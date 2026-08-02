@@ -1,0 +1,103 @@
+---
+title: WOF placetypes ↔ OSM tags — where the two vocabularies meet, and where they don't
+---
+
+# WOF placetypes ↔ OSM tags
+
+Who's On First's placetype vocabulary and OpenStreetMap's tagging scheme both describe places, but
+they are not two dialects of one language. WOF has a **single-axis hierarchy of place kinds**; OSM
+has **free-form key/value tags** with an administrative hierarchy expressed as a country-relative
+number. Mapping between them is useful — it is how `terminal` and `gate` reached our venue-structure
+vocabulary — but three structural mismatches make a naive table dangerous.
+
+Written 2026-08-02 while extending the span proposer's designator vocabulary. Confidence is flagged
+per row: OSM conventions are firm in some places and genuinely contested in others.
+
+## The three mismatches to know before reading the table
+
+**1. `place=locality` is a FALSE FRIEND, and it is the most dangerous row here.** In WOF a
+`locality` is a settlement — a city, town or village, the backbone of the address hierarchy. In OSM,
+`place=locality` means **a named place with no population**: a spot on a map that people call
+something, explicitly not a settlement. The two mean nearly opposite things. A WOF locality maps to
+OSM `place=city|town|village|hamlet`. Anyone mapping these mechanically will silently import
+uninhabited places as cities.
+
+**2. `admin_level` is country-relative, so the administrative rows cannot map to fixed numbers.**
+OSM's `admin_level=2` is reliably the country, but 4/6/7/8 mean different things in different
+countries by explicit design — a London borough is `admin_level=8`, while a New York borough sits
+higher in a differently-shaped hierarchy. Every administrative row below is therefore "typically",
+never "equals".
+
+**3. WOF's venue-INTERIOR placetypes have no counterpart in OSM's place hierarchy at all.** `arcade`,
+`concourse`, `wing`, `enclosure` are not places to OSM — they are building interior, modelled by the
+separate **Simple Indoor Tagging** scheme (`indoor=room|corridor|area|level`, `building:part=*`,
+`level=*`). This is the mismatch that matters most for us: it means the vocabulary we want for
+sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
+
+## The table
+
+| WOF placetype   | OSM equivalent                                                                                                | confidence                 |
+| --------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `address`       | `addr:*` tag cluster on a node/way — no object type of its own                                                | firm                       |
+| `arcade`        | none in the place scheme; a shopping arcade is usually `shop=mall`, the architectural sense is indoor tagging | weak                       |
+| `borough`       | `boundary=administrative` at a country-relative `admin_level` (London: 8)                                     | firm shape, variable level |
+| `building`      | `building=*` — the cleanest 1:1 in the whole table                                                            | firm                       |
+| `campus`        | no single tag; `amenity=university\|college\|school` plus `landuse=education`, sometimes a `site` relation    | moderate                   |
+| `concourse`     | none; concourses live inside `aeroway=terminal` as indoor areas                                               | weak                       |
+| `continent`     | `place=continent`                                                                                             | firm                       |
+| `country`       | `boundary=administrative` + `admin_level=2`; also `place=country`                                             | firm                       |
+| `county`        | `boundary=administrative`, typically `admin_level=6`                                                          | moderate                   |
+| `custom`        | none — WOF's escape hatch for non-standard geometries                                                         | n/a                        |
+| `dependency`    | `boundary=administrative` with ISO3166 tags; genuinely messy in OSM                                           | weak                       |
+| `disputed`      | `disputed=yes` / `boundary=disputed`                                                                          | moderate                   |
+| `empire`        | **none** — historical polities live in OpenHistoricalMap, not OSM                                             | firm (absent)              |
+| `enclosure`     | none in the place scheme; a fenced area is `barrier=*`, an interior one is indoor tagging                     | weak                       |
+| `installation`  | military: `landuse=military` + `military=base`; industrial: `man_made=works`                                  | moderate                   |
+| `intersection`  | a node where highways meet; `junction=yes`, `highway=motorway_junction`                                       | firm                       |
+| `localadmin`    | `boundary=administrative`, typically `admin_level=7`–`8`                                                      | moderate                   |
+| `locality`      | **`place=city\|town\|village\|hamlet`** — NOT `place=locality`, see mismatch 1                                | firm, and a trap           |
+| `macrocounty`   | **none**                                                                                                      | firm (absent)              |
+| `macrohood`     | none; loosely `place=suburb`                                                                                  | weak                       |
+| `macroregion`   | `boundary=administrative`, typically `admin_level=3`                                                          | moderate                   |
+| `marinearea`    | `place=sea`, `natural=bay\|strait`                                                                            | moderate                   |
+| `marketarea`    | **none** — a media/market region is not a geographic object OSM models                                        | firm (absent)              |
+| `metroarea`     | no standard tag; occasionally boundary relations, inconsistently                                              | weak                       |
+| `microhood`     | `place=neighbourhood` or `place=quarter` at the finer end                                                     | weak                       |
+| `nation`        | overlaps `country`; OSM does not distinguish nation from state                                                | moderate                   |
+| `neighbourhood` | `place=neighbourhood`, sometimes `place=suburb`                                                               | firm                       |
+| `ocean`         | `place=ocean`                                                                                                 | firm                       |
+| `planet`        | **none** — OSM is Earth by definition                                                                         | firm (absent)              |
+| `postalcode`    | `boundary=postal_code`, `postal_code=*`, `addr:postcode`                                                      | firm                       |
+| `postalregion`  | `boundary=postal_code` at a coarser level; no distinct tag                                                    | weak                       |
+| `region`        | `boundary=administrative`, typically `admin_level=4`                                                          | moderate                   |
+| `timezone`      | not a core OSM concept; `timezone=*` appears on some boundaries                                               | weak                       |
+| `venue`         | the POI tag families: `amenity`/`shop`/`tourism`/`leisure`/`office`=\*                                        | firm                       |
+| `wing`          | `building:part=*` + Simple Indoor Tagging                                                                     | moderate                   |
+
+## What this changed for us
+
+The venue-structure designator vocabulary (`core/resources/whosonfirst/placetypes/venue-structure.ts`)
+takes `arcade`, `building`, `campus`, `concourse`, `enclosure`, `installation`, `wing` from WOF and
+adds `terminal` and `gate` from OSM's `aeroway` key — precisely because WOF has no placetype for
+either and they are the two commonest sub-venue designators in real airport addresses.
+
+The table suggests where that vocabulary could grow, and where it should not:
+
+- **Plausible additions from OSM Simple Indoor Tagging**: `level` (overlaps Pub 28's `FLOOR`) and
+  `hall`. Both are written in real venue addresses.
+- **Not worth adding**: `corridor`, `room` (already Pub 28), `area` — `corridor` and `area` are
+  mapping primitives nobody writes on an envelope.
+- **Nothing from the administrative rows.** Those are the pair-index and census program's territory,
+  and `admin_level` being country-relative is exactly why we key that work on WOF's hierarchy rather
+  than OSM's numbers.
+
+## Why we lean on WOF for hierarchy and OSM for interiors
+
+The split is not arbitrary. WOF's single-axis hierarchy with explicit parent links is what makes
+`(child, parent)` pair extraction possible at all — the campaign's entire mechanism assumes a place
+knows its ancestors. OSM has no equivalent: containment is inferred from geometry, and the
+administrative levels it does carry are country-relative. Conversely OSM's indoor scheme describes
+building interiors in a detail WOF's seven interior placetypes never attempt.
+
+Each source is used where its model is strongest, which is also why neither is treated as
+authoritative for the other's territory.

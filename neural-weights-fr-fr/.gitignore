@@ -22,3 +22,7 @@
 # The #1104 country soft-feed lexicon (same treatment — copied from data/gazetteer/ at
 # dev-link/publish time; this line existed in en-us since #1104 but was never mirrored here).
 /country-surface-lexicon-v1.json
+
+# The placetype-pair index (hierarchy campaign R6) — built from the raw BAN dump by
+# `scripts/link-dev-weights.ts` for local dev, fetched from the HF bucket at publish time.
+/pair-index-*.bin

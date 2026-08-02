@@ -131,3 +131,18 @@ base feed inherits it for free. Pre-registered bars for WHOEVER runs it: T1 `fr-
 flips to full PASS; T2 op2 venue-field hits at least double vs the staged 7.0.1 candidate;
 T3 the six #1366 fixtures ≥ the candidate's 2; B1 the full battery + gauntlet, no waivers.
 Stop rule: any miss → operator conversation, no contingency.
+
+---
+
+## Addendum 4 (2026-08-01) — country-tail RUN VERDICT: NEGATIVE (stopped per the stop rule)
+
+The v4.1.3 run (dose 12, λ=1e4, v0.15.2 overlay, md5 baccf7df) FAILS its bars: T1 the FR control
+still fails at BOTH the pipeline and bare-classifier levels — the model learned to TAG the tail
+(`country` now emits on tailed rows) without transferring venue competence through it (venue null
+everywhere; the FR control's house_number degraded 44→"4"); the corrected gauntlet shows 0 newly
+passing and a gated regression (VERDICT FAIL). Mechanism read: at fine-tune dose the model solves
+the new pattern by its easiest route (tail token → country) and the added tail tokens dilute the
+venue boundary signal rather than extending it. The SHARD change stays banked (a from-scratch
+base learns the joint pattern from step 0 — the run-2 lesson says composition differs at base
+training); the FINE-TUNE route to it is now a recorded dead end. No further launches; the staged
+7.0.1 (v411, B1-clean) remains the best venue candidate.

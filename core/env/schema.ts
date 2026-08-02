@@ -137,4 +137,7 @@ export const PrivateEnvSchema = z.object({
 	// FCC Broadband Map (BDC) public-API credentials (`bdc/sdk/client.ts`) — username + hash_value header auth.
 	FCC_MAP_USERNAME: z.string().optional(),
 	FCC_MAP_API_KEY: z.string().optional(),
+
+	// SEC EDGAR fair-access User-Agent (`filer/sdk/sec-client.ts`) — "Company Name AdminContact@domain.com".
+	SEC_EDGAR_USER_AGENT: z.string().optional(),
 })

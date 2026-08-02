@@ -36,6 +36,8 @@
 				"neural-web",
 				"variant-aliases",
 				"react",
+				"bdc",
+				"filer",
 				"mailwoman",
 				"mcp",
 				"timezone-lookup",

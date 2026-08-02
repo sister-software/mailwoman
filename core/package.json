@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/core",
-	"version": "8.4.0",
+	"version": "8.5.0",
 	"description": "Mailwoman core: tokenization, decoder, formatter, resources, filters, utils.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -116,6 +116,16 @@
 			"node": "./api/index.ts",
 			"default": "./out/api/index.js",
 			"types": "./out/api/index.d.ts"
+		},
+		"./api/disk-storage": {
+			"node": "./api/disk-storage.ts",
+			"default": "./out/api/disk-storage.js",
+			"types": "./out/api/disk-storage.d.ts"
+		},
+		"./api/test-clocks": {
+			"node": "./api/test-clocks.ts",
+			"default": "./out/api/test-clocks.js",
+			"types": "./out/api/test-clocks.d.ts"
 		},
 		"./logging": {
 			"node": "./logging/index.ts",

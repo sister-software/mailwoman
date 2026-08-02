@@ -23,7 +23,7 @@
  *   count table) — this sizes the word-span window the decode-side prior (Task 4) walks.
  */
 
-import { createReadStream, existsSync, writeFileSync } from "node:fs"
+import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
@@ -37,6 +37,8 @@ import { CSVSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
+import { extractBoroughPairs } from "../../gazetteer-pipeline/borough-pairs.ts"
+import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
@@ -61,6 +63,15 @@ const EXPECTED_GB_PAIR_COUNT = 19_209
 const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
 
 /**
+ * The US instance's cross-check (hierarchy campaign R5), measured 2026-08-01 against the shipped
+ * `admin-global-priority.db`. Unlike GB there is no postal register in the mix — every pair is WOF-sourced (borough +
+ * neighbourhood children under locality/localadmin/borough parents, see `PAIR_PLACETYPES_BY_COUNTRY`), so this number
+ * tracks the WOF snapshot alone. A snapshot refresh legitimately moves it; re-anchor the constant deliberately, after
+ * inspecting the diff, rather than relaxing the gate.
+ */
+const EXPECTED_US_PAIR_COUNT = 49_033
+
+/**
  * Known (child, parent) pairs probed after write as a self-check — PER COUNTRY, keyed by the `--country` code. Probing
  * another country's names against a freshly built index prints reassuring-looking `PROBE MISS` lines that verify
  * nothing (the en-nz first build ran the GB names — caught 2026-07-24). A country without an entry gets a loud skip,
@@ -77,6 +88,32 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		// The repeated-name convention's identity pair — the (x,x) evidence the segment rule keys on.
 		["Mangawhai", "Mangawhai"],
 	],
+	// R5 (hierarchy campaign): the US instance's probes. Unlike GB/NZ these are NOT postal-format
+	// dependent localities — USPS routes city/state/ZIP — they are the borough/neighbourhood class
+	// the schema's umbrella term covers, sourced from WOF rather than a postal register.
+	us: [
+		["Astoria", "Queens"],
+		["Park Slope", "Brooklyn"],
+		["Manhattan", "New York"],
+	],
+	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`), not quartiers —
+	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.
+	fr: [
+		["Pinsonnac", "Montpeyroux"],
+		["Line", "Salignac-Eyvigues"],
+	],
+}
+
+/**
+ * Split a comma-separated path list, tolerating whitespace and an absent value. Each secondary source stays its OWN
+ * file rather than being pre-merged into a blob, so every one keeps a distinct provenance md5 in the header — which is
+ * what lets a freshness guard notice that exactly one of them changed.
+ */
+function splitPathList(value: string | undefined): string[] {
+	return (value ?? "")
+		.split(",")
+		.map((path) => path.trim())
+		.filter(Boolean)
 }
 
 const OptionsSchema = zod.object({
@@ -109,6 +146,22 @@ const OptionsSchema = zod.object({
 				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
 				"nonzero value for a shipped artifact build."
 		),
+	pairsJsonl: zod
+		.string()
+		.optional()
+		.describe(
+			"Secondary pairs JSONL ({child, parent} per line) merged through the same fold — hierarchy campaign R3 (ONSPD London wards etc.)"
+		),
+	boroughDb: zod
+		.string()
+		.optional()
+		.describe("WOF admin DB path — merge borough (child, parent) pairs for the country (hierarchy campaign R2)"),
+	banDir: zod
+		.string()
+		.optional()
+		.describe(
+			"BAN adresses-<dept>.csv directory — merge FR (lieu-dit, commune) pairs through ban/sdk's cleanLieuDit filter (hierarchy campaign R6)"
+		),
 	holdoutSeed: zod
 		.number()
 		.default(42)
@@ -120,10 +173,21 @@ export { OptionsSchema as options }
 const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const country = options.country.toLowerCase()
-		const sourcePath = options.source ?? dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
+		// The PPD tuples CSV is a GB national register — there is no equivalent for the US instance (USPS routes
+		// city/state/ZIP, so no postal source carries dependent localities). A country whose pairs come entirely from
+		// the WOF/secondary sources below runs with NO CSV rather than being handed an empty one.
+		const sourcePath =
+			options.source ?? (country === "gb" ? String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")) : undefined)
 
-		if (!existsSync(sourcePath)) {
+		if (sourcePath && !existsSync(sourcePath)) {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
+		}
+
+		if (!sourcePath && !options.boroughDb && !options.pairsJsonl && !options.banDir) {
+			throw new Error(
+				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
+					`or the build would write an empty index.`
+			)
 		}
 
 		const builder = new PairIndexBuilder()
@@ -134,24 +198,82 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		// Same CSVSpliterator idiom as `corpus/src/shard-recipes/locale.ts`'s `readTuples`: array mode, no header
 		// row consumed by the parser (`header: false`), so we build the column index off the first yielded row
 		// ourselves and skip forward from there.
-		for await (const cells of CSVSpliterator.fromAsync<string[]>(createReadStream(sourcePath), {
-			mode: "array",
-			header: false,
-			enableQuoteHandling: true,
-		})) {
-			if (header === null) {
-				header = cells.map((h) => h.trim().toUpperCase())
-				cityIx = header.indexOf("CITY")
-				districtIx = header.indexOf("DISTRICT")
+		if (sourcePath) {
+			for await (const cells of CSVSpliterator.fromAsync<string[]>(createReadStream(sourcePath), {
+				mode: "array",
+				header: false,
+				enableQuoteHandling: true,
+			})) {
+				if (header === null) {
+					header = cells.map((h) => h.trim().toUpperCase())
+					cityIx = header.indexOf("CITY")
+					districtIx = header.indexOf("DISTRICT")
 
-				if (cityIx < 0 || districtIx < 0) {
-					throw new Error(`pair-index: source header is missing CITY/DISTRICT: ${header.join(",")}`)
+					if (cityIx < 0 || districtIx < 0) {
+						throw new Error(`pair-index: source header is missing CITY/DISTRICT: ${header.join(",")}`)
+					}
+
+					continue
 				}
 
-				continue
+				builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "")
+			}
+		}
+
+		// R2 (hierarchy campaign): borough pairs from the WOF admin DB, through the SAME fold/dedupe
+		// as the CSV rows (boroughs project onto dependent_locality — plan/reference/placetype-evidence).
+		let boroughsAdded = 0
+
+		if (options.boroughDb) {
+			const before = builder.distinctCount
+
+			for (const pair of extractBoroughPairs(options.boroughDb, country.toUpperCase())) {
+				builder.addRow(pair.child, pair.parent)
 			}
 
-			builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "")
+			boroughsAdded = builder.distinctCount - before
+
+			console.error(`pair-index: +${boroughsAdded} distinct borough pairs (WOF admin DB)`)
+		}
+
+		// R6: FR lieu-dit pairs from the raw BAN dump. Streams ~26M rows, so it is the slowest source by far —
+		// deliberately opt-in per build rather than a default.
+		if (options.banDir) {
+			const before = builder.distinctCount
+			const { pairs, rowsWithLieuDit, filesRead } = await extractLieuDitPairs(options.banDir)
+
+			for (const pair of pairs) {
+				builder.addRow(pair.child, pair.parent)
+			}
+
+			boroughsAdded += builder.distinctCount - before
+
+			console.error(
+				`pair-index: +${builder.distinctCount - before} distinct lieu-dit pairs ` +
+					`(${filesRead} départements, ${rowsWithLieuDit.toLocaleString()} rows with a clean lieu-dit)`
+			)
+		}
+
+		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
+		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
+		if (options.pairsJsonl) {
+			for (const path of splitPathList(options.pairsJsonl)) {
+				const before = builder.distinctCount
+
+				for (const line of readFileSync(path, "utf8").split("\n")) {
+					if (!line.trim()) continue
+
+					const pair = JSON.parse(line) as { child: string; parent: string }
+
+					builder.addRow(pair.child, pair.parent)
+				}
+
+				boroughsAdded += builder.distinctCount - before
+
+				console.error(
+					`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${path.split("/").pop()})`
+				)
+			}
 		}
 
 		const built = builder.finish()
@@ -166,7 +288,13 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			options.holdoutSeed
 		)
 
-		const sourceMD5 = await md5File(sourcePath)
+		// Provenance covers every source that contributed rows, in the order they were folded in — a US build has no
+		// CSV at all, so an unconditional single-element array would have claimed a source the artifact never read.
+		const sourceMD5s = [
+			...(sourcePath ? [await md5File(sourcePath)] : []),
+			...(options.boroughDb ? [await md5File(options.boroughDb)] : []),
+			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
+		]
 
 		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
 		// beta-less binary, byte-shape-identical to every pre-TRANSITION-BETA artifact) — not a null/0.
@@ -175,7 +303,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			delta: options.delta,
 			schemaVersion: 1,
 			foldVersion: 1,
-			sourceMD5s: [sourceMD5],
+			sourceMD5s,
 			buildDate: new Date().toISOString(),
 			...(options.transitionBeta !== undefined ? { transitionBeta: options.transitionBeta } : {}),
 		}
@@ -227,11 +355,17 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const gateLine =
 			country === "gb"
 				? options.holdoutFraction > 0
-					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})${preFoldSuffix}`
-					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT
-						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (production baseline expects ${EXPECTED_GB_PAIR_COUNT.toLocaleString()})${preFoldSuffix}`
-						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != the production baseline's ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} — investigate fold divergence before trusting this artifact${preFoldSuffix}`
-				: `(cross-check only registered for gb; ${preHoldoutCount.toLocaleString()} distinct pairs)`
+					? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${(EXPECTED_GB_PAIR_COUNT + boroughsAdded).toLocaleString()})${preFoldSuffix}`
+					: preHoldoutCount === EXPECTED_GB_PAIR_COUNT + boroughsAdded
+						? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${boroughsAdded} borough)${preFoldSuffix}`
+						: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != baseline ${EXPECTED_GB_PAIR_COUNT.toLocaleString()} + ${boroughsAdded} borough — investigate fold divergence before trusting this artifact${preFoldSuffix}`
+				: country === "us"
+					? options.holdoutFraction > 0
+						? `(cross-check skipped under --holdout-fraction; ${preHoldoutCount.toLocaleString()} distinct pairs before holdout, expects ${EXPECTED_US_PAIR_COUNT.toLocaleString()})`
+						: preHoldoutCount === EXPECTED_US_PAIR_COUNT
+							? `CROSS-CHECK PASS: ${preHoldoutCount.toLocaleString()} distinct pairs (all WOF-sourced; no postal register)`
+							: `CROSS-CHECK BLOCKED: ${preHoldoutCount.toLocaleString()} distinct pairs != ${EXPECTED_US_PAIR_COUNT.toLocaleString()} — a WOF snapshot refresh moves this number, so re-anchor the constant DELIBERATELY (with the diff inspected) rather than trusting the artifact`
+					: `(cross-check only registered for gb/us; ${preHoldoutCount.toLocaleString()} distinct pairs)`
 
 		const holdoutLine =
 			options.holdoutFraction > 0
