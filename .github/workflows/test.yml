@@ -9,6 +9,11 @@
 # The aggregator job is named `test` ON PURPOSE: the "Production Integrity" ruleset's
 # required status check matches the context `test`, and publish.yml's prepare phase
 # auto-merges the release PR on that same check. Rename it and both break.
+#
+# PATH-GATING: the smoke leg validates the PACKAGING pipeline, not the source, so it is
+# gated on paths that affect packaging. A docs-only or data-only PR skips smoke entirely
+# (the job reports green in seconds) — the long pole drops from 17-19 min to ~10 min for
+# most PRs. On push to main + workflow_dispatch (release flow), smoke runs unconditionally.
 # Each leg repeats the checkout→install→compile prefix (~75s) rather than sharing a
 # build artifact — the legs run concurrently on the same host, so the prefix costs
 # wall-clock once, and artifact round-trips through GitHub's storage would cost more.
@@ -234,6 +239,12 @@ jobs:
   # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
   # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
   # effect — all invisible in-repo, all fatal to a fresh `npm install`.
+  #
+  # PATH-GATED on pull_request: the smoke test validates the PACKAGING pipeline, so changes to
+  # docs, root *.md, data/, .github/, or any workspace NOT packed by smoke-clean-install.ts
+  # (osm, tile-worker, resolver-wof-wasm, neural-web) can't affect it. On a docs-only or
+  # data-only PR the heavy steps are skipped → green in seconds. On push to main, workflow_dispatch
+  # (release flow), and any PR that TOUCHES a smoke-relevant path, every step runs.
   smoke:
     runs-on:
       - self-hosted
@@ -243,7 +254,73 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Change detection replaces a trigger-level `paths:` filter (the docs-build precedent).
+      # On pull_request, the heavy steps run only when a path in the filter list changed —
+      # otherwise the job reports green in seconds (checkout + this step). The list mirrors the
+      # WORKSPACES dict in smoke-clean-install.ts — keep the two in sync.
+      - name: Detect smoke-affecting changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        with:
+          filters: |
+            smoke:
+              # --- Published workspace source (WORKSPACES dict in smoke-clean-install.ts) ---
+              - 'core/**'
+              - 'spatial/**'
+              - 'resolver/**'
+              - 'resolver-wof-sqlite/**'
+              - 'ban/**'
+              - 'codex/**'
+              - 'poi-taxonomy/**'
+              - 'kind-classifier/**'
+              - 'react/**'
+              - 'locale-gate/**'
+              - 'normalize/**'
+              - 'phrase-grouper/**'
+              - 'query-shape/**'
+              - 'sentencepiece-wasm/**'
+              - 'neural/**'
+              - 'neural-weights-en-us/**'
+              - 'neural-weights-fr-fr/**'
+              - 'neural-weights-en-gb/**'
+              - 'neural-weights-en-nz/**'
+              - 'variant-aliases/**'
+              - 'tiger/**'
+              - 'formatter/**'
+              - 'record/**'
+              - 'match/**'
+              - 'registry/**'
+              - 'address-id/**'
+              - 'corpus/**'
+              - 'mailwoman/**'
+              - 'annotations/**'
+              - 'timezone-lookup/**'
+              - 'un-locode-lookup/**'
+              - 'nuts-lookup/**'
+              - 'api-kit/**'
+              - 'api/**'
+              - 'libpostal/**'
+              - 'photon/**'
+              - 'nominatim/**'
+              - 'fastify/**'
+              - 'mcp/**'
+              - 'bdc/**'
+              - 'filer/**'
+              # --- Smoke script + packaging pipeline ---
+              - 'scripts/smoke-clean-install.ts'
+              - 'scripts/pack-workspace.ts'
+              # --- Root config that affects packaging ---
+              - 'package.json'
+              - 'tsconfig.json'
+              - 'tsconfig.base.json'
+              - 'release.config.json'
+              - 'yarn.lock'
+              - '.nvmrc'
+              - '.yarnrc.yml'
+
       - name: Setup Node
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -252,12 +329,15 @@ jobs:
           # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
       - name: Enable Corepack (yarn 4)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: corepack enable
 
       - name: Install dependencies
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn install --immutable
 
       - name: Compile
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn compile
 
       # Same cache as the unit leg (same key → shared entry). Smoke packs the weights workspaces
@@ -267,6 +347,7 @@ jobs:
       # the chicken-and-egg that blocked the v7.6.0 release PR). `yarn pack` quietly packs whatever
       # subset of the `files` globs exists, so the binaries MUST be present before packing.
       - name: Restore weights cache (model + soft-feed siblings)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         id: weights-cache
         uses: actions/cache@v6
         with:
@@ -280,11 +361,11 @@ jobs:
           key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json') }}
 
       - name: Materialize weights (cache miss — ~5 min, once per release.config change)
-        if: steps.weights-cache.outputs.cache-hit != 'true'
+        if: (github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true') && steps.weights-cache.outputs.cache-hit != 'true'
         run: node scripts/copy-weights.ts
 
       - name: Symlink base-latn model (cache miss — en-us already materialized)
-        if: steps.weights-cache.outputs.cache-hit != 'true'
+        if: (github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true') && steps.weights-cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p neural-weights-base-latn
           for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
@@ -292,6 +373,7 @@ jobs:
           done
 
       - name: Clean-install smoke test
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: yarn ci:smoke
 
   # Aggregator — the ONLY check the ruleset + release auto-merge look at (context `test`).
