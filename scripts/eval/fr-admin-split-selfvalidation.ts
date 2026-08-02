@@ -38,7 +38,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
 
-import { v0RecordToTree } from "./v0-tree-adapter.ts"
+import { v0RecordToTree } from "../../mailwoman/eval-harness/v0-tree-adapter.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 /**
