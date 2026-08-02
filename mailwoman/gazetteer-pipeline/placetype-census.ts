@@ -26,15 +26,21 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
 
 /**
- * The complete Who's on First placetype vocabulary (34 as of 2026-08-02). {@link PLACETYPE_PROJECTION} must carry a key
+ * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION} must carry a key
  * for every entry — a test asserts it — so a placetype can never reach {@link buildPlacetypeCensus} unmapped and turn a
  * build into a throw at the worst moment. Sorted to keep the diff readable when WOF grows the vocabulary.
+ *
+ * Pinned to `WhosOnFirstPlacetype` (`@mailwoman/core/resources/whosonfirst`) with `satisfies`, the same discipline
+ * `WOF_VENUE_STRUCTURE_PLACETYPES` uses: this list stops COMPILING if it names something outside the vocabulary. The
+ * type is the authority on membership; this array exists because a type union cannot be enumerated at runtime, which is
+ * what the completeness test needs. A hand-maintained copy drifted once already — it was missing `custom`.
  */
-export const WOF_PLACETYPES: readonly string[] = [
+export const WOF_PLACETYPES = [
 	"address",
 	"arcade",
 	"borough",
@@ -44,6 +50,7 @@ export const WOF_PLACETYPES: readonly string[] = [
 	"continent",
 	"country",
 	"county",
+	"custom",
 	"dependency",
 	"disputed",
 	"empire",
@@ -69,7 +76,7 @@ export const WOF_PLACETYPES: readonly string[] = [
 	"timezone",
 	"venue",
 	"wing",
-]
+] as const satisfies readonly WhosOnFirstPlacetype[]
 
 /**
  * WOF placetype → `ComponentTag` projection, the executable copy of plan/reference/placetype-evidence.mdx's table. A
@@ -123,6 +130,9 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	marinearea: null,
 	planet: null,
 	empire: null,
+	// `custom` is WOF's escape hatch for a locally-defined placetype. It names no fixed feature class, so no projection
+	// can be right for it — deliberately uncounted rather than guessed at.
+	custom: null,
 	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag. An intersection is
 	// a two-span construct (`intersection_a` + `intersection_b`); a WOF `address` is a whole address record consumed by
 	// the kind-classifier and the resolver's address-point tiers, not a span role.
