@@ -33,40 +33,17 @@ export interface ShardTuple {
 }
 
 /**
- * The deterministic LCG (`s = s*1664525 + 1013904223 mod 2^32`) the street/po-box/anchor builders used. A recipe whose
- * legacy `.mjs` seeded this must create it here so `--seed N` is byte-reproducible.
+ * The two seeded generators the legacy `build-*-shard` scripts used, re-exported from their home in
+ * `@mailwoman/core/utils` so a recipe keeps importing everything it needs from this one scaffold module.
+ *
+ * - `makeLcg` (`s = s*1664525 + 1013904223 mod 2^32`) — what the street/po-box/anchor builders seeded.
+ * - `makeMulberry32` — what the MAJORITY of them used (german, locale, boundary-stress, unit, fr-order, country-balanced,
+ *   intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
+ *
+ * A recipe must seed the same one its `.mjs` did, the same way it did (usually `seed`, but some derive a per-stream
+ * seed), or `--seed N` stops being byte-reproducible.
  */
-export function makeLcg(seed: number): () => number {
-	let s = seed >>> 0
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
-
-/**
- * Back-compat alias for {@link makeLcg}.
- */
-export const makeRandom = makeLcg
-
-/**
- * Mulberry32 — the PRNG the MAJORITY of the legacy `build-*-shard` scripts used (german, locale, boundary-stress, unit,
- * fr-order, country-balanced, intersection, fr-admin-split, street-affix, street-bare, po-box-cedex). A recipe must
- * seed it EXACTLY as its `.mjs` did (usually `seed`, but some derive a per-stream seed) to stay byte-reproducible.
- */
-export function makeMulberry32(seed: number): () => number {
-	let a = seed >>> 0
-
-	return () => {
-		a = (a + 0x6d_2b_79_f5) | 0
-		let t = Math.imul(a ^ (a >>> 15), 1 | a)
-		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-
-		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
-	}
-}
+export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@mailwoman/core/utils"
 
 /**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).

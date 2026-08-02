@@ -13,28 +13,72 @@
  *   byte-identical random stream buys nothing observable. What is preserved is what matters: a
  *   seeded, deterministic-per-input stream and Python's helper semantics — inclusive `randint`,
  *   uniform `choice`, with-replacement `choices`.
+ *
+ *   TWO generators live here, and that is deliberate. {@link mulberry32} and {@link makeLcg} were
+ *   each copy-pasted into a dozen files before the 2026-08-02 dedupe, and their streams differ. The
+ *   mulberry32 stream decides which typos get injected into the training corpus; the LCG stream
+ *   decides the train/test splits the scorer evals report. Collapsing them onto one generator would
+ *   silently rewrite synthesized corpus rows and published eval numbers, so both are kept, both are
+ *   named, and NEW code should reach for `mulberry32` (better distribution) unless it must reproduce
+ *   an existing stream.
  */
 
 /**
- * Seeded `random.Random`-equivalent. Backed by mulberry32 (a 32-bit stateful generator).
+ * Mulberry32 as a thunk — `seed` in, `() => number` in `[0, 1)` out.
+ *
+ * The thunk shape is the point. `SeededRandom` below has been this exact generator all along, but it is a class with a
+ * `.random()` method, and every caller in the repo wants a bare function to pass as an injected `random` option.
+ * Sixteen call sites re-typed the generator rather than adapt to the class — which is a fact about the interface, not
+ * about the callers.
+ */
+export function mulberry32(seed: number): () => number {
+	let a = seed >>> 0
+
+	return () => {
+		a = (a + 0x6d_2b_79_f5) | 0
+		let t = Math.imul(a ^ (a >>> 15), 1 | a)
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
+	}
+}
+
+/**
+ * The Numerical-Recipes linear congruential generator — `s = s * 1664525 + 1013904223 mod 2³²`.
+ *
+ * Weaker than {@link mulberry32}, and kept only because its exact stream is baked into shipped artifacts: the synthetic
+ * PO-box adapter's rows and the registry scorers' train/test splits both reproduce from it. Prefer `mulberry32` for
+ * anything new.
+ *
+ * Seed 0 is a valid state here (unlike mulberry32, which needs a non-zero one); callers that used to guard with `seed
+ * || 1` keep doing so at the call site, since dropping the guard would shift their stream for that one seed.
+ */
+export function makeLcg(seed: number): () => number {
+	let s = seed >>> 0
+
+	return () => {
+		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
+
+		return s / 4_294_967_296
+	}
+}
+
+/**
+ * Seeded `random.Random`-equivalent. Backed by {@link mulberry32}.
  */
 export class SeededRandom {
-	#state: number
+	readonly #next: () => number
 
 	constructor(seed: number) {
 		// mulberry32 wants a non-zero 32-bit state.
-		this.#state = seed >>> 0 || 1
+		this.#next = mulberry32(seed >>> 0 || 1)
 	}
 
 	/**
 	 * Float in `[0, 1)`. Mirrors Python `random.random()`.
 	 */
 	random(): number {
-		let t = (this.#state += 0x6d_2b_79_f5)
-		t = Math.imul(t ^ (t >>> 15), t | 1)
-		t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-
-		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
+		return this.#next()
 	}
 
 	/**

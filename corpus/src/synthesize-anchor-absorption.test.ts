@@ -5,24 +5,15 @@
  * what the model must learn instead of flipping the default (the Probe A0 erosion this shard fixes).
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { alignRow } from "./align.ts"
 import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "./synthesize-anchor-absorption.ts"
 
 // A deterministic RNG so the assertions are stable.
-function seeded(seed: number): () => number {
-	let s = seed >>> 0
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) >>> 0
-
-		return s / 0x1_00_00_00_00
-	}
-}
-
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
-	const synth = synthesizeAnchorAbsorptionRow({ random: seeded(seed), forceTemplate: template })
+	const synth = synthesizeAnchorAbsorptionRow({ random: makeLcg(seed), forceTemplate: template })
 
 	const aligned = alignRow({
 		raw: synth.raw,

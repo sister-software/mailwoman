@@ -7,6 +7,7 @@
  *   this is the contract that makes the rows useful as counter-distribution training data.
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -16,16 +17,6 @@ import {
 	STREET_SIDE_TAGS,
 	synthesizeNoStreetRow,
 } from "./synthesize-no-street.ts"
-
-function seededRandom(seed: number): () => number {
-	let s = seed
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
 
 const SAMPLE_BASE: NoStreetBaseTuple = {
 	locality: "Boston",
@@ -37,7 +28,7 @@ const SAMPLE_BASE: NoStreetBaseTuple = {
 describe("synthesizeNoStreetRow", () => {
 	it("emits a venue-plain row with no street-side tags", () => {
 		const row = synthesizeNoStreetRow(SAMPLE_BASE, {
-			random: seededRandom(1),
+			random: makeLcg(1),
 			forceTemplate: "venue-plain",
 		})
 
@@ -52,7 +43,7 @@ describe("synthesizeNoStreetRow", () => {
 
 	it("emits a venue-adversarial row whose venue contains street-typing words", () => {
 		const row = synthesizeNoStreetRow(SAMPLE_BASE, {
-			random: seededRandom(2),
+			random: makeLcg(2),
 			forceTemplate: "venue-adversarial",
 		})
 
@@ -84,7 +75,7 @@ describe("synthesizeNoStreetRow", () => {
 
 	it("emits a locality-region-postcode row with only admin tags", () => {
 		const row = synthesizeNoStreetRow(SAMPLE_BASE, {
-			random: seededRandom(3),
+			random: makeLcg(3),
 			forceTemplate: "locality-region-postcode",
 		})
 
@@ -99,7 +90,7 @@ describe("synthesizeNoStreetRow", () => {
 
 	it("emits a postcode-only row", () => {
 		const row = synthesizeNoStreetRow(SAMPLE_BASE, {
-			random: seededRandom(4),
+			random: makeLcg(4),
 			forceTemplate: "postcode-only",
 		})
 
@@ -111,7 +102,7 @@ describe("synthesizeNoStreetRow", () => {
 
 	it("emits a country-only row", () => {
 		const row = synthesizeNoStreetRow(SAMPLE_BASE, {
-			random: seededRandom(5),
+			random: makeLcg(5),
 			forceTemplate: "country-only",
 		})
 
@@ -123,7 +114,7 @@ describe("synthesizeNoStreetRow", () => {
 	})
 
 	it("never emits ANY street-side tag across 500 random invocations", () => {
-		const rng = seededRandom(42)
+		const rng = makeLcg(42)
 
 		for (let i = 0; i < 500; i++) {
 			const row = synthesizeNoStreetRow(SAMPLE_BASE, { random: rng })
@@ -136,7 +127,7 @@ describe("synthesizeNoStreetRow", () => {
 	})
 
 	it("template distribution is reasonable across 1000 invocations", () => {
-		const rng = seededRandom(99)
+		const rng = makeLcg(99)
 
 		const counts: Record<NoStreetTemplate, number> = {
 			"venue-plain": 0,
@@ -175,7 +166,7 @@ describe("synthesizeNoStreetRow", () => {
 		for (const [country, expectedLocale] of cases) {
 			const row = synthesizeNoStreetRow(
 				{ ...SAMPLE_BASE, country },
-				{ random: seededRandom(7), forceTemplate: "venue-plain" }
+				{ random: makeLcg(7), forceTemplate: "venue-plain" }
 			)
 
 			expect(row!.locale).toBe(expectedLocale)

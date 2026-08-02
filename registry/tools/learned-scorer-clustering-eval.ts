@@ -30,7 +30,7 @@
 
 import { writeFileSync } from "node:fs"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import {
 	addressFrequencyKey,
@@ -127,19 +127,6 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 
 const addr = (line: string, city: string, st: string, zip: string) =>
 	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
-
-/**
- * Deterministic LCG (no Math.random — reproducible split).
- */
-function lcg(seed: number): () => number {
-	let s = seed >>> 0 || 1
-
-	return () => {
-		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
-
-		return s / 0x1_00_00_00_00
-	}
-}
 
 interface MessyRow {
 	npi: string
@@ -331,7 +318,7 @@ export async function scorerClusteringEval(
 	 * with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {
-		const rnd = lcg(seed)
+		const rnd = makeLcg(seed || 1)
 		const npiSplit = new Map<string, "train" | "eval">()
 
 		for (const npi of kept) {
