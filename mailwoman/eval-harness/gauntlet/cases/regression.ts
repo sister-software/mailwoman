@@ -1110,6 +1110,75 @@ export const REGRESSION_CASES: SeedCase[] = [
 		addedAt: "2026-07-30",
 		note: "East homograph opening the venue + an apostrophe-bearing Saint-abbreviated street (St James's Square).",
 	},
+	// ── The non-GB dependent-locality instances (campaign R9–R11), gated so each locale's win cannot
+	// silently regress. Every one of these emitted NOTHING before its artifact shipped, and three of
+	// the four additionally emitted a WRONG span — the locality fused with the sub-locality — so these
+	// rows protect against a return to corrupt output, not merely to missing output.
+	//
+	// They grade through their own weights overlay (OVERLAY_LOCALE_BY_COUNTRY in harness.ts). Without
+	// that mapping they would run against base en-US, find no pair index for their country, and fail
+	// for a reason that has nothing to do with the model.
+	{
+		id: "de-r9-nippes-koeln",
+		input: "Neusser Str. 12, Nippes, 50733 Köln",
+		source: "campaign:r9",
+		addressKind: "de_structured",
+		country: "DE",
+		status: "pass",
+		expectComponents: {
+			street: "Neusser Str.",
+			house_number: "12",
+			dependent_locality: "Nippes",
+			locality: "Köln",
+			postcode: "50733",
+		},
+		addedAt: "2026-08-02",
+		note: "R9: Ortsteil under Gemeinde. Needs the `de` leading-postcode strip — German addresses write '50733 Köln', and without it the parent segment folds to a key no bare-Gemeinde entry matches.",
+	},
+	{
+		id: "in-r10-indiranagar-bengaluru",
+		input: "12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India",
+		source: "campaign:r10",
+		addressKind: "in_structured",
+		country: "IN",
+		status: "pass",
+		expectComponents: {
+			dependent_locality: "Indiranagar",
+			locality: "Bengaluru",
+		},
+		addedAt: "2026-08-02",
+		note: "R10: needs PARENT-ALIAS expansion — WOF stores 'Bangalore' and the address says 'Bengaluru' (renamed 2014, carried as an eng variant). Before the artifact this fused as locality='Indiranagar Bengaluru Karnataka'.",
+	},
+	{
+		id: "es-r11-aravaca-madrid",
+		input: "Calle Mayor 12, Aravaca, 28023 Madrid",
+		source: "campaign:r11",
+		addressKind: "es_structured",
+		country: "ES",
+		status: "pass",
+		expectComponents: {
+			dependent_locality: "Aravaca",
+			locality: "Madrid",
+			postcode: "28023",
+		},
+		addedAt: "2026-08-02",
+		note: "R11: barrio under municipio. Previously fused as locality='Aravaca Madrid'.",
+	},
+	{
+		id: "it-r11-trastevere-roma",
+		input: "Via Roma 12, Trastevere, 00153 Roma",
+		source: "campaign:r11",
+		addressKind: "it_structured",
+		country: "IT",
+		status: "pass",
+		expectComponents: {
+			dependent_locality: "Trastevere",
+			locality: "Roma",
+			postcode: "00153",
+		},
+		addedAt: "2026-08-02",
+		note: "R11: quartiere under comune. Needs alias expansion in ITALIAN — WOF's preferred name is the English 'Rome', and 'Roma' is the ita form. Also a street named 'Via Roma' in the same row, which the parent must not swallow.",
+	},
 	// ── Northern Ireland (2026-08-02, campaign R7). NI sat outside the GB index since R3, deferred on
 	// "the pair parent needs post towns" — a licensed Royal Mail table. R5 dissolved that: the parent
 	// side need not come from a postal register, and WOF parents NI neighbourhoods to Belfast /
