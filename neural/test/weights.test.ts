@@ -98,6 +98,7 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 		execFileSync(process.execPath, [repoRootPath(`neural-weights-${locale}`, "scripts", "link-dev-weights.ts")], {
 			stdio: "pipe",
 		})
+
 		linkedLocales.add(locale)
 	}
 }

@@ -35,7 +35,7 @@
 
 import { spawnSync } from "node:child_process"
 import type { PathLike } from "node:fs"
-import { existsSync, readFileSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
@@ -43,7 +43,63 @@ import { $public } from "@mailwoman/core/env"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 
+import { derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
+
 const repoRoot = repoRootPath()
+
+/**
+ * The derived-artifact store for THIS checkout's inputs. Computed once — the key is a hash over files that do not
+ * change mid-run.
+ */
+const derivedStore = derivedWeightsDir(derivedWeightsKey())
+
+/**
+ * Serve `filename` into `dir` from the derived store, if this checkout's key already has it.
+ *
+ * Returns true when the file was placed, which tells the caller to skip its CLI spawn. A miss returns false; the caller
+ * builds and then calls {@link stashDerived}.
+ *
+ * Replaces the actions/cache round-trip that carried 76.3 MB at ~1.6 MB/s (48–54s per leg) to a runner that already
+ * holds the source model locally. See scripts/derived-weights-key.ts.
+ */
+function serveFromDerivedStore(dir: string, filename: string): boolean {
+	const cached = resolve(derivedStore, filename)
+
+	if (!existsSync(cached)) return false
+
+	const dest = resolve(dir, filename)
+
+	// Unlink first. `fs.copyFile` FOLLOWS a symlink at the destination and writes THROUGH it, leaving
+	// the symlink in place — and the registry refuses a tarball containing one (HTTP 415, YN0035).
+	// Same discipline as the rest of this script; see AGENTS.md "symlinks in the publish tarball".
+	try {
+		unlinkSync(dest)
+	} catch {
+		// Nothing there to remove.
+	}
+
+	copyFileSync(cached, dest)
+	process.stderr.write(`derived store HIT → ${filename}\n`)
+
+	return true
+}
+
+/**
+ * Deposit a freshly-built `filename` into the derived store under this checkout's key.
+ *
+ * Best-effort by design: a store write that fails must never fail a release. The build already succeeded and the
+ * workspace already has the artifact — the store is an optimization, not a source of truth, so a failure here costs the
+ * next run five minutes and nothing else.
+ */
+function stashDerived(dir: string, filename: string): void {
+	try {
+		mkdirSync(derivedStore, { recursive: true })
+		copyFileSync(resolve(dir, filename), resolve(derivedStore, filename))
+		process.stderr.write(`derived store WRITE → ${filename}\n`)
+	} catch (error) {
+		process.stderr.write(`derived store write skipped for ${filename}: ${String(error)}\n`)
+	}
+}
 
 const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
 const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
@@ -274,6 +330,9 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	}
 
 	const binDest = resolve(dir, `postcode-${country}.bin`)
+
+	if (serveFromDerivedStore(dir, `postcode-${country}.bin`)) return
+
 	await removeIfPresent(binDest)
 	// `gazetteer postcode-binary` is the compiled Pastel command (ported from the old
 	// scripts/build-postcode-binary.ts). `.release-it.json` runs `yarn compile` right before this
@@ -290,6 +349,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	if (r.status !== 0) throw new Error(`gazetteer postcode-binary failed for ${country} (exit ${r.status})`)
 
 	if (!existsSync(binDest)) throw new Error(`gazetteer postcode-binary ran but ${binDest} was not produced`)
+	stashDerived(dir, `postcode-${country}.bin`)
 	process.stderr.write(`built soft-feed → ${workspace}/postcode-${country}.bin\n`)
 }
 
@@ -343,6 +403,9 @@ async function materializePairIndex(workspace: string, dir: string) {
 	}
 
 	const binDest = resolve(dir, `pair-index-${country}.bin`)
+
+	if (serveFromDerivedStore(dir, `pair-index-${country}.bin`)) return
+
 	await removeIfPresent(binDest)
 	// `gazetteer pair-index` is the compiled Pastel command; `.release-it.json` runs `yarn compile` right
 	// before this script, so mailwoman/out/cli.js exists (same precondition as postcode-binary above).
@@ -372,6 +435,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 	if (r.status !== 0) throw new Error(`gazetteer pair-index failed for ${country} (exit ${r.status})`)
 
 	if (!existsSync(binDest)) throw new Error(`gazetteer pair-index ran but ${binDest} was not produced`)
+	stashDerived(dir, `pair-index-${country}.bin`)
 	process.stderr.write(`built soft-feed → ${workspace}/pair-index-${country}.bin (delta=${entry.delta})\n`)
 }
 

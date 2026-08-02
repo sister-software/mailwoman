@@ -394,30 +394,17 @@ jobs:
       - name: Compile
         run: yarn compile
 
-      - name: Restore weights cache (model + soft-feed siblings)
-        id: weights-cache
-        uses: actions/cache@v6
-        with:
-          path: |
-            neural-weights-*/model.onnx
-            neural-weights-*/tokenizer.model
-            neural-weights-*/postcode-*.bin
-            neural-weights-*/pair-index-*.bin
-            neural-weights-*/anchor-lexicon-v1.json
-            neural-weights-*/country-surface-lexicon-v1.json
-          # The key hashes every input the artifacts are DERIVED from, not just their config. It used to hash
-          # release.config.json + data/gazetteer/*.json only, which missed the EXTRACTOR — so the 2026-08-02
-          # currency-filter change produced new artifacts while the cache happily served the old ones, and the
-          # pair-index↔card parity guard failed with `expected 47878 to be 49033`. A cache key that omits the code
-          # generating the cached thing is a stale-artifact machine.
-          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json', 'data/gazetteer/*.jsonl', 'mailwoman/gazetteer-pipeline/borough-pairs.ts', 'mailwoman/gazetteer-pipeline/lieudit-pairs.ts', 'mailwoman/commands/gazetteer/pair-index.tsx') }}
-
-      - name: Materialize weights (cache miss — ~5 min, once per release.config change)
-        if: steps.weights-cache.outputs.cache-hit != 'true'
+      # Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
+      # actions/cache. The cache entry carried 76.3 MB of real files and restored at ~1.6 MB/s over
+      # the lab's path to GitHub's cache service — 48-54s, to a host that already holds the source
+      # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
+      # pays the multi-minute build only on a genuine key change; the key hashes the generating CLI
+      # modules as well as the config and data, which the retired workflow key did not. See
+      # scripts/derived-weights-key.ts.
+      - name: Materialize weights (derived store; multi-minute build only on a key change)
         run: node scripts/copy-weights.ts
 
-      - name: Symlink base-latn model (cache miss — en-us already materialized)
-        if: steps.weights-cache.outputs.cache-hit != 'true'
+      - name: Symlink base-latn model (en-us already materialized)
         run: |
           mkdir -p neural-weights-base-latn
           for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
@@ -742,26 +729,19 @@ jobs:
       # release branch npm would otherwise chase the not-yet-published registry version (ETARGET —
       # the chicken-and-egg that blocked the v7.6.0 release PR). `yarn pack` quietly packs whatever
       # subset of the `files` globs exists, so the binaries MUST be present before packing.
-      - name: Restore weights cache (model + soft-feed siblings)
+      # Weights come from the DERIVED STORE at $MAILWOMAN_DATA_ROOT/derived/weights/<key>, not from
+      # actions/cache. The cache entry carried 76.3 MB of real files and restored at ~1.6 MB/s over
+      # the lab's path to GitHub's cache service — 48-54s, to a host that already holds the source
+      # model on local disk. `copy-weights.ts` now serves the derived binaries from that store and
+      # pays the multi-minute build only on a genuine key change; the key hashes the generating CLI
+      # modules as well as the config and data, which the retired workflow key did not. See
+      # scripts/derived-weights-key.ts.
+      - name: Materialize weights (derived store; multi-minute build only on a key change)
         if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
-        id: weights-cache
-        uses: actions/cache@v6
-        with:
-          path: |
-            neural-weights-*/model.onnx
-            neural-weights-*/tokenizer.model
-            neural-weights-*/postcode-*.bin
-            neural-weights-*/pair-index-*.bin
-            neural-weights-*/anchor-lexicon-v1.json
-            neural-weights-*/country-surface-lexicon-v1.json
-          key: weights-${{ hashFiles('release.config.json', 'data/gazetteer/*.json', 'data/gazetteer/*.jsonl', 'mailwoman/gazetteer-pipeline/borough-pairs.ts', 'mailwoman/gazetteer-pipeline/lieudit-pairs.ts', 'mailwoman/commands/gazetteer/pair-index.tsx') }}
-
-      - name: Materialize weights (cache miss — ~5 min, once per release.config change)
-        if: (github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true') && steps.weights-cache.outputs.cache-hit != 'true'
         run: node scripts/copy-weights.ts
 
-      - name: Symlink base-latn model (cache miss — en-us already materialized)
-        if: (github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true') && steps.weights-cache.outputs.cache-hit != 'true'
+      - name: Symlink base-latn model (en-us already materialized)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.smoke == 'true'
         run: |
           mkdir -p neural-weights-base-latn
           for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
