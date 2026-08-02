@@ -9,12 +9,13 @@
 		"pair_index_de_bin": {
 			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (Ortsteil, Gemeinde) dependent_locality prior, e.g. (\"Nippes\", \"K\u00f6ln\")",
 			"source": "Who's On First admin hierarchy ($MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db). Children: borough + neighbourhood (WOF's typing for Ortsteile/Stadtteile). Parents: locality, localadmin, borough. No postal register: Deutsche Post routes 'PLZ Stadt' and carries no Ortsteil field, so WOF is the source \u2014 the same call the US instance made and the opposite of France's, where BAN's lieu-dit field IS the postal line.",
-			"pairs": 85605,
-			"bytes": 2160665,
+			"pairs": 85603,
+			"bytes": 2160583,
 			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from the GB calibration per R5's finding that the classifier's dependent_locality deficit is uniform across locales.",
 			"country_gate": "hard-gated on the header's country (de).",
 			"requires_leading_postcode_strip": "This artifact is INERT without the `de` entries in SEGMENT_PARENT_POSTCODE_SHAPES and LEADING_POSTCODE_COUNTRIES (neural/placetype-pair-prior.ts). German addresses write '50733 K\u00f6ln', so a parent segment folds to a key no bare-Gemeinde entry matches \u2014 measured: the index alone changed nothing until both entries landed. Same dependency FR's artifact carries.",
-			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-de-de --country de --delta 10 --transition-beta 5 --pairs-jsonl <de-pairs.jsonl>`"
+			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-de-de --country de --delta 10 --transition-beta 5 --pairs-jsonl <de-pairs.jsonl>`",
+			"$comment_currency": "CURRENCY FILTER (2026-08-02): both ends of every pair are now required LIVE \u2014 `is_current != 0 AND is_deprecated = 0`. The WOF ingest hard-rejects `wof:superseded_by` records but RECORDS `edtf:deprecated` and `mz:is_current` as columns rather than rejecting them, so filtering is the reader's job and this extraction was not doing it. Pair count 85605 \u2192 85603."
 		}
 	},
 	"eval": {

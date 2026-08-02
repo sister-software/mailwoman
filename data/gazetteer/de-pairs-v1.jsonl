@@ -1,4 +1,3 @@
-{"child": "AEussere Neustadt", "parent": "Dresden"}
 {"child": "Aabauerschaft", "parent": "Laer"}
 {"child": "Aach", "parent": "Dornstetten"}
 {"child": "Aach", "parent": "Oberstaufen"}
@@ -5606,8 +5605,6 @@
 {"child": "Berlichingen", "parent": "Schöntal"}
 {"child": "Berlin", "parent": "Seedorf"}
 {"child": "Berlin", "parent": "Trave-Land"}
-{"child": "Berlin Ost", "parent": "Berlin"}
-{"child": "Berlin Ost", "parent": "Lichtenberg"}
 {"child": "Berlinchen", "parent": "Wittstock/Dosse"}
 {"child": "Berliner Chaussee", "parent": "Magdeburg"}
 {"child": "Berliner Vorstadt", "parent": "Potsdam"}
@@ -75509,7 +75506,6 @@
 {"child": "UEckeritz", "parent": "Ückeritz"}
 {"child": "UEckertseifen", "parent": "Hamm (Sieg)"}
 {"child": "UEckertseifen", "parent": "Niederirsen"}
-{"child": "UEckesdorf", "parent": "Bonn"}
 {"child": "UEdemerbruch", "parent": "Uedem"}
 {"child": "UEdemerfeld", "parent": "Uedem"}
 {"child": "UEdingen", "parent": "Kreuzau"}
