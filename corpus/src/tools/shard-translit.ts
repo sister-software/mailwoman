@@ -16,7 +16,7 @@
  *   - Each shard is written to `train/part-translit-<slug>.parquet` (distinct from kryptonite's
  *       `part-0000.parquet`, which v0.4.0's first builder already produced).
  *   - Inherits the path-canonicalization fix flagged in Thread B's postmortem: v0.3.0 shard paths are
- *       rewritten from `/mnt/playpen/mailwoman-data/...` to `/data/...` in the combined MANIFEST so
+ *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined MANIFEST so
  *       all paths share one container-friendly form.
  *
  *   See docs/articles/plan/reference/CORPUS_V0_4_0_GENERATION.md for prompts, model, and the
@@ -32,7 +32,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
-import { iterateJSONL, sha256File } from "@mailwoman/core/utils"
+import { iterateJSONL, mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
 
 import { alignRow } from "../align.ts"
 import { ParquetWriter } from "../parquet-wrapper/index.ts"
@@ -53,7 +53,10 @@ export interface ShardTranslitOptions {
 	 */
 	canonicalPathPrefix?: string
 	/**
-	 * Default `"/mnt/playpen/mailwoman-data/"`.
+	 * Prefix the base manifest's shard paths currently carry, to be rewritten to
+	 * {@link ShardTranslitOptions.canonicalPathPrefix}. Defaults to `mailwomanDataRoot()` with a trailing slash — the
+	 * root that WROTE those paths. Pass it explicitly when translating a manifest generated under a different
+	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
 	legacyPathPrefix?: string
 }
@@ -164,7 +167,7 @@ export async function buildTranslitShard(
 ): Promise<void> {
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
 	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
-	const legacyPathPrefix = options.legacyPathPrefix ?? "/mnt/playpen/mailwoman-data/"
+	const legacyPathPrefix = options.legacyPathPrefix ?? `${mailwomanDataRoot()}/`
 
 	if (!existsSync(options.jsonl)) throw new Error(`jsonl not found: ${options.jsonl}`)
 

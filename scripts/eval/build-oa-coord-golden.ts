@@ -24,7 +24,7 @@
  *   Streams the CSV — OOM-safe on the multi-GB dumps.
  *
  *   Usage: node scripts/eval/build-oa-coord-golden.ts --country IT\
- *   --zip /mnt/playpen/mailwoman-data/oa-cache/it__countrywide.zip\
+ *   --zip $MAILWOMAN_DATA_ROOT/oa-cache/it__countrywide.zip\
  *   --entry it/countrywide.csv --out data/eval/external/oa-it-coord-150.jsonl --n 150
  *
  *   Ported faithfully from scripts/eval/build-oa-coord-golden.py. NOTE: the seeded RNG shuffle is

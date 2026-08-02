@@ -6,6 +6,7 @@
 
 import { existsSync } from "node:fs"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { autocomplete } from "./fst-autocomplete.ts"
@@ -13,7 +14,7 @@ import { buildFSTFromWOF } from "./fst-builder.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { PlaceEntry, PlacetypeID } from "./fst-types.ts"
 
-const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {

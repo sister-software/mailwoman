@@ -23,12 +23,14 @@ import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { dataRootPath } from "@mailwoman/core/utils"
+
 /**
  * Artifact examples collected before the list is truncated.
  */
 const MAX_LISTED_ARTIFACTS = 12
 
-const WOF_REPOS = "/mnt/playpen/mailwoman-data/wof/repos"
+const WOF_REPOS = dataRootPath("wof", "repos")
 
 function adminRoots(): string[] {
 	let matched: string[]

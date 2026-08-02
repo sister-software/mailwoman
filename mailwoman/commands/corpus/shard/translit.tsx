@@ -6,7 +6,7 @@
  *   `mailwoman corpus shard translit` — build per-script parquet shards from the DeepSeek-generated
  *   transliteration JSONL (one shard per `deepseek-translit-<slug>` source) and emit the combined
  *   corpus MANIFEST. Sibling of `corpus shard kryptonite`; also canonicalizes legacy base-shard
- *   paths (`/mnt/playpen/mailwoman-data/…` → `/data/…`).
+ *   paths (`$MAILWOMAN_DATA_ROOT/…` → `/data/…`).
  */
 
 import { buildTranslitShard } from "@mailwoman/corpus/tools"
@@ -23,8 +23,9 @@ const OptionsSchema = zod.object({
 	canonicalPathPrefix: zod.string().default("/data/").describe("Prefix replacing legacy base-shard paths"),
 	legacyPathPrefix: zod
 		.string()
-		.default("/mnt/playpen/mailwoman-data/")
-		.describe("Legacy base-shard path prefix to rewrite"),
+
+		.optional()
+		.describe("Legacy base-shard path prefix to rewrite (default: $MAILWOMAN_DATA_ROOT)"),
 })
 
 export { OptionsSchema as options }

@@ -13,7 +13,7 @@ import { buildFSTFromWOF } from "./fst-builder.ts"
 import type { FSTMatcher } from "./fst-matcher.ts"
 import type { BuildFSTResult, FSTProvenance } from "./fst-types.ts"
 
-const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {

@@ -28,7 +28,7 @@
 
 import { existsSync } from "node:fs"
 
-import { repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it, test } from "vitest"
 
 import { STAGE2_BIO_LABELS } from "./labels.ts"
@@ -48,7 +48,7 @@ const FIXTURE_TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "token
 
 // Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom). Not present in
 // stripped-down CI; runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
-const PRODUCTION_TOKENIZER_PATH = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.9.0-multisplice/tokenizer.model"
+const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {

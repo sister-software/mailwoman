@@ -33,8 +33,8 @@ const MODEL =
 	$public.MAILWOMAN_CAPABILITY_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
 
-const TOKENIZER = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.6.0-a0/tokenizer.model"
-const ANCHOR = "/mnt/playpen/mailwoman-data/anchor/pilot-anchor-lookup.json"
+const TOKENIZER = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
+const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const GAZETTEER = repoRootPath("data", "gazetteer", "anchor-lexicon-v1.json")
 const MODEL_CARD = repoRootPath("neural-weights-en-us", "model-card.json")
 

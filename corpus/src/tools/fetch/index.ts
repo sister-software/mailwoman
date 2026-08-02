@@ -65,7 +65,7 @@
  *
  *   # Download Canada (~2 GiB compressed, ~7 GiB uncompressed)
  *   mailwoman corpus fetch openaddresses --country ca \
- *     --out-root /mnt/playpen/mailwoman-data/corpus/sources
+ *     --out-root $MAILWOMAN_DATA_ROOT/corpus/sources
  *
  *   # Or any other OA country code
  *   mailwoman corpus fetch openaddresses --country fr
