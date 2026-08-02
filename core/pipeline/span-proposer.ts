@@ -122,6 +122,19 @@ export interface SpanProposerLexicon {
 	 */
 	weakDesignators: ReadonlySet<string>
 	/**
+	 * The subset of {@link unitDesignators} naming venue-INTERIOR structure ("concourse", "terminal", "wing", "gate", …)
+	 * rather than a postal secondary unit. Sourced from WOF placetypes + OSM `aeroway`, never from a mail standard — see
+	 * `@mailwoman/neural`'s `venue-structure.ts`.
+	 *
+	 * Membership is carried through to the proposal's `source` so the consuming prior can weight the two provenances
+	 * differently. It has to: measured 2026-08-02, the model's margin against `I-unit` on a sub-venue IDENTIFIER runs
+	 * 4.6–5.0 nats (`B` after `Concourse` scores `B-venue` 4.24 while `I-unit` sits 17th of 33), which the shipped
+	 * unit-designator scale cannot reach — while raising that shared scale far enough drags quote marks and commas into
+	 * unit spans elsewhere in the corpus. The two classes need different magnitudes because the model has different
+	 * opinions about them, so the lexicon has to keep them distinguishable.
+	 */
+	venueStructureDesignators: ReadonlySet<string>
+	/**
 	 * Global scan regex for delivery-service designator+identifier phrases, built from the codex po_box /
 	 * delivery-service tables. Must carry the `g` flag.
 	 */
@@ -136,6 +149,7 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	unitDesignators: new Set(),
 	levelDesignators: new Set(),
 	weakDesignators: new Set(),
+	venueStructureDesignators: new Set(),
 }
 
 //#region Tokenization
@@ -381,13 +395,16 @@ function proposeDesignatorPhrases(
 		// cue family 3 owns punctuated ids
 		if (!isShortIdentifier(next.stripped)) continue
 		const weak = lexicon.weakDesignators.has(lead)
+		// Provenance rides the source string: a venue-INTERIOR designator and a postal one produce the same
+		// span shape but face different model margins, and the consuming prior weights them apart on this.
+		const venueStructure = !isLevel && lexicon.venueStructureDesignators.has(lead)
 
 		out.push({
 			start: tokens[i]!.strippedStart,
 			end: next.strippedEnd,
 			kind: isLevel ? "LEVEL_PHRASE" : "UNIT_PHRASE",
 			confidence: weak ? 0.5 : 0.85,
-			source: `designator:${isLevel ? "level" : "unit"}`,
+			source: venueStructure ? "designator:venue-structure" : `designator:${isLevel ? "level" : "unit"}`,
 		})
 	}
 

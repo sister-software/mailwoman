@@ -143,6 +143,9 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 		unitDesignators,
 		levelDesignators,
 		weakDesignators,
+		// The venue-interior subset, kept addressable after the merge above so the consuming prior can weight it
+		// separately from the postal designators it now shares a set with.
+		venueStructureDesignators: new Set<string>(VENUE_STRUCTURE_DESIGNATORS),
 		...(deliveryService ? { deliveryService } : {}),
 	}
 }
