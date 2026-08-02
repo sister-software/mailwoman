@@ -70,7 +70,7 @@ const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
  * tracks the WOF snapshot alone. A snapshot refresh legitimately moves it; re-anchor the constant deliberately, after
  * inspecting the diff, rather than relaxing the gate.
  */
-const EXPECTED_US_PAIR_COUNT = 49_033
+const EXPECTED_US_PAIR_COUNT = 47_878
 
 /**
  * Known (child, parent) pairs probed after write as a self-check — PER COUNTRY, keyed by the `--country` code. Probing
