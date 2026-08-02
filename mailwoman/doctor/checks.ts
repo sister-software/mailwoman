@@ -388,7 +388,7 @@ export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 /**
  * Facts about the ONNX runtime binding.
  */
-export interface OnnxRuntimeObservation {
+export interface ONNXRuntimeObservation {
 	loadable: boolean
 	error?: string
 }
@@ -396,7 +396,7 @@ export interface OnnxRuntimeObservation {
 /**
  * Check #6b — onnxruntime-node loadability. CORE: the neural runtime cannot infer without it.
  */
-export function onnxRuntimeCheck(o: OnnxRuntimeObservation): DoctorCheck {
+export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 	const base = { id: "onnxruntime", label: "ONNX runtime", core: true }
 
 	if (o.loadable) {

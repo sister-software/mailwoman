@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the POI query board's grading core (`gradeCase`) and the committed fixture contract.
- *   No db, no classifier, no resolver — `gradeCase` is graded against synthetic `PoiBoardOutcome`
+ *   No db, no classifier, no resolver — `gradeCase` is graded against synthetic `POIBoardOutcome`
  *   fakes, matching the "no db needed" discipline `fragment-board.test.ts` set for the interval math.
  */
 
@@ -19,20 +19,20 @@ import {
 	gradeCase,
 	POI_BOARD_FIXTURES,
 	POI_BOARD_FLOORS,
-	type PoiBoardFixture,
-	type PoiBoardOutcome,
+	type POIBoardFixture,
+	type POIBoardOutcome,
 } from "./poi-board.ts"
 
 const fixtures = readFileSync(POI_BOARD_FIXTURES, "utf8")
 	.split("\n")
 	.filter(Boolean)
-	.map((line) => JSON.parse(line) as PoiBoardFixture)
+	.map((line) => JSON.parse(line) as POIBoardFixture)
 
-function intentOutcome(poiIntent: POIIntentOutcome): PoiBoardOutcome {
+function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
 	return { path: "poi", poiIntent }
 }
 
-const resultsFixture: PoiBoardFixture = {
+const resultsFixture: POIBoardFixture = {
 	id: "t-results",
 	query: "cafe near Springfield IL",
 	expect: {
@@ -43,7 +43,7 @@ const resultsFixture: PoiBoardFixture = {
 	},
 }
 
-const brandResultsFixture: PoiBoardFixture = {
+const brandResultsFixture: POIBoardFixture = {
 	id: "t-brand-results",
 	query: "chevron near Houston TX",
 	expect: {
@@ -54,13 +54,13 @@ const brandResultsFixture: PoiBoardFixture = {
 	},
 }
 
-const abstainFixture: PoiBoardFixture = {
+const abstainFixture: POIBoardFixture = {
 	id: "t-abstain",
 	query: "fire hydrant near Springfield IL",
 	expect: { kind: "abstain", reason: "requires_build_local_layer" },
 }
 
-const addressFixture: PoiBoardFixture = {
+const addressFixture: POIBoardFixture = {
 	id: "t-address",
 	query: "350 5th Ave, New York, NY 10118",
 	expect: { kind: "address" },
@@ -408,7 +408,7 @@ describe("the committed poi-board fixture set", () => {
 })
 
 describe("evaluateFloors — breach detection", () => {
-	// Synthetic slice counts → a FloorInput, mirroring `runPoiBoard`'s `byExpectKind` + `overallPassRate`.
+	// Synthetic slice counts → a FloorInput, mirroring `runPOIBoard`'s `byExpectKind` + `overallPassRate`.
 	function report(slices: Record<string, { total: number; pass: number }>): FloorInput {
 		const byExpectKind: FloorInput["byExpectKind"] = {}
 		let total = 0
