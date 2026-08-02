@@ -362,6 +362,15 @@ jobs:
           done
           ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin
 
+      # The FETCHED pair indexes must agree with the model cards that describe them. The step above proves each file
+      # EXISTS and is non-empty; this one proves it is the RIGHT one. Both are needed: a stale artifact left on the
+      # bucket by an earlier release is present, non-empty, and wrong — which is exactly what happened to
+      # pair-index-gb.bin, whose staged copy sat three increments behind the repo (19,209 pairs vs 20,126) while the
+      # en-gb card described neither. The fetch above wrote these binaries into the weights workspaces, so the same
+      # parity test CI already runs against locally-built artifacts now grades the STAGED ones for free.
+      - name: Verify staged pair indexes match their model cards
+        run: yarn vitest run neural/test/pair-index-card-parity.test.ts
+
       - name: Tag + GitHub release
         if: ${{ !inputs.dry_run }}
         env:
