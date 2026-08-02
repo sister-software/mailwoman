@@ -28,6 +28,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
+import { wordNorm, wordNormLower } from "@mailwoman/codex"
 import { COUNTRY_LOOKUP } from "@mailwoman/codex/country"
 import { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
@@ -61,18 +62,9 @@ export { OptionsSchema as options }
  * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
  * pass through it, so "U.S.A." ≡ "u.s.a".
  */
-const wordNorm = (s: string): string =>
-	s
-		.split(/\s+/)
-		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-		.filter(Boolean)
-		.join(" ")
-
 /**
  * Normalize a surface for the case-insensitive map.
  */
-const norm = (s: string): string => wordNorm(s).toLowerCase()
-
 /**
  * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
  */
@@ -106,7 +98,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 				return
 			}
 
-			const key = norm(s)
+			const key = wordNormLower(s)
 
 			if (!key) return
 			maxNgram = Math.max(maxNgram, key.split(" ").length)
@@ -130,7 +122,7 @@ const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ option
 
 		// ── po_box designators (case-insensitive even when short — "Box 17" is titlecase) ────────────
 		for (const d of US_PO_BOX_DESIGNATORS) {
-			const key = norm(d)
+			const key = wordNormLower(d)
 			maxNgram = Math.max(maxNgram, key.split(" ").length)
 			entries.set(key, (entries.get(key) ?? 0) | BIT.po_box)
 		}

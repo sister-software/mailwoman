@@ -13,6 +13,8 @@
  *   `code-postal.ts`).
  */
 
+import { foldName } from "../normalize.ts"
+
 /**
  * Per-region record: ISO 3166-2:FR code (sans `FR-` prefix) + French name.
  */
@@ -63,18 +65,6 @@ const REGION_CODE_SET: ReadonlySet<string> = new Set(Object.keys(FR_REGIONS))
  */
 export function isFrenchRegionCode(input: unknown): input is FrenchRegionCode {
 	return typeof input === "string" && REGION_CODE_SET.has(input.toUpperCase())
-}
-
-/**
- * Strip diacritics + lowercase so `Île-de-France`, `ile-de-france`, `Ile de France` all key alike.
- */
-function foldName(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[\u0300-\u036F]/g, "")
-		.replaceAll(/[^a-z0-9]+/g, " ")
-		.trim()
 }
 
 /**

@@ -16,6 +16,8 @@
  *   regions, the Canadian code IS a surface form, not just a resolver key.
  */
 
+import { foldName } from "../normalize.ts"
+
 /**
  * Per-province record: ISO 3166-2:CA code, English name, and the co-official French name.
  */
@@ -66,18 +68,6 @@ const PROVINCE_CODE_SET: ReadonlySet<string> = new Set(Object.keys(CA_PROVINCES)
  */
 export function isCanadianProvinceCode(input: unknown): input is CanadianProvinceCode {
 	return typeof input === "string" && PROVINCE_CODE_SET.has(input.toUpperCase())
-}
-
-/**
- * Strip diacritics + lowercase so `Québec`, `Quebec`, and `quebec` all key alike.
- */
-function foldName(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[\u0300-\u036F]/g, "")
-		.replaceAll(/[^a-z0-9]+/g, " ")
-		.trim()
 }
 
 /**
