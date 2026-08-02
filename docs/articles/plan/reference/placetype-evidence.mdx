@@ -169,10 +169,36 @@ Two register-vs-writer distinctions the GB rungs had to make explicit, both gene
   register names the parish that way; an address says `Pontypridd`. Strip the suffix rather than
   dropping the pair — 1,545 Welsh pairs would otherwise have been discarded.
 
-**The Republic, Germany, Spain and Italy are blocked on the same thing, and it is not data.** The
-pair index is hard-gated on the resolved locale's country, so an artifact shipped inside another
-locale's package can never fire. Each needs its own **carrier package** (`@mailwoman/neural-weights-*`,
-a ~6-file data-only overlay declaring `baseWeights`) before any artifact can reach it. IE
-additionally needs its licence survey (Tailte Éireann, logainm); DE/ES/IT additionally need
-`LEADING_POSTCODE_COUNTRIES` entries, since all three write the postcode before the locality the way
-France does.
+**Every locale on the original wave 2–4 list has now shipped.** The blocker was never data — the
+pair index is hard-gated on the resolved locale's country, so an artifact inside another locale's
+package can never fire, and each locale needed its own **carrier package**: a ~6-file data-only
+overlay declaring `baseWeights`. Once that was understood the rest was mechanical.
+
+| locale |   pairs | source       | note                                                  |
+| ------ | ------: | ------------ | ----------------------------------------------------- |
+| GB     |  30,825 | PPD + WOF    | England, Scotland, Wales, NI, London                  |
+| US     |  47,878 | WOF          | no postal register carries the line                   |
+| DE     |  85,603 | WOF          | Deutsche Post carries no Ortsteil field               |
+| FR     | 199,282 | BAN `nom_ld` | the lieu-dit IS the postal line                       |
+| IN     | 176,086 | WOF          | 53% of source nodes are deprecated; a city instrument |
+| ES     |   3,559 | WOF          |                                                       |
+| IT     |   4,026 | WOF          |                                                       |
+| NZ     |       — | LINZ         | shipped earlier                                       |
+
+**Ireland is the only one left, and it is the only one ever blocked on something other than
+mechanics**: its sources (Tailte Éireann, logainm) need a licence survey before anything can be
+harvested.
+
+Three things the non-GB instances established that the GB arc never had to face:
+
+- **The source follows the postal format, not a rule.** France's lieu-dit comes from BAN because it
+  IS the postal line; the US, DE, ES, IT and IN take WOF because no postal register carries their
+  sub-city line at all.
+- **A leading postcode makes the artifact inert.** France, Germany, Spain and Italy write
+  `12210 Montpeyroux`, so a parent segment folds to a key no bare-locality entry matches. Each
+  needed a `LEADING_POSTCODE_COUNTRIES` entry, and in every case the artifact built correctly and
+  changed nothing until it landed.
+- **WOF's preferred name is not always the written one.** It stores `Bangalore` for a city written
+  `Bengaluru` and `Rome` for one written `Roma`, and the fold does not strip accents, so `Cordoba`
+  never matches `Córdoba`. Parent-alias expansion draws from names whose language is official for
+  the country plus English, restricted to Latin script.
