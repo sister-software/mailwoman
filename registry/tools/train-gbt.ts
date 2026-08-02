@@ -36,6 +36,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { uniqueQuantiles } from "./shared.ts"
 
 /**
  * Share of entities assigned to fit; the rest are held out.
@@ -120,20 +121,6 @@ interface MessyRow {
 	 * Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree).
 	 */
 	auth: string
-}
-
-/**
- * Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates.
- */
-function uniqueQuantiles(sorted: number[], n: number): number[] {
-	if (!sorted.length) return [0]
-	const ts = new Set<number>()
-
-	for (let k = 0; k <= n; k++) {
-		ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
-	}
-
-	return [...ts]
 }
 
 /**

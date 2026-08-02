@@ -50,6 +50,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { addr, norm } from "./shared.ts"
 
 /**
  * Smallest mean gap counted as a real difference rather than seed noise.
@@ -141,11 +142,6 @@ const C = {
 	mZip: "Provider Business Mailing Address Postal Code",
 	otherOrg: "Provider Other Organization Name",
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
-
-const addr = (line: string, city: string, st: string, zip: string) =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
 interface MessyRow {
 	npi: string
