@@ -1221,7 +1221,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 			postcode: "TW6 2GA",
 		},
 		addedAt: "2026-08-01",
-		note: 'Sub-venue: TERMINAL is absent from Pub 28. Today: locality="Terminal", house_number=5, airport dropped.',
+		note: 'Sub-venue. IMPROVED 2026-08-02 by the WOF venue-structure vocabulary: unit="Terminal 5" is now correct (was locality="Terminal" + house_number=5, airport dropped). Residual: the airport reads as locality and Hounslow as street.',
 	},
 	{
 		id: "gb-subvenue-manchester-gate",
@@ -1237,7 +1237,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 			postcode: "M90 1QX",
 		},
 		addedAt: "2026-08-01",
-		note: 'Sub-venue: TWO nested structural levels. Today: locality="Gate", house_number=12.',
+		note: 'Sub-venue, TWO nested structural levels. IMPROVED 2026-08-02: unit="Gate 12" is now correct (was locality="Gate" + house_number=12). Residual: only the inner level is captured.',
 	},
 	{
 		id: "gb-subvenue-st-thomas-wing",
@@ -1254,7 +1254,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 			postcode: "SE1 7EH",
 		},
 		addedAt: "2026-08-01",
-		note: "Sub-venue with a TRAILING designator and a directional lead — the designator probe did not move this one.",
+		note: "Sub-venue with a TRAILING designator and a directional lead. UNMOVED by the venue-structure vocabulary: the proposer reads a designator that LEADS its identifier ('Wing B'), not one trailing a modifier ('West Wing'). A named residual.",
 	},
 	{
 		id: "us-subvenue-ohare-concourse",
@@ -1271,7 +1271,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 			postcode: "60666",
 		},
 		addedAt: "2026-08-01",
-		note: "Sub-venue with a LETTER rather than a number; the designator probe split this into unit=Concourse + venue=B.",
+		note: "Sub-venue with a LETTER rather than a number. Still splits into unit='Concourse' + venue='B': the designator is recognized, the bare-letter identifier after it is not. The other named residual.",
 	},
 	{
 		id: "us-subvenue-googleplex-building",
