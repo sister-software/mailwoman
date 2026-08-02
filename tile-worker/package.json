@@ -18,7 +18,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@cloudflare/workers-types": "^5.20260726.1",
+		"@cloudflare/workers-types": "^5.20260730.1",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
