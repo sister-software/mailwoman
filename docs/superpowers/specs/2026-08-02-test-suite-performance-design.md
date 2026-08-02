@@ -6,7 +6,8 @@
 durability are secondary and only picked up where they ride along free.
 **Deliverable:** PR wall-clock 6m29s → ~2m00–2m15s (projected from measured per-step numbers), and
 an evidence-lexicons gate that stops growing with the gazetteer.
-**Sibling:** `2026-08-02-pnpm-migration-design.md` — approved separately, gates only step (e1).
+**Sibling:** `2026-08-02-pnpm-migration-design.md` — approved but DEFERRED 2026-08-02. It gated only
+step (e1), so **(e1) is deferred with it**. In-scope here: (a), (b), (c), (d), (e3), free items.
 
 ## The question
 
@@ -311,21 +312,23 @@ repo. It gates only (e1).
 
 Remaining order, most-certain-prize first:
 
-1. **a** — cache prune. Config only; unblocks quota for e1/e3. No dependency on the migration.
-2. **b** — weights from the data root. No dependency on the migration.
+1. **a** — cache prune. Config only; unblocks quota for (e3).
+2. **b** — weights from the data root.
 3. **c** — evidence-lexicons four-layer split. The only piece with real design content, the largest
-   single wall-clock win, and the only one that stops the gazetteer making this worse over time. No
-   dependency on the migration.
+   single wall-clock win, and the only one that stops the gazetteer making this worse over time.
 4. **d** — weights.test session reuse.
 5. **e3** — `out/` cache.
-6. **e1** — install caching. **After** `2026-08-02-pnpm-migration-design.md`.
+
+**(e1) is out of scope** — deferred with the migration. (a) already removes the coin-flip and lands
+install at a reliable ~24s warm; (e1)'s remaining ~14s is not worth building twice against two
+different layouts.
 
 Free items ride along with whichever step touches the same file — except the `vitest.config.ts:82`
 `onnxruntime-web` fix, which moves into the migration spec (it must land before the layout changes,
 not after).
 
-Steps 1–5 are independent of the migration and can proceed in parallel with it, in a separate branch,
-provided the two do not both edit `test.yml` at once.
+All five steps are independent of the deferred migration. When it is picked back up, (e1) comes with
+it and the only shared file is `test.yml`.
 
 Re-measure after (b) and again after (c). `static` becomes the critical path once `unit-slow` drops
 below ~185s, so steps 5–6 should be re-justified against a fresh measurement rather than assumed.

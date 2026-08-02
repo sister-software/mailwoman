@@ -1,7 +1,9 @@
 # yarn → pnpm migration — design
 
 **Date:** 2026-08-02
-**Status:** design approved, plan not yet written
+**Status:** DEFERRED 2026-08-02 — design approved and kept warm, but not scheduled. Deferred to keep
+the test-suite performance work focused; the two are independent except for step (e1) there, which is
+deferred alongside it. Circle back when the performance ladder is done.
 **Driver:** operator direction — pnpm is where the ecosystem is going. This is a **direction call, not
 a performance claim**; see "What this is not" below.
 **Deliverable:** the repo installs, builds, tests, packs, and publishes under pnpm, with the publish
