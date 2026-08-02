@@ -659,7 +659,11 @@ export class NeuralAddressClassifier {
 			repairs: TraceRepair[]
 		}
 	}> {
-		const { pieces, ids } = this.cfg.tokenizer.encode(text)
+		const encoded = this.cfg.tokenizer.encode(text)
+		const ids = encoded.ids
+		// Reassigned after inference — the runner clamps to the model's fixed sequence length and
+		// `pieces` has to follow it. See the clamp below.
+		let pieces = encoded.pieces
 		// Soft-feature channels (#718): the postcode-anchor (#239/#240) + gazetteer-anchor (#464) clues
 		// the model conditions on alongside the ids, plus the near-postcode gazetteer choreography. The
 		// build + choreography is the single PURE `buildSoftFeatures` (soft-features.ts) — both this
@@ -691,6 +695,27 @@ export class NeuralAddressClassifier {
 		)
 
 		this.assertEmissionWidth(logits)
+
+		// The runner CLAMPS its input to the model's fixed sequence length (`ONNXRunner.infer`:
+		// `Math.min(tokenIds.length, this.fixedSeqLen)`, 128 by default) and slices `logits` back to what
+		// it actually ran. Nothing used to clamp `pieces` to match, so every downstream consumer that
+		// walks pieces and indexes emissions in lockstep — the token build below reading `logits[i]`,
+		// `enforceWordConsistency` reading `emissions[pi]` — ran off the end the moment an input tokenized
+		// past the limit, and threw.
+		//
+		// That is a CRASH ON VALID INPUT, not on garbage. 128 pieces is roughly 330 characters of ordinary
+		// address text, which a form-concatenated delivery address with a department line clears easily;
+		// measured 2026-08-02, 330 chars parsed and 394 threw. It reached every consumer of the geocode
+		// path, including the Nominatim/Photon/libpostal drop-ins, where it surfaced as an HTTP 500 on a
+		// well-formed query. Found by the mailfail sweep, which was looking for emoji.
+		//
+		// Truncating here makes the pipeline agree with what the model SAW. The tail is dropped rather
+		// than mis-parsed — the degradation the runner had already chosen unilaterally — and a caller who
+		// handed over a real address gets its first 128 pieces instead of an exception. `logits.length` is
+		// the authority rather than a literal 128, so this stays correct for any `fixedSeqLen`.
+		if (pieces.length > logits.length) {
+			pieces = pieces.slice(0, logits.length)
+		}
 
 		// Trace retention (spec 2026-07-03): capture-by-reference of arrays this method already
 		// builds. Null when not tracing — the non-trace path allocates nothing new (every recording
