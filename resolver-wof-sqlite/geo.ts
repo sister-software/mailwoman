@@ -10,17 +10,22 @@
  *   ray-cast PIP a ~30-line one — both plenty fast for the post-fetch passes (we operate on ≤ a few
  *   hundred candidates per query, not the whole 142k-row corpus).
  *
- *   The PIP implementation here is the CANONICAL port of the even-odd ray cast that previously lived
- *   only in Python (`scripts/eval/pip-containment.py`, with a second copy in
- *   `scripts/build-postcode-locality.ts`). Keep the three in sync if the algorithm ever changes —
- *   the eval-side Python copies grade the same containment truth this one resolves with.
+ *   The even-odd ray cast used to be implemented HERE, with a note asking future readers to keep it
+ *   in sync with the Python copies that grade the same containment truth
+ *   (`scripts/eval/pip-containment.py`). Hand-maintained sync across copies is the thing that fails
+ *   quietly, so the implementation moved to `@mailwoman/spatial` (2026-08-02) and this file
+ *   re-exports it — one definition for the resolver, the reverse-geocoder, and the gazetteer
+ *   pipeline. The Python side still needs matching by hand; it is the only remaining copy.
  *
  *   The R*Tree index name + schema are centralized in `fts.ts` (alongside the FTS5 build).
  */
 
-// haversineKm is the canonical implementation in @mailwoman/spatial; re-exported so this package's
-// readers keep importing it from "./geo.ts" (the spatial dep is transitive via @mailwoman/resolver).
-export { haversineKm } from "@mailwoman/spatial"
+import { pointInPolygon } from "@mailwoman/spatial"
+
+// haversineKm and the point-in-polygon ray cast are implemented in @mailwoman/spatial, the math
+// home; re-exported so this package's readers keep importing them from "./geo.ts" (the spatial dep
+// is transitive via @mailwoman/resolver).
+export { haversineKm, pointInRing } from "@mailwoman/spatial"
 
 /**
  * WGS-84 degrees → radians.
@@ -82,42 +87,14 @@ export interface GeojsonMultiPolygon {
 export type GeojsonGeometry = GeojsonPolygon | GeojsonMultiPolygon | { type: string; coordinates?: unknown }
 
 /**
- * Ray-cast a point against ONE linear ring. Standard even-odd crossing count: shoot a ray along +lon and toggle on
- * every edge crossing. Points exactly on an edge are implementation-defined (either side is acceptable for geocoding —
- * admin boundaries are DP-simplified anyway).
- */
-export function pointInRing(lon: number, lat: number, ring: readonly GeojsonPosition[]): boolean {
-	let inside = false
-	const n = ring.length
-
-	for (let i = 0, j = n - 1; i < n; j = i++) {
-		const xi = ring[i]![0]
-		const yi = ring[i]![1]
-		const xj = ring[j]![0]
-		const yj = ring[j]![1]
-
-		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
-			inside = !inside
-		}
-	}
-
-	return inside
-}
-
-/**
- * Even-odd containment over a polygon's ring list (`[outer, hole1, …]`) — being inside an odd number of rings means
- * inside the polygon, which handles holes without ring-orientation rules.
+ * Even-odd containment over a polygon's ring list (`[outer, hole1, …]`).
+ *
+ * Named alias for `@mailwoman/spatial`'s {@link pointInPolygon}, kept because this package's readers and the gazetteer
+ * pipeline import `pointInPolygonRings` by name and the "rings" spelling is what makes the ring-list argument obvious
+ * at those call sites.
  */
 export function pointInPolygonRings(lon: number, lat: number, rings: readonly GeojsonPosition[][]): boolean {
-	let inside = false
-
-	for (const ring of rings) {
-		if (pointInRing(lon, lat, ring)) {
-			inside = !inside
-		}
-	}
-
-	return inside
+	return pointInPolygon(lon, lat, rings)
 }
 
 /**

@@ -122,6 +122,71 @@ export function isSolidPolygonPath(input: PolygonLiteral): boolean {
 }
 
 /**
+ * A linear ring as the containment predicates read it: positions of `[lon, lat, …]`.
+ *
+ * Deliberately looser than {@link LineStringPath} — the ray cast only ever indexes `[0]` and `[1]`, and the callers
+ * arrive with different position types (`[number, number, ...number[]]` from the resolver's GeoJSON reader, plain
+ * `number[][]` from a `JSON.parse` of a stored geometry column). A tight tuple type here would force a cast at every
+ * call site and buy nothing the predicate uses.
+ */
+export type ContainmentRing = readonly (readonly number[])[]
+
+/**
+ * Ray-cast a point against ONE linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
+ * edge crossing.
+ *
+ * Points exactly on an edge are implementation-defined; either side is acceptable for geocoding, where admin boundaries
+ * are Douglas-Peucker–simplified before they ever reach us.
+ */
+export function pointInRing(lon: number, lat: number, ring: ContainmentRing): boolean {
+	let inside = false
+	const n = ring.length
+
+	for (let i = 0, j = n - 1; i < n; j = i++) {
+		const xi = ring[i]![0]!
+		const yi = ring[i]![1]!
+		const xj = ring[j]![0]!
+		const yj = ring[j]![1]!
+
+		if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) {
+			inside = !inside
+		}
+	}
+
+	return inside
+}
+
+/**
+ * Even-odd containment over a polygon's ring list (`[outer, hole₁, …]`).
+ *
+ * Being inside an odd number of rings means inside the polygon, which handles holes — and islands inside holes —
+ * without depending on ring winding order. GeoJSON nominally specifies orientation, but the gazetteer sources do not
+ * reliably honour it, so the orientation-free rule is the one that survives real data.
+ */
+export function pointInPolygon(lon: number, lat: number, rings: readonly ContainmentRing[]): boolean {
+	let inside = false
+
+	for (const ring of rings) {
+		if (pointInRing(lon, lat, ring)) {
+			inside = !inside
+		}
+	}
+
+	return inside
+}
+
+/**
+ * Inside ANY polygon of a multi-polygon.
+ */
+export function pointInMultiPolygon(
+	lon: number,
+	lat: number,
+	polygons: readonly (readonly ContainmentRing[])[]
+): boolean {
+	return polygons.some((rings) => pointInPolygon(lon, lat, rings))
+}
+
+/**
  * A collection of polygons, such as a country with islands or a lake with islands.
  */
 export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> extends GeoObjectLiteral {
