@@ -200,6 +200,7 @@ the pair yield killed it. A pair needs the child's locality parent to resolve �
 
 | country     | sub-locality nodes | usable pairs | conversion |
 | ----------- | -----------------: | -----------: | ---------: |
+| IN          |            189,026 |  **186,469** |      98.6% |
 | GB (cloned) |             13,225 |       13,094 |        99% |
 | IE          |                152 |          151 |        99% |
 | BR          |                848 |          774 |        91% |
@@ -212,10 +213,35 @@ locality entirely (`Omanu Beach`, `Koutu`, `Hairini` all read
 Overture is a node-count artifact; in the campaign's actual currency it yields 280 pairs, and
 Overture's 992 macrohoods carry `parent_division_id`.
 
-**Conversion ranges from 15% to 99% across three countries.** Ranking gazetteer work by node count is
-therefore not a shortcut with acceptable error — it is wrong by up to 6×, and wrong in a way that
-inverts the ordering. The pair-yield column is load-bearing, not a refinement, and the scorecard must
-never present a node count as an opportunity estimate.
+**Conversion ranges from 15% to 99%.** Ranking gazetteer work by node count is therefore not a
+shortcut with acceptable error — it is wrong by up to 6×, and wrong in a way that inverts the
+ordering. The pair-yield column is load-bearing, not a refinement, and the scorecard must never
+present a node count as an opportunity estimate.
+
+#### The headline the probe was looking for
+
+**India yields 186,469 pairs at 98.6% conversion, from a repo we have never cloned.**
+
+For scale: the shipped GB pair index is **30,834** pairs, assembled across eight campaign rungs from
+HM Land Registry PPD, ONSPD wards, and WOF — months of sourcing, each rung boarded against venue
+confounds before shipping. India is 6× that, and the acquisition cost is a `git clone` plus one entry
+in `DEFAULT_WOF_PRIORITY_COUNTRIES`. Samples read correctly: `Mulund East / Mumbai`,
+`Rajbagh / Srinagar`, `Fort / Tiruchchirappalli`, `Pedaganayada / Visakhapatnam`.
+
+**This is the answer to the "what maximizes parsability" half of the originating question**, and it
+was never a modelling problem or a sourcing problem. It was a recipe constant.
+
+Three honest caveats before anyone treats 186,469 as shippable:
+
+- **A pair count is not a parse improvement.** Every GB rung cleared a venue-confound board at 0 false
+  positives before shipping; IN has had no board built. The doctrine that governed GB governs this.
+- **IN needs a carrier package.** The pair index is hard-gated on the resolved locale's country, so an
+  artifact shipped inside another locale's package can never fire — IN needs its own
+  `@mailwoman/neural-weights-*` overlay first, the same blocker `placetype-evidence.mdx` records for
+  IE/DE/ES/IT.
+- **Whether Indian postal format writes a dependent-locality line is unverified here.** `Mulund East,
+Mumbai` suggests yes, but the demand-side check does not exist for this tier (Finding 4), so that
+  remains an assumption rather than a measurement.
 
 Two incidental confirmations that PR A was necessary: the IE and BR repos carry `campus` rows (2 and
 24), and NZ carries `marinearea` (84) and `dependency` (2). All four are placetypes
