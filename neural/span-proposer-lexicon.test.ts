@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { VENUE_STRUCTURE_DESIGNATORS } from "@mailwoman/core/resources/whosonfirst"
 import { expect, test } from "vitest"
 
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.ts"
+import { VENUE_STRUCTURE_DESIGNATORS } from "./venue-structure.ts"
 
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])

@@ -38,9 +38,14 @@ const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
 /**
  * A locale with no `@mailwoman/neural-weights-*` workspace package — resolution can never succeed.
+ *
+ * Was `de-DE` until 2026-08-02, when campaign R9 shipped `@mailwoman/neural-weights-de-de` and made the "absent" locale
+ * resolvable. Every assertion here inverted at once: the CLI stopped warning because it found real weights, and
+ * `expected '' to contain 'neural weights not found'` is what that looks like. `pt-BR` has no carrier package today; if
+ * one ever ships, this breaks the same way and wants the same one-line move.
  */
-const ABSENT_LOCALE = "de-DE"
-const ABSENT_PACKAGE = "@mailwoman/neural-weights-de-de"
+const ABSENT_LOCALE = "pt-BR"
+const ABSENT_PACKAGE = "@mailwoman/neural-weights-pt-br"
 
 /**
  * An empty $HOME so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.

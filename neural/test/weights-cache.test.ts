@@ -6,7 +6,9 @@
  *   Cache-fallback resolution for the CLI weights guard (plan 3): when no
  *   `@mailwoman/neural-weights-<locale>` package resolves, `resolveWeights` probes the user-level
  *   npm-prefix cache (`~/.cache/mailwoman/weights` — `cacheRoot` injects a test root). Uses the
- *   `de-DE` locale throughout because no workspace package exists for it, so the package branch
+ *   `pt-BR` locale throughout because no workspace package exists for it, so the package branch
+ *   (was `de-DE` until 2026-08-02, when campaign R9 shipped that package and made the locale resolvable — the
+ *   negative control has to name a locale nobody has claimed yet)
  *   falls through to the cache on every host, lab or CI.
  */
 
@@ -17,8 +19,8 @@ import { join } from "node:path"
 import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-const LOCALE = "de-DE"
-const PACKAGE_NAME = "@mailwoman/neural-weights-de-de"
+const LOCALE = "pt-BR"
+const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
 
 let cacheRoot: string
 
@@ -48,7 +50,7 @@ describe("resolveWeights cache fallback", () => {
 			"model.onnx",
 			"tokenizer.model",
 			"model-card.json",
-			"postcode-de.bin",
+			"postcode-br.bin",
 			"crf-transitions.json",
 		])
 
@@ -59,7 +61,7 @@ describe("resolveWeights cache fallback", () => {
 		expect(resolved.tokenizerPath).toBe(join(packageDir, "tokenizer.model"))
 		expect(resolved.modelCardPath).toBe(join(packageDir, "model-card.json"))
 		// The PCB1 anchor binary resolves exactly as it would from an installed package (#718 soft-feed).
-		expect(resolved.anchorLookupPath).toEqual({ path: join(packageDir, "postcode-de.bin"), binary: true })
+		expect(resolved.anchorLookupPath).toEqual({ path: join(packageDir, "postcode-br.bin"), binary: true })
 	})
 
 	test("a binary-less cache install (metadata-only tarball) does not resolve", () => {

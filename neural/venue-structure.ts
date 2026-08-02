@@ -25,6 +25,13 @@
  *       equivalent placetype, and they are the two most common sub-venue designators in real
  *       airport addresses — the class that motivated this module.
  *
+ *   WHY THE LIST LIVES IN `neural/` WHILE THE VOCABULARY IT IS PINNED TO LIVES IN `core/`. The pin is a
+ *   TYPE (`satisfies readonly WhosOnFirstPlacetype[]`), and a type-only import is erased at build — so the
+ *   compiler still refuses any entry WOF does not define, at zero bundle cost. A VALUE import of the
+ *   vocabulary would not be free: `@mailwoman/core/resources/whosonfirst` re-exports `PlacetypeDataSource`,
+ *   which imports `node:sqlite`, and pulling that barrel into the span proposer broke the docs browser
+ *   bundle (2026-08-02). The span proposer is this list's only consumer, so it owns it.
+ *
  *   WHAT MOTIVATED IT (2026-08-02, campaign R5 follow-on). `Building 43, Googleplex, 1600
  *   Amphitheatre Parkway` already parsed correctly, because BUILDING happens to be in Pub 28. In
  *   the same breath `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` collapsed to
@@ -33,7 +40,7 @@
  *   the parser's.
  */
 
-import type { WhosOnFirstPlacetype } from "./definition.ts"
+import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 
 /**
  * WOF placetypes that name a structure INSIDE a venue rather than a place on the map.
