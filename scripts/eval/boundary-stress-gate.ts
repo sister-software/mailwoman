@@ -32,6 +32,7 @@
 import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { mulberry32 } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
 

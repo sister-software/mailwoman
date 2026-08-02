@@ -62,11 +62,17 @@ function parseArgs(): Args {
 	return { evalPath, country, shards }
 }
 
+/**
+ * One eval row as this probe reads it. The three postcode spellings and the top-level coordinates are all optional
+ * because the eval files it runs against were written by different generations of the harness; the loop skips a row
+ * that carries none of them.
+ */
 interface EvalRow {
 	expected?: { postcode?: string; lat?: number; lon?: number }
 	postcode?: string
 	components?: { postcode?: string }
-	[key: string]: unknown
+	lat?: number
+	lon?: number
 }
 
 function main(): void {
