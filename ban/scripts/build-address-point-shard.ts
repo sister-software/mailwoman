@@ -28,7 +28,6 @@
  *     node ban/out/scripts/build-address-point-shard.js --depts 48,2A,05 --out /tmp/ban-sample.db
  */
 
-import { createHash } from "node:crypto"
 import {
 	createReadStream,
 	existsSync,
@@ -44,7 +43,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, sealDatabase } from "@mailwoman/core/utils"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -130,19 +129,6 @@ function departementFiles(csvDir: string, depts: string[] | null): Map<string, s
 	}
 
 	return byDept
-}
-
-/**
- * Streaming md5 of a file (never buffer a multi-GB artifact).
- */
-async function fileMD5(path: string): Promise<string> {
-	const hash = createHash("md5")
-
-	for await (const chunk of createReadStream(path)) {
-		hash.update(chunk as Buffer)
-	}
-
-	return hash.digest("hex")
 }
 
 async function main(): Promise<void> {
@@ -253,7 +239,7 @@ async function main(): Promise<void> {
 
 	sealDatabase(args.output)
 
-	const md5 = await fileMD5(args.output)
+	const md5 = await md5File(args.output)
 	const bytes = statSync(args.output).size
 
 	// Provenance manifest — additive, written at creation (house discipline). Only for a FULL national build

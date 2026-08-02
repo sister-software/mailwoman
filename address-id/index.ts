@@ -26,9 +26,8 @@
  *   which isn't published.)
  */
 
-import { createHash } from "node:crypto"
-
 import { us } from "@mailwoman/codex"
+import { sha256Hex } from "@mailwoman/core/utils"
 import { normalize } from "@mailwoman/normalize"
 import { latLngToCell } from "h3-js"
 
@@ -133,7 +132,7 @@ export function createPostalAddressID(input: CreatePostalAddressIDInput): Postal
 		input.resolution ?? ADDRESS_H3_RESOLUTION
 	)
 
-	const hash = createHash("sha256").update(canonicalizeForHash(input.address)).digest("hex").slice(0, HASH_LENGTH)
+	const hash = sha256Hex(canonicalizeForHash(input.address)).slice(0, HASH_LENGTH)
 	const state = (input.state ?? deriveState(input.address) ?? "xx").toLowerCase()
 
 	return `${state}.${cell}.${hash}` as PostalAddressID

@@ -25,6 +25,7 @@
 import { createHash, type Hash } from "node:crypto"
 
 import type { ComponentTag } from "@mailwoman/core/types"
+import { sha256Hex } from "@mailwoman/core/utils"
 
 import type { CanonicalRow, CorpusAdapter } from "./types.ts"
 
@@ -105,7 +106,9 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
 	const sortedKeys = Object.keys(components).toSorted() as ComponentTag[]
 	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\u001F")
-	const digest = createHash("sha256").update(adapterID).update("\u001E").update(payload).digest("hex")
+	// `update(a).update(b).update(c)` hashes the same byte stream as `update(a + b + c)`,
+	// so this is the previous digest exactly — the ids stay stable across the dedupe.
+	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
 
 	return `${adapterID}-${digest.slice(0, 12)}`
 }
@@ -186,6 +189,11 @@ export interface StreamingHasher {
 
 /**
  * Default `StreamingHasher` (SHA-256, hex).
+ */
+/**
+ * @see {@link StreamingHasher} — this is the incremental counterpart to `sha256Hex`, not a copy of
+ *   it. `@mailwoman/core/utils` exposes one-shot digests (`sha256Hex`) and whole-file digests
+ *   (`sha256File`); the runner needs neither, because it hashes JSONL lines as they stream past.
  */
 export function streamingSha256(): StreamingHasher {
 	const h: Hash = createHash("sha256")

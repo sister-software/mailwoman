@@ -39,7 +39,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { readJSONL, repoRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -162,6 +162,14 @@ function weightedPick<T extends { w: number }>(items: readonly T[], random: () =
 const pairKey = (a: string, b: string): string => [a.toLowerCase(), b.toLowerCase()].toSorted().join("\u001F")
 
 /**
+ * One row of the intersection eval gold — the shape this recipe reads to exclude eval crossings.
+ */
+interface EvalGoldRow {
+	node: number | string
+	components: { intersection_a: string; intersection_b: string }
+}
+
+/**
  * Load the eval's crossings so neither train nor golden ever sees them.
  */
 function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
@@ -174,9 +182,7 @@ function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
 		return { nodes, pairs }
 	}
 
-	for (const line of readFileSync(EVAL_GOLD_PATH, "utf8").split("\n")) {
-		if (!line) continue
-		const row = JSON.parse(line)
+	for (const row of readJSONL<EvalGoldRow>(EVAL_GOLD_PATH)) {
 		nodes.add(Number(row.node))
 		pairs.add(pairKey(row.components.intersection_a, row.components.intersection_b))
 	}

@@ -21,7 +21,7 @@
 import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
-import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { dataRootPath, percentile, readJSONL } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
 /**
@@ -62,19 +62,25 @@ function parseArgs(): Args {
 	return { evalPath, country, shards }
 }
 
+interface EvalRow {
+	expected?: { postcode?: string; lat?: number; lon?: number }
+	postcode?: string
+	components?: { postcode?: string }
+	[key: string]: unknown
+}
+
 function main(): void {
 	const { evalPath, country, shards } = parseArgs()
 	const lookup = new WOFPostcodeLookup(shards)
 
-	const lines = readFileSync(evalPath, "utf8").split("\n").filter(Boolean)
+	const rows = readJSONL<EvalRow>(evalPath)
 	let withPostcode = 0
 	let placed = 0
 	let inGazetteerNoCentroid = 0
 	let notInGazetteer = 0
 	const distances: number[] = []
 
-	for (const line of lines) {
-		const row = JSON.parse(line)
+	for (const row of rows) {
 		const postcode: string | undefined = row.expected?.postcode ?? row.postcode ?? row.components?.postcode
 		const lat: number | undefined = row.lat
 		const lon: number | undefined = row.lon

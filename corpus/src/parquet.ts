@@ -37,10 +37,11 @@
  *   close — cheap relative to writing it).
  */
 
-import { createHash } from "node:crypto"
 import { createReadStream } from "node:fs"
 import { mkdir, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
+
+import { sha256File } from "@mailwoman/core/utils"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/index.ts"
 import type { SplitName } from "./split.ts"
@@ -311,7 +312,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 			if (shardRows > 0) {
 				const fileStat = await stat(path)
-				const sha256 = await hashFile(path)
+				const sha256 = await sha256File(path)
 
 				shards.push({
 					split,
@@ -374,18 +375,4 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 	await writeFile(join(corpusDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
 
 	return manifest
-}
-
-/**
- * Single-pass SHA-256 over the file at `path`. Cheap relative to Parquet write throughput.
- */
-async function hashFile(path: string): Promise<string> {
-	const hash = createHash("sha256")
-	const stream = createReadStream(path)
-
-	for await (const chunk of stream) {
-		hash.update(chunk as Buffer)
-	}
-
-	return hash.digest("hex")
 }
