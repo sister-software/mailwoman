@@ -67,6 +67,7 @@ function ladderFixtureDB(): string {
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, is_current INTEGER, is_deprecated INTEGER)`
 	)
+
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER)`)
 
 	const places: Array<[number, string, string, string, number, number]> = [
@@ -200,7 +201,7 @@ describe("bottomsOutAt", () => {
 		// A handful of nodes clustered under one parent is not a tier the country reaches.
 		const row = granularity("XX", {
 			country: { nodes: 1 },
-			locality: { nodes: 5_000 },
+			locality: { nodes: 5000 },
 			dependent_locality: { nodes: 40, parentCoverage: 0.01 },
 		})
 
@@ -209,7 +210,7 @@ describe("bottomsOutAt", () => {
 
 	it("honors a caller-supplied floor", () => {
 		const row = granularity("XX", {
-			locality: { nodes: 5_000 },
+			locality: { nodes: 5000 },
 			dependent_locality: { nodes: 40, parentCoverage: 0.01 },
 		})
 
@@ -220,8 +221,8 @@ describe("bottomsOutAt", () => {
 		const row = granularity("JP", {
 			country: { nodes: 1 },
 			locality: { nodes: 43_868 },
-			dependent_locality: { nodes: 7_759, parentCoverage: 0.08 },
-			venue: { nodes: 2_000, parentCoverage: 0.2 },
+			dependent_locality: { nodes: 7759, parentCoverage: 0.08 },
+			venue: { nodes: 2000, parentCoverage: 0.2 },
 		})
 
 		expect(bottomsOutAt(row)).toBe("venue")

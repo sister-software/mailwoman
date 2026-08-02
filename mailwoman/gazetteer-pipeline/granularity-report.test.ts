@@ -61,7 +61,7 @@ describe("renderGranularityReport", () => {
 
 	it("marks a country whose rung is Overture-backfilled rather than real WOF", () => {
 		const markdown = renderGranularityReport(
-			[row("IE", { country: { nodes: 1 }, locality: { nodes: 3_230, overtureBackfilled: 3_230 } })],
+			[row("IE", { country: { nodes: 1 }, locality: { nodes: 3230, overtureBackfilled: 3230 } })],
 			META
 		)
 
@@ -84,7 +84,7 @@ describe("renderGranularityReport", () => {
 	})
 
 	it("renders a measured-and-empty rung as 0 rather than omitting it", () => {
-		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3_230 } })], META)
+		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3230 } })], META)
 
 		// IE was measured for dependent_locality and has none: the cell must exist and read 0.
 		const ieLine = markdown.split("\n").find((line) => line.startsWith("| IE |"))

@@ -29,17 +29,17 @@ live under `scripts/diagnostic/` (gitignored by convention — one-off investiga
 
 Global census of `admin-global-priority.db` (`spr`, current + non-deprecated):
 
-| placetype   |      rows | countries |
-| ----------- | --------: | --------: |
-| locality    | 3,731,863 |       244 |
-| neighbourhood |  159,398 |    **11** |
-| localadmin  |   112,023 |        24 |
-| county      |    36,672 |        87 |
-| region      |     4,299 |       227 |
-| macrocounty |       467 |         4 |
-| country     |       237 |       237 |
-| borough     |       210 |         6 |
-| macroregion |        65 |         5 |
+| placetype     |      rows | countries |
+| ------------- | --------: | --------: |
+| locality      | 3,731,863 |       244 |
+| neighbourhood |   159,398 |    **11** |
+| localadmin    |   112,023 |        24 |
+| county        |    36,672 |        87 |
+| region        |     4,299 |       227 |
+| macrocounty   |       467 |         4 |
+| country       |       237 |       237 |
+| borough       |       210 |         6 |
+| macroregion   |        65 |         5 |
 
 Zero rows for the other 25 placetypes in the WOF vocabulary, including the entire venue/sub-venue
 deep end (`venue`, `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`,
@@ -76,18 +76,18 @@ Sub-locality nodes (`borough` + hood family) in the shipped DB vs Overture `divi
 `2026-06-17.0` (`macrohood` + `neighborhood` + `microhood`; Overture publishes no `borough` subtype
 rows for these countries):
 
-| country | WOF (shipped) | Overture |      ratio |
-| ------- | ------------: | -------: | ---------: |
+| country | WOF (shipped) | Overture |       ratio |
+| ------- | ------------: | -------: | ----------: |
 | DE      |        67,162 |   27,156 | 2.5× richer |
 | NL      |        11,965 |    5,162 | 2.3× richer |
 | GB      |        13,177 |   11,196 | 1.2× richer |
-| US      |        49,491 |   59,600 |       0.8× |
+| US      |        49,491 |   59,600 |        0.8× |
 | FR      |         5,321 |   50,782 |   **0.10×** |
 | ES      |         1,266 |   42,038 |   **0.03×** |
 | IT      |         1,137 |   30,101 |   **0.04×** |
 | JP      |         7,759 |  210,631 |   **0.04×** |
-| IE      |         **0** |   51,778 |          — |
-| NZ      |         **0** |      992 |          — |
+| IE      |         **0** |   51,778 |           — |
+| NZ      |         **0** |      992 |           — |
 
 Two notes that make this usable:
 
@@ -106,12 +106,12 @@ The intuitive design ("use Overture `address_levels` to learn what depth address
 compare to WOF") does not reach the tier we care about. Measured depth distributions, release
 `2026-06-17.0`:
 
-| country | `len(address_levels)` | levels                            |
-| ------- | --------------------: | --------------------------------- |
-| ES      |            1 (100%)   | municipality only                 |
-| NL      |            1 (100%)   | municipality only                 |
-| DE      |            2 (100%)   | state code → municipality         |
-| IT      |            3 (100%)   | region → province → comune        |
+| country | `len(address_levels)` | levels                     |
+| ------- | --------------------: | -------------------------- |
+| ES      |              1 (100%) | municipality only          |
+| NL      |              1 (100%) | municipality only          |
+| DE      |              2 (100%) | state code → municipality  |
+| IT      |              3 (100%) | region → province → comune |
 
 None reach dependent_locality. So `address_levels` can grade WOF at the locality rung and above and
 nothing below it. Two further limits on the same source:
@@ -149,15 +149,15 @@ Rungs are derived from `PLACETYPE_PROJECTION` rather than hand-written, so the s
 census can never disagree about what projects where. Rungs are named in `ComponentTag` terms because
 that is the vocabulary the decoder consumes:
 
-| rung                 | WOF placetypes                                                       | Overture subtypes                        | source              |
-| -------------------- | -------------------------------------------------------------------- | ---------------------------------------- | ------------------- |
-| `country`            | `country`, `nation`, `dependency`, `disputed`                        | `country`                                | admin DB            |
-| `region`             | `region`, `macroregion`                                              | `region`                                 | admin DB            |
-| `subregion`          | `county`, `macrocounty`                                              | `county`                                 | admin DB            |
-| `locality`           | `locality`, `localadmin`                                             | `locality`, `localadmin`                 | admin DB            |
-| `dependent_locality` | `borough`, `neighbourhood`, `macrohood`, `microhood`                 | `macrohood`, `neighborhood`, `microhood` | admin DB            |
-| `venue`              | `venue`                                                              | —                                        | `poi.db`            |
-| venue sub-structure  | `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`, `installation` | —                             | `poi.db` (see below) |
+| rung                 | WOF placetypes                                                                   | Overture subtypes                        | source               |
+| -------------------- | -------------------------------------------------------------------------------- | ---------------------------------------- | -------------------- |
+| `country`            | `country`, `nation`, `dependency`, `disputed`                                    | `country`                                | admin DB             |
+| `region`             | `region`, `macroregion`                                                          | `region`                                 | admin DB             |
+| `subregion`          | `county`, `macrocounty`                                                          | `county`                                 | admin DB             |
+| `locality`           | `locality`, `localadmin`                                                         | `locality`, `localadmin`                 | admin DB             |
+| `dependent_locality` | `borough`, `neighbourhood`, `macrohood`, `microhood`                             | `macrohood`, `neighborhood`, `microhood` | admin DB             |
+| `venue`              | `venue`                                                                          | —                                        | `poi.db`             |
+| venue sub-structure  | `building`, `campus`, `wing`, `concourse`, `arcade`, `enclosure`, `installation` | —                                        | `poi.db` (see below) |
 
 Context-only and out-of-grammar placetypes (`metroarea`, `marketarea`, `postalregion`, `timezone`,
 `continent`, `ocean`, `marinearea`, `planet`, `empire`) project to `null` and are **excluded from the
@@ -181,7 +181,7 @@ that rung.
 
 That choice is deliberate. The census probe measured GB's share at **33.2%** of 16,987 locality-class
 surfaces and found it to be real conditional evidence (a hit rules out two thirds of the parent
-population), while *within-node* share carried no information at all — WOF rarely parents a locality
+population), while _within-node_ share carried no information at all — WOF rarely parents a locality
 under a locality, so covered nodes read ~100% across the board. Presence and magnitude across the
 parent population are the statistics that discriminate; use those.
 

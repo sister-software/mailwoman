@@ -37,10 +37,12 @@ empty), and the 5% parent-coverage floor wants a second calibration point, which
 ### Task 1: Map all 34 WOF placetypes
 
 **Files:**
+
 - Modify: `mailwoman/gazetteer-pipeline/placetype-census.ts:41-72` (the `PLACETYPE_PROJECTION` map)
 - Test: `mailwoman/gazetteer-pipeline/placetype-census.test.ts:62-76` (the `PLACETYPE_PROJECTION` describe block)
 
 **Interfaces:**
+
 - Consumes: `ComponentTag` from `@mailwoman/core/types` — the 26-member union in `core/types/component.ts:30-61`. There is **no** `intersection` tag; the union carries `intersection_a` and `intersection_b`.
 - Produces: `WOF_PLACETYPES` (a `readonly string[]` of all 34), and a `PLACETYPE_PROJECTION` whose key set equals it. PR B's `placetypesForRung()` reads both.
 
@@ -266,10 +268,12 @@ vocabulary in both directions."
 ### Task 2: The rung ladder
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/granularity.ts`
 - Create: `mailwoman/gazetteer-pipeline/granularity.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PLACETYPE_PROJECTION`, `WOF_PLACETYPES` from `./placetype-census.ts` (Task 1).
 - Produces:
   - `LADDER: readonly ComponentTag[]` — the ordered containment rungs, shallowest first.
@@ -279,7 +283,7 @@ vocabulary in both directions."
   Tasks 3-5 consume all three.
 
 **Context the implementer needs.** The ladder is an ordered list because "bottoms out at" needs an
-ordering, but rung *membership* is derived from `PLACETYPE_PROJECTION` so the scorecard and the
+ordering, but rung _membership_ is derived from `PLACETYPE_PROJECTION` so the scorecard and the
 census can never disagree about what projects where. `postcode` is deliberately excluded: it is an
 orthogonal channel, not a containment rung, and folding it in would make "bottoms out at"
 incoherent. Context-only placetypes project to `null` and are excluded by construction.
@@ -391,7 +395,11 @@ export const LADDER: readonly ComponentTag[] = [
  * Rungs measured by parent-coverage share rather than node presence — everything BELOW the locality backbone, which is
  * the denominator those shares are taken against.
  */
-export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["dependent_locality", "venue", "unit"])
+export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
+	"dependent_locality",
+	"venue",
+	"unit",
+])
 
 /**
  * The locality-class placetypes that host address-bearing children — the parent set and the parent-coverage
@@ -433,10 +441,12 @@ postcode is excluded: an orthogonal channel, not a containment rung."
 ### Task 3: Measure the ladder against the admin DB
 
 **Files:**
+
 - Modify: `mailwoman/gazetteer-pipeline/granularity.ts` (append)
 - Modify: `mailwoman/gazetteer-pipeline/granularity.test.ts` (append)
 
 **Interfaces:**
+
 - Consumes: `LADDER`, `PARENT_PLACETYPES`, `placetypesForRung` (Task 2); `OVERTURE_ID_BASE` from `./admin/fold-overture.ts`.
 - Produces:
   - `interface RungMeasurement { nodes: number; overtureBackfilled: number; parentsCovered: number; parentCoverage: number }`
@@ -757,9 +767,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 			for (const rung of LADDER) {
 				const measurement = country.rungs[rung]!
 
-				measurement.parentCoverage = country.localityParents
-					? measurement.parentsCovered / country.localityParents
-					: 0
+				measurement.parentCoverage = country.localityParents ? measurement.parentsCovered / country.localityParents : 0
 			}
 		}
 
@@ -796,7 +804,7 @@ for (const cc of ["GB", "IE", "JP", "DE"]) {
 Expected: `countries: 244`. GB `depLoc nodes 13177`, IE `depLoc nodes 0`, JP `depLoc nodes 7759`,
 DE `depLoc nodes 67162` — these must match the design-stage probe exactly. GB's coverage share is
 the number to sanity-check against the census probe's 33.2% reading; it will not match exactly (the
-census measured distinct *surfaces*, this measures distinct *nodes*), but a wildly different figure
+census measured distinct _surfaces_, this measures distinct _nodes_), but a wildly different figure
 means the join is wrong. **If the counts do not match the probe, stop and diagnose before Task 4.**
 
 - [ ] **Step 6: Commit**
@@ -820,10 +828,12 @@ rung is a present zero, never an absent row."
 ### Task 4: Derive "bottoms out at"
 
 **Files:**
+
 - Modify: `mailwoman/gazetteer-pipeline/granularity.ts` (append)
 - Modify: `mailwoman/gazetteer-pipeline/granularity.test.ts` (append)
 
 **Interfaces:**
+
 - Consumes: `CountryGranularity`, `LADDER`, `SUB_LOCALITY_RUNGS` (Tasks 2-3).
 - Produces: `DEFAULT_COVERAGE_FLOOR = 0.05` and `bottomsOutAt(country: CountryGranularity, floor?: number): ComponentTag | null`. Task 5 renders the result.
 
@@ -996,10 +1006,12 @@ country with a validated reading, sits near 33%."
 ### Task 5: Render the report
 
 **Files:**
+
 - Create: `mailwoman/gazetteer-pipeline/granularity-report.ts`
 - Create: `mailwoman/gazetteer-pipeline/granularity-report.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CountryGranularity`, `bottomsOutAt`, `LADDER`, `DEFAULT_COVERAGE_FLOOR` (Tasks 2-4).
 - Produces: `renderGranularityReport(rows: CountryGranularity[], meta: GranularityReportMeta): string`, where `GranularityReportMeta` is `{ sourcePath: string; sourceMD5: string; buildDate: string; floor: number }`. Task 6 writes the returned string to disk.
 
@@ -1065,7 +1077,13 @@ const META = {
 describe("renderGranularityReport", () => {
 	it("puts the bottoms-out-at column in the summary table", () => {
 		const markdown = renderGranularityReport(
-			[row("GB", { country: { nodes: 1 }, locality: { nodes: 16_677 }, dependent_locality: { nodes: 13_177, parentCoverage: 0.33 } })],
+			[
+				row("GB", {
+					country: { nodes: 1 },
+					locality: { nodes: 16_677 },
+					dependent_locality: { nodes: 13_177, parentCoverage: 0.33 },
+				}),
+			],
 			META
 		)
 
@@ -1098,10 +1116,7 @@ describe("renderGranularityReport", () => {
 	})
 
 	it("renders a measured-and-empty rung as 0 rather than omitting it", () => {
-		const markdown = renderGranularityReport(
-			[row("IE", { country: { nodes: 1 }, locality: { nodes: 3_230 } })],
-			META
-		)
+		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3_230 } })], META)
 
 		// IE was measured for dependent_locality and has none: the cell must exist and read 0.
 		const ieLine = markdown.split("\n").find((line) => line.startsWith("| IE |"))
@@ -1254,10 +1269,12 @@ meaning-of-zero rule made visible in the artifact."
 ### Task 6: Wire the command
 
 **Files:**
+
 - Create: `mailwoman/commands/gazetteer/granularity.tsx`
 - Test: manual smoke (the command layer is Ink/TSX; the logic it calls is covered by Tasks 2-5)
 
 **Interfaces:**
+
 - Consumes: `buildGranularityLadder` (Task 3), `renderGranularityReport` + `GranularityReportMeta` (Task 5), `DEFAULT_COVERAGE_FLOOR` (Task 4).
 - Produces: the `mailwoman gazetteer granularity` subcommand and a written markdown report.
 
@@ -1399,6 +1416,7 @@ the sibling command's usage before improvising.
 Run: `rg -n "^\| (GB|IE|JP|DE|NZ) \|" /tmp/scorecard-smoke.md`
 
 Expected, matching the numbers in the spec exactly:
+
 - GB `dependent_locality` cell reads `13,177`
 - DE reads `67,162`
 - JP reads `7,759`

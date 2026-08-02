@@ -146,6 +146,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 		const placetypeList = ladderPlacetypes()
 			.map((placetype) => `'${placetype}'`)
 			.join(", ")
+
 		const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
 		// Alias-qualified: the parent query joins `spr` to itself, so an unqualified `is_deprecated` is ambiguous.
 		const live = (alias: string): string => `${alias}.is_current != 0 AND ${alias}.is_deprecated = 0`
@@ -241,9 +242,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 			for (const rung of LADDER) {
 				const measurement = country.rungs[rung]!
 
-				measurement.parentCoverage = country.localityParents
-					? measurement.parentsCovered / country.localityParents
-					: 0
+				measurement.parentCoverage = country.localityParents ? measurement.parentsCovered / country.localityParents : 0
 			}
 		}
 
