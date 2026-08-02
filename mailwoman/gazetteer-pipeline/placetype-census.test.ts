@@ -12,7 +12,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { describe, expect, it } from "vitest"
 
-import { PLACETYPE_PROJECTION, buildPlacetypeCensus, toBaseRates } from "./placetype-census.ts"
+import { PLACETYPE_PROJECTION, WOF_PLACETYPES, buildPlacetypeCensus, toBaseRates } from "./placetype-census.ts"
 
 /**
  * Build an in-memory DB with the `spr`/`ancestors` shape the census reads, then hand its path-less handle to the
@@ -66,12 +66,39 @@ describe("PLACETYPE_PROJECTION", () => {
 		}
 	})
 
+	it("covers every placetype in the WOF vocabulary", () => {
+		const unmapped = WOF_PLACETYPES.filter((placetype) => !(placetype in PLACETYPE_PROJECTION))
+
+		expect(unmapped).toEqual([])
+	})
+
+	it("maps nothing outside the WOF vocabulary", () => {
+		const vocabulary = new Set<string>(WOF_PLACETYPES)
+		const extra = Object.keys(PLACETYPE_PROJECTION).filter((placetype) => !vocabulary.has(placetype))
+
+		expect(extra).toEqual([])
+	})
+
 	it("distinguishes a deliberately-uncounted placetype from an unmapped one", () => {
 		// Present with a null value: in the vocabulary, not projected.
 		expect("metroarea" in PLACETYPE_PROJECTION).toBe(true)
 		expect(PLACETYPE_PROJECTION.metroarea).toBeNull()
 		// Absent entirely: the builder must report it rather than count it.
-		expect("wing" in PLACETYPE_PROJECTION).toBe(false)
+		expect("not_a_wof_placetype" in PLACETYPE_PROJECTION).toBe(false)
+	})
+
+	it("projects the sub-venue structures onto venue and unit rather than dropping them", () => {
+		expect(PLACETYPE_PROJECTION.building).toBe("venue")
+		expect(PLACETYPE_PROJECTION.campus).toBe("venue")
+		expect(PLACETYPE_PROJECTION.wing).toBe("unit")
+		expect(PLACETYPE_PROJECTION.concourse).toBe("unit")
+	})
+
+	it("leaves the multi-span and record placetypes deliberately unprojected", () => {
+		// `intersection` is a two-span construct (intersection_a + intersection_b) — no single tag fits.
+		expect(PLACETYPE_PROJECTION.intersection).toBeNull()
+		// A WOF `address` is a whole address record, not a span role.
+		expect(PLACETYPE_PROJECTION.address).toBeNull()
 	})
 })
 
