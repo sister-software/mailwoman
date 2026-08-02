@@ -140,9 +140,39 @@ not a question about the model.
 
 The GB pair source (PPD) is England+Wales and leaves CITY empty for London, so London
 neighbourhoods, estates, Northern Ireland and the Republic all sat outside the shipped index by the
-source's own construction. The hierarchy campaign closed the London part of that gap from open
-data: 15 borough pairs from WOF (R2), 391 ward pairs from ONSPD (R3), and 424 WOF neighbourhood
-pairs behind a passed venue-confound board (R4b) — the GB index now carries 19,209 PPD pairs plus
-830 secondary, cross-checked at 20,039. Northern Ireland still waits on an outcode→post-town table
-to supply the parent side, and the Republic waits on a licence survey (Tailte Éireann, logainm).
-Both remain data acquisitions in the proven shape, not new mechanism.
+source's own construction. **Great Britain is now covered end to end**, entirely from open data:
+
+| rung     | source                                  | pairs      |
+| -------- | --------------------------------------- | ---------- |
+| baseline | HM Land Registry PPD                    | 19,209     |
+| R2       | WOF boroughs                            | 15         |
+| R3 / R4b | ONSPD wards + WOF London neighbourhoods | 815        |
+| R7       | WOF Northern Ireland                    | 87         |
+| R8       | WOF Scotland, Wales, England            | 10,708     |
+|          | **GB total, cross-checked**             | **30,834** |
+
+Every increment after the baseline cleared a venue-confound board before shipping, and no board has
+ever exceeded 0 false positives.
+
+**Northern Ireland's blocker turned out not to exist.** It was deferred for months on "the pair
+parent needs post towns" — a licensed Royal Mail table — which was reasoning from GB's _source
+shape_ (PPD's parent column happens to be the post town) rather than from what a pair requires.
+WOF parents NI neighbourhoods to Belfast, Newtownabbey, Londonderry and Lisburn, which _are_ those
+post towns. Worth re-reading any deferred blocker after a premise moves.
+
+Two register-vs-writer distinctions the GB rungs had to make explicit, both general:
+
+- A slash-separated WOF parent (`Londonderry / Derry`) is an **alias set**, not a name. It folds to
+  one key matching neither alternative, so such pairs ship _dead_ — present in the artifact,
+  incapable of firing. Emit one pair per alternative.
+- A civil-parish suffix (`Pontypridd Community`, `Llanelli Rural`) is administrative furniture. The
+  register names the parish that way; an address says `Pontypridd`. Strip the suffix rather than
+  dropping the pair — 1,545 Welsh pairs would otherwise have been discarded.
+
+**The Republic, Germany, Spain and Italy are blocked on the same thing, and it is not data.** The
+pair index is hard-gated on the resolved locale's country, so an artifact shipped inside another
+locale's package can never fire. Each needs its own **carrier package** (`@mailwoman/neural-weights-*`,
+a ~6-file data-only overlay declaring `baseWeights`) before any artifact can reach it. IE
+additionally needs its licence survey (Tailte Éireann, logainm); DE/ES/IT additionally need
+`LEADING_POSTCODE_COUNTRIES` entries, since all three write the postcode before the locality the way
+France does.
