@@ -262,11 +262,13 @@
 			"source": "BAN \u2014 Base Adresse Nationale (DINUM/IGN, Licence Ouverte 2.0), raw adresses-<dept>.csv `nom_ld` field read through ban/sdk's cleanLieuDit filter. 101 d\u00e9partements, 1,684,844 rows carrying a clean lieu-dit. NOT WOF: WOF's French neighbourhood records are Paris quartiers, cartographic subdivisions that never appear in a postal address (the arrondissement is encoded in the postcode). The lieu-dit is the line French addresses actually carry \u2014 La Poste's line 5.",
 			"pairs": 199282,
 			"bytes": 5839518,
-			"md5": "6ed84ff4b14cea952384a9f0c96955e9",
+			"md5": "f0999f1d5cd52a642ca7129157659578",
 			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from the GB calibration, per R5's finding that the classifier's dependent_locality deficit is uniform across locales rather than GB-specific. The R6 bars were measured at exactly this pair.",
 			"country_gate": "hard-gated on the header's country (fr).",
 			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-fr-fr --country fr --delta 10 --transition-beta 5 --ban-dir <corpus/sources/ban>`",
-			"required_decode_fixes": "This artifact is INERT without two locale-general probe-chain fixes that shipped alongside it: a LEADING postcode strip on parent-candidate keys (France writes '12210 Montpeyroux'; the probe previously stripped only trailing postcodes, the Anglo/NZ convention) and NEWLINE as a segment boundary (computeGroupSegments scanned for commas only, so multi-line addresses collapsed to one segment and the segment path went structurally inert). With the artifact but without them the golden board stayed at 0/80."
+			"required_decode_fixes": "This artifact is INERT without two locale-general probe-chain fixes that shipped alongside it: a LEADING postcode strip on parent-candidate keys (France writes '12210 Montpeyroux'; the probe previously stripped only trailing postcodes, the Anglo/NZ convention) and NEWLINE as a segment boundary (computeGroupSegments scanned for commas only, so multi-line addresses collapsed to one segment and the segment path went structurally inert). With the artifact but without them the golden board stayed at 0/80.",
+			"$comment_md5": "REPRODUCIBILITY: a PIX1 header embeds `buildDate`, so a rebuild from identical sources produces different bytes and a different md5. This md5 therefore identifies the artifact STAGED TO HUGGING FACE for this release \u2014 it is a provenance record of the shipped bytes, NOT a check a local rebuild can reproduce. A mismatch after rebuilding is expected and is not corruption; verify pair COUNT and header delta/beta instead.",
+			"provenance_gap": "The PIX1 header's sourceMD5s is EMPTY for this artifact: the BAN source is a directory of 101 d\u00e9partement CSVs, and the build hashes individual files only. Hashing the full dump costs more than the provenance is worth at build time, so a BAN refresh is a deliberate act \u2014 rebuild with the artifact deleted rather than trusting a guard to notice."
 		}
 	}
 }
