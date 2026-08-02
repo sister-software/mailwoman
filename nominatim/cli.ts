@@ -22,7 +22,7 @@ import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { makeNutsAnnotator, NutsLookup } from "@mailwoman/nuts-lookup"
+import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
@@ -197,7 +197,7 @@ async function serve(): Promise<void> {
 	const nutsDBPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
 
 	if (existsSync(nutsDBPath)) {
-		annotators.push(makeNutsAnnotator(new NutsLookup({ databasePath: nutsDBPath })))
+		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: nutsDBPath })))
 	}
 
 	const annotate = composeAnnotators(annotators)

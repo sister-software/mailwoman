@@ -378,7 +378,7 @@ export async function trainDedupGBT(
 		` *   The default learned-scorer model (#603): a gradient-boosted-tree dedup scorer trained on the\n` +
 		` *   NPPES NPI-truth set (${STATE}, ${kept.size} NPIs → ${pairs.length} candidate pairs). Validated to\n` +
 		` *   generalize across states by learned-scorer-crossstate-eval.ts. Used by resolveEntities'\n` +
-		` *   opt-in learnedScorer hook via createGbtScorer. The trained {@link GBT} is plain data.\n` +
+		` *   opt-in learnedScorer hook via createGBTScorer. The trained {@link GBT} is plain data.\n` +
 		` */\n\n` +
 		`import type { GBT } from "@mailwoman/match"\n\n` +
 		`/** Provenance for the bundled model — what it was trained on. */\n` +

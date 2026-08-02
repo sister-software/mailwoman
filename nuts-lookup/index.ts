@@ -11,7 +11,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { AnnotationSet, Annotator, Nuts } from "@mailwoman/annotations"
+import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
@@ -78,8 +78,8 @@ export function pointInMultiPolygon(lon: number, lat: number, polygons: MultiPol
 /**
  * Derive the nested NUTS levels from a NUTS id (`"DE111"` → `{ level1:"DE1", level2:"DE11", level3:"DE111" }`).
  */
-export function nutsFromID(id: string): Nuts {
-	const nuts: Nuts = {}
+export function nutsFromID(id: string): NUTS {
+	const nuts: NUTS = {}
 
 	if (id.length >= NUTS_1_LENGTH) {
 		nuts.level1 = id.slice(0, 3)
@@ -99,7 +99,7 @@ export function nutsFromID(id: string): Nuts {
 /**
  * A NUTS lookup over a built `node:sqlite` polygon table.
  */
-export class NutsLookup {
+export class NUTSLookup {
 	#db: DatabaseSync
 	#byLevelBox: ReturnType<DatabaseSync["prepare"]>
 
@@ -118,7 +118,7 @@ export class NutsLookup {
 	/**
 	 * The nested NUTS codes containing `(lat, lon)`, or null when the point is outside the EU NUTS area.
 	 */
-	find(lat: number, lon: number): Nuts | null {
+	find(lat: number, lon: number): NUTS | null {
 		for (const level of [3, 2, 1]) {
 			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsID: string; geom: string }>
 
@@ -138,7 +138,7 @@ export class NutsLookup {
 /**
  * Build an `Annotator` filling `AnnotationSet.nuts` for EU coordinates (abstains elsewhere).
  */
-export function makeNutsAnnotator(lookup: NutsLookup): Annotator {
+export function makeNUTSAnnotator(lookup: NUTSLookup): Annotator {
 	return ({ lat, lon }): Partial<AnnotationSet> => {
 		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 		const nuts = lookup.find(lat, lon)

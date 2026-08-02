@@ -35,7 +35,7 @@ import { spawnSync } from "node:child_process"
 import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
-import { isNzDeliveryService, isNzPostcode } from "@mailwoman/codex/nz"
+import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
 
 import { alignRow } from "../align.ts"
@@ -172,20 +172,20 @@ interface USTuple {
 	postcode: string
 }
 
-interface FrTuple {
+interface FRTuple {
 	house_number: string
 	street: string
 	locality: string
 	postcode: string
 }
 
-interface AuTuple {
+interface AUTuple {
 	locality: string
 	region: string
 	postcode: string
 }
 
-interface NzTuple {
+interface NZTuple {
 	locality: string
 	postcode: string
 }
@@ -273,7 +273,7 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
  * strides the whole country instead of reading one département. Quoted commas survive because awk only FILTERS lines —
  * parsing stays in splitCSV.
  */
-function readFrTuples(limit: number): FrTuple[] {
+function readFrTuples(limit: number): FRTuple[] {
 	const r = spawnSync(
 		"bash",
 		["-c", `unzip -p "${FR_SOURCE.zip}" "${FR_SOURCE.csv}" | awk 'NR==1 || NR%211==3' | head -n ${limit + 1}`],
@@ -298,7 +298,7 @@ function readFrTuples(limit: number): FrTuple[] {
 		iPost = idx("postcode")
 
 	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
-	const tuples: FrTuple[] = []
+	const tuples: FRTuple[] = []
 	const seen = new Set<string>()
 
 	for (let li = 1; li < lines.length; li++) {
@@ -354,7 +354,7 @@ function readCaLocalities(admin1: string): string[] {
 function readPostalTuples(
 	source: { zip: string; txt: string },
 	opts: { withState: boolean }
-): Array<AuTuple | NzTuple> {
+): Array<AUTuple | NZTuple> {
 	const r = spawnSync("unzip", ["-p", source.zip, source.txt], { maxBuffer: 1024 * 1024 * 64, encoding: "utf8" })
 
 	if (r.status !== 0) {
@@ -363,9 +363,9 @@ function readPostalTuples(
 		return []
 	}
 
-	const tuples: Array<AuTuple | NzTuple> = []
+	const tuples: Array<AUTuple | NZTuple> = []
 	const seen = new Set<string>()
-	const validPostcode = opts.withState ? isAuPostcode : isNzPostcode
+	const validPostcode = opts.withState ? isAuPostcode : isNZPostcode
 
 	for (const line of r.stdout.split("\n")) {
 		if (!line) continue
@@ -476,7 +476,7 @@ function makeCedex(random: () => number): string {
 /**
  * Compose an AU or NZ delivery-service phrase from the codex-sourced leaders. Same contract as makePoBoxPhrase: a
  * phrase built from a codex-known designator and a clean id must round-trip the codex matcher (isAuDeliveryService /
- * isNzDeliveryService) — a failure is a generation bug, loud. Noisy ids (commas / embedded spaces) are corpus-designed
+ * isNZDeliveryService) — a failure is a generation bug, loud. Noisy ids (commas / embedded spaces) are corpus-designed
  * adversarial forms, exempt.
  */
 function makeAuNzPoBoxPhrase(
@@ -494,14 +494,14 @@ function makeAuNzPoBoxPhrase(
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 
 	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
-	if (leader === "CMB" && validate === isNzDeliveryService) {
+	if (leader === "CMB" && validate === isNZDeliveryService) {
 		num = `B${num}`
 	}
 
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
-	const cleanID = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
+	const cleanID = validate === isNZDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
 
 	if (cleanID.test(num) && !validate(phrase)) {
 		throw new Error(`generated a phrase the codex matcher rejects: "${phrase}"`)
@@ -576,7 +576,7 @@ function renderPmbUs(random: () => number, t: USTuple): Rendered {
 	return { fmt: "pmb-bare", raw: `${road} ${phrase}`, components: { house_number: hn, street, po_box: phrase } }
 }
 
-function renderBpFr(random: () => number, t: FrTuple): Rendered {
+function renderBpFr(random: () => number, t: FRTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, FR_LEADERS)
 	const { locality, postcode: pc } = t
 	const upper = random() < 0.5
@@ -613,7 +613,7 @@ function renderBpFr(random: () => number, t: FrTuple): Rendered {
 	}
 }
 
-function renderCedexFr(random: () => number, t: FrTuple): Rendered {
+function renderCedexFr(random: () => number, t: FRTuple): Rendered {
 	const cedex = makeCedex(random)
 	const { house_number: hn, street, locality, postcode: pc } = t
 	const loc = random() < 0.6 ? locality.toUpperCase() : locality
@@ -665,7 +665,7 @@ function renderCaEn(random: () => number, loc: string): Rendered {
 	return { fmt: "ca-en-bare", raw: phrase, components: { po_box: phrase } }
 }
 
-function renderAuPoBox(random: () => number, t: AuTuple): Rendered {
+function renderAUPoBox(random: () => number, t: AUTuple): Rendered {
 	const phrase = makeAuNzPoBoxPhrase(random, AU_LEADERS_CURRENT, AU_LEADERS_LEGACY, isAuDeliveryService)
 	const { locality, region: reg, postcode: pc } = t
 	const r = random()
@@ -699,8 +699,8 @@ function renderAuPoBox(random: () => number, t: AuTuple): Rendered {
 	return { fmt: "au-venue", raw: `${v}, ${phrase}, ${loc} ${reg} ${pc}`, components: { venue: v, ...base } }
 }
 
-function renderNzPoBox(random: () => number, t: NzTuple): Rendered {
-	const phrase = makeAuNzPoBoxPhrase(random, NZ_LEADERS_COMMON, NZ_LEADERS_RARE, isNzDeliveryService)
+function renderNZPoBox(random: () => number, t: NZTuple): Rendered {
+	const phrase = makeAuNzPoBoxPhrase(random, NZ_LEADERS_COMMON, NZ_LEADERS_RARE, isNZDeliveryService)
 	const { locality, postcode: pc } = t
 	// NZ addresses are written mixed-case ("PO Box 4099, Timaru 7942") — no region line (ADV358).
 	const base = { po_box: phrase, locality, postcode: pc }
@@ -780,8 +780,8 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
 
 		// AU/NZ pools: same stable locality-hash holdout as FR/CA.
-		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AuTuple[]
-		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NzTuple[]
+		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AUTuple[]
+		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NZTuple[]
 		const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 
@@ -839,11 +839,11 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country = "CA"
 				locale = "fr-CA"
 			} else if (cls === "po-box-au") {
-				rendered = renderAuPoBox(random, pick(random, auPool))
+				rendered = renderAUPoBox(random, pick(random, auPool))
 				country = "AU"
 				locale = "en-AU"
 			} else if (cls === "po-box-nz") {
-				rendered = renderNzPoBox(random, pick(random, nzPool))
+				rendered = renderNZPoBox(random, pick(random, nzPool))
 				country = "NZ"
 				locale = "en-NZ"
 			} else if (cls === "po-box-us-military") {

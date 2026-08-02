@@ -27,7 +27,7 @@ import { normalizePLZ } from "./de/index.ts"
 import { normalizeCodePostal } from "./fr/index.ts"
 import { normalizeUkPostcode } from "./gb/index.ts"
 import { normalizeJpPostalCode } from "./jp/index.ts"
-import { normalizeNzPostcode } from "./nz/index.ts"
+import { normalizeNZPostcode } from "./nz/index.ts"
 import { isZipCode } from "./us/index.ts"
 
 /**
@@ -48,7 +48,7 @@ const SYSTEM_ACCEPTS: ReadonlyArray<readonly [SystemCode, (s: string) => boolean
 	["gb", (s) => normalizeUkPostcode(s) !== null],
 	["jp", (s) => normalizeJpPostalCode(s) !== null],
 	["au", (s) => normalizeAuPostcode(s) !== null],
-	["nz", (s) => normalizeNzPostcode(s) !== null],
+	["nz", (s) => normalizeNZPostcode(s) !== null],
 ]
 
 /**

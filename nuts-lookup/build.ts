@@ -13,7 +13,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { MultiPolygonCoords } from "./index.ts"
 
-interface NutsFeature {
+interface NUTSFeature {
 	properties: { NUTS_ID: string; LEVL_CODE: number }
 	geometry: { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] }
 }
@@ -21,8 +21,8 @@ interface NutsFeature {
 /**
  * Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
  */
-export function buildNutsDB(geojsonPath: string, dbPath: string): { regions: number } {
-	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NutsFeature[] }
+export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: number } {
+	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NUTSFeature[] }
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 

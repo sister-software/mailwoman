@@ -6,7 +6,7 @@
 
 import { expect, test } from "vitest"
 
-import { isNzPostcode, normalizeNzPostcode, NZ_POSTCODE_PATTERN } from "./postcode.ts"
+import { isNZPostcode, normalizeNZPostcode, NZ_POSTCODE_PATTERN } from "./postcode.ts"
 
 test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {
 	expect(NZ_POSTCODE_PATTERN.test("7942")).toBe(true)
@@ -17,40 +17,40 @@ test("NZ_POSTCODE_PATTERN: matches exactly four digits, nothing else", () => {
 	expect(NZ_POSTCODE_PATTERN.test(" 7942")).toBe(false) // pattern does not tolerate whitespace
 })
 
-test("normalizeNzPostcode: trims and returns a valid four-digit postcode", () => {
-	expect(normalizeNzPostcode("7942")).toBe("7942")
-	expect(normalizeNzPostcode("  6011  ")).toBe("6011") // trim
-	expect(normalizeNzPostcode("\t0110\n")).toBe("0110")
-	expect(normalizeNzPostcode("0110")).toBe("0110") // leading zero preserved
+test("normalizeNZPostcode: trims and returns a valid four-digit postcode", () => {
+	expect(normalizeNZPostcode("7942")).toBe("7942")
+	expect(normalizeNZPostcode("  6011  ")).toBe("6011") // trim
+	expect(normalizeNZPostcode("\t0110\n")).toBe("0110")
+	expect(normalizeNZPostcode("0110")).toBe("0110") // leading zero preserved
 })
 
-test("normalizeNzPostcode: rejects wrong-shape / non-string → null", () => {
-	expect(normalizeNzPostcode("794")).toBeNull()
-	expect(normalizeNzPostcode("79420")).toBeNull()
-	expect(normalizeNzPostcode("Auckland")).toBeNull()
-	expect(normalizeNzPostcode("79 42")).toBeNull() // interior space
-	expect(normalizeNzPostcode("")).toBeNull()
-	expect(normalizeNzPostcode("   ")).toBeNull()
-	expect(normalizeNzPostcode(7942)).toBeNull() // number, not string
-	expect(normalizeNzPostcode(null)).toBeNull()
-	expect(normalizeNzPostcode(undefined)).toBeNull()
+test("normalizeNZPostcode: rejects wrong-shape / non-string → null", () => {
+	expect(normalizeNZPostcode("794")).toBeNull()
+	expect(normalizeNZPostcode("79420")).toBeNull()
+	expect(normalizeNZPostcode("Auckland")).toBeNull()
+	expect(normalizeNZPostcode("79 42")).toBeNull() // interior space
+	expect(normalizeNZPostcode("")).toBeNull()
+	expect(normalizeNZPostcode("   ")).toBeNull()
+	expect(normalizeNZPostcode(7942)).toBeNull() // number, not string
+	expect(normalizeNZPostcode(null)).toBeNull()
+	expect(normalizeNZPostcode(undefined)).toBeNull()
 })
 
-test("isNzPostcode: predicate is true only for an already-normalized four-digit string", () => {
-	expect(isNzPostcode("7942")).toBe(true)
-	expect(isNzPostcode("0110")).toBe(true)
+test("isNZPostcode: predicate is true only for an already-normalized four-digit string", () => {
+	expect(isNZPostcode("7942")).toBe(true)
+	expect(isNZPostcode("0110")).toBe(true)
 	// the predicate does NOT trim — it tests the shape verbatim
-	expect(isNzPostcode(" 7942 ")).toBe(false)
-	expect(isNzPostcode("794")).toBe(false)
-	expect(isNzPostcode("ABCD")).toBe(false)
-	expect(isNzPostcode("")).toBe(false)
-	expect(isNzPostcode(7942)).toBe(false)
-	expect(isNzPostcode(null)).toBe(false)
-	expect(isNzPostcode(undefined)).toBe(false)
+	expect(isNZPostcode(" 7942 ")).toBe(false)
+	expect(isNZPostcode("794")).toBe(false)
+	expect(isNZPostcode("ABCD")).toBe(false)
+	expect(isNZPostcode("")).toBe(false)
+	expect(isNZPostcode(7942)).toBe(false)
+	expect(isNZPostcode(null)).toBe(false)
+	expect(isNZPostcode(undefined)).toBe(false)
 })
 
-test("normalizeNzPostcode → isNzPostcode round-trip: a normalized value passes the predicate", () => {
-	const normalized = normalizeNzPostcode("  7942  ")
+test("normalizeNZPostcode → isNZPostcode round-trip: a normalized value passes the predicate", () => {
+	const normalized = normalizeNZPostcode("  7942  ")
 	expect(normalized).not.toBeNull()
-	expect(isNzPostcode(normalized)).toBe(true)
+	expect(isNZPostcode(normalized)).toBe(true)
 })

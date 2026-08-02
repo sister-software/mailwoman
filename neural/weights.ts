@@ -696,7 +696,7 @@ export function lookupTagCapability(
 	return cap as TagCapability
 }
 
-export interface CrfTransitions {
+export interface CRFTransitions {
 	transitions: number[][]
 	startTransitions: number[]
 	endTransitions: number[]
@@ -706,7 +706,7 @@ export interface CrfTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export function readCrfTransitions(crfPath: string | undefined): CrfTransitions | undefined {
+export function readCRFTransitions(crfPath: string | undefined): CRFTransitions | undefined {
 	if (!crfPath || !existsSync(crfPath)) return undefined
 	let raw: string
 

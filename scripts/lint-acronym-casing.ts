@@ -13,7 +13,7 @@
  *   list of acronyms (`Json|Jsonl|Us|Http|Api|Url`) to zero and recorded the win — and by
  *   2026-08-02 a DIFFERENT set had drifted in behind it: ten exported `PoiBoard*` against 250+
  *   `POI*` occurrences, twelve `Nz*` in a file that spells the same acronym `NZ_` twenty-four lines
- *   away, plus `Nuts*`, `Crf*`, `Gbt*`. A convention enforced only by review, swept only against a
+ *   away, plus `NUTS*`, `Crf*`, `Gbt*`. A convention enforced only by review, swept only against a
  *   fixed list, regrows at every acronym not on the list. So the sweep became a check.
  *
  *   The shape is borrowed from VS Code's `.eslint-plugin-local` rules: the mechanism is generic and
@@ -83,34 +83,13 @@ const ALLOWED = new Set<string>([
 ])
 
 /**
- * Drifted identifiers that are PUBLIC exports of published packages. Renaming one is a breaking change for consumers,
- * so these are reported as a warning and wait for the next major — the same treatment AGENTS.md records for the v5.0.0
- * acronym batch.
+ * Drifted identifiers that are PUBLIC exports of published packages, waiting on a major to rename.
  *
- * This list is deliberately separate from {@link ALLOWED}: an allowed identifier is correct forever, a deferred one is a
- * rename we owe. Emptying this list is a task for the next major version bump; nothing should be MOVED here from a
- * fresh violation, only added when a genuinely new public export is discovered to predate the check.
+ * Empty, and the check is stricter for it: with nothing deferred, every violation this reports is one a contributor can
+ * fix in the commit that introduced it. Add an entry only for an export that PREDATES this check — a fresh violation
+ * gets renamed, not recorded.
  */
-const DEFERRED = new Map<string, string>([
-	["Nuts", "@mailwoman/annotations — public interface"],
-	["NzIdentifierRule", "@mailwoman/codex/nz — public type"],
-	["NzDeliveryServiceType", "@mailwoman/codex/nz — public interface"],
-	["NzDeliveryServiceTypeName", "@mailwoman/codex/nz — public type"],
-	["NzDeliveryServiceMatchTypeName", "@mailwoman/codex/nz — public type"],
-	["NzDeliveryServiceMatch", "@mailwoman/codex/nz — public interface"],
-	["matchNzDeliveryService", "@mailwoman/codex/nz — public function"],
-	["isNzDeliveryService", "@mailwoman/codex/nz — public function"],
-	["normalizeNzDeliveryService", "@mailwoman/codex/nz — public function"],
-	["NzPostcode", "@mailwoman/codex/nz — public branded type"],
-	["normalizeNzPostcode", "@mailwoman/codex/nz — public function"],
-	["isNzPostcode", "@mailwoman/codex/nz — public function"],
-	["CrfTransitions", "@mailwoman/neural/weights — exported subpath"],
-	["readCrfTransitions", "@mailwoman/neural/weights — exported subpath"],
-	["buildNutsDB", "@mailwoman/nuts-lookup/build — exported subpath"],
-	["NutsLookup", "@mailwoman/nuts-lookup — public class"],
-	["makeNutsAnnotator", "@mailwoman/nuts-lookup — public function"],
-	["createGbtScorer", "@mailwoman/registry — re-exported from the barrel"],
-])
+const DEFERRED = new Map<string, string>()
 
 /**
  * Files the check never reads. Dated historical records are point-in-time documents — AGENTS.md is explicit that eval

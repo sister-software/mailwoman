@@ -310,7 +310,7 @@ export class NeuralAddressClassifier {
 		// builtins they reference.
 		const [
 			{ ONNXRunner },
-			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
+			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
 			{ parseCountryLexicon },
@@ -330,7 +330,7 @@ export class NeuralAddressClassifier {
 
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
-		const crf = readCrfTransitions(resolved.crfTransitionsPath)
+		const crf = readCRFTransitions(resolved.crfTransitionsPath)
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
 		// undefined).

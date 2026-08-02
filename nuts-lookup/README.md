@@ -21,12 +21,12 @@ npx @mailwoman/nuts-lookup --db nuts.db -- 52.52 13.405
 ## Library
 
 ```ts
-import { NutsLookup, makeNutsAnnotator } from "@mailwoman/nuts-lookup"
+import { NUTSLookup, makeNUTSAnnotator } from "@mailwoman/nuts-lookup"
 
-const lookup = new NutsLookup({ databasePath: "nuts.db" })
+const lookup = new NUTSLookup({ databasePath: "nuts.db" })
 lookup.find(52.52, 13.405) // { level1: "DE3", level2: "DE30", level3: "DE300" }
 
-const annotator = makeNutsAnnotator(lookup) // fills AnnotationSet.nuts (EU only; abstains elsewhere)
+const annotator = makeNUTSAnnotator(lookup) // fills AnnotationSet.nuts (EU only; abstains elsewhere)
 ```
 
 NUTS ids nest by prefix, so the lookup finds the deepest containing region and derives its parents.
