@@ -136,13 +136,15 @@ jobs:
 
           cutoff=$(date -u -d '1 hour ago' +%s)
 
-          # Every codeql overlay-base entry on the default branch, newest first, with its language.
-          # The key shape is codeql-overlay-base-database-<n>-<hash>-<language>-<version>-<sha>, so the
-          # language is field 6 when split on "-".
+          # Every codeql overlay-base entry, newest first, with its language. The key shape is
+          #   codeql-overlay-base-database-<n>-<hash>-<language>-<version>-<sha>-<runid>-1
+          #   0      1       2    3        4   5      6          7         8     9       10
+          # so the language is index 6. (Verified against real keys 2026-08-02 — an earlier draft of
+          # this plan said 5 and would have grouped by the hash instead.)
           gh api --paginate "repos/${REPO}/actions/caches" \
             --jq '.actions_caches[]
                   | select(.key | startswith("codeql-overlay-base-database-"))
-                  | [.id, .key, .ref, .last_accessed_at, (.key | split("-")[5])]
+                  | [.id, .key, .ref, .last_accessed_at, (.key | split("-")[6])]
                   | @tsv' > /tmp/codeql.tsv || true
 
           seen_langs=""
@@ -208,8 +210,16 @@ Expected: the run is green and the log lists `KEEP (newest <lang>)` lines and `D
 gh workflow run cache-prune.yml -f apply=true
 ```
 
-Run: `gh api repos/sister-software/mailwoman/actions/cache/usage`
-Expected: `active_caches_size_in_bytes` drops below 8 GB (from 10,715,161,750).
+⚠ Do NOT verify with `/actions/cache/usage` — it is eventually consistent and lagged badly here: it
+still read 10.7 GB / 77 entries immediately after 51 confirmed deletions. Sum the live listing:
+
+```bash
+gh api --paginate repos/sister-software/mailwoman/actions/caches \
+  --jq '.actions_caches[].size_in_bytes' | awk '{s+=$1} END {printf "%.0f MB\n", s/1048576}'
+gh api "repos/sister-software/mailwoman/actions/caches?per_page=1" --jq '.total_count'
+```
+
+Expected: under 8 GB (from 10.7 GB) and the codeql group down to 3 entries.
 
 - [ ] **Step 5: Confirm the yarn cache now survives**
 
