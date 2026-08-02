@@ -46,6 +46,49 @@ export interface ShardTuple {
 export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@mailwoman/core/utils"
 
 /**
+ * Split one CSV line into fields, honouring double-quoted fields and doubled-quote escapes (`""`).
+ *
+ * Six recipes each carried a byte-identical copy of this before the 2026-08-02 dedupe (two spellings that differed only
+ * by a non-null assertion). It stays hand-rolled rather than delegating to `csv-parse`: the recipes read one line at a
+ * time out of an already-streaming reader, and the dependency's per-line entry point costs more than the twenty lines
+ * it would replace.
+ */
+export function splitCSV(line: string): string[] {
+	const out: string[] = []
+	let cur = ""
+	let inQ = false
+
+	for (let i = 0; i < line.length; i++) {
+		const c = line[i]!
+
+		if (inQ) {
+			if (c === '"') {
+				if (line[i + 1] === '"') {
+					cur += '"'
+
+					i++
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
+			out.push(cur)
+			cur = ""
+		} else {
+			cur += c
+		}
+	}
+
+	out.push(cur)
+
+	return out
+}
+
+/**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
  */
 export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {

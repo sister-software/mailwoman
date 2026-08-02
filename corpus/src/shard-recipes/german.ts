@@ -20,7 +20,7 @@ import { spawnSync } from "node:child_process"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.ts"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).
@@ -40,44 +40,6 @@ const SOURCES: GermanSource[] = [
 	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
 	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
-
-/**
- * Minimal RFC-4180-ish splitter (handles quoted fields).
- */
-function splitCSV(line: string): string[] {
-	const out: string[] = []
-	let cur = ""
-	let inQ = false
-
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]!
-
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
-	}
-
-	out.push(cur)
-
-	return out
-}
 
 /**
  * Stream real German tuples out of a cached OA zip (buffered `unzip -p`).

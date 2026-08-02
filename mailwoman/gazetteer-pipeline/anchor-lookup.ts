@@ -44,7 +44,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -55,8 +55,6 @@ import { dataRootPath } from "@mailwoman/core/utils"
  */
 const GAZETTEER_ROW_COLUMNS = 7
 
-const ROUND_HALF_DIGIT = 5
-
 /**
  * Keep in sync with scripts/zcta-centroids.ts.
  */
@@ -66,96 +64,6 @@ const ZCTA_SOURCE = "census-zcta-2024"
  * (lat, lon, source): source is null when the row is a placeholder (membership only).
  */
 type Centroid = [number, number, string | null]
-
-/**
- * Increment a non-negative decimal-digit string, propagating the carry (e.g. "999" → "1000").
- */
-function incDecimalString(s: string): string {
-	const a = s.split("")
-	let i = a.length - 1
-
-	for (; i >= 0; i--) {
-		if (a[i] === "9") {
-			a[i] = "0"
-		} else {
-			a[i] = String(Number(a[i]) + 1)
-
-			break
-		}
-	}
-
-	if (i < 0) {
-		a.unshift("1")
-	}
-
-	return a.join("")
-}
-
-/**
- * Python `round()` — correctly-rounded, round-half-to-EVEN. Works off the double's EXACT (terminating) decimal
- * expansion via `toFixed(80)`, so it matches Python both on ordinary values (where a naïve `x * 10**nd` would diverge
- * by a ULP) and on exact half-way ties like `40.890625` → `40.89062` (where `toFixed(nd)` rounds half-UP and would
- * diverge). `nd === 0` keeps a fast half-even path on the double.
- */
-function pyRound(x: number, nd = 0): number {
-	if (!Number.isFinite(x)) return x
-
-	if (nd === 0) {
-		const floor = Math.floor(x)
-		const diff = x - floor
-
-		if (diff < 0.5) return floor
-
-		if (diff > 0.5) return floor + 1
-
-		return floor % 2 === 0 ? floor : floor + 1
-	}
-
-	const neg = x < 0
-	const digits = Math.abs(x).toFixed(20) // exact expansion for any coord/distance-range double
-	const dot = digits.indexOf(".")
-	const intPart = digits.slice(0, dot)
-	const frac = digits.slice(dot + 1)
-	const keep = frac.slice(0, nd)
-	const rest = frac.slice(nd)
-	let roundUp = false
-	const first = rest.charCodeAt(0) - 48
-
-	if (first > ROUND_HALF_DIGIT) {
-		roundUp = true
-	} else if (first === ROUND_HALF_DIGIT) {
-		if (/[1-9]/.test(rest.slice(1))) {
-			roundUp = true
-		} else {
-			// exact half → round to even
-			const lastKept = keep.length ? keep.charCodeAt(keep.length - 1) - 48 : Number(intPart) % 10
-			roundUp = lastKept % 2 === 1
-		}
-	}
-
-	let combined = intPart + keep
-
-	if (roundUp) {
-		combined = incDecimalString(combined)
-	}
-
-	const num = Number(combined) / 10 ** nd
-
-	return neg ? -num : num
-}
-
-/**
- * Python `float()`: trimmed empty / non-numeric → null (the load_zcta try/except skip).
- */
-function pyFloat(s: string | undefined): number | null {
-	if (s === undefined) return null
-	const t = s.trim()
-
-	if (t === "") return null
-	const n = Number(t)
-
-	return Number.isNaN(n) ? null : n
-}
 
 function fiveDigit(name: string | null | undefined): string | null {
 	const n = (name || "").trim().toUpperCase()

@@ -45,7 +45,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "../synthesize-po-box.ts"
-import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, shardSourceID, splitCSV, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
@@ -213,44 +213,6 @@ function localityHash(name: string): number {
 }
 
 const isHoldoutLocality = (name: string): boolean => localityHash(name) % 10 === 0
-
-/**
- * Minimal RFC-4180-ish splitter (handles quoted fields).
- */
-function splitCSV(line: string): string[] {
-	const out: string[] = []
-	let cur = ""
-	let inQ = false
-
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]!
-
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
-	}
-
-	out.push(cur)
-
-	return out
-}
 
 const MAX_LOCALITY_LENGTH = 40
 
