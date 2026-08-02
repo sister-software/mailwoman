@@ -219,6 +219,24 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
  * Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles).
  */
 export function loadPersonNameSurfaces(): Set<string> {
+	personNameSurfacesMemo ??= scanPersonNameSurfaces()
+
+	return personNameSurfacesMemo
+}
+
+/**
+ * Memo for {@link loadPersonNameSurfaces}.
+ *
+ * The curation inputs are static files, so this is process-lifetime — no invalidation key, unlike
+ * {@link computeSurfaceCountryCounts}, whose input is a rebuildable artifact. The FR and US locality-surface passes were
+ * each re-reading and re-folding the whole given-names + surnames + personal-titles set.
+ *
+ * The returned set is SHARED. Every caller only probes it (`clearsProminenceFloor` takes it as `ReadonlySet`); a future
+ * caller that mutates must copy first.
+ */
+let personNameSurfacesMemo: Set<string> | undefined
+
+function scanPersonNameSurfaces(): Set<string> {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
 	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
 
