@@ -1,3 +1,17 @@
 # The placetype-pair index (hierarchy campaign R9) — built from the WOF admin DB by
 # `scripts/link-dev-weights.ts` for local dev, fetched from the HF bucket at publish time.
 /pair-index-*.bin
+
+# Materialized at dev-link/publish time by scripts/link-dev-weights.ts and scripts/copy-weights.ts —
+# derived artifacts, never committed. This list was MISSING here (2026-08-02): the overlay shipped
+# with only /pair-index-*.bin, so a `copy-weights` run left an untracked ~40 MB model.onnx in the
+# workspace, one `git add -A` from landing in the repo. Keep in lockstep with
+# neural-weights-en-us/.gitignore.
+/model.onnx
+/tokenizer.model
+/postcode-*.bin
+/anchor-lexicon-v1.json
+/country-surface-lexicon-v1.json
+/fst-*.bin
+/street-type-lexicon-*.json
+/locality-surface-lexicon-*.json
