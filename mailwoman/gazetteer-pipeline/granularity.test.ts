@@ -172,6 +172,7 @@ function granularity(
 		rungs[rung] = {
 			nodes: given?.nodes ?? 0,
 			overtureBackfilled: 0,
+			geonamesBackfilled: 0,
 			parentsCovered: Math.round((given?.parentCoverage ?? 0) * localityParents),
 			parentCoverage: given?.parentCoverage ?? 0,
 		}

@@ -32,6 +32,14 @@ import { OVERTURE_ID_BASE } from "./admin/fold-overture.ts"
 import { PLACETYPE_PROJECTION } from "./placetype-census.ts"
 
 /**
+ * Synthetic id base for the GeoNames alias fold. Mirrors `GEONAMES_ID_BASE` in
+ * `@mailwoman/resolver-wof-sqlite/geonames-aliases` — duplicated rather than imported because that package is an
+ * OPTIONAL peer of `mailwoman` (the `geocode.tsx` convention: type-only imports at module level, value imports dynamic
+ * inside functions), and this module must stay importable without it.
+ */
+const GEONAMES_ID_BASE = 9_000_000_000_000
+
+/**
  * The containment rungs, shallowest first. `postcode` is deliberately absent: it is an orthogonal channel (the
  * postcode-anchor path already ships, and `postalcode` has its own build), and folding it into a depth ladder would
  * make "bottoms out at" incoherent.
@@ -84,11 +92,17 @@ export interface RungMeasurement {
 	 */
 	nodes: number
 	/**
-	 * How many of {@link nodes} are Overture-backfilled (`id >= OVERTURE_ID_BASE`) rather than real WOF. For the
-	 * 86-country backfill set the locality rung and above are partly Overture, so a report that hid this would present
-	 * self-comparison as corroboration.
+	 * How many of {@link nodes} are Overture-backfilled (`OVERTURE_ID_BASE <= id < GEONAMES_ID_BASE`) rather than real
+	 * WOF. For the Overture backfill set the locality rung and above ARE Overture, so a report that hid this would
+	 * present self-comparison as corroboration.
 	 */
 	overtureBackfilled: number
+	/**
+	 * How many of {@link nodes} come from the GeoNames alias fold (`id >= GEONAMES_ID_BASE`). Split out from
+	 * {@link overtureBackfilled} because a single `id >= OVERTURE_ID_BASE` test sweeps these in and mislabels every
+	 * GeoNames-only country's rows as Overture.
+	 */
+	geonamesBackfilled: number
 	/**
 	 * Distinct locality-class parents carrying at least one child projecting onto this rung.
 	 */
@@ -156,16 +170,18 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 				`SELECT s.country AS country,
 					${rungCaseExpression("s.placetype")} AS rung,
 					COUNT(*) AS nodes,
-					SUM(CASE WHEN s.id >= ? THEN 1 ELSE 0 END) AS overtureBackfilled
+					SUM(CASE WHEN s.id >= ? AND s.id < ? THEN 1 ELSE 0 END) AS overtureBackfilled,
+					SUM(CASE WHEN s.id >= ? THEN 1 ELSE 0 END) AS geonamesBackfilled
 				 FROM spr s
 				 WHERE ${live("s")} AND s.country != '' AND s.placetype IN (${placetypeList})
 				 GROUP BY s.country, rung`
 			)
-			.all(OVERTURE_ID_BASE) as Array<{
+			.all(OVERTURE_ID_BASE, GEONAMES_ID_BASE, GEONAMES_ID_BASE) as Array<{
 			country: string
 			rung: ComponentTag
 			nodes: number
 			overtureBackfilled: number | null
+			geonamesBackfilled: number | null
 		}>
 
 		const parentRows = db
@@ -207,7 +223,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 			const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
 			for (const rung of LADDER) {
-				rungs[rung] = { nodes: 0, overtureBackfilled: 0, parentsCovered: 0, parentCoverage: 0 }
+				rungs[rung] = { nodes: 0, overtureBackfilled: 0, geonamesBackfilled: 0, parentsCovered: 0, parentCoverage: 0 }
 			}
 
 			const row: CountryGranularity = { country, localityParents: 0, rungs }
@@ -228,6 +244,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 
 			measurement.nodes = row.nodes
 			measurement.overtureBackfilled = row.overtureBackfilled ?? 0
+			measurement.geonamesBackfilled = row.geonamesBackfilled ?? 0
 		}
 
 		for (const row of parentRows) {

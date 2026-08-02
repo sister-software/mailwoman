@@ -23,6 +23,12 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"ES",
 	"FR",
 	"GB",
+	// Added 2026-08-02 after the granularity probe. `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes —
+	// more than Germany's 67,162, the richest tier shipped before this — converting at 98.6% into 186,469 (child,
+	// parent) pairs, against Overture-IN's 74,920 nodes. That is 6× the shipped GB pair index, which took eight
+	// campaign rungs to assemble. IN moves OUT of DEFAULT_OVERTURE_COUNTRIES in the same change: a country served by
+	// both would double up its admin (the #267 warning).
+	"IN",
 	"IT",
 	"JP",
 	"KR",
@@ -72,7 +78,7 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 	"ID",
 	"IE",
 	"IL",
-	"IN",
+	// "IN" moved to DEFAULT_WOF_PRIORITY_COUNTRIES 2026-08-02 — see the note there.
 	"IQ",
 	"IR",
 	"IS",
