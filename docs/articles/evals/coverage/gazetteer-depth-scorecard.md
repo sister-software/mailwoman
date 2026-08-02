@@ -5,11 +5,11 @@ gazetteer bottoms out — node counts per containment rung, and for the sub-loca
 parent-coverage share (the fraction of the country's locality-class nodes carrying at least one
 child projecting onto that rung).
 
-- **Source:** `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db` (md5 `f639aa52197ba0127fbfd4383c749223`)
-- **Built:** 2026-08-02T04:53:37.857Z
+- **Source:** `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db` (md5 `515beab21eaaea13f77defc6afd9374d`)
+- **Built:** 2026-08-02T07:19:40.101Z
 - **Parent-coverage floor:** 5.0% — a sub-locality rung counts as reached only above this.
 - **Countries measured:** 244
-- **Countries built from a cloned WOF repo:** 11 — the rest came from Overture divisions or the GeoNames alias fold.
+- **Countries built from a cloned WOF repo:** 12 — the rest came from Overture divisions or the GeoNames alias fold.
 - **Countries reaching `dependent_locality`:** 4
 
 ## Read the `source` column first
@@ -148,7 +148,7 @@ still Overture or GeoNames, and its rungs say nothing about WOF yet.
 | IE | overture | locality | 3,230 | 1 (100.0% ovt) | 26 (100.0% ovt) | 0 | 3,230 (100.0% ovt) | 0 | 0 | 0 |
 | IL | overture | locality | 1,361 | 1 (100.0% ovt) | 6 (100.0% ovt) | 14 (100.0% ovt) | 1,361 (100.0% ovt) | 0 | 0 | 0 |
 | IM | geonames | locality | 43 | 1 (100.0% gn) | 24 (100.0% gn) | 0 | 43 (100.0% gn) | 0 | 0 | 0 |
-| IN | overture (rebuild pending) | locality | 282,992 | 1 (100.0% ovt) | 37 (100.0% ovt) | 781 (100.0% ovt) | 282,992 (100.0% ovt) | 0 | 0 | 0 |
+| IN | wof-repo | locality | 915,063 | 1 | 37 | 641 | 915,063 | 88,142 | 0 | 0 |
 | IQ | overture | locality | 13,328 | 1 (100.0% ovt) | 19 (100.0% ovt) | 129 (100.0% ovt) | 13,328 (100.0% ovt) | 0 | 0 | 0 |
 | IR | overture | locality | 50,278 | 1 (100.0% ovt) | 31 (100.0% ovt) | 480 (100.0% ovt) | 50,278 (100.0% ovt) | 0 | 0 | 0 |
 | IS | overture | locality | 131 | 1 (100.0% ovt) | 8 (100.0% ovt) | 61 (100.0% ovt) | 131 (100.0% ovt) | 0 | 0 | 0 |

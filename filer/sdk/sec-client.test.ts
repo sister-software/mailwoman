@@ -27,16 +27,15 @@ import {
 	maxCountInSlidingWindow,
 	VirtualClock,
 } from "@mailwoman/core/api/test-clocks"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+// `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceErrorShape`). The value arrives
+// via the post-reset dynamic import below; a `const` carries no type side, so the type position needs its own static
+// import. Type-only, so it never evaluates the mocked module chain.
+import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import {
-	createSECClient,
-	isImmutableArchiveURL,
-	isTransientResourceError,
-	ResourceError,
-	SEC_DEFAULT_REQUESTS_PER_SECOND,
-	SEC_MAX_REQUESTS_PER_SECOND,
-} from "./sec-client.ts"
+// NOTE: `./sec-client.ts` is imported DYNAMICALLY below, after `vi.resetModules()` — see the
+// shared-graph guard under the env mock. A static import here would bind the module before the reset
+// and reintroduce the flake this file used to carry.
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — the repo's
 // real `.env` already sets `SEC_EDGAR_USER_AGENT`, so `vi.stubEnv` alone can't hide it (see
@@ -51,6 +50,27 @@ vi.mock("@mailwoman/core/env", async (importOriginal) => {
 		$private: { ...actual.$private, SEC_EDGAR_USER_AGENT: undefined },
 	}
 })
+
+// Shared-graph guard, mirroring `bdc/sdk/client.test.ts`: the root vitest config runs `isolate: false`, so
+// `./sec-client.ts` may ALREADY sit in the worker's cache — evaluated WITHOUT this file's `@mailwoman/core/env` mock by
+// an earlier file (a cached module never re-evaluates, and `vi.mock` factories are only consulted at evaluation). Reset
+// on the way in so the chain re-evaluates against the mock, and on the way out so the NEXT file in this fork never
+// inherits our mocked env module.
+//
+// Without this the UA fail-fast test passes in isolation and in a serialized run, then fails whenever unrelated test
+// files shift the worker's scheduling — which is exactly how it surfaced (2026-08-02), long after it was introduced.
+vi.resetModules()
+afterAll(() => vi.resetModules())
+
+// Dynamic imports AFTER the reset so the module chain evaluates against the env mock.
+const {
+	createSECClient,
+	isImmutableArchiveURL,
+	isTransientResourceError,
+	ResourceError,
+	SEC_DEFAULT_REQUESTS_PER_SECOND,
+	SEC_MAX_REQUESTS_PER_SECOND,
+} = await import("./sec-client.ts")
 
 const TEST_USER_AGENT = "Test Harness test@example.com"
 
@@ -250,7 +270,7 @@ describe("createSECClient: host allowlist", () => {
 			.catch((error: unknown) => error)
 
 		expect(caught).toBeInstanceOf(ResourceError)
-		expect((caught as ResourceError).status).toBe(400)
+		expect((caught as ResourceErrorShape).status).toBe(400)
 		expect(isTransientResourceError(caught)).toBe(false)
 		expect((caught as Error).message).toMatch(/SEC EDGAR hosts/)
 		expect(transport.calls).toHaveLength(0)
@@ -522,7 +542,7 @@ describe("createSECClient: getDocument (3b task 0 — the raw-text path get() ca
 		const caught = await client.getDocument(archiveURL).catch((error: unknown) => error)
 
 		expect(caught).toBeInstanceOf(ResourceError)
-		expect((caught as ResourceError).status).toBe(403)
+		expect((caught as ResourceErrorShape).status).toBe(403)
 		expect((caught as Error).message).toMatch(/did NOT identify itself/i)
 	})
 
@@ -684,7 +704,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 		const caught = await client.get("https://data.sec.gov/retry-ceiling-test.json").catch((error: unknown) => error)
 
 		expect(caught).toBeInstanceOf(ResourceError)
-		expect((caught as ResourceError).status).toBe(503)
+		expect((caught as ResourceErrorShape).status).toBe(503)
 		expect(transport.calls).toHaveLength(2)
 	})
 
@@ -702,7 +722,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 		const caught = await client.get("https://www.sec.gov/files/company_tickers.json").catch((error: unknown) => error)
 
 		expect(caught).toBeInstanceOf(ResourceError)
-		expect((caught as ResourceError).status).toBe(403)
+		expect((caught as ResourceErrorShape).status).toBe(403)
 		expect((caught as Error).message).toMatch(/did NOT identify itself/i)
 		expect((caught as Error).message).toContain(TEST_USER_AGENT)
 		expect(transport.calls).toHaveLength(1)
@@ -723,7 +743,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 			.get("https://data.sec.gov/submissions/CIK9999999999.json")
 			.catch((error: unknown) => error)
 
-		expect((caught as ResourceError).status).toBe(404)
+		expect((caught as ResourceErrorShape).status).toBe(404)
 		expect(transport.calls).toHaveLength(1)
 	})
 
@@ -827,21 +847,21 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 	it("404 → skip this filing", async () => {
 		const error = await failureFor([{ status: 404, statusText: "Not Found" }])
 
-		expect((error as ResourceError).status).toBe(404)
+		expect((error as ResourceErrorShape).status).toBe(404)
 		expect(isTransientResourceError(error)).toBe(false)
 	})
 
 	it("403 → abort the run", async () => {
 		const error = await failureFor([{ status: 403, statusText: "Forbidden" }])
 
-		expect((error as ResourceError).status).toBe(403)
+		expect((error as ResourceErrorShape).status).toBe(403)
 		expect(isTransientResourceError(error)).toBe(false)
 	})
 
 	it("exhausted 429 → requeue", async () => {
 		const error = await failureFor([{ status: 429, statusText: "Too Many Requests" }])
 
-		expect((error as ResourceError).status).toBe(429)
+		expect((error as ResourceErrorShape).status).toBe(429)
 		expect(isTransientResourceError(error)).toBe(true)
 	})
 

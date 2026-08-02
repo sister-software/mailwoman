@@ -203,7 +203,7 @@
 {"child": "Amwell Hill", "parent": "Great Amwell"}
 {"child": "Anchor", "parent": "Newcastle on Clun"}
 {"child": "Ancoats", "parent": "Manchester"}
-{"child": "Ancton", "parent": "Middleton-On-Sea"}
+{"child": "Ancton", "parent": "Middleton-on-Sea"}
 {"child": "Anderby Creek", "parent": "Anderby"}
 {"child": "Anderston", "parent": "Glasgow"}
 {"child": "Anderton", "parent": "Northwich"}
@@ -427,7 +427,7 @@
 {"child": "Ayton", "parent": "West Ayton"}
 {"child": "Aztec West", "parent": "Patchway"}
 {"child": "Babbacombe", "parent": "Torquay"}
-{"child": "Babel", "parent": "Llanfair-ar-y-Bryn"}
+{"child": "Babel", "parent": "Llanfair-ar-y-bryn"}
 {"child": "Babeny", "parent": "Widecombe in the Moor"}
 {"child": "Baberton", "parent": "Edinburgh"}
 {"child": "Babingley", "parent": "Sandringham"}
@@ -564,7 +564,7 @@
 {"child": "Barras", "parent": "Stainmore"}
 {"child": "Barrasford", "parent": "Chollerton"}
 {"child": "Barrow Common", "parent": "Barrow Gurney"}
-{"child": "Barrow Haven", "parent": "Barrow Upon Humber"}
+{"child": "Barrow Haven", "parent": "Barrow upon Humber"}
 {"child": "Barrow Hill", "parent": "Staveley"}
 {"child": "Barrow Nook", "parent": "Rainford"}
 {"child": "Barrow upon Trent", "parent": "Shobnall"}
@@ -574,7 +574,7 @@
 {"child": "Barsby", "parent": "Gaddesby"}
 {"child": "Barsham", "parent": "Marsham"}
 {"child": "Barstable", "parent": "Basildon"}
-{"child": "Barston", "parent": "Barton-On-The-Heath"}
+{"child": "Barston", "parent": "Barton-on-the-Heath"}
 {"child": "Bartley", "parent": "Copythorne"}
 {"child": "Bartley Green", "parent": "Birmingham"}
 {"child": "Barton", "parent": "Downholland"}
@@ -650,7 +650,7 @@
 {"child": "Bearwood", "parent": "Smethwick"}
 {"child": "Beauchamp Roding", "parent": "Abbess Beauchamp and Berners Roding"}
 {"child": "Beauchief", "parent": "Sheffield"}
-{"child": "Beaumont", "parent": "Thorpe-Le-Soken"}
+{"child": "Beaumont", "parent": "Thorpe-le-Soken"}
 {"child": "Beaumont Leys", "parent": "Leicester"}
 {"child": "Beausale", "parent": "Kenilworth"}
 {"child": "Bebington", "parent": "Birkenhead"}
@@ -888,11 +888,10 @@
 {"child": "Birstall Smithies", "parent": "Dewsbury"}
 {"child": "Birthorpe", "parent": "Billingborough"}
 {"child": "Birtle", "parent": "Rochdale"}
-{"child": "Biscathorpe", "parent": "Gayton Le Wold"}
+{"child": "Biscathorpe", "parent": "Gayton le Wold"}
 {"child": "Bishop Monkton Moor", "parent": "Bishop Monkton"}
 {"child": "Bishop Sutton", "parent": "Stowey-Sutton"}
 {"child": "Bishop's Wood", "parent": "Blymhill and Weston-Under-Lizard"}
-{"child": "Bishopbriggs", "parent": "East Dunbartonshire"}
 {"child": "Bishopdown", "parent": "Salisbury"}
 {"child": "Bishops Frome", "parent": "Bishop's Frome"}
 {"child": "Bishops Green", "parent": "Ashford Hill with Headley"}
@@ -1158,7 +1157,7 @@
 {"child": "Bourton", "parent": "Much Wenlock"}
 {"child": "Bourton", "parent": "Wick St. Lawrence"}
 {"child": "Bourton on Dunsmore", "parent": "Bourton and Draycote"}
-{"child": "Boustead Hill", "parent": "Burgh By Sands"}
+{"child": "Boustead Hill", "parent": "Burgh by Sands"}
 {"child": "Bouth", "parent": "Bolton"}
 {"child": "Bouth", "parent": "Colton"}
 {"child": "Bouthwaite", "parent": "Fountains Earth"}
@@ -1327,7 +1326,7 @@
 {"child": "Bridgend", "parent": "Newton and Noss"}
 {"child": "Bridgeton", "parent": "Glasgow"}
 {"child": "Bridgetown", "parent": "Exton"}
-{"child": "Bridgetown", "parent": "Stratford-Upon-Avon"}
+{"child": "Bridgetown", "parent": "Stratford-upon-Avon"}
 {"child": "Bridgeyate", "parent": "Wick and Abson"}
 {"child": "Briercliffe", "parent": "Roecliffe"}
 {"child": "Brierley", "parent": "Bradford"}
@@ -1445,7 +1444,7 @@
 {"child": "Brookside", "parent": "Stirchley and Brookside"}
 {"child": "Brookthorpe", "parent": "Brookthorpe-With-Whaddon"}
 {"child": "Brookwood", "parent": "Woking"}
-{"child": "Broom", "parent": "Bidford-On-Avon"}
+{"child": "Broom", "parent": "Bidford-on-Avon"}
 {"child": "Broom", "parent": "Southill"}
 {"child": "Broom Hill", "parent": "Bristol"}
 {"child": "Broom Hill", "parent": "Holt"}
@@ -1583,7 +1582,7 @@
 {"child": "Bulwell Forest", "parent": "Nottingham"}
 {"child": "Bumble's Green", "parent": "Nazeing"}
 {"child": "Bunkers Hill", "parent": "Shipton-On-Cherwell and Thrupp"}
-{"child": "Bunkers Hill", "parent": "Thornton Le Fen"}
+{"child": "Bunkers Hill", "parent": "Thornton le Fen"}
 {"child": "Bunyions Lye", "parent": "Church Stretton"}
 {"child": "Burchett's Green", "parent": "Bisham"}
 {"child": "Burcot", "parent": "Berinsfield"}
@@ -1701,7 +1700,6 @@
 {"child": "Bythorn", "parent": "Bythorn and Keyston"}
 {"child": "Byworth", "parent": "Petworth"}
 {"child": "Cackle Street", "parent": "Maresfield"}
-{"child": "Cadder", "parent": "East Dunbartonshire"}
 {"child": "Cade Street", "parent": "Heathfield and Waldron"}
 {"child": "Cadeby", "parent": "Careby Aunby and Holywell"}
 {"child": "Cadeby Hall", "parent": "Wyham Cum Cadeby"}
@@ -1774,7 +1772,6 @@
 {"child": "Cambois", "parent": "East Bedlington"}
 {"child": "Cambridge", "parent": "Otley"}
 {"child": "Cambrose", "parent": "Portreath"}
-{"child": "Cambuslang", "parent": "South Lanarkshire"}
 {"child": "Came", "parent": "Cam"}
 {"child": "Camels Head", "parent": "Plymouth"}
 {"child": "Camelsdale", "parent": "Linchmere"}
@@ -2287,7 +2284,6 @@
 {"child": "Clarendon", "parent": "Clarendon Park"}
 {"child": "Clarendon Palace", "parent": "Clarendon Park"}
 {"child": "Clarendon Park", "parent": "Leicester"}
-{"child": "Clarkston", "parent": "East Renfrewshire"}
 {"child": "Clase", "parent": "Mynyddbach"}
 {"child": "Clatterford End", "parent": "Fyfield"}
 {"child": "Claughton", "parent": "Birkenhead"}
@@ -2298,7 +2294,7 @@
 {"child": "Clawdd-newydd", "parent": "Derwen"}
 {"child": "Clawdd-newydd", "parent": "Gwyddelwern"}
 {"child": "Clawddcoch", "parent": "Pendoylan"}
-{"child": "Clawthorpe", "parent": "Burton-In-Kendal"}
+{"child": "Clawthorpe", "parent": "Burton-in-Kendal"}
 {"child": "Clay Bottom", "parent": "Bristol"}
 {"child": "Clay Common", "parent": "Frostenden"}
 {"child": "Clay Hill", "parent": "Bristol"}
@@ -2309,7 +2305,7 @@
 {"child": "Clayton", "parent": "Manchester"}
 {"child": "Clayton", "parent": "Newcastle under Lyme"}
 {"child": "Clayton", "parent": "Pyecombe"}
-{"child": "Clayton Brook", "parent": "Clayton-Le-Woods"}
+{"child": "Clayton Brook", "parent": "Clayton-le-Woods"}
 {"child": "Clayton Heights", "parent": "Bradford"}
 {"child": "Clayton West", "parent": "Denby Dale"}
 {"child": "Clayton le Moors", "parent": "Accrington"}
@@ -2706,7 +2702,7 @@
 {"child": "Croespenmaen", "parent": "Penmaen"}
 {"child": "Croesyceilog", "parent": "Llandyfaelog"}
 {"child": "Croft", "parent": "Croft and Yarpole"}
-{"child": "Croft", "parent": "Croft-On-Tees"}
+{"child": "Croft", "parent": "Croft-on-Tees"}
 {"child": "Croftfoot", "parent": "Glasgow"}
 {"child": "Crofton", "parent": "Great Bedwyn"}
 {"child": "Crofton West Yorks", "parent": "Crofton"}
@@ -2887,7 +2883,7 @@
 {"child": "Cymdda", "parent": "St. Bride's Minor"}
 {"child": "Cymer", "parent": "Glyncorrwg"}
 {"child": "Cyncoed", "parent": "Cardiff"}
-{"child": "Cynghordy", "parent": "Llanfair-ar-y-Bryn"}
+{"child": "Cynghordy", "parent": "Llanfair-ar-y-bryn"}
 {"child": "Cynheidre", "parent": "Llanelli"}
 {"child": "Cynheidre", "parent": "Llanelli Rural"}
 {"child": "Cynllwyd Uchaf", "parent": "Llanuwchllyn"}
@@ -2920,7 +2916,7 @@
 {"child": "Danby Wiske", "parent": "Danby Wiske with Lazenby"}
 {"child": "Dancersend", "parent": "Aston Clinton"}
 {"child": "Dancersend", "parent": "Buckland"}
-{"child": "Dandderwen", "parent": "Mynachlog-Ddu"}
+{"child": "Dandderwen", "parent": "Mynachlog-ddu"}
 {"child": "Dane Bank", "parent": "Ashton under Lyne"}
 {"child": "Dane End", "parent": "Little Munden"}
 {"child": "Dane Hills", "parent": "Leicester"}
@@ -3077,7 +3073,7 @@
 {"child": "Doe Lea", "parent": "Ault Hucknall"}
 {"child": "Dog and Gun", "parent": "Liverpool"}
 {"child": "Dogsthorpe", "parent": "Peterborough"}
-{"child": "Dol-y-Gaer", "parent": "Talybont-On-Usk"}
+{"child": "Dol-y-Gaer", "parent": "Talybont-on-Usk"}
 {"child": "Dolanog", "parent": "Llanfihangel"}
 {"child": "Dolau", "parent": "Nantmel"}
 {"child": "Dolau", "parent": "Penybont"}
@@ -3271,7 +3267,7 @@
 {"child": "Earlswood", "parent": "Greasley"}
 {"child": "Earlswood", "parent": "Painscastle"}
 {"child": "Earlswood", "parent": "Redhill"}
-{"child": "Earlswood", "parent": "Tanworth-In-Arden"}
+{"child": "Earlswood", "parent": "Tanworth-in-Arden"}
 {"child": "Earsdon", "parent": "Shiremoor"}
 {"child": "Eashing", "parent": "Peper Harow"}
 {"child": "Eashing", "parent": "Shackleford"}
@@ -3432,7 +3428,7 @@
 {"child": "Eaton Mascott", "parent": "Acton Scott"}
 {"child": "Eaton Socon", "parent": "St. Neots"}
 {"child": "Eaton Wick", "parent": "Eton"}
-{"child": "Eaton on Tern", "parent": "Stoke Upon Tern"}
+{"child": "Eaton on Tern", "parent": "Stoke upon Tern"}
 {"child": "Ebberley", "parent": "Roborough"}
 {"child": "Ebberston", "parent": "Ebberston and Yedingham"}
 {"child": "Ebbsfleet", "parent": "Minster"}
@@ -3522,7 +3518,7 @@
 {"child": "Elmdale", "parent": "Chepstow"}
 {"child": "Elmdon", "parent": "Weldon"}
 {"child": "Elmdon Heath", "parent": "Solihull"}
-{"child": "Elmer", "parent": "Middleton-On-Sea"}
+{"child": "Elmer", "parent": "Middleton-on-Sea"}
 {"child": "Elmhurst", "parent": "Farewell and Chorley"}
 {"child": "Elmley", "parent": "Minster on Sea"}
 {"child": "Elmley", "parent": "Minster-On-Sea"}
@@ -4133,7 +4129,6 @@
 {"child": "Gib Heath", "parent": "Birmingham"}
 {"child": "Gibbet Hill", "parent": "Kenilworth"}
 {"child": "Gibbons Down", "parent": "Barry"}
-{"child": "Giffnock", "parent": "East Renfrewshire"}
 {"child": "Gigg Mill", "parent": "Nailsworth"}
 {"child": "Gileston", "parent": "St. Athan"}
 {"child": "Gilfach", "parent": "Bargoed"}
@@ -4155,7 +4150,7 @@
 {"child": "Giltbrook", "parent": "Greasley"}
 {"child": "Gilwern", "parent": "Llanelly"}
 {"child": "Ginge", "parent": "West Hendred"}
-{"child": "Gipsey Bridge", "parent": "Thornton Le Fen"}
+{"child": "Gipsey Bridge", "parent": "Thornton le Fen"}
 {"child": "Gipsyville", "parent": "Kingston Upon Hull"}
 {"child": "Gipton", "parent": "Leeds"}
 {"child": "Gipton Wood", "parent": "Leeds"}
@@ -5185,7 +5180,7 @@
 {"child": "Hipperholme", "parent": "Brighouse"}
 {"child": "Hipsburn", "parent": "Lesbury"}
 {"child": "Hiraethog", "parent": "Clocaenog"}
-{"child": "Hirnant", "parent": "Pen-y-Bont-Fawr"}
+{"child": "Hirnant", "parent": "Pen-y-bont-fawr"}
 {"child": "Hoarwithy", "parent": "Hentland"}
 {"child": "Hobson", "parent": "Burnopfield"}
 {"child": "Hoby", "parent": "Hoby with Rotherby"}
@@ -5195,7 +5190,7 @@
 {"child": "Hodgehill", "parent": "Birmingham"}
 {"child": "Hodgeston", "parent": "Lamphey"}
 {"child": "Hodson", "parent": "Chiseldon"}
-{"child": "Hoe Hill", "parent": "Barton-Upon-Humber"}
+{"child": "Hoe Hill", "parent": "Barton-upon-Humber"}
 {"child": "Hoel-galed", "parent": "Manordeilo and Salem"}
 {"child": "Hoel-galed", "parent": "Salem"}
 {"child": "Hogganfield", "parent": "Glasgow"}
@@ -5254,7 +5249,7 @@
 {"child": "Holme VIllage", "parent": "Bradford"}
 {"child": "Holme Wood", "parent": "Bradford"}
 {"child": "Holme on the Wolds", "parent": "Dalton Holme"}
-{"child": "Holme-on-Spalding-Moor", "parent": "Holme Upon Spalding Moor"}
+{"child": "Holme-on-Spalding-Moor", "parent": "Holme upon Spalding Moor"}
 {"child": "Holmer Green", "parent": "Little Missenden"}
 {"child": "Holmeswood", "parent": "Tarleton"}
 {"child": "Holmfield", "parent": "Bradford"}
@@ -5300,7 +5295,7 @@
 {"child": "Honnington", "parent": "Northwich"}
 {"child": "Hoo", "parent": "Hoo St Werburgh"}
 {"child": "Hoo", "parent": "Hoo St. Werburgh"}
-{"child": "Hoo", "parent": "Preston Upon the Weald Moors"}
+{"child": "Hoo", "parent": "Preston upon the Weald Moors"}
 {"child": "Hoo Meavy", "parent": "Shaugh Prior"}
 {"child": "Hooe", "parent": "Wembury"}
 {"child": "Hooe Common", "parent": "Herstmonceux"}
@@ -5774,7 +5769,7 @@
 {"child": "Kingswood", "parent": "Lapworth"}
 {"child": "Kingswood", "parent": "Manley"}
 {"child": "Kingswood", "parent": "Redhill"}
-{"child": "Kingswood", "parent": "Wotton-Under-Edge"}
+{"child": "Kingswood", "parent": "Wotton-under-Edge"}
 {"child": "Kingswood Manor", "parent": "Redhill"}
 {"child": "Kingswood Warren", "parent": "Epsom"}
 {"child": "Kingthorpe", "parent": "Bardney"}
@@ -5893,7 +5888,7 @@
 {"child": "Laira", "parent": "Plymouth"}
 {"child": "Laisterdyke", "parent": "Bradford"}
 {"child": "Laity Moor", "parent": "St. Gluvias"}
-{"child": "Lake Side", "parent": "Staveley-In-Cartmel"}
+{"child": "Lake Side", "parent": "Staveley-in-Cartmel"}
 {"child": "Lakeland", "parent": "North Bovey"}
 {"child": "Lakenham", "parent": "Norwich"}
 {"child": "Laleham", "parent": "Staines-Upon-Thames"}
@@ -6062,7 +6057,7 @@
 {"child": "Lemington", "parent": "Newcastle Upon Tyne"}
 {"child": "Lemmington Hall", "parent": "Edlingham"}
 {"child": "Lenham Heath", "parent": "Charing"}
-{"child": "Lennel", "parent": "Cornhill-On-Tweed"}
+{"child": "Lennel", "parent": "Cornhill-on-tweed"}
 {"child": "Lenton", "parent": "Nottingham"}
 {"child": "Lenton Abbey", "parent": "Nottingham"}
 {"child": "Lenwade", "parent": "Great Witchingham"}
@@ -6277,7 +6272,7 @@
 {"child": "Little Wymondley", "parent": "Wymondley"}
 {"child": "Littlebeck", "parent": "Eskdaleside Cum Ugglebarnby"}
 {"child": "Littleborough", "parent": "Rochdale"}
-{"child": "Littleborough", "parent": "Sturton Le Steeple"}
+{"child": "Littleborough", "parent": "Sturton le Steeple"}
 {"child": "Littlebury Green", "parent": "Littlebury"}
 {"child": "Littlecote", "parent": "Dunton"}
 {"child": "Littlecote", "parent": "Littlemore"}
@@ -6350,12 +6345,12 @@
 {"child": "Llandeilo'r Fan", "parent": "Maescar"}
 {"child": "Llandeloy", "parent": "Brawdy"}
 {"child": "Llandenny", "parent": "Raglan"}
-{"child": "Llandetty Hall", "parent": "Talybont-On-Usk"}
+{"child": "Llandetty Hall", "parent": "Talybont-on-Usk"}
 {"child": "Llandgadog", "parent": "Llangrannog"}
 {"child": "Llandogo", "parent": "Trellech United"}
 {"child": "Llandowror", "parent": "Llanddowror"}
 {"child": "Llandre", "parent": "Llanyre"}
-{"child": "Llandrillo-yn-Rhôs", "parent": "Rhos-On-Sea"}
+{"child": "Llandrillo-yn-Rhôs", "parent": "Rhos-on-Sea"}
 {"child": "Llandudno Junction", "parent": "Conwy"}
 {"child": "Llandulas", "parent": "Llangamarch"}
 {"child": "Llandyfrydog", "parent": "Rhosybol"}
@@ -6421,7 +6416,7 @@
 {"child": "Llangewydd", "parent": "Laleston"}
 {"child": "Llangian", "parent": "Llanengan"}
 {"child": "Llanglydwen", "parent": "Llanboidy"}
-{"child": "Llangolman", "parent": "Mynachlog-Ddu"}
+{"child": "Llangolman", "parent": "Mynachlog-ddu"}
 {"child": "Llangorwen", "parent": "Llangywer"}
 {"child": "Llangower", "parent": "Llangywer"}
 {"child": "Llangranog", "parent": "Llangrannog"}
@@ -6464,7 +6459,7 @@
 {"child": "Llansaintffraid", "parent": "Llansantffraed"}
 {"child": "Llansaintfraed in Elvel", "parent": "Glascwm"}
 {"child": "Llansamlet Community", "parent": "Llansamlet"}
-{"child": "Llansantffraed", "parent": "Talybont-On-Usk"}
+{"child": "Llansantffraed", "parent": "Talybont-on-Usk"}
 {"child": "Llansantffraid-ym-Mechain", "parent": "Llansantffraid"}
 {"child": "Llanshay", "parent": "Llanharry"}
 {"child": "Llansoar", "parent": "Llangwm"}
@@ -6491,7 +6486,7 @@
 {"child": "Llanwonno", "parent": "Ynysybwl and Coed-y-Cwm"}
 {"child": "Llanwrin", "parent": "Glantwymyn"}
 {"child": "Llanwrtyd", "parent": "Llanwrtyd Wells"}
-{"child": "Llanwysg", "parent": "Talybont-On-Usk"}
+{"child": "Llanwysg", "parent": "Talybont-on-Usk"}
 {"child": "Llanybri", "parent": "Llansteffan"}
 {"child": "Llanycefn", "parent": "Maenclochog"}
 {"child": "Llanychaer", "parent": "Cwm Gwaun"}
@@ -6605,7 +6600,7 @@
 {"child": "Lorbottle", "parent": "Callaly"}
 {"child": "Lordens Hill", "parent": "Dinnington St. John's"}
 {"child": "Lordington", "parent": "Stoughton"}
-{"child": "Lostford", "parent": "Stoke Upon Tern"}
+{"child": "Lostford", "parent": "Stoke upon Tern"}
 {"child": "Lostock", "parent": "Bolton"}
 {"child": "Lostock Hall", "parent": "Farington"}
 {"child": "Lostock Junction", "parent": "Bolton"}
@@ -7009,7 +7004,7 @@
 {"child": "Marsh Lane", "parent": "Eckington"}
 {"child": "Marsh Mills", "parent": "Plymouth"}
 {"child": "Marsh Top", "parent": "Oxenhope"}
-{"child": "Marshall Meadows", "parent": "Berwick-Upon-Tweed"}
+{"child": "Marshall Meadows", "parent": "Berwick-upon-Tweed"}
 {"child": "Marshalls Cross", "parent": "St Helens"}
 {"child": "Marshalswick", "parent": "Sandridge"}
 {"child": "Marshaw", "parent": "Over Wyresdale"}
@@ -7211,7 +7206,7 @@
 {"child": "Midhopestones", "parent": "Bradfield"}
 {"child": "Milbourne", "parent": "Ponteland"}
 {"child": "Milbury Heath", "parent": "Thornbury"}
-{"child": "Milcote Hall", "parent": "Stratford-Upon-Avon"}
+{"child": "Milcote Hall", "parent": "Stratford-upon-Avon"}
 {"child": "Mile End", "parent": "Myland"}
 {"child": "Mile Oak", "parent": "Brenchley"}
 {"child": "Mile Oak", "parent": "Southwick"}
@@ -7464,7 +7459,7 @@
 {"child": "Mydroilin", "parent": "Llanllwchaiarn"}
 {"child": "Mylor Bridge", "parent": "Mylor"}
 {"child": "Mynachdy", "parent": "Cardiff"}
-{"child": "Mynachlogddu", "parent": "Mynachlog-Ddu"}
+{"child": "Mynachlogddu", "parent": "Mynachlog-ddu"}
 {"child": "Mynydd Bodafon", "parent": "Llanddyfnan"}
 {"child": "Mynydd Llandygai", "parent": "Llandygai"}
 {"child": "Mynydd Nefyn", "parent": "Nefyn"}
@@ -7490,7 +7485,7 @@
 {"child": "Nanpantan", "parent": "Loughborough"}
 {"child": "Nanpean", "parent": "St. Stephen-In-Brannel"}
 {"child": "Nanstallon", "parent": "Lanivet"}
-{"child": "Nant Bwlch Yr Haiarn", "parent": "Betws-y-Coed"}
+{"child": "Nant Bwlch Yr Haiarn", "parent": "Betws-y-coed"}
 {"child": "Nant Ffrancon", "parent": "Capel Curig"}
 {"child": "Nant Gwynant", "parent": "Beddgelert"}
 {"child": "Nant Peris", "parent": "Llanberis"}
@@ -7637,7 +7632,7 @@
 {"child": "New Silksworth", "parent": "Sunderland"}
 {"child": "New Springs", "parent": "Wigan"}
 {"child": "New Sprowston", "parent": "Norwich"}
-{"child": "New Stanton", "parent": "Stanton By Dale"}
+{"child": "New Stanton", "parent": "Stanton by Dale"}
 {"child": "New Totley", "parent": "Sheffield"}
 {"child": "New Town", "parent": "Addingham"}
 {"child": "New Town", "parent": "Dartford"}
@@ -7678,7 +7673,7 @@
 {"child": "Newby", "parent": "Clapham Cum Newby"}
 {"child": "Newby", "parent": "Newby and Scalby"}
 {"child": "Newby", "parent": "Wetheral"}
-{"child": "Newby Bridge", "parent": "Staveley-In-Cartmel"}
+{"child": "Newby Bridge", "parent": "Staveley-in-Cartmel"}
 {"child": "Newby Head", "parent": "Ingleton"}
 {"child": "Newcastle", "parent": "Llangattock-Vibon-Avel"}
 {"child": "Newcastle Great Park", "parent": "Newcastle Upon Tyne"}
@@ -7751,7 +7746,7 @@
 {"child": "Newton in Makerfield", "parent": "St Helens"}
 {"child": "Newton on the Moor", "parent": "Newton-On-The-Moor and Swarland"}
 {"child": "Newton under Roseberry", "parent": "Guisborough"}
-{"child": "Newton upon Ouse", "parent": "Newton-On-Ouse"}
+{"child": "Newton upon Ouse", "parent": "Newton-on-Ouse"}
 {"child": "Newton with Scales", "parent": "Newton-With-Clifton"}
 {"child": "Newton-le-Willows", "parent": "St Helens"}
 {"child": "Newton-on-Rawcliffe", "parent": "Levisham"}
@@ -7778,7 +7773,6 @@
 {"child": "Ninham", "parent": "Newchurch"}
 {"child": "Niton", "parent": "Niton and Whitwell"}
 {"child": "Niton Undercliff", "parent": "Ventnor"}
-{"child": "Nitshill", "parent": "East Renfrewshire"}
 {"child": "No Man's Heath", "parent": "Hampton"}
 {"child": "No Man's Heath", "parent": "Stretton En Le Field"}
 {"child": "No Mans Land Looe", "parent": "St. Martin-By-Looe"}
@@ -7797,7 +7791,7 @@
 {"child": "Norland Town", "parent": "Elland"}
 {"child": "Norleywood", "parent": "Boldre"}
 {"child": "Norman Cross", "parent": "Yaxley"}
-{"child": "Normanby", "parent": "Burton Upon Stather"}
+{"child": "Normanby", "parent": "Burton upon Stather"}
 {"child": "Normanby", "parent": "Guisborough"}
 {"child": "Normanby", "parent": "Saxby"}
 {"child": "Normans Bay", "parent": "Bexhill"}
@@ -8060,7 +8054,7 @@
 {"child": "Old Tebay", "parent": "Tebay"}
 {"child": "Old Town", "parent": "Eastbourne"}
 {"child": "Old Town", "parent": "Edinburgh"}
-{"child": "Old Town", "parent": "Stratford-Upon-Avon"}
+{"child": "Old Town", "parent": "Stratford-upon-Avon"}
 {"child": "Old Tupton", "parent": "Clay Cross"}
 {"child": "Old Walker", "parent": "Newcastle Upon Tyne"}
 {"child": "Old Wall", "parent": "Irthington"}
@@ -8339,7 +8333,7 @@
 {"child": "Pen-y-lan", "parent": "Cardiff"}
 {"child": "Penboyr", "parent": "Llangeler"}
 {"child": "Pencader", "parent": "Llanfihangel-ar-Arth"}
-{"child": "Pencelli", "parent": "Talybont-On-Usk"}
+{"child": "Pencelli", "parent": "Talybont-on-Usk"}
 {"child": "Pencombe", "parent": "Pencombe with Grendon Warren"}
 {"child": "Pencraig", "parent": "Walford"}
 {"child": "Pendas Fields", "parent": "Leeds"}
@@ -8417,7 +8411,7 @@
 {"child": "Pentre", "parent": "Mochdre"}
 {"child": "Pentre Berw", "parent": "Llanfihangel Ysgeifiog"}
 {"child": "Pentre Castell", "parent": "Llanberis"}
-{"child": "Pentre Du", "parent": "Betws-y-Coed"}
+{"child": "Pentre Du", "parent": "Betws-y-coed"}
 {"child": "Pentre Galar", "parent": "Crymych"}
 {"child": "Pentre Gwynfryn", "parent": "Llanbedr"}
 {"child": "Pentre Halkyn", "parent": "Halkyn"}
@@ -8875,7 +8869,7 @@
 {"child": "Quoisley", "parent": "Marbury Cum Quoisley"}
 {"child": "Quoisley Bridge", "parent": "Marbury Cum Quoisley"}
 {"child": "Quorn", "parent": "Quorndon"}
-{"child": "Quy Mill", "parent": "Stow Cum Quy"}
+{"child": "Quy Mill", "parent": "Stow cum Quy"}
 {"child": "R A F St Mawgan", "parent": "Colan"}
 {"child": "RAF Coningsby", "parent": "Coningsby"}
 {"child": "RAF Coningsby", "parent": "Tattershall"}
@@ -9005,7 +8999,7 @@
 {"child": "Rettendon Place", "parent": "Rettendon"}
 {"child": "Rew", "parent": "Rewe"}
 {"child": "Reynalton", "parent": "Kilgetty/Begelly"}
-{"child": "Rhandir Mwyn", "parent": "Llanfair-ar-y-Bryn"}
+{"child": "Rhandir Mwyn", "parent": "Llanfair-ar-y-bryn"}
 {"child": "Rhes-y-Cae", "parent": "Halkyn"}
 {"child": "Rhiw", "parent": "Aberdaron"}
 {"child": "Rhiwbina", "parent": "Cardiff"}
@@ -9027,7 +9021,7 @@
 {"child": "Rhoscefnhir", "parent": "Pentraeth"}
 {"child": "Rhoscrowther", "parent": "Angle"}
 {"child": "Rhosesmor", "parent": "Halkyn"}
-{"child": "Rhosfach", "parent": "Mynachlog-Ddu"}
+{"child": "Rhosfach", "parent": "Mynachlog-ddu"}
 {"child": "Rhosgadfan", "parent": "Llanwnda"}
 {"child": "Rhosgoch", "parent": "Rhosybol"}
 {"child": "Rhosneigr", "parent": "Llanfaelog"}
@@ -9716,7 +9710,7 @@
 {"child": "Shotley Gate", "parent": "Shotley"}
 {"child": "Shotover Hill", "parent": "Forest Hill with Shotover"}
 {"child": "Shottermill", "parent": "Haslemere"}
-{"child": "Shottery", "parent": "Stratford-Upon-Avon"}
+{"child": "Shottery", "parent": "Stratford-upon-Avon"}
 {"child": "Shottle", "parent": "Shottle and Postern"}
 {"child": "Shottlegate", "parent": "Shottle and Postern"}
 {"child": "Shotton Colliery", "parent": "Peterlee"}
@@ -10097,7 +10091,7 @@
 {"child": "St. Leonards", "parent": "St. Leonards and St. Ives"}
 {"child": "St. Loyes", "parent": "Exeter"}
 {"child": "St. Margarets", "parent": "Great Amwell"}
-{"child": "St. Margarets Bay", "parent": "St. Margaret's At Cliffe"}
+{"child": "St. Margarets Bay", "parent": "St. Margaret's at Cliffe"}
 {"child": "St. Marks", "parent": "Cheltenham"}
 {"child": "St. Martins", "parent": "Hereford"}
 {"child": "St. Martins", "parent": "St. Martin's Without"}
@@ -10155,7 +10149,6 @@
 {"child": "Stalling Busk", "parent": "Bainbridge"}
 {"child": "Stalmine", "parent": "Stalmine-With-Staynall"}
 {"child": "Stalybridge", "parent": "Ashton under Lyne"}
-{"child": "Stamperland", "parent": "East Renfrewshire"}
 {"child": "Stamshaw", "parent": "Portsmouth"}
 {"child": "Standard Hill", "parent": "Nottingham"}
 {"child": "Standish", "parent": "Wigan"}
@@ -10241,7 +10234,6 @@
 {"child": "Stepaside", "parent": "Saundersfoot"}
 {"child": "Stepaside", "parent": "St. Mary Out Liberty"}
 {"child": "Stephenson", "parent": "Newcastle Upon Tyne"}
-{"child": "Stepps", "parent": "North Lanarkshire"}
 {"child": "Sterndale Moor", "parent": "Hartington Upper Quarter"}
 {"child": "Sterte", "parent": "Poole"}
 {"child": "Steynton", "parent": "Milford Haven"}
@@ -10384,7 +10376,7 @@
 {"child": "Strong Close", "parent": "Keighley"}
 {"child": "Strood Green", "parent": "Kirdford"}
 {"child": "Strood Green", "parent": "Warnham"}
-{"child": "Strubby", "parent": "Maltby Le Marsh"}
+{"child": "Strubby", "parent": "Maltby le Marsh"}
 {"child": "Stubbing Holme", "parent": "Erringden"}
 {"child": "Stubbington", "parent": "Fareham"}
 {"child": "Stubbington", "parent": "Shabbington"}
@@ -10439,7 +10431,7 @@
 {"child": "Surrey Heath", "parent": "Chobham"}
 {"child": "Sutton", "parent": "Ellesmere Port"}
 {"child": "Sutton", "parent": "Shrewsbury"}
-{"child": "Sutton", "parent": "Sutton-Under-Whitestonecliffe"}
+{"child": "Sutton", "parent": "Sutton-under-Whitestonecliffe"}
 {"child": "Sutton Abinger", "parent": "Shere"}
 {"child": "Sutton Bingham", "parent": "Closworth"}
 {"child": "Sutton Coldfield", "parent": "Birmingham"}
@@ -10490,7 +10482,7 @@
 {"child": "Swinbrook", "parent": "Swinbrook and Widford"}
 {"child": "Swindon Village", "parent": "Wednesbury"}
 {"child": "Swineford", "parent": "Bitton"}
-{"child": "Swingate", "parent": "St. Margaret's At Cliffe"}
+{"child": "Swingate", "parent": "St. Margaret's at Cliffe"}
 {"child": "Swingfield Minnis", "parent": "Swingfield"}
 {"child": "Swingfield Street", "parent": "Swingfield"}
 {"child": "Swinhoe", "parent": "Beadnell"}
@@ -10540,7 +10532,7 @@
 {"child": "Talog", "parent": "Abernant"}
 {"child": "Talybont", "parent": "Ceulanamaesmawr"}
 {"child": "Talybont", "parent": "Llanllechid"}
-{"child": "Talybont", "parent": "Talybont-On-Usk"}
+{"child": "Talybont", "parent": "Talybont-on-Usk"}
 {"child": "Talysarn", "parent": "Llanfihangel Ystrad"}
 {"child": "Talysarn", "parent": "Llanfihangel-Ystrad"}
 {"child": "Talysarn", "parent": "Llanllyfni"}
@@ -10555,7 +10547,7 @@
 {"child": "Tangham Farm", "parent": "Capel St. Andrew"}
 {"child": "Tangiers", "parent": "Rudbaxton"}
 {"child": "Tankerville", "parent": "Worthen with Shelve"}
-{"child": "Tanworth", "parent": "Tanworth-In-Arden"}
+{"child": "Tanworth", "parent": "Tanworth-in-Arden"}
 {"child": "Tanyraltt", "parent": "Llanllyfni"}
 {"child": "Tapton", "parent": "Chesterfield"}
 {"child": "Tapton Hill", "parent": "Sheffield"}
@@ -10681,7 +10673,7 @@
 {"child": "The Village Willingale", "parent": "Willingale"}
 {"child": "The Waterfront", "parent": "Portsmouth"}
 {"child": "The Waterways", "parent": "Oxford"}
-{"child": "Thealby", "parent": "Burton Upon Stather"}
+{"child": "Thealby", "parent": "Burton upon Stather"}
 {"child": "Theale", "parent": "Wedmore"}
 {"child": "Thearne", "parent": "Woodmansey"}
 {"child": "Thedden Grange", "parent": "Beech"}
@@ -10726,7 +10718,6 @@
 {"child": "Thornhill Edge", "parent": "Sitlington"}
 {"child": "Thornhill Lees", "parent": "Dewsbury"}
 {"child": "Thornley Hall", "parent": "Thornley-With-Wheatley"}
-{"child": "Thornliebank", "parent": "East Renfrewshire"}
 {"child": "Thornthwaite", "parent": "Lorton"}
 {"child": "Thornthwaite", "parent": "Thornthwaite with Padside"}
 {"child": "Thornton", "parent": "Bagworth & Thornton"}
@@ -10791,7 +10782,7 @@
 {"child": "Thurnscoe", "parent": "Barnsley"}
 {"child": "Thursford Green", "parent": "Thursford"}
 {"child": "Thurstaston", "parent": "Birkenhead"}
-{"child": "Thurstonfield", "parent": "Burgh By Sands"}
+{"child": "Thurstonfield", "parent": "Burgh by Sands"}
 {"child": "Thurstonland", "parent": "Holme Valley"}
 {"child": "Thuxton", "parent": "Garvestone"}
 {"child": "Thwaite", "parent": "Muker"}
@@ -10834,7 +10825,7 @@
 {"child": "Tipton St. John", "parent": "Ottery St. Mary"}
 {"child": "Tiptree Heath", "parent": "Great Braxted"}
 {"child": "Tir-Phil", "parent": "New Tredegar"}
-{"child": "Tirabad", "parent": "Llanfair-ar-y-Bryn"}
+{"child": "Tirabad", "parent": "Llanfair-ar-y-bryn"}
 {"child": "Tircoed", "parent": "Llangyfelach"}
 {"child": "Tirril", "parent": "Sockbridge and Tirril"}
 {"child": "Tissington", "parent": "Tissington and Lea Hall"}
@@ -11140,7 +11131,7 @@
 {"child": "Tuttington", "parent": "Burgh and Tuttington"}
 {"child": "Tutts Clump", "parent": "Bradfield"}
 {"child": "Twdweiliog", "parent": "Tudweiliog"}
-{"child": "Tweedmouth", "parent": "Berwick-Upon-Tweed"}
+{"child": "Tweedmouth", "parent": "Berwick-upon-Tweed"}
 {"child": "Twelveheads", "parent": "Gwennap"}
 {"child": "Twenty", "parent": "Bourne"}
 {"child": "Twerton", "parent": "Newton St Loe"}
@@ -11620,7 +11611,7 @@
 {"child": "Welborne", "parent": "Runhall"}
 {"child": "Welby Grange", "parent": "Asfordby"}
 {"child": "Welch's Dam", "parent": "Manea"}
-{"child": "Welford on Avon", "parent": "Welford-On-Avon"}
+{"child": "Welford on Avon", "parent": "Welford-on-Avon"}
 {"child": "Welham Green", "parent": "North Mymms"}
 {"child": "Well End", "parent": "South Mimms"}
 {"child": "Well Hill", "parent": "Shoreham"}
@@ -11806,7 +11797,7 @@
 {"child": "Westbury-on-Trym", "parent": "Bristol"}
 {"child": "Westbury-sub-Mendip", "parent": "Westbury"}
 {"child": "Westcliff-on-Sea", "parent": "Southend-on-Sea"}
-{"child": "Westcliffe", "parent": "St. Margaret's At Cliffe"}
+{"child": "Westcliffe", "parent": "St. Margaret's at Cliffe"}
 {"child": "Westcombe", "parent": "Grafton"}
 {"child": "Westcot", "parent": "Waddesdon"}
 {"child": "Westcot", "parent": "Westcott"}
@@ -12448,7 +12439,7 @@
 {"child": "Ystrad Aeron", "parent": "Llanfihangel-Ystrad"}
 {"child": "Ystrad Mynach", "parent": "Gelligaer"}
 {"child": "Ystrad-Meurig", "parent": "Ystrad Meurig"}
-{"child": "Ystrad-ffin", "parent": "Llanfair-ar-y-Bryn"}
+{"child": "Ystrad-ffin", "parent": "Llanfair-ar-y-bryn"}
 {"child": "Ystradowen", "parent": "Penllyn"}
 {"child": "Ystumtuen", "parent": "Melindwr"}
 {"child": "Zelah", "parent": "St. Allen"}

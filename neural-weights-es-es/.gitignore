@@ -1,0 +1,3 @@
+# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF
+# bucket at publish time. Never committed.
+/pair-index-*.bin

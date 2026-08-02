@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { VENUE_STRUCTURE_DESIGNATORS } from "@mailwoman/core/resources/whosonfirst"
 import { expect, test } from "vitest"
 
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.ts"
+import { VENUE_STRUCTURE_DESIGNATORS } from "./venue-structure.ts"
 
 test("buildCodexSpanLexicon: assembles the four designator sets + a delivery-service regex", () => {
 	const lex = buildCodexSpanLexicon(["us"])

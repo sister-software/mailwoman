@@ -75,6 +75,10 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/neural-weights-fr-fr": "neural-weights-fr-fr",
 	"@mailwoman/neural-weights-en-gb": "neural-weights-en-gb",
 	"@mailwoman/neural-weights-en-nz": "neural-weights-en-nz",
+	"@mailwoman/neural-weights-it-it": "neural-weights-it-it",
+	"@mailwoman/neural-weights-es-es": "neural-weights-es-es",
+	"@mailwoman/neural-weights-de-de": "neural-weights-de-de",
+	"@mailwoman/neural-weights-en-in": "neural-weights-en-in",
 	"@mailwoman/variant-aliases": "variant-aliases",
 	// mailwoman's OTHER optional peer (besides resolver-wof-sqlite above) — optional or not, npm
 	// still resolves its version spec, so an unpacked workspace dep ETARGETs on a release branch.

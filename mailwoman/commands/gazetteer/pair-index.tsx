@@ -69,7 +69,7 @@ const RUNG3_PRE_FOLD_CENSUS_LINE_COUNT = 19_431
  * tracks the WOF snapshot alone. A snapshot refresh legitimately moves it; re-anchor the constant deliberately, after
  * inspecting the diff, rather than relaxing the gate.
  */
-const EXPECTED_US_PAIR_COUNT = 49_033
+const EXPECTED_US_PAIR_COUNT = 47_878
 
 /**
  * Known (child, parent) pairs probed after write as a self-check — PER COUNTRY, keyed by the `--country` code. Probing
@@ -95,6 +95,27 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Astoria", "Queens"],
 		["Park Slope", "Brooklyn"],
 		["Manhattan", "New York"],
+	],
+	// R10: the IN instance. Indian addresses carry an area/locality line above the city
+	// ("Indiranagar, Bengaluru"), which is the dependent-locality slot.
+	in: [
+		["Indiranagar", "Bangalore"],
+		["Mulund East", "Mumbai"],
+	],
+	// R11: the ES + IT instances. Spanish barrios and Italian quartieri under their municipio/comune.
+	es: [
+		["Aravaca", "Madrid"],
+		["Triana", "Sevilla"],
+	],
+	it: [
+		["Barona", "Milano"],
+		["Trastevere", "Roma"],
+	],
+	// R9: the DE instance. Ortsteile/Stadtteile under their Gemeinde — the line German addresses
+	// carry when they carry one at all (the Ortsteil sits above "PLZ Stadt", never inside it).
+	de: [
+		["Nippes", "Köln"],
+		["Schwabing", "München"],
 	],
 	// R6: the FR instance. These are LIEUX-DITS under their communes (BAN `nom_ld`), not quartiers —
 	// see gazetteer-pipeline/lieudit-pairs.ts for why the French source differs from the US one.

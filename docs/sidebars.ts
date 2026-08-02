@@ -250,6 +250,7 @@ const sidebars: SidebarsConfig = {
 		"plan/reference/closed-vocab-fields-model-first",
 		"plan/reference/registry-backed-structured-prediction",
 		"plan/reference/placetype-evidence",
+		"plan/reference/wof-osm-placetype-map",
 		"plan/reference/the-meaning-of-zero",
 		"plan/reference/FST_GAZETTEER_LM",
 		"plan/reference/TRAINING_RECIPE_LEVERS",

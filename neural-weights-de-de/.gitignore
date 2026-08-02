@@ -1,0 +1,3 @@
+# The placetype-pair index (hierarchy campaign R9) — built from the WOF admin DB by
+# `scripts/link-dev-weights.ts` for local dev, fetched from the HF bucket at publish time.
+/pair-index-*.bin
