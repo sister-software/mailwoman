@@ -1,25 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { synthesizeStreetRow } from "./synthesize-street.ts"
-
-function seededRandom(seed: number): () => number {
-	let s = seed
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
 
 describe("synthesizeStreetRow", () => {
 	it("emits all required components", () => {
 		const row = synthesizeStreetRow(
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
-			{ random: seededRandom(1) }
+			{ random: makeLcg(1) }
 		)
 
 		expect(row).not.toBeNull()
@@ -40,7 +31,7 @@ describe("synthesizeStreetRow", () => {
 		// Generate many variants and check that at least some get decomposed
 		let hasPrefix = 0
 		let hasSuffix = 0
-		const rng = seededRandom(42)
+		const rng = makeLcg(42)
 
 		for (let i = 0; i < 50; i++) {
 			const r = synthesizeStreetRow(
@@ -63,7 +54,7 @@ describe("synthesizeStreetRow", () => {
 	})
 
 	it("house_number is included most of the time", () => {
-		const rng = seededRandom(7)
+		const rng = makeLcg(7)
 		let withHN = 0
 
 		for (let i = 0; i < 100; i++) {
@@ -85,7 +76,7 @@ describe("synthesizeStreetRow", () => {
 	it("raw string is the assembled address", () => {
 		const r = synthesizeStreetRow(
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
-			{ random: seededRandom(42), includeHouseNumberProb: 0 }
+			{ random: makeLcg(42), includeHouseNumberProb: 0 }
 		)
 
 		expect(r!.raw).toContain("Burlington")
@@ -98,7 +89,7 @@ describe("synthesizeStreetRow", () => {
 	it("non-US returns null", () => {
 		const r = synthesizeStreetRow(
 			{ locality: "Paris", region: "Île-de-France", postcode: "75001", country: "FR" },
-			{ random: seededRandom(1) }
+			{ random: makeLcg(1) }
 		)
 
 		expect(r).toBeNull()

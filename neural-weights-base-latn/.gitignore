@@ -14,3 +14,12 @@
 # so a lexicon bump never re-strays.
 /street-type-lexicon-*.json
 /locality-surface-lexicon-*.json
+
+# Materialized at dev-link/publish time by scripts/link-dev-weights.ts and scripts/copy-weights.ts —
+# derived artifacts, never committed. This list was MISSING here (2026-08-02): the overlay shipped
+# with only /pair-index-*.bin, so a `copy-weights` run left an untracked ~40 MB model.onnx in the
+# workspace, one `git add -A` from landing in the repo. Keep in lockstep with
+# neural-weights-en-us/.gitignore.
+/postcode-*.bin
+/fst-*.bin
+/pair-index-*.bin

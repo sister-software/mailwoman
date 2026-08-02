@@ -375,6 +375,14 @@ jobs:
       - name: Verify staged pair indexes match their model cards
         run: yarn vitest run neural/test/pair-index-card-parity.test.ts
 
+      # The full-scale locality-surface build. On the PR path this is behind a path filter
+      # (test.yml's `lexicon-full`), so most PRs merge with it deliberately unrun — the four laws are
+      # covered by the fixture layer, but the coverage-scale claims (entries > 10_000, the nonzero
+      # skip counters) are not. A release must exercise them rather than inherit a green tick that
+      # only ever meant "no lexicon path changed in that PR".
+      - name: Full-scale locality-surface build
+        run: yarn ci:test:lexicon-full
+
       - name: Tag + GitHub release
         if: ${{ !inputs.dry_run }}
         env:

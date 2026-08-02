@@ -63,9 +63,9 @@ result as `node:readline` while adding:
 
 **Intentionally kept:**
 
-| File                          | Why                                                                                                                                                         |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scripts/bless-package.ts:40` | Interactive TTY prompt — `readline/promises` `question()` is the correct API. Spliterator is a streaming byte-range splitter, not an interactive I/O layer. |
+| File                           | Why                                                                                                                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~`scripts/bless-package.ts`~~ | **Moot as of 2026-08-02.** The prompt it kept `readline` for was the npm OTP entry, deleted when the script moved to npm's web-auth flow (hardware security key over SSH). No `readline` call site remains outside the migration set. |
 
 ## Migration recipe by pattern
 
@@ -257,10 +257,13 @@ for await (const line of TextSpliterator.fromAsync(jsonl)) {
    immediately. If the child process writes trailing data after the main payload,
    spliterator may miss it. Test with real `ogr2ogr`/`osmconvert` output.
 
-3. **`createInterface` with `process.stdin`.** `scripts/bless-package.ts` uses
-   `readline/promises` for interactive OTP prompting. Spliterator is a byte-range
-   splitter, not a line-editor. This call site is intentionally excluded from the
-   migration.
+3. ~~**`createInterface` with `process.stdin`.**~~ **Resolved 2026-08-02 — no longer a
+   risk.** `scripts/bless-package.ts` used `readline/promises` to prompt for an npm OTP;
+   that prompt is gone. The script now inherits stdio so the npm CLI runs its own auth
+   handshake (printing an approval URL for a hardware security key, or prompting for a
+   code itself). Should another interactive prompt appear, the reasoning still holds:
+   spliterator is a byte-range splitter, not a line-editor, and such a site would be
+   excluded from the migration.
 
 4. **`split.ts` write path.** `corpus/src/split.ts:219` uses `createInterface` for
    reading AND `createWriteStream` for writing. Only the **read** phase migrates to
