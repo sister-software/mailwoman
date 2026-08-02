@@ -80,18 +80,37 @@ neural-weights-en-gb/scripts/link-dev-weights.ts       512
 Shared units the clone scan matched across them: `linkForce` (×5), `peekPairIndexHeaderFields` (×5),
 `md5FileWithSidecar` (×2), `removeIfPresent` (×2).
 
-**Cost of leaving it: highest in the audit.** The 4.3× size spread is the divergence — the four
-~117-line copies do not link what the 441- and 512-line copies link. `AGENTS.md` documents this
-script as one of four cooperating pieces (`copy-weights.ts`, `weights.test.ts`, the publish tarball
-symlink guard); a fork means the guard's assumptions hold for some workspaces and not others, and
-which ones is not visible from any single file.
+> **CORRECTED 2026-08-02, before touching it — the size spread is mostly BY DESIGN.** Reading
+> `package.json` across the nine: `en-us` and `base-latn` are BASE packages (their `files` ship
+> `model.onnx` + `tokenizer.model`); the other seven declare
+> `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and are OVERLAYS whose `files` ship only
+> locale artifacts. So the four ~117-line scripts linking nothing but `pair-index-<cc>.bin` are
+> correct for what those packages are, not evidence of drift. The audit read nine different files as
+> nine forks of one thing; they are two bases and seven overlays.
+>
+> **A real question survives, and it is narrower.** Among the seven overlays, three (`en-gb`, `en-nz`,
+> `fr-fr`) additionally link the BASE artifacts — `model.onnx`, `tokenizer.model`,
+> `anchor-lexicon-v1.json`, `country-surface-lexicon-v1.json` — into their workspace for local dev,
+> and four (`de-de`, `es-es`, `it-it`, `en-in`) do not. Whether that split is intentional (only the
+> three are ever exercised standalone) or is the actual gap cannot be settled from the files alone.
+> **That is the operator's call, and it is the reason this cluster was ranked "wants a second pair of
+> eyes" rather than executed.**
 
-**Cost of fixing it: high.** Nine files whose behaviour genuinely differs per locale. The union of
-what each links has to be established by reading all nine before a shared module can replace them.
-This is not a mechanical merge.
+**Cost of leaving it: still the highest in the audit, for a different reason.** Nine scripts, nine
+md5s, and the shared helpers (`linkForce` ×5, `peekPairIndexHeaderFields` ×5, `md5FileWithSidecar`
+×2, `removeIfPresent` ×2) are duplicated regardless of which package needs which artifact.
+`AGENTS.md` documents this script as one of four cooperating pieces (`copy-weights.ts`,
+`weights.test.ts`, the publish tarball symlink guard); the per-package artifact LIST is legitimately
+per-package, but the machinery that does the linking is not.
 
-**Proposed home:** one shared module (a `neural-weights-kit`, or `scripts/link-dev-weights.ts`), with
-each workspace's script reduced to a per-locale artifact manifest plus one call.
+**Cost of fixing it: high**, and the shape is now clearer. The refactor is: one shared linker
+holding the machinery, plus a per-package manifest declaring which artifacts that package links —
+base or overlay. The manifest content is exactly the question above, which is why the split has to
+be decided before the module is written, not during.
+
+**Proposed home:** a `neural-weights-kit` (or `scripts/link-dev-weights.ts`) holding `linkForce`,
+`peekPairIndexHeaderFields`, `md5FileWithSidecar` and `removeIfPresent`, with each workspace's script
+reduced to its artifact manifest plus one call.
 
 ### A2. Percentile / stats — the home was created for this and the copies came back
 
