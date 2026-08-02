@@ -16,7 +16,12 @@ import { LADDER } from "./granularity.ts"
 
 function row(
 	country: string,
-	spec: Partial<Record<string, { nodes?: number; overtureBackfilled?: number; parentCoverage?: number }>>,
+	spec: Partial<
+		Record<
+			string,
+			{ nodes?: number; overtureBackfilled?: number; geonamesBackfilled?: number; parentCoverage?: number }
+		>
+	>,
 	localityParents = 100
 ): CountryGranularity {
 	const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
@@ -27,6 +32,7 @@ function row(
 		rungs[rung] = {
 			nodes: given?.nodes ?? 0,
 			overtureBackfilled: given?.overtureBackfilled ?? 0,
+			geonamesBackfilled: given?.geonamesBackfilled ?? 0,
 			parentsCovered: Math.round((given?.parentCoverage ?? 0) * localityParents),
 			parentCoverage: given?.parentCoverage ?? 0,
 		}
@@ -83,20 +89,38 @@ describe("renderGranularityReport", () => {
 		expect(markdown).toContain("meaning-of-zero")
 	})
 
-	it("classifies each country by which build path supplied its rows", () => {
+	it("classifies each country by the source observed in the artifact, not by the recipe", () => {
 		const markdown = renderGranularityReport(
 			[
-				row("GB", { country: { nodes: 1 } }),
-				row("IE", { country: { nodes: 1 } }),
-				row("ZW", { country: { nodes: 1 } }),
+				row("GB", { locality: { nodes: 16_677 } }),
+				row("IE", { locality: { nodes: 3230, overtureBackfilled: 3230 } }),
+				row("ZW", { locality: { nodes: 500, geonamesBackfilled: 500 } }),
 			],
 			META
 		)
 
-		// GB is in DEFAULT_WOF_PRIORITY_COUNTRIES; IE is an Overture-backfill country; ZW comes via GeoNames.
 		expect(markdown).toMatch(/^\| GB \| wof-repo \|/m)
 		expect(markdown).toMatch(/^\| IE \| overture \|/m)
 		expect(markdown).toMatch(/^\| ZW \| geonames \|/m)
+	})
+
+	it("flags a recipe/artifact mismatch as rebuild pending rather than claiming wof-repo", () => {
+		// IN is in DEFAULT_WOF_PRIORITY_COUNTRIES, but until the gazetteer is rebuilt its rows are still Overture.
+		const markdown = renderGranularityReport(
+			[row("IN", { locality: { nodes: 282_992, overtureBackfilled: 282_992 } })],
+			META
+		)
+
+		expect(markdown).toMatch(/^\| IN \| overture \(rebuild pending\) \|/m)
+	})
+
+	it("labels GeoNames-sourced rows gn rather than ovt", () => {
+		const markdown = renderGranularityReport([row("ZW", { locality: { nodes: 500, geonamesBackfilled: 500 } })], META)
+
+		const line = markdown.split("\n").find((l) => l.startsWith("| ZW |"))
+
+		expect(line).toContain("100.0% gn")
+		expect(line).not.toContain("ovt")
 	})
 
 	it("warns that an empty rung in a non-WOF-repo country is not a finding about WOF", () => {
