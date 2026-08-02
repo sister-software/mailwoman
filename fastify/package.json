@@ -45,7 +45,7 @@
 		"mailwoman": "workspace:^"
 	},
 	"devDependencies": {
-		"fastify": "^5.10.0"
+		"fastify": "^5.11.0"
 	},
 	"peerDependencies": {
 		"fastify": ">=5"
