@@ -182,10 +182,29 @@ Overture?" The scorecard carrying both columns per country is therefore not redu
 only defensible shape. This is what makes the ABSENT/MISTYPED name match load-bearing rather than a
 refinement.
 
-**One concrete, cheap win falls out immediately:** NZ ships `pair-index-nz.bin` (built from LINZ),
-has zero gazetteer sub-locality nodes, and has 1,894 WOF neighbourhoods sitting uncloned that beat
-the Overture alternative. Adding `NZ` to `DEFAULT_WOF_PRIORITY_COUNTRIES` is a recipe line plus a
-rebuild.
+#### And node counts do not survive conversion to pairs
+
+The obvious next move was "add NZ to `DEFAULT_WOF_PRIORITY_COUNTRIES`, it beats Overture." Measuring
+the pair yield killed it. A pair needs the child's locality parent to resolve — via `wof:hierarchy`'s
+`locality_id`, which is what `freeze.ts`'s `backfillAncestorsFromHierarchy` reads:
+
+| country | sub-locality nodes | usable pairs | conversion |
+| ------- | -----------------: | -----------: | ---------: |
+| IE      |                152 |          151 |        99% |
+| BR      |                848 |          774 |        91% |
+| NZ      |              1,894 |      **280** |    **15%** |
+
+**NZ's hierarchy is broken at the locality tier.** 1,637 of its sub-locality records carry
+`locality_id: -1` and `wof:parent_id: -1` — WOF parents them straight to the region, skipping the
+locality entirely (`Omanu Beach`, `Koutu`, `Hairini` all read
+`{"country_id":85633345,"locality_id":-1,"region_id":85687175}`). So NZ's apparent 1.9× win over
+Overture is a node-count artifact; in the campaign's actual currency it yields 280 pairs, and
+Overture's 992 macrohoods carry `parent_division_id`.
+
+**Conversion ranges from 15% to 99% across three countries.** Ranking gazetteer work by node count is
+therefore not a shortcut with acceptable error — it is wrong by up to 6×, and wrong in a way that
+inverts the ordering. The pair-yield column is load-bearing, not a refinement, and the scorecard must
+never present a node count as an opportunity estimate.
 
 Two incidental confirmations that PR A was necessary: the IE and BR repos carry `campus` rows (2 and
 24), and NZ carries `marinearea` (84) and `dependency` (2). All four are placetypes
