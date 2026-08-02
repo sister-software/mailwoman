@@ -160,6 +160,39 @@ silently go uncounted. So the moment anyone deepens the gazetteer past the curre
 `mailwoman gazetteer census` breaks. Closing this is a prerequisite of the scorecard work, not a
 follow-up.
 
+### Finding 6 — the uncloned repos probed: it varies per country, and neither source wins
+
+Shallow-cloned three uncloned admin repos and tallied `wof:placetype` the way `ingest-wof.ts` reads
+them (skip superseded, exclude `*-alt-*.geojson`), against Overture `divisions` @ `2026-06-17.0`:
+
+| country | WOF repo sub-locality | Overture sub-locality |        verdict |
+| ------- | --------------------: | --------------------: | -------------: |
+| IE      |                   152 |                51,778 | Overture ~340× |
+| NZ      |             **1,894** |                   992 |  **WOF ~1.9×** |
+| BR      |                   848 |                64,537 |  Overture ~76× |
+
+**No global rule survives this.** Ireland's WOF repo is genuinely thin — 152 neighbourhoods against
+Overture's 51,778 — which vindicates the original "Overture is the fix for IE" framing, not the
+recipe-gap correction. New Zealand inverts it: WOF holds 1,894 neighbourhoods, nearly double
+Overture's 992, and mailwoman ships **zero** because the repo was never cloned. Brazil looks like
+Ireland at a different scale.
+
+So "is WOF granular enough?" has no country-independent answer, and neither does "should we prefer
+Overture?" The scorecard carrying both columns per country is therefore not redundancy — it is the
+only defensible shape. This is what makes the ABSENT/MISTYPED name match load-bearing rather than a
+refinement.
+
+**One concrete, cheap win falls out immediately:** NZ ships `pair-index-nz.bin` (built from LINZ),
+has zero gazetteer sub-locality nodes, and has 1,894 WOF neighbourhoods sitting uncloned that beat
+the Overture alternative. Adding `NZ` to `DEFAULT_WOF_PRIORITY_COUNTRIES` is a recipe line plus a
+rebuild.
+
+Two incidental confirmations that PR A was necessary: the IE and BR repos carry `campus` rows (2 and
+24), and NZ carries `marinearea` (84) and `dependency` (2). All four are placetypes
+`ADMIN_PLACETYPES` drops today and that `PLACETYPE_PROJECTION` did **not** map before PR A — so
+widening the ingest allowlist without PR A would have made `mailwoman gazetteer census` throw, which
+is exactly the landmine PR A was written to defuse.
+
 ## The scorecard
 
 ### Unit and rungs
@@ -383,10 +416,7 @@ ships with the source-gap leg reporting "unknown" rather than blocking.
    **PR B supplied four:** DE 72.6%, GB 34.7%, plus NL and US above the floor, against JP at 0.6% —
    a wide gap between the countries that reach the tier and the ones that do not, which suggests the
    floor's exact value matters less than expected.
-4. **How much of the 249 uncloned admin repos is sub-locality tier?** This is now the load-bearing
-   unknown, and it is what "is WOF granular enough" actually asks. Repo size is a poor proxy
-   (IN 2,230 MB, PL 482 MB, IE 114 MB, but size does not separate `locality` rows from hood rows).
-   A cheap probe: clone two or three uncloned repos of different sizes, tally `wof:placetype`, and
-   see whether the hood tier is present. If it is, the recipe — not the data — is what has been
-   capping mailwoman's depth, and full world coverage is a fetch-and-rebuild problem rather than a
-   sourcing one.
+4. ~~How much of the 249 uncloned admin repos is sub-locality tier?~~ **Probed 2026-08-02 — see
+   Finding 6.** The answer is "it varies enormously, and neither source dominates," which settles the
+   design question: the scorecard must carry both columns per country, and no global
+   source-preference rule is defensible.
