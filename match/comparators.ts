@@ -105,6 +105,29 @@ export function jaroWinkler(
 }
 
 /**
+ * Jaccard similarity between two token sets in [0, 1]: `|a ∩ b| / |a ∪ b|`.
+ *
+ * The set-of-tokens complement to the string comparators above. Where {@link nameSimilarity} asks how close two names
+ * LOOK, this asks how much two token bags OVERLAP — the right question for organization names and address bags, where
+ * word order carries no information and a shared rare token is worth more than character-level proximity.
+ *
+ * Either side empty scores 0 rather than 1: an empty bag agrees with nothing, and treating "no evidence" as "perfect
+ * agreement" is how a blocking pass floods with false pairs.
+ */
+export function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
+	if (!a.size || !b.size) return 0
+	let intersection = 0
+
+	for (const token of a) {
+		if (b.has(token)) {
+			intersection++
+		}
+	}
+
+	return intersection / (a.size + b.size - intersection)
+}
+
+/**
  * Normalized Levenshtein similarity in [0, 1]: `1 - editDistance / max(len)`.
  */
 export function levenshteinSimilarity(a: string, b: string): number {

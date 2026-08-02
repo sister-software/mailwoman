@@ -31,7 +31,7 @@ import { resolve as resolvePath } from "node:path"
 import { pathToFileURL } from "node:url"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { haversineKm, type GBT } from "@mailwoman/match"
+import { haversineKm, jaccard, type GBT } from "@mailwoman/match"
 import {
 	addressFrequencyKey,
 	ingestRows,
@@ -182,18 +182,6 @@ const orgTokens = (s: string): Set<string> =>
 			.split(/\s+/)
 			.filter((t) => t && !ORG_STOP.has(t))
 	)
-
-function orgJaccard(a: Set<string>, b: Set<string>): number {
-	if (!a.size || !b.size) return 0
-	let inter = 0
-
-	for (const t of a)
-		if (b.has(t)) {
-			inter++
-		}
-
-	return inter / (a.size + b.size - inter)
-}
 
 /**
  * Gold-set threshold.
@@ -575,7 +563,7 @@ export async function nppesDedupBenchmark(
 		for (const group of byAddr.values()) {
 			for (let i = 0; i < group.length; i++) {
 				for (let j = i + 1; j < group.length; j++) {
-					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU) {
+					if (jaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU) {
 						union(group[i]!, group[j]!)
 					}
 				}
@@ -650,7 +638,7 @@ export async function nppesDedupBenchmark(
 
 				if (haversineKm(npiCoord.get(a)!, npiCoord.get(b)!) > COLOCATION_KM) continue
 
-				if (orgJaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) {
+				if (jaccard(npiPrimary.get(a)!.tokens, npiPrimary.get(b)!.tokens) >= ORG_TAU) {
 					unionC(a, b)
 				}
 			}
@@ -718,7 +706,7 @@ export async function nppesDedupBenchmark(
 		for (const group of byCell.values()) {
 			for (let i = 0; i < group.length; i++) {
 				for (let j = i + 1; j < group.length; j++) {
-					if (orgJaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU) {
+					if (jaccard(npiPrimary.get(group[i]!)!.tokens, npiPrimary.get(group[j]!)!.tokens) >= ORG_TAU) {
 						unionH(group[i]!, group[j]!)
 					}
 				}
