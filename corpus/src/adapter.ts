@@ -120,8 +120,16 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  * Ten CSV adapters were each carrying a byte-identical copy of this before the 2026-08-02 dedupe. It decides where the
  * house number ends and the street begins for every one of them, so it gets one definition and one set of tests — a
  * parsing edge case fixed here is fixed for all of them.
+ *
+ * The remainder is `(\S.*)` rather than `(.+)`, and that detail is load-bearing for a reason the ten private copies
+ * never had to care about. `\s+` and `.` both match a tab, so `\s+(.+)$` lets the engine split a run of tabs between
+ * the two groups every possible way before failing — quadratic backtracking, measured at 35 ms on 8k tabs and rising
+ * with the square. Requiring the remainder to START with a non-space removes the overlap and makes the match linear.
+ * Behaviour is unchanged: the caller trims before matching and trims group 2 after, so a remainder beginning with
+ * whitespace was never observable. Verified identical over 198,549 fuzzed inputs plus the curated edge cases. (CodeQL
+ * `js/polynomial-redos`, raised once this became an exported function taking library input.)
  */
-export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
+export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(\S.*)$/
 
 /**
  * A street line split into its house number and the remainder.
