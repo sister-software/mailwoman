@@ -32,9 +32,15 @@ import { readFileSync } from "node:fs"
  *
  * Only add an acronym once the repo has settled on its capitalized form — this check reports drift from an established
  * convention, it does not invent one.
+ *
+ * A hand-maintained list only ever contains the acronyms someone thought to add, which is its structural weakness:
+ * `HTML`, `SVG`, `XML` and `ASCII` were all missing until the oxlint plugin's generic default list found `outHtml`
+ * sitting in three sibling files. Prefer widening this list over trusting it.
  */
 const ACRONYMS = [
 	"API",
+	// oxlint-disable-next-line unicorn/text-encoding-identifier-case -- an acronym in a policy list, not an encoding argument.
+	"ASCII",
 	"BIO",
 	"CLI",
 	"CRF",
@@ -43,6 +49,7 @@ const ACRONYMS = [
 	"FST",
 	"GBT",
 	"GERS",
+	"HTML",
 	"HTTP",
 	"HTTPS",
 	"ID",
@@ -56,11 +63,13 @@ const ACRONYMS = [
 	"OSM",
 	"POI",
 	"SQL",
+	"SVG",
 	"TSV",
 	"URI",
 	"URL",
 	"UTC",
 	"WOF",
+	"XML",
 	"ZCTA",
 ] as const
 

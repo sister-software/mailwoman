@@ -33,7 +33,7 @@ export interface YardstickFigureOptions {
 	/**
 	 * Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd).
 	 */
-	outSvg?: string
+	outSVG?: string
 }
 
 // ── The committed measurement (2026-06-16-dedup-dual-level-benchmark.md). ────────────────────────
@@ -101,8 +101,8 @@ const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").re
 export function yardstickFigure(
 	options: YardstickFigureOptions = {},
 	report?: (line: string) => void
-): { outSvg: string } {
-	const OUT = options.outSvg || "docs/articles/evals/charts/dedup-yardstick.svg"
+): { outSVG: string } {
+	const OUT = options.outSVG || "docs/articles/evals/charts/dedup-yardstick.svg"
 
 	const parts: string[] = []
 	const push = (s: string) => parts.push(s)
@@ -228,5 +228,5 @@ export function yardstickFigure(
 
 	report?.(`  over-merge: ${OVERMERGE.GBT!.join(" → ")}`)
 
-	return { outSvg: OUT }
+	return { outSVG: OUT }
 }

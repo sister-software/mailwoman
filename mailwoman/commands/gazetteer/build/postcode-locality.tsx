@@ -34,7 +34,7 @@ const OptionsSchema = zod.object({
 	postalNames: zod.string().optional().describe("jp: KEN_ALL.CSV path"),
 	geonames: zod.string().optional().describe("jp/kr: GeoNames dump path"),
 	adminDb: zod.string().optional().describe("jp/kr/tw: admin gazetteer DB"),
-	postalXml: zod.string().optional().describe("tw: postal districts XML"),
+	postalXML: zod.string().optional().describe("tw: postal districts XML"),
 	divisions: zod.string().optional().describe("tw: Overture divisions parquet/dir"),
 })
 
@@ -99,7 +99,7 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 				const { buildPostcodeLocalityTW } = await import("../../../gazetteer-pipeline/postcode-locality/tw.ts")
 
 				await buildPostcodeLocalityTW({
-					postalXml: need("postal-xml", options.postalXml),
+					postalXML: need("postal-xml", options.postalXML),
 					divisions: need("divisions", options.divisions),
 					adminDb: need("admin-db", options.adminDb),
 					output: options.output,

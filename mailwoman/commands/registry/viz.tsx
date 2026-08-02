@@ -42,8 +42,8 @@ const OptionsSchema = zod.object({
 	oaMod: zod.number().optional().describe("source-provenance-map: keep ~1/N of OpenAddresses points (default 120)"),
 	cap: zod.number().optional().describe("source-provenance-map: per-source marker cap (default 7000)"),
 	// shared outputs
-	outHtml: zod.string().optional().describe("HTML figures: output path (each figure has a /tmp default)"),
-	outSvg: zod
+	outHTML: zod.string().optional().describe("HTML figures: output path (each figure has a /tmp default)"),
+	outSVG: zod
 		.string()
 		.optional()
 		.describe("yardstick-figure: output SVG path (default docs/articles/evals/charts/dedup-yardstick.svg)"),
@@ -61,25 +61,25 @@ function runFigure(figure: Figure, options: Options): string {
 	switch (figure) {
 		case "cross-dataset-map":
 			return crossDatasetMap(
-				{ in: options.in, outHtml: options.outHtml, crossAgencyOnly: options.crossAgencyOnly },
+				{ in: options.in, outHTML: options.outHTML, crossAgencyOnly: options.crossAgencyOnly },
 				report
-			).outHtml
+			).outHTML
 		case "geocode-first-surface":
-			return geocodeFirstSurface({ lambda: options.lambda, outHtml: options.outHtml }, report).outHtml
+			return geocodeFirstSurface({ lambda: options.lambda, outHTML: options.outHTML }, report).outHTML
 		case "source-provenance-map":
 			return sourceProvenanceMap(
 				{
 					state: options.state,
 					db: options.db,
-					outHtml: options.outHtml,
+					outHTML: options.outHTML,
 					nadMod: options.nadMod,
 					oaMod: options.oaMod,
 					cap: options.cap,
 				},
 				report
-			).outHtml
+			).outHTML
 		case "yardstick-figure":
-			return yardstickFigure({ outSvg: options.outSvg }, report).outSvg
+			return yardstickFigure({ outSVG: options.outSVG }, report).outSVG
 	}
 }
 
