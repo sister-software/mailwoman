@@ -66,3 +66,26 @@ had two homes and one could go stale against the other; `data/gazetteer/de-pairs
 `admin-global-priority.db` rebuilt (4.92M nodes, up from 4.09M — all India), **verify PASS 21/21**,
 sealed, previous artifact preserved under `wof/superseded/`. Confirmed additive before swapping:
 GB/US/DE/FR live pair counts identical across old and new; India 0 → 86,754.
+
+## What the scorecard says after the rebuild, and why it still says "locality"
+
+Regenerating `gazetteer granularity` against the swapped artifact moves India's `source` column from
+`overture (rebuild pending)` to `wof-repo` and populates its dependent-locality rung with **88,142
+nodes**. It still reports India as bottoming out at `locality`, and that is correct rather than a
+stale read:
+
+| country | locality nodes carrying a dep-loc child |    share |
+| ------- | --------------------------------------: | -------: |
+| DE      |                        12,436 of 17,123 |    72.6% |
+| GB      |                         9,727 of 28,070 |    34.7% |
+| **IN**  |                   **36,610 of 915,063** | **4.0%** |
+
+India has by far the most sub-locality nodes in absolute terms and the thinnest coverage in relative
+terms, because its locality tier is enormous — 915,063 nodes, essentially every village. 4.0% sits
+under the scorecard's 5% floor.
+
+The practical reading: **the India pair index is a city instrument.** Bangalore (605 children),
+Delhi (583), Chennai (382), Hyderabad (338) and Varanasi (337) carry real depth; the long rural tail
+carries none. That is the right expectation to set for it, and it is exactly the distinction the
+scorecard's parent-coverage statistic exists to make — a raw node count would have called India the
+best-covered country in the table.
