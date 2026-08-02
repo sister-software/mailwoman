@@ -6,10 +6,13 @@
  *   Cached archive download + subprocess capture — the two helpers `fetch.ts` and `redistricting.ts`
  *   each carried byte-identical copies of before the 2026-08-02 dedupe.
  *
- *   Worth extracting for a reason beyond tidiness: `downloadIfNeeded` is one of the raw-`fetch` sites
- *   `AGENTS.md` says should extend `APIClient` (see `filer/sdk/sec-client.ts` and `bdc/sdk/client.ts`
- *   for the worked examples). With one definition that migration is one rewrite; with two it was two,
- *   and the second one would have been the one nobody remembered.
+ *   RAW `fetch` HERE IS DELIBERATE. `AGENTS.md` requires HTTP clients to extend or instantiate
+ *   `APIClient`, and that rule is about API REQUESTS — small bodies, repeated calls, rate-limited
+ *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
+ *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
+ *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
+ *   non-stream response type in memory. The primitive that fits a body this large is the one that
+ *   never holds it: a web stream piped to a write stream. Classified 2026-08-02.
  */
 
 import { spawn } from "node:child_process"

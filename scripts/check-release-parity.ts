@@ -24,6 +24,8 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
 	options: { "warn-only": { type: "boolean" } },
@@ -67,12 +69,21 @@ function normalizeVersion(version: string): string {
 	return version.replace(/^v/, "").trim()
 }
 
-async function fetchJSON(url: string): Promise<Record<string, unknown>> {
-	const res = await fetch(url, { headers: { accept: "application/json" } })
+/**
+ * The parity checker's HTTP client.
+ *
+ * Retry is ON because every host this talks to rate-limits: the npm registry, the demo manifest bucket, and Hugging
+ * Face. A release check that fails because a registry throttled it reads exactly like a release check that failed
+ * because a surface trails, and the second one is the only kind anybody should act on.
+ */
+const parityClient = new APIClient({
+	displayName: "release-parity",
+	retry: true,
+	axios: { headers: { accept: "application/json" } },
+})
 
-	if (!res.ok) throw new Error(`GET ${url} → HTTP ${res.status}`)
-
-	return (await res.json()) as Record<string, unknown>
+function fetchJSON(url: string): Promise<Record<string, unknown>> {
+	return parityClient.fetch<Record<string, unknown>>({ url }).then(pluckResponseData)
 }
 
 async function readNPMLatest(): Promise<string> {
@@ -141,7 +152,7 @@ if (!demoOK && localCard.files_md5?.["model.onnx"]) {
 	try {
 		const trailingCardURL = `https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${demoDefault}/model-card.json`
 
-		const trailingCard = (await (await fetch(trailingCardURL)).json()) as {
+		const trailingCard = (await fetchJSON(trailingCardURL)) as {
 			files_md5?: Record<string, string>
 		}
 
