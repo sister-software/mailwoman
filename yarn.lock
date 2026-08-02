@@ -4826,9 +4826,25 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/neural-weights-es-es@workspace:neural-weights-es-es":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-es-es@workspace:neural-weights-es-es"
+  dependencies:
+    "@mailwoman/neural-weights-en-us": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr"
+  dependencies:
+    "@mailwoman/neural-weights-en-us": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/neural-weights-it-it@workspace:neural-weights-it-it":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-it-it@workspace:neural-weights-it-it"
   dependencies:
     "@mailwoman/neural-weights-en-us": "workspace:*"
   languageName: unknown

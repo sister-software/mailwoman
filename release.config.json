@@ -1,7 +1,7 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode \u2014 see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "7.8.1",
-	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "en-nz"],
+	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "es-es", "it-it", "en-nz"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
 		"model": "models/quantized/model-v3230-guard-step-004000-int8.onnx",
@@ -38,6 +38,18 @@
 			},
 			"in": {
 				"$comment": "Hierarchy campaign R10 (2026-08-02). WOF-sourced (area, city) pairs with parent-alias expansion — India Post carries an area line on essentially every address, and WOF's city names lag official renames.",
+				"delta": 10,
+				"transitionBeta": 5,
+				"boroughDb": "wof/admin-global-priority.db"
+			},
+			"es": {
+				"$comment": "Hierarchy campaign R11 (2026-08-02). WOF-sourced pairs with parent-alias expansion; leading-postcode locale.",
+				"delta": 10,
+				"transitionBeta": 5,
+				"boroughDb": "wof/admin-global-priority.db"
+			},
+			"it": {
+				"$comment": "Hierarchy campaign R11 (2026-08-02). WOF-sourced pairs with parent-alias expansion; leading-postcode locale.",
 				"delta": 10,
 				"transitionBeta": 5,
 				"boroughDb": "wof/admin-global-priority.db"

@@ -1,0 +1,27 @@
+{
+	"name": "@mailwoman/neural-weights-es-es",
+	"version": "8.5.0",
+	"description": "es-ES weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us.",
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "neural-weights-es-es"
+	},
+	"files": [
+		"model-card.json",
+		"pair-index-es.bin",
+		"README.md",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts"
+	],
+	"type": "module",
+	"dependencies": {
+		"@mailwoman/neural-weights-en-us": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-en-us"
+	}
+}

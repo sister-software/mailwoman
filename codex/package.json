@@ -79,6 +79,16 @@
 			"node": "./tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
+		},
+		"./es": {
+			"node": "./es/index.ts",
+			"default": "./out/es/index.js",
+			"types": "./out/es/index.d.ts"
+		},
+		"./it": {
+			"node": "./it/index.ts",
+			"default": "./out/it/index.js",
+			"types": "./out/it/index.d.ts"
 		}
 	},
 	"publishConfig": {

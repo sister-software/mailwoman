@@ -1,0 +1,25 @@
+{
+	"name": "@mailwoman/neural-weights-es-es",
+	"version": "7.0.0",
+	"locale": "es-ES",
+	"license": "AGPL-3.0",
+	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights.",
+	"files": {
+		"model_card": "model-card.json",
+		"pair_index": "pair-index-es.bin"
+	},
+	"es_artifacts": {
+		"$comment": "Hierarchy campaign R11 (2026-08-02). The Spanish instance of the dependent-locality prior.",
+		"pair_index_es_bin": {
+			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (barrio, municipio) dependent_locality prior, e.g. (\"Aravaca\", \"Madrid\")",
+			"source": "Who's On First admin hierarchy. No postal register carries the sub-city line for this country, so WOF is the source \u2014 the same call the US, DE and IN instances made.",
+			"pairs": 3559,
+			"bytes": 100147,
+			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from GB per R5's uniform-deficit finding.",
+			"country_gate": "hard-gated on the header's country (es).",
+			"requires_leading_postcode_strip": "INERT without the `es` entries in SEGMENT_PARENT_POSTCODE_SHAPES and LEADING_POSTCODE_COUNTRIES (neural/placetype-pair-prior.ts) \u2014 Spanish addresses write the postcode first.",
+			"parent_alias_expansion": "ENABLED. WOF stores `Cordoba` for a city written `C\u00f3rdoba`, and the fold does NOT strip accents \u2014 the two are different keys. Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT \u2014 the model never sees other scripts.",
+			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-es-es --country es --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
+		}
+	}
+}

@@ -103,6 +103,15 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Indiranagar", "Bangalore"],
 		["Mulund East", "Mumbai"],
 	],
+	// R11: the ES + IT instances. Spanish barrios and Italian quartieri under their municipio/comune.
+	es: [
+		["Aravaca", "Madrid"],
+		["Triana", "Sevilla"],
+	],
+	it: [
+		["Barona", "Milano"],
+		["Trastevere", "Roma"],
+	],
 	// R9: the DE instance. Ortsteile/Stadtteile under their Gemeinde — the line German addresses
 	// carry when they carry one at all (the Ortsteil sits above "PLZ Stadt", never inside it).
 	de: [
