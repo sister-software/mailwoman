@@ -11,7 +11,7 @@
  *   without them — same pattern as `resolver-wof-wasm/hot-db.test.ts`):
  *
  *   - `MAILWOMAN_WOF_ADMIN_DB` — the admin gazetteer with the package-built `place_bbox` R*Tree, e.g.
- *       `/mnt/playpen/mailwoman-data/wof/admin-global-priority.db`.
+ *       `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
  *   - `MAILWOMAN_WOF_POLYGONS_DB` — the polygon sidecar, e.g.
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */

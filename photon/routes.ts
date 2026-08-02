@@ -9,6 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
+import { legacyQuery } from "@mailwoman/api-kit"
 import type { Context } from "hono"
 
 import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "./engine.ts"
@@ -48,25 +49,6 @@ function asStringArray(raw: unknown): string[] | undefined {
 	const s = asString(raw)
 
 	return s ? [s] : undefined
-}
-
-/**
- * Express's `req.query` shape: `string` for a single value, `string[]` for repeats. The legacy parsing helpers
- * (`asString`, `asStringArray`, `Number(...)`) — and their observable degenerate behaviors (repeated `q` → 400,
- * repeated `lat` → NaN → 400) — key off exactly this shape, so the handlers consume it unchanged. Do NOT dedup or
- * canonicalize here: photon's repeatable params (`osm_tag`, `layer`) are contract, and its duplicate-param 400s are
- * contract too (unlike libpostal, where duplicates were never-contract — see the phase-1 adjudications).
- * Null-prototype, matching express-simple's req.query shape (a repeated `?__proto__=` param must create an own
- * property, not reparent the object).
- */
-function legacyQuery(c: Context): Record<string, string | string[]> {
-	const out: Record<string, string | string[]> = Object.create(null)
-
-	for (const [key, values] of Object.entries(c.req.queries())) {
-		out[key] = values.length === 1 ? values[0]! : values
-	}
-
-	return out
 }
 
 /**

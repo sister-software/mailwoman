@@ -6,7 +6,7 @@
 
 import { existsSync } from "node:fs"
 
-import { repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it, test } from "vitest"
 
 import {
@@ -25,7 +25,7 @@ const TOKENIZER_MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokeniz
 // Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom) — this is what the fix-round-2
 // re-review actually reproduced the bare-▁-orphan drop against. Not present in stripped-down CI, so this whole
 // block skips there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
-const PRODUCTION_TOKENIZER_PATH = "/mnt/playpen/mailwoman-data/models/tokenizer/v0.9.0-multisplice/tokenizer.model"
+const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {

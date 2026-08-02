@@ -18,6 +18,7 @@
 
 import { writeFileSync } from "node:fs"
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
 
 /**
@@ -43,26 +44,13 @@ export interface MatcherScaleOptions {
 }
 
 /**
- * Deterministic LCG so the eval is reproducible run to run (no Math.random).
- */
-function lcg(seed: number): () => number {
-	let s = seed >>> 0
-
-	return () => {
-		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
-
-		return s / 0x1_00_00_00_00
-	}
-}
-
-/**
  * Generate N synthetic records clustered into ~N/DUP distinct "places". Each place gets a coordinate in the
  * continental-US box, a canonical key, and an org name; its DUP duplicates carry a lightly-varied name and a jittered
  * coordinate, so geo-cell + canonical-key blocking groups them and scoring links them — the realistic shape of a dedup
  * workload.
  */
 function generate(n: number, dup: number, seed = 1): SourceRecord[] {
-	const rnd = lcg(seed)
+	const rnd = makeLcg(seed || 1)
 	const places = Math.max(1, Math.round(n / dup))
 	const records: SourceRecord[] = new Array(n)
 

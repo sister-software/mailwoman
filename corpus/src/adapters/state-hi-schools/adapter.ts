@@ -33,7 +33,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.ts"
+import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
@@ -49,7 +49,6 @@ export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
  */
 export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"
 
-const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 const HI_STATE_ABBR = "HI"
 
 interface HiSchoolRow {
@@ -58,17 +57,6 @@ interface HiSchoolRow {
 	address: string
 	city: string
 	zip: string
-}
-
-function splitAddress(address: string): { house_number?: string; street: string } | null {
-	const trimmed = address.trim()
-
-	if (!trimmed) return null
-	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
-
-	if (m) return { house_number: m[1], street: m[2]!.trim() }
-
-	return { street: trimmed }
 }
 
 function normalizeZip(raw: string): string {
@@ -127,7 +115,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 
 					if (!name || !address || !city || !zip) continue
 
-					const split = splitAddress(address)
+					const split = splitStreetLine(address)
 
 					if (!split) continue
 

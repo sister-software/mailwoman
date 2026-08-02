@@ -4,19 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "./synthesize-house-venue.ts"
-
-function seededRandom(seed: number): () => number {
-	let s = seed
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
 
 const TUPLE: HouseVenueBaseTuple = {
 	locality: "Boston",
@@ -28,7 +19,7 @@ const TUPLE: HouseVenueBaseTuple = {
 describe("synthesizeHouseVenueRow", () => {
 	it("emits venue-after-street form", () => {
 		const row = synthesizeHouseVenueRow(TUPLE, {
-			random: seededRandom(1),
+			random: makeLcg(1),
 			forceTemplate: "venue-after-street",
 		})
 
@@ -40,7 +31,7 @@ describe("synthesizeHouseVenueRow", () => {
 
 	it("emits venue-before-street form", () => {
 		const row = synthesizeHouseVenueRow(TUPLE, {
-			random: seededRandom(2),
+			random: makeLcg(2),
 			forceTemplate: "venue-before-street",
 		})
 
@@ -53,7 +44,7 @@ describe("synthesizeHouseVenueRow", () => {
 	it("uses base tuple's street + houseNumber when present", () => {
 		const row = synthesizeHouseVenueRow(
 			{ ...TUPLE, street: "Newbury St", houseNumber: "234" },
-			{ random: seededRandom(3), forceTemplate: "venue-after-street" }
+			{ random: makeLcg(3), forceTemplate: "venue-after-street" }
 		)
 
 		expect(row).not.toBeNull()
@@ -63,7 +54,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("falls back to internal pool when tuple lacks street + houseNumber", () => {
-		const row = synthesizeHouseVenueRow(TUPLE, { random: seededRandom(4) })
+		const row = synthesizeHouseVenueRow(TUPLE, { random: makeLcg(4) })
 		expect(row).not.toBeNull()
 		expect(row!.components.street).toBeDefined()
 		expect(row!.components.house_number).toBeDefined()
@@ -81,7 +72,7 @@ describe("synthesizeHouseVenueRow", () => {
 		}
 
 		const row = synthesizeHouseVenueRow(frTuple, {
-			random: seededRandom(3),
+			random: makeLcg(3),
 			forceTemplate: "venue-before-street",
 		})
 
@@ -104,7 +95,7 @@ describe("synthesizeHouseVenueRow", () => {
 		}
 
 		const row = synthesizeHouseVenueRow(gbTuple, {
-			random: seededRandom(5),
+			random: makeLcg(5),
 			forceTemplate: "venue-before-street",
 		})
 
@@ -128,7 +119,7 @@ describe("synthesizeHouseVenueRow", () => {
 				street: "Portland Street",
 				houseNumber: "101",
 			},
-			{ random: seededRandom(6), forceTemplate: "venue-after-street" }
+			{ random: makeLcg(6), forceTemplate: "venue-after-street" }
 		)
 
 		expect(row).not.toBeNull()
@@ -136,7 +127,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("GB emits range house numbers at the pre-registered rate (~15% across 2000 rows)", () => {
-		const random = seededRandom(7)
+		const random = makeLcg(7)
 		let ranges = 0
 
 		for (let i = 0; i < 2000; i++) {
@@ -158,7 +149,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("appends a tagged country surface at the pre-registered rate, in every order (Addendum 3)", () => {
-		const random = seededRandom(9)
+		const random = makeLcg(9)
 		let appended = 0
 
 		for (let i = 0; i < 2000; i++) {
@@ -191,7 +182,7 @@ describe("synthesizeHouseVenueRow", () => {
 					street: "Minories",
 					houseNumber: "27",
 				},
-				{ random: seededRandom(seed), forceTemplate: "venue-before-street" }
+				{ random: makeLcg(seed), forceTemplate: "venue-before-street" }
 			)
 
 			if (row!.components.country) {
@@ -205,7 +196,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("GB never emits the held-out #1366 gauntlet venue names", () => {
-		const random = seededRandom(8)
+		const random = makeLcg(8)
 
 		const heldOut = [
 			"Ye Three Lords",
@@ -238,7 +229,7 @@ describe("synthesizeHouseVenueRow", () => {
 				street: "Rue de la République",
 				houseNumber: "5",
 			},
-			{ random: seededRandom(4), forceTemplate: "venue-after-street" }
+			{ random: makeLcg(4), forceTemplate: "venue-after-street" }
 		)
 
 		expect(row).not.toBeNull()
@@ -246,7 +237,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("ALWAYS emits both house_number AND venue across 500 random invocations", () => {
-		const rng = seededRandom(42)
+		const rng = makeLcg(42)
 
 		for (let i = 0; i < 500; i++) {
 			const row = synthesizeHouseVenueRow(TUPLE, { random: rng })
@@ -261,7 +252,7 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("template distribution is balanced across 1000 invocations", () => {
-		const rng = seededRandom(99)
+		const rng = makeLcg(99)
 		const counts = { "venue-after-street": 0, "venue-before-street": 0 }
 
 		for (let i = 0; i < 1000; i++) {
@@ -286,7 +277,7 @@ describe("synthesizeHouseVenueRow", () => {
 		] as const) {
 			const row = synthesizeHouseVenueRow(
 				{ ...TUPLE, country },
-				{ random: seededRandom(7), forceTemplate: "venue-after-street" }
+				{ random: makeLcg(7), forceTemplate: "venue-after-street" }
 			)
 
 			expect(row!.locale).toBe(expectedLocale)

@@ -37,7 +37,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -68,44 +68,6 @@ interface FrTuple {
 	street: string
 	locality: string
 	postcode: string
-}
-
-/**
- * Minimal RFC-4180-ish splitter (handles quoted fields with doubled-quote escaping).
- */
-function splitCSV(line: string): string[] {
-	const out: string[] = []
-	let cur = ""
-	let inQ = false
-
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]
-
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
-	}
-
-	out.push(cur)
-
-	return out
 }
 
 /**

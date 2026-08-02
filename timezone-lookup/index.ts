@@ -20,6 +20,12 @@ export type MultiPolygonCoords = number[][][][]
 
 /**
  * Ray-cast point-in-ring (even-odd rule). `ring` is `[[lon, lat], …]`.
+ *
+ * DELIBERATE DUPLICATE of `@mailwoman/spatial`'s `pointInRing`, kept local on purpose. This package has exactly one
+ * dependency — zero-dep `@mailwoman/annotations` — and importing spatial to reach a fifteen-line ray cast would pull
+ * `@mailwoman/core` with it, whose published tarball carries ~11 MB of libpostal/WOF/chromium-i18n data. Eleven
+ * megabytes for fifteen lines is the wrong trade for a leaf lookup package. Measured 2026-08-02; if this package ever
+ * gains a real spatial dependency, delete these and import them.
  */
 function pointInRing(lon: number, lat: number, ring: number[][]): boolean {
 	let inside = false

@@ -20,7 +20,7 @@ import { parseArgs } from "node:util"
  *   Run: node scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -56,13 +56,6 @@ interface N9 {
 }
 
 const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
-
-const pctile = (xs: number[], p: number): number => {
-	if (!xs.length) return Number.NaN
-	const s = [...xs].toSorted((a, b) => a - b)
-
-	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
-}
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
@@ -155,7 +148,7 @@ async function main() {
 		}
 
 		const swapKm = sT1.length
-			? `${pctile(sT1, 50).toFixed(1)}/${pctile(sT1, 90).toFixed(0)} · ${pctile(sB5, 50).toFixed(1)}/${pctile(sB5, 90).toFixed(0)} (n${sT1.length})`
+			? `${(percentile(sT1, 50) ?? Number.NaN).toFixed(1)}/${(percentile(sT1, 90) ?? Number.NaN).toFixed(0)} · ${(percentile(sB5, 50) ?? Number.NaN).toFixed(1)}/${(percentile(sB5, 90) ?? Number.NaN).toFixed(0)} (n${sT1.length})`
 			: "—"
 
 		console.log(
@@ -181,10 +174,10 @@ async function main() {
 	)
 
 	// FALSIFIER VERDICT (DeepSeek-specified): does the gold-locality swap recover a REAL coordinate?
-	const t1p50 = pctile(swapTop1, 50),
-		t1p90 = pctile(swapTop1, 90),
-		b5p50 = pctile(swapBest5, 50),
-		b5p90 = pctile(swapBest5, 90)
+	const t1p50 = percentile(swapTop1, 50) ?? Number.NaN,
+		t1p90 = percentile(swapTop1, 90) ?? Number.NaN,
+		b5p50 = percentile(swapBest5, 50) ?? Number.NaN,
+		b5p90 = percentile(swapBest5, 90) ?? Number.NaN
 
 	const verdict = !swapTop1.length
 		? "INCONCLUSIVE — no swap cases with a truth coord + resolvable gold"

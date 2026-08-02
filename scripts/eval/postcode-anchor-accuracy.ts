@@ -21,7 +21,7 @@
 import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, percentile, readJSONL } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
 /**
@@ -62,26 +62,31 @@ function parseArgs(): Args {
 	return { evalPath, country, shards }
 }
 
-function pct(sorted: number[], p: number): number {
-	if (!sorted.length) return Number.NaN
-	const i = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))
-
-	return sorted[i]!
+/**
+ * One eval row as this probe reads it. The three postcode spellings and the top-level coordinates are all optional
+ * because the eval files it runs against were written by different generations of the harness; the loop skips a row
+ * that carries none of them.
+ */
+interface EvalRow {
+	expected?: { postcode?: string; lat?: number; lon?: number }
+	postcode?: string
+	components?: { postcode?: string }
+	lat?: number
+	lon?: number
 }
 
 function main(): void {
 	const { evalPath, country, shards } = parseArgs()
 	const lookup = new WOFPostcodeLookup(shards)
 
-	const lines = readFileSync(evalPath, "utf8").split("\n").filter(Boolean)
+	const rows = readJSONL<EvalRow>(evalPath)
 	let withPostcode = 0
 	let placed = 0
 	let inGazetteerNoCentroid = 0
 	let notInGazetteer = 0
 	const distances: number[] = []
 
-	for (const line of lines) {
-		const row = JSON.parse(line)
+	for (const row of rows) {
 		const postcode: string | undefined = row.expected?.postcode ?? row.postcode ?? row.components?.postcode
 		const lat: number | undefined = row.lat
 		const lon: number | undefined = row.lon
@@ -125,7 +130,7 @@ function main(): void {
 	)
 	console.log(`distance to true address (placed only), km:`)
 	console.log(
-		`  p50 ${pct(distances, 50).toFixed(1)}  p90 ${pct(distances, 90).toFixed(1)}  p99 ${pct(distances, 99).toFixed(1)}  max ${(distances.at(-1) ?? Number.NaN).toFixed(1)}`
+		`  p50 ${(percentile(distances, 50) ?? Number.NaN).toFixed(1)}  p90 ${(percentile(distances, 90) ?? Number.NaN).toFixed(1)}  p99 ${(percentile(distances, 99) ?? Number.NaN).toFixed(1)}  max ${(distances.at(-1) ?? Number.NaN).toFixed(1)}`
 	)
 
 	const within10 = distances.filter((d) => d <= 10).length

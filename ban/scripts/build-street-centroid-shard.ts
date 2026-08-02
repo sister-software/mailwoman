@@ -25,7 +25,6 @@
  *     node ban/out/scripts/build-street-centroid-shard.js --country fr --out /tmp/sc-fr.db
  */
 
-import { createHash } from "node:crypto"
 import {
 	createReadStream,
 	existsSync,
@@ -42,7 +41,7 @@ import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, sealDatabase } from "@mailwoman/core/utils"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import {
 	createStreetCentroidIndexes,
@@ -82,19 +81,6 @@ function parse(): BuildArgs {
 	const output = values.out ?? dataRootPath("ban", `street-centroids-${country}.db`)
 
 	return { country, source, release, output }
-}
-
-/**
- * Streaming md5 of a file (never buffer a multi-GB artifact).
- */
-async function fileMD5(path: string): Promise<string> {
-	const hash = createHash("md5")
-
-	for await (const chunk of createReadStream(path)) {
-		hash.update(chunk as Buffer)
-	}
-
-	return hash.digest("hex")
 }
 
 /**
@@ -235,7 +221,7 @@ async function main(): Promise<void> {
 
 	sealDatabase(args.output)
 
-	const md5 = await fileMD5(args.output)
+	const md5 = await md5File(args.output)
 	const bytes = statSync(args.output).size
 	const srcMD5 = sourceMD5(args.country)
 

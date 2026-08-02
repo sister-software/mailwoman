@@ -6,6 +6,7 @@
 
 import { existsSync } from "node:fs"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { buildFSTFromWOF } from "./fst-builder.ts"
@@ -127,7 +128,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 
 // --- Integration tests with real WOF data ---
 
-const WOF_DB = "/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db"
+const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = existsSync(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {

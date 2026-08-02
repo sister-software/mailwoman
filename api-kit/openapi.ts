@@ -93,3 +93,17 @@ export function printOpenAPIDocument(
 		console.log(json)
 	}
 }
+
+/**
+ * An OpenAPI error-response descriptor: a description plus a JSON body of `schema`.
+ *
+ * Takes the schema rather than owning one, because each drop-in's error envelope reproduces the wire shape of the
+ * project it replaces — Nominatim's differs from libpostal's, and both are recorded decisions rather than drift. What
+ * repeats between them is this four-line descriptor, not the shape it wraps.
+ */
+export function errorContent<S>(description: string, schema: S) {
+	return {
+		description,
+		content: { "application/json": { schema } },
+	}
+}

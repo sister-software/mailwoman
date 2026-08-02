@@ -32,7 +32,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.ts"
+import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
@@ -64,19 +64,6 @@ interface SamhsaSiteRow {
 	 * Optional. Falls back to `stableSourceID` derived from components when missing.
 	 */
 	frid?: string
-}
-
-const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
-
-function splitAddress(address: string): { house_number?: string; street: string } | null {
-	const trimmed = address.trim()
-
-	if (!trimmed) return null
-	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
-
-	if (m) return { house_number: m[1], street: m[2]!.trim() }
-
-	return { street: trimmed }
 }
 
 /**
@@ -169,7 +156,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 
 					const venue = composeVenue(record.name1 ?? "", record.name2)
 					const street = joinTwoLineStreet(record.street1 ?? "", record.street2)
-					const split = splitAddress(street)
+					const split = splitStreetLine(street)
 					const city = (record.city ?? "").trim()
 					const stateAbbr = (record.state ?? "").trim()
 					const postcode = (record.zip ?? "").trim()

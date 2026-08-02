@@ -9,6 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
+import { errorContent } from "@mailwoman/api-kit"
 import type { Context, MiddlewareHandler } from "hono"
 
 import { type LibpostalEngine, toLibpostalComponents } from "./engine.ts"
@@ -57,11 +58,6 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 </html>
 `
 
-const errorContent = (description: string) => ({
-	description,
-	content: { "application/json": { schema: ErrorSchema } },
-})
-
 /**
  * Query-side request schema, shared by the GET routes (documented; presence enforced in-handler).
  */
@@ -79,8 +75,8 @@ const parseResponses = {
 		description: "The ordered libpostal components.",
 		content: { "application/json": { schema: ParseResponseSchema } },
 	},
-	400: errorContent("The required `query` (or `address`) parameter is missing."),
-	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
+	400: errorContent("The required `query` (or `address`) parameter is missing.", ErrorSchema),
+	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),
 }
 
 const expandResponses = {
@@ -88,9 +84,9 @@ const expandResponses = {
 		description: "The deterministic expansion set.",
 		content: { "application/json": { schema: ExpandResponseSchema } },
 	},
-	400: errorContent("The required `address` parameter is missing."),
-	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
-	501: errorContent("The backing engine method is not wired for this deployment."),
+	400: errorContent("The required `address` parameter is missing.", ErrorSchema),
+	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),
+	501: errorContent("The backing engine method is not wired for this deployment.", ErrorSchema),
 }
 
 const rootRoute = createRoute({

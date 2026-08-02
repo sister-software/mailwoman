@@ -49,7 +49,7 @@ import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-
  */
 export const POI_BOARD_FIXTURES = "mailwoman/eval-harness/fixtures/poi-board.jsonl"
 
-export interface PoiBoardResultsExpect {
+export interface POIBoardResultsExpect {
 	kind: "results"
 	/**
 	 * Exactly one of `categoryID` / `brandWikidata` is set per fixture — the grader checks the top result's matching
@@ -62,28 +62,28 @@ export interface PoiBoardResultsExpect {
 	maxNearestKm: number
 }
 
-export interface PoiBoardAbstainExpect {
+export interface POIBoardAbstainExpect {
 	kind: "abstain"
 	reason: string
 }
 
-export interface PoiBoardAddressExpect {
+export interface POIBoardAddressExpect {
 	kind: "address"
 }
 
-export type PoiBoardExpect = PoiBoardResultsExpect | PoiBoardAbstainExpect | PoiBoardAddressExpect
+export type POIBoardExpect = POIBoardResultsExpect | POIBoardAbstainExpect | POIBoardAddressExpect
 
-export interface PoiBoardFixture {
+export interface POIBoardFixture {
 	id: string
 	query: string
 	locale?: string
-	expect: PoiBoardExpect
+	expect: POIBoardExpect
 }
 
 /**
  * The slice of a `PipelineResult` grading needs — kept narrow so tests can hand in a fake without building a tree.
  */
-export interface PoiBoardOutcome {
+export interface POIBoardOutcome {
 	path: PipelineResult["path"]
 	poiIntent?: POIIntentOutcome
 }
@@ -91,7 +91,7 @@ export interface PoiBoardOutcome {
 export interface CaseGrade {
 	id: string
 	query: string
-	expectKind: PoiBoardExpect["kind"]
+	expectKind: POIBoardExpect["kind"]
 	pass: boolean
 	detail: string
 	/**
@@ -103,9 +103,9 @@ export interface CaseGrade {
 
 /**
  * Grade one case against the pipeline's outcome. Pure — no I/O, no pipeline construction — so this is the unit-tested
- * core (`poi-board.test.ts`) and the live runner (`runPoiBoard`) is just fixture-load + pipeline-call + this.
+ * core (`poi-board.test.ts`) and the live runner (`runPOIBoard`) is just fixture-load + pipeline-call + this.
  */
-export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): CaseGrade {
+export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): CaseGrade {
 	const tookPoiPath = outcome.path === "poi" && outcome.poiIntent !== undefined
 	const expect = fixture.expect
 
@@ -235,7 +235,7 @@ export function gradeCase(fixture: PoiBoardFixture, outcome: PoiBoardOutcome): C
 	}
 }
 
-export interface PoiBoardOptions {
+export interface POIBoardOptions {
 	locale?: string
 	weightsCacheRoot?: string
 	fixturesPath?: string
@@ -267,7 +267,7 @@ export interface PoiBoardOptions {
  * else the FTS admin shard set, else no resolver at all (anchored category cases then abstain `anchor_required`,
  * exactly like the CLI probe degrades). Caller owns closing the returned handle.
  */
-async function loadResolver(options: PoiBoardOptions): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+async function loadResolver(options: POIBoardOptions): Promise<{ resolver: Resolver; close: () => void } | undefined> {
 	const wofPaths = options.candidateDb
 		? []
 		: (options.resolveDb ? options.resolveDb.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
@@ -400,7 +400,7 @@ export function evaluateFloors(report: FloorInput): FloorEvaluation {
 	return { lines, breached: lines.some((line) => !line.met) }
 }
 
-export interface PoiBoardReport {
+export interface POIBoardReport {
 	generatedAt: string
 	db: string
 	totalCases: number
@@ -420,11 +420,19 @@ export interface PoiBoardReport {
 	cases: CaseGrade[]
 }
 
-export interface PoiBoardRunResult {
-	report: PoiBoardReport
+export interface POIBoardRunResult {
+	report: POIBoardReport
 	exitCode: number
 }
 
+/**
+ * Linear-interpolated quantile — deliberately NOT `percentile` from `@mailwoman/core/utils`.
+ *
+ * They are different estimators, not two copies of one. Core's is nearest-rank and its docstring warns against
+ * "upgrading" it, because the resolver gate baselines were measured with that exact semantics. This one interpolates
+ * between the bracketing order statistics, which is what the POI board's distance summaries have always reported.
+ * Pointing this at core would shift published board numbers without changing a single measurement.
+ */
 function quantile(sorted: number[], q: number): number {
 	if (!sorted.length) return Number.NaN
 
@@ -456,13 +464,13 @@ function computeStats(values: number[]): QuantileStats | null {
  * aggregate. Mirrors `commands/poi.tsx`'s construction: `NeuralAddressClassifier.loadFromWeights` + the same
  * resolver-backend selector (`resolver-backend.ts`) + `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`.
  */
-export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoardRunResult> {
+export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoardRunResult> {
 	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
 
 	const fixtures = readFileSync(fixturesPath, "utf8")
 		.split("\n")
 		.filter(Boolean)
-		.map((line) => JSON.parse(line) as PoiBoardFixture)
+		.map((line) => JSON.parse(line) as POIBoardFixture)
 
 	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 
@@ -491,7 +499,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 		for (const fixture of fixtures) {
 			const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
 			const result = await pipeline(fixture.query, runOpts)
-			const outcome: PoiBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
+			const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
 			const grade = gradeCase(fixture, outcome)
 			cases.push(grade)
 
@@ -517,7 +525,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 		resolverHandle?.close()
 	}
 
-	const byExpectKind: PoiBoardReport["byExpectKind"] = {}
+	const byExpectKind: POIBoardReport["byExpectKind"] = {}
 
 	for (const grade of cases) {
 		const bucket = byExpectKind[grade.expectKind] ?? { total: 0, pass: 0, rate: 0 }
@@ -538,7 +546,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 	const totalPass = cases.filter((c) => c.pass).length
 	const overallPassRate = cases.length ? totalPass / cases.length : 0
 
-	const report: PoiBoardReport = {
+	const report: POIBoardReport = {
 		generatedAt: new Date().toISOString(),
 		db,
 		totalCases: cases.length,
@@ -560,7 +568,7 @@ export async function runPoiBoard(options: PoiBoardOptions = {}): Promise<PoiBoa
 	return { report, exitCode: options.enforce && report.floors.breached ? 1 : 0 }
 }
 
-function printReport(report: PoiBoardReport): void {
+function printReport(report: POIBoardReport): void {
 	console.log(`\nPOI query board (spec §3.6) — floors enforced under --enforce — db: ${report.db}`)
 	console.log(`${report.totalCases} cases, ${(report.overallPassRate * 100).toFixed(1)}% overall pass rate\n`)
 	console.log("  expect kind     n     pass    rate")

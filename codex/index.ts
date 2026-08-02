@@ -27,6 +27,7 @@ export {
 	type AddressSystemConventions,
 } from "./address-system-conventions.ts"
 
+export * from "./normalize.ts"
 export * as au from "./au/index.ts"
 export * as ca from "./ca/index.ts"
 export * as de from "./de/index.ts"

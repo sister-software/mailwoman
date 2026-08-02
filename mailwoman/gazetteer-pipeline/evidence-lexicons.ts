@@ -54,6 +54,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
@@ -571,13 +572,6 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 	])
 
 	const output = opts.output ?? String(repoRootPathBuilder("data", "gazetteer", "street-type-lexicon-v3.json"))
-
-	const wordNorm = (s: string): string =>
-		s
-			.split(/\s+/)
-			.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-			.filter(Boolean)
-			.join(" ")
 
 	const isShortCode = (s: string): boolean => {
 		const letters = s.replaceAll(/[^\p{L}]/gu, "")

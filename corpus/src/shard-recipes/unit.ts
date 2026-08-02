@@ -29,7 +29,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
@@ -112,44 +112,6 @@ interface UnitTuple {
 	region: string
 	postcode: string
 	oaUnit: string
-}
-
-/**
- * Minimal RFC-4180-ish splitter (handles quoted fields).
- */
-function splitCSV(line: string): string[] {
-	const out: string[] = []
-	let cur = ""
-	let inQ = false
-
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]
-
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
-	}
-
-	out.push(cur)
-
-	return out
 }
 
 /**

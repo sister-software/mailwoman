@@ -29,6 +29,7 @@ import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.ts"
+import { downloadIfNeeded, runCapture } from "./download.ts"
 import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.ts"
 
 const REDISTRICTING_BASE =
@@ -102,42 +103,6 @@ export interface FetchRedistrictingResult {
 	outPath: string
 	table: string
 	inserted: number
-}
-
-function runCapture(cmd: string, args: string[]): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const child = spawn(cmd, args)
-		let out = ""
-		let err = ""
-		child.stdout.on("data", (d) => (out += d))
-		child.stderr.on("data", (d) => (err += d))
-		child.on("error", reject)
-
-		child.on("close", (code) =>
-			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
-		)
-	})
-}
-
-async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
-	if (existsSync(dest)) {
-		try {
-			await runCapture("unzip", ["-tq", dest])
-
-			return true
-		} catch {
-			// corrupt cache — re-download
-		}
-	}
-
-	const tmp = dest + ".tmp"
-	const res = await fetch(url, { redirect: "follow" })
-
-	if (!res.ok || !res.body) throw new Error(`HTTP ${res.status} fetching ${url}`)
-	await pipeline(Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]), createWriteStream(tmp))
-	await rename(tmp, dest)
-
-	return false
 }
 
 // Pipe-delimited, fixed field-offset census rows — the manual `split("|")` at each call site stays (the

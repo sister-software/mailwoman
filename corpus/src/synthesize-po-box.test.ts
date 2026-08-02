@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { alignRow } from "./align.ts"
@@ -18,21 +19,11 @@ import {
 import type { CanonicalRow } from "./types.ts"
 
 // Deterministic RNG for reproducible tests.
-function seededRandom(seed: number): () => number {
-	let s = seed
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
-
 describe("synthesizePoBoxRow", () => {
 	it("US: replaces street with PO Box leader + number", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
-			{ random: seededRandom(42), pickNumber: () => "123" }
+			{ random: makeLcg(42), pickNumber: () => "123" }
 		)
 
 		expect(row).not.toBeNull()
@@ -51,7 +42,7 @@ describe("synthesizePoBoxRow", () => {
 	it("FR: uses BP / Boîte Postale leaders", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Paris", region: "Île-de-France", postcode: "75001", country: "FR" },
-			{ random: seededRandom(1), pickNumber: () => "42" }
+			{ random: makeLcg(1), pickNumber: () => "42" }
 		)
 
 		expect(row).not.toBeNull()
@@ -62,7 +53,7 @@ describe("synthesizePoBoxRow", () => {
 	it("ES: uses Apartado / Apdo. leaders", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Madrid", region: "Madrid", postcode: "28001", country: "ES" },
-			{ random: seededRandom(7), pickNumber: () => "100" }
+			{ random: makeLcg(7), pickNumber: () => "100" }
 		)
 
 		expect(row).not.toBeNull()
@@ -73,7 +64,7 @@ describe("synthesizePoBoxRow", () => {
 	it("AR: uses Casilla leaders", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Buenos Aires", region: "CABA", postcode: "C1000", country: "AR" },
-			{ random: seededRandom(13), pickNumber: () => "55" }
+			{ random: makeLcg(13), pickNumber: () => "55" }
 		)
 
 		expect(row).not.toBeNull()
@@ -84,7 +75,7 @@ describe("synthesizePoBoxRow", () => {
 	it("NZ: Private Bag / Private Box leaders, region-less format (#517)", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" },
-			{ random: seededRandom(5), pickNumber: () => "12" }
+			{ random: makeLcg(5), pickNumber: () => "12" }
 		)
 
 		expect(row).not.toBeNull()
@@ -105,7 +96,7 @@ describe("synthesizePoBoxRow", () => {
 				street: "Main St",
 				houseNumber: "100",
 			},
-			{ random: seededRandom(99), pickNumber: () => "200", pmbRatio: 1 }
+			{ random: makeLcg(99), pickNumber: () => "200", pmbRatio: 1 }
 		)
 
 		expect(row).not.toBeNull()
@@ -128,7 +119,7 @@ describe("synthesizePoBoxRow", () => {
 				street: "Main St",
 				houseNumber: "100",
 			},
-			{ random: seededRandom(42), pickNumber: () => "123", pmbRatio: 0 }
+			{ random: makeLcg(42), pickNumber: () => "123", pmbRatio: 0 }
 		)
 
 		expect(row!.template).toBe("po-box")
@@ -139,7 +130,7 @@ describe("synthesizePoBoxRow", () => {
 	it("unknown country falls back to en-US locale", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Somewhere", region: "??", postcode: "00000", country: "ZZ" },
-			{ random: seededRandom(3), pickNumber: () => "1" }
+			{ random: makeLcg(3), pickNumber: () => "1" }
 		)
 
 		expect(row!.locale).toBe("en-US")
@@ -158,7 +149,7 @@ describe("synthesizePoBoxRow", () => {
 
 describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theatre ZIP", () => {
-		const row = synthesizeMilitaryPoBoxRow({ random: seededRandom(7) })
+		const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(7) })
 		expect(row.template).toBe("military-po-box")
 		expect(row.locale).toBe("en-US")
 		expect(row.components.po_box!).toMatch(/^(PSC|CMR|Unit) \d+( Box \d+)?$/)
@@ -175,7 +166,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 	it("aligns cleanly through alignRow (po_box + locality + region + postcode, no quarantine)", () => {
 		// Seeds chosen to cover a box-bearing (PSC/CMR) and a bare (Unit) line.
 		for (const seed of [11, 23, 42, 7, 100]) {
-			const row = synthesizeMilitaryPoBoxRow({ random: seededRandom(seed) })
+			const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(seed) })
 
 			const canonical: CanonicalRow = {
 				...row,

@@ -21,7 +21,7 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import {
 	addressFrequencyKey,
@@ -36,6 +36,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { uniqueQuantiles } from "./shared.ts"
 
 /**
  * Share of entities assigned to fit; the rest are held out.
@@ -120,33 +121,6 @@ interface MessyRow {
 	 * Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree).
 	 */
 	auth: string
-}
-
-/**
- * Deterministic LCG (no Math.random — reproducible split + commit).
- */
-function lcg(seed: number): () => number {
-	let s = seed >>> 0 || 1
-
-	return () => {
-		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
-
-		return s / 0x1_00_00_00_00
-	}
-}
-
-/**
- * Up to `n` unique sorted-quantile values from a sorted score array — link-threshold candidates.
- */
-function uniqueQuantiles(sorted: number[], n: number): number[] {
-	if (!sorted.length) return [0]
-	const ts = new Set<number>()
-
-	for (let k = 0; k <= n; k++) {
-		ts.add(sorted[Math.floor((k / n) * (sorted.length - 1))]!)
-	}
-
-	return [...ts]
 }
 
 /**
@@ -326,7 +300,7 @@ export async function trainDedupGBT(
 	// CLUSTERING threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
 	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
-	const rnd = lcg(20_260_615)
+	const rnd = makeLcg(20_260_615)
 	const split = new Map<string, "fit" | "holdout">()
 
 	for (const npi of kept) {

@@ -36,6 +36,7 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
+import { downloadIfNeeded, runCapture } from "./download.ts"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.ts"
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.ts"
 
@@ -167,42 +168,6 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
 				geometry: JSON.stringify(geometry),
 			}
 	}
-}
-
-function runCapture(cmd: string, args: string[]): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const child = spawn(cmd, args)
-		let out = ""
-		let err = ""
-		child.stdout.on("data", (d) => (out += d))
-		child.stderr.on("data", (d) => (err += d))
-		child.on("error", reject)
-
-		child.on("close", (code) =>
-			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
-		)
-	})
-}
-
-async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
-	if (existsSync(dest)) {
-		try {
-			await runCapture("unzip", ["-tq", dest])
-
-			return true
-		} catch {
-			// corrupt cache — re-download
-		}
-	}
-
-	const tmp = dest + ".tmp"
-	const res = await fetch(url, { redirect: "follow" })
-
-	if (!res.ok || !res.body) throw new Error(`HTTP ${res.status} fetching ${url}`)
-	await pipeline(Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]), createWriteStream(tmp))
-	await rename(tmp, dest)
-
-	return false
 }
 
 /**

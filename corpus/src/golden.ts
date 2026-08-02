@@ -112,6 +112,11 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 
 /**
  * Validate one `.jsonl` file end-to-end, returning a list of issues.
+ *
+ * Reads and splits by hand rather than using `readJSONL` from `@mailwoman/core/utils`: every issue this returns carries
+ * the LINE NUMBER it was found on, and a malformed line has to be reported rather than thrown. `readJSONL` maps
+ * straight to a typed array and throws on the first bad line — correct for consumers that want the rows, wrong for the
+ * validator whose whole job is locating the bad ones.
  */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
 	const text = await readFile(path, "utf8")

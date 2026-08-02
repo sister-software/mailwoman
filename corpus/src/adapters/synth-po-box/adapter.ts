@@ -20,6 +20,7 @@
  *       carries a `street` field.
  */
 
+import { makeLcg } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
@@ -73,16 +74,6 @@ export interface SynthPoBoxAdapterOptions {
 	militaryRatio?: number
 }
 
-function makeRandom(seed: number): () => number {
-	let s = seed
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
-
 export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): CorpusAdapter {
 	const variantsPerInput = opts.variantsPerInput ?? 1
 	const pmbRatio = opts.pmbRatio ?? 0.15
@@ -95,7 +86,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 			"Synthetic PO box / PMB / Apartado / Boîte Postale rows. Consumes JSONL of (locality, region, postcode, country) tuples and emits locale-appropriate PO box variants.",
 
 		async *rows(options: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const random = makeRandom(opts.seed ?? Date.now())
+			const random = makeLcg(opts.seed ?? Date.now())
 
 			// TextSpliterator streams string lines; the per-line try/catch below keeps this reader
 			// tolerant of malformed rows (skipped++), so TextSpliterator + explicit JSON.parse — not

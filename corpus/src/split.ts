@@ -152,6 +152,13 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 /**
  * Lightweight deterministic 0..(n-1) bucket from a string id.
  */
+/**
+ * Deterministic bucket for a stable id.
+ *
+ * Stays on raw `createHash` rather than `sha256Hex` from `@mailwoman/core/utils`: it needs the digest BYTES, and the
+ * shared helper returns hex. Re-parsing hex back into bytes to reach the same four octets would cost more than the one
+ * line it saves.
+ */
 export function hashBucket(id: string, n: number): number {
 	const digest = createHash("sha256").update(id).digest()
 	// Read 4 bytes as uint32 to avoid bigint overhead.

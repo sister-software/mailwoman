@@ -44,7 +44,7 @@
  *   ```sh
  *   # With token (preferred). Default country: ca. Supports any OA country code (us-west, fr, …)
  *   OA_BATCH_TOKEN=<token> mailwoman corpus fetch openaddresses --country ca \
- *     --out-root /mnt/playpen/mailwoman-data/corpus/sources
+ *     --out-root $MAILWOMAN_DATA_ROOT/corpus/sources
  *
  *   # Without token (will detect + print instructions, then report the failure):
  *   mailwoman corpus fetch openaddresses --country ca

@@ -27,6 +27,7 @@
  */
 
 import { CA_PROVINCES } from "../ca/province.ts"
+import { foldName } from "../normalize.ts"
 import { US_STATE_BY_ABBREVIATION } from "../us/state.ts"
 
 /**
@@ -45,18 +46,6 @@ export interface SubdivisionMatch {
 	 * ISO 3166-1 alpha-2 country the subdivision belongs to (`CA`, `US`).
 	 */
 	country: string
-}
-
-/**
- * Strip diacritics + lowercase so `Québec`, `Quebec`, and `quebec` all key alike (mirrors `ca/province.ts`).
- */
-function foldName(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[\u0300-\u036F]/g, "")
-		.replaceAll(/[^a-z0-9]+/g, " ")
-		.trim()
 }
 
 /**

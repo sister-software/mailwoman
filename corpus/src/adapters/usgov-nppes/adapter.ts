@@ -25,7 +25,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.ts"
+import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
@@ -41,8 +41,6 @@ export const USGOV_NPPES_ADAPTER_ID = "usgov-nppes"
  */
 export const USGOV_NPPES_DEFAULT_LICENSE = "Public Domain"
 
-const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
-
 interface NPPESRow {
 	NPI: string
 	"Entity Type Code": string
@@ -54,17 +52,6 @@ interface NPPESRow {
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
 	"Provider Business Practice Location Address Postal Code": string
-}
-
-function splitAddress(address: string): { house_number?: string; street: string } | null {
-	const trimmed = address.trim()
-
-	if (!trimmed) return null
-	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
-
-	if (m) return { house_number: m[1], street: m[2]!.trim() }
-
-	return { street: trimmed }
 }
 
 function composeRaw(
@@ -131,7 +118,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 					if (!state) continue
 
 					const fullStreet = [address1, address2].filter(Boolean).join(" ")
-					const split = splitAddress(fullStreet)
+					const split = splitStreetLine(fullStreet)
 
 					if (!split) continue
 

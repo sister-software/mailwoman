@@ -9,6 +9,14 @@
  *   default shard unit — matching Photon's per-country dumps and our own per-locale weights), and a
  *   smaller sub-region extract when we only need to smoke a build (Île-de-France for the Paris
  *   acceptance). The bytes are ODbL OpenStreetMap data — see `osm/README.md`.
+ *
+ *   RAW `fetch` HERE IS DELIBERATE. `AGENTS.md` requires HTTP clients to extend or instantiate
+ *   `APIClient`, and that rule is about API REQUESTS — small bodies, repeated calls, rate-limited
+ *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
+ *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
+ *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
+ *   non-stream response type in memory. The primitive that fits a body this large is the one that
+ *   never holds it: a web stream piped to a write stream. Classified 2026-08-02.
  */
 
 import { createWriteStream } from "node:fs"

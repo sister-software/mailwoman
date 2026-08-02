@@ -26,7 +26,7 @@
  *   ## Usage
  *
  *   ```sh
- *   mailwoman corpus fetch nad --out-root /mnt/playpen/mailwoman-data/corpus/sources
+ *   mailwoman corpus fetch nad --out-root $MAILWOMAN_DATA_ROOT/corpus/sources
  *
  *   # Resume from an OID
  *   mailwoman corpus fetch nad --start-oid 34400001

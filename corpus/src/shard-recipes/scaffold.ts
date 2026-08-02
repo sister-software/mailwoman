@@ -33,39 +33,59 @@ export interface ShardTuple {
 }
 
 /**
- * The deterministic LCG (`s = s*1664525 + 1013904223 mod 2^32`) the street/po-box/anchor builders used. A recipe whose
- * legacy `.mjs` seeded this must create it here so `--seed N` is byte-reproducible.
+ * The two seeded generators the legacy `build-*-shard` scripts used, re-exported from their home in
+ * `@mailwoman/core/utils` so a recipe keeps importing everything it needs from this one scaffold module.
+ *
+ * - `makeLcg` (`s = s*1664525 + 1013904223 mod 2^32`) — what the street/po-box/anchor builders seeded.
+ * - `makeMulberry32` — what the MAJORITY of them used (german, locale, boundary-stress, unit, fr-order, country-balanced,
+ *   intersection, fr-admin-split, street-affix, street-bare, po-box-cedex).
+ *
+ * A recipe must seed the same one its `.mjs` did, the same way it did (usually `seed`, but some derive a per-stream
+ * seed), or `--seed N` stops being byte-reproducible.
  */
-export function makeLcg(seed: number): () => number {
-	let s = seed >>> 0
-
-	return () => {
-		s = (s * 1_664_525 + 1_013_904_223) % 4_294_967_296
-
-		return s / 4_294_967_296
-	}
-}
+export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@mailwoman/core/utils"
 
 /**
- * Back-compat alias for {@link makeLcg}.
+ * Split one CSV line into fields, honouring double-quoted fields and doubled-quote escapes (`""`).
+ *
+ * Six recipes each carried a byte-identical copy of this before the 2026-08-02 dedupe (two spellings that differed only
+ * by a non-null assertion). It stays hand-rolled rather than delegating to `csv-parse`: the recipes read one line at a
+ * time out of an already-streaming reader, and the dependency's per-line entry point costs more than the twenty lines
+ * it would replace.
  */
-export const makeRandom = makeLcg
+export function splitCSV(line: string): string[] {
+	const out: string[] = []
+	let cur = ""
+	let inQ = false
 
-/**
- * Mulberry32 — the PRNG the MAJORITY of the legacy `build-*-shard` scripts used (german, locale, boundary-stress, unit,
- * fr-order, country-balanced, intersection, fr-admin-split, street-affix, street-bare, po-box-cedex). A recipe must
- * seed it EXACTLY as its `.mjs` did (usually `seed`, but some derive a per-stream seed) to stay byte-reproducible.
- */
-export function makeMulberry32(seed: number): () => number {
-	let a = seed >>> 0
+	for (let i = 0; i < line.length; i++) {
+		const c = line[i]!
 
-	return () => {
-		a = (a + 0x6d_2b_79_f5) | 0
-		let t = Math.imul(a ^ (a >>> 15), 1 | a)
-		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+		if (inQ) {
+			if (c === '"') {
+				if (line[i + 1] === '"') {
+					cur += '"'
 
-		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
+					i++
+				} else {
+					inQ = false
+				}
+			} else {
+				cur += c
+			}
+		} else if (c === '"') {
+			inQ = true
+		} else if (c === ",") {
+			out.push(cur)
+			cur = ""
+		} else {
+			cur += c
+		}
 	}
+
+	out.push(cur)
+
+	return out
 }
 
 /**

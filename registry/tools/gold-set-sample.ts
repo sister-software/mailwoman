@@ -23,6 +23,7 @@
 import { writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { jaccard } from "@mailwoman/match"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
 /**
@@ -83,18 +84,6 @@ function orgTokens(s: string): Set<string> {
 			.split(/\s+/)
 			.filter((t) => t && !STOP.has(t))
 	)
-}
-
-function jaccard(a: Set<string>, b: Set<string>): number {
-	if (!a.size || !b.size) return 0
-	let inter = 0
-
-	for (const t of a)
-		if (b.has(t)) {
-			inter++
-		}
-
-	return inter / (a.size + b.size - inter)
 }
 
 const C = {

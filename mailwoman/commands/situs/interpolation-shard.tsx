@@ -24,12 +24,12 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
-import { existsSync, globSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { globSync, mkdirSync, rmSync } from "node:fs"
 import { basename, dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
 import zod from "zod"
@@ -138,31 +138,6 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 	if (f !== to % 2) return "mixed"
 
 	return f === 1 ? "odd" : "even"
-}
-
-/**
- * Scripts/AGENTS.md atomic swap: the build wrote to a temp path, so a mid-build crash never leaves a half-written DB at
- * finalPath. Move any prior version aside, slot the new one in, then drop the old. (The original script rebuilt in
- * place — `rmSync(OUT)` then `new DatabaseSync(OUT)`.)
- */
-function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
-	const aside = `${finalPath}.old-${process.pid}`
-
-	if (existsSync(finalPath)) {
-		renameSync(finalPath, aside)
-	}
-
-	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(finalPath + sfx, { force: true })
-	}
-
-	renameSync(tmpPath, finalPath)
-
-	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(tmpPath + sfx, { force: true })
-	}
-
-	rmSync(aside, { force: true })
 }
 
 const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {

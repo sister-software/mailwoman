@@ -33,7 +33,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.ts"
+import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
@@ -75,18 +75,6 @@ interface HrsaSiteRow {
  * column. Leaving the surface form intact in `street` preserves the adversarial training signal (the model learns that
  * a trailing "Suite 4" is part of the road line in this distribution).
  */
-const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
-
-function splitAddress(address: string): { house_number?: string; street: string } | null {
-	const trimmed = address.trim()
-
-	if (!trimmed) return null
-	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
-
-	if (m) return { house_number: m[1], street: m[2]!.trim() }
-
-	return { street: trimmed }
-}
 
 /**
  * Compose the raw envelope-style address line. Format:
@@ -142,7 +130,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
 					const venue = (record["Site Name"] ?? "").trim()
-					const split = splitAddress(record["Site Address"] ?? "")
+					const split = splitStreetLine(record["Site Address"] ?? "")
 					const city = (record["Site City"] ?? "").trim()
 					const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
 					const postcode = (record["Site Postal Code"] ?? "").trim()

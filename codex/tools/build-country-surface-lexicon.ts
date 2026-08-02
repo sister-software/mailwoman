@@ -44,6 +44,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
+import { wordNorm, wordNormLower } from "../normalize.ts"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
 
 /**
@@ -71,15 +72,6 @@ const OUTPUT = resolve(import.meta.dirname, "../../data/gazetteer/country-surfac
  * letters or digits (keep internal ones: "u.s.a", "timor-leste"), rejoin single-spaced. Entry keys and scanned tokens
  * both pass through it, so "U.S.A." ≡ "u.s.a".
  */
-const wordNorm = (s: string): string =>
-	s
-		.split(/\s+/)
-		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-		.filter(Boolean)
-		.join(" ")
-
-const norm = (s: string): string => wordNorm(s).toLowerCase()
-
 /**
  * Short alphabetic code (≤3 letters once punctuation is dropped) → exact-uppercase matching.
  */
@@ -125,7 +117,7 @@ function add(surface: string): void {
 		return
 	}
 
-	const key = norm(s)
+	const key = wordNormLower(s)
 
 	if (!key) return
 	const words = key.split(" ")

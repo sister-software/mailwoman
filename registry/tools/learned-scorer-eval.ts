@@ -37,7 +37,7 @@
 
 import { writeFileSync } from "node:fs"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
 import {
 	addressFrequencyKey,
@@ -50,6 +50,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { addr, norm } from "./shared.ts"
 
 /**
  * Smallest mean gap counted as a real difference rather than seed noise.
@@ -140,24 +141,6 @@ const C = {
 	mState: "Provider Business Mailing Address State Name",
 	mZip: "Provider Business Mailing Address Postal Code",
 	otherOrg: "Provider Other Organization Name",
-}
-
-const norm = (s: string | undefined) => (s ?? "").trim()
-
-const addr = (line: string, city: string, st: string, zip: string) =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
-
-/**
- * Deterministic LCG (no Math.random — reproducible split).
- */
-function lcg(seed: number): () => number {
-	let s = seed >>> 0 || 1
-
-	return () => {
-		s = (Math.imul(s, 1_664_525) + 1_013_904_223) >>> 0
-
-		return s / 0x1_00_00_00_00
-	}
 }
 
 interface MessyRow {
@@ -379,7 +362,7 @@ export async function scorerPairwiseEval(
 	 * pairs); only the LR weights and the test subset move with the seed, so repeating over seeds bounds split variance.
 	 */
 	function runSplit(seed: number): SplitScored {
-		const rnd = lcg(seed)
+		const rnd = makeLcg(seed || 1)
 		const npiSplit = new Map<string, "train" | "test">()
 
 		for (const npi of keptNPIs) {

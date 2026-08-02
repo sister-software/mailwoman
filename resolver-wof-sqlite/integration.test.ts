@@ -12,7 +12,7 @@
  *   Resolution order for the DB path:
  *
  *   1. `MAILWOMAN_WOF_DB` env var (explicit operator override).
- *   2. `/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
+ *   2. `$MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
  *        documented in the README + handover doc).
  *
  *   Assumes the `place_search` FTS5 table is already built (run `mailwoman gazetteer build fts` ahead of

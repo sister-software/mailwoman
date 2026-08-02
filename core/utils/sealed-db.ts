@@ -8,8 +8,14 @@
  *   is how anything opens a data artifact; a write-mode open of a sealed file throws a NAMED error
  *   pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
  *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
+ *
+ *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step AGENTS.md
+ *   specifies in prose ("build it successfully, then move the previous version to a temp directory,
+ *   and then move the new version into place"). It lives here because this module already owns the
+ *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
+ *   once in code should be a function.
  */
-import { chmodSync, existsSync, statSync, unlinkSync } from "node:fs"
+import { chmodSync, existsSync, renameSync, rmSync, statSync, unlinkSync } from "node:fs"
 import { basename } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
@@ -90,4 +96,35 @@ export function openBuiltDatabase(path: string, opts: { write?: boolean } = {}):
 	}
 
 	return new (sqlite().DatabaseSync)(path, { readOnly: true })
+}
+
+/**
+ * Atomically move a freshly-built database into its published location.
+ *
+ * The build writes to a temp path, so a mid-build crash never leaves a half-written DB at `finalPath`. This moves any
+ * prior version aside, slots the new one in, then drops the old — the previous file stays intact until the replacement
+ * is committed, and the `-wal`/`-shm` siblings of BOTH paths are cleared so a stale journal can never be paired with a
+ * new main file.
+ *
+ * Sealing (`sealDatabase`) happens on the temp file BEFORE the swap: a sealed artifact is what gets published, and 0444
+ * does not prevent a rename.
+ */
+export function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
+	const aside = `${finalPath}.old-${process.pid}`
+
+	if (existsSync(finalPath)) {
+		renameSync(finalPath, aside)
+	}
+
+	for (const sfx of ["-wal", "-shm"]) {
+		rmSync(finalPath + sfx, { force: true })
+	}
+
+	renameSync(tmpPath, finalPath)
+
+	for (const sfx of ["-wal", "-shm"]) {
+		rmSync(tmpPath + sfx, { force: true })
+	}
+
+	rmSync(aside, { force: true })
 }

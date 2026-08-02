@@ -11,7 +11,7 @@
  *
  *   Integration suite paths:
  *
- *   - WOF admin DB: $MAILWOMAN_WOF_DB or /mnt/playpen/mailwoman-data/wof/admin-global-priority.db
+ *   - WOF admin DB: $MAILWOMAN_WOF_DB or $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
  *   - Address-point shard: --address-points-db flag (explicit, skips state-selection)
  *   - Interpolation shard: --interpolation-db flag (explicit, skips state-selection)
  *
@@ -37,8 +37,8 @@ const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
 // Per-state TX shards (the demo address is Round Rock, TX).
-const TX_ADDRESS_POINTS_DB = "/mnt/playpen/mailwoman-data/address-points/address-points-us-tx.db"
-const TX_INTERPOLATION_DB = "/mnt/playpen/mailwoman-data/interpolation/interpolation-us-tx.db"
+const TX_ADDRESS_POINTS_DB = dataRootPath("address-points", "address-points-us-tx.db")
+const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.db")
 
 const hasWOFDb = existsSync(wofPath)
 const hasCLICompiled = existsSync(CLI_PATH)

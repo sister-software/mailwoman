@@ -20,7 +20,7 @@
  *   Both passes record per-row provenance in a `centroid_source` table (`id` → `source`) and NEVER
  *   overwrite a real coordinate. Both are idempotent (the UPDATE re-checks `latitude=0`).
  *
- *   Data file notes: `/mnt/playpen/mailwoman-data/census/README.md` (ZCTA);
+ *   Data file notes: `$MAILWOMAN_DATA_ROOT/census/README.md` (ZCTA);
  *   download.geonames.org/export/zip/US.zip (GeoNames; CC-BY 4.0, attribute "GeoNames (CC-BY
  *   4.0)").
  *

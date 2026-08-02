@@ -23,10 +23,11 @@
  *   (v0-via-adapter >= 85% of v0 standalone component accuracy on canonical) catches an adapter
  *   that drops too much.
  *
- *   NOTE(phase5a): this is a COPY of `scripts/eval/v0-tree-adapter.ts`, taken when
- *   `oa-resolver-eval` migrated into the eval-harness. The original stays behind because two probes
- *   pending triage (`resolver-eval.ts`, `fr-admin-split-selfvalidation.ts`) still import it; the
- *   probe triage should delete that copy and repoint any survivor here.
+ *   HISTORY: this began as a copy of `scripts/eval/v0-tree-adapter.ts`, taken when
+ *   `oa-resolver-eval` migrated into the eval-harness. Both copies then carried a note saying the
+ *   OTHER one was the copy, and both named the probe triage that would collapse them. The triage
+ *   finished for `resolver-eval.ts` (deleted) but never came back for the file itself; the
+ *   duplicate was removed 2026-08-02 and `fr-admin-split-selfvalidation.ts` repointed here.
  */
 
 import { buildAddressTree, type AddressTree, type DecoderToken } from "@mailwoman/core/decoder"
