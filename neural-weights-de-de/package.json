@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/sister-software/mailwoman.git",
-		"directory": "neural-weights-en-nz"
+		"directory": "neural-weights-de-de"
 	},
 	"files": [
 		"model-card.json",
