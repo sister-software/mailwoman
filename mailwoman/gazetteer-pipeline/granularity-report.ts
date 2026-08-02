@@ -17,7 +17,27 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 
+import { DEFAULT_GEONAMES_COUNTRIES, DEFAULT_OVERTURE_COUNTRIES, DEFAULT_WOF_PRIORITY_COUNTRIES } from "./defaults.ts"
 import { LADDER, type CountryGranularity, bottomsOutAt } from "./granularity.ts"
+
+/**
+ * Which build path supplied a country's rows — the single most important column in this report.
+ *
+ * A country outside {@link DEFAULT_WOF_PRIORITY_COUNTRIES} had NO WOF GeoJSON repo cloned or ingested, so its empty
+ * sub-locality rung says nothing whatsoever about WOF's depth there. Only 11 of the 260 admin repos WOF publishes are
+ * in the recipe; the rest of the world arrives via Overture divisions (5 subtypes, none hood-level) or the GeoNames
+ * alias fold. Without this column a reader would take "233 countries bottom out at locality" as a finding about WOF
+ * rather than about the recipe.
+ */
+function sourceClass(country: string): string {
+	if ((DEFAULT_WOF_PRIORITY_COUNTRIES as readonly string[]).includes(country)) return "wof-repo"
+
+	if ((DEFAULT_OVERTURE_COUNTRIES as readonly string[]).includes(country)) return "overture"
+
+	if ((DEFAULT_GEONAMES_COUNTRIES as readonly string[]).includes(country)) return "geonames"
+
+	return "other"
+}
 
 export interface GranularityReportMeta {
 	/**
@@ -65,10 +85,11 @@ export function renderGranularityReport(rows: CountryGranularity[], meta: Granul
 		const bottom = bottomsOutAt(country, meta.floor)
 		const cells = LADDER.map((rung) => rungCell(country, rung)).join(" | ")
 
-		return `| ${country.country} | ${bottom ?? "(none)"} | ${country.localityParents.toLocaleString()} | ${cells} |`
+		return `| ${country.country} | ${sourceClass(country.country)} | ${bottom ?? "(none)"} | ${country.localityParents.toLocaleString()} | ${cells} |`
 	})
 
 	const reached = rows.filter((country) => bottomsOutAt(country, meta.floor) === "dependent_locality").length
+	const fromWOFRepo = rows.filter((country) => sourceClass(country.country) === "wof-repo").length
 
 	return `# Gazetteer depth scorecard
 
@@ -81,7 +102,20 @@ child projecting onto that rung).
 - **Built:** ${meta.buildDate}
 - **Parent-coverage floor:** ${pct(meta.floor)} — a sub-locality rung counts as reached only above this.
 - **Countries measured:** ${rows.length.toLocaleString()}
+- **Countries built from a cloned WOF repo:** ${fromWOFRepo.toLocaleString()} — the rest came from Overture divisions or the GeoNames alias fold.
 - **Countries reaching \`dependent_locality\`:** ${reached.toLocaleString()}
+
+## Read the \`source\` column first
+
+**This report measures the shipped artifact, not Who's on First.** WOF publishes 260 per-country
+admin repos; \`DEFAULT_WOF_PRIORITY_COUNTRIES\` clones 11 of them. Every other country's rows come
+from Overture divisions — whose \`OVERTURE_DIVISION_SUBTYPES\` is \`country\`/\`locality\`/\`region\`/
+\`county\`/\`localadmin\`, with no hood-level subtype — or from the GeoNames alias fold.
+
+So a \`source\` of \`overture\` or \`geonames\` with an empty \`dependent_locality\` rung is **not a
+finding about WOF's depth in that country**. It is a country we never asked. The sub-locality tier
+appears in exactly the countries whose repo is cloned, and that correspondence is the recipe, not a
+property of the data.
 
 ## What this report does not tell you
 
@@ -91,15 +125,16 @@ child projecting onto that rung).
   out at municipality in every country measured, so it cannot see this tier.
 - **The locality rung and above are partly self-comparison.** For the Overture-backfilled country
   set those rows came from Overture, not WOF; the \`ovt\` share in each cell is how much.
-- **An empty rung is coverage, not fact.** \`ADMIN_PLACETYPES\` in \`admin/ingest-wof.ts\` allowlists
-  9 of WOF's 34 placetypes, so for 25 of them the build never asked. Per the **meaning-of-zero**
-  rule a measured-and-empty rung renders as \`0\` and a never-measured rung as \`—\`; they are not
-  the same claim.
+- **An empty rung is coverage, not fact.** Two independent filters produce zeroes here: the country
+  recipe above, and \`ADMIN_PLACETYPES\` in \`admin/ingest-wof.ts\`, which allowlists 9 of WOF's 34
+  placetypes — so even for a cloned country the build never asked for the other 25. Per the
+  **meaning-of-zero** rule a measured-and-empty rung renders as \`0\` and a never-measured rung as
+  \`—\`; they are not the same claim.
 
 ## Ladder
 
-| country | bottoms out at | locality parents | ${header} |
-| --- | --- | --: | ${alignment} |
+| country | source | bottoms out at | locality parents | ${header} |
+| --- | --- | --- | --: | ${alignment} |
 ${body.join("\n")}
 `
 }

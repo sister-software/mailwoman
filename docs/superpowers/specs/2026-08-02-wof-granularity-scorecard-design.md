@@ -56,6 +56,27 @@ NZ is **not** among them, yet NZ ships a pair index (`pair-index-nz.bin`). That 
 index never depended on gazetteer sub-locality nodes — NZ's came from LINZ. Gazetteer depth and pair
 coverage are independent axes, and the scorecard must not conflate them.
 
+### Correction (2026-08-02, after the plan's PR A+B landed)
+
+**The 11 are exactly the countries whose WOF repo the build clones.**
+`DEFAULT_WOF_PRIORITY_COUNTRIES` (`gazetteer-pipeline/defaults.ts:20`) is CN, DE, ES, FR, GB, IT,
+JP, KR, NL, TW, US — the same eleven, in the same set. Verified against
+`$MAILWOMAN_DATA_ROOT/wof/repos`, which holds those repos and no others.
+
+**WOF publishes 260 per-country admin repos.** The recipe ingests 11. Everything else arrives via
+Overture divisions — whose `OVERTURE_DIVISION_SUBTYPES` carries no hood-level subtype — or the
+GeoNames alias fold. Repos exist and are substantial for countries we have never touched: IN 2,230 MB
+(larger than the US's 1,858 MB), FR-sized PL at 482 MB, BR 303 MB, NZ 235 MB, IE 114 MB.
+
+So the "dependent_locality in 11 of 244" headline is a true statement about the **artifact** and a
+false one about **WOF**. Nothing here has tested whether WOF is granular enough outside those eleven
+countries, because outside them WOF was never asked. Ireland is the sharpest case: this spec framed
+IE's zero as a WOF gap that Overture could fill, and the cheaper reading is that
+`whosonfirst-data-admin-ie` exists, is 114 MB, and has never been cloned.
+
+Repo size is not placetype depth — how much of those 249 repos is sub-locality tier is **unmeasured**,
+and measuring it is the source-gap leg below.
+
 ### Finding 2 — a chunk of that is an allowlist, not a data gap
 
 `ADMIN_PLACETYPES` (`mailwoman/gazetteer-pipeline/admin/ingest-wof.ts:27`) is a hardcoded
@@ -196,18 +217,28 @@ direct answer to the originating question.
 
 A count alone routes nowhere. Every thin or empty cell is attributed by walking down:
 
-1. **Allowlist gap** — the placetype is absent from `ADMIN_PLACETYPES`. Fix: one-line recipe change
-   plus a rebuild. Cheapest class; currently covers 25 of 34 placetypes.
-2. **Source gap** — allowlisted, but the cloned `whosonfirst-data*` repos hold no such rows for that
-   country. Fix: another provider (Overture divisions, `poi.db`, a national register).
-3. **Build gap** — ingested but missing downstream (freeze, priority filter, dedup). Fix: a bug.
+1. **Recipe gap** — the country is absent from `DEFAULT_WOF_PRIORITY_COUNTRIES`, so no WOF repo was
+   ever cloned or ingested for it. Fix: clone the repo and add the country to the recipe. **This is
+   the dominant class — 233 of 244 countries — and it was missed in the first draft of this spec.**
+   A recipe-gap cell says nothing about WOF's depth.
+2. **Allowlist gap** — the placetype is absent from `ADMIN_PLACETYPES`. Fix: one-line recipe change
+   plus a rebuild. Covers 25 of 34 placetypes, and applies even to the eleven cloned countries.
+3. **Source gap** — the country is cloned and the placetype allowlisted, but the repo holds no such
+   rows. Fix: another provider (Overture divisions, `poi.db`, a national register). **This is the
+   only class that is a genuine statement about WOF**, and today it can only be evaluated for eleven
+   countries.
+4. **Build gap** — ingested but missing downstream (freeze, priority filter, dedup). Fix: a bug.
 
-Attribution (2) requires counting placetypes present on disk in the WOF repo set. `ingest-wof.ts`
-globs `**/data/**/*.geojson` under discovered roots; the scorecard needs the same discovery and a
-per-(country, placetype) tally. **Open question:** the repo set was not found under
-`$MAILWOMAN_DATA_ROOT/wof/` during design (`wof/global` is empty; `wof/dbs-per-country` holds 7
-per-country DBs). Locating or re-cloning the repos is the first plan step, and if they are not
-available the source-gap leg degrades to "unknown" rather than being silently merged into (1).
+Attribution (1) is free — a set membership test against `defaults.ts`, shipped in PR B as the
+report's `source` column. Attribution (3) requires counting placetypes on disk in the WOF repo set.
+`ingest-wof.ts` globs `**/data/**/*.geojson` under discovered roots; the scorecard needs the same
+discovery and a per-(country, placetype) tally, which means parsing `wof:placetype` out of each
+feature — the repos carry no `meta/` CSV shortcut.
+
+**Open question 1 is resolved.** The repos are at `$MAILWOMAN_DATA_ROOT/wof/repos` (the default the
+`gazetteer build admin --data` flag documents), holding the eleven priority admin repos plus eight
+`whosonfirst-data-postalcode-*`. The design-stage claim that they were missing was a truncated
+directory listing, not a fact.
 
 ### Name match — missing vs mistyped
 
@@ -339,12 +370,23 @@ ships with the source-gap leg reporting "unknown" rather than blocking.
 
 ## Open questions for the plan stage
 
-1. Where are the cloned `whosonfirst-data*` repos? `wof/global` is empty and `wof/dbs-per-country`
-   holds only 7 per-country DBs. Without the repos, source-gap attribution degrades to "unknown."
-   Not a blocker for the other legs.
+1. ~~Where are the cloned `whosonfirst-data*` repos?~~ **Resolved 2026-08-02:**
+   `$MAILWOMAN_DATA_ROOT/wof/repos`, holding the eleven priority admin repos. The source-gap leg is
+   unblocked for those eleven; for the other 249 it needs the repo cloned first, which is now its own
+   piece of work (see the new open question 4).
 2. Whether the venue sub-structure rungs collapse into one `venue` row for v1. `poi.db` answers venue
    density but does not carry WOF's building/campus/wing distinctions, so the sub-structure rungs may
    have no measurable source yet — in which case they are **absent** rows, not zero rows. Getting
    this wrong violates the meaning-of-zero rule in the artifact itself.
 3. Whether the 5% parent-coverage floor is right. GB sits at 33.2%, so the floor is far below the one
    country we have a validated reading for. It wants a second calibration point before it hardens.
+   **PR B supplied four:** DE 72.6%, GB 34.7%, plus NL and US above the floor, against JP at 0.6% —
+   a wide gap between the countries that reach the tier and the ones that do not, which suggests the
+   floor's exact value matters less than expected.
+4. **How much of the 249 uncloned admin repos is sub-locality tier?** This is now the load-bearing
+   unknown, and it is what "is WOF granular enough" actually asks. Repo size is a poor proxy
+   (IN 2,230 MB, PL 482 MB, IE 114 MB, but size does not separate `locality` rows from hood rows).
+   A cheap probe: clone two or three uncloned repos of different sizes, tally `wof:placetype`, and
+   see whether the hood tier is present. If it is, the recipe — not the data — is what has been
+   capping mailwoman's depth, and full world coverage is a fetch-and-rebuild problem rather than a
+   sourcing one.

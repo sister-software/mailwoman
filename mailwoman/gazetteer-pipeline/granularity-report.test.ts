@@ -83,6 +83,29 @@ describe("renderGranularityReport", () => {
 		expect(markdown).toContain("meaning-of-zero")
 	})
 
+	it("classifies each country by which build path supplied its rows", () => {
+		const markdown = renderGranularityReport(
+			[
+				row("GB", { country: { nodes: 1 } }),
+				row("IE", { country: { nodes: 1 } }),
+				row("ZW", { country: { nodes: 1 } }),
+			],
+			META
+		)
+
+		// GB is in DEFAULT_WOF_PRIORITY_COUNTRIES; IE is an Overture-backfill country; ZW comes via GeoNames.
+		expect(markdown).toMatch(/^\| GB \| wof-repo \|/m)
+		expect(markdown).toMatch(/^\| IE \| overture \|/m)
+		expect(markdown).toMatch(/^\| ZW \| geonames \|/m)
+	})
+
+	it("warns that an empty rung in a non-WOF-repo country is not a finding about WOF", () => {
+		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 } })], META)
+
+		expect(markdown).toContain("It is a country we never asked.")
+		expect(markdown).toContain("260")
+	})
+
 	it("renders a measured-and-empty rung as 0 rather than omitting it", () => {
 		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3230 } })], META)
 
