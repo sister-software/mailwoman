@@ -1,0 +1,45 @@
+{
+	"name": "@mailwoman/neural-weights-en-in",
+	"version": "7.0.0",
+	"locale": "en-IN",
+	"license": "AGPL-3.0",
+	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with @mailwoman/neural-weights-en-us via mailwoman.baseWeights \u2014 this package ships ONLY the IN placetype-pair index.",
+	"in_artifacts": {
+		"$comment": "Hierarchy campaign R10 (2026-08-02). The Indian instance of the dependent-locality prior.",
+		"pair_index_in_bin": {
+			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (area, city) dependent_locality prior, e.g. (\"Indiranagar\", \"Bengaluru\")",
+			"source": "Who's On First admin hierarchy. India Post routes house/street, area, city, state, PIN \u2014 the AREA line is the dependent-locality slot, and it is written on essentially every Indian address.",
+			"pairs": 175744,
+			"bytes": 4335958,
+			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from GB per R5's uniform-deficit finding.",
+			"country_gate": "hard-gated on the header's country (in).",
+			"parent_alias_expansion": "ENABLED FOR INDIA ALONE. WOF stores Bangalore; an address today says Bengaluru (renamed 2014, carried as an `eng` VARIANT rather than the preferred name), so without expansion the pair exists and never fires. Scoped to `eng` names longer than 3 characters \u2014 the names table is exhaustively multilingual and the short tail is airport/agency codes (BLR, BBMP). NOT enabled globally: applied everywhere it took the US index from 47,878 to 101,560 on surfaces no board has graded.",
+			"deprecated_records": "53.4% of WOF's Indian borough/neighbourhood nodes carry edtf:deprecated (100,860 of 189,002), against 0.0-2.5% for every other shipped locale. Only live records are indexed. A raw-repo node count for India overstates usable yield by roughly 2x \u2014 the number to trust is measured through the ingest, not off the repo.",
+			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-in --country in --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
+		}
+	},
+	"eval": {
+		"r10_in_area": {
+			"venue_confound_board": {
+				"n": 70,
+				"false_positives": 0,
+				"fp_pct": 0.0,
+				"bar_pct": 2.0,
+				"note": "40 directional-class surfaces (North/South/East/West/New/Old, from 665 available) + 30 others, each opening an Indian venue name"
+			},
+			"positive_board": {
+				"n": 60,
+				"emit": 60,
+				"tag_correct": 59,
+				"tag_correct_pct": 98.3,
+				"bar_pct": 70.0,
+				"note": "the single miss is a trailing period ('Pimpale Bk' vs 'Pimpale Bk.'), a tokenization artifact rather than a retrieval failure"
+			},
+			"before_after": "'12 MG Road, Indiranagar, Bengaluru, Karnataka 560038' fused locality as 'Indiranagar Bengaluru Karnataka' and emitted no dependent locality; it now yields dependent_locality=Indiranagar, locality=Bengaluru."
+		}
+	},
+	"files": {
+		"model_card": "model-card.json",
+		"pair_index": "pair-index-in.bin"
+	}
+}
