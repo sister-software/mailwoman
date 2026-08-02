@@ -1110,6 +1110,44 @@ export const REGRESSION_CASES: SeedCase[] = [
 		addedAt: "2026-07-30",
 		note: "East homograph opening the venue + an apostrophe-bearing Saint-abbreviated street (St James's Square).",
 	},
+	// ── Northern Ireland (2026-08-02, campaign R7). NI sat outside the GB index since R3, deferred on
+	// "the pair parent needs post towns" — a licensed Royal Mail table. R5 dissolved that: the parent
+	// side need not come from a postal register, and WOF parents NI neighbourhoods to Belfast /
+	// Newtownabbey / Londonderry / Lisburn, which ARE the post towns for those addresses. 87 pairs.
+	{
+		id: "ni-r7-ballyhackamore-belfast",
+		input: "78 Ormeau Rd, Ballyhackamore, Belfast, BT7 1NT",
+		source: "campaign:r7",
+		addressKind: "gb_structured",
+		country: "GB",
+		status: "pass",
+		expectComponents: {
+			house_number: "78",
+			street: "Ormeau Rd",
+			dependent_locality: "Ballyhackamore",
+			locality: "Belfast",
+			postcode: "BT7 1NT",
+		},
+		addedAt: "2026-08-02",
+		note: "R7: a Belfast neighbourhood as dependent locality.",
+	},
+	{
+		id: "ni-r7-east-belfast-venue-confound",
+		input: "East Belfast Barbers, 5 Lisburn Rd, Belfast, BT9 6AL",
+		source: "campaign:r7",
+		addressKind: "gb_venue_led",
+		country: "GB",
+		status: "pass",
+		expectComponents: {
+			venue: "East Belfast Barbers",
+			house_number: "5",
+			street: "Lisburn Rd",
+			locality: "Belfast",
+			postcode: "BT9 6AL",
+		},
+		addedAt: "2026-08-02",
+		note: "R7 law-1 CONFOUND, gated: 'East Belfast' is an indexed pair AND opens a venue name here — dependent_locality must NOT fire on the venue span.",
+	},
 	// ── US dependent-locality instance (2026-08-01, campaign R5). en-us ships `pair-index-us.bin`, so
 	// a US address carrying BOTH a neighbourhood/borough and its parent now resolves the hierarchy
 	// instead of dropping the second admin level. The pair of gated cases below locks BOTH halves: the

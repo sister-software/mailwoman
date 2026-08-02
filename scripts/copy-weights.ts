@@ -314,13 +314,25 @@ async function materializePairIndex(workspace: string, dir: string) {
 	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
 	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
-	const pairsJsonl = entry.pairsJsonl ? resolveFrom(repoRoot, entry.pairsJsonl) : undefined
+	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
+	const pairsJsonl = entry.pairsJsonl
+		? entry.pairsJsonl
+				.split(",")
+				.map((path) => resolveFrom(repoRoot, path.trim()))
+				.join(",")
+		: undefined
 	const banDir = entry.banDir ? resolveFrom(dataRoot, entry.banDir) : undefined
+
+	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {
+		if (!existsSync(path)) {
+			throw new Error(`Missing pair-index pairs JSONL for ${country}: ${path}`)
+		}
+	}
 
 	for (const [label, path] of [
 		["source CSV", source],
 		["borough DB", boroughDb],
-		["pairs JSONL", pairsJsonl],
+
 		["BAN dir", banDir],
 	] as const) {
 		if (path && !existsSync(path)) {

@@ -105,6 +105,18 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 	],
 }
 
+/**
+ * Split a comma-separated path list, tolerating whitespace and an absent value. Each secondary source stays its OWN
+ * file rather than being pre-merged into a blob, so every one keeps a distinct provenance md5 in the header — which is
+ * what lets a freshness guard notice that exactly one of them changed.
+ */
+function splitPathList(value: string | undefined): string[] {
+	return (value ?? "")
+		.split(",")
+		.map((path) => path.trim())
+		.filter(Boolean)
+}
+
 const OptionsSchema = zod.object({
 	out: zod.string().default("docs/static/mailwoman").describe("Output dir for pair-index-<country>.bin"),
 	country: zod.string().default("gb").describe("ISO country code this shard is built for"),
@@ -246,20 +258,23 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		// R3: generic secondary pairs (ONSPD-derived London ward pairs; future NI/IE sources) — the
 		// same fold/dedupe path, counted into the cross-check delta alongside the boroughs.
 		if (options.pairsJsonl) {
-			const before = builder.distinctCount
+			for (const path of splitPathList(options.pairsJsonl)) {
+				const before = builder.distinctCount
 
-			for (const line of readFileSync(options.pairsJsonl, "utf8").split("\n")) {
-				if (!line.trim()) continue
+				for (const line of readFileSync(path, "utf8").split("\n")) {
+					if (!line.trim()) continue
 
-				const pair = JSON.parse(line) as { child: string; parent: string }
-				builder.addRow(pair.child, pair.parent)
+					const pair = JSON.parse(line) as { child: string; parent: string }
+
+					builder.addRow(pair.child, pair.parent)
+				}
+
+				boroughsAdded += builder.distinctCount - before
+
+				console.error(
+					`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${path.split("/").pop()})`
+				)
 			}
-
-			boroughsAdded += builder.distinctCount - before
-
-			console.error(
-				`pair-index: +${builder.distinctCount - before} distinct secondary pairs (${options.pairsJsonl.split("/").pop()})`
-			)
 		}
 
 		const built = builder.finish()
@@ -279,7 +294,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const sourceMD5s = [
 			...(sourcePath ? [await md5File(sourcePath)] : []),
 			...(options.boroughDb ? [await md5File(options.boroughDb)] : []),
-			...(options.pairsJsonl ? [await md5File(options.pairsJsonl)] : []),
+			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
 		]
 
 		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
