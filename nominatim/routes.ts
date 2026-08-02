@@ -9,6 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
+import { errorContent, legacyQuery } from "@mailwoman/api-kit"
 import type { Context } from "hono"
 
 import type {
@@ -66,23 +67,6 @@ function asString(raw: unknown): string | undefined {
 }
 
 /**
- * Express's `req.query` shape: `string` for a single value, `string[]` for repeats. The legacy parsing helpers
- * (`asString`, `parseFormat`, `parseBool`, `Number(...)`) — and their observable degenerate behaviors (repeated `q` →
- * `asString(array)` → undefined → silently treated as absent, never a 400) — key off exactly this shape, so the
- * handlers consume it unchanged. Null-prototype, matching express-simple's req.query shape (a repeated `?__proto__=`
- * param must create an own property, not reparent the object).
- */
-function legacyQuery(c: Context): Record<string, string | string[]> {
-	const out: Record<string, string | string[]> = Object.create(null)
-
-	for (const [key, values] of Object.entries(c.req.queries())) {
-		out[key] = values.length === 1 ? values[0]! : values
-	}
-
-	return out
-}
-
-/**
  * A friendly HTML landing page for `GET /` (#1022). Nominatim itself has no root page (just `/status`), so there's no
  * wire contract to match — this is pure courtesy: a browser visitor who pastes the bare host in gets a one-glance
  * orientation with clickable example queries instead of Express's `Cannot GET /` 404, which reads as "the service is
@@ -120,18 +104,13 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 </html>
 `
 
-const errorContent = (description: string) => ({
-	description,
-	content: { "application/json": { schema: ErrorSchema } },
-})
-
 const searchResponses = {
 	200: {
 		description: "A jsonv2 result array (or a geojson FeatureCollection / jsonld Place[] per `format`).",
 		content: { "application/json": { schema: NominatimSearchResponseSchema } },
 	},
-	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
-	501: errorContent("The backing engine method is not wired for this deployment."),
+	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),
+	501: errorContent("The backing engine method is not wired for this deployment.", ErrorSchema),
 }
 
 const reverseResponses = {
@@ -139,9 +118,9 @@ const reverseResponses = {
 		description: "A single jsonv2 result (or `null`; a geojson FeatureCollection / jsonld Place per `format`).",
 		content: { "application/json": { schema: NominatimReverseResponseSchema } },
 	},
-	400: errorContent("Missing or out-of-range `lat`/`lon`."),
-	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
-	501: errorContent("The backing engine method is not wired for this deployment."),
+	400: errorContent("Missing or out-of-range `lat`/`lon`.", ErrorSchema),
+	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),
+	501: errorContent("The backing engine method is not wired for this deployment.", ErrorSchema),
 }
 
 const lookupResponses = {
@@ -149,8 +128,8 @@ const lookupResponses = {
 		description: "A jsonv2 result array (or a geojson FeatureCollection when format=geojson).",
 		content: { "application/json": { schema: NominatimLookupResponseSchema } },
 	},
-	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
-	501: errorContent("The backing engine method is not wired for this deployment."),
+	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),
+	501: errorContent("The backing engine method is not wired for this deployment.", ErrorSchema),
 }
 
 const statusResponses = {
@@ -158,7 +137,7 @@ const statusResponses = {
 		description: 'Engine health. Absent `engine.status` answers `{status: 0, message: "OK"}` — never 501.',
 		content: { "application/json": { schema: NominatimStatusSchema } },
 	},
-	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace."),
+	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),
 }
 
 const rootRoute = createRoute({
