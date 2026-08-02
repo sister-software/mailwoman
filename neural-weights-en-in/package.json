@@ -1,0 +1,30 @@
+{
+	"name": "@mailwoman/neural-weights-en-in",
+	"version": "8.5.0",
+	"description": "Indian English (en-IN) weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us and ships the IN placetype-pair index.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "neural-weights-en-in"
+	},
+	"files": [
+		"model-card.json",
+		"pair-index-in.bin",
+		"README.md",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts"
+	],
+	"type": "module",
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/neural-weights-en-us": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-en-us"
+	}
+}

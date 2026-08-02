@@ -97,6 +97,12 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 		["Park Slope", "Brooklyn"],
 		["Manhattan", "New York"],
 	],
+	// R10: the IN instance. Indian addresses carry an area/locality line above the city
+	// ("Indiranagar, Bengaluru"), which is the dependent-locality slot.
+	in: [
+		["Indiranagar", "Bangalore"],
+		["Mulund East", "Mumbai"],
+	],
 	// R9: the DE instance. Ortsteile/Stadtteile under their Gemeinde — the line German addresses
 	// carry when they carry one at all (the Ortsteil sits above "PLZ Stadt", never inside it).
 	de: [

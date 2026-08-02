@@ -1,7 +1,7 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode \u2014 see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "7.8.1",
-	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-nz"],
+	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "en-nz"],
 	"weights": {
 		"dataRoot": "/mnt/playpen/mailwoman-data",
 		"model": "models/quantized/model-v3230-guard-step-004000-int8.onnx",
@@ -36,11 +36,17 @@
 				"transitionBeta": 5,
 				"banDir": "corpus/sources/ban"
 			},
+			"in": {
+				"$comment": "Hierarchy campaign R10 (2026-08-02). WOF-sourced (area, city) pairs with parent-alias expansion — India Post carries an area line on essentially every address, and WOF's city names lag official renames.",
+				"delta": 10,
+				"transitionBeta": 5,
+				"boroughDb": "wof/admin-global-priority.db"
+			},
 			"de": {
 				"$comment": "Hierarchy campaign R9 (2026-08-02). WOF-sourced (Ortsteil, Gemeinde) pairs — Deutsche Post routes 'PLZ Stadt' and carries no Ortsteil field, so there is no postal register to harvest.",
 				"delta": 10,
 				"transitionBeta": 5,
-				"pairsJsonl": "data/gazetteer/de-pairs-v1.jsonl"
+				"boroughDb": "wof/admin-global-priority.db"
 			},
 			"us": {
 				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB \u2014 that is the pair the R5 bars were measured with.",
