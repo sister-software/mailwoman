@@ -142,7 +142,18 @@ export async function buildGauntletDeps(
 	// routes them. Lazy + memoized; a missing overlay package (e.g. a candidate weights-cache built
 	// without neural-weights-en-gb) falls back to the base classifier with ONE loud warning per
 	// locale — base-only grading must never be silent again (the meaning-of-zero rule).
-	const OVERLAY_LOCALE_BY_COUNTRY: Record<string, string> = { GB: "en-GB", NZ: "en-NZ" }
+	// Every locale that ships its own weights overlay belongs here. A case whose country is absent grades through the
+	// BASE en-US package, which carries no pair index for that country — so its dependent locality silently never
+	// fires and the row looks like a model failure. That exact artifact burned an afternoon in R1, when 53 operator
+	// probes read "dependent_locality never emitted" while the mechanism was fine and the INSTRUMENT was base-only.
+	const OVERLAY_LOCALE_BY_COUNTRY: Record<string, string> = {
+		GB: "en-GB",
+		NZ: "en-NZ",
+		DE: "de-DE",
+		IN: "en-IN",
+		ES: "es-ES",
+		IT: "it-IT",
+	}
 	const overlayClassifiers = new Map<string, typeof classifier>()
 	const warnedOverlays = new Set<string>()
 
