@@ -26,7 +26,7 @@ import { parseArgs } from "node:util"
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -136,13 +136,6 @@ function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_R
 		}
 
 	return best
-}
-
-const pct = (xs: number[], p: number): number => {
-	if (!xs.length) return Number.NaN
-	const s = [...xs].toSorted((a, b) => a - b)
-
-	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
@@ -364,12 +357,12 @@ async function main() {
 		label,
 		n,
 		coord_mean_km: +mean(errs).toFixed(2),
-		coord_p50_km: +pct(errs, 50).toFixed(2),
-		coord_p90_km: +pct(errs, 90).toFixed(2),
+		coord_p50_km: +(percentile(errs, 50) ?? Number.NaN).toFixed(2),
+		coord_p90_km: +(percentile(errs, 90) ?? Number.NaN).toFixed(2),
 		// RESOLVED-ONLY coordinate: the quality WHERE the address resolves, separated from the
 		// unresolved penalty (which pins to FR_CENTROID and is meaningless for non-FR locales).
-		coord_p50_resolved_km: resolvedErrs.length ? +pct(resolvedErrs, 50).toFixed(2) : null,
-		coord_p90_resolved_km: resolvedErrs.length ? +pct(resolvedErrs, 90).toFixed(2) : null,
+		coord_p50_resolved_km: resolvedErrs.length ? +(percentile(resolvedErrs, 50) ?? Number.NaN).toFixed(2) : null,
+		coord_p90_resolved_km: resolvedErrs.length ? +(percentile(resolvedErrs, 90) ?? Number.NaN).toFixed(2) : null,
 		resolve_rate: +(resolved / n).toFixed(4),
 		region_emit_rate: hasGoldRegion ? +(regionEmitted / hasGoldRegion).toFixed(4) : null,
 		region_correct_rate: hasGoldRegion ? +(regionCorrect / hasGoldRegion).toFixed(4) : null,

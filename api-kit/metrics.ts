@@ -49,6 +49,14 @@ export function recordTimed(latencyMs: number, tier: string): void {
 	}
 }
 
+/**
+ * Percentile for the metrics snapshot — deliberately NOT `percentile` from `@mailwoman/core/utils`.
+ *
+ * Three differences, each on purpose for a hot request-path counter: it takes an ALREADY-sorted array (the caller sorts
+ * once per snapshot, not once per percentile), returns `0` rather than `null` on empty so the snapshot stays a plain
+ * number map, and rounds to two decimals because these are milliseconds on a wire format. Core's returns `null` and
+ * does not round.
+ */
 function percentile(sorted: number[], p: number): number {
 	if (!sorted.length) return 0
 	const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length))

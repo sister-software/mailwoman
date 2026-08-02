@@ -52,7 +52,7 @@ import { parseArgs } from "node:util"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, median } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 
@@ -99,21 +99,6 @@ const values = rawValues as {
 }
 
 //#region CLI helpers
-
-//#endregion
-
-//#region Percentile (0-indexed: p=0.9 → 90th)
-
-function percentile(xs: number[], p: number): number {
-	if (!xs.length) return Number.NaN
-	const s = [...xs].toSorted((a, b) => a - b)
-
-	return s[Math.min(s.length - 1, Math.floor(p * s.length))]!
-}
-
-function median(xs: number[]): number {
-	return percentile(xs, 0.5)
-}
 
 //#endregion
 
@@ -384,8 +369,8 @@ async function main(): Promise<void> {
 		// innerRows, not the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
 		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
 		// computed on the correct splits; only this breakdown was dead).
-		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM))
-		const errMeds = median(innerRows.map((r) => r.errorM))
+		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
+		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 
 		return {
 			tier: t,

@@ -21,7 +21,7 @@
 import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 
 /**
@@ -60,13 +60,6 @@ function parseArgs(): Args {
 	}
 
 	return { evalPath, country, shards }
-}
-
-function pct(sorted: number[], p: number): number {
-	if (!sorted.length) return Number.NaN
-	const i = Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))
-
-	return sorted[i]!
 }
 
 function main(): void {
@@ -125,7 +118,7 @@ function main(): void {
 	)
 	console.log(`distance to true address (placed only), km:`)
 	console.log(
-		`  p50 ${pct(distances, 50).toFixed(1)}  p90 ${pct(distances, 90).toFixed(1)}  p99 ${pct(distances, 99).toFixed(1)}  max ${(distances.at(-1) ?? Number.NaN).toFixed(1)}`
+		`  p50 ${(percentile(distances, 50) ?? Number.NaN).toFixed(1)}  p90 ${(percentile(distances, 90) ?? Number.NaN).toFixed(1)}  p99 ${(percentile(distances, 99) ?? Number.NaN).toFixed(1)}  max ${(distances.at(-1) ?? Number.NaN).toFixed(1)}`
 	)
 
 	const within10 = distances.filter((d) => d <= 10).length

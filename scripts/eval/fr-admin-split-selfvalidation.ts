@@ -33,7 +33,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
@@ -110,13 +110,6 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	}
 
 	return best
-}
-
-const pct = (xs: number[], p: number): number => {
-	if (!xs.length) return Number.NaN
-	const s = [...xs].toSorted((a, b) => a - b)
-
-	return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]!
 }
 
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
@@ -277,9 +270,9 @@ const row = (label: string, a: StratumAgg): string => {
 		"",
 		"| state | mean km | p50 | p90 | resolve-rate |",
 		"| --- | --: | --: | --: | --: |",
-		`| dropped (région→null) | ${mean(a.dropped).toFixed(1)} | ${pct(a.dropped, 50).toFixed(1)} | ${pct(a.dropped, 90).toFixed(1)} | ${rr(a.res.dropped)} |`,
-		`| merged (loc=commune+dept) | ${mean(a.merged).toFixed(1)} | ${pct(a.merged, 50).toFixed(1)} | ${pct(a.merged, 90).toFixed(1)} | ${rr(a.res.merged)} |`,
-		`| **split (corrected)** | **${mean(a.split).toFixed(1)}** | ${pct(a.split, 50).toFixed(1)} | ${pct(a.split, 90).toFixed(1)} | ${rr(a.res.split)} |`,
+		`| dropped (région→null) | ${mean(a.dropped).toFixed(1)} | ${(percentile(a.dropped, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.dropped, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.dropped)} |`,
+		`| merged (loc=commune+dept) | ${mean(a.merged).toFixed(1)} | ${(percentile(a.merged, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.merged, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.merged)} |`,
+		`| **split (corrected)** | **${mean(a.split).toFixed(1)}** | ${(percentile(a.split, 50) ?? Number.NaN).toFixed(1)} | ${(percentile(a.split, 90) ?? Number.NaN).toFixed(1)} | ${rr(a.res.split)} |`,
 		"",
 		`**SPLIT vs DROPPED mean reduction: ${reduction.toFixed(1)}%** · split beats dropped by >2km on ${a.splitBeatsDroppedBy2km}/${a.n} rows`,
 		"",
