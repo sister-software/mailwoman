@@ -167,9 +167,19 @@ them (skip superseded, exclude `*-alt-*.geojson`), against Overture `divisions` 
 
 | country | WOF repo sub-locality | Overture sub-locality |        verdict |
 | ------- | --------------------: | --------------------: | -------------: |
+| IN      |           **189,026** |                74,920 |  **WOF ~2.5×** |
 | IE      |                   152 |                51,778 | Overture ~340× |
 | NZ      |             **1,894** |                   992 |  **WOF ~1.9×** |
 | BR      |                   848 |                64,537 |  Overture ~76× |
+
+Control (a repo we DO clone, to validate the method): GB tallies **13,225** sub-locality nodes in the
+repo against **13,177** in the shipped DB — the delta is the superseded/current filter, so the probe
+reads the repos the way the build does.
+
+**India is the largest untapped tier found anywhere.** 189,026 sub-locality nodes exceeds Germany's
+67,162, the richest tier mailwoman currently ships, and India is not in the recipe at all. Its repo
+also carries `macrohood` (24) and `borough` (78) rows — the `macrohood` ones drop at ingest even for
+a cloned country, since `ADMIN_PLACETYPES` omits that placetype.
 
 **No global rule survives this.** Ireland's WOF repo is genuinely thin — 152 neighbourhoods against
 Overture's 51,778 — which vindicates the original "Overture is the fix for IE" framing, not the
@@ -188,11 +198,12 @@ The obvious next move was "add NZ to `DEFAULT_WOF_PRIORITY_COUNTRIES`, it beats 
 the pair yield killed it. A pair needs the child's locality parent to resolve — via `wof:hierarchy`'s
 `locality_id`, which is what `freeze.ts`'s `backfillAncestorsFromHierarchy` reads:
 
-| country | sub-locality nodes | usable pairs | conversion |
-| ------- | -----------------: | -----------: | ---------: |
-| IE      |                152 |          151 |        99% |
-| BR      |                848 |          774 |        91% |
-| NZ      |              1,894 |      **280** |    **15%** |
+| country     | sub-locality nodes | usable pairs | conversion |
+| ----------- | -----------------: | -----------: | ---------: |
+| GB (cloned) |             13,225 |       13,094 |        99% |
+| IE          |                152 |          151 |        99% |
+| BR          |                848 |          774 |        91% |
+| NZ          |              1,894 |      **280** |    **15%** |
 
 **NZ's hierarchy is broken at the locality tier.** 1,637 of its sub-locality records carry
 `locality_id: -1` and `wof:parent_id: -1` — WOF parents them straight to the region, skipping the
