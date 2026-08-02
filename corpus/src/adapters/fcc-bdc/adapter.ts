@@ -36,6 +36,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { splitStreetLine } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
 import { formatAddress, reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
@@ -61,38 +62,6 @@ interface BdcLocationRow {
 	state: string
 	zip: string
 	zip_suffix: string | null
-}
-
-/**
- * Split `address_primary` into a `(house_number, street)` pair.
- *
- * BDC's `address_primary` follows USPS Publication 28 conventions but with hand-entry drift. The canonical
- * leading-digit prefix is the house number (`"123 Main St"`, `"6450 W Indian School Rd"`, even hyphenated forms `"40-12
- * Bell Blvd"`). Anything that doesn't match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC 1"`) is left as a
- * single `street` value — the model sees the original surface form, and downstream classifiers/po-box handling can pick
- * it up.
- *
- * The regex tolerates one trailing letter (`"123A Main St"`) and an optional hyphenated half (`"40-12"`) which is
- * common in NYC + suburban garden-apartment numbering.
- */
-const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
-
-interface SplitAddress {
-	house_number?: string
-	street: string
-}
-
-export function splitAddressPrimary(address: string): SplitAddress | null {
-	const trimmed = address.trim()
-
-	if (!trimmed) return null
-	const match = HOUSE_NUMBER_PREFIX.exec(trimmed)
-
-	if (match) {
-		return { house_number: match[1], street: match[2]!.trim() }
-	}
-
-	return { street: trimmed }
 }
 
 /**
@@ -150,7 +119,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 
 					if (opts.limit !== undefined && emitted >= opts.limit) return
 
-					const split = splitAddressPrimary(row.address_primary ?? "")
+					const split = splitStreetLine(row.address_primary ?? "")
 
 					if (!split) continue
 					const state = lookupStateAbbreviation(row.state)

@@ -23,7 +23,7 @@ import { createReadStream } from "node:fs"
 
 import { parse as csvParse } from "csv-parse"
 
-import { stableSourceID } from "../../adapter.ts"
+import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
@@ -38,7 +38,6 @@ export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
  */
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
 
-const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
 /**
  * PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12".
  */
@@ -55,18 +54,17 @@ interface IrsBmfRow {
 
 /**
  * Classify the street line into a `po_box` or a `{house_number?, street}` split.
+ *
+ * BMF mixes street addresses and PO boxes in one `STREET` column, so the PO-box shapes have to be claimed BEFORE the
+ * shared house-number split runs — otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street, which
+ * is correct for every other US adapter and wrong here.
  */
-function splitStreetLine(street: string): { po_box: string } | { house_number?: string; street: string } | null {
+function splitStreetLineOrPOBox(street: string): { po_box: string } | { house_number?: string; street: string } | null {
 	const trimmed = street.trim()
 
-	if (!trimmed) return null
-
 	if (PO_BOX.test(trimmed)) return { po_box: trimmed }
-	const m = HOUSE_NUMBER_PREFIX.exec(trimmed)
 
-	if (m) return { house_number: m[1], street: m[2]!.trim() }
-
-	return { street: trimmed }
+	return splitStreetLine(trimmed)
 }
 
 function composeRaw(
@@ -117,7 +115,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 					if (!city || !zipRaw) continue
 					const postcode = zipRaw.split("-")[0]!.trim() // 5-digit; drop the optional +4
 
-					const split = splitStreetLine(street)
+					const split = splitStreetLineOrPOBox(street)
 
 					if (!split) continue
 

@@ -12,6 +12,8 @@
  *   - `InMemoryAdapterRegistry`: the default implementation.
  *   - `stableSourceID(adapterID, components)`: deterministic content-addressed id for adapters whose
  *       source data has no native primary key (CSV, GeoJSON).
+ *   - `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`: the one house-number/street split every
+ *       US CSV adapter uses.
  *   - `canonicalDedupKey(row)`: normalized signature used to drop near-identical rows during a run.
  *       Adapter-internal dedup; cross-adapter dedup is the runner's job.
  *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash JSONL output as it
@@ -106,6 +108,49 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
 	const digest = createHash("sha256").update(adapterID).update("\u001E").update(payload).digest("hex")
 
 	return `${adapterID}-${digest.slice(0, 12)}`
+}
+
+/**
+ * Leading house number on a US-style street line: digits, an optional hyphenated range (Queens `40-12`), an optional
+ * single alpha suffix (`101A`), then whitespace, then the rest.
+ *
+ * Ten CSV adapters were each carrying a byte-identical copy of this before the 2026-08-02 dedupe. It decides where the
+ * house number ends and the street begins for every one of them, so it gets one definition and one set of tests — a
+ * parsing edge case fixed here is fixed for all of them.
+ */
+export const HOUSE_NUMBER_PREFIX = /^(\d+(?:-\d+)?[A-Za-z]?)\s+(.+)$/
+
+/**
+ * A street line split into its house number and the remainder.
+ */
+export interface SplitStreetLine {
+	house_number?: string
+	street: string
+}
+
+/**
+ * Split a US-style street line on {@link HOUSE_NUMBER_PREFIX}.
+ *
+ * The US CSV sources follow USPS Publication 28 conventions with hand-entry drift. The leading digit run is the house
+ * number (`"123 Main St"`, `"6450 W Indian School Rd"`), and the regex tolerates one trailing letter (`"123A Main St"`)
+ * plus an optional hyphenated half (`"40-12 Bell Blvd"`, common in NYC and suburban garden-apartment numbering; Hawaii
+ * uses it island-wide — `"47-470 Hui Aeko Place"`).
+ *
+ * Returns `null` for blank input. Anything that does not match the prefix shape (`"PO Box 1234"`, `"RR 2 Box 67"`, `"HC
+ * 1"`) becomes a single `street` value rather than being mangled — the model sees the original surface form and
+ * downstream classifiers pick it up. Callers that need those forms recognized as something other than a street (see
+ * `usgov-irs-bmf`) test for them BEFORE calling this.
+ */
+export function splitStreetLine(line: string): SplitStreetLine | null {
+	const trimmed = line.trim()
+
+	if (!trimmed) return null
+
+	const match = HOUSE_NUMBER_PREFIX.exec(trimmed)
+
+	if (match) return { house_number: match[1], street: match[2]!.trim() }
+
+	return { street: trimmed }
 }
 
 /**

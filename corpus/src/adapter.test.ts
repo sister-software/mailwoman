@@ -6,7 +6,13 @@
 
 import { describe, expect, it } from "vitest"
 
-import { InMemoryAdapterRegistry, canonicalDedupKey, stableSourceID, streamingSha256 } from "./adapter.ts"
+import {
+	InMemoryAdapterRegistry,
+	canonicalDedupKey,
+	splitStreetLine,
+	stableSourceID,
+	streamingSha256,
+} from "./adapter.ts"
 import type { CanonicalRow, CorpusAdapter } from "./types.ts"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
@@ -142,5 +148,36 @@ describe("streamingSha256", () => {
 		h.update("abc")
 		h.digest()
 		expect(() => h.update("def")).toThrow(/after digest/)
+	})
+})
+
+describe("splitStreetLine", () => {
+	it("splits a standard urban address into house_number + street", () => {
+		expect(splitStreetLine("123 Main St")).toEqual({ house_number: "123", street: "Main St" })
+	})
+
+	it("preserves directional prefixes inside the street component", () => {
+		expect(splitStreetLine("6450 W Indian School Rd")).toEqual({
+			house_number: "6450",
+			street: "W Indian School Rd",
+		})
+	})
+
+	it("recognizes a single trailing letter on the house number", () => {
+		expect(splitStreetLine("101A Main St")).toEqual({ house_number: "101A", street: "Main St" })
+	})
+
+	it("recognizes hyphenated house numbers (NYC garden-apartment style)", () => {
+		expect(splitStreetLine("40-12 Bell Blvd")).toEqual({ house_number: "40-12", street: "Bell Blvd" })
+	})
+
+	it("returns street-only for shapes lacking a leading digit", () => {
+		expect(splitStreetLine("PO Box 1234")).toEqual({ street: "PO Box 1234" })
+		expect(splitStreetLine("RR 2 Box 67")).toEqual({ street: "RR 2 Box 67" })
+	})
+
+	it("returns null for empty or whitespace-only input", () => {
+		expect(splitStreetLine("")).toBeNull()
+		expect(splitStreetLine("   ")).toBeNull()
 	})
 })

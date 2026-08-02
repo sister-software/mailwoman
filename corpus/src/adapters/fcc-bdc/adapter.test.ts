@@ -14,13 +14,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.ts"
 import type { CanonicalRow } from "../../types.ts"
-import {
-	FCC_BDC_ADAPTER_ID,
-	FCC_BDC_DEFAULT_LICENSE,
-	buildPostcode,
-	createFccBdcAdapter,
-	splitAddressPrimary,
-} from "./adapter.ts"
+import { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, buildPostcode, createFccBdcAdapter } from "./adapter.ts"
 
 const fixtureSQLPath = repoRootPath("corpus", "fixtures", "fcc-bdc", "fixture.sql")
 
@@ -54,37 +48,6 @@ async function loadRows(): Promise<CanonicalRow[]> {
 
 	return trimmed.split("\n").map((l) => JSON.parse(l) as CanonicalRow)
 }
-
-describe("splitAddressPrimary", () => {
-	it("splits a standard urban address into house_number + street", () => {
-		expect(splitAddressPrimary("123 Main St")).toEqual({ house_number: "123", street: "Main St" })
-	})
-
-	it("preserves directional prefixes inside the street component", () => {
-		expect(splitAddressPrimary("6450 W Indian School Rd")).toEqual({
-			house_number: "6450",
-			street: "W Indian School Rd",
-		})
-	})
-
-	it("recognizes a single trailing letter on the house number", () => {
-		expect(splitAddressPrimary("101A Main St")).toEqual({ house_number: "101A", street: "Main St" })
-	})
-
-	it("recognizes hyphenated house numbers (NYC garden-apartment style)", () => {
-		expect(splitAddressPrimary("40-12 Bell Blvd")).toEqual({ house_number: "40-12", street: "Bell Blvd" })
-	})
-
-	it("returns street-only for shapes lacking a leading digit", () => {
-		expect(splitAddressPrimary("PO Box 1234")).toEqual({ street: "PO Box 1234" })
-		expect(splitAddressPrimary("RR 2 Box 67")).toEqual({ street: "RR 2 Box 67" })
-	})
-
-	it("returns null for empty or whitespace-only input", () => {
-		expect(splitAddressPrimary("")).toBeNull()
-		expect(splitAddressPrimary("   ")).toBeNull()
-	})
-})
 
 describe("buildPostcode", () => {
 	it("returns the bare zip when no suffix is present", () => {
