@@ -21,6 +21,10 @@ const LEXICON: SpanProposerLexicon = {
 	unitDesignators: new Set(["apt", "apartment", "suite", "ste", "unit", "rm", "room", "bldg", "building"]),
 	levelDesignators: new Set(["fl", "floor", "bsmt", "basement"]),
 	weakDesignators: new Set(["bldg", "building"]),
+	// Empty here on purpose: this fixture models the POSTAL vocabulary, and the venue-structure split is exercised in
+	// its own describe below. A fixture that quietly carried both would make every assertion above ambiguous about
+	// which provenance produced the proposal.
+	venueStructureDesignators: new Set<string>(),
 	deliveryService: /\b(?:p\.?\s*o\.?\s*box|gpo\s+box|private\s+bag|locked\s+bag)\s*#?\s*(\d[\dA-Za-z-]*)\b/gi,
 }
 
@@ -189,5 +193,44 @@ describe("degenerate inputs", () => {
 		const spans = proposeSpans("PO Box 19 (rear), Apt 4B", LEXICON)
 		const starts = spans.map((s) => s.start)
 		expect(starts).toEqual([...starts].toSorted((a, b) => a - b))
+	})
+})
+
+describe("venue-structure provenance", () => {
+	/**
+	 * The venue-interior subset shares `unitDesignators` with the postal tables — the proposer needs it in both sets to
+	 * fire at all — so the only thing distinguishing the two provenances downstream is the `source` string. If that tag
+	 * stops being emitted, the consuming prior silently falls back to the postal scale and the sub-venue fix reverts with
+	 * nothing failing.
+	 */
+	const withVenueStructure: SpanProposerLexicon = {
+		...LEXICON,
+		unitDesignators: new Set([...LEXICON.unitDesignators, "concourse", "terminal", "gate", "wing"]),
+		venueStructureDesignators: new Set(["concourse", "terminal", "gate", "wing"]),
+	}
+
+	it("tags a venue-interior designator's proposal with its own source", () => {
+		const [span] = proposeSpans("Concourse B, O'Hare International Airport, Chicago, IL 60666", withVenueStructure)
+
+		expect(span?.kind).toBe("UNIT_PHRASE")
+		expect(span?.source).toBe("designator:venue-structure")
+	})
+
+	it("leaves a postal designator on the postal source", () => {
+		const [span] = proposeSpans("Suite 500, 1 Market St, San Francisco, CA 94105", withVenueStructure)
+
+		expect(span?.kind).toBe("UNIT_PHRASE")
+		expect(span?.source).toBe("designator:unit")
+	})
+
+	it("does not fire on a confound: the word must be a standalone token", () => {
+		// "Briggate" is one token. The GB `-gate` street names are the confound class this protects.
+		expect(proposeSpans("12 Briggate, Leeds, LS1 6ER", withVenueStructure)).toEqual([])
+	})
+
+	it("does not fire on a confound: the designator needs a SHORT identifier after it", () => {
+		// "Gate House" / "Terminal Industrial Estate" — the next token is a word, not an identifier.
+		expect(proposeSpans("Gate House, 1 Farringdon Street, London, EC4M 7LG", withVenueStructure)).toEqual([])
+		expect(proposeSpans("Terminal Industrial Estate, Portsmouth, PO3 5PA", withVenueStructure)).toEqual([])
 	})
 })
