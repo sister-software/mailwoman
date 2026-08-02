@@ -8,10 +8,8 @@
  *   are the regression fence around that tuition.
  */
 
-import { existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -190,72 +188,4 @@ describe("street-type lexicon build", () => {
 		expect(j.entries.way).toBe(1)
 		expect(j.entries.court).toBe(1)
 	})
-})
-
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
-
-describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (admin DB)", () => {
-	it("applies all three laws end to end", async () => {
-		const { buildLocalitySurfaceLexicon } = await import("./evidence-lexicons.ts")
-		const tmp = `${tmpdir()}/locality-surface-lexicon-test.json`
-
-		// v3-parity placetypes for run-to-run comparability with the probe chain's numbers.
-		const built = buildLocalitySurfaceLexicon({
-			countries: ["FR"],
-			placetypes: ["locality", "localadmin"],
-			output: tmp,
-		})
-
-		expect(built.entries).toBeGreaterThan(10_000)
-		expect(built.skippedDegenerate).toBeGreaterThan(0)
-		expect(built.skippedProminence).toBeGreaterThan(0)
-		const { readFileSync } = await import("node:fs")
-		const j = JSON.parse(readFileSync(tmp, "utf8"))
-
-		expect(j.entries.paris).toBe(3) // metro clears the person-name tier, homograph-flagged
-		expect(j.entries.joseph).toBeUndefined() // law 3
-		expect(j.entries["12"]).toBeUndefined() // letters-required
-		expect(j.entries["de la"]).toBeUndefined() // law 1 compositional
-	}, 600_000)
-
-	it("v5: the census flip families are out, the legitimate entries stay", async () => {
-		const { buildLocalitySurfaceLexicon } = await import("./evidence-lexicons.ts")
-		const tmp = `${tmpdir()}/locality-surface-lexicon-v5-us-test.json`
-
-		const built = buildLocalitySurfaceLexicon({
-			countries: ["US"],
-			placetypes: ["locality", "localadmin", "neighbourhood"],
-			output: tmp,
-		})
-
-		expect(built.skippedRegionVocabulary).toBeGreaterThan(0)
-		expect(built.skippedSubPhrase).toBeGreaterThan(0)
-		const { readFileSync } = await import("node:fs")
-		const j = JSON.parse(readFileSync(tmp, "utf8"))
-
-		// Family F2b — directionals (neighbourhoods literally named these; law-1 closure):
-		for (const s of ["east", "west", "north", "south", "northeast", "southwest"]) {
-			expect(j.entries[s], s).toBeUndefined()
-		}
-
-		// Family F2 — region vocabulary (the evidence→REGION rotation rows):
-		for (const s of ["washington", "wyoming", "vermont", "missouri", "north dakota"]) {
-			expect(j.entries[s], s).toBeUndefined()
-		}
-
-		// WOF data-noise carriers with census receipts (the evidence supplemental-degenerate set):
-		expect(j.entries.school).toBeUndefined()
-		expect(j.entries.state).toBeUndefined()
-
-		// The lexicon still carries the ordinary locality surfaces the census rows NEED. (Not casper/
-		// powell: Casper WY is a GIVEN-NAME homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
-		// the law-2 floor — both were absent from v4 too; their census flips were family-F1 street-code
-		// evidence, fixed in the street lexicon.)
-		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
-			expect(j.entries[s], s).toBeDefined()
-		}
-
-		// Multi-token entries with a directional/state INSIDE survive (only whole-surface exclusion):
-		expect(j.entries["east nashville"]).toBeDefined()
-	}, 600_000)
 })

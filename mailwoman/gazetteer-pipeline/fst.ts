@@ -109,6 +109,44 @@ export function loadDegenerateSurfaces(
 	surfaces: Set<string>
 	stopwordTokens: Set<string>
 } {
+	// Memoized like loadPersonNameSurfaces: static dictionaries, so process-lifetime with no
+	// invalidation key. Keyed by fold IDENTITY then language set — the FST and painter worlds fold
+	// differently by design and must not share an entry. Without this the fixture-layer test paid
+	// ~1s of dictionary parsing per build (10 builds, 11.2s); with it the file runs in ~1s.
+	//
+	// ⚠ The returned sets are SHARED and `buildLocalitySurfaceLexicon` MUTATES its copy (it unions
+	// the directionals and the evidence supplemental set into `degenerate`). So this hands back a
+	// fresh shallow copy per call and caches only the parse.
+	let byLanguages = degenerateSurfacesMemo.get(fold)
+
+	if (!byLanguages) {
+		byLanguages = new Map()
+		degenerateSurfacesMemo.set(fold, byLanguages)
+	}
+
+	const key = languages.join(",")
+	let parsed = byLanguages.get(key)
+
+	if (!parsed) {
+		parsed = scanDegenerateSurfaces(languages, fold)
+		byLanguages.set(key, parsed)
+	}
+
+	return { surfaces: new Set(parsed.surfaces), stopwordTokens: new Set(parsed.stopwordTokens) }
+}
+
+const degenerateSurfacesMemo = new Map<
+	(surface: string) => string[],
+	Map<string, { surfaces: Set<string>; stopwordTokens: Set<string> }>
+>()
+
+function scanDegenerateSurfaces(
+	languages: readonly string[],
+	fold: (surface: string) => string[]
+): {
+	surfaces: Set<string>
+	stopwordTokens: Set<string>
+} {
 	const dictionariesDir = String(repoRootPathBuilder("core", "data", "libpostal", "dictionaries"))
 	const surfaces = new Set<string>()
 	const stopwordTokens = new Set<string>()
