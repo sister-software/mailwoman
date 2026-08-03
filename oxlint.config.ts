@@ -110,8 +110,19 @@ const BROWSER_REACHABLE_NEURAL_FILES = [
 
 /**
  * Node-only modules those files must not pull into the bundle.
+ *
+ * The `node:*` pattern is the load-bearing entry, and the named modules are conveniences on top of it. An enumeration
+ * alone only catches what its author thought of: this list first shipped without `@mailwoman/core/env`, whose `$public`
+ * reaches `node:util`, and the omission broke the docs bundle exactly as a listed module would have. Restricting the
+ * BUILTINS catches any module that reaches them, named or not.
  */
 const NODE_ONLY_NEURAL_MODULES = ["./onnx-runner.ts", "./weights.ts", "./scorer.ts", "onnxruntime-node"]
+
+/**
+ * Every Node builtin, by specifier prefix. A browser-reachable file importing one of these is a bundle break whatever
+ * the module is called.
+ */
+const NODE_BUILTIN_PATTERN = "node:*"
 
 export default {
 	...config,
@@ -123,6 +134,16 @@ export default {
 				"typescript/no-restricted-imports": [
 					"error",
 					{
+						patterns: [
+							{
+								group: [NODE_BUILTIN_PATTERN],
+								allowTypeImports: true,
+								message:
+									"A Node builtin cannot be imported from a file reachable from neural/browser.ts — the bundler " +
+									"follows it into the client graph. Use `import type` (erased), or reach it through an " +
+									"`import(/* webpackIgnore: true */ …)` inside the Node-only code path.",
+							},
+						],
 						paths: NODE_ONLY_NEURAL_MODULES.map((name) => ({
 							name,
 							allowTypeImports: true,

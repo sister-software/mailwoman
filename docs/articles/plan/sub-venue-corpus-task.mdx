@@ -58,9 +58,13 @@ entirely downstream.
 
 ## The corpus task
 
-Teach the tag instead of outvoting it. Synthesize `<sub-venue>, <venue>, <street>, <locality>,
+Teach the tag instead of outvoting it. Synthesize lines of the shape
 
-<postcode>` lines where the sub-venue carries both shapes:
+```
+<sub-venue>, <venue>, <street>, <locality>, <postcode>
+```
+
+where the sub-venue carries both forms:
 
 - designator + identifier — `Terminal 5`, `Gate 12`, `Concourse B`, `Wing B`, `Building 43`
 - modifier + designator — `West Wing`, `North Terminal`, `Upper Concourse`, `Main Building`

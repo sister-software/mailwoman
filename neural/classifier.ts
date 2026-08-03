@@ -24,7 +24,6 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import {
 	proposeSpans,
 	type ProposedSpan,
@@ -324,6 +323,7 @@ export class NeuralAddressClassifier {
 		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 		const [
 			{ DEFAULT_INTRA_OP_THREADS, ONNXRunner },
+			{ $public },
 			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
@@ -333,6 +333,7 @@ export class NeuralAddressClassifier {
 			fs,
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
+			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 			import(/* webpackIgnore: true */ "./weights.ts"),
 			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
 			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
