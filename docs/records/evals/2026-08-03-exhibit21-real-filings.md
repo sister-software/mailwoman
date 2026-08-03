@@ -177,11 +177,13 @@ Refetching a document needs `SEC_EDGAR_USER_AGENT` set to a descriptive
 
 ## Still open
 
-The parser is correct now. Finding the exhibit inside a filing is still missing:
-`fetchExhibit21` takes a URL and nothing supplies one. EDGAR's accession `index.json` types
-every file as a GIF icon name, so the usable route is the accession's `…-index-headers.html`,
-whose escaped SGML manifest gives a type and filename per document. One such manifest
-(Lumen's, 162 documents, one of type `EX-21`) is vendored for the test that will cover it.
+The parser is correct now, and finding the exhibit inside a filing works:
+`findExhibit21Documents` reads an accession's `…-index-headers.html`, whose escaped SGML
+manifest gives a type and filename per document, and returns an absolute URL per `EX-21*`.
+EDGAR's accession `index.json` cannot answer this — it types every file as a GIF icon name.
+
+Lumen's manifest is vendored for that test. It carries 161 `<DOCUMENT>` blocks while its own
+`<PUBLIC-DOCUMENT-COUNT>` says 162; four sequence numbers have no block. Count the blocks.
 
 Beyond that: the CIK corroboration rule, the share-class collapse, and the orchestrator that
 walks corroborated registrants into `filer_family` rows. Until those land, nothing from EDGAR

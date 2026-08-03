@@ -152,7 +152,7 @@
 			"filingDate": "2026-02-20",
 			"exhibitType": "(filing index, not an exhibit)",
 			"url": "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/0000018926-26-000014-index-headers.html",
-			"shape": "the accession's document manifest — 162 escaped <DOCUMENT> blocks, one of type EX-21"
+			"shape": "the accession's document manifest — 161 escaped <DOCUMENT> blocks, one of type EX-21. The SGML header's own <PUBLIC-DOCUMENT-COUNT> says 162; sequence numbers 18, 159, 161 and 162 have no block of their own. A real EDGAR quirk, not a truncated fixture — count the blocks, not the header."
 		}
 	]
 }
