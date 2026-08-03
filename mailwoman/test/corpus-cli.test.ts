@@ -20,8 +20,8 @@ import { options as runOptions } from "../commands/corpus/run.tsx"
 import { withCLISpawnLockAsync } from "../test-kit/cli-spawn-lock.ts"
 
 /**
- * Wall-clock budget for a CLI spawn — see the note in `mailwoman/commands/geocode.test.ts`. One spawn costs ~5.6 s
- * (2.73 s of it node boot alone), so the old 10 s left under 2x margin.
+ * Wall-clock budget for a CLI spawn — see the note in `mailwoman/commands/geocode.test.ts`. A single spawn costs ~5.6
+ * s, 2.7 s of it node boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 

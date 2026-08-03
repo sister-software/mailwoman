@@ -75,12 +75,11 @@ export const DEFAULT_FIXED_SEQ_LEN = 128
 /**
  * Intra-op thread cap applied by `NeuralAddressClassifier.loadFromWeights`.
  *
- * Measured 2026-08-03 on a 16-core box, 120 warm parses of short addresses: `1` costs 18.3 ms/parse against 9.3 for
- * ORT's all-cores default — a 97% regression, so the parallelism is genuinely working — `2` costs 12.5, and `4` is 9.2,
- * flat against the default while claiming a quarter of the threads. Four is where the curve flattens: no latency paid,
- * and 4x less oversubscription when several processes run at once, which is the normal case for the CLI and the test
- * suite. Re-run the curve before changing it; the intuition that a short sequence does not benefit from parallelism is
- * measurably false.
+ * Four is where the latency curve flattens. On a 16-core box over 120 warm parses of short addresses: 1 thread costs
+ * 18.3 ms/parse, 2 costs 12.5, and 4 costs 9.2 — level with ORT's all-cores default at 9.3 while holding a quarter of
+ * the threads. Lowering it is NOT free: the parallelism is doing real work, and `1` nearly doubles latency.
+ *
+ * Re-derive the curve before changing this. It is a property of the model and the box, not a convention.
  */
 export const DEFAULT_INTRA_OP_THREADS = 4
 
