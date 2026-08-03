@@ -6,7 +6,7 @@
  *   `/demo` — the mailwoman geocoder demo, fully client-side. It renders the published
  *   `@mailwoman/react/map` `<GeocoderDemo>` driven by the REAL docs runtime ({@link useDemoMapRuntime}):
  *
- *   - `@mailwoman/neural-web` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier,
+ *   - `@mailwoman/neural/web-loader` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier,
  *   - sql.js-httpvfs (`../../shared/httpvfs-resolver`) range-loading the same-origin WOF + polygon DBs,
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *

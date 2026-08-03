@@ -90,9 +90,9 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 				setLoading(true)
 				setBackend("")
 
-				const neuralWeb = await import("@mailwoman/neural-web")
+				const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
-				const { classifier: cls, diagnostics } = await neuralWeb.loadNeuralClassifierFromURLs(
+				const { classifier: cls, diagnostics } = await loadNeuralClassifierFromURLs(
 					neuralClassifierLoadURLs(DEFAULT_LOCALE, compareVersion, { hasAnchor: release?.hasAnchor, forceWASM })
 				)
 

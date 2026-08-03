@@ -4644,7 +4644,7 @@ __metadata:
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
-    "@mailwoman/neural-web": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
@@ -4785,7 +4785,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-web@workspace:*, @mailwoman/neural-web@workspace:neural-web":
+"@mailwoman/neural-web@workspace:neural-web":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-web@workspace:neural-web"
   dependencies:

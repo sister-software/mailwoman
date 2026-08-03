@@ -84,7 +84,6 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	// `.tsx` explorers transpile inline (like every other workspace source import); the `./styles.css`
 	// subpath is left to package-exports resolution (the `$` keeps this alias from swallowing it).
 	for (const pkg of [
-		"@mailwoman/neural-web",
 		"@mailwoman/resolver-wof-wasm",
 		"@mailwoman/core",
 		"@mailwoman/query-shape",
@@ -139,16 +138,15 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		}
 	}
 
-	// @mailwoman/neural browser-side subpaths. Package `exports` already routes these correctly for a
-	// production build; the aliases point at SOURCE so `yarn start` transpiles them inline and
-	// hot-reloads, instead of serving whatever `neural/out/` was last compiled (the same staleness
-	// trap the core sub-entrypoint aliases document below).
+	// @mailwoman/neural/web-loader — the demo's only entry into the neural package, and the root of the
+	// browser runtime's whole graph (it reaches the runner and the classifier by relative path). Package
+	// `exports` routes it correctly for a production build; the alias points at SOURCE so `yarn start`
+	// transpiles it inline and hot-reloads, instead of serving whatever `neural/out/` was last compiled
+	// (the same staleness trap the core sub-entrypoint aliases document below).
 	const neuralDir = resolveWorkspaceDir("@mailwoman/neural")
 
 	if (neuralDir) {
-		for (const sub of ["browser", "web-onnx-runner", "web-loader"]) {
-			aliases[`@mailwoman/neural/${sub}`] = resolveWorkspaceFile(neuralDir, sub)
-		}
+		aliases["@mailwoman/neural/web-loader"] = resolveWorkspaceFile(neuralDir, "web-loader")
 	}
 
 	// @mailwoman/core sub-entrypoints (transitive deps from neural / resolver).

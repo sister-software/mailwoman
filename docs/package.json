@@ -40,7 +40,7 @@
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
-		"@mailwoman/neural-web": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
