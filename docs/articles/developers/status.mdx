@@ -108,15 +108,15 @@ path.
 Each row states the limit and the next step. Where a limit is a default rather than an absence, the
 next step turns it on.
 
-| Limit                                                                                      | Next step                                                                                                     |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Geocoding requires the gazetteer database. Parsing does not.                               | Download it once. `mailwoman doctor` prints the URL and the variable to set.                                  |
-| Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                   |
-| The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                   |
-| One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                 |
-| Korean addresses have no parser claim, and no open data path has been adopted.             | None today. The constraint is data licensing, not engineering.                                                |
-| CJK scripts route through a character-level path that is scaffolded and deferred.          | Use the resolver route for JP postcodes; do not rely on a parse claim.                                        |
-| Published packages carry no sigstore provenance attestation.                               | Verify with the published SBOMs instead. See [Security and compliance](../about/security-and-compliance.mdx). |
+| Limit                                                                                      | Next step                                                                                                          |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Geocoding requires the gazetteer database. Parsing does not.                               | Download it once: `mailwoman data pull candidate`. `mailwoman doctor` prints that command and the variable to set. |
+| Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                        |
+| The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                        |
+| One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                      |
+| Korean addresses have no parser claim, and no open data path has been adopted.             | None today. The constraint is data licensing, not engineering.                                                     |
+| CJK scripts route through a character-level path that is scaffolded and deferred.          | Use the resolver route for JP postcodes; do not rely on a parse claim.                                             |
+| Published packages carry no sigstore provenance attestation.                               | Verify with the published SBOMs instead. See [Security and compliance](../about/security-and-compliance.mdx).      |
 
 ## Rationale
 
