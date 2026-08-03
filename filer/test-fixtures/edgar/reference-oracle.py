@@ -130,9 +130,16 @@ def classify_table(rows, stats, carried=None):
 
     pairs = [[v for v in r if v] for r in rows]
     two = [p for p in pairs if len(p) == 2 and not FOOTNOTE.match(p[0]) and not all(is_headerish(v) for v in p)]
-    if not mapping and len(two) >= 2 and sum(1 for p in two if DESIGNATION.search(p[1])) * 2 > len(two):
-        stats["name-name-table"] += len(two)
-        return subs, mapping
+    if not mapping and len(two) >= 4:
+        seconds = [p[1] for p in two]
+        designated = sum(1 for v in seconds if DESIGNATION.search(v))
+        distinct = len(set(seconds))
+        # A jurisdiction column repeats; a second NAME column does not. Charter writes its
+        # jurisdictions as "Delaware limited liability company" (135/135 carry a designation)
+        # and is separated from IDT's two-across name list only by this ratio.
+        if designated * 2 > len(two) and distinct * 10 > len(two) * 7:
+            stats["name-name-table"] += len(two)
+            return subs, mapping
 
     all_single = bool(pairs) and all(len(p) <= 1 for p in pairs) and sum(1 for p in pairs if len(p) == 1) >= 2
 
@@ -157,11 +164,17 @@ def classify_table(rows, stats, carried=None):
             i, j = mapping
             name = row[i] if i < len(row) else ""
             juris = row[j] if j < len(row) else ""
-            if not name:
-                stats["blankname"] += 1
+            if not name and i < j:
+                # Indented corporate-tree row: the child's name sits in a column to the RIGHT of the
+                # labelled name column but still LEFT of the labelled jurisdiction column. The nesting
+                # depth is discarded; the name itself is not in doubt.
+                for k in range(i + 1, min(j, len(row))):
+                    if row[k]:
+                        name = row[k]
+                        break
+            if name:
+                subs.append({"name": name, "jurisdiction": juris} if juris else {"name": name})
                 continue
-            subs.append({"name": name, "jurisdiction": juris} if juris else {"name": name})
-            continue
         if len(values) > 2:
             stats["wide"] += 1
             continue
@@ -170,9 +183,6 @@ def classify_table(rows, stats, carried=None):
             continue
         if len(values) == 1:
             subs.append({"name": values[0]})
-            continue
-        if DESIGNATION.search(values[1]):
-            stats["jurisdiction-is-a-name"] += 1
             continue
         subs.append({"name": values[0], "jurisdiction": values[1]})
     return subs, mapping

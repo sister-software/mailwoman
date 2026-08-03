@@ -193,14 +193,32 @@ This is not guessing which of N columns means what — the document labels them.
 
 The mapping CARRIES FORWARD to subsequent sibling top-level tables until another header row replaces it. EDGAR splits one logical table across page-break tables constantly, and only the first carries the header: `att-2025.htm`'s second table holds AT&T Mobility, Cricket Wireless, Teleport Communications America and BellSouth Telecommunications with no header of its own. Footnote rows are still caught by the footnote rule (Step 5) before the mapping is consulted, so a footnote table following a labelled list does not inherit it.
 
+Two rules govern what happens when the mapped name column is blank on a row:
+
+1. **Indented corporate tree.** If the mapped name column is blank, take the first non-blank column strictly BETWEEN the name column and the jurisdiction column. Telephone and Data Systems indents each subsidiary one column right of its parent — `["", "ADI FINANCIAL, LLC", "", "ILLINOIS"]` under a header of `["SUBSIDIARY COMPANIES", "", "STATE OF ORGANIZATION"]` — and 132 of its 183 subsidiaries sit on such rows. The nesting depth is discarded (an Exhibit 21 row becomes a registrant→subsidiary edge either way); the name itself is not in doubt, because the header says the jurisdiction is to its right. A row like `["", "Delaware", ""]` under a mapping whose jurisdiction column is index 1 has no column between 0 and 1 and still abstains.
+2. **Otherwise fall through**, not abstain. A row the mapping cannot name is handed to the generic rules below rather than counted immediately — a ragged table (`anterix-2025.htm`'s rows are 5 and 6 cells under a 6-cell header) misaligns the mapping without making the row unreadable.
+
+Add a hand-written indented-tree case to `exhibit21.test.ts` covering rule 1 — a 4-row table with a two-column header, one top-level row and two indented rows — plus the `["", "Delaware", ""]` counter-case that must still abstain. TDS itself is 176 KB and is not vendored.
+
 - [ ] **Step 5: Four new abstention rules**
 
-Each counts `unparseable` and drops the row. Order matters; apply in this order, after the existing blank-row and header/decoration checks:
+Each counts `unparseable` and drops the row. Order matters; apply in this order, after the existing blank-row and header/decoration checks.
+
+**There is deliberately NO per-row "this jurisdiction looks like a company name" rule.** It was in an earlier draft of this plan and it is wrong: Charter Communications writes its jurisdiction column as `"Delaware limited liability company"`, so such a rule abstains on 135 of Charter's 139 subsidiaries. Rule 4 below replaces it at table level, where the evidence to tell the two cases apart actually exists.
 
 1. **Footnote marker.** The row's first non-blank value matches `/^[([]?\d{1,3}[)\]]?$/` or `/^\*{1,3}$/`. Covers the footnote tables in `widepoint-2025.htm`, `atn-international-2025.htm` and `echostar-2025.htm`.
 2. **Section heading.** The row has exactly one non-blank value AND the table is not a plain single-column name list (a table qualifies as one only when every row has at most one non-blank value and at least two rows have one). Covers `idt-2025.htm`'s `"Domestic Subsidiaries"` / `"Foreign Subsidiaries"` rows and its single-row trailing footnote tables.
 3. **Multi-value cell.** The row's name cell contains a block boundary (`</p>`, `</div>`, `<br>`, `</li>`) with non-blank text on both sides of it — the source kept several values apart and cleaning ran them together. `ooma-2025.htm`'s last row is one `<td>` holding five `<p>` blocks; without this rule it emits `{name: "Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC FluentStream Technologies, LLC Phone.Com, Inc.", jurisdiction: "Delaware Delaware Delaware Colorado Delaware"}`. This check needs the cell's RAW HTML, so keep it alongside the cleaned text on `TableCell`.
-4. **Name/name table.** With no header mapping in force, a table whose two-value data rows number at least 2 and whose SECOND value carries a legal designation in more than half of them is a two-across list of entity names with no jurisdiction column — abstain on the whole table. `idt-2025.htm`'s "Domestic Subsidiaries" table is `["IDT America, Corp. (NJ)", "IDT Payment Services, Inc*. (DE)"]` and four more like it; without this rule each emits a company as another company's jurisdiction. Use `canonicalizeOrganizationName` from `@mailwoman/record` (already a dependency, already used by `edgar-filings.ts`) to detect a designation rather than hand-rolling a token list.
+4. **Name/name table.** With no header mapping in force, a table qualifies as a two-across list of entity names — no jurisdiction column at all — and abstains as a whole when ALL THREE hold over its two-value data rows:
+   - there are at least 4 of them,
+   - more than half of their SECOND values carry a legal designation, and
+   - the number of DISTINCT second values exceeds 70% of the row count.
+
+   `idt-2025.htm`'s "Domestic Subsidiaries" table is `["IDT America, Corp. (NJ)", "IDT Payment Services, Inc*. (DE)"]` and four more like it: 5 rows, 5/5 carrying a designation, 5 distinct. Without this rule each emits a company as another company's jurisdiction.
+
+   **The distinctness condition is not belt-and-braces — drop it and Charter Communications loses all 135 of its subsidiaries.** Charter writes its jurisdiction column as `"Delaware limited liability company"`, so 135 of 135 second values carry a designation (`limited`, `company`) on a table that is a perfectly ordinary name/jurisdiction list. What separates them is repetition: a jurisdiction column repeats (Charter 9 distinct over 135 rows, 0.07; Comcast 0.05; Uniti 0.13; T-Mobile 0.15; Lumen 0.26), a second name column does not (IDT 1.00). Measured 2026-08-03 across the seven large filings that are not vendored.
+
+   Use `canonicalizeOrganizationName` from `@mailwoman/record` (already a dependency, already used by `edgar-filings.ts`) for designation detection rather than hand-rolling a token list: it returns a `designations` array, non-empty exactly when the value carries one. Verified against these values on 2026-08-03 — `"IDT Payment Services, Inc*. (DE)"` → `["inc"]`, `"South Carolina"` / `"Delaware"` / `"British Columbia, Canada"` / `"England and Wales"` / `"DE"` → `[]`.
 
 - [ ] **Step 6: Fall through to the line/list strategies when the tables yield nothing**
 
