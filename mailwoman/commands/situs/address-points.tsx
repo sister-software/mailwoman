@@ -51,11 +51,17 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("5-digit state+county FIPS (e.g. 17031) — point-in-polygon scope against --county-boundary"),
+	/**
+	 * Deliberately has NO default. The boundary has to be the same TIGER vintage as the EDGES its companion interpolation
+	 * shard was built from, so the correct file is a property of the run, not of this command — a default would be right
+	 * for one vintage and silently wrong for every other.
+	 */
 	countyBoundary: zod
 		.string()
 		.optional()
-		.default("/tmp/tiger-county/tl_2023_us_county.shp")
-		.describe("TIGER COUNTY boundary shapefile (GEOID = state+county FIPS) for the --county-fips PIP"),
+		.describe(
+			"TIGER COUNTY boundary shapefile (GEOID = state+county FIPS) for the --county-fips PIP. Required with --county-fips; use the same TIGER vintage as the interpolation shard, e.g. $MAILWOMAN_DATA_ROOT/tiger/<vintage>/tl_<vintage>_us_county.shp"
+		),
 	// ODbL-hygiene: when set, only keep rows whose Overture dataset is in this comma-separated allow-list
 	// (case-insensitive). Default absent = keep everything (byte-stable). Typical: --license-filter NAD.
 	licenseFilter: zod
@@ -88,6 +94,12 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
 			throw commandError("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
+		}
+
+		if (options.countyFips && !options.countyBoundary) {
+			throw commandError(
+				"--county-fips requires --county-boundary (the TIGER COUNTY shapefile to point-in-polygon against)"
+			)
 		}
 
 		const STATE = options.state.toUpperCase()

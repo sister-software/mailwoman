@@ -657,16 +657,16 @@ The CSV parse fix only changes shard bytes for a source that actually carries a 
 quoted field. That is measurable rather than arguable, so it was measured — every OpenAddresses
 member reachable on the lab host, scanned for lines with an odd number of quotes:
 
-| source                | member                 |          lines | odd-quote | shard effect                               |
-| --------------------- | ---------------------- | -------------: | --------: | ------------------------------------------ |
-| `europe.zip`          | `fr/countrywide.csv`   |     25,414,422 |         2 | none — stride skips it                     |
-| `europe.zip`          | `de/berlin.csv`        |        375,341 |         0 | none                                       |
-| `europe.zip`          | `de/sn/statewide.csv`  |        962,817 |         0 | none                                       |
-| `ch__countrywide`     | `ch/countrywide.csv`   |      2,759,182 |         0 | none                                       |
-| `no__countrywide`     | `no/countrywide.csv`   |      1,904,206 |         0 | none                                       |
-| `it__countrywide`     | `it/countrywide.csv`   |              — |         0 | none (equivalence-proven)                  |
-| `nl__countrywide`     | `nl/countrywide.csv`   |              — |        >0 | none (equivalence-proven)                  |
-| **`es__countrywide`** | **`es_addresses.csv`** | **15,627,792** |    **52** | **CHANGES `locale.ts`'s ES pedanía shard** |
+| source            | member                |      lines | odd-quote | shard effect                            |
+| ----------------- | --------------------- | ---------: | --------: | --------------------------------------- |
+| `europe.zip`      | `fr/countrywide.csv`  | 25,414,422 |         2 | none — stride skips it                  |
+| `europe.zip`      | `de/berlin.csv`       |    375,341 |         0 | none                                    |
+| `europe.zip`      | `de/sn/statewide.csv` |    962,817 |         0 | none                                    |
+| `ch__countrywide` | `ch/countrywide.csv`  |  2,759,182 |         0 | none                                    |
+| `no__countrywide` | `no/countrywide.csv`  |  1,904,206 |         0 | none                                    |
+| `it__countrywide` | `it/countrywide.csv`  |          — |         0 | none (equivalence-proven)               |
+| `nl__countrywide` | `nl/countrywide.csv`  |          — |        >0 | none (equivalence-proven)               |
+| `es__countrywide` | `es_addresses.csv`    | 15,627,792 |        52 | none — already correct since 2026-07-08 |
 
 Two findings worth keeping.
 
@@ -676,18 +676,27 @@ halves and the shard is unchanged. That is luck, not design, and the reason the 
 documented in place at `po-box-cedex.ts` rather than fixed: a halved record fails the field checks
 and drops, so the failure mode is a lost row, not a corrupt one.
 
-**ES is the real one.** 52 odd-quote lines = 26 records, all the same Catastro shape — a quoted field
-holding nothing but a newline, sitting between the house number and the postcode:
+**ES carries the only real cluster, and it costs nothing.** 52 odd-quote lines = 26 records, all the
+same Catastro shape — a quoted field holding nothing but a newline, between the house number and the
+postcode:
 
 ```
 …,POL INDUSTRIAL VIAL B,"10",,
 ","16210","16042",Campillo de Altobuey,Cuenca,…
 ```
 
-The old quote-blind splitter turned each into two rows: one truncated, one whose `16210` postcode
-landed in a column expecting something else. The new parse yields 26 correct rows. So the ES pedanía
-shard SHOULD change, and needs re-pinning deliberately — this is the corruption the change fixes,
-visible in the output.
+A quote-blind splitter turns each into two rows, the second with `16210` sitting a column off. But
+`locale.ts` — the only reader that touches `es_addresses.csv` — moved onto `CSVSpliterator` in
+`1d7b1bd1` on **2026-07-08**, which is already on main, and `synth-es-pedania-v1.jsonl` was built
+**2026-07-22**. The shard postdates the fix by two weeks, so it already holds the corrected rows. No
+rebuild, no re-pin.
+
+**The corrected conclusion: no shard changes anywhere in the checkable set.** An earlier revision of
+this appendix claimed ES needed re-pinning. That was reached by finding which file reads the ES CSV
+and stopping there — without checking whether that reader was on the changed code path (it is not;
+the eight `readCSVRecords` callers name no ES source) or whether the artifact predated the fix (it
+does not). Both checks are one command each. The claim would have cost someone an 800,000-row rebuild
+to discover it was already done.
 
 **Still unscanned:** the seven `us__*` zips and the GeoNames dumps, absent from this host. Same
 one-liner closes them:
