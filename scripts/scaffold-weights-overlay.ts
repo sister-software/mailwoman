@@ -91,7 +91,19 @@ writeFileSync(
 				url: "https://github.com/sister-software/mailwoman.git",
 				directory: `neural-weights-${slug}`,
 			},
-			files: ["model-card.json", artifact, "README.md", "*.ts", "**/*.ts", "!*.test.ts", "!**/*.test.ts"],
+			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
+			// relative path, which does not resolve once unpacked — and a data-only overlay has no use
+			// for a dev script anyway.
+			files: [
+				"model-card.json",
+				artifact,
+				"README.md",
+				"*.ts",
+				"**/*.ts",
+				"!*.test.ts",
+				"!**/*.test.ts",
+				"!scripts/**",
+			],
 			dependencies: { "@mailwoman/neural-weights-en-us": "workspace:*" },
 			mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
 		},
@@ -108,6 +120,44 @@ writeFileSync(
 writeFileSync(
 	resolve(pkgDir, ".npmignore"),
 	readFileSync(String(repoRootPath("neural-weights-en-nz", ".npmignore")), "utf8")
+)
+
+// The dev linker, emitted rather than copied. This step used to be a printed instruction reading
+// "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
+// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
+// leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
+writeFileSync(
+	resolve(pkgDir, "scripts", "link-dev-weights.ts"),
+	`/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Dev-weights linker for \`${packageName}\`.
+ *
+ *   The build itself lives in \`scripts/weights-overlay-linker.ts\` — this overlay declares
+ *   \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
+ *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
+ *
+ *   TODO(${slug}): say what makes this locale's index load-bearing, and what it is INERT without. If
+ *   the locale writes its postcode BEFORE the locality, it needs entries in
+ *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
+ *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode
+ *   last, say so, because the ABSENCE from that set is then deliberate. Write this for ${slug}, not
+ *   for whichever locale you read first.
+ */
+
+import { buildPairIndexOverlay } from "../../scripts/weights-overlay-linker.ts"
+
+buildPairIndexOverlay({
+	packageDir: "neural-weights-${slug}",
+	country: "${country}",
+	// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
+	// a measurement of this one.
+	delta: 10,
+	transitionBeta: 5,
+})
+`
 )
 
 writeFileSync(
@@ -197,5 +247,8 @@ console.log("STILL MANUAL — these name artifacts explicitly, so they stay a hu
 console.log(`  1. neural/test/pair-index-card-parity.test.ts — add a PACKAGES row once the card has its block`)
 console.log(`  2. .github/workflows/publish.yml — add ${artifact} to the preflight list, the $CURL fetch,`)
 console.log(`     the non-empty guard and the --pair-indexes remediation string`)
-console.log(`  3. scripts/link-dev-weights.ts — the overlay ships none; copy the closest sibling's build block`)
-console.log(`  4. OPERATOR: first-publish ${packageName} (OIDC cannot CREATE a package)`)
+console.log(`  3. OPERATOR: first-publish ${packageName} (OIDC cannot CREATE a package)`)
+console.log("")
+console.log(`WRITTEN BUT NOT FINISHED — scripts/link-dev-weights.ts has two TODO(${slug}) markers:`)
+console.log(`  - the docstring's "what this index is inert without", written for ${slug} specifically`)
+console.log(`  - delta / transitionBeta, which are every other overlay's magnitudes until measured`)
