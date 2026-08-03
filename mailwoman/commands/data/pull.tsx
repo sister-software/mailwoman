@@ -100,6 +100,12 @@ function existingLocalPath(
  * HEAD the artifact (and, when it publishes one, GET its `.md5` sidecar) via the paced/retried `APIClient`. Failures
  * degrade to an empty state rather than throwing — a HEAD that 404s or times out just means "can't verify", handled
  * downstream as a warning, not a hard stop (the GET that follows is the real signal on whether the artifact exists).
+ *
+ * The sidecar GET carries the SAME `Range: bytes=0-` header `downloadToDisk` needs (see that function's docstring for
+ * the measured WAF behavior) — a `.md5` sidecar is a tiny text object on the SAME bucket, and nothing rules out the
+ * WAF's ranged-request rule applying to it too. No bundle publishes one today (`data-bundles.ts`'s docstring), so this
+ * path is UNEXERCISED against live data; a failure here is loud (`console.error`), not swallowed, so the day a sidecar
+ * ships, a wrong guess about which requests need `Range` shows up immediately instead of silently degrading forever.
  */
 async function probeRemote(client: APIClient, artifact: BundleArtifact): Promise<RemoteArtifactState> {
 	const url = artifactURL(artifact)
@@ -118,11 +124,18 @@ async function probeRemote(client: APIClient, artifact: BundleArtifact): Promise
 
 	if (artifact.md5Sidecar) {
 		try {
-			const res = await client.fetch<string>({ method: "get", url: `${url}.md5`, responseType: "text" })
+			const res = await client.fetch<string>({
+				method: "get",
+				url: `${url}.md5`,
+				responseType: "text",
+				headers: { range: "bytes=0-" },
+			})
 
 			state.md5 = String(res.data).trim().split(/\s+/)[0]
-		} catch {
-			// No sidecar reachable — falls back to the content-length check above.
+		} catch (error) {
+			console.error(
+				`WARNING: md5 sidecar fetch failed for ${url}.md5 (${error instanceof Error ? error.message : String(error)}) — falling back to size verification`
+			)
 		}
 	}
 

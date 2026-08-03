@@ -155,17 +155,20 @@ async function statusForBundles(
 }
 
 const DataStatus: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
-	const state = useCommandTask(async () => {
-		const dataRoot = options.dataRoot ?? mailwomanDataRoot()
-		const names = args.length ? args : Object.keys(BUNDLES)
+	const state = useCommandTask(
+		async () => {
+			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+			const names = args.length ? args : Object.keys(BUNDLES)
 
-		return statusForBundles(names, dataRoot, options.checkRemote)
-	})
+			return statusForBundles(names, dataRoot, options.checkRemote)
+		},
+		(result) => (result.ok ? 0 : 1)
+	)
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
 	if (state.status === "done") {
-		return <CheckList checks={state.result.checks} />
+		return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 	}
 
 	return <Text color="gray">checking…</Text>
