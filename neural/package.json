@@ -72,9 +72,10 @@
 			"types": "./out/tokenizer.d.ts"
 		},
 		"./onnx-runner": {
+			"types": "./out/onnx-runner.d.ts",
+			"browser": "./out/onnx-runner-browser.js",
 			"node": "./onnx-runner.ts",
-			"default": "./out/onnx-runner.js",
-			"types": "./out/onnx-runner.d.ts"
+			"default": "./out/onnx-runner.js"
 		},
 		"./weights": {
 			"node": "./weights.ts",

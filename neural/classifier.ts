@@ -30,6 +30,9 @@ import {
 	type SpanProposerLexicon,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
+// SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
+// `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
+import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "@mailwoman/neural/onnx-runner"
 
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 import type { AnchorLookup } from "./anchor-inference.ts"
@@ -38,7 +41,6 @@ import type { CountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import type { InferResult } from "./onnx-runner.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
@@ -318,7 +320,6 @@ export class NeuralAddressClassifier {
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
 		const [
-			{ DEFAULT_INTRA_OP_THREADS, ONNXRunner },
 			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
@@ -327,7 +328,6 @@ export class NeuralAddressClassifier {
 			{ PairIndexResolver, peekPairIndexHeader },
 			fs,
 		] = await Promise.all([
-			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
 			import(/* webpackIgnore: true */ "./weights.ts"),
 			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
 			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
