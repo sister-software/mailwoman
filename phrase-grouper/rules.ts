@@ -708,6 +708,15 @@ export function scoreStreetPhrase(tokens: ReadonlyArray<SegmentToken>, text: str
  * Confidence scales with: run length (2-5 are good place-name lengths), tail-of-segment position, and whether the span
  * sits at a segment boundary.
  */
+/**
+ * Longest locality phrase proposed, in tokens — "Las Palmas de Gran Canaria" is 5.
+ *
+ * Bounds BOTH the emitted proposals and the forward walk that finds them. Those must stay tied: the walk exists only to
+ * measure the run this cap will clamp anyway, so letting it range further is work whose result is discarded, and it is
+ * quadratic on a long capitalized run where every start index walks to the end.
+ */
+const MAX_LOCALITY_PHRASE_TOKENS = 6
+
 export function scoreLocalityPhrase(
 	tokens: ReadonlyArray<SegmentToken>,
 	text: string,
@@ -741,6 +750,12 @@ export function scoreLocalityPhrase(
 		let j = i
 
 		for (;;) {
+			// Only `tokens[i .. i + MAX_LOCALITY_PHRASE_TOKENS - 1]` are ever read below, since `maxLen`
+			// clamps to that. Walking further discovers a longer run that is then discarded, and on a long
+			// capitalized run every start index walks to its end — quadratic in segment length for a result
+			// that cannot differ.
+			if (j - i + 1 >= MAX_LOCALITY_PHRASE_TOKENS) break
+
 			const next = tokens[j + 1]
 
 			if (!next) break
@@ -775,9 +790,7 @@ export function scoreLocalityPhrase(
 			break
 		}
 
-		// Emit proposals for every prefix-length of the run starting at i, capped at 6 tokens (covers
-		// "Las Palmas de Gran Canaria" = 5). Each starting i contributes ≤6 proposals → O(n) per segment.
-		const maxLen = Math.min(j - i + 1, 6)
+		const maxLen = Math.min(j - i + 1, MAX_LOCALITY_PHRASE_TOKENS)
 
 		for (let len = 1; len <= maxLen; len++) {
 			const startTok = tokens[i]!
