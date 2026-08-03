@@ -173,7 +173,11 @@ writeFileSync(
 			version: "7.0.0",
 			locale: localeTag,
 			license: "AGPL-3.0",
-			$comment: "Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights.",
+			$comment:
+				"Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights. " +
+				"Deliberately carries NO `labels`: the vocabulary belongs to the shared MODEL, so it is inherited " +
+				"from the base card at resolve time. Copying it here creates a second copy to go stale on the next " +
+				"retrain, and an overlay whose labels disagree with its model throws on the first parse.",
 			files: { model_card: "model-card.json" },
 		},
 		null,

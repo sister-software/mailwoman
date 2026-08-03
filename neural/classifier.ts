@@ -344,7 +344,14 @@ export class NeuralAddressClassifier {
 
 		/* oxlint-enable typescript/no-restricted-imports */
 		const resolved: ResolvedWeights = resolveWeights(opts)
-		const labels = readLabelsFromModelCard(resolved.modelCardPath)
+
+		// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
+		// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
+		// and omitting `labels` there is correct; copying them in would be a second copy to go stale on the
+		// next retrain. Falling back is what keeps the two facts in one place.
+		const labels =
+			readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
+
 		const crf = readCRFTransitions(resolved.crfTransitionsPath)
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays

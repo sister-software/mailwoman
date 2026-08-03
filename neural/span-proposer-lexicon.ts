@@ -20,7 +20,11 @@
 import { au, nz, us, type SystemCode } from "@mailwoman/codex"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
 
-import { VENUE_STRUCTURE_DESIGNATORS } from "./venue-structure.ts"
+import {
+	MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS,
+	VENUE_STRUCTURE_DESIGNATORS,
+	VENUE_STRUCTURE_MODIFIERS,
+} from "./venue-structure.ts"
 
 /**
  * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A" describes the
@@ -146,6 +150,8 @@ export function buildCodexSpanLexicon(systems: readonly SystemCode[] = ["us", "a
 		// The venue-interior subset, kept addressable after the merge above so the consuming prior can weight it
 		// separately from the postal designators it now shares a set with.
 		venueStructureDesignators: new Set<string>(VENUE_STRUCTURE_DESIGNATORS),
+		venueStructureModifiers: new Set<string>(VENUE_STRUCTURE_MODIFIERS),
+		modifierEligibleStructureDesignators: new Set<string>(MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS),
 		...(deliveryService ? { deliveryService } : {}),
 	}
 }

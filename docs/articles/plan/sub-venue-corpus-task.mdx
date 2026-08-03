@@ -1,0 +1,113 @@
+---
+title: Sub-venue structure is a corpus gap, not a decode gap
+---
+
+# Sub-venue structure is a corpus gap, not a decode gap
+
+`West Wing`, `North Terminal`, `Concourse B`, `Gate 12` — the interior structure of a large venue.
+The span proposer finds these correctly and the decoder discards most of them, and the reason is not
+a weight that needs turning up.
+
+## What the measurements say
+
+Two proposal shapes reach the same tag by different routes.
+
+**Designator + identifier** (`Concourse B`, `Terminal 5`, `Gate 12`) proposes at 0.85 confidence and
+needed a bias scale of 5.90 to win the decode. That shipped: `venueStructureBiasScale`, default 6.0.
+
+**Modifier + designator** (`West Wing`, `North Terminal`) proposes at 0.6 and needs far more:
+
+| case            | required scale |
+| --------------- | -------------: |
+| West Wing       |           5.87 |
+| East Wing       |           8.34 |
+| South Concourse |           9.04 |
+| Upper Concourse |           9.65 |
+| North Terminal  |      **10.65** |
+
+Only the first clears the shipped 6.0, which is exactly the one that parses today.
+
+Closing the class by weight would take a scale near 11 — **nearly double what the stronger evidence
+needed**. A positional word before a designator is a shape ordinary street names also take; an
+identifier after one is nearly unambiguous. Paying more for the weaker cue inverts the evidence
+ordering, and at 11 nats a prior stops being a prior: it overrides the model wherever it fires, on
+the strength of a six-row confound board.
+
+The distribution is the tell. 5.87 is a model that half-believes; 10.65 is a model confidently
+believing something else. That is the signature of a tag it was never taught, and it matches the
+campaign's aliveness finding — `B-unit` ranks 11th–15th of 25 in raw pre-prior logits across every
+locale, at 0.15–0.42% even for `Apt` and `Suite`.
+
+## What is already in place
+
+Shipped, and not to be redone:
+
+- `VENUE_STRUCTURE_DESIGNATORS` — `arcade`, `building`, `campus`, `concourse`, `enclosure`,
+  `installation`, `wing` from the WOF placetype vocabulary, plus `terminal` and `gate` from OSM's
+  `aeroway` key.
+- `VENUE_STRUCTURE_MODIFIERS` + `MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS` — the positional words, and
+  the narrower designator subset they may precede. `gate` and `building` are excluded because "East
+  Gate" and "Building Society Place" are streets.
+- Both proposal rules, with two structural guards: a preceding house number means a street line, and
+  a preceding capitalized word means the pair sits inside a longer proper name ("Grand Central
+  Terminal" contains "Central Terminal").
+- A 30-row confound board as a gate (`fixtures/venue-structure-confounds.jsonl`).
+
+The proposer emits the right span on 5 of 6 target shapes with zero false positives. The gap is
+entirely downstream.
+
+## The corpus task
+
+Teach the tag instead of outvoting it. Synthesize `<sub-venue>, <venue>, <street>, <locality>,
+
+<postcode>` lines where the sub-venue carries both shapes:
+
+- designator + identifier — `Terminal 5`, `Gate 12`, `Concourse B`, `Wing B`, `Building 43`
+- modifier + designator — `West Wing`, `North Terminal`, `Upper Concourse`, `Main Building`
+
+with the sub-venue labelled `unit` and the containing venue labelled `venue`.
+
+Include the confound shapes as NEGATIVES in the same shard, or the model learns the surface rather
+than the structure: `12 East Gate` (street), `Briggate` / `Kirkgate` (single-token GB street names),
+`Gate House` (venue), `Wing Yip` (business name), `Grand Central Terminal` (the pair inside a longer
+name).
+
+## Get real data first, and get a lot of it
+
+Do not synthesize these from a template list. Airports and transit terminals are the densest real
+source of sub-venue structure in existence, they are globally distributed, and the naming is
+genuinely varied in ways an invented list will not be — `Concourse B`, `Terminal 2F`, `Pier C`,
+`Satellite 4`, `Hall M`, `Gate A12`, `North Terminal`, `Terminal Sur`.
+
+This is also the class of query a geocoder is expected to answer and currently answers badly. "Which
+terminal" is a real user intent with a real coordinate attached.
+
+Sources worth pulling, roughly in order of value:
+
+- **OSM `aeroway=terminal` / `aeroway=gate`** — already the provenance for `terminal` and `gate` in
+  the designator vocabulary, and `osm/sdk` already fetches and shards OSM. The extraction path
+  exists; this is a new extractor over data we can already reach.
+- **OSM `public_transport=station` + `railway=station`** with their platform and concourse children —
+  the rail equivalent, and the naming conventions differ enough from aviation to be worth having
+  both.
+- **OurAirports** (public domain) — every airport worldwide with IATA/ICAO codes and coordinates.
+  Good for the venue side of each pair, weaker on interior structure.
+- **Overture Places** — already ingested for `poi.db`; filter to transport categories for venue names
+  with coordinates.
+- **Wikidata** — terminal and concourse entities carry multilingual labels, which is the cheapest
+  route to non-English sub-venue naming (`Terminal Sur`, `Halle 2`, `ターミナル1`).
+
+The interior structure is the scarce part. Airport terminal and gate data is the densest source of it
+available, and the vocabulary this arc is built on already came from there — extending the same
+source into the corpus is the natural next step, not a new dependency.
+
+## Bars
+
+Whatever the shard produces has to hold the existing board: 30 confound rows, zero `unit` emissions,
+and the shipped designator+identifier cases (`Concourse B`, `Terminal 5`, `Gate 12`, `Wing B`) stay
+correct. The five modifier cases above are the target; `West Wing` already passes and must not
+regress.
+
+Success is the required-scale table collapsing — the modifier class winning at the shipped 6.0
+rather than needing 11. If a retrained model still needs 9+, the shard did not teach the structure
+and the data is the thing to look at, not the scale.
