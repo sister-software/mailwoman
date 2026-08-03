@@ -55,7 +55,7 @@ const PUBLISHED_REPORT_PATH = join(
 	"..",
 	"..",
 	"docs",
-	"articles",
+	"records",
 	"evals",
 	`${PUBLISHED_LINKAGE_EVAL_DATE}-filer-linkage.md`
 )
