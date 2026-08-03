@@ -41,13 +41,19 @@ curl -s -X POST localhost:3000/v1/geocode \
 # → { "lat": 40.74…, "lon": -73.98…, "resolution_tier": "interpolated", … }
 ```
 
-Don't have a gazetteer yet? Grab the worldwide candidate DB (~1.4 GB, byte-range friendly):
+Don't have a gazetteer yet? Pull the worldwide candidate DB (~1.65 GB, population-first ranking) with
+the same image — no Node/npm needed on your host either:
 
 ```bash
-mkdir -p mailwoman-data/wof
-curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \
-  -o mailwoman-data/wof/candidate.db
+mkdir -p mailwoman-data
+docker run --rm -v "$(pwd)/mailwoman-data:/data" \
+  ghcr.io/sister-software/mailwoman:latest \
+  node node_modules/mailwoman/out/cli.js data pull candidate
 ```
+
+The container's own `$MAILWOMAN_DATA_ROOT` (`/data`, set by the image) is where `data pull` lands the
+file — `/data/wof/candidate.db`, exactly the path the read-only mount above expects. This one run needs
+the volume **without** `:ro`; every later `docker run` that only reads the gazetteer keeps it.
 
 ### Why read-only mounts need the candidate backend
 

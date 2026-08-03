@@ -27,7 +27,7 @@ export const PublicEnvSchema = z.object({
 	// releasing to the libuv pool, and `node:sqlite` reads are synchronous. Measured 1.00x flat from
 	// 1→16 workers on both parse and full geocode. Don't reintroduce it without re-measuring; worker
 	// threads (see `mailwoman/geocode-stream.ts`) are the only lever that moves this in Node.
-	// Receipts: `docs/articles/plan/reference/performance.mdx`.
+	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: z.coerce.number().int().positive().default(1000),
 
 	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).
@@ -97,6 +97,17 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_DIAG_INTERP: z.string().optional(),
 	MAILWOMAN_DUMP_MISS_TAG: z.string().optional(),
 	MAILWOMAN_WORD_CONSISTENCY: z.string().optional(),
+	/**
+	 * Gates the with-data half of `mailwoman/test/dropin-cold-start.test.ts` — a real `mailwoman data pull candidate`
+	 * (~1.65 GB) plus booting all three drop-in servers against it. Unset in CI; the always-on half (missing-data +
+	 * libpostal's zero-data boot) downloads nothing and needs no guard.
+	 */
+	MAILWOMAN_COLD_START_FULL: z.string().optional(),
+	/**
+	 * Reuse an already-populated data root for the gated cold-start suite above instead of pulling candidate.db fresh
+	 * into a throwaway temp dir — avoids a redundant ~1.65 GB re-download across repeated local runs.
+	 */
+	MAILWOMAN_COLD_START_DATA_ROOT: z.string().optional(),
 	MW_DUMP_REGRESSIONS: z.string().optional(),
 	PROBE_N: z.string().optional(),
 	DEBUG: z.string().optional(),

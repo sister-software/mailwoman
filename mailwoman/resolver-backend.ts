@@ -20,6 +20,7 @@
  */
 
 import { existsSync } from "node:fs"
+import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import type {
@@ -53,6 +54,51 @@ export function resolvePostalCityAliasDBPath(explicit?: string): string | undefi
 // `/mnt/playpen` default appears. Re-exported here so the server routers + CLI commands keep
 // importing them from this module unchanged.
 export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+
+/**
+ * The #1009 "no gazetteer data found" preflight message, shared by every caller that gates on a candidate/WOF resolver
+ * being present before it will boot (`photon/cli.ts`, `nominatim/cli.ts`, `mailwoman/api-engine.ts`'s `mailwoman
+ * serve`). Originally a bare `curl -fSL https://public.sister.software/...` line; measured 2026-08-03
+ * (`mailwoman/data-bundles.ts`'s `downloadToDisk` docstring) that an UNRANGED GET against that bucket 403s — the hint
+ * was broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
+ * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
+ *
+ * `requiresExplicitEnv` distinguishes the two candidate-resolution shapes in this codebase: `photon`/`nominatim` fall
+ * back to the `<data-root>/wof/candidate.db` CONVENTION path even when `$MAILWOMAN_CANDIDATE_DB` is unset (see their
+ * own `candidateDb` derivation, a couple of lines above their preflight check) — so a bare `data pull candidate` is the
+ * whole fix, no export needed. `mailwoman serve` resolves ONLY via `resolveCandidateDBPath` (explicit opt or env —
+ * doctor's documented convention-path trap, `doctor/checks.ts`'s `gazetteerCheck`), so its message needs the export
+ * line spelled out.
+ */
+export function buildNoGazetteerMessage(opts: {
+	dataRoot: string
+	docsPath: string
+	requiresExplicitEnv: boolean
+}): string {
+	const conventionCandidate = join(opts.dataRoot, "wof", "candidate.db")
+
+	const afterPull = opts.requiresExplicitEnv
+		? [
+				"  Then point $MAILWOMAN_CANDIDATE_DB at the pulled file and re-run:",
+				`    export MAILWOMAN_CANDIDATE_DB=${conventionCandidate}`,
+			]
+		: [`  The file lands at ${conventionCandidate} and is auto-detected there — just re-run \`serve\`.`]
+
+	return [
+		"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
+		"",
+		"  Fastest path (worldwide resolution, population-first ranking, ~1.65 GB):",
+		"    mailwoman data pull candidate",
+		"",
+		...afterPull,
+		"",
+		"  Or point at your own:",
+		"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
+		"    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)",
+		"",
+		`  Docs: https://mailwoman.sister.software${opts.docsPath}`,
+	].join("\n")
+}
 
 /**
  * The lookup constructors this selector needs — a structural subset of `@mailwoman/resolver-wof-sqlite`.

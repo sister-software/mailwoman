@@ -24,6 +24,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {
+	buildNoGazetteerMessage,
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
@@ -99,30 +100,34 @@ async function serve(): Promise<void> {
 
 	// #1009: fail FRIENDLY before the resolver throws its internal "resolveShards: at least one shard
 	// is required" — a stranger's first `npx @mailwoman/photon serve` must say exactly what data is
-	// missing and the one command that fixes it. Kept in sync with the docs' hosted-artifact layout
-	// (mailwoman.sister.software/docs/switching/photon — the maintained pointer).
+	// missing and the one command that fixes it. Points at the ten-minute trial until the switching
+	// pages land (docs-reorg wave 2).
 	if (!candidateDb && !wofPaths.length) {
 		console.error(
-			[
-				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
-				"",
-				"  Fastest path (worldwide resolution, ~1.4 GB, byte-range friendly):",
-				`    mkdir -p ${join(mailwomanDataRoot(), "wof")}`,
-				`    curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \\`,
-				`      -o ${conventionCandidate}`,
-				"",
-				"  Then re-run `serve` (the file is auto-detected at that path), or point at your own:",
-				"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
-				"    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)",
-				"",
-				"  Docs: https://mailwoman.sister.software/docs/switching/photon",
-			].join("\n")
+			buildNoGazetteerMessage({
+				dataRoot: mailwomanDataRoot(),
+				docsPath: "/docs/developers/get-started/ten-minute-trial",
+				requiresExplicitEnv: false,
+			})
 		)
 
 		process.exit(1)
 	}
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	// #1009: same friendly-failure discipline for the model weights — a stranger who installed only
+	// `@mailwoman/photon` (which DOES declare `@mailwoman/neural-weights-en-us`, so this should always
+	// resolve) still gets a named artifact + the one fix command instead of an unhandled-rejection
+	// stack trace if resolution ever fails (corrupt install, pruned node_modules, etc).
+	let classifier: NeuralAddressClassifier
+
+	try {
+		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	} catch (error) {
+		console.error(`✗ ${error instanceof Error ? error.message : String(error)}`)
+
+		process.exit(1)
+	}
+
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())

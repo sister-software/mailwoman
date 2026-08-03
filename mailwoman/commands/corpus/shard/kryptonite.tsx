@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus shard kryptonite` — build a parquet shard from the DeepSeek-generated
  *   kryptonite JSONL and emit the combined corpus MANIFEST (base shards + the new shard). See
- *   docs/articles/plan/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility contract.
+ *   docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility contract.
  */
 
 import { buildKryptoniteShard } from "@mailwoman/corpus/tools"

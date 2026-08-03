@@ -11,7 +11,7 @@
  *     promote-gate verdicts + the measured hard-resolve rates that used to live in a code comment on
  *     `HARD_PLACE_COUNTRY_SAFELIST`. Presence = measured; `hard_filter_safe = 0` = measured and
  *     FAILED the gate (FI 69.5%, PL 77.8%) — distinguishable from a country never measured at all
- *     (the meaning-of-zero rule, `docs/articles/plan/reference/layer-contract.mdx`).
+ *     (the meaning-of-zero rule, `docs/engineering/reference/layer-contract.mdx`).
  *   - `country_bbox`: the coarse guard-B plausibility boxes that used to live in
  *     `resolver/plausibility.ts`'s `COUNTRY_BBOX`. An absent row fails open (never trips the guard),
  *     exactly like an absent key in the constant.

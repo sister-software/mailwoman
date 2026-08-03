@@ -3,30 +3,52 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Docs structural gate (docs-architecture cleanup, Phase 4). Static frontmatter parse only — no
- *   install, no Docusaurus build — so it runs in seconds as the first step of the Docs workflow
- *   (`.github/workflows/docs-build.yml`) and locally via
- *   `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check-docs-structure.ts`
+ *   Docs structural gate (docs-architecture cleanup, Phase 4; frontmatter contract rewrite, docs-reorg
+ *   Phase 0 task 2). Static frontmatter parse only — no install, no Docusaurus build — so it runs in
+ *   seconds as the first step of the Docs workflow (`.github/workflows/docs-build.yml`) and locally
+ *   via `yarn workspace @mailwoman/docs lint:structure` (or `node docs/scripts/check-docs-structure.ts`
  *   from the repo root).
  *
- *   Three checks, matching the contributor policy page (`docs/articles/contributing-docs.mdx`):
+ *   Three checks:
  *
- *   1. Frontmatter validity — a page declaring `role:` must use the policy vocabulary and carry
- *      that role's required fields; a page declaring `status:` must use the record-class chrome
- *      vocabulary (`src/theme/DocItem/Content`). Presence is not required everywhere: validity is
- *      enforced where declared, and `role:` itself is required on the entry pages, the canonical
- *      concept pages, and every recipe (see ROLE_REQUIRED_PAGES).
+ *   1. Frontmatter validity — two modes, chosen by the `--strict` CLI flag:
+ *        - Strict (`--strict`) — THE LIVE MODE. Both CI (`.github/workflows/docs-build.yml`) and
+ *          `yarn workspace @mailwoman/docs lint:structure` pass the flag as of the docs-reorg
+ *          Task 5 skeleton cutover. It enforces the six-role contract
+ *          (`docs-frontmatter-contract.ts`): `role:` is required on EVERY published page, value ∈
+ *          {tutorial, guide, reference, explanation, landing, evidence}, with role-conditional
+ *          required fields (`validatePage`).
+ *        - Legacy (default, no flag): the seven-role vocabulary the contract replaced
+ *          (guide/tutorial/concept/reference/decision/evidence/landing), required only on a
+ *          manifest of entry pages and every recipe (`ROLE_REQUIRED_PAGES` /
+ *          `ROLE_REQUIRED_DIRECTORIES`). Nothing invokes it now. It is kept because the pages it
+ *          describes still exist unpublished under `docs/records/site-2026-08/`, so pointing the
+ *          script at that tree remains a way to check them; delete it once nothing does.
  *   2. Exact duplicate `title:` frontmatter across the published site.
  *   3. Orphan pages — published docs absent from every sidebar in `docs/sidebars.ts`.
  *
- *   Known-intentional findings live in `docs-structure-allowlist.ts`, each with a reason. The
- *   evals/retrospectives trees are a delegated workstream and are skipped by checks 1 and 3 (see
- *   `isDelegatedWorkstream`).
+ *   Checks 2 and 3 are unconditional — the `--strict` flag affects check 1 only. Known-intentional
+ *   findings live in `docs-structure-allowlist.ts`, each with a reason. The evals/retrospectives
+ *   trees are a delegated workstream and are skipped by the frontmatter check (both modes) and by
+ *   the legacy `role:` requirement (see `isDelegatedWorkstream`).
  */
 
+import { parseArgs } from "node:util"
+
 import sidebars from "../sidebars.ts"
+import { validatePage } from "./docs-frontmatter-contract.ts"
 import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "./docs-frontmatter.ts"
 import { allowedDuplicateTitles, allowedOrphans } from "./docs-structure-allowlist.ts"
+
+// parseArgs reads process.argv.slice(2) by default — the blessed pattern (core/scripting/utils'
+// `cliArguments()` docstring): call it bare rather than slicing process.argv ourselves.
+const { values: flags } = parseArgs({
+	options: {
+		strict: { type: "boolean", default: false },
+	},
+})
+
+const strict = flags.strict
 
 //#region Policy vocabulary
 
@@ -72,7 +94,11 @@ const ROLE_REQUIRED_DIRECTORIES = ["recipes/"]
 
 //#region Check 1 — frontmatter validity
 
-function checkFrontmatter(pages: DocPage[]): string[] {
+/**
+ * Legacy frontmatter check — the original policy, unchanged. Used when `--strict` is absent so CI keeps passing against
+ * the current tree until a later task deletes it and flips the flag.
+ */
+function checkFrontmatterLegacy(pages: DocPage[]): string[] {
 	const failures: string[] = []
 	const checkable = pages.filter((page) => !isDelegatedWorkstream(page))
 	const byRelativePath = new Map(checkable.map((page) => [page.relativePath, page]))
@@ -128,6 +154,40 @@ function checkFrontmatter(pages: DocPage[]): string[] {
 				failures.push(`${page.relativePath}: status \`superseded\` requires a \`superseded-by:\` link`)
 			}
 		}
+	}
+
+	return failures
+}
+
+/**
+ * Flattens a `DocPage`'s parsed frontmatter into the plain `Record<string, unknown>` shape `validatePage` expects.
+ * Declared keys with a scalar value carry that value; a declared key whose value is nested/non-scalar (an array, a
+ * block scalar — `docs-frontmatter.ts`'s parser records the key but not the value) carries `true`, which is enough for
+ * a presence check but nothing a role rule here reads for content.
+ */
+function toFrontmatterRecord(page: DocPage): Record<string, unknown> {
+	const record: Record<string, unknown> = {}
+
+	for (const key of page.declaredKeys) {
+		record[key] = page.frontmatter.get(key) ?? true
+	}
+
+	return record
+}
+
+/**
+ * Strict frontmatter check — the NEW six-role contract, enforced on every published page (minus the delegated
+ * evals/retrospectives workstream, same boundary as the legacy check). This is what a later task points CI at once the
+ * old tree is gone; run today it fails wholesale against the current corpus, which predates the contract — that's
+ * expected, not a regression.
+ */
+function checkFrontmatterStrict(pages: DocPage[]): string[] {
+	const failures: string[] = []
+
+	for (const page of pages) {
+		if (isDelegatedWorkstream(page)) continue
+
+		failures.push(...validatePage(toFrontmatterRecord(page), page.relativePath))
 	}
 
 	return failures
@@ -228,7 +288,10 @@ const pages = await collectDocPages()
 const published = pages.filter((page) => !isExcludedFromBuild(page))
 
 const failuresByCheck: [name: string, failures: string[]][] = [
-	["Frontmatter validity", checkFrontmatter(published)],
+	[
+		strict ? "Frontmatter validity (--strict: six-role contract)" : "Frontmatter validity (legacy vocabulary)",
+		strict ? checkFrontmatterStrict(published) : checkFrontmatterLegacy(published),
+	],
 	["Duplicate titles", checkDuplicateTitles(published)],
 	["Orphan pages", checkOrphans(published)],
 ]
@@ -274,7 +337,8 @@ for (const allowance of allowedDuplicateTitles) {
 if (failureCount > 0) {
 	console.error(
 		`\nDocs structure check FAILED (${failureCount} finding${failureCount === 1 ? "" : "s"}). ` +
-			`Policy: docs/articles/contributing-docs.mdx · allowlist: docs/scripts/docs-structure-allowlist.ts`
+			`Contract: docs/scripts/docs-frontmatter-contract.ts · voice + section rules: ` +
+			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs-structure-allowlist.ts`
 	)
 
 	process.exit(1)

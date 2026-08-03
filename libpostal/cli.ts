@@ -38,8 +38,21 @@ async function serve(): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	// The neural BIO tagger is the sole engine (v7 rules-parser excision). Loaded eagerly so a
-	// missing-weights boot fails fast at startup rather than on the first request.
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	// missing-weights boot fails fast at startup rather than on the first request. #1009-style friendly
+	// failure: unlike `@mailwoman/photon`/`@mailwoman/nominatim`, this package does NOT declare
+	// `@mailwoman/neural-weights-en-us` as a dependency (see the package.json comment) — a bare
+	// `npx @mailwoman/libpostal serve` resolves it only when it happens to already be installed
+	// alongside. `resolveWeights` (`neural/weights.ts`) already names the exact fix command; this guard
+	// only keeps that message from being buried under an unhandled-rejection stack trace.
+	let classifier: NeuralAddressClassifier
+
+	try {
+		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	} catch (error) {
+		console.error(`✗ ${error instanceof Error ? error.message : String(error)}`)
+
+		process.exit(1)
+	}
 
 	const engine: LibpostalEngine = {
 		async parse(query) {
@@ -106,7 +119,7 @@ const command = parseArgs({ strict: false, allowPositionals: true }).positionals
 
 switch (command) {
 	case "serve":
-		void serve()
+		await serve()
 		break
 	case "openapi":
 		openapi()

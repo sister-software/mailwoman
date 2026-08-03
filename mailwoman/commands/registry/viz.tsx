@@ -46,7 +46,7 @@ const OptionsSchema = zod.object({
 	outSVG: zod
 		.string()
 		.optional()
-		.describe("yardstick-figure: output SVG path (default docs/articles/evals/charts/dedup-yardstick.svg)"),
+		.describe("yardstick-figure: output SVG path (default docs/records/evals/charts/dedup-yardstick.svg)"),
 })
 
 export { ArgsSchema as args, OptionsSchema as options }

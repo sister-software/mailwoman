@@ -70,7 +70,7 @@ kind-classifier → phrase-grouper → classifier (neural/rule-based) → ...
 - [`@mailwoman/core`](../core) — pipeline coordinator that consumes phrase groups
 - [`@mailwoman/kind-classifier`](../kind-classifier) — preceding stage
 - [The Knowledge Ladder](https://mailwoman.sister.software/articles/concepts/the-knowledge-ladder/) — design rationale
-- [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/)
+- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License
 

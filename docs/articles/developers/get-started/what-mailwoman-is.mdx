@@ -1,0 +1,79 @@
+---
+title: What Mailwoman is
+description: An address parser and geocoder that runs inside your own process, from a model file on your own disk.
+role: explanation
+---
+
+# What Mailwoman is
+
+## The question
+
+You have addresses. They came from a signup form, a CRM export, a spreadsheet a field crew filled in
+on a phone. You need them split into fields, and you need coordinates. Every tool that does this
+seems to want an account before it will answer. So what is Mailwoman, and where does it run?
+
+## The analog
+
+A sorting clerk reading an envelope does two jobs, in that order. First they read it: this group of
+characters is the house number, that one is the town, the one at the end is the postcode. Then they
+look it up — they take the town they read and work out where it is.
+
+Mailwoman keeps those two jobs apart. `npm install mailwoman` gives you the reading job: a function
+that takes `apt 4b 350 5th ave new york ny 10118` and returns a tree of tagged components, each with
+a confidence score. The looking-up job is a second pass that walks that tree and attaches
+coordinates from a gazetteer — a database of places and where they are.
+
+The reading pass runs a sequence labeler: a small model that assigns one tag to each piece of the
+input, the way a spam filter assigns one label to a message. That is the whole of the model
+vocabulary this page needs.
+
+## Where it runs
+
+Inside your process. The English model is a 39.4 MB file that arrives as an npm package,
+`@mailwoman/neural-weights-en-us`, and loading it is a file read. Node 24.18.0 or later. A browser
+build runs the same stages through `@mailwoman/neural-web`.
+
+Three consequences follow from that, and they are the reason the design is shaped this way:
+
+- **Nothing to be down.** Parsing has no upstream. If your process is running, the parser is
+  running, and a network outage between you and us cannot affect a parse, because there is no
+  network between you and us.
+- **No meter.** You are not billed per address. Re-parsing the same string a thousand times because
+  a user kept editing a form field costs you a thousand function calls and nothing else.
+- **The addresses stay where they are.** A parse call opens no network socket. Customer addresses
+  never reach our infrastructure, which is a conversation you then do not have to have with your
+  compliance team. The detail, including the one opt-in code path that does make a request, is on
+  [Security and compliance](../../about/security-and-compliance.mdx).
+
+## What it is not
+
+**It is not a hosted service you sign up for.** There is no API key, no dashboard, no quota. If you
+want an HTTP endpoint, you run one: `@mailwoman/api` and the Nominatim-, Photon- and
+libpostal-compatible drop-ins are servers you deploy on your own hardware, pointed at your own data.
+
+**It is not a substitute for a postal authority's address file.** Royal Mail's PAF, Ordnance
+Survey's AddressBase and the USPS address products answer a question Mailwoman does not: does this
+delivery point exist, and will mail arrive there? Those are licensed authoritative registers of real
+letterboxes. Mailwoman reads the string you hand it and matches what it can against open data. It
+will tell you that a string looks like `350 5th Ave, New York, NY 10118` and where that is. It will
+not tell you that somebody lives there.
+
+## What it costs
+
+You carry the data. The model file sits on your disk, and geocoding wants a gazetteer database that
+you download once and keep. That is the trade for having no server: the bytes are your problem
+rather than ours.
+
+Coverage is whatever open data covers, and it is uneven by country.
+[What ships today](../status.mdx) gives the per-locale picture, including the locales where the
+claim is thin.
+
+And the two jobs arrive separately. Parsing works the moment `npm install` finishes. Geocoding does
+not, until the gazetteer is on disk.
+
+## Related
+
+- [Install and first parse](./install-and-first-parse.mdx) — the reading job, in about ten lines.
+- [Your first ten minutes](./ten-minute-trial.mdx) — the looking-up job, once the gazetteer is on
+  disk.
+- [What ships today](../status.mdx) — versions, footprints, locales, and the gaps.

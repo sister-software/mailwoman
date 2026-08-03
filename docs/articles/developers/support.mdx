@@ -1,0 +1,50 @@
+---
+title: Support
+description: Where to file a bug, how to report a vulnerability, and how to build a reproduction we can act on.
+role: landing
+audience: developers
+---
+
+# Support
+
+Mailwoman is maintained in the open by a small team. Everything below routes to a real person; none
+of it routes to a queue.
+
+## I found a bug
+
+File it at
+[github.com/sister-software/mailwoman/issues](https://github.com/sister-software/mailwoman/issues).
+There is no form to fill in, so five things make the difference between an issue that gets fixed and
+one that gets a follow-up question:
+
+- The exact input string, as typed. Copy it, do not retype it — whitespace and punctuation are the
+  bug about half the time.
+- What you expected, and what you got.
+- The output of `npx mailwoman doctor`. It names your versions, your Node build, and which data
+  layers you have, which is most of the reproduction.
+- Whether the resolver was wired. A missing coordinate on a parse-only pipeline is the documented
+  behaviour, not a bug.
+- The locale, if it is not `en-US`.
+
+A wrong parse is worth filing. Send the address that broke rather than a description of the class of
+address that broke: a concrete string can go straight into a test case, and a description cannot.
+
+If an AI coding assistant is filing the issue on your behalf, run `npx mailwoman skill install` first
+— it teaches the assistant this diagnostic flow directly, so the report arrives with the right
+evidence already attached.
+
+## I found a security issue
+
+Do not open a public issue. Email **teffen@sister.software** with the impact, the reproduction, and
+the version you found it on. The full policy, including what is in and out of scope, is in
+[`SECURITY.md`](https://github.com/sister-software/mailwoman/blob/main/SECURITY.md).
+
+## I want to show you rather than describe it
+
+The [demo](/demo) runs the same parser and the same resolver in your browser tab, against the
+published model. It reads the address out of the URL, so `/demo?q=350+5th+Ave,+New+York` loads with
+your input already in the box. Put that link in the issue and we see exactly what you saw, with no
+install on either side.
+
+If your input is something you cannot paste into a public page, say so in the issue and we will find
+another way to look at it.

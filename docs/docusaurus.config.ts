@@ -133,16 +133,6 @@ const config: Config = {
 					tags: "../tags.yml",
 					onInlineTags: "throw",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
-					// Internal-only content — kept in the repo for the record but NOT rendered on the public
-					// site (globs are relative to `path: "articles"`). `reviews/` is AI-consult transcripts +
-					// the public-readiness review; the `*postmortem*` / session-report files are candid
-					// night-shift narratives with spend + autonomous-operation notes — neither is for a public
-					// audience. The technical eval reports stay published (concept pages cite them as
-					// evidence). Where a kept page linked to one of these, the link was reduced to plain text
-					// (onBrokenLinks is "throw"). To re-publish a doc, remove its pattern here.
-					// The `**` matches the topic subdirs (evals/{night-shifts,retrospectives}/…) the reports
-					// were foldered into — a postmortem stays unpublished wherever it lands in the tree.
-					exclude: ["reviews/**", "evals/**/*postmortem*", "evals/**/*night-shift-session-report*"],
 					remarkPlugins: [
 						[
 							glossaryRemarkPlugin,
@@ -239,23 +229,29 @@ const config: Config = {
 				// /img for use on lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
+			// The doors, in reading order. `docSidebar` items point at sidebar ids declared in
+			// sidebars.ts — the Product / Solutions / Resources doors land with their own tasks
+			// and are deliberately absent rather than stubbed, because a navbar entry pointing at
+			// an empty sidebar is a dead link with a label on it.
 			items: [
 				{
-					to: "/demo",
-					label: "Demo",
-					position: "left",
-				},
-				{
-					to: "/training",
-					label: "Training",
-					position: "left",
-				},
-				{
-					// Lands on the "Start here" section; the docs sub-header switches sections from there.
 					type: "docSidebar",
-					sidebarId: "startHere",
+					sidebarId: "developers",
 					position: "left",
 					label: "Docs",
+				},
+				{
+					type: "docSidebar",
+					sidebarId: "about",
+					position: "left",
+					label: "About",
+				},
+				{
+					// Direct doc link rather than a sidebar: pricing lives in the `about` sidebar for
+					// nav-tree membership, but a reader looking for the price wants one click.
+					to: "/docs/pricing",
+					label: "Pricing",
+					position: "left",
 				},
 				{
 					to: "/research",
@@ -263,19 +259,11 @@ const config: Config = {
 					position: "left",
 				},
 				{
-					to: "/glossary",
-					label: "Glossary",
-					position: "left",
-				},
-				{
-					to: "/docs/licensing/pricing/",
-					label: "Pricing",
-					position: "left",
-				},
-				{
-					to: "/docs/licensing/",
-					label: "Licensing",
-					position: "left",
+					// The call to action, styled as a button rather than a nav label.
+					to: "/demo",
+					label: "Try the demo",
+					position: "right",
+					className: "navbar__cta",
 				},
 				{
 					href: "https://github.com/sister-software/mailwoman",
@@ -292,20 +280,16 @@ const config: Config = {
 					items: [
 						{ label: "Demo", to: "/demo" },
 						{ label: "Field notes", to: "/research" },
-					],
-				},
-				{
-					title: "Docs",
-					items: [
-						{ label: "Roadmap", to: "/docs/plan/SCOPE" },
-						{ label: "Eval reports", to: "/docs/evals/" },
-						{ label: "Retrospectives", to: "/docs/retrospectives" },
+						// /training is a published page with no other route into it since the navbar
+						// was cut back to the doors. This is the smallest fix for that, not a
+						// considered placement — revisit when the Resources door lands.
+						{ label: "Training", to: "/training" },
 					],
 				},
 				{
 					title: "More",
 					items: [
-						{ label: "Pricing", to: "/docs/licensing/pricing/" },
+						{ label: "Pricing", to: "/docs/pricing" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
 					],

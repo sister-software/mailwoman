@@ -171,7 +171,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	const body = await res.text()
 	expect(body).toContain("@mailwoman/nominatim")
 	expect(body).toContain("/search?q=") // a clickable example query
-	expect(body).toContain("switching-from-nominatim") // docs pointer
+	expect(body).toContain("what-mailwoman-is") // docs pointer
 })
 
 // Pinning tests — the four nominatim wrinkles (wire contract) + the parsing/error-envelope guarantees.

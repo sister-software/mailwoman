@@ -1,0 +1,272 @@
+---
+title: Your first ten minutes
+description: What works the moment npm finishes, the one download geocoding needs, and your first geocode once it lands.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Your first ten minutes
+
+Mailwoman arrives in two halves, and they become available at different times. Parsing works as soon
+as `npm install` finishes, because the model travels with the package. Geocoding does not, because
+the reference data it resolves against is far too large to ship on npm. By the end of this page
+you'll have run both checks, pulled that reference data, and geocoded a US address and a French one.
+About ten minutes, not counting the one-time gazetteer download.
+
+## Prerequisites
+
+- Node.js 24.18.0 or later, and roughly 750 MB of free disk for the install. The full
+  reasoning is in [Install and first parse](./install-and-first-parse.mdx#prerequisites).
+- About 1.65 GB more disk and a few minutes on your connection once you reach
+  [Geocode it](#5-geocode-it) below — the gazetteer database, pulled once and kept for every geocode
+  after.
+- `mailwoman data pull`, the command that gazetteer step runs, ships in `8.7.0`. Check
+  `npm view mailwoman version` first: if it still prints `8.6.0` for you, steps 1 through 4 already
+  work, and step 5 is the one still on its way to npm.
+
+## 1. Install
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+```
+
+## 2. Ask it what it has
+
+`doctor` is the diagnostic to run before you debug anything else. It checks seven things and, for each
+gap, prints the one command that closes it. Point it at a data root — the rest of this page reuses
+the same one.
+
+```bash
+export MAILWOMAN_DATA_ROOT=/tmp/mw-trial/mailwoman-data
+npx mailwoman doctor
+```
+
+On a fresh install with no address data on disk, that reads:
+
+```
+mailwoman doctor
+
+✓ Model weights (en-us): package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB
+✓ Node runtime: node v26.2.0 (engines: >=24.18.0)
+✓ ONNX runtime: onnxruntime-node loadable
+✗ Data root: /tmp/mw-trial/mailwoman-data ($MAILWOMAN_DATA_ROOT) does not exist (optional)
+    fix: mkdir -p /tmp/mw-trial/mailwoman-data   (or set $MAILWOMAN_DATA_ROOT to an existing dir)
+✗ Admin gazetteer: no candidate.db or WOF shard found (probed 5 paths) (optional)
+    fix: mailwoman data pull candidate   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)
+✗ POI layer: /tmp/mw-trial/mailwoman-data/poi/poi.db not found (optional)
+    fix: mailwoman gazetteer build poi   (or: mailwoman data pull poi)
+✗ Locale overlay (fr-fr): @mailwoman/neural-weights-fr-fr not installed (optional — only needed for fr-fr parsing) (optional)
+    fix: npm install @mailwoman/neural-weights-fr-fr
+
+PASS — core checks ok (weights + runtime); parse is ready
+```
+
+Four red crosses and it still exits `0`. That is the contract, not a bug: the exit code tracks the
+two core checks, weights and runtime. Everything marked `(optional)` is a data layer that parsing
+does not need, so a gap there is reported and costed rather than treated as a failure. The paths in
+your own output will name `$MAILWOMAN_DATA_ROOT`, which is wherever you point it.
+
+## 3. Parse something
+
+The green half is ready now. Follow
+[Install and first parse](./install-and-first-parse.mdx) for a ten-line script that turns
+`apt 4b 350 5th ave new york ny 10118` into a labeled tree, or check it from the shell:
+
+```bash
+npx mailwoman parse "350 5th Ave, New York, NY 10118"
+```
+
+```
+{
+  "region": "NY",
+  "locality": "New York",
+  "street": "5th",
+  "house_number": "350",
+  "street_suffix": "Ave",
+  "postcode": "10118"
+}
+```
+
+No coordinates in that output. Components, and no coordinates, is exactly the shape of a parser that
+has its model and not its gazetteer.
+
+## 4. Know which half you have
+
+**Parsing works out of the box.** Free text in, tagged components out — house number, street, unit,
+locality, region, postcode, and the rest. The model file travels inside
+`@mailwoman/neural-weights-en-us`, so there is nothing further to fetch and nothing to configure.
+French is one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
+
+**Geocoding needs the resolver database.** Turning `New York` into a
+latitude/longitude means looking it up, and the gazetteer that answers is a file you download once
+and keep. At the `2026-07-07a` build the admin gazetteer, `candidate.db`, is 1.65 GB. Your `doctor`
+output prints the exact command and the environment variable to set once it lands — those two lines
+are the whole procedure, and they are generated from the build the CLI you installed knows about, so
+prefer them over any command copied from a page. Run them next.
+
+Point-of-interest search ("coffee near Honolulu") is a third layer with its own database, also
+optional, also reported by `doctor`.
+
+## 5. Geocode it
+
+Run the fix line `doctor` printed above, in the same shell so `$MAILWOMAN_DATA_ROOT` is still set:
+
+```bash
+npx mailwoman data pull candidate
+```
+
+```
+▸ pull https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db (~1652.9 MB) → /tmp/mw-trial/mailwoman-data/wof/candidate.db
+[DEBUG] (mailwoman data): HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+[DEBUG] (mailwoman data): 200 (uncached) HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+
+export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
+✓ candidate: gazetteer/2026-07-07a/candidate.db: content-length verified (1652.9 MB) → /tmp/mw-trial/mailwoman-data/wof/candidate.db
+PASS (1/1 checks)
+```
+
+Took about four minutes on this connection. The two `[DEBUG]` lines are the download client checking
+the remote file's size before it starts; harmless. Export the line the command printed, then geocode
+a US address:
+
+```bash
+export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
+npx mailwoman geocode "350 5th Ave, New York, NY 10118"
+```
+
+```
+{
+  "input": "350 5th Ave, New York, NY 10118",
+  "lat": 40.694457,
+  "lon": -73.93045,
+  "resolution_tier": "admin",
+  "uncertainty_m": null,
+  "locality": "New York",
+  "region": "NY",
+  "postcode": "10118",
+  "house_number": "350",
+  "street": "5th Ave",
+  "venue": null,
+  "dependent_locality": null,
+  "countryCode": "US",
+  "hierarchy": [
+    {
+      "tag": "locality",
+      "value": "New York",
+      "name": "New York",
+      "lat": 40.694457,
+      "lon": -73.93045,
+      "placeID": "wof:85977539"
+    },
+    {
+      "tag": "region",
+      "value": "NY",
+      "name": "New York",
+      "lat": 42.921227,
+      "lon": -75.596537,
+      "placeID": "wof:85688543"
+    }
+  ],
+  "candidates": [
+    {
+      "name": "New York",
+      "tag": "locality",
+      "lat": 40.694457,
+      "lon": -73.93045,
+      "countryCode": "US",
+      "placeID": "wof:85977539"
+    }
+  ]
+}
+```
+
+`resolution_tier: "admin"` is what `candidate.db` alone can answer: it carries locality and region
+centroids, so the coordinate is New York's, not this specific rooftop. Street-level precision
+(`resolution_tier: "address_point"` or `"interpolated"`) is a further, per-country download —
+`mailwoman data pull us` or `mailwoman data pull fr` — outside what this page covers.
+
+Now a French address, no other change:
+
+```bash
+npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
+```
+
+```
+{
+  "input": "12 Rue de Rivoli, 75001 Paris",
+  "lat": 48.856599,
+  "lon": 2.342841,
+  "resolution_tier": "admin",
+  "uncertainty_m": null,
+  "locality": "Paris",
+  "region": null,
+  "postcode": "75001",
+  "house_number": "12",
+  "street": "Rue de Rivoli",
+  "venue": null,
+  "dependent_locality": null,
+  "countryCode": "FR",
+  "hierarchy": [
+    {
+      "tag": "locality",
+      "value": "Paris",
+      "name": "Paris",
+      "lat": 48.856599,
+      "lon": 2.342841,
+      "placeID": "wof:1159322569"
+    }
+  ],
+  "candidates": [
+    {
+      "name": "Paris",
+      "tag": "locality",
+      "lat": 48.856599,
+      "lon": 2.342841,
+      "countryCode": "FR",
+      "placeID": "wof:1159322569"
+    },
+    {
+      "name": "Les Paris",
+      "tag": "locality",
+      "lat": 45.63972,
+      "lon": 5.73742,
+      "countryCode": "FR",
+      "placeID": "wof:1327276209"
+    }
+  ]
+}
+```
+
+Right country, right city. That is not automatic, and it is why this page has you set
+`$MAILWOMAN_CANDIDATE_DB` instead of leaving `geocode` on its own default. Pointed at a full admin
+database instead (a separate, locally-built file `data pull` does not publish — see
+[`resolver-backend.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/resolver-backend.ts)),
+the same input resolves to Paris, Texas:
+
+```
+{
+  "lat": 33.668553,
+  "lon": -95.54435,
+  "countryCode": "US",
+  "placeID": "wof:101725293"
+}
+```
+
+Measured 2026-08-03, against this gazetteer's own population column: Paris, Texas carries 24,969;
+Paris, France carries 2,187,526 — about 88 times larger. The default admin backend ranks matches by
+full-text-search relevance, which does not read that column, so a same-named place wins or loses on
+relevance scoring alone. The candidate backend you pulled above ranks population-first instead, the
+same ranking the hosted demo uses, which is why it is the setup this page has you build.
+
+## What you have now
+
+A parser and a geocoder, both running against your own disk. `mailwoman parse` (or
+`createRuntimePipeline`) gives you tagged components; `mailwoman geocode` gives you a coordinate, once
+`candidate.db` is on disk and `$MAILWOMAN_CANDIDATE_DB` points at it. You also have the command that
+will answer the "which half do I have" question again after any change to your install.
+
+## Next
+
+- [What ships today](../status.mdx) — versions, footprints, the locale tiers, and what is not
+  supported.
+- [What Mailwoman is](./what-mailwoman-is.mdx) — why the two halves are separate in the first place.
