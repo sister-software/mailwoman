@@ -38,23 +38,16 @@ On a fresh install with no address data on disk, that reads:
 ```
 mailwoman doctor
 
-✓ Model weights (en-us): package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB,
-tokenizer.model 1.6 MB
+✓ Model weights (en-us): package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB
 ✓ Node runtime: node v26.2.0 (engines: >=24.18.0)
 ✓ ONNX runtime: onnxruntime-node loadable
 ✗ Data root: /tmp/mw-trial/mailwoman-data ($MAILWOMAN_DATA_ROOT) does not exist (optional)
-    fix: mkdir -p /tmp/mw-trial/mailwoman-data   (or set $MAILWOMAN_DATA_ROOT to an existing
-dir)
+    fix: mkdir -p /tmp/mw-trial/mailwoman-data   (or set $MAILWOMAN_DATA_ROOT to an existing dir)
 ✗ Admin gazetteer: no candidate.db or WOF shard found (probed 5 paths) (optional)
-    fix: curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
--o <data-root>/wof/candidate.db   (then: export
-MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)
+    fix: mailwoman data pull candidate   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)
 ✗ POI layer: /tmp/mw-trial/mailwoman-data/poi/poi.db not found (optional)
-    fix: mailwoman gazetteer build poi   (or: curl -fSL
-https://public.sister.software/mailwoman/poi/2026-07-20a/poi.db -o
-/tmp/mw-trial/mailwoman-data/poi/poi.db)
-✗ Locale overlay (fr-fr): @mailwoman/neural-weights-fr-fr not installed (optional — only needed
-for fr-fr parsing) (optional)
+    fix: mailwoman gazetteer build poi   (or: mailwoman data pull poi)
+✗ Locale overlay (fr-fr): @mailwoman/neural-weights-fr-fr not installed (optional — only needed for fr-fr parsing) (optional)
     fix: npm install @mailwoman/neural-weights-fr-fr
 
 PASS — core checks ok (weights + runtime); parse is ready
@@ -99,9 +92,9 @@ French is one more package (`@mailwoman/neural-weights-fr-fr`) and no other chan
 **Geocoding needs the resolver database.** Turning `New York` into a
 latitude/longitude means looking it up, and the gazetteer that answers is a file you download once
 and keep. At the `2026-07-07a` build the admin gazetteer, `candidate.db`, is 1.65 GB. Your `doctor`
-output prints the exact URL and the environment variable to set once it lands — those two lines are
-the whole procedure, and they are generated from the build the CLI you installed knows about, so
-prefer them over any URL copied from a page.
+output prints the exact command and the environment variable to set once it lands — those two lines
+are the whole procedure, and they are generated from the build the CLI you installed knows about, so
+prefer them over any command copied from a page.
 
 Point-of-interest search ("coffee near Honolulu") is a third layer with its own database, also
 optional, also reported by `doctor`.
