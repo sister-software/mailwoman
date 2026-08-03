@@ -50,14 +50,14 @@ browser change. The tokenizer is unchanged, `v0.9.0-multisplice` (73,143 pieces)
 **French** no-anchor comma-free case (`Rue du Chevaleret Paris` — a bare terminal locality with no
 trailing state or postcode to anchor it) stays a tracked #1101 xfail; a locality name-index
 ([#30](https://github.com/sister-software/mailwoman/issues/30)) closes it. See the
-[v6.5.0 punct+digit grade](./evals/2026-07-17-v650-punct-digit-result.md) for the full write-up.
+[v6.5.0 punct+digit grade](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/2026-07-17-v650-punct-digit-result.md) for the full write-up.
 
 **The per-tag tables below are frozen at the 2026-07-02 full re-score of the earlier 5.0.0/v4.15.0
 line** (the #885 measurement re-anchor). Several model releases have shipped since without a fresh
 full re-score (5.1.0 → 5.4.0 → 5.9.0 → 6.1.0 → 6.2.0 → 6.3.0 → 6.4.0 → 6.5.0); their measured deltas are narrated
 release-by-release — not folded into a new scorecard — on
 [Releases & capabilities](./releases.mdx), which is the current per-release source of truth. Treat
-the [parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md) below as a
+the [parity scorecard](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/parity-scorecard-2026-07-02.md) below as a
 historical baseline, not the shipped model's live per-tag truth.
 :::
 
@@ -92,7 +92,7 @@ All publishable workspaces release in lockstep; the current npm version is **6.5
 ### Per-tag health (summary)
 
 The full per-tag table — two lenses, golden-dev and real-OOD — lives in the
-[parity scorecard](./evals/competitive-parity/parity-scorecard-2026-07-02.md). It is frozen at the
+[parity scorecard](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/parity-scorecard-2026-07-02.md). It is frozen at the
 2026-07-02 re-score of the 5.0.0/v4.15.0 line, several model generations behind the shipped v264 line
 above — read it as a historical baseline, not this model's live numbers. The sortable summary:
 
@@ -117,7 +117,7 @@ The trend, in words:
   0 → 89.1, cedex 0 → 96.1, intersections 0 → 100 (real-OOD, P ≥ 95) — and the v4.3.0 arena
   debt (perturb 64 → 72, now a gated floor). The span bridge ships as required decode config:
   dotted surfaces ("P.O. Box") are structurally unlabelable in the corpus format; the bridge is
-  the containment ([ship gate](./evals/model-versions/2026-06-11-v4.4.0-ship-gate.md) tells the three-battery story).
+  the containment ([ship gate](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-06-11-v4.4.0-ship-gate.md) tells the three-battery story).
 - **Closed by the relabel (v4.3.0):** the affix ceiling was never capacity — it was a 1,039:1
   label contradiction in the training mix ([#492](https://github.com/sister-software/mailwoman/issues/492) →
   [#511](https://github.com/sister-software/mailwoman/issues/511)). Affixes now 93.6/96.6 (int8,

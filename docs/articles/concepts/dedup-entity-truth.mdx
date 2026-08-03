@@ -64,7 +64,7 @@ multi-address NPIs) then _contracts_ below the NPI count (org-name fuses the
 co-located subparts, the coordinate fusing a few more) — the shape of
 over-segmentation being corrected.
 
-![The dedup F1 climbs as the entity-truth gets more precise: a slope chart of entity-resolution F1 across four rulers (NPI, site, org-name, org-name-coord) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% → 68.1% across the same clusters.](../evals/charts/dedup-yardstick.svg)
+![The dedup F1 climbs as the entity-truth gets more precise: a slope chart of entity-resolution F1 across four rulers (NPI, site, org-name, org-name-coord) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% → 68.1% across the same clusters.](https://raw.githubusercontent.com/sister-software/mailwoman/main/docs/records/evals/charts/dedup-yardstick.svg)
 
 Grade the shipped GBT scorer's clusters against each ruler and the F1 climbs
 **53.6% (NPI) → 55.3% (site) → 60.7% (org-name) → 68.1% (coordinate)** — a
@@ -80,7 +80,7 @@ A ruler you invent to make your number go up is worthless unless it's _right_. S
 the org-name collapse was validated against a frozen gold set: the hardest
 slice — co-located, name-similar, **distinct** NPIs that are **not** flagged
 subparts — adjudicated one pair at a time. The verdict was unanimous:
-[**120 of 120**](../evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md) were the same
+[**120 of 120**](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md) were the same
 real-world organization; **zero** were two unrelated companies wrongly fused.
 Every hard pair the matcher merges at a shared address is a correct merge that
 NPI-truth was scoring as an error.
@@ -103,7 +103,7 @@ truth-grain is unreadable.
 This is the same move the rest of the system makes: [grade the pipeline against
 the right target, not a convenient proxy](./eval-discipline.mdx). The remaining
 org-name over-merge (76 clusters at the coordinate grain) is the frontier — small, and approaching
-the [irreducible ceiling](../evals/matcher-dedup/2026-06-16-dedup-ceiling.md) of co-located
+the [irreducible ceiling](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-ceiling.md) of co-located
 distinct organizations that no address-based signal can separate.
 
 A closing note on framing: NPI-as-truth is _conservative_ in the direction that
@@ -112,7 +112,7 @@ matters. A cluster fusing two NPIs is a candidate "same entity, two registration
 addresses is geocode-first behaving correctly. We resolve and report the join;
 what it _means_ is the consumer's call.
 
-_Measurements: [`2026-06-16-dedup-dual-level-benchmark`](../evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md)
-(the four-grain table), [`2026-06-16-dedup-gold-set-tx120`](../evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md)
-(the adjudicated slice), [`2026-06-16-dedup-ceiling`](../evals/matcher-dedup/2026-06-16-dedup-ceiling.md)
+_Measurements: [`2026-06-16-dedup-dual-level-benchmark`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md)
+(the four-grain table), [`2026-06-16-dedup-gold-set-tx120`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md)
+(the adjudicated slice), [`2026-06-16-dedup-ceiling`](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-ceiling.md)
 (the irreducible floor). Figure generator: `scripts/record-matcher/viz/yardstick-figure.ts`._

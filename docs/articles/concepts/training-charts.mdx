@@ -28,7 +28,7 @@ and dampen large spikes; use linear to read absolute magnitudes.
 
 Both runs spike into the 0.4–0.7 range periodically. Initially I read this as
 overconfidence drift on v0.6.2; the
-[v0.6.2 confidence probe](../evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) walked that
+[v0.6.2 confidence probe](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) walked that
 back — the per-token confidence distributions on the two runs are essentially
 identical (81.2% vs 81.8% of wrong predictions land at ≥0.9 confidence). The
 val_loss bouncing is per-batch sample variance, not a model-level signal.
@@ -59,18 +59,18 @@ node scripts/parse-training-log.ts \
 node scripts/training-chart.ts \
   --input /tmp/v062.json --input /tmp/v062b.json \
   --metric val_loss --title "v0.6.2 vs v0.6.2b val_loss" \
-  --output docs/articles/evals/charts/v06x-val-loss.svg
+  --output docs/records/evals/charts/v06x-val-loss.svg
 
 # 4. Generate the log-scale variant (for the toggle):
 node scripts/training-chart.ts \
   --input /tmp/v062.json --input /tmp/v062b.json \
   --metric val_loss --title "v0.6.2 vs v0.6.2b val_loss" --log \
-  --output docs/articles/evals/charts/v06x-val-loss-log.svg
+  --output docs/records/evals/charts/v06x-val-loss-log.svg
 
 # Or transform an existing linear SVG:
 node scripts/log-scale-chart.ts \
-  --input docs/articles/evals/charts/v06x-val-loss.svg \
-  --output docs/articles/evals/charts/v06x-val-loss-log.svg
+  --input docs/records/evals/charts/v06x-val-loss.svg \
+  --output docs/records/evals/charts/v06x-val-loss-log.svg
 ```
 
 The parser auto-detects CSV vs modal-log format. The chart generator accepts
@@ -112,7 +112,7 @@ train-loss points.
 - `scripts/log-scale-chart.ts` — transforms existing linear SVG → log10
 - `scripts/parse-training-log.ts` — log → JSON converter
 - `docs/src/components/TrainingChart.tsx` — the Linear/Log toggle component
-- [v0.6.2 step 100K eval](../evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) — embeds
+- [v0.6.2 step 100K eval](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-05-29-v0.6.2-100k-eval.mdx) — embeds
   these charts in context
 - [How the model reasons](./how-the-model-reasons.mdx) — the architecture
   context for what these metrics measure

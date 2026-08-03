@@ -154,7 +154,7 @@ Mailwoman tried this. A trainable CRF shipped in v3.0.0, and Stage 3's
 33×33 transition matrix (masked `-∞` entries) was re-attempted more
 than once — including a run that hit NaN gradients traced to bf16
 precision on the masked `logsumexp`, described in the
-[fp32-CRF diagnostic](../evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx).
+[fp32-CRF diagnostic](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/model-versions/2026-05-28-fp32-crf-diagnostic.mdx).
 Every attempt after v0.4.0's loss-scale fix still diverged, three times
 over. The recipe first went CE-only (`crf_loss_weight: 0.0`) at v0.5.0,
 and apart from those labeled diagnostic reactivations (the v0.6.2 fp32

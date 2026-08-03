@@ -15,13 +15,13 @@
  *
  *   A slope chart over four rulers (NPI → site → org-name → org-name-coord) for the shipped GBT
  *   scorer and the FS baseline. Numbers are the committed measurement in
- *   `docs/articles/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
+ *   `docs/records/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
  *
  *   Emits a self-contained SVG (the docs' committed-chart-asset convention — see
- *   `docs/articles/evals/charts/*.svg`), no browser required.
+ *   `docs/records/evals/charts/*.svg`), no browser required.
  *
  *   Run: `mailwoman registry viz yardstick-figure
- *   [--out-svg docs/articles/evals/charts/dedup-yardstick.svg]`
+ *   [--out-svg docs/records/evals/charts/dedup-yardstick.svg]`
  */
 
 import { writeFileSync } from "node:fs"
@@ -31,7 +31,7 @@ import { writeFileSync } from "node:fs"
  */
 export interface YardstickFigureOptions {
 	/**
-	 * Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd).
+	 * Output SVG path. Default `docs/records/evals/charts/dedup-yardstick.svg` (relative to cwd).
 	 */
 	outSVG?: string
 }
@@ -102,7 +102,7 @@ export function yardstickFigure(
 	options: YardstickFigureOptions = {},
 	report?: (line: string) => void
 ): { outSVG: string } {
-	const OUT = options.outSVG || "docs/articles/evals/charts/dedup-yardstick.svg"
+	const OUT = options.outSVG || "docs/records/evals/charts/dedup-yardstick.svg"
 
 	const parts: string[] = []
 	const push = (s: string) => parts.push(s)

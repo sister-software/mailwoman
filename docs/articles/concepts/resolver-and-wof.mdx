@@ -66,7 +66,7 @@ The candidate-search step is where the indexes pay off. Mailwoman's WOF distribu
 - A **column index on `wof:population`** for population-weighted ranking.
 - **Multi-shard support** so different subsets (postcodes, localities, countries) can live in separate database files.
 
-These were shipped through Phase 4 of the implementation plan; see [PHASE_4_resolver.md](../plan/phases/PHASE_4_resolver.mdx) and its subphase files for the details.
+These were shipped through Phase 4 of the implementation plan; see [PHASE_4_resolver.md](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_4_resolver.mdx) and its subphase files for the details.
 
 ## Slim distribution for browsers
 
@@ -101,7 +101,7 @@ Mailwoman's resolver drops any candidate whose coordinates are `(0, 0)` from res
 - **Browser resolver:** `resolver-wof-wasm/` (uses `@sqlite.org/sqlite-wasm`)
 - **Slim builder:** `corpus/scripts/build-wof-slim.ts`
 - **Demo integration:** `docs/src/pages/demo/index.tsx` (the cascade + the `FailureDiagnostic` panel)
-- **Phase plan:** [PHASE_4_resolver.md](../plan/phases/PHASE_4_resolver.mdx) + subphases
+- **Phase plan:** [PHASE_4_resolver.md](https://github.com/sister-software/mailwoman/blob/main/docs/records/plan/phases/PHASE_4_resolver.mdx) + subphases
 
 ## See also
 

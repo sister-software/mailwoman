@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Markdown renderer for the gazetteer depth scorecard — the committed artifact under
- *   `docs/articles/evals/coverage/`, following the `fill-rates.md` precedent.
+ *   `docs/records/evals/coverage/`, following the `fill-rates.md` precedent.
  *
  *   The report declares its own limits inline rather than deferring them to a design doc. These
  *   numbers will outlive the conversation that produced them, and a reader six months out must be
