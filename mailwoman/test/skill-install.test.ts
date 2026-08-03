@@ -17,7 +17,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { withCLISpawnLock } from "../test-kit/cli-spawn-lock.ts"
 
@@ -29,6 +29,21 @@ const hasCLICompiled = existsSync(CLI_PATH)
  * boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
+
+/**
+ * Per-test budget. Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ */
+const CLI_TEST_TIMEOUT_MS = 120_000
+
+/**
+ * Vitest's per-test budget for this whole file.
+ *
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
+ * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
+ * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
+ * report, surfacing as a bare timeout with no attribution.
+ */
+vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 	const tempDirs: string[] = []

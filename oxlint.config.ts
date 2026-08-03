@@ -117,7 +117,15 @@ const NODE_TIER_NEURAL_FILES = [
  * export conditions do not apply to relative specifiers, so the package-name form is safe and the relative one silently
  * is not. Naming the relative path is what makes that difference visible at the point of the mistake.
  */
-const NODE_ONLY_NEURAL_MODULES = ["./onnx-runner.ts", "./weights.ts", "./scorer.ts", "onnxruntime-node"]
+const NODE_ONLY_NEURAL_MODULES = [
+	"./onnx-runner.ts",
+	"./weights.ts",
+	"./scorer.ts",
+	"onnxruntime-node",
+	// `$public` reaches node:util/node:fs/node:path. The `node:*` pattern below cannot catch it: the rule matches
+	// specifiers, and this module launders the builtins behind its own name.
+	"@mailwoman/core/env",
+]
 
 /**
  * Every Node builtin, by specifier prefix. A browser-reachable file importing one of these is a bundle break whatever

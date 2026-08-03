@@ -41,6 +41,22 @@ function sleepSync(ms: number): void {
 	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
 }
 
+/**
+ * Remove the lock directory, tolerating every failure.
+ *
+ * Two workers can race here — one reclaiming a stale lock while its holder releases, or two reclaiming at once — and
+ * `rmSync` throws ENOTEMPTY when the pid file is rewritten between its scan and the rmdir. A lock whose BOOKKEEPING can
+ * throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding it. A
+ * failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
+ */
+function releaseQuietly(): void {
+	try {
+		rmSync(LOCK_DIR, { recursive: true, force: true })
+	} catch {
+		// Another worker is mid-removal or mid-write; its stale check will reclaim.
+	}
+}
+
 function staleHolder(): boolean {
 	try {
 		const pid = Number.parseInt(readFileSync(PID_FILE, "utf8"), 10)
@@ -77,7 +93,7 @@ export function withCLISpawnLock<T>(fn: () => T): T {
 			break
 		} catch {
 			if (staleHolder()) {
-				rmSync(LOCK_DIR, { recursive: true, force: true })
+				releaseQuietly()
 
 				continue
 			}
@@ -90,7 +106,7 @@ export function withCLISpawnLock<T>(fn: () => T): T {
 		return fn()
 	} finally {
 		if (held) {
-			rmSync(LOCK_DIR, { recursive: true, force: true })
+			releaseQuietly()
 		}
 	}
 }
@@ -118,7 +134,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 			break
 		} catch {
 			if (staleHolder()) {
-				rmSync(LOCK_DIR, { recursive: true, force: true })
+				releaseQuietly()
 
 				continue
 			}
@@ -133,7 +149,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 		return await fn()
 	} finally {
 		if (held) {
-			rmSync(LOCK_DIR, { recursive: true, force: true })
+			releaseQuietly()
 		}
 	}
 }

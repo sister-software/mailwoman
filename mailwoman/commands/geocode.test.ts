@@ -27,7 +27,7 @@ import { join } from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import { withCLISpawnLock } from "../test-kit/cli-spawn-lock.ts"
 
@@ -52,6 +52,21 @@ const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.d
  * measured. A generous budget costs nothing on a passing test.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
+
+/**
+ * Per-test budget. Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ */
+const CLI_TEST_TIMEOUT_MS = 120_000
+
+/**
+ * Vitest's per-test budget for this whole file.
+ *
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
+ * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
+ * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
+ * report, surfacing as a bare timeout with no attribution.
+ */
+vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 const hasWOFDb = existsSync(wofPath)
 const hasCLICompiled = existsSync(CLI_PATH)

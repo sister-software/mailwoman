@@ -33,7 +33,7 @@ import { promisify } from "node:util"
 import { $public } from "@mailwoman/core/env"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 
 import { withCLISpawnLockAsync } from "../test-kit/cli-spawn-lock.ts"
 
