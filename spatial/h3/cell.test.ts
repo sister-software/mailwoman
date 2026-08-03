@@ -7,7 +7,7 @@
 import { getBaseCellNumber, latLngToCell } from "h3-js"
 import { expect, test } from "vitest"
 
-import { expandH3Cell, shortCellToInt, shortenH3Cell, type H3Cell, type H3CellShort } from "./cell.ts"
+import { expandH3Cell, isH3Cell, shortCellToInt, shortenH3Cell, type H3Cell, type H3CellShort } from "./cell.ts"
 
 // A real resolution-9 cell (White House, 38.8977, -77.0365) from h3-js itself, not a synthetic
 // hex string — this exercises the actual encoding shortCellToInt is packing.
@@ -69,4 +69,13 @@ test("expandH3Cell: rejects a resolution outside the range H3 defines", () => {
 
 test("expandH3Cell: rejects a short cell wider than the encoding holds", () => {
 	expect(() => expandH3Cell("2aa845a18a50bff" as H3CellShort, 15)).toThrow(RangeError)
+})
+
+test("isH3Cell rejects well-shaped strings that are not cells", () => {
+	// Fifteen lowercase hex characters each, so a shape check passes all four. Only the third is a
+	// real cell — the guard has to know the difference, because its return type claims it does.
+	expect(isH3Cell("000000000000000")).toBe(false)
+	expect(isH3Cell("fffffffffffffff")).toBe(false)
+	expect(isH3Cell("123456789abcdef")).toBe(false)
+	expect(isH3Cell("8f0494516235000")).toBe(true)
 })

@@ -30,8 +30,16 @@ export const H3_MAX_RESOLUTION = 15
  */
 export type H3Cell = Tagged<string, "H3Cell">
 
+/**
+ * Is `value` a real H3 cell index?
+ *
+ * Delegates to h3-js rather than testing the surface shape. The shape is necessary but nowhere near sufficient —
+ * `000000000000000`, `fffffffffffffff` and `123456789abcdef` are all fifteen lowercase hex characters and none of them
+ * is a cell. A guard that returns `value is H3Cell` on those hands the caller a branded type it has not earned, and the
+ * error surfaces later inside h3-js with no reference to where the bad value entered.
+ */
 export function isH3Cell(value: string): value is H3Cell {
-	return /^[0-9a-f]{15}$/.test(value)
+	return isValidCell(value)
 }
 
 /**
