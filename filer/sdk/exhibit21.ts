@@ -28,12 +28,39 @@
  *   hand-rolled-parser precedent), and Exhibit 21's known shapes don't need one. Table/list extraction below
  *   is a small, deliberately narrow regex-based scan — not a general HTML parser, and not trying to be one.
  *
- *   **Table strategy.** The table used is the OUTERMOST `<table>...</table>` in the document (depth-tracked,
- *   not "up to the first `</table>`") — a nested layout/formatting table inside a cell must not truncate the
- *   scan before the real subsidiary rows that follow it. A row's cells are found by slicing between
- *   successive `<td>`/`<th>` START tags rather than requiring a matching close tag: Word-exported EDGAR HTML
- *   routinely leaves `<td>` unclosed, and a browser (and this parser) treats that as implicitly closed by
- *   the next cell or the row's end, not as one cell whose text runs on into its neighbor's.
+ *   **Table strategy.** EVERY top-level `<table>...</table>` in the document is read, in document order
+ *   (depth-tracked, so a nested layout/formatting table belongs to the cell it sits in and is never a table of
+ *   its own). Reading only the outermost one was the single largest recall defect the real corpus exposed:
+ *   EDGAR splits one logical subsidiary list across sibling page-break tables constantly, and only the first
+ *   carries a header. A row's cells are found by slicing between successive `<td>`/`<th>` START tags rather
+ *   than requiring a matching close tag: Word-exported EDGAR HTML routinely leaves `<td>` unclosed, and a
+ *   browser (and this parser) treats that as implicitly closed by the next cell or the row's end, not as one
+ *   cell whose text runs on into its neighbor's.
+ *
+ *   Each table's rows are right-padded to its widest row and every column blank in EVERY row is dropped —
+ *   per table, column-wise, never per row, because a row-by-row blank filter destroys the one piece of
+ *   evidence that distinguishes a top-level subsidiary row from an indented child row (whether the row's
+ *   LEADING cell was blank). An undropped all-blank spacer column makes every data row look 3-wide, which is
+ *   the shape the extra-column rule abstains on; that alone cost five vendored filings every subsidiary they
+ *   state.
+ *
+ *   A table's own header row then MAPS its columns, when it labels exactly one of them with a jurisdiction
+ *   label: the jurisdiction column is that one, and the name column is the first other column not labelled
+ *   with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, …). This is not guessing
+ *   which of N columns means what — the document says so. The mapping CARRIES FORWARD to subsequent sibling
+ *   tables until another header row replaces it. When the mapped name column is blank on a row, the first
+ *   non-blank column strictly BETWEEN the name and jurisdiction columns is the name (an indented corporate
+ *   tree; the nesting depth is discarded, since an Exhibit 21 row is a registrant→subsidiary edge either
+ *   way); when there is no such column the row FALLS THROUGH to the generic rules rather than abstaining,
+ *   because a ragged table misaligns the mapping without making its rows unreadable.
+ *
+ *   Four abstentions run before the mapping is consulted, in this order: a row whose first non-blank value is
+ *   a bare FOOTNOTE MARKER (`(1)`, `*`) is the footnote's own text; a row holding exactly one value inside a
+ *   table that is not a plain single-column name list is a SECTION HEADING; a cell whose raw HTML keeps
+ *   several complete legal names apart at a block boundary states MORE VALUES than the row can align; and a
+ *   whole table abstains as a NAME/NAME list — two columns of entity names, no jurisdiction anywhere — when
+ *   it has 4+ two-value rows, more than half of whose second values carry a legal designation and more than
+ *   70% of which are distinct. Every one of the four is an abstention, and none of them invents a value.
  *
  *   A row made ENTIRELY of `<th>` cells is recognized as a header/label row and skipped (neither counted as
  *   a subsidiary nor as `unparseable`) — this is unambiguous given well-formed markup. A row is also
@@ -46,10 +73,11 @@
  *   that — it's an exact whole-cell match against known non-entity boilerplate text, which a real legal
  *   entity name does not collide with.
  *
- *   A data row with exactly 1 or 2 non-empty cells is confident (`{name}` or `{name, jurisdiction}`); a row
- *   with 0 cells is silently ignored as formatting cruft (an empty `<tr></tr>`); a row with a BLANK name
- *   cell, or 3+ cells (an extra column this parser has no confident meaning for — an ownership percentage,
- *   an EIN), is `unparseable` — decision 6's "when in doubt, abstain and count it", applied literally.
+ *   A data row with exactly 1 or 2 non-blank values is confident (`{name}` or `{name, jurisdiction}`); a row
+ *   with 0 cells is silently ignored as formatting cruft (an empty `<tr></tr>`); a row with a BLANK leading
+ *   cell, or 3+ non-blank values (an extra column this parser has no confident meaning for — an ownership
+ *   percentage, an EIN — that no header row explained), is `unparseable` — decision 6's "when in doubt,
+ *   abstain and count it", applied literally.
  *
  *   **List/plain-text strategies abstain on the JURISDICTION only, never on the name — except where the
  *   whole line is itself unparseable.** A candidate line that doesn't match a recognized name/jurisdiction
@@ -227,44 +255,59 @@ function cleanCellText(rawHTML: string): string {
 interface TableCell {
 	tag: "td" | "th"
 	text: string
+	/**
+	 * The cell's RAW inner HTML, kept alongside the cleaned {@linkcode TableCell.text} because
+	 * {@linkcode isMultiValueCell} needs the block structure `text` has already thrown away — a `<td>` holding five `<p>`
+	 * blocks cleans to one run-on string indistinguishable from a genuinely long name.
+	 */
+	rawHTML: string
 }
+
+const BLANK_CELL: TableCell = { tag: "td", text: "", rawHTML: "" }
 
 const ROW_PATTERN = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
 const CELL_START_PATTERN = /<t([dh])[^>]*>/gi
 const TABLE_TAG_PATTERN = /<table[^>]*>|<\/table>/gi
 
 /**
- * Finds the OUTERMOST `<table>...</table>` block in `html` (depth-tracked across nested `<table>`s), or `null` when
- * there is no `<table` at all. Scanning "up to the FIRST `</table>`" (the previous approach) truncates at a nested
- * layout/formatting table's close and never sees the real subsidiary rows that follow it in the outer table — see the
- * module docstring's table-strategy paragraph. An outer `<table>` missing its final `</table>` (truncated/malformed
- * markup) still yields everything after the opening tag, rather than `null`.
+ * Finds EVERY top-level (depth-0) `<table>...</table>` block in `html`, in document order — depth-tracked, so a nested
+ * layout/formatting table belongs to the cell it sits in and is never returned as a table of its own. A final top-level
+ * `<table>` missing its `</table>` (truncated/malformed markup) still yields everything after its opening tag.
+ *
+ * Reading only the outermost table (the previous approach) is the single largest recall defect the real corpus exposed:
+ * EDGAR splits one logical subsidiary list across sibling page-break tables constantly — `att-2025.htm` uses 2,
+ * `echostar-2025.htm` 5, `atn-international-2025.htm` 7, and the unvendored Comcast filing 33 — and only the first
+ * carries a header row.
  */
-function extractOutermostTableHTML(html: string): string | null {
-	const firstOpen = /<table[^>]*>/i.exec(html)
-
-	if (!firstOpen) return null
+function extractTopLevelTableHTML(html: string): string[] {
+	const tables: string[] = []
 
 	let depth = 0
 	let contentStart = -1
 
 	for (const match of html.matchAll(TABLE_TAG_PATTERN)) {
-		if (match.index < firstOpen.index) continue
-
 		if (match[0]!.toLowerCase().startsWith("<table")) {
 			if (depth === 0) {
 				contentStart = match.index + match[0].length
 			}
 
 			depth++
-		} else {
+		} else if (depth > 0) {
 			depth--
 
-			if (depth === 0) return html.slice(contentStart, match.index)
+			if (depth === 0) {
+				tables.push(html.slice(contentStart, match.index))
+
+				contentStart = -1
+			}
 		}
 	}
 
-	return contentStart === -1 ? null : html.slice(contentStart)
+	if (depth > 0 && contentStart !== -1) {
+		tables.push(html.slice(contentStart))
+	}
+
+	return tables
 }
 
 /**
@@ -288,55 +331,146 @@ function extractRowCells(rowHTML: string): TableCell[] {
 
 	return starts.map((start, i) => {
 		const end = i + 1 < starts.length ? starts[i + 1]!.index : rowHTML.length
+		const rawHTML = rowHTML.slice(start.contentStart, end)
 
-		return { tag: start.tag, text: cleanCellText(rowHTML.slice(start.contentStart, end)) }
+		return { tag: start.tag, text: cleanCellText(rawHTML), rawHTML }
 	})
 }
 
 /**
- * Extracts every `<tr>` row's cells from the outermost `<table>...</table>` block in `html`, or `null` when there is no
- * table at all (the caller falls through to the list/plain-text strategies). A row is `[]` when it has no `<td>`/
- * `<th>` cells at all (formatting cruft — an empty `<tr></tr>`), never `null`.
+ * Extracts every top-level table's `<tr>` rows' cells from `html`, or `null` when there is no table at all (the caller
+ * falls through to the list/plain-text strategies). A row is `[]` when it has no `<td>`/`<th>` cells at all (formatting
+ * cruft — an empty `<tr></tr>`), never `null`.
  */
-function extractTableRows(html: string): TableCell[][] | null {
-	const tableHTML = extractOutermostTableHTML(html)
+function extractTableRows(html: string): TableCell[][][] | null {
+	const tables = extractTopLevelTableHTML(html)
 
-	if (tableHTML === null) return null
+	if (!tables.length) return null
 
-	const rows: TableCell[][] = []
+	return tables.map((tableHTML) => {
+		const rows: TableCell[][] = []
 
-	for (const rowMatch of tableHTML.matchAll(ROW_PATTERN)) {
-		rows.push(extractRowCells(rowMatch[1]!))
+		for (const rowMatch of tableHTML.matchAll(ROW_PATTERN)) {
+			rows.push(extractRowCells(rowMatch[1]!))
+		}
+
+		return rows
+	})
+}
+
+/**
+ * Right-pads every row to the table's widest row, then drops each column index that is blank in EVERY row. Per table,
+ * and column-wise — never per row. A row-by-row "filter out the blanks" loses the fact that a row's LEADING cell was
+ * blank, which is the difference between a top-level subsidiary row and an indented child row, and no single row
+ * carries enough evidence to tell those apart.
+ *
+ * This is what an all-blank spacer column costs when it isn't dropped: `cable-one-2025.htm`, `ooma-2025.htm`,
+ * `verizon-2025.htm`, `att-2025.htm` and `anterix-2025.htm` all interleave one, making every data row look 3-wide (the
+ * shape the 3+-column rule abstains on) and yielding zero subsidiaries each.
+ */
+function widestRow(rows: readonly TableCell[][]): number {
+	let width = 0
+
+	for (const row of rows) {
+		width = Math.max(width, row.length)
 	}
 
-	return rows
+	return width
+}
+
+function padAndDropBlankColumns(rows: readonly TableCell[][]): TableCell[][] {
+	const width = widestRow(rows)
+	const keep: number[] = []
+
+	for (let column = 0; column < width; column++) {
+		if (rows.some((row) => (row[column]?.text ?? "") !== "")) {
+			keep.push(column)
+		}
+	}
+
+	return rows.map((row) => keep.map((column) => row[column] ?? BLANK_CELL))
 }
 
 const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 
-const KNOWN_HEADER_LABELS = new Set<string>([
+/**
+ * Column labels that name a JURISDICTION column. Exactly one of these in a header row is what licenses
+ * {@linkcode headerColumnMapping} — the document says which column means what, so reading it is not guessing.
+ */
+const JURISDICTION_HEADER_LABELS = new Set<string>([
+	"jurisdiction",
+	"jurisdiction of incorporation",
+	"jurisdiction of incorporation or organization",
+	"jurisdiction of incorporation or formation",
+	"jurisdiction of organization",
+	"jurisdiction of formation",
+	"state",
+	"country",
+	"domicile",
+	"state of incorporation",
+	"state of organization",
+	"state of formation",
+	"state or jurisdiction of incorporation",
+	"state or other jurisdiction of incorporation",
+	"state or country of incorporation",
+	"state of incorporation / organization",
+	"state of incorporation/organization",
+	"state of incorporation or formation",
+	"state of incorporation/formation",
+	"state/country of organization",
+	"state/country of formation",
+])
+
+/**
+ * Column labels that name a column which is NEITHER the entity name NOR its jurisdiction — a trade name, an ownership
+ * percentage, a tax ID. {@linkcode headerColumnMapping} skips these when picking the name column, and every one of them
+ * is also a header label in its own right.
+ */
+const OTHER_HEADER_LABELS = new Set<string>([
+	"% of ownership",
+	"% owned",
+	"ownership",
+	"ownership percentage",
+	"percentage owned",
+	"percent owned",
+	"name doing business as",
+	"conducts business under",
+	"d/b/a",
+	"dba",
+	"other name(s) under which entity does business",
+	"ein",
+])
+
+/**
+ * Column labels that name the ENTITY NAME column, plus the section headings and document titles EDGAR filings state as
+ * a `<td>` row of their own ("Domestic Subsidiaries", "Subsidiaries of the Registrant").
+ */
+const NAME_HEADER_LABELS = new Set<string>([
+	"name",
+	"entity name",
+	"legal name",
+	"legal entity",
+	"full legal name",
+	"name of entity",
+	"subsidiary name",
+	"subsidiary companies",
 	"name of subsidiary",
 	"name of subsidiaries",
 	"subsidiary",
 	"subsidiaries",
 	"subsidiaries of the registrant",
 	"list of subsidiaries",
-	"name",
-	"jurisdiction of incorporation",
-	"jurisdiction of incorporation or organization",
-	"jurisdiction of organization",
-	"state of incorporation",
-	"state or jurisdiction of incorporation",
-	"state or other jurisdiction of incorporation",
-	"jurisdiction",
-	"state",
-	"% owned",
-	"percentage owned",
-	"percent owned",
-	"ownership",
+	"domestic subsidiaries",
+	"foreign subsidiaries",
 	"exhibit 21",
 	"exhibit 21.1",
 	"registrant",
+])
+
+const KNOWN_HEADER_LABELS = new Set<string>([
+	...JURISDICTION_HEADER_LABELS,
+	...OTHER_HEADER_LABELS,
+	...NAME_HEADER_LABELS,
 ])
 
 /**
@@ -357,21 +491,236 @@ function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 }
 
 /**
- * Turns extracted table rows into {@linkcode ParsedExhibit21} — see the module docstring's "table strategy" section for
- * the exact abstention rules.
+ * A row whose FIRST non-blank value is nothing but a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`. The row is the
+ * footnote's own text, not a subsidiary: `widepoint-2025.htm`'s second table is `[(1), "In January 2019, WidePoint
+ * Solutions Corp. was merged into…"]`, and `echostar-2025.htm`/`atn-international-2025.htm` state one such table per
+ * footnote. Checked BEFORE any column mapping is consulted, so a footnote table trailing a labelled list never inherits
+ * that list's mapping.
  */
-function subsidiariesFromTableRows(rows: readonly TableCell[][]): ParsedExhibit21 {
+const FOOTNOTE_MARKER_PATTERN = /^[([]?\d{1,3}[)\]]?$|^\*{1,3}$/
+
+/**
+ * Block-level boundaries inside ONE cell's raw HTML. See {@linkcode isMultiValueCell}.
+ */
+const CELL_BLOCK_BOUNDARY_PATTERN = /<\/p\s*>|<\/div\s*>|<br[^>]*>|<\/li\s*>/gi
+
+const LETTER_OR_DIGIT_PATTERN = /[a-z0-9]/i
+
+/**
+ * True when `value` carries a corporate legal designation ("Inc.", "LLC", "Limited") — `canonicalizeOrganizationName`
+ * (`@mailwoman/record`) returns a non-empty `designations` array exactly then. Verified against the corpus on
+ * 2026-08-03: `"IDT Payment Services, Inc*. (DE)"` → `["inc"]`, while `"South Carolina"`, `"Delaware"`, `"British
+ * Columbia, Canada"`, `"England and Wales"` and `"DE"` all → `[]`. Used by {@linkcode isMultiValueCell} and
+ * {@linkcode isNameOverNameTable} to tell an entity name from a place — never on its own, always alongside a second
+ * condition, because a jurisdiction CAN carry one (Charter writes `"Delaware limited liability company"`).
+ */
+function carriesLegalDesignation(value: string): boolean {
+	return (canonicalizeOrganizationName(value)?.designations.length ?? 0) > 0
+}
+
+/**
+ * True when ONE cell holds several ENTITY VALUES the source kept in separate blocks — a block boundary (`</p>`,
+ * `</div>`, `<br>`, `</li>`) with a COMPLETE legal entity name on both sides of it. `ooma-2025.htm`'s last row is a
+ * single `<td>` holding five `<p>` blocks; cleaning it to text runs them together into `"Trunking.IO, LLC FluentStream
+ * Corp. FluentStream Intermediate, LLC …"` against a jurisdiction of `"Delaware Delaware Delaware Colorado Delaware"`,
+ * which is five fabricated claims, not one. Decision 6: the row states more than this parser can align, so it
+ * abstains.
+ *
+ * A block boundary alone is NOT enough, and this is the rule's whole difficulty: EDGAR's Word/Workiva exporters also
+ * emit a SOFT LINE WRAP as a block boundary, so `att-2025.htm` states one name as `<div>Illinois Bell
+ * Telephone</div><div>&#160;&#160;Company, LLC</div>` — text on both sides, one entity. What separates the two is that
+ * each half of a genuine multi-value cell is a whole legal name carrying its own designation
+ * (`canonicalizeOrganizationName` — `"Trunking.IO, LLC"` / `"FluentStream Corp. …"` both do), whereas a wrap splits ONE
+ * name's designation off the front half (`"Illinois Bell Telephone"` carries none). Ten of AT&T's nineteen subsidiaries
+ * are stated on wrapped rows.
+ */
+function isMultiValueCell(rawHTML: string): boolean {
+	for (const match of rawHTML.matchAll(CELL_BLOCK_BOUNDARY_PATTERN)) {
+		const before = cleanCellText(rawHTML.slice(0, match.index))
+		const after = cleanCellText(rawHTML.slice(match.index + match[0].length))
+
+		if (!LETTER_OR_DIGIT_PATTERN.test(before) || !LETTER_OR_DIGIT_PATTERN.test(after)) continue
+
+		if (carriesLegalDesignation(before) && carriesLegalDesignation(after)) return true
+	}
+
+	return false
+}
+
+/**
+ * The column indices a table's own header row assigns to the entity name and its jurisdiction. See
+ * {@linkcode headerColumnMapping}.
+ */
+interface ColumnMapping {
+	name: number
+	jurisdiction: number
+}
+
+/**
+ * The narrowest header row that establishes a mapping, counted in the row's OWN cells before blank columns are dropped.
+ * A two-cell header has nothing to map that the generic "first value is the name, second is the jurisdiction" rule does
+ * not already read the same way, so requiring three costs no fixture a single subsidiary — and it keeps a two-cell
+ * header from claiming to describe a WIDER data row it never mentions, which is `exhibit21-mangled.html`'s shape
+ * exactly: a `Name of Subsidiary`/`State` header over a row whose third cell is `"Note: pending name change"`. That row
+ * is unreadable and must stay unreadable (gate 3's load-bearing fixture asserts zero subsidiaries from it).
+ */
+const MINIMUM_HEADER_ROW_CELLS = 3
+
+/**
+ * Reads a table's own header row to learn which column is the entity name and which is the jurisdiction — the answer
+ * the document itself states, rather than a guess about which two of N columns matter.
+ *
+ * A row qualifies as the header only when EVERY one of its non-blank values is a known label/decoration and EXACTLY ONE
+ * of them is a jurisdiction label (two would be ambiguous, zero leaves nothing to anchor on). The name column is then
+ * the first other column not labelled with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, …) —
+ * `att-2025.htm`'s `["Legal Name", "State of Incorporation/Formation", "Conducts Business Under"]` maps to `{name: 0,
+ * jurisdiction: 1}`, and `atn-international-2025.htm`'s unlabelled first column (its header row is `["", "Jurisdiction
+ * of Incorporation", "Other name(s) under which entity does business"]`) still maps to `{name: 0, jurisdiction: 1}`.
+ *
+ * Returns `null` when no row qualifies; the caller then keeps whatever mapping a PRECEDING sibling table established.
+ */
+function headerColumnMapping(
+	rows: readonly TableCell[][],
+	extractedRows: readonly TableCell[][]
+): ColumnMapping | null {
+	for (const [rowIndex, row] of rows.entries()) {
+		if ((extractedRows[rowIndex]?.length ?? 0) < MINIMUM_HEADER_ROW_CELLS) continue
+
+		const values = row.map((cell) => cell.text)
+
+		if (!isHeaderOrDecorationRow(values)) continue
+
+		const jurisdictionColumns = values.flatMap((value, index) =>
+			value && JURISDICTION_HEADER_LABELS.has(value.toLowerCase()) ? [index] : []
+		)
+
+		if (jurisdictionColumns.length !== 1) continue
+
+		const jurisdiction = jurisdictionColumns[0]!
+
+		for (const [index, value] of values.entries()) {
+			if (index === jurisdiction) continue
+
+			if (value && OTHER_HEADER_LABELS.has(value.toLowerCase())) continue
+
+			return { name: index, jurisdiction }
+		}
+	}
+
+	return null
+}
+
+/**
+ * True when the table is a two-across list of ENTITY NAMES — no jurisdiction column at all — so that reading its second
+ * column as a jurisdiction would emit one company as another company's place of incorporation. The whole table
+ * abstains.
+ *
+ * All three conditions are load-bearing over the table's two-value data rows: at least 4 of them, more than half of
+ * their SECOND values carrying a legal designation, and more than 70% of those second values DISTINCT. `idt-2025.htm`'s
+ * "Domestic Subsidiaries" table is 5 rows, 5/5 designated, 5 distinct.
+ *
+ * The distinctness condition is not belt-and-braces. Charter Communications writes its jurisdiction column as
+ * `"Delaware limited liability company"`, so 135 of 135 second values carry a designation on a table that is a
+ * perfectly ordinary name/jurisdiction list; what separates the two cases is repetition — a jurisdiction column repeats
+ * (Charter 9 distinct over 135 rows, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26), a second NAME column does
+ * not (IDT 1.00). Measured 2026-08-03 across the large filings that are not vendored.
+ */
+const MINIMUM_NAME_OVER_NAME_ROWS = 4
+
+/**
+ * More than half the second values must carry a legal designation. IDT's two-across name table is 5/5; a genuine
+ * jurisdiction column is 0/N except where the filer spells the entity type out (Charter's `"Delaware limited liability
+ * company"`, 135/135) — which is what {@linkcode DISTINCT_SECOND_VALUE_RATIO} is there to separate.
+ */
+const DESIGNATED_SECOND_VALUE_RATIO = 0.5
+
+/**
+ * More than 70% of the second values must be DISTINCT. Measured 2026-08-03 over the large filings that are not
+ * vendored: a jurisdiction column repeats (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26), a second
+ * NAME column does not (IDT 1.00). Drop this condition and Charter loses all 135 of its subsidiaries.
+ */
+const DISTINCT_SECOND_VALUE_RATIO = 0.7
+
+function isNameOverNameTable(rows: readonly TableCell[][]): boolean {
+	const seconds = rows.flatMap((row) => {
+		const values = row.map((cell) => cell.text).filter(Boolean)
+
+		if (values.length !== 2) return []
+
+		if (FOOTNOTE_MARKER_PATTERN.test(values[0]!)) return []
+
+		if (isHeaderOrDecorationRow(values)) return []
+
+		return [values[1]!]
+	})
+
+	if (seconds.length < MINIMUM_NAME_OVER_NAME_ROWS) return false
+
+	const designated = seconds.filter(carriesLegalDesignation)
+
+	if (designated.length <= seconds.length * DESIGNATED_SECOND_VALUE_RATIO) return false
+
+	return new Set(seconds).size > seconds.length * DISTINCT_SECOND_VALUE_RATIO
+}
+
+/**
+ * True when the table is a plain single-column list of names, in which a row holding exactly one value is a SUBSIDIARY
+ * rather than a section heading. Every row must hold at most one value, and either two of them do (an actual list) or
+ * the table is literally one cell wide (a one-row list has no heading to be confused with).
+ *
+ * The converse is what this rule exists for: a lone value in a table that ALSO has multi-value rows is a section
+ * heading (`idt-2025.htm`'s "Domestic Subsidiaries") or a trailing explanatory sentence (its `"*Versature
+ * Communications Corp. has registered Net2Phone Canada as a Trade Name"`, a one-row table three columns wide).
+ */
+const MINIMUM_NAME_LIST_ROWS = 2
+
+function isSingleColumnNameList(rows: readonly TableCell[][], rawWidth: number): boolean {
+	if (!rows.length) return false
+
+	const valueCounts = rows.map((row) => row.filter((cell) => cell.text !== "").length)
+
+	if (!valueCounts.every((count) => count <= 1)) return false
+
+	return valueCounts.filter((count) => count === 1).length >= MINIMUM_NAME_LIST_ROWS || rawWidth === 1
+}
+
+/**
+ * Turns ONE top-level table's extracted rows into subsidiaries, given the column mapping a PRECEDING sibling table
+ * established (or `null`). Returns the mapping in force at the end so the caller can carry it to the next sibling — see
+ * the module docstring's "table strategy" section for the full rule order.
+ */
+function subsidiariesFromTable(
+	extractedRows: readonly TableCell[][],
+	carriedMapping: ColumnMapping | null
+): ParsedExhibit21 & { mapping: ColumnMapping | null } {
 	const subsidiaries: ParsedSubsidiary[] = []
 	let unparseable = 0
 
-	for (const row of rows) {
-		// An empty <tr></tr> — formatting cruft, not a data row either way.
-		if (!row.length) continue
+	// An empty <tr></tr> — formatting cruft, not a data row either way, and not a column's worth of evidence.
+	const present = extractedRows.filter((row) => row.length > 0)
+	const rawWidth = widestRow(present)
+	const rows = padAndDropBlankColumns(present)
+	const mapping = headerColumnMapping(rows, present) ?? carriedMapping
 
+	if (!mapping && isNameOverNameTable(rows)) {
+		return { subsidiaries, unparseable: rows.length, mapping }
+	}
+
+	const singleColumnList = isSingleColumnNameList(rows, rawWidth)
+
+	for (const [rowIndex, row] of rows.entries()) {
 		// A row made ENTIRELY of <th> cells — a header/label row, recognized and skipped (structural certainty).
-		if (row.every((cell) => cell.tag === "th")) continue
+		// Asked of the row as EXTRACTED: right-padding adds `<td>` blanks, which say nothing about the row's markup.
+		if (present[rowIndex]!.every((cell) => cell.tag === "th")) continue
 
 		const values = row.map((cell) => cell.text)
+		const nonBlank = values.filter(Boolean)
+
+		if (!nonBlank.length) {
+			unparseable++
+
+			continue
+		}
 
 		// A header/decoration row using <td> instead of <th> — recognized the same way, but COUNTED, since this
 		// is a content judgment rather than markup certainty (decision 6: count a judgment call, don't discard it
@@ -382,7 +731,57 @@ function subsidiariesFromTableRows(rows: readonly TableCell[][]): ParsedExhibit2
 			continue
 		}
 
-		if (values.length > 2) {
+		if (FOOTNOTE_MARKER_PATTERN.test(nonBlank[0]!)) {
+			unparseable++
+
+			continue
+		}
+
+		if (nonBlank.length === 1 && !singleColumnList) {
+			unparseable++
+
+			continue
+		}
+
+		const leadCell = row.find((cell) => cell.text !== "")!
+
+		if (isMultiValueCell(leadCell.rawHTML)) {
+			unparseable++
+
+			continue
+		}
+
+		if (mapping) {
+			let name = row[mapping.name]?.text ?? ""
+
+			if (!name && mapping.name < mapping.jurisdiction) {
+				// An indented corporate tree: the child's name sits in a column to the RIGHT of the labelled name
+				// column but still LEFT of the labelled jurisdiction column. The nesting depth is discarded (an
+				// Exhibit 21 row is a registrant→subsidiary edge either way); the name itself is not in doubt,
+				// because the header says the jurisdiction is to its right.
+				for (let column = mapping.name + 1; column < Math.min(mapping.jurisdiction, row.length); column++) {
+					if (row[column]!.text) {
+						name = row[column]!.text
+
+						break
+					}
+				}
+			}
+
+			if (name) {
+				const jurisdiction = row[mapping.jurisdiction]?.text ?? ""
+
+				subsidiaries.push(jurisdiction ? { name, jurisdiction } : { name })
+
+				continue
+			}
+
+			// Otherwise FALL THROUGH to the generic rules rather than abstaining: a ragged table
+			// (`anterix-2025.htm`'s 5- and 6-cell rows under a 6-cell header) misaligns the mapping without
+			// making the row unreadable.
+		}
+
+		if (nonBlank.length > 2) {
 			// An extra column this parser has no confident meaning for (an ownership percentage, an EIN) —
 			// decision 6: abstain rather than guess which two of N columns are name/jurisdiction.
 			unparseable++
@@ -390,15 +789,39 @@ function subsidiariesFromTableRows(rows: readonly TableCell[][]): ParsedExhibit2
 			continue
 		}
 
-		const [name, jurisdiction] = values as [string, string?]
-
-		if (!name) {
+		if (!values[0]) {
+			// A blank LEADING cell with no header mapping to explain it — an indented child row whose parent this
+			// parser cannot identify, or a misaligned spacer. Decision 6 abstains.
 			unparseable++
 
 			continue
 		}
 
+		const [name, jurisdiction] = nonBlank as [string, string?]
+
 		subsidiaries.push(jurisdiction ? { name, jurisdiction } : { name })
+	}
+
+	return { subsidiaries, unparseable, mapping }
+}
+
+/**
+ * Classifies every top-level table in document order and concatenates the results, carrying each table's column mapping
+ * forward to its siblings until another header row replaces it — EDGAR splits one logical table across page-break
+ * tables constantly, and only the first carries the header (`att-2025.htm`'s second table holds AT&T Mobility, Cricket
+ * Wireless, Teleport Communications America and BellSouth Telecommunications with no header of its own).
+ */
+function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhibit21 {
+	const subsidiaries: ParsedSubsidiary[] = []
+	let unparseable = 0
+	let mapping: ColumnMapping | null = null
+
+	for (const rows of tables) {
+		const result = subsidiariesFromTable(rows, mapping)
+
+		subsidiaries.push(...result.subsidiaries)
+		unparseable += result.unparseable
+		mapping = result.mapping
 	}
 
 	return { subsidiaries, unparseable }
@@ -622,8 +1045,8 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
  * more confidence (multiple sibling tables, blank spacer columns, footnote rows, …) is Task 3's territory, not this
  * check's.
  */
-function isEntirelyBlankTable(rows: readonly TableCell[][]): boolean {
-	return rows.every((row) => row.every((cell) => cell.text === ""))
+function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
+	return tables.every((rows) => rows.every((row) => row.every((cell) => cell.text === "")))
 }
 
 /**
