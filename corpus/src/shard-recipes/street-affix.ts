@@ -39,6 +39,7 @@ import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -59,16 +60,20 @@ interface USSource {
 }
 
 const TRAIN_SOURCES: readonly USSource[] = [
-	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__dc__statewide.zip", csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", region: "IL" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
+	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
+	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
+	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
+	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
 ]
 
-const EVAL_SOURCE: USSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
+const EVAL_SOURCE: USSource = {
+	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+	csv: "us/vt/statewide.csv",
+	region: "VT",
+}
 
 // Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
 // only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors
@@ -83,14 +88,38 @@ interface BalanceSource {
 }
 
 const MULTILOCALE_SOURCES: readonly BalanceSource[] = [
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
-	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
+	{
+		zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+		csv: "de/sn/statewide.csv",
+		iso2: "DE",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+		csv: "fr/countrywide.csv",
+		iso2: "FR",
+		region: "",
+		order: "fr",
+	},
+	{
+		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+		csv: "it/countrywide.csv",
+		iso2: "IT",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+		csv: "nl/countrywide.csv",
+		iso2: "NL",
+		region: "",
+		order: "eu",
+	},
 ]
 
 const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
 /**
@@ -393,7 +422,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No US tuples found — are the cached OA zips present in /tmp/oa-cache?")
+			throw new Error(`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0

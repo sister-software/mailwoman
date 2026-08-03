@@ -64,7 +64,10 @@ const HTTP_SERVER_ERROR_MIN = 500
 const MAX_LISTED_FAILURES = 20
 
 const OptionsSchema = zod.object({
-	edgesDir: zod.string().default("/tmp/tiger-edges").describe("Download destination for TIGER ZIP + SHP files"),
+	edgesDir: zod
+		.string()
+		.default(dataRootPath("census", "tiger2023-edges"))
+		.describe("Download destination for TIGER ZIP + SHP files"),
 	outDir: zod.string().optional().describe("Directory for per-state shard DBs. Default <data-root>/interpolation"),
 	release: zod.string().default("TIGER2023").describe("TIGER vintage tag written into each shard row"),
 	states: zod

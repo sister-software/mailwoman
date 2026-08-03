@@ -30,8 +30,8 @@
  *   External inputs (`--edges-dir`, opts.edgesDir; both already on disk — do not re-download):
  *
  *   - <edges-dir>/tl_2023_{17031,34027,50023}_edges.shp (unzipped TIGER 2023 EDGES; default
- *       /tmp/tiger-edges)
- *   - /tmp/oa-cache/us__il__cook.zip (ZIP→city tails)
+ *       `$MAILWOMAN_DATA_ROOT/census/tiger2023-edges`, where `mailwoman situs interpolation` puts them)
+ *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
  */
 
 import { spawnSync } from "node:child_process"
@@ -39,7 +39,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { readJSONL, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, readJSONL, repoRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -60,7 +60,13 @@ const TRAIN_COUNTIES: readonly County[] = [
 const GOLDEN_COUNTIES: readonly County[] = [{ fips: "50023", state: "VT", regime: "rural" }]
 
 const EVAL_GOLD_PATH = repoRootPath("data", "eval", "external", "intersection-real.jsonl")
-const OA_COOK = { zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv" }
+/**
+ * Where `mailwoman situs interpolation` unpacks the per-county TIGER EDGES shapefiles — a Census download, so it sits
+ * beside the other Census vintages under `census/`. `--edges-dir` overrides it.
+ */
+const DEFAULT_EDGES_DIR = dataRootPath("census", "tiger2023-edges")
+
+const OA_COOK = { zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv" }
 
 /**
  * One real crossing extracted from a county's TIGER EDGES shapefile.
@@ -446,13 +452,18 @@ export const intersectionRecipe: ShardRecipe = {
 	name: "intersection",
 	description: "Real-pair intersection rows (US): TIGER 2023 EDGES crossings → audited intersection_a/b labels",
 	mode: "generate",
-	options: [{ flag: "--edges-dir <dir>", description: "Unzipped TIGER 2023 EDGES dir. Default /tmp/tiger-edges" }],
+	options: [
+		{
+			flag: "--edges-dir <dir>",
+			description: `Unzipped TIGER 2023 EDGES dir. Default ${DEFAULT_EDGES_DIR}`,
+		},
+	],
 	async run(opts, write) {
 		// Legacy build-intersection-shard.mjs seeded `mulberry32(opts.seed)`.
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 40_000
 		const source = opts.sourceName ?? "synth-intersection"
-		const edgesDir = opts.edgesDir ?? "/tmp/tiger-edges"
+		const edgesDir = opts.edgesDir ?? DEFAULT_EDGES_DIR
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES
 		const exclusions = readEvalExclusions()
 

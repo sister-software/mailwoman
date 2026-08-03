@@ -86,26 +86,26 @@ export interface LocaleCountrySource {
 }
 
 /**
- * Per-country OA sources + the source name used in the corpus. DE/FR still point at the legacy `/tmp/oa-cache` zips
- * (their historical build inputs — materialize them there to regenerate). ES/NL read the extracted countrywide CSVs and
- * IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is OA-conformed, so the old
- * raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is empty; the
- * international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad autónoma, IT =
- * regione, NL = province).
+ * Per-country OA sources + the source name used in the corpus. DE/FR read their historical build inputs, the cached
+ * zips under `$MAILWOMAN_DATA_ROOT/oa-cache` — materialize them there to regenerate. ES/NL read the extracted
+ * countrywide CSVs and IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is
+ * OA-conformed, so the old raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is
+ * empty; the international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad
+ * autónoma, IT = regione, NL = province).
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
 		source: "synth-german",
 		corpusVersion: "0.4.0",
 		parts: [
-			{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
-			{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
+			{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+			{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
 		],
 	},
 	FR: {
 		source: "synth-fr",
 		corpusVersion: "0.4.0",
-		parts: [{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }],
+		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
 		source: "synth-nl",

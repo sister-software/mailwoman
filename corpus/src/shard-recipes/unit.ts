@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `unit` shard recipe — US secondary-unit coverage (#451, the v0-parity `unit` gap). Onto REAL US
- *   OpenAddresses skeletons (cached zips under `/tmp/oa-cache`) it INJECTS a USPS Pub-28 Appendix
+ *   OpenAddresses skeletons (cached zips under `$MAILWOMAN_DATA_ROOT/oa-cache`) it INJECTS a USPS Pub-28 Appendix
  *   C2 secondary-unit designator (the `@mailwoman/codex/us` table), varying the surface form
  *   (canonical "Apartment" vs approved "Apt") AND the unit's POSITION (after-street / unit-first /
  *   bare / venue-prefixed) per row, so the model learns to RECOGNIZE the designator wherever it
@@ -25,6 +25,7 @@ import { spawnSync } from "node:child_process"
 
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -58,16 +59,20 @@ interface UnitSource {
  * state cached; eval is Vermont only (the corpus holdout).
  */
 const TRAIN_SOURCES: readonly UnitSource[] = [
-	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__dc__statewide.zip", csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", region: "IL" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
+	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
+	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
+	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
+	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
 ]
 
-const EVAL_SOURCE: UnitSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
+const EVAL_SOURCE: UnitSource = {
+	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+	csv: "us/vt/statewide.csv",
+	region: "VT",
+}
 
 /**
  * USPS Pub-28 C2 designators that take a secondary identifier ("Apt 4B"). Weighted toward the common ones the v0-parity
@@ -268,7 +273,7 @@ export const unitRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No US tuples found — are the cached OA zips present in /tmp/oa-cache?")
+			throw new Error(`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0

@@ -20,9 +20,9 @@
  *   locality-hash holdout (hash%10===0).
  *
  *   Prerequisites (read once, before the generation loop — these do NOT consume `random`): the cached
- *   OA zips in /tmp/oa-cache, the GeoNames Canada dump at /tmp/geonames-cache/CA.zip, and the
- *   GeoNames POSTAL-CODE dumps for AU/NZ (/tmp/geonames-cache/{AU,NZ}-postal.zip). See the legacy
- *   script header for the exact curl commands.
+ *   OA zips in `$MAILWOMAN_DATA_ROOT/oa-cache`, the GeoNames Canada dump at
+ *   `$MAILWOMAN_DATA_ROOT/geonames/CA.zip`, and the GeoNames POSTAL-CODE dumps for AU/NZ
+ *   (`$MAILWOMAN_DATA_ROOT/geonames-postal/{AU,NZ}.zip`).
  *
  *   Byte-fidelity: the legacy script seeded its own mulberry32 from `--seed`
  *   (`mulberry32(opts.seed)`); this recipe re-creates the SAME generator
@@ -37,6 +37,7 @@ import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { alignRow } from "../align.ts"
 import {
@@ -58,20 +59,29 @@ import { makeMulberry32, readCSVRecords, shardSourceID, type CanonicalShardRow, 
    extracted as named constants above. */
 
 const US_TRAIN_SOURCES = [
-	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__dc__statewide.zip", csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", region: "IL" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
+	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
+	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
+	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
+	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
 ]
 
-const US_EVAL_SOURCE = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
-const FR_SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
-const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
-const GEONAMES_POSTAL_AU = { zip: "/tmp/geonames-cache/AU-postal.zip", txt: "AU.txt" }
-const GEONAMES_POSTAL_NZ = { zip: "/tmp/geonames-cache/NZ-postal.zip", txt: "NZ.txt" }
+const US_EVAL_SOURCE = {
+	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+	csv: "us/vt/statewide.csv",
+	region: "VT",
+}
+
+const FR_SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
+// GeoNames has two per-country exports with different schemas, and this recipe reads both. The MAIN
+// dump (feature class + population columns) lives under `geonames/`; the POSTAL-CODE dump lives
+// under `geonames-postal/`, where the directory carries the "postal" distinction the filename used
+// to.
+const GEONAMES_CA = dataRootPath("geonames", "CA.zip")
+const GEONAMES_POSTAL_AU = { zip: dataRootPath("geonames-postal", "AU.zip"), txt: "AU.txt" }
+const GEONAMES_POSTAL_NZ = { zip: dataRootPath("geonames-postal", "NZ.zip"), txt: "NZ.txt" }
 
 /**
  * ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────.
@@ -763,7 +773,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 
 		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length) {
 			throw new Error(
-				"A base pool is empty — check /tmp/oa-cache and /tmp/geonames-cache (CA.zip, AU-postal.zip, NZ-postal.zip)."
+				`A base pool is empty — check ${dataRootPath("oa-cache")}, ${GEONAMES_CA}, ${GEONAMES_POSTAL_AU.zip}, and ${GEONAMES_POSTAL_NZ.zip}.`
 			)
 		}
 

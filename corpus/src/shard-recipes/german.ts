@@ -17,6 +17,8 @@
 
 import { spawnSync } from "node:child_process"
 
+import { dataRootPath } from "@mailwoman/core/utils"
+
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.ts"
@@ -37,8 +39,8 @@ interface GermanSource {
  * Berlin (a city-state, region==locality); sn/statewide → Sachsen.
  */
 const SOURCES: GermanSource[] = [
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
+	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+	{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
 /**
@@ -110,7 +112,7 @@ export const germanRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No German tuples found — are the cached zips present in /tmp/oa-cache?")
+			throw new Error(`No German tuples found — are the cached zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0

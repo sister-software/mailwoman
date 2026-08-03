@@ -54,25 +54,10 @@ export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@m
 export type CSVRecord = Record<string, string | undefined>
 
 /**
- * Window size the buffer is handed to {@link CSVSpliterator.fromAsync} in.
- *
- * Quote-aware scanning costs O(n²) in the size of whatever the scanner is handed at once (spliterator 4.0.0): each
- * refill re-scans from the read position to the END of the source, and the SIMD path caps at 4096 matches, so any real
- * CSV falls through to the JS scan of the whole remainder. Measured on synthetic rows, doubling the input quadrupled
- * the time; on 200 K OpenAddresses rows, 207 s in one buffer against 4.1 s at this window. Windowing bounds each
- * re-scan, and the async spliterator re-assembles records that straddle a boundary, so quote handling still spans the
- * row split. 64 KiB sat at the flat end of a 4–64 KiB sweep.
+ * Window size {@link readCSVRecords} feeds the spliterator, in bytes. Flat end of a 4 KiB–4 MiB sweep: small enough that
+ * the quote scanner's per-refill work stays bounded, large enough that window bookkeeping does not dominate.
  */
-const CSV_CHUNK_BYTES = 64 * 1024
-
-/**
- * Slice an in-memory buffer into the windows {@link CSVSpliterator.fromAsync} wants.
- */
-async function* chunked(source: Uint8Array): AsyncGenerator<Uint8Array> {
-	for (let offset = 0; offset < source.length; offset += CSV_CHUNK_BYTES) {
-		yield source.subarray(offset, offset + CSV_CHUNK_BYTES)
-	}
-}
+const CSV_WINDOW_BYTES = 64 * 1024
 
 /**
  * Read an in-memory CSV (an `unzip -p` buffer, say) as header-keyed records.
@@ -82,14 +67,27 @@ async function* chunked(source: Uint8Array): AsyncGenerator<Uint8Array> {
  * lines first and unquote afterwards and such a record splits in two — the first half short by however many columns
  * followed the newline, which is how a `street` value comes to be read as `city`.
  *
- * Header names are lower-cased on the way in: OpenAddresses ships them upper-case (`STREET`), other extracts ship them
- * lower-case, and a recipe names its columns in lower case either way.
+ * Header names are lower-cased on the way in. `normalizeKeys` will not do it: it leaves an ALL CAPS header alone, and
+ * OpenAddresses ships `LON,LAT,NUMBER,STREET` while other extracts ship the same names lower-case. A recipe names its
+ * columns in lower case either way.
+ *
+ * The buffer is fed through `fromAsync` in {@link CSV_WINDOW_BYTES} windows rather than handed to the synchronous
+ * `from()` whole. `from()` with `enableQuoteHandling` rescans to the end of the source on every refill of its index
+ * queue, so cost grows with the square of the input — measured on a real OpenAddresses extract at 1.0 s for 2 MB and 27
+ * s for 8 MB, against a 468 MB file. `fromAsync` is bounded by chunk size instead. The spliterator re-assembles a
+ * record straddling a window boundary, so quote handling still spans the row split.
  */
 export async function* readCSVRecords(source: Uint8Array): AsyncGenerator<CSVRecord> {
 	let header: string[] | null = null
 
+	async function* windows(): AsyncGenerator<Uint8Array> {
+		for (let offset = 0; offset < source.length; offset += CSV_WINDOW_BYTES) {
+			yield source.subarray(offset, Math.min(offset + CSV_WINDOW_BYTES, source.length))
+		}
+	}
+
 	// `header: false` keeps the first record in the stream so this reader owns the lower-casing.
-	for await (const cells of CSVSpliterator.fromAsync(chunked(source), { header: false, enableQuoteHandling: true })) {
+	for await (const cells of CSVSpliterator.fromAsync(windows(), { header: false, enableQuoteHandling: true })) {
 		if (!header) {
 			header = cells.map((name) => name.trim().toLowerCase())
 

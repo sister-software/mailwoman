@@ -112,7 +112,7 @@ const OptionsSchema = zod.object({
 	edgesDir: zod
 		.string()
 		.optional()
-		.default("/tmp/tiger-edges")
+		.default(dataRootPath("census", "tiger2023-edges"))
 		.describe("Directory holding the per-county TIGER EDGES shapefiles (tl_*_<statefips>???_edges.shp)"),
 	release: zod.string().optional().default("TIGER2023").describe("TIGER release tag, recorded as per-row provenance"),
 	out: zod.string().optional().describe("Output DB path. Default <data-root>/interpolation/interpolation-us-<st>.db"),

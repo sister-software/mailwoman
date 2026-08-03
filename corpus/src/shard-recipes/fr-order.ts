@@ -33,6 +33,7 @@
 import { spawnSync } from "node:child_process"
 
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -45,7 +46,7 @@ import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
 
-const SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
+const SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
 
 /**
  * Ordinal suffixes used in French house numbers (BAN corpus), to cover the "8 bis" sub-mode.
@@ -165,7 +166,7 @@ export const frOrderRecipe: ShardRecipe = {
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 
 		if (!pool.length) {
-			throw new Error("No FR tuples found — is /tmp/oa-cache/fr__countrywide.zip present?")
+			throw new Error(`No FR tuples found — is ${SOURCE.zip} present?`)
 		}
 
 		let emitted = 0

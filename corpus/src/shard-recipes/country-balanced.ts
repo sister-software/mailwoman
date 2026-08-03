@@ -28,6 +28,7 @@ import { spawnSync } from "node:child_process"
 
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -72,24 +73,72 @@ interface CountrySource {
  * countrywide extracts (FR/IT/NL) read region from the CSV when present.
  */
 const SOURCES: readonly CountrySource[] = [
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", iso2: "US", region: "IA", order: "us" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", iso2: "US", region: "IL", order: "us" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", iso2: "US", region: "MT", order: "us" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", iso2: "US", region: "SD", order: "us" },
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
+	{
+		zip: dataRootPath("oa-cache", "us__ia__statewide.zip"),
+		csv: "us/ia/statewide.csv",
+		iso2: "US",
+		region: "IA",
+		order: "us",
+	},
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", iso2: "US", region: "IL", order: "us" },
+	{
+		zip: dataRootPath("oa-cache", "us__mt__statewide.zip"),
+		csv: "us/mt/statewide.csv",
+		iso2: "US",
+		region: "MT",
+		order: "us",
+	},
+	{
+		zip: dataRootPath("oa-cache", "us__sd__statewide.zip"),
+		csv: "us/sd/statewide.csv",
+		iso2: "US",
+		region: "SD",
+		order: "us",
+	},
+	{
+		zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+		csv: "de/sn/statewide.csv",
+		iso2: "DE",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+		csv: "fr/countrywide.csv",
+		iso2: "FR",
+		region: "",
+		order: "fr",
+	},
 	// ES uses the Spanish IGN schema, not the OA standard columns — skipped here (codex still recognizes
 	// "España"/"Spain"). A dedicated IGN adapter is a follow-up.
-	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
+	{
+		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+		csv: "it/countrywide.csv",
+		iso2: "IT",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+		csv: "nl/countrywide.csv",
+		iso2: "NL",
+		region: "",
+		order: "eu",
+	},
 ]
 
 /**
  * Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained.
  */
 const EVAL_SOURCES: readonly CountrySource[] = [
-	{ zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", iso2: "US", region: "VT", order: "us" },
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+	{
+		zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+		csv: "us/vt/statewide.csv",
+		iso2: "US",
+		region: "VT",
+		order: "us",
+	},
+	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
 /**
@@ -410,7 +459,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No tuples — are the cached OA zips present in /tmp/oa-cache?")
+			throw new Error(`No tuples — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0
