@@ -38,17 +38,19 @@ Raw material note: Task 4 parks the old `articles/` tree at `docs/records/site-2
 ### Task 1: Vale toolchain
 
 **Files:**
+
 - Create: `docs/.vale.ini`, `docs/styles/Mailwoman/*.yml` (rule files below), `docs/styles/config/vocabularies/Mailwoman/accept.txt`
 - Modify: `docs/package.json` (devDependency `@vvago/vale`, script `lint:prose`), `.github/workflows/docs-build.yml` (prose-lint step in the PR job)
 - Test: fixture files under `docs/scripts/vale-fixtures/`
 
 **Interfaces:**
+
 - Produces: `yarn workspace @mailwoman/docs lint:prose [glob]` — exits non-zero on any error-severity hit. Phase 3 tasks run it per page; Task 23 runs it corpus-wide.
 
 - [ ] **Step 1: Install the vendored binary.** `yarn workspace @mailwoman/docs add -D @vvago/vale`, script `"lint:prose": "vale --config .vale.ini articles src/pages"`. Verify `yarn workspace @mailwoman/docs exec vale --version` prints a version (binary ships per-platform; if the package fails on the lab host, fall back to `docs/scripts/fetch-vale.ts` pinning a release tarball into `docs/.bin/` — document whichever path lands in the file header).
 - [ ] **Step 2: Write `.vale.ini`.**
 
-```ini
+````ini
 StylesPath = styles
 MinAlertLevel = warning
 Vocab = Mailwoman
@@ -58,10 +60,10 @@ BasedOnStyles = Mailwoman
 # MDX: skip imports/JSX blocks
 TokenIgnores = (import .+ from .+), (<[A-Z][^>]*>)
 BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
-```
+````
 
 - [ ] **Step 3: Write the rule files.** Each is a Vale `existence`/`substitution` rule; severities: banned words = error, weasel quantities = warning, anthropomorphism = warning.
-  - `Mailwoman/BannedWords.yml` (error): actually, basically, simply, obviously, clearly, just (softener caught as ` just `), robust, seamless(ly), comprehensive, various, numerous, leverage, plethora, myriad, delve, crucial, pivotal, vibrant, elevate, unlock, harness, foster, facilitate, honest(ly), genuine(ly), truly, effortlessly, cleanly, quietly.
+  - `Mailwoman/BannedWords.yml` (error): actually, basically, simply, obviously, clearly, just (softener caught as `just`), robust, seamless(ly), comprehensive, various, numerous, leverage, plethora, myriad, delve, crucial, pivotal, vibrant, elevate, unlock, harness, foster, facilitate, honest(ly), genuine(ly), truly, effortlessly, cleanly, quietly.
   - `Mailwoman/StockPhrases.yml` (error): "not just", "it's not just", "more than just", "isn't just", "less about .* more about", "here's the thing", "the uncomfortable truth", "what most people miss", "belt and suspenders", "load-bearing", "blast radius", "escape hatch", "north star", "first-class citizen", "source of truth" (prose only — `source-of-truth:` frontmatter is ignored via TokenIgnores addition `(^source-of-truth:.*)`).
   - `Mailwoman/Anthropomorphism.yml` (warning): "(parser|model|decoder|resolver|pipeline) (thinks|believes|wants|knows|decides to|tries to|gives up)". Suggested fixes in the rule message ("assigns", "scores", "returns").
   - `Mailwoman/Weasel.yml` (warning): nearby, fairly, usually, often, many, a lot of, significant(ly) — message: "state the measured quantity or mark the sentence deliberately qualitative."
@@ -73,10 +75,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 2: Frontmatter contract + structure gate rewrite
 
 **Files:**
+
 - Modify: `docs/scripts/check-docs-structure.ts` (full rewrite of the role logic; keep orphan + duplicate-title checks), `docs/scripts/docs-structure-allowlist.ts`
 - Test: `docs/scripts/check-docs-structure.test.ts` (new, vitest — pure functions over fixture frontmatter)
 
 **Interfaces:**
+
 - Produces: gate requiring on EVERY published page: `role` ∈ the six-role enum; `verified-with` when role ∈ {tutorial, guide}; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
 
 - [ ] **Step 1: Write failing tests** for `validatePage`: missing role → error; bad role value → error; tutorial without `verified-with` → error; reference without `source-of-truth` → error; landing without `audience` → error; valid page → `[]`.
@@ -87,10 +91,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 25: Writing-system derivation (execution order: after Task 2, before Task 5)
 
 **Files:**
+
 - Create: `docs/engineering/writing-system.md` (the binding style source + the comparison record), `docs/engineering/page-templates/{tutorial,how-to,reference,explanation,landing,evidence}.md`
 - Modify: `docs/styles/Mailwoman/*.yml` (rules updated to match the derived system), `scratchpad/writing-standards-draft.md` is INPUT ONLY (never committed — scratchpad is git-ignored)
 
 **Interfaces:**
+
 - Consumes: Task 1's Vale toolchain.
 - Produces: the voice authority every Phase 3 task drafts against, and the updated Vale rules that mechanically enforce it. Phase 3 dispatches carry `docs/engineering/writing-system.md` + the relevant template as required reading.
 
@@ -104,10 +110,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 3: Move active internal contracts to `docs/engineering/`
 
 **Files:**
+
 - Move (git mv, content untouched — these are internal, not part of the rewrite): `docs/articles/plan/SCOPE.mdx`, `docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`, all of `docs/articles/plan/reference/`, the two active design notes listed in the `reference` sidebar → `docs/engineering/` (flatten: `docs/engineering/SCOPE.mdx`, `docs/engineering/reference/…`)
 - Modify: `AGENTS.md` (five path references), `docs/scripts/check-docs-structure.ts` sidebar references if any, every in-repo referrer found by grep
 
 **Interfaces:**
+
 - Produces: `docs/engineering/` — unpublished internal tree. AGENTS.md pointers valid.
 
 - [ ] **Step 1:** `git mv` the files. `grep -rn "articles/plan" --include="*.{ts,tsx,md,mdx,yml,json}" .` (repo root, excluding `docs/records`, `docs/build`, `node_modules`) and fix every hit: AGENTS.md, workflow path filters, sidebars (removal happens in Task 5 — for now delete the moved ids from `sidebars.ts` `reference`/`contribute`/`archive` lists so the build stays green), any code imports of `eval-ledger.schema.json` (it lives in `plan/reference/` — keep its new path wired).
@@ -117,10 +125,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 4: Park raw records; retire path-shaped exclusions
 
 **Files:**
+
 - Move: `docs/articles/evals/` → `docs/records/evals/`; `docs/articles/retrospectives/` → `docs/records/retrospectives/`; `docs/articles/reviews/` → `docs/records/reviews/`; `docs/articles/plan/` (remainder: phases, dated plans, superseded reference) → `docs/records/plan/`
 - Modify: `docs/docusaurus.config.ts` — delete the `exclude` globs for `reviews/**` and eval postmortems (nothing internal remains under `articles/`), `docs/sidebars.ts` + `docs/src/components/DocsSubHeader/sections.ts` — drop the `archive`, `evals`, `retrospectives` sections (two files, same commit)
 
 **Interfaces:**
+
 - Produces: `docs/records/` — unpublished, greppable raw material for Phase 3. `articles/` contains only pages intended for the public site.
 
 - [ ] **Step 1:** git mv the four trees; delete the exclusion globs; drop the three retired sidebar sections from both coupled files.
@@ -130,11 +140,13 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 5: Skeleton cutover — new nav, front page, first pages, old tree parked
 
 **Files:**
+
 - Move: remaining `docs/articles/` (understanding, concepts, recipes, root pages, licensing) → `docs/records/site-2026-08/`
 - Create: new `docs/articles/` skeleton: `developers/get-started/{what-mailwoman-is,install-and-first-parse,ten-minute-trial}.mdx`, `developers/status.mdx`, `developers/support.mdx`, `about/{mission,security-and-compliance,contact}.mdx`, `pricing.mdx`
 - Modify: `docs/sidebars.ts` (six new sidebar ids: product, solutions, resources, developers, about, pricing), `docs/src/components/DocsSubHeader/sections.ts` (same ids, same order), `docs/docusaurus.config.ts` (navbar: six doors + Demo CTA + GitHub; footer rebuild), `docs/src/pages/index.tsx` (front page: three-audience fork — rewrite copy, keep component techniques), `.github/workflows/docs-build.yml` (structure gate → `--strict`)
 
 **Interfaces:**
+
 - Produces: the six-door frame every Phase 3 task hangs pages on. Sidebar ids: `product`, `solutions`, `resources`, `developers`, `about`, `pricing` — Phase 3 tasks add doc ids to these lists.
 
 - [ ] **Step 1:** Park the old tree under `docs/records/site-2026-08/`.
@@ -146,10 +158,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 6: `mailwoman data` command group
 
 **Files:**
+
 - Create: `mailwoman/data-bundles.ts` (pure bundle→artifact logic), `mailwoman/commands/data/{pull,status}.tsx`, `mailwoman/test/data-bundles.test.ts`
 - Modify: `mailwoman/doctor/checks.ts` (fix hints point at `mailwoman data pull …`), `mailwoman/doctor/checks.test.ts`
 
 **Interfaces:**
+
 - Consumes: `readReleaseManifest`/`resolveShardPath` (`mailwoman/data-release.ts`), `dataRootPath`/`mailwomanDataRoot` (`@mailwoman/core/utils`), `sha/md5File` (`core/utils/hash.ts`), `swapDatabaseIntoPlace` (`core/utils/sealed-db.ts`), `APIClient` (`@mailwoman/core/api`) for the manifest fetch + downloads (binary path: `responseType: "arraybuffer"` streaming variant — follow `bdc/sdk/client.ts`; for multi-GB artifacts stream raw `fetch` to disk per the AGENTS.md file-transfer carve-out and say so in the header).
 - Produces: `mailwoman data pull <bundle…>` and `mailwoman data status`. Bundle registry: `BUNDLES: Record<string, DataBundle>` with `{name, description, artifacts: Array<{remotePath, localPath (data-root-relative), md5Sidecar: boolean, approxBytes}>}`. Tutorials reference bundles by these names: `candidate` (global admin candidate.db), `us` (address-points + interpolation shards), `fr`, `poi`, `timezone`. Enumerate the real remote paths from the R2 bucket (`rclone ls` with `RCLONE_S3_PUBLIC_*` from `.env`, or the public HTTPS manifest) before coding — do not invent paths.
 
@@ -163,10 +177,12 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 7: Drop-in cold-start truth
 
 **Files:**
+
 - Modify (as findings dictate): `photon/cli.ts`, `nominatim/cli.ts`, `libpostal/cli.ts`, their READMEs
 - Test: `mailwoman/test/dropin-cold-start.test.ts` (spawns each compiled CLI against a temp data root)
 
 **Interfaces:**
+
 - Consumes: Task 6's `data pull`.
 - Produces: each of the three serves starts cold from exactly the command sequence the docs will print, or exits with a doctor-grade message naming the `data pull` fix. The verified sequences (recorded in the test) are the contract Tasks 10–11 document.
 
@@ -178,17 +194,20 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 ### Task 8: Claude Code skill + `mailwoman skill install`
 
 **Files:**
+
 - Create: `mailwoman/skills/mailwoman/SKILL.md`, `mailwoman/commands/skill/install.tsx`
 - Modify: `mailwoman/package.json` (`files` += `skills/`)
 - Test: `mailwoman/test/skill-install.test.ts`
 
 **Interfaces:**
+
 - Produces: `mailwoman skill install [--dest <dir>]` copies the packaged skill into `./.claude/skills/mailwoman/`. The SKILL.md teaches an agent: parse/geocode entry points, `mailwoman doctor` first on any failure, `data pull` for missing artifacts, the component-tag vocabulary pointer, "confidence is calibrated — trust the number", and the bug-report recipe (`mailwoman parse --trace`).
 - [ ] Steps: failing test (run install in temp cwd → file exists, second run idempotent) → SKILL.md content (≤150 lines, imperative, references only shipped commands) → command → tests green → **Commit** `feat(cli): ship a Claude Code skill and its installer`.
 
 ### Task 9: Get-started trio verified cold + the 10-minute trial
 
 **Files:**
+
 - Modify: the three `developers/get-started/*.mdx` pages from Task 5
 - Create: `docs/scripts/verify-get-started.sh` (the cold-trial harness)
 
@@ -200,80 +219,92 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 **Files:** Create `developers/tutorials/{first-parse,first-geocode,geocode-a-csv,run-the-api-server}.mdx`; sidebar additions.
 
 Per-page briefs (each: colleague voice, starts-and-destinations opener, every command executed, output pasted from the real run, `verified-with` stamped):
-- *first-parse* — Node, `createRuntimePipeline` (the recommended entry — not `NeuralAddressClassifier`), one messy input, walk the `AddressTree` output, confidence meaning, link to schema reference.
-- *first-geocode* — `data pull candidate`, geocode the same address, coordinates + attribution, "how close is close enough" link.
-- *geocode-a-csv* — the operator's own example scenario; a 20-row sample CSV committed under `docs/static/examples/`; loop with the library, then the same via CLI; malformed-row handling shown from the real output.
-- *run-the-api-server* — `mailwoman serve`, health route, one curl parse + one geocode, OpenAPI pointer, where the drop-ins fit.
+
+- _first-parse_ — Node, `createRuntimePipeline` (the recommended entry — not `NeuralAddressClassifier`), one messy input, walk the `AddressTree` output, confidence meaning, link to schema reference.
+- _first-geocode_ — `data pull candidate`, geocode the same address, coordinates + attribution, "how close is close enough" link.
+- _geocode-a-csv_ — the operator's own example scenario; a 20-row sample CSV committed under `docs/static/examples/`; loop with the library, then the same via CLI; malformed-row handling shown from the real output.
+- _run-the-api-server_ — `mailwoman serve`, health route, one curl parse + one geocode, OpenAPI pointer, where the drop-ins fit.
 - [ ] Draft all four → run every example → Vale + de-slop pass → build green → **Commit** `docs(tutorials): parse, geocode, CSV, API server — executed`.
 
 ### Task 11: Tutorials 5–6 (drop-in swap · browser)
 
 **Files:** Create `developers/tutorials/{swap-in-for-nominatim,parse-in-the-browser}.mdx`.
-- *swap-in* — the Task 7 verified sequence: install, `data pull`, `mailwoman-photon serve` (photon primary; nominatim/libpostal variants as tabs), point an existing client (geopy example pointed at localhost — the survey's universal-Python-path recipe), caveats table (what the drop-in does/doesn't honor, from each README).
-- *browser* — `@mailwoman/neural-web` + WASM resolver against the published R2 artifacts; the demo page is the worked proof; cold-load budget stated as measured.
+
+- _swap-in_ — the Task 7 verified sequence: install, `data pull`, `mailwoman-photon serve` (photon primary; nominatim/libpostal variants as tabs), point an existing client (geopy example pointed at localhost — the survey's universal-Python-path recipe), caveats table (what the drop-in does/doesn't honor, from each README).
+- _browser_ — `@mailwoman/neural-web` + WASM resolver against the published R2 artifacts; the demo page is the worked proof; cold-load budget stated as measured.
 - [ ] Same pipeline as Task 10. **Commit** `docs(tutorials): drop-in swap and browser — executed`.
 
 ### Task 12: Tutorials 7–8 (US dataset build · full planet)
 
 **Files:** Create `developers/tutorials/{build-the-us-dataset,full-planet-build}.mdx`.
+
 - Content from the real command surface (`gazetteer build …`, `tiger`, `situs`, `wof` command groups — enumerate with `--help` and the poi-layer runbook now at `docs/engineering/`). Prerequisites (disk, RAM, source downloads), staged fixtures→smoke→full ladder, expected artifacts + `data status` verification, measured durations/footprints from the lab run (numbers in the page, per the measurement corollary).
-- [ ] Execute the US path end-to-end on the lab host (existing `$MAILWOMAN_DATA_ROOT` sources may seed the raw downloads; the *commands in the page* run as written). Planet page: execute the incremental deltas beyond US (document per-region loop); where a step is operator-gated (R2 creds), the page says so plainly.
+- [ ] Execute the US path end-to-end on the lab host (existing `$MAILWOMAN_DATA_ROOT` sources may seed the raw downloads; the _commands in the page_ run as written). Planet page: execute the incremental deltas beyond US (document per-region loop); where a step is operator-gated (R2 creds), the page says so plainly.
 - [ ] **Commit** `docs(tutorials): US dataset and planet builds — executed with measured numbers`.
 
 ### Task 13: How-to wave 1 (integration surface)
 
 **Files:** Create `developers/how-to/{batch-geocoding,validate-addresses,handle-messy-input,autocomplete,reverse-geocode,use-annotations,tune-confidence}.mdx`.
+
 - Briefs: batch (CPU note from the batch-path memory: session.run blocks the JS thread — worker pool pattern shown); validate (parse-confidence + codex checks, NOT deliverability claims); messy-input (normalize stage, lowercase register note); autocomplete (`autocomplete` command + library path); reverse (`reverse` + the WOFReverseGeocoder); annotations (`toOpenCage()`/`toNative()`); confidence (calibration story, thresholds by use).
 - [ ] Every snippet executed against compiled CLI/library. Vale + de-slop. **Commit** `docs(how-to): integration wave`.
 
 ### Task 14: How-to wave 2 (operations surface)
 
 **Files:** Create `developers/how-to/{keep-data-fresh,deploy-serverless,deploy-docker,mcp-server,claude-code-skill,record-matching,po-boxes-and-edge-kinds,report-a-bug}.mdx`.
+
 - Briefs: data-fresh (`data pull` re-run + releases.json semantics; "no cadence committed" phrasing); serverless (disk-resident SQLite story, cold-start sizes measured); docker (a verified Dockerfile under `docs/static/examples/`); mcp (`@mailwoman/mcp` stdio wiring into Claude Code/other agents); skill (Task 8 installer); record-matching (`registry` command walk on a 20-row messy sample); po-boxes (kind-classifier behavior, what resolves vs what can't); report-a-bug (`parse --trace`, what a good issue contains).
 - [ ] Same pipeline. **Commit** `docs(how-to): operations wave`.
 
 ### Task 15: Reference door
 
 **Files:** Create `developers/reference/{library-api,cli,http-apis,component-tags,packages,runtime-flags,locales-and-tiers,footprints}.mdx`; Create `docs/scripts/generate-cli-reference.ts`.
-- *cli* is generated: walk `mailwoman/commands/**` Pastel modules (they export `options` zod schemas + descriptions), emit MDX tables; wire into `prebuild` beside the OpenAPI emit. `source-of-truth: generated — docs/scripts/generate-cli-reference.ts`.
-- *http-apis* wraps the four existing OpenAPI emits. *component-tags* renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the contract; the public page derives and links). *packages* is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). *runtime-flags* from the SCOPE flag register. *locales-and-tiers* states tier-1 locales + eval gates. *footprints* carries the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
+
+- _cli_ is generated: walk `mailwoman/commands/**` Pastel modules (they export `options` zod schemas + descriptions), emit MDX tables; wire into `prebuild` beside the OpenAPI emit. `source-of-truth: generated — docs/scripts/generate-cli-reference.ts`.
+- _http-apis_ wraps the four existing OpenAPI emits. _component-tags_ renders from the schema source (`docs/engineering/reference/SCHEMA.mdx` stays the contract; the public page derives and links). _packages_ is the curated 40-workspace table (from AGENTS.md, consumer-relevant subset). _runtime-flags_ from the SCOPE flag register. _locales-and-tiers_ states tier-1 locales + eval gates. _footprints_ carries the measured artifact sizes (30.5 MB model etc. — re-measure at head, don't copy).
 - Controlled register throughout; STE100 rules; no narrative.
 - [ ] Generator with a vitest snapshot test → pages → build → **Commit** `docs(reference): the eight contracts, CLI generated`.
 
 ### Task 16: Knowledge base — Postal systems shelf
 
 **Files:** Create `developers/knowledge-base/postal/{what-is-an-address,postcodes-and-zip-codes,how-mail-gets-delivered,addressing-around-the-world,falsehoods-about-addresses,two-addresses-one-building,po-boxes-and-alternatives}.mdx`.
+
 - Mine `docs/records/site-2026-08/understanding/` (the-problem, falsehoods) — the material is strong; the rewrite tightens, de-slops, updates examples, merges the eight falsehood pages into one page with sections (the best-of decision).
 - [ ] Draft → Vale/de-slop → build → **Commit** `docs(knowledge-base): postal systems shelf`.
 
 ### Task 17: Knowledge base — Geocoding shelf
 
 **Files:** Create `developers/knowledge-base/geocoding/{what-geocoding-is,the-two-architectures,gazetteers,how-close-is-close-enough,the-landscape,why-addresses-are-hard}.mdx`.
-- *the-two-architectures* is the flagship: search-engine-with-a-map vs understand-then-look-up, written plain enough to read aloud; RAM vs disk table with sourced numbers (each engine's own docs, dated citations).
+
+- _the-two-architectures_ is the flagship: search-engine-with-a-map vs understand-then-look-up, written plain enough to read aloud; RAM vs disk table with sourced numbers (each engine's own docs, dated citations).
 - [ ] Same pipeline. **Commit** `docs(knowledge-base): geocoding shelf`.
 
 ### Task 18: Knowledge base — Address intelligence shelf
 
 **Files:** Create `developers/knowledge-base/address-intelligence/{how-a-model-reads-an-address,tokens-and-labels,the-gazetteer-prior,decoding-and-viterbi,calibration-and-confidence,training-and-the-corpus,what-the-model-cannot-do}.mdx`.
+
 - Analog-first rule binds hardest here: every mechanism enters through its rule-world analog (gazetteer lookup → FST prior; hand-written pattern → learned emission; tie-break heuristics → Viterbi). Mine `records/site-2026-08/concepts/` parsing-internals set. Verify every architectural claim against `neural/` at head (CRF is CE-only — no learned transitions; fr-fr ships en-us base weights; check current truth before writing, both have memory receipts).
 - [ ] Same pipeline. **Commit** `docs(knowledge-base): address intelligence shelf`.
 
 ### Task 19: Product door
 
 **Files:** Create `product/{overview,capabilities,deployment-options,drop-in-replacements,data-products}.mdx`.
+
 - ≤600 words each; every page hands off to a tutorial/reference; landing role; numbers earned (footprints from Task 15's measurements). Data-products rewrites `records/site-2026-08/licensing/data-products.md` catalog to consumer shape; cadence phrasing per register rule.
 - [ ] Same pipeline. **Commit** `docs(product): the five landing pages`.
 
 ### Task 20: Solutions door
 
 **Files:** Create `solutions/{cut-the-per-request-bill,own-what-you-look-up,keep-addresses-inside,fleet-reverse-geocoding,resolve-a-messy-file}.mdx`.
+
 - The manager register: problem → what changes → proof link → try-it + pricing links (the same two, every page). The storage-rights page draws licence contrasts ONLY from published terms with dated citations, neutrally framed. Price anchors only where publicly published.
 - [ ] Same pipeline. **Commit** `docs(solutions): five pains, five pages`.
 
 ### Task 21: Resources — benchmarks + compare
 
 **Files:** Create `resources/benchmarks/{index,france-ban,belgium-panel,outdoor-poi,reading-our-numbers}.mdx`, `resources/compare/{google-maps,verification-vendors,self-hosted-nominatim,pelias-and-libpostal}.mdx`.
-- Benchmarks become public evidence pages: method, n, both arms, the losses published (street-level precision; the Belgian reverse defect + its fix arc), harness links (commit the harnesses under `docs/static/benchmarks/` or link the repo paths), circularity caveats kept ("the BAN tier IS BAN"). Source material is provided by the controller at dispatch time; committed pages carry only public methods, results, and harnesses. *reading-our-numbers* explains resolve-% vs precision traps.
+
+- Benchmarks become public evidence pages: method, n, both arms, the losses published (street-level precision; the Belgian reverse defect + its fix arc), harness links (commit the harnesses under `docs/static/benchmarks/` or link the repo paths), circularity caveats kept ("the BAN tier IS BAN"). Source material is provided by the controller at dispatch time; committed pages carry only public methods, results, and harnesses. _reading-our-numbers_ explains resolve-% vs precision traps.
 - Compare pages: factual tables, dated citations, each ends "run it yourself" → benchmark harness. Kind register throughout.
 - Gate: no internal workflow references, no unsourced figures.
 - [ ] Same pipeline. **Commit** `docs(resources): re-runnable benchmarks and comparisons`.
@@ -281,9 +312,10 @@ Per-page briefs (each: colleague voice, starts-and-destinations opener, every co
 ### Task 22: About door + Pricing final
 
 **Files:** Finalize `about/{mission,security-and-compliance,contact}.mdx`, `pricing.mdx` (seeded in Task 5).
-- *mission* — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat licence, funded-by-customers posture. Register rules absolute here.
-- *security-and-compliance* — self-host boundary, what leaves the machine (nothing), SBOM, data provenance (ODbL/attribution posture), licence tiers link.
-- *pricing* — the ratified three tiers ($0 AGPL / $250 mo · $2,400 yr Pro under the ~250-staff·$10M fence / Enterprise from $15k), grandfathering commitment, flat-price rationale sentence ("costs us the same"), no cadence commitment.
+
+- _mission_ — the public open-strategy: commodify the layer, the operator's VS Code argument, why AGPL + flat licence, funded-by-customers posture. Register rules absolute here.
+- _security-and-compliance_ — self-host boundary, what leaves the machine (nothing), SBOM, data provenance (ODbL/attribution posture), licence tiers link.
+- _pricing_ — the ratified three tiers ($0 AGPL / $250 mo · $2,400 yr Pro under the ~250-staff·$10M fence / Enterprise from $15k), grandfathering commitment, flat-price rationale sentence ("costs us the same"), no cadence commitment.
 - [ ] Same pipeline. **Commit** `docs(about): mission, trust, pricing`.
 
 ### Task 23: Full-site audit

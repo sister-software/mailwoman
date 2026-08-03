@@ -27,17 +27,21 @@ Mailwoman   Product | Solutions | Resources | Developers | About | Pricing   [De
 ~85 maintained pages replace ~400.
 
 ### Product (5)
+
 Overview (one engine, one artifact) · Capabilities · Deployment options (library / server / browser / serverless / MCP) · Drop-in replacements · Data products. Landing pages, ≤ ~600 words, each hands off to a tutorial or reference page.
 
 ### Solutions (5) — the manager door, organized by pain
+
 Cut the per-request bill · Own what you look up (storage rights) · Keep addresses inside your infrastructure · Fleet/telemetry reverse geocoding at volume · Resolve a messy customer file. Every page ends with the same two links: try it (tutorial) and what it costs (pricing).
 
 ### Resources (~10)
+
 - **Field notes** — the existing blog, unchanged and not rewritten (dated record).
 - **Benchmarks (~5)** — fresh evidence pages for our benchmark results: France/BAN, Belgium panel, outdoor/POI panel, plus the published losses. Each page links its committed harness; the governing sentence is "our numbers ship with the code to re-run them." Source material is provided at drafting time; committed pages carry only public methods, results, and harnesses.
 - **Compare (~4)** — vs Google · vs Loqate/verification vendors · vs self-hosted Nominatim/Photon · vs Pelias/libpostal. Kind and factual; register rules below.
 
 ### Developers (~60 — the bulk)
+
 - **Get started (3):** what Mailwoman is (for a developer) · install + first parse · the 10-minute trial.
 - **Tutorials (8):** first parse → first geocode → CSV geocode → API server → drop-in swap → browser build → US dataset build → full planet build. Each carries `verified-with:` and is executed before shipping.
 - **How-to guides (~15):** batch · record matching · validation · data freshness · serverless · Docker · MCP from an agent · Claude Code skill · messy input · PO boxes and edge kinds · autocomplete · reverse · annotations · confidence tuning · reporting a bug well.
@@ -46,9 +50,11 @@ Cut the per-request bill · Own what you look up (storage rights) · Keep addres
 - **Plus:** Status (what works today) · community and support · changelog (generated from releases).
 
 ### About (3)
+
 Mission and open strategy (public-safe register) · security and compliance (privacy + SBOM + provenance + licensing rolled up) · contact.
 
 ### Deliberately absent
+
 Case studies, webinars, whitepapers, customers/adopters, jobs. No faking the shape of a bigger organization; the slots exist to grow into.
 
 ## Writing system (the house style)
@@ -71,7 +77,7 @@ Working hypothesis the derivation tests (not a foregone conclusion):
 - Competitor prose is kind and factual; prices and claims carry dated public citations or do not appear.
 - Business and personal details that are not already published stay unpublished.
 - Accuracy claims ship with re-runnable harnesses; losses are published next to wins.
-- Data-refresh cadence: docs state the committed truth, currently *no cadence committed*.
+- Data-refresh cadence: docs state the committed truth, currently _no cadence committed_.
 
 ## Mechanics
 
