@@ -53,6 +53,7 @@
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.3.4",
 		"maplibre-gl": "^5.24.0",
+		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2",
 		"prism-react-renderer": "^2.4.1",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",

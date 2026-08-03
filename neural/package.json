@@ -106,8 +106,22 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
-		"@mailwoman/sentencepiece-wasm": "workspace:*",
+		"@mailwoman/sentencepiece-wasm": "workspace:*"
+	},
+	"devDependencies": {
 		"onnxruntime-node": "^1.26.0",
 		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
+	},
+	"peerDependencies": {
+		"onnxruntime-node": "^1.26.0",
+		"onnxruntime-web": "*"
+	},
+	"peerDependenciesMeta": {
+		"onnxruntime-node": {
+			"optional": true
+		},
+		"onnxruntime-web": {
+			"optional": true
+		}
 	}
 }
