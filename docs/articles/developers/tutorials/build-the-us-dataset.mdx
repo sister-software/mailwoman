@@ -20,9 +20,10 @@ prove the whole ladder. Step 9 gives the numbers for the other 49.
 
 Read the first two before you start anything. They are the ones that stop a run partway through.
 
-- **9 GB of free disk for Vermont.** The data root measured 8.4 GB at the end of this page: a 6.93 GB
-  national Overture parquet you need even for one state (the ingest has no per-state mode), 205 MB of
+- **9 GB of free disk for Vermont.** The parts, in decimal GB as your disk vendor counts them: a 6.93 GB
+  national Overture parquet you need even for one state (the ingest has no per-state mode), 215 MB of
   Census TIGER archives for Vermont's 14 counties, 140 MB of finished shards, and a 1.65 GB gazetteer.
+  That sums to 8.94 GB, which `du -sh` will report back to you as `8.4G` because `du` counts in GiB.
   Step 9 gives the national figures.
 - **8 GB of free RAM.** The ingest peaked at 7.45 GB resident (`/usr/bin/time -v`, maximum resident set
   size 7,445,032 KB). Everything after it stays under 500 MB. If you have less, the ingest is the step
@@ -205,7 +206,7 @@ Building VT…
   Wall clock:      6.0s
 ```
 
-17 s end to end — 14 county archives downloaded and unpacked to 205 MB, then 6.0 s of build — for a
+17 s end to end — 14 county archives downloaded and unpacked to 215 MB, then 6.0 s of build — for a
 58.5 MB shard holding 137,256 segment-sides. The command downloads its own TIGER data, so there is nothing
 to fetch first.
 
@@ -395,9 +396,9 @@ these same two commands, read off the bundle registry the CLI ships:
 Vermont's 140 MB is a three-hundredth of that, and the spread between states is wide: California's rooftop
 shard is 3.47 GB and Alaska's is 78.6 MB. Two things scale and one does not. The parquet is a fixed
 6.93 GB whatever you build from it. Shard build time scales with rows, so plan against the population of
-the states you want rather than their count. And the TIGER working set scales with counties — 205 MB
-bought Vermont's 14, and the national run walks 3,143 — so give the interpolation step room beyond the
-finished 11.0 GB.
+the states you want rather than their count. And the TIGER working set scales with counties — 215 MB
+bought Vermont's 14, against the 3,144 in the ranking — so give the interpolation step room well beyond
+the finished 11.0 GB.
 
 Two states do not come out of the Overture path at all, and this is the part to check before you promise
 coverage:

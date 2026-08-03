@@ -20,18 +20,24 @@ terms of data.
 
 ## Prerequisites
 
+**This page forks partway through, and it is a packaging fork rather than a preference.** Steps 1 and 2
+run entirely from npm. Step 3 does not: `@mailwoman/osm` is not published to npm, so that section needs a
+repository checkout. Each requirement below says which half it belongs to.
+
 - **About 2 GB of free disk** for the path below: 1.65 GB of gazetteer and under 100 MB of everything
   else. Adding France's whole national register instead of three départements is 6.95 GB; adding the US
   is 41.3 GB. Check the number for the country you want before you start it.
-- **GDAL on your `PATH`** for the OpenStreetMap step — `ogr2ogr --version` should answer. Nothing else on
-  this page needs it.
-- **The CLI**, as on every page here:
+- **Steps 1–2, from npm.** The CLI, plus the French register's builder:
 
   ```bash
   npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
-  npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite
+  npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite @mailwoman/ban
   ```
 
+- **Step 3, from a checkout.** `@mailwoman/osm` has no npm package, so `npm install @mailwoman/osm`
+  answers `E404`. Step 3 restates this where you hit it, along with the clone and build it needs.
+- **GDAL on your `PATH`**, for step 3 only — `ogr2ogr --version` should answer. Steps 1 and 2 do not
+  touch it.
 - **A data root**, and the willingness to keep it:
 
   ```bash
@@ -130,7 +136,7 @@ done
 7.3 MB of gzipped CSV. Then build:
 
 ```bash
-node ban/out/scripts/build-address-point-shard.js \
+node node_modules/@mailwoman/ban/out/scripts/build-address-point-shard.js \
   --csv-dir "$MAILWOMAN_DATA_ROOT/ban/sources" --depts 48,2A,05 \
   --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db"
 ```
@@ -151,22 +157,52 @@ node ban/out/scripts/build-address-point-shard.js \
       source                           : ban:fr  release=2026-08-03  license=Licence Ouverte / Open Licence 2.0 (Etalab)
 ```
 
-4.71 s, 200,406 points, and **zero rows skipped**: every row in these three départements carries both a
+6.84 s, 200,406 points, and **zero rows skipped**: every row in these three départements carries both a
 street and a number, which is what a government register buys you and what step 3 does not have. The build
 streams the CSV instead of loading it, so the national set is the same command with a longer file list —
 26 million rows, and 6.95 GB in the published shard.
 
-This is a workspace script, not a `mailwoman` subcommand. There is no `mailwoman ban` group: the
-fetch is a `curl` against a documented URL pattern, and the build is the script above.
+Two things about that invocation. It is a script inside the installed package, not a `mailwoman`
+subcommand — there is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
+and the build is the script above. And the path is a `node_modules` path because `@mailwoman/ban` is on
+npm; if you are working from a checkout instead, the same file is at
+`ban/out/scripts/build-address-point-shard.js` after `yarn compile`.
 
 ## 3. Build the same ground from OpenStreetMap
 
-For a country with no open register, OpenStreetMap is the fallback, and it comes with a licence
-consequence that belongs above the command, not below it. **OSM is ODbL, which is share-alike on a
-derived database, and a shard built here is a derived database.** Mailwoman publishes no OSM shard to npm,
-R2 or the demo, and will not until counsel has reviewed how share-alike applies to serving a coordinate
-from one. The builder ships; the data does not. If you build one, the obligation is yours and it rides on
-the file.
+For a country with no open register, OpenStreetMap is the fallback. Two constraints come before the
+command, because both of them stop the step rather than complicate it.
+
+**The licence.** OSM is ODbL, which is share-alike on a derived database, and a shard built here is a
+derived database. Mailwoman publishes no OSM shard to npm, R2 or the demo, and will not until counsel has
+reviewed how share-alike applies to serving a coordinate from one. If you build one, the obligation is
+yours and it rides on the file.
+
+**The package.** The same review keeps the _builder_ off npm too, so this step cannot run from an install
+the way step 2 did:
+
+```bash
+npm install @mailwoman/osm
+```
+
+```
+npm error code E404
+npm error 404 Not Found - GET https://registry.npmjs.org/@mailwoman%2fosm - Not found
+npm error 404
+npm error 404  The requested resource '@mailwoman/osm@*' could not be found or you do not have permission to access it.
+```
+
+That is the state today, with no date attached to it — the package is absent from the registry while the
+licence review is open, and this page will not guess when that changes. Until it does, the builder comes
+from a checkout:
+
+```bash
+git clone https://github.com/sister-software/mailwoman.git
+cd mailwoman && yarn install && yarn compile
+```
+
+The two `node osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
+back to the npm CLI and does not care where the shard was built.
 
 Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. Adding
 a fourth means registering the country and writing its branch in the street normalizer in the same commit,
@@ -278,7 +314,10 @@ rather than merging them into one file.
 Absence is a claim, so here are the ones worth stating outright.
 
 **Great Britain has no open address source in this stack.** Overture's addresses theme carries no GB rows
-at all, which you can confirm in about two minutes:
+at all, which you can confirm in about two minutes. Pass a release that is currently in Overture's bucket
+rather than the CLI's built-in default, which has aged out of it — the
+[release pin section](./build-the-us-dataset.mdx#the-overture-release-pin-before-it-bites-you) on the US
+page has the one-line command that lists what is live. `2026-06-17.0` was live on 2026-08-03:
 
 ```bash
 npx mailwoman gazetteer overture-ingest --countries GB --release 2026-06-17.0
