@@ -220,9 +220,13 @@ Each counts `unparseable` and drops the row. Order matters; apply in this order,
 
    Use `canonicalizeOrganizationName` from `@mailwoman/record` (already a dependency, already used by `edgar-filings.ts`) for designation detection rather than hand-rolling a token list: it returns a `designations` array, non-empty exactly when the value carries one. Verified against these values on 2026-08-03 — `"IDT Payment Services, Inc*. (DE)"` → `["inc"]`, `"South Carolina"` / `"Delaware"` / `"British Columbia, Canada"` / `"England and Wales"` / `"DE"` → `[]`.
 
-- [ ] **Step 6: Fall through to the line/list strategies when the tables yield nothing**
+- [ ] **Step 6: Reconcile the blank-table fallthrough Task 2 already added**
 
-`parseExhibit21` currently commits to the table strategy the moment a `<table>` exists. `shentel-2025.htm` has two tables whose every cell is blank and states its subsidiaries as block text outside them. When the table strategy produces zero subsidiaries, run the list and plain-text strategies and take their result instead; keep the table strategy's `unparseable` count only if the fallback also produces nothing.
+`parseExhibit21` used to commit to the table strategy the moment a `<table>` existed, so `shentel-2025.htm` — two entirely-blank decorative tables, with the real list as block text outside them — returned nothing. Task 2 added `isEntirelyBlankTable`: when every cell of every row is blank, `parseExhibit21` proceeds as if no table were present.
+
+**An earlier draft of this plan specified the broader rule "when the table strategy produces zero subsidiaries, fall through and take the fallback's result", and that rule is wrong.** It also fires on `exhibit21-mangled.html`, whose blank `<td></td>` beside a real `<td>Delaware</td>` becomes an isolated `"Delaware"` line once tags are stripped — which the line strategy accepts as a name-only subsidiary, fabricating `{name: "Delaware"}` and breaking the currently-green "deliberately mangled fixture yields ZERO subsidiaries" test.
+
+So: keep `isEntirelyBlankTable` as the condition. Read it before you write anything here — it may already be correct for every fixture, in which case this step is "confirm and leave alone", and say so in your report. Widen it only if a vendored fixture forces you to, and only in a way that still leaves `exhibit21-mangled.html` at zero subsidiaries.
 
 - [ ] **Step 7: Run the suites**
 
