@@ -39,8 +39,8 @@ export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
 	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
 	externalDocs: {
-		description: "Switching from Nominatim",
-		url: "https://mailwoman.sister.software/docs/concepts/switching-from-nominatim",
+		description: "What Mailwoman is",
+		url: "https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is",
 	},
 	servers: [
 		{

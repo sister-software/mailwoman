@@ -94,7 +94,11 @@ function wofPaths(): string[] {
  * drop-ins' `false`.
  */
 function buildPreflightMessage(): string {
-	return buildNoGazetteerMessage({ dataRoot: DATA_ROOT, docsPath: "/docs", requiresExplicitEnv: true })
+	return buildNoGazetteerMessage({
+		dataRoot: DATA_ROOT,
+		docsPath: "/docs/developers/get-started/ten-minute-trial",
+		requiresExplicitEnv: true,
+	})
 }
 
 /**

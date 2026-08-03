@@ -143,12 +143,13 @@ async function serve(): Promise<void> {
 		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
 
 	// #1009: fail FRIENDLY before the resolver's internal shard error — same message shape as
-	// @mailwoman/photon's pre-flight (kept in lockstep; docs/switching pages are the maintained pointer).
+	// @mailwoman/photon's pre-flight (kept in lockstep; points at the ten-minute trial until the
+	// switching pages land — docs-reorg wave 2).
 	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			buildNoGazetteerMessage({
 				dataRoot: mailwomanDataRoot(),
-				docsPath: "/docs/switching/nominatim",
+				docsPath: "/docs/developers/get-started/ten-minute-trial",
 				requiresExplicitEnv: false,
 			})
 		)

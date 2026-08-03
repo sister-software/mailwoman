@@ -100,13 +100,13 @@ async function serve(): Promise<void> {
 
 	// #1009: fail FRIENDLY before the resolver throws its internal "resolveShards: at least one shard
 	// is required" — a stranger's first `npx @mailwoman/photon serve` must say exactly what data is
-	// missing and the one command that fixes it. Kept in sync with the docs' hosted-artifact layout
-	// (mailwoman.sister.software/docs/switching/photon — the maintained pointer).
+	// missing and the one command that fixes it. Points at the ten-minute trial until the switching
+	// pages land (docs-reorg wave 2).
 	if (!candidateDb && !wofPaths.length) {
 		console.error(
 			buildNoGazetteerMessage({
 				dataRoot: mailwomanDataRoot(),
-				docsPath: "/docs/switching/photon",
+				docsPath: "/docs/developers/get-started/ten-minute-trial",
 				requiresExplicitEnv: false,
 			})
 		)

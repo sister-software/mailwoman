@@ -18,8 +18,9 @@ Before debugging anything else:
 npx mailwoman doctor
 ```
 
-It checks model weights, the Node/ONNX runtime, the data root, the admin gazetteer, and the POI
-layer, and prints the one command that closes each gap. Exit code 0 means the two CORE checks
+It checks seven things: model weights, the Node runtime, the ONNX runtime, the data root, the admin
+gazetteer, the POI layer, and any locale overlays (e.g. fr-fr), and prints the one command that
+closes each gap. Exit code 0 means the two CORE checks
 (weights + runtime) passed — parsing works even with every data layer missing. A red `✗` on a data
 layer is a reported gap with a `fix:` line, not a failure; read that line before guessing at a fix.
 `--json` emits the same report as `{ checks: [...], exitCode }` for scripting.

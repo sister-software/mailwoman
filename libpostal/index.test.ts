@@ -262,7 +262,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	const body = await res.text()
 	expect(body).toContain("@mailwoman/libpostal")
 	expect(body).toContain("/parse?query=")
-	expect(body).toContain("switching-from-libpostal")
+	expect(body).toContain("what-mailwoman-is") // docs pointer
 })
 
 test("GET /openapi.json serves the emitted 3.1 document", async () => {
