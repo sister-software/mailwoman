@@ -84,39 +84,38 @@ const config = createOxlintConfig({
 // Mailwoman-specific rule overrides, merged onto the shared base. The factory's `overrides` option
 // shallow-spreads, so merge `rules` explicitly to avoid clobbering the base rule set.
 /**
- * Files re-exported by `neural/browser.ts`, the browser-safe entry `@mailwoman/neural-web` and the docs demo consume.
+ * `@mailwoman/neural` is bundled for a browser whole: the demo reaches its web loader, which reaches the classifier and
+ * every soft-feature channel behind it. So the browser-reachable set is the package MINUS its Node tier, stated that
+ * way round because the Node tier is the short, stable list — an enumeration of the browser half needs an edit every
+ * time a module is added, and gets one only if its author remembered this file.
  *
- * Everything reachable from that entry is bundled for a browser, so a VALUE import of a Node-only module here breaks
- * the client bundle — webpack follows it eagerly and chokes on `onnxruntime-node`'s binary assets. `import type` is
- * erased before the bundler sees it and stays legal; `loadFromWeights` reaches the Node modules through `webpackIgnore`
- * dynamic imports for the same reason.
+ * A VALUE import of a Node-only module from here breaks the client bundle: webpack follows it eagerly and chokes on
+ * `onnxruntime-node`'s binary assets. `import type` is erased before the bundler sees it and stays legal.
  *
  * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle. Only the
  * separate docs-build workflow does, which is minutes later and in another run.
  */
-const BROWSER_REACHABLE_NEURAL_FILES = [
-	"neural/browser.ts",
-	"neural/classifier.ts",
-	"neural/labels.ts",
-	"neural/tokenizer.ts",
-	"neural/anchor-inference.ts",
-	"neural/postcode-binary-resolver.ts",
-	"neural/gazetteer-inference.ts",
-	"neural/country-inference.ts",
-	"neural/pair-index-resolver.ts",
-	"neural/placetype-pair-prior.ts",
-	"neural/soft-features.ts",
-	"neural/web-onnx-runner.ts",
-	"neural/web-loader.ts",
+const BROWSER_REACHABLE_NEURAL_FILES = ["neural/*.ts"]
+
+/**
+ * The Node tier, exempt from the rule below. `index.ts` is the Node entry and re-exports the other three as values;
+ * `test/**` and the nested directories fall outside the single-segment glob above on their own.
+ */
+const NODE_TIER_NEURAL_FILES = [
+	"neural/index.ts",
+	"neural/onnx-runner.ts",
+	"neural/scorer.ts",
+	"neural/weights.ts",
+	"neural/*.test.ts",
+	"neural/vitest.config.ts",
 ]
 
 /**
- * Node-only modules those files must not pull into the bundle.
+ * Node-only modules the browser tier must not pull into the bundle.
  *
- * The `node:*` pattern is the load-bearing entry, and the named modules are conveniences on top of it. An enumeration
- * alone only catches what its author thought of: this list first shipped without `@mailwoman/core/env`, whose `$public`
- * reaches `node:util`, and the omission broke the docs bundle exactly as a listed module would have. Restricting the
- * BUILTINS catches any module that reaches them, named or not.
+ * `./onnx-runner.ts` earns its place twice over now that `@mailwoman/neural/onnx-runner` carries a `browser` condition:
+ * export conditions do not apply to relative specifiers, so the package-name form is safe and the relative one silently
+ * is not. Naming the relative path is what makes that difference visible at the point of the mistake.
  */
 const NODE_ONLY_NEURAL_MODULES = ["./onnx-runner.ts", "./weights.ts", "./scorer.ts", "onnxruntime-node"]
 
@@ -132,6 +131,7 @@ export default {
 		...((config.overrides as unknown[] | undefined) ?? []),
 		{
 			files: BROWSER_REACHABLE_NEURAL_FILES,
+			excludeFiles: NODE_TIER_NEURAL_FILES,
 			rules: {
 				"typescript/no-restricted-imports": [
 					"error",
@@ -141,7 +141,7 @@ export default {
 								group: [NODE_BUILTIN_PATTERN],
 								allowTypeImports: true,
 								message:
-									"A Node builtin cannot be imported from a file reachable from neural/browser.ts — the bundler " +
+									"A Node builtin cannot be imported from the browser tier of @mailwoman/neural — the bundler " +
 									"follows it into the client graph. Use `import type` (erased), or reach it through an " +
 									"`import(/* webpackIgnore: true */ …)` inside the Node-only code path.",
 							},
@@ -150,7 +150,7 @@ export default {
 							name,
 							allowTypeImports: true,
 							message:
-								`${name} is Node-only and this file is reachable from neural/browser.ts. A value import ` +
+								`${name} is Node-only and this file is in the browser tier of @mailwoman/neural. A value import ` +
 								`pulls it into the client bundle. Use \`import type\` (erased), or reach it through a ` +
 								`\`import(/* webpackIgnore: true */ …)\` inside the Node-only code path.`,
 						})),
