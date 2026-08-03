@@ -1,0 +1,21 @@
+customer_id,company,street,city,state,postal_code
+C-1001,Harbor & Vine Catering,1275 Pennsylvania Ave NW,Washington,DC,20004
+C-1002,Beacon Ridge Analytics,800 F St NW,Washington,DC,20004
+C-1003,Tidewater Print Shop,1000 Jefferson Dr SW,Washington,DC,20560
+C-1004,Pemberton Signal Works,620 H St NE,Washington,DC,20002
+C-1005,Ashgrove Textiles,11 W 53rd St,New York,NY,10019
+C-1006,Halyard Supply Co,89 E 42nd St,New York,NY,10017
+C-1007,"Rowan, Fitch & Co.",30 Rockefeller Plaza,New York,NY,10112
+C-1008,Sable Creek Design,1071 5th Ave,New York,NY,10128
+C-1009,Northgate Freight,233 S Wacker Dr,Chicago,IL,60606
+C-1010,Cedarline Robotics,111 S Michigan Ave,Chicago,IL,60603
+C-1011,Quarry Lane Foods,1901 W Madison St,Chicago,IL,60612
+C-1012,Blue Heron Optical,875 N Michigan Ave,Chicago,IL,60611
+C-1013,Marlowe Instruments,151 3rd St,San Francisco,CA,94103
+C-1014,Foghorn Coffee Roasters,900 North Point St,San Francisco,CA,94109
+C-1015,Silverback Studios,6801 Hollywood Blvd,Los Angeles,CA,90028
+C-1016,Palmetto Rail Systems,5905 Wilshire Blvd,Los Angeles,CA,90036
+C-1017,Wrenfield Ceramics,465 Huntington Ave,Boston,MA,02115
+C-1018,Anchorline Marine,1 Science Park,Boston,MA,02114
+C-1019,Kestrel Microsystems,77 Massachusetts Ave,Cambridge,MA,02139
+C-1020,Duckworth Provisioning,24 Jersey St,Boston,MA,02215

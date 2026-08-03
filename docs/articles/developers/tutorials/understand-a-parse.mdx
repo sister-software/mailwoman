@@ -1,0 +1,279 @@
+---
+title: Read everything a parse returns
+description: Walk the whole AddressTree — spans, confidence, containment — then use --debug and --candidates to see how the pipeline got there.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Read everything a parse returns
+
+[Install and first parse](../get-started/install-and-first-parse.mdx) prints a tree of tags, values and
+confidence scores, and stops there. Each of those nodes carries more than it prints, and the pipeline
+that produced them kept a record. By the end of this page you'll be reading the character span behind
+every component, what the confidence number measures and what moves it, the stage verdicts behind a
+surprising tag, and the places the resolver ranked second and third. About fifteen minutes.
+
+## Prerequisites
+
+- **The first-parse install.** `mailwoman`, `@mailwoman/neural` and `@mailwoman/neural-weights-en-us`,
+  in an ESM project on Node.js 24.18.0 or later. The full reasoning is in
+  [Install and first parse](../get-started/install-and-first-parse.mdx#prerequisites).
+- **`jq`, for steps 4 and 5.** Both pipe CLI output through it to cut the fences down to the part under
+  discussion. Drop the pipe if you'd rather read the whole object.
+- **`candidate.db` on disk, for step 5 only.** Steps 1 through 4 need no gazetteer. Step 5 resolves place
+  names against one, so run [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it)
+  first if you haven't; that page's download is the same file this one reuses.
+
+## 1. Print every node
+
+Save this as `tree.mjs`. It parses two addresses — the second is the first with the region and the
+postcode removed — and prints every node in the tree rather than the six-key projection.
+
+```js
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+function walk(raw, node, depth = 0) {
+	const label = "  ".repeat(depth) + node.tag
+	const span = `[${node.start}, ${node.end})`
+	const slice = JSON.stringify(raw.slice(node.start, node.end))
+
+	console.log(`${label.padEnd(22)} ${span.padEnd(10)} ${slice.padEnd(9)} conf ${node.confidence.toFixed(3)}`)
+
+	for (const child of node.children) walk(raw, child, depth + 1)
+}
+
+for (const address of ["1 madison ave madison wi 53703", "1 madison ave madison"]) {
+	const result = await parse(address)
+
+	console.log("input:    ", JSON.stringify(result.input))
+	console.log("tree.raw: ", JSON.stringify(result.tree.raw))
+
+	for (const root of result.tree.roots) walk(result.tree.raw, root)
+
+	console.log()
+}
+```
+
+```bash
+node tree.mjs
+```
+
+```
+input:     "1 madison ave madison wi 53703"
+tree.raw:  "1 Madison Ave Madison WI 53703"
+region                 [22, 24)   "WI"      conf 0.908
+  locality             [14, 21)   "Madison" conf 0.934
+    street             [2, 9)     "Madison" conf 0.920
+      house_number     [0, 1)     "1"       conf 0.852
+      street_suffix    [10, 13)   "Ave"     conf 0.924
+    postcode           [25, 30)   "53703"   conf 0.903
+
+input:     "1 madison ave madison"
+tree.raw:  "1 Madison Ave Madison"
+locality               [14, 21)   "Madison" conf 0.793
+  street               [2, 9)     "Madison" conf 0.778
+    house_number       [0, 1)     "1"       conf 0.844
+    street_suffix      [10, 13)   "Ave"     conf 0.681
+```
+
+The word `madison` appears twice and carries a different tag each time. That is the case a flat record
+handles by luck: two keys happen to differ, so nothing collides. The next section is about the field that
+makes it work by construction.
+
+## 2. Read the spans
+
+Every node carries `start` and `end`. They are character offsets, half-open, and they index
+`tree.raw` — the repaired string — rather than the string you passed in. In the first parse the two
+`Madison` spans are `[2, 9)` and `[14, 21)`, which is what tells you the street one came first.
+
+`tree.raw` and `result.input` are separate fields for exactly this reason. The repair here is casing
+only, so the two strings are the same length and an offset taken against either lands in the same place.
+That is a property of this input, not a guarantee: slice `tree.raw`, and keep `result.input` when you
+need the characters the user typed.
+
+Spans are what you build a highlighted input box on, what you use to attribute a correction back to a
+position, and what you check when a component looks right but came from the wrong part of the string.
+The tag vocabulary each node draws from is fixed and documented in
+[`SCHEMA.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx),
+which is the contract for the `ComponentTag` union.
+
+## 3. Read the confidence
+
+A node's `confidence` is the mean of the softmax scores the model gave the tokens inside that node's
+span. It is not a probability that the tag is correct, and
+[Install and first parse](../get-started/install-and-first-parse.mdx#4-read-the-tree) covers the
+calibration fit that closes the gap between the two readings.
+
+What the second parse shows is what the number responds to. Dropping `wi 53703` costs the street two
+tokens of context, and every score in the tree falls: locality 0.934 to 0.793, street 0.920 to 0.778,
+and `street_suffix` 0.681 from 0.924. Nothing about the street changed. The evidence around it did.
+
+Read a low score as "this span had less to go on", then decide what to do about it. A route-to-review
+threshold on that number is a reasonable design, and the calibrated score is the one to threshold on,
+because the uncalibrated model here runs under-confident and will send you more rows than the error rate
+warrants.
+
+## 4. Ask the pipeline what it decided
+
+The tree is the answer. `--debug` is the record of the stages that produced it — normalization, the
+structural query shape, the locale gate, the kind classifier, then the model.
+
+```bash
+npx mailwoman parse --debug "1 madison ave madison wi 53703" | jq '{path, locale, kind, knownFormats: .queryShape.knownFormats, timing}'
+```
+
+```
+{
+  "path": "full",
+  "locale": {
+    "locale": "en-US",
+    "confidence": 1,
+    "alternatives": [
+      {
+        "locale": "en-US",
+        "confidence": 0.5
+      }
+    ],
+    "source": "caller"
+  },
+  "kind": {
+    "kind": "structured_address",
+    "confidence": 0.75,
+    "alternatives": [
+      {
+        "kind": "vague",
+        "confidence": 0.3
+      }
+    ]
+  },
+  "knownFormats": [
+    {
+      "format": "us_zip",
+      "span": {
+        "start": 25,
+        "end": 30,
+        "body": "53703"
+      },
+      "confidence": 0.6
+    },
+    {
+      "format": "fr_postcode",
+      "span": {
+        "start": 25,
+        "end": 30,
+        "body": "53703"
+      },
+      "confidence": 0.6
+    },
+    {
+      "format": "de_postcode",
+      "span": {
+        "start": 25,
+        "end": 30,
+        "body": "53703"
+      },
+      "confidence": 0.6
+    }
+  ],
+  "timing": {
+    "normalize": 0.5091919999999845,
+    "place-country": 1.043992000000344,
+    "query-shape": 0.6537020000000666,
+    "locale-gate": 0.20217800000000352,
+    "kind-classifier": 0.6429920000000493,
+    "phrase-grouper": 1.0681070000000545,
+    "token-classify": 223.19595000000027,
+    "grouper-audit": 0.14948000000003958
+  }
+}
+```
+
+Four things in there answer "why did that token go where it went".
+
+**`knownFormats` is the structural read, and it is deliberately non-committal.** `53703` matches the US
+ZIP Code shape, the French postcode shape and the German postcode shape, all at 0.6, because a bare
+five-digit run is all three. This stage proposes; it does not pick.
+
+**`locale.source: "caller"` means the gate was not consulted.** `mailwoman parse` defaults `--locale` to
+`en-US`, and a caller-pinned locale is taken as given — which is why the confidence reads 1 while the
+sole alternative sits at 0.5. Pass a different `--locale` and this is the field that records it.
+
+**`kind` picks the shape of query, before any component is labeled.** `structured_address` at 0.75 with
+`vague` at 0.3 behind it. The other verdicts in that vocabulary — `postcode_only`, `po_box`,
+`intersection` — route the input down different paths, and `path: "full"` records which one ran.
+
+**`timing` is per stage, in milliseconds, for this call.** `token-classify` at 223 ms dominates because
+this is the first parse in a fresh process and the model is warming up; the steady-state number for a
+held pipeline is on the first-parse page. Everything before it costs about 4 ms combined.
+
+## 5. See the places it did not pick
+
+Names collide. Drop the state, and `Madison` has to be chosen rather than looked up. `--resolve` runs the
+tree through the gazetteer and `--candidates` keeps the runners-up on each resolved node.
+
+```bash
+export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
+npx mailwoman parse --resolve --candidates 3 "1 madison ave madison" | jq '.roots[0] | {tag, value, placeID, lat, lon, alternatives: [.alternatives[] | {name, placetype, lat, lon, score}]}'
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-trial/mailwoman-data/wof/candidate.db
+{
+  "tag": "locality",
+  "value": "Madison",
+  "placeID": "wof:101732721",
+  "lat": 43.08258,
+  "lon": -89.393029,
+  "alternatives": [
+    {
+      "name": "Madison",
+      "placetype": "localadmin",
+      "lat": 43.08258,
+      "lon": -89.393029,
+      "score": 5.447632394010742
+    },
+    {
+      "name": "Madison",
+      "placetype": "locality",
+      "lat": 34.711251,
+      "lon": -86.761677,
+      "score": 4.771087497336895
+    },
+    {
+      "name": "Madison",
+      "placetype": "locality",
+      "lat": 32.473765,
+      "lon": -90.130043,
+      "score": 4.446971865240103
+    }
+  ]
+}
+```
+
+The first line is the resolver announcing which backend answered, on standard error.
+
+The winner is Madison, Wisconsin, and the node now carries `placeID`, `lat` and `lon` alongside the tag
+and the span. Read the three alternatives in order: the first is the same place at a coarser admin tier
+(`localadmin`, same coordinate); the second is Madison, Alabama; the third is Madison, Mississippi. The
+ranking is population-first, and this gazetteer's own population column puts those three at 280,305,
+59,031 and 27,987.
+
+That ordering is a default, not a verdict. When your records carry a state, or a viewport, or a known
+service area, you have evidence the resolver did not — so keep the alternatives, filter them yourself,
+and treat a same-name collision as something to disambiguate rather than something to accept.
+
+## What you have now
+
+A reading of the full parse result: spans that locate every component in the input, a confidence you
+know how to interpret and how to threshold, the stage verdicts behind any surprising tag, and the ranked
+alternatives behind any resolved place name. Nothing here needed a second call — it was all in the object
+the first parse already returned.
+
+## Next
+
+- [Geocode a CSV of customer addresses](./geocode-a-csv.mdx) — the same result object, applied to a file.
+- [Improve geocode precision](./improve-geocode-precision.mdx) — what turns a city centroid into a rooftop.

@@ -1,0 +1,335 @@
+---
+title: Run the API server
+description: Start mailwoman serve, curl the health route, parse and geocode over HTTP, and find the OpenAPI document it emits.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Run the API server
+
+Not every service that needs an address parsed can load a 39.4 MB model — a Python worker, a Go service,
+a browser talking to your own backend. `mailwoman serve` puts the same pipeline behind an HTTP endpoint
+on your own hardware. By the end of this page you'll have it running, you'll have curled a parse, a
+geocode and a batch through it, and you'll know where its OpenAPI document lives. About ten minutes.
+
+## Prerequisites
+
+Read the memory line before you start — it is the one that bites.
+
+- **The first-parse install**: `mailwoman`, `@mailwoman/neural`, `@mailwoman/neural-weights-en-us`, on
+  Node.js 24.18.0 or later.
+- **`candidate.db` and `$MAILWOMAN_CANDIDATE_DB`**, if you want the geocode routes to return
+  coordinates. Parse works without it.
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has both commands.
+- **`jq`**, for every `curl` below. Drop the pipe if you'd rather read the raw response.
+- **Roughly 420 MB of memory per worker.** `--cpus` defaults to every core the box reports, and
+  each worker is a separate process that loads its own copy of the model and opens its own database
+  handles. Two warmed workers measured 418 MB and 419 MB of proportional set size on this machine, plus
+  220 MB for the manager. Set `--cpus` to what you have room for; on a sixteen-core box the default is
+  about 6.9 GB.
+
+Two is a starting point with a measurement behind it. The threaded geocode path in this codebase was
+swept on a 16-core box against a single database and peaked at 2 workers, degrading from there — the
+ceiling is database and memory bandwidth, not core count. The reasoning is written up in
+[`geocode-stream.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts).
+
+## 1. Start it
+
+```bash
+export MAILWOMAN_DATA_ROOT=/tmp/mw-trial/mailwoman-data
+export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
+npx mailwoman serve --port 7788 --cpus 2
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-trial/mailwoman-data/wof/candidate.db
+
+Manager process: 3138143
+Workers:
+ℹ Listening (3138160) "HTTP server ready"
+ℹ Listening (3138161) "HTTP server ready"
+```
+
+The line above the frame is the resolver naming the backend that answered; each worker prints its own on
+standard error as it boots, so with `--cpus 2` it goes by twice. Measured on this machine, `/health` answered 3.8 s after launch and the first parse request
+4.0 s after launch, with the model file already in the page cache from an earlier run; a first-ever
+start pays the read as well. Leave it running and open a second terminal for everything below.
+
+`--host` defaults to `0.0.0.0`, so the server is reachable from your network the moment it boots. There
+is no authentication in front of it. Bind it to `127.0.0.1` or put it behind something before it goes
+anywhere shared.
+
+## 2. Ask it what it has
+
+```bash
+curl -s http://127.0.0.1:7788/health | jq
+```
+
+```
+{
+  "status": "ok",
+  "uptime_s": 40,
+  "model": {
+    "name": "neural-weights-en-us",
+    "version": "7.0.0",
+    "locale": "en-us",
+    "labels": 33,
+    "format": {
+      "model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
+      "tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
+      "max_sequence_length": 128,
+      "opset": 17,
+      "fp32_size_mb": 146.6,
+      "int8_size_mb": 37.6,
+      "pair_index_us_bin": "PIX1 binary, 1,323,912 bytes, 49,033 pairs, δ=10, β=5"
+    }
+  },
+  "data": {
+    "data_root": "/tmp/mw-trial/mailwoman-data",
+    "versions": null,
+    "wof_dbs": [],
+    "situs_states": 0,
+    "interpolation_states": 0
+  }
+}
+```
+
+This is the route to point a load balancer at, and the route to read when a deployment answers
+differently than the last one did. `model.version` is the weights bundle, not the package version, which
+is the field to compare across two hosts when their answers diverge.
+
+The `data` block reports the shard families found under the data root: `wof_dbs` lists WOF admin
+distributions, and this deployment has none because the candidate gazetteer is what it resolves against.
+`situs_states: 0` means no per-state street shards are present, so geocodes here answer at the admin
+tier — [Improve geocode precision](./improve-geocode-precision.mdx) is what changes those two numbers.
+
+## 3. Parse one address
+
+`GET /v1/parse` is the one route that takes a query string, which makes it the one you can test from a
+browser address bar.
+
+```bash
+curl -s "http://127.0.0.1:7788/v1/parse?address=1%20madison%20ave%20madison%20wi%2053703" | jq '{input, components}'
+```
+
+```
+{
+  "input": "1 madison ave madison wi 53703",
+  "components": [
+    {
+      "tag": "house_number",
+      "value": "1"
+    },
+    {
+      "tag": "street",
+      "value": "Madison"
+    },
+    {
+      "tag": "street_suffix",
+      "value": "Ave"
+    },
+    {
+      "tag": "locality",
+      "value": "Madison"
+    },
+    {
+      "tag": "region",
+      "value": "WI"
+    },
+    {
+      "tag": "postcode",
+      "value": "53703"
+    }
+  ]
+}
+```
+
+The response also carries a `tree` key that this `jq` filter drops — the same nested `AddressTree`, with
+spans and confidences, that [Read everything a parse returns](./understand-a-parse.mdx) walks. The flat
+`components` array is the order-preserving projection, which is what most callers want over HTTP.
+
+## 4. Geocode one address
+
+```bash
+curl -s -X POST http://127.0.0.1:7788/v1/geocode \
+  -H 'content-type: application/json' \
+  -d '{"address":"233 S Wacker Dr, Chicago, IL 60606"}' \
+  | jq '{lat, lon, resolution_tier, uncertainty_m, locality, region, hierarchy}'
+```
+
+```
+{
+  "lat": 41.837235,
+  "lon": -87.685969,
+  "resolution_tier": "admin",
+  "uncertainty_m": null,
+  "locality": "Chicago",
+  "region": "IL",
+  "hierarchy": [
+    {
+      "tag": "locality",
+      "value": "Chicago",
+      "name": "Chicago",
+      "lat": 41.837235,
+      "lon": -87.685969,
+      "placeID": "wof:85940195"
+    },
+    {
+      "tag": "region",
+      "value": "IL",
+      "name": "Illinois",
+      "lat": 40.124199,
+      "lon": -89.148632,
+      "placeID": "wof:85688697"
+    }
+  ]
+}
+```
+
+Same object the CLI and the library return, over the wire without loss.
+
+`POST /v1/batch` takes an array and returns them in order, which is one connection and one round trip
+instead of N:
+
+```bash
+curl -s -X POST http://127.0.0.1:7788/v1/batch \
+  -H 'content-type: application/json' \
+  -d '{"addresses":["11 W 53rd St, New York, NY 10019","465 Huntington Ave, Boston, MA 02115"]}' \
+  | jq '[.results[] | {input, lat, lon, resolution_tier}]'
+```
+
+```
+[
+  {
+    "input": "11 W 53rd St, New York, NY 10019",
+    "lat": 40.694457,
+    "lon": -73.93045,
+    "resolution_tier": "admin"
+  },
+  {
+    "input": "465 Huntington Ave, Boston, MA 02115",
+    "lat": 42.317974,
+    "lon": -71.088246,
+    "resolution_tier": "admin"
+  }
+]
+```
+
+The batch route caps at 500 rows per request by default. Past that, chunk your input or run the loop in
+[Geocode a CSV](./geocode-a-csv.mdx) instead, which has no HTTP layer to pay for.
+
+## 5. Read the failures
+
+A malformed request answers with a status code and a one-key object, not a stack trace:
+
+```bash
+curl -s -i -X POST http://127.0.0.1:7788/v1/geocode -H 'content-type: application/json' -d '{}'
+```
+
+```
+HTTP/1.1 400 Bad Request
+content-type: application/json
+{"error":"address is required"}
+```
+
+400 for a request the server refused to run, 500 reserved for an engine fault. `/metrics` is the
+counterpart for the requests that succeeded:
+
+```bash
+curl -s http://127.0.0.1:7788/metrics | jq
+```
+
+```
+{
+  "uptime_s": 49,
+  "timings": {
+    "total": 1,
+    "errors": 0,
+    "tiers": {
+      "admin": 1
+    },
+    "latency_ms": {
+      "p50": 206.29,
+      "p90": 206.29,
+      "p99": 206.29,
+      "max": 206.29
+    },
+    "latency_samples": 1
+  }
+}
+```
+
+`total: 1` after several geocodes is not a bug and it is the thing to know before you wire this to a
+dashboard: each worker keeps its own counters, and a scrape reads whichever worker answered it. Scraping
+the two-worker server above alternates between two sets of numbers — measured, three consecutive scrapes
+returned 4, 3 and 4 against seven requests. Run `--cpus 1` when you want one coherent set, or sum across
+scrapes and accept that the percentiles are per worker.
+
+The 206 ms first sample is the model warming up. The `tiers` histogram is the operational read that
+matters over time: a deployment that starts answering `admin` where it used to answer `address_point`
+has lost a shard, not accuracy.
+
+## 6. Find the contract
+
+The server emits its own OpenAPI document at `/openapi.json`.
+
+```bash
+curl -s http://127.0.0.1:7788/openapi.json | jq '{openapi, version: .info.version, paths: (.paths | keys)}'
+```
+
+```
+{
+  "openapi": "3.1.0",
+  "version": "8.7.0",
+  "paths": [
+    "/health",
+    "/metrics",
+    "/v1/batch",
+    "/v1/format",
+    "/v1/geocode",
+    "/v1/parse",
+    "/v1/reload",
+    "/v1/resolve"
+  ]
+}
+```
+
+It is generated from the same route definitions the server runs
+([`routes.ts`](https://github.com/sister-software/mailwoman/blob/main/api/routes.ts)), so it cannot drift
+from the deployment that served it. Point a client generator at that URL rather than at a copy.
+
+Three routes this page did not curl: `/v1/resolve` takes an already-decoded address tree and resolves it
+against the gazetteer, for callers that parse in-process and want only that pass; `/v1/format` is the
+inverse of the parser, rendering components back to an address string plus a canonical match key; and
+`/v1/reload` reloads versioned data shards. That last one is a deploy-time route on a server with no
+authentication of its own — gate it at your ingress, or it is a restart anyone on the network can
+trigger.
+
+## 7. Stop it
+
+`Ctrl-C` in the server's terminal. The manager closes the listener and shuts the workers down rather than
+dropping in-flight requests.
+
+## When to run a drop-in instead
+
+`mailwoman serve` speaks Mailwoman's own `/v1` shape. If the caller you're replacing already speaks
+someone else's, run the compatible server instead of rewriting the caller: `@mailwoman/nominatim` answers
+`/search` and `/reverse` in Nominatim's shape, `@mailwoman/photon` answers Photon's autocomplete
+endpoints with GeoJSON feature collections, and `@mailwoman/libpostal` answers `/parse` and `/expand`.
+Each is a separate package with its own `serve` command, pointed at the same data root.
+
+The rule of thumb: a new integration goes to `/v1`, which has the fuller result object; an existing
+integration goes to whichever drop-in matches the client you already have. Why those exist at all is on
+[What Mailwoman is](../get-started/what-mailwoman-is.mdx#what-it-is-not).
+
+## What you have now
+
+An HTTP geocoder on your own hardware, with a health route to monitor, a metrics route to scrape, and a
+generated OpenAPI document to build clients from. It holds the same model and the same data your CLI and
+library calls use, so its answers match theirs.
+
+## Next
+
+- [Improve geocode precision](./improve-geocode-precision.mdx) — the download that moves
+  `situs_states: 0` off zero, and with it the tier this server reports.
+- [What ships today](../status.mdx) — versions, footprints, and the per-locale picture.

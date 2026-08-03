@@ -1,0 +1,304 @@
+---
+title: Improve geocode precision
+description: Move a result from city centroid to rooftop with one per-state download, and read uncertainty_m for what it means at each tier.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Improve geocode precision
+
+Every geocode you have run so far answered `resolution_tier: "admin"` — a coordinate for the city, not
+for the building. By the end of this page you'll have moved one address 1,521 m, from a city centroid to
+its rooftop, with a 127 MB download; you'll know what the four tiers are and which download reaches
+which; and you'll know what `uncertainty_m` is measuring in each one. About twenty minutes.
+
+## Prerequisites
+
+- **`candidate.db` on disk and `$MAILWOMAN_CANDIDATE_DB` exported.**
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) covers both.
+- **About 127 MB of free disk** for the street shards this page pulls, and `$MAILWOMAN_DATA_ROOT`
+  pointing where you want them. The full US street tier is 103 files and about 41.3 GB, so this page
+  pulls one jurisdiction — the District of Columbia, small on disk and dense enough in rooftop coverage
+  to show both street tiers inside one state.
+- **`mailwoman data pull` ships in `8.7.0`.** If `npm view mailwoman version` still prints `8.6.0` for
+  you, the CLI is on its way to npm and the URLs in the dry-run below are downloadable by hand in the
+  meantime.
+
+## The backend this assumes
+
+One paragraph of recap, because everything below depends on it. `$MAILWOMAN_CANDIDATE_DB` selects the
+candidate-table gazetteer, which ranks same-named places population-first and is the backend the hosted
+demo uses. Leave it unset and the resolver falls back to the full-text-search path over a WOF admin
+distribution, which ranks by relevance instead and answers some queries differently. The setup is on
+[Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it); this page assumes you did it.
+
+## 1. See the tier you have
+
+```bash
+npx mailwoman geocode "1275 Pennsylvania Ave NW, Washington, DC 20004" --format text
+```
+
+```
+input:            1275 Pennsylvania Ave NW, Washington, DC 20004
+resolution_tier:  admin
+coordinate:       38.904831, -77.016216
+locality:         Washington
+region:           DC
+postcode:         20004
+hierarchy:
+  locality             Washington [wof:85931779] (38.9048, -77.0162)
+  region               DC [wof:85688741] (38.9048, -77.0163)
+```
+
+The house number was parsed — it's in the input line — and then nothing was consulted that knows where
+house numbers are. The coordinate is Washington's, identical to the one every other Washington address
+returns. No `uncertainty_m` line, because the admin tier does not report one.
+
+## 2. Check what the download costs before you start it
+
+`--dry-run` touches the network only to plan, writes nothing, and prints the exact bytes and
+destinations.
+
+```bash
+npx mailwoman data pull us --only dc --dry-run
+```
+
+```
+✓ us: street/us/dc/situs.db: [dry-run] 119.9 MB
+https://public.sister.software/mailwoman/street/us/dc/situs.db →
+/tmp/mw-trial/mailwoman-data/address-points/address-points-us-dc.db
+✓ us: street/us/dc/interp.db: [dry-run] 7.4 MB
+https://public.sister.software/mailwoman/street/us/dc/interp.db →
+/tmp/mw-trial/mailwoman-data/interpolation/interpolation-us-dc.db
+```
+
+Two files, two tiers. `situs.db` is the rooftop register: address points with a coordinate each.
+`interp.db` is the TIGER street network, which carries a house-number range per segment and estimates a
+position along it. Every state ships both, except the US Virgin Islands, which has no interpolation
+shard.
+
+`--only` matches on the slug, the remote path or the local path, so `--only dc` picks the two DC files
+out of the 103. Drop it and you get the whole 41.3 GB tier.
+
+A small download is not a cheap state, and the plan is where you can tell the two apart. New Hampshire's
+rooftop register downloads, verifies and installs at 20,480 bytes — and holds 0 rows. The file exists;
+the tier it should serve does not, and nothing reports an error, because a shard with no matching row
+and a shard with no rows at all look identical from the lookup. NH addresses fall through to its
+interpolation shard, which is a real 57.6 MB. Read the sizes in the dry-run as a coverage signal before
+you plan around a state.
+
+## 3. Pull it
+
+```bash
+npx mailwoman data pull us --only dc
+```
+
+```
+▸ pull https://public.sister.software/mailwoman/street/us/dc/situs.db (~119.9 MB) → /tmp/mw-trial/mailwoman-data/address-points/address-points-us-dc.db
+[DEBUG] (mailwoman data): HEAD: https://public.sister.software/mailwoman/street/us/dc/situs.db
+[DEBUG] (mailwoman data): 200 (uncached) HEAD: https://public.sister.software/mailwoman/street/us/dc/situs.db
+▸ pull https://public.sister.software/mailwoman/street/us/dc/interp.db (~7.4 MB) → /tmp/mw-trial/mailwoman-data/interpolation/interpolation-us-dc.db
+[DEBUG] (mailwoman data): HEAD: https://public.sister.software/mailwoman/street/us/dc/interp.db
+[DEBUG] (mailwoman data): 200 (uncached) HEAD: https://public.sister.software/mailwoman/street/us/dc/interp.db
+✓ us: street/us/dc/situs.db: content-length verified (119.9 MB) → /tmp/mw-trial/mailwoman-data/address-points/address-points-us-dc.db
+✓ us: street/us/dc/interp.db: content-length verified (7.4 MB) → /tmp/mw-trial/mailwoman-data/interpolation/interpolation-us-dc.db
+PASS (2/2 checks)
+```
+
+21 seconds on this connection. The `[DEBUG]` lines are the download client asking the remote how big the
+file is before it starts; `content-length verified` is that same number checked against what landed.
+There is no checksum in that check, because the bucket publishes no checksum sidecar — a truncated
+transfer is caught, a corrupted one of the right length is not.
+
+No configuration follows. The shards are found by filename under the data root, keyed to the region the
+parse resolved.
+
+## 4. See the tier you have now
+
+Same command, same shell, nothing else changed:
+
+```bash
+npx mailwoman geocode "1275 Pennsylvania Ave NW, Washington, DC 20004" --format text
+```
+
+```
+input:            1275 Pennsylvania Ave NW, Washington, DC 20004
+resolution_tier:  address_point
+coordinate:       38.895665, -77.029255
+uncertainty_m:    1
+locality:         Washington
+region:           DC
+postcode:         20004
+hierarchy:
+  locality             Washington [wof:85931779] (38.9048, -77.0162)
+  region               DC [wof:85688741] (38.9048, -77.0163)
+```
+
+`address_point`, and the coordinate moved 1,521 m — from the middle of the District to the building.
+The `hierarchy` block did not change: the admin ancestry is still Washington and DC, still at the
+centroid coordinates. The rooftop is the answer; the hierarchy is the context.
+
+Now one the rooftop register does not carry:
+
+```bash
+npx mailwoman geocode "620 H St NE, Washington, DC 20002" --format text
+```
+
+```
+input:            620 H St NE, Washington, DC 20002
+resolution_tier:  interpolated
+coordinate:       38.900204, -76.997978
+uncertainty_m:    141
+locality:         Washington
+region:           DC
+postcode:         20002
+hierarchy:
+  locality             Washington [wof:85931779] (38.9048, -77.0162)
+  region               DC [wof:85688741] (38.9048, -77.0163)
+```
+
+`interpolated`, and a radius you can act on. The second shard found the H St NE segment whose
+house-number range contains 620 and placed the point proportionally along it.
+
+## 5. Read the four tiers
+
+`resolution_tier` takes one of four values, best first. Check it on every result; it is how a coordinate
+tells you what kind of coordinate it is.
+
+| Tier            | Source                                    | `uncertainty_m`                          |
+| --------------- | ----------------------------------------- | ---------------------------------------- |
+| `address_point` | the state's rooftop register (`situs.db`) | `1` — a floor, not a measurement         |
+| `interpolated`  | the TIGER street network (`interp.db`)    | the calibrated bracket, `141` above      |
+| `street`        | a national register's street centroids    | half the street's bounding-box diagonal  |
+| `admin`         | the gazetteer, `candidate.db`             | `null` — no sub-locality estimate exists |
+
+Three notes on that table.
+
+**The `1` at the rooftop tier is a constant.** The situs point is a parcel or building coordinate and
+the code writes a 1 m floor rather than a measured error. It means "this is as good as this pipeline
+gets", not "this is accurate to a metre".
+
+**The `141` at the interpolated tier is calibrated, and per region.** The raw radius — half the matched
+segment's length — covers about 72% of true errors, so it is multiplied by a per-region conformal factor
+for roughly a 90% bound. The measured factors run 1.44 for DC, the densest, to 3.12 for Arizona, with
+1.95 applied to states the sweep did not reach. The table is embedded in
+[`interp-calibration.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/interp-calibration.ts)
+and states its own source.
+
+**The `street` tier needs a shard no published bundle carries today.** It comes from a national
+register's derived street-centroid database, built locally; the `fr` bundle ships the rooftop register
+alone, and the per-state US provider never opens one. Until that changes, a street-only query falls to
+`admin`.
+
+## 6. The admin tier is a ladder too
+
+`admin` is not one coordinate source. When no street-level tier answers, the resolver walks the resolved nodes
+in a fixed order — locality, then dependent locality, then postcode, then region, then country — and
+takes the first with a coordinate. Which is why the DC address in step 1 returned Washington's centroid
+and not its ZIP Code's, even though both resolved.
+
+That ordering matters when the locality is missing. A bare postcode has nothing above it:
+
+```bash
+npx mailwoman geocode "20004" --format text
+```
+
+```
+input:            20004
+resolution_tier:  admin
+coordinate:       53.093382, 14.259291
+postcode:         20004
+```
+
+That is in Germany. `20004` is a valid postcode in at least Germany, Spain, the United States and
+Poland — this gazetteer holds a row for each — and a bare five-digit string carries nothing that says
+which. `--locale en-US` does not rescue it: with the candidate backend active the locale stops implying
+a country filter, which is the same design that lets a French address resolve in France while the locale
+still reads `en-US`. Nothing scoped this query, so the global ranking decided it.
+
+A bare postcode is ambiguous across countries and the result will not warn you — so scope it, either
+with `--default-country` or by sending the city along with it:
+
+```bash
+npx mailwoman geocode "20004" --default-country US --format text
+```
+
+```
+input:            20004
+resolution_tier:  admin
+coordinate:       38.894885, -77.028638
+postcode:         20004
+```
+
+Still `admin`, because a postcode centroid is an admin coordinate — but 102 m from the rooftop in step 4
+rather than 1,521 m. When the street shards are missing, a resolved postcode is a much better answer
+than a resolved city, and the tier label does not distinguish them. Read `hierarchy` when you need to
+know which one you got.
+
+## 7. Outside the US
+
+The street tier is per country, and France is the one with a published national register: `data pull fr`
+stages the BAN rooftop shard, 26 million points under the Licence Ouverte.
+
+```bash
+npx mailwoman data pull fr --dry-run
+```
+
+```
+✓ fr: street/fr/2026-07-10/situs.db: [dry-run] 6952.5 MB
+https://public.sister.software/mailwoman/street/fr/2026-07-10/situs.db →
+/tmp/mw-trial/mailwoman-data/ban/address-points-fr.db
+```
+
+Nearly 7 GB, against 127 MB for the District of Columbia — check that number against your free disk
+before you start it.
+With the shard in place, French addresses answer at the rooftop tier with no locale flag and no other
+change:
+
+```bash
+npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris" --format text
+```
+
+```
+input:            12 Rue de Rivoli, 75001 Paris
+resolution_tier:  address_point
+coordinate:       48.855602, 2.359950
+uncertainty_m:    1
+locality:         Paris
+postcode:         75001
+```
+
+One gap to plan around, and it is structural rather than temporary. France ships a rooftop register and
+no interpolation shard, so a house number BAN does not carry falls straight to `admin` — there is no
+middle tier to catch it, the way `620 H St NE` was caught in DC:
+
+```bash
+npx mailwoman geocode "99999 Rue de Rivoli, 75001 Paris" --format text
+```
+
+```
+input:            99999 Rue de Rivoli, 75001 Paris
+resolution_tier:  admin
+coordinate:       48.856599, 2.342841
+locality:         Paris
+postcode:         75001
+hierarchy:
+  locality             Paris [wof:1159322569] (48.8566, 2.3428)
+```
+
+An FR result is therefore rooftop or city, with nothing between — so branch on `resolution_tier` rather
+than on `uncertainty_m` being small, and treat an `admin` answer in France as a miss to re-check rather
+than as a coarse hit. Parsing French addresses well is a separate download,
+`@mailwoman/neural-weights-fr-fr`; [What ships today](../status.mdx) has the per-locale picture.
+
+## What you have now
+
+A data root that answers rooftop coordinates for one jurisdiction and city centroids everywhere else,
+which is the shape every deployment has — the question is only which jurisdictions you downloaded. Pull
+the states your customers are in with `--only`, check `resolution_tier` on every result, and read
+`uncertainty_m` as a bound rather than as an error bar.
+
+## Next
+
+- [Geocode a CSV of customer addresses](./geocode-a-csv.mdx) — the same tiers, per row, at file scale.
+- [What ships today](../status.mdx) — which countries have a street tier at all.

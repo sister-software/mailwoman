@@ -1,0 +1,279 @@
+---
+title: Geocode a CSV of customer addresses
+description: Run a customer file through the geocoder, keep the rows that resolved, and see what the bad rows do. Twenty rows, two ways.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Geocode a CSV of customer addresses
+
+Let's say you have a CSV of customer addresses exported from a CRM, and you need coordinates on a map
+before Friday. By the end of this page you'll have run twenty of them through the geocoder twice — once
+with a Node loop that writes JSON lines, once with a single CLI command that writes GeoJSON — and you'll
+know what each path does with a row that can't be geocoded. About twenty minutes.
+
+## Prerequisites
+
+Three things, and the second one will stop you partway through if it isn't done.
+
+- **The first-parse install**, plus one more package for reading the CSV:
+
+  ```bash
+  npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+  npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite spliterator
+  ```
+
+- **`candidate.db` on disk, and `$MAILWOMAN_CANDIDATE_DB` pointing at it.** Coordinates come from the
+  gazetteer, which is a 1.65 GB download you do once.
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command and the
+  export line. Every transcript below assumes you ran them.
+- **A CSV whose columns you know.** This page uses
+  [customers.csv](/examples/customers.csv) — twenty invented companies at real street addresses across
+  New York, Illinois, California, Massachusetts and the District of Columbia. Download it next to your
+  script.
+
+Everything below runs at the admin tier, which means each row resolves to its city's centroid rather
+than to its building. That is what `candidate.db` alone can answer; [Improve geocode
+precision](./improve-geocode-precision.mdx) is the page that changes it, and the loop you write here
+does not change when you get there.
+
+## 1. Look at the file
+
+```bash
+head -4 customers.csv
+```
+
+```
+customer_id,company,street,city,state,postal_code
+C-1001,Harbor & Vine Catering,1275 Pennsylvania Ave NW,Washington,DC,20004
+C-1002,Beacon Ridge Analytics,800 F St NW,Washington,DC,20004
+C-1003,Tidewater Print Shop,1000 Jefferson Dr SW,Washington,DC,20560
+```
+
+Six columns, one address split across four of them, and further down the file a company name with a
+comma inside it, wrapped in quotes. Your own export has that row too.
+
+## 2. Write the loop
+
+Save this as `geocode-csv.mjs`. It builds the geocoder once, walks the file, and writes one JSON object
+per line.
+
+```js
+import { createWriteStream } from "node:fs"
+
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import { geocodeAddress } from "mailwoman/geocode-core"
+import { CSVSpliterator } from "spliterator"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const lookup = new WOFCandidateTableLookup({ databasePath: process.env.MAILWOMAN_CANDIDATE_DB })
+const resolver = createWOFResolver(lookup)
+
+const out = createWriteStream("customers.geocoded.jsonl")
+const counts = { matched: 0, mismatched: 0, skipped: 0 }
+
+// enableQuoteHandling is opt-in: without it a quoted "Rowan, Fitch & Co." splits into two columns.
+for await (const row of CSVSpliterator.fromAsync("customers.csv", { mode: "object", enableQuoteHandling: true })) {
+	if (!row.street || !row.city) {
+		console.warn(`skip      ${row.customer_id ?? "(no id)"} — street or city column is empty`)
+		counts.skipped++
+		continue
+	}
+
+	const query = [row.street, row.city, row.state, row.postal_code].filter(Boolean).join(", ")
+	const result = await geocodeAddress(query, { classifier, resolver, defaultCountry: "US" })
+	// hierarchy[].name is what the gazetteer matched; row.city is what you sent. Compare them.
+	const matched = result.hierarchy.find((node) => node.tag === "locality")
+
+	if (matched && matched.name.toLowerCase() === row.city.toLowerCase()) {
+		counts.matched++
+	} else {
+		console.warn(
+			`mismatch  ${row.customer_id} — sent "${row.city}", gazetteer returned "${matched?.name ?? "nothing"}"`
+		)
+		counts.mismatched++
+	}
+
+	out.write(
+		JSON.stringify({
+			customer_id: row.customer_id,
+			company: row.company,
+			query,
+			lat: result.lat,
+			lon: result.lon,
+			resolution_tier: result.resolution_tier,
+			uncertainty_m: result.uncertainty_m,
+			matched_locality: matched?.name ?? null,
+			region: result.region,
+		}) + "\n"
+	)
+}
+
+out.end()
+lookup.close()
+
+console.log(
+	`matched ${counts.matched}, mismatched ${counts.mismatched}, skipped ${counts.skipped} → customers.geocoded.jsonl`
+)
+```
+
+Four decisions in there are worth naming.
+
+**The classifier, the lookup and the resolver are built once, outside the loop.** Loading the model is
+the expensive part of a geocode, and hoisting it out is why the row count barely moves the clock: the
+same script over one row runs in 1.28 s and over twenty in 1.36 s.
+
+**`enableQuoteHandling: true` is opt-in and you want it.** Without it, `CSVSpliterator` splits on every
+comma, so `"Rowan, Fitch & Co."` becomes two columns and every field after it shifts left — including
+the address. The row still geocodes. It geocodes the wrong string.
+
+**The address is rebuilt from four columns with `join(", ")`.** The parser takes free text, so handing
+it commas between the parts you already know are separate costs nothing and removes a guess.
+
+**`hierarchy[].name` is compared against the city you sent.** `name` is the gazetteer's own name for
+the place it matched; `value` is your input span. Step 4 is what that comparison is for.
+
+## 3. Run it
+
+```bash
+node geocode-csv.mjs
+```
+
+```
+matched 20, mismatched 0, skipped 0 → customers.geocoded.jsonl
+```
+
+```bash
+head -3 customers.geocoded.jsonl
+```
+
+```
+{"customer_id":"C-1001","company":"Harbor & Vine Catering","query":"1275 Pennsylvania Ave NW, Washington, DC, 20004","lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Washington","region":"DC"}
+{"customer_id":"C-1002","company":"Beacon Ridge Analytics","query":"800 F St NW, Washington, DC, 20004","lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Washington","region":"DC"}
+{"customer_id":"C-1003","company":"Tidewater Print Shop","query":"1000 Jefferson Dr SW, Washington, DC, 20560","lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Washington","region":"DC"}
+```
+
+Twenty rows in 1.36 s wall on the machine this page was verified on, model load included. The three DC
+rows share a coordinate because they share a city, and `resolution_tier: "admin"` says so — three
+different buildings, one centroid, and `uncertainty_m: null` because the admin tier has no radius to
+report.
+
+JSON lines rather than one JSON array: the file is appendable, streamable, and survives a crash halfway
+through with the rows written so far still readable.
+
+## 4. Break it on purpose
+
+Add three rows your CRM will eventually produce — one with an empty street, one at a place that does not
+exist, one truncated mid-line — and run it again.
+
+```bash
+cat >> customers.csv <<'EOF'
+C-1021,Ninefold Optics,,Portland,OR,97205
+C-1022,Larkspur Tooling,42 Nonexistent Ln,Zzyzx Falls,ZZ,00000
+C-1023,Half Row Co,88 Beacon St
+EOF
+node geocode-csv.mjs
+```
+
+```
+skip      C-1021 — street or city column is empty
+mismatch  C-1022 — sent "Zzyzx Falls", gazetteer returned "Falls Township"
+skip      C-1023 — street or city column is empty
+matched 20, mismatched 1, skipped 2 → customers.geocoded.jsonl
+```
+
+Two of the three announce themselves before any work happens: an empty street column and a row that ran
+out of columns both fail the guard at the top of the loop, and neither costs a geocode.
+
+The third is the one to design for.
+
+```bash
+tail -1 customers.geocoded.jsonl
+```
+
+```
+{"customer_id":"C-1022","company":"Larkspur Tooling","query":"42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000","lat":40.168649,"lon":-74.791478,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Falls Township","region":"ZZ"}
+```
+
+`Zzyzx Falls, ZZ` is not a place, and the row came back with a coordinate anyway — in Pennsylvania. The
+gazetteer matched on `Falls`, found Falls Township, and returned it. Nothing in the result object is
+false: the coordinate is Falls Township's, and `matched_locality` says Falls Township. Only the
+assumption that a coordinate means a match is false.
+
+A returned coordinate is a match against a gazetteer, not a check that the address exists — so compare
+`hierarchy[].name` against the value you sent and route the disagreements to review, which is the
+comparison already in the loop above. It costs one string compare per row and it is the difference
+between twenty-one usable coordinates and twenty.
+
+## 5. The one-command version
+
+`mailwoman registry run` does ingest, geocode and export in one call. It is the CLI in front of the
+record matcher, so what it writes is an entity set rather than a row dump.
+
+Two things about it before you run it. It wants `--resolve-db` even when `$MAILWOMAN_CANDIDATE_DB` is
+what answers, so pass the same path twice. And its output properties are the record matcher's normalized
+view of your row, not your row: your `customer_id` rides in `sourceIds`.
+
+```bash
+npx mailwoman registry run customers.csv --infer-mapping --resolve-db "$MAILWOMAN_CANDIDATE_DB" --out customers.geojson
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-trial/mailwoman-data/wof/candidate.db
+registry: 20 rows → 20 records (20 geocoded) → 20 entities (26 candidate pairs)
+wrote 20 features → customers.geojson
+```
+
+```bash
+jq '.features[0]' customers.geojson
+```
+
+```
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -77.016216,
+      38.904831
+    ]
+  },
+  "properties": {
+    "entityID": "entity-0",
+    "recordCount": 1,
+    "cohesion": null,
+    "sourceIds": [
+      "C-1001"
+    ],
+    "sources": [],
+    "name": null,
+    "organization": "harbor and vine catering",
+    "address": "Pennsylvania Ave NW 1275, 20004 Washington",
+    "geocodeTier": "admin"
+  }
+}
+```
+
+`20 rows → 20 records → 20 entities` is the line to read: twenty inputs in, twenty entities out, so no
+two records were linked. `26 candidate pairs` counts the comparisons the blocking pass thought worth
+scoring, out of the 190 a full cross-product of twenty records would have been — the pass runs whether
+or not it finds anything, and on a file of distinct customers it changes nothing.
+
+Reach for this one when you want GeoJSON without writing the conversion. Reach for the loop when you
+want your own columns to survive.
+
+## What you have now
+
+Two files: `customers.geocoded.jsonl`, one line per input row with your ids intact, and
+`customers.geojson`, a FeatureCollection you can drag into QGIS or hand to a map library. Both carry
+`resolution_tier`, which is the field that tells you a coordinate is a city centroid rather than a
+building — and which the next page changes.
+
+## Next
+
+- [Improve geocode precision](./improve-geocode-precision.mdx) — the per-state download that turns
+  `admin` into `address_point`.
+- [Run the API server](./run-the-api-server.mdx) — the same geocoder behind an HTTP endpoint, for the
+  services that can't load a model.

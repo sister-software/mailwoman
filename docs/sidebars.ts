@@ -40,6 +40,19 @@ const sidebars: SidebarsConfig = {
 				"developers/get-started/ten-minute-trial",
 			],
 		},
+		{
+			type: "category",
+			label: "Tutorials",
+			// Reading order again, and it is a dependency order: the parse walk needs only the
+			// install, the CSV loop needs candidate.db, the server needs both, and the precision
+			// page needs a second download on top. Each page's prerequisites name the one before it.
+			items: [
+				"developers/tutorials/understand-a-parse",
+				"developers/tutorials/geocode-a-csv",
+				"developers/tutorials/run-the-api-server",
+				"developers/tutorials/improve-geocode-precision",
+			],
+		},
 		"developers/status",
 		"developers/support",
 	],
