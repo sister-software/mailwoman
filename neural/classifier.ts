@@ -24,6 +24,7 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
+import { $public } from "@mailwoman/core/env"
 import {
 	proposeSpans,
 	type ProposedSpan,
@@ -371,7 +372,9 @@ export class NeuralAddressClassifier {
 				// regression — the parallelism IS doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
 				// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1;
 				// do not "simplify" it downward without re-running that curve.
-				intraOpNumThreads: opts.intraOpNumThreads ?? DEFAULT_INTRA_OP_THREADS,
+				// Explicit opt > deployment env > compromise default. The env layer exists because the right
+				// value is a property of how many processes share the host, which this library cannot see.
+				intraOpNumThreads: opts.intraOpNumThreads ?? $public.MAILWOMAN_INTRA_OP_THREADS ?? DEFAULT_INTRA_OP_THREADS,
 			}),
 		])
 

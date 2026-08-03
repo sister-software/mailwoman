@@ -18,6 +18,19 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_FST_BIN: z.string().optional(),
 	MAILWOMAN_MODEL_CARD: z.string().optional(),
 	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional(),
+
+	// ONNX intra-op thread cap. Deployment-shaped rather than code-shaped: the right value depends on how many
+	// mailwoman processes share the host, which the library cannot know. See DEFAULT_INTRA_OP_THREADS.
+	//
+	// The `""` preprocessing is load-bearing: a shell `export FOO=` and an unset Docker/CI interpolation both
+	// arrive as an empty string, `z.coerce.number()` turns that into 0, and `.positive()` then rejects it —
+	// crashing at import rather than falling back to the default. Absent and blank must mean the same thing.
+	// `.optional()` sits INSIDE the preprocess: the outer value is present (an empty string), so an outer
+	// `.optional()` never fires — the inner schema is what receives the `undefined` and must accept it.
+	MAILWOMAN_INTRA_OP_THREADS: z.preprocess(
+		(v) => (v === "" ? undefined : v),
+		z.coerce.number().int().positive().optional()
+	),
 	WOF_DATA_DIR: z.string().optional(),
 
 	// Geocode server batch row cap (`POST /v1/batch`).
