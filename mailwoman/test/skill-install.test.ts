@@ -6,11 +6,13 @@
  *   Integration test for `mailwoman skill install [--dest <dir>]` (#task-8): spawns the compiled CLI
  *   and asserts it copies the packaged Claude Code skill (`skills/mailwoman/`, shipped inside this
  *   package) into `<dest>/.claude/skills/mailwoman/`. Covers the default (cwd-rooted) destination, a
- *   second idempotent run, and the explicit `--dest` override.
+ *   second idempotent run, the explicit `--dest` override, and the clean-slate reinstall (a stale file
+ *   a newer shipped skill dropped must be REMOVED, not left behind by a merge-only copy — the finding
+ *   the task review caught: `cpSync` alone never deletes).
  */
 
 import { execFileSync } from "node:child_process"
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -96,5 +98,27 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 
 		expect(existsSync(join(dest, ".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
 		expect(existsSync(join(cwd, ".claude"))).toBe(false)
+	})
+
+	test("a stale file left over from an older shipped skill is removed, not merged", () => {
+		const cwd = makeTempDir("mw-skill-install-stale-")
+		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
+		const staleFile = join(skillDir, "stale-reference.md")
+
+		// Plant a file that a hypothetical OLDER install left behind and the current shipped skill no
+		// longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
+		mkdirSync(skillDir, { recursive: true })
+		writeFileSync(staleFile, "belongs to an older skill version; must not survive a reinstall")
+
+		withCLISpawnLock(() =>
+			execFileSync(process.execPath, [CLI_PATH, "skill", "install"], {
+				cwd,
+				encoding: "utf8",
+				timeout: CLI_SPAWN_TIMEOUT_MS,
+			})
+		)
+
+		expect(existsSync(staleFile)).toBe(false)
+		expect(existsSync(join(skillDir, "SKILL.md"))).toBe(true)
 	})
 })

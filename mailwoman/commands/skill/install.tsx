@@ -9,9 +9,21 @@
  *   root wires the skill into that project's `.claude/skills/` directory, exactly where Claude Code
  *   discovers project-level skills.
  *
- *   Idempotent: `cpSync(..., { recursive: true, force: true })` overwrites the destination cleanly on
- *   a second run instead of erroring, so re-running after this package updates the shipped skill
- *   picks up the new content with no manual cleanup.
+ *   Idempotent via a clean-slate install: each run `rmSync`s the destination directory first, then
+ *   `cpSync(..., { recursive: true, force: true })`s the packaged skill into it. The `rmSync` step is
+ *   what makes "safe to re-run" true in GENERAL, not just today — `cpSync` alone is a MERGE copy: it
+ *   overwrites a file that exists on both sides but never DELETES a destination file that a newer
+ *   shipped skill version dropped. That gap is latent right now (the skill is one file, so there's
+ *   nothing to leave behind) but would silently strand stale content the day the skill grows a second
+ *   file and a later version renames or removes it upstream. Removing the whole destination first
+ *   turns "merge" into "replace," which is what a reinstall should mean.
+ *
+ *   No destination-side symlink can precede the copy in this pipeline, so the `unlink`-then-`copyFile`
+ *   discipline `scripts/copy-weights.ts` needs (AGENTS.md's "Pitfall: symlinks in the publish
+ *   tarball") does not apply here: `rmSync` removes whatever sits at `destDir` — a symlink, a real
+ *   directory, or nothing — as an unlink of that path itself, never by following it, so `cpSync`
+ *   always writes into a directory it just created fresh. There is no step here that could write
+ *   THROUGH a stale symlink the way a naive `fs.copyFile` onto an existing destination link would.
  *
  *   PACKAGE-RELATIVE RESOLUTION (source vs. compiled tree — see `core/utils/repo.ts`'s
  *   `__isCompiledTree` note): `skills/mailwoman/` ships as raw markdown via `package.json`'s `files`
@@ -24,7 +36,7 @@
  *   `eval-harness/baseline-assert.ts`'s `resolveBaselineFilePath` uses for its sibling JSON asset.
  */
 
-import { cpSync, existsSync } from "node:fs"
+import { cpSync, existsSync, rmSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { Text } from "ink"
@@ -73,6 +85,8 @@ function installSkill(dest: string | undefined): InstallOutcome {
 		const sourceDir = resolveSkillSourceDir()
 		const destDir = resolvePath(dest ?? ".", ".claude", "skills", "mailwoman")
 
+		// Clean-slate, not merge — see the module docstring for why a bare cpSync isn't enough.
+		rmSync(destDir, { recursive: true, force: true })
 		cpSync(sourceDir, destDir, { recursive: true, force: true })
 
 		checks.push({ ok: true, check: "mailwoman skill", detail: `installed at ${destDir}` })
