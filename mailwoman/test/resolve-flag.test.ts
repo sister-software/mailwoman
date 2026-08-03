@@ -45,13 +45,16 @@ describe("--resolve schema validation", () => {
 })
 
 describe("npx mailwoman parse --resolve error paths", () => {
-	test("--resolve without a WOF DB path exits non-zero with a clear message", async () => {
+	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
 		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
-		// handles classification + resolution end-to-end. The remaining error path is "no WOF SQLite
-		// distribution available".
+		// handles classification + resolution end-to-end. The remaining error path is "no gazetteer
+		// available", which means BOTH backends unreachable: no WOF shard AND no candidate.db.
+		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets the
+		// convention path answer, and on any machine that has run `data pull candidate` the command
+		// then succeeds and this test's premise is gone.
 		await expect(
 			exec("node", [cliBin, "parse", "--resolve", "123 Main St"], {
-				env: childEnv({ MAILWOMAN_WOF_DB: "" }),
+				env: childEnv({ MAILWOMAN_WOF_DB: "", MAILWOMAN_CANDIDATE_DB: "none" }),
 			})
 		).rejects.toMatchObject({
 			stdout: expect.stringMatching(/needs a WOF SQLite path/),

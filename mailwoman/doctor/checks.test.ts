@@ -154,25 +154,37 @@ describe("gazetteerCheck (optional)", () => {
 		expect(c.detail).toContain("WOF admin shard")
 	})
 
-	it("DEGRADED (the trap) — candidate.db at the convention path but $MAILWOMAN_CANDIDATE_DB unset", () => {
-		// A fresh consumer downloads candidate.db to <root>/wof/candidate.db but never sets the env. geocode/serve
-		// resolve candidate env-only (no convention fallback) — so the file is on disk yet the tools won't touch it.
+	it("ok on a convention-path candidate.db with no env set", () => {
+		// A fresh consumer runs `data pull candidate` and never exports anything. That used to be the
+		// documented TRAP — the file on disk, every tool ignoring it — and the fix was an export line.
+		// resolveCandidateDBPath reaches the convention path now, so the same observation is healthy,
+		// and telling the reader to export something would be advice that changes nothing.
 		const c = gazetteerCheck({
 			conventionCandidate: "/data/wof/candidate.db",
 			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
 		})
 
-		expect(c.status).toBe(CheckStatus.Degraded)
-		expect(c.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
-		expect(c.detail).toContain("geocode/serve won't use it")
-		expect(c.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
+		expect(c.status).toBe(CheckStatus.OK)
+		expect(c.detail).toContain("/data/wof/candidate.db")
+		expect(c.fix).toBeUndefined()
 	})
 
-	it("missing with the data-pull + env-set hint when nothing found", () => {
+	it("prefers a convention-path candidate.db over a WOF shard, matching resolution precedence", () => {
+		const c = gazetteerCheck({
+			conventionCandidate: "/data/wof/candidate.db",
+			wofShard: { path: "/data/wof/admin.db" },
+			probed: ["/data/wof/admin.db", "/data/wof/candidate.db"],
+		})
+
+		expect(c.status).toBe(CheckStatus.OK)
+		expect(c.detail).toContain("candidate.db")
+		expect(c.detail).not.toContain("WOF admin shard")
+	})
+
+	it("missing with the data-pull hint when nothing found", () => {
 		const c = gazetteerCheck({ probed: ["/a", "/b"] })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("mailwoman data pull candidate")
-		expect(c.fix).toContain("export MAILWOMAN_CANDIDATE_DB=")
 		expect(c.detail).toContain("2 paths")
 	})
 })

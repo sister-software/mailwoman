@@ -197,9 +197,10 @@ export function defaultDoctorDeps(): DoctorDeps {
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
 		dataRoot: () => ({ path: mailwomanDataRoot(), fromEnv: Boolean($public.MAILWOMAN_DATA_ROOT) }),
-		// Mirror the tools EXACTLY: `resolveCandidateDBPath` is env-only (no convention fallback). A candidate.db at the
-		// convention path with the env unset is surfaced separately via `conventionCandidatePath` → the degraded trap.
-		envCandidatePath: () => resolveCandidateDBPath(),
+		// Mirror the tools EXACTLY. `resolveCandidateDBPath` now reaches the convention path itself, so report the
+		// explicit/env hit ONLY when one is set — otherwise a convention-path candidate.db would be labelled as coming
+		// from an env var nobody exported, and `conventionCandidatePath` below would never be consulted.
+		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath() : undefined),
 		conventionCandidatePath: defaultConventionCandidatePath,
 		wofShardPaths: defaultWOFShardPaths,
 		poiPath: () => dataRootPath("poi", "poi.db"),
@@ -230,25 +231,26 @@ function gatherWeights(deps: DoctorDeps): WeightsObservation {
 }
 
 function gatherGazetteer(deps: DoctorDeps): GazetteerObservation {
-	// Same precedence the tools apply: env candidate.db → WOF FTS shards. A convention-path candidate.db with the env
-	// unset is picked up by NEITHER, so it surfaces as the degraded trap (only when nothing else would work).
+	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS shards.
+	// The convention probe must come BEFORE the shards, or a machine holding both reports the FTS shard while every
+	// tool on it uses the candidate table — doctor's one job is to name the backend actually in use.
 	const envCandidate = deps.envCandidatePath()
 
 	if (envCandidate) {
 		return { envCandidate: { path: envCandidate, sizeBytes: deps.fileSize(envCandidate) }, probed: [envCandidate] }
 	}
 
+	const convention = deps.conventionCandidatePath()
 	const shards = deps.wofShardPaths()
+
+	if (convention) {
+		return { conventionCandidate: convention, probed: [convention, ...shards] }
+	}
+
 	const existing = shards.find((p) => deps.existsSync(p))
 
 	if (existing) {
 		return { wofShard: { path: existing, sizeBytes: deps.fileSize(existing) }, probed: shards }
-	}
-
-	const convention = deps.conventionCandidatePath()
-
-	if (convention) {
-		return { conventionCandidate: convention, probed: [...shards, convention] }
 	}
 
 	return { probed: shards }

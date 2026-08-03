@@ -78,6 +78,15 @@ const OptionsSchema = zod.object({
 			"ISO-3166 country to scope the WOF resolver. Defaults from --locale's region subtag (en-US → US). " +
 				"Pass 'none' to disable the country filter."
 		),
+	countryScope: zod
+		.enum(["auto", "locale", "none"])
+		.optional()
+		.default("auto")
+		.describe(
+			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
+				"'auto' (default) only on the FTS backend. Pin 'locale' or 'none' to hold country policy fixed " +
+				"while changing backends. An explicit --default-country outranks all three."
+		),
 	resolveDb: zod
 		.string()
 		.optional()

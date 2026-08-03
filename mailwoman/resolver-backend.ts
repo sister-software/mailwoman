@@ -5,24 +5,25 @@
  *
  *   Shared resolver-backend selector for the CLI commands + server routers. Picks the byte-range
  *   CANDIDATE-table lookup ({@link WOFCandidateTableLookup}) — the SAME backend + population-first,
- *   country-agnostic ranking the browser demo uses — when a `candidate.db` is configured, else the
- *   FTS admin lookup ({@link WOFSqlitePlaceLookup}, today's default).
+ *   country-agnostic ranking the browser demo uses — when a `candidate.db` is reachable, else the
+ *   FTS admin lookup ({@link WOFSqlitePlaceLookup}).
  *
  *   Why this exists: the demo resolves localities population-first ("Moscow" → the 10.4 M-pop Russian
  *   city), but the FTS resolver ranks by bm25 + exact-match tiering, so a bare homonym goes to
- *   whichever same-name place bm25 floats up (often a small US township). Pointing the CLI/server
- *   at the candidate table makes them resolve identically to the demo. On the US held-out eval the
- *   candidate backend is a strict improvement over FTS (locality 96.8 → 97.3 %, coord p99 692 → 28
- *   km) while adding global coverage, so it's safe to opt into.
+ *   whichever same-name place bm25 floats up (often a small US township). The candidate table also
+ *   carries 3.66 M postcodes and the exonym aliases that map `Munich` onto `München`, neither of
+ *   which the FTS admin shard stocks.
  *
- *   Opt-in via `MAILWOMAN_CANDIDATE_DB` (or an explicit `--candidate-db` on commands that expose it).
- *   Unset → the FTS backend, unchanged. Flip the env to make the CLI/server match the demo.
+ *   The candidate table is the DEFAULT: {@link resolveCandidateDBPath} falls back to the convention
+ *   path, so a pulled gazetteer is picked up with nothing exported. `MAILWOMAN_CANDIDATE_DB=none`
+ *   (or `--candidate-db none`) pins the FTS backend.
  */
 
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -31,12 +32,34 @@ import type {
 } from "@mailwoman/resolver-wof-sqlite"
 
 /**
- * Resolve the candidate-db path from an explicit option then `$MAILWOMAN_CANDIDATE_DB`; undefined if unset or missing.
+ * The candidate gazetteer's conventional home — where `mailwoman data pull candidate` writes it, and where every caller
+ * looks when nothing points somewhere else.
+ */
+export function conventionCandidateDBPath(): string {
+	return join(mailwomanDataRoot(), "wof", "candidate.db")
+}
+
+/**
+ * Resolve the candidate-db path: an explicit option, then `$MAILWOMAN_CANDIDATE_DB`, then the convention path. Each is
+ * used only if it exists on disk. `none` at either the explicit or the env position pins the FTS backend instead.
+ *
+ * The convention fallback is what makes the candidate table the DEFAULT backend, and it is the same fallback
+ * `photon`/`nominatim` already did on their own — `parse`, `geocode`, `serve` and `registry` were the outliers.
+ * Measured on the two tier-1 locales with the country scope pinned identically across arms (150 rows each, graded at
+ * the locality tier): US within-25 km 149/150 → 150/150 and worst-case 692 km → 20 km; FR within-25 km 126/150 →
+ * 145/150, p90 144.2 km → 2.4 km, worst-case 572 km → 53 km. See docs/engineering/reference/resolver-backends.mdx for
+ * the arms, the residuals, and how to reproduce.
  */
 export function resolveCandidateDBPath(explicit?: string): string | undefined {
-	const p = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
+	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
-	return p && existsSync(p) ? p : undefined
+	if (pinned === "none") return undefined
+
+	if (pinned) return existsSync(pinned) ? pinned : undefined
+
+	const convention = conventionCandidateDBPath()
+
+	return existsSync(convention) ? convention : undefined
 }
 
 /**
@@ -63,26 +86,15 @@ export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/
  * was broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
  * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
  *
- * `requiresExplicitEnv` distinguishes the two candidate-resolution shapes in this codebase: `photon`/`nominatim` fall
- * back to the `<data-root>/wof/candidate.db` CONVENTION path even when `$MAILWOMAN_CANDIDATE_DB` is unset (see their
- * own `candidateDb` derivation, a couple of lines above their preflight check) — so a bare `data pull candidate` is the
- * whole fix, no export needed. `mailwoman serve` resolves ONLY via `resolveCandidateDBPath` (explicit opt or env —
- * doctor's documented convention-path trap, `doctor/checks.ts`'s `gazetteerCheck`), so its message needs the export
- * line spelled out.
+ * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath} reaches the convention path
+ * this message names, so no export follows the download. (Until 2026-08-04 `mailwoman serve` was the exception — it
+ * stopped at the env — and this message carried a `requiresExplicitEnv` branch to tell its readers to export something
+ * the drop-ins' readers did not need.)
  */
-export function buildNoGazetteerMessage(opts: {
-	dataRoot: string
-	docsPath: string
-	requiresExplicitEnv: boolean
-}): string {
+export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: string }): string {
 	const conventionCandidate = join(opts.dataRoot, "wof", "candidate.db")
 
-	const afterPull = opts.requiresExplicitEnv
-		? [
-				"  Then point $MAILWOMAN_CANDIDATE_DB at the pulled file and re-run:",
-				`    export MAILWOMAN_CANDIDATE_DB=${conventionCandidate}`,
-			]
-		: [`  The file lands at ${conventionCandidate} and is auto-detected there — just re-run \`serve\`.`]
+	const afterPull = [`  The file lands at ${conventionCandidate} and is auto-detected there — just re-run.`]
 
 	return [
 		"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",

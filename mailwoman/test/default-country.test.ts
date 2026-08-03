@@ -85,6 +85,37 @@ describe("resolverDefaultCountry", () => {
 	})
 })
 
+describe("--country-scope separates country policy from the resolver backend", () => {
+	// The hazard this pins: under 'auto', backend and country scope are ONE switch, so an A/B that
+	// changes the backend has silently changed the filter too and is comparing four conditions, not
+	// two. 'locale' and 'none' are what a measurement pins to hold one variable still.
+	test("'auto' is what the backend argument reaches — the historical coupling", () => {
+		expect(resolverDefaultCountry({ locale: "en-US" }, false)).toBe("US")
+		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBeUndefined()
+	})
+
+	test("'locale' scopes on either backend", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, false)).toBe("US")
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, true)).toBe("US")
+	})
+
+	test("'none' scopes on neither backend", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, false)).toBeUndefined()
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, true)).toBeUndefined()
+	})
+
+	test("an explicit --default-country outranks every scope", () => {
+		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" }, true)).toBe("FR")
+		expect(
+			resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" }, false)
+		).toBeUndefined()
+	})
+
+	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {
+		expect(parseOptions.parse({}).countryScope).toBe("auto")
+	})
+})
+
 describe("--default-country schema validation", () => {
 	test("accepts an explicit ISO country", () => {
 		expect(parseOptions.parse({ defaultCountry: "US" }).defaultCountry).toBe("US")
