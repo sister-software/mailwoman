@@ -9,18 +9,29 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress } from "mailwoman/geocode-core"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
+// This file is served at /examples/mailwoman-server.mjs and runs in a READER's project, where
+// `@mailwoman/core/env` — the blessed env helper inside this repo — is not a dependency. A raw read is
+// the correct shape here, and it is the only one in the file: the gazetteer path below goes through
+// `resolveCandidateDBPath`, which IS reachable from a reader's install.
+// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset; runs outside this repo
 const PORT = Number(process.env.PORT ?? 3000)
-const CANDIDATE_DB = process.env.MAILWOMAN_CANDIDATE_DB
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
-// Geocoding is opt-in on the presence of a gazetteer. With no volume mounted, /parse still answers and
-// /geocode reports 503 — the same degrade the published image makes, so a first run needs no data.
+// Geocoding is opt-in on a gazetteer being THERE, not on the environment variable being set. An image
+// that bakes `MAILWOMAN_CANDIDATE_DB` as a default — the Dockerfile beside this file does — leaves it set
+// on every run, mounted volume or not, so a truthiness check would open a file that does not exist and
+// kill the process with SQLITE_CANTOPEN on a first run with no data. `resolveCandidateDBPath` is the
+// shipped helper for exactly this: it reads the variable and returns undefined unless the file exists.
+// Same guard the published image's server.mjs uses.
+const candidateDB = resolveCandidateDBPath()
+
 let resolver
 
-if (CANDIDATE_DB) {
-	resolver = createWOFResolver(new WOFCandidateTableLookup({ databasePath: CANDIDATE_DB }))
+if (candidateDB) {
+	resolver = createWOFResolver(new WOFCandidateTableLookup({ databasePath: candidateDB }))
 }
 
 function send(res, status, body) {
@@ -44,7 +55,7 @@ createServer(async (req, res) => {
 		}
 
 		if (url.pathname === "/geocode") {
-			if (!resolver) return send(res, 503, { error: "no gazetteer mounted at $MAILWOMAN_CANDIDATE_DB" })
+			if (!resolver) return send(res, 503, { error: "no gazetteer found at $MAILWOMAN_CANDIDATE_DB" })
 
 			return send(res, 200, await geocodeAddress(address, { classifier, resolver, defaultCountry: "US" }))
 		}

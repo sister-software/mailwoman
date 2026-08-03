@@ -18,8 +18,10 @@ mounts read-only at `/data`. Parsing works with no volume at all.
 container was built or run here. Every command below is sourced from the repository assets that produce
 the published image — the repo-root `Dockerfile`, `docker/package.json`, `docker/docker-compose.yml` and
 `docker/README.md` — and the registry facts in step 1 come from the GHCR API. The
-[example server](/examples/mailwoman-server.mjs) in step 4 _was_ executed, outside a container, and its
-transcripts are real. Treat the `docker run` lines as sourced, not as executed output.
+[example server](/examples/mailwoman-server.mjs) in step 4 _was_ executed, outside a container, in both
+states the image can start in: with a gazetteer on disk, and with `MAILWOMAN_CANDIDATE_DB` set to a path
+that does not exist, which is what a first run with no volume looks like. Those transcripts are real.
+Treat the `docker run` lines as sourced, not as executed output.
 
 ## Prerequisites
 
@@ -132,31 +134,61 @@ three routes, everything expensive built once at module scope. It was run outsid
 real gazetteer:
 
 ```bash
-PORT=13777 MAILWOMAN_CANDIDATE_DB=/tmp/mw-fresh-demo/wof/candidate.db node mailwoman-server.mjs
-curl -s "http://127.0.0.1:13777/health"
-curl -s "http://127.0.0.1:13777/geocode?address=1600+Pennsylvania+Ave+NW,+Washington,+DC+20500"
+PORT=13783 MAILWOMAN_CANDIDATE_DB=/tmp/mw-fresh-demo/wof/candidate.db node mailwoman-server.mjs
+curl -s "http://127.0.0.1:13783/health"
+curl -s "http://127.0.0.1:13783/geocode?address=1600+Pennsylvania+Ave+NW,+Washington,+DC+20500"
 ```
 
 ```
-listening on http://0.0.0.0:13777 (geocoder: ready)
+listening on http://0.0.0.0:13783 (geocoder: ready)
 {"ok":true,"geocoder":true}
 {"lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","locality":"Washington"}
 ```
 
-And with no gazetteer, to confirm the degrade rather than assume it:
+One line in it is why a first run with no volume works at all:
+
+```js
+// Gate on the gazetteer being THERE, not on the variable being set.
+const candidateDB = resolveCandidateDBPath()
+```
+
+The Dockerfile bakes `MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db` as a default, so a reader who mounts
+a volume needs no `-e` flag — which also means the variable is set on **every** run, volume or not. A
+server that checked it for truthiness would open a file that does not exist and die at import with
+`SQLITE_ERROR: unable to open database file`, before binding a port. `resolveCandidateDBPath` from
+`mailwoman/resolver-backend` reads the variable and returns nothing unless the file is on disk; the
+published image's own entrypoint uses the same guard.
+
+That is verifiable without Docker — set the variable to a path that does not exist, which is exactly the
+container's first-run state, and run it under plain node:
+
+```bash
+PORT=13781 MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db node mailwoman-server.mjs
+curl -s "http://127.0.0.1:13781/health"
+curl -s "http://127.0.0.1:13781/geocode?address=1600+Pennsylvania+Ave+NW"
+curl -s -o /dev/null -w 'parse status %{http_code}\n' "http://127.0.0.1:13781/parse?address=1600+Pennsylvania+Ave+NW,+Washington+DC"
+```
 
 ```
-listening on http://0.0.0.0:13778 (geocoder: off)
+listening on http://0.0.0.0:13781 (geocoder: off)
 {"ok":true,"geocoder":false}
-{"error":"no gazetteer mounted at $MAILWOMAN_CANDIDATE_DB"}
+{"error":"no gazetteer found at $MAILWOMAN_CANDIDATE_DB"}
 parse status 200
 ```
 
-Build it with the two example files side by side:
+The process is alive, parsing answers 200, and geocoding reports 503. That is the "parse works with no
+volume" claim from step 1, demonstrated rather than assumed.
+
+Build it with the two example files side by side, saved under the names the docs site serves them as:
 
 ```bash
+curl -O https://mailwoman.sister.software/examples/mailwoman.Dockerfile
+curl -O https://mailwoman.sister.software/examples/mailwoman-server.mjs
 docker build -f mailwoman.Dockerfile -t my-mailwoman .
 ```
+
+The `COPY` and `CMD` lines name `mailwoman-server.mjs`, so a directory holding those two downloads
+builds without renaming anything.
 
 ## Verify
 

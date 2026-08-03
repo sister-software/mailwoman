@@ -91,8 +91,17 @@ mailwoman registry --sources config.json --resolve-db "$MAILWOMAN_CANDIDATE_DB" 
 mailwoman registry --sources tx-nppes.json --reconcile tx-fcc.json --resolve-db "$MAILWOMAN_CANDIDATE_DB"
 ```
 
-`--resolve-db` (or `$MAILWOMAN_WOF_DB`) is required. It is the one command in the CLI that does not
-read `$MAILWOMAN_CANDIDATE_DB` on its own, so pass the candidate gazetteer through the flag.
+`--resolve-db` (or `$MAILWOMAN_WOF_DB`) is required to BOOT, and is then ignored whenever
+`$MAILWOMAN_CANDIDATE_DB` is set. `resolveWOFPath` throws before anything opens; `createResolverBackend`
+then prefers the candidate backend and never touches the WOF path (`run.tsx`'s own inline comment states
+this correctly: "`$MAILWOMAN_CANDIDATE_DB` → the demo-parity candidate backend; else FTS over wofPath").
+A nonexistent path passes the gate.
+
+So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do NOT pass `candidate.db` to
+`--resolve-db` with the environment variable unset — the flag is believed on that path, and the admin
+backend queries `place_search`/`spr`, which a candidate gazetteer does not have.
+
+Requiring an argument in order to discard it is a defect in this command. Documented rather than fixed.
 
 Two CLI defaults differ from the library defaults: `--threshold` defaults to `0`, which is the
 Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `--train-em` is on.

@@ -78,12 +78,6 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
 		"sentencepiece-wasm/sentencepiece.mjs",
-		// Copy-pasteable assets the docs site serves at /examples/*. They run in a READER's project,
-		// not in this repo, so they cannot import `@mailwoman/core/env` for `process.env` (the package
-		// is not a dependency of a reader's script) and they are not part of any workspace's build.
-		// Their correctness is proved by executing them, not by linting them — see the transcripts in
-		// `docs/articles/developers/how-to/deploy-docker.mdx`.
-		"docs/static/examples/**",
 	],
 })
 

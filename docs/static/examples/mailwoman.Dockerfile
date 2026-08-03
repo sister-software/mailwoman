@@ -45,9 +45,10 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends libgomp1 \
 	&& rm -rf /var/lib/apt/lists/*
 
-# The data root is read on every call rather than cached at import, so an override at `docker run`
-# time is honoured. Point MAILWOMAN_CANDIDATE_DB at the real file, not a symlink: an absolute-path
-# symlink created on the host dangles inside the container.
+# MAILWOMAN_CANDIDATE_DB is baked as a DEFAULT so a reader who mounts a volume needs no `-e` flag. It is
+# therefore set on every run, volume or not, which is why the entrypoint gates on the file existing
+# rather than on the variable being set — see the note in mailwoman-server.mjs. Point it at the real
+# file, not a symlink: an absolute-path symlink created on the host dangles inside the container.
 ENV NODE_ENV=production \
 	MAILWOMAN_DATA_ROOT=/data \
 	MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db
@@ -55,7 +56,9 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 COPY --from=install --chown=node:node /app/node_modules ./node_modules
-COPY --chown=node:node server.mjs ./server.mjs
+# The filename matches the example asset as downloaded, so `docker build` works on a directory holding
+# the two files saved straight from the docs site.
+COPY --chown=node:node mailwoman-server.mjs ./mailwoman-server.mjs
 
 # Both resolver backends open SQLite read-only, so mount this `:ro`. Per-state rooftop shards are
 # WAL-mode: keep their -wal and -shm siblings in the same mount, or those addresses fall back to a
@@ -74,4 +77,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 	CMD ["node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
-CMD ["node", "server.mjs"]
+CMD ["node", "mailwoman-server.mjs"]

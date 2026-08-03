@@ -44,10 +44,45 @@ wrote 20 features → entities.geojson
 Twenty rows in, twenty entities out. **Nothing linked at the defaults.** That is the real starting point
 for a file this size, and the rest of this page is about why and what to do.
 
-Note `--resolve-db` in that command. `mailwoman registry` is the one command that does not read
-`$MAILWOMAN_CANDIDATE_DB` on its own — it requires a resolver path from the flag or from
-`$MAILWOMAN_WOF_DB`, and errors without one. Passing the candidate gazetteer through the flag is the
-workaround, and it is what the tutorial does too.
+Note `--resolve-db` in that command, and note what it is doing, because it is not what it looks like.
+`mailwoman registry` reads `$MAILWOMAN_CANDIDATE_DB` like everything else — the banner above says so, and
+that path came from the environment. What the flag satisfies is a separate boot gate: registry refuses to
+start without a WOF admin path from `--resolve-db` or `$MAILWOMAN_WOF_DB`, and then discards it whenever
+the candidate gazetteer is set.
+
+You can watch both halves. Without the flag and without `$MAILWOMAN_WOF_DB`, it will not boot even though
+the candidate gazetteer is right there:
+
+```
+registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.
+```
+
+And a path that does not exist satisfies the gate perfectly, because nothing ever opens it:
+
+```bash
+npx mailwoman registry run customers-messy.csv --infer-mapping --resolve-db /nonexistent/wof.db --out entities.geojson
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-fresh-demo/wof/candidate.db
+registry: 20 rows → 20 records (20 geocoded) → 20 entities (38 candidate pairs)
+wrote 20 features → entities.geojson
+```
+
+So the recipe is: **set `$MAILWOMAN_CANDIDATE_DB`, and pass anything to `--resolve-db` to get past the
+gate.** Passing the candidate path is the tidiest thing to pass, which is why this page and the tutorial
+both do it — but it is satisfying a check, not selecting a backend.
+
+What you must not do is follow that literally with the environment variable unset. The flag would then be
+believed, and `candidate.db` has neither table the admin backend queries:
+
+```
+Error: WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman gazetteer build fts <path-to-wof.db>` ahead of time (see
+resolver-wof-sqlite/README.md).
+```
+
+A gate that demands an argument and then ignores it is a defect in this command, not a convention to
+learn. It is recorded here because the workaround is needed today.
 
 ## 2. Confirm blocking is not the problem
 
