@@ -12,6 +12,11 @@
 # words from a fence/import/JSX/details block into real alerts, shows up here
 # as the wrong fixture producing the wrong verdict.
 #
+# dirty.md also carries one NEGATIVE assertion: the phrase "full-text search"
+# sits in plain prose and must NOT trip Terms.yml's `text search` swap. That
+# swap is guarded precisely so the FTS5 vocabulary this repo ships survives it,
+# and the guard is only checked by that line staying quiet.
+#
 # Run from anywhere:
 #   docs/scripts/check-vale-rules.sh
 #   yarn workspace @mailwoman/docs lint:prose:fixtures
@@ -23,7 +28,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-MIN_DIRTY_ERRORS=5
+# The exact error-severity count dirty.md produces today (measured, not
+# estimated). It is a `>=` bar, so adding a rule + its fixture line passes
+# without a bump; only a rule that STOPS firing fails. Raised 5 -> 29 when the
+# derived writing system (docs/engineering/writing-system.md) added the
+# API-key / data-layer / geocoding-direction terms and the ease-claim stock
+# phrases, and dirty.md grew one hit for each.
+MIN_DIRTY_ERRORS=29
 RULE_FILES=(BannedWords StockPhrases Anthropomorphism Weasel Terms)
 
 cd "$DOCS_DIR"
