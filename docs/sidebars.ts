@@ -47,11 +47,18 @@ const sidebars: SidebarsConfig = {
 			// install, the CSV loop needs candidate.db, the server needs both, and the precision
 			// page needs a second download on top. Each page's prerequisites name the one before it.
 			//
-			// The last two are the wave-2 destinations rather than further rungs on that ladder:
+			// The next two are the wave-2 destinations rather than further rungs on that ladder:
 			// the drop-in swap re-uses the same candidate.db as the server page but answers a
 			// different question (an existing client, not a new one), and the browser page needs no
 			// data root at all. Both sit after the ladder so a reader following it in order reaches
 			// them having already met every artifact they name.
+			//
+			// The last two are the build pages, and they come last because they invert the
+			// direction of every page above: those consume published artifacts, these produce
+			// them. Each is hours of wall clock and tens of gigabytes, so a reader arrives at
+			// them having already established they need something the downloads do not give.
+			// US before planet — the planet page's per-country loop assumes the US ladder
+			// (rooftop, then interpolation, then the gazetteer under both) is already familiar.
 			items: [
 				"developers/tutorials/understand-a-parse",
 				"developers/tutorials/geocode-a-csv",
@@ -59,6 +66,8 @@ const sidebars: SidebarsConfig = {
 				"developers/tutorials/improve-geocode-precision",
 				"developers/tutorials/swap-in-for-nominatim",
 				"developers/tutorials/parse-in-the-browser",
+				"developers/tutorials/build-the-us-dataset",
+				"developers/tutorials/full-planet-build",
 			],
 		},
 		"developers/status",

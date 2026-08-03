@@ -1,0 +1,326 @@
+---
+title: Build the planet
+description: One global gazetteer plus per-country address tiers — which countries have a tier today, how to build one for a country that has none, and which countries have no path at all. Corsica two ways.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Build the planet
+
+"Planet coverage" for a geocoder is two claims, and they come apart. One is that every place on Earth
+resolves to a coordinate; that one is answered globally by a single gazetteer. The other is that a house
+number resolves to a building; that one is answered country by country, and today it is answered for two
+countries. By the end of this page you'll have built street-level coverage for one region of France twice
+— once from the French government's address register, once from OpenStreetMap — geocoded the same address
+against both, and seen which answers it. About twenty minutes of work plus a 1.65 GB download.
+
+You will also know which countries you could repeat it for and which have no path at all. The
+[status page](../status.mdx) answers that question in terms of parser locales; this page answers it in
+terms of data.
+
+## Prerequisites
+
+- **About 2 GB of free disk** for the path below: 1.65 GB of gazetteer and under 100 MB of everything
+  else. Adding France's whole national register instead of three départements is 6.95 GB; adding the US
+  is 41.3 GB. Check the number for the country you want before you start it.
+- **GDAL on your `PATH`** for the OpenStreetMap step — `ogr2ogr --version` should answer. Nothing else on
+  this page needs it.
+- **The CLI**, as on every page here:
+
+  ```bash
+  npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+  npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite
+  ```
+
+- **A data root**, and the willingness to keep it:
+
+  ```bash
+  export MAILWOMAN_DATA_ROOT=/tmp/mw-planet
+  mkdir -p "$MAILWOMAN_DATA_ROOT"
+  ```
+
+Building the US tier is a different shape from everything below, because the US is the one country with
+both a rooftop register and a national street-segment file. It has its own page:
+[Build the US address dataset](./build-the-us-dataset.mdx).
+
+## What "the planet" is here
+
+One layer is global and the rest are per country, which is the split that makes "planet" two claims instead
+of one.
+
+| Layer                  | Scope                       | Published today                                       |
+| ---------------------- | --------------------------- | ----------------------------------------------------- |
+| Admin gazetteer        | 244 countries, one database | `candidate.db`, 1.65 GB                               |
+| Rooftop address points | Per country                 | US (30.3 GB, 52 shards) and France (6.95 GB, 1 shard) |
+| Street interpolation   | Per country                 | US only (11.0 GB, 51 shards)                          |
+| POI                    | Per country                 | US, Canada, Mexico, France in one 3.89 GB layer       |
+
+That is the complete published set — `mailwoman data pull` offers four bundles and no others. Everything
+else on this page you build yourself.
+
+The 244 comes from the three source lists the gazetteer build unions, and you can read them off the
+defaults it ships with: 12 countries served from Who's On First repositories, 85 from Overture divisions,
+161 from GeoNames, and 244 distinct countries between them. Coverage at that layer means the country,
+region and locality resolve — not that a street does.
+
+## 1. Get the global gazetteer
+
+```bash
+npx mailwoman data pull candidate
+export MAILWOMAN_CANDIDATE_DB="$MAILWOMAN_DATA_ROOT/wof/candidate.db"
+```
+
+```
+▸ pull https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db (~1652.9 MB) → /tmp/mw-planet/wof/candidate.db
+
+export MAILWOMAN_CANDIDATE_DB=/tmp/mw-planet/wof/candidate.db
+✓ candidate: gazetteer/2026-07-07a/candidate.db: content-length verified (1652.9 MB) → /tmp/mw-planet/wof/candidate.db
+PASS (1/1 checks)
+```
+
+Four minutes for 1.65 GB here. Take the download unless you have a reason not to, because the build behind
+it is the heaviest thing in this repository, and this page does not run it. What it involves, so you can
+price it:
+
+```bash
+# 1. Clone the Who's On First data repositories. 823 non-archived repos in the org
+#    on 2026-08-03; `--repos` narrows it to the countries you need.
+npx mailwoman gazetteer inspect sync "$MAILWOMAN_DATA_ROOT/wof/repos" \
+  --repos whosonfirst-data-admin-fr,whosonfirst-data-postalcode-fr
+
+# 2. Build the admin database. Reads the repos above, streams Overture divisions
+#    from S3, folds GeoNames dumps you have already downloaded.
+npx mailwoman gazetteer build admin
+
+# 3. Derive the query-time gazetteer from it.
+npx mailwoman gazetteer build candidate
+```
+
+Step 2 runs nine stages in order — `ingest-wof`, `fold-overture`, `fold-geonames`, `freeze`, `enrich`,
+`VACUUM INTO`, `fts`, `verify`, `seal` — and a failed `verify` throws and leaves the artifact unsealed
+instead of shipping it. Step 3 folds the GeoNames alias tail in and compresses the result into the
+byte-range-friendly candidate table.
+
+Budget disk for two databases, not one, because step 3 reads what step 2 wrote. The sizes are from the
+maintainer build host, not from a run on this page: the admin database there, built 2026-08-02,
+measures 5,275,287,552 bytes; the published candidate database is 1,652,916,224 bytes, which is a little
+under a third of it.
+
+Two things about the sync command before you run it. It shells out to `gh repo list`, so the GitHub CLI
+has to be installed and authenticated. And its own source comment estimates "~100 whosonfirst-data repos
+… ~2.9 GB of git" — the organization holds 823 non-archived repositories today, so pass `--repos` and
+size against what you asked for.
+
+## 2. Add a country with a national register
+
+France publishes the Base Adresse Nationale — 26 million addresses under the Licence Ouverte 2.0, which
+asks for attribution and imposes no share-alike. That makes it the same licensing shape as the permissive
+core, and it is why France is the one non-US country with a published shard.
+
+Take three départements, not the whole country, so the step finishes while you watch:
+
+```bash
+mkdir -p "$MAILWOMAN_DATA_ROOT/ban/sources"
+for d in 48 2A 05; do
+  curl -sL -o "$MAILWOMAN_DATA_ROOT/ban/sources/adresses-$d.csv.gz" \
+    "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-$d.csv.gz"
+done
+```
+
+7.3 MB of gzipped CSV. Then build:
+
+```bash
+node ban/out/scripts/build-address-point-shard.js \
+  --csv-dir "$MAILWOMAN_DATA_ROOT/ban/sources" --depts 48,2A,05 \
+  --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db"
+```
+
+```
+[ban] building fr rooftop shard from 3 départements in /tmp/mw-planet/ban/sources
+[ban]   dept 05: 81,258 cumulative
+[ban]   dept 2A: 138,573 cumulative
+[ban]   dept 48: 200,406 cumulative
+[ban] indexing…
+[ban] DONE /tmp/mw-planet/ban/address-points-fr-sample.db
+      départements                     : 3
+      total source rows                : 200,406
+      written points                   : 200,406
+      skipped (no street/number)       : 0
+      bytes                            : 53,411,840
+      md5                              : 765cacaaaf1cc224530117a6d1d1a991
+      source                           : ban:fr  release=2026-08-03  license=Licence Ouverte / Open Licence 2.0 (Etalab)
+```
+
+4.71 s, 200,406 points, and **zero rows skipped**: every row in these three départements carries both a
+street and a number, which is what a government register buys you and what step 3 does not have. The build
+streams the CSV instead of loading it, so the national set is the same command with a longer file list —
+26 million rows, and 6.95 GB in the published shard.
+
+This is a workspace script, not a `mailwoman` subcommand. There is no `mailwoman ban` group: the
+fetch is a `curl` against a documented URL pattern, and the build is the script above.
+
+## 3. Build the same ground from OpenStreetMap
+
+For a country with no open register, OpenStreetMap is the fallback, and it comes with a licence
+consequence that belongs above the command, not below it. **OSM is ODbL, which is share-alike on a
+derived database, and a shard built here is a derived database.** Mailwoman publishes no OSM shard to npm,
+R2 or the demo, and will not until counsel has reviewed how share-alike applies to serving a coordinate
+from one. The builder ships; the data does not. If you build one, the obligation is yours and it rides on
+the file.
+
+Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. Adding
+a fourth means registering the country and writing its branch in the street normalizer in the same commit,
+which is why the list grows one considered country at a time.
+
+Pull an extract and build. The Corsica extract is 34 MB, small enough to finish in seconds:
+
+```bash
+mkdir -p "$MAILWOMAN_DATA_ROOT/osm/geofabrik"
+curl -sL -o "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf" \
+  "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
+
+node osm/out/scripts/build-rooftop-shard.js \
+  --country fr --slug corse --release 260803 \
+  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
+```
+
+```
+[osm] building fr/corse rooftop shard from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
+[osm] indexing…
+[osm] DONE /tmp/mw-planet/osm/address-points-fr-corse.db
+      total addr:housenumber features : 15,774
+      written total                    : 8,674  (of which recovered: 0)
+      skipped (no addr:street)         : 7,100  (45.0% raw association gap)
+      skipped (bad coord)              : 0
+      source                           : openstreetmap:fr  release=260803  recover=false
+```
+
+2.41 s, and the `skipped` line is the one to read. 7,100 of 15,774 house-number features carry no
+`addr:street`, so 45.0% of the data is unqueryable as an address. The build counts them instead of
+inventing a street, and that count is the input to the fix: rerun with `--recover` and the builder
+attaches each orphan to the nearest named highway within 30 m.
+
+```bash
+node osm/out/scripts/build-rooftop-shard.js \
+  --country fr --slug corse --release 260803 --recover \
+  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
+```
+
+```
+[osm] recovery index: 369,423 highway vertices (radius 30m)
+[osm] building fr/corse rooftop shard from /tmp/mw-planet/osm/geofabrik/corse-260803.osm.pbf
+[osm] indexing…
+[osm] DONE /tmp/mw-planet/osm/address-points-fr-corse.db
+      total addr:housenumber features : 15,774
+      written total                    : 14,714  (of which recovered: 6,040)
+      skipped (no addr:street)         : 1,060  (6.7% raw association gap)
+      skipped (bad coord)              : 0
+      source                           : openstreetmap:fr  release=260803  recover=true
+```
+
+3.32 s, 6,040 points recovered, and the gap falls from 45.0% to 6.7%. The recovered rows carry
+`openstreetmap:fr#recovered` in their `source` column rather than `openstreetmap:fr`, so a consumer that
+does not trust a geometric guess can filter them out with one predicate.
+
+## 4. See which one answers
+
+You now hold two shards over overlapping ground. Ask both for the same address — `--address-points-db`
+points the geocoder at an explicit shard instead of the per-state US convention:
+
+```bash
+npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
+  --address-points-db "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db" --format text
+```
+
+```
+input:            12 Cours Napoléon, 20000 Ajaccio
+resolution_tier:  address_point
+coordinate:       41.919826, 8.737100
+uncertainty_m:    1
+locality:         Ajaccio
+postcode:         20000
+hierarchy:
+  locality             Ajaccio [wof:404376035] (41.9346, 8.7005)
+```
+
+```bash
+npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
+  --address-points-db "$MAILWOMAN_DATA_ROOT/osm/address-points-fr-corse.db" --format text
+```
+
+```
+input:            12 Cours Napoléon, 20000 Ajaccio
+resolution_tier:  admin
+coordinate:       41.934571, 8.700510
+locality:         Ajaccio
+postcode:         20000
+```
+
+Rooftop from the register, city centroid from OpenStreetMap, on the same street in the same town. The
+density behind that is the whole story: the register holds 57,315 points for Corse-du-Sud alone against
+14,714 for all of Corsica in OSM, after recovery. This is why the resolver consults a national register
+ahead of the OSM tier when both are present, and why the ordering is not a preference you tune.
+
+It does not run one way every time. Swap the address for `20 Boulevard Tino Rossi, 20000 Ajaccio`, in the
+same town, and the two swap places:
+
+```
+# register:  resolution_tier: admin
+# OSM:       resolution_tier: address_point   coordinate: 41.908027, 8.679581
+```
+
+The register files that quay as `Quai Port Plaisance Tino Rossi`, so the query misses it and falls to the
+city. Neither source contains the other. If you carry both, carry them as tiers with the register first
+rather than merging them into one file.
+
+## 5. What has no path today
+
+Absence is a claim, so here are the ones worth stating outright.
+
+**Great Britain has no open address source in this stack.** Overture's addresses theme carries no GB rows
+at all, which you can confirm in about two minutes:
+
+```bash
+npx mailwoman gazetteer overture-ingest --countries GB --release 2026-06-17.0
+```
+
+```
+[ingest] GB -> /tmp/mw-planet/overture/2026-06-17.0/addresses-gb.parquet (138s)
+[probe] GB: no rows found — check the country code or release
+✓ overture ingest: /tmp/mw-planet/overture/2026-06-17.0
+  release 2026-06-17.0 · GB · 0 probed
+```
+
+The command succeeds and writes a 532-byte parquet: a valid file holding the schema and no rows. That is
+the shape of a real absence, and it is a different fact from a failed download. Royal Mail's Postcode
+Address File is not open, so the GB street tier is a licensing gap rather than a build anyone can run.
+Postcode-level resolution for GB still works, out of the gazetteer.
+
+**Korea has no adopted open data path**, and that is a data-licensing constraint, not an
+engineering one. **Australia's G-NAF** is in the repository, but as a training-corpus adapter
+(`mailwoman gnaf assemble` emits labelled JSONL), not a shard builder — there is no
+`address-points-au` to build today. **New Hampshire** is a hole inside the country that does have a tier:
+its published rooftop shard is 20,480 bytes and holds zero rows, because the state appears in neither
+Overture nor the OpenAddresses set the build falls back to.
+
+Two closing notes on the word "coverage". A missing row is not a measured zero, and newer mailwoman
+artifacts make that distinction structural: the spatial-layer contract the POI layer follows stores
+per-cell survey completeness beside the data, so a consumer can tell "surveyed and empty" from "never
+surveyed". The address shards on this page predate it and carry no such table, which is why the New
+Hampshire case above has to be stated in prose. And a locale claim on the [status page](../status.mdx) is
+a claim about parsing, not about street-level coordinates: France and the US are tier 1 for both, and every
+other claimed locale parses against a coordinate panel while resolving at the admin tier.
+
+## What you have now
+
+Two rooftop shards over Corsica built from different sources under different licences, a global gazetteer
+under both of them, and a row count for what each source holds instead of an assumption about it.
+The same two commands, given a country code the normalizer knows and an extract or a register dump,
+produce the next one.
+
+## Next
+
+- [Build the US address dataset](./build-the-us-dataset.mdx) — the one country with both a rooftop
+  register and a national street-segment file, and the fifty-state numbers.
+- [Improve geocode precision](./improve-geocode-precision.mdx) — the published French shard, downloaded
+  rather than built, and what the four resolution tiers mean.
