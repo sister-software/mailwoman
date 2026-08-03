@@ -122,7 +122,7 @@ The negative form of the same experiment is worth naming, because it bit us: _re
 
 ## Verdict smokes and eval infrastructure
 
-A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](../plan/reference/VERDICT_SMOKES.mdx) for the full framework. The eval-relevant lessons:
+A separate but related discipline surrounds training experiments. See [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) for the full framework. The eval-relevant lessons:
 
 - **Constant-LR smokes, not cosine.** Cosine decay hides divergence under a near-zero learning rate. A verdict smoke that uses cosine decay will report "stable" even when the recipe would diverge under sustained peak LR. v0.4.0's cosine-LR meta-bug cost five training runs before it was diagnosed.
 - **Full-run batch geometry.** A smoke that runs at a different effective batch size than the full run is testing a different gradient-noise regime. The smoke's "pass" verdict is not transferable.
@@ -145,6 +145,6 @@ Before shipping a model release:
 
 - [Input robustness](./input-robustness.mdx) — the metamorphic INV/DIR gate in context: the three absorption layers upstream of it and the coverage matrix
 - [v0.4.0 ablation campaign retrospective](/research/v0-4-0-ablation-campaign) — the original false-negative bucketing analysis
-- [VERDICT_SMOKES.md](../plan/reference/VERDICT_SMOKES.mdx) — smoke-test discipline for training experiments
+- [VERDICT_SMOKES.md](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) — smoke-test discipline for training experiments
 - [Dual-loss curvature conflict](./dual-loss-curvature-conflict.mdx) — the training divergence this methodology helped diagnose
 - [Training pipeline](./training-pipeline.mdx) — how corpus composition affects eval-set coverage

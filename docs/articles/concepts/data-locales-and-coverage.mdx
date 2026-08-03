@@ -4,7 +4,7 @@ title: Data, locales, and coverage
 description: Which places Mailwoman can read and which it can pin to the map — the locale tiers as declared, the data layers behind each claim, and where the coverage runs out.
 role: concept
 audience: product-reader
-source-of-truth: plan/SCOPE.mdx, plan/reference/address-data-sources.mdx, licensing/data-provenance.md
+source-of-truth: engineering/SCOPE.mdx, engineering/reference/address-data-sources.mdx, licensing/data-provenance.md
 review-by: 2026-10-14
 ---
 
@@ -60,7 +60,7 @@ One operational footnote from the second command: `--default-country none`. The 
 
 ## The tiers, as declared
 
-The tier table lives in [the scope declaration](../plan/SCOPE.mdx), and it is a statement about evidence, not a switch in the code: a locale is claimed only when a coordinate-graded eval exists for it. Summarized, with what membership means when you run the thing:
+The tier table lives in [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), and it is a statement about evidence, not a switch in the code: a locale is claimed only when a coordinate-graded eval exists for it. Summarized, with what membership means when you run the thing:
 
 | Tier                             | Locales                                                | What you get                                                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -86,7 +86,7 @@ Everything the resolver consults is a read-only SQLite artifact, sealed at build
 - **Interpolation and street data.** US TIGER street segments for house-number ranges; BAN street centroids for French street-only queries.
 - **Reference data in the packages.** [`@mailwoman/codex`](https://www.npmjs.com/package/@mailwoman/codex) (per-address-system facts: USPS suffixes, ZIP shapes), locale-gated variant aliases, and the bundled libpostal dictionaries and libaddressinput format rules.
 
-The full source catalog, with per-source notes and the licensing gradient, is [the address-data-sources reference](../plan/reference/address-data-sources.mdx).
+The full source catalog, with per-source notes and the licensing gradient, is [the address-data-sources reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx).
 
 Provenance is a design constraint. The shipped core is built entirely from permissive sources (WOF is CC0, TIGER and NAD are public domain, Overture is CDLA-Permissive, GeoNames is CC-BY, BAN is Licence Ouverte), so a resolved coordinate carries no copyleft. An OpenStreetMap-derived rooftop tier exists in code for countries without an open register, but OSM's ODbL is share-alike, so those shards are quarantined behind a structural boundary and are not enabled in any published artifact pending legal review. [The data licensing page](../licensing/data-provenance.md) walks the whole boundary.
 
@@ -105,7 +105,7 @@ locality:         Blorenfeld
 
 No point is invented. An unresolved span stays a labeled span, and downstream code can tell the difference.
 
-The visual evidence for all of this is on [the demo map](https://mailwoman.sister.software/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · honest fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](../plan/reference/coverage-overlay.mdx).
+The visual evidence for all of this is on [the demo map](https://mailwoman.sister.software/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · honest fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
 
 ## Where the parser's knowledge comes from
 

@@ -50,7 +50,7 @@ Three findings worth naming:
    happily bias a house number toward an admin tag.
 
 Only 3 surfaces were inert at importance 0 (`avenue`, `budapest`, `paix`) — so the
-[meaning-of-zero](../plan/reference/registry-backed-structured-prediction.mdx) inertia is **not** what
+[meaning-of-zero](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/registry-backed-structured-prediction.mdx) inertia is **not** what
 is protecting us here. The prior is live and it fires.
 
 ## 2. The effect is nil

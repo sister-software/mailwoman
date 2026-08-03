@@ -4,7 +4,7 @@ title: How Mailwoman parses an address
 description: One address followed through the whole parse — subword pieces, per-label scores, gazetteer priors, Viterbi decoding, and the component tree the resolver receives.
 role: concept
 audience: product-reader
-source-of-truth: neural/classifier.ts, core/decoder/build-tree.ts, neural-weights-en-us/model-card.json, plan/reference/SCHEMA.mdx
+source-of-truth: neural/classifier.ts, core/decoder/build-tree.ts, neural-weights-en-us/model-card.json, engineering/reference/SCHEMA.mdx
 review-by: 2026-10-14
 ---
 
@@ -57,7 +57,7 @@ The encoder's output is a table of scores: for each of the 21 pieces, a score fo
 
 Why 33 labels for 16 components? Because a label has to say where a component starts. Each component tag `X` becomes two labels: `B-X` (begins a span) and `I-X` (continues it), plus one shared `O` for "not part of any component." 16 tags × 2 + 1 = 33. A one-word city is a lone `B-locality`; `New York` is `B-locality` followed by `I-locality`. And where two same-type names sit in one query — an intersection like `5th Ave & 42nd St` — the schema doesn't lean on span boundaries to keep them apart: the two cross streets get distinct tags, `intersection_a` and `intersection_b`.
 
-The 16 tags are drawn from the `ComponentTag` schema, which is defined once, in [the component schema reference](../plan/reference/SCHEMA.mdx). That page owns the tag names and their meanings; when any other page disagrees with it, it wins. The union also declares tags the current model doesn't emit (Japanese block-addressing, `attention`), reserved for future training stages. Note the spellings are snake_case — `house_number`, `dependent_locality` — and they match what you saw in the JSON above.
+The 16 tags are drawn from the `ComponentTag` schema, which is defined once, in [the component schema reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx). That page owns the tag names and their meanings; when any other page disagrees with it, it wins. The union also declares tags the current model doesn't emit (Japanese block-addressing, `attention`), reserved for future training stages. Note the spellings are snake_case — `house_number`, `dependent_locality` — and they match what you saw in the JSON above.
 
 ## Where the gazetteer pushes back
 
@@ -99,7 +99,7 @@ This tree is the handoff. The resolver walks it top-down and decorates nodes wit
 
 ## What one model covers, and how it fails
 
-Mailwoman ships one trained model. The `en-us` and `fr-fr` weight packages currently contain the same binary — the publish workflow copies the en-us artifacts into the fr-fr package — and that one model is trained on a multi-country corpus, which is why the sharing works. Coverage claims are graded per locale, by coordinate accuracy on held-out government address points, and the current tier table lives in [the scope declaration](../plan/SCOPE.mdx): US and France are first-class and floor-gated; fourteen more locales are trained and coordinate-paneled; a thin tail is measured but under-powered; Japan is resolver-route only, with no parser training claim. Outside the tiers, output quality is unverified: the table is the boundary of the claim.
+Mailwoman ships one trained model. The `en-us` and `fr-fr` weight packages currently contain the same binary — the publish workflow copies the en-us artifacts into the fr-fr package — and that one model is trained on a multi-country corpus, which is why the sharing works. Coverage claims are graded per locale, by coordinate accuracy on held-out government address points, and the current tier table lives in [the scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx): US and France are first-class and floor-gated; fourteen more locales are trained and coordinate-paneled; a thin tail is measured but under-powered; Japan is resolver-route only, with no parser training claim. Outside the tiers, output quality is unverified: the table is the boundary of the claim.
 
 The characteristic failures are span-shaped, because the parse is span-shaped. Boundary slips: the tag is right but the edge is fuzzy, catching a comma or dropping a trailing character (the tree builder trims the worst of this). Fragmentation: a multi-word name splits into two spans, so `Saint Paul` risks becoming two localities (a whitespace-adjacency repair in the tree builder catches the common case). Lookalikes: strings whose shape belongs to another component, the 5-digit house number being the classic; this is what the postcode anchor's membership check exists for. And namesakes — `Portland, ME` versus `Portland, OR` — are deliberately not the parser's problem; the parse hands both to the resolver, where gazetteer context settles them.
 

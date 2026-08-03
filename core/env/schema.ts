@@ -27,7 +27,7 @@ export const PublicEnvSchema = z.object({
 	// releasing to the libuv pool, and `node:sqlite` reads are synchronous. Measured 1.00x flat from
 	// 1→16 workers on both parse and full geocode. Don't reintroduce it without re-measuring; worker
 	// threads (see `mailwoman/geocode-stream.ts`) are the only lever that moves this in Node.
-	// Receipts: `docs/articles/plan/reference/performance.mdx`.
+	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: z.coerce.number().int().positive().default(1000),
 
 	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).

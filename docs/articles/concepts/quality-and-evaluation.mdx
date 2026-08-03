@@ -4,7 +4,7 @@ title: Quality and evaluation
 description: How Mailwoman grades itself — the coordinate-first grading rule, the reports/ledger/scorecard evidence trail, the promotion gates that decide what ships, what a calibrated confidence means, and where quality drops.
 role: concept
 audience: product-reader
-source-of-truth: plan/CONTRIBUTING_MODEL_WORK.mdx, evals/scores-by-version.json, plan/reference/eval-ledger.schema.json, plan/SCOPE.mdx
+source-of-truth: engineering/CONTRIBUTING_MODEL_WORK.mdx, evals/scores-by-version.json, engineering/reference/eval-ledger.schema.json, engineering/SCOPE.mdx
 review-by: 2026-10-14
 ---
 
@@ -16,7 +16,7 @@ The [parsing](./how-mailwoman-parses-an-address.mdx) and [resolution](./how-mail
 
 The parse and the geocode are graded separately, because they fail separately. The parse grade is per-component: for each tag (street, locality, postcode, …), how often the labeled span matches a gold label, scored as F1 against a fixed golden set plus held-out real-world slices. The geocode grade is the coordinate: great-circle distance from the resolved point to a surveyed truth point, read at the median and the tail, plus resolve-rate within a stated tolerance.
 
-Watch the coordinate grade. A parse can be flawless and the answer still useless — "Springfield" tagged perfectly as a locality and resolved to the wrong state's Springfield is a few-hundred-kilometre error wearing a correct label. The project's [scope declaration](../plan/SCOPE.mdx) makes this a standing rule: "Grade the assembled coordinate, never label-F1 alone." Label metrics stay in the battery as a drift backstop, on a re-score cadence described below.
+Watch the coordinate grade. A parse can be flawless and the answer still useless — "Springfield" tagged perfectly as a locality and resolved to the wrong state's Springfield is a few-hundred-kilometre error wearing a correct label. The project's [scope declaration](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) makes this a standing rule: "Grade the assembled coordinate, never label-F1 alone." Label metrics stay in the battery as a drift backstop, on a re-score cadence described below.
 
 The rule was paid for. An early resolver eval scored 93.7% locality name-match on a Vermont slice while the median resolved coordinate sat 326 km from the truth — right names, wrong states, invisible to a string metric. The run that surfaced this (the `honest-eval` harness, [2026-06-08](../evals/experiments/2026-06-08-honest-eval.mdx)) is why coordinate grading leads everywhere now.
 
@@ -28,7 +28,7 @@ Three artifacts, each with a different job.
 
 **The dated eval reports** ([`evals/`](../evals/index.mdx)) are the narrative record: gate runs, benchmarks, diagnostics, and postmortems, grouped by topic (competitive parity, model versions, resolver and geo, calibration, coverage). Reports are point-in-time and say so; each states its own eval set, channels, and quantization, because those evolve between eras.
 
-**The score ledger** ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json), repo root) is the machine-readable spine: one row per training run that produced shippable weights or a measured baseline, validated against [a JSON schema](../plan/reference/eval-ledger.schema.json). Every row pins its provenance — which corpus, which eval set, which artifact bytes. From the v5.0.0 row, verbatim:
+**The score ledger** ([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json), repo root) is the machine-readable spine: one row per training run that produced shippable weights or a measured baseline, validated against [a JSON schema](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/eval-ledger.schema.json). Every row pins its provenance — which corpus, which eval set, which artifact bytes. From the v5.0.0 row, verbatim:
 
 ```json
 {
@@ -44,7 +44,7 @@ The ledger has a documented hole: rows for 4.5.0 through 4.16.2 were never popul
 
 ## What gates a change
 
-Nothing promotes on a felt improvement. The full procedure is [the model-work runbook](../plan/CONTRIBUTING_MODEL_WORK.mdx); the reader's version is three mechanisms.
+Nothing promotes on a felt improvement. The full procedure is [the model-work runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx); the reader's version is three mechanisms.
 
 **Gates are pre-registered.** The target numbers and no-regression bounds for a change are written into the training config before the first optimizer step runs; the runbook's phrasing is "If you can't define the gate, you aren't ready to train." Written down first, a gate can't quietly bend around the result it was meant to judge.
 
@@ -85,7 +85,7 @@ Mailwoman is benchmarked against Nominatim, Pelias, and libpostal on the coordin
 
 ## Where quality drops
 
-**Outside the claimed locales.** Coverage is claimed per locale and only with evidence: in the scope declaration's words, "a locale is only _claimed_ when a coordinate-graded eval exists for it." The [tier table](../plan/SCOPE.mdx) is the boundary — US and France first-class and floor-gated; fourteen more locales trained and coordinate-paneled; Norway and Sweden thinly measured (the Swedish panel: n=173, low power); Japan resolver-route only, with no parser training claim. Beyond the table, output quality is unverified (no evidence either way), and a sample of your own data settles it faster than any claim here could.
+**Outside the claimed locales.** Coverage is claimed per locale and only with evidence: in the scope declaration's words, "a locale is only _claimed_ when a coordinate-graded eval exists for it." The [tier table](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) is the boundary — US and France first-class and floor-gated; fourteen more locales trained and coordinate-paneled; Norway and Sweden thinly measured (the Swedish panel: n=173, low power); Japan resolver-route only, with no parser training claim. Beyond the table, output quality is unverified (no evidence either way), and a sample of your own data settles it faster than any claim here could.
 
 **On tags the golden set barely contains.** Golden-dev per-tag numbers mislead for thin tags: `unit` reads 6.3 there and 92.3 on the real-world slice, because the golden set scarcely exercises it. The runbook's rule: for campaign tags, the real-OOD column is the truth. Check which eval column a per-tag figure came from before trusting it.
 

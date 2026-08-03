@@ -297,7 +297,10 @@ const config: Config = {
 				{
 					title: "Docs",
 					items: [
-						{ label: "Roadmap", to: "/docs/plan/SCOPE" },
+						{
+							label: "Roadmap",
+							href: "https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx",
+						},
 						{ label: "Eval reports", to: "/docs/evals/" },
 						{ label: "Retrospectives", to: "/docs/retrospectives" },
 					],

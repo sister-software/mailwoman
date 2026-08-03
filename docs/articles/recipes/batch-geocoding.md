@@ -169,7 +169,7 @@ Sorting helps, though: the first address in a given US state warms that state's 
 
 What won't help is asking the server to work on several rows at once. A batch is geocoded one row at a time, and we left that knob out on purpose. A second row can't make progress while the first is in the model, because ONNX Runtime's Node binding holds the JavaScript thread for the duration of an inference, and the gazetteer reads are synchronous too. We shipped a `MAILWOMAN_BATCH_CONCURRENCY` worker pool until we measured it: 1.00x, flat, from one worker to sixteen. It's gone as of 2026-07-16.
 
-To use more cores you have to cross a thread boundary, which is what the streaming recipes below do. Expect a modest return even there: geocoding is memory- and I/O-bound on a shared multi-gigabyte database, and a measured sweep peaked at two workers. The full receipts are in [the performance reference](../plan/reference/performance.mdx).
+To use more cores you have to cross a thread boundary, which is what the streaming recipes below do. Expect a modest return even there: geocoding is memory- and I/O-bound on a shared multi-gigabyte database, and a measured sweep peaked at two workers. The full receipts are in [the performance reference](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx).
 
 ## Skipping the endpoint entirely
 

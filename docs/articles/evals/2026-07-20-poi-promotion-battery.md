@@ -1,7 +1,7 @@
 # `poiQueryKind` promotion battery — golden 2pp + demo presets + POI board
 
 **Date:** 2026-07-20. **Flag:** `poiQueryKind` (`CreateRuntimePipelineOpts`, default OFF — see
-[runtime-flag register](../plan/reference/runtime-flags.mdx)). **Status: report only.** No
+[runtime-flag register](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/runtime-flags.mdx)). **Status: report only.** No
 default was flipped by this work; the numbers below are for the operator's promotion decision.
 
 The register's gate: **"golden 2pp + demo presets + the POI board (spec §3.6)."** Three legs,

@@ -325,7 +325,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// `onnxruntime-node`'s `session.run()` blocks the JS thread rather than releasing to the libuv pool,
 	// and `node:sqlite` reads are synchronous. The pool bought nothing but the appearance of tuning, so
 	// it's a plain loop now. To actually parallelize, cross a thread boundary — see
-	// `mailwoman/geocode-stream.ts`. Receipts: `docs/articles/plan/reference/performance.mdx`.
+	// `mailwoman/geocode-stream.ts`. Receipts: `docs/engineering/reference/performance.mdx`.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
 		// Decision A endpoint default: batch rows are the record register.
 		const inputMode = opts?.inputMode ?? "formatted"

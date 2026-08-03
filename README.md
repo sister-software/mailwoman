@@ -165,7 +165,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
 The [browser demo](https://mailwoman.sister.software/demo) carries the same coverage. Full
-receipts live in the [scope declaration](./docs/articles/plan/SCOPE.mdx) and the [eval
+receipts live in the [scope declaration](./docs/engineering/SCOPE.mdx) and the [eval
 reports](./docs/articles/evals/).
 
 ## Points of interest, for agents
@@ -259,7 +259,7 @@ the published package interact with the neural pipeline exclusively.
 
 Fork and open a pull request against `main` on a feature branch. Please include unit tests.
 The model-work runbook (which evals gate a change, how to add a shard) is
-[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx).
+[`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
 
 ## Acknowledgements
 

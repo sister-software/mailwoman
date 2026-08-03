@@ -14,14 +14,16 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // - startHere / use / understand are guidance: onboarding, task recipes, and the why/how
 //   narrative. understand also folds in the old top-level `concepts` sidebar as its last
 //   category, so "Concept deep dives" no longer needs its own switcher tab.
-// - reference is the authoritative contract layer (SCOPE + the plan/reference/ pages that
-//   the Phase 0 inventory marked keep/rewrite/merge), plus a category for the two still-open
-//   dated design docs.
+// - reference is EMPTY as of the docs-reorg Task 3 tree surgery: SCOPE, the two active design
+//   docs, and all of plan/reference/ moved to docs/engineering/ (unpublished internal
+//   contracts) — the section itself is deleted wholesale in Task 5.
 // - contribute is maintainer/contributor runbooks — how to work on the project, not lookup
-//   contracts.
-// - archive is the historical record: phase plans, dated plan-root specs, and the six
-//   superseded plan/reference/ pages the inventory marked archive. Nothing moves here from
-//   concepts/ or understanding/ in Phase 1 — that's per-page pruning, deferred to Phase 2.
+//   contracts. Its plan/reference/ entries moved to docs/engineering/ alongside reference's.
+// - archive is the historical record: phase plans and dated plan-root specs. Its former
+//   "Reference (superseded)" category (six plan/reference/ pages) moved to docs/engineering/
+//   with the rest of reference/ — those pages weren't actually archived, just relocated.
+//   Nothing moves here from concepts/ or understanding/ in Phase 1 — that's per-page pruning,
+//   deferred to Phase 2.
 // - evals / retrospectives are untouched, owned by a separate workstream.
 // - legal (licensing/) is newly added to the switcher — it already had a sidebar but was
 //   missing from sections.ts, reachable only via a separate top-navbar link.
@@ -235,43 +237,8 @@ const sidebars: SidebarsConfig = {
 			],
 		},
 	],
-	reference: [
-		"plan/SCOPE",
-		{
-			type: "category",
-			label: "Active design decisions",
-			items: ["plan/2026-06-29-joint-consistency-resolution", "plan/2026-07-03-exonym-prominence"],
-		},
-		"plan/reference/ARCHITECTURE",
-		"plan/reference/SCHEMA",
-		"plan/reference/INTERFACES",
-		"plan/reference/STAGES",
-		"plan/reference/QUERY_SHAPE",
-		"plan/reference/closed-vocab-fields-model-first",
-		"plan/reference/registry-backed-structured-prediction",
-		"plan/reference/placetype-evidence",
-		"plan/reference/wof-osm-placetype-map",
-		"plan/reference/the-meaning-of-zero",
-		"plan/reference/FST_GAZETTEER_LM",
-		"plan/reference/TRAINING_RECIPE_LEVERS",
-		"plan/reference/runtime-flags",
-		"plan/reference/performance",
-		"plan/reference/address-data-sources",
-		"plan/reference/record-matcher-sources",
-		"plan/reference/sentencepiece-uds-whitespace",
-	],
-	contribute: [
-		"contributing-docs",
-		"plan/CONTRIBUTING_MODEL_WORK",
-		"plan/reference/acceptance-battery",
-		"plan/reference/country-evidence-layer-runbook",
-		"plan/reference/OPERATIONS",
-		"plan/reference/layer-contract",
-		"plan/reference/poi-layer-runbook",
-		"plan/reference/coverage-overlay",
-		"plan/reference/VERDICT_SMOKES",
-		"plan/reference/WIKIPEDIA_IMPORTANCE",
-	],
+	reference: [],
+	contribute: ["contributing-docs"],
 	archive: [
 		{
 			type: "category",
@@ -309,18 +276,6 @@ const sidebars: SidebarsConfig = {
 				"plan/2026-06-14-coarse-placer-soft-signal-spec",
 				"plan/2026-06-19-coordinate-leverage-sprint",
 				"plan/migrate-readline-to-spliterator",
-			],
-		},
-		{
-			type: "category",
-			label: "Reference (superseded)",
-			items: [
-				"plan/reference/CONTEXT",
-				"plan/reference/CORPUS_V0_4_0_GENERATION",
-				"plan/reference/DEMO_PRESET_DIAGNOSIS",
-				"plan/reference/tokenizer-a0-baseline",
-				"plan/reference/tokenizer-a1-results",
-				"plan/reference/TRAINING_ENV",
 			],
 		},
 	],

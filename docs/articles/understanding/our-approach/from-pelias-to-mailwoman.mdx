@@ -50,7 +50,7 @@ The Pelias side of the equation — the gazetteer + resolver — is also evolvin
 - **The two-job split.** Parse, then resolve. Same as Pelias. Same as every modern geocoder.
 - **The output shape.** Mailwoman emits parsed components with confidence scores and offsets, the same surface a Pelias consumer would expect.
 - **The CLI ergonomics.** `mailwoman parse <input>` is the entry point.
-- **Multi-locale packaging.** Mailwoman ships a separate weights package per locale (en-us, fr-fr) — a packaging boundary for a locale to get its own trained weights without a breaking change, even though today both packages carry the same model (see [`plan/reference/ARCHITECTURE.md`](../../plan/reference/ARCHITECTURE.mdx)).
+- **Multi-locale packaging.** Mailwoman ships a separate weights package per locale (en-us, fr-fr) — a packaging boundary for a locale to get its own trained weights without a breaking change, even though today both packages carry the same model (see [`plan/reference/ARCHITECTURE.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/ARCHITECTURE.mdx)).
 
 ## What we deliberately do differently: no span left behind
 

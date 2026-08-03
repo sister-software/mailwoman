@@ -7,7 +7,7 @@ title: The v1 implementation plan (historical)
 
 **This is a design record, not the live plan.** The current scope declaration — locale tiers,
 workstreams, standing invariants, where the roadmap lives — is **[Scope — what mailwoman is
-now](./SCOPE.mdx)** ([#886](https://github.com/sister-software/mailwoman/issues/886) marked this
+now](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx)** ([#886](https://github.com/sister-software/mailwoman/issues/886) marked this
 directory historical on 2026-07-02).
 
 What follows below this note is the plan that drove the neural classifier work from Phase 0
@@ -16,7 +16,7 @@ Phase 6 stress test; the shipped reality (a multi-locale geocoder with drop-in A
 record-matching workstream) outgrew it — which is what plans are for. Read it, and the
 `phases/*` + `reference/*` files it indexes, for design rationale and the reasoning behind
 decisions that still bind (`reference/SCHEMA.mdx` remains the live source of truth for the
-`ComponentTag` union; [CONTRIBUTING_MODEL_WORK](./CONTRIBUTING_MODEL_WORK.mdx) remains the live
+`ComponentTag` union; [CONTRIBUTING_MODEL_WORK](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx) remains the live
 model-work runbook).
 
 ## The plan as written (2026-05, status notes through 2026-06-11)
@@ -55,7 +55,7 @@ reports in `docs/articles/evals/`.
 - **Coexistence, not replacement.** The neural classifier is additive. Rule classifiers are not
   deleted until per-component metrics justify retirement.
 - **Locale scope (v1):** US + France. English + French. Japanese is a deliberate Phase 6 stress
-  test of the architecture, not v1. _(Superseded — see [Scope](./SCOPE.mdx) for the real list.)_
+  test of the architecture, not v1. _(Superseded — see [Scope](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) for the real list.)_
 - **Staged components:** coarse (country/region/locality/postcode) first, street second, venue
   third. Each stage ships.
 - **No new ML in places where rules are already correct.** Postcodes are a regex problem. Don't

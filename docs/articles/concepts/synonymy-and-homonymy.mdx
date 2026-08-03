@@ -50,7 +50,7 @@ _kinds_ of context, which want two different homes.
   tells you it is the state. So it belongs in the **parser**, and it is exactly what
   a context-sensitive neural tagger is for. The model resolves it; a lexicon can
   only _inform_ the decision (a soft feature), never make it — see
-  [closed-vocab fields are model-first](../plan/reference/closed-vocab-fields-model-first.mdx).
+  [closed-vocab fields are model-first](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 - **Referent disambiguation — _which specific entity?_** ("Springfield" → which of
   the 30-some?) This needs **context that is not in the address string** — a
   coordinate, a focus point, the administrative hierarchy. So it belongs in the
@@ -101,7 +101,7 @@ a rules engine cannot read context, so it constrains the search space instead.
 A model that reads context does not need the crutch, but the _same signals are still
 useful_ — as **soft priors**, fed in as features the model or resolver can overrule
 when the string says otherwise. A focus-country becomes a feature for the parser's
-[gazetteer anchor](../plan/reference/closed-vocab-fields-model-first.mdx); a focus-point
+[gazetteer anchor](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/closed-vocab-fields-model-first.mdx); a focus-point
 becomes a term in the resolver's ranking. Same information as the mask, but as a
 preference the model can override, not a constraint it can't.
 

@@ -21,7 +21,7 @@ side rather than the artifact side.
 ## How to read an entry
 
 **Tier** is the distribution posture, defined by the
-[spatial-layer contract](../plan/reference/layer-contract.mdx#tiers) and used here for every
+[spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx#tiers) and used here for every
 artifact, not just the ones that formally embed the layer manifest:
 
 - **shipped** — permissive sources only. We build it and publish it.
@@ -140,7 +140,7 @@ Treat the card as history, not as a description of anything you can download tod
 
 ## POI layer — `poi.db`
 
-Layer #1 on the [spatial-layer contract](../plan/reference/layer-contract.mdx), and the worked
+Layer #1 on the [spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx), and the worked
 example every later layer copies. It answers category and brand queries — "coffee near Springfield
 IL" — rather than address queries.
 
@@ -164,7 +164,7 @@ principle; no schedule is committed.
 **Approximate size.** 3.7 GB sealed.
 
 **Build.** `mailwoman gazetteer build poi --countries US,CA,MX,FR`. The
-[POI layer runbook](../plan/reference/poi-layer-runbook.mdx) is the full build/verify/publish
+[POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) is the full build/verify/publish
 procedure, including the Overture schema traps that bite first-time builders.
 
 :::info[The ODbL half of POI is a different artifact]
@@ -467,7 +467,7 @@ work happens at public block granularity plus the address spine we already own.
   Overture parquet slices are intermediates that feed the artifacts above. They are documented
   in the build runbooks, not here.
 - **Demo assets.** The map-highlight polygons and the address-coverage tile overlay exist to make
-  the demo work; see the [coverage overlay runbook](../plan/reference/coverage-overlay.mdx).
+  the demo work; see the [coverage overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
 - **Your data.** A `private`-tier layer conforming to the same contract — a CRM export, survey
   notes, parcel relationships — joins the same query surface and never leaves your machine. That
   is a supported posture, not a product we sell.
@@ -479,12 +479,12 @@ work happens at public block granularity plus the address spine we already own.
 - [Pricing](./pricing.mdx) — the engine's tiers, and the
   [OEM band](./pricing.mdx#embedding-mailwoman-in-a-product-you-sell) for shipping Mailwoman inside
   a product you license to others.
-- [Spatial-layer contract](../plan/reference/layer-contract.mdx) — the schema every layer database
+- [Spatial-layer contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-contract.mdx) — the schema every layer database
   embeds, and where the tier vocabulary on this page comes from.
-- [POI layer runbook](../plan/reference/poi-layer-runbook.mdx) — the worked build/verify/publish
+- [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx) — the worked build/verify/publish
   example.
 - [Data, locales, and coverage](../concepts/data-locales-and-coverage.mdx) — the same layers
   described by what they can and cannot resolve.
-- [Address data sources](../plan/reference/address-data-sources.mdx) — the upstream register
+- [Address data sources](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx) — the upstream register
   catalog and the licensing gradient.
 - [Software Bill of Materials](./sbom.md) — the code-side inventory, per release.

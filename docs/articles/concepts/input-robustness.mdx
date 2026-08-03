@@ -28,7 +28,7 @@ shouldn't.
 
 ### Layer 1 — deterministic normalization
 
-The first pass is pure code, no model, in [`@mailwoman/normalize`](../plan/reference/STAGES.mdx).
+The first pass is pure code, no model, in [`@mailwoman/normalize`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx).
 It does the transforms that are always safe because they have a single correct
 answer: Unicode NFC, so a composed `é` and a decomposed `é` stop being different
 strings; punctuation folding; whitespace collapse, where a run of spaces becomes

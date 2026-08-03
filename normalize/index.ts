@@ -10,7 +10,7 @@
  *   `offsetMap` so downstream stages can map normalized-string spans back to raw-string character
  *   offsets.
  *
- *   See `docs/articles/plan/reference/STAGES.md` § Stage 1 for the contract.
+ *   See `docs/engineering/reference/STAGES.md` § Stage 1 for the contract.
  */
 
 export { type AbbreviationEntry, abbreviationDictionary, expandAbbreviations } from "./abbreviations.ts"

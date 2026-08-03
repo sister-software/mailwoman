@@ -27,7 +27,7 @@ reviewing counsel, and date it.
 ## Where the data comes from
 
 Every source below is recorded with its license at the point it enters the pipeline. The authoritative
-catalog is [`address-data-sources.mdx`](../plan/reference/address-data-sources.mdx); the legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution, and each
+catalog is [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx); the legal notices ship as `THIRD_PARTY_NOTICES.md` in the source distribution, and each
 built data artifact carries its own `ATTRIBUTION.json` recording source, release, and license
 at build time.
 
@@ -137,6 +137,6 @@ tier can ship. Until then, the build and the local benchmark are fine to run; **
 
 - [Database products catalog](./data-products.md) — the same sources seen from the artifact side: what each shipped or planned database contains, its tier, its version, and its size.
 - [`osm/README.md`](https://github.com/sister-software/mailwoman/blob/main/osm/README.md) — the OSM package, the shard builder, the boundary in package terms.
-- [`address-data-sources.mdx`](../plan/reference/address-data-sources.mdx) — the full source catalog + the licensing gradient.
+- [`address-data-sources.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/address-data-sources.mdx) — the full source catalog + the licensing gradient.
 - [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md) — the formal notices shipped with the package.
 - [Open-source license](./open-source.md) · [Commercial license](./commercial.md) — the engine's terms.

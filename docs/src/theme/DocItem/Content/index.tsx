@@ -13,8 +13,9 @@
  *   - Docs with a `status:` frontmatter field from the maintained vocabulary (`active-decision`,
  *     `superseded` — the content-model table in
  *     docs/superpowers/plans/2026-07-14-documentation-architecture-cleanup.md) render a status
- *     line; an optional `superseded-by:` field (a site-relative URL, e.g. `/docs/plan/SCOPE`)
- *     renders as a link when present. Free-text `status:` values (some dated eval reports carry
+ *     line; an optional `superseded-by:` field (a site-relative URL, or an external URL such as
+ *     a GitHub blob link for a page that has left the published tree) renders as a link when
+ *     present. Free-text `status:` values (some dated eval reports carry
  *     them, and evals/retrospectives are a delegated workstream) deliberately render nothing.
  *
  *   Hand-written banners on individual pages (ARCHITECTURE.mdx, how-it-will-work.mdx, …) carry
@@ -76,7 +77,11 @@ function DocRecordChrome(): ReactNode {
 		return (
 			<aside className={clsx("alert", "alert--warning", styles.recordChrome)} role="note">
 				<strong>Historical record{date ? ` · ${date}` : ""}.</strong> Preserved as written, not maintained. For the
-				current state, see <Link to="/docs/plan/SCOPE">Current scope &amp; roadmap</Link>.
+				current state, see{" "}
+				<Link to="https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx">
+					Current scope &amp; roadmap
+				</Link>
+				.
 			</aside>
 		)
 	}
