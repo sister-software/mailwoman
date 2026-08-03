@@ -25,6 +25,18 @@ import { expect, test } from "vitest"
  */
 const UNIT = "123 Main St, Springfield, IL 62701, "
 
+/**
+ * Timing samples per size. Three is enough for the minimum to skip a transient spike without making the test slow.
+ */
+const TIMING_SAMPLES = 3
+
+/**
+ * Best of {@link TIMING_SAMPLES} runs.
+ *
+ * Contention can only ever ADD time to a sample, never remove it, so the minimum is the run least polluted by whatever
+ * else the machine was doing. A mean or a single sample inherits every load spike, which on a shared CI runner is the
+ * difference between measuring the algorithm and measuring the neighbours.
+ */
 function timeAt(reps: number): number {
 	const input = UNIT.repeat(reps)
 	// Warm first — a cold JIT on the smaller sample would inflate the ratio and fail spuriously.
@@ -37,10 +49,20 @@ function timeAt(reps: number): number {
 	return performance.now() - start
 }
 
+function bestOf(chars: number): number {
+	let best = Number.POSITIVE_INFINITY
+
+	for (let i = 0; i < TIMING_SAMPLES; i++) {
+		best = Math.min(best, timeAt(chars))
+	}
+
+	return best
+}
+
 test("computeQueryShape stays linear as segment count doubles", () => {
 	// Large enough that fixed overheads do not dominate the ratio.
-	const small = timeAt(4000)
-	const large = timeAt(8000)
+	const small = bestOf(4000)
+	const large = bestOf(8000)
 	const ratio = large / Math.max(small, 0.001)
 
 	expect(
