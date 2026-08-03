@@ -5,14 +5,12 @@
  *
  *   Serialize CLI spawns across vitest workers.
  *
- *   Vitest runs test FILES in parallel across forked workers, and several suites spawn the compiled CLI as a child
- *   process. Each spawn is expensive and heavy in a way that is easy to underestimate: measured 2026-08-03 on an idle
- *   16-core box, one `mailwoman geocode` costs 5.62 s wall, 541 MB RSS and 11 threads — 2.73 s of that is node boot
- *   plus the CLI's import graph, before any model loads. Eight concurrent spawns took 8.75 s, against a 10 s timeout.
+ *   Vitest runs test FILES in parallel across forked workers, and several suites spawn the compiled CLI as a child.
+ *   One spawn costs ~5.6 s wall, 541 MB and 11 threads on a 16-core box — 2.7 s of it node boot and the CLI's import
+ *   graph, before any model loads — so a handful in parallel saturate the machine and every one of them slows down.
  *
- *   Raising the timeout (which we also did) buys margin; it does not stop the stacking. This does. A lock is the right
- *   shape rather than a vitest concurrency setting because the constraint is not "this file is slow" but "these
- *   processes contend for the whole machine" — a property of the child, invisible to the runner.
+ *   A lock rather than a vitest concurrency setting: the constraint is a property of the CHILD process, which the
+ *   runner cannot see. Timeouts alone buy margin without stopping the stacking.
  *
  *   The lock is a DIRECTORY, because `mkdir` is atomic on every platform we run on and needs no dependency. It carries
  *   the holder's pid so a crashed worker's lock can be reclaimed rather than wedging the suite, and it always releases

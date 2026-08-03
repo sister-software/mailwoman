@@ -980,18 +980,13 @@ export class NeuralAddressClassifier {
 		// word whose pieces already agree is untouched. See word-consistency.ts.
 		let healedConfidence: Map<number, number> | null = null
 
-		// DEFAULT ON since 2026-08-03, matching what the pipeline already shipped. It was default-OFF from
-		// introduction so that adding the repair changed no bytes, and `geocode-core.ts` switched it on for
-		// production via WORD_CONSISTENCY_SHIP_DEFAULT. The cost of that split was that the two paths
-		// disagreed and only one of them was the one users are on: anything holding a
-		// `NeuralAddressClassifier` directly — probes, evals written against the classifier, third-party
-		// consumers of `@mailwoman/neural` — silently got the UN-healed decode unless it knew to pass the
-		// constant. It bit this repo's own confound board, which reported `unit="Buil"` (a sub-token
-		// fragment of "Building") as a product defect when no shipped consumer could reach it.
+		// The default is the SHIPPED configuration, deliberately — `geocode-core.ts` resolves to this same
+		// constant, so a bare classifier and the production pipeline decode identically. Anything that
+		// defaults differently here is a decode no user is on, and probes written against the classifier
+		// will report defects the shipped path cannot reach.
 		//
-		// The repair enforces an invariant no valid parse can violate — the pieces of ONE word must carry
-		// ONE tag — so the safe default is the one that upholds it. Callers who need the raw decode still
-		// have `enforceWordConsistency: false`, per-parse or per-config.
+		// The repair upholds an invariant no valid parse can violate: the pieces of one word carry one tag.
+		// `false` opts out for callers who want the raw emissions.
 		const wordConsistency =
 			opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT
 
