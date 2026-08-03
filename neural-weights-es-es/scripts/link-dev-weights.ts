@@ -7,13 +7,13 @@
  *
  *   This overlay ships exactly ONE artifact — `pair-index-es.bin` — because it declares
  *   `mailwoman.baseWeights` and shares the base model/tokenizer with the en-us package. There is
- *   nothing to symlink; the only job is building the index so `resolveWeights({locale: "de-de"})`
+ *   nothing to symlink; the only job is building the index so `resolveWeights({locale: "es-es"})`
  *   surfaces `pairIndexPath` in local dev.
  *
- *   The index is INERT without the `de` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
- *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): German addresses write
- *   "50733 Köln", so a parent segment folds to a key no bare-Gemeinde entry matches. Measured
- *   during R9 — the artifact alone changed nothing until both landed.
+ *   The index is INERT without the `es` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
+ *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): Spanish addresses write the
+ *   codigo postal first ("28013 Madrid"), so a parent segment folds to a key no bare-municipio
+ *   entry matches. The artifact alone changes nothing until both entries are present.
  */
 
 import { spawnSync } from "node:child_process"

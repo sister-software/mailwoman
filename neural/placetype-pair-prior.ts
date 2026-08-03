@@ -579,8 +579,10 @@ const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new Map([
  * Anglo-format assumption. Directly measured: "…, Pinsonnac, 12210 Montpeyroux" applied=false, while the same row with
  * the postcode removed applied=true and emitted dependent_locality=Pinsonnac.
  *
- * Membership is per-country and deliberately narrow. DE/ES/IT share the leading convention and will want entries when
- * their instances are built, but each needs its own codex shape and its own confound board first.
+ * Membership is per-country and deliberately narrow: an entry is earned by a codex postcode shape plus a confound
+ * board, not by the country merely writing the postcode first. FR/DE/ES/IT have all cleared that bar. A country absent
+ * from this set is not an oversight to be corrected in passing — en-IN, for one, is absent BECAUSE the PIN goes last,
+ * so the trailing-postcode strip already folds its parent segment correctly.
  */
 const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de", "es", "it"])
 
