@@ -28,8 +28,10 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 One paragraph of recap, because everything below depends on it. `$MAILWOMAN_CANDIDATE_DB` selects the
 candidate-table gazetteer, which ranks same-named places population-first and is the backend the hosted
-demo uses. Leave it unset and the resolver falls back to the full-text-search path over a WOF admin
-distribution, which ranks by relevance instead and answers some queries differently. The setup is on
+demo uses. Leave it unset and the resolver falls back to a full-text-search path over a WOF admin
+distribution, which ranks by relevance instead and answers some queries differently — but that database
+is not one you can obtain here, because `data pull` publishes no bundle for it and it has to be built
+locally, which is why every page on this site sets the variable. The setup is on
 [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it); this page assumes you did it.
 
 ## 1. See the tier you have
@@ -256,32 +258,38 @@ With the shard in place, French addresses answer at the rooftop tier with no loc
 change:
 
 ```bash
-npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris" --format text
+npx mailwoman geocode "12 Rue de Rivoli, 75004 Paris" --format text
 ```
 
 ```
-input:            12 Rue de Rivoli, 75001 Paris
+input:            12 Rue de Rivoli, 75004 Paris
 resolution_tier:  address_point
 coordinate:       48.855602, 2.359950
 uncertainty_m:    1
 locality:         Paris
-postcode:         75001
+postcode:         75004
+hierarchy:
+  locality             Paris [wof:1159322569] (48.8566, 2.3428)
 ```
+
+The `hierarchy` block survives the tier change here exactly as it did in DC: Paris still at its own
+centroid, underneath a rooftop coordinate 1,257 m away from it.
 
 One gap to plan around, and it is structural rather than temporary. France ships a rooftop register and
 no interpolation shard, so a house number BAN does not carry falls straight to `admin` — there is no
-middle tier to catch it, the way `620 H St NE` was caught in DC:
+middle tier to catch it, the way `620 H St NE` was caught in DC. Rue de Rivoli runs to number 258 in
+BAN, so 500 is off the end of it:
 
 ```bash
-npx mailwoman geocode "99999 Rue de Rivoli, 75001 Paris" --format text
+npx mailwoman geocode "500 Rue de Rivoli, 75004 Paris" --format text
 ```
 
 ```
-input:            99999 Rue de Rivoli, 75001 Paris
+input:            500 Rue de Rivoli, 75004 Paris
 resolution_tier:  admin
 coordinate:       48.856599, 2.342841
 locality:         Paris
-postcode:         75001
+postcode:         75004
 hierarchy:
   locality             Paris [wof:1159322569] (48.8566, 2.3428)
 ```

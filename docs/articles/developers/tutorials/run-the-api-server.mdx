@@ -22,11 +22,11 @@ Read the memory line before you start — it is the one that bites.
   coordinates. Parse works without it.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has both commands.
 - **`jq`**, for every `curl` below. Drop the pipe if you'd rather read the raw response.
-- **Roughly 420 MB of memory per worker.** `--cpus` defaults to every core the box reports, and
-  each worker is a separate process that loads its own copy of the model and opens its own database
-  handles. Two warmed workers measured 418 MB and 419 MB of proportional set size on this machine, plus
-  220 MB for the manager. Set `--cpus` to what you have room for; on a sixteen-core box the default is
-  about 6.9 GB.
+- **Roughly 450 MB of memory per worker.** `--cpus` defaults to every core the box reports, and each
+  worker is a separate process that loads its own copy of the model and opens its own database handles.
+  Measured on this machine as proportional set size, a pair of workers read 354 MB and 407 MB under light
+  traffic and 447 MB and 449 MB once both were warm, plus 220 MB for the manager. Budget the warm figure.
+  Set `--cpus` to what you have room for; on a sixteen-core box the default is about 7.4 GB.
 
 Two is a starting point with a measurement behind it. The threaded geocode path in this codebase was
 swept on a 16-core box against a single database and peaked at 2 workers, degrading from there — the
@@ -36,24 +36,30 @@ ceiling is database and memory bandwidth, not core count. The reasoning is writt
 ## 1. Start it
 
 ```bash
-export MAILWOMAN_DATA_ROOT=/tmp/mw-trial/mailwoman-data
-export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
+# Replace <YOUR_DATA_ROOT> with the data root `mailwoman doctor` reports for your install.
+export MAILWOMAN_DATA_ROOT=<YOUR_DATA_ROOT>
+export MAILWOMAN_CANDIDATE_DB=<YOUR_DATA_ROOT>/wof/candidate.db
 npx mailwoman serve --port 7788 --cpus 2
 ```
 
 ```
 [resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-trial/mailwoman-data/wof/candidate.db
 
-Manager process: 3138143
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-trial/mailwoman-data/wof/candidate.db
+
+Manager process: 3241417
 Workers:
-ℹ Listening (3138160) "HTTP server ready"
-ℹ Listening (3138161) "HTTP server ready"
+ℹ Listening (3241438) "HTTP server ready"
+ℹ Listening (3241439) "HTTP server ready"
 ```
 
-The line above the frame is the resolver naming the backend that answered; each worker prints its own on
-standard error as it boots, so with `--cpus 2` it goes by twice. Measured on this machine, `/health` answered 3.8 s after launch and the first parse request
-4.0 s after launch, with the model file already in the page cache from an earlier run; a first-ever
-start pays the read as well. Leave it running and open a second terminal for everything below.
+The two lines above the frame are the resolver naming the backend that answered, once per worker, on
+standard error — the path in them is the data root this page was verified against, so yours reads
+differently.
+
+Measured on this machine, `/health` answered 3.8 s after launch and the first parse request 4.0 s after
+launch, with the model file already in the page cache from an earlier run; a first-ever start pays the
+read as well. Leave it running and open a second terminal for everything below.
 
 `--host` defaults to `0.0.0.0`, so the server is reachable from your network the moment it boots. There
 is no authentication in front of it. Bind it to `127.0.0.1` or put it behind something before it goes
@@ -68,7 +74,7 @@ curl -s http://127.0.0.1:7788/health | jq
 ```
 {
   "status": "ok",
-  "uptime_s": 40,
+  "uptime_s": 23,
   "model": {
     "name": "neural-weights-en-us",
     "version": "7.0.0",
@@ -88,8 +94,8 @@ curl -s http://127.0.0.1:7788/health | jq
     "data_root": "/tmp/mw-trial/mailwoman-data",
     "versions": null,
     "wof_dbs": [],
-    "situs_states": 0,
-    "interpolation_states": 0
+    "situs_states": 1,
+    "interpolation_states": 1
   }
 }
 ```
@@ -98,10 +104,12 @@ This is the route to point a load balancer at, and the route to read when a depl
 differently than the last one did. `model.version` is the weights bundle, not the package version, which
 is the field to compare across two hosts when their answers diverge.
 
-The `data` block reports the shard families found under the data root: `wof_dbs` lists WOF admin
-distributions, and this deployment has none because the candidate gazetteer is what it resolves against.
-`situs_states: 0` means no per-state street shards are present, so geocodes here answer at the admin
-tier — [Improve geocode precision](./improve-geocode-precision.mdx) is what changes those two numbers.
+The `data` block counts what it found under the data root. `wof_dbs` is empty because this deployment
+resolves against the candidate gazetteer rather than a WOF admin distribution. `situs_states: 1` and
+`interpolation_states: 1` are the District of Columbia shards
+[Geocode a CSV](./geocode-a-csv.mdx#6-make-the-same-script-more-precise) pulled — one jurisdiction out
+of the 52 the US bundle ships, which is why the geocodes below still answer `admin`. Those two counters
+are the fastest way to tell a deployment that lost a mount from one that never had the data.
 
 ## 3. Parse one address
 
@@ -241,33 +249,33 @@ curl -s http://127.0.0.1:7788/metrics | jq
 
 ```
 {
-  "uptime_s": 49,
+  "uptime_s": 60,
   "timings": {
-    "total": 1,
+    "total": 6,
     "errors": 0,
     "tiers": {
-      "admin": 1
+      "admin": 5,
+      "batch": 1
     },
     "latency_ms": {
-      "p50": 206.29,
-      "p90": 206.29,
-      "p99": 206.29,
-      "max": 206.29
+      "p50": 11.32,
+      "p90": 37.66,
+      "p99": 37.66,
+      "max": 37.66
     },
-    "latency_samples": 1
+    "latency_samples": 6
   }
 }
 ```
 
-`total: 1` after several geocodes is not a bug and it is the thing to know before you wire this to a
-dashboard: each worker keeps its own counters, and a scrape reads whichever worker answered it. Scraping
-the two-worker server above alternates between two sets of numbers — measured, three consecutive scrapes
-returned 4, 3 and 4 against seven requests. Run `--cpus 1` when you want one coherent set, or sum across
-scrapes and accept that the percentiles are per worker.
+That count is lower than the number of requests this page has sent, and it is the thing to know before
+you wire the route to a dashboard: each worker keeps its own counters, and a scrape reads whichever
+worker answered it. Three consecutive scrapes of this two-worker server returned 4, 6 and 4 — one
+server, three answers. Run `--cpus 1` when you want a single coherent set, or sum across scrapes and
+accept that the percentiles are per worker.
 
-The 206 ms first sample is the model warming up. The `tiers` histogram is the operational read that
-matters over time: a deployment that starts answering `admin` where it used to answer `address_point`
-has lost a shard, not accuracy.
+The `tiers` histogram is the operational read that matters over time: a deployment that starts answering
+`admin` where it used to answer `address_point` has lost a shard, not accuracy.
 
 ## 6. Find the contract
 

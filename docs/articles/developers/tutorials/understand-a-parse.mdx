@@ -90,10 +90,11 @@ Every node carries `start` and `end`. They are character offsets, half-open, and
 `tree.raw` — the repaired string — rather than the string you passed in. In the first parse the two
 `Madison` spans are `[2, 9)` and `[14, 21)`, which is what tells you the street one came first.
 
-`tree.raw` and `result.input` are separate fields for exactly this reason. The repair here is casing
-only, so the two strings are the same length and an offset taken against either lands in the same place.
-That is a property of this input, not a guarantee: slice `tree.raw`, and keep `result.input` when you
-need the characters the user typed.
+`tree.raw` and `result.input` are separate fields for exactly this reason — the repair that separates
+them is the one
+[Install and first parse](../get-started/install-and-first-parse.mdx#4-read-the-tree) describes. Here it
+is casing only, so the two strings are the same length and an offset taken against either lands in the
+same place. That is a property of this input, not a guarantee: slice `tree.raw`.
 
 Spans are what you build a highlighted input box on, what you use to attribute a correction back to a
 position, and what you check when a component looks right but came from the wrong part of the string.
@@ -112,10 +113,8 @@ What the second parse shows is what the number responds to. Dropping `wi 53703` 
 tokens of context, and every score in the tree falls: locality 0.934 to 0.793, street 0.920 to 0.778,
 and `street_suffix` 0.681 from 0.924. Nothing about the street changed. The evidence around it did.
 
-Read a low score as "this span had less to go on", then decide what to do about it. A route-to-review
-threshold on that number is a reasonable design, and the calibrated score is the one to threshold on,
-because the uncalibrated model here runs under-confident and will send you more rows than the error rate
-warrants.
+Read a low score as "this span had less to go on". If you plan to threshold on it, calibrate first, for
+the reason the first-parse page gives.
 
 ## 4. Ask the pipeline what it decided
 
@@ -215,8 +214,10 @@ held pipeline is on the first-parse page. Everything before it costs about 4 ms 
 Names collide. Drop the state, and `Madison` has to be chosen rather than looked up. `--resolve` runs the
 tree through the gazetteer and `--candidates` keeps the runners-up on each resolved node.
 
+Export `MAILWOMAN_CANDIDATE_DB` first, using the line `mailwoman doctor` prints for your own data root
+rather than a path copied from here — that is the whole reason `doctor` prints it. Then:
+
 ```bash
-export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
 npx mailwoman parse --resolve --candidates 3 "1 madison ave madison" | jq '.roots[0] | {tag, value, placeID, lat, lon, alternatives: [.alternatives[] | {name, placetype, lat, lon, score}]}'
 ```
 
