@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+#
+# Fixture test for docs/styles/Mailwoman/*.yml (docs-reorg Task 1: Vale toolchain).
+#
+# There's no vitest harness for a set of Vale YAML rule files, so this is the
+# test: run Vale against scripts/vale-fixtures/dirty.md, which is written to
+# trip every rule file at least once (and also embeds a code fence, a JSX tag,
+# an import line, and a `<details>` block full of the same banned words, none
+# of which should be flagged — that's the TokenIgnores/BlockIgnores coverage),
+# and scripts/vale-fixtures/clean.md, which should pass with zero alerts. A
+# rule that stops firing, or an ignore pattern that starts leaking banned
+# words from a fence/import/JSX/details block into real alerts, shows up here
+# as the wrong fixture producing the wrong verdict.
+#
+# Run from anywhere:
+#   docs/scripts/check-vale-rules.sh
+#   yarn workspace @mailwoman/docs lint:prose:fixtures
+#
+# Wired into the docs CI job (.github/workflows/docs-build.yml) so a rule
+# regression fails loudly instead of silently drifting.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+MIN_DIRTY_ERRORS=5
+RULE_FILES=(BannedWords StockPhrases Anthropomorphism Weasel Terms)
+
+cd "$DOCS_DIR"
+
+# yarn 4's node-modules linker hoists @vvago/vale to whichever node_modules is
+# closest to the workspace root that doesn't have a conflicting version — that
+# is the repo root here, not docs/node_modules — so walk up looking for it,
+# the same resolution order Node itself would use.
+VALE_BIN=""
+search_dir="$DOCS_DIR"
+while true; do
+	if [[ -x "$search_dir/node_modules/@vvago/vale/bin/vale" ]]; then
+		VALE_BIN="$search_dir/node_modules/@vvago/vale/bin/vale"
+		break
+	fi
+	[[ "$search_dir" == "/" ]] && break
+	search_dir="$(dirname "$search_dir")"
+done
+
+if [[ -z "$VALE_BIN" ]]; then
+	echo "error: @vvago/vale binary not found in any node_modules above $DOCS_DIR — run 'yarn install' first" >&2
+	exit 1
+fi
+
+echo "== dirty.md: expect failure, >= ${MIN_DIRTY_ERRORS} errors, every rule file represented =="
+dirty_status=0
+dirty_json="$("$VALE_BIN" --config .vale.ini --output=JSON scripts/vale-fixtures/dirty.md)" || dirty_status=$?
+
+if [[ "$dirty_status" -eq 0 ]]; then
+	echo "FAIL: dirty.md exited 0 (expected a non-zero exit from error-severity hits)" >&2
+	exit 1
+fi
+
+error_count="$(jq '[.[][] | select(.Severity == "error")] | length' <<<"$dirty_json")"
+if [[ "$error_count" -lt "$MIN_DIRTY_ERRORS" ]]; then
+	echo "FAIL: dirty.md produced $error_count error-severity hits, expected >= $MIN_DIRTY_ERRORS" >&2
+	exit 1
+fi
+
+for rule in "${RULE_FILES[@]}"; do
+	hits="$(jq --arg rule "Mailwoman.$rule" '[.[][] | select(.Check == $rule)] | length' <<<"$dirty_json")"
+	if [[ "$hits" -lt 1 ]]; then
+		echo "FAIL: rule Mailwoman.$rule did not fire on dirty.md (regression)" >&2
+		exit 1
+	fi
+done
+echo "OK: dirty.md — $error_count error-severity hits, all ${#RULE_FILES[@]} rule files fired"
+
+echo "== clean.md: expect success =="
+if ! "$VALE_BIN" --config .vale.ini scripts/vale-fixtures/clean.md; then
+	echo "FAIL: clean.md tripped a rule (false positive)" >&2
+	exit 1
+fi
+echo "OK: clean.md — 0 alerts"
+
+echo "All Vale rule fixture checks passed."

@@ -1,0 +1,42 @@
+## Mailwoman house style: banned filler words.
+##
+## Vale existence rule. Every token here is intensifier/hedge/buzzword prose
+## that a reviewer would cut anyway — ban it at lint time so it never gets to
+## review. `just` is padded with literal spaces (` just `) instead of a plain
+## token because an unpadded token also matches inside `justice`/`adjust`;
+## the padding is an approximation, not a word-boundary guarantee, and misses
+## `just` at the very start/end of a sentence next to punctuation.
+extends: existence
+message: "'%s' is filler — cut it or replace it with the concrete claim."
+level: error
+ignorecase: true
+tokens:
+  - actually
+  - basically
+  - simply
+  - obviously
+  - clearly
+  - ' just '
+  - robust
+  - seamlessly?
+  - comprehensive
+  - various
+  - numerous
+  - leverage
+  - plethora
+  - myriad
+  - delve
+  - crucial
+  - pivotal
+  - vibrant
+  - elevate
+  - unlock
+  - harness
+  - foster
+  - facilitate
+  - honestly?
+  - genuinely?
+  - truly
+  - effortlessly
+  - cleanly
+  - quietly

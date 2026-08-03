@@ -1,0 +1,19 @@
+## Mailwoman house style: weasel quantities.
+##
+## Vale existence rule (warning). Unmeasured hedge-quantities read as
+## precision without paying for it — see feedback-count-at-the-unit-the-
+## model-reads in project memory. Either cite the number or mark the claim
+## as deliberately qualitative; don't split the difference with "often" or
+## "many".
+extends: existence
+message: "'%s' is a weasel word — state the measured quantity or mark the sentence deliberately qualitative."
+level: warning
+ignorecase: true
+tokens:
+  - nearby
+  - fairly
+  - usually
+  - often
+  - many
+  - a lot of
+  - significantly?

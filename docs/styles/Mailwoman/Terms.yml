@@ -1,0 +1,18 @@
+## Mailwoman house style: canonical term spellings.
+##
+## Vale substitution rule (error). `ignorecase: true` matches any casing of
+## the left-hand pattern, but Vale only flags a hit when the matched text
+## differs from the right-hand replacement — an already-correct "ZIP Code"
+## or "geocode" does not self-flag. "postal code" -> "postcode" is the
+## en-GB house term; it does not touch "ZIP Code" (a distinct US term, kept
+## correct by the accept-list in styles/config/vocabularies/Mailwoman/accept.txt).
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: error
+ignorecase: true
+swap:
+  zip code|zipcode: ZIP Code
+  whos on first|who's on first: Who's On First
+  geo-code: geocode
+  lat/long|lat-long: latitude/longitude
+  postal code: postcode

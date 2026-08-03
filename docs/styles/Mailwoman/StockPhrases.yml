@@ -1,0 +1,28 @@
+## Mailwoman house style: banned stock phrases.
+##
+## Vale existence rule. These are the "AI-slop" / consultant-deck constructions
+## the house voice rejects outright — see feedback-plain-words-no-insider-jargon
+## and feedback-sister-software-voice in project memory. `source of truth` is
+## legitimate as Docusaurus frontmatter (`source-of-truth: true`); frontmatter
+## is stripped by Vale before linting, and the `(^source-of-truth:.*)` entry in
+## .vale.ini's TokenIgnores is a defensive backstop for that case.
+extends: existence
+message: "Cut the stock phrase '%s' — say the specific claim instead."
+level: error
+ignorecase: true
+tokens:
+  - not just
+  - "it's not just"
+  - more than just
+  - "isn't just"
+  - less about .* more about
+  - "here's the thing"
+  - the uncomfortable truth
+  - what most people miss
+  - belt and suspenders
+  - load-bearing
+  - blast radius
+  - escape hatch
+  - north star
+  - first-class citizen
+  - source of truth

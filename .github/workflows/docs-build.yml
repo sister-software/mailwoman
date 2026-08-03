@@ -87,6 +87,13 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         with:
+          # list-files: json also gives us steps.changes.outputs.docs_prose_files below, for the
+          # Prose lint step — dorny/paths-filter resolves the PR's base/head SHAs from the event
+          # payload via the GitHub API, so it works correctly under actions/checkout's default
+          # shallow (fetch-depth: 1) clone. A hand-rolled `git diff --name-only origin/main...`
+          # would not: origin/main isn't fetched at all by a bare `actions/checkout@v7`, and even
+          # with a fetch added, triple-dot diff needs a merge-base that a depth-1 clone doesn't have.
+          list-files: json
           filters: |
             docs:
               - "docs/**"
@@ -100,6 +107,14 @@ jobs:
               - "spatial/**"
               - "codex/**"
               - "*.md"
+            # docs/articles/ is still the OLD site (hundreds of pages that predate the Vale rules
+            # and won't pass them — they're replaced wholesale by the docs-reorg plan). Scoping the
+            # Prose lint step to just the files a PR touches, instead of the whole corpus, is a
+            # deliberate stopgap: Task 23 flips it to a full-corpus `lint:prose` run once the
+            # replacement lands.
+            docs_prose:
+              - "docs/articles/**/*.md"
+              - "docs/articles/**/*.mdx"
 
       - name: Setup Node
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
@@ -127,6 +142,26 @@ jobs:
       - name: Install dependencies
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn install --immutable
+
+      # Fixture regression test for docs/styles/Mailwoman/*.yml (the Vale prose-lint rules): a rule
+      # that stops firing, or a TokenIgnores/BlockIgnores change that starts leaking banned words
+      # out of a code fence/import/JSX/`<details>` block, fails loudly here instead of silently
+      # drifting. See docs/scripts/check-vale-rules.sh for what it checks.
+      - name: Vale rule fixtures
+        if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
+        run: docs/scripts/check-vale-rules.sh
+
+      # Scoped to just the files this PR changed (see the docs_prose filter above) — NOT the whole
+      # docs/articles corpus, which is still old prose that predates these rules. Runs vale directly
+      # instead of the lint:prose script because that script's paths ("articles src/pages") are
+      # fixed defaults that extra CLI args append to, not override.
+      - name: Prose lint (changed articles)
+        if: github.event_name == 'pull_request' && steps.changes.outputs.docs_prose == 'true'
+        env:
+          PROSE_FILES_JSON: ${{ steps.changes.outputs.docs_prose_files }}
+        run: |
+          mapfile -t files < <(echo "$PROSE_FILES_JSON" | jq -r '.[]')
+          yarn workspace @mailwoman/docs exec -- vale --config .vale.ini "${files[@]/#docs\//}"
 
       - name: Compile workspaces
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
