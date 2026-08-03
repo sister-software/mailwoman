@@ -21,7 +21,13 @@ import { resolve } from "node:path"
 import type { LoadContext, Plugin } from "@docusaurus/types"
 import webpack from "webpack"
 
-import { buildWorkspaceAliases, stagePairIndexes, stageSQLJSHTTPVFS } from "./resolve.ts"
+import {
+	buildWorkspaceAliases,
+	resolveWorkspaceDir,
+	resolveWorkspaceFile,
+	stagePairIndexes,
+	stageSQLJSHTTPVFS,
+} from "./resolve.ts"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir
@@ -53,7 +59,25 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 			actions.setGlobalData(content)
 		},
 
-		configureWebpack() {
+		configureWebpack(_config, isServer) {
+			const alias = buildWorkspaceAliases()
+
+			// The SSR compile resolves under the `node` condition — correctly, it targets Node — so
+			// `@mailwoman/neural/onnx-runner` reaches the real runner and drags onnxruntime-node's `.node`
+			// binaries into a bundle webpack then cannot parse. The client compile needs nothing: its
+			// `browser` condition already picks the counterpart.
+			//
+			// Aliasing just this specifier rather than adding `browser` to the server's conditionNames: that
+			// would flip every browser-conditioned package in node_modules for SSR, and `@mailwoman/neural` is
+			// the only workspace carrying such a condition.
+			if (isServer) {
+				const neuralDir = resolveWorkspaceDir("@mailwoman/neural")
+
+				if (neuralDir) {
+					alias["@mailwoman/neural/onnx-runner"] = resolveWorkspaceFile(neuralDir, "onnx-runner-browser")
+				}
+			}
+
 			return {
 				plugins: [
 					new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
@@ -61,7 +85,7 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 					}),
 				],
 				resolve: {
-					alias: buildWorkspaceAliases(),
+					alias,
 					extensionAlias: {
 						".js": [".ts", ".js"],
 					},
