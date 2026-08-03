@@ -1,0 +1,158 @@
+{
+	"$comment": [
+		"Real SEC EDGAR Exhibit 21 documents, retrieved 2026-08-03 and vendored verbatim (byte-for-byte, including",
+		"the SGML <DOCUMENT> wrapper EDGAR's archive serves them inside). US federal government publication — public",
+		"domain, no licence obligation. Each entry records exactly where the file came from so a reviewer can refetch",
+		"and diff it.",
+		"",
+		"Two of the registrants below are NOT the company whose name was queried: 'AlTi Global, Inc.' came back for a",
+		"query of 'Altice USA, Inc.', and 'WidePoint Corp' for 'WideOpenWest, Inc.'. Both are recorded under their",
+		"TRUE registrant name. They are kept deliberately — they are the measured evidence that name-only CIK",
+		"resolution produces confident false identity links, which is why the ingest path requires corroboration."
+	],
+	"retrieved": "2026-08-03",
+	"documents": [
+		{
+			"file": "anterix-2025.htm",
+			"registrant": "Anterix Inc.",
+			"cik": "0001304492",
+			"accession": "0001304492-26-000027",
+			"filingDate": "2026-06-25",
+			"exhibitType": "EX-21.1",
+			"url": "https://www.sec.gov/Archives/edgar/data/1304492/000130449226000027/a211listofsubsidiaries.htm",
+			"shape": "single table, ragged spacer columns (rows of 5 and 6 cells, most blank)"
+		},
+		{
+			"file": "shentel-2025.htm",
+			"registrant": "Shenandoah Telecommunications Company",
+			"cik": "0000354963",
+			"accession": "0000354963-26-000125",
+			"filingDate": "2026-02-26",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/354963/000035496326000125/shenex2112312025.htm",
+			"shape": "two tables whose every cell is blank — the list itself is block text outside them"
+		},
+		{
+			"file": "bandwidth-2025.htm",
+			"registrant": "Bandwidth Inc.",
+			"cik": "0001514416",
+			"accession": "0001514416-26-000017",
+			"filingDate": "2026-02-19",
+			"exhibitType": "EX-21.1",
+			"url": "https://www.sec.gov/Archives/edgar/data/1514416/000151441626000017/q42025exh211listofsubsidia.htm",
+			"shape": "no table; bulleted list, 'Name (Jurisdiction)' per line"
+		},
+		{
+			"file": "widepoint-2025.htm",
+			"registrant": "WidePoint Corp",
+			"cik": "0001034760",
+			"accession": "0001654954-26-002749",
+			"filingDate": "2026-03-25",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/1034760/000165495426002749/wyy_ex21.htm",
+			"shape": "clean 2-column table + a second top-level footnote table",
+			"note": "returned by a query for 'WideOpenWest, Inc.' — a false identity link, kept as evidence"
+		},
+		{
+			"file": "alti-global-2025.htm",
+			"registrant": "AlTi Global, Inc.",
+			"cik": "0001838615",
+			"accession": "0001628280-26-022450",
+			"filingDate": "2026-03-31",
+			"exhibitType": "EX-21.1",
+			"url": "https://www.sec.gov/Archives/edgar/data/1838615/000162828026022450/altilistofsubsidiariesex.htm",
+			"shape": "no table; one subsidiary per block line, jurisdiction after the name",
+			"note": "returned by a query for 'Altice USA, Inc.' — a false identity link, kept as evidence"
+		},
+		{
+			"file": "cable-one-2025.htm",
+			"registrant": "Cable One, Inc.",
+			"cik": "0001632127",
+			"accession": "0001632127-26-000005",
+			"filingDate": "2026-02-26",
+			"exhibitType": "EX-21.1",
+			"url": "https://www.sec.gov/Archives/edgar/data/1632127/000163212726000005/a2025q4-exhibit211.htm",
+			"shape": "single table, one all-blank spacer column between name and jurisdiction"
+		},
+		{
+			"file": "liberty-broadband-2025.htm",
+			"registrant": "Liberty Broadband Corp",
+			"cik": "0001611983",
+			"accession": "0001104659-26-010397",
+			"filingDate": "2026-02-05",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/1611983/000110465926010397/lbrda-20251231xex21.htm",
+			"shape": "single clean table; header labels 'Entity Name'/'Domicile'; a leading row of U+200B cells"
+		},
+		{
+			"file": "atn-international-2025.htm",
+			"registrant": "ATN International, Inc.",
+			"cik": "0000879585",
+			"accession": "0001104659-26-028515",
+			"filingDate": "2026-03-16",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/879585/000110465926028515/atni-20251231xex21.htm",
+			"shape": "seven top-level tables — one list plus six footnote tables; three populated columns (name, 'Jurisdiction of Incorporation', 'Other name(s) under which entity does business') under a header row whose name column is unlabelled"
+		},
+		{
+			"file": "verizon-2025.htm",
+			"registrant": "Verizon Communications Inc.",
+			"cik": "0000732712",
+			"accession": "0000732712-26-000007",
+			"filingDate": "2026-02-17",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/732712/000073271226000007/a2025q410-kxexhibit21.htm",
+			"shape": "single table, spacer columns, and 19 entirely blank filler rows"
+		},
+		{
+			"file": "idt-2025.htm",
+			"registrant": "IDT Corp",
+			"cik": "0001005731",
+			"accession": "0001493152-25-016071",
+			"filingDate": "2025-09-29",
+			"exhibitType": "EX-21.01",
+			"url": "https://www.sec.gov/Archives/edgar/data/1005731/000149315225016071/ex21-01.htm",
+			"shape": "'Domestic Subsidiaries' is a two-across NAME/NAME layout with no header row — two entity names per row, no jurisdiction column; 'Foreign Subsidiaries' is a normal Name/Country table"
+		},
+		{
+			"file": "echostar-2025.htm",
+			"registrant": "EchoStar Corp",
+			"cik": "0001415404",
+			"accession": "0001104659-26-021817",
+			"filingDate": "2026-03-02",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/1415404/000110465926021817/tmb-20251231xex21.htm",
+			"shape": "four real columns (name, jurisdiction, % ownership, d/b/a) + four footnote tables"
+		},
+		{
+			"file": "att-2025.htm",
+			"registrant": "AT&T Inc.",
+			"cik": "0000732717",
+			"accession": "0000732717-26-000120",
+			"filingDate": "2026-02-09",
+			"exhibitType": "EX-21",
+			"url": "https://www.sec.gov/Archives/edgar/data/732717/000073271726000120/ex-21ye2025.htm",
+			"shape": "two tables, spacer columns, three populated columns ('Legal Name', 'State of Incorporation/Formation', 'Conducts Business Under'); the second table repeats the layout with no header row"
+		},
+		{
+			"file": "ooma-2025.htm",
+			"registrant": "OOMA INC",
+			"cik": "0001327688",
+			"accession": "0001327688-26-000009",
+			"filingDate": "2026-04-03",
+			"exhibitType": "EX-21.1",
+			"url": "https://www.sec.gov/Archives/edgar/data/1327688/000132768826000009/ooma-ex21_1.htm",
+			"shape": "single table, one all-blank spacer column"
+		},
+		{
+			"file": "lumen-2025-index-headers.html",
+			"registrant": "Lumen Technologies, Inc.",
+			"cik": "0000018926",
+			"accession": "0000018926-26-000014",
+			"filingDate": "2026-02-20",
+			"exhibitType": "(filing index, not an exhibit)",
+			"url": "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/0000018926-26-000014-index-headers.html",
+			"shape": "the accession's document manifest — 162 escaped <DOCUMENT> blocks, one of type EX-21"
+		}
+	]
+}

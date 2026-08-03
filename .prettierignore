@@ -73,3 +73,9 @@ data/eval/golden/*/REVIEW-DECK.md
 docs/static/sbom/*.json
 # Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
 sentencepiece-wasm/sentencepiece.mjs
+
+## Vendored SEC EDGAR filings (filer/test-fixtures/edgar/manifest.json records each source URL).
+## These are third-party documents kept byte-for-byte so a reviewer can refetch and diff them —
+## reformatting would make that check impossible, and the parser under test reads their raw markup.
+filer/test-fixtures/edgar/*.htm
+filer/test-fixtures/edgar/*.html
