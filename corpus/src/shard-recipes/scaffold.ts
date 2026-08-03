@@ -64,6 +64,17 @@ export type CSVRecord = Record<string, string | undefined>
  * Header names are lower-cased on the way in. `normalizeKeys` will not do it: it leaves an ALL CAPS header alone, and
  * OpenAddresses ships `LON,LAT,NUMBER,STREET` while other extracts ship the same names lower-case. A recipe names its
  * columns in lower case either way.
+ *
+ * Line breaks inside a value become single spaces. A quote-aware parse is the first thing here able to return a value
+ * CONTAINING one — `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"` — and every consumer synthesizes
+ * one-line address text from these cells with no guard, because until that parse landed no value could carry one.
+ * Collapsing keeps the record (the address is fine; the source's line break is not part of it) without emitting a
+ * training row with a newline inside it.
+ *
+ * Only `\r` and `\n`, deliberately — NOT `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
+ * (OA's IA extract writes `NORTH`, three spaces, `MAIN STREET`), because those could always appear and every shard
+ * built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at all.
+ * `scaffold.test.ts` pins both halves.
  */
 export function* readCSVRecords(source: Uint8Array): Generator<CSVRecord> {
 	let header: string[] | null = null
@@ -79,7 +90,7 @@ export function* readCSVRecords(source: Uint8Array): Generator<CSVRecord> {
 		const record: CSVRecord = {}
 
 		for (let i = 0; i < header.length; i++) {
-			record[header[i]!] = (cells[i] ?? "").trim()
+			record[header[i]!] = (cells[i] ?? "").replaceAll(/[\r\n]+/g, " ").trim()
 		}
 
 		yield record
