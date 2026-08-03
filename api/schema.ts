@@ -31,11 +31,26 @@ export { APIErrorSchema } from "@mailwoman/api-kit"
 export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
 
 /**
+ * Longest accepted `address`, in characters.
+ *
+ * Sized against what the model can actually read, not against a guess at abuse. The classifier's window is 128
+ * SentencePiece pieces — roughly 330 characters of address text — and everything past it is truncated before inference,
+ * so input beyond this bound cannot influence a result. The margin over that window leaves room for scripts that
+ * tokenize denser than Latin, and for the department-and-division prefixes web forms concatenate.
+ *
+ * The bound exists because preprocessing is linear but not free: a 1 MB body costs ~1.7 s across normalize, query-shape
+ * and the phrase grouper, and Node runs them on the one thread every other request is waiting on. A cap here is cheaper
+ * than fairness plumbing, and rejecting is more honest than accepting a body whose tail the parser will silently
+ * discard.
+ */
+export const MAX_ADDRESS_LENGTH = 1024
+
+/**
  * `POST /v1/parse` request body.
  */
 export const ParseRequestSchema = z
 	.object({
-		address: z.string(),
+		address: z.string().max(MAX_ADDRESS_LENGTH),
 		debug: z.boolean().optional(),
 		input_mode: InputModeSchema.optional(),
 	})
@@ -65,7 +80,7 @@ export const ParseOutcomeSchema = z
  */
 export const GeocodeRequestSchema = z
 	.object({
-		address: z.string(),
+		address: z.string().max(MAX_ADDRESS_LENGTH),
 		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("GeocodeRequest")
@@ -139,7 +154,9 @@ export const GeocodeOutcomeSchema = z
  */
 export const BatchRequestSchema = z
 	.object({
-		addresses: z.array(z.string()),
+		// Per-ROW, not just per-request: the row cap (`batchMax`, default 500) bounds how many addresses arrive,
+		// and this bounds how large each may be. Without both, one request is 500 unbounded bodies.
+		addresses: z.array(z.string().max(MAX_ADDRESS_LENGTH)),
 		/**
 		 * Register override for every row. DEFAULT `"formatted"` — batch rows are the record register by nature.
 		 */
