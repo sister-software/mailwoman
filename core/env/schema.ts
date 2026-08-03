@@ -1,6 +1,21 @@
 import { z } from "zod"
 
 /**
+ * Wrap a coerced schema so a BLANK value means the same as an absent one.
+ *
+ * A shell `export FOO=`, an unset Docker/CI `${VAR}` interpolation and a compose file with a missing key all arrive as
+ * an empty string rather than as nothing. `z.coerce.number()` turns that into `0`, which any `.positive()` or `.min()`
+ * then rejects — so the process dies at import instead of falling back to its default, and the message points at a
+ * variable the operator believes they never set.
+ *
+ * The `.optional()`/`.default()` must be applied to `inner` BEFORE it reaches here: the outer value is present, so an
+ * outer `.optional()` never fires — `inner` is what receives the `undefined` this produces.
+ */
+function blankAsAbsent<T extends z.ZodType>(inner: T) {
+	return z.preprocess((v) => (v === "" ? undefined : v), inner)
+}
+
+/**
  * Non-secret operational config, exposed via `$public`. Add a key here to make it visible to the runtime; anything not
  * listed is stripped from `process.env` on parse.
  */
@@ -22,15 +37,7 @@ export const PublicEnvSchema = z.object({
 	// ONNX intra-op thread cap. Deployment-shaped rather than code-shaped: the right value depends on how many
 	// mailwoman processes share the host, which the library cannot know. See DEFAULT_INTRA_OP_THREADS.
 	//
-	// The `""` preprocessing is load-bearing: a shell `export FOO=` and an unset Docker/CI interpolation both
-	// arrive as an empty string, `z.coerce.number()` turns that into 0, and `.positive()` then rejects it —
-	// crashing at import rather than falling back to the default. Absent and blank must mean the same thing.
-	// `.optional()` sits INSIDE the preprocess: the outer value is present (an empty string), so an outer
-	// `.optional()` never fires — the inner schema is what receives the `undefined` and must accept it.
-	MAILWOMAN_INTRA_OP_THREADS: z.preprocess(
-		(v) => (v === "" ? undefined : v),
-		z.coerce.number().int().positive().optional()
-	),
+	MAILWOMAN_INTRA_OP_THREADS: blankAsAbsent(z.coerce.number().int().positive().optional()),
 	WOF_DATA_DIR: z.string().optional(),
 
 	// Geocode server batch row cap (`POST /v1/batch`).
@@ -41,7 +48,7 @@ export const PublicEnvSchema = z.object({
 	// 1→16 workers on both parse and full geocode. Don't reintroduce it without re-measuring; worker
 	// threads (see `mailwoman/geocode-stream.ts`) are the only lever that moves this in Node.
 	// Receipts: `docs/articles/plan/reference/performance.mdx`.
-	MAILWOMAN_BATCH_MAX: z.coerce.number().int().positive().default(1000),
+	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)),
 
 	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).
 	MAILWOMAN_DATA_ROOT: z.string().optional(),
