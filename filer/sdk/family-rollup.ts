@@ -15,12 +15,11 @@
  *   Given a `familyID`, this returns that one family's membership (0 or 1 elements — see the return-shape
  *   note below). Given a `nodeID`, it resolves EVERY family (if any) that node belongs to as of that date
  *   and returns the full rollup for each — a node CAN legitimately belong to more than one family at once
- *   (Task 2's own fixtures: a filer whose holding company differs from its management company gets two
- *   DIFFERENT family memberships), and this is a normal shape, not an exceptional one to guess around or
- *   refuse (the original version threw on this case; `filerLookup.ts`'s
- *   own `families` field answers the identical "which families does this node belong to" question with an
- *   array, so the two surfaces would otherwise disagree about whether a normal multi-family shape is
- *   exceptional).
+ *   (a filer whose holding company differs from its management company gets two DIFFERENT family
+ *   memberships), and this is a normal shape, not an exceptional one to guess around or refuse:
+ *   `filerLookup.ts`'s own `families` field answers the identical "which families does this node belong to"
+ *   question with an array, so throwing here would make the two surfaces disagree about whether a normal
+ *   multi-family shape is exceptional.
  *
  *   **Return shape: always `FamilyRollup[]`, never `null` or a bare
  *   object.** Empty when nothing is found — by `familyID`, when that family has no member row in force
@@ -36,25 +35,25 @@
  *   here, so every reader in this SDK shares one definition of "today."
  *
  *   Temporal scoping copies `filer-lookup.ts`'s exact half-open predicate verbatim — `valid_from <= asOf AND
- *   (valid_to IS NULL OR valid_to > asOf)` — rather than reimplementing it: three separate 3a tasks fixed
- *   this same class of bug independently before the final review caught them diverging, and the task brief
- *   for this module names that history explicitly as the reason to copy, not rewrite.
+ *   (valid_to IS NULL OR valid_to > asOf)` — rather than reimplementing it: dropping the `valid_to` half, or
+ *   making either bound inclusive, are easy mistakes that read as correct, and every reimplementation is
+ *   another place to make one and another place for the readers to diverge.
  *
  *   **EDGAR-sourced families need no change here.** `build-filer.ts`'s EDGAR ingest writes
  *   `filer_family` rows shaped identically to every other writer's, so this module's query — generic over
  *   `relationship` and never keyed to a specific `source` — already answers a `familyID`/`nodeID` query for a
  *   `cik:`-named family exactly as it would for a `holding_company_name:`-named one. The one dependency this
- *   module has on a source-specific decision is `readFamilyDisplayNames` (`filer-lookup.ts`), which Task 8
- *   widened to admit an INFERRED accompanying edge (EDGAR's subsidiary-name→FRN corroboration is inference by
- *   design, never authoritative) — see that function's own docstring for why widening it cannot misattribute
- *   a display name to the wrong member.
+ *   module has on a source-specific decision is `readFamilyDisplayNames` (`filer-lookup.ts`), which admits an
+ *   INFERRED accompanying edge (EDGAR's subsidiary-name→FRN corroboration is inference by design, never
+ *   authoritative) — see that function's own docstring for why admitting one cannot misattribute a display
+ *   name to the wrong member.
  *
- *   **What Task 8's fix round 1 DID change: `members` now report `assertion`/`match_score`.** EDGAR's is the
- *   repo's first inferred family membership, and `source` cannot grade it — `edgar-exhibit-21` writes an
+ *   **`members` grade themselves via `assertion`/`match_score`, not via `source`.** EDGAR's is the repo's
+ *   first inferred family membership, and `source` cannot grade it — `edgar-exhibit-21` writes an
  *   authoritative disclosure edge and an inferred corroboration in the same build, so the source name spans
  *   both grades and a caller reading strength off it would need a private table of which sources are
- *   inferential. Gate 2's "inferred never merges with authoritative" now reaches this rollup the same way it
- *   already reached `filerLookup`'s `cluster`/`inferred_links` split. See {@link FamilyRollupMember}.
+ *   inferential. Gate 2's "inferred never merges with authoritative" therefore reaches this rollup the same
+ *   way it reaches `filerLookup`'s `cluster`/`inferred_links` split. See {@link FamilyRollupMember}.
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -104,12 +103,12 @@ export interface FamilyRollupMember {
  * This is the inverse view, "who belongs to THIS family," so `relationship` lives per-member instead.
  *
  * `distinct_member_count` is `members` deduped by `node_id` — `members` itself is NEVER deduped (provenance plurality:
- * two different sources asserting the same node's membership both survive as separate entries; since task 3 fix round
- * 4, so do two DIFFERENT raw spellings one member reported for the same family), so `members.length` alone over-counts
- * whenever more than one row corroborates the same member. This mirrors `filerLookup.ts`'s `cluster.members`, which IS
- * already deduped (one entry per node) — without this field, a caller sizing a family by array length would get an
- * inconsistent answer depending on which rollup they read. It counts distinct member NODES, never rows, so widening
- * `filer_family`'s primary key cannot inflate it.
+ * two different sources asserting the same node's membership both survive as separate entries, as do two DIFFERENT raw
+ * spellings one member reported for the same family), so `members.length` alone over-counts whenever more than one row
+ * corroborates the same member. This mirrors `filerLookup.ts`'s `cluster.members`, which IS already deduped (one entry
+ * per node) — without this field, a caller sizing a family by array length would get an inconsistent answer depending
+ * on which rollup they read. It counts distinct member NODES, never rows, so widening `filer_family`'s primary key
+ * cannot inflate it.
  *
  * `display_names` (`family_id` alone is a canonicalized slug, and losing the raw name entirely was a real product loss
  * for the headline "these filers report holding company H" output) is {@linkcode readFamilyDisplayNames}'s output over

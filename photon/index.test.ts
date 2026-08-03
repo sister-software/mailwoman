@@ -390,7 +390,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	expect(body).toContain("switching-from-photon") // docs pointer
 })
 
-// Pinning tests (Phase-2 Task 3) — the `legacyQuery` adapter's express-shaped observable contract.
+// Pinning tests — the `legacyQuery` adapter's express-shaped observable contract.
 
 test("repeated q answers the legacy 400 envelope (express array shape preserved)", async () => {
 	const app = createPhotonApp(searchEngine)

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Node reader for `poi.db` (spec §3.4) — the res-9 k-ring reader over the clustered `poi`
- *   `WITHOUT ROWID` B-tree Task 1's schema (`poi-schema.ts`) builds. Three search modes share one
+ *   `WITHOUT ROWID` B-tree `poi-schema.ts` builds. Three search modes share one
  *   artifact:
  *
  *   - **Category**: `latLngToCell(center, 9)` → `gridDisk` ring-by-ring expansion, probing each

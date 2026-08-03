@@ -14,7 +14,7 @@
  *   neither of which needs the classifier at all). The shared classifier+resolver are built once, on the FIRST call
  *   to any tool that needs them, and cached for the process lifetime.
  *
- *   **Graceful layer-absent guards (2b task 7, decision 6).** Both BDC-backed tools treat a missing/unreadable
+ *   **Graceful layer-absent guards (decision 6).** Both BDC-backed tools treat a missing/unreadable
  *   database file as absence, never a raw `node:sqlite` throw ("unable to open database file"): `bdcFilingLandscape`
  *   requires bdc.db unconditionally, so a missing file becomes one friendly thrown `Error` naming the layer;
  *   `plausibilityCheck`'s `bdcDB`/`poi` deps are each OPTIONAL, so a missing/absent `bdc_database_path`/
@@ -150,9 +150,9 @@ async function getPoiPipeline(dbPath: string | undefined): Promise<Pipeline> {
 
 /**
  * `plausibilityCheck`'s geocode dep — reuses the SAME shared classifier+resolver `deps.geocode` builds from (see the
- * module header's laziness note), wired at this CLI/MCP layer per the 2b task 5 brief ("`deriveGeocodeRegister`/
- * formatted register is the geocode dep's concern, wired at the CLI/MCP layer"). The real return type (`GeocodeResult`)
- * is structurally assignable to `plausibility.ts`'s minimal `GeocodeLike` — no adapter needed.
+ * module header's laziness note). `deriveGeocodeRegister`/the formatted register is the geocode dep's concern, so it is
+ * wired at this CLI/MCP layer rather than inside `plausibility.ts`. The real return type (`GeocodeResult`) is
+ * structurally assignable to `plausibility.ts`'s minimal `GeocodeLike` — no adapter needed.
  */
 async function resolveGeocode(address: string) {
 	const { classifier, resolver, shards } = await loadCore()

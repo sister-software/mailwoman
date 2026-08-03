@@ -981,9 +981,9 @@ describe("§7-2b gates", () => {
 		})
 
 		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time guard above vacuous", () => {
-			// The pin's real teeth are the `satisfies` clause itself (compile-time only, verified by hand per the
-			// task 8 report: temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`, confirm `tsc` fails
-			// here, then revert). This runtime assertion is only the same non-empty backstop the union pins' own
+			// The pin's real teeth are the `satisfies` clause itself, which is compile-time only — to check it by
+			// hand, temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`, confirm `tsc` fails here,
+			// then revert. This runtime assertion is only the same non-empty backstop the union pins' own
 			// `toHaveLength(16)` above provides — it can't observe a MISSING key the way `tsc` does.
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
 		})

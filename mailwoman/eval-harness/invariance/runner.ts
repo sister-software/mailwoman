@@ -304,10 +304,10 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 				// Severity-aware, NOT severity-blind: a violation is pre-existing only if the candidate's verdict
 				// is not WORSE than the baseline's on this SAME (row, transform) pair — INVARIANT < DEGRADED <
-				// LOST. Two non-INVARIANT verdicts on both sides used to be enough to call it pre-existing, which
-				// let a candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on
-				// the same pair (the reviewer's repro: baseline drops a non-critical `unit` on comma-drop,
-				// candidate drops the CRITICAL `house_number` on the identical pair — that must gate, not hide).
+				// LOST. Treating two non-INVARIANT verdicts as pre-existing regardless of severity would let a
+				// candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on the
+				// same pair: baseline drops a non-critical `unit` on comma-drop, candidate drops the CRITICAL
+				// `house_number` on the identical pair — that must gate, not hide.
 				// v1 is verdict-severity matching only, not content-diff matching: it doesn't check whether the
 				// candidate's LOST is the SAME underlying break as the baseline's LOST (e.g. same tag, same kind
 				// of corruption) — only that it's no worse in kind. A future tightening could require the diffs
@@ -360,10 +360,9 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		for (const v of violations) {
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
 
-			// Final-review fix: this used to hardcode "baseline held INVARIANT" for every NEW violation, but
-			// "not pre-existing" (worse severity than the baseline) does not imply the baseline was INVARIANT —
-			// the baseline could itself have been DEGRADED while the candidate is the strictly-worse LOST.
-			// Print the baseline's ACTUAL recorded verdict instead of asserting one.
+			// Print the baseline's ACTUAL recorded verdict rather than asserting one: "not pre-existing" (worse
+			// severity than the baseline) does NOT imply the baseline held INVARIANT — it could itself have been
+			// DEGRADED while the candidate is the strictly-worse LOST.
 			const provenance = options.baselineParse
 				? v.preExisting
 					? " [pre-existing: baseline also violates — non-blocking]"

@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode filerLinkageEval} (3b Task 4, decisions 3 & 4). Gate 4's structural requirements
+ *   Tests for {@linkcode filerLinkageEval} (§7-3b decisions 3 & 4). Gate 4's structural requirements
  *   live here — the truth field's absence from the withheld run's input (asserted against the SAME
  *   `buildFilteredEvalInputs()` seam the eval itself calls, not a parallel copy), and reproducibility — plus
- *   the POSITIVE CONTROL the task 4 review added: the control run's perfect score is asserted, so stubbing
+ *   a POSITIVE CONTROL: the control run's perfect score is asserted, so stubbing
  *   the prediction predicate kills a test instead of leaving 19/19 green. Runs the REAL
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
  */
@@ -562,9 +562,9 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		// The plan's Task 8 section and this eval's own page both assert, as a measured fact, that wiring EDGAR in as
-		// inferred `Subsidiary` EDGES leaves recall at 0.000 and only `filer_family` rows move it. Both stated it with
-		// nothing in-repo to re-derive it from. This is that artifact: the exact shape Task 8 is specified to emit.
+		// The plan and this eval's own page both assert, as a measured fact, that wiring EDGAR in as inferred
+		// `Subsidiary` EDGES leaves recall at 0.000 and only `filer_family` rows move it — with nothing in-repo to
+		// re-derive it from. This test is that artifact: the exact edge shape an EDGAR importer emits.
 		const injected = await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),

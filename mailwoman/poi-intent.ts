@@ -87,9 +87,9 @@ export interface POIIntentStageDeps {
 	 */
 	parseAnchor: (text: string, opts?: PipelineOpts) => Promise<PipelineResult>
 	/**
-	 * The executor (Task 4, `poi-executor.ts`'s `createPOIExecutor`) — when present, the stage runs the matched intent
-	 * through it and returns whatever it decides (results attached, or an abstain). Absent = today's Plan-2 behavior: the
-	 * bare `{ type: "intent", intent }`, unexecuted.
+	 * The executor (`poi-executor.ts`'s `createPOIExecutor`) — when present, the stage runs the matched intent through it
+	 * and returns whatever it decides (results attached, or an abstain). Absent, the stage yields the bare `{ type:
+	 * "intent", intent }`, unexecuted.
 	 */
 	execute?: (intent: POIIntent) => POIIntentOutcome
 }

@@ -6,8 +6,8 @@
  *   Cheap unit coverage for `generate-clients.ts`'s pure logic ONLY — the surface list + the
  *   template-string builders (pyproject.toml, `__init__.py`, Cargo.toml, `lib.rs`). The pipeline
  *   itself (`generateClients`) is spawn-heavy end to end (node CLIs, `uvx`, `uv build`, `cargo
- *   check`) — that's receipt-verified by an actual local run (see `.superpowers/sdd/task-3-report.md`
- *   + the CI job in Phase 5 Task 4), not re-simulated here with mocks. What IS worth pinning cheaply:
+ *   check`) — that's covered by an actual local run and by the client-generation CI job, not
+ *   re-simulated here with mocks. What IS worth pinning cheaply:
  *   that the four-surface list stays in sync, and that the generated file templates actually
  *   interpolate the version and name every module — a typo here (e.g. forgetting the `mailwoman`
  *   module in `lib.rs`) would silently ship a three-surface client.

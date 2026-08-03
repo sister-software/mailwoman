@@ -199,13 +199,13 @@ export interface NeuralAddressClassifierConfig {
 	spanProposer?: SpanProposerConfig | false
 
 	/**
-	 * Default placetype-pair index (placetype-pair-prior arc, Task 5 — see `ParseOpts.placetypePair` for the full
-	 * matching contract, including the Task 6 probe-mode default). Set by `loadFromWeights` when the resolved weights
-	 * package ships a country-matching `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse
-	 * `opts.placetypePair` overrides this default; omitting both is the byte-stable no-prior default (undefined → zero
-	 * matrix). `#decode` always injects the current parse's `inputText` into whichever object wins (config default or
-	 * per-parse override) — see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field
-	 * nor a per-parse override needs to carry its own text.
+	 * Default placetype-pair index (placetype-pair-prior arc — see `ParseOpts.placetypePair` for the full matching
+	 * contract, including the probe-mode default). Set by `loadFromWeights` when the resolved weights package ships a
+	 * country-matching `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse `opts.placetypePair`
+	 * overrides this default; omitting both is the byte-stable no-prior default (undefined → zero matrix). `#decode`
+	 * always injects the current parse's `inputText` into whichever object wins (config default or per-parse override) —
+	 * see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field nor a per-parse override
+	 * needs to carry its own text.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
 
@@ -213,7 +213,7 @@ export interface NeuralAddressClassifierConfig {
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
 	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
 	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence gates
-	 * (floor / byte-fallback skip / slash grouping); `true` = the original ungated vote. Per-parse
+	 * (floor / byte-fallback skip / slash grouping); `true` = the ungated vote. Per-parse
 	 * `ParseOptions.enforceWordConsistency` overrides this default.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts
@@ -461,10 +461,10 @@ export class NeuralAddressClassifier {
 		// not something to apply anyway): the index header's `country` must equal the resolved locale's
 		// country subtag, or the default is skipped with a single warning naming both. Unlike the
 		// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
-		// case here — the prior is opt-in plumbing (Task 7 owns the ship decision), so a missing/mismatched
-		// index degrades silently to the pre-Task-5 byte-stable default, loud only via the gate warning.
+		// case here — the prior is opt-in plumbing, so a missing/mismatched index degrades silently to the
+		// byte-stable no-prior default, loud only via the gate warning.
 		//
-		// Review follow-up (header peek before construction): the country check reads ONLY the magic +
+		// Header peek before construction: the country check reads ONLY the magic +
 		// header block via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index
 		// never pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor (which
 		// DOES walk every entry) only runs once the gate has already confirmed the country match.
@@ -544,10 +544,9 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * Like `parse`, but also returns the raw per-token logits and piece offsets needed for per-span logit aggregation
-	 * (Option C joint-reconcile integration). Shares the ENTIRE decode path with `parse` (one `#decode`, #481) —
-	 * including the repair passes, which previously ran only in `parse`: reconcile must consume the same tokens the
-	 * argmax path serves users, and the repair opts were silently ignored here before. `logits` stay RAW (pre-prior,
-	 * pre-repair) — they are the model's emissions, not the decode's opinions.
+	 * (Option C joint-reconcile integration). Shares the ENTIRE decode path with `parse` (one `#decode`, #481) — repair
+	 * passes included, because reconcile must consume the same tokens the argmax path serves users, under the same repair
+	 * opts. `logits` stay RAW (pre-prior, pre-repair) — they are the model's emissions, not the decode's opinions.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
 		if (!text.length) {
@@ -628,11 +627,11 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * THE decode path (#481): tokenize → anchor/gazetteer features → infer → priors → CRF/argmax → tokens → repairs. Both
-	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces in the
-	 * previous duplicated copies.
+	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces across
+	 * duplicated copies of this path.
 	 */
-	// Deliberately ONE function: the 2026-06 audit found three drifted copies of the previously-split
-	// version, which is why every caller now funnels through here.
+	// Deliberately ONE function, long on purpose — every caller funnels through here so there is nowhere
+	// for a second copy to drift.
 	// oxlint-disable-next-line complexity -- 104, and splitting it is what drifted last time
 	async #decode(
 		text: string,
@@ -698,16 +697,16 @@ export class NeuralAddressClassifier {
 
 		// The runner CLAMPS its input to the model's fixed sequence length (`ONNXRunner.infer`:
 		// `Math.min(tokenIds.length, this.fixedSeqLen)`, 128 by default) and slices `logits` back to what
-		// it actually ran. Nothing used to clamp `pieces` to match, so every downstream consumer that
-		// walks pieces and indexes emissions in lockstep — the token build below reading `logits[i]`,
-		// `enforceWordConsistency` reading `emissions[pi]` — ran off the end the moment an input tokenized
-		// past the limit, and threw.
+		// it actually ran. `pieces` MUST be clamped to match: every downstream consumer walks pieces and
+		// indexes emissions in lockstep — the token build below reading `logits[i]`,
+		// `enforceWordConsistency` reading `emissions[pi]` — so an unclamped `pieces` runs off the end and
+		// throws the moment an input tokenizes past the limit.
 		//
 		// That is a CRASH ON VALID INPUT, not on garbage. 128 pieces is roughly 330 characters of ordinary
 		// address text, which a form-concatenated delivery address with a department line clears easily;
-		// measured 2026-08-02, 330 chars parsed and 394 threw. It reached every consumer of the geocode
-		// path, including the Nominatim/Photon/libpostal drop-ins, where it surfaced as an HTTP 500 on a
-		// well-formed query. Found by the mailfail sweep, which was looking for emoji.
+		// measured 2026-08-02, 330 chars parsed and 394 threw. It reaches every consumer of the geocode
+		// path, including the Nominatim/Photon/libpostal drop-ins, where it surfaces as an HTTP 500 on a
+		// well-formed query.
 		//
 		// Truncating here makes the pipeline agree with what the model SAW. The tail is dropped rather
 		// than mis-parsed — the degradation the runner had already chosen unilaterally — and a caller who
@@ -863,9 +862,9 @@ export class NeuralAddressClassifier {
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
 
-		// Placetype-pair prior (placetype-pair-prior arc, Tasks 4-5): retrieval-augmented complement to the
+		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to the
 		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Config-level
-		// default set by loadFromWeights (Task 5's country-gated construction); per-call opts override it,
+		// default set by loadFromWeights (its country-gated construction); per-call opts override it,
 		// same "opts ?? cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below. Default
 		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
 		// might bias toward still gets masked out.
@@ -1274,19 +1273,18 @@ export interface ParseOpts {
 	 * Per-call override for the config-level `placetypePair` default (see
 	 * {@link NeuralAddressClassifierConfig.placetypePair}). Explicit `false` disables an AUTO-WIRED config default for
 	 * this one call — the same typed-disable shape as {@link spanProposer} above (`SpanProposerConfig | false` at the
-	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. Final-review
-	 * fix: before this, `ParseOpts.placetypePair` only accepted an object, so there was no way to force the prior OFF for
-	 * one call short of substituting a never-matching `PairIndexLike` stub (`neural/test/weights.test.ts`'s
-	 * `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but not a real "disable" signal, and not type-checkable as
-	 * one. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false` correctly with no further
-	 * change: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit `false` here wins over any
-	 * config default without needing a special case.
+	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. The typed
+	 * `false` is the ONLY real disable signal: an object-only field leaves a caller substituting a never-matching
+	 * `PairIndexLike` stub (`neural/test/weights.test.ts`'s `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but
+	 * not type-checkable as intent. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false`
+	 * correctly with no special case: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit
+	 * `false` here wins over any config default.
 	 *
-	 * Placetype-pair emission bias (placetype-pair-prior arc, Tasks 4-6). When provided, candidates are probed against a
-	 * PIX1 pair index of (child, parent) place-name pairs harvested from a real address register (the Task-3 GB shard:
-	 * PPD `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets
-	 * an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality`
-	 * when "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
+	 * Placetype-pair emission bias (placetype-pair-prior arc). When provided, candidates are probed against a PIX1 pair
+	 * index of (child, parent) place-name pairs harvested from a real address register (the GB shard: PPD
+	 * `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets an
+	 * additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality` when
+	 * "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
 	 * `dependent_locality`.
 	 *
 	 * **`probeMode` — the `"auto"` probe chain (default) vs the explicit `"segment"`/`"anchored"`/`"window"` overrides.**
@@ -1294,37 +1292,33 @@ export interface ParseOpts {
 	 * adjacent-pair design) runs the segment path when the input has ≥2 comma-delimited segments — byte-identical to
 	 * explicit `"segment"` there, by construction — and the anchored-adjacent path on comma-free input (where segment
 	 * mode is deterministically inert; any anchored bias is strictly additive against that zero baseline). `"segment"`
-	 * (the v1 default set by Task 6) restricts candidates to WHOLE comma-delimited segments; the original `"window"` mode
-	 * (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the
-	 * measured distribution that set that ceiling) is preserved but now opt-in. The flip happened because window mode,
-	 * measured against a 6,500-row venue-confound falsifier board (real UK business names that embed a real place name —
-	 * "Bitterne Charcoal Grill" embeds "Bitterne") at the real artifact's δ=6.0, produced a **52.123% false-positive
-	 * rate** (2026-07-22, `.superpowers/sdd/task-6-report.md`) against a pre-registered FP=0 bar: a sub-segment window
-	 * has no venue-boundary awareness and fires just as readily inside a longer venue/business phrase as it does on a
-	 * bare place name. Segment mode structurally can't make that mistake — "Bitterne Charcoal Grill" has no internal
-	 * comma, so its only candidate key is the 3-word fold, which never equals a 1-word census entry. See
-	 * `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract, both modes'
-	 * honestly-reported trade-offs, and the re-enablement bar for window mode as a default. The runtime-flag register row
-	 * documenting BOTH probe modes for the pipeline lands in Task 7, not here — this field (and its default) is the
-	 * plumbing/measurement, not the ship decision.
+	 * (the v1 default) restricts candidates to WHOLE comma-delimited segments; `"window"` mode (contiguous 1..3-word
+	 * sliding sub-segments — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the measured distribution
+	 * that set that ceiling) is opt-in only. Window mode is not a default because, measured against a 6,500-row
+	 * venue-confound falsifier board (real UK business names that embed a real place name — "Bitterne Charcoal Grill"
+	 * embeds "Bitterne") at the real artifact's δ=6.0, it produced a **52.123% false-positive rate** (2026-07-22) against
+	 * a pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness and fires just as readily inside a
+	 * longer venue/business phrase as it does on a bare place name. Segment mode structurally can't make that mistake —
+	 * "Bitterne Charcoal Grill" has no internal comma, so its only candidate key is the 3-word fold, which never equals a
+	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract,
+	 * both modes' measured trade-offs, and the re-enablement bar for window mode as a default.
 	 *
 	 * Country-agnostic at the API surface: this module does no country gating itself — the caller is responsible for
 	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never
 	 * match, composing harmlessly).
 	 *
-	 * Default resolution: **an omitted field is NOT unconditionally byte-identical to every parse before this task.**
-	 * `#decode` resolves this as `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a
-	 * config-level default (the country-gated construction for en-gb-shaped caches), an omitted per-call field falls
-	 * through to THAT default and the prior fires. Byte-identical-to-pre-task behavior only holds when NEITHER this field
-	 * NOR the config default is set (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin`
-	 * sibling to auto-wire). Pass explicit `false` to force the prior off for one call regardless of an auto-wired config
-	 * default (see this field's own doc comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22)
-	 * measured 100% recall / 0.0% false-positive rate at δ=6.0 on the curated probe set that motivated this prior.
-	 * **Superseded by Task 7's δ calibration** (2026-07-22, `.superpowers/sdd/task-7-report.md`): the real
-	 * `pair-index-gb.bin` artifact now ships δ=5.0 (a held-out register-row + venue-confound sweep, feed-8k's calibrated
-	 * optimum and Task 7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment bare-locality
-	 * bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike` test double
-	 * that omits `delta`.
+	 * Default resolution: **an omitted field does NOT unconditionally mean "no prior".** `#decode` resolves this as
+	 * `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a config-level default (the
+	 * country-gated construction for en-gb-shaped caches), an omitted per-call field falls through to THAT default and
+	 * the prior fires. The no-prior path holds only when NEITHER this field NOR the config default is set (e.g.
+	 * `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin` sibling to auto-wire). Pass explicit
+	 * `false` to force the prior off for one call regardless of an auto-wired config default (see this field's own doc
+	 * comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0%
+	 * false-positive rate at δ=6.0 on the curated probe set that motivated this prior. **Superseded by the shipped δ
+	 * calibration** (2026-07-22): the real `pair-index-gb.bin` artifact ships δ=5.0 (a held-out register-row +
+	 * venue-confound sweep, feed-8k's calibrated optimum; feed-2k calibrates to 4.5 but fails the FR-fragment
+	 * bare-locality bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike`
+	 * test double that omits `delta`.
 	 */
 	placetypePair?: PlacetypePairPriorOpts | false
 }

@@ -13,31 +13,31 @@
  *   - The en-gb case exercises the #1177 base-overlay dedup: en-gb ships no model.onnx/tokenizer.model
  *       of its own (declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`), so resolution
  *       must fall through to the en-us package dir (`source` suffixed `+base`) while still resolving
- *       en-gb's OWN `postcode-gb.bin` locally. Since Task 8 (6.7.0), en-gb ALSO ships its own
- *       `model-card.json` (the #1249 base-card-fallback design's overlay-local path) — the card-less
- *       fallback for `modelCardPath` specifically is now dormant for en-gb (model/tokenizer still fall
- *       through to base; only the card resolves locally, per `resolveFromPackageDir`'s precedence).
+ *       en-gb's OWN `postcode-gb.bin` locally. As of 6.7.0 en-gb ALSO ships its own `model-card.json`
+ *       (#1249's overlay-local path), so the card-less fallback for `modelCardPath` is dormant for en-gb
+ *       (model/tokenizer still fall through to base; only the card resolves locally, per
+ *       `resolveFromPackageDir`'s precedence).
  *   - The en-nz case is the same base-overlay dedup in its second (and simpler) form: NO local
  *       postcode binary exists at all (no WOF NZ postcode shard — see the overlay's model-card
  *       `no_postcode_bin` follow-up), so `anchorLookupPath` must be undefined while the overlay's
  *       OWN `pair-index-nz.bin` + model-card resolve locally and model/tokenizer fall through to
  *       base. One test, wiring-only — the country-gate/prior machinery is generic and already
  *       exhaustively covered by the en-gb block below.
- *   - The placetype-pair-prior arc Task 5 block is the arc's end-to-end smoke: en-gb resolves
+ *   - The placetype-pair-prior block is the arc's end-to-end smoke: en-gb resolves
  *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
  *       prior is INERT on en-us (no sibling shipped) against the identical GB-shaped input.
- *   - Task-5 REVIEW FOLLOW-UP (this file's "placetype-pair prior" describe block): the block used to
- *       assert a single argmax flip on `GB_DEPENDENT_LOCALITY_ADDRESS`, whose measured margin at the
- *       shipped δ=6.0 is only ~0.211 logits — any future recalibration of that delta could flip the
- *       assertion for reasons having nothing to do with wiring correctness. Split into three tiers: (a)
- *       WIRING assertions (pairIndexPath resolves; `applied` true/false) stay on the original address and
+ *   - MARGIN DISCIPLINE in that same "placetype-pair prior" describe block: a single argmax flip on
+ *       `GB_DEPENDENT_LOCALITY_ADDRESS` is NOT a safe thing to assert, because its measured margin at the
+ *       shipped δ=6.0 is only ~0.211 logits — any future recalibration of that delta flips the assertion
+ *       for reasons having nothing to do with wiring correctness. So the block runs in three tiers: (a)
+ *       WIRING assertions (pairIndexPath resolves; `applied` true/false) stay on the knife-edge address and
  *       are margin-independent by construction — `applied` reports whether the prior fired, not whether it
  *       won; (b) a bias-DELTA assertion compares the biased trace against a same-input trace with the
  *       prior forced off (a no-match `PairIndexLike` stub passed via `opts.placetypePair`), so the measured
  *       delta at the child token isolates the prior's own contribution — margin-independent, and provable
- *       without ever touching the model's own unbiased preference; (c) exactly one flip assertion remains,
- *       moved to `GB_WIDE_MARGIN_ADDRESS` — a real census pair chosen by probing candidates from
+ *       without ever touching the model's own unbiased preference; (c) exactly one flip assertion, on
+ *       `GB_WIDE_MARGIN_ADDRESS` — a real census pair chosen by probing candidates from
  *       `scratchpad/gb-probe-grade/census-gb-pairs.jsonl` for the widest post-bias margin (see that
  *       const's docstring for the measured candidate table). Margin ≥~3 survives a δ recalibration down to
  *       ~3 before the flip could invert.
@@ -113,7 +113,7 @@ const GB_WOF_DB_PATH = dataRootPath("wof", "postalcode-gb.db")
 const haveCLI = existsSync(CLI_PATH)
 const haveGBWofDB = existsSync(String(GB_WOF_DB_PATH))
 
-// The Task 5 smoke's en-gb link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
+// The en-gb smoke's link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
 // pair-index-gb.bin from the PPD tuples CSV (see that script's header) — needs the source CSV on disk
 // same as the postcode-binary build needs the WOF shard above.
 const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
@@ -132,16 +132,16 @@ const haveNZSource = existsSync(String(NZ_SOURCE_CSV_PATH))
 const LINK_SCRIPT_TIMEOUT_MS = 600_000
 
 /**
- * A real GB address whose middle place ("Fishburn") is the verified PROBE OK (child, parent) pair from the Task-3
- * artifact ("Fishburn" / "Stockton-on-Tees" → dependent_locality). Deliberately house-number-less: with a leading house
- * number ("14 Beulah Hill, …") the base model's own B-locality logit for "Fishburn" is confident enough (raw gap ~6.9)
- * that the +6.0 pair-index delta narrows but does not flip it — this phrasing's unbiased margin is narrow enough for
- * the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
+ * A real GB address whose middle place ("Fishburn") is a verified PROBE OK (child, parent) pair in the shipped
+ * `pair-index-gb.bin` ("Fishburn" / "Stockton-on-Tees" → dependent_locality). Deliberately house-number-less: with a
+ * leading house number ("14 Beulah Hill, …") the base model's own B-locality logit for "Fishburn" is confident enough
+ * (raw gap ~6.9) that the +6.0 pair-index delta narrows but does not flip it — this phrasing's unbiased margin is
+ * narrow enough for the prior to decide it, which is exactly what an end-to-end smoke should demonstrate.
  *
- * KNIFE-EDGE, KEPT ON PURPOSE (review follow-up): measured post-bias margin at δ=6.0 is only ~0.211 logits (biased
- * B-dependent_locality 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to gate an argmax-flip
- * assertion on (see `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the WIRING assertions below (`pairIndexPath`
- * resolves, `applied` true/false) and the bias-DELTA assertion, both margin-independent.
+ * KNIFE-EDGE, KEPT ON PURPOSE: measured post-bias margin at δ=6.0 is only ~0.211 logits (biased B-dependent_locality
+ * 4.592 vs runner-up B-locality 4.380 at the "Fish" piece) — too thin to gate an argmax-flip assertion on (see
+ * `GB_WIDE_MARGIN_ADDRESS` for that). Still used for the WIRING assertions below (`pairIndexPath` resolves, `applied`
+ * true/false) and the bias-DELTA assertion, both margin-independent.
  */
 const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, TS21 3AB"
 
@@ -159,7 +159,7 @@ const GB_DEPENDENT_LOCALITY_ADDRESS = "Beulah Hill, Fishburn, Stockton-on-Tees, 
  * | 3    | Holland Fen / Lincoln             | 2.837  | B-dependent_locality |
  * | 4    | Up Hatherley / Cheltenham         | 2.412  | B-dependent_locality |
  * | 5    | Lower Bullingham / Hereford       | 2.349  | B-dependent_locality |
- * | —    | Shoreditch / London (Task-5 orig) | 0.496  | B-dependent_locality |
+ * | —    | Shoreditch / London (also probed) | 0.496  | B-dependent_locality |
  * | —    | Fishburn / Stockton-on-Tees       | 0.211  | B-dependent_locality |
  * | —    | Sedgefield / Stockton-on-Tees     | −1.128 | B-locality (no flip) |
  *
@@ -254,11 +254,10 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
 			expect(r.anchorLookupPath?.binary).toBe(true)
 			expect(r.anchorLookupPath?.path).toMatch(/neural-weights-en-gb\/postcode-gb\.bin$/)
-			// Overlay-local card (Task 8, 6.7.0): en-gb now ships its own model-card.json (a verbatim
-			// copy of the base's labels/requires — see that file's header comment), so
-			// `resolveFromPackageDir` resolves it LOCALLY instead of falling through to the en-us base
-			// card. The label vocab is byte-identical either way (STAGE3+, 33 labels), so
-			// `assertEmissionWidth` still never trips — this assertion just moved to the new source.
+			// Overlay-local card (6.7.0): en-gb ships its own model-card.json (a verbatim copy of the
+			// base's labels/requires — see that file's header comment), so `resolveFromPackageDir`
+			// resolves it LOCALLY instead of falling through to the en-us base card. The label vocab is
+			// byte-identical either way (STAGE3+, 33 labels), so `assertEmissionWidth` never trips.
 			expect(r.modelCardPath).toMatch(/neural-weights-en-gb\/model-card\.json$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
@@ -273,7 +272,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// postcode-nz.bin (no WOF NZ postcode shard exists — the overlay's model-card `no_postcode_bin`
 	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
 	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
-	// prior/country-gate behavior itself is generic machinery already covered by the en-gb Task 5
+	// prior/country-gate behavior itself is generic machinery already covered by the en-gb prior
 	// block below and the mispackaging gate at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode shard), and parses",
@@ -292,7 +291,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.pairIndexPath).toMatch(/neural-weights-en-nz\/pair-index-nz\.bin$/)
 
 			// Probe the built artifact directly: header country gates to nz, and a known identity pair
-			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x); task-8 report) is
+			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x)) is
 			// genuinely present in THIS build.
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("nz")
@@ -308,18 +307,18 @@ describe("resolveWeights — package auto-resolve", () => {
 	)
 })
 
-// placetype-pair-prior arc, Task 5: the arc's end-to-end proof. `pairIndexPath` resolves on en-gb,
+// placetype-pair-prior arc: the arc's end-to-end proof. `pairIndexPath` resolves on en-gb,
 // `loadFromWeights` constructs a country-gated `PairIndexResolver` default from it, and a real GB
 // dependent_locality address decodes with the tag applied. The en-us companion proves the SAME input
 // produces NO bias when the package ships no sibling index — the prior degrades to byte-stable, not to
 // a crash or a silent wrong-country apply.
 //
-// Review follow-up (see the module docstring's "Task-5 REVIEW FOLLOW-UP" bullet): the wiring assertions
+// Margin discipline (see the module docstring's MARGIN DISCIPLINE bullet): the wiring assertions
 // below never depend on the model's own margin — `applied` reports whether the prior fired, and the
 // bias-DELTA assertion measures the prior's OWN contribution against a same-input, prior-forced-off trace.
 // Only the LAST test in this block asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS` (margin
 // ~3.5), not the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
-describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task 5 smoke)", () => {
+describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
 	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
 		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
 		async () => {
@@ -379,9 +378,9 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// Final-review fix: the typed disable (`ParseOpts.placetypePair: false`) — the real "turn an
-	// AUTO-WIRED config default off for one call" mechanism, replacing the `NO_MATCH_PAIR_INDEX` stub
-	// workaround above with an actual disable signal that's type-checkable as one. See
+	// The typed disable (`ParseOpts.placetypePair: false`) — the real "turn an AUTO-WIRED config
+	// default off for one call" mechanism, and distinct from the `NO_MATCH_PAIR_INDEX` stub above in
+	// that it is a disable signal type-checkable as one. See
 	// `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case contract this
 	// pins the middle case of: a config default IS auto-wired here (en-gb), so `false` is doing real work,
 	// not just matching an already-inert default.
@@ -421,16 +420,16 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 
 			const r = resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
-			// Setup precondition, per the brief: confirm the pair is genuinely PROBE OK in THIS build before
+			// Setup precondition: confirm the pair is genuinely PROBE OK in THIS build before
 			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
 			// SPACE-preserved token ("holland fen"), not concatenated — see pair-index-resolver.ts's header
 			// doc on how normalizeFSTToken folds interior whitespace.
 			expect(resolver.probe("holland fen", "lincoln")).toBe("dependent_locality")
 
 			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-LESS (see its docstring — the comma form scored
-			// LOWER for this exact pair). Task 6 defaulted the prior to `probeMode: "segment"`, under which a
+			// LOWER for this exact pair). The prior defaults to `probeMode: "segment"`, under which a
 			// comma-free three-word input is one inert segment — no bias, no flip. This is the window-mode
-			// sub-window behavior on purpose, so `probeMode: "window"` (the now-opt-in mode) is passed
+			// sub-window behavior on purpose, so `probeMode: "window"` (the opt-in mode) is passed
 			// explicitly, reusing the SAME real resolver already probed above as the per-parse override.
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 
@@ -443,19 +442,19 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// TRANSITION-BETA characterization (task-8 § "Transition-level pair-evidence probe", operator-approved
-	// build 2026-07-24): a real comma-free GB register row from the probe's 17-row fused-path population.
-	// Re-pinned 2026-07-30 for the model 7.0.0 from-scratch base: the full 17-row re-measurement
-	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json) shows 15/17 rows now self-recover BETA-LESS — including
-	// Hedon and Ashby Parva, which never recovered at any β on the fine-tune lineage, and the then-pin
-	// row Glenfield (margin 3.10). Two rows still needed the artifact: "Upton"/"Bude" and Wheatley.
+	// TRANSITION-BETA characterization (operator-approved build 2026-07-24): a real comma-free GB register
+	// row from the probe's 17-row fused-path population. Measured against the model 7.0.0 from-scratch base
+	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json), 15 of the 17
+	// rows self-recover BETA-LESS — including Hedon and Ashby Parva, which never recovered at any β on the
+	// fine-tune lineage. Glenfield (margin 3.10) is the pinned discriminator; Wheatley is the other row
+	// that still needs the artifact.
 	//
-	// RE-PINNED AGAIN 2026-08-01, back to Glenfield — and the reason matters more than the swap. Upton
-	// self-recovers beta-less against a FRESHLY BUILT index, and had done so for some time; the test kept
-	// passing only because the artifact it graded against was stale. `link-dev-weights.ts`'s freshness
-	// guard compared `sourceMD5s[0]` alone, so it never noticed campaign R3/R4b adding the borough DB and
-	// the checked-in London pairs, and the CI cache key had the same blind spot. The guard now compares
-	// EVERY source md5 (fixed in the same change), so this class of silent staleness is closed.
+	// STALENESS TRAP, and it has bitten this test before: the pin is graded against a LOCALLY BUILT index,
+	// so a stale artifact keeps the test green while the row it names has quietly started self-recovering
+	// beta-less ("Upton"/"Bude" did exactly that). `link-dev-weights.ts`'s freshness guard therefore
+	// compares EVERY entry of `sourceMD5s`, not just `[0]` — checking the CSV alone leaves it blind to a
+	// new source joining the index (a borough DB, a checked-in London pair set) — and the CI cache key has
+	// to track the same set. A pass here is only as trustworthy as the artifact's freshness.
 	//
 	// Expect this pin to keep moving: it is by construction whichever row sits nearest the delta
 	// threshold, so any delta recalibration or pair-set growth reshuffles it. A failure here means
@@ -500,9 +499,8 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (Task
 	test.skipIf(!haveModel || !haveCLI)(
 		"en-us: ships its OWN us-gated pair index — a GB-shaped input still applies NO placetype-pair bias",
 		async () => {
-			// Rewritten 2026-08-01 (hierarchy campaign R5). This used to assert en-us shipped NO sibling at all, which
-			// was the packaging fact rather than the property worth protecting. en-us now ships `pair-index-us.bin`
-			// (49,033 WOF-sourced pairs), so the invariant is sharper: the index EXISTS and is still inert on GB input.
+			// en-us ships `pair-index-us.bin` (49,033 WOF-sourced pairs), so the property worth protecting is not the
+			// packaging fact that no sibling exists — it does exist — but that the index is still INERT on GB input.
 			// Two independent things keep it inert — the header's hard country gate, and the plain fact that US pairs
 			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			ensureDevWeightsLinked("en-us")

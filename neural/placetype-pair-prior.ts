@@ -6,7 +6,7 @@
  *   Placetype-pair emission bias — the sixth emission prior (placetype-pair-prior arc). The
  *   retrieval-augmented complement to the encoder's own judgment: probes contiguous word windows of
  *   the input against a PIX1 pair index (`pair-index-resolver.ts`) of (child, parent) place-name
- *   pairs harvested from a real address register (Task 3's GB shard: PPD `CITY`/`DISTRICT`), and
+ *   pairs harvested from a real address register (the GB shard: PPD `CITY`/`DISTRICT`), and
  *   nudges the matching BIO label when a window resolves.
  *
  *   Same additive-matrix contract as every other prior in this file (`fst-prior.ts`,
@@ -15,23 +15,23 @@
  *   priors still get the final vote; this one only proposes.
  *
  *   Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0% false-positive rate at δ=6.0 on the
- *   probe set that motivated this prior. **Superseded by Task 7's δ calibration** (2026-07-22,
- *   `.superpowers/sdd/task-7-report.md`, a held-out register-row + venue-confound sweep) — the real
- *   `pair-index-gb.bin` artifact now ships δ=5.0 in its header (feed-8k's calibrated optimum and Task
- *   7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment
+ *   probe set that motivated this prior. **Superseded by the shipped δ calibration** (2026-07-22, a
+ *   held-out register-row + venue-confound sweep) — the real
+ *   `pair-index-gb.bin` artifact ships δ=5.0 in its header (feed-8k's calibrated
+ *   optimum; feed-2k calibrates to 4.5 but fails the FR-fragment
  *   bare-locality bar).
  *
- *   **Disable semantics (final-review fix — the previous wording here was self-contradictory).** This
+ *   **Disable semantics.** This
  *   module has no notion of "on"/"off" by itself — `buildPlacetypePairPriors(opts, …)` just returns a
  *   zero matrix whenever `opts?.index` is absent, and the CALLER (`neural/classifier.ts`'s `#decode`)
  *   decides what `opts` resolves to. Three distinct cases, don't conflate them:
  *
  *   - **No config default, no per-call override** (e.g. `loadFromWeights({ locale: "en-us" })`, which
- *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely byte-identical to every parse before
- *     this arc: `opts` is `undefined` all the way down.
+ *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely no prior at all: `opts` is
+ *     `undefined` all the way down.
  *   - **A config default IS auto-wired** (`loadFromWeights` for an en-gb-shaped cache) and the
  *     caller passes nothing per-call — the prior is ON, not off; omitting the per-call field does NOT
- *     recover byte-identical behavior in this case (see `ParseOpts.placetypePair`'s own doc comment for
+ *     recover the no-prior path in this case (see `ParseOpts.placetypePair`'s own doc comment for
  *     the exact resolution order).
  *   - **A config default is auto-wired and the caller wants it off for THIS call** — pass an explicit
  *     `placetypePair: false` per-call (typed disable, same shape as `spanProposer`). There is no
@@ -46,20 +46,20 @@
  *     input splits into ≥2 comma-delimited segments, and then runs byte-identically to explicit
  *     `"segment"` mode — a construction property, the chain shares the segment path's code verbatim);
  *     when it cannot engage (a comma-free input is one giant segment — the population segment mode is
- *     deterministically inert on), the anchored-adjacent path takes over. Any anchored bias is strictly
- *     additive against what was previously a guaranteed zero matrix, so byte-stability outside the
- *     comma-free target population is trivial.
+ *     deterministically inert on), the anchored-adjacent path takes over. Segment mode's matrix on that
+ *     population is a guaranteed zero, so any anchored bias is strictly additive and the chain cannot
+ *     perturb anything outside the comma-free target population.
  *   - `"segment"` (the v1 default, still available as an explicit override) — a candidate is a WHOLE
  *     comma-delimited segment of the input, folded as one unit. See "Segment mode" below for the full
  *     contract. Comma-free input = one segment = zero matrix, the documented v1 trade-off.
  *   - `"anchored"` — the anchored adjacent-pair path alone (harness use; the chain reaches it only on
  *     comma-free input). See "Anchored mode" below.
- *   - `"window"` — the original sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
- *     below), preserved unchanged for opt-in use.
+ *   - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior (see "Window mode"
+ *     below), opt-in only.
  *
  *   The rung-3 gate above measured the prior's RECALL/FP on a curated probe set — real (child, parent)
- *   pairs in isolation, no surrounding venue text. Task 6 of this arc (`.superpowers/sdd/task-6-report.md`,
- *   2026-07-22) went looking for the failure mode a curated probe set can't see: a **6,500-row venue-confound
+ *   pairs in isolation, no surrounding venue text. A second measurement (2026-07-22) went looking for the
+ *   failure mode a curated probe set can't see: a **6,500-row venue-confound
  *   board**, built from real UK Food Standards Agency establishment names that happen to embed a real GB
  *   place name inside a longer venue/business string ("Bitterne Charcoal Grill" embeds the place "Bitterne";
  *   "North Cadbury Village Stores Ltd" embeds "North Cadbury"). Run through the full pipeline with the prior
@@ -72,13 +72,11 @@
  *   it. Marker suppression ({@link STRUCTURAL_MARKER_WORDS}) closes a handful of specific successor-word
  *   classes ("Church Road", "Manor House") but was never a general venue-boundary detector, and the
  *   venue-confound board's FP hits are dominated by venue name shapes the marker table was never built to
- *   catch ("… Stores Ltd", "… Academy", "… Charcoal Grill"). This is the arc's pre-registered fallback
- *   engaging: **segment mode is the v1 default**, and window mode moves behind this opt-in flag.
+ *   catch ("… Stores Ltd", "… Academy", "… Charcoal Grill"). Hence the arc's pre-registered fallback:
+ *   **segment mode is the v1 default**, and window mode sits behind this opt-in flag.
  *   Re-enabling window mode as a default requires BOTH (a) a venue-aware suppression mechanism (a
  *   venue/POI-name detector ahead of the prior, not just a fixed successor-word table) AND (b) a
- *   re-measured venue-confound FP of 0 on this same board (or its successor) with that mechanism engaged —
- *   see the task-6 report's "Concerns for whoever adjudicates the acceptance bars" §1 for the design options
- *   considered and not yet built.
+ *   re-measured venue-confound FP of 0 on this same board (or its successor) with that mechanism engaged.
  *
  *   **Segment mode.** A candidate is an ENTIRE comma-delimited segment of the input — not a sliding
  *   sub-window. Segments are reconstructed from the tokenizer pieces' own character offsets against the raw
@@ -109,7 +107,7 @@
  *
  *   **Identity pairs — the repeated-name convention (segment path only).** Some registers conventionally
  *   write the same name twice when the dependent locality and the post town coincide — NZ is the measured
- *   case ("Mangawhai, Mangawhai": 63/246 rows of the NZ golden board, 25.6%; task-8 report § "NZ arc"),
+ *   case ("Mangawhai, Mangawhai": 63/246 rows of the NZ golden board, 25.6%),
  *   and the LINZ-built pair index records the identity pair ("mangawhai","mangawhai") accordingly. The
  *   (x,x) entry IS the evidence of the convention (registry-evidence semantics): it says "when this name
  *   appears twice in adjacent fields, the FIRST occurrence is the dependent locality and the second is the
@@ -134,14 +132,14 @@
  *   unmeasured population); the anchored path needs no equivalent rule — it only ever biases the child left
  *   of the parent anchor, so a comma-free "Mangawhai Mangawhai" already biases the first occurrence only.
  *
- *   Two known, honestly-reported trade-offs of the segment default (Task 6 measurements, all against the
+ *   Two known, measured trade-offs of the segment default (all against the
  *   feed-2k checkpoint): (1) a residual FP class survives — when a non-venue FIELD (e.g. the venue-confound
  *   board's synthetic `street` field) happens to equal a bare census child verbatim as its OWN segment (e.g.
  *   `"Moelfre B & B, Moelfre, Abergele, …"` — the street segment is literally "Moelfre"), segment mode still
  *   fires, because the mechanism is purely textual/segmental, not semantic; this is not a bug in the segment
  *   restriction, it is the segment restriction doing exactly what it's specified to do. (2) recall on a
  *   comma-FREE input degrades toward inert, because a comma-free string is one giant segment with no
- *   internal split — see the task-6 report's Measurement 2(c) for the exact number. Window mode remains
+ *   internal split — which is what the `"auto"` chain's anchored path exists to cover. Window mode remains
  *   available, opt-in, for callers who have their own venue-boundary gate and have re-verified FP=0.
  *
  *   **Anchored mode (v1.1)** — the comma-free complement to segment mode, reached by the `"auto"` chain
@@ -228,10 +226,10 @@
  *   to be a general venue-boundary detector, which is exactly why the segment restriction exists
  *   alongside it rather than instead of it.
  *
- *   **Segment-boundary awareness (final-review fix).** In segment mode, the successor check only suppresses when the
+ *   **Segment-boundary awareness.** In segment mode, the successor check only suppresses when the
  *   successor word is in the SAME comma-delimited segment as the candidate — a successor that has already crossed into
  *   the NEXT segment can never be read as a street/venue-head suffix of THIS candidate, because a comma sits between
- *   them. Reviewer repro: `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) must NOT be suppressed by "5"
+ *   them. Worked case: `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) must NOT be suppressed by "5"
  *   (segment 1's first word, a house-number shape), because the comma means "5" is never a suffix of "Fishburn" in the
  *   source text. Since a segment-mode candidate already spans its ENTIRE segment (see "Segment mode" below), this
  *   check is structurally near-inert for segment mode's own candidates — the real protection against a "Church
@@ -243,14 +241,14 @@
  *   **Bias write.** `+delta` on `B-<tag>` (window's first piece) / `I-<tag>` (the rest), same
  *   per-piece pattern as `fst-prior.ts`'s `applyBias` — `Math.max` against any bias already written by
  *   an earlier window, never additive-stacked. `delta` resolves as `index.delta ?? opts.biasScale ??`
- *   {@link DEFAULT_DELTA} — the real artifact's header carries the calibrated per-country `delta` (5.0 for GB as of the 2026-07-22 calibration; see task-7 sweep), so `biasScale` exists
+ *   {@link DEFAULT_DELTA} — the real artifact's header carries the calibrated per-country `delta` (5.0 for GB as of the 2026-07-22 calibration), so `biasScale` exists
  *   only as an override for a hand-built `PairIndexLike` test double that omits it.
  *
  *   **Transition term (TRANSITION-BETA build, 2026-07-24).** When the index header carries the optional
  *   `transitionBeta` (see `PairIndexHeader.transitionBeta`), every applied bias ALSO emits a
  *   position-scoped decoder transition adjustment — `+β` on every transition into `B-<tag>` at the child
  *   span's first piece (see {@link TransitionAdjustment} and `viterbi.ts`'s `ViterbiTransitionAdjustment`).
- *   This is the path-fusion recovery lever the task-8 transition-level probe measured: the emission δ can
+ *   This is the path-fusion recovery lever the transition-level probe measured: the emission δ can
  *   win the per-token argmax at the child-start piece while the global Viterbi still routes through a
  *   fused street/locality run; the entry-transition bonus pays the structural continuation toll directly
  *   (β=5: 13/17 comma-free GB misses recovered, zero measured collateral). No hit / no `transitionBeta` →
@@ -278,7 +276,7 @@ import { collectMatches } from "./postcode-repair.ts"
 import type { TokenLike } from "./query-shape-prior.ts"
 
 /**
- * P99 of the GB PPD `CITY` word-length distribution (Task 3, measured 2026-07-22; see the module docstring's table). A
+ * P99 of the GB PPD `CITY` word-length distribution (measured 2026-07-22; see the module docstring's table). A
  * dependent_locality-shaped candidate almost never spans more than 3 words in the source register that motivated this
  * prior; the observed max was 5 (287 of 9,031,691 rows).
  */
@@ -288,22 +286,21 @@ const WINDOW_MAX_WORDS = 3
  * Anchored mode's child-window word cap. Wider than {@link WINDOW_MAX_WORDS} on purpose: the anchored geometry already
  * rejects the venue-confound class by construction (a venue phrase is never immediately left of the post-town anchor),
  * so the over-matching risk that froze the sliding-window cap at the p99 doesn't apply, and the observed register max
- * is 5 words with a real 4-word class ("Knott End on Sea" — experiment 0, task-8 report). Segment/window modes keep
- * their own caps unchanged.
+ * is 5 words with a real 4-word class ("Knott End on Sea"). Segment/window modes keep their own caps unchanged.
  */
 const ANCHORED_CHILD_MAX_WORDS = 4
 
 /**
  * Bias magnitude used when neither the index nor the caller supplies one. Real usage always has `index.delta` (the
- * calibrated per-country delta from the artifact header, 5.0 for GB as of the 2026-07-22 calibration; see task-7
- * sweep), so this is a defensive fallback, not a tuned value.
+ * calibrated per-country delta from the artifact header, 5.0 for GB as of the 2026-07-22 calibration), so this is a
+ * defensive fallback, not a tuned value.
  */
 const DEFAULT_DELTA = 1
 
 /**
  * Structural-marker words: a candidate window immediately followed by one of these is the HEAD of a street/venue name,
- * not a standalone place reference. Each entry's rationale is the specific false-positive class it closes (DeepSeek
- * venue-confound review, rung-3):
+ * not a standalone place reference. Each entry's rationale is the specific false-positive class it closes (the rung-3
+ * venue-confound board):
  *
  * - `house` — venue/building-name suffix: "Church House", "Manor House".
  * - `road` / `street` — street-type suffix: "Church Road", "Church Street".
@@ -366,8 +363,8 @@ function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], wi
  *   segment (matches the documented comma-free-input degradation, not a distinct failure mode).
  * - `"anchored"` — the anchored adjacent-pair path alone (see the module docstring's "Anchored mode" section). Explicit
  *   value for harness use; the chain reaches it only on comma-free input.
- * - `"window"` — the original sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default
- *   requires a venue-aware suppression mechanism AND a re-measured venue-confound FP=0 (see the module docstring).
+ * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default requires a
+ *   venue-aware suppression mechanism AND a re-measured venue-confound FP=0 (see the module docstring).
  */
 export type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
 
@@ -394,8 +391,8 @@ export interface PlacetypePairPriorOpts {
 	/**
 	 * Candidate-building strategy. Default `"auto"` (the segment→anchored probe chain) — see
 	 * {@link PlacetypePairProbeMode} and the module docstring's "Probe mode" section for the 52.1% venue-confound FP
-	 * measurement (2026-07-22, `.superpowers/sdd/task-6-report.md`) that set the v1 segment path, and the 2026-07-24
-	 * anchored adjacent-pair design that added the comma-free leg.
+	 * measurement (2026-07-22) that set the v1 segment path, and the 2026-07-24 anchored adjacent-pair design that added
+	 * the comma-free leg.
 	 */
 	probeMode?: PlacetypePairProbeMode
 	/**
@@ -415,15 +412,15 @@ export interface PlacetypePairPriorOpts {
 }
 
 /**
- * A position-scoped decoder transition bonus (TRANSITION-BETA build, 2026-07-24 — task-8 report § "Transition-level
- * pair-evidence probe"): `+bonus` on every transition INTO `toLabel` at exactly `pieceIndex`, from any predecessor.
- * Emitted alongside the emission matrix — one per pair hit, at the CHILD span's first piece, toward `B-<tag>` — and
- * ONLY when the loaded index's header carries `transitionBeta` (see `PairIndexHeader.transitionBeta`). Rationale: the
- * emission-side δ wins the per-token argmax at the child-start piece yet the global Viterbi can still route through a
- * fused street/locality run (switching one piece to `B-dependent_locality` structurally forces the following pieces to
- * continue/restart, and that forced continuation can cost more emission mass than the local win recovers); a bonus on
- * the ENTRY transition pays that structural toll where it is levied. Measured at β=5: 13/17 comma-free GB misses
- * recovered, 0/47 flips on already-correct rows, 0/200 new venue-overlap FP.
+ * A position-scoped decoder transition bonus (TRANSITION-BETA build, 2026-07-24): `+bonus` on every transition INTO
+ * `toLabel` at exactly `pieceIndex`, from any predecessor. Emitted alongside the emission matrix — one per pair hit, at
+ * the CHILD span's first piece, toward `B-<tag>` — and ONLY when the loaded index's header carries `transitionBeta`
+ * (see `PairIndexHeader.transitionBeta`). Rationale: the emission-side δ wins the per-token argmax at the child-start
+ * piece yet the global Viterbi can still route through a fused street/locality run (switching one piece to
+ * `B-dependent_locality` structurally forces the following pieces to continue/restart, and that forced continuation can
+ * cost more emission mass than the local win recovers); a bonus on the ENTRY transition pays that structural toll where
+ * it is levied. Measured at β=5: 13/17 comma-free GB misses recovered, 0/47 flips on already-correct rows, 0/200 new
+ * venue-overlap FP.
  *
  * `toLabel` is the full BIO label string — the caller (`classifier.ts`) owns the label→index mapping and converts to
  * the decoder's index-based `ViterbiTransitionAdjustment` (`viterbi.ts`); this module deliberately never learns the
@@ -844,10 +841,10 @@ function probeAnchoredAdjacentPair(
  * `groupSegments`, when supplied (segment mode only — see the call site), gates this on the successor sharing `x`'s OWN
  * segment. Without that gate, a candidate at the tail of one comma-delimited segment reads the FIRST word of the NEXT
  * segment as its "successor" — a false cross-segment reading, not a real street/venue-head suffix of this candidate.
- * Final-review fix (reviewer repro): `"Fishburn, 5 Fishburn Road"` — "Fishburn" (segment 0) was wrongly suppressed
- * because "5" (segment 1's first word, a house-number shape) sat next in `nonEmptyGroups`, even though the comma
- * between them means "5" can never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted),
- * suppression is unchanged — comma placement was never consulted there, by design (see `buildWindows`).
+ * Worked case: `"Fishburn, 5 Fishburn Road"` — ungated, "Fishburn" (segment 0) is suppressed because "5" (segment 1's
+ * first word, a house-number shape) sits next in `nonEmptyGroups`, even though the comma between them means "5" can
+ * never be read as a suffix of "Fishburn". In WINDOW mode (`groupSegments` omitted), suppression ignores comma
+ * placement entirely, by design (see `buildWindows`).
  */
 function isMarkerSuppressed(
 	nonEmptyGroups: readonly WordGroup[],

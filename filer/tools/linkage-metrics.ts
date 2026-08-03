@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pairwise grouping precision/recall/F1 (3b Task 4, decision 4) — scores a PREDICTED "same group"
+ *   Pairwise grouping precision/recall/F1 (§7-3b decision 4) — scores a PREDICTED "same group"
  *   judgment against a TRUTH partition over the same id universe. Built for {@linkcode filerLinkageEval}
  *   (`linkage-eval.ts`), which scores the corporate-family membership a `filer.db` build asserts
  *   (`filer_family`) against held-out `holdingCompany` truth. The types here are generic — nothing below is
@@ -16,13 +16,13 @@
  *   for {@linkcode filerLinkageEval}'s use: a predicted family's id is derived from the canonicalized
  *   parent name, so there is no correspondence problem to solve and no alignment step to get wrong — the
  *   only question that matters is "are these two records correctly judged together or apart," which is
- *   well-defined over pairs without an alignment step. (Same rationale the scorecard gives; module and page
- *   should not disagree about why this metric was chosen — task 4 re-review, I3.)
- *   `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes the identical pairwise choice for an
- *   analogous problem (does `resolveEntities`' clustering recover the true NPI grouping?) — evidence
- *   pairwise is the right shape for THIS kind of experiment too, not just a borrowed convenience. It isn't
- *   reused here (per the task brief): it hard-codes a `{records}`/NPI-shaped input, and its
- *   zero-denominator convention is one this module deliberately replaces — see below.
+ *   well-defined over pairs without an alignment step. (The scorecard states the same rationale; keep the
+ *   two in step — a module and its published page disagreeing about why a metric was chosen is its own
+ *   defect.) `registry/tools/train-gbt.ts`'s (unexported) `clusterF1` makes the identical pairwise choice
+ *   for an analogous problem (does `resolveEntities`' clustering recover the true NPI grouping?) —
+ *   evidence pairwise is the right shape for THIS kind of experiment too, not just a borrowed convenience.
+ *   It isn't reused here: it hard-codes a `{records}`/NPI-shaped input, and its zero-denominator
+ *   convention is one this module deliberately replaces — see below.
  *
  *   **Zero-denominator convention (deliberately NOT `clusterF1`'s):** `clusterF1` defaults an empty
  *   denominator to `0` for both precision and recall, silently. This module reports `null` instead — "the
@@ -31,12 +31,12 @@
  *   predicted NOTHING (this module's own primary use case — see {@linkcode filerLinkageEval}'s scorecard)
  *   as indistinguishable from one that confidently predicted the wrong thing everywhere.
  *
- *   **`f1` propagates that `null` rather than collapsing it (task 4 review fix, I2).** The first version of
- *   this module argued the case above for `precision`/`recall` and then handed back `f1: 0` whenever
- *   `truePositivePairs === 0`, which threw the distinction away again on the one field a reader quotes as
- *   the headline. Worked example: a PERFECT prediction over an all-singleton truth partition (nothing to
- *   merge, nothing merged) has no defined precision and no defined recall, and reported `f1: 0` —
- *   arithmetically indistinguishable from a linkage that got every call wrong. So `f1` is `null` whenever
+ *   **`f1` propagates that `null` rather than collapsing it.** `f1` is the one field a reader quotes as
+ *   the headline, so an `f1: 0` fallback whenever `truePositivePairs === 0` throws the distinction above
+ *   away again at exactly the point it matters most. Worked example: a PERFECT prediction over an
+ *   all-singleton truth partition (nothing to merge, nothing merged) has no defined precision and no
+ *   defined recall, so an `f1` of `0` would be arithmetically indistinguishable from a linkage that got
+ *   every call wrong. So `f1` is `null` whenever
  *   `precision` or `recall` is `null`, `0` when both are defined and `truePositivePairs === 0` (a genuine,
  *   measurable miss with positive calls made and positive pairs available), and the ordinary harmonic mean
  *   otherwise. A `null` here means "this run does not support an F1", not "this run scored zero"; render it
@@ -83,10 +83,10 @@ export interface PairwiseGroupingScore {
 	 */
 	recall: number | null
 	/**
-	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component is undefined, not zero (task
-	 * 4 review fix, I2; see the module docstring's worked example). `0` when both are defined and `truePositivePairs ===
-	 * 0` (the harmonic mean of two zeros, reported as the `0` it is rather than `NaN`). Otherwise the ordinary harmonic
-	 * mean of `precision`/`recall`.
+	 * `null` whenever `precision` or `recall` is `null` — an F1 over an undefined component is undefined, not zero (see
+	 * the module docstring's worked example). `0` when both are defined and `truePositivePairs === 0` (the harmonic mean
+	 * of two zeros, reported as the `0` it is rather than `NaN`). Otherwise the ordinary harmonic mean of
+	 * `precision`/`recall`.
 	 */
 	f1: number | null
 }
@@ -138,7 +138,7 @@ export function scorePairwiseGrouping<ID>(
 	const precision = predictedPositivePairs > 0 ? truePositivePairs / predictedPositivePairs : null
 	const recall = truthPositivePairs > 0 ? truePositivePairs / truthPositivePairs : null
 
-	// I2: `null` in, `null` out — never `0`. `0` is reserved for the case both components are DEFINED and the
+	// `null` in, `null` out — never `0`. `0` is reserved for the case both components are DEFINED and the
 	// prediction still recovered nothing, which is a measurement; an undefined component is the absence of one.
 	let f1: number | null = null
 

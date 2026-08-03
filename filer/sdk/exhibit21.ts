@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Exhibit 21 ("Subsidiaries of the Registrant") fetch + parse (3b Task 7, decision 6, gate 3).
+ * @file Exhibit 21 ("Subsidiaries of the Registrant") fetch + parse (decision 6, gate 3).
  *
  *   Exhibit 21 is genuinely inconsistent across filers: some file a clean HTML `<table>`, some a nested
  *   `<ul>`/`<li>` corporate tree, some a plain fixed-width-column text block (the older SGML-era filings),
@@ -73,11 +73,11 @@
  *   before stripping the rest — a minified single-line document with no real `\n` at all still gets one
  *   logical line per paragraph/row, rather than every paragraph concatenated onto one fixed-width line.
  *
- *   **Fetch.** {@linkcode fetchExhibit21} is the thin "fetch + parse" pairing the task brief names — it
- *   takes anything satisfying {@link SECDocumentClient} (the one method, `getDocument`, `sec-client.ts`'s
- *   Task 0 addition) rather than the concrete `SECClient` class, so a test never needs a full axios harness.
- *   Discovering WHICH URL a given filing's Exhibit 21 lives at (the filing index, or EDGAR full-text search)
- *   is out of scope here — this module parses a document once its URL is already known.
+ *   **Fetch.** {@linkcode fetchExhibit21} is a thin "fetch + parse" pairing — it takes anything satisfying
+ *   {@link SECDocumentClient} (one method, `getDocument`, from `sec-client.ts`) rather than the concrete
+ *   `SECClient` class, so a test never needs a full axios harness. Discovering WHICH URL a given filing's
+ *   Exhibit 21 lives at (the filing index, or EDGAR full-text search) is out of scope here — this module
+ *   parses a document once its URL is already known.
  */
 
 /**
@@ -529,9 +529,9 @@ export interface SECDocumentClient {
 }
 
 /**
- * Fetches one Exhibit 21 document (through the shared SEC client's `getDocument`, Task 0's raw-text path) and parses
- * it. Discovering WHICH URL a filing's Exhibit 21 lives at is out of scope here — the caller supplies it (from the
- * filing's own archive index, however that's found).
+ * Fetches one Exhibit 21 document (through the shared SEC client's `getDocument` raw-text path) and parses it.
+ * Discovering WHICH URL a filing's Exhibit 21 lives at is out of scope here — the caller supplies it (from the filing's
+ * own archive index, however that's found).
  */
 export async function fetchExhibit21(client: SECDocumentClient, url: string | URL): Promise<ParsedExhibit21> {
 	const html = await client.getDocument(url)

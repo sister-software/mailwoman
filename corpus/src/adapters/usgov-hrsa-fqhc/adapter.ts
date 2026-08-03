@@ -70,10 +70,10 @@ interface HrsaSiteRow {
  * Split a "123 Main St Suite 4" surface form into `(house_number, street)`. The regex tolerates one trailing letter on
  * the number (`"123A Main St"`) and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
  *
- * Suite / Apt / Unit designators stay on `street` for Phase 1 — Mailwoman's `unit` component exists but the
- * address-formatter does not have a clean slot for it, and HRSA addresses do not separate the suite into its own
- * column. Leaving the surface form intact in `street` preserves the adversarial training signal (the model learns that
- * a trailing "Suite 4" is part of the road line in this distribution).
+ * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists but the address-formatter does
+ * not have a clean slot for it, and HRSA addresses do not separate the suite into its own column. Leaving the surface
+ * form intact in `street` preserves the adversarial training signal (the model learns that a trailing "Suite 4" is part
+ * of the road line in this distribution).
  */
 
 /**

@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `poi.db` builder (spec §3.4, Task 3 of the POI Data + MCP plan) — the Overture Places ingest
- *   + the clustered res-9 `poi` table Task 1's schema (`poi-schema.ts`) defines, queried by Task 2's
- *   {@link POILookup}.
+ *   The `poi.db` builder (spec §3.4) — the Overture Places ingest + the clustered res-9 `poi` table
+ *   `poi-schema.ts` defines, queried by {@link POILookup}.
  *
  *   Two phases, split so the load/materialize/seal phase is testable WITHOUT DuckDB or network:
  *
@@ -24,7 +23,7 @@
  *        write the layer-contract manifest + per-res-6-cell coverage, then seal.
  *
  *   Build-on-copy: `build-candidate.ts` (the closer anchor for "dictionaries + clustered
- *   materialize", also named in the task brief) writes DIRECTLY to its output path (removing any
+ *   materialize") writes DIRECTLY to its output path (removing any
  *   stale file first) and lets the caller `sealDatabase` once the connection closes — no
  *   `<out>.building`-suffix temp-swap. This builder mirrors THAT precedent rather than the
  *   `admin/index.ts` staging-suffix + `VACUUM INTO` dance (which exists there for a much longer,
@@ -131,7 +130,7 @@ export interface CountryExpression {
 /**
  * PURE column-choice logic over a `DESCRIBE` result — no DuckDB/network in this function, so it's unit-testable on its
  * own (mirrors {@link chooseCategoryColumn}'s pattern). The Overture places-theme has, as of the 2026-05-20.0 release,
- * NO top-level `country` column (unlike the addresses theme this SQL was originally templated from) — country instead
+ * NO top-level `country` column (unlike the addresses theme, whose SQL this one is templated from) — country instead
  * lives inside the `addresses` LIST<STRUCT<...>> column. Prefers a top-level `country` column when present (a future
  * release may add one back), falling back to `addresses[1].country` (DuckDB lists are 1-based).
  *
@@ -404,8 +403,8 @@ export function bboxCoverageCells(
 
 /**
  * `source` literal → the manifest `license`/`attribution` pair to write. Keyed by {@link BuildPOIOptions.source} so the
- * default (`overture-places`, when `source` is omitted) reproduces the manifest's PRE-task-3 hardcoded literals exactly
- * — the byte-identical-default-path requirement.
+ * default (`overture-places`, when `source` is omitted) writes the Overture pair — an omitted `source` must produce a
+ * manifest byte-identical to an explicit `"overture-places"` one.
  */
 const SOURCE_MANIFEST_DEFAULTS = {
 	"overture-places": { license: "CDLA-Permissive-2.0", attribution: "Overture Maps Foundation" },
@@ -445,19 +444,18 @@ export interface BuildPOIOptions {
 	createdAt?: string
 	/**
 	 * Manifest `source` + the license/attribution pair it implies (see {@link SOURCE_MANIFEST_DEFAULTS}). Default
-	 * `"overture-places"` — the pre-task-3 behavior.
+	 * `"overture-places"`.
 	 */
 	source?: "overture-places" | "osm"
 	/**
-	 * Manifest distribution tier. Default {@link LayerTier.Shipped} — the pre-task-3 behavior. The `--source osm` build
-	 * branch passes {@link LayerTier.BuildLocal} (ODbL share-alike; see `osm/README.md`).
+	 * Manifest distribution tier. Default {@link LayerTier.Shipped}. The `--source osm` build branch passes
+	 * {@link LayerTier.BuildLocal} (ODbL share-alike; see `osm/README.md`).
 	 */
 	tier?: LayerTier
 	/**
 	 * Decision 5: when given, REPLACES the rows-derived res-6 coverage with this pre-computed set (typically
 	 * {@link bboxCoverageCells} over the extract's bbox) — every cell written at `completeness: 1`, `observedRows` taken
-	 * as-is (0 permitted). Default: undefined, preserving the pre-task-3 "coverage = cells a row actually fell into"
-	 * behavior.
+	 * as-is (0 permitted). Default: undefined, meaning "coverage = the cells a row actually fell into".
 	 */
 	coverageCellsOverride?: Iterable<{ h3Cell: number; observedRows: number }>
 	onProgress?: (phase: string, message: string) => void

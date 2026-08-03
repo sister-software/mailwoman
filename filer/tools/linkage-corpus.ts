@@ -21,14 +21,14 @@ import type { ProviderListRow } from "../sdk/provider-list.ts"
 
 /**
  * The date the committed scorecard (`docs/articles/evals/2026-07-31-filer-linkage.md`) was generated under. Exported so
- * `linkage-eval.test.ts` can regenerate that exact file and byte-compare it (task 4 review fix, I3) — before this pin
- * existed, editing the corpus silently staled the published numbers with nothing failing.
+ * `linkage-eval.test.ts` can regenerate that exact file and byte-compare it — without this pin, editing the corpus
+ * silently stales the published numbers with nothing failing.
  */
 export const PUBLISHED_LINKAGE_EVAL_DATE = "2026-07-31"
 
 /**
  * The SHA-256 {@linkcode hashLinkageEvalInputs} produces over the WITHHELD run's inputs, as published in the committed
- * scorecard. Asserted against the freshly computed value in `linkage-eval.test.ts` (task 4 review fix, I3).
+ * scorecard. Asserted against the freshly computed value in `linkage-eval.test.ts`.
  */
 export const PUBLISHED_WITHHELD_INPUTS_SHA256 = "b20909439dcf6bc0d2b04da43b3b3fb11cdb9ff68313e12d3eeb78a24bacda58"
 
@@ -307,10 +307,10 @@ export interface LinkageEvalRegistrant {
 }
 
 /**
- * Fold the corpus's FRNs into registrants (task 4 review fix, C2). Two FRNs reported under the SAME `bdc_provider_id`
- * are one legal entity with two registrations; scoring them as two separate ids let the truth partition assert that one
- * company belonged to two different corporate families at once, which is not a coherent thing for a truth partition to
- * say and made every downstream count questionable.
+ * Fold the corpus's FRNs into registrants. Two FRNs reported under the SAME `bdc_provider_id` are one legal entity with
+ * two registrations; scoring them as two separate ids lets the truth partition assert that one company belongs to two
+ * different corporate families at once, which is not a coherent thing for a truth partition to say and makes every
+ * downstream count questionable.
  *
  * Identity here is taken from `providerID`, a field the builder also sees — it is NOT withheld, so using it to define
  * the scored id universe leaks nothing about the field that is. The eval deliberately does not ask the built artifact
@@ -407,10 +407,10 @@ export function buildTruthFamilyGroups(
 
 	const families = createUnionFind()
 
-	// Accumulated per REGISTRANT, never per union-find root (task 4 re-review, m1). Keying this on the root as it stood
-	// mid-loop meant a later union that re-rooted the component orphaned the earlier key, and the family id recorded
-	// under it silently vanished from the label — the label being what the corpus and pairs tables publish as truth. The
-	// partition was always right, so no score ever moved; the published string would have been wrong. Unreachable on
+	// Accumulated per REGISTRANT, never per union-find root. Keying this on the root as it stands
+	// mid-loop means a later union that re-roots the component orphans the earlier key, and the family id recorded
+	// under it silently vanishes from the label — the label being what the corpus and pairs tables publish as truth. The
+	// partition stays right either way, so no score moves; the published string is what goes wrong. Unreachable on
 	// today's corpus (no registrant names two parents) and reachable the moment one does.
 	const familyIDsOfRegistrant = new Map<FRN, Set<string>>()
 

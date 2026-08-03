@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildFilerDatabase} — the stage/materialize/seal build of `filer.db` (3a Task
- *   5). Feeds the loader synthetic {@link Form499Row}/{@link ProviderListRow} sources directly (the
+ *   Tests for {@linkcode buildFilerDatabase} — the stage/materialize/seal build of `filer.db`. Feeds
+ *   the loader synthetic {@link Form499Row}/{@link ProviderListRow} sources directly (the
  *   `form499Rows`/`providerRows` seams), so the suite exercises the whole build WITHOUT touching the
  *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
  */
@@ -34,7 +34,7 @@ const FRN_ACME = toFRN("0001753557")!
 const FRN_BDC_ONLY = toFRN("0009999999")!
 const FRN_GAMMA = toFRN("0005555555")!
 
-// 3b Task 2 family-membership fixtures — distinct from the FRNs above to avoid any accidental cross-test coupling.
+// Family-membership fixtures — distinct from the FRNs above to avoid any accidental cross-test coupling.
 const FRN_DELTA = toFRN("0002222222")!
 const FRN_EPSILON = toFRN("0003333333")!
 const FRN_ZETA = toFRN("0004444444")!
@@ -418,7 +418,7 @@ describe("buildFilerDatabase", () => {
 		}
 	})
 
-	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1, fix round 1)", async () => {
+	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1)", async () => {
 		await setupScratch()
 
 		try {
@@ -444,7 +444,7 @@ describe("buildFilerDatabase", () => {
 		}
 	})
 
-	it("a blank provider-list frn is loud — never mints a shared degenerate FRN node (fix round 1)", async () => {
+	it("a blank provider-list frn is loud — never mints a shared degenerate FRN node", async () => {
 		await setupScratch()
 
 		try {
@@ -487,7 +487,7 @@ describe("buildFilerDatabase", () => {
 		}
 	})
 
-	describe("idempotent write path (carried from Task 4's review)", () => {
+	describe("idempotent write path", () => {
 		/**
 		 * A single fully-populated row, deliberately small so every count below is hand-verifiable: 3 nodes (form499ID,
 		 * FRN, holdingCompanyName — managementCompany is blank, so NO management-company node/edge), 2 edges
@@ -624,7 +624,7 @@ describe("buildFilerDatabase", () => {
 		})
 	})
 
-	describe("single-vintage snapshot semantics (review MINOR-B, fix round 1)", () => {
+	describe("single-vintage snapshot semantics", () => {
 		it("rebuilding at a later sourceVintage REPLACES the artifact — earlier-vintage rows do not survive", async () => {
 			await setupScratch()
 
@@ -666,7 +666,7 @@ describe("buildFilerDatabase", () => {
 		})
 	})
 
-	describe("typed relationship + family membership (3b Task 2)", () => {
+	describe("typed relationship + family membership", () => {
 		const SOURCE_VINTAGE = "2026-Q3"
 
 		/**
@@ -792,8 +792,8 @@ describe("buildFilerDatabase", () => {
 					expect(family.source_vintage).toBe("2026-05-01")
 					expect(family.valid_from).toBe("2026-05-01")
 					expect(family.valid_to).toBeNull()
-					// A 499 row naming its own holding company IS the filing — nothing was matched (task 8 fix
-					// round 1). The EDGAR block below pins the opposite grading from the same builder.
+					// A 499 row naming its own holding company IS the filing — nothing was matched. The EDGAR
+					// block below pins the opposite grading from the same builder.
 					expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
 					expect(family.match_score).toBeNull()
 				}
@@ -934,7 +934,7 @@ describe("buildFilerDatabase", () => {
 		})
 	})
 
-	describe("EDGAR Exhibit 21 ingest (3b task 8)", () => {
+	describe("EDGAR Exhibit 21 ingest", () => {
 		const CIK_PARENT = "0001234567"
 		const EDGAR_SOURCE_VINTAGE = "2026-Q3-edgar"
 
@@ -1053,7 +1053,7 @@ describe("buildFilerDatabase", () => {
 			}
 		})
 
-		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes BOTH an inferred filer_edge AND a filer_family row — the Task 8 precondition, load-bearing", async () => {
+		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes BOTH an inferred filer_edge AND a filer_family row — the family row is what the rollup reads, so one without the other is invisible", async () => {
 			await setupScratch()
 
 			try {
@@ -1163,11 +1163,10 @@ describe("buildFilerDatabase", () => {
 		})
 
 		/**
-		 * 3b Task 8 fix round 1 — the score used to be a flat `0.92` on every subsidiary→FRN link. That number was a lie
-		 * about the ambiguous case: the join is on the CANONICALIZED name, and `canonicalizeOrganizationName` maps
-		 * `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"` all to `"american
-		 * broadband"` (`record/organization.test.ts` pins the collapse), so one score for all three claimed a confidence
-		 * the match provably could not hold.
+		 * The subsidiary→FRN score must not be a constant. The join is on the CANONICALIZED name, and
+		 * `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."` and `"American
+		 * Broadband Corp"` all to `"american broadband"` (`record/organization.test.ts` pins the collapse), so a single
+		 * score across all three would claim a confidence the match provably cannot hold.
 		 *
 		 * The existing abstention does not cover it, and these fixtures show why: it fires only on a collision WITHIN the
 		 * 499 file, so a 499 carrying ONLY the LLC against an Exhibit 21 disclosing the Inc. matches exactly one FRN and
@@ -1177,7 +1176,7 @@ describe("buildFilerDatabase", () => {
 		 * values, asserted against each other as well as against their literals — pin the score back to a constant and the
 		 * ordering assertions die, not just the value ones.
 		 */
-		describe("the subsidiary→FRN match score varies with what the match actually knows (fix round 1)", () => {
+		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
 				await buildFilerDatabase({
 					form499Rows: [
@@ -1225,8 +1224,8 @@ describe("buildFilerDatabase", () => {
 				await setupScratch()
 
 				try {
-					// The reviewer's exact reproduction: 499 carries only the LLC, Exhibit 21 discloses the Inc.
-					// EXACTLY ONE FRN matches, so an edge IS written — at 0.5, not 0.92.
+					// The case the abstention cannot see: 499 carries only the LLC, Exhibit 21 discloses the Inc.
+					// EXACTLY ONE FRN matches, so an edge IS written — at the weakest score, not the ceiling.
 					expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
 				} finally {
 					await teardownScratch()

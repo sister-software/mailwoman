@@ -2,16 +2,15 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file SEC EDGAR HTTP client, built on {@linkcode APIClient} (3b decision 5, migrated task 5).
+ * @file SEC EDGAR HTTP client, built on {@linkcode APIClient} (3b decision 5).
  *
  *   SEC's fair-access policy (https://www.sec.gov/os/accessing-edgar-data, verified against source
  *   2026-07-31) declares a max request rate of 10/second and asks for a descriptive `User-Agent`
  *   naming a company + contact address, plus `Accept-Encoding: gzip, deflate`.
  *
- *   This client used to carry its own pacer, retry loop, on-disk cache, and error type. All four now
- *   live in `@mailwoman/core/api`, because every one of them was general HTTP-client machinery that a
- *   second client would have had to re-derive (`bdc/sdk/client.ts` is still on raw `fetch` and is the
- *   obvious next migration). What remains here is the part that is genuinely SEC-specific:
+ *   The pacer, retry loop, on-disk cache, and error type all live in `@mailwoman/core/api`, not here —
+ *   every one of them is general HTTP-client machinery a second client would otherwise re-derive
+ *   (`bdc/sdk/client.ts` is that second client). What remains here is genuinely SEC-specific:
  *
  *     1. UA fail-fast off `$private.SEC_EDGAR_USER_AGENT` — a silently-UA-less client just 403s on
  *        first use, which is a worse failure mode than failing at construction.
@@ -180,11 +179,11 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * EDGAR client, and its configured User-Agent carries a real contact address; sending that anywhere a caller happens to
  * point it (or in cleartext) would leak it outside SEC's fair-access program for no benefit.
  *
- * `sec.gov` (the apex) and `efts.sec.gov` (EDGAR full-text search — task 8's Exhibit 21 discovery path) are included
- * alongside the two hosts decision 5 originally verified. Matching is EXACT (a `Set` lookup on `url.hostname`), not a
- * suffix check — `www.sec.gov.attacker.example` must NOT match, and an `.endsWith(".sec.gov")`-style check would let it
- * through. `url.hostname` (from the WHATWG URL parser) already lower-cases, strips userinfo, and
- * percent/punycode-decodes, so those bypasses need no extra handling.
+ * `sec.gov` (the apex) and `efts.sec.gov` (EDGAR full-text search — the Exhibit 21 discovery path) are included
+ * alongside the two hosts decision 5 names. Matching is EXACT (a `Set` lookup on `url.hostname`), not a suffix check —
+ * `www.sec.gov.attacker.example` must NOT match, and an `.endsWith(".sec.gov")`-style check would let it through.
+ * `url.hostname` (from the WHATWG URL parser) already lower-cases, strips userinfo, and percent/punycode-decodes, so
+ * those bypasses need no extra handling.
  */
 const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "efts.sec.gov"])
 
@@ -398,15 +397,15 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  * The cache's `validate` predicate — decides whether a response body is worth persisting at all, BEFORE it reaches
  * disk. Two shapes are worth caching, and the SAME EDGAR host serves both depending on the endpoint:
  *
- * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`): the ORIGINAL rule,
- *   unchanged. Axios already rejects an unparseable body via `transitional.silentJSONParsing` (see the `axios` config
- *   below), so this is the second gate rather than the first — a decoded body that isn't an object means the upstream
- *   served something other than what it claimed.
- * - A non-empty string (every `getDocument` call, 3b Task 0 — a filing document is HTML/text, never JSON): admits the
- *   body `getDocument`'s `responseType: "text"` override actually produces, which the ORIGINAL `typeof === "object"`
- *   rule rejected outright (a string is never `typeof "object"`). `.length > 0` is the truncated/empty guard on THIS
- *   shape — `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the
- *   only gate standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
+ * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`). Axios already
+ *   rejects an unparseable body via `transitional.silentJSONParsing` (see the `axios` config below), so this is the
+ *   second gate rather than the first — a decoded body that isn't an object means the upstream served something other
+ *   than what it claimed.
+ * - A non-empty string (every `getDocument` call — a filing document is HTML/text, never JSON): admits the body
+ *   `getDocument`'s `responseType: "text"` override actually produces. A `typeof === "object"` test alone would reject
+ *   it outright, since a string is never `typeof "object"`. `.length > 0` is the truncated/empty guard on THIS shape —
+ *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does, so this predicate is the only
+ *   gate standing between a truncated/empty document and a permanent (`/Archives/edgar/data/`) cache entry with no
  *   self-healing path short of hand-deleting a hash-named file.
  *
  * An `/Archives/` entry cached under the permanent TTL has no self-healing path short of hand-deleting a hash-named
@@ -460,8 +459,7 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			storage: buildDiskStorage({
 				directory: options.cacheDir ?? dataRootPath("sec", "cache"),
 				// Validate BEFORE writing — see isCacheableSECBody's own docstring for the JSON-object-or-
-				// non-empty-string rule (3b Task 0 widened this from JSON-object-only so getDocument's text
-				// bodies aren't rejected).
+				// non-empty-string rule. A JSON-object-only rule would reject getDocument's text bodies.
 				validate: isCacheableSECBody,
 			}),
 			ttl: (response) => responseTTL(response, cacheTTLMs),

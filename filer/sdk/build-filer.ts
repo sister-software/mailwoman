@@ -211,8 +211,8 @@ import { parseProviderList, type ProviderListRow } from "./provider-list.ts"
 const STAGE_BATCH_SIZE = 10_000
 
 /**
- * One EDGAR Exhibit 21 subsidiary disclosure — the shape Task 6's CIK resolution + Task 7's `parseExhibit21` produce
- * somewhere upstream of this file. See the module docstring's "EDGAR Exhibit 21 ingest" section for exactly what
+ * One EDGAR Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution + `parseExhibit21` produce somewhere
+ * outside this file. See the module docstring's "EDGAR Exhibit 21 ingest" section for exactly what
  * {@linkcode buildFilerDatabase} does with one of these.
  */
 export interface EdgarSubsidiaryRow {
@@ -286,19 +286,19 @@ export interface BuildFilerOptions {
 	 */
 	sourceVintage: string
 	/**
-	 * ISO `YYYY-MM-DD` date for `valid_from` on every provider-list-derived edge (review fix, round N) — deliberately a
-	 * SEPARATE field from {@link BuildFilerOptions.sourceVintage}, never derived from it. The provider list carries no
-	 * per-row date, so decision 7 originally used the whole-file `sourceVintage` for BOTH `source_vintage` and
-	 * `valid_from` — but `sourceVintage` is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed
-	 * ISO-sortable, while `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s
-	 * `valid_from <= asOf`) as a plain STRING comparison. `"2026-Q2"` sorts lexicographically ABOVE any real ISO date
-	 * this century (`"Q"` > any ASCII digit) — writing it into `valid_from` silently breaks every `asOf`-scoped read
-	 * against that edge (reviewer probe: a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned
-	 * `identifiers: []` from `filerLookup`). Validated via {@linkcode assertISODate}. REQUIRED when
-	 * `providerRows`/`providerListPath` is supplied (thrown otherwise); ignored when no provider-list source is given.
-	 * Deliberately NOT derived automatically from `sourceVintage` when omitted — guessing a specific date from an
-	 * arbitrary label (which day inside "Q2"?) would be a fabrication this builder refuses to make; the caller, who knows
-	 * the file's actual publish/effective date, supplies it explicitly.
+	 * ISO `YYYY-MM-DD` date for `valid_from` on every provider-list-derived edge — deliberately a SEPARATE field from
+	 * {@link BuildFilerOptions.sourceVintage}, never derived from it. The provider list carries no per-row date, which
+	 * makes the whole-file `sourceVintage` the tempting single source for BOTH `source_vintage` and `valid_from` — but
+	 * `sourceVintage` is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed ISO-sortable, while
+	 * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as
+	 * a plain STRING comparison. `"2026-Q2"` sorts lexicographically ABOVE any real ISO date this century (`"Q"` > any
+	 * ASCII digit) — writing it into `valid_from` silently breaks every `asOf`-scoped read against that edge (reviewer
+	 * probe: a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []` from
+	 * `filerLookup`). Validated via {@linkcode assertISODate}. REQUIRED when `providerRows`/`providerListPath` is
+	 * supplied (thrown otherwise); ignored when no provider-list source is given. Deliberately NOT derived automatically
+	 * from `sourceVintage` when omitted — guessing a specific date from an arbitrary label (which day inside "Q2"?) would
+	 * be a fabrication this builder refuses to make; the caller, who knows the file's actual publish/effective date,
+	 * supplies it explicitly.
 	 */
 	validFrom?: string
 	/**
@@ -326,10 +326,10 @@ export interface BuildFilerResult {
 	attributes: number
 	/**
 	 * Distinct `filer_family` rows after the build — PK-deduped on `(node_id, family_id, naming_node_id, source,
-	 * valid_from)`, the identical composite shape as `filer_edge`'s own PK plus the naming provenance (task 3 fix round
-	 * 4). One row per `HoldingCompany`/`ManagementCompany` edge whose target name canonicalized to something non-empty
-	 * (see {@linkcode mintFamilyID}), so two DIFFERENT spellings of one family under one source at one instant count as
-	 * two rows here, not one.
+	 * valid_from)`, the identical composite shape as `filer_edge`'s own PK plus the naming provenance. One row per
+	 * `HoldingCompany`/`ManagementCompany` edge whose target name canonicalized to something non-empty (see
+	 * {@linkcode mintFamilyID}), so two DIFFERENT spellings of one family under one source at one instant count as two
+	 * rows here, not one.
 	 */
 	families: number
 	/**
@@ -370,7 +370,7 @@ async function createFilerAttributeStageTable(db: Kysely<FilerDatabase>): Promis
  * `FRN | null`), and {@linkcode parseProviderList} validates it via `toFRN` on the production (file-reading) route — but
  * the `providerRows` TEST SEAM bypasses that parser entirely. Without this guard, two rows for two DIFFERENT, unrelated
  * providers each carrying a blank `frn` would silently mint and share ONE degenerate `frn:` node — a false identity
- * link joining unrelated filers, the worst failure class this crosswalk can produce (review finding).
+ * link joining unrelated filers, the worst failure class this crosswalk can produce.
  */
 function mintFRNNodeID(frn: string, context: string): string {
 	if (frn.trim() === "") {
@@ -456,8 +456,8 @@ function strippedDesignationKey(name: string): string {
 }
 
 /**
- * The `match_score` for one subsidiary-name→FRN inference — replacing the flat `0.92` this builder used to write on
- * EVERY such link regardless of how much the match actually knew.
+ * The `match_score` for one subsidiary-name→FRN inference — graded per match, never one flat constant across every such
+ * link regardless of how much the match actually knows.
  *
  * Both names reaching this function already share a canonical form; that is the match. The question this answers is how
  * much of the ORIGINAL string that shared form threw away, because `canonicalizeOrganizationName` maps `"American
@@ -467,11 +467,11 @@ function strippedDesignationKey(name: string): string {
  *
  * **`@mailwoman/match`'s comparators were checked first and are the wrong instrument here — measured, not assumed.**
  * `nameSimilarity` on the RAW pair scores `"American Broadband LLC"` vs `"American Broadband, Inc."` at **0.9485** and
- * vs `"American Broadband Corp"` at **0.9557** — HIGHER than the 0.92 constant being removed, because Jaro-Winkler's
- * prefix boost rewards exactly the long shared head these pairs have. String distance measures how alike two spellings
- * look; the signal that separates a real match from a designation collision is WHICH TOKENS canonicalization deleted,
- * which is a set comparison. So this uses `canonicalizeOrganizationName`'s own `designations` output — already computed
- * on this path, no new dependency — rather than a comparator that would score the ambiguous case highest of all.
+ * vs `"American Broadband Corp"` at **0.9557** — HIGHER than a flat 0.92 would be, because Jaro-Winkler's prefix boost
+ * rewards exactly the long shared head these pairs have. String distance measures how alike two spellings look; the
+ * signal that separates a real match from a designation collision is WHICH TOKENS canonicalization deleted, which is a
+ * set comparison. So this uses `canonicalizeOrganizationName`'s own `designations` output — already computed on this
+ * path, no new dependency — rather than a comparator that would score the ambiguous case highest of all.
  *
  * Three outcomes, no interpolation: a similarity curve here would imply a resolution this evidence does not have.
  */
@@ -483,7 +483,7 @@ function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: string): n
 		: EDGAR_MATCH_SCORE_DESIGNATION_DIFFERS
 }
 
-// mintFamilyID moved to family-id.ts — filer-lookup.ts's readFamilyDisplayNames now needs the
+// mintFamilyID lives in family-id.ts — filer-lookup.ts's readFamilyDisplayNames needs the
 // identical canonicalization rule to tell apart which target node's edge names a given family_id, and re-deriving it
 // a second time independently would be exactly the "two definitions that can drift" hazard guards.ts's own extraction
 // already closed for assertISODate.
@@ -543,12 +543,12 @@ interface FamilyMembershipFact {
  * over.
  *
  * {@link FamilyMembershipFact.namingNodeID} is the company node this row's `family_id` was minted FROM — the edge's
- * `to_node_id`, which every caller has already minted immediately above its call (task 3 fix round 4; it is
- * deliberately taken as a field rather than re-derived from `identifierType`/`name` here, so the family row and the
- * edge can never name two different nodes). Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames`
- * recover the raw spelling by a plain join instead of re-running `canonicalizeOrganizationName` at read time against a
- * sealed, separately-versioned artifact — see `schema.ts`'s file header for the drift that closed. Adding it pushed
- * this function's positional arity past the linter's `max-params` ceiling, hence the single options argument.
+ * `to_node_id`, which every caller has already minted immediately above its call. It is deliberately taken as a field
+ * rather than re-derived from `identifierType`/`name` here, so the family row and the edge can never name two different
+ * nodes. Persisting it is what lets `filer-lookup.ts`'s `readFamilyDisplayNames` recover the raw spelling by a plain
+ * join instead of re-running `canonicalizeOrganizationName` at read time against a sealed, separately-versioned
+ * artifact — see `schema.ts`'s file header for the drift that closed. Adding it pushed this function's positional arity
+ * past the linter's `max-params` ceiling, hence the single options argument.
  */
 function insertFamilyMembership(insFamily: StatementSync, fact: FamilyMembershipFact): void {
 	const familyID = mintFamilyID(fact.identifierType, fact.name)
@@ -585,11 +585,12 @@ interface Form499FRNContext {
 /**
  * One 499 row's FRN-anchored writes: `FRN↔form499ID` (always), `FRN↔holdingCompanyName`/`FRN↔managementCompanyName`
  * (when the corresponding field is non-empty, each its own edge + `filer_family` row) — see the module docstring's
- * "Edges emitted" section. Also records this row's legal name into `legalNameByFRN` for Task 8's EDGAR corroboration
- * match, keeping the LATEST `lastFiledAt` per FRN. Returns the number of edge OPPORTUNITIES declined (0, 1, or 2 — see
- * {@link BuildFilerResult.skipped}'s docstring), for the caller to add to its own running total. Module-level (matching
- * {@linkcode insertFamilyMembership}'s own precedent) purely to stay under the linter's `max-statements` ceiling — this
- * call site's own docstring precedes it in {@linkcode buildFilerDatabase}.
+ * "Edges emitted" section. Also records this row's legal name into `legalNameByFRN` for
+ * {@linkcode processEdgarSubsidiaryRow}'s corroboration match, keeping the LATEST `lastFiledAt` per FRN. Returns the
+ * number of edge OPPORTUNITIES declined (0, 1, or 2 — see {@link BuildFilerResult.skipped}'s docstring), for the caller
+ * to add to its own running total. Module-level (matching {@linkcode insertFamilyMembership}'s own precedent) purely to
+ * stay under the linter's `max-statements` ceiling — this call site's own docstring precedes it in
+ * {@linkcode buildFilerDatabase}.
  */
 function processForm499FRNRelationships(
 	insNode: StatementSync,
@@ -696,10 +697,9 @@ function processForm499FRNRelationships(
 }
 
 /**
- * One FRN in a canonical-name bucket, carrying the RAW `legalNameOfCarrier` spelling that landed it there (3b Task 8
- * fix round 1). The raw name is what {@linkcode scoreEdgarSubsidiaryMatch} needs: the canonical form is by definition
- * identical across every member of a bucket, so it holds none of the signal that separates a real match from a
- * designation collision.
+ * One FRN in a canonical-name bucket, carrying the RAW `legalNameOfCarrier` spelling that landed it there. The raw name
+ * is what {@linkcode scoreEdgarSubsidiaryMatch} needs: the canonical form is by definition identical across every member
+ * of a bucket, so it holds none of the signal that separates a real match from a designation collision.
  */
 interface CanonicalNameCandidate {
 	frn: string
@@ -741,7 +741,7 @@ function groupFRNsByCanonicalLegalName(
  * One EDGAR subsidiary row's full write: the disclosure edge (always, authoritative) plus — only when the subsidiary
  * name canonically matches EXACTLY ONE FRN's legal name — the corroboration edge and its accompanying `filer_family`
  * row (inference, never authority; see the module docstring's "EDGAR Exhibit 21 ingest" section for the full rationale
- * and the Task 8 precondition this is written to satisfy). Module-level (not a closure inside
+ * and the family-visibility precondition this is written to satisfy). Module-level (not a closure inside
  * {@linkcode buildFilerDatabase}, matching {@linkcode insertFamilyMembership}'s own precedent) purely to stay under the
  * linter's `max-statements` ceiling.
  */
@@ -788,7 +788,7 @@ function processEdgarSubsidiaryRow(
 	// Corroboration — INFERENCE, not authority, and only when UNAMBIGUOUS (exactly one match). Zero matches: nothing
 	// more to write, the disclosure edge above is the whole fact. Two or more: a genuine name collision across
 	// distinct FRNs — abstain rather than guess which one, same as resolveCIKCandidates never silently narrowing a
-	// tie. KEPT as-is by task 8 fix round 1: scoring the survivors honestly is not a substitute for abstaining on a
+	// tie. Grading the survivors is not a substitute for abstaining on a
 	// tie, and the two answer different questions (WHETHER to write an edge vs how far to trust the one written).
 	if (matchedFRNs.length !== 1) return
 
@@ -814,7 +814,7 @@ function processEdgarSubsidiaryRow(
 		JSON.stringify({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
 	)
 
-	// The Task 8 precondition: a filer_edge row ALONE is invisible to familyRollup/filerLookup.families — both
+	// The family-visibility precondition: a filer_edge row ALONE is invisible to familyRollup/filerLookup.families — both
 	// answer membership from filer_family alone. family_id/naming_node_id are the CIK's OWN node id: a CIK needs no
 	// mintFamilyID canonicalization to be a stable family key, unlike a free-text holding-/management-company name.
 	//
@@ -855,12 +855,12 @@ function mintForm499NodeID(form499ID: string, rowIndex: number): string {
 
 /**
  * Validates `lastFiledAt` is non-blank before it is written into BOTH `filer_edge.source_vintage`/`valid_from` and
- * every attribute's `source_vintage` for this row (review finding). Decision 7 / gate 1 make `valid_from` MANDATORY on
- * every edge — but `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date`
- * parsing happens at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank
- * `lastFiledAt` would silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute this row produces
- * — a time-scoped read (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty
- * decision 7 exists to prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
+ * every attribute's `source_vintage` for this row. Decision 7 / gate 1 make `valid_from` MANDATORY on every edge — but
+ * `Form499Row.lastFiledAt` is a raw, unvalidated TSV string (`form499.ts`'s own docstring: "no `Date` parsing happens
+ * at this layer"), and SQLite's `NOT NULL` does not reject an empty string. An unguarded blank `lastFiledAt` would
+ * silently write `source_vintage: ""`/`valid_from: ""` onto every edge/attribute this row produces — a time-scoped read
+ * (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision 7 exists to
+ * prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
  * {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the "which fields
  * are load-bearing for THIS artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
  * non-validating passthrough for every field it doesn't itself need to type (see its own docstring).
@@ -880,10 +880,10 @@ function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: num
 
 /**
  * Requires + ISO-validates {@link BuildFilerOptions.validFrom} — called once, up front, only when a provider-list source
- * is actually supplied (review fix, round N). Fails fast, before any file/DB I/O, matching the "pass at least one …
- * source" options-level guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check (an
- * options contract violation, not a malformed data row), so it is validated at the same point in the function, not
- * lazily inside the provider-row loop.
+ * is actually supplied. Fails fast, before any file/DB I/O, matching the "pass at least one … source" options-level
+ * guard just above it in {@linkcode buildFilerDatabase} — this is the same class of check (an options contract
+ * violation, not a malformed data row), so it is validated at the same point in the function, not lazily inside the
+ * provider-row loop.
  */
 function assertProviderValidFrom(validFrom: string | undefined): string {
 	if (validFrom === undefined) {
@@ -921,10 +921,9 @@ function mintProviderNodeID(providerID: number, rowIndex: number): string {
 /**
  * Create every table this builder writes to, in one place — split out of {@linkcode buildFilerDatabase} itself purely
  * to stay under the linter's `max-statements` ceiling, once `filer_family`'s creation call joined `filer_cluster`'s in
- * the 3b family-membership work; no behavioral difference from inlining these calls at the original call site.
- * `filer_cluster` and `filer_family` are both created EMPTY here, for schema completeness — see the module docstring
- * for who populates each later (`cluster-filers.ts` for the former, this file's family-membership emission for the
- * latter).
+ * the family-membership work. Inlining these calls at the single call site would behave identically. `filer_cluster`
+ * and `filer_family` are both created EMPTY here, for schema completeness — see the module docstring for who populates
+ * each later (`cluster-filers.ts` for the former, this file's family-membership emission for the latter).
  */
 async function createFilerBuildTables(kdb: Kysely<FilerDatabase>): Promise<void> {
 	await createFilerManifestTable(kdb)
@@ -998,8 +997,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 	// filer_family — same "no staging table needed" discipline as filer_node/filer_edge above (module
 	// docstring): the composite PK (node_id, family_id, naming_node_id, source, valid_from) already provides the
-	// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key (task 3 fix round
-	// 4) — see createFilerFamilyTable's docstring for why leaving it out would make THIS statement's OR IGNORE drop a
+	// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key —
+	// see createFilerFamilyTable's docstring for why leaving it out would make THIS statement's OR IGNORE drop a
 	// second, differently-spelled report of the same family.
 	const insFamily = db.prepare(
 		`INSERT OR IGNORE INTO filer_family (
@@ -1049,8 +1048,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
 		// Guarded ONCE per row, before anything below writes it into source_vintage/valid_from — see the
-		// docstring above assertLastFiledAt (review finding). ISO-validated too (review fix,
-		// round N): this SAME value becomes valid_from on every edge this row emits, and valid_from must
+		// docstring above assertLastFiledAt. ISO-validated too: this SAME value becomes valid_from on every edge this row emits, and valid_from must
 		// always be ISO-sortable — see assertISODate's docstring.
 		const lastFiledAt = assertISODate(
 			assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
@@ -1116,7 +1114,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
 		// source_vintage stays the (possibly non-ISO) human vintage label; valid_from is the SEPARATE, always-ISO
-		// providerValidFrom — see BuildFilerOptions.validFrom's docstring (review fix, round N). Non-null
+		// providerValidFrom — see BuildFilerOptions.validFrom's docstring. Non-null
 		// here by construction: this loop only runs when hasProviderSource is true, the same condition that made
 		// providerValidFrom non-null above.
 		insEdge.run(
@@ -1227,8 +1225,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			name: "filer",
 			// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
 			version: options.sourceVintage,
-			// Bumped 1 -> 2 (3b Task 1, decisions 1, 2): filer_edge gained the NOT NULL relationship column and
-			// filer_family is a new table — both are shape changes to the artifact this version number describes.
+			// 2 (decisions 1, 2): schema_version 1 had no NOT NULL relationship column on filer_edge and no
+			// filer_family table — both are shape changes to the artifact this version number describes.
 			schema_version: 2,
 			source: sourcesUsed.join(","),
 			source_vintage: options.sourceVintage,

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Telecom-infrastructure POI extractor (BDC 2b task 2, decisions 2/3) — stream OSM telecom features
+ *   Telecom-infrastructure POI extractor (decisions 2/3) — stream OSM telecom features
  *   (telephone exchanges, street cabinets, communications masts, data centers) out of a Geofabrik
  *   `.osm.pbf` extract via GDAL/ogr2ogr, matched against an AND/OR tag-rule table, and yielded as
  *   {@link POISourceRow}s ready for `buildPOIDatabase`'s injected `rows` seam
@@ -27,20 +27,20 @@
  *   `street_cabinet`, and `tower:type` are NOT in either layer's `attributes=` list, so they land in
  *   the `other_tags` hstore and are read via `hstore_get_value`, exactly as `extract.ts` reads
  *   `addr:*`. This split was verified against the installed `osmconf.ini` and a hand-built `.osm` XML
- *   fixture (GDAL's OSM driver reads plain OSM XML the same way it reads `.pbf`) — see the report for
- *   the transcript. A custom `OSM_CONFIG_FILE` that un-promotes `man_made` would break the bare-column
+ *   fixture (GDAL's OSM driver reads plain OSM XML the same way it reads `.pbf`).
+ *   A custom `OSM_CONFIG_FILE` that un-promotes `man_made` would break the bare-column
  *   assumption; not a concern for the shipped default.
  *
  *   `POISourceRow` is declared LOCALLY here (structurally identical to the exported interface of the
  *   same name in `mailwoman/gazetteer-pipeline/poi/build-poi.ts`) rather than imported: `@mailwoman/osm`
  *   is a dependency OF the top-level `mailwoman` package (which owns the gazetteer pipeline), never the
- *   reverse — importing it here would invert the workspace dependency graph. Task 3 (the `--source osm`
- *   build branch, landing in `build-poi.ts`) sits on the correct side of that edge; TS structural typing
- *   accepts this row with no cast, so Task 3 wires the two together directly.
+ *   reverse — importing it here would invert the workspace dependency graph. `build-poi.ts`'s `--source osm`
+ *   build branch sits on the correct side of that edge; TS structural typing
+ *   accepts this row with no cast, so the two are wired together directly.
  *
  *   `country` has no representation on a bare OSM feature (a Geofabrik extract's country isn't a
- *   feature property) and this module's `extractOSMPOIs(pbfPath, rules?)` signature — fixed by the task
- *   brief — takes no `--country` parameter. Rows are yielded with `country: ""`; Task 3's `--source osm`
+ *   feature property) and this module's `extractOSMPOIs(pbfPath, rules?)` signature takes no
+ *   `--country` parameter. Rows are yielded with `country: ""`; the `--source osm`
  *   build branch has the invocation's own `--country` flag and is expected to stamp it onto each row
  *   before the rows reach `buildPOIDatabase`.
  */
@@ -76,8 +76,7 @@ export interface OSMPOITagRule {
 }
 
 /**
- * Telecom-infrastructure tag rules (decision 2), category ids matching `poi-taxonomy` exactly
- * (`telecom_exchange`/`tower_comms` landed in task 1; `telecom_cabinet`/`data_center` pre-existed):
+ * Telecom-infrastructure tag rules (decision 2), category ids matching `poi-taxonomy` exactly:
  *
  * - `telecom_exchange` ← `man_made=telephone_exchange` OR `telecom=exchange`
  * - `telecom_cabinet` ← `man_made=street_cabinet` AND `street_cabinet=telecom`
@@ -313,7 +312,7 @@ function toPOISourceRow(
 		brandWikidata: null,
 		longitude: pt[0],
 		latitude: pt[1],
-		// No feature-level country on a bare OSM extract — see the module docstring. Task 3's
+		// No feature-level country on a bare OSM extract — see the module docstring. The
 		// `--source osm` build branch stamps the invocation's `--country` onto each row.
 		country: "",
 		confidence: 1,

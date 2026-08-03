@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file BDC provider list CSV — streaming parser preserving multi-FRN cardinality (3a Task 3, decision 6).
+ * @file BDC provider list CSV — streaming parser preserving multi-FRN cardinality (decision 6).
  *
  *   Source shape reference: Nexus's `sync/scripts/registrations.ts` parses `bdc_us_provider_list_*.csv`
  *   into `{frn, provider_id, holding_company}` rows via `csv.parse(contents, { columns: true })` — a
@@ -22,8 +22,8 @@
  *   downstream ever sees the discarded string. {@linkcode parseProviderList} does none of that: it is a
  *   flat streaming pass with NO `Map` keyed by `provider_id`, NO dedup, and NO last-wins — every row in
  *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
- *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`, arriving in Task 4+) is
- *   where that cardinality gets to mean something; collapsing it here would be unrecoverable downstream.
+ *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`) is where that cardinality gets
+ *   to mean something; collapsing it here would be unrecoverable downstream.
  *
  *   `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string). Unlike
  *   `Form499Row.frn`, this field is NOT nullable: the provider list — unlike a 499 filing — has no

@@ -148,8 +148,8 @@ export interface ResolvedWeights {
 	 */
 	streetMorphologyPath?: string
 	/**
-	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3) shipped
-	 * beside the resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
+	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc) shipped beside the
+	 * resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
 	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
 	 * `baseWeights` package (a shared base ships no locale-specific pairs to offer; en-us has none, en-gb ships its own
 	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
@@ -325,7 +325,7 @@ function resolveFromPackageDir(
 	const localitySurfaceLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
 
-	// Placetype-pair index sibling (placetype-pair-prior arc Task 5) — resolved LOCALLY from packageDir
+	// Placetype-pair index sibling (placetype-pair-prior arc) — resolved LOCALLY from packageDir
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
 
@@ -389,7 +389,7 @@ function resolveAnchorLookupSibling(
 }
 
 /**
- * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3).
+ * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc).
  * COUNTRY-SPECIFIC BY DESIGN: this artifact is resolved from `packageDir` ONLY, unlike the model/tokenizer/model-card
  * siblings above, which fall back to a `baseWeights` package — a shared base has no locale-specific place-pair data to
  * offer, so a base package without its own `pair-index-<cc>.bin` simply has none (no fallback attempted). `undefined`

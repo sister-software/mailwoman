@@ -16,7 +16,7 @@ describe("loadSuite", () => {
 	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", () => {
 		const rows = loadSuite()
 
-		// 19 base rows + 4 Task-9 paired-punctuation rows = 23.
+		// 19 base rows + 4 paired-punctuation rows = 23.
 		expect(rows.length).toBeGreaterThanOrEqual(16)
 		expect(rows.length).toBeLessThanOrEqual(25)
 
@@ -167,7 +167,7 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("--baseline severity gate: candidate LOST where baseline only DEGRADED is a NEW (gating) violation, not pre-existing", async () => {
-		// The reviewer's exact reproduction: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
+		// The case the severity gate exists for: baseline drops `unit` on comma-drop (DEGRADED — non-critical),
 		// candidate drops `house_number` on the SAME pair (LOST — critical). Severity-blind matching (both
 		// sides merely "non-INVARIANT") would wrongly call this pre-existing and let it through. A candidate
 		// verdict that is WORSE than the baseline's on the same (row, transform) must always be NEW.
@@ -193,11 +193,10 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("final-review fix: the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
-		// Same reviewer repro as the severity-gate test above (baseline DEGRADED, candidate LOST — a NEW,
+		// Same case as the severity-gate test above (baseline DEGRADED, candidate LOST — a NEW,
 		// gating violation) — but this time asserting on the printed report LINE itself, not just the
-		// structured outcome. Before the fix, every NEW violation's line claimed "baseline held INVARIANT"
-		// regardless of what the baseline actually did; here the baseline was DEGRADED, not INVARIANT, so a
-		// hardcoded claim would be false on its face.
+		// structured outcome. A violation line that hardcodes "baseline held INVARIANT" is false on its
+		// face here: the baseline was DEGRADED, so the line has to read the baseline's actual verdict.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -247,8 +246,8 @@ describe("runInvarianceSuite", () => {
 		// `street` output — that's the transform doing its job, not a violation. Comparing RAW values would
 		// flag it as a false LOST (street is critical); compareForTransform's abbreviation-swap branch
 		// canonicalizes both sides to long-form first. This test goes through the REAL "abbreviation-swap"
-		// transform id (not a fake one) so a typo'd id string in that dispatch (the false-positive class the
-		// build report found) fails this test with a spurious LOST instead of staying silently dead.
+		// transform id (not a fake one) so a typo'd id string in that dispatch fails this test with a
+		// spurious LOST instead of staying silently dead.
 		const abbrevRow: InvarianceRow = {
 			id: "abbrev-wiring-row",
 			raw: "350 Fifth Avenue, New York, NY",

@@ -405,9 +405,9 @@ function isPopulated(value: unknown): boolean {
 }
 
 /**
- * How many corpus rows actually carry a value for a field — computed from the corpus, never asserted (task 4 review
- * fix, M4). The first version of this table marked `hqAddress`, both `customerInquiries*` fields and all five
- * `dcAgent*` fields as "given to the matcher: yes" when every one of them is `""` on every row, which is exactly the
+ * How many corpus rows actually carry a value for a field — computed from the corpus, never asserted by hand. Hand
+ * assertion gets this wrong in the most misleading direction available: `hqAddress`, both `customerInquiries*` fields
+ * and all five `dcAgent*` fields look like channels "given to the matcher" while being `""` on every row, which is the
  * opposite of the impression a reader takes from that column — and those are the same channels the caveats name as the
  * way forward.
  */
@@ -601,10 +601,10 @@ export interface LinkageEvalPassOptions {
 	holdingCompanyWithheld: boolean
 	/**
 	 * Writes evidence into the built artifact AFTER the leakage gate has passed and BEFORE the prediction is read — the
-	 * seam the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not exist yet
-	 * (task 4 re-review). Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody
-	 * touched. Ordering is the point — the gate still polices what the BUILDER produced from a withheld input, so a probe
-	 * can add ownership facts without disarming it.
+	 * seam the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not exist yet.
+	 * Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched. Ordering is
+	 * the point — the gate still polices what the BUILDER produced from a withheld input, so a probe can add ownership
+	 * facts without disarming it.
 	 */
 	injectEvidence?: (db: DatabaseClient<FilerDatabase>) => Promise<void>
 }
@@ -729,12 +729,12 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 }
 
 /**
- * The precondition a future run has to satisfy to beat this baseline, stated as narrowly as the code supports (task 4
- * re-review, I1). An earlier draft promised that "any channel that actually correlates with ownership — a shared
- * headquarters address, a shared officer, an external corporate filing that names a parent — would show up here as
- * recall above zero." A reviewer falsified it twice. Both probes are carried on the page rather than quietly deleted:
- * the false version was the same species of defect as the one this task's first round shipped — a stated causal
- * relation the data contradicts — and the page's whole value is that its claims survive being checked.
+ * The precondition a future run has to satisfy to beat this baseline, stated as narrowly as the code supports. The
+ * tempting broader claim — that "any channel that actually correlates with ownership — a shared headquarters address, a
+ * shared officer, an external corporate filing that names a parent — would show up here as recall above zero" — is
+ * false, and has been falsified by probe twice. The page carries both falsified probes rather than dropping them: a
+ * stated causal relation the data contradicts is exactly the defect this page exists not to commit, and its whole value
+ * is that its claims survive being checked.
  */
 function renderWhatWouldMoveItSection(): string {
 	return (
@@ -931,8 +931,8 @@ export interface FilerLinkageEvalOptions {
 	outMd?: string
 	/**
 	 * Overrides the report's dated H1 — for regenerating the committed scorecard on a later day, and for reproducibility
-	 * tests that need byte-identical markdown across two runs that don't fall on the same wall-clock date (task 4 review
-	 * fix, M6: without this the report could not be regenerated without editing code). Defaults to today.
+	 * tests that need byte-identical markdown across two runs that don't fall on the same wall-clock date. Without it the
+	 * report cannot be regenerated without editing code. Defaults to today.
 	 */
 	date?: string
 	/**

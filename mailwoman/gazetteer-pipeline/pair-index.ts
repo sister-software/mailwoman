@@ -13,12 +13,12 @@
  *   reads: CITY is the dependent_locality candidate, DISTRICT the enclosing post town — see
  *   `corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate). A row with an empty CITY (the
  *   PPD majority — the dependent_locality is legitimately absent on most rows) is skipped: it carries
- *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the single
- *   fold this arc's Task 1 exported), matching `PairIndexHeader.foldVersion` — the same fold the PIX1
+ *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the arc's one
+ *   exported fold), matching `PairIndexHeader.foldVersion` — the same fold the PIX1
  *   reader's caller (`fst-prior.ts`'s `groupPiecesIntoWords`) applies at query time.
  *
  *   Also tracks the pre-fold CITY word-length distribution (whitespace-split word count per raw,
- *   non-empty CITY) — this sizes the word-span window Task 4's decode-side prior walks (a
+ *   non-empty CITY) — this sizes the word-span window the decode-side prior walks (a
  *   dependent_locality candidate rarely spans more than a handful of words; the p99 here is the
  *   evidence for that window, not a guess).
  */

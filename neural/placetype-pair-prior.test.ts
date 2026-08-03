@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the placetype-pair emission bias (placetype-pair-prior arc, Tasks 4 + 6): the
+ *   Unit tests for the placetype-pair emission bias (placetype-pair-prior arc): the
  *   space-joined window-key fold, the two-sided disjoint-window match, marker suppression, and the
  *   `delta ?? biasScale` bias-magnitude resolution. The query-shape-prior.test.ts / street-morphology
  *   mock-index idiom — a hand-built `PairIndexLike` double, no real binary artifact needed.
  *
- *   `probeMode` DEFAULTED to `"segment"` in Task 6 (the venue-confound falsifier verdict — see
+ *   `probeMode`'s v1 default is `"segment"` (the venue-confound falsifier verdict — see
  *   `placetype-pair-prior.ts`'s module docstring). Every test above this file's "segment mode" section
  *   passes `probeMode: "window"` explicitly — they exercise the sub-segment sliding-window behavior on
- *   comma-free `makePieces` input, which is now opt-in, not the default. The "segment mode" section below
+ *   comma-free `makePieces` input, which is opt-in, never a default. The "segment mode" section below
  *   tests that path directly, using `makePiecesWithCommas` (a comma-preserving sibling of
  *   `makePieces`) so segment boundaries actually exist to probe.
  *
@@ -361,11 +361,10 @@ describe("buildPlacetypePairPriors — dual-key tie-break (fix round 2, re-revie
 })
 
 describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix round 2, real PIX1 round trip)", () => {
-	// Item 3 of the fix-round-2 brief: a REAL PairIndexBuilder-shaped entry, through a REAL tokenizer, through
-	// the REAL PIX1 serialize/deserialize round trip — not a hand-built `PairIndexLike` double. This is the
-	// case that was structurally impossible to express with `makePieces` (one synthetic ▁-per-word piece each
-	// — it can't reproduce a genuine bare-▁-orphan split) and that fix round 1's mock-only coverage therefore
-	// never exercised.
+	// A REAL PairIndexBuilder-shaped entry, through a REAL tokenizer, through the REAL PIX1
+	// serialize/deserialize round trip — not a hand-built `PairIndexLike` double. Mock-only coverage cannot
+	// reach this case at all: `makePieces` emits one synthetic ▁-per-word piece, so it can never reproduce a
+	// genuine bare-▁-orphan split.
 	//
 	// The entry below is not re-derived by calling `PairIndexBuilder` here: that class lives in the `mailwoman`
 	// workspace (CLI/gazetteer tooling), which depends on `@mailwoman/neural` — not the reverse — and
@@ -397,8 +396,8 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 
 		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
 		// Real split: ["▁F","ish","burn","▁Stock","ton","▁","on","▁Te","es"] — the bare "▁" before "on" is
-		// exactly the pattern fix round 2 recovers; pre-fix, "on" would vanish and the 3-word parent window
-		// "stockton on tees" would never even be built, let alone probed.
+		// exactly the orphan pattern `groupPiecesIntoWords` has to recover. Drop "on" and the 3-word parent
+		// window "stockton on tees" is never even built, let alone probed.
 		const { pieces } = tokenizer.encode("Fishburn Stockton on Tees")
 		const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
@@ -413,7 +412,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 
 			const tokenizer = await MailwomanTokenizer.loadFromFile(PRODUCTION_TOKENIZER_PATH)
 			// Real split: ["▁Fish","burn","▁Stockton","▁","on","▁","Tees"] — same bare-▁-orphan shape, on the
-			// tokenizer the re-review actually found this bug against.
+			// PRODUCTION tokenizer rather than the fixture one.
 			const { pieces } = tokenizer.encode("Fishburn Stockton on Tees")
 			const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
@@ -447,7 +446,7 @@ describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now
 	})
 
 	it("a segment-EXACT name DOES fire — a bare census child occupying its own comma-delimited field", () => {
-		// The honestly-reported residual FP class from the task-6 report: this is ALSO the shape of a genuine
+		// The segment default's residual FP class: this is ALSO the shape of a genuine
 		// false positive when a non-venue field (e.g. a street name) happens to equal a bare census child
 		// verbatim ("Moelfre B & B, Moelfre, Abergele, SY20 8LF" — the street field is literally "Moelfre"). The
 		// mechanism is purely textual/segmental, not semantic, so the same shape that defeats the venue-confound
@@ -496,7 +495,7 @@ describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now
 
 		expect(autoMatrix[0]![labelCol("B-dependent_locality")]).toBe(6)
 
-		// Explicit opt-in: the original sub-window behavior is unchanged and still resolves the same pair.
+		// Explicit opt-in: the sub-window path resolves the same pair.
 		const { matrix: windowMatrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
 		expect(windowMatrix[0]![labelCol("B-dependent_locality")]).toBe(6)
@@ -586,8 +585,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
-		// The child flips via the "Porirua" segment (its OWN comma-field) — the postcode segment "5026" is ignored,
-		// exactly as before this fix.
+		// The child flips via the "Porirua" segment (its OWN comma-field) — the postcode segment "5026" is ignored.
 		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6)
 		expect(index.calls).toContainEqual(["plimmerton", "porirua"])
 		expect(index.calls.some(([child]) => child === "5026")).toBe(true)
@@ -629,8 +627,8 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 	})
 
 	it('control: WINDOW mode marker suppression is unaffected by comma placement — "Fishburn Road, Leeds" still suppresses "Fishburn" (successor "Road" IS in the same clause)', () => {
-		// Window mode never consulted segment boundaries before this fix and must not start now — "Fishburn"
-		// immediately followed by "Road" (the structural marker) is still suppressed regardless of the later comma.
+		// Window mode never consults segment boundaries and must not start — "Fishburn" immediately followed by
+		// "Road" (the structural marker) is suppressed regardless of the later comma.
 		const index = mockPairIndex({ "fishburn|leeds": "dependent_locality" }, 6)
 		const text = "Fishburn Road, Leeds"
 		const pieces = makePiecesWithCommas(text)
@@ -901,7 +899,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 
 describe("buildPlacetypePairPriors — identical adjacent segments (NZ repeated-name convention, registry-evidence semantics)", () => {
 	// NZ conventionally repeats the name when suburb == post town ("Mangawhai, Mangawhai" — 63/246 rows of
-	// the NZ golden board, 25.6%; task-8 report § "NZ arc"), and the LINZ-built pair index records the
+	// the NZ golden board, 25.6%), and the LINZ-built pair index records the
 	// identity pair ("mangawhai","mangawhai"). The (x, x) entry is itself the evidence of the convention:
 	// the FIRST occurrence is the dependent locality, the second is the post town. See the module
 	// docstring's "Identity pairs" section for the full rule.
@@ -956,8 +954,8 @@ describe("buildPlacetypePairPriors — identical adjacent segments (NZ repeated-
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
-		// BOTH identical segments bias, exactly as before this fix: neither has an identical immediately-preceding
-		// neighbor ("Something" sits between them), so neither is a repeat.
+		// BOTH identical segments bias: neither has an identical immediately-preceding neighbor ("Something" sits
+		// between them), so neither is a repeat.
 		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6)
 		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6)
 		// The middle segment never resolves — untouched.

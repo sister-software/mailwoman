@@ -285,18 +285,17 @@ export function buildFSTEmissionPriors(
  *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
  *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
  *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
- *      fresh here instead of being dropped. **This is the fix**: earlier code only ever opened a new word on a
- *      `▁`-prefixed piece (or `i === 0`), so a pending word whose first piece happened to lack its own `▁` — the exact
- *      shape a SentencePiece vocab produces for a short/common word that was never learned as a merged `"▁word"` token
- *      (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on the production
- *      `v0.9.0-multisplice` tokenizer) — silently vanished. Confirmed live, not a fixture-vocab quirk: see the fix-round-2
- *      report for the production-tokenizer repro table.
+ *      fresh here instead of being dropped. **Opening on a non-`▁` piece is load-bearing, not a nicety**: restrict
+ *      word-opening to `▁`-prefixed pieces (or `i === 0`) and a pending word whose first piece happens to lack its own `▁`
+ *      vanishes silently — that is the exact shape a SentencePiece vocab produces for a short/common word never learned as
+ *      a merged `"▁word"` token (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on
+ *      the production `v0.9.0-multisplice` tokenizer, so not a fixture-vocab quirk).
  *    - **Punctuation-only** (`"-"`, `"'"`, a bare `","`): if a word is open, it's interior punctuation — absorbed into
  *      `current.pieceIndices` (contributing nothing to `fstToken`; `normalizeFSTToken` strips punctuation anyway) but
- *      never resetting it, so the pieces that follow still have a `current` to land on (the Critical fix from the first
- *      fix wave — "Stockton-on-Tees", "Bishop's Stortford"). If a word is PENDING, this punctuation piece has nothing to
- *      attach to either — same empty-placeholder treatment as case 2 — and the state stays PENDING; the punctuation
- *      doesn't consume or clear the pending word, it just has nothing of its own to open.
+ *      never resetting it, so the pieces that follow still have a `current` to land on ("Stockton-on-Tees", "Bishop's
+ *      Stortford"). If a word is PENDING, this punctuation piece has nothing to attach to either — same empty-placeholder
+ *      treatment as case 2 — and the state stays PENDING; the punctuation doesn't consume or clear the pending word, it
+ *      just has nothing of its own to open.
  *
  * The pending state is what keeps `"Stockton , Lancashire"` from fusing "Stockton" and "Lancashire" into one group:
  * however many raw empty-placeholder groups the comma/space sequence produces (one from the bare `▁`, one from the

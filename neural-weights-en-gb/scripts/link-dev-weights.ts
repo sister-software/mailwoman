@@ -26,26 +26,26 @@
  *
  *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc) the same way: no
  *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
- *   the compiled `gazetteer pair-index` CLI. `--delta 5.0` is the Task-7-CALIBRATED value
- *   (2026-07-22, `.superpowers/sdd/task-7-report.md`) baked into the real
- *   `neural-weights-en-gb/pair-index-gb.bin` artifact's header — superseding Task 3's
- *   rung-3 probe-set placeholder (6.0). Calibration method: a δ ∈ {3,4,4.5,5,6,7} sweep against
+ *   the compiled `gazetteer pair-index` CLI. The δ it builds with is {@link PAIR_INDEX_DELTA} — the
+ *   single source of truth, matched against the existing binary's header by the freshness guard
+ *   below; the shipped bundle re-tuned it to 10 (#1269). The original calibration (2026-07-22, δ =
+ *   5.0) swept δ ∈ {3,4,4.5,5,6,7} against
  *   ~2k held-out PPD-tail register rows (dependent_locality tag-correct recall) and the 6,500-row
  *   FSA venue-confound board (FP), for BOTH ship-candidate checkpoints (feed-2k, feed-8k) — the
- *   two calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). This shared artifact bakes
- *   feed-8k's value (5.0): the operator ratified feed-8k as the ship checkpoint (2026-07-23) over
+ *   two calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). The artifact is
+ *   feed-8k-calibrated: the operator ratified feed-8k as the ship checkpoint (2026-07-23) over
  *   feed-2k (which fails the FR-fragment `bare-locality` hallucination bar outright, 0.665 vs
  *   ≥0.90 — the same early-training-collapse shape as the sibling en-gb-locale-arc's probe-2
- *   checkpoint). That checkpoint choice is FINAL, not open — the feed-2k branch this comment used
- *   to describe is moot. **What actually blocks promotion is the Gauntlet**, not the checkpoint
+ *   checkpoint). That checkpoint choice is FINAL, not open.
+ *   **What actually blocks promotion is the Gauntlet**, not the checkpoint
  *   pick: feed-8k FAILS the metamorphic layer (loses the "1600 Pennsylvania Ave NW" comma-drop
  *   rooftop resolution; v385 holds it), and a same-day repair attempt
  *   (`v3.11.1-deploc-consolidate`) came back NOT CLEAN — STOP RULE EXECUTED, the v3.11.x lineage
- *   is CLOSED for shipping. This artifact (δ=5.0, feed-8k-calibrated) stays correct and ready
+ *   is CLOSED for shipping. This artifact (feed-8k-calibrated) stays correct and ready
  *   regardless — the prior composes with whatever model eventually ships. Path forward: v3.12
  *   (`docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md`, operator-gated redesign).
  *
- *   FRESHNESS GUARD on the skip-if-exists path (review follow-up): a bare `existsSync` skip is
+ *   FRESHNESS GUARD on the skip-if-exists path: a bare `existsSync` skip is
  *   right for `postcode-gb.bin` (rebuilds in seconds from a small WOF shard) but wrong on its own
  *   here — an existing `pair-index-gb.bin` could be stale against either (a) a bumped `--delta`
  *   literal below (the #397-guard-style md5-lockstep discipline the model/tokenizer check above
@@ -311,8 +311,8 @@ if (!existsSync(CLI)) {
 
 /**
  * `pair-index-gb.bin` (placetype-pair-prior arc) has no committed source either (it's derived from the HM Land Registry
- * PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the
- * Task-7-CALIBRATED value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header
+ * PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` is held in
+ * lockstep with the value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header
  * comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed, not the
  * checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a worktree without the
  * PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds),
@@ -334,9 +334,9 @@ const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
 const PAIR_INDEX_DELTA = 10
 /**
  * The GB artifact's decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
- * task-8 transition-level probe: 13/17 comma-free misses recovered, zero measured collateral). Held in lockstep with
- * the shipped header exactly like {@link PAIR_INDEX_DELTA}: a mismatch against the existing binary's header forces a
- * loud rebuild. NZ deliberately ships WITHOUT a beta (unmeasured there) — its link script has no counterpart const.
+ * transition-level probe: 13/17 comma-free misses recovered, zero measured collateral). Held in lockstep with the
+ * shipped header exactly like {@link PAIR_INDEX_DELTA}: a mismatch against the existing binary's header forces a loud
+ * rebuild. NZ deliberately ships WITHOUT a beta (unmeasured there) — its link script has no counterpart const.
  */
 const PAIR_INDEX_TRANSITION_BETA = 5
 
@@ -387,10 +387,10 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta + transitionBeta (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
-			// Compare EVERY source, not just the CSV. The guard used to check `sourceMD5s[0]` alone, which made it blind
-			// to the borough DB and the checked-in London pairs — so after campaign R3/R4b added those sources, a stale
-			// artifact built from an older pair set kept reporting itself fresh and every local run (and the CI cache)
-			// silently graded against it. That is how the TRANSITION-BETA pin row drifted unnoticed. The build writes
+			// Compare EVERY source, not just the CSV. Checking `sourceMD5s[0]` alone leaves the guard blind
+			// to the borough DB and the checked-in London pairs (the sources campaign R3/R4b added), so a stale
+			// artifact built from an older pair set keeps reporting itself fresh and every local run (and the CI cache)
+			// silently grades against it — that is how the TRANSITION-BETA pin row drifted unnoticed. The build writes
 			// one md5 per source in order (CSV, borough DB, pairs JSONL), so a length mismatch is itself staleness:
 			// an artifact predating a source cannot have recorded its md5.
 			const currentSourceMD5s = [

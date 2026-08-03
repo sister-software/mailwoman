@@ -24,7 +24,7 @@
  *   - `mailwoman_plausibility_check` — score one claimed broadband-service assertion against BDC filing evidence and
  *     nearby telecom infrastructure (`@mailwoman/bdc`'s `plausibilityCheck`), returning a positive-evidence-only bundle
  *     with an always-present `coverage_confidence`. A missing/absent `bdc_database_path`/`poi_database_path` degrades
- *     to a typed abstain entry in the bundle, never a throw (2b task 7, decision 6).
+ *     to a typed abstain entry in the bundle, never a throw (decision 6).
  *   - `mailwoman_filer_lookup` — read the FCC filer identity crosswalk (`@mailwoman/filer`'s
  *     `filerLookup`) for one identifier (FRN, Form 499 ID, or BDC provider ID): every OTHER identifier it shares an
  *     authoritative edge with, its current attributes, its authoritative entity cluster, and any inferred links —

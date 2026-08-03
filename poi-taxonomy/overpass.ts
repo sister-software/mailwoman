@@ -8,11 +8,10 @@
  *   a mailwoman intent there. The category→OSM-tag mapping is the caller's input (from
  *   `@mailwoman/poi-taxonomy`'s `osmTag`); the emitter is a pure string builder.
  *
- *   Re-homed from `mailwoman/poi-overpass.ts` (Task 8, pre-declared plan deviation): this package
- *   must not depend on `@mailwoman/core`, so `OverpassIntentLike` below is a local structural type
- *   covering exactly what the emitter reads. `POIIntent` (`@mailwoman/core/pipeline`) is structurally
- *   assignable to it — callers pass a real `POIIntent` without a cast. `mailwoman/poi-overpass.ts` is
- *   now a thin re-export of this module, kept for backward compatibility.
+ *   This package must not depend on `@mailwoman/core`, so `OverpassIntentLike` below is a local
+ *   structural type covering exactly what the emitter reads. `POIIntent` (`@mailwoman/core/pipeline`)
+ *   is structurally assignable to it — callers pass a real `POIIntent` without a cast.
+ *   `mailwoman/poi-overpass.ts` is a thin re-export of this module, kept for backward compatibility.
  *
  *   Two escaping contexts: the category branch and the `area["name"="…"]` anchor scope are string
  *   EQUALITY, so `escapeQL` alone is correct. The brand/name branches interpolate into a `~"…"`

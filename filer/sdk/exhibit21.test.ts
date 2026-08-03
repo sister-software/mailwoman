@@ -2,19 +2,19 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (3b Task 7, decision 6, gate 3).
+ * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (§7-3b decision 6, gate 3).
  *
  *   Gate 3 first (TDD order): the mangled fixture's zero-subsidiaries/non-zero-unparseable/no-throw
  *   contract is the load-bearing test in this file. The other three fixtures (clean table, nested list,
  *   plain text) each pin a correct extraction for their own shape.
  *
- *   Also covers a fabrication audit (six findings — an unclosed `<td>`, a minified no-table/no-`<li>`
- *   document, a plain-text 3-column row, an inline tag inside a `<li>`, a nested layout table, and
- *   `<td>`-tagged header/decoration rows) where the shipped parser emitted a subsidiary name that did not
- *   appear in its input. The substring-invariant test at the bottom of this file is the load-bearing check
- *   for the fix: every emitted `name`/`jurisdiction`, across every fixture AND every crafted malformed case,
- *   must be a literal substring of the document once tags are stripped, entities decoded, and whitespace
- *   collapsed.
+ *   Six document shapes are known to tempt an extractor into emitting a subsidiary name that appears
+ *   nowhere in its input — an unclosed `<td>`, a minified no-table/no-`<li>` document, a plain-text
+ *   3-column row, an inline tag inside a `<li>`, a nested layout table, and `<td>`-tagged
+ *   header/decoration rows — and each has a fixture here. The substring invariant asserted at the bottom
+ *   of this file is what covers all six at once: every emitted `name`/`jurisdiction`, across every fixture
+ *   AND every crafted malformed case, must be a literal substring of the document once tags are stripped,
+ *   entities decoded, and whitespace collapsed.
  */
 
 import { readFileSync } from "node:fs"
