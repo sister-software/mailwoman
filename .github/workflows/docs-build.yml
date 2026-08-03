@@ -107,14 +107,16 @@ jobs:
               - "spatial/**"
               - "codex/**"
               - "*.md"
-            # docs/articles/ is still the OLD site (hundreds of pages that predate the Vale rules
-            # and won't pass them — they're replaced wholesale by the docs-reorg plan). Scoping the
-            # Prose lint step to just the files a PR touches, instead of the whole corpus, is a
-            # deliberate stopgap: Task 23 flips it to a full-corpus `lint:prose` run once the
-            # replacement lands.
+            # docs/articles/ and docs/src/pages/ are still the OLD site (hundreds of pages that
+            # predate the Vale rules and won't pass them — they're replaced wholesale by the
+            # docs-reorg plan). Scoping the Prose lint step to just the files a PR touches, instead
+            # of the whole corpus (both trees — lint:prose's own default targets), is a deliberate
+            # stopgap: Task 23 flips it to a full-corpus `lint:prose` run once the replacement lands.
             docs_prose:
               - "docs/articles/**/*.md"
               - "docs/articles/**/*.mdx"
+              - "docs/src/pages/**/*.md"
+              - "docs/src/pages/**/*.mdx"
 
       - name: Setup Node
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
@@ -151,11 +153,11 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: docs/scripts/check-vale-rules.sh
 
-      # Scoped to just the files this PR changed (see the docs_prose filter above) — NOT the whole
-      # docs/articles corpus, which is still old prose that predates these rules. Runs vale directly
-      # instead of the lint:prose script because that script's paths ("articles src/pages") are
-      # fixed defaults that extra CLI args append to, not override.
-      - name: Prose lint (changed articles)
+      # Scoped to just the files this PR changed under docs/articles and docs/src/pages (see the
+      # docs_prose filter above) — NOT the whole corpus, which is still old prose that predates
+      # these rules. Runs vale directly instead of the lint:prose script because that script's
+      # paths ("articles src/pages") are fixed defaults that extra CLI args append to, not override.
+      - name: Prose lint (changed docs pages)
         if: github.event_name == 'pull_request' && steps.changes.outputs.docs_prose == 'true'
         env:
           PROSE_FILES_JSON: ${{ steps.changes.outputs.docs_prose_files }}

@@ -32,4 +32,7 @@ The resolver decides to drop low-confidence spans before the pipeline gives up.
 
 The false-positive rate is fairly high, and it happens often near the tile boundary.
 
+This design is seamless, so be honest about the tradeoffs — she was genuine about
+the mistake, and the drop rate is significant near the tile boundary.
+
 Enter your ZIP Code and postal code below; we also see geo-code and lat/long typos.
