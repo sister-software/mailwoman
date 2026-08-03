@@ -229,23 +229,29 @@ const config: Config = {
 				// /img for use on lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
+			// The doors, in reading order. `docSidebar` items point at sidebar ids declared in
+			// sidebars.ts — the Product / Solutions / Resources doors land with their own tasks
+			// and are deliberately absent rather than stubbed, because a navbar entry pointing at
+			// an empty sidebar is a dead link with a label on it.
 			items: [
 				{
-					to: "/demo",
-					label: "Demo",
-					position: "left",
-				},
-				{
-					to: "/training",
-					label: "Training",
-					position: "left",
-				},
-				{
-					// Lands on the "Start here" section; the docs sub-header switches sections from there.
 					type: "docSidebar",
-					sidebarId: "startHere",
+					sidebarId: "developers",
 					position: "left",
 					label: "Docs",
+				},
+				{
+					type: "docSidebar",
+					sidebarId: "about",
+					position: "left",
+					label: "About",
+				},
+				{
+					// Direct doc link rather than a sidebar: pricing lives in the `about` sidebar for
+					// nav-tree membership, but a reader looking for the price wants one click.
+					to: "/docs/pricing",
+					label: "Pricing",
+					position: "left",
 				},
 				{
 					to: "/research",
@@ -253,19 +259,11 @@ const config: Config = {
 					position: "left",
 				},
 				{
-					to: "/glossary",
-					label: "Glossary",
-					position: "left",
-				},
-				{
-					to: "/docs/licensing/pricing/",
-					label: "Pricing",
-					position: "left",
-				},
-				{
-					to: "/docs/licensing/",
-					label: "Licensing",
-					position: "left",
+					// The call to action, styled as a button rather than a nav label.
+					to: "/demo",
+					label: "Try the demo",
+					position: "right",
+					className: "navbar__cta",
 				},
 				{
 					href: "https://github.com/sister-software/mailwoman",
@@ -285,18 +283,9 @@ const config: Config = {
 					],
 				},
 				{
-					title: "Docs",
-					items: [
-						{
-							label: "Roadmap",
-							href: "https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx",
-						},
-					],
-				},
-				{
 					title: "More",
 					items: [
-						{ label: "Pricing", to: "/docs/licensing/pricing/" },
+						{ label: "Pricing", to: "/docs/pricing" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
 					],

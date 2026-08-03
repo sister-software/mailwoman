@@ -1,0 +1,119 @@
+---
+title: Your first ten minutes
+description: What works the moment npm finishes, what still needs a download, and one command that tells you which is which.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Your first ten minutes
+
+Mailwoman arrives in two halves, and they become available at different times. Parsing works as soon
+as `npm install` finishes, because the model travels with the package. Geocoding does not, because
+the reference data it resolves against is far too large to ship on npm. By the end of this page
+you'll have run both checks and know exactly which half you have. About ten minutes, not counting
+the geocoding download.
+
+## Prerequisites
+
+- Node.js 24.18.0 or later, and roughly 750 MB of free disk for the install. The full
+  reasoning is in [Install and first parse](./install-and-first-parse.mdx#prerequisites).
+
+## 1. Install
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+```
+
+## 2. Ask it what it has
+
+`doctor` is the diagnostic to run before you debug anything else. It checks six things and, for each
+gap, prints the one command that closes it.
+
+```bash
+npx mailwoman doctor
+```
+
+On a fresh install with no address data on disk, that reads:
+
+```
+mailwoman doctor
+
+✓ Model weights (en-us): package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB,
+tokenizer.model 1.6 MB
+✓ Node runtime: node v26.2.0 (engines: >=24.18.0)
+✓ ONNX runtime: onnxruntime-node loadable
+✗ Data root: /tmp/mw-trial/mailwoman-data ($MAILWOMAN_DATA_ROOT) does not exist (optional)
+    fix: mkdir -p /tmp/mw-trial/mailwoman-data   (or set $MAILWOMAN_DATA_ROOT to an existing
+dir)
+✗ Admin gazetteer: no candidate.db or WOF shard found (probed 5 paths) (optional)
+    fix: curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+-o <data-root>/wof/candidate.db   (then: export
+MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)
+✗ POI layer: /tmp/mw-trial/mailwoman-data/poi/poi.db not found (optional)
+    fix: mailwoman gazetteer build poi   (or: curl -fSL
+https://public.sister.software/mailwoman/poi/2026-07-20a/poi.db -o
+/tmp/mw-trial/mailwoman-data/poi/poi.db)
+✗ Locale overlay (fr-fr): @mailwoman/neural-weights-fr-fr not installed (optional — only needed
+for fr-fr parsing) (optional)
+    fix: npm install @mailwoman/neural-weights-fr-fr
+
+PASS — core checks ok (weights + runtime); parse is ready
+```
+
+Four red crosses and it still exits `0`. That is the contract, not a bug: the exit code tracks the
+two core checks, weights and runtime. Everything marked `(optional)` is a data layer that parsing
+does not need, so a gap there is reported and costed rather than treated as a failure. The paths in
+your own output will name `$MAILWOMAN_DATA_ROOT`, which is wherever you point it.
+
+## 3. Parse something
+
+The green half is ready now. Follow
+[Install and first parse](./install-and-first-parse.mdx) for a ten-line script that turns
+`apt 4b 350 5th ave new york ny 10118` into a labeled tree, or check it from the shell:
+
+```bash
+npx mailwoman parse "350 5th Ave, New York, NY 10118"
+```
+
+```
+{
+  "region": "NY",
+  "locality": "New York",
+  "street": "5th",
+  "house_number": "350",
+  "street_suffix": "Ave",
+  "postcode": "10118"
+}
+```
+
+No coordinates in that output. Components, and no coordinates, is exactly the shape of a parser that
+has its model and not its gazetteer.
+
+## 4. Know which half you have
+
+**Parsing works out of the box.** Free text in, tagged components out — house number, street, unit,
+locality, region, postcode, and the rest. The model file travels inside
+`@mailwoman/neural-weights-en-us`, so there is nothing further to fetch and nothing to configure.
+French is one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
+
+**Geocoding needs the resolver database.** Turning `New York` into a
+latitude/longitude means looking it up, and the gazetteer that answers is a file you download once
+and keep. At the `2026-07-07a` build the admin gazetteer, `candidate.db`, is 1.65 GB. Your `doctor`
+output prints the exact URL and the environment variable to set once it lands — those two lines are
+the whole procedure, and they are generated from the build the CLI you installed knows about, so
+prefer them over any URL copied from a page.
+
+Point-of-interest search ("coffee near Honolulu") is a third layer with its own database, also
+optional, also reported by `doctor`.
+
+## What you have now
+
+A working parser, and a measured answer to what geocoding will cost you: one 1.65 GB download and an
+environment variable. You also have the command that will answer the same question again after any
+change to your install.
+
+## Next
+
+- [What ships today](../status.mdx) — versions, footprints, the locale tiers, and what is not
+  supported.
+- [What Mailwoman is](./what-mailwoman-is.mdx) — why the two halves are separate in the first place.

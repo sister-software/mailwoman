@@ -12,21 +12,18 @@
  *   Three checks:
  *
  *   1. Frontmatter validity — two modes, chosen by the `--strict` CLI flag:
- *        - Legacy (default, no flag): the ORIGINAL policy from `docs/articles/contributing-docs.mdx`
- *          — a page declaring `role:` must use the seven-role vocabulary
- *          (guide/tutorial/concept/reference/decision/evidence/landing) and carry that role's
- *          required fields; `role:` itself is required only on the entry pages, the canonical concept
- *          pages, and every recipe (`ROLE_REQUIRED_PAGES` / `ROLE_REQUIRED_DIRECTORIES`). A page
- *          declaring `status:` must use the record-class chrome vocabulary
- *          (`src/theme/DocItem/Content`). CI calls the script without `--strict` for now — the OLD
- *          content tree (still present) predates the six-role contract and would fail every-page
- *          enforcement wholesale.
- *        - Strict (`--strict`): the NEW six-role contract (`docs-frontmatter-contract.ts`,
- *          docs-reorg plan) — `role:` is required on EVERY published page, value ∈
+ *        - Strict (`--strict`) — THE LIVE MODE. Both CI (`.github/workflows/docs-build.yml`) and
+ *          `yarn workspace @mailwoman/docs lint:structure` pass the flag as of the docs-reorg
+ *          Task 5 skeleton cutover. It enforces the six-role contract
+ *          (`docs-frontmatter-contract.ts`): `role:` is required on EVERY published page, value ∈
  *          {tutorial, guide, reference, explanation, landing, evidence}, with role-conditional
- *          required fields (`validatePage`). Replaces the legacy vocabulary outright; does not layer
- *          on top of it. A later task flips the CI invocation to `--strict` once the old tree is
- *          gone.
+ *          required fields (`validatePage`).
+ *        - Legacy (default, no flag): the seven-role vocabulary the contract replaced
+ *          (guide/tutorial/concept/reference/decision/evidence/landing), required only on a
+ *          manifest of entry pages and every recipe (`ROLE_REQUIRED_PAGES` /
+ *          `ROLE_REQUIRED_DIRECTORIES`). Nothing invokes it now. It is kept because the pages it
+ *          describes still exist unpublished under `docs/records/site-2026-08/`, so pointing the
+ *          script at that tree remains a way to check them; delete it once nothing does.
  *   2. Exact duplicate `title:` frontmatter across the published site.
  *   3. Orphan pages — published docs absent from every sidebar in `docs/sidebars.ts`.
  *
@@ -340,7 +337,8 @@ for (const allowance of allowedDuplicateTitles) {
 if (failureCount > 0) {
 	console.error(
 		`\nDocs structure check FAILED (${failureCount} finding${failureCount === 1 ? "" : "s"}). ` +
-			`Policy: docs/articles/contributing-docs.mdx · allowlist: docs/scripts/docs-structure-allowlist.ts`
+			`Contract: docs/scripts/docs-frontmatter-contract.ts · voice + section rules: ` +
+			`docs/engineering/writing-system.md · allowlist: docs/scripts/docs-structure-allowlist.ts`
 	)
 
 	process.exit(1)

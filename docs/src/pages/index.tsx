@@ -13,26 +13,19 @@ function HomepageHeader(): ReactNode {
 	return (
 		<header className={clsx("hero", styles.heroBanner)}>
 			<div className="container">
-				<p className={styles.heroEyebrow}>Open source · No API key · Runs in your browser</p>
+				<p className={styles.heroEyebrow}>Open source · No API key · Runs in your process</p>
 				<Heading as="h1" className={styles.heroTitle}>
-					Still assembling a geocoder from spare parts?
+					An address parser and geocoder that runs where your code runs.
 				</Heading>
 				<p className={styles.heroSubtitle}>
-					Mailwoman parses, geocodes, and resolves messy records to real places — so you can stop stitching tools
-					together and get back to the problem you set out to solve.
+					Install it from npm, load a 39.4 MB model, and turn messy address text into labeled components and coordinates
+					— with no server to call and no address leaving your infrastructure.
 				</p>
 				<div className={styles.heroButtons}>
 					<Link className="button button--primary button--lg" to="/demo">
 						Try the demo
 					</Link>
-					<Link className="button button--secondary button--lg" to="/docs/getting-started">
-						Read the docs
-					</Link>
 				</div>
-				<p className={styles.heroWhy}>
-					Free to run yourself, forever — AGPL-3.0 open source, with a{" "}
-					<Link to="/docs/licensing/">commercial license</Link> if your legal team wants one.
-				</p>
 				<p className={styles.heroTransform}>
 					<span className={styles.heroIn}>"1600 Pennsylvania Ave NW"</span>
 					<span className={styles.heroArrow}>→</span>
@@ -44,61 +37,64 @@ function HomepageHeader(): ReactNode {
 	)
 }
 
-function Gallery(): ReactNode {
+/**
+ * The three-way fork. A visitor arrives wanting one of three things — to wire it up, to price it, or to see whether it
+ * works at all — and each card ends in exactly one link.
+ */
+function Fork(): ReactNode {
 	return (
 		<section className={styles.gallery}>
 			<div className="container">
 				<Heading as="h2" className={styles.galleryHeading}>
-					What you'd build with it
+					Where would you like to start?
 				</Heading>
-				<p className={styles.gallerySub}>
-					Recognizable jobs you've lost a week to, done without the assembly tax — and every one runs on open data you
-					can audit.
-				</p>
 				<div className={clsx("row", styles.galleryRow)}>
 					<div className="col col--4">
 						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>Parse</p>
-							<h3 className={styles.cardTitle}>Untangle any address line</h3>
+							<p className={styles.cardJob}>Build with it</p>
+							<h3 className={styles.cardTitle}>Three packages and ten lines</h3>
 							<p className={styles.cardBody}>
-								Paste a gnarly, half-formatted, mistyped address and watch the neural parser label every component —
-								house number, street, unit, city, postcode — across locales, live in the page.
+								Run <code>npm install</code>, load the English model, and parse your first address. Parsing works the
+								moment the install finishes — the model travels with the package, so there is nothing to configure and
+								no key to obtain.
 							</p>
 							<code className={styles.cardTransform}>
-								"Apt 4, 12 Rue de Rivoli, 75001 Paris" → unit·house·street·postcode·city
+								"apt 4b 350 5th ave new york ny 10118" → unit·house·street·city·postcode
 							</code>
 							<p className={styles.cardLinks}>
-								<Link to="/demo">Open the playground →</Link>
+								<Link to="/docs/developers/get-started/what-mailwoman-is">Start here →</Link>
 							</p>
 						</div>
 					</div>
 					<div className="col col--4">
 						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>Geocode</p>
-							<h3 className={styles.cardTitle}>Geocode on-device</h3>
+							<p className={styles.cardJob}>What it costs</p>
+							<h3 className={styles.cardTitle}>Free, or a flat license</h3>
 							<p className={styles.cardBody}>
-								Resolve an address to a real coordinate with no server, no API key, and no query leaving the machine. A
-								37.6 MB model — one download, a few seconds on ordinary broadband, cached after that — and a byte-ranged
-								global gazetteer do it in the tab.
+								AGPL-3.0 and free to run in production. A commercial license releases you from the source-sharing
+								condition for a flat $250 a month per company. There are no seats to count and no per-address fees,
+								because the software runs on your machines and reports nothing back.
 							</p>
-							<code className={styles.cardTransform}>"350 5th Ave, New York" → 40.7484, -73.9857 · rooftop</code>
+							<code className={styles.cardTransform}>2M addresses/month · $250 · 20M addresses/month · $250</code>
 							<p className={styles.cardLinks}>
-								<Link to="/demo">Try the demo</Link> ·{" "}
-								<Link to="/research/geocoding-that-never-phones-home">Read the field notes →</Link>
+								<Link to="/docs/pricing">See the pricing →</Link>
 							</p>
 						</div>
 					</div>
 					<div className="col col--4">
 						<div className={styles.galleryCard}>
-							<p className={styles.cardJob}>Match</p>
-							<h3 className={styles.cardTitle}>Match records by place, not spelling</h3>
+							<p className={styles.cardJob}>See it work</p>
+							<h3 className={styles.cardTitle}>The whole engine, in a browser tab</h3>
 							<p className={styles.cardBody}>
-								Resolve fragmented records with no shared key into entities. Block on the geocoded place, then match on
-								canonicalized names, with a calibrated score and an abstain band for review.
+								The demo is the product, not a mock of it: the same model and the same resolver, downloaded once and run
+								client-side. Type an address and watch it get labeled and placed. Nothing you type is transmitted
+								anywhere.
 							</p>
-							<code className={styles.cardTransform}>123 Main St + 123 Main Street Apt 2 → 1 entity</code>
+							<code className={styles.cardTransform}>
+								type an address → components, coordinate, and the source it came from
+							</code>
 							<p className={styles.cardLinks}>
-								<Link to="/research/same-building-different-company">Read the field notes →</Link>
+								<Link to="/demo">Open the demo →</Link>
 							</p>
 						</div>
 					</div>
@@ -172,67 +168,6 @@ function FeaturedWork(): ReactNode {
 	)
 }
 
-const COMPARE_ROWS: ReadonlyArray<[capability: string, ...cells: string[]]> = [
-	[
-		"Before your first query",
-		"npm install",
-		"PostgreSQL + planet import",
-		"Nominatim import + OpenSearch",
-		"Elasticsearch cluster + imports",
-		"create an account",
-	],
-	["API key", "none", "none", "none", "none", "required"],
-	["Monthly fee", "none", "none (self-host)", "none (self-host)", "none (self-host)", "metered"],
-	["Runs in the browser, offline", "✅", "—", "—", "—", "—"],
-	["Calibrated confidence per component", "✅", "—", "—", "heuristic", "varies"],
-]
-
-function Compare(): ReactNode {
-	return (
-		<section className={styles.compare}>
-			<div className="container">
-				<Heading as="h2" className={styles.galleryHeading}>
-					How it compares
-				</Heading>
-				<p className={styles.gallerySub}>
-					Good tools sit in every column here — several of them taught us the trade. The difference is what you stand up
-					before the first query, and what each answer carries with it.
-				</p>
-				<div className={styles.compareScroll}>
-					<table className={styles.compareTable}>
-						<thead>
-							<tr>
-								<th></th>
-								<th>Mailwoman</th>
-								<th>Nominatim</th>
-								<th>Photon</th>
-								<th>Pelias</th>
-								<th>Hosted APIs</th>
-							</tr>
-						</thead>
-						<tbody>
-							{COMPARE_ROWS.map(([capability, ...cells]) => (
-								<tr key={capability}>
-									<th scope="row">{capability}</th>
-									{cells.map((cell, i) => (
-										<td key={i}>{cell}</td>
-									))}
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-				<p className={styles.compareFootnote}>
-					Already running one of these? Mailwoman ships drop-in Nominatim-, Photon-, and libpostal-compatible APIs, so
-					your client code can stay put. The full capability matrix — including the rows where the other tools win — is
-					in <Link to="/docs/concepts/how-mailwoman-compares">How Mailwoman compares</Link>, with switching guides for
-					each.
-				</p>
-			</div>
-		</section>
-	)
-}
-
 function FeatureStrip(): ReactNode {
 	return (
 		<section className={styles.features}>
@@ -241,34 +176,33 @@ function FeatureStrip(): ReactNode {
 					<div className="col col--3">
 						<h3>Neural address parser</h3>
 						<p>
-							ONNX-runtime sequence classifier over a SentencePiece tokenizer. Emits BIO-labeled components (country /
-							region / locality / postcode / street / venue / …). Trained on a corpus stitched from TIGER, NAD, BAN,
-							OpenAddresses + curated rows. Ships per-locale weight bundles as separate npm packages.
+							A 6-layer encoder over a 73,143-piece SentencePiece vocabulary, quantized to int8 and executed on ONNX
+							Runtime. Emits 33 BIO labels over 16 component tags — country, region, locality, postcode, street, house
+							number, unit, venue and the rest — each with a confidence score.
 						</p>
 					</div>
 					<div className="col col--3">
-						<h3>WOF-backed resolver</h3>
+						<h3>Gazetteer-backed resolver</h3>
 						<p>
-							Parsed components are resolved to <a href="https://whosonfirst.org">Who&apos;s On First</a> place IDs +
-							WGS-84 coordinates via FTS5 + R*Tree over pre-indexed SQLite shards. Pure <code>node:sqlite</code>, no
-							SpatiaLite, no native build deps. Multi-shard ATTACH routes postcode queries to the postalcode shard
-							automatically.
+							Parsed components resolve to <a href="https://whosonfirst.org">Who&apos;s On First</a> place IDs and
+							WGS-84 coordinates over pre-indexed SQLite. Pure <code>node:sqlite</code> — no SpatiaLite, no native build
+							step. The gazetteer is a 1.65 GB download you keep, not a service you call.
 						</p>
 					</div>
 					<div className="col col--3">
-						<h3>Pure-TypeScript runtime</h3>
+						<h3>Node and the browser</h3>
 						<p>
-							Mailwoman runs on Node 22+ and, as the <Link to="/demo">live demo</Link> shows, entirely in the browser —
-							the classifier on <code>onnxruntime-web</code>, the resolver on <code>sql.js-httpvfs</code> over a
-							byte-ranged gazetteer. The same pipeline client-side, no API server.
+							Node 24.18 or later, and the same pipeline in a browser tab: the classifier on{" "}
+							<code>onnxruntime-web</code>, the resolver on WASM SQLite over a byte-ranged gazetteer. The{" "}
+							<Link to="/demo">demo</Link> is that build, not a hosted API behind a text box.
 						</p>
 					</div>
 					<div className="col col--3">
-						<h3>Spatial tools for agents</h3>
+						<h3>Drop-in and agent surfaces</h3>
 						<p>
-							A <code>poi_query</code> kind and a sealed <code>poi.db</code> resolve category searches ("coffee near
-							Honolulu") the way address queries resolve. <code>@mailwoman/mcp</code> exposes the same parse / geocode /
-							POI-search toolset to any MCP-compatible agent over stdio. On npm since <code>7.2.1</code>.
+							Nominatim-, Photon- and libpostal-compatible servers answer on the shapes your client code already speaks,
+							so a migration can be a hostname change. <code>@mailwoman/mcp</code> exposes parse, geocode and POI search
+							to any MCP-compatible agent over stdio.
 						</p>
 					</div>
 				</div>
@@ -288,37 +222,38 @@ function QuickStart(): ReactNode {
 						<CodeBlock language="bash">
 							npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
 						</CodeBlock>
-						<CodeBlock language="ts">
+						<CodeBlock language="js">
 							{`import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const lookup = new WOFSqlitePlaceLookup({ databasePath: "./wof.sqlite" })
-const parse = createRuntimePipeline({ classifier, resolver: createWOFResolver(lookup as unknown as ResolverBackend) })
+const parse = createRuntimePipeline({ classifier })
 
-const result = await parse("1600 Pennsylvania Ave NW, Washington DC")
-// → house_number "1600" · street "Pennsylvania Ave NW" · locality "Washington" · region "DC"
-//   …and with the resolver attached, each resolved node carries coordinates + its source:
-//   locality "Washington" → lat 38.90, lon -77.04 · src resolver:locality`}
+const result = await parse("apt 4b 350 5th ave new york ny 10118")
+// result.tree.roots — nested by geographic containment:
+//   region "NY" › locality "New York" › street "5TH"
+//     › unit "Apt 4B" · house_number "350" · street_suffix "Ave"
+//   …and postcode "10118" under the locality`}
 						</CodeBlock>
 					</div>
 					<div className="col col--6">
 						<h4>CLI</h4>
-						<CodeBlock language="bash">{`# parse + resolve in one shot
-MAILWOMAN_WOF_DB=/path/to/wof.db npx mailwoman parse \\
-  --neural --resolve --format xml \\
-  "Springfield, Illinois"`}</CodeBlock>
-						<CodeBlock language="xml">
-							{`<address raw="Springfield, Illinois">
-  <region src="resolver:region:85688697" lat="40.27" lon="-89.19">Illinois
-    <locality src="resolver:locality:85940429"
-              lat="39.80" lon="-89.65"
-              place="wof:85940429">Springfield</locality>
-  </region>
-</address>`}
+						<CodeBlock language="bash">{`npx mailwoman parse "350 5th Ave, New York, NY 10118"`}</CodeBlock>
+						<CodeBlock language="json">
+							{`{
+  "region": "NY",
+  "locality": "New York",
+  "street": "5th",
+  "house_number": "350",
+  "street_suffix": "Ave",
+  "postcode": "10118"
+}`}
 						</CodeBlock>
+						<p>
+							No coordinates in that output, because geocoding needs the gazetteer.{" "}
+							<Link to="/docs/developers/get-started/ten-minute-trial">Your first ten minutes</Link> covers what you get
+							out of the box and what still needs a download.
+						</p>
 					</div>
 				</div>
 			</div>
@@ -332,13 +267,12 @@ export default function Home(): ReactNode {
 	return (
 		<Layout
 			title={title}
-			description="TypeScript-first address parser + geocoder. No API key, no server required — neural parser + open-data resolver, in Node or entirely in your browser."
+			description="An address parser and geocoder that runs in your own process. No API key, no server — a neural parser plus an open-data resolver, in Node or entirely in your browser."
 		>
 			<HomepageHeader />
 			<main>
-				<Gallery />
+				<Fork />
 				<FeaturedWork />
-				<Compare />
 				<FeatureStrip />
 				<QuickStart />
 			</main>

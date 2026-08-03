@@ -1,10 +1,16 @@
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
- * @file Pricing tier cards + OEM band for the licensing pricing page (GTM A3b).
+ * @file Pricing tier cards + OEM band for the pricing page (GTM A3b).
  *
- *   Presentation only — every sentence of copy lives in
- *   `docs/articles/licensing/pricing.mdx`, which remains the ratified source.
+ *   Presentation only — no copy lives here.
+ *
+ *   UNMOUNTED as of the docs-reorg Task 5 skeleton cutover. Its only consumer was the old
+ *   `licensing/pricing.mdx`, which is now parked unpublished under
+ *   `docs/records/site-2026-08/licensing/pricing.mdx`; the live page is `docs/articles/pricing.mdx`
+ *   and it renders the tiers as prose. Kept rather than deleted because the card styling is real
+ *   work and the Product door lands later — mount it there, and take the tier figures from the live
+ *   page, which is the ratified wording.
  */
 
 import type { ReactNode } from "react"

@@ -127,15 +127,22 @@ jobs:
           # hangs through the lab's degraded path (multiple 20m job-budget deaths in Setup Node) and
           # is redundant — .yarnrc.yml's enableGlobalCache serves installs offline on the runners.
 
-      # Fast structural gate (docs-architecture cleanup, Phase 4): frontmatter vocabulary +
+      # Fast structural gate (docs-architecture cleanup, Phase 4): frontmatter contract +
       # required fields, exact duplicate titles, orphan pages. Static parse over node built-ins
       # only — no install, no build — so a structural regression fails in seconds instead of
-      # after the full Docusaurus build. Policy: docs/articles/contributing-docs.mdx.
+      # after the full Docusaurus build.
+      #
+      # --strict since the docs-reorg Task 5 skeleton cutover: the flag selects the six-role
+      # frontmatter contract (docs/scripts/docs-frontmatter-contract.ts) and enforces `role:` on
+      # EVERY published page, rather than the legacy seven-role vocabulary that only required one
+      # on a manifest of entry pages. It was held off until the old tree left docs/articles/,
+      # because that corpus predated the contract and failed the check wholesale. Voice and
+      # section rules that the gate cannot see live in docs/engineering/writing-system.md.
       # (--disable-warning: sidebars.ts is format-ambiguous — the docs workspace can't carry
       # type:module without breaking the Docusaurus SSR bundle; see docs/scripts/package.json.)
       - name: Docs structure checks
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
-        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check-docs-structure.ts
+        run: node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON docs/scripts/check-docs-structure.ts --strict
 
       - name: Enable Corepack (yarn 4)
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'

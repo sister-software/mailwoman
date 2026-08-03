@@ -1,0 +1,129 @@
+---
+title: What ships today
+description: Versions, packages, model artifacts, locale coverage, and the limits — as of Mailwoman 8.7.0.
+role: reference
+source-of-truth: package.json versions + `mailwoman doctor` + the eval ledger at evals/scores-by-version.json
+---
+
+# What ships today
+
+## Scope
+
+This page records what the current release contains: the version, the packages a consumer installs,
+the model artifacts and their measured sizes, the locales that carry a claim, and the limits. It
+does not record per-tag accuracy. Those numbers live in the eval ledger
+([`evals/scores-by-version.json`](https://github.com/sister-software/mailwoman/blob/main/evals/scores-by-version.json))
+and in the dated eval reports beside it.
+
+Every artifact size below was measured on 2026-08-03 against the files this release publishes.
+
+## Version
+
+Every published workspace releases in lockstep on one version number, the model bundles included. A
+weights package version therefore tracks the release, not the model's own lineage.
+
+| Fact                | Value                                                                    |
+| ------------------- | ------------------------------------------------------------------------ |
+| Release             | `8.7.0`                                                                  |
+| Model version       | `7.0.0` — the from-scratch base retrain, unchanged since release `8.3.0` |
+| Node floor          | `>=24.18.0` (the `engines` field on every published package)             |
+| Module format       | ESM only                                                                 |
+| License             | `AGPL-3.0-only OR LicenseRef-Commercial`                                 |
+| What npm serves now | `npm view mailwoman version`. Check it rather than trusting this page    |
+
+## Packages
+
+These are the packages a consumer installs directly. The remaining workspaces are pipeline stages
+and build tooling, and they arrive as dependencies rather than as something you name.
+
+| Package                                                             | What it is                                                                                                      |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `mailwoman`                                                         | The CLI and `createRuntimePipeline`, the recommended entry point                                                |
+| `@mailwoman/neural`                                                 | The inference runtime: SentencePiece tokenizer, ONNX execution, decoder wiring                                  |
+| `@mailwoman/neural-weights-<locale>`                                | The model bundles. Data only. Published: `en-us`, `fr-fr`, `en-gb`, `en-nz`, `de-de`, `es-es`, `it-it`, `en-in` |
+| `@mailwoman/core`                                                   | Tokenization, decoder, calibration, the policy registry, and the bundled reference data                         |
+| `@mailwoman/resolver`                                               | Walks a parsed tree and decorates it with coordinates and attribution                                           |
+| `@mailwoman/resolver-wof-sqlite`                                    | The Node gazetteer backend, over `node:sqlite`                                                                  |
+| `@mailwoman/neural-web`                                             | The browser inference runtime, over `onnxruntime-web`                                                           |
+| `@mailwoman/resolver-wof-wasm`                                      | The browser gazetteer backend, over `@sqlite.org/sqlite-wasm`                                                   |
+| `@mailwoman/api`                                                    | The native HTTP surface: `/v1/parse`, `/geocode`, `/batch`, `/resolve`, `/format`                               |
+| `@mailwoman/nominatim`, `@mailwoman/photon`, `@mailwoman/libpostal` | Drop-in servers that answer on the shapes those tools already use                                               |
+| `@mailwoman/mcp`                                                    | An MCP server exposing parse, geocode, and POI search to agents over stdio                                      |
+
+## Model artifacts
+
+`@mailwoman/neural-weights-en-us` publishes 16 files totalling 73,796,933 bytes (73.8 MB). The six
+that account for the size:
+
+| File                               | Bytes      | Size    | What it is                         |
+| ---------------------------------- | ---------- | ------- | ---------------------------------- |
+| `model.onnx`                       | 39,419,629 | 39.4 MB | The int8-quantized model, opset 17 |
+| `fst-en-us.bin`                    | 21,757,160 | 21.8 MB | The gazetteer prior index          |
+| `locality-surface-lexicon-v6.json` | 7,346,004  | 7.3 MB  | Locality surface forms             |
+| `postcode-us.bin`                  | 1,904,322  | 1.9 MB  | The US postcode anchor table       |
+| `tokenizer.model`                  | 1,632,289  | 1.6 MB  | The SentencePiece model            |
+| `pair-index-us.bin`                | 1,293,031  | 1.3 MB  | The locality/region pair index     |
+
+Structure of the model itself, from its model card:
+
+| Property                | Value                                   |
+| ----------------------- | --------------------------------------- |
+| Encoder                 | 6 layers, 384 hidden, 6 attention heads |
+| Maximum sequence length | 128 tokens                              |
+| Tokenizer vocabulary    | 73,143 SentencePiece pieces             |
+| Output labels           | 33 BIO labels over 16 component tags    |
+| Quantization            | int8 dynamic, quantized from fp32       |
+
+The gazetteer is a separate download and is not part of any npm package. At the `2026-07-07a` build
+the admin gazetteer, `candidate.db`, is 1,652,916,224 bytes (1.65 GB). Run `mailwoman doctor` for
+the current URL rather than copying one from a page.
+
+## Locales
+
+The tiers below are the scope declaration of 2026-07-02, reproduced from
+[`docs/engineering/SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx),
+which is where they are maintained. A locale is claimed only where a coordinate-graded evaluation
+exists for it, so trained exposure and a claim are different things.
+
+| Tier | Locales                                                | What the tier means                                                              |
+| ---- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| 1    | US, FR                                                 | First-class. Per-tag floors gated in the release process, plus real-world slices |
+| 2    | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Trained, with a per-locale coordinate panel behind the claim                     |
+| 3    | NO, SE                                                 | Trained exposure, thinly measured. Claims beyond the panel are unverified        |
+| 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in `5.1.0`                     |
+| 5    | JP                                                     | Resolver route only — postcode resolution, with no parser training claim         |
+
+Queued behind an external constraint rather than an engineering one: GB, IE, SE, HU and RO corpora
+via OpenStreetMap, which is gated on the share-alike review; and KR, which has no adopted open data
+path.
+
+## Limits
+
+Each row states the limit and the next step. Where a limit is a default rather than an absence, the
+next step turns it on.
+
+| Limit                                                                                      | Next step                                                                                                     |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Geocoding requires the gazetteer database. Parsing does not.                               | Download it once. `mailwoman doctor` prints the URL and the variable to set.                                  |
+| Confidence scores are uncalibrated by default. The shipped model is under-confident.       | Wire `createCalibrator` from `@mailwoman/core/decoder` with the bundled `calibration.json`.                   |
+| The resolver stage has no default. `createRuntimePipeline` parses only until you pass one. | Pass `resolver:` a `createWOFResolver` instance backed by `@mailwoman/resolver-wof-sqlite`.                   |
+| One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                 |
+| Korean addresses have no parser claim, and no open data path has been adopted.             | None today. The constraint is data licensing, not engineering.                                                |
+| CJK scripts route through a character-level path that is scaffolded and deferred.          | Use the resolver route for JP postcodes; do not rely on a parse claim.                                        |
+| Published packages carry no sigstore provenance attestation.                               | Verify with the published SBOMs instead. See [Security and compliance](../about/security-and-compliance.mdx). |
+
+## Rationale
+
+Lockstep versioning means one number answers "which release do I have" across every package at once,
+including the weights. The cost is that the release number says nothing about the model: most
+releases are code-only, so `8.7.0` and `8.4.0` carry the same model `7.0.0`. The model card inside
+each weights package carries the lineage.
+
+The gazetteer stays outside npm because it is 1.65 GB. A registry tarball of that size would be paid
+for by every consumer who wanted only the parser.
+
+## See also
+
+- [Your first ten minutes](./get-started/ten-minute-trial.mdx) — running `doctor` against your own install.
+- [Security and compliance](../about/security-and-compliance.mdx) — the network boundary, licensing, and SBOMs.
+- [Support](./support.mdx) — where to report something this page got wrong.

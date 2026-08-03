@@ -1,0 +1,139 @@
+---
+title: Install Mailwoman and parse your first address
+description: Install three packages, write ten lines of Node, and read a messy address back as a labeled tree.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Install Mailwoman and parse your first address
+
+By the end of this page you'll have a Node script that takes a lowercase, comma-free, unit-first
+address and prints it back as a tree of labeled components with a confidence score on each one. No
+API key, no server, no account. About ten minutes, most of it waiting on the download.
+
+## Prerequisites
+
+Read these before you start — two of them will stop you partway through if they don't hold.
+
+- **Node.js 24.18.0 or later.** Mailwoman's published packages ship TypeScript source alongside the
+  compiled output, and the `engines` floor is `>=24.18.0`. Check with `node --version`.
+- **About 750 MB of free disk.** Measured on Linux x64 on 2026-08-03, the three packages below plus
+  their dependencies land 746 MB in `node_modules`. 500 MB of that is `onnxruntime-node`'s prebuilt
+  binaries and 74 MB is the English model package. This is a one-time cost per project, not per
+  parse.
+- **An ESM project.** The packages are ESM-only. Either put `"type": "module"` in your
+  `package.json` or name the script file `.mjs`, as this page does.
+
+## 1. Install
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us
+```
+
+Three packages, three jobs: `mailwoman` is the pipeline and the CLI, `@mailwoman/neural` is the
+runtime that executes the model, and `@mailwoman/neural-weights-en-us` is the English model itself —
+a 39.4 MB ONNX file plus its tokenizer and lookup tables, 73.8 MB unpacked across 16 files.
+
+Nothing here runs an install script of ours, so nothing phones anywhere during the install beyond
+npm fetching tarballs.
+
+## 2. Write the script
+
+Save this as `parse.mjs`.
+
+```js
+import { createRuntimePipeline } from "mailwoman"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const parse = createRuntimePipeline({ classifier })
+
+const result = await parse("apt 4b 350 5th ave new york ny 10118")
+
+console.log("input:", result.input)
+console.log("locale:", result.locale.locale)
+console.log("kind:", result.kind.kind)
+console.log()
+
+function print(node, depth = 0) {
+	const pad = "  ".repeat(depth)
+	console.log(`${pad}${node.tag}: "${node.value}"  (confidence ${node.confidence.toFixed(2)})`)
+	for (const child of node.children) print(child, depth + 1)
+}
+
+for (const root of result.tree.roots) print(root)
+```
+
+`createRuntimePipeline` is the entry point to reach for. It wires the whole staged pipeline —
+normalization, structural analysis, locale detection, phrase grouping, the model, and the resolver
+if you give it one — and hands back a single async function. The classifier is the one stage with no
+default, because the model is a separate download; everything else has a production default already
+wired.
+
+The address is deliberately awful: lowercase, no commas, and the unit in front of the house number.
+
+## 3. Run it
+
+```bash
+node parse.mjs
+```
+
+```
+input: apt 4b 350 5th ave new york ny 10118
+locale: en-US
+kind: structured_address
+
+region: "NY"  (confidence 0.91)
+  locality: "New York"  (confidence 0.93)
+    street: "5TH"  (confidence 0.93)
+      unit: "Apt 4B"  (confidence 0.86)
+      house_number: "350"  (confidence 0.91)
+      street_suffix: "Ave"  (confidence 0.92)
+    postcode: "10118"  (confidence 0.91)
+```
+
+Loading the model took 1,480 ms and the first parse 697 ms on the machine this page was verified on;
+the next twenty parses on the same `parse` function averaged 13.8 ms each. Build the pipeline once
+and keep it, rather than rebuilding it per request.
+
+## 4. Read the tree
+
+Three things in that output are worth knowing before you write code against it.
+
+**It is a tree, not a flat record.** `result.tree.roots` is an array of top-level nodes, and each
+node has `tag`, `value`, `confidence`, and `children`. The nesting is geographic containment: `NY`
+contains `New York`, which contains the street and the postcode, and the street contains the house
+number, the unit, and the suffix. If you want a flat record, walk the tree and collect by `tag` —
+the shape above is what containment looks like, and flattening it is your choice rather than a
+default the parser makes for you.
+
+**The confidence is the model's own score, and it is not calibrated by default.** Read `0.91` as
+"the model scored this span 0.91", not as "this span is right 91% of the time". A calibration fit
+ships in the same weights package (`calibration.json`), and you apply it by wiring `createCalibrator`
+from `@mailwoman/core/decoder`; leaving it out keeps the parse output byte-stable, which is why it is
+off by default. The difference is measurable and it runs in one direction: on the held-out set this
+model is under-confident, mean confidence 0.913 against 0.980 accuracy, and the fit moves expected
+calibration error from 0.0698 to 0.0017. If you plan to route on the number — send everything under
+0.8 to human review, say — wire the calibrator first, because the uncalibrated score will send you
+more work than the error rate warrants.
+
+**Values come back repaired, not as typed.** The input said `apt 4b` and the output says `Apt 4B`;
+the ordinal `5th` comes back as `5TH`. Hand the same address in mixed case with commas and the
+repair leaves the casing alone. If you need the exact characters the user typed, keep your own copy
+of the input string — `result.input` has it.
+
+Two more fields on `result` are worth a look when you get there: `result.locale` records which
+locale the pipeline decided to run under, and `result.kind` records what shape of query it thought
+it had (`structured_address` here, versus `postcode_only`, `po_box`, `intersection`, and others).
+
+## What you have now
+
+A parser running in your own process, with no service dependency, that turns free-text addresses
+into labeled components with confidence scores you can route on. It does not yet produce
+coordinates: that needs a gazetteer database, which is a separate download.
+
+## Next
+
+- [Your first ten minutes](./ten-minute-trial.mdx) — what works out of the box, what doesn't yet,
+  and how to check your install.
+- [What ships today](../status.mdx) — the per-locale picture and the known gaps.

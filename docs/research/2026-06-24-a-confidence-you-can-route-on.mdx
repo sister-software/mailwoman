@@ -16,7 +16,7 @@ That's the gap we set out to close. Every geocoder chases accuracy, be-right-mor
 
 Think about a weather forecaster. A good one who says "70% chance of rain" is right on about seven of every ten days they say it. That's the whole contract: the number means what it says. A neural model makes the same promise implicitly every time it hands you a softmax probability, and for a long while ours quietly broke it, confident in some bands and timid in others, with no single number you could lean on.
 
-We fixed that part first (it's [its own story](/docs/concepts/confidence-calibration)). The short version: a small post-hoc correction maps the model's raw confidence onto an honest one, so when a parsed span reads `conf="0.94"` it's right about 94% of the time, measured on addresses the fit never saw. When the model says it's sure, now you can believe it.
+We fixed that part first (it's [its own story](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/confidence-calibration.mdx)). The short version: a small post-hoc correction maps the model's raw confidence onto an honest one, so when a parsed span reads `conf="0.94"` it's right about 94% of the time, measured on addresses the fit never saw. When the model says it's sure, now you can believe it.
 
 A calibrated number per _span_ still isn't a number you can act on per _answer_, though. So we carried it the last step, to the resolved coordinate.
 

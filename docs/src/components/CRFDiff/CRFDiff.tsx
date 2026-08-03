@@ -32,7 +32,8 @@ import styles from "./styles.module.css"
  * ILLUSTRATIVE, not shipped: the soft scores (+1.5, +2.0, …) show what a learned transition matrix would look like.
  * Mailwoman's shipped decoder uses only the structural BIO mask (0 for valid transitions, −∞ for invalid) — no learned
  * transition scores train or ship (first CE-only at v0.5.0, permanent from v0.6.3 on; see
- * docs/articles/concepts/crf-decoder.mdx). The −∞ row is the part that matches production.
+ * docs/records/site-2026-08/concepts/crf-decoder.mdx, parked unpublished by the docs-reorg Task 5 cutover). The −∞ row
+ * is the part that matches production.
  *
  * Key insight:
  *
