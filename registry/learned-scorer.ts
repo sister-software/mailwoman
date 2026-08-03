@@ -11,7 +11,7 @@
  *        evals), and inference time (here). A pair → one-hot of each comparison's agreement level +
  *        the over-merge interaction terms (co-located × name/org disagreement) + address
  *        crowdedness.
- *   2. {@link createGbtScorer} — wraps a trained {@link GBT} + the featurizer into the `(a, b) => number`
+ *   2. {@link createGBTScorer} — wraps a trained {@link GBT} + the featurizer into the `(a, b) => number`
  *        the resolve pipeline's `scorer` hook expects (a logit, threshold-comparable with the
  *        Fellegi-Sunter weight it replaces).
  *
@@ -130,7 +130,7 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
  * weight is the model's logit — same threshold-comparable units as the Fellegi-Sunter weight it replaces, so the
  * pipeline's clustering + threshold semantics are unchanged.
  */
-export function createGbtScorer(
+export function createGBTScorer(
 	config: LearnedFeatureConfig & { model: GBT }
 ): (a: SourceRecord, b: SourceRecord) => number {
 	const featurize = createMatchFeaturizer(config)

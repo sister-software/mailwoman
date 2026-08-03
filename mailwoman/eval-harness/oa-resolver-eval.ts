@@ -137,7 +137,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Write per-row failure dump here.
 	 */
-	errorsJson?: string
+	errorsJSON?: string
 	/**
 	 * Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`.
 	 */
@@ -177,7 +177,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Write the aggregate JSON dump here.
 	 */
-	outJson?: string
+	outJSON?: string
 	/**
 	 * Also write the markdown report here (self-reporting safeguard).
 	 */
@@ -1097,7 +1097,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// Per-row failure dump (--errors-json): one record per row where neural OR v0 missed locality,
 	// carrying each parser's resolved admin names so failures can be bucketed offline (resolve-wrong
 	// vs unresolved vs neural-only vs v0-only). Aggregates are unaffected.
-	const collectErrors = !!(options.errorsJson || "")
+	const collectErrors = !!(options.errorsJSON || "")
 	const errorRows: Record<string, unknown>[] = []
 
 	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (scripts/eval/pip-containment.py).
@@ -1321,9 +1321,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	}
 
 	if (collectErrors) {
-		writeFileSync(options.errorsJson || "", JSON.stringify(errorRows, null, 2))
+		writeFileSync(options.errorsJSON || "", JSON.stringify(errorRows, null, 2))
 
-		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJson || ""}`)
+		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJSON || ""}`)
 	}
 
 	if (collectRows) {
@@ -1371,7 +1371,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		console.error(`wrote markdown → ${options.outMd || ""}`)
 	}
 
-	if (options.outJson || "") {
+	if (options.outJSON || "") {
 		const dump = (g: { overall: Agg; byState: Map<string, Agg> }) => ({
 			overall: { ...g.overall, errs: undefined, errN: g.overall.errs.length },
 			coord: {
@@ -1382,9 +1382,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
 
-		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
+		writeFileSync(options.outJSON || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
 
-		console.error(`wrote json → ${options.outJson || ""}`)
+		console.error(`wrote json → ${options.outJSON || ""}`)
 	}
 
 	postcodeLookup?.close()

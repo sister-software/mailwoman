@@ -233,7 +233,7 @@ async function main(): Promise<void> {
 	const trimmed = rows.slice(0, n)
 
 	mkdirSync(dirname(out), { recursive: true })
-	writeFileSync(out, trimmed.map((r) => pyJSONDumps(r, { ensureAscii: false }) + "\n").join(""))
+	writeFileSync(out, trimmed.map((r) => pyJSONDumps(r, { ensureASCII: false }) + "\n").join(""))
 
 	process.stderr.write(
 		`wrote ${trimmed.length} ${country.toUpperCase()} rows across ${buckets.size} buckets -> ${out}\n`

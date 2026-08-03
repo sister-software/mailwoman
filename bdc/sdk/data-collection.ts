@@ -12,8 +12,8 @@ import type { BroadbandServicableLocationID } from "./location.ts"
  * Snake_case identifier for a US State or Territory.
  *
  * Loosely typed as `string` for now. The Nexus original derived this from `StateName` (via `@isp.nexus/tiger`); this
- * port drops that dependency since 2a doesn't consume the literal union anywhere. Task 2c tightens this against
- * `@mailwoman/tiger`'s `StateName` if a downstream dictionary needs it.
+ * port drops that dependency since nothing here consumes the literal union. Tighten it against `@mailwoman/tiger`'s
+ * `StateName` if a downstream dictionary ever needs it.
  *
  * @category FCC
  * @title FCC State Identifier

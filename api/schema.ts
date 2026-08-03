@@ -6,9 +6,9 @@
  *   Zod wire schemas for the native `/v1` surface. Unlike the drop-ins (photon, nominatim,
  *   libpostal), nothing here is a vendor contract — this surface is ours to design, so request
  *   bodies are REQUIRED and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
- *   on the app (wired in Task 3) maps validation failures through the shared `APIErrorSchema`
- *   envelope (`apiError(c, 400, "invalid request body", <zod summary>)`) — the documented pattern
- *   boundary from phase 2: where no legacy contract exists, the validator MAY speak, but only in
+ *   on the app maps validation failures through the shared `APIErrorSchema` envelope
+ *   (`apiError(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
+ *   surface holds to: where no legacy contract exists, the validator MAY speak, but only in
  *   our envelope.
  *
  *   `APIErrorSchema` itself is owned by `@mailwoman/api-kit` (plumbing shared by every native

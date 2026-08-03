@@ -31,6 +31,42 @@ const config = createOxlintConfig({
 		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
+	// An acronym is capitalized as a whole camelCase component: `parseJSON`, `POILookup`,
+	// `createWOFResolver`. The shipped list covers general programming vocabulary; everything below is
+	// this project's own, and the list is worth widening on sight — `outHtml` sat in three sibling
+	// files for months because a hand-maintained list only contains the acronyms someone thought to add.
+	acronymCasing: {
+		extraAcronyms: [
+			"BIO",
+			"CRF",
+			"DMS",
+			"FST",
+			"GBT",
+			"GERS",
+			"MCP",
+			"MGRS",
+			"NUTS",
+			"NZ",
+			"ONNX",
+			"OSM",
+			"POI",
+			"WOF",
+			"ZCTA",
+		],
+		// Names whose casing is not ours to choose. Prefer a scoped disable comment at the one site
+		// that needs it — an entry here silently covers every future declaration of the same name.
+		ignoreNames: [
+			// kysely's own dialect classes are `SqliteAdapter`/`SqliteDialect`/`SqliteDriver`; ours
+			// implement its interfaces and read as a matched pair only if they follow suit.
+			"SqliteAdapter",
+			"SqliteDialect",
+			"SqliteDialectConfig",
+			"SqliteDriver",
+			// `LedgerAppendOptions` receives the Pastel option bag verbatim — its fields ARE the
+			// `--run-id` flag names, and the house form is derived at the boundary.
+			"runId",
+		],
+	},
 	ignorePatterns: [
 		...DefaultIgnorePatterns,
 		".pi",

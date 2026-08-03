@@ -133,8 +133,8 @@ export function DemoControls({
 				activeIndex={autocomplete.activeIndex}
 				onPick={autocomplete.pick}
 				onHover={autocomplete.setActiveIndex}
-				listboxId={autocomplete.listboxId}
-				optionId={autocomplete.optionId}
+				listboxID={autocomplete.listboxID}
+				optionID={autocomplete.optionID}
 			/>
 
 			<PresetChips

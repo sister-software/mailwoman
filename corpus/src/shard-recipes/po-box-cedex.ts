@@ -20,9 +20,9 @@
  *   locality-hash holdout (hash%10===0).
  *
  *   Prerequisites (read once, before the generation loop — these do NOT consume `random`): the cached
- *   OA zips in /tmp/oa-cache, the GeoNames Canada dump at /tmp/geonames-cache/CA.zip, and the
- *   GeoNames POSTAL-CODE dumps for AU/NZ (/tmp/geonames-cache/{AU,NZ}-postal.zip). See the legacy
- *   script header for the exact curl commands.
+ *   OA zips in `$MAILWOMAN_DATA_ROOT/oa-cache`, the GeoNames Canada dump at
+ *   `$MAILWOMAN_DATA_ROOT/geonames/CA.zip`, and the GeoNames POSTAL-CODE dumps for AU/NZ
+ *   (`$MAILWOMAN_DATA_ROOT/geonames-postal/{AU,NZ}.zip`).
  *
  *   Byte-fidelity: the legacy script seeded its own mulberry32 from `--seed`
  *   (`mulberry32(opts.seed)`); this recipe re-creates the SAME generator
@@ -35,8 +35,9 @@ import { spawnSync } from "node:child_process"
 import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
-import { isNzDeliveryService, isNzPostcode } from "@mailwoman/codex/nz"
+import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { alignRow } from "../align.ts"
 import {
@@ -45,7 +46,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "../synthesize-po-box.ts"
-import { makeMulberry32, shardSourceID, splitCSV, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
@@ -58,20 +59,29 @@ import { makeMulberry32, shardSourceID, splitCSV, type CanonicalShardRow, type S
    extracted as named constants above. */
 
 const US_TRAIN_SOURCES = [
-	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__dc__statewide.zip", csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", region: "IL" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
+	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
+	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
+	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
+	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
 ]
 
-const US_EVAL_SOURCE = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
-const FR_SOURCE = { zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }
-const GEONAMES_CA = "/tmp/geonames-cache/CA.zip"
-const GEONAMES_POSTAL_AU = { zip: "/tmp/geonames-cache/AU-postal.zip", txt: "AU.txt" }
-const GEONAMES_POSTAL_NZ = { zip: "/tmp/geonames-cache/NZ-postal.zip", txt: "NZ.txt" }
+const US_EVAL_SOURCE = {
+	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+	csv: "us/vt/statewide.csv",
+	region: "VT",
+}
+
+const FR_SOURCE = { zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }
+// GeoNames has two per-country exports with different schemas, and this recipe reads both. The MAIN
+// dump (feature class + population columns) lives under `geonames/`; the POSTAL-CODE dump lives
+// under `geonames-postal/`, where the directory carries the "postal" distinction the filename used
+// to.
+const GEONAMES_CA = dataRootPath("geonames", "CA.zip")
+const GEONAMES_POSTAL_AU = { zip: dataRootPath("geonames-postal", "AU.zip"), txt: "AU.txt" }
+const GEONAMES_POSTAL_NZ = { zip: dataRootPath("geonames-postal", "NZ.zip"), txt: "NZ.txt" }
 
 /**
  * ── Surface vocabulary (codex + corpus templates — see the header) ──────────────────────────────.
@@ -172,20 +182,20 @@ interface USTuple {
 	postcode: string
 }
 
-interface FrTuple {
+interface FRTuple {
 	house_number: string
 	street: string
 	locality: string
 	postcode: string
 }
 
-interface AuTuple {
+interface AUTuple {
 	locality: string
 	region: string
 	postcode: string
 }
 
-interface NzTuple {
+interface NZTuple {
 	locality: string
 	postcode: string
 }
@@ -231,38 +241,24 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string) => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const locality = get(cells, iCity)
+	for (const row of readCSVRecords(r.stdout)) {
+		const locality = row.city ?? ""
 
 		if (!cleanLocality(locality)) continue
 		const key = locality.toLowerCase()
 
-		const street = get(cells, iStreet),
-			house_number = get(cells, iNum)
+		const street = row.street ?? "",
+			house_number = row.number ?? ""
 
 		// One tuple per (locality, street) pair keeps the pool varied without ballooning memory.
 		const pairKey = `${key}|${street}`.toLowerCase()
 
 		if (seen.has(pairKey)) continue
 		seen.add(pairKey)
-		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost) })
+		tuples.push({ house_number, street, locality, region: source.region, postcode: row.postcode ?? "" })
 	}
 
 	return tuples
@@ -270,10 +266,13 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 
 /**
  * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and insee-ordered; `awk NR%K`
- * strides the whole country instead of reading one département. Quoted commas survive because awk only FILTERS lines —
- * parsing stays in splitCSV.
+ * strides the whole country instead of reading one département.
+ *
+ * The stride counts PHYSICAL lines, so a record carrying a newline inside a quoted field is two lines to awk and can be
+ * cut in half by the stride. That is a sampling artefact of the awk pre-filter, not of the parse: whichever lines
+ * survive are re-assembled into records by {@link readCSVRecords}, and a halved record fails the field checks below.
  */
-function readFrTuples(limit: number): FrTuple[] {
+function readFrTuples(limit: number): FRTuple[] {
 	const r = spawnSync(
 		"bash",
 		["-c", `unzip -p "${FR_SOURCE.zip}" "${FR_SOURCE.csv}" | awk 'NR==1 || NR%211==3' | head -n ${limit + 1}`],
@@ -286,29 +285,14 @@ function readFrTuples(limit: number): FrTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (n: string) => header.indexOf(n)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
-	const tuples: FrTuple[] = []
+	const tuples: FRTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-
-		const locality = get(cells, iCity),
-			postcode = get(cells, iPost),
-			street = get(cells, iStreet),
-			house_number = get(cells, iNum)
+	for (const row of readCSVRecords(r.stdout)) {
+		const locality = row.city ?? "",
+			postcode = row.postcode ?? "",
+			street = row.street ?? "",
+			house_number = row.number ?? ""
 
 		if (!cleanLocality(locality) || !/^\d{5}$/.test(postcode) || !street || !house_number) continue
 		const key = `${locality}|${street}`.toLowerCase()
@@ -354,7 +338,7 @@ function readCaLocalities(admin1: string): string[] {
 function readPostalTuples(
 	source: { zip: string; txt: string },
 	opts: { withState: boolean }
-): Array<AuTuple | NzTuple> {
+): Array<AUTuple | NZTuple> {
 	const r = spawnSync("unzip", ["-p", source.zip, source.txt], { maxBuffer: 1024 * 1024 * 64, encoding: "utf8" })
 
 	if (r.status !== 0) {
@@ -363,9 +347,9 @@ function readPostalTuples(
 		return []
 	}
 
-	const tuples: Array<AuTuple | NzTuple> = []
+	const tuples: Array<AUTuple | NZTuple> = []
 	const seen = new Set<string>()
-	const validPostcode = opts.withState ? isAuPostcode : isNzPostcode
+	const validPostcode = opts.withState ? isAuPostcode : isNZPostcode
 
 	for (const line of r.stdout.split("\n")) {
 		if (!line) continue
@@ -476,7 +460,7 @@ function makeCedex(random: () => number): string {
 /**
  * Compose an AU or NZ delivery-service phrase from the codex-sourced leaders. Same contract as makePoBoxPhrase: a
  * phrase built from a codex-known designator and a clean id must round-trip the codex matcher (isAuDeliveryService /
- * isNzDeliveryService) — a failure is a generation bug, loud. Noisy ids (commas / embedded spaces) are corpus-designed
+ * isNZDeliveryService) — a failure is a generation bug, loud. Noisy ids (commas / embedded spaces) are corpus-designed
  * adversarial forms, exempt.
  */
 function makeAuNzPoBoxPhrase(
@@ -494,14 +478,14 @@ function makeAuNzPoBoxPhrase(
 	let num = maybeNoisifyBoxNumber(pickBoxNumber(random), random)
 
 	// NZ CMB identifiers are alpha-led per the ADV358 example ("CMB B99").
-	if (leader === "CMB" && validate === isNzDeliveryService) {
+	if (leader === "CMB" && validate === isNZDeliveryService) {
 		num = `B${num}`
 	}
 
 	const phrase = `${caseDial(random, leader)} ${num}`
 	// The "clean id" shape differs per system: ADV358 identifiers carry no separators at all, the AU
 	// AMAS id (like the US one) tolerates dashes. Noisy ids outside the clean shape are exempt.
-	const cleanID = validate === isNzDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
+	const cleanID = validate === isNZDeliveryService ? /^[\dA-Za-z]+$/ : /^[\dA-Za-z][\dA-Za-z-]*$/
 
 	if (cleanID.test(num) && !validate(phrase)) {
 		throw new Error(`generated a phrase the codex matcher rejects: "${phrase}"`)
@@ -576,7 +560,7 @@ function renderPmbUs(random: () => number, t: USTuple): Rendered {
 	return { fmt: "pmb-bare", raw: `${road} ${phrase}`, components: { house_number: hn, street, po_box: phrase } }
 }
 
-function renderBpFr(random: () => number, t: FrTuple): Rendered {
+function renderBpFr(random: () => number, t: FRTuple): Rendered {
 	const phrase = makePoBoxPhrase(random, FR_LEADERS)
 	const { locality, postcode: pc } = t
 	const upper = random() < 0.5
@@ -613,7 +597,7 @@ function renderBpFr(random: () => number, t: FrTuple): Rendered {
 	}
 }
 
-function renderCedexFr(random: () => number, t: FrTuple): Rendered {
+function renderCedexFr(random: () => number, t: FRTuple): Rendered {
 	const cedex = makeCedex(random)
 	const { house_number: hn, street, locality, postcode: pc } = t
 	const loc = random() < 0.6 ? locality.toUpperCase() : locality
@@ -665,7 +649,7 @@ function renderCaEn(random: () => number, loc: string): Rendered {
 	return { fmt: "ca-en-bare", raw: phrase, components: { po_box: phrase } }
 }
 
-function renderAuPoBox(random: () => number, t: AuTuple): Rendered {
+function renderAUPoBox(random: () => number, t: AUTuple): Rendered {
 	const phrase = makeAuNzPoBoxPhrase(random, AU_LEADERS_CURRENT, AU_LEADERS_LEGACY, isAuDeliveryService)
 	const { locality, region: reg, postcode: pc } = t
 	const r = random()
@@ -699,8 +683,8 @@ function renderAuPoBox(random: () => number, t: AuTuple): Rendered {
 	return { fmt: "au-venue", raw: `${v}, ${phrase}, ${loc} ${reg} ${pc}`, components: { venue: v, ...base } }
 }
 
-function renderNzPoBox(random: () => number, t: NzTuple): Rendered {
-	const phrase = makeAuNzPoBoxPhrase(random, NZ_LEADERS_COMMON, NZ_LEADERS_RARE, isNzDeliveryService)
+function renderNZPoBox(random: () => number, t: NZTuple): Rendered {
+	const phrase = makeAuNzPoBoxPhrase(random, NZ_LEADERS_COMMON, NZ_LEADERS_RARE, isNZDeliveryService)
 	const { locality, postcode: pc } = t
 	// NZ addresses are written mixed-case ("PO Box 4099, Timaru 7942") — no region line (ADV358).
 	const base = { po_box: phrase, locality, postcode: pc }
@@ -780,8 +764,8 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
 
 		// AU/NZ pools: same stable locality-hash holdout as FR/CA.
-		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AuTuple[]
-		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NzTuple[]
+		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AUTuple[]
+		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NZTuple[]
 		const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 
@@ -789,7 +773,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 
 		if (!usPool.length || !frPool.length || !qcPool.length || !onPool.length || !auPool.length || !nzPool.length) {
 			throw new Error(
-				"A base pool is empty — check /tmp/oa-cache and /tmp/geonames-cache (CA.zip, AU-postal.zip, NZ-postal.zip)."
+				`A base pool is empty — check ${dataRootPath("oa-cache")}, ${GEONAMES_CA}, ${GEONAMES_POSTAL_AU.zip}, and ${GEONAMES_POSTAL_NZ.zip}.`
 			)
 		}
 
@@ -839,11 +823,11 @@ export const poBoxCedexRecipe: ShardRecipe = {
 				country = "CA"
 				locale = "fr-CA"
 			} else if (cls === "po-box-au") {
-				rendered = renderAuPoBox(random, pick(random, auPool))
+				rendered = renderAUPoBox(random, pick(random, auPool))
 				country = "AU"
 				locale = "en-AU"
 			} else if (cls === "po-box-nz") {
-				rendered = renderNzPoBox(random, pick(random, nzPool))
+				rendered = renderNZPoBox(random, pick(random, nzPool))
 				country = "NZ"
 				locale = "en-NZ"
 			} else if (cls === "po-box-us-military") {

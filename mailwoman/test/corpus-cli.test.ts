@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Integration test for `npx mailwoman corpus list` + `corpus run`. Spawns the compiled CLI binary
- *   and verifies exit codes + output shape. The registry is empty during Phase 1 task 2; only
- *   behavior we can assert today is the empty-registry messaging.
+ *   and verifies exit codes + output shape. While the shard registry ships empty, the only behavior
+ *   there is to assert is the empty-registry messaging.
  */
 
 import { execFile } from "node:child_process"

@@ -8,7 +8,7 @@
  *   The default learned-scorer model (#603): a gradient-boosted-tree dedup scorer trained on the
  *   NPPES NPI-truth set (TX, 3000 NPIs → 618872 candidate pairs). Validated to
  *   generalize across states by learned-scorer-crossstate-eval.ts. Used by resolveEntities'
- *   opt-in learnedScorer hook via createGbtScorer. The trained {@link GBT} is plain data.
+ *   opt-in learnedScorer hook via createGBTScorer. The trained {@link GBT} is plain data.
  */
 
 import type { GBT } from "@mailwoman/match"

@@ -25,7 +25,7 @@
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
- *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index (Task 8), built from a
+ *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index, built from a
  *       PPD-style (child, parent) tuples CSV (`softFeed.pairIndexByCountry[<cc>].source` + `.delta`) via
  *       `mailwoman gazetteer pair-index`. COUNTRY-SPECIFIC BY DESIGN — a workspace whose country has no
  *       `pairIndexByCountry` entry ships no sibling and is silently skipped (see materializePairIndex).
@@ -374,6 +374,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
 	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
+
 	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
 		? entry.pairsJsonl
@@ -381,6 +382,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 				.map((path) => resolveFrom(repoRoot, path.trim()))
 				.join(",")
 		: undefined
+
 	const banDir = entry.banDir ? resolveFrom(dataRoot, entry.banDir) : undefined
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {

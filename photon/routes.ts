@@ -159,8 +159,8 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 		const collection = await engine.search(params)
 
 		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD. The
-		// declared 200 schema documents only the FeatureCollection shape (matching the legacy yaml — see the
-		// Task 4 adjudication); the jsonld branch's differing runtime shape is a local cast at the boundary,
+		// declared 200 schema documents only the FeatureCollection shape (matching the legacy yaml); the
+		// jsonld branch's differing runtime shape is a local cast at the boundary,
 		// never a wire-behavior change (api-kit's `openapi.ts` sets the precedent for this idiom).
 		if (asString(q["format"]) === "jsonld") {
 			return c.json(photonToSchemaOrg(collection) as never, 200)

@@ -154,6 +154,7 @@ export async function buildGauntletDeps(
 		ES: "es-ES",
 		IT: "it-IT",
 	}
+
 	const overlayClassifiers = new Map<string, typeof classifier>()
 	const warnedOverlays = new Set<string>()
 
@@ -172,18 +173,21 @@ export async function buildGauntletDeps(
 				locale: overlayLocale,
 				...(opts.weightsCacheRoot ? { cacheRoot: opts.weightsCacheRoot } : {}),
 			})
+
 			overlayClassifiers.set(overlayLocale, overlay)
 
 			return overlay
 		} catch (error) {
 			if (!warnedOverlays.has(overlayLocale)) {
 				warnedOverlays.add(overlayLocale)
+
 				console.error(
 					`[gauntlet] ⚠ ${overlayLocale} overlay unavailable (${(error as Error).message.split("\n")[0]}) — ` +
 						`grading ${caseCountry} cases BASE-ONLY (no pair-index/deploc prior). ` +
 						`For production-true grading, include @mailwoman/neural-weights-${overlayLocale.toLowerCase()} in the weights cache.`
 				)
 			}
+
 			overlayClassifiers.set(overlayLocale, classifier)
 
 			return classifier

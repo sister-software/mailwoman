@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Node reader for `poi.db` (spec §3.4) — the res-9 k-ring reader over the clustered `poi`
- *   `WITHOUT ROWID` B-tree Task 1's schema (`poi-schema.ts`) builds. Three search modes share one
+ *   `WITHOUT ROWID` B-tree `poi-schema.ts` builds. Three search modes share one
  *   artifact:
  *
  *   - **Category**: `latLngToCell(center, 9)` → `gridDisk` ring-by-ring expansion, probing each
@@ -276,8 +276,8 @@ export class POILookup implements Disposable {
 
 				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
 				// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
-				for (const categoryId of categoryIds) {
-					rows.push(...(this.#categoryCellProbe.all(shortCell, categoryId, limit) as unknown as POIRow[]))
+				for (const categoryID of categoryIds) {
+					rows.push(...(this.#categoryCellProbe.all(shortCell, categoryID, limit) as unknown as POIRow[]))
 				}
 			}
 

@@ -140,7 +140,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// GB dependent_locality (placetype-pair-prior arc, Task 8) — a verified `gb-golden` board row
+	// GB dependent_locality (placetype-pair-prior arc) — a verified `gb-golden` board row
 	// (mailwoman/eval-harness/fixtures/gb-golden.jsonl). "Henbury" flips to dependent_locality via the en-gb pair-index
 	// prior; the `country: "gb"` pin selects it even if the user edits away the postcode (and structural detection also
 	// picks gb while the UK postcode is present).

@@ -8,9 +8,9 @@
  *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs that
  *   self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
  *   carries the site name, the postal-formatted street address, and the locality/region/postcode
- *   quad. Phase 1.6 §1.2 (#22) selects this source for its adversarial-value-per-row: every
- *   facility name is a human-typed venue string and the addresses pass through enough hands to
- *   accumulate the abbreviation drift + suite designator chaos that pure gazetteer data does not.
+ *   quad. The source earns its place on adversarial-value-per-row (#22): every facility name is a
+ *   human-typed venue string and the addresses pass through enough hands to accumulate the
+ *   abbreviation drift + suite designator chaos that pure gazetteer data does not.
  *
  *   The adapter consumes a CSV file the operator pre-downloads. The HRSA data is published as a
  *   single national CSV (~10K rows), small enough that the operator can re-fetch on every corpus
@@ -70,10 +70,10 @@ interface HrsaSiteRow {
  * Split a "123 Main St Suite 4" surface form into `(house_number, street)`. The regex tolerates one trailing letter on
  * the number (`"123A Main St"`) and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
  *
- * Suite / Apt / Unit designators stay on `street` for Phase 1 — Mailwoman's `unit` component exists but the
- * address-formatter does not have a clean slot for it, and HRSA addresses do not separate the suite into its own
- * column. Leaving the surface form intact in `street` preserves the adversarial training signal (the model learns that
- * a trailing "Suite 4" is part of the road line in this distribution).
+ * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists but the address-formatter does
+ * not have a clean slot for it, and HRSA addresses do not separate the suite into its own column. Leaving the surface
+ * form intact in `street` preserves the adversarial training signal (the model learns that a trailing "Suite 4" is part
+ * of the road line in this distribution).
  */
 
 /**

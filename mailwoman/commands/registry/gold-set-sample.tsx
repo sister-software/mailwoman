@@ -23,7 +23,7 @@ const OptionsSchema = zod.object({
 	state: zod.string().default("TX").describe("State filter"),
 	tau: zod.number().default(0.7).describe("Org-name Jaccard collision threshold"),
 	n: zod.number().default(300).describe("Adjudication sample size (deterministic stride sample)"),
-	outJsonl: zod.string().optional().describe("Write the sampled pairs here as JSONL"),
+	outJSONL: zod.string().optional().describe("Write the sampled pairs here as JSONL"),
 })
 
 export { OptionsSchema as options }
@@ -37,7 +37,7 @@ const RegistryGoldSetSample: CommandComponent<typeof OptionsSchema> = ({ options
 				state: options.state,
 				tau: options.tau,
 				n: options.n,
-				outJsonl: options.outJsonl,
+				outJSONL: options.outJSONL,
 			},
 			(line) => console.error(line)
 		)

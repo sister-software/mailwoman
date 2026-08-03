@@ -39,11 +39,12 @@ import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -59,16 +60,20 @@ interface USSource {
 }
 
 const TRAIN_SOURCES: readonly USSource[] = [
-	{ zip: "/tmp/oa-cache/us__ca__berkeley.zip", csv: "us/ca/berkeley.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__ca__marin.zip", csv: "us/ca/marin.csv", region: "CA" },
-	{ zip: "/tmp/oa-cache/us__dc__statewide.zip", csv: "us/dc/statewide.csv", region: "DC" },
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", region: "IA" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", region: "IL" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", region: "MT" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", region: "SD" },
+	{ zip: dataRootPath("oa-cache", "us__ca__berkeley.zip"), csv: "us/ca/berkeley.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__ca__marin.zip"), csv: "us/ca/marin.csv", region: "CA" },
+	{ zip: dataRootPath("oa-cache", "us__dc__statewide.zip"), csv: "us/dc/statewide.csv", region: "DC" },
+	{ zip: dataRootPath("oa-cache", "us__ia__statewide.zip"), csv: "us/ia/statewide.csv", region: "IA" },
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", region: "IL" },
+	{ zip: dataRootPath("oa-cache", "us__mt__statewide.zip"), csv: "us/mt/statewide.csv", region: "MT" },
+	{ zip: dataRootPath("oa-cache", "us__sd__statewide.zip"), csv: "us/sd/statewide.csv", region: "SD" },
 ]
 
-const EVAL_SOURCE: USSource = { zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", region: "VT" }
+const EVAL_SOURCE: USSource = {
+	zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+	csv: "us/vt/statewide.csv",
+	region: "VT",
+}
 
 // Multi-locale BALANCE sources (--multilocale-count > 0). These rows carry NO affix split — they exist
 // only to keep the postcode-ORDER distribution multi-locale. Native-order rendering mirrors
@@ -83,14 +88,38 @@ interface BalanceSource {
 }
 
 const MULTILOCALE_SOURCES: readonly BalanceSource[] = [
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
-	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
+	{
+		zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+		csv: "de/sn/statewide.csv",
+		iso2: "DE",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+		csv: "fr/countrywide.csv",
+		iso2: "FR",
+		region: "",
+		order: "fr",
+	},
+	{
+		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+		csv: "it/countrywide.csv",
+		iso2: "IT",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+		csv: "nl/countrywide.csv",
+		iso2: "NL",
+		region: "",
+		order: "eu",
+	},
 ]
 
 const MULTILOCALE_EVAL_SOURCES: readonly BalanceSource[] = [
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
 /**
@@ -143,34 +172,20 @@ function readTuples(source: USSource): USTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string): number => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const street = get(cells, iStreet)
-		const locality = get(cells, iCity)
-		const house_number = get(cells, iNum)
+	for (const row of readCSVRecords(r.stdout)) {
+		const street = row.street ?? ""
+		const locality = row.city ?? ""
+		const house_number = row.number ?? ""
 
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
 
 		if (seen.has(key)) continue
 		seen.add(key)
-		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost) })
+		tuples.push({ house_number, street, locality, region: source.region, postcode: row.postcode ?? "" })
 	}
 
 	return tuples
@@ -305,8 +320,8 @@ function renderRow(
 }
 
 /**
- * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale; reading the whole
- * CSV blows V8's string limit, so cap the bytes with `head` (mirrors build-country-shard-balanced.mjs). Only keeps
+ * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale, so cap the bytes
+ * with `head` (mirrors build-country-shard-balanced.mjs) rather than holding a whole extract in memory. Only keeps
  * tuples that carry a POSTCODE.
  */
 function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
@@ -323,30 +338,16 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (n: string): number => header.indexOf(n)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iRegion = idx("region"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
+	for (const row of readCSVRecords(r.stdout)) {
+		if (tuples.length >= limit) break
 
-		const street = get(cells, iStreet),
-			locality = get(cells, iCity),
-			house_number = get(cells, iNum),
-			postcode = get(cells, iPost)
+		const street = row.street ?? "",
+			locality = row.city ?? "",
+			house_number = row.number ?? "",
+			postcode = row.postcode ?? ""
 
 		if (!street || !locality || !house_number || !postcode) continue // postcode is required for balance
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
@@ -358,7 +359,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 			house_number,
 			street,
 			locality,
-			region: get(cells, iRegion) || source.region,
+			region: row.region || source.region,
 			postcode,
 			iso2: source.iso2,
 			order: source.order,
@@ -421,7 +422,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No US tuples found — are the cached OA zips present in /tmp/oa-cache?")
+			throw new Error(`No US tuples found — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@link POILookup} — the Node reader over `poi.db` (spec §3.4). Builds a tiny fixture
- *   straight against Task 1's schema (`poi` + `poi_category_codes` + the `poi_search` FTS5 table): 3
+ *   straight against the layer schema (`poi` + `poi_category_codes` + the `poi_search` FTS5 table): 3
  *   cafes at increasing distance from a Springfield, IL center, one branded McDonald's (`Q38076`),
  *   seven rows clustered ~280 km away in Chicago (a distinct res-9 cell far outside the default
  *   ring budget, including the ONLY `museum`-category rows in the fixture), and one uncategorized
@@ -194,7 +194,7 @@ async function buildFixture(path: string): Promise<void> {
 	let rowidKey = 1
 
 	for (const row of ALL_ROWS) {
-		const categoryId = row.category ? (CATEGORY_IDS[row.category] ?? 0) : 0
+		const categoryID = row.category ? (CATEGORY_IDS[row.category] ?? 0) : 0
 		const confidence = row.confidence ?? 0.9
 		const nameKey = nameKeyFor(row.name)
 		const h3Cell = cellFor(row.latitude, row.longitude)
@@ -203,7 +203,7 @@ async function buildFixture(path: string): Promise<void> {
 			.insertInto("poi")
 			.values({
 				h3_cell: h3Cell,
-				category_id: categoryId,
+				category_id: categoryID,
 				neg_rank: 1 - confidence,
 				rowid_key: rowidKey++,
 				name: row.name,

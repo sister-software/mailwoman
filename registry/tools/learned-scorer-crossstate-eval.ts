@@ -28,7 +28,7 @@ import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
-	createGbtScorer,
+	createGBTScorer,
 	createMatchFeaturizer,
 	DEDUP_GBT_MODEL,
 	defaultBlockingKeys,
@@ -294,6 +294,7 @@ export async function scorerCrossStateEval(
 	const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
 	const w = new Array<number>(dim).fill(0)
 	let bias = 0
+
 	for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 		const gw = new Array<number>(dim).fill(0)
 		let gb = 0
@@ -394,7 +395,7 @@ export async function scorerCrossStateEval(
 	// The SHIPPED model (the default-on candidate): the bundled DEDUP_GBT_MODEL, NOT a fresh per-run TX
 	// fit. This is the arm that justifies flipping `learnedScorer` default-on — the actual artifact every
 	// caller would get, evaluated on a state it never trained on.
-	const bundledScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
+	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	const bundledArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({
 		addressFrequency,

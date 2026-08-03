@@ -157,6 +157,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),
 			...(c.country ? { caseCountry: c.country } : {}),
 		}
+
 		const issues = checkCase(c, await runOne(c.input, deps, geoOpts))
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 

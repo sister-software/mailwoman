@@ -647,7 +647,7 @@ export async function nppesDedupBenchmark(
 	const geocodedNpis = [...npiPrimary.keys()].filter((n) => npiCoord.has(n)).length
 	const orgNameCoordLabel = (rec: SourceRecord) => (npiPrimary.has(rec.id) ? findC(rec.id) : rec.id)
 
-	// --- ORG-NAME-H3 entity-truth (Task 4, #109). The same building-grain co-location, but keyed on an
+	// --- ORG-NAME-H3 entity-truth (#109). The same building-grain co-location, but keyed on an
 	// H3 CELL (the geocode-first "cell" the issue suggested) instead of a pairwise 50 m haversine: assign
 	// each NPI's coordinate to an H3 cell at building-block resolution, then union same-org (Jaccard ≥
 	// ORG_TAU) NPIs that share a cell. A robustness check on the haversine coord-grain — if the F1
@@ -865,7 +865,7 @@ export async function nppesDedupBenchmark(
 	const orgCoordCount = new Set(records.map((r) => orgNameCoordLabel(r))).size
 	const fsOrgCoord = scoreEntities(bestLever.res.entities, orgNameCoordLabel)
 	const gbtOrgCoord = scoreEntities(gbtRes.entities, orgNameCoordLabel)
-	// Task 4 (#109): the H3-cell co-location truth — a robustness check on the haversine coord-grain.
+	// #109: the H3-cell co-location truth — a robustness check on the haversine coord-grain.
 	const orgH3Count = new Set(records.map((r) => orgNameH3Label(r))).size
 	const gbtOrgH3 = scoreEntities(gbtRes.entities, orgNameH3Label)
 
@@ -1135,7 +1135,7 @@ export async function nppesDedupBenchmark(
 	lines.push("")
 
 	lines.push(
-		`**Task 4 (#109) — H3-cell robustness check.** Re-keying the same building-grain co-location on an H3 cell ` +
+		`**H3-cell robustness check (#109).** Re-keying the same building-grain co-location on an H3 cell ` +
 			`(res ${H3_RES}) instead of the 50 m haversine radius — the deterministic, O(n) "geocode-first cell" the issue ` +
 			`suggested — gives GBT **org-name-h3 ${pct(gbtOrgH3.f1)}%** (${orgH3Count} classes), vs the haversine ` +
 			`${pct(gbtOrgCoord.f1)}% (${orgCoordCount}). ${

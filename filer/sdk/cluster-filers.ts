@@ -3,30 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Entity clustering over an already-built `filer.db` (3a Task 6, decisions 4, 5). TWO passes, kept
+ *   Entity clustering over an already-built `filer.db` (decisions 4, 5). TWO passes, kept
  *   deliberately apart (decision 5):
  *
  *   **(a) Authoritative components** ({@linkcode clusterAuthoritativeComponents}) — every
  *   `filer_edge` row asserted `"authoritative"` AND typed `relationship: FilerRelationship.SameEntity`
- *   (Task 5's builder — a source document stating the relationship directly) is fed to {@linkcode
- *   cluster} (`@mailwoman/match`) as a {@linkcode ScoredLink} with `weight: Infinity` — an authoritative
- *   SAME-ENTITY edge is never in doubt, so ANY finite `threshold` unions it. The resulting connected
- *   components are written to `filer_cluster` with `assertion: "authoritative"`.
+ *   (`build-filer.ts` emits one only where a source document states the relationship directly) is fed to
+ *   {@linkcode cluster} (`@mailwoman/match`) as a {@linkcode ScoredLink} with `weight: Infinity` — an
+ *   authoritative SAME-ENTITY edge is never in doubt, so ANY finite `threshold` unions it. The resulting
+ *   connected components are written to `filer_cluster` with `assertion: "authoritative"`.
  *
- *   **The `relationship` filter is CRITICAL, not incidental (task 3 fix round 1).** `assertion` grades
+ *   **The `relationship` filter is load-bearing, not incidental.** `assertion` grades
  *   evidence strength (authoritative vs. inferred); `relationship` grades WHAT the edge means
  *   (`same_entity` vs. `holding_company` vs. `management_company` — `schema.ts`'s {@link
- *   FilerRelationship}) — the two columns are orthogonal by design (3b Task 1), and entity clustering
- *   only ever meant the FORMER. Before this fix, {@linkcode readAuthoritativeGroups} union-found EVERY
- *   authoritative edge regardless of `relationship`, so a `HoldingCompany`/`ManagementCompany` edge
- *   (also authoritative, correctly, since Task 2 began typing them) silently merged every filer sharing
+ *   FilerRelationship}) — the two columns are orthogonal by design, and entity clustering
+ *   means only the FORMER. Union-finding EVERY authoritative edge regardless of `relationship` lets a
+ *   `HoldingCompany`/`ManagementCompany` edge (authoritative too, correctly so) merge every filer sharing
  *   that holding/management company into ONE entity cluster — three unrelated filers under one holding
  *   company reported as ONE filer, the exact conflation `filer_family` (a SEPARATE rollup, decision 2)
  *   exists to keep apart from `filer_cluster`. A hand-written test fixture that inserts edges with
- *   `relationship: SameEntity` by default (`filer-lookup.test.ts`'s `authoritativeEdge()` helper) could
- *   never catch this — only a fixture built through the REAL `buildFilerDatabase` (which types
- *   holding-/management-company edges correctly, per Task 2) exposes it, which is why gate 1
- *   (`filer-lookup.test.ts`'s `describe("§7-3b gates")`) now includes a real-builder-path test.
+ *   `relationship: SameEntity` by default (`filer-lookup.test.ts`'s `authoritativeEdge()` helper) cannot
+ *   catch a regression here — only a fixture built through the REAL `buildFilerDatabase`, which types
+ *   holding-/management-company edges correctly, exposes it, which is why gate 1
+ *   (`filer-lookup.test.ts`'s `describe("§7-3b gates")`) includes a real-builder-path test.
  *
  *   **(b) Inferred links** ({@linkcode clusterInferredLinks}) — one {@linkcode SourceRecord}
  *   (`@mailwoman/registry`) per `form499_id` node that carries a `legal_name` attribute:
@@ -36,7 +35,7 @@
  *   (a)'s own grouping is reused here purely as the feature basis for pass (b) — not as a write
  *   target).
  *
- *   **Honest description of what pass (b) actually does (review fix, round 1):** blocking is on the
+ *   **What pass (b) actually does:** blocking is on the
  *   EXACT canonicalized organization name, and the Fellegi-Sunter model's own organization comparison
  *   extracts that SAME field — so every candidate pair this module ever scores already has
  *   `similarity === 1.0` on that comparison, i.e. `NAME_LEVELS`' `"high"` (0.88) tier is dead code
@@ -46,39 +45,39 @@
  *   phone/email — filer.db carries none of those until ASR lands in Phase 3c, decision 2 — so the
  *   library defaults would propose zero candidate pairs; that's why blocking is overridden at all.)
  *
- *   **The identifier veto (review fix, round 1, CRITICAL — decision 5's real enforcement
- *   mechanism):** an adversarial review found that two DIFFERENT authoritative components ALWAYS have
+ *   **The identifier veto (decision 5's real enforcement
+ *   mechanism):** two DIFFERENT authoritative components ALWAYS have
  *   fully disjoint `frn`/`form499ID`/`providerID` code sets (structurally — a shared code would mean
  *   a shared node, which means union-find would already have merged those components in pass (a)). So
- *   `exactDiscriminators` could only ever contribute their "different" level for a genuine
+ *   `exactDiscriminators` can only ever contribute their "different" level for a genuine
  *   cross-component candidate — a CONSTANT negative tax that `INFERRED_LINK_THRESHOLD` exists to
- *   cancel, never an actual separator. Net effect: FEWER identifiers present on a pair scored HIGHER
- *   (fewer negative contributions) — the exact inverse of what a discriminator should do, and it
- *   produced real false-identity links in review (two unrelated companies sharing a common corporate
- *   name pattern, e.g. "American Broadband LLC" / "American Broadband, Inc." with disjoint FRNs).
+ *   cancel, never an actual separator. Left to the score alone, FEWER identifiers present on a pair
+ *   ranks it HIGHER (fewer negative contributions) — the exact inverse of what a discriminator should
+ *   do, and enough to link two unrelated companies sharing a common corporate
+ *   name pattern (e.g. "American Broadband LLC" / "American Broadband, Inc." with disjoint FRNs).
  *   Merging two unrelated registrants is the worst output this crosswalk can produce, even tagged
  *   `"inferred"`.
  *
- *   The fix is NOT a threshold retune — {@linkcode hasSharedIdentifier} is a HARD pre-filter wired in
+ *   The guard is NOT a threshold retune — {@linkcode hasSharedIdentifier} is a HARD pre-filter wired in
  *   as `resolveEntities`'s custom `scorer` ({@linkcode scoreWithIdentifierVeto}): two records with NO
  *   shared code across ALL THREE identifier types are vetoed to `-Infinity`, unconditionally, before
  *   the name score is even consulted — no name similarity, however exact, can outvote it. A link can
  *   only ever form when the two nodes ALREADY share an authoritative identifier (in practice: two
  *   `form499_id` nodes in the SAME authoritative component, e.g. a re-filing under one FRN with a
- *   drifted legal name) — this repurposes what were previously three inert, always-negative
- *   comparisons into the thing that actually makes a link SAFE. "Two different FRNs" is treated as
+ *   drifted legal name) — so those three otherwise-inert, always-negative
+ *   comparisons are what actually makes a link SAFE. "Two different FRNs" is treated as
  *   authoritative ground truth in this domain: full stop, no name match overrides it.
  *
- *   **Degenerate discovery scope — ACCEPTED for 3a, a coordinator decision, not a defect (review fix,
- *   round 2).** Because `attributes.frn`/`.form499ID`/`.providerID` are derived PER AUTHORITATIVE
+ *   **Degenerate discovery scope — accepted for 3a, a coordinator decision, not a defect.**
+ *   Because `attributes.frn`/`.form499ID`/`.providerID` are derived PER AUTHORITATIVE
  *   COMPONENT (every member of one component carries the identical code-set strings — see the field
- *   list above), {@linkcode hasSharedIdentifier} finding ANY overlap is now, by construction, EXACTLY
+ *   list above), {@linkcode hasSharedIdentifier} finding ANY overlap is, by construction, EXACTLY
  *   equivalent to "these two nodes are already in the same authoritative component." Consequently, pass
  *   (b) as it stands CANNOT discover a link between two nodes that pass (a) doesn't already connect —
  *   it can only ever CONFIRM/re-surface an existing authoritative grouping via name matching, never
  *   bridge two genuinely separate ones. This is intentional, not a bug to chase: a linker that discovers
- *   nothing is safe; a linker that discovers FALSE links (the CRITICAL bug the identifier veto fixes,
- *   above) is not — and 3a's decision 5 scope was authoritative-only anyway. Restoring genuine
+ *   nothing is safe; a linker that discovers FALSE links (what the identifier veto above exists to
+ *   prevent) is not — and 3a's decision 5 scope was authoritative-only anyway. Restoring genuine
  *   cross-component discovery power requires corroborating evidence BEYOND the canonical name (e.g. a
  *   normalized HQ address, a contact phone/email) — that data doesn't exist reliably in this crosswalk
  *   until CORES and EDGAR land in Phase 3b, so it's explicitly deferred there, not attempted here.
@@ -95,48 +94,46 @@
  *   it has no write-order dependency on (a) having run first. `clusterFilers` runs both, in the
  *   documented order, purely for caller convenience.
  *
- *   **Idempotency (carried from Task 4/5 review): `filer_cluster` has no uniqueness constraint.**
- *   Unlike `filer_edge` (composite PK `(from_node_id, to_node_id, source, valid_from)`, Task 4) or
- *   `filer_attribute` (Task 5's staging-table dedup), `filer_cluster` has neither — Task 5 left it
- *   untouched (it writes nothing there; Task 4's review flagged it as a forward-looking concern for
- *   whichever task first populates it, which is this one). Both passes here make their OWN write
+ *   **Idempotency: `filer_cluster` has no uniqueness constraint.**
+ *   Unlike `filer_edge` (composite PK `(from_node_id, to_node_id, source, valid_from)`) or
+ *   `filer_attribute` (deduped through `build-filer.ts`'s staging table), `filer_cluster` has neither —
+ *   `build-filer.ts` creates it empty and this module is its ONLY writer, so nothing but the discipline
+ *   below keeps a rerun from doubling it. Both passes here make their OWN write
  *   idempotent the same way: inside one transaction, DELETE every row carrying that pass's
  *   `assertion` value, then INSERT the freshly computed set. Re-running either pass AT THE SAME
  *   `sourceVintage` against unchanged input data reproduces byte-identical `(node_id, cluster_id)`
  *   rows (cluster ids are CONTENT-DERIVED — `` `${assertion}:${lexicographically-smallest member
  *   node_id}` `` — not index-based, so they don't depend on iteration order surviving between runs).
  *
- *   **`sourceVintage` vs `validFrom` — NEVER the same field (review fix, round N, CRITICAL).**
+ *   **`sourceVintage` vs `validFrom` — NEVER the same field.**
  *   {@link ClusterFilersOptions.sourceVintage} is a free-text human vintage LABEL (`"2026-cluster-v1"`)
  *   and {@link ClusterFilersOptions.validFrom} is a SEPARATE, always-ISO `YYYY-MM-DD` date
- *   ({@linkcode assertISODate}, imported from `guards.ts` — moved there in 3b Task 1, closing the
- *   reach-into-the-builder coupling this docstring used to describe: the same rule, one implementation,
- *   no drift between writers). `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
+ *   ({@linkcode assertISODate}, imported from `guards.ts` — it lives there, not in the builder, so every
+ *   writer of a `valid_from` shares one implementation of the rule and none of them drift).
+ *   `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
  *   `validFrom`. This split exists because `valid_from` participates in every downstream `asOf`-scoped
  *   predicate (`filer-lookup.ts`) as a plain STRING comparison — a label like `"2026-cluster-v1"` sorts
- *   lexicographically ABOVE any real ISO date this century, so writing it into `valid_from` (the
- *   pre-fix behavior) silently broke every `asOf`-scoped read against the edge. The "same run" identity
+ *   lexicographically ABOVE any real ISO date this century, so writing it into `valid_from` silently
+ *   breaks every `asOf`-scoped read against the edge. The "same run" identity
  *   question below (same-vintage rebuild vs. a genuinely earlier run) is answered by `sourceVintage`
  *   (the label IS the run's identity); the "which real date did this change happen" question is
  *   answered by `validFrom` (a real, ISO-sortable date, so chronological order is a plain comparison).
  *
- *   **Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual — the
- *   same-vintage idempotency claim above does NOT, by itself, extend to a REBUILD at that same
- *   vintage).** `filer_edge`'s composite PK plus `INSERT ... ON CONFLICT DO NOTHING` only makes an
- *   UNCHANGED same-vintage rerun idempotent; it does nothing for a rerun (same OR later vintage) whose
- *   underlying data changed. A prior review incorrectly claimed this table "doesn't need anything
- *   extra" — in fact, rerunning at vintage v2 after names diverged left `filer_cluster` correctly split
- *   back into singletons while the STALE v1 inferred edge survived with `valid_to: null` ("still
- *   valid"), directly contradicting the current `filer_cluster` snapshot. A follow-up review then found
- *   the SAME bug class, narrowed: a REBUILD at the SAME `sourceVintage` (e.g. filer.db corrected and
- *   rebuilt without bumping the clustering vintage label) hit the identical contradiction, because the
- *   round-1 fix's earlier-vintage comparison was strict and never touched a row already AT that
- *   vintage.
+ *   **Cross-vintage supersession — the same-vintage idempotency claim above does NOT, by itself, extend
+ *   to a REBUILD at that same vintage.** `filer_edge`'s composite PK plus `INSERT ... ON CONFLICT DO
+ *   NOTHING` only makes an UNCHANGED same-vintage rerun idempotent; it does nothing for a rerun (same OR
+ *   later vintage) whose underlying data changed. Unguarded, rerunning at vintage v2 after names
+ *   diverged leaves `filer_cluster` correctly split back into singletons while the STALE v1 inferred
+ *   edge survives with `valid_to: null` ("still valid"), directly contradicting the current
+ *   `filer_cluster` snapshot. A REBUILD at the SAME `sourceVintage` (e.g. filer.db corrected and
+ *   rebuilt without bumping the clustering vintage label) reaches the identical contradiction by a
+ *   narrower route — an earlier-vintage-only comparison is strict, so it never touches a row already AT
+ *   that vintage.
  *
- *   Fixed with TWO separate operations, at the START of every {@linkcode clusterInferredLinks} call,
+ *   Hence TWO separate operations, at the START of every {@linkcode clusterInferredLinks} call,
  *   before writing the freshly computed set — chosen deliberately over a single inclusive (`<=`)
- *   comparison, which would have closed a row to `valid_to === valid_from` (a zero-duration window) on
- *   an UNCHANGED same-vintage rerun and then had `ON CONFLICT DO NOTHING` refuse to re-open it,
+ *   comparison, which would close a row to `valid_to === valid_from` (a zero-duration window) on
+ *   an UNCHANGED same-vintage rerun and then have `ON CONFLICT DO NOTHING` refuse to re-open it,
  *   permanently mislabeling a still-valid link "closed":
  *
  *   1. **DELETE** every inferred `filer_edge` row AT this run's OWN `sourceVintage` (`source_vintage =
@@ -150,7 +147,7 @@
  *      vintage that no longer holds becomes a closed row, not an erased one, and a link that DOES
  *      persist gets a new, separate row at the new vintage rather than an update-in-place.
  *
- *   **Scope note:** only `form499_id` nodes carry a `legal_name` attribute (Task 5's builder never
+ *   **Scope note:** only `form499_id` nodes carry a `legal_name` attribute (`build-filer.ts` never
  *   attaches attributes to `frn` / `bdc_provider_id` / holding- or management-company nodes), so
  *   those are the only nodes pass (b) can name-match. A provider that only ever appears in the BDC
  *   provider list (no corresponding Form 499 filing) has no legal name in this crosswalk and is
@@ -178,8 +175,8 @@ import { assertISODate } from "./guards.ts"
 export const CLUSTER_FILERS_SOURCE = "cluster-filers"
 
 /**
- * The attribute key {@linkcode clusterInferredLinks} reads to name-match `form499_id` nodes (Task 5's builder — see
- * `build-filer.ts`'s `stageAttribute(form499NodeID, "legal_name", ...)`).
+ * The attribute key {@linkcode clusterInferredLinks} reads to name-match `form499_id` nodes — written by
+ * `build-filer.ts`'s `stageAttribute(form499NodeID, "legal_name", ...)`.
  */
 const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
 
@@ -196,11 +193,11 @@ const LEGAL_NAME_ATTRIBUTE_KEY = "legal_name"
  * — which, for two DIFFERENT authoritative components, is the common case (their code sets are disjoint by
  * construction; components sharing a code would already be one authoritative component). Worst case, all three
  * discriminators disagree: `-13.29 + 6.32 - 3×1.88 ≈ -12.61` bits. `-13` sits just below that worst case (empirically
- * verified against `buildDefaultModel`'s current seed `m`/`u` constants — see the Task 6 report) while staying above
- * the zero-evidence floor (`-13.29`, reachable only by a pair with no organization match at all — impossible here,
- * since the blocking key IS the organization match). Revisit this constant if `NAME_LEVELS`/`CODE_SET_LEVELS`
- * (`registry/resolve.ts`) or `buildDefaultModel`'s `lambda` change, or once EM/real filer data can calibrate it
- * properly (seed, not a universal constant — same caveat the library's own `ComparisonLevel`s carry).
+ * verified against `buildDefaultModel`'s current seed `m`/`u` constants) while staying above the zero-evidence floor
+ * (`-13.29`, reachable only by a pair with no organization match at all — impossible here, since the blocking key IS
+ * the organization match). Revisit this constant if `NAME_LEVELS`/`CODE_SET_LEVELS` (`registry/resolve.ts`) or
+ * `buildDefaultModel`'s `lambda` change, or once EM/real filer data can calibrate it properly (seed, not a universal
+ * constant — same caveat the library's own `ComparisonLevel`s carry).
  */
 export const INFERRED_LINK_THRESHOLD = -13
 
@@ -211,10 +208,9 @@ export const INFERRED_LINK_THRESHOLD = -13
 const IDENTIFIER_VETO_KEYS = ["frn", "form499ID", "providerID"] as const
 
 /**
- * HARD VETO (review fix, round 1 — decision 5's real enforcement mechanism; see the module docstring's "identifier
- * veto" section). `true` when `a` and `b` share at least one code across ANY of {@link IDENTIFIER_VETO_KEYS}. In this
- * domain, identifiers are authoritative — two different FRNs mean two different registrants, full stop, no matter how
- * similar the names look.
+ * HARD VETO (decision 5's real enforcement mechanism; see the module docstring's "identifier veto" section). `true`
+ * when `a` and `b` share at least one code across ANY of {@link IDENTIFIER_VETO_KEYS}. In this domain, identifiers are
+ * authoritative — two different FRNs mean two different registrants, full stop, no matter how similar the names look.
  *
  * A value missing on EITHER side is not evidence of "different" — it's silence on that dimension, so it never
  * contributes to the veto (only a value present AND disjoint on BOTH sides counts, exactly like `resolveEntities`'s own
@@ -252,11 +248,11 @@ const INFERRED_SCORING_MODEL = buildDefaultModel({
 })
 
 /**
- * The custom `scorer` passed to `resolveEntities` (review fix, round 1) — this is where the hard identifier veto is
- * actually enforced. Supplying a `scorer` makes `resolveEntities` use THIS function's return value as a candidate
- * pair's match weight instead of its own internal `scorePair` call (`registry/resolve.ts`), so a disjoint-identifier
- * pair is forced to `-Infinity` — unable to clear ANY threshold — before the name-similarity score is even computed.
- * Only when {@linkcode hasSharedIdentifier} finds real overlap does the ordinary Fellegi-Sunter weight (over
+ * The custom `scorer` passed to `resolveEntities` — this is where the hard identifier veto is actually enforced.
+ * Supplying a `scorer` makes `resolveEntities` use THIS function's return value as a candidate pair's match weight
+ * instead of its own internal `scorePair` call (`registry/resolve.ts`), so a disjoint-identifier pair is forced to
+ * `-Infinity` — unable to clear ANY threshold — before the name-similarity score is even computed. Only when
+ * {@linkcode hasSharedIdentifier} finds real overlap does the ordinary Fellegi-Sunter weight (over
  * {@link INFERRED_SCORING_MODEL}) decide the outcome.
  */
 function scoreWithIdentifierVeto(a: SourceRecord, b: SourceRecord): number {
@@ -315,19 +311,18 @@ export interface ClusterFilersOptions {
 	 * inferred pass carries no finer-grained per-pair date than "when this clustering run happened"). A free-text human
 	 * vintage LABEL (e.g. `"2026-cluster-v1"`) is fine — this field is also the "same run" identity the
 	 * same-vintage-rebuild half of cross-vintage supersession keys on (see the module docstring). Never written into
-	 * `valid_from`/`valid_to` directly — see {@link ClusterFilersOptions.validFrom} for that (review fix, round N,
-	 * CRITICAL).
+	 * `valid_from`/`valid_to` directly — see {@link ClusterFilersOptions.validFrom} for that.
 	 */
 	sourceVintage: string
 	/**
 	 * ISO `YYYY-MM-DD` date for `valid_from` (on every inferred `filer_edge` row this run writes) and `valid_to` (on
-	 * every earlier-vintage row this run closes out) — SEPARATE from {@link ClusterFilersOptions.sourceVintage} (review
-	 * fix, round N, CRITICAL; same rationale as `BuildFilerOptions.validFrom` in `build-filer.ts`). `valid_from`
-	 * participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`) as a plain STRING comparison, so it
-	 * must always be ISO-sortable — a vintage label like `"2026-cluster-v1"` sorts lexicographically ABOVE any real ISO
-	 * date this century and would silently break every `asOf`-scoped read against the edge. Validated via
-	 * {@linkcode assertISODate}. Also the "which real date did this change happen" half of cross-vintage supersession
-	 * (see the module docstring) — the "same run" half is answered by `sourceVintage`, not this field.
+	 * every earlier-vintage row this run closes out) — SEPARATE from {@link ClusterFilersOptions.sourceVintage} (same
+	 * rationale as `BuildFilerOptions.validFrom` in `build-filer.ts`). `valid_from` participates in every downstream
+	 * `asOf`-scoped predicate (`filer-lookup.ts`) as a plain STRING comparison, so it must always be ISO-sortable — a
+	 * vintage label like `"2026-cluster-v1"` sorts lexicographically ABOVE any real ISO date this century and would
+	 * silently break every `asOf`-scoped read against the edge. Validated via {@linkcode assertISODate}. Also the "which
+	 * real date did this change happen" half of cross-vintage supersession (see the module docstring) — the "same run"
+	 * half is answered by `sourceVintage`, not this field.
 	 */
 	validFrom: string
 	onProgress?: (message: string) => void
@@ -384,13 +379,13 @@ async function readNodeInfo(
  * "same_entity"` `filer_edge` (weight `Infinity` — an authoritative same-entity edge is never in doubt). A node touched
  * by no such edge is its own singleton component (`cluster()`'s own contract — see `match/clustering.ts`).
  *
- * **The `relationship` filter (task 3 fix round 1, CRITICAL):** `assertion` and `relationship` are orthogonal columns
- * (3b Task 1) — `assertion` grades evidence strength, `relationship` grades what the edge MEANS. Before this filter
- * existed, EVERY authoritative edge unioned regardless of `relationship`, so a `HoldingCompany`/`ManagementCompany`
- * edge (correctly typed authoritative by Task 2's builder) silently merged every filer sharing that holding/management
- * company into one entity cluster — the exact conflation `filer_family` exists to keep separate. Restricting to
- * `same_entity` is what makes an entity cluster mean "these identifiers denote the SAME legal entity" and nothing
- * broader; a holding-company edge asserts "A is held by B", a different claim that must never merge identities.
+ * **The `relationship` filter:** `assertion` and `relationship` are orthogonal columns — `assertion` grades evidence
+ * strength, `relationship` grades what the edge MEANS. Before this filter existed, EVERY authoritative edge unioned
+ * regardless of `relationship`, so a `HoldingCompany`/`ManagementCompany` edge (correctly typed authoritative by Task
+ * 2's builder) silently merged every filer sharing that holding/management company into one entity cluster — the exact
+ * conflation `filer_family` exists to keep separate. Restricting to `same_entity` is what makes an entity cluster mean
+ * "these identifiers denote the SAME legal entity" and nothing broader; a holding-company edge asserts "A is held by
+ * B", a different claim that must never merge identities.
  */
 async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<string[][]> {
 	const nodeRows = await db.selectFrom("filer_node").select(["node_id"]).orderBy("node_id").execute()
@@ -409,7 +404,7 @@ async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<strin
 		weight: Number.POSITIVE_INFINITY,
 	}))
 
-	// threshold is irrelevant in value (every real link is Infinity) — 0 is as good as any finite number.
+	// Threshold is irrelevant in value (every real link is Infinity) — 0 is as good as any finite number.
 	return cluster(nodeIds, links, { threshold: 0 })
 }
 
@@ -424,11 +419,11 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
 	const rows: FilerClusterTable[] = groups.flatMap((group) => {
 		// Content-derived, not index-derived — stable across reruns regardless of `cluster()`'s internal iteration
 		// order (see the module docstring's idempotency section).
-		const clusterId = `${FilerEdgeAssertion.Authoritative}:${[...group].toSorted()[0]}`
+		const clusterID = `${FilerEdgeAssertion.Authoritative}:${[...group].toSorted()[0]}`
 
-		return group.map((nodeId) => ({
-			node_id: nodeId,
-			cluster_id: clusterId,
+		return group.map((nodeID) => ({
+			node_id: nodeID,
+			cluster_id: clusterID,
 			assertion: FilerEdgeAssertion.Authoritative,
 		}))
 	})
@@ -451,15 +446,14 @@ export async function clusterAuthoritativeComponents(db: Kysely<FilerDatabase>):
  * `source_vintage`. A `form499_id` node re-filing under a new legal name over time is real (a rename, a DBA change);
  * this module scores the CURRENT name, not an arbitrary historical one.
  *
- * **Constraint (documented, not enforced — review fix, round 1, minor):** "latest" is a plain STRING comparison (`>`),
- * not a date parse. This is safe in practice because `legal_name` is exclusively `form-499`-sourced (Task 5's builder
- * never attaches it from `bdc-provider-list`), and `source_vintage` for every `form-499` row is the row's own
- * `lastFiledAt` — a real filing-date string, not a synthetic label like `bdc-provider-list` edges' `"2026-Q1"`. As long
- * as every `legal_name` vintage for one node is drawn from that SAME lexicographically-sortable date scheme (the
- * assumption this whole module makes about `filer.db`), `>` and "chronologically later" agree. This breaks if that
- * assumption is ever violated (e.g. a future source starts writing `legal_name` with a differently formatted or
- * non-chronological `source_vintage`) — at that point "latest" here means "lexicographically greatest", silently, not
- * "chronologically latest".
+ * **Constraint (documented, not enforced):** "latest" is a plain STRING comparison (`>`), not a date parse. This is
+ * safe in practice because `legal_name` is exclusively `form-499`-sourced (`build-filer.ts` never attaches it from
+ * `bdc-provider-list`), and `source_vintage` for every `form-499` row is the row's own `lastFiledAt` — a real
+ * filing-date string, not a synthetic label like `bdc-provider-list` edges' `"2026-Q1"`. As long as every `legal_name`
+ * vintage for one node is drawn from that SAME lexicographically-sortable date scheme (the assumption this whole module
+ * makes about `filer.db`), `>` and "chronologically later" agree. This breaks if that assumption is ever violated (e.g.
+ * a future source starts writing `legal_name` with a differently formatted or non-chronological `source_vintage`) — at
+ * that point "latest" here means "lexicographically greatest", silently, not "chronologically latest".
  */
 async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<string, string>> {
 	const rows = await db
@@ -478,7 +472,7 @@ async function readLatestLegalNames(db: Kysely<FilerDatabase>): Promise<Map<stri
 		}
 	}
 
-	return new Map([...latest].map(([nodeId, { value }]) => [nodeId, value]))
+	return new Map([...latest].map(([nodeID, { value }]) => [nodeID, value]))
 }
 
 /**
@@ -493,24 +487,24 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 	const groupOfNode = new Map<string, string[]>()
 
 	for (const group of groups) {
-		for (const nodeId of group) {
-			groupOfNode.set(nodeId, group)
+		for (const nodeID of group) {
+			groupOfNode.set(nodeID, group)
 		}
 	}
 
 	const codesByType = (group: string[], identifierType: string): string =>
 		codeSetString(
 			group
-				.filter((nodeId) => nodeInfo.get(nodeId)?.identifierType === identifierType)
-				.map((nodeId) => nodeInfo.get(nodeId)!.identifierValue)
+				.filter((nodeID) => nodeInfo.get(nodeID)?.identifierType === identifierType)
+				.map((nodeID) => nodeInfo.get(nodeID)!.identifierValue)
 		)
 
 	const records: SourceRecord[] = []
 
-	for (const [nodeId, info] of nodeInfo) {
+	for (const [nodeID, info] of nodeInfo) {
 		if (info.identifierType !== FilerIdentifierType.Form499ID) continue
 
-		const legalName = legalNames.get(nodeId)
+		const legalName = legalNames.get(nodeID)
 
 		if (!legalName) continue
 
@@ -518,12 +512,12 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 
 		// `canonicalizeOrganizationName` returns a TRUTHY object even when the whole input was designation
 		// tokens (e.g. a bare "LLC") and stripped down to an EMPTY canonical string — `!organization` alone
-		// misses that case (review fix, round 1, minor), inflating `recordsConsidered` with a record that
+		// misses that case, inflating `recordsConsidered` with a record that
 		// can never usefully block (an empty-string blocking key never matches another record; see
 		// `exactKey`, `match/blocking.ts`).
 		if (!organization || !organization.canonical) continue
 
-		const group = groupOfNode.get(nodeId) ?? [nodeId]
+		const group = groupOfNode.get(nodeID) ?? [nodeID]
 
 		const attributes: Record<string, string> = {}
 		const frnCodes = codesByType(group, FilerIdentifierType.FRN)
@@ -545,7 +539,7 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 			attributes.providerID = providerCodes
 		}
 
-		records.push({ id: nodeId, organization, attributes })
+		records.push({ id: nodeID, organization, attributes })
 	}
 
 	return records
@@ -553,10 +547,9 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
 
 /**
  * Pass (b): name-match `form499_id` nodes across the whole crosswalk via `resolveEntities` (decision 4: BINDING
- * `learnedScorer: false`; review fix round 1: a HARD identifier veto via a custom `scorer`, see
- * {@linkcode scoreWithIdentifierVeto} and the module docstring's "identifier veto" section), and record the outcome as
- * `assertion: "inferred"` rows — WITHOUT touching any `assertion: "authoritative"` row (decision 5 / gate 2, BINDING;
- * see the module docstring).
+ * `learnedScorer: false`, plus a HARD identifier veto via a custom `scorer` — see {@linkcode scoreWithIdentifierVeto}
+ * and the module docstring's "identifier veto" section), and record the outcome as `assertion: "inferred"` rows —
+ * WITHOUT touching any `assertion: "authoritative"` row (decision 5 / gate 2, BINDING; see the module docstring).
  *
  * Writes:
  *
@@ -568,8 +561,8 @@ async function buildInferredRecords(db: Kysely<FilerDatabase>): Promise<SourceRe
  *   WEAKEST intra-cluster link weight; `resolveEntities` doesn't expose the individual pairwise weights behind a larger
  *   entity, so this is the honest single number available) and `evidence` (the full membership, as JSON). Made
  *   idempotent/current EVERY run, same-vintage or not, by clearing this run's own vintage first and closing out any
- *   still-open EARLIER-vintage row (review fix, rounds 1 + 2 — see the module docstring's "cross-vintage supersession"
- *   section) so a link that no longer holds never lingers as falsely "still valid".
+ *   still-open EARLIER-vintage row (see the module docstring's "cross-vintage supersession" section) so a link that no
+ *   longer holds never lingers as falsely "still valid".
  */
 export async function clusterInferredLinks(
 	db: Kysely<FilerDatabase>,
@@ -577,8 +570,8 @@ export async function clusterInferredLinks(
 ): Promise<InferredClusterResult> {
 	const progress = options.onProgress ?? (() => {})
 
-	// Fails fast, before any query/write — see ClusterFilersOptions.validFrom's docstring and assertISODate's
-	// (review fix, round N, CRITICAL): a vintage LABEL like "2026-cluster-v1" must never reach valid_from/valid_to.
+	// Fails fast, before any query/write — see ClusterFilersOptions.validFrom's docstring and assertISODate's:
+	// a vintage LABEL like "2026-cluster-v1" must never reach valid_from/valid_to.
 	const validFrom = assertISODate(options.validFrom, "options.validFrom")
 
 	const records = await buildInferredRecords(db)
@@ -598,7 +591,7 @@ export async function clusterInferredLinks(
 		// Fellegi-Sunter weight units and has no business scoring corporate legal names. Redundant with `scorer` below
 		// (a custom `scorer` already bypasses the learned-scorer branch entirely) but kept explicit for intent.
 		learnedScorer: false,
-		// Review fix, round 1, CRITICAL: the hard identifier veto — see the module docstring and
+		// The hard identifier veto — see the module docstring and
 		// scoreWithIdentifierVeto's own docstring. Two records with no shared frn/form499ID/providerID code are
 		// forced to -Infinity here, unconditionally, before name similarity is ever consulted.
 		scorer: scoreWithIdentifierVeto,
@@ -610,8 +603,7 @@ export async function clusterInferredLinks(
 	let links = 0
 
 	await db.transaction().execute(async (trx) => {
-		// Cross-vintage supersession (review fix, round 1; round-2 fix for the SAME-vintage residual; round-N fix
-		// for the sourceVintage/validFrom split — see the module docstring). Two cases, handled separately because
+		// Cross-vintage supersession (see the module docstring). Two cases, handled separately because
 		// they mean different things AND key on different columns:
 		//
 		// 1. SAME-vintage rebuild (`source_vintage = sourceVintage` — the run's LABEL identity) — DELETE, not
@@ -649,29 +641,29 @@ export async function clusterInferredLinks(
 		for (const entity of entities) {
 			const memberNodeIds = entity.records.map((record) => record.id).toSorted()
 			// Content-derived (see clusterAuthoritativeComponents) — stable across reruns.
-			const clusterId = `${FilerEdgeAssertion.Inferred}:${memberNodeIds[0]}`
+			const clusterID = `${FilerEdgeAssertion.Inferred}:${memberNodeIds[0]}`
 
-			for (const nodeId of memberNodeIds) {
-				clusterRows.push({ node_id: nodeId, cluster_id: clusterId, assertion: FilerEdgeAssertion.Inferred })
+			for (const nodeID of memberNodeIds) {
+				clusterRows.push({ node_id: nodeID, cluster_id: clusterID, assertion: FilerEdgeAssertion.Inferred })
 			}
 
 			if (entity.records.length <= 1) continue
 
 			linkedClusters++
-			const representativeId = entity.representative.id
+			const representativeID = entity.representative.id
 
-			for (const nodeId of memberNodeIds) {
-				if (nodeId === representativeId) continue
+			for (const nodeID of memberNodeIds) {
+				if (nodeID === representativeID) continue
 
 				await trx
 					.insertInto("filer_edge")
 					.values({
-						from_node_id: nodeId,
-						to_node_id: representativeId,
+						from_node_id: nodeID,
+						to_node_id: representativeID,
 						assertion: FilerEdgeAssertion.Inferred,
 						// This pass links two form499_id nodes that are the SAME underlying filer (a re-filing
-						// under one FRN with a drifted legal name — see the module docstring) — genuinely
-						// SameEntity, not a placeholder like build-filer.ts's own 3b Task 1 stand-in value.
+						// under one FRN with a drifted legal name — see the module docstring), so SameEntity is
+						// the literal claim being made here, not a default stand-in for an untyped relationship.
 						relationship: FilerRelationship.SameEntity,
 						source: CLUSTER_FILERS_SOURCE,
 						source_vintage: options.sourceVintage,
@@ -681,8 +673,8 @@ export async function clusterInferredLinks(
 						evidence: JSON.stringify({ memberNodeIds }),
 					})
 					// Both the same-vintage-rebuild and earlier-vintage-supersession cases are handled ABOVE, before
-					// this loop runs (see the module docstring's "cross-vintage supersession" section) — this
-					// `onConflict` is now just a defensive no-op for the (already-cleared) same-vintage PK.
+					// this loop runs (see the module docstring's "cross-vintage supersession" section), so this
+					// `onConflict` is a defensive no-op for the (already-cleared) same-vintage PK.
 					.onConflict((oc) => oc.doNothing())
 					.execute()
 

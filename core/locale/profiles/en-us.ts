@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   En-US locale profile (per Phase 0 task 5). Lists the rule classifier IDs the legacy registry will
- *   assign and the `ComponentTag`s the US locale actually uses. No `weightsPackage` is set in Phase
- *   0 — neural weights ship in Phase 3.
+ *   En-US locale profile. Lists the rule classifier IDs active in this locale and the
+ *   `ComponentTag`s the US locale actually uses.
  */
 
 import type { LocaleProfile } from "../locale.ts"

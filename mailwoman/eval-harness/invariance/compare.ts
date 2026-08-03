@@ -16,15 +16,15 @@
  *   DEGRADED: recoverable, worth flagging, not ship-blocking on its own.
  *
  *   A critical tag that's ABSENT in the original parse but PRESENT in the transformed one — a hallucination
- *   — is ALSO LOST, not DEGRADED and not ignored. (Adjudicated: review fix wave, 2026-07-23.) A missing
+ *   — is ALSO LOST, not DEGRADED and not ignored. A missing
  *   critical tag degrades gracefully to a coarser admin-tier fallback; a hallucinated one can resolve to a
  *   SPECIFIC WRONG rooftop with high apparent confidence — worse than falling back, because nothing
  *   downstream knows to distrust it.
  */
 
 /**
- * Tags whose change under a transform counts as a real failure. A shifted venue or unit is tolerable; a shifted house
- * number, street, locality or region is not.
+ * Tags whose change under a transform counts as a real failure. A shifted venue, unit or locality is tolerable; a
+ * shifted house number, street or postcode is not.
  */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 

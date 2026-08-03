@@ -31,8 +31,8 @@ export const WithSuggestions: Story = {
 				activeIndex={active}
 				onPick={() => {}}
 				onHover={setActive}
-				listboxId="story-suggest"
-				optionId={(i) => `story-suggest-${i}`}
+				listboxID="story-suggest"
+				optionID={(i) => `story-suggest-${i}`}
 			/>
 		)
 	},
@@ -49,8 +49,8 @@ export const Empty: Story = {
 				suggestions={[]}
 				activeIndex={-1}
 				onPick={() => {}}
-				listboxId="story-suggest"
-				optionId={(i) => `story-suggest-${i}`}
+				listboxID="story-suggest"
+				optionID={(i) => `story-suggest-${i}`}
 			/>
 		</>
 	),

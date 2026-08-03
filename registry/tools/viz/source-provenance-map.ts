@@ -48,7 +48,7 @@ export interface SourceProvenanceMapOptions {
 	/**
 	 * Output HTML path. Default `/tmp/source-provenance.html`.
 	 */
-	outHtml?: string
+	outHTML?: string
 	/**
 	 * Keep ~1/N of NAD points. Default 700.
 	 */
@@ -90,10 +90,10 @@ type Row = { lat: number; lon: number; source: string; number: string | null; st
 export function sourceProvenanceMap(
 	options: SourceProvenanceMapOptions = {},
 	report?: (line: string) => void
-): { outHtml: string; points: number } {
+): { outHTML: string; points: number } {
 	const STATE = (options.state || "ny").toLowerCase()
 	const DB = options.db || `${dataRootPath("address-points")}/address-points-us-${STATE}.db`
-	const OUT = options.outHtml || "/tmp/source-provenance.html"
+	const OUT = options.outHTML || "/tmp/source-provenance.html"
 	const NAD_MOD = options.nadMod ?? 700 // keep ~1/700 of NAD points
 	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points
 	const CAP = options.cap ?? 7000 // per-source marker cap
@@ -154,5 +154,5 @@ export function sourceProvenanceMap(
 		report?.(`  ${n.toString().padStart(5)}  ${bucket}`)
 	}
 
-	return { outHtml: OUT, points: features.length }
+	return { outHTML: OUT, points: features.length }
 }

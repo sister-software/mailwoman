@@ -37,7 +37,7 @@ export interface ResolvedPlaceLayersProps {
 	/**
 	 * Source/layer id prefix for the outline. @default "mw-result"
 	 */
-	outlineId?: string
+	outlineID?: string
 	/**
 	 * Marker color. @default the house pink.
 	 */
@@ -51,7 +51,7 @@ export function ResolvedPlaceLayers({
 	spec,
 	applyCamera = true,
 	animateCamera = true,
-	outlineId,
+	outlineID,
 	markerColor,
 }: ResolvedPlaceLayersProps): ReactNode {
 	if (!spec) return null
@@ -66,7 +66,7 @@ export function ResolvedPlaceLayers({
 					color={markerColor}
 				/>
 			))}
-			<ResultOverlay outline={spec.outline} id={outlineId} color={markerColor} />
+			<ResultOverlay outline={spec.outline} id={outlineID} color={markerColor} />
 			{applyCamera ? <ResultCamera target={spec.camera} animate={animateCamera} /> : null}
 		</>
 	)

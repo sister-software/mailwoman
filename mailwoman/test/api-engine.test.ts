@@ -9,7 +9,7 @@
  *   `app.request()`.
  *
  *   `test/resolve-router.test.ts` (the `/api/resolve` XML-tree-viewer endpoint, `ResolveRouter.ts`)
- *   does NOT port — that endpoint retires with the debug pages (Task 2), and its coverage is unrelated
+ *   does NOT port — that endpoint retires with the debug pages, and its coverage is unrelated
  *   to `resolveTreeHandler`/`/v1/resolve` (a DIFFERENT express router, `GeocodeRouter.ts`), which this
  *   file DOES cover (ported from `geocode-router.test.ts`'s RemoteResolver round-trip test).
  *
@@ -43,7 +43,7 @@ const hasStack = existsSync(wofPath) && existsSync(txSitus)
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
- * `/v1/parse` needs only the model weights (Task 2) — gate its own tests independently of the WOF/TX stack above.
+ * `/v1/parse` needs only the model weights — gate its own tests independently of the WOF/TX stack above.
  */
 function weightsPresent(): boolean {
 	try {
@@ -116,7 +116,7 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 })
 
-// /v1/parse — native neural output (Task 2); needs only the model weights, not the gazetteer, so
+// /v1/parse — native neural output; needs only the model weights, not the gazetteer, so
 // it's gated on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(

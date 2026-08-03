@@ -30,7 +30,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 interface Args {
 	harnessPath: string
 	outMd?: string
-	outJson?: string
+	outJSON?: string
 	geocodeEarthKey?: string
 	backoffMs: number
 }
@@ -60,7 +60,7 @@ function parseArgs(): Args {
 	}
 
 	if (values["out-json"] != null) {
-		out.outJson = values["out-json"] as string
+		out.outJSON = values["out-json"] as string
 	}
 
 	if (values["geocode-earth-key"] != null) {
@@ -395,12 +395,12 @@ async function main(): Promise<void> {
 		writeFileSync(args.outMd, mdText)
 	}
 
-	if (args.outJson) {
-		writeFileSync(args.outJson, JSON.stringify(results, null, 2))
+	if (args.outJSON) {
+		writeFileSync(args.outJSON, JSON.stringify(results, null, 2))
 	}
 
 	console.log(mdText)
-	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJson ?? "(no json)"}`)
+	console.error(`\nWrote ${args.outMd ?? "(no md)"} / ${args.outJSON ?? "(no json)"}`)
 }
 
 runIfScript(import.meta, main)

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer pair-index` — build the PIX1 placetype-pair index (placetype-pair-prior
- *   arc, Task 3) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
+ *   arc) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
  *   `gb-tuples.csv`; columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). Streams the CSV
  *   (CSVSpliterator, the `corpus/src/shard-recipes/locale.ts` `readTuples` idiom), folds
  *   child=CITY/parent=DISTRICT through `normalizeFSTToken` and tags every pair `dependent_locality`
@@ -21,7 +21,7 @@
  *   MISS` lines rather than trusting the write silently succeeded.
  *
  *   Also prints the raw (pre-fold) CITY word-length distribution (p50/p90/p99/max + a per-length
- *   count table) — this sizes the word-span window the decode-side prior (Task 4) walks.
+ *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
@@ -43,16 +43,14 @@ import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
- * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. Re-anchored
- * (final-review fix) from the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) down
- * to 19,209. This is not a bug fix — a real Task-3 cross-check rebuild fired the gate at exactly this delta and it was
- * adjudicated as the production fold correctly MERGING punctuation-variant duplicates the raw census counted separately
- * (e.g. "St Helens" vs "St. Helens" fold to the SAME `(child, parent)` key). The collision receipt: 221 merge groups —
- * 220 groups where 2 raw census lines collapse to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where
- * 3 raw lines collapse to 1 entry (1 × 2 collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 =
- * 19,209. See `.superpowers/sdd/progress.md`'s Task 3 entry for the adjudication record. A mismatch AGAINST 19,209 on a
- * real rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate
- * before trusting the artifact.
+ * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
+ * the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) because the production fold
+ * MERGES punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
+ * SAME `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
+ * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
+ * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
+ * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate before
+ * trusting the artifact.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
@@ -153,7 +151,7 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"OPTIONAL — the decoder transition-entry bonus a probe hit contributes (+β into B-<tag> at the child's " +
-				"first piece; TRANSITION-BETA build, task-8 probe). Written into the PIX1 header ONLY when passed — " +
+				"first piece; TRANSITION-BETA build). Written into the PIX1 header ONLY when passed — " +
 				"omitting it builds a beta-less artifact (no transition term at decode, the pre-beta behavior). " +
 				"Per-country calibration like --delta: GB ships 5; NZ ships without it."
 		),
@@ -163,7 +161,7 @@ const OptionsSchema = zod.object({
 		.max(1)
 		.default(0)
 		.describe(
-			"DEV-ONLY falsifier flag (placetype-pair-prior arc, Task 6) — withhold this fraction of deduplicated pairs " +
+			"DEV-ONLY falsifier flag (placetype-pair-prior arc) — withhold this fraction of deduplicated pairs " +
 				"from the build (seeded, deterministic; see --holdout-seed), for measuring decode-layer degradation " +
 				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
 				"nonzero value for a shipped artifact build."
@@ -195,6 +193,7 @@ export { OptionsSchema as options }
 const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const country = options.country.toLowerCase()
+
 		// The PPD tuples CSV is a GB national register — there is no equivalent for the US instance (USPS routes
 		// city/state/ZIP, so no postal source carries dependent localities). A country whose pairs come entirely from
 		// the WOF/secondary sources below runs with NO CSV rather than being handed an empty one.
@@ -301,7 +300,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const built = builder.finish()
 		const { rowsKept, rowsSkipped, distribution } = built
 
-		// Task 6 falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
+		// Falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
 		// downstream eval can measure decode-layer degradation on pairs the index never saw. A no-op
 		// (`entries === built.entries` by value) when --holdout-fraction is the 0 default.
 		const { kept: entries, heldOut } = applyPairIndexHoldout(

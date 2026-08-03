@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fr-FR locale profile (per Phase 0 task 5). Uses the same rule classifier set as en-US for
+ *   Fr-FR locale profile. Uses the same rule classifier set as en-US for
  *   locale-agnostic primitives, with the French-specific component set: cedex (postal routing),
  *   street_prefix_particle (de la / du / des), and dependent_locality (arrondissement). The
  *   `central_european_street_name` classifier lives in the registry for FR / DE / etc. and is

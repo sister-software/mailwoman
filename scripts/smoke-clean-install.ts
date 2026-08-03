@@ -46,9 +46,9 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/resolver": "resolver",
 	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
 	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module
-	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0 (2026-07-18
-	// — found while adding @mailwoman/mcp to this closure; ERR_PACKAGE_PATH_NOT_EXPORTED on './poi-lookup',
-	// reproduced with mcp absent too, so this gap predates Task 6 and was simply uncaught until now).
+	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0
+	// (2026-07-18), which exports no './poi-lookup' at all — resolving there is an
+	// ERR_PACKAGE_PATH_NOT_EXPORTED the instant the CLI loads its command modules.
 	"@mailwoman/resolver-wof-sqlite": "resolver-wof-sqlite",
 	"@mailwoman/ban": "ban",
 	"@mailwoman/codex": "codex",

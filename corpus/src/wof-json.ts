@@ -72,8 +72,8 @@ export interface WOFRecord {
  * `mz:is_current` ∈ {`1`, `-1`} → keep. `0` → drop.
  *
  * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active"); the Pelias importer accepts `-1`
- * alongside `1`. The previous SpatiaLite-backed adapters filtered on `= 1` only and silently emitted zero rows from the
- * corpus — this loosened predicate is the critical fix.
+ * alongside `1`. Tightening the predicate to `= 1` is the trap: the postalcode distros then contribute ZERO rows to the
+ * corpus, silently, with nothing raised to notice it by.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {
 	const raw = props["mz:is_current"]

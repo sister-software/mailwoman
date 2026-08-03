@@ -270,7 +270,7 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 }
 
 export interface PostcodeLocalityTWOptions {
-	postalXml: string
+	postalXML: string
 	divisions: string
 	adminDb: string
 	output: string
@@ -438,10 +438,10 @@ function loadAdminIndexes(args: { adminDb: string }) {
 }
 
 export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
-	const districts = loadPostalDistricts(args.postalXml)
+	const districts = loadPostalDistricts(args.postalXML)
 
 	if (!districts.length) {
-		console.error(`no postal districts parsed from ${args.postalXml}`)
+		console.error(`no postal districts parsed from ${args.postalXML}`)
 
 		process.exit(1)
 	}

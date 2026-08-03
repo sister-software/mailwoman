@@ -4,26 +4,26 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build bdc` — the FCC BDC availability ingest + sealed `bdc.db` layer build
- *   (2a Task 8). Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
+ *. Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
  *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink/Pastel or
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   First cut wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
  *   broadband/voice subcategories are a future flag, not a scope gap in this command's shape.
  *
- *   `--provider-list-path` (3a Task 8, decision 6) opts INTO populating `bdc_provider` —
+ *   `--provider-list-path` (decision 6) opts INTO populating `bdc_provider` —
  *   `bdc_availability` itself is unaffected either way. When given, `parseProviderList`
  *   (`@mailwoman/filer/sdk`) streams the FCC provider-list CSV as `BuildBDCOptions.providers`, and
  *   filer.db (`--filer-db-path`, default `<data-root>/filer/filer.db`) is opened read-only to resolve
  *   each multi-FRN provider's primary FRN (`readFRNFilingCandidates` + `pickPrimaryFRN`, imported
  *   rather than reimplemented — see `build-bdc.ts`'s `BuildBDCOptions.filerDB` docstring). Omitting
- *   `--provider-list-path` leaves `bdc_provider` empty, exactly as before Task 8.
+ *   `--provider-list-path` leaves `bdc_provider` empty.
  *
- *   Both paths are `existsSync`-guarded BEFORE any download/build work starts (review fix round 1,
- *   IMPORTANT-2): `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
+ *   Both paths are `existsSync`-guarded BEFORE any download/build work starts:
+ *   `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
  *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw ENOENT
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
- *   `--filer-db-path` given without `--provider-list-path` is a loud error, not a silent no-op (MINOR):
+ *   `--filer-db-path` given without `--provider-list-path` is a loud error, not a silent no-op:
  *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
  *   list to resolve FRNs FOR.
  */
@@ -68,7 +68,7 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"Path to the FCC BDC provider list CSV (frn/provider_id/holding_company). When given, populates " +
-				"bdc_provider (decision 6, 3a task 8); omit to leave bdc_provider empty, as before task 8."
+				"bdc_provider (decision 6); omit to leave bdc_provider empty."
 		),
 	filerDbPath: zod
 		.string()
@@ -83,7 +83,7 @@ export { OptionsSchema as options }
 
 const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		// Fail-fast guards (review fix round 1, IMPORTANT-2 / MINOR) — checked BEFORE any network/download work
+		// Fail-fast guards — checked BEFORE any network/download work
 		// starts. `populateBDCProviderTable` only runs after the availability ingest AND writeLayerManifest, so
 		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
 		// build, discarding hours of work for a check that costs microseconds up front.
@@ -153,9 +153,9 @@ const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 		console.error(`▸ build: ${out}`)
 
-		// --provider-list-path (3a Task 8, decision 6) opts into populating bdc_provider — omitted, `providers`/
-		// `filerDB` stay undefined and buildBDCDatabase's default (byte-identical) path runs unchanged. Both
-		// paths were already existsSync-validated above, so this can't ENOENT.
+		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted, `providers`/
+		// `filerDB` stay undefined and buildBDCDatabase runs its default path. Both paths were already
+		// existsSync-validated above, so this can't ENOENT.
 		let filerDB: DatabaseClient<FilerDatabase> | undefined
 
 		if (filerDbPath) {

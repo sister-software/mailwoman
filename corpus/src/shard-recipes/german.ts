@@ -17,10 +17,12 @@
 
 import { spawnSync } from "node:child_process"
 
+import { dataRootPath } from "@mailwoman/core/utils"
+
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.ts"
-import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).
@@ -37,8 +39,8 @@ interface GermanSource {
  * Berlin (a city-state, region==locality); sn/statewide → Sachsen.
  */
 const SOURCES: GermanSource[] = [
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
+	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+	{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
 ]
 
 /**
@@ -53,35 +55,18 @@ function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string): number => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iRegion = idx("region"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		const lineStr = lines[li]
-
-		if (!lineStr) continue
-		const cells = splitCSV(lineStr)
-		const street = get(cells, iStreet)
-		const locality = get(cells, iCity)
+	for (const row of readCSVRecords(r.stdout)) {
+		const street = row.street ?? ""
+		const locality = row.city ?? ""
 
 		if (!street || !locality) continue
-		const house_number = get(cells, iNum)
-		const postcode = get(cells, iPost)
+		const house_number = row.number ?? ""
+		const postcode = row.postcode ?? ""
 		// OA's REGION column is empty for DE — fall back to the source's Bundesland (set per file).
-		const region = get(cells, iRegion) || source.region || ""
+		const region = row.region || source.region || ""
 		const key = `${house_number}|${street}|${locality}|${postcode}`.toLowerCase()
 
 		if (seen.has(key)) continue
@@ -127,7 +112,7 @@ export const germanRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No German tuples found — are the cached zips present in /tmp/oa-cache?")
+			throw new Error(`No German tuples found — are the cached zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0

@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@link plausibilityCheck} (2b task 5, decisions 4, 6, 8). The four §7-2b acceptance gates
- *   are Task 6's own file; this suite exercises the composition logic itself — claim resolution, the
- *   tech→category mapping, filing/physical evidence assembly, the abstain precedent, and the
- *   `coverage_confidence` combination — so Task 6 can build on a module already known to compose
- *   correctly in isolation.
+ *   Tests for {@link plausibilityCheck} (decisions 4, 6, 8). The four §7-2b acceptance gates get their
+ *   own `describe("§7-2b gates")` block at the bottom of this file; every suite above it exercises the
+ *   composition logic itself — claim resolution, the tech→category mapping, filing/physical evidence
+ *   assembly, the abstain precedent, and the `coverage_confidence` combination — so each gate can assert
+ *   its own specific claim against a module already known to compose correctly in isolation.
  *
  *   Fixture idiom: a real `bdc.db` built via `buildBDCDatabase`'s `rows:` seam (same idiom as
  *   `filing-landscape.test.ts`), and a poi-layer pair built the SAME way `nearest-infrastructure.test.ts`
  *   established (`poi-schema.ts` table builders directly — `bdc` cannot depend on the `mailwoman`
  *   workspace). Unlike that test's deliberately-decoupled `contractDB` fixture, several tests here need a
  *   REALISTIC poi `layer_manifest` (a real recorded `spineKeys.h3.resolution`) to exercise
- *   `assertCoverageSpineAgreement`, so `openPOIContractDB` below writes one explicitly with resolution 9
+ *   `assertLayerSpineResolution`, so `openPOIContractDB` below writes one explicitly with resolution 9
  *   (matching `POI_H3_RESOLUTION`) by default, overridable per test for the mismatch case.
  *
  *   Springfield, IL is the shared center (same coordinates `nearest-infrastructure.test.ts` uses) for
@@ -218,8 +218,8 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
 /**
  * A `LayerContractDatabase`-only fixture standing in for poi.db's own manifest/coverage — NOT poi.db's actual file
  * (mirrors `nearest-infrastructure.test.ts`'s decoupled `openEmptyContractDB`), but with a REALISTIC recorded
- * `spineKeys.h3.resolution` (9, matching `POI_H3_RESOLUTION`) by default so `assertCoverageSpineAgreement` passes in
- * the happy-path tests. `resolutionOverride` lets the mismatch test set something else.
+ * `spineKeys.h3.resolution` (9, matching `POI_H3_RESOLUTION`) by default so `assertLayerSpineResolution` passes in the
+ * happy-path tests. `resolutionOverride` lets the mismatch test set something else.
  */
 async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient<LayerContractDatabase>> {
 	const kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
@@ -405,7 +405,7 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		expect(bundle.vintage).toBeNull()
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "requires_bdc_layer", layer: "bdc" })
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// finding 1: the filing axis names WHY it's not covered — the layer was never wired — distinct from a
+		// The filing axis names WHY it's not covered — the layer was never wired — distinct from a
 		// wired-but-unsurveyed cell (see the next test).
 		expect(bundle.coverage_detail.filing).toBe("layer_missing")
 	})
@@ -435,7 +435,7 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 		})
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
-		// finding 1: distinct from the layer-missing case above — the LAYER is wired, only this cell lacks coverage.
+		// Distinct from the layer-missing case above — the LAYER is wired, only this cell lacks coverage.
 		expect(bundle.coverage_detail.filing).toBe("cell_unsurveyed")
 	})
 })
@@ -538,8 +538,8 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 		// DSL has no physical falsifier, so with no poi dep the confidence is filing-axis-only: covered -> "low"
 		// (this module's conservative not_applicable extension — see plausibility.ts's module docstring).
 		expect(bundle.coverage_confidence).toBe("low")
-		// finding 1: the bundle now NAMES why this is "low" — physical is not_applicable (DSL has no physical
-		// falsifier at all), NOT a poi survey gap — distinct states that used to be indistinguishable.
+		// The bundle NAMES why this is "low": physical is not_applicable (DSL has no physical falsifier at all),
+		// NOT a poi survey gap.
 		expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "not_applicable" })
 	})
 })
@@ -561,8 +561,8 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			layer: "poi",
 		})
 
-		// finding 1: physical is layer_missing here — fiber DOES have a falsifier (see the next test's
-		// not_applicable contrast for a tech that has none at all).
+		// Physical is layer_missing here — fiber DOES have a falsifier (see the next test's not_applicable
+		// contrast for a tech that has none at all).
 		expect(bundle.coverage_detail.physical).toBe("layer_missing")
 	})
 
@@ -577,7 +577,7 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 		)
 
 		expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(false)
-		// finding 1: not_applicable, NOT layer_missing — DSL has no physical falsifier regardless of poi's presence.
+		// not_applicable, NOT layer_missing — DSL has no physical falsifier regardless of poi's presence.
 		expect(bundle.coverage_detail.physical).toBe("not_applicable")
 	})
 
@@ -607,7 +607,7 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 			false
 		)
 
-		// finding 1: no_coordinate — a real capability gap distinct from layer_missing, since deps.poi IS wired here.
+		// no_coordinate — a real capability gap distinct from layer_missing, since deps.poi IS wired here.
 		expect(bundle.coverage_detail.physical).toBe("no_coordinate")
 	})
 })
@@ -652,11 +652,10 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
 	})
 
-	// task 5 fix round 1 (review finding 3): `combineCoverage`'s genuine MIXED branch (one axis covered, the other
-	// not) was previously asserted via a test titled for exactly this case but whose body actually hit the
-	// both-unknown branch instead (its own comment admitted the mixed case couldn't be constructed). The two tests
-	// below construct the real thing, in both directions, rather than leaving the branch's actual coverage claim
-	// resting on a misleading title.
+	// `combineCoverage`'s genuine MIXED branch — one axis covered, the other not. It takes deliberate
+	// construction: any single point remote enough for bdc.db to have missed it is also outside the poi coverage
+	// table, so both axes land on unknown together and the both-unknown branch runs instead. The two tests below
+	// drive the mixed branch in BOTH directions by separating the two axes on purpose.
 	it("MIXED: filing covered, physical layer entirely missing (no poi dep) -> low", async () => {
 		const { scratch, db } = await buildBDCFixture()
 
@@ -722,7 +721,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 	})
 })
 
-describe("plausibilityCheck — per-layer coverage-spine resolution assertion (ledger note, task 4 review; task 5 fix round 1 finding 2)", () => {
+describe("plausibilityCheck — per-layer coverage-spine resolution assertion", () => {
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with both layers wired", async () => {
 		const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
 		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
@@ -750,11 +749,11 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion (l
 		).rejects.toThrow(/poi\.db's recorded h3 spine resolution \(6\) does not match BDC_H3_RESOLUTION \(9\)/)
 	})
 
-	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB) — finding 2", async () => {
+	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB)", async () => {
 		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Same mismatch as above, but this time bdcDB is never wired at all — previously this ran NO check whatsoever,
-		// since the retired assertion only fired when BOTH layers were present. `pointCell` (below) is still derived
-		// from BDC_H3_RESOLUTION regardless, so poi's own resolution must be checked here too.
+		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion gated on BOTH layers
+		// being present would skip entirely. `pointCell` (below) is still derived from BDC_H3_RESOLUTION regardless,
+		// so poi's own resolution must be checked here too.
 		const poiContractDB = await openPOIContractDB(6)
 		const poiLookup = new POILookup({ databasePath: poiPath })
 
@@ -821,12 +820,12 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion (l
 })
 
 /**
- * The §7-2b acceptance gates (task 6) — one describe per gate, mapped 1:1 to the brief's four bullets
- * (`.superpowers/sdd/2026-07-30-bdc-2b-plan/task-6-brief.md`). Several gates' BEHAVIORAL claims are already proven by
- * the suites above — `plausibility.ts`'s own module docstring says as much ("this module is designed for them but
- * doesn't assert them itself"). Where that's true, the test below asserts the gate's SPECIFIC claim against a real
- * bundle (reusing the established fixtures, including the hoisted `openBoth()`) and cross-references the fuller proof
- * by comment, rather than re-deriving the whole scenario.
+ * The §7-2b acceptance gates — one describe per gate, mapped 1:1 to the four bullets in
+ * `docs/superpowers/plans/2026-07-30-bdc-2b-plan.md`'s "The §7-2b gates" section. Several gates' BEHAVIORAL claims are
+ * already proven by the suites above — `plausibility.ts`'s own module docstring says as much ("this module is designed
+ * for them but doesn't assert them itself"). Where that's true, the test below asserts the gate's SPECIFIC claim
+ * against a real bundle (reusing the established fixtures, including the hoisted `openBoth()`) and cross-references the
+ * fuller proof by comment, rather than re-deriving the whole scenario.
  */
 describe("§7-2b gates", () => {
 	describe("Gate 1 — positive-evidence-only invariant (load-bearing)", () => {
@@ -887,9 +886,8 @@ describe("§7-2b gates", () => {
 			expect(bundle.coverage_detail).toEqual({ filing: "cell_unsurveyed", physical: "cell_unsurveyed" })
 			expect(bundle.coverage_confidence).toBe("insufficient_survey_data")
 
-			// task 8 carried-minor: this gate anchor mirrored the fuller "both axes unknown" test above but omitted its
-			// abstain assertion, making the gate anchor strictly weaker than the ordinary test it cites as fuller
-			// proof — a gate should never assert less than the test it points to.
+			// A gate anchor must never assert LESS than the ordinary test it cites as fuller proof, so the abstain
+			// assertion from the "both axes unknown" test is mirrored here too.
 			expect(bundle.evidence_found).toContainEqual({
 				type: "abstain",
 				reason: "insufficient_survey_data",
@@ -905,18 +903,18 @@ describe("§7-2b gates", () => {
 		 * are object literals assigned directly via `satisfies`, so excess-property checking applies). A future change that
 		 * adds a verdict-shaped member (e.g. `"implausible"`) to any of these unions therefore either fails to compile here
 		 * — silently missing from the pinned list, forcing a reviewer to touch this file — or, once added to the list,
-		 * fails the runtime blocklist check below. That's the "mutation-style" assertion: this file is what keeps Task 5
-		 * reviewer-confirmed property true.
+		 * fails the runtime blocklist check below. That's the "mutation-style" assertion Gate 1 asks for: the pins are what
+		 * keep the property true, not a reviewer's memory.
 		 *
 		 * Only `tsc` checks the `satisfies` clauses (`yarn typecheck:tests`, which auto-discovers `bdc/tsconfig.test.json`)
 		 * — `yarn vitest run` alone (esbuild, types stripped) runs only the `it()` below, which still confirms none of the
 		 * CURRENT values reads as a negative verdict.
 		 *
-		 * The five pins above close every existing UNION, but none of them has a claim over the bundle's own KEY SET — a
+		 * The five union pins close every closed UNION, but none of them has a claim over the bundle's own KEY SET — a
 		 * wholly NEW field appended to `PlausibilityBundle` (e.g. a hypothetical `verdict: "plausible" | "implausible"`)
-		 * would compile and ship green, since no pin above even looks at it (task 8 carried-minor from task 6).
-		 * `PLAUSIBILITY_BUNDLE_KEYS` below closes that gap the same way: `satisfies Record<keyof PlausibilityBundle, true>`
-		 * fails to compile if a key is added to (or removed from) the interface without a matching update here.
+		 * would compile and ship green, since no union pin even looks at it. `PLAUSIBILITY_BUNDLE_KEYS` below closes that
+		 * gap the same way: `satisfies Record<keyof PlausibilityBundle, true>` fails to compile if a key is added to (or
+		 * removed from) the interface without a matching update here.
 		 */
 		const PLAUSIBILITY_BUNDLE_KEYS = {
 			claim: true,
@@ -983,9 +981,9 @@ describe("§7-2b gates", () => {
 		})
 
 		it("PLAUSIBILITY_BUNDLE_KEYS (the key-set pin) is non-empty — a hollowed-out pin object would make the compile-time guard above vacuous", () => {
-			// The pin's real teeth are the `satisfies` clause itself (compile-time only, verified by hand per the
-			// task 8 report: temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`, confirm `tsc` fails
-			// here, then revert). This runtime assertion is only the same non-empty backstop the union pins' own
+			// The pin's real teeth are the `satisfies` clause itself, which is compile-time only — to check it by
+			// hand, temporarily add a field to `PlausibilityBundle`, rebuild `bdc/out`, confirm `tsc` fails here,
+			// then revert. This runtime assertion is only the same non-empty backstop the union pins' own
 			// `toHaveLength(16)` above provides — it can't observe a MISSING key the way `tsc` does.
 			expect(Object.keys(PLAUSIBILITY_BUNDLE_KEYS)).toHaveLength(6)
 		})
@@ -1006,9 +1004,8 @@ describe("§7-2b gates", () => {
 			)
 
 			expect(bundle.coverage_confidence).toBe("high")
-			// task 8 carried-minor: this gate anchor mirrored the fuller co-presence test above but omitted its
-			// coverage_detail and no-abstain assertions, making the gate anchor strictly weaker than the ordinary test
-			// it cites as fuller proof — a gate should never assert less than the test it points to.
+			// A gate anchor must never assert LESS than the ordinary test it cites as fuller proof, so the
+			// coverage_detail and no-abstain assertions from the co-presence test are mirrored here too.
 			expect(bundle.coverage_detail).toEqual({ filing: "covered", physical: "covered" })
 			expect(bundle.evidence_found.some((e) => e.type === "filing" && e.corroborates)).toBe(true)
 			expect(bundle.evidence_found.some((e) => e.type === "physical_plant")).toBe(true)

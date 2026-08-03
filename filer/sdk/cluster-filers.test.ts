@@ -4,23 +4,22 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for {@linkcode clusterAuthoritativeComponents}/{@linkcode clusterInferredLinks}/
- *   {@linkcode clusterFilers}/{@linkcode hasSharedIdentifier} (3a Task 6, decisions 4, 5; review fix
- *   round 1) — built directly against an in-memory `filer.db` (nodes/edges/attributes inserted
- *   straight through Kysely, matching `schema.test.ts`'s convention), never through
- *   `buildFilerDatabase` — this suite exercises the clustering pass in isolation.
+ *   {@linkcode clusterFilers}/{@linkcode hasSharedIdentifier} (3a decisions 4, 5) — built
+ *   directly against an in-memory `filer.db` (nodes/edges/attributes inserted straight through
+ *   Kysely, matching `schema.test.ts`'s convention), never through `buildFilerDatabase` — this suite
+ *   exercises the clustering pass in isolation.
  *
- *   **Review fix round 1 context:** an adversarial review found that pure organization-name matching
- *   (even with `exactDiscriminators` wired in) produces real false-identity links across DIFFERENT
- *   authoritative components — two DIFFERENT components structurally always have disjoint
- *   frn/form499ID/providerID code sets, so those "discriminators" could only ever contribute a
- *   constant negative tax, never separate anything. The fix is a HARD identifier veto
- *   ({@linkcode hasSharedIdentifier}): a link can only ever form between two nodes that ALREADY share
- *   an authoritative identifier. Consequently, a fixture that used to demonstrate "gate 2" by having a
- *   NAME-ONLY match bridge two different authoritative components (component A / component B, no
- *   shared identifier) now demonstrates the OPPOSITE — that such a bridge must NEVER form at all. The
- *   "positive control" fixtures below (two nodes sharing an authoritative FRN) are what a GENUINE
- *   inferred link looks like post-fix, and gate 2 is tested against THAT: even a real, sanctioned
- *   inferred link must never alter an authoritative cluster assignment.
+ *   **Why the identifier veto is hard, not a score.** Pure organization-name matching (even with
+ *   `exactDiscriminators` wired in) produces real false-identity links across DIFFERENT authoritative
+ *   components — two DIFFERENT components structurally always have disjoint frn/form499ID/providerID
+ *   code sets, so those "discriminators" can only ever contribute a constant negative tax, never
+ *   separate anything. Hence {@linkcode hasSharedIdentifier}: a link can only ever form between two
+ *   nodes that ALREADY share an authoritative identifier. A NAME-ONLY match bridging two different
+ *   authoritative components (component A / component B, no shared identifier) must NEVER form at
+ *   all, which is why the fixtures below assert its absence rather than its cluster assignment. The
+ *   "positive control" fixtures (two nodes sharing an authoritative FRN) are what a GENUINE inferred
+ *   link looks like, and gate 2 is tested against THAT: even a real, sanctioned inferred link must
+ *   never alter an authoritative cluster assignment.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -145,7 +144,7 @@ async function readClusterMap(db: DatabaseClient<FilerDatabase>, assertion: stri
 
 /**
  * Insert a pair of `form499_id` nodes that SHARE an authoritative FRN (a re-filing under one registrant) — the only
- * realistic shape, under the post-fix design, that lets an inferred link form at all (see the module docstring).
+ * shape that lets an inferred link form at all under the identifier veto (see the module docstring).
  */
 async function seedSharedFRNPair(
 	db: DatabaseClient<FilerDatabase>,
@@ -184,7 +183,8 @@ async function seedSharedFRNPair(
 
 /**
  * Insert a pair of `form499_id` nodes under DIFFERENT, unrelated FRNs (two genuinely different authoritative
- * components) whose legal names happen to canonicalize to the same key — the false-positive shape the review found.
+ * components) whose legal names happen to canonicalize to the same key — the false-positive shape the veto exists to
+ * reject.
  */
 async function seedDisjointNamedPair(
 	db: DatabaseClient<FilerDatabase>,
@@ -224,7 +224,7 @@ async function seedDisjointNamedPair(
 		.execute()
 }
 
-describe("hasSharedIdentifier (review fix, round 1 — the hard veto's core predicate)", () => {
+describe("hasSharedIdentifier — the hard veto's core predicate", () => {
 	it("is true when two records share a code on ANY of frn/form499ID/providerID", () => {
 		expect(
 			hasSharedIdentifier(
@@ -256,7 +256,7 @@ describe("hasSharedIdentifier (review fix, round 1 — the hard veto's core pred
 	})
 })
 
-describe("clusterAuthoritativeComponents (3a Task 6, pass a)", () => {
+describe("clusterAuthoritativeComponents (pass a)", () => {
 	it("writes one filer_cluster row per node, grouping connected components and leaving unlinked nodes as singletons", async () => {
 		using db = openMemory()
 		await seedFixture(db)
@@ -311,7 +311,7 @@ describe("clusterAuthoritativeComponents (3a Task 6, pass a)", () => {
 	})
 })
 
-describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix round 1, CRITICAL)", () => {
+describe("clusterInferredLinks — the identifier veto", () => {
 	it("does NOT bridge two authoritative components via a name-only match — and authoritative clustering stays untouched regardless", async () => {
 		using db = openMemory()
 		await seedFixture(db)
@@ -355,7 +355,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		expect(authoritativeAfter).toEqual(authoritativeBefore)
 	})
 
-	it("never links the reviewer's exact false-positive pairs, despite colliding canonical names and disjoint identifiers", async () => {
+	it("never links a false-positive pair, despite colliding canonical names and disjoint identifiers", async () => {
 		using db = openMemory()
 		await createAllTables(db)
 
@@ -446,7 +446,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 		expect(authoritativeResult.clusters).toBe(1)
 	})
 
-	it("source_vintage stays the human vintage LABEL while valid_from is the SEPARATE ISO date — the label never reaches valid_from (review fix, round N, CRITICAL)", async () => {
+	it("source_vintage stays the human vintage LABEL while valid_from is the SEPARATE ISO date — the label never reaches valid_from", async () => {
 		using db = openMemory()
 		await createAllTables(db)
 
@@ -505,7 +505,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 
 		// "LLC" alone is entirely a stripped legal designation — canonicalizeOrganizationName returns a TRUTHY
 		// object ({ raw: "LLC", canonical: "", designations: ["llc"] }), which a bare `!organization` check
-		// would have missed (review fix, round 1, minor).
+		// would have missed.
 		const designationOnlyFRN = `${FilerIdentifierType.FRN}:1230000000`
 		const designationOnlyNode = `${FilerIdentifierType.Form499ID}:999999`
 
@@ -671,7 +671,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 	})
 })
 
-describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review fix round 1, IMPORTANT)", () => {
+describe("clusterInferredLinks — cross-vintage supersession", () => {
 	it("closes a stale inferred edge when the underlying link no longer holds at a later vintage", async () => {
 		using db = openMemory()
 		await createAllTables(db)
@@ -758,12 +758,11 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
-		// valid_from is the SEPARATE, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label
-		// (review fix, round N, CRITICAL).
+		// valid_from is the SEPARATE, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label.
 		expect(secondRun[0]?.valid_from).toBe("2026-07-01")
 	})
 
-	it("supersedes its own prior inferred edges on a SAME-vintage REBUILD after corrected input (review fix, round 2)", async () => {
+	it("supersedes its own prior inferred edges on a SAME-vintage REBUILD after corrected input", async () => {
 		using db = openMemory()
 		await createAllTables(db)
 
@@ -822,12 +821,12 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 	})
 })
 
-describe("clusterFilers (3a Task 6, orchestrator)", () => {
+describe("clusterFilers (orchestrator)", () => {
 	it("runs both passes and returns their combined results, including a real inferred link", async () => {
 		using db = openMemory()
 		await seedFixture(db)
 		// Layer a shared-FRN positive-control pair on top of the base fixture so the inferred pass has a
-		// genuine (post-veto) link to find.
+		// genuine, veto-passing link to find.
 		await seedSharedFRNPair(db, "9990009990", "990", "991", { a: "Orchestrator Co Corp", b: "Orchestrator Co Inc" })
 
 		const result = await clusterFilers(db, { sourceVintage: "2026-cluster-v1", validFrom: "2026-07-01" })

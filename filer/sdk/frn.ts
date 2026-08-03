@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file FCC Registration Number (FRN) branded type (3a Task 2, decision 3).
+ * @file FCC Registration Number (FRN) branded type (3a decision 3).
  *
  *   Re-homed from Nexus's `fcc/entity/frn.ts` (relicense-by-copy, no provenance headers), retyped
  *   per decision 3: Nexus modeled `FRN` as `Tagged<number, "FRN">`, which silently drops leading

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CLI integration test for `mailwoman openapi` (Phase 5 Task 2). Runs the compiled CLI
+ *   CLI integration test for `mailwoman openapi`. Runs the compiled CLI
  *   (`out/cli.js` — the standing "use the compiled CLI" rule) against a stub `createMailwomanAPI({})`
  *   engine: no model, no gazetteer, no data-root env required. The per-package `/openapi.json` tests
  *   (`api/index.test.ts`) already pin the document's content in depth; this test only pins the CLI

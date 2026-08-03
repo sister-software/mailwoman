@@ -12,7 +12,7 @@ import { type H3Cell, type H3CellShort, expandH3Cell } from "./cell.ts"
 export * from "./cell.ts"
 
 /**
- * Given a geographic point, return a short cell address.
+ * Given a short cell address and the resolution it was captured at, return the centre of that cell.
  */
 export function shortCellToPoint(shortCell: H3CellShort, resolution = 15): GeoPoint {
 	const cell = expandH3Cell(shortCell, resolution)

@@ -22,9 +22,9 @@ import { MailwomanTokenizer } from "./tokenizer.ts"
 
 const TOKENIZER_MODEL_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-// Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom) — this is what the fix-round-2
-// re-review actually reproduced the bare-▁-orphan drop against. Not present in stripped-down CI, so this whole
-// block skips there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
+// Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom) — the bare-▁-orphan splits below
+// only occur in ITS vocab, not the small fixture's. Not present in stripped-down CI, so this whole block skips
+// there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
 const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
 
@@ -169,18 +169,13 @@ describe("buildFSTEmissionPriors", () => {
 		expect(matrix[1]![labelCol("I-locality")]).toBeCloseTo(0.45 * 3, 2)
 	})
 
-	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder (post Fix-1 adjudication)", () => {
-		// Behavior-delta adjudication (fix-wave, groupPiecesIntoWords Critical fix): before the fix, ANY
-		// punctuation-only piece — including one trailing a complete word with no more alnum content to
-		// follow — reset `current` and got its own empty placeholder group, so the comma's own row (piece 1)
-		// never received the "Washington" bias. Under the controller-decided semantics ("the word boundary is
-		// ▁ only"), a punctuation-only piece with no leading ▁ is unconditionally interior to whatever word is
-		// still active — there's no look-ahead to distinguish "mid-word hyphen" from "trailing comma before a
-		// new ▁ word", and the task's own repro cases ("Stockton-on-Tees" etc.) don't need one. The comma here
-		// never risked being dropped either way (the fix's actual harm was pieces vanishing, which this case
-		// never hit — "▁DC" always opens its own group), so the OLD assertion (comma's row stays all-zero)
-		// encoded an implementation accident of the pre-fix code, not a protected invariant — updated
-		// consciously, not silently. See the fix-wave report.
+	it("folds trailing punctuation into the preceding word's bias, not into a separate placeholder", () => {
+		// The word boundary is ▁ ONLY: a punctuation-only piece with no leading ▁ is unconditionally interior
+		// to whatever word is still active. There is deliberately no look-ahead distinguishing "mid-word
+		// hyphen" from "trailing comma before a new ▁ word" — the grouper cannot see the next piece, and the
+		// splits that matter ("Stockton-on-Tees" etc.) don't need it. So the comma below joins the
+		// "Washington" group and carries its bias rather than getting an all-zero placeholder row of its own.
+		// Nothing is lost by the coarser rule: "▁DC" opens its own group regardless.
 		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", importance: 0.85 }]]]))
 
 		const pieces = [
@@ -389,11 +384,11 @@ describe("groupPiecesIntoWords with normalizeFSTToken", () => {
 	})
 })
 
-describe("groupPiecesIntoWords — interior punctuation (Critical fix regression, real fixture tokenizer)", () => {
-	// Fix-wave regression: interior punctuation (a hyphen/apostrophe with no leading ▁) must continue the
-	// current word, never reset it. Before the fix, a punctuation-only piece set `current = null`, and every
-	// subsequent piece up to the next ▁ was silently dropped — these five real-tokenizer splits are the
-	// reviewer's exact repro cases. See the module docstring's "word boundary is ▁ only" section.
+describe("groupPiecesIntoWords — interior punctuation (real fixture tokenizer)", () => {
+	// Interior punctuation (a hyphen/apostrophe with no leading ▁) must continue the current word, never reset
+	// it. A punctuation-only piece that sets `current = null` silently drops every subsequent piece up to the
+	// next ▁ — these five real-tokenizer splits are where that happens. See the module docstring's "word
+	// boundary is ▁ only" section.
 
 	it('groups "Stockton-on-Tees" into a single word ("stocktonontees"), not a truncated fragment', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -439,14 +434,13 @@ describe("groupPiecesIntoWords — interior punctuation (Critical fix regression
 		expect(nonEmptyGroups.map((g) => g.fstToken)).toEqual(["stokeontrent"])
 	})
 
-	it('recovers "on" in "Stockton on the Forest" via pending-word-start (fix round 2, re-review finding)', async () => {
-		// Fix-wave round 1 documented this as a "fixture-vocab artifact" and left it dropped — re-review against
-		// the PRODUCTION tokenizer (v0.9.0-multisplice) falsified that adjudication: the bare-▁-orphan pattern is
-		// live and widespread there ("Stockton on the Forest", "Newcastle upon Tyne", "Weston super Mare",
-		// "Kingston upon Hull", and a trailing "IL" all reproduce — see the skipIf-gated production-tokenizer
-		// block below). Fixed via pending-word-start: a bare "▁" piece (real split here:
-		// ["▁Stock","ton","▁","on","▁the","▁Forest"]) closes "Stockton" and leaves `current === null` PENDING;
-		// the next piece ("on", no leading ▁ of its own) opens a fresh word instead of being dropped.
+	it('recovers "on" in "Stockton on the Forest" via pending-word-start', async () => {
+		// A bare "▁" piece is a word boundary carrying no content of its own (real split here:
+		// ["▁Stock","ton","▁","on","▁the","▁Forest"]). It closes "Stockton" and leaves `current === null`
+		// PENDING, so the next piece ("on", with no leading ▁ of its own) opens a fresh word instead of being
+		// dropped. This is not a fixture-vocab curiosity: the pattern is live and widespread in the PRODUCTION
+		// tokenizer (v0.9.0-multisplice) — "Newcastle upon Tyne", "Weston super Mare", "Kingston upon Hull" and
+		// a trailing "IL" all split this way; see the skipIf-gated production-tokenizer block below.
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
 		const { pieces } = tokenizer.encode("Stockton on the Forest")
 		const groups = groupPiecesIntoWords(pieces)
@@ -470,11 +464,10 @@ describe("groupPiecesIntoWords — interior punctuation (Critical fix regression
 
 describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fstToken (paired-punctuation audit)", () => {
 	// The small fixture tokenizer's deliberately tiny vocab hits SentencePiece byte-fallback (`<0xHH>` pieces) on
-	// curly quotes, guillemets, and even ASCII braces/brackets — not just non-Latin scripts. Before the fix,
-	// `hasAlnum` read the PLACEHOLDER TEXT ("<0x7B>" — hex digits and letters) as real alnum content, so a
-	// byte-fallback piece silently injected garbage into fstToken ("0x7bblock" instead of "block"), corrupting
-	// every FST/pair-index probe key for a place name written with one of these characters. See
-	// `.superpowers/sdd/task-9-audit-report.md`.
+	// curly quotes, guillemets, and even ASCII braces/brackets — not just non-Latin scripts. `hasAlnum` must
+	// never read the PLACEHOLDER TEXT ("<0x7B>" — hex digits and letters) as real alnum content: it would
+	// inject garbage into fstToken ("0x7bblock" instead of "block"), corrupting every FST/pair-index probe key
+	// for a place name written with one of these characters. See `.superpowers/sdd/task-9-audit-report.md`.
 
 	it('folds "{Block C}, Leeds" to clean words, no "0x7b"/"0x7d" garbage', async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_MODEL_PATH)
@@ -502,13 +495,11 @@ describe("groupPiecesIntoWords — byte-fallback placeholder never leaks into fs
 })
 
 describe.skipIf(!haveProductionTokenizer)(
-	"groupPiecesIntoWords — bare-▁-orphan recovery, PRODUCTION tokenizer (fix round 2, reviewer re-review table)",
+	"groupPiecesIntoWords — bare-▁-orphan recovery, PRODUCTION tokenizer vocabulary",
 	() => {
-		// The reviewer's re-review falsified fix-wave round 1's "fixture-vocab artifact" adjudication by
-		// reproducing the bare-▁-orphan drop against the real production tokenizer
-		// (v0.9.0-multisplice) — worse there than on the small test fixture: it hits short common words
-		// ("on", "upon", "super") AND a trailing single-letter abbreviation ("IL"). This is the reviewer's
-		// exact 5-case repro table, run verbatim, asserting FULL group recovery.
+		// The bare-▁ split is more common in the production tokenizer (v0.9.0-multisplice) than in the small
+		// test fixture: it hits short common words ("on", "upon", "super") AND a trailing single-letter
+		// abbreviation ("IL"). Each case below asserts FULL group recovery, not merely a non-empty result.
 		const cases: Array<{ raw: string; expected: string[] }> = [
 			{ raw: "Stockton on the Forest", expected: ["stockton", "on", "the", "forest"] },
 			{ raw: "Newcastle upon Tyne", expected: ["newcastle", "upon", "tyne"] },

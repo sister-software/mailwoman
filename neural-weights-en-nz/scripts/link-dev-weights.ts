@@ -36,12 +36,12 @@
  *   binary's header (magic + header block ONLY, via a local reimplementation of
  *   `peekPairIndexHeader` — NOT imported from `@mailwoman/neural`, so this data-only package
  *   doesn't gain a dependency on the ONNX-runtime-carrying workspace for one header read) and
- *   compare `header.delta` against this script's `PAIR_INDEX_DELTA`, and `header.sourceMD5s[0]`
- *   against a freshly computed md5 of the CURRENT source CSV (sidecar-cached — the CSV is 2.12M
- *   rows, worth not re-hashing on every `yarn test`). Either mismatch forces a loud rebuild
- *   instead of a silent skip. The NZ CSV is ~12× smaller than GB's PPD source (2.1M vs 25.6M
- *   rows), so even a cold rebuild is well under a minute — the guard exists for correctness, not
- *   build-time savings.
+ *   compare `header.delta` against this script's `PAIR_INDEX_DELTA`, and EVERY md5 in
+ *   `header.sourceMD5s` against a freshly computed md5 of the corresponding source (sidecar-cached
+ *   — the CSV is 2.12M rows, worth not re-hashing on every `yarn test`). Any mismatch forces a loud
+ *   rebuild instead of a silent skip. The NZ CSV is ~12× smaller than GB's PPD source (2.1M vs
+ *   25.6M rows), so even a cold rebuild is well under a minute — the guard exists for correctness,
+ *   not build-time savings.
  */
 
 import { spawnSync } from "node:child_process"
@@ -147,7 +147,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
  * (which pulls in onnxruntime-node) just to read four header fields. Kept intentionally tiny; if the PIX1 format ever
  * changes, `pair-index-resolver.ts`'s own header parse is the source of truth this must stay in sync with.
  */
-function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD5: string | undefined } {
+function peekPairIndexDeltaAndSourceMD5s(path: string): { delta: number; sourceMD5s: string[] } {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	const MAGIC = 0x31_58_49_50
@@ -165,7 +165,7 @@ function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD
 		sourceMD5s?: string[]
 	}
 
-	return { delta: header.delta, sourceMD5: header.sourceMD5s?.[0] }
+	return { delta: header.delta, sourceMD5s: header.sourceMD5s ?? [] }
 }
 
 removeIfPresent(resolve(PKG_DIR, "model.onnx"))
@@ -222,7 +222,8 @@ let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const { delta: existingDelta, sourceMD5: existingSourceMD5 } = peekPairIndexDeltaAndSourceMD5(PAIR_INDEX_BIN_DEST)
+		const { delta: existingDelta, sourceMD5s: existingSourceMD5s } =
+			peekPairIndexDeltaAndSourceMD5s(PAIR_INDEX_BIN_DEST)
 
 		if (existingDelta !== PAIR_INDEX_DELTA) {
 			console.log(
@@ -238,15 +239,28 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
+			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
+			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it
+			// was built from has moved. The NZ build passes exactly one source (`--source <csv>`; no
+			// `--borough-db`, no `--pairs-jsonl`), so `gazetteer pair-index` records exactly one md5 and this
+			// single comparison IS the whole set — a header recording any other count cannot have come from
+			// this build, which is itself staleness.
 			const currentSourceMD5 = await md5FileWithSidecar(String(NZ_SOURCE_CSV))
+			const [existingSourceMD5] = existingSourceMD5s
 
-			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
+			if (existingSourceMD5s.length !== 1) {
+				console.log(
+					`STALE pair-index-nz.bin: header records ${existingSourceMD5s.length} source md5s ` +
+						`[${existingSourceMD5s.join(", ") || "(none recorded)"}], but this build reads exactly one source ` +
+						`(${NZ_SOURCE_CSV}) — rebuilding.`
+				)
+			} else if (existingSourceMD5 === currentSourceMD5) {
 				pairIndexIsFresh = true
 
 				console.log(`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + source md5 match)`)
 			} else {
 				console.log(
-					`STALE pair-index-nz.bin: header source md5 ${existingSourceMD5 ?? "(none recorded)"} != current ` +
+					`STALE pair-index-nz.bin: header source md5 ${existingSourceMD5} != current ` +
 						`${NZ_SOURCE_CSV} md5 ${currentSourceMD5} — rebuilding.`
 				)
 			}

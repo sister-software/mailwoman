@@ -5,13 +5,8 @@
  *
  *   Shared helpers for the `registry/tools` probe battery.
  *
- *   Twenty-four scripts live in this directory and, until the 2026-08-02 dedupe, none of them had a
- *   module to share anything through — so each new probe copied the record-shaping helpers out of
- *   whichever one it was cloned from. That is the whole mechanism: not that anyone preferred a copy,
- *   but that no shared file existed to put the original in, and adding one is a bigger decision than
- *   pasting eight lines.
- *
- *   Anything reused by two or more probes belongs here. Anything a single probe needs stays with it.
+ *   The rule: anything reused by two or more probes belongs here; anything a single probe needs
+ *   stays with that probe.
  */
 
 import type { ColumnMapping } from "../ingest.ts"

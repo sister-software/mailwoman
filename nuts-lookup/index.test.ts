@@ -8,7 +8,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { expect, test } from "vitest"
 
-import { makeNutsAnnotator, nutsFromID, NutsLookup, pointInMultiPolygon } from "./index.ts"
+import { makeNUTSAnnotator, nutsFromID, NUTSLookup, pointInMultiPolygon } from "./index.ts"
 
 test("nutsFromID: derives nested levels by prefix", () => {
 	expect(nutsFromID("DE300")).toEqual({ level1: "DE3", level2: "DE30", level3: "DE300" })
@@ -59,14 +59,14 @@ function fixtureDB(): DatabaseSync {
 	return db
 }
 
-test("NutsLookup.find: deepest containing region → nested codes", () => {
-	const lookup = new NutsLookup({ database: fixtureDB() })
+test("NUTSLookup.find: deepest containing region → nested codes", () => {
+	const lookup = new NUTSLookup({ database: fixtureDB() })
 	expect(lookup.find(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
-test("makeNutsAnnotator: fills nuts inside, abstains outside", () => {
-	const annotate = makeNutsAnnotator(new NutsLookup({ database: fixtureDB() }))
+test("makeNUTSAnnotator: fills nuts inside, abstains outside", () => {
+	const annotate = makeNUTSAnnotator(new NUTSLookup({ database: fixtureDB() }))
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ nuts: { level1: "XX3", level2: "XX30", level3: "XX300" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

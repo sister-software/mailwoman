@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the decision-6 (2b task 7) layer-absent guards — pulled out of `cli.ts` into their own module
- *   (task 7 fix round 1 review finding) precisely because these three functions are pure, transport-independent
+ *   Unit tests for the decision-6 layer-absent guards. The guards live in their own module rather than
+ *   in `cli.ts` precisely because these three functions are pure, transport-independent
  *   logic: nothing in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
  *   itself can't be imported by vitest). Each guard gets its three branches exercised directly: path `undefined`,
  *   path set but the file missing, path set and the file present.
@@ -131,7 +131,7 @@ describe("assertBDCDatabaseExists", () => {
 	})
 })
 
-describe("openFilerDatabaseIfPresent (3a task 7)", () => {
+describe("openFilerDatabaseIfPresent", () => {
 	it("returns undefined when databasePath is undefined", () => {
 		expect(openFilerDatabaseIfPresent(undefined)).toBeUndefined()
 	})
@@ -150,7 +150,7 @@ describe("openFilerDatabaseIfPresent (3a task 7)", () => {
 	})
 })
 
-describe("assertFilerDatabaseExists (3a task 7)", () => {
+describe("assertFilerDatabaseExists", () => {
 	it("throws a friendly error naming the layer when the file is missing", () => {
 		expect(() => assertFilerDatabaseExists("mailwoman_filer_lookup", "/nonexistent/path/filer.db")).toThrow(
 			/mailwoman_filer_lookup: filer\.db not found at "\/nonexistent\/path\/filer\.db"/

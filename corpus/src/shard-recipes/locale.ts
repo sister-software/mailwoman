@@ -86,26 +86,26 @@ export interface LocaleCountrySource {
 }
 
 /**
- * Per-country OA sources + the source name used in the corpus. DE/FR still point at the legacy `/tmp/oa-cache` zips
- * (their historical build inputs — materialize them there to regenerate). ES/NL read the extracted countrywide CSVs and
- * IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is OA-conformed, so the old
- * raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is empty; the
- * international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad autónoma, IT =
- * regione, NL = province).
+ * Per-country OA sources + the source name used in the corpus. DE/FR read their historical build inputs, the cached
+ * zips under `$MAILWOMAN_DATA_ROOT/oa-cache` — materialize them there to regenerate. ES/NL read the extracted
+ * countrywide CSVs and IT the cached national zip under `$MAILWOMAN_DATA_ROOT` (#241; the fresh ES extract is
+ * OA-conformed, so the old raw-CNIG conform map is gone). DE carries a per-part `region` fallback (its REGION column is
+ * empty; the international-order tail needs it, #327). FR/NL/IT/ES REGION is populated per-row (ES = comunidad
+ * autónoma, IT = regione, NL = province).
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
 		source: "synth-german",
 		corpusVersion: "0.4.0",
 		parts: [
-			{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", region: "Berlin" },
-			{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", region: "Sachsen" },
+			{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
+			{ zip: dataRootPath("oa-cache", "de__sn__statewide.zip"), csv: "de/sn/statewide.csv", region: "Sachsen" },
 		],
 	},
 	FR: {
 		source: "synth-fr",
 		corpusVersion: "0.4.0",
-		parts: [{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv" }],
+		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
 		source: "synth-nl",
@@ -144,7 +144,7 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
-		// HM Land Registry Price Paid Data tuples (25.67M rows; see Task 2's ppd ingest). PPD's DISTRICT is the
+		// HM Land Registry Price Paid Data tuples (25.67M rows out of the PPD ingest). PPD's DISTRICT is the
 		// postal town (locality) and CITY is the dependent locality — legitimately EMPTY on the majority of rows
 		// (most GB addresses have no dependent locality). `districtAsLocality` maps DISTRICT→locality and, when
 		// present, CITY→dependent_locality; the `readTuples` gate above only drops a row when BOTH are empty, so
@@ -256,9 +256,8 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 
 	try {
 		// CSVSpliterator handles OA's quoted fields (embedded commas/newlines) and CRLF row terminators
-		// (spliterator ≥ 3.2.0); `header: false` yields the header row too, so we build the column index
-		// from it exactly as the prior hand-rolled split did. Verified byte-identical tuples vs that split
-		// on 10M+ real OA rows — the only raw-cell difference was a trailing CR on the discarded HASH column.
+		// (spliterator ≥ 3.2.0); `header: false` yields the header row too, so the column index is built
+		// from that first row rather than from a header option.
 		for await (const cells of CSVSpliterator.fromAsync<string[]>(input, {
 			mode: "array",
 			header: false,
@@ -315,9 +314,8 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			// dependent_locality. When DISTRICT is empty (~18% of NZ rows), fall back to CITY → locality with no
 			// sub-locality. GB PPD tuples flip which side is legitimately empty — on the MAJORITY of GB rows CITY
 			// (the dependent_locality) is empty and DISTRICT (the locality) is populated, so the gate below only
-			// drops a `districtAsLocality` row when BOTH are empty, not when CITY alone is (that used to silently
-			// drop most of the GB source — see the fixed `readTuples` gate below). See
-			// {@link LocalePart.districtAsLocality}.
+			// drops a `districtAsLocality` row when BOTH are empty, never when CITY alone is — gating on CITY
+			// alone silently discards most of the GB source. See {@link LocalePart.districtAsLocality}.
 			let locality: string | null
 			let dependent_locality: string | undefined
 

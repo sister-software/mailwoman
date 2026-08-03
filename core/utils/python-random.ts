@@ -14,22 +14,19 @@
  *   seeded, deterministic-per-input stream and Python's helper semantics — inclusive `randint`,
  *   uniform `choice`, with-replacement `choices`.
  *
- *   TWO generators live here, and that is deliberate. {@link mulberry32} and {@link makeLcg} were
- *   each copy-pasted into a dozen files before the 2026-08-02 dedupe, and their streams differ. The
- *   mulberry32 stream decides which typos get injected into the training corpus; the LCG stream
- *   decides the train/test splits the scorer evals report. Collapsing them onto one generator would
- *   silently rewrite synthesized corpus rows and published eval numbers, so both are kept, both are
- *   named, and NEW code should reach for `mulberry32` (better distribution) unless it must reproduce
- *   an existing stream.
+ *   TWO generators live here, and that is deliberate: their streams differ, and both streams are
+ *   baked into shipped artifacts. mulberry32 decides which typos get injected into the training
+ *   corpus; the LCG decides the train/test splits the scorer evals report. Collapsing them onto one
+ *   would silently rewrite synthesized corpus rows and published eval numbers. New code should reach
+ *   for `mulberry32` (better distribution) unless it must reproduce an existing stream.
  */
 
 /**
  * Mulberry32 as a thunk — `seed` in, `() => number` in `[0, 1)` out.
  *
- * The thunk shape is the point. `SeededRandom` below has been this exact generator all along, but it is a class with a
- * `.random()` method, and every caller in the repo wants a bare function to pass as an injected `random` option.
- * Sixteen call sites re-typed the generator rather than adapt to the class — which is a fact about the interface, not
- * about the callers.
+ * The thunk exists because callers inject a `random` option and want a bare function; `SeededRandom` below is the same
+ * generator behind the Python-shaped class surface. Reach for whichever matches the call site — for one seed they
+ * produce identical streams.
  */
 export function mulberry32(seed: number): () => number {
 	let a = seed >>> 0

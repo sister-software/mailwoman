@@ -64,6 +64,15 @@ const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Parse a `lat,lon` string into a coordinate, or null if malformed / out of range.
+ *
+ * Deliberately strict, and deliberately not `GeoPoint.from()`. The provided coordinate is this eval's ground truth, so
+ * a row we cannot read exactly has to be _dropped_ (counted in `noCoord`) rather than repaired into something plausible
+ * — a silently repaired coordinate lands in the delta distribution as geocoder error. `GeoPoint.from()` repairs in
+ * three ways that matter here: it runs `inferGeoJSONCoordOrder`, which swaps the pair whenever both magnitudes fall in
+ * [-90, 90] (`31.5,-89.5` comes back as lat -89.5, lon 31.5); it accepts out-of-range values instead of rejecting them
+ * (`200,-97.74` becomes a point); and it maps 0,0 to null, moving Null Island from a measured outlier into the skipped
+ * bucket. The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to
+ * stay rejected or measured as-is, never rewritten. Strictness is the measurement, not an unfinished migration.
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null

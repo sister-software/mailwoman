@@ -675,7 +675,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectLon: 2.3467,
 		expectToleranceM: 50_000,
 		addedAt: "2026-07-15",
-		note: "Passes on the staged v3.11.x candidates (task-8 record) — flip to pass WHEN a lineage successor promotes; shipped v385 still fails (verified 2026-07-23). The street/locality boundary that swallowed 'Paris' on 2026-07-15 has since flipped in experimental lineages (#727 span-head). Was the only miss in the operator's 10-row tricky list (9/10 passed at the time); tracked as span-head's class. See final-review fix-wave report / #1189 adjudication for context.",
+		note: "Passes on the staged v3.11.x candidates — flip to pass WHEN a lineage successor promotes; shipped v385 still fails (verified 2026-07-23). The street/locality boundary that swallowed 'Paris' on 2026-07-15 has since flipped in experimental lineages (#727 span-head). Was the only miss in the operator's 10-row tricky list (9/10 passed at the time); tracked as span-head's class. See #1189 for context.",
 	},
 
 	// Venue-name traps, carried-address form (operator's venue list, 2026-07-24). Sibling family of

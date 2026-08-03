@@ -99,7 +99,7 @@ export interface ResolvedWeights {
 	 * span head's k-best decode consumes. `undefined` on a pre-v3 bundle (no span head). Read by `loadFromWeights` to
 	 * expose {@link NeuralAddressClassifier.spanGrammar} for the phase-4c name-evidence rerank.
 	 */
-	semiCrfTransitionsPath?: string
+	semiCRFTransitionsPath?: string
 	/**
 	 * Path to the postcode→anchor source shipped beside the resolved model (#718 D1) — the soft-feed `loadFromWeights`
 	 * reads to feed the anchor channel without a callsite change. Prefer the compact PCB1 binary (`postcode-<cc>.bin`,
@@ -148,8 +148,8 @@ export interface ResolvedWeights {
 	 */
 	streetMorphologyPath?: string
 	/**
-	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3) shipped
-	 * beside the resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
+	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc) shipped beside the
+	 * resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
 	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
 	 * `baseWeights` package (a shared base ships no locale-specific pairs to offer; en-us has none, en-gb ships its own
 	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
@@ -293,7 +293,7 @@ function resolveFromPackageDir(
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
 
 	const semiCrfCandidate = resolve(packageDir, "semi-crf-transitions.json")
-	const semiCrfTransitionsPath = existsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
+	const semiCRFTransitionsPath = existsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
 
 	// Soft-feature sibling artifacts (#718 D1): the anchor + gazetteer sources the package ships so
 	// `loadFromWeights` can feed the channels the model was trained against — without a callsite
@@ -325,7 +325,7 @@ function resolveFromPackageDir(
 	const localitySurfaceLexiconPath =
 		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
 
-	// Placetype-pair index sibling (placetype-pair-prior arc Task 5) — resolved LOCALLY from packageDir
+	// Placetype-pair index sibling (placetype-pair-prior arc) — resolved LOCALLY from packageDir
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
 
@@ -352,7 +352,7 @@ function resolveFromPackageDir(
 		tokenizerPath,
 		modelCardPath,
 		crfTransitionsPath,
-		...(semiCrfTransitionsPath ? { semiCrfTransitionsPath } : {}),
+		...(semiCRFTransitionsPath ? { semiCRFTransitionsPath } : {}),
 		...(anchorLookupPath ? { anchorLookupPath } : {}),
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
@@ -389,7 +389,7 @@ function resolveAnchorLookupSibling(
 }
 
 /**
- * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3).
+ * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc).
  * COUNTRY-SPECIFIC BY DESIGN: this artifact is resolved from `packageDir` ONLY, unlike the model/tokenizer/model-card
  * siblings above, which fall back to a `baseWeights` package — a shared base has no locale-specific place-pair data to
  * offer, so a base package without its own `pair-index-<cc>.bin` simply has none (no fallback attempted). `undefined`
@@ -696,7 +696,7 @@ export function lookupTagCapability(
 	return cap as TagCapability
 }
 
-export interface CrfTransitions {
+export interface CRFTransitions {
 	transitions: number[][]
 	startTransitions: number[]
 	endTransitions: number[]
@@ -706,7 +706,7 @@ export interface CrfTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export function readCrfTransitions(crfPath: string | undefined): CrfTransitions | undefined {
+export function readCRFTransitions(crfPath: string | undefined): CRFTransitions | undefined {
 	if (!crfPath || !existsSync(crfPath)) return undefined
 	let raw: string
 

@@ -7,13 +7,13 @@
  *
  *   This overlay ships exactly ONE artifact — `pair-index-it.bin` — because it declares
  *   `mailwoman.baseWeights` and shares the base model/tokenizer with the en-us package. There is
- *   nothing to symlink; the only job is building the index so `resolveWeights({locale: "de-de"})`
+ *   nothing to symlink; the only job is building the index so `resolveWeights({locale: "it-it"})`
  *   surfaces `pairIndexPath` in local dev.
  *
- *   The index is INERT without the `de` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
- *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): German addresses write
- *   "50733 Köln", so a parent segment folds to a key no bare-Gemeinde entry matches. Measured
- *   during R9 — the artifact alone changed nothing until both landed.
+ *   The index is INERT without the `it` entries in `SEGMENT_PARENT_POSTCODE_SHAPES` and
+ *   `LEADING_POSTCODE_COUNTRIES` (`neural/placetype-pair-prior.ts`): Italian addresses write the
+ *   CAP first ("00184 Roma"), so a parent segment folds to a key no bare-comune entry matches.
+ *   The artifact alone changes nothing until both entries are present.
  */
 
 import { spawnSync } from "node:child_process"
@@ -50,6 +50,7 @@ function peekPairIndexHeaderFields(path: string): { delta: number; transitionBet
 	}
 
 	const headerLen = view.getUint32(4, true)
+
 	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
 		delta: number
 		transitionBeta?: number

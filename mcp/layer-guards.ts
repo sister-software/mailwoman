@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Decision 6 (2b task 7) layer-absent guards — pulled out of `cli.ts` into their own importable module (task 7
- *   fix round 1 review finding) so the branching itself has direct unit coverage (`layer-guards.test.ts`), not just
+ *   Decision 6 layer-absent guards — kept out of `cli.ts` in their own importable module so the
+ *   branching itself has direct unit coverage (`layer-guards.test.ts`), not just
  *   "the tool handler passes an abstain through" (`tools.test.ts`'s stub-level dispatch tests). `cli.ts`
  *   top-level-`await`s a real stdio transport connection at import time, so IT can't be imported by vitest — these
  *   three functions have no such dependency (pure existence-check + open, or a thrown Error), so they live here and
@@ -17,7 +17,7 @@
  *   - `assertBDCDatabaseExists` — `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
  *     abstain shape exists for that tool), so a missing file becomes one friendly thrown `Error` naming the layer
  *     instead of the raw `node:sqlite` "unable to open database file" message.
- *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` (3a task 7) — the SAME pairing, for filer.db.
+ *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` — the SAME pairing, for filer.db.
  *     `mailwoman_filer_lookup` requires filer.db unconditionally (mirrors `mailwoman_bdc_filing_landscape`'s own
  *     "requires the layer" discipline — `filerLookup` itself has no optional-dep abstain shape either, since gate
  *     4 makes it throw rather than answer unstamped), so `cli.ts` pairs `assertFilerDatabaseExists` (the friendly
@@ -77,7 +77,7 @@ export function assertBDCDatabaseExists(toolName: string, databasePath: string):
 
 /**
  * Open a filer.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw
- * (3a task 7, mirroring {@link openBDCDatabaseIfPresent}). Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
+ * (mirroring {@link openBDCDatabaseIfPresent}). Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
  * {@link assertFilerDatabaseExists} has already confirmed the file is present.
  */
 export function openFilerDatabaseIfPresent(
@@ -89,9 +89,9 @@ export function openFilerDatabaseIfPresent(
 }
 
 /**
- * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_filer_lookup`'s guard (3a
- * task 7, mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep abstain shape (gate 4
- * makes it throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
+ * Throws a friendly Error naming the layer when `databasePath` doesn't exist — `mailwoman_filer_lookup`'s guard
+ * (mirroring {@link assertBDCDatabaseExists}). `filerLookup` itself has no optional-dep abstain shape (gate 4 makes it
+ * throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
  * `mailwoman_bdc_filing_landscape`.
  */
 export function assertFilerDatabaseExists(toolName: string, databasePath: string): void {

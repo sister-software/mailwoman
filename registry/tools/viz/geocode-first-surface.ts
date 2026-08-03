@@ -51,7 +51,7 @@ export interface GeocodeFirstSurfaceOptions {
 	/**
 	 * Output HTML path. Default `/tmp/geocode-first-surface.html`.
 	 */
-	outHtml?: string
+	outHTML?: string
 }
 
 // ── Real Bayes-factor weights, transcribed from source (values kept in sync by comment, not import,
@@ -113,9 +113,9 @@ function distanceWeight(km: number): number {
 export function geocodeFirstSurface(
 	options: GeocodeFirstSurfaceOptions = {},
 	report?: (line: string) => void
-): { outHtml: string } {
+): { outHTML: string } {
 	const LAMBDA = options.lambda ?? 0.02
-	const OUT_HTML = options.outHtml || "/tmp/geocode-first-surface.html"
+	const OUT_HTML = options.outHTML || "/tmp/geocode-first-surface.html"
 
 	const PRIOR = priorWeight(LAMBDA)
 
@@ -315,5 +315,5 @@ document.getElementByID("cap").innerHTML =
 		)
 	}
 
-	return { outHtml: OUT_HTML }
+	return { outHTML: OUT_HTML }
 }

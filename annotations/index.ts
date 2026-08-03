@@ -68,7 +68,7 @@ export interface Iso3166 {
 /**
  * EU NUTS statistical-region codes.
  */
-export interface Nuts {
+export interface NUTS {
 	level1?: string
 	level2?: string
 	level3?: string
@@ -100,7 +100,7 @@ export interface AnnotationSet {
 	flag?: string
 	timezone?: TimezoneInfo
 	iso3166?: Iso3166
-	nuts?: Nuts
+	nuts?: NUTS
 	/**
 	 * UN/LOCODE, e.g. "US NYC".
 	 */

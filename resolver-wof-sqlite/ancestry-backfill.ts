@@ -132,19 +132,19 @@ function placetypeFromKey(key: string): string | null {
  * `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a single transaction; caller owns connection
  * lifecycle (open, WAL checkpoint, close).
  *
- * `opts.maxId` bounds the candidate scan to ids BELOW it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
+ * `opts.maxID` bounds the candidate scan to ids BELOW it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
  * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have NO `wof:hierarchy`
  * geojson, so probing them is pure waste: on a wide-coverage DB the only-self set is millions of Overture/GeoNames leaf
  * localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
  * ~40-minute one (their ancestry comes from the parent_id closure, not this backfill). Correctness-preserving — the
- * skipped rows would have `noGeojson`-skipped anyway. Omit `maxId` (default) for the legacy WOF-only DBs.
+ * skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
  */
 export function backfillAncestorsFromHierarchy(
 	db: DatabaseSync,
 	geojsonRoots: readonly string[],
-	opts: { maxId?: number } = {}
+	opts: { maxID?: number } = {}
 ): AncestryBackfillResult {
-	const maxId = opts.maxId ?? Number.MAX_SAFE_INTEGER
+	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
 
 	// `s.id < ?` first lets SQLite prune by the PK index before the correlated only-self subquery runs at all.
 	const candidates = db
@@ -152,7 +152,7 @@ export function backfillAncestorsFromHierarchy(
 			`SELECT s.id AS id, s.placetype AS placetype FROM spr s
 			 WHERE s.id < ? AND (SELECT count(*) FROM ancestors a WHERE a.id = s.id) <= 1`
 		)
-		.all(maxId) as Array<{ id: number; placetype: string }>
+		.all(maxID) as Array<{ id: number; placetype: string }>
 
 	const insert = db.prepare(
 		"INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)"

@@ -6,14 +6,14 @@
  *
  *   Re-homed from Nexus's `sync/fcc/bdc/download-file.ts` (relicense-by-copy, no provenance headers),
  *   trimmed hard: the Nexus original downloaded AND cached the `.zip`, extracted it, THEN wrote a Parquet
- *   file with a row-count integrity check. All Parquet machinery is dropped here — 2a's `bdc.db` is
- *   SQLite, not Parquet-backed (see Task 7+) — and the `.zip` itself isn't cached either; only the
+ *   file with a row-count integrity check. All Parquet machinery is dropped here — `bdc.db` is
+ *   SQLite, not Parquet-backed (`bdc/schema.ts`) — and the `.zip` itself isn't cached either; only the
  *   extracted CSV is written to `destinationDir`, and its presence alone is the cache check.
  *
  *   The zip-extraction library also changes: the Nexus original's `extractSingleFileZip` used `adm-zip`
  *   (a repo-wide Nexus dependency). No unzip dependency exists anywhere in this repo — every workspace
- *   `package.json` was checked, `tiger/` and `osm/` included — so `yauzl-promise` is added to `bdc` alone
- *   (noted in this task's commit body per the brief).
+ *   `package.json` was checked, `tiger/` and `osm/` included — so `yauzl-promise` is a `bdc`-only
+ *   dependency.
  */
 
 import * as fs from "node:fs/promises"

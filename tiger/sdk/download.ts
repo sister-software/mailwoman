@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cached archive download + subprocess capture — the two helpers `fetch.ts` and `redistricting.ts`
- *   each carried byte-identical copies of before the 2026-08-02 dedupe.
+ *   Cached archive download + subprocess capture, shared by `fetch.ts` and `redistricting.ts`.
  *
  *   RAW `fetch` HERE IS DELIBERATE. `AGENTS.md` requires HTTP clients to extend or instantiate
  *   `APIClient`, and that rule is about API REQUESTS — small bodies, repeated calls, rate-limited
@@ -12,7 +11,7 @@
  *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
  *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
  *   non-stream response type in memory. The primitive that fits a body this large is the one that
- *   never holds it: a web stream piped to a write stream. Classified 2026-08-02.
+ *   never holds it: a web stream piped to a write stream.
  */
 
 import { spawn } from "node:child_process"

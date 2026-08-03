@@ -3,23 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `filerLinkageEval` (3b Task 4, decisions 3 & 4) — measures whether a `filer.db` build places two
- *   registrants in the same CORPORATE FAMILY, and how much of that answer depends on the filer having
- *   disclosed its parent.
+ *   `filerLinkageEval` (decisions 3 & 4) — measures whether a `filer.db` build places two registrants
+ *   in the same CORPORATE FAMILY, and how much of that answer depends on the filer having disclosed its
+ *   parent.
  *
- *   **What the prediction is read from (task 4 review fix, the central one).** Two registrants are
+ *   **What the prediction is read from.** Two registrants are
  *   predicted to be the same family iff `filer_family` places them in a common family as of
  *   {@linkcode EVAL_AS_OF}, read through the shipped reader (`family-rollup.ts`'s `familyRollup`) rather
  *   than a query written for this eval. That is where corporate-family membership actually lives: the
  *   builder writes one `filer_family` row per holding-/management-company edge, and every reader on the
  *   product surface answers "which families does this node belong to" from that table.
  *
- *   The first version of this eval read `filer_cluster` instead — the ENTITY-resolution output, which
- *   answers "are these two identifiers the same legal entity", a different question. It scored 0.000, and
- *   it scored exactly 0.000 with the truth field fully present, with the answer handed back as an
- *   authoritative ownership edge, and with two same-family filers given byte-identical legal names. A
- *   measurement that cannot move when it is handed the answer is not measuring anything; this one can, and
- *   the control run below is what demonstrates that.
+ *   `filer_cluster` is the wrong table for this question, and wrong in a way that looks like a result: it
+ *   is the ENTITY-resolution output, answering "are these two identifiers the same legal entity". An eval
+ *   pointed at it scores 0.000 — and scores exactly 0.000 with the truth field fully present, with the
+ *   answer handed back as an authoritative ownership edge, and with two same-family filers given
+ *   byte-identical legal names. A measurement that cannot move when it is handed the answer is not
+ *   measuring anything, which is the whole job of the control run below.
  *
  *   **The two runs.** Both build a real scratch `filer.db` from the same authored corpus and run the same
  *   shipped pipeline; they differ in one field.
@@ -35,8 +35,8 @@
  *   values canonicalize to the same string ({@linkcode mintFamilyID}, the builder's own rule). The unit is
  *   the REGISTRANT, not the FRN: two FRNs that share a `bdc_provider_id` are one legal entity, so
  *   {@linkcode buildTruthRegistrants} folds them into a single scored id before any family label is
- *   assigned. Scoring them as two ids let the truth partition claim one company sat in two different
- *   families at once (task 4 review fix, C2).
+ *   assigned. Scoring them as two ids would let the truth partition claim one company sits in two
+ *   different families at once.
  *
  *   **Management-company families are excluded from both truth and prediction, deliberately.** The builder
  *   also writes a `filer_family` row for a reported `managementCompany`, under a separately namespaced
@@ -103,17 +103,16 @@ const EVAL_AS_OF = "2026-06-01"
 const EVAL_BUILD_SHA = "filer-linkage-eval"
 
 /**
- * What a built artifact actually contains that bears on ownership — counted, not asserted (task 4 review fix, I4). The
- * first scorecard claimed no `filer_family` row COULD exist in the withheld artifact; two do, from the corpus's
- * management-company disclosures. The claim was over-broad on the one page whose credibility rests on the withholding
- * being real, so this eval measures the artifact instead of describing it.
+ * What a built artifact actually contains that bears on ownership — counted, not asserted. The withheld artifact is not
+ * family-row-free: two `filer_family` rows reach it from the corpus's management-company disclosures, so the one page
+ * whose credibility rests on the withholding being real has to measure the artifact rather than describe it.
  *
- * **Every count here is scoped to what the PREDICTION scores, not to `holding_company` alone (task 4 re-review, I2).**
- * The prediction accepts any `filer_family` membership whose relationship asserts OWNERSHIP — `holding_company` today,
- * `parent_company`/`subsidiary` the moment a writer emits one. Counting only `holding_company` left the census silent
- * about exactly the rows a future evidence channel will add: a reviewer injected three `subsidiary` family rows that
- * moved recall from 0.000 to 0.500, and the census still read `0`, under a heading promising the numbers were counted
- * from the build.
+ * **Every count here is scoped to what the PREDICTION scores, not to `holding_company` alone.** The prediction accepts
+ * any `filer_family` membership whose relationship asserts OWNERSHIP — `holding_company` today,
+ * `parent_company`/`subsidiary` the moment a writer emits one. Counting only `holding_company` leaves the census silent
+ * about exactly the rows a future evidence channel will add: three injected `subsidiary` family rows move recall from
+ * 0.000 to 0.500 while a `holding_company`-only census still reads `0`, under a heading promising the numbers were
+ * counted from the build.
  */
 export interface LeakageCensus {
 	/**
@@ -156,16 +155,15 @@ export interface LeakageCensus {
  * Whether each {@linkcode FilerRelationship} asserts OWNERSHIP — the thing this eval withholds and scores — as opposed
  * to operational control or plain identity.
  *
- * **Exhaustive by construction, and that is the point (task 4 re-review, round 3 follow-up).** The round-3
- * implementation expressed the same classification as two DENYLISTS typed `readonly string[]`, and flagged the hazard
- * itself: a relationship class added to `FilerRelationship` later would fall through to "counts as ownership" silently,
- * in BOTH the prediction and the leakage census — scoring a fact nobody decided should be scored, and doing it without
- * a test failing. The `satisfies Record<FilerRelationship, boolean>` pin below inverts that default: a new member is a
- * COMPILE error here until someone classifies it deliberately. Same idiom the BDC plausibility gate uses
- * (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`). Unlike the `satisfies` pins
- * that live in TEST files — which only `yarn typecheck:tests` evaluates — this one sits in a source file inside
- * `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a member fails with TS1360 naming
- * the missing relationship.
+ * **Exhaustive by construction, and that is the point.** Expressed the obvious way — two DENYLISTS typed `readonly
+ * string[]`, naming the relationships that don't count — a relationship class added to `FilerRelationship` later falls
+ * through to "counts as ownership" silently, in BOTH the prediction and the leakage census, scoring a fact nobody
+ * decided should be scored and doing it without a test failing. The `satisfies Record<FilerRelationship, boolean>` pin
+ * below inverts that default: a new member is a COMPILE error here until someone classifies it deliberately. Same idiom
+ * the BDC plausibility gate uses (`bdc/sdk/plausibility.test.ts`'s `satisfies Record<keyof PlausibilityBundle, true>`).
+ * Unlike the `satisfies` pins that live in TEST files — which only `yarn typecheck:tests` evaluates — this one sits in
+ * a source file inside `filer/tsconfig.json`'s default include, so plain `tsc -b` enforces it: dropping a member fails
+ * with TS1360 naming the missing relationship.
  *
  * `SameEntity` is false because two identifiers denoting ONE filer say nothing about who owns it; `ManagementCompany`
  * because operational control is not ownership (spec §3.1 finding 1, and the reason this eval excludes management
@@ -191,9 +189,9 @@ const OWNERSHIP_BY_RELATIONSHIP = {
  * **The {@linkcode isRecognizedRelationship} guard is required, not belt-and-braces.** `OWNERSHIP_BY_RELATIONSHIP` is a
  * plain object literal, so a bare index lookup inherits `Object.prototype`: `relationship === "constructor"` (or
  * `"toString"`, or `"__proto__"`) resolves to a FUNCTION, which is truthy and never nullish, so `??` does not fire and
- * this returned `true` for a string it does not classify — the precise failure the paragraph above says it exists to
- * stop. Reproduced through the real builder: three injected `constructor` family rows scored as ownership AND counted
- * in the unrecognized bucket, so the three census splits summed to 8 against a published total of 5.
+ * the lookup answers `true` for a string it does not classify — the precise failure the paragraph above says it exists
+ * to stop. Measured through the real builder: three injected `constructor` family rows score as ownership AND land in
+ * the unrecognized bucket, so the three census splits sum to 8 against a published total of 5.
  */
 function assertsOwnership(relationship: string): boolean {
 	return isRecognizedRelationship(relationship) && OWNERSHIP_BY_RELATIONSHIP[relationship as FilerRelationship]
@@ -202,16 +200,14 @@ function assertsOwnership(relationship: string): boolean {
 /**
  * Is this relationship one {@linkcode OWNERSHIP_BY_RELATIONSHIP} actually classifies? Distinct from
  * {@linkcode assertsOwnership} because the PREDICTION and the GATE want opposite defaults for a string neither
- * recognizes, and one predicate cannot serve both (re-review finding against the exhaustiveness refactor).
+ * recognizes, and one predicate cannot serve both.
  *
  * The prediction must not score an assertion it does not understand, so unknown → not ownership → ignored. The gate
  * exists to REFUSE publication when the withheld build holds ownership facts it should never have seen, and "a
  * relationship this eval does not recognize, in a build it did not write" is precisely the case it should refuse rather
- * than quietly bucket as non-ownership. Before the refactor the gate got that behaviour for free, because its count was
- * "everything that is not `management_company`" and an unknown string fell on the firing side; collapsing both call
- * sites onto `assertsOwnership` moved unknowns to the silent side and narrowed the gate. Reproduced: three injected
- * `transfer_of_control` family rows left `scoredFamilyRows: 0` and the gate silent, where it would previously have
- * fired.
+ * than quietly bucket as non-ownership. Collapse the two call sites onto `assertsOwnership` alone and the gate narrows
+ * to nothing on exactly that case: three injected `transfer_of_control` family rows leave `scoredFamilyRows: 0` and the
+ * gate silent.
  */
 function isRecognizedRelationship(relationship: string): boolean {
 	return Object.hasOwn(OWNERSHIP_BY_RELATIONSHIP, relationship)
@@ -333,7 +329,7 @@ function findTruthPositivePairs(
 			const familyID = truthGroupOf.get(a)
 
 			// A `singleton:` label embeds its own representative, so it can never equal another registrant's label —
-			// no separate singleton check is needed here (task 4 review fix, M3 removed one that could never fire).
+			// no separate singleton check is needed here.
 			if (familyID === undefined || familyID !== truthGroupOf.get(b)) continue
 
 			outcomes.push({ a, b, familyID, recovered: predictedSame(a, b) })
@@ -348,9 +344,9 @@ function formatScoreValue(value: number | null): string {
 }
 
 /**
- * Renders a GitHub-flavoured markdown table already padded the way `oxfmt` would pad it (task 4 review fix, M1) —
- * column width is the widest cell, separator dashes fill it. The generator's raw output previously failed `oxfmt
- * --check`, so the documented `--out-md` command left the tree failing lint until someone reformatted by hand.
+ * Renders a GitHub-flavoured markdown table already padded the way `oxfmt` would pad it — column width is the widest
+ * cell, separator dashes fill it. Unpadded output fails `oxfmt --check`, so a scorecard regenerated by the documented
+ * `--out-md` command would leave the tree failing lint until someone reformatted it by hand.
  */
 function renderTable(header: readonly string[], rows: ReadonlyArray<readonly string[]>): string[] {
 	const width = (cell: string): number => [...cell].length
@@ -375,8 +371,8 @@ function renderTable(header: readonly string[], rows: ReadonlyArray<readonly str
 }
 
 /**
- * Per-field commentary for the input-shape table. Typed as a total `Record` over `keyof Form499Row` (task 4 review fix,
- * M4) so adding a field to the parser is a compile error here rather than a silently stale published claim.
+ * Per-field commentary for the input-shape table. Typed as a total `Record` over `keyof Form499Row` so adding a field
+ * to the parser is a compile error here rather than a silently stale published claim.
  */
 const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	form499ID: "",
@@ -409,9 +405,9 @@ function isPopulated(value: unknown): boolean {
 }
 
 /**
- * How many corpus rows actually carry a value for a field — computed from the corpus, never asserted (task 4 review
- * fix, M4). The first version of this table marked `hqAddress`, both `customerInquiries*` fields and all five
- * `dcAgent*` fields as "given to the matcher: yes" when every one of them is `""` on every row, which is exactly the
+ * How many corpus rows actually carry a value for a field — computed from the corpus, never asserted by hand. Hand
+ * assertion gets this wrong in the most misleading direction available: `hqAddress`, both `customerInquiries*` fields
+ * and all five `dcAgent*` fields look like channels "given to the matcher" while being `""` on every row, which is the
  * opposite of the impression a reader takes from that column — and those are the same channels the caveats name as the
  * way forward.
  */
@@ -605,10 +601,10 @@ export interface LinkageEvalPassOptions {
 	holdingCompanyWithheld: boolean
 	/**
 	 * Writes evidence into the built artifact AFTER the leakage gate has passed and BEFORE the prediction is read — the
-	 * seam the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not exist yet
-	 * (task 4 re-review). Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody
-	 * touched. Ordering is the point — the gate still polices what the BUILDER produced from a withheld input, so a probe
-	 * can add ownership facts without disarming it.
+	 * seam the standing "this baseline can be beaten" test uses to simulate an evidence channel that does not exist yet.
+	 * Never set by {@linkcode filerLinkageEval} itself: the two published runs measure builds nobody touched. Ordering is
+	 * the point — the gate still polices what the BUILDER produced from a withheld input, so a probe can add ownership
+	 * facts without disarming it.
 	 */
 	injectEvidence?: (db: DatabaseClient<FilerDatabase>) => Promise<void>
 }
@@ -733,12 +729,12 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 }
 
 /**
- * The precondition a future run has to satisfy to beat this baseline, stated as narrowly as the code supports (task 4
- * re-review, I1). An earlier draft promised that "any channel that actually correlates with ownership — a shared
- * headquarters address, a shared officer, an external corporate filing that names a parent — would show up here as
- * recall above zero." A reviewer falsified it twice. Both probes are carried on the page rather than quietly deleted:
- * the false version was the same species of defect as the one this task's first round shipped — a stated causal
- * relation the data contradicts — and the page's whole value is that its claims survive being checked.
+ * The precondition a future run has to satisfy to beat this baseline, stated as narrowly as the code supports. The
+ * tempting broader claim — that "any channel that actually correlates with ownership — a shared headquarters address, a
+ * shared officer, an external corporate filing that names a parent — would show up here as recall above zero" — is
+ * false, and has been falsified by probe twice. The page carries both falsified probes rather than dropping them: a
+ * stated causal relation the data contradicts is exactly the defect this page exists not to commit, and its whole value
+ * is that its claims survive being checked.
  */
 function renderWhatWouldMoveItSection(): string {
 	return (
@@ -770,7 +766,7 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 	const { date, withheld, control, withheldInputs, controlInputs, registrants, truthForm499Rows, truthGroupOf } = input
 
 	const lines: string[] = [
-		`# ${date} — does filer.db recover corporate family without the disclosed parent? (3b task 4)`,
+		`# ${date} — does filer.db recover corporate family without the disclosed parent?`,
 		"",
 		renderVerdict(withheld, control),
 		"",
@@ -935,8 +931,8 @@ export interface FilerLinkageEvalOptions {
 	outMd?: string
 	/**
 	 * Overrides the report's dated H1 — for regenerating the committed scorecard on a later day, and for reproducibility
-	 * tests that need byte-identical markdown across two runs that don't fall on the same wall-clock date (task 4 review
-	 * fix, M6: without this the report could not be regenerated without editing code). Defaults to today.
+	 * tests that need byte-identical markdown across two runs that don't fall on the same wall-clock date. Without it the
+	 * report cannot be regenerated without editing code. Defaults to today.
 	 */
 	date?: string
 	/**

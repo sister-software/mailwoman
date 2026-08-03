@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure row→pair fold/dedupe/skip logic for the PIX1 placetype-pair index (placetype-pair-prior
- *   arc, Task 3). Extracted out of `commands/gazetteer/pair-index.tsx` so it's unit-testable against
+ *   arc). Extracted out of `commands/gazetteer/pair-index.tsx` so it's unit-testable against
  *   plain in-memory rows — the command itself only owns CSV streaming + CLI plumbing + the file
  *   write.
  *
@@ -13,12 +13,12 @@
  *   reads: CITY is the dependent_locality candidate, DISTRICT the enclosing post town — see
  *   `corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate). A row with an empty CITY (the
  *   PPD majority — the dependent_locality is legitimately absent on most rows) is skipped: it carries
- *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the single
- *   fold this arc's Task 1 exported), matching `PairIndexHeader.foldVersion` — the same fold the PIX1
+ *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the arc's one
+ *   exported fold), matching `PairIndexHeader.foldVersion` — the same fold the PIX1
  *   reader's caller (`fst-prior.ts`'s `groupPiecesIntoWords`) applies at query time.
  *
  *   Also tracks the pre-fold CITY word-length distribution (whitespace-split word count per raw,
- *   non-empty CITY) — this sizes the word-span window Task 4's decode-side prior walks (a
+ *   non-empty CITY) — this sizes the word-span window the decode-side prior walks (a
  *   dependent_locality candidate rarely spans more than a handful of words; the p99 here is the
  *   evidence for that window, not a guess).
  */
@@ -183,16 +183,16 @@ export interface PairIndexHoldoutResult {
 	 */
 	kept: PairIndexEntry[]
 	/**
-	 * Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6).
+	 * Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc).
 	 */
 	heldOut: PairIndexEntry[]
 }
 
 /**
- * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout falsifier (Task 6):
- * "rebuild the GB index minus a random 10% of pairs (seed 42)" so the acceptance bars can be re-anchored against a
- * measured degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build
- * (a shipped index always has `fraction: 0`, i.e. holds out nothing).
+ * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout falsifier: "rebuild
+ * the GB index minus a random 10% of pairs (seed 42)" so the acceptance bars can be re-anchored against a measured
+ * degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build (a
+ * shipped index always has `fraction: 0`, i.e. holds out nothing).
  *
  * Order-independent and seed-deterministic: entries are sorted by (child, parent) BEFORE the seeded shuffle (mirrors
  * {@link serializePairIndex}'s own sort), so the same `(fraction, seed)` pair always withholds the same entries

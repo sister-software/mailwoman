@@ -13,11 +13,11 @@
  *        `JSON.stringify` is compact (`","` / `":"`). The committed files are spaced, so we match.
  *   2. **`ensure_ascii`.** Python defaults to escaping every non-ASCII codepoint as `\uXXXX` (surrogate
  *        pairs for astral chars). `JSON.stringify` emits raw UTF-8. We replicate Python's default
- *        (`ensureAscii: true`) and allow `ensure_ascii=False` (`ensureAscii: false`).
+ *        (`ensureASCII: true`) and allow `ensure_ascii=False` (`ensureASCII: false`).
  *
  *   String escaping of ASCII (quote, backslash, `\n`/`\t`/`\r`/`\b`/`\f`, other control -> `\u00xx`)
  *   is identical between `JSON.stringify` and Python's json, so we delegate per-string base
- *   escaping to `JSON.stringify` and only post-escape the non-ASCII range when `ensureAscii` is
+ *   escaping to `JSON.stringify` and only post-escape the non-ASCII range when `ensureASCII` is
  *   on.
  *
  *   Caveat: JS has a single number type, so a whole-valued float (e.g. an exact `5.0` coordinate)
@@ -29,17 +29,17 @@ export interface PyJSONOptions {
 	/**
 	 * Escape non-ASCII as `\uXXXX` (Python `ensure_ascii`). Defaults to `true`, matching Python.
 	 */
-	ensureAscii?: boolean
+	ensureASCII?: boolean
 }
 
 /**
  * Serialize one string the way Python's json does (then optionally `ensure_ascii`-escape it).
  */
-function serializeString(value: string, ensureAscii: boolean): string {
+function serializeString(value: string, ensureASCII: boolean): string {
 	// JSON.stringify handles the quote/backslash/control escaping identically to Python's json.
 	const out = JSON.stringify(value)
 
-	if (!ensureAscii) return out
+	if (!ensureASCII) return out
 	// ensure_ascii: escape every code unit >= 0x80 as \uXXXX (surrogate halves handled per-unit,
 	// exactly as CPython emits astral codepoints as a \u-pair).
 	let escaped = ""
@@ -64,7 +64,7 @@ function serializeNumber(value: number): string {
 	return value > 0 ? "Infinity" : "-Infinity"
 }
 
-function serialize(value: unknown, ensureAscii: boolean): string {
+function serialize(value: unknown, ensureASCII: boolean): string {
 	if (value === null || value === undefined) return "null"
 	const t = typeof value
 
@@ -72,10 +72,10 @@ function serialize(value: unknown, ensureAscii: boolean): string {
 
 	if (t === "number") return serializeNumber(value as number)
 
-	if (t === "string") return serializeString(value as string, ensureAscii)
+	if (t === "string") return serializeString(value as string, ensureASCII)
 
 	if (Array.isArray(value)) {
-		return "[" + value.map((v) => serialize(v, ensureAscii)).join(", ") + "]"
+		return "[" + value.map((v) => serialize(v, ensureASCII)).join(", ") + "]"
 	}
 
 	if (t === "object") {
@@ -83,7 +83,7 @@ function serialize(value: unknown, ensureAscii: boolean): string {
 
 		for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
 			if (v === undefined) continue // a key Python would never have produced
-			parts.push(serializeString(k, ensureAscii) + ": " + serialize(v, ensureAscii))
+			parts.push(serializeString(k, ensureASCII) + ": " + serialize(v, ensureASCII))
 		}
 
 		return "{" + parts.join(", ") + "}"
@@ -96,7 +96,7 @@ function serialize(value: unknown, ensureAscii: boolean): string {
  * `json.dumps(value)` — single line, `(", ", ": ")` separators, `ensure_ascii` per options.
  */
 export function pyJSONDumps(value: unknown, options: PyJSONOptions = {}): string {
-	return serialize(value, options.ensureAscii ?? true)
+	return serialize(value, options.ensureASCII ?? true)
 }
 
 /**

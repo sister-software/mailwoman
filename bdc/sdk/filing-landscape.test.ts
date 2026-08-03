@@ -3,41 +3,38 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The four pre-registered 2a acceptance gates for `filingLandscape` (2a Task 9) — this whole phase
- *   is judged by these. Each gate builds (or reuses) a fixture `bdc.db` via Task 8's `buildBDCDatabase`
+ *   The four pre-registered 2a acceptance gates for `filingLandscape` — this whole phase
+ *   is judged by these. Each gate builds (or reuses) a fixture `bdc.db` via `buildBDCDatabase`'s
  *   `rows:` test seam, feeding one location per (geoid, provider, technology) triple so the census in
  *   Gate 3 is hand-verifiable without any BSL/location_id collapsing to reason about.
  *
  *   Fixture: 3 known blocks (SF, NY, and a THIRD block — "DIVERGENT" — chosen because its directly
- *   -indexed res-6 cell disagrees with its res-9 cell's H3 hierarchy parent, see fix round 1 below) × 2
+ *   -indexed res-6 cell disagrees with its res-9 cell's H3 hierarchy parent, see below) × 2
  *   providers each at SF/NY, distinct techs/speeds landing in 3 different speed buckets, plus one geoid
  *   that is NEVER fed to the builder at all (Gate 2's "absent from the fixture" block). Gates 1–4 below
- *   query only `[GEOID_SF, GEOID_NY]` (or subsets), so adding DIVERGENT doesn't perturb their hand-counts
- *   — it's exercised only by the fix-round-1 tests that need it.
+ *   query only `[GEOID_SF, GEOID_NY]` (or subsets), so DIVERGENT doesn't perturb their hand-counts
+ *   — it's exercised only by the coverage-cell unification tests that need it.
  *
- *   Fix round 1 (post-hoc review) additions, each addressing one reviewer finding against the original
- *   Task 9 submission:
+ *   Three properties the four gates do NOT pin on their own, each with its own describe block below:
  *
- *   - CRITICAL 1: the builder and reader used to derive a block's res-6 coverage cell two DIFFERENT ways
- *     (builder: `latLngToCell(centroid, 6)` directly; reader: `cellToParent(res9Cell, 6)`). H3's cell
- *     hierarchy is not geometrically exact — these disagree for ~6% of real points — so a genuinely
- *     surveyed block could read back as `unknown_block_count` while its own rows still populated
- *     `filings`, a self-contradiction (reproduced end-to-end against a brute-force-found divergent point
- *     before the fix). `build-bdc.ts` now derives both `h3_cell` and the coverage cell from the SAME full
+ *   - **Builder and reader must derive a block's res-6 coverage cell the SAME way.** H3's cell hierarchy
+ *     is not geometrically exact: `latLngToCell(centroid, 6)` and `cellToParent(latLngToCell(centroid,
+ *     9), 6)` disagree for ~6% of real points. Derive the two sides independently and a genuinely
+ *     surveyed block reads back as `unknown_block_count` while its own rows still populate `filings` — a
+ *     self-contradiction. `build-bdc.ts` derives both `h3_cell` and the coverage cell from the SAME full
  *     res-9 index; see that file's docstring. The "builder/reader coverage-cell unification" describe
- *     block below proves this holds even for the DIVERGENT block — chosen specifically because the OLD
- *     two-derivation approach would have disagreed for it (verified inline: the test asserts the two
- *     derivations DO differ for this point, before asserting the reader agrees with what the builder
- *     actually wrote).
- *   - CRITICAL 2: the original Gate 2 test was vacuous — it only ever exercised the "zero rows at all"
- *     shortcut (no candidate cell derivable), never the `readLayerCoverage` branch itself; deleting that
- *     branch entirely left every original test green. "Gate 2 (extended)" below adds a geoid that HAS
- *     rows but whose `layer_coverage` row is deliberately deleted post-build (a genuine coverage-check
- *     exercise), plus an `h3Cells`-form query against a cell that was never surveyed at all (that branch
- *     is the ONLY path for an `h3Cells` query — there's no "zero rows" shortcut available to it).
- *   - IMPORTANT: `speedBucketForDownloadSpeed` had zero direct assertions and the "100-1000" bucket was
- *     never exercised. "speed bucket boundaries" below adds a table test over the exact boundary values
- *     and a dedicated SQL-vs-JS agreement test so the SQL `CASE` and the JS mirror can't silently drift.
+ *     block below proves the agreement holds even for the DIVERGENT block, chosen specifically because
+ *     the two derivations DO disagree there (asserted inline first, so the test cannot pass vacuously).
+ *   - **Gate 2 must exercise `readLayerCoverage`, not the zero-rows shortcut.** A geoid absent from the
+ *     fixture derives no candidate cell at all, so it is classified unknown before the coverage check is
+ *     ever reached — a Gate 2 built only on that block stays green with the coverage branch deleted
+ *     outright. "Gate 2 (extended)" below adds a geoid that HAS rows but whose `layer_coverage` row is
+ *     deliberately deleted post-build (a genuine coverage-check exercise), plus an `h3Cells`-form query
+ *     against a cell that was never surveyed at all — that branch is the ONLY path for an `h3Cells`
+ *     query, which has no "zero rows" shortcut available to it.
+ *   - **The SQL `CASE` and the JS `speedBucketForDownloadSpeed` mirror must not drift.** "speed bucket
+ *     boundaries" below is a table test over the exact boundary values plus a dedicated SQL-vs-JS
+ *     agreement test; the "100-1000" bucket is otherwise never exercised by the gates.
  */
 
 import { chmodSync, existsSync } from "node:fs"
@@ -74,7 +71,7 @@ const GEOID_SF = "060750001001001"
 const GEOID_NY = "360610001001001"
 // A rural-Virginia point found by brute-force search over a CONUS bounding box specifically because its
 // directly-indexed res-6 cell (`latLngToCell(_, 6)`) disagrees with its res-9 cell's H3 hierarchy parent
-// (`cellToParent(latLngToCell(_, 9), 6)`) — the exact divergence class fix round 1's CRITICAL 1 fixes.
+// (`cellToParent(latLngToCell(_, 9), 6)`) — the exact divergence class builder/reader unification guards.
 const GEOID_DIVERGENT = "510090101001001"
 // Deliberately NEVER passed to `buildBDCDatabase` at all — Gate 2's "absent from the fixture" block.
 const GEOID_UNKNOWN = "999999999999999"
@@ -241,12 +238,12 @@ describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 	})
 })
 
-describe("filingLandscape — Gate 2 (extended, fix round 1): coverage-check is load-bearing, not a rows-shortcut proxy", () => {
-	// CRITICAL 2 (review): the ORIGINAL Gate 2 above never exercised `readLayerCoverage` at all — GEOID_UNKNOWN has
-	// zero rows, so it's classified unknown by the "no candidate cell" shortcut alone. Deleting the coverage-check
-	// branch entirely left every original test green. These two tests target the coverage-check branch directly:
-	// (a) a geoid WITH rows whose coverage row is deliberately deleted, and (b) an `h3Cells` query — which has NO
-	// rows-based shortcut available at all — against a cell that was never surveyed.
+describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing, not a rows-shortcut proxy", () => {
+	// Gate 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
+	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
+	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately
+	// deleted, and (b) an `h3Cells` query — which has NO rows-based shortcut available at all — against a cell that
+	// was never surveyed.
 	let corruptScratch: string
 	let corruptOut: string
 
@@ -281,8 +278,8 @@ describe("filingLandscape — Gate 2 (extended, fix round 1): coverage-check is 
 		const sfCoverageCell = res9ShortCellToRes6Parent(sfRow.h3_cell)
 
 		const contractDB = writable as unknown as Kysely<LayerContractDatabase>
-		// Sanity: the builder DID write this coverage row (fix round 1 unifies the two derivations) — deleting it
-		// below is a deliberate corruption, not a pre-existing gap.
+		// Sanity: the builder DID write this coverage row, at the cell the reader derives — deleting it below is a
+		// deliberate corruption, not a pre-existing gap.
 		expect(await readLayerCoverage(contractDB, sfCoverageCell)).toBeDefined()
 
 		await contractDB.deleteFrom("layer_coverage").where("h3_cell", "=", sfCoverageCell).execute()
@@ -319,7 +316,7 @@ describe("filingLandscape — Gate 2 (extended, fix round 1): coverage-check is 
 	})
 })
 
-describe("filingLandscape — fix round 1 (CRITICAL 1): builder/reader coverage-cell unification", () => {
+describe("filingLandscape — builder/reader coverage-cell unification", () => {
 	it("agrees with the builder's coverage cell even at a point where the two derivations used to disagree", async () => {
 		using db = openFixture()
 		const contractDB = db as unknown as Kysely<LayerContractDatabase>
@@ -330,10 +327,11 @@ describe("filingLandscape — fix round 1 (CRITICAL 1): builder/reader coverage-
 			.where("geoid", "=", GEOID_DIVERGENT)
 			.executeTakeFirstOrThrow()
 
-		// Prove this is a genuinely divergent point BEFORE trusting the rest of the test: the old (buggy) builder
-		// derivation — `latLngToCell(centroid, 6)` independent of the stored res-9 cell — disagrees with the
-		// reader's hierarchy-parent derivation for this exact point. If this assertion ever stops holding (e.g. an
-		// h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh brute-force search.
+		// Prove this is a genuinely divergent point BEFORE trusting the rest of the test: the independent
+		// derivation — `latLngToCell(centroid, 6)`, taken without reference to the stored res-9 cell — disagrees
+		// with the reader's hierarchy-parent derivation for this exact point. If this assertion ever stops holding
+		// (e.g. an h3-js upgrade changes cell boundaries), the point needs re-selecting via a fresh brute-force
+		// search.
 		const oldBuggyDerivation = shortCellToInt(latLngToCell(CENTROID_DIVERGENT.lat, CENTROID_DIVERGENT.lon, 6) as H3Cell)
 		const unifiedDerivation = res9ShortCellToRes6Parent(row.h3_cell)
 		expect(unifiedDerivation).not.toBe(oldBuggyDerivation)
@@ -439,7 +437,7 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 	})
 })
 
-describe("speed bucket boundaries (fix round 1)", () => {
+describe("speed bucket boundaries", () => {
 	it.each([
 		[0, BDC_SPEED_BUCKET_UNDER_25],
 		[24, BDC_SPEED_BUCKET_UNDER_25],

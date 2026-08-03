@@ -136,8 +136,7 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
  * every caller reads as "all roles").
  *
  * Rejects an unknown role with {@link commandError} rather than silently filtering it — a typo in a role name would
- * otherwise produce an empty, entirely plausible-looking result. Three gazetteer inspect commands carried identical
- * copies before the 2026-08-02 dedupe.
+ * otherwise produce an empty, entirely plausible-looking result.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
 	if (!raw) return undefined

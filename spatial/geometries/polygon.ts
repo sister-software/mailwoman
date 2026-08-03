@@ -193,9 +193,12 @@ export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> e
 	type: "MultiPolygon"
 
 	/**
-	 * An array of polygons.
+	 * One ring array per polygon — `coordinates[polygon][ring][position]`, matching a `Polygon`'s `coordinates` lifted by
+	 * exactly one level.
+	 *
+	 * @see {@link https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.7 | RFC 7946 Section 3.1.7}
 	 */
-	coordinates: P[][]
+	coordinates: P[]
 }
 
 /**

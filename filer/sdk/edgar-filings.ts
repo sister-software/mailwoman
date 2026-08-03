@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file SEC EDGAR company→CIK resolution + 10-K filing discovery (3b Task 6).
+ * @file SEC EDGAR company→CIK resolution + 10-K filing discovery.
  *
  *   Two public EDGAR endpoints, reached through the existing {@linkcode SECClient} (never a second
  *   fetcher — see `sec-client.ts`):
@@ -15,15 +15,15 @@
  *      deliberately excluded — a distinct filing this task doesn't need, not an oversight).
  *
  *   **Name→CIK matching is NOT name-only, and this is the load-bearing rule in this file (3a's
- *   false-identity-link lesson, carried forward).** `cluster-filers.ts`'s own review history found that
+ *   false-identity-link lesson, carried forward).** `cluster-filers.ts` carries the worked example:
  *   "American Broadband LLC" and "American Broadband, Inc." — two DIFFERENT companies — canonicalize to the
  *   exact same string once legal designations are stripped, and a matcher that silently picks "the best
  *   name match" would merge them under one CIK. `resolveCIKCandidates` therefore never returns a single
  *   winner: it returns every candidate that clears {@link ResolveCIKOptions.minScore}, each carrying its own
  *   `score`, and — the part that actually enforces this — a genuine TIE for the top score is NEVER silently
  *   narrowed to fewer than `limit` (see {@linkcode resolveCIKCandidates}'s own docstring). Deciding which
- *   candidate (if any) is authoritative is explicitly deferred to Task 8, which has other corroborating
- *   evidence (an existing FRN's legal name) this module does not.
+ *   candidate (if any) is authoritative belongs to a caller holding corroborating evidence — an existing
+ *   FRN's legal name, say — which this module does not have.
  *
  *   No live network in the test suite: every test either drives {@linkcode parseCompanyTickers}/
  *   {@linkcode parseTenKFilings}/{@linkcode resolveCIKCandidates} directly (pure functions) or passes a

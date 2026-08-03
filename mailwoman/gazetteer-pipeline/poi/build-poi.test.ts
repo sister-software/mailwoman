@@ -182,7 +182,7 @@ describe("buildPOIDatabase", () => {
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
 		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
 
-		// --- end-to-end via Task 2's POILookup reader ---
+		// --- end-to-end via the POILookup reader ---
 		using lookup = new POILookup({ databasePath: out })
 		const cafeHits = lookup.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 5 })
 		expect(cafeHits.length).toBeGreaterThan(0)
@@ -258,13 +258,12 @@ describe("bboxCoverageCells", () => {
 })
 
 /**
- * The `--source osm` build-local branch (bdc 2b task 3, decisions 3/5): same `rows:` injection seam as the default
- * Overture path, but `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the
- * rows-derived coverage with the bbox polyfill above — including a zero-observed-rows cell, which per the task brief
- * must round-trip through `writeLayerCoverage` / `readLayerCoverage` (never silently dropped, never conflated with
- * "unsurveyed").
+ * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection seam as the default Overture path, but
+ * `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the rows-derived coverage
+ * with the bbox polyfill above — including a zero-observed-rows cell, which must round-trip through
+ * `writeLayerCoverage` / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
  */
-describe("buildPOIDatabase — --source osm build-local branch (bdc 2b task 3)", () => {
+describe("buildPOIDatabase — --source osm build-local branch", () => {
 	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
 
 	function osmFixtureRows(): POISourceRow[] {
@@ -367,12 +366,12 @@ describe("buildPOIDatabase — --source osm build-local branch (bdc 2b task 3)",
 })
 
 /**
- * Builder/reader res-6 coverage-cell agreement (2b final-review-wave fix, IMPORTANT finding) — `bboxCoverageCells` (the
- * `--source osm` build branch's coverage aggregator, decision 5) used to key a row's observed count off a DIRECT
- * `latLngToCell(row, 6)`, while the default (non-override) rows-derived coverage path just above in this same file's
+ * Builder/reader res-6 coverage-cell agreement — `bboxCoverageCells` (the `--source osm` build branch's coverage
+ * aggregator, decision 5) must key a row's observed count off `cellToParent(res9Cell, 6)`, never a direct
+ * `latLngToCell(row, 6)`: the default (non-override) rows-derived coverage path just above in this same file's
  * `buildPOIDatabase` (~:592) and every layer reader (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`,
- * `plausibility.ts`, `nearest-infrastructure.ts`) derive a row's res-6 coverage cell as `cellToParent(res9Cell, 6)` —
- * the SAME spine-disagreement class `bdc` 2a fix-round-1 fixed. H3's cell hierarchy is not geometrically exact, so the
+ * `plausibility.ts`, `nearest-infrastructure.ts`) derive it the parent way, and a builder that disagrees with its
+ * readers about the spine is the recurring failure class here. H3's cell hierarchy is not geometrically exact, so the
  * two derivations disagree for a real fraction of points (~6.56% measured over 20k CONUS points): a row's observed
  * count could land on a neighbouring cell, or be dropped entirely when its direct-res-6 cell isn't a member of the bbox
  * polyfill.

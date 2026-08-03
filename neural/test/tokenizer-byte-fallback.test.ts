@@ -5,14 +5,14 @@
  *
  *   Byte-fallback offset-reconstruction regression (paired-punctuation audit, `.superpowers/sdd/task-9-audit-report.md`).
  *
- *   Before the fix, `MailwomanTokenizer.encode`'s offset walker treated a byte-fallback piece's placeholder TEXT
- *   (`"<0x7B>"`, 6 chars) as if it were 6 real input characters, when it actually represents exactly the ONE byte of a
- *   real character's UTF-8 encoding. The cursor over-advanced on every such piece, desyncing every SUBSEQUENT piece's
- *   `[start, end)` offsets for the rest of the input — not just the byte-fallback piece itself. On the small fixture
- *   tokenizer (`tokenizer-v0.1.0.model`, deliberately tiny-vocab) this fires on curly quotes “”‘’, guillemets «», and
- *   even ASCII braces `{}`/`[]` — not just non-Latin scripts, which is why this suite doesn't need the gated production
- *   tokenizer to reproduce it. See `tokenizer.ts`'s doc comment for the fix (buffer a byte-fallback RUN, decode as one
- *   UTF-8 sequence via `TextDecoder`, advance the cursor by the DECODED string's length).
+ *   A byte-fallback piece's placeholder TEXT (`"<0x7B>"`, 6 chars) is NOT 6 input characters — it represents exactly
+ *   ONE byte of a real character's UTF-8 encoding. An offset walker that advances the cursor by the placeholder's
+ *   length desyncs every SUBSEQUENT piece's `[start, end)` offsets for the rest of the input, not just the
+ *   byte-fallback piece itself, which is why the assertions here reach well past the fallback run. On the small
+ *   fixture tokenizer (`tokenizer-v0.1.0.model`, deliberately tiny-vocab) byte-fallback fires on curly quotes “”‘’,
+ *   guillemets «», and even ASCII braces `{}`/`[]` — not just non-Latin scripts, so this suite reproduces without the
+ *   gated production tokenizer. See `tokenizer.ts`'s doc comment for the handling (buffer a byte-fallback RUN, decode
+ *   as one UTF-8 sequence via `TextDecoder`, advance the cursor by the DECODED string's length).
  */
 
 import { repoRootPath } from "@mailwoman/core/utils"
@@ -32,8 +32,8 @@ async function assertDownstreamOffsetsSurvive(raw: string): Promise<void> {
 	expect(pieces.length).toBeGreaterThan(0)
 
 	// Offsets must never regress (non-decreasing across the whole stream) — the fundamental guarantee
-	// `tokenizer-large-parity.test.ts` checks for the "supported" subset; this asserts it holds even WITH
-	// byte-fallback pieces present, which is exactly what that suite's exclusion filter used to concede away.
+	// `tokenizer-large-parity.test.ts` checks for the "supported" subset. Its exclusion filter drops
+	// byte-fallback pieces, so this suite is the only place the guarantee is asserted WITH them present.
 	for (let i = 1; i < pieces.length; i++) {
 		expect(pieces[i]!.start).toBeGreaterThanOrEqual(pieces[i - 1]!.end)
 	}
@@ -106,10 +106,9 @@ describe("MailwomanTokenizer — byte-fallback offset reconstruction (paired-pun
 		expect(raw.slice(openRun[2]!.start, openRun[2]!.end)).toBe("“")
 		expect(raw.slice(closeRun[2]!.start, closeRun[2]!.end)).toBe("”")
 
-		// Critical assertion: the piece BETWEEN the two runs ("A") and everything after the second run land on the
-		// correct offsets — before the fix, the cursor over-advanced by 5 chars per 3-piece run (18 placeholder
-		// chars for 1 real char), landing deep past the end of this 15-char string and garbling every downstream
-		// span.
+		// The piece BETWEEN the two runs ("A") and everything after the second run must land on the correct
+		// offsets. A placeholder-length walk over-advances by 5 chars per 3-piece run (18 placeholder chars for
+		// 1 real char), landing deep past the end of this 15-char string and garbling every downstream span.
 		const aPiece = pieces.find((p) => p.piece === "A")!
 		expect(raw.slice(aPiece.start, aPiece.end)).toBe("A")
 

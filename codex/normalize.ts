@@ -11,8 +11,6 @@
  *   a codex table already depends on it. Putting the folding rules next to the tables they fold
  *   means a lookup and its table can never disagree about what counts as the same name.
  *
- *   Both functions were copy-pasted before the 2026-08-02 dedupe: `foldName` three times inside
- *   codex itself, `wordNorm` three times across codex/tools, the gazetteer pipeline, and the CLI.
  */
 
 /**

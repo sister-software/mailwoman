@@ -28,11 +28,12 @@ import { spawnSync } from "node:child_process"
 
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
@@ -72,24 +73,72 @@ interface CountrySource {
  * countrywide extracts (FR/IT/NL) read region from the CSV when present.
  */
 const SOURCES: readonly CountrySource[] = [
-	{ zip: "/tmp/oa-cache/us__ia__statewide.zip", csv: "us/ia/statewide.csv", iso2: "US", region: "IA", order: "us" },
-	{ zip: "/tmp/oa-cache/us__il__cook.zip", csv: "us/il/cook.csv", iso2: "US", region: "IL", order: "us" },
-	{ zip: "/tmp/oa-cache/us__mt__statewide.zip", csv: "us/mt/statewide.csv", iso2: "US", region: "MT", order: "us" },
-	{ zip: "/tmp/oa-cache/us__sd__statewide.zip", csv: "us/sd/statewide.csv", iso2: "US", region: "SD", order: "us" },
-	{ zip: "/tmp/oa-cache/de__sn__statewide.zip", csv: "de/sn/statewide.csv", iso2: "DE", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/fr__countrywide.zip", csv: "fr/countrywide.csv", iso2: "FR", region: "", order: "fr" },
+	{
+		zip: dataRootPath("oa-cache", "us__ia__statewide.zip"),
+		csv: "us/ia/statewide.csv",
+		iso2: "US",
+		region: "IA",
+		order: "us",
+	},
+	{ zip: dataRootPath("oa-cache", "us__il__cook.zip"), csv: "us/il/cook.csv", iso2: "US", region: "IL", order: "us" },
+	{
+		zip: dataRootPath("oa-cache", "us__mt__statewide.zip"),
+		csv: "us/mt/statewide.csv",
+		iso2: "US",
+		region: "MT",
+		order: "us",
+	},
+	{
+		zip: dataRootPath("oa-cache", "us__sd__statewide.zip"),
+		csv: "us/sd/statewide.csv",
+		iso2: "US",
+		region: "SD",
+		order: "us",
+	},
+	{
+		zip: dataRootPath("oa-cache", "de__sn__statewide.zip"),
+		csv: "de/sn/statewide.csv",
+		iso2: "DE",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "fr__countrywide.zip"),
+		csv: "fr/countrywide.csv",
+		iso2: "FR",
+		region: "",
+		order: "fr",
+	},
 	// ES uses the Spanish IGN schema, not the OA standard columns — skipped here (codex still recognizes
 	// "España"/"Spain"). A dedicated IGN adapter is a follow-up.
-	{ zip: "/tmp/oa-cache/it__countrywide.zip", csv: "it/countrywide.csv", iso2: "IT", region: "", order: "eu" },
-	{ zip: "/tmp/oa-cache/nl__countrywide.zip", csv: "nl/countrywide.csv", iso2: "NL", region: "", order: "eu" },
+	{
+		zip: dataRootPath("oa-cache", "it__countrywide.zip"),
+		csv: "it/countrywide.csv",
+		iso2: "IT",
+		region: "",
+		order: "eu",
+	},
+	{
+		zip: dataRootPath("oa-cache", "nl__countrywide.zip"),
+		csv: "nl/countrywide.csv",
+		iso2: "NL",
+		region: "",
+		order: "eu",
+	},
 ]
 
 /**
  * Held-out for --golden: Vermont (US holdout) + Berlin (DE holdout) — geographic split, never trained.
  */
 const EVAL_SOURCES: readonly CountrySource[] = [
-	{ zip: "/tmp/oa-cache/us__vt__statewide.zip", csv: "us/vt/statewide.csv", iso2: "US", region: "VT", order: "us" },
-	{ zip: "/tmp/oa-cache/de__berlin.zip", csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
+	{
+		zip: dataRootPath("oa-cache", "us__vt__statewide.zip"),
+		csv: "us/vt/statewide.csv",
+		iso2: "US",
+		region: "VT",
+		order: "us",
+	},
+	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", iso2: "DE", region: "", order: "eu" },
 ]
 
 /**
@@ -105,45 +154,9 @@ interface CountryTuple {
 	order: string
 }
 
-function splitCSV(line: string): string[] {
-	const out: string[] = []
-
-	let cur = "",
-		inQ = false
-
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]
-
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
-	}
-
-	out.push(cur)
-
-	return out
-}
-
 function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	// countrywide extracts (FR/IT/NL) are GB-scale — cap the bytes with `head` (read ~8 lines per wanted
-	// tuple to survive dedup/skips) so the toString stays under V8's string limit.
+	// tuple to survive dedup/skips) so the whole extract never has to be held in memory.
 	const maxLines = Math.max(limit * 8, 20_000) + 1
 
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
@@ -157,29 +170,15 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (n: string): number => header.indexOf(n)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iRegion = idx("region"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
+	for (const row of readCSVRecords(r.stdout)) {
+		if (tuples.length >= limit) break
 
-		const street = get(cells, iStreet),
-			locality = get(cells, iCity),
-			house_number = get(cells, iNum)
+		const street = row.street ?? "",
+			locality = row.city ?? "",
+			house_number = row.number ?? ""
 
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
@@ -191,8 +190,8 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 			house_number,
 			street,
 			locality,
-			region: get(cells, iRegion) || source.region,
-			postcode: get(cells, iPost),
+			region: row.region || source.region,
+			postcode: row.postcode ?? "",
 			iso2: source.iso2,
 			order: source.order,
 		})
@@ -460,7 +459,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 		}
 
 		if (!pool.length) {
-			throw new Error("No tuples — are the cached OA zips present in /tmp/oa-cache?")
+			throw new Error(`No tuples — are the cached OA zips present in ${dataRootPath("oa-cache")}?`)
 		}
 
 		let emitted = 0

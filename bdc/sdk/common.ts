@@ -170,8 +170,8 @@ export interface RawBDCFile {
 	 * 2-digit state or territory FIPS code.
 	 *
 	 * Loosely typed as `string` for now. The Nexus original was `AdminLevel1Code` (via `@isp.nexus/tiger`); this port
-	 * drops that dependency, same as `data-collection.ts`'s `FCCStateID`. Task 2c tightens this against
-	 * `@mailwoman/tiger` if a downstream dictionary needs the literal union.
+	 * drops that dependency, same as `data-collection.ts`'s `FCCStateID`. Tighten it against `@mailwoman/tiger` if a
+	 * downstream dictionary ever needs the literal union.
 	 *
 	 * Nullable in live data for rows not scoped to a specific state (e.g. Provider-category rows). Guarded in
 	 * {@linkcode parseRawBDCFile} — a null value parses to an empty `stateCode` string.
@@ -180,7 +180,7 @@ export interface RawBDCFile {
 	/**
 	 * State or territory name.
 	 *
-	 * Loosely typed as `string` — the Nexus original was `StateName` (via `@isp.nexus/tiger`). Same task-2c deferral as
+	 * Loosely typed as `string` — the Nexus original was `StateName` (via `@isp.nexus/tiger`). Same deferral as
 	 * `state_fips` above.
 	 */
 	state_name: string
@@ -234,8 +234,8 @@ export interface BDCFile {
 	/**
 	 * The state or territory FIPS code.
 	 *
-	 * Loosely typed as `string` — see {@linkcode RawBDCFile} for the task-2c deferral. Empty string when the raw
-	 * `state_fips` was `null`.
+	 * Loosely typed as `string` — see {@linkcode RawBDCFile} for the deferral. Empty string when the raw `state_fips` was
+	 * `null`.
 	 */
 	stateCode: string
 	/**

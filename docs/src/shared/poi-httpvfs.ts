@@ -128,7 +128,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 	const categoryIds = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
 	if (!categoryIds.length) return []
-	const categoryIdList = categoryIds.join(", ")
+	const categoryIDList = categoryIds.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
 	const seenCells = new Set<string>()
@@ -152,7 +152,7 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 			// trim to the nearest `limit`.
 			const sql =
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
-				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIdList}) ORDER BY neg_rank ASC LIMIT ${limit}`
+				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIDList}) ORDER BY neg_rank ASC LIMIT ${limit}`
 
 			const hits = rowsFromExec(await worker.db.exec(sql)) as unknown as Array<{
 				name: string | null

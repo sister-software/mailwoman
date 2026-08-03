@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest"
 import { canonicalizeAbbreviations, getTransform, TRANSFORMS } from "./transforms.ts"
 
 describe("TRANSFORMS registry", () => {
-	it("carries the seven spec-named classes plus the two Task-9 paired-punct classes", () => {
+	it("carries the seven spec-named classes plus the two paired-punctuation classes", () => {
 		const ids = TRANSFORMS.map((t) => t.id).toSorted()
 
 		expect(ids).toEqual(
@@ -171,7 +171,7 @@ describe("canonicalizeAbbreviations", () => {
 	})
 })
 
-describe("wrap-in-quotes (Task 9 paired-punctuation audit)", () => {
+describe("wrap-in-quotes (paired-punctuation audit)", () => {
 	it("wraps the whole input in a matching straight-quote pair", () => {
 		expect(getTransform("wrap-in-quotes").apply("350 Fifth Avenue")).toBe('"350 Fifth Avenue"')
 	})
@@ -181,7 +181,7 @@ describe("wrap-in-quotes (Task 9 paired-punctuation audit)", () => {
 	})
 })
 
-describe("add-parenthetical (Task 9 paired-punctuation audit)", () => {
+describe("add-parenthetical (paired-punctuation audit)", () => {
 	it("appends a bracketed aside", () => {
 		expect(getTransform("add-parenthetical").apply("12 High St, Leeds")).toBe("12 High St, Leeds (main entrance)")
 	})
