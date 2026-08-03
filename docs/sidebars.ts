@@ -46,11 +46,19 @@ const sidebars: SidebarsConfig = {
 			// Reading order again, and it is a dependency order: the parse walk needs only the
 			// install, the CSV loop needs candidate.db, the server needs both, and the precision
 			// page needs a second download on top. Each page's prerequisites name the one before it.
+			//
+			// The last two are the wave-2 destinations rather than further rungs on that ladder:
+			// the drop-in swap re-uses the same candidate.db as the server page but answers a
+			// different question (an existing client, not a new one), and the browser page needs no
+			// data root at all. Both sit after the ladder so a reader following it in order reaches
+			// them having already met every artifact they name.
 			items: [
 				"developers/tutorials/understand-a-parse",
 				"developers/tutorials/geocode-a-csv",
 				"developers/tutorials/run-the-api-server",
 				"developers/tutorials/improve-geocode-precision",
+				"developers/tutorials/swap-in-for-nominatim",
+				"developers/tutorials/parse-in-the-browser",
 			],
 		},
 		"developers/status",

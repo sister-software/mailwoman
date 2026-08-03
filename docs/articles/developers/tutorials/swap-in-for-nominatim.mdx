@@ -1,0 +1,457 @@
+---
+title: Swap in a drop-in for an existing client
+description: Run the Photon-compatible server on your own hardware, point geopy at it with a one-line change, then do the same for the Nominatim and libpostal shapes — and read what each one honors.
+role: tutorial
+verified-with: mailwoman 8.7.0
+---
+
+# Swap in a drop-in for an existing client
+
+You have a service that already talks to a geocoder. It builds Photon query strings, or reads
+Nominatim's `jsonv2` result array, or posts to libpostal's `/parse`. Rewriting that caller to speak
+Mailwoman's own `/v1` shape is work you did not ask for.
+
+Three packages answer on those shapes instead. By the end of this page you'll have the
+Photon-compatible one running against your own gazetteer, a geopy client pointed at it by changing one
+argument, the Nominatim and libpostal variants running the same way, and a table of which request
+parameters each drop-in reads. About thirty minutes, most of it a download.
+
+## Prerequisites
+
+Read the last two before you start. They decide whether this page can answer the question you have.
+
+- **Node.js 24.18.0 or later**, and about 1.7 GB of free disk.
+- **`jq`** for the `curl` output below. Drop the pipe if you'd rather read the raw JSON.
+- **Python with `geopy`** for step 4, in a throwaway virtual environment. Skip that step if your
+  client is in another language; the change it makes is one constructor argument in any of them.
+- **The gazetteer is a 1,652,916,224-byte download** and it is not on npm. Step 1 fetches it once.
+  Everything after step 1 is local.
+- **The ports collide with what you're replacing.** The defaults are 2322 for Photon, 8080 for
+  Nominatim, 8081 for libpostal — the same ports the servers you already run are bound to. This page
+  moves two of them with `--port`, because the machine it was verified on had 2322 and 8080 taken.
+  Running the drop-in beside the original on a spare port is the right shape for a swap anyway: you
+  can diff the two answers before you cut over.
+- **`/reverse` needs a database this page does not download.** Reverse geocoding on the Photon and
+  Nominatim drop-ins runs point-in-polygon over a Who's On First admin distribution at
+  `<data-root>/wof/admin-global-priority.db`. `mailwoman data pull` does not ship one, so `/reverse`
+  answers an empty result until you put one there. Step 3 shows what that looks like so you don't
+  mistake it for a broken install. Forward geocoding — the path most callers use — works from step 1.
+- **There is no authentication in front of any of them,** and `--host` defaults to `0.0.0.0`. Bind
+  `127.0.0.1` or put the server behind your own ingress before it goes anywhere shared.
+
+## 1. Pull the gazetteer once
+
+All three packages read one data root. Set it, and look at the plan before you commit to the
+transfer — `--dry-run` prints the URL, the size and the destination, and touches no network:
+
+```bash
+export MAILWOMAN_DATA_ROOT=/tmp/mailwoman-data
+npx mailwoman data pull candidate --dry-run
+```
+
+```
+✓ candidate: gazetteer/2026-07-07a/candidate.db: [dry-run] 1652.9 MB
+https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db →
+/tmp/mailwoman-data/wof/candidate.db
+PASS (1/1 checks)
+```
+
+Then drop the flag and let it run:
+
+```bash
+npx mailwoman data pull candidate
+```
+
+```
+▸ pull https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db (~1652.9 MB) → /tmp/mailwoman-data/wof/candidate.db
+[DEBUG] (mailwoman data): HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+[DEBUG] (mailwoman data): 200 (uncached) HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+
+export MAILWOMAN_CANDIDATE_DB=/tmp/mailwoman-data/wof/candidate.db
+✓ candidate: gazetteer/2026-07-07a/candidate.db: content-length verified (1652.9 MB) →
+/tmp/mailwoman-data/wof/candidate.db
+PASS (1/1 checks)
+```
+
+The paths in every transcript on this page are the data root it was verified against; yours read
+differently. The file lands at `<data-root>/wof/candidate.db` and the three drop-ins find it there on
+their own — the `export` line the pull prints is for `mailwoman geocode` and `mailwoman serve`, which
+resolve the candidate gazetteer only from `$MAILWOMAN_CANDIDATE_DB` or an explicit flag. The drop-ins
+also accept `--candidate-db <path>` if your copy lives somewhere else. Exporting the variable anyway
+costs nothing and makes every entry point agree.
+
+Re-running the pull is safe: with the file already on disk it reports `already present … skipped` and
+downloads nothing, so this is a line you can leave in a provisioning script.
+
+## 2. Start the Photon-compatible server
+
+```bash
+npx @mailwoman/photon serve --port 2323
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mailwoman-data/wof/candidate.db
+[@mailwoman/photon] listening on http://0.0.0.0:2323
+  wof: (none found — set MAILWOMAN_WOF_DB)
+  resolver: candidate gazetteer (worldwide) — /tmp/mailwoman-data/wof/candidate.db
+  cors: enabled (Access-Control-Allow-Origin: *)
+  endpoints: GET /  GET /api  GET /reverse  GET /openapi.json
+```
+
+Four of those lines are the deployment describing itself, and they are the ones to read in a log when
+two hosts disagree. `resolver:` names the gazetteer that will answer. `wof:` is the reverse-geocoding
+database from the prerequisites, absent here — and the variable that line suggests is read by
+`mailwoman serve`, not by this server, which looks only at `<data-root>/wof/`. Permissive CORS is on
+by default because browser geocoder widgets call these endpoints cross-origin; `--no-cors` turns it
+off when a reverse proxy already sets the headers.
+
+Leave it running and open a second terminal.
+
+## 3. Ask it what your client asks
+
+`GET /api` is Photon's forward endpoint, and it answers a GeoJSON `FeatureCollection`.
+
+```bash
+curl -s "http://127.0.0.1:2323/api?q=1600+pennsylvania+ave+nw+washington+dc+20500&limit=1" | jq '.features[0]'
+```
+
+```
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -77.016216,
+      38.904831
+    ]
+  },
+  "properties": {
+    "osm_key": "place",
+    "osm_value": "city",
+    "type": "city",
+    "name": "Washington",
+    "city": "Washington",
+    "state": "District of Columbia",
+    "postcode": "20500",
+    "country": "United States",
+    "countrycode": "us"
+  }
+}
+```
+
+`osm_key`, `osm_value` and `type` are always present, because Photon clients dereference them without
+checking. They are derived from the resolved place's type, not read from OpenStreetMap — see the
+table in step 7.
+
+The `lat`/`lon` parameters are a proximity bias, and an ambiguous query is where you can watch them
+work. Two requests, one query, two orderings:
+
+```bash
+curl -s "http://127.0.0.1:2323/api?q=paris&limit=3" | jq -c '[.features[] | {name: .properties.name, cc: .properties.countrycode, coords: .geometry.coordinates}]'
+curl -s "http://127.0.0.1:2323/api?q=paris&limit=3&lat=33.66&lon=-95.55" | jq -c '[.features[] | {name: .properties.name, cc: .properties.countrycode, coords: .geometry.coordinates}]'
+```
+
+```
+[{"name":"Paris","cc":"fr","coords":[2.342841,48.856599]},{"name":"Paris","cc":"us","coords":[-95.54435,33.668553]},{"name":"Paris","cc":"us","coords":[-88.30661,36.293581]}]
+[{"name":"Paris","cc":"us","coords":[-95.54435,33.668553]},{"name":"Paris","cc":"fr","coords":[2.342841,48.856599]},{"name":"Paris","cc":"us","coords":[-88.30661,36.293581]}]
+```
+
+Unbiased, Paris in France wins on population. Biased to a point in north-east Texas, the Texan Paris
+takes the first slot and France drops to second. The bias re-ranks; it never filters, so both
+alternatives stay in the collection. Feed it your map center and a type-ahead orders results the way
+the person typing expects.
+
+Now the endpoint from the prerequisites:
+
+```bash
+curl -s "http://127.0.0.1:2323/reverse?lat=52.52&lon=13.405" | jq -c
+```
+
+```
+{"type":"FeatureCollection","features":[]}
+```
+
+An empty collection, not an error. That is the `wof: (none found)` line from step 2 showing through:
+with no admin distribution on disk the reverse geocoder is never constructed, and the route answers
+the empty shape rather than a 500. Put `admin-global-priority.db` in `<data-root>/wof/` and restart
+to change that answer.
+
+## 4. Point your existing client at it
+
+Nothing above required a client library. This step is the swap itself, and in geopy it is one
+argument. Install it in a throwaway environment:
+
+```bash
+python3 -m venv /tmp/geopy-venv && /tmp/geopy-venv/bin/pip install geopy
+```
+
+Then hand the `Photon` geocoder a `domain` and a `scheme` instead of letting it default to the hosted
+service:
+
+```python
+from geopy.geocoders import Photon
+
+photon = Photon(domain="localhost:2323", scheme="http")
+loc = photon.geocode("1600 Pennsylvania Ave NW, Washington DC 20500")
+print(loc.address)
+print((loc.latitude, loc.longitude))
+```
+
+```
+Washington, 20500, Washington, District of Columbia, United States
+(38.904831, -77.016216)
+```
+
+Same object your code already handles, from a server you run. Every Photon client has this pair of
+knobs under some name — a base URL, a host, an endpoint override — because the hosted instance is a
+default, not a hard-coded constant.
+
+## 5. The Nominatim shape
+
+Same data root, same pull, different package and a different result envelope. Start it beside the
+Photon server:
+
+```bash
+npx @mailwoman/nominatim serve --port 8088
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mailwoman-data/wof/candidate.db
+[@mailwoman/nominatim] listening on http://0.0.0.0:8088
+  wof: (none found — set MAILWOMAN_WOF_DB)
+  resolver: candidate gazetteer (worldwide) — /tmp/mailwoman-data/wof/candidate.db
+  cors: enabled (Access-Control-Allow-Origin: *)
+  endpoints: GET /  GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json
+```
+
+`/status` is the route a health check hits, and it answers Nominatim's two-key object:
+
+```bash
+curl -s http://127.0.0.1:8088/status
+```
+
+```
+{"status":0,"message":"OK"}
+```
+
+`/search` takes free text or the structured parameters, and `addressdetails=1` adds the `address`
+block:
+
+```bash
+curl -s "http://127.0.0.1:8088/search?q=10+Downing+Street,+London+SW1A+2AA&addressdetails=1" | jq '.[0]'
+```
+
+```
+{
+  "place_id": 1178923677,
+  "licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER",
+  "lat": "51.500525578898",
+  "lon": "-0.109400835283853",
+  "display_name": "10, Downing Street, London, SW1A 2AA",
+  "address": {
+    "city": "London",
+    "postcode": "SW1A 2AA",
+    "house_number": "10",
+    "road": "Downing Street"
+  },
+  "annotations": {
+    "DMS": {
+      "lat": "51° 30′ 1.89″ N",
+      "lng": "0° 6′ 33.84″ W"
+    },
+    "MGRS": "30UYC0062309449",
+    "Maidenhead": "IO91wm",
+    "Mercator": {
+      "x": -12178.445276157312,
+      "y": 6710313.068983022
+    },
+    "geohash": "gcpuvx2k6",
+    "qibla": 119.00112658398905,
+    "sun": {
+      "rise": {
+        "apparent": 1785731284
+      },
+      "set": {
+        "apparent": 1785786464
+      }
+    }
+  }
+}
+```
+
+The `annotations` block is an addition, in OpenCage's shape. Everything derived from the coordinate
+alone is always there — the formats, the qibla bearing, the sun times. Three more, `flag`, `currency`
+and `callingcode`, need a country in the resolved hierarchy, which this result has not got and
+`?q=Berlin,+Germany` has. The IANA timezone, UN/LOCODE and EU NUTS codes join them when those lookup
+databases are present in the data root. A Nominatim client that ignores unknown keys will not notice
+any of it.
+
+`countrycodes` is honored as a hard restriction, which makes it the manual override when a bare place
+name resolves to the wrong country:
+
+```bash
+curl -s "http://127.0.0.1:8088/search?q=springfield&countrycodes=de" | jq -c
+```
+
+```
+[]
+```
+
+An empty array: the restriction held, and nothing in Germany matched. A hard filter returning nothing
+is the parameter working, not a lookup failure, and it is exactly what step 3's soft bias will never
+do to you.
+
+geopy's `Nominatim` geocoder takes the same two arguments as its `Photon` one, plus the `user_agent`
+it requires:
+
+```python
+from geopy.geocoders import Nominatim
+
+nom = Nominatim(domain="localhost:8088", scheme="http", user_agent="swap-tutorial")
+loc = nom.geocode("10 Downing Street, London SW1A 2AA", addressdetails=True)
+print(loc.address)
+print((loc.latitude, loc.longitude))
+print(loc.raw["address"])
+```
+
+```
+10, Downing Street, London, SW1A 2AA
+(51.500525578898, -0.109400835283853)
+{'city': 'London', 'postcode': 'SW1A 2AA', 'house_number': '10', 'road': 'Downing Street'}
+```
+
+## 6. The libpostal shape
+
+The parse-only drop-in needs no gazetteer at all — the model weights arrive as a package dependency,
+so this one starts on a machine that never ran step 1:
+
+```bash
+npx @mailwoman/libpostal serve --port 8081
+```
+
+```
+[@mailwoman/libpostal] listening on http://0.0.0.0:8081
+  cors: enabled (Access-Control-Allow-Origin: *)
+  endpoints: GET /  POST/GET /parse  POST/GET /expand  GET /openapi.json
+```
+
+`/parse` returns libpostal's ordered `[{label, value}]` array, over `GET` or `POST`:
+
+```bash
+curl -s "http://127.0.0.1:8081/parse?query=1600%20Pennsylvania%20Ave%20NW%2C%20Washington%20DC%2020500"
+curl -s -X POST http://127.0.0.1:8081/parse -H 'content-type: application/json' -d '{"query":"30 Rue de Rivoli, 75004 Paris"}'
+```
+
+```
+[{"label":"house_number","value":"1600"},{"label":"road","value":"Pennsylvania Ave NW"},{"label":"city","value":"Washington"},{"label":"state","value":"DC"},{"label":"postcode","value":"20500"}]
+[{"label":"house_number","value":"30"},{"label":"road","value":"Rue de Rivoli"},{"label":"postcode","value":"75004"},{"label":"city","value":"Paris"}]
+```
+
+`/expand` answers with a set, and the set is small on purpose:
+
+```bash
+curl -s "http://127.0.0.1:8081/expand?address=1600%20Pennsylvania%20Ave%20NW"
+```
+
+```
+{"expansions":["1600 Pennsylvania Ave NW","1600 Pennsylvania Avenue Northwest"]}
+```
+
+The route builds three strings — the input, its normalized form, and its abbreviation-expanded form —
+and drops the duplicates, which is why this address yields two. Mailwoman's normalization stage is
+deterministic, so the result is one canonical alternative rather than the multi-variant hypothesis
+set libpostal's probabilistic expander produces. A caller that indexes every expansion gets fewer
+keys per address here; a caller that takes `expansions[0]` or the last element sees no difference.
+
+A missing parameter is a status code and a one-key object, not a stack trace:
+
+```bash
+curl -s -i "http://127.0.0.1:8081/parse" | head -1
+curl -s "http://127.0.0.1:8081/parse"
+```
+
+```
+HTTP/1.1 400 Bad Request
+{"error":"query is required"}
+```
+
+## 7. What each drop-in honors
+
+The tables below are the compatibility surface as of `8.7.0`, read off the route handlers and the
+engines behind them, then checked against a running server. Request parameters get one of three
+verdicts:
+
+- **Honored** — the parameter changes the answer.
+- **Accepted, no effect** — the request is valid and the parameter is parsed, and nothing downstream
+  reads it. Your client will not break; it will get the unfiltered answer.
+- **Not read** — the parameter never reaches a handler.
+
+Rows for response fields and whole routes carry their own verdict instead, and each one says what it
+means in the third column.
+
+### Photon: `/api` and `/reverse`
+
+| Parameter or field                       | Verdict             | What that means here                                                                                 |
+| ---------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `q`                                      | Honored             | Parsed and resolved. Empty or over 512 characters answers an empty collection                        |
+| `limit`                                  | Honored             | Caps the features returned. `/reverse` returns at most one regardless                                |
+| `lat` + `lon` on `/api`                  | Honored             | Soft proximity bias, both required. Re-ranks candidates, never filters                               |
+| `format=jsonld`                          | Honored, addition   | Re-serializes the same collection as schema.org `Place[]`. Upstream Photon has no such format        |
+| `lang`                                   | Accepted, no effect | Names come back as the gazetteer stores them. `?q=cologne&lang=en` still answers `Köln`              |
+| `osm_tag`                                | Accepted, no effect | No category filter. A request for `amenity:cafe` returns the same places as one without it           |
+| `layer`                                  | Accepted, no effect | No layer filter                                                                                      |
+| `radius` on `/reverse`                   | Accepted, no effect | The reverse geocoder returns the containing place, not a radius search                               |
+| `bbox`                                   | Not read            | The handler parses no bounding box. Use `lat`/`lon` for viewport influence                           |
+| `osm_key`/`osm_value`/`type`             | Always present      | Derived from the resolved place's type so clients can dereference them. Not OpenStreetMap tag values |
+| `osm_id` / `osm_type`                    | Never set           | Nothing here is keyed to an OpenStreetMap object. A client that stores them stores `undefined`       |
+| `/reverse` without an admin distribution | Empty collection    | See the prerequisites                                                                                |
+
+### Nominatim: `/search`, `/reverse`, `/lookup`, `/status`
+
+| Parameter or field                                           | Verdict             | What that means here                                                                                                                                       |
+| ------------------------------------------------------------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `q`                                                          | Honored             | Free-text forward geocoding                                                                                                                                |
+| `street`, `city`, `county`, `state`, `country`, `postalcode` | Honored             | Joined into one query string in that order, then parsed. `?city=Berlin&country=Germany` resolves                                                           |
+| `countrycodes`                                               | Honored             | Hard country restriction, first code only. Can legitimately answer `[]`                                                                                    |
+| `addressdetails`                                             | Honored             | Adds the `address` block                                                                                                                                   |
+| `format`                                                     | Honored             | `geojson` and `jsonld` change the envelope; `jsonv2` (the default) and `json` both answer the result array. `/lookup` ignores `jsonld` — a preserved quirk |
+| `limit`                                                      | Accepted, capped    | `/search` returns at most one result today, so `limit=5` still answers one                                                                                 |
+| `bounded`                                                    | Accepted, no effect | No viewbox restriction                                                                                                                                     |
+| `accept-language`                                            | Accepted, no effect | Same gazetteer-name behavior as Photon's `lang`                                                                                                            |
+| `zoom` on `/reverse`                                         | Accepted, no effect | The detail level is whatever the containing hierarchy gives                                                                                                |
+| `viewbox`, `extratags`, `namedetails`, `polygon_*`, `dedupe` | Not read            | The handlers parse none of them                                                                                                                            |
+| `place_id`                                                   | Substituted         | Forward results carry a deterministic hash of coordinate plus display name, not a Nominatim id. Reverse results carry the gazetteer's own place id         |
+| `osm_id` / `osm_type`                                        | Never set           | As with Photon                                                                                                                                             |
+| `licence`                                                    | Substituted         | `Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER` — the sources these answers come from                                               |
+| `annotations`                                                | Addition            | The OpenCage-style block from step 5                                                                                                                       |
+| `/lookup`                                                    | `501`               | Not implemented                                                                                                                                            |
+| `/reverse` without an admin distribution                     | `null`              | See the prerequisites                                                                                                                                      |
+
+### libpostal: `/parse` and `/expand`
+
+| Parameter or field | Verdict          | What that means here                                                                                                                                                                                                                                                |
+| ------------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `query`, `address` | Honored          | On `/parse`, either name works, over `GET` or `POST`. `/expand` takes `address`                                                                                                                                                                                     |
+| Component labels   | Mapped           | Mailwoman's tags project onto libpostal's names — `street` to `road`, `locality` to `city`, `region` to `state`, `dependent_locality` and `neighbourhood` both to `suburb`, and so on through twenty entries. A tag with no entry passes through under its own name |
+| `/expand` output   | Deduplicated set | The input, its normalized form and its abbreviation-expanded form, with duplicates dropped — one to three strings, not a hypothesis set. See step 6                                                                                                                 |
+| Language options   | Not read         | One weights bundle (`en-us`) is loaded at startup, and there is no per-request language parameter                                                                                                                                                                   |
+
+## 8. Stop them
+
+`Ctrl-C` in each server's terminal. Nothing is written to the data root by serving, so a restart
+picks up where you left off.
+
+## What you have now
+
+Three compatible endpoints on your own hardware, reading one gazetteer, answering the request shapes
+your existing callers already build — and a written record of which parameters each one reads, so a
+swap that changes an answer is a row in a table rather than a mystery.
+
+## Next
+
+- [Run the API server](./run-the-api-server.mdx) — Mailwoman's own `/v1` surface, with the fuller
+  result object and a generated OpenAPI document. The rule of thumb: an existing integration goes to
+  a drop-in, a new one goes to `/v1`.
+- [Improve geocode precision](./improve-geocode-precision.mdx) — the per-state download that moves
+  these answers from a city centroid to a rooftop.
+- [Parse in the browser](./parse-in-the-browser.mdx) — the same model with no server at all.
