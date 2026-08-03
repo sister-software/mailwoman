@@ -144,7 +144,13 @@ you cannot change.
 
 ## Annotators that need a database
 
-Three more annotators exist, each behind a database you build the same way the gazetteer is built:
+Three more annotators exist, each behind a database you build the same way the gazetteer is built.
+**This section is documented from source rather than executed here** — no `timezone.db`,
+`un-locode.db` or `nuts.db` was on the machine the transcripts above ran on, so there is no run to
+paste. The names, signatures and gating idiom come from the packages themselves and from the Nominatim
+drop-in's own composition
+([`nominatim/cli.ts`](https://github.com/sister-software/mailwoman/blob/main/nominatim/cli.ts)). To run
+it, build each lookup database per its package README first.
 
 | Annotator                       | Package                       | Fills      | Needs                           |
 | ------------------------------- | ----------------------------- | ---------- | ------------------------------- |
@@ -153,7 +159,7 @@ Three more annotators exist, each behind a database you build the same way the g
 | `makeNUTSAnnotator(lookup)`     | `@mailwoman/nuts-lookup`      | `nuts`     | `nuts.db`, and an EU coordinate |
 
 Gate each one on the file being present rather than assuming it, which is what the Nominatim drop-in
-does:
+does — the shape below is that call site, reduced to one annotator:
 
 ```js
 const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]

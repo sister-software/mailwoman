@@ -115,10 +115,11 @@ partial first token    680       8370     10512
 partial later token    400          6        19
 ```
 
-Measured on an AMD Ryzen 9 8945HS, Node.js 26.2.0, `mailwoman` 8.7.0, over every keystroke of four typed
-queries (`san francisco`, `brooklyn`, `washington dc`, `cambridge ma`), 40 samples per prefix, after a
-warm-up pass. Resident set after load moved between 241 MB and 293 MB across runs, so read that figure
-as a scale rather than a constant.
+Measured on an AMD Ryzen 9 8945HS, 16 logical cores, Node.js 26.2.0, `mailwoman` 8.7.0, over every
+keystroke of four typed queries (`san francisco`, `brooklyn`, `washington dc`, `cambridge ma`), 40
+samples per prefix, after a warm-up pass. The machine was shared, so treat these absolutes as one
+host's figures: your numbers will differ, and the ratios below are what transfers. Resident set after
+load moved between 241 MB and 293 MB across runs, so read that one as a scale rather than a constant.
 
 Three shapes, and the middle one is the whole story:
 
@@ -132,9 +133,19 @@ Three shapes, and the middle one is the whole story:
   8.4 ms.
 
 So the expensive keystrokes are the first few of the first word, and the cost collapses the moment a
-space is typed. Two consequences for the front end: debounce input rather than querying on every
-keydown, and do not hold the query on the main thread of a browser tab — 8.4 ms per keystroke is more
-than a frame at 60 Hz.
+space is typed.
+
+Size those two costs against a parse rather than against a clock, because the ratio is what survives a
+change of machine. `classifier.parse` over the same twenty addresses on the same host, same session,
+measured p50 6,086 µs. So a complete-token completion is **roughly three orders of magnitude cheaper
+than one parse**, and a partial-first-token completion **costs about as much as one parse**. Those two
+statements are the design input: the index is nearly free to query except at the root, where it is a
+model-sized cost.
+
+Two consequences for the front end follow from the ratio, not from the microseconds. Debounce input
+rather than querying on every keydown, since the root-scan keystrokes are the ones a fast typist
+generates most of. And keep the query off the main thread of a browser tab: on this host 8.4 ms is
+more than a frame at 60 Hz, and on a slower one the margin only widens.
 
 ## Verify
 
