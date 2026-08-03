@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer pair-index` — build the PIX1 placetype-pair index (placetype-pair-prior
- *   arc, Task 3) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
+ *   arc) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
  *   `gb-tuples.csv`; columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). Streams the CSV
  *   (CSVSpliterator, the `corpus/src/shard-recipes/locale.ts` `readTuples` idiom), folds
  *   child=CITY/parent=DISTRICT through `normalizeFSTToken` and tags every pair `dependent_locality`
@@ -21,7 +21,7 @@
  *   MISS` lines rather than trusting the write silently succeeded.
  *
  *   Also prints the raw (pre-fold) CITY word-length distribution (p50/p90/p99/max + a per-length
- *   count table) — this sizes the word-span window the decode-side prior (Task 4) walks.
+ *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"

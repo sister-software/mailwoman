@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `plausibilityCheck` (2b task 5, spec §3.2/§4) — the heart of the BDC plausibility vertical. Composes
- *   `filingLandscape` (2a) + `nearestInfrastructure` (2b task 4) into ONE evidence bundle over a single
+ *   `filingLandscape` (2a) + `nearestInfrastructure` into ONE evidence bundle over a single
  *   broadband-service claim, under the registry-backed doctrine's positive-evidence-only invariant (spec
  *   §4): a BDC filing or a nearby infrastructure hit can RAISE confidence; their absence can only ever
  *   read as "unknown" or "no supporting evidence found, coverage permitting" — NEVER as "implausible."
@@ -170,11 +170,11 @@ export type PlausibilityEvidence =
 
 /**
  * One evidence channel's survey-completeness state for THIS claim, WITH the reason a non-`"covered"` state applies —
- * task 5 fix round 1 (review finding 1): `coverage_confidence` alone folds several genuinely different situations into
- * the same `"low"`/`"insufficient_survey_data"` verdict (a tech with no physical falsifier at all vs. a real poi survey
- * gap vs. a geoid-only claim with no coordinate to search from), and Task 6's gates need to attribute WHICH one
- * applies. `"not_applicable"` and `"no_coordinate"` are only ever produced for the physical axis; the filing axis only
- * ever reaches `"covered"`, `"layer_missing"`, or `"cell_unsurveyed"`.
+ * task 5 fix round 1: `coverage_confidence` alone folds several genuinely different situations into the same
+ * `"low"`/`"insufficient_survey_data"` verdict (a tech with no physical falsifier at all vs. a real poi survey gap vs.
+ * a geoid-only claim with no coordinate to search from), and Task 6's gates need to attribute WHICH one applies.
+ * `"not_applicable"` and `"no_coordinate"` are only ever produced for the physical axis; the filing axis only ever
+ * reaches `"covered"`, `"layer_missing"`, or `"cell_unsurveyed"`.
  */
 export type PlausibilityCoverageAxisState =
 	| "covered"
@@ -364,13 +364,13 @@ function combineCoverage(
  * filing-lookup cell (bdc side, via `pointCell`) and the coverage-cell join key `readLayerCoverage` is read against
  * (poi side, via `res9ShortCellToRes6Parent(pointCell)`).
  *
- * Task 5 fix round 1 (review finding 2): checked independently PER LAYER, whenever THAT layer is wired, rather than
- * only when both `bdcDB` and `poi` are wired together. The original one-sided assertion compared the two manifests to
- * EACH OTHER, which meant a poi-only call (no `bdcDB`) never checked poi's recorded resolution at all — even though
- * `pointCell` (computed unconditionally from `BDC_H3_RESOLUTION`) still drives the poi coverage-cell read below.
- * Comparing each layer directly against the constant is also strictly stronger than the retired manifest-vs-manifest
- * check: it catches a layer built under a since-changed `BDC_H3_RESOLUTION` even when the OTHER layer is absent
- * entirely, not just a disagreement between two present layers.
+ * Task 5 fix round 1: checked independently PER LAYER, whenever THAT layer is wired, rather than only when both `bdcDB`
+ * and `poi` are wired together. The original one-sided assertion compared the two manifests to EACH OTHER, which meant
+ * a poi-only call (no `bdcDB`) never checked poi's recorded resolution at all — even though `pointCell` (computed
+ * unconditionally from `BDC_H3_RESOLUTION`) still drives the poi coverage-cell read below. Comparing each layer
+ * directly against the constant is also strictly stronger than the retired manifest-vs-manifest check: it catches a
+ * layer built under a since-changed `BDC_H3_RESOLUTION` even when the OTHER layer is absent entirely, not just a
+ * disagreement between two present layers.
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",

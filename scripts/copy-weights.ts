@@ -25,7 +25,7 @@
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
- *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index (Task 8), built from a
+ *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index, built from a
  *       PPD-style (child, parent) tuples CSV (`softFeed.pairIndexByCountry[<cc>].source` + `.delta`) via
  *       `mailwoman gazetteer pair-index`. COUNTRY-SPECIFIC BY DESIGN — a workspace whose country has no
  *       `pairIndexByCountry` entry ships no sibling and is silently skipped (see materializePairIndex).

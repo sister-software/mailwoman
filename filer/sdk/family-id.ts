@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared `family_id` derivation (task 3 fix round 3) — pulled out of `build-filer.ts`, mirroring
+ *   Shared `family_id` derivation — pulled out of `build-filer.ts`, mirroring
  *   `guards.ts`'s own extraction precedent (that module's docstring: "a writer importing another writer's
  *   whole module just to borrow a guard is a coupling that gets worse with every new filer.db writer").
  *   `mintFamilyID` used to be `build-filer.ts`-only, correct while only the WRITER needed it — but
- *   `filer-lookup.ts`'s `readFamilyDisplayNames` (task 3 fix round 2) now ALSO needs this exact
+ *   `filer-lookup.ts`'s `readFamilyDisplayNames` now ALSO needs this exact
  *   canonicalization rule, to tell apart WHICH target node's edge actually names a given `family_id` when a
  *   member carries more than one holding-/management-company edge under the same provenance tuple. Two
  *   independent re-derivations of "how does a raw name become a family_id" is precisely the "two

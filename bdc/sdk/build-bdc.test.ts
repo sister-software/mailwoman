@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildBDCDatabase} — the stage/materialize/seal build of `bdc.db` (2a Task 8).
+ *   Tests for {@linkcode buildBDCDatabase} — the stage/materialize/seal build of `bdc.db`.
  *   Feeds the loader a synthetic row source directly (an injected `Iterable<BDCAvailabilityRow>`), so
  *   the suite exercises the whole build WITHOUT touching the filesystem CSV path or a real TIGER
  *   database — matches `build-poi.test.ts`'s injected-row convention.
@@ -411,8 +411,9 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 	 * own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's (2026-01-15), so FRN_LATE must win the
 	 * primary-FRN pick. `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query is needed to resolve
 	 * its primary FRN. Also seeds `provider_id` 700001's TWO conflicting `holding_company_name` edges (review fix round
-	 * 1, IMPORTANT-3) — the same cardinality problem `frn` has, proving both discarded values stay recoverable from
-	 * filer.db even though `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
+	 *
+	 * 1. — the same cardinality problem `frn` has, proving both discarded values stay recoverable from filer.db even though
+	 *    `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -427,7 +428,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			.values({
 				name: "filer",
 				version: "2026-Q2",
-				// 2, not 1 — filerLookup (task 3 fix round 1, IMPORTANT-3) refuses a manifest reporting a
+				// 2, not 1 — filerLookup refuses a manifest reporting a
 				// schema_version that predates filer_family, which this fixture now also creates above.
 				schema_version: 2,
 				source: "form-499,bdc-provider-list",
@@ -590,7 +591,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 
 		// The LOSSY pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins. Its two
 		// holding_company values genuinely CONFLICT ("Alpha Holdco" vs "Alpha Holdco Renamed") — no rule resolves that
-		// (review fix round 1, IMPORTANT-3), so it stays NULL, same as brand_name.
+		//, so it stays NULL, same as brand_name.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
 		expect(multiFRNProvider.holding_company).toBeNull()
@@ -631,7 +632,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
 		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
 
-		// Task 3 fix round 1, CRITICAL: filerLookup's `identifiers` is relationship: same_entity ONLY now — a
+		// filerLookup's `identifiers` is relationship: same_entity ONLY now — a
 		// HoldingCompanyName edge never surfaces there regardless of retention, so "not lost" is proven directly
 		// against filer_edge instead (this fixture predates filer_family and never populates it, so `families` isn't
 		// the right recovery channel here either).

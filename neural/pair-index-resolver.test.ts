@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Round-trip tests for the PIX1 placetype-pair index (#placetype-pair-prior arc, Task 2):
+ *   Round-trip tests for the PIX1 placetype-pair index (#placetype-pair-prior arc):
  *   serialize a folded (child, parent) → tag table, load the bytes, and assert probe hits/misses,
  *   header fidelity, and the format's guard rails (bad magic, future schema, duplicate input,
  *   empty entries).

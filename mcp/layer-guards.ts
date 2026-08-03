@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Decision 6 (2b task 7) layer-absent guards — pulled out of `cli.ts` into their own importable module (task 7
+ *   Decision 6 layer-absent guards — pulled out of `cli.ts` into their own importable module (task 7
  *   fix round 1 review finding) so the branching itself has direct unit coverage (`layer-guards.test.ts`), not just
  *   "the tool handler passes an abstain through" (`tools.test.ts`'s stub-level dispatch tests). `cli.ts`
  *   top-level-`await`s a real stdio transport connection at import time, so IT can't be imported by vitest — these
@@ -17,7 +17,7 @@
  *   - `assertBDCDatabaseExists` — `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
  *     abstain shape exists for that tool), so a missing file becomes one friendly thrown `Error` naming the layer
  *     instead of the raw `node:sqlite` "unable to open database file" message.
- *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` (3a task 7) — the SAME pairing, for filer.db.
+ *   - `openFilerDatabaseIfPresent` / `assertFilerDatabaseExists` — the SAME pairing, for filer.db.
  *     `mailwoman_filer_lookup` requires filer.db unconditionally (mirrors `mailwoman_bdc_filing_landscape`'s own
  *     "requires the layer" discipline — `filerLookup` itself has no optional-dep abstain shape either, since gate
  *     4 makes it throw rather than answer unstamped), so `cli.ts` pairs `assertFilerDatabaseExists` (the friendly

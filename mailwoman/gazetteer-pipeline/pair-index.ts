@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure row→pair fold/dedupe/skip logic for the PIX1 placetype-pair index (placetype-pair-prior
- *   arc, Task 3). Extracted out of `commands/gazetteer/pair-index.tsx` so it's unit-testable against
+ *   arc). Extracted out of `commands/gazetteer/pair-index.tsx` so it's unit-testable against
  *   plain in-memory rows — the command itself only owns CSV streaming + CLI plumbing + the file
  *   write.
  *
@@ -183,16 +183,16 @@ export interface PairIndexHoldoutResult {
 	 */
 	kept: PairIndexEntry[]
 	/**
-	 * Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc, Task 6).
+	 * Entries withheld from the build — the falsifier-board holdout set (placetype-pair-prior arc).
 	 */
 	heldOut: PairIndexEntry[]
 }
 
 /**
- * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout falsifier (Task 6):
- * "rebuild the GB index minus a random 10% of pairs (seed 42)" so the acceptance bars can be re-anchored against a
- * measured degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build
- * (a shipped index always has `fraction: 0`, i.e. holds out nothing).
+ * Deterministically withhold a `fraction` of `entries` from a pair-index build — the pair-holdout falsifier: "rebuild
+ * the GB index minus a random 10% of pairs (seed 42)" so the acceptance bars can be re-anchored against a measured
+ * degradation curve rather than an assumed one. Dev/eval-only — never wired into a real shipped-artifact build (a
+ * shipped index always has `fraction: 0`, i.e. holds out nothing).
  *
  * Order-independent and seed-deterministic: entries are sorted by (child, parent) BEFORE the seeded shuffle (mirrors
  * {@link serializePairIndex}'s own sort), so the same `(fraction, seed)` pair always withholds the same entries

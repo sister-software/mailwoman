@@ -29,7 +29,7 @@
  *        (`core/api/retry.ts`) and the thrown error says all of this explicitly. This project already
  *        lost a debugging cycle to a generic "403 Forbidden" on an FCC endpoint.
  *
- *   DOCUMENT PATH (3b Task 0 — a prerequisite the migration review flagged as `m3`/`I2`, folded into Task
+ *   DOCUMENT PATH (a prerequisite the migration review flagged as `m3`/`I2`, folded into Task
  *   7's commit because Exhibit 21 parsing is the first consumer). {@linkcode SECClient.get} is JSON-only —
  *   `responseType: "json"` plus a cache `validate` predicate that required an object body — so it could
  *   never fetch a filing DOCUMENT (a 10-K, an Exhibit 21, any `/Archives/` HTML/text page). {@linkcode
@@ -347,8 +347,8 @@ export class SECClient extends APIClient<SECClientConfig> {
 
 	/**
 	 * Issue a `GET` against a full absolute EDGAR URL and return the RAW response body as text — the sibling
-	 * {@linkcode get} cannot provide (3b Task 0): a filing document (a 10-K, an Exhibit 21 exhibit) is HTML/text, not
-	 * JSON, and `get`'s `responseType: "json"` plus its cache `validate` predicate both assume a JSON body.
+	 * {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit) is HTML/text, not JSON, and
+	 * `get`'s `responseType: "json"` plus its cache `validate` predicate both assume a JSON body.
 	 *
 	 * Same client, same pacing gate, same host allowlist, same retry policy, same {@linkcode ResourceError} mapping as
 	 * {@linkcode get} — only a per-request `responseType: "text"` override differs, which tells Axios to hand back the

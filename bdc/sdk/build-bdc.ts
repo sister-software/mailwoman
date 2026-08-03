@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `bdc.db` builder (2a Task 8) — ingests parsed FCC BDC availability rows (Task 6's
+ *   The `bdc.db` builder — ingests parsed FCC BDC availability rows (Task 6's
  *   {@link BDCAvailabilityRow}) into Task 7's schema (`schema.ts`), producing a sealed layer database.
  *
  *   Mirrors `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s shape closely: the same build-tuning
@@ -70,7 +70,7 @@ import { openBuiltDatabase, sealDatabase } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
-// (review fix round 1, IMPORTANT-1). Only the TYPES are imported here; `import type` is fully erased, so
+//. Only the TYPES are imported here; `import type` is fully erased, so
 // this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
 import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -145,12 +145,12 @@ export interface BuildBDCOptions {
 	onProgress?: (message: string) => void
 	/**
 	 * Provider-list rows (Task 3's {@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI
-	 * seam for populating `bdc_provider` (2a decision 8 / 3a decision 6, Task 8). When ABSENT (the default),
-	 * `bdc_provider` stays empty and the rest of the build is byte-identical to the pre-Task-8 behavior: every code path
-	 * this option touches is gated behind `if (options.providers)`, so omitting it changes nothing. When present,
-	 * `buildBDCDatabase` groups rows by `providerID` and inserts one `bdc_provider` row per distinct provider — see
-	 * {@link BuildBDCOptions.filerDB} for how the primary FRN is picked when a provider carries more than one, and
-	 * `schema.ts`'s `BDCProviderTable` docstring for the full lossy-denormalization rationale (decision 6).
+	 * seam for populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider` stays
+	 * empty and the rest of the build is byte-identical to the pre-Task-8 behavior: every code path this option touches
+	 * is gated behind `if (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups
+	 * rows by `providerID` and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB}
+	 * for how the primary FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable`
+	 * docstring for the full lossy-denormalization rationale (decision 6).
 	 */
 	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
 	/**
@@ -436,7 +436,7 @@ async function groupProviderListRows(
 }
 
 /**
- * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6, Task 8) — see `schema.ts`'s
+ * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6) — see `schema.ts`'s
  * `BDCProviderTable` docstring for the full lossy-denormalization rationale. For each distinct `provider_id`:
  *
  * - Exactly one `frn` among its rows → that FRN is primary by construction; no `filerDB` query needed at all.
@@ -447,22 +447,22 @@ async function groupProviderListRows(
  *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
  * - `filerDB` is REQUIRED the instant a multi-FRN `provider_id` is encountered; its absence throws immediately, naming
  *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
- * - `holding_company` gets the IDENTICAL single-distinct-value shortcut `frn` gets (review fix round 1, IMPORTANT-3):
- *   exactly one distinct non-null `holdingCompany` across a provider's rows means there's no conflict to resolve, so
- *   it's populated directly, no rule needed. Two or more distinct values IS the real conflict decision 6 refuses to
- *   paper over with last-wins — that case inserts NULL, and every value stays recoverable from `filer.db`. A `null`
- *   `holdingCompany` on some rows doesn't count as a competing value (a row simply not stating it isn't a conflicting
- *   assertion) — only distinct NON-NULL strings are compared.
+ * - `holding_company` gets the IDENTICAL single-distinct-value shortcut `frn` gets: exactly one distinct non-null
+ *   `holdingCompany` across a provider's rows means there's no conflict to resolve, so it's populated directly, no rule
+ *   needed. Two or more distinct values IS the real conflict decision 6 refuses to paper over with last-wins — that
+ *   case inserts NULL, and every value stays recoverable from `filer.db`. A `null` `holdingCompany` on some rows
+ *   doesn't count as a competing value (a row simply not stating it isn't a conflicting assertion) — only distinct
+ *   NON-NULL strings are compared.
  *
  * `brand_name` is always inserted NULL — the provider list carries no brand-name column at all, so there is nothing to
  * populate it from, primary or otherwise (see the schema docstring).
  *
- * **Lazy `@mailwoman/filer/sdk` import (review fix round 1, IMPORTANT-1).** `readFRNFilingCandidates`/`pickPrimaryFRN`
- * are loaded via `await import("@mailwoman/filer/sdk")`, memoized in `filerSDK` below, rather than a top-level static
- * import — that barrel re-exports `cluster-filers.ts`, which pulls in `@mailwoman/match`/`record`/`registry`. A
- * top-level import regressed `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate
- * providers at all; the dynamic import here only ever runs when a multi-FRN `provider_id` is actually encountered, so a
- * `providers`-less build (or one whose providers are all single-FRN) pays nothing.
+ * **Lazy `@mailwoman/filer/sdk` import.** `readFRNFilingCandidates`/`pickPrimaryFRN` are loaded via `await
+ * import("@mailwoman/filer/sdk")`, memoized in `filerSDK` below, rather than a top-level static import — that barrel
+ * re-exports `cluster-filers.ts`, which pulls in `@mailwoman/match`/`record`/`registry`. A top-level import regressed
+ * `@mailwoman/bdc`'s import time ~32% for EVERY consumer, including ones that never populate providers at all; the
+ * dynamic import here only ever runs when a multi-FRN `provider_id` is actually encountered, so a `providers`-less
+ * build (or one whose providers are all single-FRN) pays nothing.
  */
 async function populateBDCProviderTable(
 	kdb: DatabaseClient<BDCDatabase>,
@@ -754,7 +754,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		createdAt: new Date().toISOString(),
 	})
 
-	// bdc_provider population (2a decision 8 / 3a decision 6, Task 8) — entirely additive and gated behind
+	// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and gated behind
 	// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty, exactly as before
 	// Task 8 (see `BuildBDCOptions.providers`'s docstring — the default-path byte-identical guarantee).
 	let providersPopulated = 0

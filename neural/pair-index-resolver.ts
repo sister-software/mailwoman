@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   PIX1 placetype-pair index (placetype-pair-prior arc, Task 2). A pure-JS, browser-safe lookup
+ *   PIX1 placetype-pair index (placetype-pair-prior arc). A pure-JS, browser-safe lookup
  *   from a folded (child, parent) place-name pair to the `ComponentTag` the pair resolves to (e.g.
  *   "shoreditch" under "london" → `dependent_locality`) — the retrieval-augmented complement to the
  *   encoder's own judgment, following the same PCB1 single-file writer+reader pattern as

@@ -90,13 +90,12 @@ export interface BDCAvailabilityTable {
  *   reimplemented — Task 7's review found and fixed a temporal bug in that exact query, one a fresh implementation
  *   would reintroduce). Every OTHER FRN that `provider_id` carries is discarded here but stays fully recoverable from
  *   `filer.db`.
- * - `holding_company` gets the SAME single-distinct-value shortcut `frn` gets (review fix round 1, IMPORTANT-3): when a
- *   `provider_id`'s rows carry exactly one distinct non-null `holding_company` string, there is no conflict to resolve,
- *   so it's populated directly — no rule needed, same as a single-FRN provider needs no `filerDB` query. When they
- *   carry MORE than one distinct value, that ambiguity is the real conflict decision 6 refuses to paper over with
- *   last-wins (`holding_company` has no most-recent-filing-date rule the way `frn` does), so it stays NULL and every
- *   discarded value remains recoverable from `filer.db`'s `holding_company_name` edges — the identical discipline
- *   `frn`'s primary pick already applies.
+ * - `holding_company` gets the SAME single-distinct-value shortcut `frn` gets: when a `provider_id`'s rows carry exactly
+ *   one distinct non-null `holding_company` string, there is no conflict to resolve, so it's populated directly — no
+ *   rule needed, same as a single-FRN provider needs no `filerDB` query. When they carry MORE than one distinct value,
+ *   that ambiguity is the real conflict decision 6 refuses to paper over with last-wins (`holding_company` has no
+ *   most-recent-filing-date rule the way `frn` does), so it stays NULL and every discarded value remains recoverable
+ *   from `filer.db`'s `holding_company_name` edges — the identical discipline `frn`'s primary pick already applies.
  * - `brand_name` stays NULL unconditionally: the provider list carries no brand-name column at all, primary or otherwise,
  *   so there is nothing to populate it from.
  */

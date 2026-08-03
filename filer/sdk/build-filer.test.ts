@@ -303,7 +303,7 @@ describe("buildFilerDatabase", () => {
 				expect(edge.assertion).toBe("authoritative")
 				expect(edge.valid_from.length).toBeGreaterThan(0)
 				// sourceVintage above ("2026-Q1") is deliberately NOT ISO — valid_from must never inherit that shape
-				// (review fix, CRITICAL): every edge's valid_from is ISO YYYY-MM-DD regardless of source.
+				//: every edge's valid_from is ISO YYYY-MM-DD regardless of source.
 				expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 			}
 		} finally {
@@ -1100,7 +1100,7 @@ describe("buildFilerDatabase", () => {
 
 				expect(familyRows).toHaveLength(1)
 
-				// The family row carries the SAME grading as the edge above (task 8 fix round 1) — `source` alone
+				// The family row carries the SAME grading as the edge above — `source` alone
 				// cannot supply it, because this very build also writes an AUTHORITATIVE `edgar-exhibit-21`
 				// disclosure edge, so the source name spans both grades.
 				expect(familyRows[0]).toMatchObject({

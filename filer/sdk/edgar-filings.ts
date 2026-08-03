@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file SEC EDGAR company→CIK resolution + 10-K filing discovery (3b Task 6).
+ * @file SEC EDGAR company→CIK resolution + 10-K filing discovery.
  *
  *   Two public EDGAR endpoints, reached through the existing {@linkcode SECClient} (never a second
  *   fetcher — see `sec-client.ts`):

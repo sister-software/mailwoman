@@ -24,7 +24,7 @@
  *   `scripts/copy-weights.ts` runs at publish time), mirroring how `postcode-fr.bin`
  *   already lives as a real (non-symlinked) file in `neural-weights-fr-fr/`.
  *
- *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) the same way: no
+ *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc) the same way: no
  *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
  *   the compiled `gazetteer pair-index` CLI. `--delta 5.0` is the Task-7-CALIBRATED value
  *   (2026-07-22, `.superpowers/sdd/task-7-report.md`) baked into the real
@@ -310,17 +310,17 @@ if (!existsSync(CLI)) {
 }
 
 /**
- * `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's derived from the HM Land
- * Registry PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA`
- * mirrors the Task-7-CALIBRATED value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this
- * file's header comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule
- * executed, not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a
- * worktree without the PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard,
- * rebuilds in seconds), the PPD tuples CSV is ~25.6M rows — a cold build takes several minutes (measured 2026-07-22:
- * ~4-5 min). `weights.test.ts` invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so
- * REBUILDING UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact is
- * verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a bumped delta or a
- * changed PPD snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
+ * `pair-index-gb.bin` (placetype-pair-prior arc) has no committed source either (it's derived from the HM Land Registry
+ * PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` mirrors the
+ * Task-7-CALIBRATED value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header
+ * comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed, not the
+ * checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a worktree without the
+ * PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds),
+ * the PPD tuples CSV is ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min).
+ * `weights.test.ts` invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING
+ * UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact is verifiably
+ * FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a bumped delta or a changed PPD
+ * snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
  */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 /**

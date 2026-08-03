@@ -694,7 +694,7 @@ describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fi
 	})
 
 	it("a curly-quoted segment ('\"The Grange\", Fishburn' with curly quotes) probes the SAME clean fold as straight quotes", async () => {
-		// Regression guard for the byte-fallback groupPiecesIntoWords fix (Task 9): before that fix, this exact
+		// Regression guard for the byte-fallback groupPiecesIntoWords fix: before that fix, this exact
 		// case's probe key was "0xe20x800x9cthe"/"grange0xe20x800x9d" — garbage that could never match a real
 		// index entry, a silent false negative.
 		const index = mockPairIndex({ "the grange|fishburn": "dependent_locality" }, 6)

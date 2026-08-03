@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `filing_landscape` reader (2a Task 9) — the FOUR PRE-REGISTERED ACCEPTANCE GATES this whole phase
+ *   `filing_landscape` reader — the FOUR PRE-REGISTERED ACCEPTANCE GATES this whole phase
  *   is judged by. See `filing-landscape.test.ts` for the gate tests; this module is only the reader.
  *
  *   Coverage check (the meaning-of-zero rule): a queried block counts as SURVEYED only when its res-6
@@ -33,7 +33,7 @@
  *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
  *   `latLngToCell(centroid, 6)` computed independently of the stored res-9 cell disagrees with
  *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over CONUS). Builder and
- *   reader deriving the res-6 parent differently was a real bug (fix round 1): a genuinely-surveyed block
+ *   reader deriving the res-6 parent differently was a real bug: a genuinely-surveyed block
  *   (real rows, real `layer_coverage` entry) could read back as `unknown_block_count` while its own rows
  *   still populated `filings` — a self-contradiction. `filings` is now scoped to units that PASS the
  *   coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen again: a

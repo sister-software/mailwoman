@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The injectable time source every timing-sensitive part of {@linkcode APIClient} reads through.
  *
- *   Lifted from `filer/sdk/sec-client.ts` (3b task 5) when the SEC client's bespoke pacing/retry
+ *   Lifted from `filer/sdk/sec-client.ts` when the SEC client's bespoke pacing/retry
  *   machinery moved down into `@mailwoman/core/api`. Keeping the seam is the whole reason the pacing
  *   and backoff suites are deterministic and finish in milliseconds instead of sleeping on the wall
  *   clock — a rate-limit test that actually waits 100ms per grant costs 4s for a 40-call fan-out and

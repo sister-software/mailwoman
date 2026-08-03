@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Placetype-pair emission bias — the sixth emission prior (placetype-pair-prior arc, Task 4). The
+ *   Placetype-pair emission bias — the sixth emission prior (placetype-pair-prior arc). The
  *   retrieval-augmented complement to the encoder's own judgment: probes contiguous word windows of
  *   the input against a PIX1 pair index (`pair-index-resolver.ts`) of (child, parent) place-name
  *   pairs harvested from a real address register (Task 3's GB shard: PPD `CITY`/`DISTRICT`), and
@@ -29,7 +29,7 @@
  *   - **No config default, no per-call override** (e.g. `loadFromWeights({ locale: "en-us" })`, which
  *     ships no `pair-index-*.bin` sibling to auto-wire) — genuinely byte-identical to every parse before
  *     this arc: `opts` is `undefined` all the way down.
- *   - **A config default IS auto-wired** (`loadFromWeights` for an en-gb-shaped cache, Task 5) and the
+ *   - **A config default IS auto-wired** (`loadFromWeights` for an en-gb-shaped cache) and the
  *     caller passes nothing per-call — the prior is ON, not off; omitting the per-call field does NOT
  *     recover byte-identical behavior in this case (see `ParseOpts.placetypePair`'s own doc comment for
  *     the exact resolution order).

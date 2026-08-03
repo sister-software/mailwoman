@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build bdc` — the FCC BDC availability ingest + sealed `bdc.db` layer build
- *   (2a Task 8). Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
+ *. Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
  *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink/Pastel or
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *
@@ -23,7 +23,7 @@
  *   IMPORTANT-2): `populateBDCProviderTable` only runs after `writeLayerManifest`, i.e. at the very END
  *   of a full build — an unguarded typo'd `--provider-list-path` would otherwise surface as a raw ENOENT
  *   only after a nationwide availability ingest had already finished, discarding hours of work.
- *   `--filer-db-path` given without `--provider-list-path` is a loud error, not a silent no-op (MINOR):
+ *   `--filer-db-path` given without `--provider-list-path` is a loud error, not a silent no-op:
  *   filer.db is only ever read to resolve a multi-FRN primary FRN, so it does nothing without a provider
  *   list to resolve FRNs FOR.
  */
@@ -83,7 +83,7 @@ export { OptionsSchema as options }
 
 const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		// Fail-fast guards (review fix round 1, IMPORTANT-2 / MINOR) — checked BEFORE any network/download work
+		// Fail-fast guards — checked BEFORE any network/download work
 		// starts. `populateBDCProviderTable` only runs after the availability ingest AND writeLayerManifest, so
 		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
 		// build, discarding hours of work for a check that costs microseconds up front.

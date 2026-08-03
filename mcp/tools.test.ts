@@ -32,7 +32,7 @@ function stubDeps(): MCPToolDeps {
 			return { vintage: "2024-06", surveyed_block_count: 1, unknown_block_count: 0, filings: [] }
 		}),
 		// Mirrors the real `plausibilityCheck`'s (`bdc/sdk/plausibility.ts`) own graceful-abstain shape — decision 6
-		// (2b task 7): an absent `bdcDatabasePath`/`poiDatabasePath` degrades to a typed abstain evidence entry in the
+		//: an absent `bdcDatabasePath`/`poiDatabasePath` degrades to a typed abstain evidence entry in the
 		// returned bundle, NEVER a throw, so the dispatch tests below can exercise "missing layer path → abstain-shaped
 		// result, not a throw" against a stub without reaching for a real bdc.db/poi.db.
 		plausibilityCheck: vi.fn(

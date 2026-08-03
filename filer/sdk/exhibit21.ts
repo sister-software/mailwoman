@@ -520,8 +520,8 @@ export function parseExhibit21(html: string): ParsedExhibit21 {
 }
 
 /**
- * The slice of `SECClient` (`sec-client.ts`, 3b Task 0) this module needs — {@linkcode fetchExhibit21} takes this rather
- * than the concrete class so a test can substitute a trivial stub instead of building a full axios harness. A real
+ * The slice of `SECClient` (`sec-client.ts`) this module needs — {@linkcode fetchExhibit21} takes this rather than the
+ * concrete class so a test can substitute a trivial stub instead of building a full axios harness. A real
  * `createSECClient()` instance already satisfies this structurally.
  */
 export interface SECDocumentClient {

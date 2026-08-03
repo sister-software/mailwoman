@@ -77,7 +77,7 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 const MANIFEST: FilerManifestTable = {
 	name: "filer",
 	version: "2026-Q1",
-	// 2, not 1 (task 3 fix round 1, IMPORTANT-3) — filerLookup now unconditionally queries filer_family and refuses
+	// 2, not 1 — filerLookup now unconditionally queries filer_family and refuses
 	// a manifest reporting a schema_version that predates it (see the dedicated schema-version-guard test below).
 	schema_version: 2,
 	source: "form-499,bdc-provider-list",
@@ -479,12 +479,12 @@ describe("§7-3a gates", () => {
 		})
 
 		/**
-		 * GATE 2 ON `filer_family` (3b Task 8 fix round 1) — the half of this gate that did not exist. Until `filer_family`
-		 * gained `assertion`/`match_score`, everything above was enforced on `filer_edge` only: `cluster` vs
-		 * `inferred_links` are two disjoint `filer_edge` reads, so the gate reached them, and it reached nothing else.
-		 * `families`/`familyRollup` answer from `filer_family` alone (that is the whole Task 8 precondition), so an
-		 * INFERRED family membership — which Task 8's EDGAR ingest is the repo's first writer of — arrived on the product
-		 * surface byte-identical to an authoritative one.
+		 * GATE 2 ON `filer_family` — the half of this gate that did not exist. Until `filer_family` gained
+		 * `assertion`/`match_score`, everything above was enforced on `filer_edge` only: `cluster` vs `inferred_links` are
+		 * two disjoint `filer_edge` reads, so the gate reached them, and it reached nothing else. `families`/`familyRollup`
+		 * answer from `filer_family` alone (that is the whole Task 8 precondition), so an INFERRED family membership —
+		 * which Task 8's EDGAR ingest is the repo's first writer of — arrived on the product surface byte-identical to an
+		 * authoritative one.
 		 *
 		 * The fixture is the sharpest available shape: TWO rows agreeing on `(node_id, family_id, naming_node_id,
 		 * relationship)` and differing ONLY in `assertion`/`match_score` (and the `source` that separates them under the
@@ -837,9 +837,9 @@ describe("§7-3a gates", () => {
 
 	describe("4. Temporal scoping", () => {
 		/**
-		 * Closes gate 4's own fixture blindness (review fix, CRITICAL): every OTHER gate-4 fixture above hand-writes ISO
-		 * `valid_from` directly into `filer_edge`, so none of them could ever catch a builder that writes a NON-ISO vintage
-		 * LABEL into `valid_from` — exactly what `buildFilerDatabase` did pre-fix for provider-list edges
+		 * Closes gate 4's own fixture blindness: every OTHER gate-4 fixture above hand-writes ISO `valid_from` directly
+		 * into `filer_edge`, so none of them could ever catch a builder that writes a NON-ISO vintage LABEL into
+		 * `valid_from` — exactly what `buildFilerDatabase` did pre-fix for provider-list edges
 		 * (`source_vintage`/`valid_from` both took `options.sourceVintage` verbatim). This test goes through the REAL
 		 * builder instead, with `sourceVintage: "2026-Q2"` — the realistic provider-list vintage shape
 		 * `cluster-filers.ts`'s own module docstring names, and the exact shape 20 of this branch's pre-fix tests passed
@@ -879,7 +879,7 @@ describe("§7-3a gates", () => {
 
 				expect(frnValues).toEqual(["0006000001"])
 
-				// Task 3 fix round 1, CRITICAL: identifiers is relationship: same_entity ONLY now — a
+				// identifiers is relationship: same_entity ONLY now — a
 				// HoldingCompanyName never surfaces here regardless of how findable its edge is asOf this date.
 				expect(holdingValues).toEqual([])
 
@@ -1128,18 +1128,17 @@ describe("§7-3b gates", () => {
 		})
 
 		/**
-		 * THE REAL GATE (task 3 fix round 1 — re-cut per the reviewer's finding). The test above hand-writes
-		 * `filer_cluster`/`filer_family` directly and never calls the real builder or clusterer — it proves `filerLookup`'s
-		 * OWN queries stay disjoint, but it CANNOT catch a builder or clusterer that emits the underlying rows differently.
-		 * That is exactly what happened: `cluster-filers.ts`'s `readAuthoritativeGroups` union-found every `assertion:
-		 * "authoritative"` edge with no `relationship` filter, so real `HoldingCompany` edges (correctly authoritative, per
-		 * Task 2) silently merged every filer sharing a holding company into ONE entity cluster — three unrelated filers
-		 * reported as one. This test goes through the REAL pipeline end to end: `buildFilerDatabase` (writes typed edges +
-		 * family membership) then `clusterAuthoritativeComponents` (writes `filer_cluster`) then
-		 * `filerLookup`/`familyRollup` (reads both). Three FRNs sharing one holding company MUST yield THREE distinct
-		 * entity clusters (never merged) and ONE shared family — the mutation this closes (deleting the `relationship`
-		 * filter from `readAuthoritativeGroups`) collapses the three clusters back into one and fails this test
-		 * immediately.
+		 * THE REAL GATE (re-cut per the reviewer's finding). The test above hand-writes `filer_cluster`/`filer_family`
+		 * directly and never calls the real builder or clusterer — it proves `filerLookup`'s OWN queries stay disjoint, but
+		 * it CANNOT catch a builder or clusterer that emits the underlying rows differently. That is exactly what happened:
+		 * `cluster-filers.ts`'s `readAuthoritativeGroups` union-found every `assertion: "authoritative"` edge with no
+		 * `relationship` filter, so real `HoldingCompany` edges (correctly authoritative, per Task 2) silently merged every
+		 * filer sharing a holding company into ONE entity cluster — three unrelated filers reported as one. This test goes
+		 * through the REAL pipeline end to end: `buildFilerDatabase` (writes typed edges + family membership) then
+		 * `clusterAuthoritativeComponents` (writes `filer_cluster`) then `filerLookup`/`familyRollup` (reads both). Three
+		 * FRNs sharing one holding company MUST yield THREE distinct entity clusters (never merged) and ONE shared family —
+		 * the mutation this closes (deleting the `relationship` filter from `readAuthoritativeGroups`) collapses the three
+		 * clusters back into one and fails this test immediately.
 		 */
 		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
 			await withScratchDir(async (out) => {
@@ -1313,12 +1312,12 @@ describe("§7-3b gates", () => {
 		})
 
 		/**
-		 * The trap `naming_node_id` had to be designed around (task 3 fix round 4), driven through the REAL builder. The
-		 * multi-spelling test above splits its two spellings across two FRNs, so its two `filer_family` rows differ in
-		 * `node_id` and no key question arises. THIS shape puts both spellings on ONE filer: one FRN, two 499 rows filed
-		 * the same day, `"Acme Corp"` and `"Acme Corporation, LLC"` — the documented decision-6 cardinality shape, and the
-		 * exact case where the two membership rows agree on `(node_id, family_id, source, valid_from)` and differ in
-		 * NOTHING except which company node named the family.
+		 * The trap `naming_node_id` had to be designed around, driven through the REAL builder. The multi-spelling test
+		 * above splits its two spellings across two FRNs, so its two `filer_family` rows differ in `node_id` and no key
+		 * question arises. THIS shape puts both spellings on ONE filer: one FRN, two 499 rows filed the same day, `"Acme
+		 * Corp"` and `"Acme Corporation, LLC"` — the documented decision-6 cardinality shape, and the exact case where the
+		 * two membership rows agree on `(node_id, family_id, source, valid_from)` and differ in NOTHING except which
+		 * company node named the family.
 		 *
 		 * That is why `naming_node_id` is IN `filer_family`'s primary key. Leave it out and the builder's `INSERT OR
 		 * IGNORE` silently drops the second row at BUILD time, taking `"Acme Corporation, LLC"` with it — a regression of
@@ -1547,11 +1546,11 @@ describe("§7-3b gates", () => {
 			expect(Object.keys(FILER_FAMILY_INSERT_FIELDS)).toHaveLength(10)
 
 			expect(FILER_FAMILY_INSERT_FIELDS).toMatchObject({
-				// naming_node_id (task 3 fix round 4) is provenance in exactly the sense this pin exists to guard: it
+				// naming_node_id is provenance in exactly the sense this pin exists to guard: it
 				// records WHICH company node's raw name produced the row's family_id, so a reader never has to
 				// re-canonicalize a sealed artifact to find its way back to the human-readable name.
 				naming_node_id: true,
-				// assertion (task 8 fix round 1) is the OTHER half of provenance this table was missing: not who
+				// assertion is the OTHER half of provenance this table was missing: not who
 				// reported the membership, but how strongly it is evidenced. Without it an EDGAR name-match guess
 				// reached filerLookup.families byte-identical to a filed Form 499 disclosure.
 				assertion: true,
@@ -1833,7 +1832,7 @@ describe("§7-3b gates", () => {
 				expect(hasCIKIdentifier).toBe(false)
 
 				// GATE 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field —
-				// and it surfaces AS AN INFERENCE (fix round 1). `assertion: inferred` plus a `match_score` is the
+				// and it surfaces AS AN INFERENCE. `assertion: inferred` plus a `match_score` is the
 				// whole difference between this row and a Form 499 holding-company membership the filer itself
 				// filed; before those two fields existed this entry was byte-identical to one, which is how a
 				// name-match guess reached the product surface wearing a filed disclosure's clothes.

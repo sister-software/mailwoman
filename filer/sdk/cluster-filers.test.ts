@@ -505,7 +505,7 @@ describe("clusterInferredLinks — the identifier veto (3a Task 6, review fix ro
 
 		// "LLC" alone is entirely a stripped legal designation — canonicalizeOrganizationName returns a TRUTHY
 		// object ({ raw: "LLC", canonical: "", designations: ["llc"] }), which a bare `!organization` check
-		// would have missed (review fix, round 1, minor).
+		// would have missed.
 		const designationOnlyFRN = `${FilerIdentifierType.FRN}:1230000000`
 		const designationOnlyNode = `${FilerIdentifierType.Form499ID}:999999`
 
@@ -759,7 +759,7 @@ describe("clusterInferredLinks — cross-vintage supersession (3a Task 6, review
 		expect(secondRun).toHaveLength(1)
 		expect(secondRun[0]?.valid_to).toBeNull()
 		// valid_from is the SEPARATE, always-ISO `validFrom` option — never the (non-ISO) sourceVintage label
-		// (review fix, round N, CRITICAL).
+		// (review fix, round N).
 		expect(secondRun[0]?.valid_from).toBe("2026-07-01")
 	})
 

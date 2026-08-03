@@ -455,7 +455,7 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		// Placetype-pair index sibling (placetype-pair-prior arc, Task 5): construct a PairIndexResolver
+		// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
 		// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one
 		// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
 		// not something to apply anyway): the index header's `country` must equal the resolved locale's
@@ -1314,9 +1314,9 @@ export interface ParseOpts {
 	 *
 	 * Default resolution: **an omitted field is NOT unconditionally byte-identical to every parse before this task.**
 	 * `#decode` resolves this as `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a
-	 * config-level default (the country-gated construction for en-gb-shaped caches, Task 5), an omitted per-call field
-	 * falls through to THAT default and the prior fires. Byte-identical-to-pre-task behavior only holds when NEITHER this
-	 * field NOR the config default is set (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin`
+	 * config-level default (the country-gated construction for en-gb-shaped caches), an omitted per-call field falls
+	 * through to THAT default and the prior fires. Byte-identical-to-pre-task behavior only holds when NEITHER this field
+	 * NOR the config default is set (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin`
 	 * sibling to auto-wire). Pass explicit `false` to force the prior off for one call regardless of an auto-wired config
 	 * default (see this field's own doc comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22)
 	 * measured 100% recall / 0.0% false-positive rate at δ=6.0 on the curated probe set that motivated this prior.

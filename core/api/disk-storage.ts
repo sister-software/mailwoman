@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file An on-disk `axios-cache-interceptor` storage adapter, so a client gets a durable HTTP cache by
- *   CONFIGURATION rather than by hand-rolling one (3b task 5).
+ *   CONFIGURATION rather than by hand-rolling one.
  *
  *   NODE ONLY, and deliberately NOT re-exported from `./index.ts`: `core/api` reaches a browser bundle
  *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`),

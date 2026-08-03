@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the placetype-pair-prior arc's row→pair fold/dedupe/skip logic (Task 3):
+ *   Unit tests for the placetype-pair-prior arc's row→pair fold/dedupe/skip logic:
  *   {@link PairIndexBuilder} + {@link nearestRankPercentile}. Fixture rows mirror the real PPD tuple
  *   shape (`corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate) without touching the CSV
  *   read path — CSVSpliterator itself is exercised elsewhere (`locale.test.ts`).

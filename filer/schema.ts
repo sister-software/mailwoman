@@ -95,20 +95,20 @@ import { sql, type Kysely } from "kysely"
  * 6); `HoldingCompanyName` and `ManagementCompanyName` cover free-text fields on either source that carry no stable ID
  * of their own.
  *
- * `SPIN` is DEFINED here but UNPOPULATED in 3a (review fix, minor — a prior docstring here incorrectly implied it was
- * sourced from the provider list or a 499 row): neither of `filer/sdk`'s two 3a parsers (`form499.ts`'s `Form499Row`,
+ * `SPIN` is DEFINED here but UNPOPULATED in 3a (a prior docstring here incorrectly implied it was sourced from the
+ * provider list or a 499 row): neither of `filer/sdk`'s two 3a parsers (`form499.ts`'s `Form499Row`,
  * `provider-list.ts`'s `ProviderListRow`) carries a SPIN field, and `build-filer.ts` mints no `spin:` node — there is
  * no code path in this phase that populates one. The namespace is reserved for whichever future task adds a source that
  * actually carries a SPIN, not a claim that any `filer.db` `buildFilerDatabase` produces today has SPIN nodes in it.
  *
- * `CIK` (3b Task 6) is SEC EDGAR's Central Index Key — populated by `edgar-filings.ts`'s name→CIK resolution and
- * `build-filer.ts`'s EDGAR ingest (3b Task 8). Always the zero-padded 10-digit string form (e.g. `"0000320193"`,
- * matching how `data.sec.gov/submissions/CIK##########.json` names itself), never the bare unpadded number
- * `company_tickers.json` carries — mirrors `FRN`'s own zero-padding convention (`frn.ts`) for the identical reason (a
- * bare `"320193"` would collide with a differently-padded value under naive string comparison).
+ * `CIK` is SEC EDGAR's Central Index Key — populated by `edgar-filings.ts`'s name→CIK resolution and `build-filer.ts`'s
+ * EDGAR ingest. Always the zero-padded 10-digit string form (e.g. `"0000320193"`, matching how
+ * `data.sec.gov/submissions/CIK##########.json` names itself), never the bare unpadded number `company_tickers.json`
+ * carries — mirrors `FRN`'s own zero-padding convention (`frn.ts`) for the identical reason (a bare `"320193"` would
+ * collide with a differently-padded value under naive string comparison).
  *
- * `SubsidiaryName` (3b Task 8) is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed it —
- * `build-filer.ts`'s EDGAR ingest mints one of these for every subsidiary row, the same "global name-node" shape
+ * `SubsidiaryName` is a raw subsidiary name exactly as one parent CIK's Exhibit 21 disclosed it — `build-filer.ts`'s
+ * EDGAR ingest mints one of these for every subsidiary row, the same "global name-node" shape
  * `HoldingCompanyName`/`ManagementCompanyName` already use (the raw string, unnormalized; two different parents both
  * disclosing a subsidiary under the identical spelling share one node). Deliberately its OWN namespace, never folded
  * into `HoldingCompanyName`/`ManagementCompanyName`: those name the source filer's OWN parent/manager, the opposite
@@ -281,17 +281,16 @@ export interface FilerFamilyTable {
 	family_id: string
 	/**
 	 * The `filer_node.node_id` of the holding-/management-company node whose raw `identifier_value` was canonicalized to
-	 * produce this row's `family_id` (3b Task 3 fix round 4) — the naming provenance of the family fact, persisted at
-	 * BUILD time so no reader ever has to re-derive it. See the file header for the drift this closes, and
-	 * {@link createFilerFamilyTable}'s docstring for why it is part of the primary key.
+	 * produce this row's `family_id` — the naming provenance of the family fact, persisted at BUILD time so no reader
+	 * ever has to re-derive it. See the file header for the drift this closes, and {@link createFilerFamilyTable}'s
+	 * docstring for why it is part of the primary key.
 	 */
 	naming_node_id: string
 	/**
-	 * One of {@link FilerEdgeAssertion} (3b Task 8 fix round 1) — HOW STRONGLY this membership is evidenced, exactly the
-	 * grading `filer_edge` has carried since 3a. `authoritative` is a membership the source document states directly (a
-	 * Form 499 row naming its own holding company); `inferred` is one a matcher concluded (EDGAR's subsidiary-name→FRN
-	 * corroboration). Read surfaces MUST keep the two distinguishable — see the file header for why `source` cannot stand
-	 * in for this.
+	 * One of {@link FilerEdgeAssertion} — HOW STRONGLY this membership is evidenced, exactly the grading `filer_edge` has
+	 * carried since 3a. `authoritative` is a membership the source document states directly (a Form 499 row naming its
+	 * own holding company); `inferred` is one a matcher concluded (EDGAR's subsidiary-name→FRN corroboration). Read
+	 * surfaces MUST keep the two distinguishable — see the file header for why `source` cannot stand in for this.
 	 */
 	assertion: string
 	/**
@@ -320,8 +319,7 @@ export interface FilerFamilyTable {
  * gained its NOT NULL `relationship` column and `filer_family` was introduced. Any reader that hard-depends on either
  * (`filer-lookup.ts`'s `families` field, `family-rollup.ts`'s `familyRollup`) must refuse an artifact reporting an
  * EARLIER `schema_version` with a descriptive, rebuild-pointing error — not a raw "no such table: filer_family"
- * surfaced straight from SQLite (task 3 fix round 1: a `schema_version: 1` artifact hit exactly that before this guard
- * existed).
+ * surfaced straight from SQLite (a `schema_version: 1` artifact hit exactly that before this guard existed).
  */
 export const FILER_FAMILY_SCHEMA_VERSION = 2
 
@@ -464,27 +462,26 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * blank/whitespace-rejecting CHECK constraint applies to `relationship` here too. Call {@link createFilerFamilyIndex}
  * separately, after bulk load, for the "all members of this family" lookup path.
  *
- * **`naming_node_id` IS in the key (3b Task 3 fix round 4), and that placement is load-bearing.** Two DIFFERENT raw
- * spellings can canonicalize to the SAME `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to
- * `"acme"` (`record/organization.test.ts` pins that collapse) — which is the documented decision-6 shape when one FRN
- * files two 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ
- * ONLY in `naming_node_id`. Left out of the key they would share an identical PK tuple, the builder's `INSERT OR
- * IGNORE` would silently drop the second, and the second spelling's display name would vanish from every rollup —
- * regressing the "expose the plurality within one family, never guess which spelling is right" rule this SDK follows
- * everywhere else (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, family
- * membership never deduped across sources). This is NOT the `relationship` situation: two spellings under one source at
- * one instant are two things the filer really did report, a plurality to store — where two conflicting `relationship`
- * values for one pair are two incompatible claims about what that pair MEANS, a contradiction to reject.
+ * **`naming_node_id` IS in the key, and that placement is load-bearing.** Two DIFFERENT raw spellings can canonicalize
+ * to the SAME `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`
+ * (`record/organization.test.ts` pins that collapse) — which is the documented decision-6 shape when one FRN files two
+ * 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ ONLY in
+ * `naming_node_id`. Left out of the key they would share an identical PK tuple, the builder's `INSERT OR IGNORE` would
+ * silently drop the second, and the second spelling's display name would vanish from every rollup — regressing the
+ * "expose the plurality within one family, never guess which spelling is right" rule this SDK follows everywhere else
+ * (`identifiers`' cardinality fidelity, `inferred_links` kept separate from `cluster`, family membership never deduped
+ * across sources). This is NOT the `relationship` situation: two spellings under one source at one instant are two
+ * things the filer really did report, a plurality to store — where two conflicting `relationship` values for one pair
+ * are two incompatible claims about what that pair MEANS, a contradiction to reject.
  *
- * **`assertion` (3b Task 8 fix round 1) is excluded from the key for that same reason**, and it is the reason it is
- * excluded from `filer_edge`'s key too: one source, at one instant, grading the identical membership BOTH
- * `authoritative` and `inferred` is a contradiction, not a plurality — two sources disagreeing about the strength of
- * the same fact already produce two rows, because `source` is in the key. It gets the same blank-rejecting CHECK as
- * `relationship`: `NOT NULL` alone would accept `''`, and a blank assertion is worse than a wrong one, since it matches
- * neither half of every gate-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would
- * vanish from any surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an
- * inferred row, since an authoritative membership matched nothing and any number there would be a fabricated
- * confidence.
+ * **`assertion` is excluded from the key for that same reason**, and it is the reason it is excluded from
+ * `filer_edge`'s key too: one source, at one instant, grading the identical membership BOTH `authoritative` and
+ * `inferred` is a contradiction, not a plurality — two sources disagreeing about the strength of the same fact already
+ * produce two rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT
+ * NULL` alone would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of
+ * every gate-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any
+ * surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row,
+ * since an authoritative membership matched nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema

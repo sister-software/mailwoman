@@ -12,7 +12,7 @@
  *   `--source osm` (bdc 2b task 3, decisions 3/5): a second, build-local branch alongside the default
  *   Overture path — same command, same `buildPOIDatabase` seam, different inputs. It streams
  *   `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract (telecom-infrastructure
- *   categories only, task 2), stamps the invocation's `--country` onto every row (a bare OSM feature
+ *   categories only), stamps the invocation's `--country` onto every row (a bare OSM feature
  *   carries no country property — see `extract-poi.ts`'s module docstring), and derives res-6 coverage
  *   by polyfilling the extract's declared `--bbox` (`bboxCoverageCells`, decision 5) rather than only
  *   the cells rows happened to land in — an infra-only extract is sparse by category, so "no plant in a

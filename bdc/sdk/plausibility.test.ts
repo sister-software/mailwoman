@@ -652,7 +652,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 		expect(bundle.evidence_found).toContainEqual({ type: "abstain", reason: "insufficient_survey_data", layer: "bdc" })
 	})
 
-	// task 5 fix round 1 (review finding 3): `combineCoverage`'s genuine MIXED branch (one axis covered, the other
+	// `combineCoverage`'s genuine MIXED branch (one axis covered, the other
 	// not) was previously asserted via a test titled for exactly this case but whose body actually hit the
 	// both-unknown branch instead (its own comment admitted the mixed case couldn't be constructed). The two tests
 	// below construct the real thing, in both directions, rather than leaving the branch's actual coverage claim
@@ -821,7 +821,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion (l
 })
 
 /**
- * The §7-2b acceptance gates (task 6) — one describe per gate, mapped 1:1 to the brief's four bullets
+ * The §7-2b acceptance gates — one describe per gate, mapped 1:1 to the brief's four bullets
  * (`.superpowers/sdd/2026-07-30-bdc-2b-plan/task-6-brief.md`). Several gates' BEHAVIORAL claims are already proven by
  * the suites above — `plausibility.ts`'s own module docstring says as much ("this module is designed for them but
  * doesn't assert them itself"). Where that's true, the test below asserts the gate's SPECIFIC claim against a real

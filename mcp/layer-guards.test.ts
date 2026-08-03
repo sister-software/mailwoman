@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the decision-6 (2b task 7) layer-absent guards — pulled out of `cli.ts` into their own module
+ *   Unit tests for the decision-6 layer-absent guards — pulled out of `cli.ts` into their own module
  *   (task 7 fix round 1 review finding) precisely because these three functions are pure, transport-independent
  *   logic: nothing in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
  *   itself can't be imported by vitest). Each guard gets its three branches exercised directly: path `undefined`,

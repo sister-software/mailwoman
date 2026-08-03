@@ -276,7 +276,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// fetches them when the release's `hasAnchor` flag is set.
 	const postcodeBins = stageBinaryList(args.postcodes, "postcode binary")
 
-	// Optional placetype-pair-index binaries (placetype-pair-prior arc, Task 8): comma-separated
+	// Optional placetype-pair-index binaries (placetype-pair-prior arc): comma-separated
 	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
 	// postcodeBins exactly, but this artifact never falls back to a base package (see
 	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.

@@ -25,12 +25,12 @@
  *   this file opens at import time (which is exactly why THIS file can't be unit-tested directly; see
  *   `layer-guards.test.ts` for their branch coverage).
  *
- *   `mailwoman_filer_lookup` (3a task 7) follows the SAME "requires the layer unconditionally" discipline as
+ *   `mailwoman_filer_lookup` follows the SAME "requires the layer unconditionally" discipline as
  *   `mailwoman_bdc_filing_landscape` (`assertFilerDatabaseExists` + `openFilerDatabaseIfPresent`, mirroring
  *   `assertBDCDatabaseExists` + the BDC open) — `filerLookup` itself has no optional-dep abstain shape (gate 4 makes
  *   it throw rather than answer unstamped), so a missing filer.db becomes one friendly thrown Error naming the layer.
  *
- *   `mailwoman_filer_family` (3b task 9) follows the IDENTICAL discipline, reusing the same two guards — `familyRollup`
+ *   `mailwoman_filer_family` follows the IDENTICAL discipline, reusing the same two guards — `familyRollup`
  *   has no optional-dep abstain shape either (it throws on a bad `familyID`/`nodeID` XOR or a pre-`filer_family`
  *   schema), so filer.db is required unconditionally here too. Its result — always `FamilyRollup[]`, never `null` or
  *   a bare object — is passed through untouched: this data is who-owns-whom, and a silent reshape here would be a
@@ -220,7 +220,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async bdcFilingLandscape(q) {
-		// Decision 6 (2b task 7): `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
+		// Decision 6: `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
 		// abstain shape exists for this tool), so a missing file becomes a friendly thrown Error naming the layer —
 		// never the raw `node:sqlite` "unable to open database file" message.
 		assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
@@ -252,7 +252,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerLookup(q) {
-		// Decision 6/gate 4 (3a task 7): filerLookup has no optional-dep abstain shape — it throws rather than
+		// Decision 6/gate 4: filerLookup has no optional-dep abstain shape — it throws rather than
 		// answer unstamped — so filer.db is required unconditionally, same discipline as bdc.db is for
 		// mailwoman_bdc_filing_landscape.
 		assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)
@@ -280,7 +280,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async filerFamily(q) {
-		// Same discipline as mailwoman_filer_lookup (3a task 7) — familyRollup has no optional-dep abstain shape
+		// Same discipline as mailwoman_filer_lookup — familyRollup has no optional-dep abstain shape
 		// either, so filer.db is required unconditionally.
 		assertFilerDatabaseExists("mailwoman_filer_family", q.databasePath)
 

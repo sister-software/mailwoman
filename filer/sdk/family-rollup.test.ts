@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode familyRollup} (3b Task 3) — the corporate-family reader. Fixtures are hand-written
+ *   Tests for {@linkcode familyRollup} — the corporate-family reader. Fixtures are hand-written
  *   directly against an in-memory `filer.db` (`filer_family`/`filer_manifest` rows inserted straight through
  *   Kysely), the same convention `filer-lookup.test.ts` uses for its own non-builder fixtures. This suite
  *   covers the general reader contract (asOf scoping, manifest-first, the schema-version guard, the
@@ -94,7 +94,7 @@ async function seedManifest(
 }
 
 const FAMILY_ID = "holding_company_name:bigco-inc"
-// The company node whose raw spelling produced FAMILY_ID (task 3 fix round 4 — `filer_family.naming_node_id`).
+// The company node whose raw spelling produced FAMILY_ID (`filer_family.naming_node_id`).
 // These reader-contract fixtures write no matching `filer_edge`, so their `display_names` are `[]` either way;
 // the column is NOT NULL, so a value is still required on every insert.
 const NAMING_NODE_BIGCO = `${FilerIdentifierType.HoldingCompanyName}:BigCo Inc`
@@ -410,15 +410,14 @@ describe("familyRollup — general reader contract", () => {
 	 *
 	 * These fixtures are hand-written (nodes, edges and family rows inserted directly) and each asserts a spelling the
 	 * reader must surface. They are NOT independent of the real canonicalizer, and deliberately so — `FAMILY_ID_SOLO` and
-	 * the multi-spelling pair below are minted through the REAL `mintFamilyID` (task 3 fix round 3), because round 2's
-	 * made-up `family_id` constants are exactly why the cross-family leak reached review. What each test PROVES is the
-	 * reader's join; what the real `mintFamilyID` calls establish is that the fixture's premise (these two spellings
-	 * really do land in one family) holds for real rather than by assumption. The end-to-end builder versions live in
-	 * `filer-lookup.test.ts`.
+	 * the multi-spelling pair below are minted through the REAL `mintFamilyID`, because round 2's made-up `family_id`
+	 * constants are exactly why the cross-family leak reached review. What each test PROVES is the reader's join; what
+	 * the real `mintFamilyID` calls establish is that the fixture's premise (these two spellings really do land in one
+	 * family) holds for real rather than by assumption. The end-to-end builder versions live in `filer-lookup.test.ts`.
 	 */
 	describe("display_names — the naming-provenance join", () => {
 		const HOLDING_NODE_ONE_SPELLING = `${FilerIdentifierType.HoldingCompanyName}:Solo Spelling Inc`
-		// The REAL canonicalized family_id — not an arbitrary constant (task 3 fix round 3: using a made-up
+		// The REAL canonicalized family_id — not an arbitrary constant (using a made-up
 		// family_id here is exactly how round 2's fixtures failed to catch the CRITICAL cross-family leak, since
 		// the pre-fix join never actually checked whether an edge's target canonicalized to the family_id at all).
 		const FAMILY_ID_SOLO = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Solo Spelling Inc")!
@@ -580,15 +579,14 @@ describe("familyRollup — general reader contract", () => {
 		})
 
 		/**
-		 * The join under direct unit pressure (task 3 fix round 4). Both tests above pass with the naming-provenance join
-		 * REMOVED — their fixtures give each member exactly one holding-company edge, so any query keyed on `(from_node_id,
-		 * relationship, source, valid_from)` finds the same single row either way. This one does not: ONE member carries
-		 * TWO edges sharing that identical 4-tuple, whose targets canonicalize to two DIFFERENT families (the documented
-		 * decision-6 shape — one FRN filing two 499 rows the same day with conflicting holding companies). Only
-		 * `naming_node_id` tells the two apart. Drop it from the query and each family reports the other's name too: a
-		 * family claiming a holding company its member never reported to it, the same false-assertion class as 3a's
-		 * identity leaks. The REAL-builder versions live in `filer-lookup.test.ts`; this is the reader-level unit that
-		 * fails first.
+		 * The join under direct unit pressure. Both tests above pass with the naming-provenance join REMOVED — their
+		 * fixtures give each member exactly one holding-company edge, so any query keyed on `(from_node_id, relationship,
+		 * source, valid_from)` finds the same single row either way. This one does not: ONE member carries TWO edges
+		 * sharing that identical 4-tuple, whose targets canonicalize to two DIFFERENT families (the documented decision-6
+		 * shape — one FRN filing two 499 rows the same day with conflicting holding companies). Only `naming_node_id` tells
+		 * the two apart. Drop it from the query and each family reports the other's name too: a family claiming a holding
+		 * company its member never reported to it, the same false-assertion class as 3a's identity leaks. The REAL-builder
+		 * versions live in `filer-lookup.test.ts`; this is the reader-level unit that fails first.
 		 */
 		it("one member, two same-tuple edges naming DIFFERENT families: each family surfaces only its OWN name", async () => {
 			using db = openMemory()
@@ -689,13 +687,13 @@ describe("familyRollup — general reader contract", () => {
 		})
 
 		/**
-		 * The naming provenance is READ, never re-derived (task 3 fix round 4 — the reviewer's own reproduction, at the
-		 * reader level). `filer.db` ships sealed and separately versioned; `canonicalizeOrganizationName` lives in
-		 * `@mailwoman/record` and its designation packs are explicitly documented as extensible. This fixture is what an
-		 * artifact built by an OLDER canonicalizer looks like from today's code: the persisted `family_id` is one no
-		 * current `mintFamilyID` call would ever produce, while node, edge and membership are all intact. Under round 3's
-		 * read-time re-canonicalization this returned `display_names: []` — no error, no warning, the name simply gone.
-		 * Joining the stored `naming_node_id` cannot fail this way, because nothing in the read path canonicalizes.
+		 * The naming provenance is READ, never re-derived (the reviewer's own reproduction, at the reader level).
+		 * `filer.db` ships sealed and separately versioned; `canonicalizeOrganizationName` lives in `@mailwoman/record` and
+		 * its designation packs are explicitly documented as extensible. This fixture is what an artifact built by an OLDER
+		 * canonicalizer looks like from today's code: the persisted `family_id` is one no current `mintFamilyID` call would
+		 * ever produce, while node, edge and membership are all intact. Under round 3's read-time re-canonicalization this
+		 * returned `display_names: []` — no error, no warning, the name simply gone. Joining the stored `naming_node_id`
+		 * cannot fail this way, because nothing in the read path canonicalizes.
 		 */
 		it("surfaces the display name even when the persisted family_id no longer matches what the CURRENT canonicalizer would mint", async () => {
 			using db = openMemory()
@@ -757,8 +755,8 @@ describe("familyRollup — general reader contract", () => {
 		})
 
 		/**
-		 * "Documented relationships only" (task 3 fix round 4). `readFamilyDisplayNames` filters the naming edge to
-		 * `assertion: "authoritative"`. Nothing in the pipeline emits an INFERRED holding-/management-company edge today —
+		 * "Documented relationships only". `readFamilyDisplayNames` filters the naming edge to `assertion:
+		 * "authoritative"`. Nothing in the pipeline emits an INFERRED holding-/management-company edge today —
 		 * `cluster-filers.ts` writes `SameEntity` and nothing else — so this cannot be produced through the REAL builder;
 		 * it is constructible only by hand, as here. The predicate is there because a `display_names` entry is presented as
 		 * a name this family's members actually REPORTED. Surfacing one recovered from a matcher's guess would restate that
