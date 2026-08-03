@@ -1,0 +1,245 @@
+---
+title: Tune confidence thresholds
+description: Calibrate the parser's per-component scores, pick an accept threshold from the shipped abstention curve, and route the rest to review.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Tune confidence thresholds
+
+**Outcome.** You have an accept threshold with a stated basis, applied to calibrated scores, and a rule
+for what happens to the rows that fall below it.
+
+Two facts decide the whole shape of this page. The parser scores each component, not each address —
+there is no whole-parse confidence field. And the raw scores are compressed: on twenty clean addresses
+they spanned 0.828 to 0.938, so a threshold at 0.9 on raw output cuts through the middle of the
+good rows. Calibration is what makes a threshold mean something.
+
+## Prerequisites
+
+- The library install from
+  [Install and first parse](../get-started/install-and-first-parse.mdx).
+- [customers.csv](/examples/customers.csv) if you want to reproduce the sweep below.
+- No data root. This is all parse-side.
+
+## 1. Look at the raw spread first
+
+```bash
+node confidence-scan.mjs
+```
+
+```
+0.828  C-1019  77 Massachusetts Ave, Cambridge, MA, 02139
+        region=0.828 locality=0.923 street=0.935 house_number=0.913 street_suffix=0.906 postcode=0.918
+0.860  C-1007  30 Rockefeller Plaza, New York, NY, 10112
+        region=0.919 locality=0.924 street=0.860 house_number=0.904 street_suffix=0.899 postcode=0.907
+0.892  C-1001  1275 Pennsylvania Ave NW, Washington, DC, 20004
+        region=0.892 locality=0.938 street=0.928 house_number=0.911 postcode=0.914
+```
+
+Every one of those parses is correct. The lowest score in the file is 0.828 and the highest is 0.938 —
+a 0.11 band for twenty rows that are all right. A raw score near 0.9 does not mean 90% correct; it means
+the model's softmax landed there, and softmax over a well-trained classifier is systematically
+overconfident and narrow.
+
+The rows that deserve review look different in kind, not in degree:
+
+```
+0.038  extra  Suite 400
+        unit=0.038
+0.409  extra  beacon ridge analytics 800 f st nw dc
+        region=0.409 street=0.483 venue=0.627 house_number=0.858
+0.462  extra  42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000
+        region=0.462 locality=0.923 street=0.921 house_number=0.908 street_suffix=0.891 postcode=0.914
+```
+
+`ZZ` is not a state, and the region score says so at 0.462 while every other component in that row
+stays above 0.89. The signal is there. It is the scale that needs fixing.
+
+## 2. Apply the calibrator
+
+Calibration maps raw scores onto the frequency with which they are right, using an isotonic-regression
+table fit on held-out data. It is opt-in: the default decode path is byte-stable and never applies it,
+and you turn it on per call by passing `calibrate` to `parse`.
+
+The table ships inside the weights package:
+
+```js
+import { readFileSync } from "node:fs"
+import { createRequire } from "node:module"
+
+import { createCalibrator } from "@mailwoman/core/decoder"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+// The isotonic table ships inside the weights package; resolve it the same way Node resolves the package itself.
+const require = createRequire(import.meta.url)
+const table = JSON.parse(readFileSync(require.resolve("@mailwoman/neural-weights-en-us/calibration.json"), "utf8"))
+const calibrate = createCalibrator(table)
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const tree = await classifier.parse(raw, { calibrate })
+```
+
+`createCalibrator` returns a pure `(raw: number) => number`, monotone and piecewise-linear over the
+table's twenty bins, clamped to `[0, 1]` outside its range. Nothing else in the call changes: the same
+spans, the same tags, the same offsets, different numbers on `confidence`.
+
+What it does to the rows above:
+
+```bash
+node calibrate.mjs "1275 Pennsylvania Ave NW, Washington, DC 20004" "42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000" "Suite 400"
+```
+
+```
+1275 Pennsylvania Ave NW, Washington, DC 20004
+  region        raw 0.906 → calibrated 0.969   "DC"
+  locality      raw 0.929 → calibrated 0.991   "Washington"
+  street        raw 0.925 → calibrated 0.991   "Pennsylvania Ave NW"
+  house_number  raw 0.910 → calibrated 0.974   "1275"
+  postcode      raw 0.907 → calibrated 0.971   "20004"
+42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000
+  region        raw 0.462 → calibrated 0.778   "ZZ"
+  locality      raw 0.923 → calibrated 0.988   "Zzyzx Falls"
+  street        raw 0.921 → calibrated 0.986   "Nonexistent"
+  house_number  raw 0.908 → calibrated 0.971   "42"
+  street_suffix raw 0.891 → calibrated 0.953   "Ln"
+  postcode      raw 0.914 → calibrated 0.979   "00000"
+Suite 400
+  unit          raw 0.038 → calibrated 0.191   "Suite 400"
+```
+
+The clean row moves from a 0.906–0.929 band to a 0.969–0.991 one. The bogus region moves from 0.462 to
+0.778 — still the outlier, now with room between it and its neighbours. That gap is what a threshold
+cuts.
+
+## 3. Take the threshold from the shipped abstention curve
+
+You do not have to guess a starting value. The same `calibration.json` carries an abstention curve
+measured on the held-out split: for each threshold, what share of spans it accepts and what share of
+those accepted spans were right.
+
+| Threshold | Coverage (accepted) | Precision of accepted | Reviewed |
+| --------- | ------------------- | --------------------- | -------- |
+| 0.50      | 99.85%              | 98.34%                | 0.15%    |
+| 0.80      | 99.55%              | 98.45%                | 0.45%    |
+| 0.90      | 99.23%              | 98.51%                | 0.77%    |
+| 0.95      | 91.74%              | 98.82%                | 8.26%    |
+| 0.97      | 84.52%              | 99.10%                | 15.48%   |
+
+Read it as a price list. Moving from 0.90 to 0.95 buys 0.31 points of precision and costs 7.5 points of
+coverage — you review ten times the spans for a third of a point. Moving to 0.97 buys another 0.28
+and costs 7.2 more.
+
+**Start at 0.90.** It is where the curve is still nearly free: 99.23% of spans accepted at 98.51%
+precision. Move up only when you have measured what a wrong accept costs you against what a review
+costs you, and the curve gives you both numbers to do that arithmetic with.
+
+Three caveats about this table, all readable in the file:
+
+- It was fit with isotonic regression (PAVA) over per-span softmax confidence, twenty bins, on 28,480
+  fitting rows and 7,120 held-out rows. Expected calibration error on the held-out split went from
+  0.0677 raw to 0.0028 calibrated.
+- Its `model_version` field reads `5.3.0`, while the model card in the same package reads `7.0.0`. The
+  table was fit against an earlier model and shipped forward. Treat the curve as a starting point rather
+  than as a measurement of the model you are running, and re-fit when a wrong accept is expensive in
+  your product.
+- The numbers are **per span**. The next section is about what happens when you apply them per row.
+
+## 4. Route rows, not spans
+
+A row is accepted or rejected whole, which means one score has to stand for the row. Take the
+weakest component: a correct address with one badly-read component is not an address you want to
+auto-accept.
+
+```js
+const components = flat((await classifier.parse(raw, { calibrate })).roots)
+const weakest = components.reduce((a, b) => (a.confidence <= b.confidence ? a : b))
+
+if (weakest.confidence >= ACCEPT) {
+	accept(raw, components)
+} else {
+	review(raw, weakest)
+}
+```
+
+That rule is stricter than the curve, and the difference is worth measuring before you ship it. Over the
+twenty-row sample plus three deliberately-broken rows:
+
+```bash
+node route-detail.mjs
+```
+
+```
+thr   rows-accepted  clean-reviewed  broken-reviewed  spans-below
+0.5       22/23           0/20              1/3       1/132
+0.8       20/23           0/20              3/3       3/132
+0.9       20/23           0/20              3/3       4/132
+0.95       18/23           2/20              3/3       8/132
+0.97        5/23          15/20              3/3      29/132
+```
+
+At 0.90 the rule catches all three broken rows and sends no clean row to review. At 0.97 it catches the
+same three and sends fifteen of twenty clean rows with them — because 22% of spans fall below 0.97, and
+a six-component row only has to lose one of them. Weakest-link gating multiplies the span-level review
+rate by roughly the component count, so a threshold that looks cheap per span can be expensive per row.
+
+The routing itself:
+
+```bash
+node route.mjs 0.95
+```
+
+```
+review  C-1007  street="Rockefeller" at 0.935  — 30 Rockefeller Plaza, New York, NY, 10112
+review  C-1019  region="MA" at 0.935  — 77 Massachusetts Ave, Cambridge, MA, 02139
+review  C-1021  unit="Suite 400" at 0.191  — Suite 400
+review  C-1022  region="ZZ" at 0.778  — 42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000
+review  C-1023  region="DC" at 0.656  — beacon ridge analytics 800 f st nw dc
+accepted 18/23, routed 5 to review at threshold 0.95
+```
+
+Log the weakest component and its score alongside the row, as above. A review queue that says "low
+confidence" tells a human nothing; one that says `region="ZZ" at 0.778` points at the field to fix.
+
+## Verify
+
+Sweep your own threshold against your own data and read the two columns that matter — the share of rows
+you would auto-accept, and the share of your known-broken rows you would have caught:
+
+```bash
+for t in 0.5 0.8 0.9 0.95 0.97; do node route.mjs $t | tail -1; done
+```
+
+```
+accepted 22/23, routed 1 to review at threshold 0.5
+accepted 20/23, routed 3 to review at threshold 0.8
+accepted 20/23, routed 3 to review at threshold 0.9
+accepted 18/23, routed 5 to review at threshold 0.95
+accepted 5/23, routed 18 to review at threshold 0.97
+```
+
+If your sweep has no rows you know are broken in it, it cannot tell you anything. Seed it with the
+failures you have already seen in production before you read the numbers.
+
+## Limits
+
+- **Confidence is about the parse, not about the place.** A high score means the model read the string
+  the way the corpus would have labelled it. It says nothing about whether the address exists — see
+  [Validate an address before you use it](./validate-addresses.mdx), and use `resolution_tier` for that
+  question.
+- **Calibration is per locale.** The package also ships `calibration-per-locale.json`. A table fit on
+  en-US does not transfer to fr-FR.
+- **The shipped table predates the shipped model.** Its `model_version` is `5.3.0` against a `7.0.0`
+  model card. Re-fitting is a repo-side job
+  ([`scripts/eval/fit-isotonic-calibration.py`](https://github.com/sister-software/mailwoman/blob/main/scripts/eval/fit-isotonic-calibration.py)),
+  not a consumer-side one.
+- **There is no threshold that removes review.** At 0.97 the accepted spans were still right 99.10% of
+  the time, not 100%. Budget for the residual rather than tuning to remove it.
+
+## Related
+
+- [Validate an address before you use it](./validate-addresses.mdx) — the presence and shape checks that
+  sit alongside a confidence check.
+- [Geocode a large file at volume](./batch-geocode-at-volume.mdx) — running the parse over enough rows
+  for these rates to matter.
+- [Understand a parse](../tutorials/understand-a-parse.mdx) — where `confidence` sits on the tree.

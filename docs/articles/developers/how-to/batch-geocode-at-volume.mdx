@@ -1,0 +1,340 @@
+---
+title: Geocode a large file at volume
+description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process buys nothing.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Geocode a large file at volume
+
+**Outcome.** You know your machine's rows-per-second ceiling for geocoding, and you have a worker pool
+that reaches it.
+
+The short version: inference blocks the JavaScript thread, so running more geocodes concurrently inside
+one process changes nothing. Throughput comes from more processes. This page measures both claims on one
+machine so you can repeat the measurement on yours — the peak worker count is a property of your box, not
+a constant.
+
+## Prerequisites
+
+- The library install from [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx), plus
+  `candidate.db` on disk and `$MAILWOMAN_CANDIDATE_DB` pointing at it. Every transcript below assumes
+  both.
+- [customers.csv](/examples/customers.csv) next to your scripts — twenty rows, repeated to make a file
+  worth timing.
+- A machine whose core count you know. `nproc` on Linux, `sysctl -n hw.ncpu` on macOS.
+
+The comparison tables below come from one sweep, run back to back on one machine: an AMD Ryzen 9 8945HS,
+16 logical cores, 29 GB RAM, Node.js 26.2.0, `mailwoman` 8.7.0 with model 7.0.0, resolving against
+`candidate.db` with the DC address-point and interpolation shards present. Each configuration ran three
+times over the same 5,000 rows and the fastest run is reported, because the machine was shared and a
+slow run measures the neighbour rather than the pool. Your numbers will differ. The shape should not.
+
+## 1. Measure the single-process baseline
+
+Before any pool, get the number you are trying to beat. This script builds the geocoder once and walks
+5,000 rows — the twenty-row sample repeated 250 times.
+
+```js
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { CSVSpliterator } from "spliterator"
+
+const repeats = Number(process.argv[2] ?? 250)
+
+const rows = []
+for await (const row of CSVSpliterator.fromAsync("customers.csv", { mode: "object", enableQuoteHandling: true })) {
+	rows.push([row.street, row.city, row.state, row.postal_code].filter(Boolean).join(", "))
+}
+const queries = []
+for (let i = 0; i < repeats; i++) queries.push(...rows)
+
+const t0 = performance.now()
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const lookup = new WOFCandidateTableLookup({ databasePath: process.env.MAILWOMAN_CANDIDATE_DB })
+const resolver = createWOFResolver(lookup)
+const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+const startupMs = performance.now() - t0
+
+// Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
+for (const q of rows.slice(0, 5))
+	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+
+const t1 = performance.now()
+for (const q of queries) {
+	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
+}
+const runMs = performance.now() - t1
+
+shards.close()
+lookup.close()
+
+console.log(`startup ${(startupMs / 1000).toFixed(2)} s`)
+console.log(
+	`${queries.length} rows in ${(runMs / 1000).toFixed(2)} s → ${(queries.length / (runMs / 1000)).toFixed(1)} rows/s`
+)
+```
+
+```bash
+node baseline.mjs 250
+```
+
+```
+startup 0.68 s
+5000 rows in 32.61 s → 153.3 rows/s
+```
+
+Run it three times. During the sweep this page reports, the three runs landed at 136.0, 138.9 and 137.9
+rows/s; a later run on the same machine under lighter load reached 153.3. That 12% spread between
+sessions is why the table in step 4 is worth more than any single figure in it: every row of that table
+was measured in one sitting, so the ratios hold even where the absolute rates drift.
+
+## 2. Confirm that async concurrency does not help
+
+The instinct after step 1 is to keep more geocodes in flight. Measure it before you build on it. This
+loop runs the same 5,000 rows with 1, 2, 4, 8 and 16 promises outstanding:
+
+```js
+for (const inFlight of [1, 2, 4, 8, 16]) {
+	const t = performance.now()
+	for (let i = 0; i < queries.length; i += inFlight) {
+		await Promise.all(queries.slice(i, i + inFlight).map((q) => geocodeAddress(q, deps)))
+	}
+	const s = (performance.now() - t) / 1000
+	console.log(`in-flight ${String(inFlight).padStart(2)}  ${(queries.length / s).toFixed(1)} rows/s`)
+}
+```
+
+```
+in-flight  1  140.4 rows/s
+in-flight  2  144.0 rows/s
+in-flight  4  144.3 rows/s
+in-flight  8  142.8 rows/s
+in-flight 16  144.5 rows/s
+```
+
+Sixteen times the concurrency, 1.04× the throughput. The 3% is loop overhead amortized across the
+`Promise.all`, not parallelism.
+
+The mechanism is that `onnxruntime-node`'s `session.run()` blocks the JavaScript thread rather than
+releasing it to the libuv pool, and `node:sqlite` reads are synchronous. An `await` in front of a
+geocode does not yield to another geocode, because there is no point at which the first one hands the
+thread back. Everything queues behind the row in front of it.
+
+## 3. Put each geocode in its own runtime
+
+A separate runtime per row is the thing that buys throughput, and a worker thread is a separate runtime.
+Two files: a worker that builds its own geocoder and answers batches, and a pool that hands out work.
+
+Save this as `geocode-worker.mjs`:
+
+```js
+import { parentPort, workerData } from "node:worker_threads"
+
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+
+// Per-worker init, paid once: its own model session, its own read-only DB handle, its own shards.
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: workerData.locale })
+const lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
+const resolver = createWOFResolver(lookup)
+const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
+const deps = { classifier, resolver, shards: shards.for, defaultCountry: workerData.country }
+
+parentPort.on("message", async (batch) => {
+	const out = []
+
+	for (const query of batch) {
+		const r = await geocodeAddress(query, deps)
+		out.push({ query, lat: r.lat, lon: r.lon, resolution_tier: r.resolution_tier })
+	}
+
+	parentPort.postMessage(out)
+})
+
+parentPort.postMessage("ready")
+```
+
+And this as `pool.mjs`:
+
+```js
+import { createWriteStream } from "node:fs"
+import { Worker } from "node:worker_threads"
+
+import { CSVSpliterator } from "spliterator"
+
+const workerCount = Number(process.argv[2] ?? 4)
+const repeats = Number(process.argv[3] ?? 250)
+const batchSize = 32
+
+const rows = []
+for await (const row of CSVSpliterator.fromAsync("customers.csv", { mode: "object", enableQuoteHandling: true })) {
+	rows.push([row.street, row.city, row.state, row.postal_code].filter(Boolean).join(", "))
+}
+const queries = []
+for (let i = 0; i < repeats; i++) queries.push(...rows)
+
+const batches = []
+for (let i = 0; i < queries.length; i += batchSize) batches.push(queries.slice(i, i + batchSize))
+
+const workerData = {
+	locale: "en-US",
+	country: "US",
+	candidateDB: process.env.MAILWOMAN_CANDIDATE_DB,
+	dataRoot: process.env.MAILWOMAN_DATA_ROOT,
+}
+
+const out = createWriteStream("customers.pooled.jsonl")
+let done = 0
+const t0 = performance.now()
+
+await Promise.all(
+	Array.from({ length: workerCount }, () => {
+		const worker = new Worker(new URL("./geocode-worker.mjs", import.meta.url), { workerData })
+
+		return new Promise((resolve, reject) => {
+			worker.on("error", reject)
+			worker.on("message", (msg) => {
+				// The first message is the worker's "ready"; every later one is a finished batch.
+				if (msg !== "ready") {
+					for (const r of msg) out.write(JSON.stringify(r) + "\n")
+					done += msg.length
+				}
+
+				const next = batches.pop()
+
+				if (next) worker.postMessage(next)
+				else worker.terminate().then(resolve, reject)
+			})
+		})
+	})
+)
+
+const s = (performance.now() - t0) / 1000
+out.end()
+console.log(`${workerCount} workers: ${done} rows in ${s.toFixed(2)} s → ${(done / s).toFixed(1)} rows/s`)
+```
+
+Two details in there earn their space. Work is pulled, not pushed: a worker asks for the next batch when
+it finishes one, so a slow batch never leaves a worker idle behind a fixed slice. And the batch size of
+32 amortizes the message round-trip without letting one worker sit on a queue the others could drain.
+
+## 4. Sweep the worker count
+
+The right number is measured, not chosen. Run the pool at several sizes over the same 5,000 rows:
+
+```bash
+for n in 1 2 4 6 8; do for r in 1 2 3; do node pool.mjs $n 250; done; done
+```
+
+Fastest of three runs per size:
+
+| Shape                         | rows/s | vs baseline |
+| ----------------------------- | ------ | ----------- |
+| Single process, one at a time | 138.9  | 1.00×       |
+| Single process, 16 in flight  | 144.5  | 1.04×       |
+| 1 worker                      | 136.8  | 0.99×       |
+| 2 workers                     | 225.5  | 1.62×       |
+| 4 workers                     | 228.6  | 1.65×       |
+| 6 workers                     | 161.6  | 1.16×       |
+| 8 workers                     | 157.0  | 1.13×       |
+
+The curve peaks and then falls. Sixteen cores did not buy 16×, and eight workers were worse than two.
+One worker is the baseline plus a message hop, which is the sanity check that the pool itself costs
+nothing.
+
+Part of the reason the peak sits low is that each worker's inference session already claims four
+threads. `NeuralAddressClassifier.loadFromWeights` caps ONNX Runtime's intra-op pool at
+`DEFAULT_INTRA_OP_THREADS = 4` (`neural/onnx-runner.ts`) because four is where per-parse latency
+flattens, so four workers is already 16 threads on a 16-core box and the sixth worker competes with the
+first five rather than adding to them.
+
+That cap is a knob. Pass `intraOpNumThreads: 1` to `loadFromWeights` in the worker and sweep again:
+
+```
+4 workers:  218.6 rows/s
+8 workers:  281.8 rows/s
+16 workers: 173.9 rows/s
+```
+
+One thread per worker and eight workers reached 281.8 rows/s — 2.03× the baseline, against 1.65× for
+the default. Fewer threads per worker and more workers won on this box, and won by 23%. It was also the
+steadiest configuration in the whole sweep: its three runs landed within 1.7% of each other, where the
+default-thread runs at four workers spread 10%.
+
+Two numbers, then, and the second one is the one to chase. Sweep worker count first at the default
+threads to find the shape, then re-sweep with `intraOpNumThreads: 1` to see whether your box prefers
+width over depth. Take the peak and stop tuning.
+
+## Verify
+
+Check that the pool wrote one record per input row, and that every record carries a coordinate:
+
+```bash
+node pool.mjs 4 250
+wc -l < customers.pooled.jsonl
+jq -s 'map(select(.lat == null)) | length' customers.pooled.jsonl
+jq -c 'select(.query | startswith("1275 Pennsylvania"))' customers.pooled.jsonl | head -1
+```
+
+```
+5000
+0
+{"query":"1275 Pennsylvania Ave NW, Washington, DC, 20004","lat":38.89566505262116,"lon":-77.02925468482408,"resolution_tier":"address_point"}
+```
+
+The `jq` filter rather than `head -1` is deliberate: records arrive in completion order, not input
+order, so the first line of the file is a different row on every run. That is also why each record
+carries its own `query`. If you need the input order back, carry an index through the batch and sort at
+the end.
+
+## The shipped version of this
+
+`mailwoman/geocode-stream` is the same pattern already built, wired to `@mailwoman/registry`'s CSV
+normalizer:
+
+```js
+import { normalizeCSV } from "@mailwoman/registry"
+import { geocodeStream } from "mailwoman/geocode-stream"
+
+const normalized = normalizeCSV("customers.csv", { mapping })
+for await (const rec of geocodeStream(normalized, { mapping, geocode, concurrency: 4 })) sink.write(rec)
+```
+
+It parses once per row and shares the tree between the returned components and the geocode, which the
+hand-rolled pool above does not. One constraint decides whether it fits: its worker builds a
+`WOFSqlitePlaceLookup`, so it resolves against a full WOF SQLite distribution rather than against
+`candidate.db`. If your setup is the `candidate.db` one the tutorials teach, the pool in step 3 is what
+you can run today.
+
+## Limits
+
+- **Memory scales with workers, not rows.** Each worker loads its own copy of the model, so eight
+  workers is eight model sessions. The gazetteer is opened read-only and shares the OS page cache
+  across workers, so it does not multiply. Watch resident set size before raising the count.
+- **The peak is per-machine and per-dataset.** The module doc for `mailwoman/geocode-stream` records a
+  different sweep — an NPPES run against a single 4 GB WOF database that peaked at 2 workers and
+  degraded from there. Same shape, different peak. Re-run step 4 when the data root or the box changes.
+- **This is CPU inference.** The browser runtime (`@mailwoman/neural-web`) has a WebGPU path; the Node
+  runtime does not, and no amount of pool tuning substitutes for that. See
+  [Parse in the browser](../tutorials/parse-in-the-browser.mdx).
+- **Batching inside one session was measured and does not pay.** Re-exported so the graph could accept
+  a batch at all, throughput peaked at 1.12× for a batch of 4 and went backwards past 8 — 0.62× at 64.
+  Batching raises arithmetic intensity, which helps when cores are idle waiting on memory, and a single
+  batch=1 inference here already occupies 8.02 cores. The receipts, including the flat 1.00× concurrency
+  table this page's step 2 reproduces, are in
+  [`performance.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx).
+
+## Related
+
+- [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx) — the single-process loop these
+  numbers are measured against.
+- [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) — what `resolution_tier` means
+  in the output above.
+- [Tune confidence thresholds](./tune-confidence-thresholds.mdx) — what to do with the rows a batch run
+  should not auto-accept.

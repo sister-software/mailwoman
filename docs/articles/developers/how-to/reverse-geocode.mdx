@@ -1,0 +1,184 @@
+---
+title: Reverse geocode a coordinate
+description: Turn a latitude/longitude into an administrative hierarchy, and read the containment field that tells you how much to trust it.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Reverse geocode a coordinate
+
+**Outcome.** You can turn a WGS-84 coordinate into the chain of places that contain it, and you know
+from the result whether that chain was confirmed against a real boundary or inferred from the closest
+centroid.
+
+Reverse geocoding here resolves to administrative places — neighbourhood, locality, county, region,
+country. It does not resolve to a street address. There is no rooftop reverse at head, and the sections
+below say what that rules out.
+
+## Prerequisites
+
+- The library install from
+  [Install and first parse](../get-started/install-and-first-parse.mdx), plus
+  `@mailwoman/resolver-wof-sqlite`.
+- **An admin gazetteer database carrying the `place_bbox` R\*Tree.** This one is not in the published
+  bundle set — `mailwoman data pull` ships `candidate`, `us`, `fr` and `poi`, and none of them is the
+  admin distribution. You build it:
+
+  ```bash
+  mailwoman gazetteer build admin
+  mailwoman gazetteer build fts <path-to-admin.db>
+  ```
+
+  [Build the planet](../tutorials/full-planet-build.mdx) is the walkthrough, including what the source
+  data costs. Point `$MAILWOMAN_WOF_ADMIN_DB` at the result.
+
+- **Optionally, a polygon sidecar** (`polygons(id, geom)`), built by `mailwoman gazetteer polygons`.
+  Without it, every result is `containment: "approximate"` by construction, because the geocoder never
+  attempts a point-in-polygon test. Point `$MAILWOMAN_WOF_POLYGONS_DB` at it.
+
+Every transcript below ran against a locally-built admin distribution and a US-only polygon sidecar.
+
+## 1. Run it from the command line
+
+```bash
+mailwoman reverse 44.5588 -72.5778 --format text
+```
+
+```
+containment: polygon
+  locality         Morrisville [wof:101728307]
+  localadmin       Morristown [wof:404527157]
+  county           Lamoille [wof:102080785]
+  region           Vermont [wof:85688763]
+  country          United States [wof:85633793]
+```
+
+The hierarchy is deepest-first: the winning place, then its ancestors up to country. `--format json`
+emits the same chain as an object with `lat`, `lon`, `containment` and a `hierarchy` array carrying
+`id`, `name`, `placetype`, `country`, `lat`, `lon` and — when the place was picked by distance rather
+than by boundary — `distanceKm`.
+
+Both database paths can come from flags instead of the environment: `--admin-db` and `--polygons-db`.
+
+## 2. Read the containment field
+
+`containment` describes how the **deepest** place in the chain was confirmed, and it is the field that
+decides how much the answer is worth:
+
+```bash
+mailwoman reverse 40.7128 -74.0060 --format text
+```
+
+```
+containment: approximate
+  neighbourhood    City Hall Area [wof:85865569] (~0.3 km from centroid)
+  borough          Manhattan [wof:421205771]
+  locality         New York [wof:85977539]
+  county           New York [wof:102081863]
+  region           New York [wof:85688543]
+  country          United States [wof:85633793]
+```
+
+That chain is correct, and it still reads `approximate` — because the deepest entry is a neighbourhood
+with no polygon in the sidecar, so it won on nearest centroid at 0.3 km. The county, region and country
+above it are not in question. `approximate` is a statement about the last step, not about the whole
+chain.
+
+The mechanism: the geocoder pulls every place whose bounding box contains the point from the
+`place_bbox` R\*Tree, smallest-area-first, then ray-casts each one's real boundary against the polygon
+sidecar. The first polygon that contains the point wins, and that is `polygon`. A candidate whose
+polygon exists but rejects the point is dropped as a bounding-box false positive. If nothing is
+polygon-confirmed, the nearest centroid among the polygon-less candidates wins, and that is
+`approximate`.
+
+## 3. Use it from the library
+
+`WOFReverseGeocoder` is a root export of `@mailwoman/resolver-wof-sqlite`:
+
+```js
+import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
+
+const geocoder = new WOFReverseGeocoder({
+	adminDBPath: process.env.MAILWOMAN_WOF_ADMIN_DB,
+	polygonDBPath: process.env.MAILWOMAN_WOF_POLYGONS_DB,
+})
+
+try {
+	for (const [lat, lon] of [
+		[44.5588, -72.5778],
+		[40.7128, -74.006],
+		[36.0, -45.0],
+	]) {
+		const { hierarchy, containment } = await geocoder.reverseGeocode(lat, lon)
+		const chain = hierarchy.map((p) => `${p.placetype}:${p.name}`).join(" ← ")
+		console.log(`${lat}, ${lon}  ${containment.padEnd(11)} ${chain || "(nothing — outside gazetteer coverage)"}`)
+	}
+} finally {
+	geocoder.close()
+}
+```
+
+```
+44.5588, -72.5778  polygon     locality:Morrisville ← localadmin:Morristown ← county:Lamoille ← region:Vermont ← country:United States
+40.7128, -74.006  approximate neighbourhood:City Hall Area ← borough:Manhattan ← locality:New York ← county:New York ← region:New York ← country:United States
+36, -45  approximate country:France
+```
+
+`reverseGeocode` is async sugar over `reverseGeocodeSync`, which does the same work on the calling
+thread — reach for the sync one inside another synchronous path. The instance holds open database
+handles, so `close()` matters; the class implements `Disposable`, so `using geocoder = new
+WOFReverseGeocoder(...)` works where your runtime supports it.
+
+Three options shape a call: `placetypes` restricts which tiers are considered, `maxCandidates`
+(default 128) caps the bounding-box pull, and `maxApproximateKm` (default 25) caps how far a
+centroid-only step may reach while descending into finer tiers.
+
+## Verify
+
+The third coordinate in that transcript is the check worth running, because it is the one that fails
+in a way you have to design for.
+
+36°N 45°W is open ocean, roughly 3,700 km from anything. It returned `country: France`. France's
+bounding box spans its overseas departments, so the mid-Atlantic point falls inside it; with a US-only
+polygon sidecar there was no boundary to reject the candidate, and the nearest-centroid fallback took
+it. Loading the DE/FR sidecar instead changes the answer to `United States` — the French polygon now
+rejects the point, and the next bounding-box candidate wins the same way.
+
+The guard is in the result:
+
+```
+36, -45  approximate  [{"n":"France","km":3673.201314408038}]
+```
+
+When `containment === "approximate"`, `hierarchy[0].distanceKm` is how far the point sat from the
+winning place's centroid. Threshold it. The top-level fallback has no distance cap of its own —
+`maxApproximateKm` bounds the descent into finer tiers, not the initial pick — so a coordinate outside
+every boundary you hold polygons for gets an answer regardless.
+
+## Limits
+
+- **There is no address-level reverse.** `WOFReverseGeocoder` reads the admin gazetteer's bounding
+  boxes, polygons and ancestor chains. It never consults an address-point database, so having the US
+  rooftop shards on disk does not add a house number to the result. Forward geocoding is where the
+  address-point tier lives — see
+  [Improve geocode precision](../tutorials/improve-geocode-precision.mdx).
+- **Reverse quality follows polygon coverage, and coverage is per-country.** Without a sidecar every
+  answer is `approximate`. With one, only the countries in that sidecar get boundary confirmation.
+- **`approximate` outside all coverage is a confident wrong answer.** See the verify step. Check
+  `distanceKm`.
+- **The admin distribution is a local build.** It is not one of the four published bundles, and it is
+  hours of work plus tens of gigabytes of source data. If you need reverse geocoding without that
+  build, run one of the drop-in servers against someone else's deployment instead —
+  [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx) covers the `/reverse` endpoint.
+- **Two source comments point at a script that no longer exists.** `resolver-wof-sqlite/reverse.ts`
+  names `scripts/build-wof-polygons.mjs` in its header and in one error message. That script became
+  `mailwoman gazetteer polygons` in June 2026. Use the command.
+
+## Related
+
+- [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx) — the same reverse geocoder behind a
+  Nominatim-compatible `/reverse` endpoint.
+- [Use annotations](./use-annotations.mdx) — enriching a coordinate with timezone, currency, calling
+  code and coordinate formats.
+- [Build the planet](../tutorials/full-planet-build.mdx) — building the admin distribution this page
+  needs.

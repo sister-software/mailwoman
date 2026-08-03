@@ -70,6 +70,25 @@ const sidebars: SidebarsConfig = {
 				"developers/tutorials/full-planet-build",
 			],
 		},
+		{
+			type: "category",
+			label: "How-to guides",
+			// Not a ladder. Each page is one task a reader arrives already wanting, so the order is by
+			// how early in a build the question lands rather than by dependency: get the data clean
+			// (messy input), check it (validate, confidence), move volume (batch), then the surfaces
+			// that sit beside the parse rather than inside it (autocomplete, reverse, annotations).
+			// Every page names its own prerequisites and links the tutorial that establishes them, so
+			// arriving at any one of them cold works.
+			items: [
+				"developers/how-to/handle-messy-input",
+				"developers/how-to/validate-addresses",
+				"developers/how-to/tune-confidence-thresholds",
+				"developers/how-to/batch-geocode-at-volume",
+				"developers/how-to/add-autocomplete",
+				"developers/how-to/reverse-geocode",
+				"developers/how-to/use-annotations",
+			],
+		},
 		"developers/status",
 		"developers/support",
 	],

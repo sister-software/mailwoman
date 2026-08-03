@@ -1,0 +1,204 @@
+---
+title: Use annotations
+description: Enrich a coordinate with timezone, currency, coordinate formats and region codes, and emit the block in either the native shape or OpenCage's.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Use annotations
+
+**Outcome.** You can attach an annotation block to a coordinate and emit it in either the native shape
+or the OpenCage-compatible one, and you know which annotators need a database and which do not.
+
+An annotation is a fact derived from a coordinate rather than from the address text: what timezone it
+is in, what currency is spent there, what it looks like in MGRS. Reach for this when you are replacing
+an OpenCage integration, or when a downstream consumer already expects that block.
+
+## Prerequisites
+
+- The library install from
+  [Install and first parse](../get-started/install-and-first-parse.mdx), plus `@mailwoman/annotations`.
+- `@mailwoman/spatial` and `@mailwoman/codex` for the two annotators that need no database. Both are
+  already in the tree if you installed the resolver.
+- Nothing else for the transcript below. The database-backed annotators are listed in
+  [Annotators that need a database](#annotators-that-need-a-database).
+
+## 1. Compose the annotators you have
+
+An annotator is a function from `{ lat, lon, countryCode?, placeName?, date? }` to the slice of the set
+it can fill. `composeAnnotators` runs a list of them over one input concurrently and merges the
+results. An annotator that throws is skipped, so one missing database never sinks the block.
+
+```js
+import { composeAnnotators, toNative, toOpenCage } from "@mailwoman/annotations"
+import { countryReferenceAnnotator } from "@mailwoman/codex/country"
+import { coordinateFormatAnnotator } from "@mailwoman/spatial"
+
+// Two annotators that need no database: one is pure coordinate math, the other reads codex's bundled country table.
+const annotate = composeAnnotators([coordinateFormatAnnotator, countryReferenceAnnotator])
+
+// Pin the date. The sun times are a function of it, so leaving it unset makes the output change every run.
+const set = await annotate({
+	lat: 51.5074,
+	lon: -0.1278,
+	countryCode: "GB",
+	placeName: "London",
+	date: new Date("2026-08-03T12:00:00Z"),
+})
+
+console.log("native:", JSON.stringify(toNative(set), null, 2))
+console.log("opencage:", JSON.stringify(toOpenCage(set), null, 2))
+```
+
+`countryCode` is what the country annotator keys on — without it, that annotator abstains and you get
+the coordinate formats alone. On a real pipeline it comes from the geocode result's `countryCode`
+field, and `placeName` from the resolved locality.
+
+## 2. Emit it in the shape the consumer wants
+
+```bash
+node annotate.mjs
+```
+
+```
+native: {
+  "dms": {
+    "lat": "51° 30′ 26.64″ N",
+    "lon": "0° 7′ 40.08″ W"
+  },
+  "geohash": "gcpvj0duq",
+  "maidenhead": "IO91wm",
+  "mgrs": "30UXC9931610163",
+  "mercator": {
+    "x": -14226.630923380362,
+    "y": 6711542.475587636
+  },
+  "qiblaBearing": 118.98721949633443,
+  "sun": {
+    "rise": 1785731287,
+    "set": 1785786470,
+    "noon": 1785758878
+  },
+  "iso3166": {
+    "alpha2": "GB"
+  },
+  "flag": "🇬🇧",
+  "callingCode": 44,
+  "currency": {
+    "isoCode": "GBP",
+    "name": "British pound",
+    "symbol": "£"
+  }
+}
+opencage: {
+  "DMS": {
+    "lat": "51° 30′ 26.64″ N",
+    "lng": "0° 7′ 40.08″ W"
+  },
+  "MGRS": "30UXC9931610163",
+  "Maidenhead": "IO91wm",
+  "Mercator": {
+    "x": -14226.630923380362,
+    "y": 6711542.475587636
+  },
+  "geohash": "gcpvj0duq",
+  "qibla": 118.98721949633443,
+  "sun": {
+    "rise": {
+      "apparent": 1785731287
+    },
+    "set": {
+      "apparent": 1785786470
+    }
+  },
+  "callingcode": 44,
+  "currency": {
+    "iso_code": "GBP",
+    "name": "British pound",
+    "symbol": "£"
+  },
+  "flag": "🇬🇧"
+}
+```
+
+`toNative` is an identity pass over the same object — it exists so that "the native shape" is a
+function call rather than a convention you have to remember. `toOpenCage` renames to OpenCage's own
+keys and casing: `dms` becomes `DMS` with `lng` instead of `lon`, `qiblaBearing` becomes `qibla`,
+`callingCode` becomes `callingcode`, `currency.isoCode` becomes `currency.iso_code`, and the sun times
+nest under `apparent`.
+
+Which one to emit is decided by the consumer, not by preference. An existing OpenCage client parses
+`annotations.DMS.lng` and will not find `annotations.dms.lon`.
+
+## 3. Know what the OpenCage projection drops
+
+`toOpenCage` maps only the fields OpenCage has a slot for. Two things in the transcript above do not
+survive the trip:
+
+- **`iso3166`** — the alpha-2/alpha-3/numeric country codes. OpenCage carries these in its `components`
+  block rather than in `annotations`, so the projection has nowhere to put them.
+- **`sun.noon`** — OpenCage's sun object has `rise` and `set`, and no solar noon.
+
+If you are building a new consumer, take the native shape and keep both. The projection is for clients
+you cannot change.
+
+## Annotators that need a database
+
+Three more annotators exist, each behind a database you build the same way the gazetteer is built:
+
+| Annotator                       | Package                       | Fills      | Needs                           |
+| ------------------------------- | ----------------------------- | ---------- | ------------------------------- |
+| `makeTimezoneAnnotator(lookup)` | `@mailwoman/timezone-lookup`  | `timezone` | `timezone.db`                   |
+| `makeUnLocodeAnnotator(lookup)` | `@mailwoman/un-locode-lookup` | `unLocode` | `un-locode.db`                  |
+| `makeNUTSAnnotator(lookup)`     | `@mailwoman/nuts-lookup`      | `nuts`     | `nuts.db`, and an EU coordinate |
+
+Gate each one on the file being present rather than assuming it, which is what the Nominatim drop-in
+does:
+
+```js
+const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
+
+if (existsSync(tzDBPath)) annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
+
+const annotate = composeAnnotators(annotators)
+```
+
+Every field on `AnnotationSet` is optional, so a missing database shows up as a missing key rather than
+as an error. That is the same reason a magnitude of zero and an unmeasured magnitude have to be
+distinguished by the caller: no `timezone` key means "no annotator filled it", not "this coordinate has
+no timezone".
+
+## Verify
+
+The round trip is checkable in one line — the OpenCage projection of a set must carry the same
+coordinate formats under its own names:
+
+```bash
+node annotate.mjs | grep -E '"(mgrs|MGRS)"'
+```
+
+```
+  "mgrs": "30UXC9931610163",
+  "MGRS": "30UXC9931610163",
+```
+
+If you see one and not the other, the annotator list you composed is not the one being projected.
+
+## Limits
+
+- **`toOpenCage` is a projection, not a round trip.** There is no `fromOpenCage`. Keep the
+  `AnnotationSet` if you need to emit both shapes.
+- **`toSchemaOrg` exists and is lossier still.** `@mailwoman/annotations` also exports a schema.org
+  JSON-LD projection, which drops tiers, confidence and provenance by design. It is for structured-data
+  markup, not for data exchange.
+- **The date matters and defaults to now.** Sun times are computed for `input.date`, which defaults to
+  the current instant per annotator. Pin it whenever you compare outputs or write a test.
+- **Annotators run concurrently and later ones win on key collisions.** Two annotators filling the same
+  field is a configuration mistake the composer will not report.
+
+## Related
+
+- [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx) — the drop-in that composes these
+  annotators and emits the OpenCage-style block over HTTP.
+- [Reverse geocode a coordinate](./reverse-geocode.mdx) — where the `countryCode` and `placeName` inputs
+  come from when you start with a coordinate.
