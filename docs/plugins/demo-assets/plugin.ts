@@ -15,6 +15,7 @@
  *   build` (prod) get correct artifacts without a separate pre-build step.
  */
 
+import { createHash } from "node:crypto"
 import { mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
@@ -28,6 +29,18 @@ import {
 	stagePairIndexes,
 	stageSQLJSHTTPVFS,
 } from "./resolve.ts"
+
+/**
+ * A stable digest of the alias map — same specifiers pointing at the same files hash the same, whatever order
+ * `buildWorkspaceAliases` happened to insert them in.
+ */
+function hashAliases(alias: Record<string, string>): string {
+	const entries = Object.keys(alias)
+		.toSorted()
+		.map((key) => `${key}=${alias[key]}`)
+
+	return createHash("md5").update(entries.join("\n")).digest("hex")
+}
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {
 	const docsDir = context.siteDir
@@ -59,7 +72,7 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 			actions.setGlobalData(content)
 		},
 
-		configureWebpack(_config, isServer) {
+		configureWebpack(config, isServer) {
 			const alias = buildWorkspaceAliases()
 
 			// The SSR compile resolves under the `node` condition — correctly, it targets Node — so
@@ -78,7 +91,41 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 				}
 			}
 
+			// Webpack does not evict its filesystem cache when an alias changes (webpack#13627), and an
+			// alias map is not a file, so it reaches no part of the cache identity on its own: Docusaurus
+			// fills `cache.buildDependencies.config` with exactly its base.js, its client/server entry,
+			// and docusaurus.config.ts. A warm cache (~600 MB under docs/node_modules/.cache/webpack)
+			// therefore keeps serving modules resolved under the OLD map — an alias added to point at
+			// workspace SOURCE goes on resolving through package `exports` to a stale `out/*.js`, with no
+			// build error to notice it by.
+			//
+			// Docusaurus solves this for THEME aliases by hashing them into `cache.version`, and the same
+			// move works here: hash the map and extend the version Docusaurus computed rather than
+			// replacing it, so its docusaurusVersion + themeAliasesHash keep their say. Measured on this
+			// site: warm rebuild 4.4s server / 7.0s client, and 27s / 32s after one alias entry changes —
+			// the cache does evict. Adding the plugin's sources to `buildDependencies.config` instead was
+			// measured NOT to work (touching resolve.ts left both compiles at their warm times), and it
+			// would key on mtime rather than on the resolved targets even if it had.
+			//
+			// Guarded on the incoming cache's shape: with DOCUSAURUS_NO_PERSISTENT_CACHE set, Docusaurus
+			// leaves `cache` undefined, and merging a version onto that yields a type-less cache object
+			// that fails webpack's schema.
+			const baseCache = config.cache
+
+			const cache =
+				typeof baseCache === "object" && baseCache?.type === "filesystem"
+					? {
+							cache: {
+								// Restated, not chosen: webpack's config type makes `type` required, and the merge
+								// lands on top of the filesystem cache the guard above just confirmed.
+								type: "filesystem" as const,
+								version: `${baseCache.version ?? ""}-${hashAliases(alias)}`,
+							},
+						}
+					: {}
+
 			return {
+				...cache,
 				plugins: [
 					new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
 						resource.request = require.resolve(emptyShim)
