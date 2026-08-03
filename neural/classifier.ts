@@ -317,6 +317,10 @@ export class NeuralAddressClassifier {
 		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
+		// The sanctioned crossing into the Node-only modules: dynamic + webpackIgnore, so the bundler never
+		// follows them. A STATIC import of either would be followed, which is what the lint rule guards.
+
+		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 		const [
 			{ DEFAULT_INTRA_OP_THREADS, ONNXRunner },
 			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
@@ -337,6 +341,7 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
 
+		/* oxlint-enable typescript/no-restricted-imports */
 		const resolved: ResolvedWeights = resolveWeights(opts)
 		const labels = readLabelsFromModelCard(resolved.modelCardPath)
 		const crf = readCRFTransitions(resolved.crfTransitionsPath)
