@@ -24,7 +24,12 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
-import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import {
+	proposeSpans,
+	type ProposedSpan,
+	type SpanProposerLexicon,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+} from "@mailwoman/core/pipeline"
 
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 import type { AnchorLookup } from "./anchor-inference.ts"
@@ -33,7 +38,7 @@ import type { CountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import type { InferResult } from "./onnx-runner.ts"
+import { DEFAULT_INTRA_OP_THREADS, type InferResult } from "./onnx-runner.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
@@ -301,7 +306,11 @@ export class NeuralAddressClassifier {
 	 * instead.
 	 */
 	static async loadFromWeights(
-		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup; executionProviders?: string[] } = {}
+		opts: ResolveWeightsOpts & {
+			postcodeAnchorLookup?: AnchorLookup
+			executionProviders?: string[]
+			intraOpNumThreads?: number
+		} = {}
 	): Promise<NeuralAddressClassifier> {
 		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
 		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
@@ -349,7 +358,16 @@ export class NeuralAddressClassifier {
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
-			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
+			ONNXRunner.create(resolved.modelPath, {
+				executionProviders: opts.executionProviders,
+				// Cap the intra-op pool. Left unset, ORT sizes it to the core count, so N concurrent processes
+				// each claim the whole machine — the multiplier behind the CLI spawn-test timeouts. Measured
+				// 2026-08-03 over 120 parses: 1 thread costs 18.3 ms/parse against 9.3 for all-cores (a 97%
+				// regression — the parallelism IS doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
+				// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1;
+				// do not "simplify" it downward without re-running that curve.
+				intraOpNumThreads: opts.intraOpNumThreads ?? DEFAULT_INTRA_OP_THREADS,
+			}),
 		])
 
 		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
@@ -962,7 +980,20 @@ export class NeuralAddressClassifier {
 		// word whose pieces already agree is untouched. See word-consistency.ts.
 		let healedConfidence: Map<number, number> | null = null
 
-		const wordConsistency = opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false
+		// DEFAULT ON since 2026-08-03, matching what the pipeline already shipped. It was default-OFF from
+		// introduction so that adding the repair changed no bytes, and `geocode-core.ts` switched it on for
+		// production via WORD_CONSISTENCY_SHIP_DEFAULT. The cost of that split was that the two paths
+		// disagreed and only one of them was the one users are on: anything holding a
+		// `NeuralAddressClassifier` directly — probes, evals written against the classifier, third-party
+		// consumers of `@mailwoman/neural` — silently got the UN-healed decode unless it knew to pass the
+		// constant. It bit this repo's own confound board, which reported `unit="Buil"` (a sub-token
+		// fragment of "Building") as a product defect when no shipped consumer could reach it.
+		//
+		// The repair enforces an invariant no valid parse can violate — the pieces of ONE word must carry
+		// ONE tag — so the safe default is the one that upholds it. Callers who need the raw decode still
+		// have `enforceWordConsistency: false`, per-parse or per-config.
+		const wordConsistency =
+			opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT
 
 		if (wordConsistency) {
 			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []

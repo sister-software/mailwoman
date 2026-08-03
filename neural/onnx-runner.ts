@@ -51,12 +51,38 @@ export interface ONNXRunnerOpts {
 	 * so a GPU box lights up and a CPU box pays ~nothing. `cpu` is always appended if not present.
 	 */
 	executionProviders?: string[]
+	/**
+	 * Cap ONNX Runtime's INTRA-op thread pool — the threads a single operator splits its work across.
+	 *
+	 * Unset means ORT sizes the pool to the machine's core count. That is the right default for a server running one
+	 * session over long sequences, and the wrong one for the shape this repo actually runs: short addresses, frequently
+	 * several processes at once. Every CLI invocation is its own session, so N concurrent processes each claim every
+	 * core, and the oversubscription surfaces as latency rather than error — measured 2026-08-03, eight concurrent
+	 * `mailwoman geocode` calls took 8.75 s against a 10 s test timeout on an otherwise idle 16-core box, where one alone
+	 * took 5.62 s.
+	 *
+	 * Set it when the caller knows it is one of many, or when sequences are short enough that thread coordination costs
+	 * more than the parallelism returns.
+	 */
+	intraOpNumThreads?: number
 }
 
 /**
  * Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128).
  */
 export const DEFAULT_FIXED_SEQ_LEN = 128
+
+/**
+ * Intra-op thread cap applied by `NeuralAddressClassifier.loadFromWeights`.
+ *
+ * Measured 2026-08-03 on a 16-core box, 120 warm parses of short addresses: `1` costs 18.3 ms/parse against 9.3 for
+ * ORT's all-cores default — a 97% regression, so the parallelism is genuinely working — `2` costs 12.5, and `4` is 9.2,
+ * flat against the default while claiming a quarter of the threads. Four is where the curve flattens: no latency paid,
+ * and 4x less oversubscription when several processes run at once, which is the normal case for the CLI and the test
+ * suite. Re-run the curve before changing it; the intuition that a short sequence does not benefit from parallelism is
+ * measurably false.
+ */
+export const DEFAULT_INTRA_OP_THREADS = 4
 
 export interface InferResult {
 	/**
@@ -95,6 +121,7 @@ export class ONNXRunner {
 	public readonly fixedSeqLen: number
 
 	private readonly executionProviders: string[]
+	private readonly intraOpNumThreads: number | undefined
 	private readonly modelPath: string
 	private readonly modelBytes: Uint8Array | null
 
@@ -105,6 +132,7 @@ export class ONNXRunner {
 		const requested = opts.executionProviders ?? ["cpu"]
 		// CPU is the universal final fallback — append it so a GPU-only list still has somewhere to land.
 		this.executionProviders = requested.includes("cpu") ? requested : [...requested, "cpu"]
+		this.intraOpNumThreads = opts.intraOpNumThreads
 	}
 
 	/**
@@ -158,6 +186,7 @@ export class ONNXRunner {
 			return await ort.InferenceSession.create(bytes, {
 				executionProviders: this.executionProviders,
 				graphOptimizationLevel: "all",
+				...(this.intraOpNumThreads ? { intraOpNumThreads: this.intraOpNumThreads } : {}),
 			})
 		} catch (error) {
 			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw error
@@ -168,7 +197,11 @@ export class ONNXRunner {
 					`(${(error as Error).message.split("\n")[0]}); falling back to CPU.`
 			)
 
-			return ort.InferenceSession.create(bytes, { executionProviders: ["cpu"], graphOptimizationLevel: "all" })
+			return ort.InferenceSession.create(bytes, {
+				executionProviders: ["cpu"],
+				graphOptimizationLevel: "all",
+				...(this.intraOpNumThreads ? { intraOpNumThreads: this.intraOpNumThreads } : {}),
+			})
 		}
 	}
 

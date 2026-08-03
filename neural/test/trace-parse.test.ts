@@ -293,7 +293,11 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// WITHOUT the pin (pre-#1275 en-gb reality): the gate never opens, the clip stands.
 		const unpinned = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const clippedTrace = await unpinned.traceParse(text, { spanProposer: false })
-		expect(clippedTrace.repairs).toEqual([])
+		// The subject here is the POSTCODE gate: unpinned, the codex gb row is never consulted, so the snap
+		// path never runs and the clip stands. Assert that specifically rather than `repairs === []` — the
+		// blanket form silently also pinned "word-consistency never fires", which was true only while that
+		// repair was default-OFF on the classifier, and broke the moment the default matched the pipeline's.
+		expect(clippedTrace.repairs.filter((r) => r.pass === "postcodeRepair")).toEqual([])
 		const clipped = (await unpinned.parseJSON(text)) as { postcode?: string }
 		expect(clipped.postcode).toBeDefined()
 		expect(clipped.postcode).not.toBe("SK11 9PD")

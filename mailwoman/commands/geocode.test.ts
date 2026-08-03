@@ -29,6 +29,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
+import { withCLISpawnLock } from "../test-kit/cli-spawn-lock.ts"
+
 // MARK: Paths
 
 const CLI_PATH = repoRootPath("mailwoman", "out", "cli.js")
@@ -39,6 +41,17 @@ const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 // Per-state TX shards (the demo address is Round Rock, TX).
 const TX_ADDRESS_POINTS_DB = dataRootPath("address-points", "address-points-us-tx.db")
 const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.db")
+
+/**
+ * Wall-clock budget for a CLI spawn.
+ *
+ * The old 10 s was set against an imagined fast path. Measured 2026-08-03 on an idle 16-core box, ONE `mailwoman
+ * geocode` takes 5.62 s end to end — 2.73 s of it node boot plus this CLI's import graph, before any model is touched —
+ * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test FILES in
+ * parallel. That is why these "flaked": not randomness, a deterministic threshold sitting just under a floor nobody had
+ * measured. A generous budget costs nothing on a passing test.
+ */
+const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 const hasWOFDb = existsSync(wofPath)
 const hasCLICompiled = existsSync(CLI_PATH)
@@ -56,12 +69,14 @@ describe("geocode argument validation", () => {
 		}
 
 		expect(() =>
-			execFileSync(process.execPath, [CLI_PATH, "geocode"], {
-				encoding: "utf8",
-				// Set a bogus WOF path so the command fails on arg validation, not on missing DB.
-				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
-				timeout: 10_000,
-			})
+			withCLISpawnLock(() =>
+				execFileSync(process.execPath, [CLI_PATH, "geocode"], {
+					encoding: "utf8",
+					// Set a bogus WOF path so the command fails on arg validation, not on missing DB.
+					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
+					timeout: CLI_SPAWN_TIMEOUT_MS,
+				})
+			)
 		).toThrow(/Command failed/)
 	})
 
@@ -73,11 +88,13 @@ describe("geocode argument validation", () => {
 		}
 
 		expect(() =>
-			execFileSync(process.execPath, [CLI_PATH, "geocode", "   "], {
-				encoding: "utf8",
-				env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
-				timeout: 10_000,
-			})
+			withCLISpawnLock(() =>
+				execFileSync(process.execPath, [CLI_PATH, "geocode", "   "], {
+					encoding: "utf8",
+					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
+					timeout: CLI_SPAWN_TIMEOUT_MS,
+				})
+			)
 		).toThrow(/Command failed/)
 	})
 
@@ -93,15 +110,17 @@ describe("geocode argument validation", () => {
 		const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-empty-"))
 
 		try {
-			execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
-				encoding: "utf8",
-				// Unset the env var AND point the data root at an empty dir: since the proximity-bias
-				// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
-				// on a standard data root that now SUCCEEDS (the new contract). The error contract
-				// only survives when no default shard exists either.
-				env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
-				timeout: 15_000,
-			})
+			withCLISpawnLock(() =>
+				execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
+					encoding: "utf8",
+					// Unset the env var AND point the data root at an empty dir: since the proximity-bias
+					// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
+					// on a standard data root that now SUCCEEDS (the new contract). The error contract
+					// only survives when no default shard exists either.
+					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
+					timeout: CLI_SPAWN_TIMEOUT_MS,
+				})
+			)
 		} catch (error: unknown) {
 			threw = true
 			const execErr = error as { stderr?: string; stdout?: string }
@@ -127,17 +146,19 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 	const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
 
 	test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", () => {
-		const stdout = execFileSync(
-			process.execPath,
-			[
-				CLI_PATH,
-				"geocode",
-				TX_ADDRESS,
-				`--resolve-db=${wofPath}`,
-				`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-				`--interpolation-db=${TX_INTERPOLATION_DB}`,
-			],
-			{ encoding: "utf8", timeout: 60_000 }
+		const stdout = withCLISpawnLock(() =>
+			execFileSync(
+				process.execPath,
+				[
+					CLI_PATH,
+					"geocode",
+					TX_ADDRESS,
+					`--resolve-db=${wofPath}`,
+					`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+					`--interpolation-db=${TX_INTERPOLATION_DB}`,
+				],
+				{ encoding: "utf8", timeout: 60_000 }
+			)
 		)
 
 		const result = JSON.parse(stdout) as {
@@ -170,18 +191,20 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 	}, 60_000)
 
 	test("--format=text produces readable output with coordinate line", () => {
-		const stdout = execFileSync(
-			process.execPath,
-			[
-				CLI_PATH,
-				"geocode",
-				TX_ADDRESS,
-				`--resolve-db=${wofPath}`,
-				`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-				`--interpolation-db=${TX_INTERPOLATION_DB}`,
-				"--format=text",
-			],
-			{ encoding: "utf8", timeout: 60_000 }
+		const stdout = withCLISpawnLock(() =>
+			execFileSync(
+				process.execPath,
+				[
+					CLI_PATH,
+					"geocode",
+					TX_ADDRESS,
+					`--resolve-db=${wofPath}`,
+					`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+					`--interpolation-db=${TX_INTERPOLATION_DB}`,
+					"--format=text",
+				],
+				{ encoding: "utf8", timeout: 60_000 }
+			)
 		)
 
 		expect(stdout).toMatch(/resolution_tier/)
@@ -189,18 +212,20 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 	}, 60_000)
 
 	test("--format=jsonld emits a valid schema.org Place JSON-LD object (#1052)", () => {
-		const stdout = execFileSync(
-			process.execPath,
-			[
-				CLI_PATH,
-				"geocode",
-				TX_ADDRESS,
-				`--resolve-db=${wofPath}`,
-				`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
-				`--interpolation-db=${TX_INTERPOLATION_DB}`,
-				"--format=jsonld",
-			],
-			{ encoding: "utf8", timeout: 60_000 }
+		const stdout = withCLISpawnLock(() =>
+			execFileSync(
+				process.execPath,
+				[
+					CLI_PATH,
+					"geocode",
+					TX_ADDRESS,
+					`--resolve-db=${wofPath}`,
+					`--address-points-db=${TX_ADDRESS_POINTS_DB}`,
+					`--interpolation-db=${TX_INTERPOLATION_DB}`,
+					"--format=jsonld",
+				],
+				{ encoding: "utf8", timeout: 60_000 }
+			)
 		)
 
 		const place = JSON.parse(stdout) as {
@@ -229,10 +254,12 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDb)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no shards provided", () => {
-		const stdout = execFileSync(process.execPath, [CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`], {
-			encoding: "utf8",
-			timeout: 60_000,
-		})
+		const stdout = withCLISpawnLock(() =>
+			execFileSync(process.execPath, [CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`], {
+				encoding: "utf8",
+				timeout: 60_000,
+			})
+		)
 
 		const result = JSON.parse(stdout) as {
 			lat: number | null
