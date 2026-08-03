@@ -174,6 +174,48 @@ describe("parseExhibit21 — clean HTML table", () => {
 	})
 })
 
+describe("parseExhibit21 — header-mapped columns and the indented corporate tree", () => {
+	/**
+	 * Telephone and Data Systems indents each subsidiary one column to the RIGHT of its parent, and 132 of its 183
+	 * subsidiaries sit on such a row. The name is not in doubt on those rows — the header says the jurisdiction is to its
+	 * right, so the only non-blank column between the two is the name — and the nesting depth is discarded, since an
+	 * Exhibit 21 row is a registrant→subsidiary edge either way. TDS's own filing is 176 KB and is not vendored; this is
+	 * its shape.
+	 */
+	it("reads an indented child row's name from the column between the header's name and jurisdiction columns", () => {
+		const html =
+			"<table>" +
+			"<tr><td>Subsidiary Companies</td><td></td><td>State of Organization</td></tr>" +
+			"<tr><td>Cascade Fiber Holdings, LLC</td><td></td><td>Delaware</td></tr>" +
+			"<tr><td></td><td>Cascade Last Mile, LLC</td><td>Illinois</td></tr>" +
+			"<tr><td></td><td>Meridian Broadband, Inc.</td><td>Wisconsin</td></tr>" +
+			"</table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [
+				{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" },
+				{ name: "Cascade Last Mile, LLC", jurisdiction: "Illinois" },
+				{ name: "Meridian Broadband, Inc.", jurisdiction: "Wisconsin" },
+			],
+			unparseable: 1,
+		})
+	})
+
+	it("a blank name column with NO column before the jurisdiction still abstains — there is nothing to read", () => {
+		const html =
+			"<table>" +
+			"<tr><td>Name of Subsidiary</td><td>Jurisdiction of Incorporation</td><td>% of Ownership</td></tr>" +
+			"<tr><td>Cascade Fiber Holdings, LLC</td><td>Delaware</td><td>100%</td></tr>" +
+			"<tr><td></td><td>Delaware</td><td>100%</td></tr>" +
+			"</table>"
+
+		expect(parseExhibit21(html)).toEqual({
+			subsidiaries: [{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" }],
+			unparseable: 2,
+		})
+	})
+})
+
 describe("parseExhibit21 — nested-list variant", () => {
 	it("flattens a nested subsidiary <ul>/<li> tree, each carrying its own name + jurisdiction", () => {
 		const html = fixture("exhibit21-nested-list.html")
