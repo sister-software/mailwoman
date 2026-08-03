@@ -78,7 +78,32 @@
  *   `SECClient` class, so a test never needs a full axios harness. Discovering WHICH URL a given filing's
  *   Exhibit 21 lives at (the filing index, or EDGAR full-text search) is out of scope here — this module
  *   parses a document once its URL is already known.
+ *
+ *   **Document window.** {@linkcode documentWindow} runs once, first, before any strategy sees the document.
+ *   EDGAR's archive serves an exhibit wrapped in its SGML `<DOCUMENT>` submission envelope — `<TYPE>EX-21.1`,
+ *   `<SEQUENCE>3`, `<FILENAME>…`, `<DESCRIPTION>…` lines ahead of the real `<TEXT>` payload, and an HTML
+ *   `<head>`/`<title>` inside THAT which names the source file, not a subsidiary. `stripTags` turning those
+ *   into bare lines (`EX-21.1`, `3`, the filename, `Document`) is exactly how they got emitted as subsidiaries
+ *   before this existed. `documentWindow` slices to the content between `<TEXT>`/`</TEXT>` (falling back to
+ *   the whole input when either boundary is absent, so a document with no SGML envelope is unaffected) and
+ *   strips `<head>...</head>` and `<script>`/`<style>` blocks from what's left.
+ *
+ *   **Line/list refinements (real-filing hardening).** A leading bullet/list marker (`•`, `●`, a dash used as
+ *   one) is stripped from a candidate line BEFORE the name/jurisdiction split runs — `bandwidth-2025.htm`'s
+ *   bulleted `Name (Jurisdiction)` convention otherwise reads as a false 2+-space column gap between the
+ *   bullet and the name, emitting the bullet itself as the name. A candidate that EXACTLY matches a known
+ *   document-title/section-heading shape (`TITLE_LINE_PATTERNS` — "Exhibit 21", "List of Subsidiaries of X",
+ *   "X AND SUBSIDIARIES", …), or whose token count exceeds `MAX_ENTITY_NAME_WORDS` (12 — the longest
+ *   legitimate name in the corpus is 8 tokens), is `unparseable` and dropped before the split runs at all —
+ *   the word cap is what lets `alti-global-2025.htm` (which separates entries with nothing but a double
+ *   space, so no name/jurisdiction boundary exists to find) abstain entirely instead of guessing one. The
+ *   single-comma split additionally abstains when the text after the comma is JUST a corporate designator
+ *   (`canonicalizeOrganizationName` from `@mailwoman/record` reduces it to an empty canonical name) —
+ *   `"Horizon Services, Inc."` is one entity's whole name, not a name/jurisdiction pair, and "Inc." is not a
+ *   place.
  */
+
+import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
  * One subsidiary {@linkcode parseExhibit21} confidently extracted.
@@ -104,6 +129,31 @@ export interface ParsedExhibit21 {
 	 * error either (gate 3).
 	 */
 	unparseable: number
+}
+
+const SGML_TEXT_OPEN = /<TEXT>/i
+const SGML_TEXT_CLOSE = /<\/TEXT>/i
+const HEAD_BLOCK = /<head[^>]*>[\s\S]*?<\/head>/gi
+const SCRIPT_OR_STYLE_BLOCK = /<(script|style)[^>]*>[\s\S]*?<\/\1>/gi
+
+/**
+ * Slices a raw EDGAR archive document down to what every strategy below should reason about — see the module
+ * docstring's "Document window" paragraph. Applied ONCE, first thing, in {@linkcode parseExhibit21}, so the table, list
+ * and plain-text strategies all see the same window rather than each re-deriving it (and Task 3's table strategy
+ * consumes it directly).
+ *
+ * Slices to the SGML `<TEXT>...</TEXT>` payload (falling back to the whole input when either boundary is missing — a
+ * document with no SGML envelope, e.g. every hand-written fixture in `exhibit21.test.ts`, is unaffected), then strips
+ * the HTML `<head>` block (whose `<title>` is the source filename, not a subsidiary) and any `<script>`/ `<style>`
+ * blocks.
+ */
+export function documentWindow(html: string): string {
+	const open = SGML_TEXT_OPEN.exec(html)
+	const afterOpen = open ? html.slice(open.index + open[0].length) : html
+	const close = SGML_TEXT_CLOSE.exec(afterOpen)
+	const body = close ? afterOpen.slice(0, close.index) : afterOpen
+
+	return body.replaceAll(HEAD_BLOCK, "").replaceAll(SCRIPT_OR_STYLE_BLOCK, "")
 }
 
 const TAG_PATTERN = /<[^>]*>/g
@@ -406,6 +456,19 @@ function extractPlainTextLines(html: string): string[] {
 }
 
 /**
+ * True when `value` is JUST a corporate legal-entity suffix ("Inc.", "LLC", "Corp.") with nothing else —
+ * `canonicalizeOrganizationName` (`@mailwoman/record`, already used the same way by `edgar-filings.ts`) reduces such a
+ * string to an empty canonical name and a non-empty `designations` list. Guards {@linkcode splitCandidateLine}'s
+ * single-comma rule: a bare designation immediately after a comma is the tail of ONE entity's name (`"Horizon Services,
+ * Inc."`), not a jurisdiction, and the comma rule must not treat "Inc." as if it were a place.
+ */
+function isBareLegalDesignation(value: string): boolean {
+	const canonicalized = canonicalizeOrganizationName(value)
+
+	return canonicalized !== null && canonicalized.canonical === "" && canonicalized.designations.length > 0
+}
+
+/**
  * Splits one candidate line (a plain-text row, or one `<li>`'s own text) into a name and an optional jurisdiction — see
  * the module docstring's "list/plain-text strategies" section for why this only ever abstains on the JURISDICTION,
  * never the name. Tried in order:
@@ -414,7 +477,10 @@ function extractPlainTextLines(html: string): string[] {
  * 2. A trailing `(Jurisdiction)` parenthetical — the common nested-list-item convention.
  * 3. EXACTLY one comma — `"Acme Fiber LLC, Delaware"`. Zero or 2+ commas is NOT split this way (a legal name can itself
  *    contain a comma, e.g. `"Acme Fiber, LLC"`, so 2+ commas is genuinely ambiguous about where the name ends) —
- *    decision 6 abstains from the split, not from recording the line.
+ *    decision 6 abstains from the split, not from recording the line. Nor is a single comma split when the text after
+ *    it is JUST a corporate designator (`{@linkcode isBareLegalDesignation}` — `canonicalizeOrganizationName` reduces
+ *    `"Inc."` to an empty canonical name) — `"Horizon Services, Inc."` is one entity's whole legal name, and "Inc." is
+ *    not a place a comma could plausibly be introducing.
  *
  * Falls through to `{name: <the whole cleaned line>}` when none of the above apply — an honest "no jurisdiction found",
  * never a fabricated one. The one exception is a 3+-column 2+-space-gap split (`name jurisdiction 100%`): that's an
@@ -450,24 +516,81 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 		const name = normalizeWhitespace(commaParts[0]!)
 		const jurisdiction = normalizeWhitespace(commaParts[1]!)
 
-		if (name && jurisdiction) return { name, jurisdiction }
+		if (name && jurisdiction && !isBareLegalDesignation(jurisdiction)) return { name, jurisdiction }
 	}
 
 	return { name: trimmedWhole }
 }
 
 /**
- * Shared by the list and plain-text strategies: split every candidate line, count a blank result as `unparseable` (the
- * only abstention these two strategies ever make on the NAME — see the module docstring), apply the same
+ * A leading bullet or list-marker glyph — markup convention, not part of a name. Stripped from a candidate line BEFORE
+ * the name/jurisdiction split runs (module docstring, "Line/list refinements"): `"• Bandwidth.com CLEC, LLC (Delaware,
+ * United States)"` must become `"Bandwidth.com CLEC, LLC (Delaware, United States)"` before
+ * {@linkcode splitCandidateLine} ever sees the (fabricated, tag-stripping-artifact) 2+-space gap the bullet leaves
+ * behind — otherwise the trailing-parenthetical rule never gets a chance and the bullet itself is read as the name.
+ */
+const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
+
+/**
+ * Whole-line, case-insensitive shapes that are a document title or section heading, never an entity name — see the
+ * module docstring's "Line/list refinements" paragraph. Deliberately whole-string patterns, not keyword sniffing, for
+ * the same reason `KNOWN_HEADER_LABELS` is an exact-match set: substring sniffing on "subsidiaries" would misfire on a
+ * company actually named that.
+ */
+const TITLE_LINE_PATTERNS = [
+	/^exhibit\s*21(\.\d+)?(\s*[-–—:]?\s*list of subsidiaries)?$/i,
+	/^list of subsidiaries( of .+)?$/i,
+	/^subsidiaries of .+$/i,
+	/^.+ and subsidiaries$/i,
+	/^(domestic|foreign|significant|principal) subsidiaries$/i,
+	/^as of .+$/i,
+]
+
+/**
+ * A candidate line/list-item longer than this many whitespace-separated tokens is abstained on rather than split — see
+ * the module docstring. The longest legitimate name in the real-filing corpus (`bandwidth-2025.htm`'s `"Voxbone
+ * Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi"`) is 8 tokens; a preamble sentence or a run of
+ * concatenated names is not a name at all, and decision 6 abstains rather than guessing a boundary.
+ */
+const MAX_ENTITY_NAME_WORDS = 12
+
+/**
+ * Shared by the list and plain-text strategies: strip a leading list marker, abstain on a title/heading line or a line
+ * too long to be one name, split every remaining candidate line, count a blank result as `unparseable` (the only
+ * abstention these two strategies ever make on the NAME — see the module docstring), apply the same
  * header/decoration-row check the table strategy uses (a plain-text or `<li>` document has no `<th>` markup to lean on,
  * so its boilerplate title/column-header lines need the same content-based recognition), and keep the rest.
+ *
+ * A line reduced to nothing but whitespace by the marker strip falls through to {@linkcode splitCandidateLine} same as
+ * any other line — it still ends up counted `unparseable` there (a blank name), the same basis `"----"`-style
+ * decorative divider lines were already counted on before this rule existed; that path is preserved deliberately rather
+ * than special-cased to "skip uncounted", since the marker character class overlaps with plain decorative dashes and
+ * the two cases aren't distinguishable from the marker alone.
  */
 function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 	const subsidiaries: ParsedSubsidiary[] = []
 	let unparseable = 0
 
 	for (const line of lines) {
-		const candidate = splitCandidateLine(line)
+		const unmarked = line.replace(LIST_MARKER_PATTERN, "")
+
+		const wordCount = unmarked.trim().split(/\s+/).filter(Boolean).length
+
+		if (wordCount > MAX_ENTITY_NAME_WORDS) {
+			unparseable++
+
+			continue
+		}
+
+		const normalizedWhole = normalizeWhitespace(unmarked)
+
+		if (normalizedWhole && TITLE_LINE_PATTERNS.some((pattern) => pattern.test(normalizedWhole))) {
+			unparseable++
+
+			continue
+		}
+
+		const candidate = splitCandidateLine(unmarked)
 
 		if (!candidate.name) {
 			unparseable++
@@ -490,33 +613,52 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 }
 
 /**
+ * True when every extracted cell of every extracted row is blank — a purely decorative border/spacer table (the kind
+ * Word/Workiva exports use as a horizontal-rule substitute) carrying no subsidiary data at all, as opposed to a real
+ * table that legitimately abstains on some or all of its rows (`subsidiariesFromTableRows`'s job, unchanged here).
+ * `shentel-2025.htm` states its subsidiary list as block text OUTSIDE two such decorative tables; committing to the
+ * (empty) table strategy the instant ANY `<table>` tag exists would silence the real list this document states. A table
+ * with even one real non-blank cell still commits to the table strategy as before — reading a REAL table's data with
+ * more confidence (multiple sibling tables, blank spacer columns, footnote rows, …) is Task 3's territory, not this
+ * check's.
+ */
+function isEntirelyBlankTable(rows: readonly TableCell[][]): boolean {
+	return rows.every((row) => row.every((cell) => cell.text === ""))
+}
+
+/**
  * Parses an Exhibit 21 document into its subsidiary list. Decision 6 binds: a row/line that cannot be confidently
  * extracted is counted (`unparseable`) and dropped, never guessed at — this function NEVER throws on malformed input
  * (gate 3); the worst case for a document this parser cannot make sense of at all is `{subsidiaries: [], unparseable:
  * N}`.
  *
+ * Runs {@linkcode documentWindow} once, first — every strategy below reasons about the same window, never the raw
+ * archive document with its SGML envelope still attached.
+ *
  * Tries three shapes, in order, and commits to the FIRST one it detects (a real Exhibit 21 uses one consistent format
  * throughout, so there's no ambiguity in picking the first match rather than trying all three and merging):
  *
- * 1. An HTML `<table>` — the common modern shape.
+ * 1. An HTML `<table>` — the common modern shape. A table every one of whose cells is blank
+ *    ({@linkcode isEntirelyBlankTable}) is treated as no table at all and falls through to shape 2/3 instead.
  * 2. A `<li>`-based list (nested subsidiary trees included, flattened) — see {@linkcode extractListItemOwnText}'s
  *    docstring for how nesting is handled without a real HTML parser.
  * 3. Plain fixed-width text (no recognized markup at all) — the older SGML-era shape.
  */
 export function parseExhibit21(html: string): ParsedExhibit21 {
-	const tableRows = extractTableRows(html)
+	const window = documentWindow(html)
+	const tableRows = extractTableRows(window)
 
-	if (tableRows !== null) {
+	if (tableRows !== null && !isEntirelyBlankTable(tableRows)) {
 		return subsidiariesFromTableRows(tableRows)
 	}
 
-	const listLines = extractListItemOwnText(html)
+	const listLines = extractListItemOwnText(window)
 
 	if (listLines.length) {
 		return subsidiariesFromLines(listLines)
 	}
 
-	return subsidiariesFromLines(extractPlainTextLines(html))
+	return subsidiariesFromLines(extractPlainTextLines(window))
 }
 
 /**
