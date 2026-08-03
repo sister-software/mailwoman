@@ -1,0 +1,200 @@
+---
+title: Deploy with Docker
+description: Run the published image, mount a gazetteer read-only, and build your own image when the published dependency set is not the one you want.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Deploy with Docker
+
+**Outcome.** You have a geocoding endpoint running in a container, with the gazetteer mounted read-only
+from outside the image, and you know when to build your own image instead of pulling the published one.
+
+The image installs the published `@mailwoman/*` packages from npm and bakes the model weights in. The
+gazetteer stays out: it is 1.65 GB and up, it changes on a different schedule from the code, and it
+mounts read-only at `/data`. Parsing works with no volume at all.
+
+**How this page was verified.** Docker is not installed on the machine these docs are written on, so no
+container was built or run here. Every command below is sourced from the repository assets that produce
+the published image — the repo-root `Dockerfile`, `docker/package.json`, `docker/docker-compose.yml` and
+`docker/README.md` — and the registry facts in step 1 come from the GHCR API. The
+[example server](/examples/mailwoman-server.mjs) in step 4 _was_ executed, outside a container, and its
+transcripts are real. Treat the `docker run` lines as sourced, not as executed output.
+
+## Prerequisites
+
+- Docker, on `linux/amd64`. The image is amd64 only: `onnxruntime-node` ships glibc x64 prebuilds, and
+  arm64 has not been verified.
+- Disk for a gazetteer if you want coordinates. [Your first ten minutes](../get-started/ten-minute-trial.mdx)
+  covers what the `candidate` bundle is.
+
+## 1. Run the published image
+
+```bash
+docker run --rm -p 3000:3000 ghcr.io/sister-software/mailwoman:latest
+
+curl -s -X POST localhost:3000/v1/parse \
+  -H 'content-type: application/json' \
+  -d '{"address":"350 5th Ave, New York, NY 10118"}'
+```
+
+Parsing answers immediately because the weights are in the image. `/v1/geocode` and `/v1/batch` return a
+`503` with `{"error":"geocoder not available"}` rather than crashing, so a first run needs no data at
+all.
+
+**Check the tag before you depend on it.** As of 2026-08-04 the GHCR tag list is `7.3.0` and `latest`,
+both pointing at the same digest — so `:latest` is the 7.3.0 build while npm is on the 8.x line. The
+publish workflow (`.github/workflows/docker-publish.yml`) has a `release: published` trigger, but its
+run history shows one manual dispatch and no release-triggered rebuild. Pin a digest and re-check the
+tag rather than assuming `:latest` tracks the current package line.
+
+## 2. Mount the gazetteer read-only
+
+```bash
+docker run --rm -p 3000:3000 \
+  -v /path/to/mailwoman-data:/data:ro \
+  -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
+  ghcr.io/sister-software/mailwoman:latest
+```
+
+`:ro` is correct for both resolver backends: every runtime lookup opens SQLite read-only, and the only
+writable open is an explicit FTS index build, which no serve path performs.
+
+Two mount details decide whether this works on the first try.
+
+- **A symlinked `wof/candidate.db` dangles inside the container.** Host-side symlinks point at host
+  paths. Set `MAILWOMAN_CANDIDATE_DB` to the real filename inside the mount.
+- **Per-state rooftop shards are WAL-mode.** Their `-wal` and `-shm` siblings have to be in the same
+  mount. A missing sidecar drops that address to a coarser resolution tier rather than failing the
+  request, which makes it a quiet failure worth checking for.
+
+If you have no gazetteer yet, the image can fetch one, so your host still needs no Node toolchain:
+
+```bash
+mkdir -p mailwoman-data
+docker run --rm -v "$(pwd)/mailwoman-data:/data" \
+  ghcr.io/sister-software/mailwoman:latest \
+  node node_modules/mailwoman/out/cli.js data pull candidate
+```
+
+That one run needs the volume writable — drop the `:ro`. The image's own `$MAILWOMAN_DATA_ROOT` is
+`/data`, so the file lands at `/data/wof/candidate.db`, which is exactly where the read-only run above
+expects it.
+
+## 3. Run a drop-in instead of the native API
+
+The same image ships the three compatible servers. Override the command:
+
+```bash
+# Nominatim-compatible — /search /reverse /status, port 8080
+docker run --rm -p 8080:8080 -v /path/to/data:/data:ro \
+  -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
+  ghcr.io/sister-software/mailwoman:latest \
+  node node_modules/@mailwoman/nominatim/out/cli.js serve
+```
+
+The image's baked health check targets `:3000/health`, so overriding the command without overriding the
+health check leaves the container permanently unhealthy. `docker/docker-compose.yml` sets a per-service
+health check for exactly this reason; copy that shape rather than dropping the check.
+
+## 4. Build your own image when the published one does not fit
+
+Three reasons to build your own: you want versions pinned rather than `latest`, you want a smaller
+dependency set than every drop-in server, or you want your own entrypoint.
+
+[mailwoman.Dockerfile](/examples/mailwoman.Dockerfile) is that image. It differs from the published one
+in three ways and is otherwise the same file:
+
+```dockerfile
+RUN npm init -y >/dev/null \
+	&& npm install --omit=dev --no-audit --no-fund --loglevel=error \
+		mailwoman@8.7.0 \
+		@mailwoman/neural@8.7.0 \
+		@mailwoman/neural-weights-en-us@8.7.0 \
+		@mailwoman/resolver@8.7.0 \
+		@mailwoman/resolver-wof-sqlite@8.7.0 \
+	&& npm cache clean --force
+
+RUN rm -rf node_modules/onnxruntime-node/bin/napi-v6/win32 \
+		node_modules/onnxruntime-node/bin/napi-v6/darwin \
+	&& rm -f node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_cuda.so \
+		node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_tensorrt.so
+```
+
+The trim is the one worth copying. `onnxruntime-node` installs 500 MB, most of it the other two
+platforms plus the CUDA and TensorRT execution providers. Measured on this host, dropping them takes
+`node_modules` from 746 MB to 303 MB, and CPU inference is unaffected — it loads
+`libonnxruntime.so.1` and `onnxruntime_binding.node` and nothing else.
+[Deploy on a serverless runtime](./deploy-serverless.mdx) has the full measurement.
+
+The entrypoint is [mailwoman-server.mjs](/examples/mailwoman-server.mjs): `node:http`, no framework,
+three routes, everything expensive built once at module scope. It was run outside a container against a
+real gazetteer:
+
+```bash
+PORT=13777 MAILWOMAN_CANDIDATE_DB=/tmp/mw-fresh-demo/wof/candidate.db node mailwoman-server.mjs
+curl -s "http://127.0.0.1:13777/health"
+curl -s "http://127.0.0.1:13777/geocode?address=1600+Pennsylvania+Ave+NW,+Washington,+DC+20500"
+```
+
+```
+listening on http://0.0.0.0:13777 (geocoder: ready)
+{"ok":true,"geocoder":true}
+{"lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","locality":"Washington"}
+```
+
+And with no gazetteer, to confirm the degrade rather than assume it:
+
+```
+listening on http://0.0.0.0:13778 (geocoder: off)
+{"ok":true,"geocoder":false}
+{"error":"no gazetteer mounted at $MAILWOMAN_CANDIDATE_DB"}
+parse status 200
+```
+
+Build it with the two example files side by side:
+
+```bash
+docker build -f mailwoman.Dockerfile -t my-mailwoman .
+```
+
+## Verify
+
+The health route is the image's own health-check target, so a green check and a successful curl are the
+same signal:
+
+```bash
+docker run -d --name mw -p 3000:3000 \
+  -v /path/to/mailwoman-data:/data:ro \
+  -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
+  ghcr.io/sister-software/mailwoman:latest
+
+docker inspect --format '{{.State.Health.Status}}' mw
+curl -s localhost:3000/health
+```
+
+Allow for the start period: the baked health check gives 60 s before it starts counting failures,
+because the model load is the slow part of boot.
+
+## Limits
+
+- **`linux/amd64` only.** An arm64 image needs the arm64 ONNX Runtime prebuild verified first. On Apple
+  silicon this runs under emulation, slowly.
+- **No Alpine base.** `onnxruntime-node` has no musl prebuild. `node:24-slim` is Debian, and `libgomp1`
+  is installed on top of it for threaded inference.
+- **The container listens on 3000 and the port is not configurable in the published image.** Remap on
+  the host side with `-p <host>:3000`.
+- **One container is one CPU-bound worker.** Inference blocks the JavaScript thread, so concurrency
+  comes from replicas.
+  [Geocode a large file at volume](./batch-geocode-at-volume.mdx) has the measurements.
+- **The published image's dependencies are pinned to `latest` at build time.** That is deliberate — each
+  rebuild integration-tests the current published packages — but it means two builds of the same
+  Dockerfile can differ. Pin a digest for a deployment.
+
+## Related
+
+- [Deploy on a serverless runtime](./deploy-serverless.mdx) — the same disk story without a container.
+- [Swap in a drop-in for an existing client](../tutorials/swap-in-for-nominatim.mdx) — what the drop-in
+  servers in step 3 answer.
+- [Run the API server](../tutorials/run-the-api-server.mdx) — the `/v1` surface the default command
+  serves.

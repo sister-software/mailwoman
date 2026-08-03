@@ -75,18 +75,28 @@ const sidebars: SidebarsConfig = {
 			label: "How-to guides",
 			// Not a ladder. Each page is one task a reader arrives already wanting, so the order is by
 			// how early in a build the question lands rather than by dependency: get the data clean
-			// (messy input), check it (validate, confidence), move volume (batch), then the surfaces
-			// that sit beside the parse rather than inside it (autocomplete, reverse, annotations).
+			// (messy input, edge kinds), check it (validate, confidence), move volume (batch, records),
+			// then the surfaces that sit beside the parse rather than inside it (autocomplete, reverse,
+			// annotations), then the operational questions that only arrive once something works
+			// (data currency, the two deploy shapes, the agent surfaces, filing a bug).
 			// Every page names its own prerequisites and links the tutorial that establishes them, so
 			// arriving at any one of them cold works.
 			items: [
 				"developers/how-to/handle-messy-input",
+				"developers/how-to/handle-po-boxes-and-edge-kinds",
 				"developers/how-to/validate-addresses",
 				"developers/how-to/tune-confidence-thresholds",
 				"developers/how-to/batch-geocode-at-volume",
+				"developers/how-to/match-messy-records",
 				"developers/how-to/add-autocomplete",
 				"developers/how-to/reverse-geocode",
 				"developers/how-to/use-annotations",
+				"developers/how-to/keep-data-fresh",
+				"developers/how-to/deploy-docker",
+				"developers/how-to/deploy-serverless",
+				"developers/how-to/use-the-mcp-server",
+				"developers/how-to/install-the-claude-code-skill",
+				"developers/how-to/report-a-parsing-bug",
 			],
 		},
 		"developers/status",

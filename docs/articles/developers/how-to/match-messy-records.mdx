@@ -1,0 +1,228 @@
+---
+title: Match messy records to one entity each
+description: Collapse the same organization written four ways into one entity — and read the pair weights, because the shipped threshold is calibrated for a bigger file than yours.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Match messy records to one entity each
+
+**Outcome.** A file where the same organization appears several times with different spellings resolves
+to one entity per organization, and you picked the link threshold from your own data rather than
+accepting a default that was calibrated elsewhere.
+
+The matcher is geocode-first: it resolves every address to a coordinate, blocks on that coordinate, and
+then scores each candidate pair on how much the names and addresses agree. That ordering is what lets it
+link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abbreviation.
+
+## Prerequisites
+
+- The library install and a candidate gazetteer, as in
+  [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx). `$MAILWOMAN_CANDIDATE_DB` points
+  at it in every transcript below.
+- [customers-messy.csv](/examples/customers-messy.csv) — twenty rows, in which five organizations appear
+  two or three times each with different spellings. Thirteen distinct organizations, twenty rows.
+- Per-state rooftop shards, at your data root, for the states in your file. Every transcript below ran
+  against a data root that has them, which is why the geocode tiers in step 2 are `address_point` rather
+  than `admin`. [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) covers pulling
+  one. The entity counts on this page are the same either way — the tier changes the coordinates, not
+  the linking.
+
+## 1. Run it and read the count
+
+```bash
+npx mailwoman registry run customers-messy.csv --infer-mapping \
+  --resolve-db "$MAILWOMAN_CANDIDATE_DB" --out entities.geojson
+```
+
+```
+[resolver] candidate-table backend (demo-parity, population-first): /tmp/mw-fresh-demo/wof/candidate.db
+registry: 20 rows → 20 records (20 geocoded) → 20 entities (38 candidate pairs)
+wrote 20 features → entities.geojson
+```
+
+Twenty rows in, twenty entities out. **Nothing linked at the defaults.** That is the real starting point
+for a file this size, and the rest of this page is about why and what to do.
+
+Note `--resolve-db` in that command. `mailwoman registry` is the one command that does not read
+`$MAILWOMAN_CANDIDATE_DB` on its own — it requires a resolver path from the flag or from
+`$MAILWOMAN_WOF_DB`, and errors without one. Passing the candidate gazetteer through the flag is the
+workaround, and it is what the tutorial does too.
+
+## 2. Confirm blocking is not the problem
+
+Before touching the threshold, check that the pairs were even proposed. A pair the blocker never
+generates can never link, and that failure is silent.
+
+The run reported **38 candidate pairs**, which is the important number in that line. The blocker put
+every record in a metro area into the same block, so all five duplicate groups had their pairs
+generated. The geocodes were rooftop-quality too:
+
+```bash
+jq -r '.features[] | [.properties.organization, .properties.geocodeTier, (.geometry.coordinates|join(","))] | @tsv' entities.geojson
+```
+
+```
+harbor and vine catering	address_point	-77.02925468482408,38.89566505262116
+harbor and vine catering	address_point	-77.02925468482408,38.89566505262116
+harbor and vine catering	address_point	-77.02925468482408,38.89566505262116
+beacon ridge analytics	address_point	-77.02328617926172,38.89698648071389
+beacon ridge analytics	address_point	-77.02328617926172,38.89698648071389
+northgate freight	address_point	-87.63586837920998,41.87865804331466
+northgate freight systems	address_point	-87.63586837920998,41.87865804331466
+```
+
+Three rows spelled three ways landed on the same rooftop point, and the name normalizer had already
+collapsed `Harbor & Vine Catering`, `Harbor and Vine Catering LLC` and `HARBOR & VINE CATERING` to one
+canonical string. Identical name, identical coordinate, and still no link. So it is the scoring, and
+specifically the threshold.
+
+## 3. Read the pair weights
+
+Score two pairs you know the answer for — one true duplicate, one true non-match — and the threshold
+picks itself:
+
+```js
+import { scorePair } from "@mailwoman/match"
+import { buildDefaultModel } from "@mailwoman/registry"
+
+const model = buildDefaultModel({ collapseSpatial: true })
+
+for (const [a, b] of [
+	[0, 1], // Harbor & Vine, two spellings — a true duplicate
+	[3, 4], // Beacon Ridge, two spellings — a true duplicate
+	[0, 3], // Harbor & Vine vs Beacon Ridge — same city, different company
+	[0, 12], // Harbor & Vine vs Tidewater — same city, different company
+]) {
+	const score = scorePair(model, records[a], records[b])
+
+	console.log(
+		`${records[a].id} vs ${records[b].id}  weight ${score.weight.toFixed(2)} bits  ` +
+			score.contributions
+				.filter((c) => c.weight !== 0)
+				.map((c) => `${c.name}=${c.weight.toFixed(2)}`)
+				.join(" ")
+	)
+}
+```
+
+```
+C-2001 vs C-2002  weight -4.64 bits  organization=6.32 spatial=2.32
+C-2004 vs C-2005  weight -4.64 bits  organization=6.32 spatial=2.32
+C-2001 vs C-2004  weight -21.29 bits  organization=-4.26 spatial=-3.74
+C-2001 vs C-2013  weight -21.29 bits  organization=-4.26 spatial=-3.74
+```
+
+The model separates them by **16.65 bits**. It is not confused about which pairs are duplicates. Both
+groups are below zero, and the default link threshold is at or above zero.
+
+The reason is in the arithmetic. A weight is a prior plus the field contributions:
+`-4.64 = prior + 6.32 + 2.32`, so the prior is `-13.28` bits. That prior is `log2(λ / (1 - λ))`, where λ
+is the probability that two records drawn at random are the same entity. On a twenty-row file the seed λ
+is small, so the prior swamps evidence worth 8.6 bits. On a file with real duplicate density the prior
+moves and the defaults land where they were calibrated to.
+
+## 4. Set the threshold from what you measured
+
+Anything between the two observed weights separates them. Halfway is `-13`; use `-15` for margin:
+
+```js
+import { ingestRows, resolveEntities, toGeoJSON } from "@mailwoman/registry"
+
+const records = await ingestRows(rows, mapping, { geocodeAddress })
+const { entities, candidatePairs } = resolveEntities(records, { learnedScorer: false, threshold: -15 })
+
+console.log(`${records.length} records → ${entities.length} entities (${candidatePairs} candidate pairs)`)
+
+for (const entity of entities.filter((e) => e.records.length > 1)) {
+	console.log(`  ${e.records.length}x — ${e.records.map((r) => r.id).join(" ")}`)
+}
+```
+
+```
+20 records → 13 entities (38 candidate pairs)
+  3x — C-2001 C-2002 C-2003
+  2x — C-2004 C-2005
+  3x — C-2006 C-2007 C-2008
+  2x — C-2009 C-2010
+  2x — C-2011 C-2012
+```
+
+Thirteen entities, which is the number of distinct organizations in the file. All five groups merged,
+including the three-way one, and nothing merged that should not have. At `-10` the run gives 14 entities
+— `C-2008`, the row that abbreviates both the company and the street, stays separate. Between `-15` and
+`-20` the answer does not move, which is the sign that the threshold sits inside the gap rather than on
+an edge.
+
+`learnedScorer: false` in that call matters. The bundled gradient-boosted scorer is on by default and
+its output is a logit, not a Fellegi-Sunter weight in bits — so a threshold read off the weights above
+is meaningless against it. It was also trained on US healthcare provider records, which a generic
+customer file is not; its own documentation says to A/B it or turn it off for a different domain.
+
+## 5. Read the entities
+
+`toGeoJSON` writes one feature per entity, with `recordCount`, `cohesion` and the source identifiers:
+
+```bash
+jq -c '.features[] | select(.properties.recordCount > 1)
+       | {org: .properties.organization, n: .properties.recordCount, ids: .properties.sourceIds}' entities.geojson
+```
+
+```
+{"org":"harbor and vine catering","n":3,"ids":["C-2001","C-2002","C-2003"]}
+{"org":"beacon ridge analytics","n":2,"ids":["C-2004","C-2005"]}
+{"org":"ashgrove textiles","n":3,"ids":["C-2006","C-2007","C-2008"]}
+{"org":"northgate freight","n":2,"ids":["C-2009","C-2010"]}
+{"org":"marlowe instruments","n":2,"ids":["C-2011","C-2012"]}
+```
+
+The properties are the matcher's normalized view of your row, not your row. Your own identifier column
+rides in `sourceIds`. And `toGeoJSON` skips an entity with no resolved coordinate, so the feature count
+can be lower than the entity count — compare the two before you treat the file as complete.
+
+## Verify
+
+The check that catches both failure directions at once:
+
+```bash
+jq '[.features[].properties.recordCount] | {entities: length, rows: add}' entities.geojson
+```
+
+```
+{
+  "entities": 13,
+  "rows": 20
+}
+```
+
+`rows` has to equal your input count — every record lands in exactly one entity, so anything else means
+rows were dropped. `entities` moving toward `rows` means the threshold is too strict; collapsing toward
+the number of distinct places means it is too loose.
+
+## Limits
+
+- **The CLI cannot reach the configuration in step 4.** In single-file mode `mailwoman registry run`
+  always leaves the learned scorer on and passes `--threshold` straight through, so the flag is in
+  learned-scorer units. Sweeping it on this file goes from 20 entities to 5 with nothing in between,
+  because the negative thresholds that clear the learned scorer's whole range merge every metro area.
+  Use the library for a small file.
+- **The defaults are conservative, and that is the safer direction.** A missed link leaves two entities
+  where one belonged; a false link fuses two real organizations and is much harder to notice downstream.
+  Take the twenty-out-of-twenty as a prompt to measure rather than as a bug.
+- **Blocking is the silent failure.** Records more than one 0.05° cell apart with no shared address key,
+  phone or email are never compared. Check `candidatePairs` against the number of comparisons you
+  expected before concluding the scorer is wrong.
+- **Every record lands in exactly one entity.** An unlinked record is its own entity of size one, so the
+  record count always adds back to your input size.
+- **Address canonical keys differ across spellings by design.** The three Harbor & Vine rows produce
+  `1275|pennsylvania ave nw|…`, `1275|pennsylvania avenue nw|…` and `1275|pennsylvania ave n w|…`. The
+  exact-key blocking pass will not join them; the geographic pass is what does.
+
+## Related
+
+- [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx) — the ingest and geocode steps
+  this page assumes, including the `--resolve-db` workaround.
+- [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) — getting to the rooftop tier
+  the blocking pass wants.
+- [Tune confidence thresholds](./tune-confidence-thresholds.mdx) — the same measure-then-set discipline,
+  applied to the parser.

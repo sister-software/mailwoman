@@ -1,0 +1,234 @@
+---
+title: Deploy on a serverless runtime
+description: What has to be resident on the instance, what a cold start costs in milliseconds, and which of the two deploy shapes your disk budget allows.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Deploy on a serverless runtime
+
+**Outcome.** You know which of the two deploy shapes fits your platform's disk and memory limits, what a
+cold start costs in each, and how to mount the data root read-only.
+
+Mailwoman is disk-resident. There is no service to call: the model is a file, the gazetteer is a SQLite
+file, and both are opened from the local filesystem. That makes the deploy question a sizing question,
+and the two shapes have very different answers.
+
+## Prerequisites
+
+- A runtime on `linux/x64` with glibc. `onnxruntime-node` ships glibc prebuilds; musl (Alpine) has none,
+  which rules out an Alpine base without building ONNX Runtime yourself.
+- Node.js ≥ 24.18.0.
+- A read path to a data root if you are geocoding. Object storage is not enough on its own — see
+  [Limits](#limits).
+
+Every number below was measured on one host: an AMD Ryzen 9 8945HS, 16 logical cores, 29 GB RAM,
+Node.js 26.2.0, packages installed from npm at 8.6.0. The machine was shared, so read the absolutes as
+one host's figures and the shape as what transfers.
+
+## 1. Pick the shape
+
+Two deploys, and the difference is whether a gazetteer is on the instance.
+
+|                               | Parse-only                                                          | Parse and geocode                                                  |
+| ----------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| npm packages                  | `mailwoman`, `@mailwoman/neural`, `@mailwoman/neural-weights-en-us` | those plus `@mailwoman/resolver`, `@mailwoman/resolver-wof-sqlite` |
+| `node_modules` as installed   | 746 MB                                                              | 746 MB                                                             |
+| `node_modules` after trimming | 303 MB                                                              | 303 MB                                                             |
+| Data root                     | none                                                                | 1.65 GB and up                                                     |
+| Answers                       | components, confidence, a match key                                 | components plus a coordinate                                       |
+
+`node_modules` is the same size for both, which is the first surprise. `@mailwoman/resolver-wof-sqlite`
+adds nothing measurable because the weight is somewhere else entirely.
+
+## 2. Trim `onnxruntime-node`, or do not fit
+
+`onnxruntime-node` is 500 MB of the 746 MB, and most of it is for hardware you do not have:
+
+```bash
+du -sh node_modules/onnxruntime-node/bin/napi-v6/*
+```
+
+```
+75M	node_modules/onnxruntime-node/bin/napi-v6/darwin
+297M	node_modules/onnxruntime-node/bin/napi-v6/linux
+128M	node_modules/onnxruntime-node/bin/napi-v6/win32
+```
+
+Inside the linux directory, `libonnxruntime_providers_cuda.so` alone is 344 MB. CPU inference never
+loads it. Two `rm`s take the tree to a third of its size:
+
+```bash
+rm -rf node_modules/onnxruntime-node/bin/napi-v6/{win32,darwin}
+rm -f node_modules/onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime_providers_{cuda,tensorrt}.so
+```
+
+```
+303M	node_modules
+```
+
+The trimmed tree still parses — the same cold-start script from step 3, run against it:
+
+```
+import 84 ms | load 691 ms | first parse 179 ms | total 953 ms | rss 373 MB
+```
+
+What survives is `libonnxruntime.so.1` (37 MB) and `onnxruntime_binding.node` (389 KB), which is
+everything CPU inference uses. 303 MB still exceeds AWS Lambda's 250 MB unzipped ceiling for a zip
+deploy, so a container image (10 GB) or a mounted layer is the route on that platform. On platforms
+whose limit is a container image size, 303 MB plus 71 MB of weights is comfortable.
+
+## 3. Measure the cold start
+
+The cost that matters on a serverless runtime is the first request on a new instance. Time the three
+phases separately, because only one of them is worth optimizing:
+
+```js
+const t0 = performance.now()
+const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+const imported = performance.now()
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const loaded = performance.now()
+await classifier.parse("1600 Pennsylvania Ave NW, Washington, DC 20500")
+const parsed = performance.now()
+
+console.log(
+	`import ${(imported - t0).toFixed(0)} ms | load ${(loaded - imported).toFixed(0)} ms | ` +
+		`first parse ${(parsed - loaded).toFixed(0)} ms | total ${(parsed - t0).toFixed(0)} ms | ` +
+		`rss ${(process.memoryUsage().rss / 1e6).toFixed(0)} MB`
+)
+```
+
+Five consecutive runs, parse-only:
+
+```
+import 101 ms | load 775 ms | first parse 231 ms | total 1107 ms | rss 374 MB
+import  97 ms | load 762 ms | first parse 177 ms | total 1037 ms | rss 373 MB
+import  97 ms | load 881 ms | first parse 189 ms | total 1167 ms | rss 369 MB
+import 102 ms | load 789 ms | first parse 193 ms | total 1085 ms | rss 407 MB
+import  99 ms | load 844 ms | first parse 195 ms | total 1138 ms | rss 376 MB
+```
+
+Adding the gazetteer and geocoding an address instead of parsing it:
+
+```
+import 191 ms | model 791 ms | open db 1 ms | first geocode 223 ms | total 1207 ms | rss 425 MB
+import 215 ms | model 785 ms | open db 1 ms | first geocode 223 ms | total 1224 ms | rss 425 MB
+import 194 ms | model 732 ms | open db 1 ms | first geocode 216 ms | total 1144 ms | rss 427 MB
+import 198 ms | model 673 ms | open db 1 ms | first geocode 219 ms | total 1091 ms | rss 426 MB
+import 192 ms | model 690 ms | open db 1 ms | first geocode 226 ms | total 1109 ms | rss 427 MB
+```
+
+Three things to take from that.
+
+**Opening the gazetteer costs 1 ms.** A 1.65 GB SQLite file is memory-mapped, not read, so the file's
+size does not appear in the cold start at all. Geocoding adds about 100 ms of cold start over parsing,
+and all of it is the extra module graph, not the database.
+
+**Loading the model is 70% of the cold start and cannot be moved.** It is one ONNX session build over a
+39 MB graph. Warm requests do not pay it, so the lever is instance lifetime, not code.
+
+**Resident set lands near 375 MB parse-only and 425 MB with a resolver.** Size the instance above that
+rather than at it — the parse-only figure moved between 369 MB and 407 MB across five runs on an idle
+box.
+
+## 4. Build the classifier once, outside the handler
+
+Everything above is per-instance, not per-request, which only holds if the handler does not rebuild it.
+Build at module scope so a warm invocation reuses the session and the open database:
+
+```js
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import { geocodeAddress } from "mailwoman/geocode-core"
+
+// Module scope: paid once per instance, reused by every warm invocation.
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const lookup = new WOFCandidateTableLookup({ databasePath: process.env.MAILWOMAN_CANDIDATE_DB })
+const resolver = createWOFResolver(lookup)
+
+export async function handler(event) {
+	const result = await geocodeAddress(event.address, { classifier, resolver, defaultCountry: "US" })
+
+	return { statusCode: 200, body: JSON.stringify(result) }
+}
+```
+
+Do not close the lookup in the handler. The instance owns it, and closing it turns every later warm
+request into an error.
+
+## 5. Mount the data root read-only
+
+Every runtime lookup opens its database with `readOnly: true`, the FTS admin backend included
+(`resolver-wof-sqlite/lookup.ts`). A read-only mount is the correct shape for both backends, and the
+only writable open is an explicit FTS index build, which is not a serve path.
+
+Set `$MAILWOMAN_DATA_ROOT` to the mount point and `$MAILWOMAN_CANDIDATE_DB` to the file. The candidate
+gazetteer is resolved from the environment variable, not from a convention path, so exporting the root
+alone is not enough:
+
+```bash
+MAILWOMAN_DATA_ROOT=/mnt/mailwoman-data
+MAILWOMAN_CANDIDATE_DB=/mnt/mailwoman-data/wof/candidate.db
+```
+
+Both are read on each call rather than cached at import, so setting them after the module graph loads
+still works.
+
+Two mount details that bite. If `wof/candidate.db` is a symlink on the host, point
+`$MAILWOMAN_CANDIDATE_DB` at the real file — an absolute-path symlink dangles inside a container. And
+the per-state shards are WAL-mode: their `-wal` and `-shm` siblings have to be in the same mount, or
+that address falls back to a coarser tier rather than failing.
+
+## Verify
+
+On a deployed instance, confirm the cold path completes and report which artifacts it found:
+
+```bash
+mailwoman doctor --json
+```
+
+```
+{
+  "checks": [
+    {
+      "id": "weights",
+      "label": "Model weights (en-us)",
+      "core": true,
+      "status": "ok",
+      "detail": "package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB"
+    },
+    {
+      "id": "onnxruntime",
+      "label": "ONNX runtime",
+      "core": true,
+      "status": "ok",
+      "detail": "onnxruntime-node loadable"
+    }
+  ]
+}
+```
+
+The `onnxruntime` check is the one that catches a trim that went too far.
+
+## Limits
+
+- **The data root has to be a filesystem, not an object store.** SQLite needs `pread` on a local file
+  descriptor. S3 behind a userspace mount works and is slow; a network filesystem with real
+  random reads works. There is no HTTP-range gazetteer client in the Node runtime today.
+- **250 MB unzipped is not reachable.** The trimmed tree is 303 MB before weights. On AWS Lambda that
+  means container images or a layer, not a zip.
+- **One instance is one CPU-bound worker.** Inference blocks the JavaScript thread, so a single instance
+  serves one geocode at a time no matter how deep the request queue gets. Scale with instances.
+  [Geocode a large file at volume](./batch-geocode-at-volume.mdx) measures this.
+- **There is no GPU path in Node.** WebGPU exists only in the browser runtime
+  (`@mailwoman/neural-web`); removing the CUDA provider above costs nothing because nothing loads it.
+- **Cold start is about 1.1 s and the model load is 70% of it.** If your platform charges for
+  initialization time, budget for it rather than trying to shrink it.
+
+## Related
+
+- [Deploy with Docker](./deploy-docker.mdx) — the same disk story with the image already assembled.
+- [Keep your data current](./keep-data-fresh.mdx) — how to refresh the mounted artifacts.
+- [Geocode a large file at volume](./batch-geocode-at-volume.mdx) — why throughput comes from processes.

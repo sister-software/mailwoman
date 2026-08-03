@@ -1,0 +1,251 @@
+---
+title: Use the MCP server from an agent
+description: Wire the stdio MCP server into Claude Code or any other client, and know which of its nine tools need data on disk.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Use the MCP server from an agent
+
+**Outcome.** An MCP client launches `mailwoman-mcp` as a subprocess and can call its tools, and you know
+which of them work with no data on disk and which need a gazetteer.
+
+`@mailwoman/mcp` is not a service. It speaks JSON-RPC over stdin and stdout, so the client starts it,
+talks to it, and stops it. There is no port to open and nothing to deploy.
+
+## Prerequisites
+
+- Node.js ≥ 24.18.0 and an MCP client. Claude Code is the one configured below; the wiring is the same
+  for any client that launches a stdio server.
+- A candidate gazetteer and `$MAILWOMAN_CANDIDATE_DB` pointing at it, if you want the four model-backed
+  tools. [Your first ten minutes](../get-started/ten-minute-trial.mdx) pulls one.
+- `@mailwoman/mcp` 8.7.0 or later. Earlier releases did not declare the weights package, so a standalone
+  install could not load the model.
+
+## 1. Install it
+
+```bash
+npm install -g @mailwoman/mcp
+```
+
+The package brings its own model weights (39.4 MB) and the resolver. Nothing else is needed to start it.
+
+## 2. Wire it into a client
+
+Claude Code reads `.mcp.json` in the project root:
+
+```json
+{
+	"mcpServers": {
+		"mailwoman": {
+			"command": "mailwoman-mcp",
+			"env": {
+				"MAILWOMAN_DATA_ROOT": "/path/to/mailwoman-data",
+				"MAILWOMAN_CANDIDATE_DB": "/path/to/mailwoman-data/wof/candidate.db"
+			}
+		}
+	}
+}
+```
+
+`$MAILWOMAN_CANDIDATE_DB` has to be set explicitly. This server resolves the gazetteer from the
+environment variable only — it does not fall back to the conventional `<data-root>/wof/candidate.db`
+path the way the Photon and Nominatim drop-ins do. Setting only the data root leaves the model-backed
+tools without a resolver.
+
+Add `"args": ["--poi-db", "/path/to/poi.db"]` if you have the POI layer. Without it, `mailwoman_poi_search`
+still extracts the query's intent — the subject and the spatial anchor — and returns that rather than
+executing a lookup.
+
+## 3. Confirm the round trip
+
+You do not need an agent to test this. The transport is newline-delimited JSON-RPC, so 40 lines of Node
+is a complete client:
+
+```js
+import { spawn } from "node:child_process"
+
+const child = spawn(process.argv[2], process.argv.slice(3), { stdio: ["pipe", "pipe", "inherit"] })
+const pending = new Map()
+let buffer = ""
+let nextID = 0
+
+child.stdout.on("data", (chunk) => {
+	buffer += chunk
+
+	for (let i; (i = buffer.indexOf("\n")) >= 0; buffer = buffer.slice(i + 1)) {
+		const message = JSON.parse(buffer.slice(0, i))
+
+		pending.get(message.id)?.(message.result)
+		pending.delete(message.id)
+	}
+})
+
+const send = (method, params) =>
+	new Promise((resolve) => {
+		const id = ++nextID
+
+		pending.set(id, resolve)
+		child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n")
+	})
+
+await send("initialize", {
+	protocolVersion: "2024-11-05",
+	capabilities: {},
+	clientInfo: { name: "probe", version: "0" },
+})
+child.stdin.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n")
+
+const { tools } = await send("tools/list", {})
+console.log(tools.map((t) => t.name).join("\n"))
+
+const call = await send("tools/call", {
+	name: "mailwoman_geocode",
+	arguments: { text: "1600 Pennsylvania Ave NW, Washington, DC 20500" },
+})
+console.log(call.isError ? `ERROR: ${call.content[0].text}` : call.content[0].text)
+
+child.kill()
+```
+
+```bash
+MAILWOMAN_CANDIDATE_DB=/path/to/wof/candidate.db node probe.mjs mailwoman-mcp
+```
+
+```
+mailwoman_parse
+mailwoman_geocode
+mailwoman_poi_search
+mailwoman_overpass_export
+mailwoman_layer_manifest
+mailwoman_bdc_filing_landscape
+mailwoman_plausibility_check
+mailwoman_filer_lookup
+mailwoman_filer_family
+[resolver] candidate-table backend (demo-parity, population-first): /path/to/wof/candidate.db
+{
+  "input": "1600 Pennsylvania Ave NW, Washington, DC 20500",
+  "lat": 38.904831,
+  "lon": -77.016216,
+  "resolution_tier": "admin",
+  "uncertainty_m": null,
+  "locality": "Washington",
+  "region": "DC",
+  "postcode": "20500",
+  "house_number": "1600",
+  "street": "Pennsylvania Ave NW",
+  "venue": null,
+  "dependent_locality": null,
+  "countryCode": "US",
+  "hierarchy": [
+    {
+      "tag": "locality",
+      "value": "Washington",
+      "name": "Washington",
+      "lat": 38.904831,
+      "lon": -77.016216,
+      "placeID": "wof:85931779"
+    },
+    {
+      "tag": "region",
+      "value": "DC",
+      "name": "District of Columbia",
+      "lat": 38.904772,
+      "lon": -77.016289,
+      "placeID": "wof:85688741"
+    }
+  ],
+  "candidates": [
+    {
+      "name": "Washington",
+      "tag": "locality",
+      "lat": 38.904831,
+      "lon": -77.016216,
+      "countryCode": "US",
+      "placeID": "wof:85931779"
+    }
+  ]
+}
+```
+
+That transcript is from a standalone `npm install @mailwoman/mcp` in an empty directory, not from this
+repository, so it is what a stranger gets. The `[resolver]` line arrives on stderr — the client's log,
+not the protocol stream. The tier is `admin` because that data root holds only the candidate gazetteer;
+with per-state shards mounted the same call reaches `address_point`.
+
+## 4. Know which tools need what
+
+Nine tools, and they fall into three groups by what has to be on disk.
+
+| Tool                             | Needs the model and a gazetteer      |
+| -------------------------------- | ------------------------------------ |
+| `mailwoman_parse`                | Yes                                  |
+| `mailwoman_geocode`              | Yes                                  |
+| `mailwoman_poi_search`           | Yes                                  |
+| `mailwoman_overpass_export`      | Yes                                  |
+| `mailwoman_layer_manifest`       | No — reads a layer database you name |
+| `mailwoman_bdc_filing_landscape` | No — reads a `bdc.db` you name       |
+| `mailwoman_filer_lookup`         | No — reads a `filer.db` you name     |
+| `mailwoman_filer_family`         | No — reads a `filer.db` you name     |
+| `mailwoman_plausibility_check`   | Only when it geocodes                |
+
+`mailwoman_overpass_export` is in the first group even though it never executes a query. It renders a
+POI query as OverpassQL, and finding the subject and the anchor to render means parsing the input first.
+
+The model and the gazetteer load on the first call that needs them, not at startup. So a client with no
+data still connects and lists all nine tools; the failure arrives inside the first call:
+
+```
+✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.
+
+  Fastest path (worldwide resolution, population-first ranking, ~1.65 GB):
+    mailwoman data pull candidate
+
+  Then point $MAILWOMAN_CANDIDATE_DB at the pulled file and re-run:
+    export MAILWOMAN_CANDIDATE_DB=/tmp/mw-bare-1/wof/candidate.db
+
+  Or point at your own:
+    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)
+    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)
+
+  Docs: https://mailwoman.sister.software/docs/developers/how-to/use-the-mcp-server
+
+  Needs it: mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export
+  Works without it: mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family
+```
+
+It arrives as a tool error with `isError: true`, not as a crash, so the agent reads it and can act on it.
+That last pair of lines is there because an agent in the middle of a task needs to know what it can still
+do, not only what broke.
+
+## Verify
+
+Call one tool that needs no data at all. Every server answers this one:
+
+```bash
+node probe.mjs mailwoman-mcp
+```
+
+If `tools/list` returns the nine names, the client is wired correctly, whatever the state of your data
+root.
+
+## Limits
+
+- **stdio only.** There is no HTTP or SSE transport. A client that cannot launch a subprocess cannot use
+  this server.
+- **The `en-US` weights are the only ones loaded.** The locale is fixed in the server; a French address
+  parses with the `en-US` model rather than the `fr-FR` overlay.
+- **One process, one geocode at a time.** Inference blocks the JavaScript thread, so a client issuing
+  parallel tool calls serializes behind the first one.
+- **The POI, BDC and filer tools need layer databases that are not published.** `mailwoman data pull poi`
+  provides the POI layer; `bdc.db` and `filer.db` are built locally. A missing file becomes a friendly
+  error naming the layer, never a raw SQLite message.
+
+## Related
+
+- [Install the Claude Code skill](./install-the-claude-code-skill.mdx) — the other half of the agent
+  story: what an agent should know about using Mailwoman at all.
+- [Run the API server](../tutorials/run-the-api-server.mdx) — the HTTP surface, for clients that want a
+  port.
+- [Keep your data current](./keep-data-fresh.mdx) — pulling the gazetteer the four model-backed tools
+  need.

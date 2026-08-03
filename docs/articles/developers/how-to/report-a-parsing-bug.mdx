@@ -1,0 +1,170 @@
+---
+title: Report a parsing bug
+description: Capture the three artifacts that turn a wrong parse into a test case, and rule out the two things that look like bugs and are not.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Report a parsing bug
+
+**Outcome.** You have a report that can be turned into a failing test without a follow-up question, and
+you have already ruled out the two configurations that produce a wrong-looking result on purpose.
+
+## Prerequisites
+
+- The exact input string that broke, copied rather than retyped. Whitespace and punctuation are the bug
+  about half the time, and retyping normalizes them away.
+
+## 1. Rule out the two false alarms
+
+Both of these look like parser bugs and are not. Checking takes one command each.
+
+**A missing coordinate on a parse-only install.** `mailwoman parse` never resolves anything; it returns
+components. If you expected a latitude/longitude, you wanted `mailwoman geocode` and a gazetteer.
+
+**A coordinate in the wrong country from an ambiguous input.** A bare postcode matches several countries'
+formats, and the resolver picks by rank. `mailwoman geocode --default-country US "10001"` and
+`mailwoman geocode "10001"` disagree, and neither is a parser failure.
+[Handle PO boxes and other edge kinds](./handle-po-boxes-and-edge-kinds.mdx) has the measurements.
+
+## 2. Capture the pipeline trace
+
+`--debug` is the flag. There is no `--trace`.
+
+```bash
+mailwoman parse --debug "1275 Pennsylvania Ave NW, Washington, DC 20004"
+```
+
+It emits one JSON object with eight keys: `input`, `normalized`, `locale`, `kind`, `path`, `queryShape`,
+`timing` and `tree`. The whole object is worth attaching, but four fields answer most first questions,
+so lead with them:
+
+```bash
+mailwoman parse --debug "$ADDRESS" | jq '{input, path, kind: {kind: .kind.kind, confidence: .kind.confidence}, timing}'
+```
+
+```
+{
+  "input": "1275 Pennsylvania Ave NW, Washington, DC 20004",
+  "path": "full",
+  "kind": {
+    "kind": "structured_address",
+    "confidence": 0.9
+  },
+  "timing": {
+    "normalize": 0.405547999999726,
+    "place-country": 1.315497999999934,
+    "query-shape": 0.7962270000002718,
+    "locale-gate": 0.16185200000018085,
+    "kind-classifier": 0.5810759999999391,
+    "phrase-grouper": 1.3690379999998186,
+    "token-classify": 230.3101270000002,
+    "grouper-audit": 0.27730899999960457
+  }
+}
+```
+
+`path` and `kind` are the two that explain the result before anyone reads the tree. `path:
+"fast-path"` means the model never ran — the input was classified confidently enough to synthesize a
+node directly, so a wrong answer there is a classifier bug rather than a model one. A surprising `kind`
+explains a surprising set of components.
+
+The `normalized` block matters when the input carries unusual characters: it lists the transforms that
+were applied before the model saw anything, so it distinguishes "the model read it wrong" from "the
+model never saw what you typed".
+
+## 3. Capture the environment
+
+```bash
+mailwoman doctor --json
+```
+
+```
+{
+  "checks": [
+    {
+      "id": "weights",
+      "label": "Model weights (en-us)",
+      "core": true,
+      "status": "ok",
+      "detail": "package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB"
+    },
+    {
+      "id": "node-version",
+      "label": "Node runtime",
+      "core": true,
+      "status": "ok",
+      "detail": "node v26.2.0 (engines: >=24.18.0)"
+    },
+    {
+      "id": "onnxruntime",
+      "label": "ONNX runtime",
+      "core": true,
+      "status": "ok",
+      "detail": "onnxruntime-node loadable"
+    },
+    {
+      "id": "data-root",
+      "label": "Data root",
+      "core": false,
+      "status": "ok",
+      "detail": "/tmp/mw-fresh-demo ($MAILWOMAN_DATA_ROOT) — exists, writable"
+    }
+  ]
+}
+```
+
+That is most of a reproduction: which model version, which Node build, which data layers are present.
+The weights line in particular pins the model, and parses are not comparable across model versions.
+
+## 4. Add a link to the demo
+
+The [demo](/demo) runs the same parser and resolver in a browser tab against the published model, and it
+reads the address out of the query string. `/demo?q=1275+Pennsylvania+Ave+NW,+Washington+DC` opens with
+your input already in the box.
+
+Paste that link into the issue. It costs you nothing and it removes the install step on the other side.
+If the demo parses it correctly and your install does not, that difference is itself the finding — the
+demo pins a published model version, so you have found a regression or a configuration gap.
+
+## Verify
+
+Before you file, confirm the report has all four pieces:
+
+```bash
+{
+  echo "## Input";      printf '%s\n' "$ADDRESS"
+  echo "## Parse";      mailwoman parse --debug "$ADDRESS"
+  echo "## Doctor";     mailwoman doctor --json
+} > mailwoman-bug-report.md
+```
+
+Then add the two things no command can produce: what you expected, and what you got.
+
+## Where to file
+
+[github.com/sister-software/mailwoman/issues](https://github.com/sister-software/mailwoman/issues).
+[Support](../support.mdx) has the full list of what makes a report actionable, plus the separate route
+for a security issue — which is email, never a public issue.
+
+Send the address that broke rather than a description of the class of address that broke. A concrete
+string becomes a test case; a description becomes a conversation.
+
+## Limits
+
+- **A wrong coordinate may be a data gap rather than a parser bug**, and the two get fixed by different
+  people. If the components are right and the coordinate is wrong, say so in the title — that routes it
+  to the gazetteer rather than the model.
+- **`--debug` prints the input back.** If the address is one you cannot paste into a public issue, say so
+  and a private route will be arranged; do not sanitize the string, because the sanitized version tends
+  to parse fine.
+- **Locale matters and defaults to `en-US`.** A French address parsed with the `en-US` model is expected
+  to be worse. Name the locale you passed, or that you passed none.
+
+## Related
+
+- [Support](../support.mdx) — every route in, including security.
+- [Handle PO boxes and other edge kinds](./handle-po-boxes-and-edge-kinds.mdx) — the inputs that look
+  broken and are documented.
+- [Install the Claude Code skill](./install-the-claude-code-skill.mdx) — this recipe, taught to a coding
+  agent.

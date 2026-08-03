@@ -1,0 +1,252 @@
+---
+title: Handle PO boxes and other edge kinds
+description: What the kind classifier does with a PO box, an intersection or a bare postcode — which of them parse, which resolve, and which resolve to the wrong country.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Handle PO boxes and other edge kinds
+
+**Outcome.** You can tell from a parse which shape of input you were handed, and you know which of those
+shapes produce a coordinate you can use and which do not.
+
+Not every location string is a street address. Stage 2.5 of the pipeline sorts the input into one of
+eight kinds before the model runs, and the kind is on every result. Reading it is cheaper than
+discovering the same thing from a coordinate that landed in the wrong hemisphere.
+
+## Prerequisites
+
+- A working parse, as in
+  [Install Mailwoman and parse your first address](../get-started/install-and-first-parse.mdx).
+- A candidate gazetteer for the geocode transcripts. `$MAILWOMAN_CANDIDATE_DB` points at one in every
+  transcript below.
+- [Read everything a parse returns](../tutorials/understand-a-parse.mdx) introduces the `--debug` output
+  this page reads.
+
+## 1. Read the kind
+
+`--debug` carries the classifier's verdict, its confidence and what it considered:
+
+```bash
+mailwoman parse --debug "PO Box 1234, San Francisco, CA 94119" | jq -c '{path, kind}'
+```
+
+```
+{"path":"full","kind":{"kind":"po_box","confidence":0.95,"alternatives":[{"kind":"structured_address","confidence":0.9},{"kind":"vague","confidence":0.3}]}}
+```
+
+Eight kinds exist, and the classifier always returns the whole ranked list rather than one answer:
+
+| Kind                 | What it means                                                          |
+| -------------------- | ---------------------------------------------------------------------- |
+| `structured_address` | A conventional postal address, several segments                        |
+| `postcode_only`      | A postcode and little else                                             |
+| `locality_only`      | A short place name and nothing else                                    |
+| `po_box`             | A post office box or its regional equivalent                           |
+| `intersection`       | Two streets joined by `and`, `&`, `@` or `at`                          |
+| `landmark`           | A named venue, or a relative description like `behind the gas station` |
+| `poi_query`          | A category or brand plus a spatial anchor, when a POI lexicon is wired |
+| `vague`              | The floor, always present in `alternatives` at 0.3                     |
+
+The verdict is a possibility, not a constraint. `vague` at 0.3 is unconditional, so the second entry in
+`alternatives` is the one worth reading.
+
+## 2. PO boxes: they parse, they do not resolve to the box
+
+```bash
+mailwoman parse "PO Box 1234, San Francisco, CA 94119"
+```
+
+```
+{
+  "region": "CA",
+  "locality": "San Francisco",
+  "po_box": "PO Box 1234",
+  "postcode": "94119"
+}
+```
+
+The whole phrase is one `po_box` component, leader and number together. That is the
+convention, and it holds for the regional forms too: `BP` in France, `Apartado` in Spain, `GPO Box` and
+`Locked Bag` in Australia. The tag never nests under `street`; it sits beside the locality.
+
+There is no PO box resolver, and there cannot be a useful one: a box is a slot in a post office, and
+every box at that office would share a coordinate. So a geocode of a PO box resolves whatever _else_ is
+in the string:
+
+```bash
+mailwoman geocode "PO Box 1234, San Francisco, CA" | jq -c '{lat, lon, resolution_tier, locality}'
+```
+
+```
+{"lat":37.759715,"lon":-122.693976,"resolution_tier":"admin","locality":"San Francisco"}
+```
+
+`admin` tier, San Francisco's centroid. That is the correct answer to the question the string can
+answer. Treat `resolution_tier: "admin"` on a `po_box` parse as "the city is right, the point
+is not a delivery point", and do not route a driver to it.
+
+## 3. Intersections: two tags, no crossing point
+
+```bash
+mailwoman parse "5th and Main"
+```
+
+```
+{
+  "intersection_a": "5th",
+  "intersection_b": "Main"
+}
+```
+
+Two components, one per street. The formatter joins them back with an ampersand when it renders. But
+there is no intersection resolver either — nothing computes where the two streets cross — so the
+coordinate again comes from whatever place name is present:
+
+```bash
+mailwoman geocode "Corner of Broadway and 42nd Street, New York, NY" | jq -c '{lat, lon, resolution_tier, locality}'
+```
+
+```
+{"lat":40.694457,"lon":-73.93045,"resolution_tier":"admin","locality":"New York"}
+```
+
+Watch what the classifier does with that same string, though:
+
+```bash
+mailwoman parse --debug "Corner of Broadway and 42nd Street, New York, NY" | jq -c '{kind: .kind.kind, confidence: .kind.confidence}'
+```
+
+```
+{"kind":"structured_address","confidence":0.9}
+```
+
+`structured_address`, not `intersection`. The intersection rule scores a flat 0.85 regardless of
+evidence, and the structured-address rule scores 0.9 for anything with two or more segments — so adding
+a city and a state outranks it. Bare, the same phrase classifies as an intersection:
+
+```bash
+mailwoman parse --debug "5th and Main" | jq -c '{kind: .kind.kind, confidence: .kind.confidence}'
+```
+
+```
+{"kind":"intersection","confidence":0.85}
+```
+
+The components come out right either way, which is what matters. If you are routing on the kind, check
+`alternatives` rather than only the top pick — `intersection` is sitting there at 0.85.
+
+## 4. Bare postcodes: resolvable, and ambiguous across countries
+
+A postcode alone is the one edge kind that resolves to a coordinate of its own. It can also take a fast
+path that skips the model entirely, when the shape is unambiguous:
+
+```bash
+mailwoman parse --debug "10118-1234" | jq -c '{path, kind: .kind.kind, confidence: .kind.confidence}'
+mailwoman parse --debug "10118" | jq -c '{path, kind: .kind.kind, confidence: .kind.confidence}'
+```
+
+```
+{"path":"fast-path","kind":"postcode_only","confidence":1}
+{"path":"full","kind":"postcode_only","confidence":0.7}
+```
+
+The ZIP+4 shape matches one country's format, so confidence reaches 1 and the pipeline synthesizes a
+single `postcode` node without running the classifier. Bare `10118` matches the US, French and German
+shapes at once, so confidence sits at 0.7 and the full pipeline runs.
+
+That ambiguity is not academic. Five bare postcodes, geocoded with no country scope:
+
+| Input      | Resolves to                       |
+| ---------- | --------------------------------- |
+| `20500`    | `43.066, -2.492` — Spain          |
+| `10001`    | `54.910, 8.311` — Germany         |
+| `02139`    | `38.604, -2.166` — Spain          |
+| `75001`    | `48.844, 9.367` — Germany         |
+| `SW1A 1AA` | `51.501, -0.142` — United Kingdom |
+
+Four of the five are US postcodes that a US reader would expect and none of them resolved to the US. The
+alphanumeric one resolved correctly, because its shape belongs to one country.
+
+**Scope a bare postcode by country.** Doing so fixes some of them:
+
+```bash
+mailwoman geocode --default-country US "10001" | jq -c '{lat, lon, postcode, countryCode}'
+```
+
+```
+{"lat":40.750634,"lon":-73.997176,"postcode":"10001","countryCode":"US"}
+```
+
+Correct, Manhattan. But not all of them:
+
+```bash
+mailwoman geocode --default-country US "20500" | jq -c '{lat, lon, postcode, countryCode}'
+```
+
+```
+{"lat":null,"lon":null,"postcode":"20500","countryCode":null}
+```
+
+Null. The candidate gazetteer's US postcode coverage is partial, so scoping to the right country turns a
+wrong answer into no answer. That is the better failure — a null is checkable and a Spanish coordinate is
+not — but plan for it: a bare US ZIP Code is not a reliable geocoding input on its own. Adding a city
+makes it one.
+
+## 5. Landmarks
+
+```bash
+mailwoman parse --debug "Empire State Building" | jq -c '{kind: .kind.kind, confidence: .kind.confidence}'
+mailwoman parse "Empire State Building"
+```
+
+```
+{"kind":"landmark","confidence":0.88}
+{"locality":"Empire State Building"}
+```
+
+The kind is right and the component is not. There is no venue tier in this configuration, so the name is
+tagged `locality` and matched against place names — which finds a place called something similar
+somewhere. Do not send venue names down the geocoder expecting a venue. `poi_query` and a wired POI layer
+are the path for that; see [Use annotations](./use-annotations.mdx) for what the POI layer provides.
+
+## Verify
+
+One command tells you what shape you were handed and whether the pipeline short-circuited:
+
+```bash
+mailwoman parse --debug "$ADDRESS" | jq '{path, kind: .kind.kind, confidence: .kind.confidence, alternatives: [.kind.alternatives[] | .kind]}'
+```
+
+```
+{
+  "path": "full",
+  "kind": "po_box",
+  "confidence": 0.95,
+  "alternatives": ["structured_address", "vague"]
+}
+```
+
+## Limits
+
+- **A kind is advisory almost everywhere.** It changes the pipeline in exactly three places: it can
+  short-circuit the model for a high-confidence `postcode_only` or `locality_only`, it routes a
+  `poi_query` to the POI stage, and it selects the input register. Otherwise it rides along on the
+  result.
+- **`po_box` and `intersection` switch the parser to the formatted register**, which turns the gazetteer
+  evidence channels off for that parse. That is the right call for a record-shaped input and the wrong
+  one for a search box. Override it with `--input-mode fragmented` if your users are typing.
+- **Parse accuracy and geocode accuracy are separate numbers here.** `po_box` scores 90.9 and
+  `intersection` 100 on the labeling task in the shipped eval ledger. Neither number says anything about
+  a coordinate, because neither kind has a resolver.
+- **`poi_query` needs a lexicon.** The default classifier is wired with the POI taxonomy, but the
+  category has to be one the taxonomy knows.
+
+## Related
+
+- [Read everything a parse returns](../tutorials/understand-a-parse.mdx) — the rest of the `--debug`
+  output.
+- [Handle messy input](./handle-messy-input.mdx) — defects inside an address, rather than a different
+  shape of input.
+- [Validate an address before you use it](./validate-addresses.mdx) — rejecting the ones that will not
+  resolve, before they reach a geocoder.

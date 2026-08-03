@@ -55,12 +55,13 @@ The container's own `$MAILWOMAN_DATA_ROOT` (`/data`, set by the image) is where 
 file — `/data/wof/candidate.db`, exactly the path the read-only mount above expects. This one run needs
 the volume **without** `:ro`; every later `docker run` that only reads the gazetteer keeps it.
 
-### Why read-only mounts need the candidate backend
+### Read-only mounts
 
-The **candidate** gazetteer (`MAILWOMAN_CANDIDATE_DB` / `wof/candidate.db`) opens SQLite read-only, so
-it works on a `:ro` mount — this is the recommended, worldwide, population-first backend. The FTS admin
-backend (`MAILWOMAN_WOF_DB`) opens its shard **read-write**, so it fails on a `:ro` mount with `unable
-to open database file`; mount read-write (drop `:ro`) if you specifically need the FTS backend. Two
+Both backends open SQLite read-only, so `:ro` is the right mount for either. The **candidate** gazetteer
+(`MAILWOMAN_CANDIDATE_DB` / `wof/candidate.db`) is the recommended one — worldwide, population-first. The
+FTS admin backend (`MAILWOMAN_WOF_DB`) opens writable only when an FTS index build is explicitly
+requested (`buildFTS`), which is never a serve path; this file previously said the FTS backend always
+opened read-write, which stopped being true in `resolver-wof-sqlite/lookup.ts` on 2026-07-20. Two
 gotchas worth naming:
 
 - If `wof/candidate.db` is a **symlink**, set `MAILWOMAN_CANDIDATE_DB` to the real file path inside the

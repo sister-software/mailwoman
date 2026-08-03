@@ -1,0 +1,129 @@
+---
+title: Install the Claude Code skill
+description: Drop a skill file into your project so a coding agent runs doctor first, wires the gazetteer correctly, and files a bug report you can act on.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Install the Claude Code skill
+
+**Outcome.** Your project carries a skill file that teaches a coding agent how Mailwoman is set up, so it
+stops guessing at the parts that are easy to get wrong.
+
+The two things agents reliably get wrong here are the same two things people get wrong: they debug a
+parse failure that `doctor` would have explained in one line, and they treat the raw confidence score as
+calibrated. The skill front-loads both.
+
+## Prerequisites
+
+- `mailwoman` 8.7.0 or later installed, globally or in the project.
+- A project that reads `.claude/skills/`. Claude Code does; the file is plain Markdown with YAML
+  frontmatter, so another agent runner can read it too.
+
+## 1. Install it
+
+Run this from the project root:
+
+```bash
+npx mailwoman skill install
+```
+
+```
+✓ mailwoman skill: installed at /tmp/mw-skill-aVjb/.claude/skills/mailwoman
+PASS (1/1 checks)
+```
+
+One file lands:
+
+```bash
+find . -type f
+```
+
+```
+./.claude/skills/mailwoman/SKILL.md
+```
+
+Commit it. It is 103 lines of Markdown and it belongs in the repository, next to the other things that
+tell a contributor how this project works.
+
+## 2. Put it somewhere else, if you need to
+
+`--dest` writes to a different root and leaves the working directory untouched:
+
+```bash
+npx mailwoman skill install --dest ../shared-agent-config
+```
+
+```
+✓ mailwoman skill: installed at /tmp/mw-skill-dest-iV0v/.claude/skills/mailwoman
+PASS (1/1 checks)
+```
+
+## 3. Re-run it after an upgrade
+
+The command is a clean-slate reinstall, not a merge. It removes the destination skill directory and
+copies the shipped one in, so a file that an older release shipped and a newer one dropped does not
+linger:
+
+```bash
+npx mailwoman skill install
+```
+
+```
+✓ mailwoman skill: installed at /tmp/mw-skill-aVjb/.claude/skills/mailwoman
+PASS (1/1 checks)
+```
+
+Exit code 0, same as the first run. Re-run it whenever you upgrade `mailwoman`.
+
+## 4. Know what it teaches
+
+Six sections, and each one exists because it is a place agents go wrong:
+
+- **Run doctor first.** What the seven checks are, that exit code 0 means the two core checks passed, and
+  that a red mark on a data layer is a reported gap with a `fix:` line rather than a failure.
+- **Parse.** The CLI form and the library form, the tree shape, and a pointer to the `ComponentTag` type
+  in `@mailwoman/core/types` for the tag vocabulary. It points at the shipped type rather than at a
+  documentation URL, because the skill installs into projects that may be offline.
+- **Geocode.** `mailwoman data pull candidate` plus the `$MAILWOMAN_CANDIDATE_DB` export as the standard
+  setup, and the measured difference the candidate backend makes against the default.
+- **Filing a bug.** The five things a report needs, covered on
+  [Report a parsing bug](./report-a-parsing-bug.mdx).
+- **Installing this skill in a new project.** So an agent that has read it once can set up the next
+  project.
+
+One correction it carries that is worth knowing about yourself: **confidence is the model's raw score
+and is not calibrated by default.** Wire `createCalibrator` from `@mailwoman/core/decoder` before routing
+on it. [Tune confidence thresholds](./tune-confidence-thresholds.mdx) is the long version.
+
+## Verify
+
+Read the frontmatter back. The `description` is what a client matches against to decide whether to load
+the skill, so an empty or truncated file is the failure mode worth checking for:
+
+```bash
+head -4 .claude/skills/mailwoman/SKILL.md
+```
+
+```
+---
+name: mailwoman
+description: Use when a project has installed mailwoman (or is deciding whether to) and you need to parse, geocode, or validate postal addresses — diagnosing a broken install, wiring the CLI or the library, setting up the gazetteer, or filing a precise bug report.
+---
+```
+
+## Limits
+
+- **The skill is not the MCP server.** It teaches an agent how to use Mailwoman from the shell and from
+  code. It gives the agent no tools. If you want the agent to parse and geocode directly, add
+  [the MCP server](./use-the-mcp-server.mdx) as well — they compose, and neither replaces the other.
+- **It is a snapshot of the shipped release.** The skill file is copied out of the installed package, so
+  it describes the version you have. Re-run the installer after an upgrade.
+- **Nothing keeps a project's copy current.** There is no check that fails when the committed skill drifts
+  from the installed package. Re-running the installer is the whole mechanism.
+
+## Related
+
+- [Use the MCP server from an agent](./use-the-mcp-server.mdx) — tools, rather than instructions.
+- [Report a parsing bug](./report-a-parsing-bug.mdx) — the recipe the skill's bug section teaches.
+- [Support](../support.mdx) — where a report goes.
