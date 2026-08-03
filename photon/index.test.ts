@@ -387,7 +387,7 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	const body = await res.text()
 	expect(body).toContain("@mailwoman/photon")
 	expect(body).toContain("/api?q=") // a clickable example query
-	expect(body).toContain("switching-from-photon") // docs pointer
+	expect(body).toContain("what-mailwoman-is") // docs pointer
 })
 
 // Pinning tests — the `legacyQuery` adapter's express-shaped observable contract.

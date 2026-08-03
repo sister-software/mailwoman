@@ -6,7 +6,7 @@ resolver — and there's plenty to do at every layer: the model, the resolver, t
 CLI, the docs, the data pipelines.
 
 This guide covers the general flow. If you're touching the **model** (training,
-shards, evals), read [`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx)
+shards, evals), read [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
 first — model work has its own gates and discipline.
 
 ## Before you start
@@ -184,7 +184,7 @@ node mailwoman/out/cli.js --help
 
 - [`AGENTS.md`](./AGENTS.md) — architecture, workspace conventions, the release
   pipeline, and the load-bearing gotchas.
-- [`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx)
+- [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
   — the model-work runbook: which evals gate a change, how to add a shard.
 - [`docs/articles/concepts/what-mailwoman-is.mdx`](./docs/articles/concepts/what-mailwoman-is.mdx)
   — what the system _is_, if you're new to the project.

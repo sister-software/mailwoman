@@ -1,0 +1,83 @@
+---
+title: Pricing
+description: Free under the AGPL, $250 a month for the commercial license, from $15,000 a year for enterprise work. No per-address fees.
+role: landing
+audience: teams
+---
+
+# Pricing
+
+Mailwoman runs where your code runs, so there is no meter. You either need a release from the
+AGPL's source-sharing condition or you do not, and the price does not move when your volume does.
+
+## Open source — free
+
+AGPL-3.0. That covers the parser, the geocoder, the resolvers, the published model weights and the
+drop-in API servers. Install it or fork it, and run it in production.
+
+The AGPL attaches one condition. If you distribute software built on Mailwoman, or run it as a
+network service that other people use, those users are entitled to your corresponding source under
+the same license. Plenty of teams are fine with that. If yours is not, the next tier is what you
+want.
+
+## Commercial license — $250 a month
+
+Or $2,400 a year, which works out to $200 a month. Per legal entity.
+
+This releases you from the AGPL's source-sharing condition, so you can build closed-source products
+and services on Mailwoman and keep your source private. One subscription covers one company: every
+developer, every environment, and every product you ship or host yourself. There are no seats to
+count and no per-address fees. You also get a direct line to the engineers who built it.
+
+The tier is sized for smaller companies, under 250 employees and under $10M in annual revenue. Past
+either line, see Enterprise.
+
+## Enterprise — from $15,000 a year
+
+Scope agreed with you. This is the tier for address stock that looks nothing like a public corpus:
+legacy CRM exports, records typed by field crews, or a country and format the open model has never
+been graded on. The work is scoped with you, and it has covered a model fine-tuned on your own
+addresses, an acceptance suite built from your data with the numbers reported to you before anything
+ships, and support with named contacts and an agreed response time.
+
+Every enterprise agreement includes the commercial license, so the release from the AGPL condition
+comes with it at any company size. This is also the tier for companies past the commercial license's
+size fence.
+
+If Mailwoman ships inside something you license to other people — a CRM, a billing platform, a
+device — that is redistribution, and the commercial subscription above does not cover it. Ask about
+OEM terms: a flat annual fee per product, banded by reach, with no revenue share and no exclusivity.
+
+_All prices are in US dollars and exclude VAT and sales taxes._
+
+## What a flat price looks like
+
+Take two million addresses a month, which is a mid-sized logistics back office reprocessing its book
+nightly. Priced per request at an illustrative $1 per 1,000, that is $2,000 a month, and it becomes
+$4,000 the month your traffic doubles. The commercial license is $250 a month at two million
+addresses and at twenty million, because the software runs on your machines and the volume is not
+something we can see. We are not being generous about this; there is no meter to read.
+
+## What we commit to
+
+**Your rate is fixed at signup.** If the published price rises later, it rises for new
+subscriptions. Yours stays where it started for as long as you keep it active.
+
+**Published releases stay published.** Every AGPL release already shipped is licensed to you
+permanently. That follows from the license itself, and we could not withdraw a grant we have already
+made.
+
+**We do not count your lookups.** There is no meter and nothing to true up at renewal.
+
+## What we do not commit to
+
+**A data refresh cadence.** The gazetteer and layer artifacts are rebuilt when coverage changes or
+an ingest bug is fixed, not on a schedule, and no schedule is committed. Each artifact is sealed and
+dated, so you can always tell which vintage you are running.
+
+**A license for the data.** The code license and the data license are separate questions. Ours is
+the code. The reference data comes from open sources with their own terms, and some of those follow
+the data into your product — read
+[Security and compliance](./about/security-and-compliance.mdx) before you ship.
+
+[Email us about a license →](mailto:teffen@sister.software?subject=Mailwoman%20licensing)

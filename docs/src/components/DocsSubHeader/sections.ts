@@ -16,16 +16,11 @@ export interface DocsSectionDef {
 }
 
 /**
- * Top-level documentation sections, in the order they appear in the sub-header.
+ * Top-level documentation sections, in the order they appear in the sub-header. Kept in lockstep with the sidebar ids
+ * in `sidebars.ts` — an id here with no sidebar renders nothing (`SectionLink` returns `null` when the target sidebar
+ * has no entry link), so a door is added to both files at once or to neither.
  */
 export const DOCS_SECTIONS: readonly DocsSectionDef[] = [
-	{ id: "startHere", label: "Start here" },
-	{ id: "use", label: "Use Mailwoman" },
-	{ id: "understand", label: "Understand" },
-	{ id: "reference", label: "Reference" },
-	{ id: "contribute", label: "Contribute" },
-	{ id: "archive", label: "Archive" },
-	{ id: "evals", label: "Eval reports" },
-	{ id: "retrospectives", label: "Retrospectives" },
-	{ id: "legal", label: "Legal" },
+	{ id: "developers", label: "Developers" },
+	{ id: "about", label: "About" },
 ]

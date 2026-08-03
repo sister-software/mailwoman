@@ -110,3 +110,22 @@ html {
 .glossary-term-wrapper a {
 	border-bottom-color: var(--ifm-color-emphasis-500);
 }
+
+/* Navbar call to action (docusaurus.config.ts's `className: "navbar__cta"`).
+   Infima gives navbar items a flat link treatment, so the demo — the one thing
+   we want a first-time visitor to click — reads identically to "Pricing". Pill
+   it in the brand magenta, which is --ifm-color-primary in both themes, and use
+   white ink: the magenta is dark enough for white text on either background. */
+.navbar__item.navbar__cta,
+.navbar-sidebar .menu__link.navbar__cta {
+	background: var(--ifm-color-primary);
+	color: var(--ifm-color-white);
+	border-radius: 999px;
+	padding: 0.3rem 0.9rem;
+	font-weight: 600;
+}
+.navbar__item.navbar__cta:hover,
+.navbar-sidebar .menu__link.navbar__cta:hover {
+	background: var(--ifm-color-primary-dark);
+	color: var(--ifm-color-white);
+}

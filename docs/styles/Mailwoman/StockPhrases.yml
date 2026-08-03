@@ -1,0 +1,42 @@
+## Mailwoman house style: banned stock phrases.
+##
+## Vale existence rule. These are the "AI-slop" / consultant-deck constructions
+## the house voice rejects outright — see feedback-plain-words-no-insider-jargon
+## and feedback-sister-software-voice in project memory. `source of truth` is
+## legitimate as Docusaurus frontmatter (`source-of-truth: true`); frontmatter
+## is stripped by Vale before linting, and the `(^source-of-truth:.*)` entry in
+## .vale.ini's TokenIgnores is a defensive backstop for that case.
+##
+## The bottom four tokens are the ease-claim cluster the docs-reorg field
+## survey turned up in marketing and quickstart copy ("Creating a new map is
+## as simple as making a POST request"; "drag and drop your files onto the
+## map, and Felt handles the rest"). A superlative is allowed here only when
+## the same sentence pair cashes it out in a checkable action — see
+## docs/engineering/writing-system.md §Register by role — and these four
+## never do. `effortless` overlaps BannedWords' `effortlessly`, so text
+## carrying the adverb trips both rules; that is duplication, not a false
+## positive.
+extends: existence
+message: "Cut the stock phrase '%s' — say the specific claim instead."
+level: error
+ignorecase: true
+tokens:
+  - not just
+  - "it's not just"
+  - more than just
+  - "isn't just"
+  - less about .* more about
+  - "here's the thing"
+  - the uncomfortable truth
+  - what most people miss
+  - belt and suspenders
+  - load-bearing
+  - blast radius
+  - escape hatch
+  - north star
+  - first-class citizen
+  - source of truth
+  - as simple as
+  - effortless
+  - handles the rest
+  - just works

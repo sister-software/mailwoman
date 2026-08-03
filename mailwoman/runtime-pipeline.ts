@@ -11,7 +11,7 @@
  *   classifier (rule-based), phrase grouper (rule-based). Only the neural classifier and resolver
  *   need explicit injection.
  *
- *   See `docs/articles/plan/reference/STAGES.md` for the full contract.
+ *   See `docs/engineering/reference/STAGES.md` for the full contract.
  */
 
 import { readFileSync } from "node:fs"

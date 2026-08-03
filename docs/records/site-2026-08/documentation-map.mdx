@@ -1,0 +1,29 @@
+---
+title: Documentation map
+description: What each section of the docs is for, and which ones you can treat as authoritative.
+role: concept
+audience: product-reader
+source-of-truth: self
+review-by: 2026-10-14
+---
+
+# Documentation map
+
+The switcher at the top of every docs page has six sections. Here's what each one is for.
+
+- **Start here** — the front door: [install, your first parse](./getting-started.mdx), [current status](./status.mdx), [releases](./releases.mdx), and [how to contribute](./contributing.md).
+- **Use Mailwoman** — [task-oriented recipes](./recipes/index.md): [batch geocoding](./recipes/batch-geocoding.md), [CSV ingest](./recipes/parallel-csv-ingest.md), [timezone lookups](./recipes/timezones.md), and the rest.
+- **Understand** — [the why and how](./understanding/README.mdx): the problem Mailwoman solves, why address parsing is hard, [the alternatives](./understanding/alternatives/the-case-for-simple-geocoders.mdx), our approach, and [concept deep dives](./concepts/README.mdx).
+- **Reference** — the contracts a build depends on: [Current scope & roadmap](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx), [the `ComponentTag` schema](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx), [the runtime pipeline stages](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx), and the other lookup docs kept in sync with the code.
+- **Contribute** — runbooks for [working on the model](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx), the training data, and [operations](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/OPERATIONS.mdx), if you're extending Mailwoman itself.
+- **Legal** — [licensing](./licensing/index.md), [data provenance](./licensing/data-provenance.md), and [privacy](./licensing/privacy.md).
+
+Dated plans, phase-by-phase build history, eval reports, and retrospectives no longer live on the
+public site — they're parked in the repo under `docs/records/` (git history holds their
+provenance), browsable on GitHub.
+
+## What to trust
+
+Only **Reference** is kept current with the code. **Start here**, **Use Mailwoman**, and
+**Understand** teach you how to use and reason about Mailwoman, and if something there conflicts
+with Reference, Reference wins.

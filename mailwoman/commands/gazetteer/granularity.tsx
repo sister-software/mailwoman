@@ -29,7 +29,7 @@ import { DEFAULT_COVERAGE_FLOOR, bottomsOutAt, buildGranularityLadder } from "..
 const OptionsSchema = zod.object({
 	out: zod
 		.string()
-		.default("docs/articles/evals/coverage/gazetteer-depth-scorecard.md")
+		.default("docs/records/evals/coverage/gazetteer-depth-scorecard.md")
 		.describe("Output path for the markdown scorecard"),
 	source: zod.string().optional().describe("WOF admin DB. Default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db"),
 	floor: zod

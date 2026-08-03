@@ -19,7 +19,7 @@
  *       titlecase).
  *
  *   The anchor is membership CLUES, not verdicts — the model decides every tag (model-first, see
- *   docs/articles/plan/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
+ *   docs/engineering/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
  *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
  *
  *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).

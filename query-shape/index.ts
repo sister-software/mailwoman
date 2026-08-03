@@ -9,8 +9,8 @@
  *   bounded segments, known-format regex hits, and whitespace pattern. Microseconds-cheap, no ML,
  *   no runtime dependencies.
  *
- *   See `docs/articles/plan/reference/QUERY_SHAPE.md` for the design rationale and
- *   `docs/articles/plan/reference/STAGES.md` for how this fits into the runtime pipeline.
+ *   See `docs/engineering/reference/QUERY_SHAPE.md` for the design rationale and
+ *   `docs/engineering/reference/STAGES.md` for how this fits into the runtime pipeline.
  */
 
 export { classifyCodepoint, classifyToken, foldInputClass } from "./character-class.ts"

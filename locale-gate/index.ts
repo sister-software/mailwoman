@@ -12,7 +12,7 @@
  *   Bitter-lesson-safe: only universal structural cues (script, postcode patterns), no place-name
  *   dictionaries. Trained character-level model is a v0.6.0 follow-on.
  *
- *   See `docs/articles/plan/reference/STAGES.md` § Stage 2 for the contract.
+ *   See `docs/engineering/reference/STAGES.md` § Stage 2 for the contract.
  */
 
 export { detectLocale, detectLocaleSync } from "./detect.ts"

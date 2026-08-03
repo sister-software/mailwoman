@@ -275,8 +275,6 @@ export interface GazetteerObservation {
 	probed: string[]
 }
 
-const CANDIDATE_URL = "https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db"
-
 /**
  * Check #4 — the admin gazetteer. Optional: parse runs without it; only geocode/resolve need it.
  */
@@ -310,7 +308,10 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.Missing,
 		detail: `no candidate.db or WOF shard found (probed ${o.probed.length} path${o.probed.length === 1 ? "" : "s"})`,
-		fix: `curl -fSL ${CANDIDATE_URL} -o <data-root>/wof/candidate.db   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)`,
+		// `mailwoman data pull candidate` (see `data-bundles.ts`) writes <data-root>/wof/candidate.db and prints
+		// this same export line on success — repeated here so `doctor` alone (before ever running `data pull`)
+		// still tells a reader the whole fix, not just the download half of it.
+		fix: `mailwoman data pull candidate   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)`,
 	}
 }
 
@@ -330,14 +331,12 @@ export interface POIObservation {
 	error?: string
 }
 
-const POI_URL = "https://public.sister.software/mailwoman/poi/2026-07-20a/poi.db"
-
 /**
  * Check #5 — the POI layer. Optional: only POI-query execution needs it.
  */
 export function checkPOI(o: POIObservation): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false }
-	const fix = `mailwoman gazetteer build poi   (or: curl -fSL ${POI_URL} -o ${o.path})`
+	const fix = "mailwoman gazetteer build poi   (or: mailwoman data pull poi)"
 
 	if (!o.exists) {
 		return { ...base, status: CheckStatus.Missing, detail: `${o.path} not found`, fix }

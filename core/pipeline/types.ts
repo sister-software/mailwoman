@@ -10,7 +10,7 @@
  *   query-shape / resolver packages while still composing them at runtime when callers wire them
  *   up.
  *
- *   See `docs/articles/plan/reference/STAGES.md` for the full contract this implements.
+ *   See `docs/engineering/reference/STAGES.md` for the full contract this implements.
  */
 
 import type { AddressTree } from "../decoder/types.ts"

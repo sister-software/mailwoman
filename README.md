@@ -20,7 +20,7 @@
 <p align="center">
   <a href="https://mailwoman.sister.software/demo"><strong>Live demo</strong></a> ·
   <a href="https://mailwoman.sister.software">Docs & blog</a> ·
-  <a href="https://mailwoman.sister.software/docs/getting-started/">Getting started</a>
+  <a href="https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse/">Getting started</a>
 </p>
 
 <p align="center">
@@ -152,7 +152,7 @@ The confidence numbers the parser returns are calibrated probabilities, not heur
 scores: when it says `0.88`, it is right about 88% of the time.
 
 For the longer version, read [What Mailwoman
-Is](https://mailwoman.sister.software/docs/concepts/what-mailwoman-is/).
+Is](https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is/).
 
 ## Locale coverage
 
@@ -165,7 +165,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
 The [browser demo](https://mailwoman.sister.software/demo) carries the same coverage. Full
-receipts live in the [scope declaration](./docs/articles/plan/SCOPE.mdx) and the [eval
+receipts live in the [scope declaration](./docs/engineering/SCOPE.mdx) and the [eval
 reports](./docs/articles/evals/).
 
 ## Points of interest, for agents
@@ -213,9 +213,9 @@ Mailwoman is dual-licensed:
 - **A commercial license** for closed-source/commercial use without the AGPL's source-sharing
   obligation. Contact `teffen@sister.software`.
 
-Release notes live in the [release matrix](https://mailwoman.sister.software/docs/releases/);
+Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases);
 what we do and don't collect is stated plainly in the
-[privacy policy](https://mailwoman.sister.software/docs/licensing/privacy/); funders and sponsors
+[privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md); funders and sponsors
 can read our machine-readable [funding.json](https://mailwoman.sister.software/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
 
@@ -259,7 +259,7 @@ the published package interact with the neural pipeline exclusively.
 
 Fork and open a pull request against `main` on a feature branch. Please include unit tests.
 The model-work runbook (which evals gate a change, how to add a shard) is
-[`docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx`](./docs/articles/plan/CONTRIBUTING_MODEL_WORK.mdx).
+[`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
 
 ## Acknowledgements
 

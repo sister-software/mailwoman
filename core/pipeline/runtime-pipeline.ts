@@ -9,7 +9,7 @@
  *   injected; the coordinator handles composition, timing, fast-path routing, and graceful
  *   degradation when stages are absent.
  *
- *   Implementation contract per `docs/articles/plan/reference/STAGES.md`.
+ *   Implementation contract per `docs/engineering/reference/STAGES.md`.
  */
 
 import type { AddressNode, AddressTree } from "../decoder/types.ts"

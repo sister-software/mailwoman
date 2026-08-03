@@ -37,7 +37,7 @@ A metric you can satisfy without being right will let you be wrong forever, chee
 
 ## The same week, the same lesson
 
-This landed the same week we did something that sounds unrelated and turns out to be the identical problem: we calibrated the parser's confidence. Every span comes out stamped with a `conf=` number, and we'd never checked whether a 0.9 actually meant right-nine-times-in-ten. It didn't, until we fit a correction that made it honest (the [calibration writeup](/docs/concepts/confidence-calibration) has the details, including the weather-forecaster version of the story).
+This landed the same week we did something that sounds unrelated and turns out to be the identical problem: we calibrated the parser's confidence. Every span comes out stamped with a `conf=` number, and we'd never checked whether a 0.9 actually meant right-nine-times-in-ten. It didn't, until we fit a correction that made it honest (the [calibration writeup](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/concepts/confidence-calibration.mdx) has the details, including the weather-forecaster version of the story).
 
 Both are the same realization wearing different hats. A geocoder reports numbers about itself constantly: how confident it is in a tag, how well it scored on a benchmark. Those numbers are worthless decoration until you've checked that they mean what they say. A confidence that isn't calibrated is a vibe with a decimal point. A benchmark you can game is a way to feel good while shipping the wrong Berlin.
 

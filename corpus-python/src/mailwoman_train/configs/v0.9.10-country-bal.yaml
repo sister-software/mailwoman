@@ -3,7 +3,7 @@
 # the tag; the night-9 49-F1/23%-precision over-fire was a SEPARATE bad shard). So this fills a void,
 # the same way `unit` did — but the corpus is built to AVOID re-creating the over-fire, and the lever
 # is MODEL-FIRST (no deterministic override; the gazetteer informs the model, never substitutes —
-# see docs/articles/plan/reference/closed-vocab-fields-model-first.mdx).
+# see docs/engineering/reference/closed-vocab-fields-model-first.mdx).
 #
 # ONE variable vs v4.1.0 (v0.9.7-unit-v3): the BALANCED country shard is overlaid on the SHIPPED
 # unit base (v0.4.5-unit-v2 → v0.4.10-country-bal). NO affix (not shipped). NO anchor feature yet
@@ -63,7 +63,7 @@ data:
     # code-as-region negatives (CA/GA/IN/MA/PA/AL) + breadth. Single variable vs v4.1.0 (NO affix).
     # Class-weight B/I-country HELD at 2.0 below — the shipped model already had 2.0 and country was
     # still 0%, so the gap was DATA, not weighting. Bump to 3-4 + add the soft anchor only if the gate
-    # shows long-tail recall lagging. See docs/articles/plan/reference/closed-vocab-fields-model-first.mdx.
+    # shows long-tail recall lagging. See docs/engineering/reference/closed-vocab-fields-model-first.mdx.
     synth-country: 2.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

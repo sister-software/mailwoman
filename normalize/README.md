@@ -49,7 +49,7 @@ identityMap(length: number): OffsetMap
 raw string → normalize → query-shape → locale-gate → kind-classifier → phrase-grouper → ...
 ```
 
-Stage 1 in the [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/). No runtime dependencies.
+Stage 1 in the [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx). No runtime dependencies.
 
 ## Design
 
@@ -60,7 +60,7 @@ Stage 1 in the [Staged Pipeline Contract](https://mailwoman.sister.software/arti
 ## Related
 
 - [`@mailwoman/query-shape`](../query-shape) — Stage 1.5, structural priors that consume the normalized output
-- [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/)
+- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 - [Tokenization concepts](https://mailwoman.sister.software/articles/concepts/tokenization/)
 
 ## License

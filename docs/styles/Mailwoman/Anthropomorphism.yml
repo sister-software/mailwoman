@@ -1,0 +1,12 @@
+## Mailwoman house style: don't anthropomorphize the system.
+##
+## Vale existence rule (warning, not error — this is a style nudge, not a
+## banned-word hard stop). The parser/model/decoder/resolver/pipeline doesn't
+## think, believe, want, know, decide, try, or give up: it assigns scores,
+## returns spans, or emits components. Say which.
+extends: existence
+message: "'%s' anthropomorphizes the system — say what it assigns, scores, or returns instead."
+level: warning
+ignorecase: true
+tokens:
+  - (parser|model|decoder|resolver|pipeline) (thinks|believes|wants|knows|decides to|tries to|gives up)

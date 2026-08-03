@@ -1,0 +1,54 @@
+---
+title: Mission
+description: Why the engine is open source, why the money comes from data and licensing, and what we will not do.
+role: landing
+audience: everyone
+---
+
+# Mission
+
+Addresses are infrastructure. Working out where one is should cost about what a lookup costs, and it
+should not require anybody's permission. Mailwoman exists to make that true in software you can hold
+in your hand.
+
+## Why the engine is open
+
+The parser, the geocoder, the resolvers, the drop-in servers and the published model weights are
+AGPL-3.0. You can read every line, fork it, and run it in production without asking us. The AGPL
+attaches one condition, and it is worth stating plainly: if you distribute software built on
+Mailwoman, or run it as a network service other people use, those users are entitled to your
+corresponding source under the same license. Teams that cannot work that way buy the
+[commercial license](../pricing.mdx), which releases them from it.
+
+Open source resets what a market charges for. When good editors became free, the paid layer moved to
+the things an editor cannot do by itself. We think address parsing belongs in the free layer, and we
+are willing to be the ones who put it there.
+
+## Why we charge for data and licensing rather than for calls
+
+Building the engine is a one-time cost. Keeping the data current is not: streets get renamed,
+postcodes get reissued, buildings get numbered, and a gazetteer that was right last year is wrong
+this year in ways nobody announces. That recurring work is what a subscription pays for, alongside
+the license release for companies that need one.
+
+So the price does not move with your volume. A signup form that re-parses on every keystroke makes
+thousands of calls per user; in your own process those are function calls, and the invoice does not
+notice them. We could not read a meter across your machines even if we wanted to, because the
+software runs on them and never reports back.
+
+## What we will not do
+
+- **Put a key on the engine.** The open release is the whole engine, not a limited edition of it.
+- **Instrument you.** No telemetry, no analytics, no usage ping. This is checkable rather than
+  promised: see [Security and compliance](./security-and-compliance.mdx).
+- **Withdraw what we published.** Every AGPL release already shipped stays licensed to you
+  permanently. That follows from the license, and we could not take back a grant already made.
+
+## Who pays for it
+
+Customers do. Subscriptions and enterprise work fund the engineering, which means the people we
+answer to are the people using the software. No advertising, no sale of data, and no harvesting of
+queries to train models — the deployment model puts your queries out of our reach in the first
+place.
+
+[See what it costs →](../pricing.mdx)

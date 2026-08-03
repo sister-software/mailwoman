@@ -168,10 +168,10 @@ describe("gazetteerCheck (optional)", () => {
 		expect(c.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
 	})
 
-	it("missing with the download URL + env-set hint when nothing found", () => {
+	it("missing with the data-pull + env-set hint when nothing found", () => {
 		const c = gazetteerCheck({ probed: ["/a", "/b"] })
 		expect(c.status).toBe(CheckStatus.Missing)
-		expect(c.fix).toContain("public.sister.software/mailwoman/gazetteer")
+		expect(c.fix).toContain("mailwoman data pull candidate")
 		expect(c.fix).toContain("export MAILWOMAN_CANDIDATE_DB=")
 		expect(c.detail).toContain("2 paths")
 	})
@@ -194,7 +194,7 @@ describe("checkPOI (optional)", () => {
 		const c = checkPOI({ path: "/poi/poi.db", exists: false })
 		expect(c.status).toBe(CheckStatus.Missing)
 		expect(c.fix).toContain("mailwoman gazetteer build poi")
-		expect(c.fix).toContain("poi/2026-07-20a")
+		expect(c.fix).toContain("mailwoman data pull poi")
 	})
 
 	it("degraded when present but the manifest is unreadable", () => {

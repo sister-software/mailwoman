@@ -17,7 +17,7 @@
 # remaining misses are ALL recognition-limited (Eswatini, Timor-Leste, Bhutan, multi-word, leading
 # position) — the model cannot recognize a surface it saw ~3 times, which is exactly the lexicon's
 # job. The clue INFORMS (the homograph bit says "context is critical here"); the model decides.
-# See docs/articles/plan/reference/closed-vocab-fields-model-first.mdx + the knowledge ladder.
+# See docs/engineering/reference/closed-vocab-fields-model-first.mdx + the knowledge ladder.
 #
 # PRE-REGISTERED GATE (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54):
 #   - country RECALL up vs v0.9.11's 48.1 (target: the long-tail/multi-word/leading misses recover;

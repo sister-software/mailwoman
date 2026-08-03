@@ -10,7 +10,7 @@
  *   possibilities (alternatives) alongside the top pick so the coordinator can fall back when the
  *   winning kind isn't actionable.
  *
- *   See `docs/articles/plan/reference/STAGES.md` § Stage 2.5 for the contract.
+ *   See `docs/engineering/reference/STAGES.md` § Stage 2.5 for the contract.
  */
 
 export { classifyKind, classifyKindSync, createKindClassifier } from "./classify.ts"
