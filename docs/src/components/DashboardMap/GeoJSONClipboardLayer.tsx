@@ -6,26 +6,33 @@
 
 import { ResourceError } from "@mailwoman/core/errors"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import type { Feature, FeatureCollection } from "geojson"
+import type { GeoFeature, GeoFeatureCollection, GeometryLiteral } from "@mailwoman/spatial"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 import React, { memo, useCallback, useEffect, useRef, useState } from "react"
 import { Layer, Source, useMap } from "react-map-gl/maplibre"
 
 /**
+ * Pasted GeoJSON arrives from outside the app, so its properties are whatever the author put there.
+ */
+type ClipboardFeature = GeoFeature<GeometryLiteral, Record<string, unknown>>
+
+type ClipboardFeatureCollection = GeoFeatureCollection<GeometryLiteral, Record<string, unknown>>
+
+/**
  * Renders GeoJSON pasted into the map, for inspecting a feature collection without a round trip.
  */
 export const GeoJSONClipboardLayer: React.FC = memo(() => {
-	const [featureCollections, setSources] = useState<FeatureCollection[]>([])
+	const [featureCollections, setSources] = useState<ClipboardFeatureCollection[]>([])
 
-	const featureCollectionGeometryTypes = useRef<WeakMap<FeatureCollection, Set<Feature["geometry"]["type"]>>>(
+	const featureCollectionGeometryTypes = useRef<WeakMap<ClipboardFeatureCollection, Set<GeometryLiteral["type"]>>>(
 		new WeakMap()
 	)
 
 	const map = useMap()
 
-	const appendGeoJSON = useCallback((geoJSON: Feature | FeatureCollection) => {
-		let featureCollection: FeatureCollection
+	const appendGeoJSON = useCallback((geoJSON: ClipboardFeature | ClipboardFeatureCollection) => {
+		let featureCollection: ClipboardFeatureCollection
 
 		if (Array.isArray(geoJSON)) {
 			featureCollection = {
@@ -44,7 +51,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 		}
 
 		if (featureCollectionGeometryTypes.current) {
-			const geometryTypes = new Set<Feature["geometry"]["type"]>()
+			const geometryTypes = new Set<GeometryLiteral["type"]>()
 
 			for (const feature of featureCollection.features) {
 				geometryTypes.add(feature.geometry.type)
@@ -84,7 +91,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 				return
 			}
 
-			const possibleJSON = tryParsingJSON<Feature | FeatureCollection>(data)
+			const possibleJSON = tryParsingJSON<ClipboardFeature | ClipboardFeatureCollection>(data)
 
 			if (!possibleJSON) {
 				console.log("Clipboard doesn't appear to be GeoJSON")
@@ -134,7 +141,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 			for (const file of dataTransfer.files) {
 				const data = await file.text()
 
-				const possibleJSON = tryParsingJSON<Feature | FeatureCollection>(data)
+				const possibleJSON = tryParsingJSON<ClipboardFeature | ClipboardFeatureCollection>(data)
 
 				if (!possibleJSON) continue
 
@@ -164,7 +171,7 @@ export const GeoJSONClipboardLayer: React.FC = memo(() => {
 			{featureCollections.map((featureCollection, featureCollectionIdx) => {
 				return (
 					<React.Fragment key={featureCollectionIdx}>
-						<Source type="geojson" data={featureCollection} id={`clipboard-${featureCollectionIdx}`} />
+						<Source data={featureCollection} id={`clipboard-${featureCollectionIdx}`} type="geojson" />
 						<Layer
 							filter={["==", "$type", "Point"]}
 							key={`clipboard-${featureCollectionIdx}-point`}

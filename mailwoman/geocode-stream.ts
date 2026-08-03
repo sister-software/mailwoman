@@ -26,6 +26,13 @@
  * there — 4 workers ≈ baseline, 6 ≈ no gain — because the shared DB + memory bandwidth is the ceiling, not
  * the core count. So the default is small, and more is usually worse. Sweep it for your data/box rather
  * than reaching for `availableParallelism()`.
+ *
+ * **Threads are the only lever, and `parallelMap` is the whole pool.** `onnxruntime-node`'s `session.run()`
+ * blocks the JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous —
+ * so concurrency *within* one runtime measures 1.00× flat from 1 to 16 (`plan/reference/performance.mdx`).
+ * A separate runtime per row is the only thing that buys anything, which is what a worker is. That also
+ * bounds what a richer pool implementation could be worth here: the scarce resource is DB and memory
+ * bandwidth at a concurrency of ~2, not task-dispatch machinery.
  */
 
 import { availableParallelism } from "node:os"

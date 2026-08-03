@@ -11,7 +11,7 @@ import {
 	isAlpha2LanguageCode,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
-import type { Feature, Geometry } from "geojson"
+import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
 
 import type { WhosOnFirstPlacetype } from "./definition.ts"
 
@@ -55,7 +55,10 @@ export type WOFLanguageProperties = Partial<Record<LanguageSpecificKey, string |
 
 export type WOFProperties = WOFBaseProperties & WOFLanguageProperties
 
-export type WOFFeature = Feature<Geometry, WOFProperties>
+/**
+ * A single record from the Who's On First GeoJSON distribution.
+ */
+export type WOFFeature = GeoFeature<GeometryLiteral, WOFProperties>
 
 type LocalizedPlacetypePropMap = Map<WOFNameKind, string>
 
