@@ -139,11 +139,16 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		}
 	}
 
-	// @mailwoman/neural/browser — browser entry that excludes onnxruntime-node.
+	// @mailwoman/neural browser-side subpaths. Package `exports` already routes these correctly for a
+	// production build; the aliases point at SOURCE so `yarn start` transpiles them inline and
+	// hot-reloads, instead of serving whatever `neural/out/` was last compiled (the same staleness
+	// trap the core sub-entrypoint aliases document below).
 	const neuralDir = resolveWorkspaceDir("@mailwoman/neural")
 
 	if (neuralDir) {
-		aliases["@mailwoman/neural/browser"] = resolveWorkspaceFile(neuralDir, "browser")
+		for (const sub of ["browser", "web-onnx-runner", "web-loader"]) {
+			aliases[`@mailwoman/neural/${sub}`] = resolveWorkspaceFile(neuralDir, sub)
+		}
 	}
 
 	// @mailwoman/core sub-entrypoints (transitive deps from neural / resolver).

@@ -20,16 +20,17 @@
 import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 
-import { MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural"
-import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
+import { NeuralAddressClassifier } from "./classifier.ts"
+import { MailwomanTokenizer } from "./tokenizer.ts"
 import { WebONNXRunner } from "./web-onnx-runner.ts"
+import { readLabelsFromModelCard, resolveWeights } from "./weights.ts"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
 // package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
-// the unit suite under neural/test/.
+// `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
 function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPath?: string } | null {
 	try {
 		const r = resolveWeights({})

@@ -78,7 +78,6 @@
 		{ "path": "./mailwoman/tsconfig.test.json" },
 		{ "path": "./match/tsconfig.test.json" },
 		{ "path": "./mcp/tsconfig.test.json" },
-		{ "path": "./neural-web/tsconfig.test.json" },
 		{ "path": "./neural/tsconfig.test.json" },
 		{ "path": "./nominatim/tsconfig.test.json" },
 		{ "path": "./normalize/tsconfig.test.json" },

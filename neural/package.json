@@ -77,6 +77,16 @@
 			"node": "./onnx-runner.ts",
 			"default": "./out/onnx-runner.js"
 		},
+		"./web-onnx-runner": {
+			"node": "./web-onnx-runner.ts",
+			"default": "./out/web-onnx-runner.js",
+			"types": "./out/web-onnx-runner.d.ts"
+		},
+		"./web-loader": {
+			"node": "./web-loader.ts",
+			"default": "./out/web-loader.js",
+			"types": "./out/web-loader.d.ts"
+		},
 		"./weights": {
 			"node": "./weights.ts",
 			"default": "./out/weights.js",
@@ -94,7 +104,10 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/locale-gate": "workspace:*",
+		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"onnxruntime-node": "^1.26.0"
+		"onnxruntime-node": "^1.26.0",
+		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
 	}
 }

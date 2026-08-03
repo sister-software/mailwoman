@@ -1,6 +1,12 @@
 {
 	// Non-emitting companion to ./tsconfig.json — see ../tsconfig.test-base.json for why it exists.
 	"extends": ["./tsconfig.json", "../tsconfig.test-base.json"],
+	"compilerOptions": {
+		// The web-loader tests stub browser fetch (RequestInfo, Response), which the build project does
+		// not need — web-loader.ts is dual-target and its node path uses Buffer. Only the tests are
+		// browser-only.
+		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+	},
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"exclude": ["./out/**/*"],
 	"references": [{ "path": "./tsconfig.json" }]

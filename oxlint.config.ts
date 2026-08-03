@@ -106,6 +106,8 @@ const BROWSER_REACHABLE_NEURAL_FILES = [
 	"neural/pair-index-resolver.ts",
 	"neural/placetype-pair-prior.ts",
 	"neural/soft-features.ts",
+	"neural/web-onnx-runner.ts",
+	"neural/web-loader.ts",
 ]
 
 /**

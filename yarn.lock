@@ -4788,11 +4788,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-web@workspace:neural-web"
   dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/neural": "workspace:*"
-    "@mailwoman/query-shape": "workspace:*"
-    onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
   languageName: unknown
   linkType: soft
 
@@ -4870,8 +4866,11 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/locale-gate": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/sentencepiece-wasm": "workspace:*"
     onnxruntime-node: "npm:^1.26.0"
+    onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
   languageName: unknown
   linkType: soft
 
