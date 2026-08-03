@@ -69,7 +69,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"kysely": "^0.29.4",
-		"spliterator": "^4.0.0"
+		"spliterator": "^5.0.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

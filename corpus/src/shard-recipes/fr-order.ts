@@ -76,7 +76,7 @@ interface FrTuple {
  * never has to be held in memory. Only keeps rows with a house_number (the shard's core signal) and a postcode
  * (required for reversed-order rendering to be meaningful).
  */
-async function readTuples(limit: number): Promise<FrTuple[]> {
+function readTuples(limit: number): FrTuple[] {
 	const maxLines = Math.max(limit * 8, 40_000) + 1
 
 	const r = spawnSync("bash", ["-c", `unzip -p "${SOURCE.zip}" "${SOURCE.csv}" | head -n ${maxLines}`], {
@@ -93,7 +93,7 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		if (tuples.length >= limit) break
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
@@ -161,7 +161,7 @@ export const frOrderRecipe: ShardRecipe = {
 
 		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
 		const poolLimit = Math.max(count * 8, 40_000)
-		const pool = await readTuples(poolLimit)
+		const pool = readTuples(poolLimit)
 
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 

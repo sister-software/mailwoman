@@ -232,7 +232,7 @@ const cleanLocality = (loc: string) =>
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-async function readUsTuples(source: { zip: string; csv: string; region: string }): Promise<USTuple[]> {
+function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -244,7 +244,7 @@ async function readUsTuples(source: { zip: string; csv: string; region: string }
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		const locality = row.city ?? ""
 
 		if (!cleanLocality(locality)) continue
@@ -272,7 +272,7 @@ async function readUsTuples(source: { zip: string; csv: string; region: string }
  * cut in half by the stride. That is a sampling artefact of the awk pre-filter, not of the parse: whichever lines
  * survive are re-assembled into records by {@link readCSVRecords}, and a halved record fails the field checks below.
  */
-async function readFrTuples(limit: number): Promise<FRTuple[]> {
+function readFrTuples(limit: number): FRTuple[] {
 	const r = spawnSync(
 		"bash",
 		["-c", `unzip -p "${FR_SOURCE.zip}" "${FR_SOURCE.csv}" | awk 'NR==1 || NR%211==3' | head -n ${limit + 1}`],
@@ -288,7 +288,7 @@ async function readFrTuples(limit: number): Promise<FRTuple[]> {
 	const tuples: FRTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		const locality = row.city ?? "",
 			postcode = row.postcode ?? "",
 			street = row.street ?? "",
@@ -741,7 +741,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		const usPool: USTuple[] = []
 
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
-			const t = await readUsTuples(s)
+			const t = readUsTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} tuples`)
 
@@ -751,7 +751,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		}
 
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
-		const frAll = await readFrTuples(80_000)
+		const frAll = readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 
 		console.error(`  ${FR_SOURCE.csv}: ${frAll.length} tuples (${frPool.length} after holdout split)`)

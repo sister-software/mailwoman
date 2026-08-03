@@ -250,7 +250,7 @@ async function extractCrossings(
 /**
  * ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings).
  */
-async function buildZipCityMap(): Promise<Map<string, string>> {
+function buildZipCityMap(): Map<string, string> {
 	const r = spawnSync("unzip", ["-p", OA_COOK.zip, OA_COOK.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -262,7 +262,7 @@ async function buildZipCityMap(): Promise<Map<string, string>> {
 	const counts = new Map<string, Map<string, number>>()
 
 	// zip → Map(city → n)
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		const city = row.city ?? ""
 		const zip = row.postcode ?? ""
 
@@ -517,7 +517,7 @@ export const intersectionRecipe: ShardRecipe = {
 			throw new Error(`No crossings found — are the TIGER EDGES shapefiles present in ${edgesDir}?`)
 		}
 
-		const zipCity = opts.golden ? new Map<string, string>() : await buildZipCityMap()
+		const zipCity = opts.golden ? new Map<string, string>() : buildZipCityMap()
 
 		if (!opts.golden) {
 			console.error(`  zip→city map: ${zipCity.size} ZIPs (OA Cook)`)

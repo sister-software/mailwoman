@@ -154,7 +154,7 @@ interface CountryTuple {
 	order: string
 }
 
-async function readTuples(source: CountrySource, limit: number): Promise<CountryTuple[]> {
+function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 	// countrywide extracts (FR/IT/NL) are GB-scale — cap the bytes with `head` (read ~8 lines per wanted
 	// tuple to survive dedup/skips) so the whole extract never has to be held in memory.
 	const maxLines = Math.max(limit * 8, 20_000) + 1
@@ -173,7 +173,7 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		if (tuples.length >= limit) break
 
 		const street = row.street ?? "",
@@ -449,7 +449,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 		const pool: CountryTuple[] = []
 
 		for (const s of sources) {
-			const t = await readTuples(s, perSource)
+			const t = readTuples(s, perSource)
 
 			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
 

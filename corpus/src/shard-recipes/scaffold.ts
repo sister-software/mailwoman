@@ -54,12 +54,6 @@ export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@m
 export type CSVRecord = Record<string, string | undefined>
 
 /**
- * Window size {@link readCSVRecords} feeds the spliterator, in bytes. Flat end of a 4 KiB–4 MiB sweep: small enough that
- * the quote scanner's per-refill work stays bounded, large enough that window bookkeeping does not dominate.
- */
-const CSV_WINDOW_BYTES = 64 * 1024
-
-/**
  * Read an in-memory CSV (an `unzip -p` buffer, say) as header-keyed records.
  *
  * Quote handling spans the ROW split, not only the column split: a newline inside a quoted field belongs to a single
@@ -70,24 +64,12 @@ const CSV_WINDOW_BYTES = 64 * 1024
  * Header names are lower-cased on the way in. `normalizeKeys` will not do it: it leaves an ALL CAPS header alone, and
  * OpenAddresses ships `LON,LAT,NUMBER,STREET` while other extracts ship the same names lower-case. A recipe names its
  * columns in lower case either way.
- *
- * The buffer is fed through `fromAsync` in {@link CSV_WINDOW_BYTES} windows rather than handed to the synchronous
- * `from()` whole. `from()` with `enableQuoteHandling` rescans to the end of the source on every refill of its index
- * queue, so cost grows with the square of the input — measured on a real OpenAddresses extract at 1.0 s for 2 MB and 27
- * s for 8 MB, against a 468 MB file. `fromAsync` is bounded by chunk size instead. The spliterator re-assembles a
- * record straddling a window boundary, so quote handling still spans the row split.
  */
-export async function* readCSVRecords(source: Uint8Array): AsyncGenerator<CSVRecord> {
+export function* readCSVRecords(source: Uint8Array): Generator<CSVRecord> {
 	let header: string[] | null = null
 
-	async function* windows(): AsyncGenerator<Uint8Array> {
-		for (let offset = 0; offset < source.length; offset += CSV_WINDOW_BYTES) {
-			yield source.subarray(offset, Math.min(offset + CSV_WINDOW_BYTES, source.length))
-		}
-	}
-
 	// `header: false` keeps the first record in the stream so this reader owns the lower-casing.
-	for await (const cells of CSVSpliterator.fromAsync(windows(), { header: false, enableQuoteHandling: true })) {
+	for (const cells of CSVSpliterator.from(source, { header: false, enableQuoteHandling: true })) {
 		if (!header) {
 			header = cells.map((name) => name.trim().toLowerCase())
 

@@ -122,7 +122,7 @@ interface UnitTuple {
 /**
  * Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip.
  */
-async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
+function readTuples(source: UnitSource): UnitTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -134,7 +134,7 @@ async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
 	const tuples: UnitTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 		const house_number = row.number ?? ""
@@ -263,7 +263,7 @@ export const unitRecipe: ShardRecipe = {
 		const pool: UnitTuple[] = []
 
 		for (const s of sources) {
-			const t = await readTuples(s)
+			const t = readTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 

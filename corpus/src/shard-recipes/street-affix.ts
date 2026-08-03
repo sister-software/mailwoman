@@ -163,7 +163,7 @@ type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "can
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-async function readTuples(source: USSource): Promise<USTuple[]> {
+function readTuples(source: USSource): USTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -175,7 +175,7 @@ async function readTuples(source: USSource): Promise<USTuple[]> {
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 		const house_number = row.number ?? ""
@@ -324,7 +324,7 @@ function renderRow(
  * with `head` (mirrors build-country-shard-balanced.mjs) rather than holding a whole extract in memory. Only keeps
  * tuples that carry a POSTCODE.
  */
-async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
+function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
 	const maxLines = Math.max(limit * 8, 20_000) + 1
 
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
@@ -341,7 +341,7 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		if (tuples.length >= limit) break
 
 		const street = row.street ?? "",
@@ -412,7 +412,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		const pool: USTuple[] = []
 
 		for (const s of sources) {
-			const t = await readTuples(s)
+			const t = readTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
@@ -513,7 +513,7 @@ export const streetAffixRecipe: ShardRecipe = {
 			const mlPool: BalanceTuple[] = []
 
 			for (const s of mlSources) {
-				const t = await readBalanceTuples(s, perSource)
+				const t = readBalanceTuples(s, perSource)
 
 				console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
 

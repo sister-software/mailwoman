@@ -46,7 +46,7 @@ const SOURCES: GermanSource[] = [
 /**
  * Stream real German tuples out of a cached OA zip (buffered `unzip -p`).
  */
-async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]> {
+function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -58,7 +58,7 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readCSVRecords(r.stdout)) {
+	for (const row of readCSVRecords(r.stdout)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 
@@ -102,7 +102,7 @@ export const germanRecipe: ShardRecipe = {
 		const pool: LocaleBaseTuple[] = []
 
 		for (const s of SOURCES) {
-			const t = await readGermanTuples(s)
+			const t = readGermanTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
