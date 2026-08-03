@@ -9,6 +9,8 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
+import { CSVSpliterator } from "spliterator"
+
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 
@@ -46,45 +48,62 @@ export interface ShardTuple {
 export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@mailwoman/core/utils"
 
 /**
- * Split one CSV line into fields, honouring double-quoted fields and doubled-quote escapes (`""`).
- *
- * Stays hand-rolled rather than delegating to `csv-parse`: the recipes read one line at a time out of an
- * already-streaming reader, and the dependency's per-line entry point costs more than the twenty lines it would
- * replace.
+ * One CSV record, keyed by its lower-cased header name, every value trimmed. A column the header does not declare reads
+ * as `undefined`; a column the header declares but this record does not reach reads as `""`.
  */
-export function splitCSV(line: string): string[] {
-	const out: string[] = []
-	let cur = ""
-	let inQ = false
+export type CSVRecord = Record<string, string | undefined>
 
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]!
+/**
+ * Window size the buffer is handed to {@link CSVSpliterator.fromAsync} in.
+ *
+ * Quote-aware scanning costs O(n²) in the size of whatever the scanner is handed at once (spliterator 4.0.0): each
+ * refill re-scans from the read position to the END of the source, and the SIMD path caps at 4096 matches, so any real
+ * CSV falls through to the JS scan of the whole remainder. Measured on synthetic rows, doubling the input quadrupled
+ * the time; on 200 K OpenAddresses rows, 207 s in one buffer against 4.1 s at this window. Windowing bounds each
+ * re-scan, and the async spliterator re-assembles records that straddle a boundary, so quote handling still spans the
+ * row split. 64 KiB sat at the flat end of a 4–64 KiB sweep.
+ */
+const CSV_CHUNK_BYTES = 64 * 1024
 
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
+/**
+ * Slice an in-memory buffer into the windows {@link CSVSpliterator.fromAsync} wants.
+ */
+async function* chunked(source: Uint8Array): AsyncGenerator<Uint8Array> {
+	for (let offset = 0; offset < source.length; offset += CSV_CHUNK_BYTES) {
+		yield source.subarray(offset, offset + CSV_CHUNK_BYTES)
 	}
+}
 
-	out.push(cur)
+/**
+ * Read an in-memory CSV (an `unzip -p` buffer, say) as header-keyed records.
+ *
+ * Quote handling spans the ROW split, not only the column split: a newline inside a quoted field belongs to a single
+ * record, so the record boundaries can only be found by a scanner that already knows where the quotes are. Find the
+ * lines first and unquote afterwards and such a record splits in two — the first half short by however many columns
+ * followed the newline, which is how a `street` value comes to be read as `city`.
+ *
+ * Header names are lower-cased on the way in: OpenAddresses ships them upper-case (`STREET`), other extracts ship them
+ * lower-case, and a recipe names its columns in lower case either way.
+ */
+export async function* readCSVRecords(source: Uint8Array): AsyncGenerator<CSVRecord> {
+	let header: string[] | null = null
 
-	return out
+	// `header: false` keeps the first record in the stream so this reader owns the lower-casing.
+	for await (const cells of CSVSpliterator.fromAsync(chunked(source), { header: false, enableQuoteHandling: true })) {
+		if (!header) {
+			header = cells.map((name) => name.trim().toLowerCase())
+
+			continue
+		}
+
+		const record: CSVRecord = {}
+
+		for (let i = 0; i < header.length; i++) {
+			record[header[i]!] = (cells[i] ?? "").trim()
+		}
+
+		yield record
+	}
 }
 
 /**

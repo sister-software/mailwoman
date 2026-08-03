@@ -44,7 +44,7 @@ import { readJSONL, repoRootPath } from "@mailwoman/core/utils"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow, LabeledRow } from "../types.ts"
-import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 interface County {
 	fips: string
@@ -244,7 +244,7 @@ async function extractCrossings(
 /**
  * ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings).
  */
-function buildZipCityMap(): Map<string, string> {
+async function buildZipCityMap(): Promise<Map<string, string>> {
 	const r = spawnSync("unzip", ["-p", OA_COOK.zip, OA_COOK.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -253,20 +253,12 @@ function buildZipCityMap(): Map<string, string> {
 		return new Map()
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return new Map()
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const iCity = header.indexOf("city")
-	const iPost = header.indexOf("postcode")
 	const counts = new Map<string, Map<string, number>>()
 
 	// zip → Map(city → n)
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const city = (cells[iCity] ?? "").trim()
-		const zip = (cells[iPost] ?? "").trim()
+	for await (const row of readCSVRecords(r.stdout)) {
+		const city = row.city ?? ""
+		const zip = row.postcode ?? ""
 
 		if (!city || !/^\d{5}$/.test(zip) || BAD_NAME.test(city)) continue
 		let byCity = counts.get(zip)
@@ -514,7 +506,7 @@ export const intersectionRecipe: ShardRecipe = {
 			throw new Error(`No crossings found — are the TIGER EDGES shapefiles present in ${edgesDir}?`)
 		}
 
-		const zipCity = opts.golden ? new Map<string, string>() : buildZipCityMap()
+		const zipCity = opts.golden ? new Map<string, string>() : await buildZipCityMap()
 
 		if (!opts.golden) {
 			console.error(`  zip→city map: ${zipCity.size} ZIPs (OA Cook)`)

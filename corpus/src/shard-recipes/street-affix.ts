@@ -43,7 +43,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -134,7 +134,7 @@ type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "can
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-function readTuples(source: USSource): USTuple[] {
+async function readTuples(source: USSource): Promise<USTuple[]> {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -143,34 +143,20 @@ function readTuples(source: USSource): USTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string): number => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const street = get(cells, iStreet)
-		const locality = get(cells, iCity)
-		const house_number = get(cells, iNum)
+	for await (const row of readCSVRecords(r.stdout)) {
+		const street = row.street ?? ""
+		const locality = row.city ?? ""
+		const house_number = row.number ?? ""
 
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
 
 		if (seen.has(key)) continue
 		seen.add(key)
-		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost) })
+		tuples.push({ house_number, street, locality, region: source.region, postcode: row.postcode ?? "" })
 	}
 
 	return tuples
@@ -305,11 +291,11 @@ function renderRow(
 }
 
 /**
- * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale; reading the whole
- * CSV blows V8's string limit, so cap the bytes with `head` (mirrors build-country-shard-balanced.mjs). Only keeps
+ * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale, so cap the bytes
+ * with `head` (mirrors build-country-shard-balanced.mjs) rather than holding a whole extract in memory. Only keeps
  * tuples that carry a POSTCODE.
  */
-function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
+async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
 	const maxLines = Math.max(limit * 8, 20_000) + 1
 
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
@@ -323,30 +309,16 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (n: string): number => header.indexOf(n)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iRegion = idx("region"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
+	for await (const row of readCSVRecords(r.stdout)) {
+		if (tuples.length >= limit) break
 
-		const street = get(cells, iStreet),
-			locality = get(cells, iCity),
-			house_number = get(cells, iNum),
-			postcode = get(cells, iPost)
+		const street = row.street ?? "",
+			locality = row.city ?? "",
+			house_number = row.number ?? "",
+			postcode = row.postcode ?? ""
 
 		if (!street || !locality || !house_number || !postcode) continue // postcode is required for balance
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
@@ -358,7 +330,7 @@ function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[]
 			house_number,
 			street,
 			locality,
-			region: get(cells, iRegion) || source.region,
+			region: row.region || source.region,
 			postcode,
 			iso2: source.iso2,
 			order: source.order,
@@ -411,7 +383,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		const pool: USTuple[] = []
 
 		for (const s of sources) {
-			const t = readTuples(s)
+			const t = await readTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
@@ -512,7 +484,7 @@ export const streetAffixRecipe: ShardRecipe = {
 			const mlPool: BalanceTuple[] = []
 
 			for (const s of mlSources) {
-				const t = readBalanceTuples(s, perSource)
+				const t = await readBalanceTuples(s, perSource)
 
 				console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
 

@@ -32,7 +32,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
@@ -105,45 +105,9 @@ interface CountryTuple {
 	order: string
 }
 
-function splitCSV(line: string): string[] {
-	const out: string[] = []
-
-	let cur = "",
-		inQ = false
-
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]
-
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
-
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
-		}
-	}
-
-	out.push(cur)
-
-	return out
-}
-
-function readTuples(source: CountrySource, limit: number): CountryTuple[] {
+async function readTuples(source: CountrySource, limit: number): Promise<CountryTuple[]> {
 	// countrywide extracts (FR/IT/NL) are GB-scale — cap the bytes with `head` (read ~8 lines per wanted
-	// tuple to survive dedup/skips) so the toString stays under V8's string limit.
+	// tuple to survive dedup/skips) so the whole extract never has to be held in memory.
 	const maxLines = Math.max(limit * 8, 20_000) + 1
 
 	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
@@ -157,29 +121,15 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (n: string): number => header.indexOf(n)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iRegion = idx("region"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
+	for await (const row of readCSVRecords(r.stdout)) {
+		if (tuples.length >= limit) break
 
-		const street = get(cells, iStreet),
-			locality = get(cells, iCity),
-			house_number = get(cells, iNum)
+		const street = row.street ?? "",
+			locality = row.city ?? "",
+			house_number = row.number ?? ""
 
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
@@ -191,8 +141,8 @@ function readTuples(source: CountrySource, limit: number): CountryTuple[] {
 			house_number,
 			street,
 			locality,
-			region: get(cells, iRegion) || source.region,
-			postcode: get(cells, iPost),
+			region: row.region || source.region,
+			postcode: row.postcode ?? "",
 			iso2: source.iso2,
 			order: source.order,
 		})
@@ -450,7 +400,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 		const pool: CountryTuple[] = []
 
 		for (const s of sources) {
-			const t = readTuples(s, perSource)
+			const t = await readTuples(s, perSource)
 
 			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
 

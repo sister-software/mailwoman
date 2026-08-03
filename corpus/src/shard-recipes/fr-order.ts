@@ -37,7 +37,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -71,11 +71,11 @@ interface FrTuple {
 }
 
 /**
- * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale; cap with `head` to stay under V8's
- * string limit. Only keeps rows with a house_number (the shard's core signal) and a postcode (required for
- * reversed-order rendering to be meaningful).
+ * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale; cap with `head` so the whole file
+ * never has to be held in memory. Only keeps rows with a house_number (the shard's core signal) and a postcode
+ * (required for reversed-order rendering to be meaningful).
  */
-function readTuples(limit: number): FrTuple[] {
+async function readTuples(limit: number): Promise<FrTuple[]> {
 	const maxLines = Math.max(limit * 8, 40_000) + 1
 
 	const r = spawnSync("bash", ["-c", `unzip -p "${SOURCE.zip}" "${SOURCE.csv}" | head -n ${maxLines}`], {
@@ -89,28 +89,15 @@ function readTuples(limit: number): FrTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string): number => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length && tuples.length < limit; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const street = get(cells, iStreet)
-		const locality = get(cells, iCity)
-		const house_number = get(cells, iNum)
-		const postcode = get(cells, iPost)
+	for await (const row of readCSVRecords(r.stdout)) {
+		if (tuples.length >= limit) break
+		const street = row.street ?? ""
+		const locality = row.city ?? ""
+		const house_number = row.number ?? ""
+		const postcode = row.postcode ?? ""
 
 		// Require all four fields: HN is the signal; postcode drives reversed-order variants.
 		if (!street || !locality || !house_number || !postcode) continue
@@ -173,7 +160,7 @@ export const frOrderRecipe: ShardRecipe = {
 
 		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
 		const poolLimit = Math.max(count * 8, 40_000)
-		const pool = readTuples(poolLimit)
+		const pool = await readTuples(poolLimit)
 
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 

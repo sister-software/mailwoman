@@ -18,16 +18,9 @@
  *     even for a cell with no filing rows of its own — a genuine "surveyed, zero providers here" result,
  *     the meaning-of-zero rule's POSITIVE case (covered but empty is not the same as never surveyed).
  *
- *   Res-9 → res-6 parent reconstruction is deliberately NOT `@mailwoman/spatial`'s `expandH3Cell` — that
- *   helper's left-shift reconstruction only round-trips a short cell that was shortened AT resolution
- *   15 (the address-id spine); fed a resolution-9 short cell it silently produces a full index
- *   `cellToParent` rejects (`Cell arguments had incompatible resolutions`), verified empirically while
- *   building this reader. The correct reconstruction for a short cell captured at a KNOWN resolution R
- *   is a straight concatenation, not a shift: a full 64-bit H3 cell index is always
- *   `"8" + <resolution nibble> + <52 bits of base-cell + digit path, trailing padding included>`, and
- *   the 48-bit "short" form (`shortCellToInt`/`shortenH3Cell`) already carries exactly those low 52 bits
- *   verbatim — so `"8" + R.toString(16) + shortHex.padStart(13, "0")` reassembles the identical full
- *   index `latLngToCell` would have produced at resolution R. See {@link res9ShortCellToRes6Parent}.
+ *   The res-6 parent is reconstructed from the STORED res-9 cell (`@mailwoman/spatial`'s `expandH3Cell`
+ *   back to a full index, then `cellToParent`) rather than recomputed from the block centroid. See
+ *   {@link res9ShortCellToRes6Parent}.
  *
  *   This same formula is exactly what `build-bdc.ts` MUST use (and does) to derive the
  *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
@@ -42,7 +35,7 @@
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { cellToParent } from "h3-js"
 import { sql, type Kysely } from "kysely"
 
@@ -155,13 +148,12 @@ function asContractDB(kdb: DatabaseClient<BDCDatabase>): Kysely<LayerContractDat
 }
 
 /**
- * Reconstruct the res-6 ancestor of a res-9 short-cell int WITHOUT a centroid — see the module docstring for why this
- * isn't `@mailwoman/spatial`'s `expandH3Cell`. Exported so tests can assert this agrees, cell-for-cell, with
- * `build-bdc.ts`'s own coverage-cell derivation (the two MUST share this exact formula — see that file's docstring).
+ * Reconstruct the res-6 ancestor of a res-9 short-cell int WITHOUT a centroid — see the module docstring for why the
+ * centroid is the wrong input. Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
+ * coverage-cell derivation (the two MUST share this derivation — see that file's docstring).
  */
 export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
-	const shortHex = h3CellShortInt.toString(16).padStart(13, "0")
-	const fullCell = `8${BDC_H3_RESOLUTION.toString(16)}${shortHex}` as H3Cell
+	const fullCell = expandH3Cell(h3CellShortInt.toString(16) as H3CellShort, BDC_H3_RESOLUTION)
 	const parentCell = cellToParent(fullCell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell
 
 	return shortCellToInt(parentCell)

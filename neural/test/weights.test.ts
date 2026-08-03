@@ -125,10 +125,11 @@ const havePPDSource = existsSync(String(PPD_SOURCE_CSV_PATH))
 const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
 const haveNZSource = existsSync(String(NZ_SOURCE_CSV_PATH))
 
-// Both en-gb tests below shell out to neural-weights-en-gb's link-dev-weights.ts, which (on a COLD
-// worktree with no pair-index-gb.bin yet) builds it from the ~25.6M-row PPD tuples CSV — several
-// minutes, well past vitest's global 15s default (see that script's header for the skip-if-exists
-// fast path this only matters for the FIRST run). Generous per-test timeout, not a perf target.
+// Every test that shells out to a link-dev-weights.ts needs this, for two different cold-start
+// costs. en-gb builds pair-index-gb.bin from the ~25.6M-row PPD tuples CSV — several minutes. en-us
+// verifies its pair-index against the 5.2 GB admin-global-priority.db, and with no `.md5` sidecar
+// yet that is a full hash of the file. Both are FIRST-run costs (each script has a skip-if-current
+// fast path), and both are far past vitest's 15s global default. Generous, not a perf target.
 const LINK_SCRIPT_TIMEOUT_MS = 600_000
 
 /**
@@ -218,24 +219,32 @@ describe("resolveWeights — package auto-resolve", () => {
 	// (`fst-<locale>.bin`) — neural exposes it verbatim (`classifier.fstPath`); the mailwoman runtime
 	// pipeline deserializes + auto-wires it from there. A package without the sibling (en-nz) leaves
 	// fstPath undefined — byte-stable.
-	test.skipIf(!haveModel)("surfaces fstPath for a weights package shipping fst-<locale>.bin", () => {
-		ensureDevWeightsLinked("en-us")
+	test.skipIf(!haveModel)(
+		"surfaces fstPath for a weights package shipping fst-<locale>.bin",
+		() => {
+			ensureDevWeightsLinked("en-us")
 
-		const r = resolveWeights({ locale: "en-us" })
-		expect(r.fstPath).toMatch(/neural-weights-en-us\/fst-en-us\.bin$/)
-	})
+			const r = resolveWeights({ locale: "en-us" })
+			expect(r.fstPath).toMatch(/neural-weights-en-us\/fst-en-us\.bin$/)
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
 
-	test.skipIf(!haveModel)("finds model.onnx + tokenizer.model after running link-dev-weights.ts", () => {
-		ensureDevWeightsLinked("en-us")
+	test.skipIf(!haveModel)(
+		"finds model.onnx + tokenizer.model after running link-dev-weights.ts",
+		() => {
+			ensureDevWeightsLinked("en-us")
 
-		const r = resolveWeights({ locale: "en-us" })
-		expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")
-		expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
-		expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
-		// v0.4.0: the resolver surfaces model-card.json so loadFromWeights can read
-		// the trained label vocabulary from it (issue #116 §5(a)).
-		expect(r.modelCardPath).toMatch(/neural-weights-en-us\/model-card\.json$/)
-	})
+			const r = resolveWeights({ locale: "en-us" })
+			expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")
+			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
+			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+			// v0.4.0: the resolver surfaces model-card.json so loadFromWeights can read
+			// the trained label vocabulary from it (issue #116 §5(a)).
+			expect(r.modelCardPath).toMatch(/neural-weights-en-us\/model-card\.json$/)
+		},
+		LINK_SCRIPT_TIMEOUT_MS
+	)
 
 	// #1177 base-overlay dedup, en-gb form: model/tokenizer resolve from the en-us base
 	// (mailwoman.baseWeights), while the GB-specific postcode anchor resolves locally.
@@ -593,6 +602,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 				warnSpy.mockRestore()
 				rmSync(cacheRoot, { recursive: true, force: true })
 			}
-		}
+		},
+		LINK_SCRIPT_TIMEOUT_MS
 	)
 })

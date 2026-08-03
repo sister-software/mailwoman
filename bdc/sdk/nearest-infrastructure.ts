@@ -27,8 +27,8 @@
  *     means awaiting one `readLayerCoverage` call per hit. A sync signature can't await that.
  *
  *   {@link res9ShortCellToRes6Parent} (exported by `filing-landscape.ts`; see that file's docstring for
- *   why the res-9 → res-6 reconstruction is a straight concatenation, not `@mailwoman/spatial`'s
- *   `expandH3Cell`) turns each hit's res-9 cell into the res-6 cell every layer in this repo aggregates
+ *   why the res-6 parent is reconstructed from the STORED res-9 cell rather than recomputed from the
+ *   centroid) turns each hit's res-9 cell into the res-6 cell every layer in this repo aggregates
  *   coverage at (poi.db's own convention; `bdc.db`'s `BDC_COVERAGE_H3_RESOLUTION` matches it
  *   deliberately — see `schema.ts`). `POI_H3_RESOLUTION` (`poi-lookup.ts`) is ALSO 9, so the two layers'
  *   spines agree without this module hardcoding a resolution of its own.

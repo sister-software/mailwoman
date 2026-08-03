@@ -45,7 +45,7 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "../synthesize-po-box.ts"
-import { makeMulberry32, shardSourceID, splitCSV, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
@@ -222,7 +222,7 @@ const cleanLocality = (loc: string) =>
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {
+async function readUsTuples(source: { zip: string; csv: string; region: string }): Promise<USTuple[]> {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -231,38 +231,24 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string) => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const locality = get(cells, iCity)
+	for await (const row of readCSVRecords(r.stdout)) {
+		const locality = row.city ?? ""
 
 		if (!cleanLocality(locality)) continue
 		const key = locality.toLowerCase()
 
-		const street = get(cells, iStreet),
-			house_number = get(cells, iNum)
+		const street = row.street ?? "",
+			house_number = row.number ?? ""
 
 		// One tuple per (locality, street) pair keeps the pool varied without ballooning memory.
 		const pairKey = `${key}|${street}`.toLowerCase()
 
 		if (seen.has(pairKey)) continue
 		seen.add(pairKey)
-		tuples.push({ house_number, street, locality, region: source.region, postcode: get(cells, iPost) })
+		tuples.push({ house_number, street, locality, region: source.region, postcode: row.postcode ?? "" })
 	}
 
 	return tuples
@@ -270,10 +256,13 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 
 /**
  * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and insee-ordered; `awk NR%K`
- * strides the whole country instead of reading one département. Quoted commas survive because awk only FILTERS lines —
- * parsing stays in splitCSV.
+ * strides the whole country instead of reading one département.
+ *
+ * The stride counts PHYSICAL lines, so a record carrying a newline inside a quoted field is two lines to awk and can be
+ * cut in half by the stride. That is a sampling artefact of the awk pre-filter, not of the parse: whichever lines
+ * survive are re-assembled into records by {@link readCSVRecords}, and a halved record fails the field checks below.
  */
-function readFrTuples(limit: number): FRTuple[] {
+async function readFrTuples(limit: number): Promise<FRTuple[]> {
 	const r = spawnSync(
 		"bash",
 		["-c", `unzip -p "${FR_SOURCE.zip}" "${FR_SOURCE.csv}" | awk 'NR==1 || NR%211==3' | head -n ${limit + 1}`],
@@ -286,29 +275,14 @@ function readFrTuples(limit: number): FRTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (n: string) => header.indexOf(n)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number) => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: FRTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-
-		const locality = get(cells, iCity),
-			postcode = get(cells, iPost),
-			street = get(cells, iStreet),
-			house_number = get(cells, iNum)
+	for await (const row of readCSVRecords(r.stdout)) {
+		const locality = row.city ?? "",
+			postcode = row.postcode ?? "",
+			street = row.street ?? "",
+			house_number = row.number ?? ""
 
 		if (!cleanLocality(locality) || !/^\d{5}$/.test(postcode) || !street || !house_number) continue
 		const key = `${locality}|${street}`.toLowerCase()
@@ -757,7 +731,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		const usPool: USTuple[] = []
 
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
-			const t = readUsTuples(s)
+			const t = await readUsTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} tuples`)
 
@@ -767,7 +741,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		}
 
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
-		const frAll = readFrTuples(80_000)
+		const frAll = await readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 
 		console.error(`  ${FR_SOURCE.csv}: ${frAll.length} tuples (${frPool.length} after holdout split)`)

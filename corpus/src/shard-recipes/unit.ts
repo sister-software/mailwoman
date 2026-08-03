@@ -29,7 +29,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, splitCSV, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
@@ -117,7 +117,7 @@ interface UnitTuple {
 /**
  * Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip.
  */
-function readTuples(source: UnitSource): UnitTuple[] {
+async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
 	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
 
 	if (r.status !== 0) {
@@ -126,28 +126,13 @@ function readTuples(source: UnitSource): UnitTuple[] {
 		return []
 	}
 
-	const lines = r.stdout.toString("utf8").split(/\r?\n/)
-
-	if (lines.length < 2) return []
-	const header = splitCSV(lines[0]!).map((h) => h.trim().toLowerCase())
-	const idx = (name: string): number => header.indexOf(name)
-
-	const iNum = idx("number"),
-		iStreet = idx("street"),
-		iUnit = idx("unit"),
-		iCity = idx("city"),
-		iPost = idx("postcode")
-
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const tuples: UnitTuple[] = []
 	const seen = new Set<string>()
 
-	for (let li = 1; li < lines.length; li++) {
-		if (!lines[li]) continue
-		const cells = splitCSV(lines[li]!)
-		const street = get(cells, iStreet)
-		const locality = get(cells, iCity)
-		const house_number = get(cells, iNum)
+	for await (const row of readCSVRecords(r.stdout)) {
+		const street = row.street ?? ""
+		const locality = row.city ?? ""
+		const house_number = row.number ?? ""
 
 		if (!street || !locality || !house_number) continue
 		const key = `${house_number}|${street}|${locality}`.toLowerCase()
@@ -160,8 +145,8 @@ function readTuples(source: UnitSource): UnitTuple[] {
 			street,
 			locality,
 			region: source.region,
-			postcode: get(cells, iPost),
-			oaUnit: get(cells, iUnit),
+			postcode: row.postcode ?? "",
+			oaUnit: row.unit ?? "",
 		})
 	}
 
@@ -273,7 +258,7 @@ export const unitRecipe: ShardRecipe = {
 		const pool: UnitTuple[] = []
 
 		for (const s of sources) {
-			const t = readTuples(s)
+			const t = await readTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 

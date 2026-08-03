@@ -41,11 +41,16 @@
 
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { existsSync, readFileSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, readFileSync, renameSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
+
+/**
+ * Hex characters in an md5 digest.
+ */
+const MD5_HEX_LENGTH = 32
 
 /**
  * --- current default -------------- 6.7.0-bundle ships the v3.23.0-bundle-guard step-4000 int8 (the Option-A evidence
@@ -356,7 +361,7 @@ const PAIR_INDEX_SOURCE_DB = dataRootPath("wof", "admin-global-priority.db")
 function peekPairIndexHeaderFields(path: string): {
 	delta: number
 	transitionBeta: number | undefined
-	sourceMD5: string | undefined
+	sourceMD5s: string[]
 } {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
@@ -375,7 +380,46 @@ function peekPairIndexHeaderFields(path: string): {
 		sourceMD5s?: string[]
 	}
 
-	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5: header.sourceMD5s?.[0] }
+	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
+}
+
+/**
+ * Read or compute the md5 of a file, using a sidecar `.md5` cache so a multi-gigabyte source isn't re-hashed on every
+ * `yarn test` (the borough DB is ~5 GB). The sidecar is written in standard md5sum format: `<hash> <filename>`. It is
+ * trusted only while its mtime is at least the source's; an older sidecar is recomputed and rewritten. Mirrors the
+ * en-gb/en-nz link scripts rather than importing theirs — each weights package's script stands alone.
+ */
+async function md5FileWithSidecar(path: string): Promise<string> {
+	const sidecarPath = `${path}.md5`
+	const sourceStats = statSync(path)
+
+	if (existsSync(sidecarPath)) {
+		try {
+			const sidecarStats = statSync(sidecarPath)
+
+			if (sidecarStats.mtime >= sourceStats.mtime) {
+				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
+				const [hash] = sidecarContent.split(/\s+/)
+
+				if (hash && hash.length === MD5_HEX_LENGTH) {
+					console.log(`md5(${path}): read from sidecar`)
+
+					return hash
+				}
+			}
+		} catch {
+			// A missing or malformed sidecar is not an error — recompute below.
+		}
+	}
+
+	const hash = await md5File(path)
+	const filename = path.split(/[/\\]/).pop() || path
+
+	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+
+	console.log(`md5(${path}): computed and cached in sidecar`)
+
+	return hash
 }
 
 if (!existsSync(CLI)) {
@@ -392,6 +436,14 @@ if (!existsSync(CLI)) {
 	if (existsSync(PAIR_INDEX_BIN_DEST)) {
 		try {
 			const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
+			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it was
+			// built from has moved. The US build passes exactly one source (`--borough-db`; there is no register CSV
+			// and no `--pairs-jsonl`), so `gazetteer pair-index` records exactly one md5 and the comparison below IS
+			// the whole set — a header recording any other count cannot have come from this build, which is itself
+			// staleness. The hash is sidecar-cached, so re-reading it on every `yarn test` costs a stat.
+			const currentSourceMD5 = await md5FileWithSidecar(String(PAIR_INDEX_SOURCE_DB))
+			const [existingSourceMD5] = header.sourceMD5s
 
 			if (header.delta !== PAIR_INDEX_DELTA) {
 				console.log(`rebuilding pair-index-us.bin — delta ${header.delta} → ${PAIR_INDEX_DELTA}`)
@@ -399,11 +451,23 @@ if (!existsSync(CLI)) {
 				console.log(
 					`rebuilding pair-index-us.bin — transitionBeta ${header.transitionBeta} → ${PAIR_INDEX_TRANSITION_BETA}`
 				)
+			} else if (header.sourceMD5s.length !== 1) {
+				console.log(
+					`rebuilding pair-index-us.bin — header records ${header.sourceMD5s.length} source md5s ` +
+						`[${header.sourceMD5s.join(", ") || "(none recorded)"}], but this build reads exactly one source ` +
+						`(${PAIR_INDEX_SOURCE_DB})`
+				)
+			} else if (existingSourceMD5 !== currentSourceMD5) {
+				console.log(
+					`rebuilding pair-index-us.bin — ${PAIR_INDEX_SOURCE_DB} md5 ${existingSourceMD5} → ${currentSourceMD5}`
+				)
 			} else {
 				needsRebuild = false
 			}
 		} catch (error) {
-			console.log(`rebuilding pair-index-us.bin — header unreadable (${(error as Error).message})`)
+			// Covers both an unreadable header and a source md5 that could not be computed: either way the
+			// artifact cannot be shown fresh, and an unverifiable index is treated as stale.
+			console.log(`rebuilding pair-index-us.bin — freshness unverifiable (${(error as Error).message})`)
 		}
 	}
 
