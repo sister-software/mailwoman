@@ -15,7 +15,8 @@
 		"*.ts",
 		"**/*.ts",
 		"!*.test.ts",
-		"!**/*.test.ts"
+		"!**/*.test.ts",
+		"!scripts/**"
 	],
 	"type": "module",
 	"dependencies": {

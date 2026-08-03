@@ -40,6 +40,8 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.
 
+One flat file is shared on purpose: `weights-overlay-linker.ts` holds the pair-index build that every `neural-weights-<locale>` overlay's `scripts/link-dev-weights.ts` calls, and `scaffold-weights-overlay.ts` — already a resident here — emits those callers. It is the shared half of an existing resident, not a new `lib/` drawer, and it lives here rather than in a workspace because its callers are excluded from their tarballs (`!scripts/**`) and can therefore import it by relative path. If a second file wants to join it, that is the signal to reconsider the drawer, not to add a third.
+
 ## Zero raw `process.env` / `process.argv` (enforced)
 
 The custom `sister-software/no-process-globals` oxlint rule ERRORS on any direct
