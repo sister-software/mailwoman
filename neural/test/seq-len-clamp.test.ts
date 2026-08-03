@@ -5,18 +5,15 @@
  *
  *   An input that tokenizes past the model's fixed sequence length must PARSE, not throw.
  *
- *   `ONNXRunner.infer` clamps its input to `fixedSeqLen` (128) and returns `logits` sliced to what it
- *   actually ran, but nothing clamped `pieces` to match — so the token build (`logits[i]`) and
- *   `enforceWordConsistency` (`emissions[pi]`) walked past the end of the emissions and threw. It
- *   presented as a garbage-input bug and is not one: 128 pieces is roughly 330 characters of ordinary
- *   address text, so a form-concatenated delivery address with a department line reaches it, and the
- *   throw propagated through `parseForGeocode` to the Nominatim/Photon/libpostal drop-ins as an HTTP
- *   500 on a well-formed query.
+ *   `ONNXRunner.infer` truncates to `fixedSeqLen` and slices `logits` to what it ran; `pieces` must
+ *   follow, or every lockstep consumer (`logits[i]` in the token build, `emissions[pi]` in
+ *   `enforceWordConsistency`) indexes past the end.
  *
- *   The test walks a REAL address grown by repetition rather than a synthetic blob, because the whole
- *   point is that the boundary is reachable by legitimate input. It asserts on both sides: under the
- *   limit the parse is unchanged, over it the parse still returns and its piece count is pinned to
- *   what the model saw.
+ *   The limit is reachable by ORDINARY input — 128 pieces is roughly 330 characters — so the fixtures
+ *   grow a real address by repetition rather than using a synthetic blob, and both sides of the
+ *   boundary are asserted. A throw here reaches the drop-in servers as a 500 on a well-formed query,
+ *   which is why the raw and healed paths are both covered: they failed with different messages, and
+ *   the difference invites diagnosing this as a word-consistency bug.
  */
 
 import { existsSync } from "node:fs"

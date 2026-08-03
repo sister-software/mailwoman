@@ -8,21 +8,14 @@
  *   by every publish path (`publish-workspace.ts` for releases, `bless-package.ts` for the
  *   first-publish bootstrap).
  *
- *   WHY THIS EXISTS (2026-08-02). `@mailwoman/neural-weights-en-in@8.6.0` published with its
- *   `files` array naming `pair-index-in.bin` — its ONLY payload, 176,086 pairs, 4.3 MB — and the
- *   tarball did not contain it. The package shipped as three metadata files describing an artifact
- *   that wasn't there. Nothing failed: `yarn pack` treats every `files` entry as a glob and a glob
- *   that matches nothing contributes nothing, silently. The binary is gitignored (derived, fetched
- *   from Hugging Face by CI) and simply wasn't materialized in the workspace the operator packed
- *   from — the CI publish path DOES fetch and `[ -s ]`-guard all thirteen indexes, but that path
- *   had already failed on `E404 PUT` (Trusted Publishing cannot CREATE a package), so the manual
- *   fallback was the unguarded one.
+ *   The gap this closes: `yarn pack` treats every `files` entry as a glob, and a glob matching
+ *   nothing contributes nothing, SILENTLY. A workspace whose derived binaries were never built
+ *   therefore packs to a tarball of metadata describing artifacts that are not in it, and npm
+ *   accepts that happily. Published versions are immutable, so between packing and publishing is
+ *   the only place the mistake is still recoverable.
  *
- *   The lesson generalizes past that one file: a `files` entry is a PROMISE to the consumer, and
- *   the pack step reads it as a wish. An entry that names a literal path — not a glob — is the
- *   author stating the file exists. If it doesn't, that is a defect at pack time, and the only
- *   place to catch it is between packing and publishing, because npm accepts the tarball happily
- *   and a published version is immutable.
+ *   A literal (non-glob) `files` entry is the author stating a file exists. Treat its absence as a
+ *   defect rather than an empty match.
  *
  *   WHAT IS CHECKED:
  *

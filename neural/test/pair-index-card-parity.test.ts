@@ -5,15 +5,10 @@
  *
  *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it.
  *
- *   WHY THIS EXISTS (2026-08-02). The en-gb card's pair-index block went stale at R2 and stayed
- *   stale through R3, R4b and R7 — three increments that each changed the artifact — still
- *   reporting the original PPD-only 19,209 pairs while the shipped binary had grown to 20,126. It
- *   was caught by hand during the Hugging Face staging, not by any gate, and only because the
- *   staging happened to compare them. Nothing in CI read both numbers.
- *
- *   The card is what a consumer, the release preflight and a future maintainer all read to learn
- *   what the artifact IS, so a card that disagrees with its binary is worse than no card: it is
- *   confidently wrong. This test makes the artifact itself the arbiter.
+ *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
+ *   what an artifact IS. Nothing else compares the two, and a card can drift across several
+ *   increments without any gate noticing — leaving it not merely absent but confidently wrong. The
+ *   artifact is the arbiter here; the card is graded against it.
  *
  *   WHAT IT CHECKS, AND WHAT IT DELIBERATELY DOES NOT. Pair COUNT and the calibrated `delta` /
  *   `transitionBeta` are compared, because those are properties of the CONTENT and a rebuild from

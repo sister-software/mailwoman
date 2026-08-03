@@ -28,11 +28,10 @@
 # and populated": unit-slow reads ~10 GB of WOF/address-point databases, and smoke needs the weights
 # materialized from that same root.
 #
-# That split is the point, not an implementation detail. Before it, all five legs contended for the
-# lab's four slots and ran on the operator's workstation — the source of the spawn-timeout flakes
-# above load ~8, and the reason turning the fleet off blocked every merge in the repo. Now the box
-# carries two legs instead of five, and `runs-on` states what a job needs, so a data-dependent test
+# The split matters beyond placement: `runs-on` states what a job NEEDS, so a data-dependent test
 # added to unit-fast fails on a hosted runner immediately instead of silently skipIf-ing to green.
+# It also keeps the lab box carrying two legs rather than five, which is what the fleet's four slots
+# and a shared workstation can actually absorb.
 #
 # `data-fleet` (below) decides only whether the two labelled legs RUN or SKIP; it does not move any
 # job between runners. Releases are unaffected either way: publish.yml stays pinned to the fleet.
@@ -87,9 +86,9 @@ jobs:
   # Is a data-capable runner online? That is the ONLY question this job answers.
   #
   # GitHub Actions has no native fallback: a job whose labels match a REGISTERED but OFFLINE runner
-  # queues (up to 24h) rather than failing. So with all five legs on `self-hosted`, shutting the lab
-  # fleet down silently blocked every merge in the repo — branch protection wants a green `test`, and
-  # `test` had nowhere to run. That happened 2026-08-02.
+  # QUEUES for up to 24h rather than failing. With every leg on `self-hosted`, taking the fleet down
+  # therefore blocks all merges silently — branch protection wants a green `test`, and `test` has
+  # nowhere to run.
   #
   # The structural half of the fix is the `mailwoman-data` capability label (see the file header):
   # three legs left the fleet entirely and no longer care whether it is up. What remains is the two
