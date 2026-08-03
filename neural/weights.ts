@@ -67,6 +67,15 @@ export interface ResolveWeightsOpts {
 	 */
 	modelCardPath?: string
 	/**
+	 * The BASE package's `model-card.json`, when this package declares `mailwoman.baseWeights` and the base is
+	 * resolvable.
+	 *
+	 * An overlay card describes the OVERLAY (its version, its own artifacts) while the vocabulary belongs to the shared
+	 * base model — so fields that describe the MODEL must fall back here rather than being copied per overlay, which is
+	 * the duplication that goes stale on the first retrain.
+	 */
+	baseModelCardPath?: string
+	/**
 	 * Serving tier (#718 D1). `"server"` (default) = anchor + gazetteer channels; `"pocket"` = anchor-only (skip the
 	 * gazetteer lexicon even when shipped). Selects which soft-feature sibling artifacts {@link resolveWeights} surfaces —
 	 * the loader feeds only the resolved channels.
@@ -89,6 +98,15 @@ export interface ResolvedWeights {
 	 * {@link readLabelsFromModelCard}.
 	 */
 	modelCardPath?: string
+	/**
+	 * The BASE package's `model-card.json`, when this package declares `mailwoman.baseWeights` and the base is
+	 * resolvable.
+	 *
+	 * An overlay card describes the OVERLAY (its version, its own artifacts) while the vocabulary belongs to the shared
+	 * base model — so fields that describe the MODEL must fall back here rather than being copied per overlay, which is
+	 * the duplication that goes stale on the first retrain.
+	 */
+	baseModelCardPath?: string
 	/**
 	 * Path to `crf-transitions.json` alongside the resolved model. `undefined` when the file doesn't exist (pre-v0.6.0
 	 * bundles or CE-only training).
@@ -289,6 +307,14 @@ function resolveFromPackageDir(
 		source = `${source}+base`
 	}
 
+	// Surfaced separately from `modelCardPath`: an overlay card that EXISTS can still omit model-level fields, and
+	// presence is not the same question as completeness. The label vocabulary is the case that bites — a card without
+	// `labels` silently yields STAGE2_BIO_LABELS (21) against a 33-logit base model, and the first parse throws.
+	const resolvedBaseModelCardPath =
+		baseModelCardCandidate && existsSync(baseModelCardCandidate) && baseModelCardCandidate !== modelCardPath
+			? baseModelCardCandidate
+			: undefined
+
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
 
@@ -351,6 +377,7 @@ function resolveFromPackageDir(
 		modelPath,
 		tokenizerPath,
 		modelCardPath,
+		...(resolvedBaseModelCardPath ? { baseModelCardPath: resolvedBaseModelCardPath } : {}),
 		crfTransitionsPath,
 		...(semiCRFTransitionsPath ? { semiCRFTransitionsPath } : {}),
 		...(anchorLookupPath ? { anchorLookupPath } : {}),

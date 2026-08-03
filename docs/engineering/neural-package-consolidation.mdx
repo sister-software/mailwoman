@@ -1,0 +1,148 @@
+---
+title: Consolidating @mailwoman/neural and @mailwoman/neural-web
+---
+
+# Consolidating `@mailwoman/neural` and `@mailwoman/neural-web`
+
+Three bugs in one week shared a cause: a browser/Node boundary that existed only as a convention.
+A `webpackIgnore` comment, a hand-maintained re-export list in `browser.ts`, and a lint rule listing
+modules someone remembered. Each held until someone added an import, and then failed in a workflow
+minutes away from the change.
+
+The boundary should be a resolution contract instead.
+
+## What is actually split today
+
+|              | `@mailwoman/neural`                   | `@mailwoman/neural-web`                                               |
+| ------------ | ------------------------------------- | --------------------------------------------------------------------- |
+| runtime dep  | `onnxruntime-node`                    | `onnxruntime-web` (pinned to a dev build)                             |
+| size         | the model, tokenizer, decoder, priors | 1,157 lines: `loader.ts` 730, `web-onnx-runner.ts` 393, `index.ts` 34 |
+| relationship | —                                     | imports `@mailwoman/neural/browser`                                   |
+
+The important thing: `NeuralRunner` (`classifier.ts`) is already a **structural interface**, and
+`ONNXRunner` and `WebONNXRunner` both implement it. Nothing about the classifier knows which runtime
+it has. The split is packaging, not architecture — which is why merging is a repackaging job rather
+than a rewrite.
+
+## Why merging was previously wrong, and why it is not now
+
+The standing objection was dependency weight: one package would put `onnxruntime-node` in every
+browser consumer's tree and `onnxruntime-web` in every server's, both heavyweight and one a native
+addon.
+
+**Optional peer dependencies remove that objection.** The consumer declares the runtime it has:
+
+```jsonc
+"peerDependencies": {
+  "onnxruntime-node": "^1.26.0",
+  "onnxruntime-web": "…"
+},
+"peerDependenciesMeta": {
+  "onnxruntime-node": { "optional": true },
+  "onnxruntime-web": { "optional": true }
+}
+```
+
+A Node service installs `onnxruntime-node`. A browser app installs `onnxruntime-web`. Neither pays
+for the other, and — the part that matters — **the dependency becomes visible to the consumer**
+rather than arriving transitively. Someone bundling for a browser now sees the runtime they chose.
+
+## Design
+
+**One package, two runners, resolution decides.**
+
+- `./onnx-runner` — `onnxruntime-node`, Node condition.
+- `./web-onnx-runner` — `onnxruntime-web`, browser condition.
+- `.` — conditioned: `node` gets the full surface, `browser` gets the safe subset.
+
+Both are subpaths of one package, so there is no cross-package import to keep in sync and no
+`browser.ts` list to drift. A module that must not reach a Node builtin resolves to a counterpart
+instead of being policed by a rule.
+
+Verified before writing this:
+
+```
+browser target -> neural/out/onnx-runner.browser.js
+node target    -> neural/onnx-runner.ts
+```
+
+and `loadFromWeights` runs with the `webpackIgnore` dance deleted, using a plain static
+self-referencing import.
+
+**The load-bearing detail: export conditions do not apply to relative imports.** `./onnx-runner.ts`
+bypasses `exports` entirely. Every runtime-split import inside the package has to become a
+self-reference — `@mailwoman/neural/onnx-runner` — which Node and webpack both resolve, and which
+this repo does nowhere today.
+
+## What breaks
+
+This is a **major**. Three breaks, none subtle:
+
+1. **`onnxruntime-node` moves from `dependencies` to an optional peer.** Any Node consumer relying on
+   it arriving transitively gets a runtime failure on first inference. That is the intended
+   correction — the dependency was always the consumer's to choose — but it is a break.
+2. **`@mailwoman/neural-web` stops being where the browser runtime lives.** It is published (8.6.0),
+   so it becomes a thin re-export shim rather than disappearing: deprecated with a pointer, removed a
+   major later.
+3. **Relative → self-referencing imports** inside `neural`. Invisible to consumers, but it touches
+   every runtime-split call site.
+
+## Blocked on an unanswered resolution question
+
+The design above assumes export conditions can carry the browser/Node boundary. **In the Docusaurus
+client build they currently do not**, and the reason is not yet known. Five experiments, each ending
+in `yarn workspace @mailwoman/docs build`:
+
+| change (cumulative)                                                    | result    |
+| ---------------------------------------------------------------------- | --------- |
+| `browser` condition on `exports["./onnx-runner"]` + a counterpart file | passes    |
+| ...plus `classifier.ts` importing `@mailwoman/neural/onnx-runner`      | **fails** |
+| ...plus `resolve.conditionNames` incl. `browser` on the client bundle  | fails     |
+| ...plus removing the `@mailwoman/neural/browser` alias                 | fails     |
+| ...plus `resolve.symlinks: false`                                      | fails     |
+
+Failures are `Module parse failed: Unexpected character` — `onnxruntime-node`'s native assets
+reaching the client graph.
+
+The decisive test: pointing the `browser` condition at a file that does NOT exist produced no
+"Can't resolve" error, only the same binary parse failure. **The condition is never consulted.**
+Resolution reaches the Node module by a path that ignores `exports` entirely.
+
+Two claims that were made and are FALSE, recorded so they are not re-derived:
+
+- _The docs webpack aliases are the blocker._ They are not. Removing
+  `aliases["@mailwoman/neural/browser"]` leaves the build passing — package exports already carry it.
+  That alias serves dev hot-reload, as its comment says, and is a simplification available today.
+- _`resolve.conditionNames` is the missing config._ Setting it changes nothing.
+
+What IS confirmed: `enhanced-resolve` invoked directly with `conditionNames: ["browser", …]` resolves
+to the browser counterpart, so the exports map is correct. The gap is specific to how the Docusaurus
+build resolves.
+
+**Step 0, before anything below: instrument that resolver** and find where
+`@mailwoman/neural/onnx-runner` actually lands and which mechanism chose it. Every step below assumes
+an answer to that.
+
+## Order of work
+
+Each step ends green, and each is separately revertable.
+
+1. **Conditions on `./onnx-runner`**, with a browser counterpart that throws a message naming the
+   browser runtime. No files move. Proves the resolution contract against the docs build.
+2. **Move `web-onnx-runner.ts` and `loader.ts`** into `neural/`, exposed as `./web-onnx-runner`.
+   `neural-web` re-exports them; nothing else changes yet.
+3. **Optional peers.** Both runtimes become optional peer deps of `neural`; the monorepo keeps them as
+   dev deps so tests and the demo still run.
+4. **Retire the convention scaffolding.** Delete `browser.ts`'s hand-maintained list where conditions
+   now cover it, drop the `webpackIgnore` comments, narrow the lint rule to whatever is left.
+5. **Migrate `docs`** to import from `@mailwoman/neural`, leaving `neural-web` as the deprecated shim.
+
+## Bars
+
+Every step: `yarn compile`, fast leg, slow leg, gauntlet, **and `@mailwoman/docs build`** — the last
+because it is the only check in the repo that bundles for a browser, and every bug this plan
+addresses was invisible to the other four.
+
+Plus, at step 3, a clean-install smoke of both shapes: a Node project with only `onnxruntime-node`
+installed, and a bundled project with only `onnxruntime-web`. The point of optional peers is that
+each works without the other, and that is not true until it is tested.

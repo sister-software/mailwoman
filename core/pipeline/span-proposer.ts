@@ -135,6 +135,17 @@ export interface SpanProposerLexicon {
 	 */
 	venueStructureDesignators: ReadonlySet<string>
 	/**
+	 * Positional words that may PRECEDE a designator ("West Wing", "Upper Concourse") — the mirror of the
+	 * designator+identifier shape, where the qualifier leads instead of following.
+	 */
+	venueStructureModifiers: ReadonlySet<string>
+	/**
+	 * The subset of {@link venueStructureDesignators} that may take a preceding modifier. Narrower than the full set
+	 * because some designators form ordinary STREET names in exactly this shape — "East Gate" is a street, "West Wing" is
+	 * not — so a rule spanning all of them converts correct street parses into sub-venue ones.
+	 */
+	modifierEligibleStructureDesignators: ReadonlySet<string>
+	/**
 	 * Global scan regex for delivery-service designator+identifier phrases, built from the codex po_box /
 	 * delivery-service tables. Must carry the `g` flag.
 	 */
@@ -150,6 +161,8 @@ export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	levelDesignators: new Set(),
 	weakDesignators: new Set(),
 	venueStructureDesignators: new Set(),
+	venueStructureModifiers: new Set(),
+	modifierEligibleStructureDesignators: new Set(),
 }
 
 //#region Tokenization
@@ -405,6 +418,39 @@ function proposeDesignatorPhrases(
 			kind: isLevel ? "LEVEL_PHRASE" : "UNIT_PHRASE",
 			confidence: weak ? 0.5 : 0.85,
 			source: venueStructure ? "designator:venue-structure" : `designator:${isLevel ? "level" : "unit"}`,
+		})
+	}
+
+	// MODIFIER + DESIGNATOR ("West Wing", "Upper Concourse") — the mirror of the shape above, where the
+	// qualifier leads rather than follows. Emitted at a lower confidence: an identifier AFTER a designator is
+	// nearly unambiguous, while a positional word BEFORE one is a shape ordinary street names also take, so
+	// this proposal should lose to a confident encoder more readily than that one does.
+	for (let i = 1; i < tokens.length; i++) {
+		const designator = tokens[i]!.stripped.toLowerCase()
+
+		if (!lexicon.modifierEligibleStructureDesignators.has(designator)) continue
+
+		const modifier = tokens[i - 1]!.stripped.toLowerCase()
+
+		if (!lexicon.venueStructureModifiers.has(modifier)) continue
+
+		const beforeModifier = tokens[i - 2]
+
+		// A house number before the modifier makes this a STREET line — "12 East Gate" is an address on East
+		// Gate, not a sub-venue of anything. The number is the discriminator the surface itself provides.
+		if (beforeModifier && /^\d{1,6}[A-Za-z]?$/.test(beforeModifier.stripped)) continue
+
+		// A capitalized word before the modifier means the pair sits INSIDE a longer proper name rather than
+		// opening one: "Grand Central Terminal" contains "Central Terminal", and proposing that as a unit
+		// carves a sub-venue out of the venue's own name. Sub-venue lines lead their segment.
+		if (beforeModifier && /^\p{Lu}/u.test(beforeModifier.stripped)) continue
+
+		out.push({
+			start: tokens[i - 1]!.strippedStart,
+			end: tokens[i]!.strippedEnd,
+			kind: "UNIT_PHRASE",
+			confidence: 0.6,
+			source: "designator:venue-structure-modifier",
 		})
 	}
 

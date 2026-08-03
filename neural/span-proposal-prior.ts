@@ -176,7 +176,7 @@ export function buildSpanProposalPriors(
 
 		if (bCol === undefined) continue
 		// Provenance decides the scale — see venueStructureBiasScale for the corpus measurement that forced the split.
-		const scale = proposal.source === "designator:venue-structure" ? venueStructureBiasScale : biasScale
+		const scale = proposal.source.startsWith("designator:venue-structure") ? venueStructureBiasScale : biasScale
 		const bias = proposal.confidence * scale
 		let first = true
 

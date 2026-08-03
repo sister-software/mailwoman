@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Every commit leaves `yarn workspace @mailwoman/docs build` green (broken links/anchors throw).
-- Every published page declares `role:` ∈ {tutorial, guide, reference, explanation, landing, evidence}; tutorials/guides also `verified-with:`; reference also `source-of-truth:`; landing/solutions also `audience:`.
+- Every published page declares `role:` ∈ `{tutorial, guide, reference, explanation, landing, evidence}`; tutorials/guides also `verified-with:`; reference also `source-of-truth:`; landing/solutions also `audience:`.
 - Register rules (spec §Register): no rude or abrasive material anywhere; no named call-outs or accusations of any person or organization; named individuals never appear in comparative or strategic material; competitor prices only with dated public citations; another vendor's customers are never quoted; public-service benchmarks (BAN/Addok) framed as complementary, never adversarial; business and personal details not already published stay unpublished. Data-refresh cadence: state "no cadence committed."
 - Voice per role (spec §Writing system): colleague voice in tutorials/guides; controlled STE100-derived register in reference; analog-first narrative in explanations; every number sourced.
 - No redirects. No rewriting `docs/research/` (Field notes). Demo pipeline untouched except links.
@@ -81,7 +81,7 @@ BlockIgnores = (?s)(```.*?```), (?s)(<details>.*?</details>)
 
 **Interfaces:**
 
-- Produces: gate requiring on EVERY published page: `role` ∈ the six-role enum; `verified-with` when role ∈ {tutorial, guide}; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
+- Produces: gate requiring on EVERY published page: `role` ∈ the six-role enum; `verified-with` when role ∈ `{tutorial, guide}`; `source-of-truth` when role = reference; `audience` when role = landing. Exported pure `validatePage(frontmatter, path): string[]` for tests.
 
 - [ ] **Step 1: Write failing tests** for `validatePage`: missing role → error; bad role value → error; tutorial without `verified-with` → error; reference without `source-of-truth` → error; landing without `audience` → error; valid page → `[]`.
 - [ ] **Step 2: Rewrite the gate.** Replace the `ROLE_REQUIRED_PAGES` hardcoded-path array with every-page enforcement; keep sidebar-orphan and duplicate-title checks as-is; empty the allowlist (old entries reference pages that will be gone).

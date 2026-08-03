@@ -30,6 +30,9 @@ import {
 	type SpanProposerLexicon,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
+// SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
+// `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
+import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "@mailwoman/neural/onnx-runner"
 
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
 import type { AnchorLookup } from "./anchor-inference.ts"
@@ -38,7 +41,6 @@ import type { CountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import type { InferResult } from "./onnx-runner.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
@@ -317,8 +319,12 @@ export class NeuralAddressClassifier {
 		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
+		// The sanctioned crossing into the Node-only modules: dynamic + webpackIgnore, so the bundler never
+		// follows them. A STATIC import of either would be followed, which is what the lint rule guards.
+
+		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 		const [
-			{ DEFAULT_INTRA_OP_THREADS, ONNXRunner },
+			{ $public },
 			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
@@ -327,7 +333,7 @@ export class NeuralAddressClassifier {
 			{ PairIndexResolver, peekPairIndexHeader },
 			fs,
 		] = await Promise.all([
-			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
+			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 			import(/* webpackIgnore: true */ "./weights.ts"),
 			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
 			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
@@ -337,8 +343,16 @@ export class NeuralAddressClassifier {
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
 
+		/* oxlint-enable typescript/no-restricted-imports */
 		const resolved: ResolvedWeights = resolveWeights(opts)
-		const labels = readLabelsFromModelCard(resolved.modelCardPath)
+
+		// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
+		// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
+		// and omitting `labels` there is correct; copying them in would be a second copy to go stale on the
+		// next retrain. Falling back is what keeps the two facts in one place.
+		const labels =
+			readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
+
 		const crf = readCRFTransitions(resolved.crfTransitionsPath)
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
@@ -366,7 +380,9 @@ export class NeuralAddressClassifier {
 				// regression — the parallelism IS doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
 				// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1;
 				// do not "simplify" it downward without re-running that curve.
-				intraOpNumThreads: opts.intraOpNumThreads ?? DEFAULT_INTRA_OP_THREADS,
+				// Explicit opt > deployment env > compromise default. The env layer exists because the right
+				// value is a property of how many processes share the host, which this library cannot see.
+				intraOpNumThreads: opts.intraOpNumThreads ?? $public.MAILWOMAN_INTRA_OP_THREADS ?? DEFAULT_INTRA_OP_THREADS,
 			}),
 		])
 

@@ -8,6 +8,7 @@ import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import { beforeEach, expect, test } from "vitest"
 
 import { createMailwomanAPI, type MailwomanAPIEngine, type ParseOutcome } from "./index.ts"
+import { MAX_ADDRESS_LENGTH } from "./schema.ts"
 
 beforeEach(() => {
 	resetMetricsForTest()
@@ -83,6 +84,7 @@ test("POST /v1/parse: debug:true reaches the engine and rides back in the respon
 
 test("GET /v1/parse?address=&debug=: happy path, first-value query reads", async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/v1/parse?address=1600+Pennsylvania+Ave+NW&debug=true")
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as ParseOutcome
@@ -118,6 +120,7 @@ test('POST /v1/parse: empty-string address -> 400 { error: "address is required"
 
 test('GET /v1/parse: absent address -> 400 { error: "address is required" }', async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/v1/parse")
 	expect(res.status).toBe(400)
 	expect(await res.json()).toEqual({ error: "address is required" })
@@ -138,6 +141,7 @@ test("POST /v1/parse: engine.parse absent -> 501", async () => {
 
 test("GET /v1/parse: engine.parse absent -> 501", async () => {
 	const app = createMailwomanAPI({})
+
 	const res = await app.request("/v1/parse?address=x")
 	expect(res.status).toBe(501)
 	expect(await res.json()).toEqual({ error: "parse not implemented" })
@@ -333,6 +337,7 @@ test("POST /v1/resolve: engine.resolveTree absent -> 503", async () => {
 
 test("POST /v1/reload: happy path passes { reloaded, versions } through", async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/v1/reload", { method: "POST" })
 	expect(res.status).toBe(200)
 	expect(await res.json()).toEqual({ reloaded: true, versions: { wof: "v1" } })
@@ -340,6 +345,7 @@ test("POST /v1/reload: happy path passes { reloaded, versions } through", async 
 
 test("POST /v1/reload: engine.reload absent -> 503", async () => {
 	const app = createMailwomanAPI({})
+
 	const res = await app.request("/v1/reload", { method: "POST" })
 	expect(res.status).toBe(503)
 	expect(await res.json()).toEqual({ error: "geocoder not available", detail: GEOCODER_UNAVAILABLE_DETAIL })
@@ -407,6 +413,7 @@ test("POST /v1/format: a missing required field -> 400 in the api-kit envelope, 
 
 test("GET /health: with an engine, spreads engine.health() alongside status + uptime_s", async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/health")
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as Record<string, unknown>
@@ -417,6 +424,7 @@ test("GET /health: with an engine, spreads engine.health() alongside status + up
 
 test("GET /health: without an engine, still answers 200 with status + uptime_s (health answers even when broken)", async () => {
 	const app = createMailwomanAPI({})
+
 	const res = await app.request("/health")
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as Record<string, unknown>
@@ -449,6 +457,7 @@ test("GET /metrics: reflects a recorded /v1/geocode call", async () => {
 
 test("GET /openapi.json: documents all 8 native paths, and is not self-referenced", async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/openapi.json")
 	expect(res.status).toBe(200)
 	const doc = (await res.json()) as { openapi: string; paths: Record<string, unknown> }
@@ -472,6 +481,7 @@ test("GET /openapi.json: documents all 8 native paths, and is not self-reference
 
 test("GET /openapi.json: full-info document config lands (license, contact, servers, security, tags)", async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/openapi.json")
 
 	const doc = (await res.json()) as {
@@ -492,6 +502,7 @@ test("GET /openapi.json: full-info document config lands (license, contact, serv
 
 test("CORS: permissive Access-Control-Allow-Origin on responses (browser clients), GET/POST/OPTIONS", async () => {
 	const app = createMailwomanAPI(fullEngine)
+
 	const res = await app.request("/health")
 	expect(res.headers.get("access-control-allow-origin")).toBe("*")
 })
@@ -513,6 +524,7 @@ test("CORS: preflight OPTIONS answers 204 with GET/POST/OPTIONS in Allow-Methods
 
 test("CORS: { cors: false } disables the headers (for a proxy that owns CORS)", async () => {
 	const app = createMailwomanAPI(fullEngine, { cors: false })
+
 	const res = await app.request("/health")
 	expect(res.headers.get("access-control-allow-origin")).toBeNull()
 })
@@ -553,4 +565,42 @@ test("malformed JSON answers a 400 envelope, not a 500", async () => {
 
 	expect(res.status).toBe(400)
 	expect(await res.json()).toEqual({ error: "invalid request body", detail: "malformed JSON" })
+})
+
+test(`POST /v1/parse: an address past ${MAX_ADDRESS_LENGTH} chars -> 400`, async () => {
+	const app = createMailwomanAPI(fullEngine)
+
+	const res = await app.request("/v1/parse", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ address: "a".repeat(MAX_ADDRESS_LENGTH + 1) }),
+	})
+
+	expect(res.status).toBe(400)
+})
+
+test(`POST /v1/parse: an address exactly at ${MAX_ADDRESS_LENGTH} chars is accepted`, async () => {
+	const app = createMailwomanAPI(fullEngine)
+
+	const res = await app.request("/v1/parse", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ address: "a".repeat(MAX_ADDRESS_LENGTH) }),
+	})
+
+	expect(res.status).toBe(200)
+})
+
+test("POST /v1/batch: the length bound applies PER ROW, not just to the request", async () => {
+	// The row cap bounds how many addresses arrive; without a per-element bound one request is still
+	// `batchMax` unbounded bodies.
+	const app = createMailwomanAPI(fullEngine)
+
+	const res = await app.request("/v1/batch", {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		body: JSON.stringify({ addresses: ["350 5th Ave", "a".repeat(MAX_ADDRESS_LENGTH + 1)] }),
+	})
+
+	expect(res.status).toBe(400)
 })

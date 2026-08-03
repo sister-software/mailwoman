@@ -73,15 +73,25 @@ export interface ONNXRunnerOpts {
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /**
- * Intra-op thread cap applied by `NeuralAddressClassifier.loadFromWeights`.
+ * Intra-op thread cap applied by `NeuralAddressClassifier.loadFromWeights`, overridable per-process via
+ * `MAILWOMAN_INTRA_OP_THREADS`.
  *
- * Four is where the latency curve flattens. On a 16-core box over 120 warm parses of short addresses: 1 thread costs
- * 18.3 ms/parse, 2 costs 12.5, and 4 costs 9.2 — level with ORT's all-cores default at 9.3 while holding a quarter of
- * the threads. Lowering it is NOT free: the parallelism is doing real work, and `1` nearly doubles latency.
+ * THERE IS NO VALUE THAT IS RIGHT FOR BOTH REGIMES, which is why this is a knob with a compromise default rather than a
+ * tuned constant. Measured on a 16-core box:
  *
- * Re-derive the curve before changing this. It is a property of the model and the box, not a convention.
+ * - ONE process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2, ORT's all-cores default 9.3.
+ *   More threads win; the parallelism is doing real work.
+ * - FOUR concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
+ *   because N processes each sizing a pool to the machine oversubscribe it N-fold.
+ *
+ * Two is the compromise: it costs a single process ~35% latency against its own optimum, and buys a four-process server
+ * ~36% throughput against the single-process optimum applied blindly. A server that knows its own worker count should
+ * set `MAILWOMAN_INTRA_OP_THREADS` to roughly cores/workers instead of accepting this.
+ *
+ * Re-derive both curves before changing it. They are properties of the model and the box, and the single-process one
+ * alone will point at the wrong answer.
  */
-export const DEFAULT_INTRA_OP_THREADS = 4
+export const DEFAULT_INTRA_OP_THREADS = 2
 
 export interface InferResult {
 	/**

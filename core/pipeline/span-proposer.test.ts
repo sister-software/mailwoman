@@ -25,6 +25,8 @@ const LEXICON: SpanProposerLexicon = {
 	// its own describe below. A fixture that quietly carried both would make every assertion above ambiguous about
 	// which provenance produced the proposal.
 	venueStructureDesignators: new Set<string>(),
+	venueStructureModifiers: new Set<string>(),
+	modifierEligibleStructureDesignators: new Set<string>(),
 	deliveryService: /\b(?:p\.?\s*o\.?\s*box|gpo\s+box|private\s+bag|locked\s+bag)\s*#?\s*(\d[\dA-Za-z-]*)\b/gi,
 }
 
@@ -232,5 +234,50 @@ describe("venue-structure provenance", () => {
 		// "Gate House" / "Terminal Industrial Estate" — the next token is a word, not an identifier.
 		expect(proposeSpans("Gate House, 1 Farringdon Street, London, EC4M 7LG", withVenueStructure)).toEqual([])
 		expect(proposeSpans("Terminal Industrial Estate, Portsmouth, PO3 5PA", withVenueStructure)).toEqual([])
+	})
+})
+
+describe("modifier + venue-interior designator", () => {
+	const withModifiers: SpanProposerLexicon = {
+		...LEXICON,
+		unitDesignators: new Set([...LEXICON.unitDesignators, "wing", "concourse", "terminal", "gate"]),
+		venueStructureDesignators: new Set(["wing", "concourse", "terminal", "gate"]),
+		venueStructureModifiers: new Set(["north", "south", "east", "west", "upper", "main"]),
+		// `gate` is deliberately absent: "East Gate" is a street, not a sub-venue.
+		modifierEligibleStructureDesignators: new Set(["wing", "concourse", "terminal"]),
+	}
+
+	it("proposes the pair when the modifier leads a segment", () => {
+		const text = "West Wing, St Thomas' Hospital, London, SE1 7EH"
+		const [span] = proposeSpans(text, withModifiers)
+
+		expect(span?.kind).toBe("UNIT_PHRASE")
+		expect(span?.source).toBe("designator:venue-structure-modifier")
+		expect(text.slice(span!.start, span!.end)).toBe("West Wing")
+	})
+
+	it("scores BELOW the designator+identifier form", () => {
+		// A qualifier before a designator is a shape ordinary street names also take; an identifier after one
+		// is nearly unambiguous. The weaker evidence must lose to a confident encoder more readily.
+		const [modifierSpan] = proposeSpans("West Wing, St Thomas' Hospital, London", withModifiers)
+		const [identifierSpan] = proposeSpans("Wing B, St Thomas' Hospital, London", withModifiers)
+
+		expect(modifierSpan!.confidence).toBeLessThan(identifierSpan!.confidence)
+	})
+
+	it("does not fire for a designator that names streets in this shape", () => {
+		expect(proposeSpans("East Gate, Warwick, CV34 4RB", withModifiers)).toEqual([])
+	})
+
+	it("does not fire behind a house number — that is a street line", () => {
+		expect(proposeSpans("12 East Wing, Warwick, CV34 4RB", withModifiers)).toEqual([])
+	})
+
+	it("does not fire mid-name, where the pair belongs to a longer proper noun", () => {
+		// "Grand Central Terminal" contains "Central Terminal"; carving that out invents a sub-venue from the
+		// venue's own name.
+		const spans = proposeSpans("Grand Central Terminal, New York, NY 10017", withModifiers)
+
+		expect(spans.filter((s) => s.source === "designator:venue-structure-modifier")).toEqual([])
 	})
 })
