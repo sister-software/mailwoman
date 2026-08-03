@@ -104,14 +104,17 @@ writeFileSync(
 	resolve(pkgDir, ".gitignore"),
 	`# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF\n# bucket at publish time. Never committed.\n/${artifact.replace(/-[a-z]{2}\.bin$/, "-*.bin")}\n`
 )
+
 writeFileSync(
 	resolve(pkgDir, ".npmignore"),
 	readFileSync(String(repoRootPath("neural-weights-en-nz", ".npmignore")), "utf8")
 )
+
 writeFileSync(
 	resolve(pkgDir, "README.md"),
 	`# ${packageName}\n\n${localeTag} weights overlay for [mailwoman](https://mailwoman.sister.software).\n\n**Data-only.** Declares \`mailwoman.baseWeights\` and shares the base model and tokenizer with\n\`@mailwoman/neural-weights-en-us\`; what it adds is \`${artifact}\`.\n\n\`\`\`sh\nnpm install ${packageName}\n\`\`\`\n`
 )
+
 writeFileSync(
 	resolve(pkgDir, "model-card.json"),
 	`${JSON.stringify(
@@ -181,6 +184,7 @@ if (!smokeText.includes(packageName)) {
 			`\t"@mailwoman/neural-weights-en-nz": "neural-weights-en-nz",\n\t"${packageName}": "neural-weights-${slug}",`
 		)
 	)
+
 	registered.push("smoke pack set")
 }
 

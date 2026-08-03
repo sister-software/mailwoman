@@ -336,6 +336,7 @@ export async function scorerClusteringEval(
 		// LR (batch GD, class-balanced) — same as the pairwise probe.
 		const w = new Array<number>(dim).fill(0)
 		let bias = 0
+
 		for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 			const gw = new Array<number>(dim).fill(0)
 			let gb = 0

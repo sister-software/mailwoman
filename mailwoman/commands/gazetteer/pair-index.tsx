@@ -193,6 +193,7 @@ export { OptionsSchema as options }
 const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const country = options.country.toLowerCase()
+
 		// The PPD tuples CSV is a GB national register — there is no equivalent for the US instance (USPS routes
 		// city/state/ZIP, so no postal source carries dependent localities). A country whose pairs come entirely from
 		// the WOF/secondary sources below runs with NO CSV rather than being handed an empty one.

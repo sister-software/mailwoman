@@ -400,6 +400,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				await md5FileWithSidecar(String(NI_PAIRS_JSONL)),
 				await md5FileWithSidecar(String(GB_REGIONS_JSONL)),
 			]
+
 			const matches =
 				existingSourceMD5s.length === currentSourceMD5s.length &&
 				currentSourceMD5s.every((md5, i) => md5 === existingSourceMD5s[i])

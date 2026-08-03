@@ -50,6 +50,7 @@ function peekPairIndexHeaderFields(path: string): { delta: number; transitionBet
 	}
 
 	const headerLen = view.getUint32(4, true)
+
 	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
 		delta: number
 		transitionBeta?: number

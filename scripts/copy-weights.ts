@@ -374,6 +374,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
 	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
+
 	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
 		? entry.pairsJsonl
@@ -381,6 +382,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 				.map((path) => resolveFrom(repoRoot, path.trim()))
 				.join(",")
 		: undefined
+
 	const banDir = entry.banDir ? resolveFrom(dataRoot, entry.banDir) : undefined
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {

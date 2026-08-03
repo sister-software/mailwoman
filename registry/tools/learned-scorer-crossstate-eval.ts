@@ -294,6 +294,7 @@ export async function scorerCrossStateEval(
 	const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
 	const w = new Array<number>(dim).fill(0)
 	let bias = 0
+
 	for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
 		const gw = new Array<number>(dim).fill(0)
 		let gb = 0

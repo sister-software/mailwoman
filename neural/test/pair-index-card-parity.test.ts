@@ -71,6 +71,7 @@ function readPairIndexFacts(path: string): PairIndexFacts {
 	expect(view.getUint32(0, true), `${path} is not a PIX1 artifact`).toBe(MAGIC)
 
 	const headerLen = view.getUint32(4, true)
+
 	const header = JSON.parse(bytes.subarray(8, 8 + headerLen).toString("utf8")) as {
 		delta: number
 		transitionBeta?: number
