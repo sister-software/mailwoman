@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `bdc.db` builder — ingests parsed FCC BDC availability rows (Task 6's
- *   {@link BDCAvailabilityRow}) into Task 7's schema (`schema.ts`), producing a sealed layer database.
+ *   The `bdc.db` builder — ingests parsed FCC BDC availability rows ({@link BDCAvailabilityRow})
+ *   into the schema declared in `schema.ts`, producing a sealed layer database.
  *
  *   Mirrors `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s shape closely: the same build-tuning
  *   pragmas, the same single-pass `Map<number, number>` coverage aggregation taken during the load
@@ -121,8 +121,8 @@ export interface BuildBDCOptions {
 	 */
 	out: string
 	/**
-	 * The FCC filing's `as_of_date` (e.g. from Task 5's `resolveLatestVintage`) — becomes the manifest's `sourceVintage`
-	 * AND `version` (BDC has no independent layer versioning yet, same deferral `build-poi.ts` makes for `release`).
+	 * The FCC filing's `as_of_date` (e.g. from `resolveLatestVintage`) — becomes the manifest's `sourceVintage` AND
+	 * `version` (BDC has no independent layer versioning yet, same deferral `build-poi.ts` makes for `release`).
 	 */
 	asOfDate: string
 	/**
@@ -144,24 +144,24 @@ export interface BuildBDCOptions {
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
 	/**
-	 * Provider-list rows (Task 3's {@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI
-	 * seam for populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider` stays
-	 * empty and the rest of the build is byte-identical to the pre-Task-8 behavior: every code path this option touches
-	 * is gated behind `if (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups
-	 * rows by `providerID` and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB}
-	 * for how the primary FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable`
-	 * docstring for the full lossy-denormalization rationale (decision 6).
+	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI seam for
+	 * populating `bdc_provider` (2a decision 8 / 3a decision 6). When ABSENT (the default), `bdc_provider` stays empty
+	 * and the rest of the build is untouched: every code path this option touches is gated behind `if
+	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
+	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
+	 * FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable` docstring for the full
+	 * lossy-denormalization rationale (decision 6).
 	 */
 	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
 	/**
 	 * Filer.db handle (`@mailwoman/filer`) used to resolve a multi-FRN provider's PRIMARY FRN via
 	 * `readFRNFilingCandidates` + `pickPrimaryFRN` (`@mailwoman/filer/sdk`, decision 6) — imported rather than
-	 * reimplemented, since Task 7's review found and fixed a temporal bug (the candidate query originally omitted the
-	 * `valid_to` half of the half-open predicate) that a fresh implementation here would reintroduce. Only actually
-	 * QUERIED for a `provider_id` whose rows carry more than one distinct `frn` — a single-FRN provider needs no lookup,
-	 * since its lone FRN is already primary by construction. Required whenever `providers` is given AND at least one
-	 * `provider_id` turns out to be multi-FRN; `buildBDCDatabase` throws a descriptive error naming the offending
-	 * `provider_id` if it's needed but missing, rather than silently picking an arbitrary FRN.
+	 * reimplemented, because the candidate query needs BOTH halves of the half-open `valid_from`/`valid_to` predicate and
+	 * a second implementation here would be a second place to drop the `valid_to` half. Only actually QUERIED for a
+	 * `provider_id` whose rows carry more than one distinct `frn` — a single-FRN provider needs no lookup, since its lone
+	 * FRN is already primary by construction. Required whenever `providers` is given AND at least one `provider_id` turns
+	 * out to be multi-FRN; `buildBDCDatabase` throws a descriptive error naming the offending `provider_id` if it's
+	 * needed but missing, rather than silently picking an arbitrary FRN.
 	 */
 	filerDB?: DatabaseClient<FilerDatabase>
 	/**
@@ -413,8 +413,8 @@ export function createTIGERBlockCentroidLookup(
 const PROVIDER_INSERT_BATCH_SIZE = 500
 
 /**
- * Groups `providers` by `providerID`. Task 3's `parseProviderList` yields one {@link ProviderListRow} PER LINE of the
- * source CSV, preserving cardinality (never folded, never last-wins — see that module's docstring) — so a `provider_id`
+ * Groups `providers` by `providerID`. `parseProviderList` yields one {@link ProviderListRow} PER LINE of the source
+ * CSV, preserving cardinality (never folded, never last-wins — see that module's docstring) — so a `provider_id`
  * appearing on N rows arrives here as N separate rows, exactly as decision 6 requires downstream.
  */
 async function groupProviderListRows(
@@ -625,7 +625,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
 	// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode, when those BSLs
 	// ALSO share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
-	// and `layer_coverage.observed_rows` by the BSL count (found in review, ~100x at real scale) — `SELECT DISTINCT`
+	// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) — `SELECT DISTINCT`
 	// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
 	// IMPORTANT — this is NOT a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
 	// same triple with DIFFERING speeds/flags are NOT the same tuple, so `SELECT DISTINCT` does not merge them —
@@ -661,8 +661,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 						// Coverage cell MUST be derived as the res-9 cell's H3 hierarchy parent — NOT a second,
 						// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
 						// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
-						// disagree for a real fraction of points (~6% empirically over CONUS, reviewer-verified —
-						// hexagon/pentagon boundary artifacts). Deriving both `h3_cell` and the coverage cell from
+						// disagree for a real fraction of points (~6% empirically over CONUS — hexagon/pentagon
+						// boundary artifacts). Deriving both `h3_cell` and the coverage cell from
 						// the SAME full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
 						// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
 						// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
@@ -755,8 +755,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	})
 
 	// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and gated behind
-	// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty, exactly as before
-	// Task 8 (see `BuildBDCOptions.providers`'s docstring — the default-path byte-identical guarantee).
+	// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty (see
+	// `BuildBDCOptions.providers`'s docstring for the default-path guarantee).
 	let providersPopulated = 0
 
 	if (options.providers) {

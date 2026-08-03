@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build poi` — the Overture Places ingest + sealed res-9 `poi.db` layer build
- *   (spec §3.4, Task 3 of the POI Data + MCP plan). Thin wiring only: the ingest (`ingestPlaces`) and
+ *   (spec §3.4 of the POI Data + MCP plan). Thin wiring only: the ingest (`ingestPlaces`) and
  *   materialize/seal (`buildPOIDatabase`) logic lives in `gazetteer-pipeline/poi/build-poi.ts`, so it
  *   stays unit-testable without Ink/Pastel in the loop. Mirrors `overture-ingest.tsx`'s progress
  *   (stderr) / summary (stdout) split.
  *
- *   `--source osm` (bdc 2b task 3, decisions 3/5): a second, build-local branch alongside the default
+ *   `--source osm` (decisions 3/5): a second, build-local branch alongside the default
  *   Overture path — same command, same `buildPOIDatabase` seam, different inputs. It streams
  *   `@mailwoman/osm/sdk`'s `extractOSMPOIs` over a Geofabrik `.osm.pbf` extract (telecom-infrastructure
  *   categories only), stamps the invocation's `--country` onto every row (a bare OSM feature
@@ -126,15 +126,14 @@ const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 			// DYNAMIC import, load-bearing: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
 			// pending — see osm/README.md), and Pastel loads every command module eagerly on --help,
-			// so a top-level import breaks the whole published CLI on a clean install (caught by the
-			// smoke test's clean-install leg, 2026-07-31). The osm source branch is build-local by
+			// so a top-level import breaks the whole published CLI on a clean install — the smoke
+			// test's clean-install leg is what catches it. The osm source branch is build-local by
 			// design; it may only resolve its SDK when actually invoked.
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {
-				// Task 3 hand-off from task 2: extractOSMPOIs yields `country: ""` (a bare OSM feature
-				// carries no country property) — stamp the invocation's --country before buildPOIDatabase
-				// ever sees the row.
+				// extractOSMPOIs yields `country: ""` (a bare OSM feature carries no country property) —
+				// stamp the invocation's --country before buildPOIDatabase ever sees the row.
 				rows.push({ ...row, country })
 			}
 

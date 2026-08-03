@@ -3,85 +3,82 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `filer.db` builder — ingests Task 2's {@link Form499Row} and Task 3's
- *   {@link ProviderListRow} into Task 4's schema (`../schema.ts`), producing a sealed identity-crosswalk
- *   artifact. Copies `bdc/sdk/build-bdc.ts`'s flow verbatim: `${out}.building` → build-tuning pragmas →
- *   ONE `DatabaseSync` handle wrapped in a `DatabaseClient` for DDL while hot inserts use raw prepared
- *   statements on that SAME handle → create tables → stage-table dedup via composite-PK
- *   `INSERT OR IGNORE` batched with `BEGIN`/`COMMIT` → materialize via `INSERT … SELECT` →
- *   index-after-load → write manifest → `ANALYZE`/`VACUUM` → `sealDatabase` → rename existing `out` to
- *   `.prev` → rename `.building` into place. `filer.db` is NOT a layer-contract artifact (decision 2), so
- *   there is no `@mailwoman/core/layers` call here and no `asContractDB`-style invariance cast is needed —
- *   the manifest is a plain `filer_manifest` insert via Kysely, not `writeLayerManifest`.
+ *   The `filer.db` builder — ingests {@link Form499Row} and {@link ProviderListRow} into the schema
+ *   (`../schema.ts`), producing a sealed identity-crosswalk artifact. Copies `bdc/sdk/build-bdc.ts`'s flow
+ *   verbatim: `${out}.building` → build-tuning pragmas → ONE `DatabaseSync` handle wrapped in a
+ *   `DatabaseClient` for DDL while hot inserts use raw prepared statements on that SAME handle → create
+ *   tables → stage-table dedup via composite-PK `INSERT OR IGNORE` batched with `BEGIN`/`COMMIT` →
+ *   materialize via `INSERT … SELECT` → index-after-load → write manifest → `ANALYZE`/`VACUUM` →
+ *   `sealDatabase` → rename existing `out` to `.prev` → rename `.building` into place. `filer.db` is NOT a
+ *   layer-contract artifact (decision 2), so there is no `@mailwoman/core/layers` call here and no
+ *   `asContractDB`-style invariance cast is needed — the manifest is a plain `filer_manifest` insert via
+ *   Kysely, not `writeLayerManifest`.
  *
  *   **Node/edge/family dedup — no staging table needed.** `filer_node` (PK `node_id`), `filer_edge` (PK
  *   `(from_node_id, to_node_id, source, valid_from)`), and `filer_family` (PK `(node_id, family_id,
- *   naming_node_id, source, valid_from)` — Task 1's four-column key plus `naming_node_id`, added by 3b Task 3
- *   fix round 4 so two raw spellings that canonicalize to one `family_id` stay two rows instead of colliding;
- *   see `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is load-bearing) already
- *   carry the uniqueness constraint a staging table would otherwise exist to provide — so all three are written
- *   directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. This *is* "the way edges are
- *   handled" the Task 4 review referenced: the composite PK, not a separate staging pass, is the dedup
- *   mechanism, and 3b Task 2's family-membership writes reuse it rather than growing a second staging table
- *   the PK already makes unnecessary.
+ *   naming_node_id, source, valid_from)` — the edge key's four columns plus `naming_node_id`, so two raw
+ *   spellings that canonicalize to one `family_id` stay two rows instead of colliding; see
+ *   `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is load-bearing) already
+ *   carry the uniqueness constraint a staging table would otherwise exist to provide — so all three are
+ *   written directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. The composite PK, not
+ *   a separate staging pass, is the dedup mechanism, and the family-membership writes reuse it rather than
+ *   growing a second staging table the PK already makes unnecessary.
  *
- *   **Attribute dedup — a real staging table, because `filer_attribute` has no PK.** Task 4's review
- *   flagged `filer_attribute`/`filer_cluster` as carrying no uniqueness constraint, so a same-source/
- *   same-vintage double-insert (e.g. the same 499 row processed twice, or two rows independently
- *   asserting the identical fact) would silently duplicate. This builder makes the write path idempotent
- *   by staging every attribute write into `filer_attribute_stage` — a build-only table (dropped before the
- *   artifact seals, same lifecycle as `bdc_stage`) carrying a composite PRIMARY KEY on the natural key
- *   `(node_id, key, value, source, source_vintage)` — then materializing into `filer_attribute` via
- *   `INSERT … SELECT`. `value` is part of the key (not just `node_id, key, source, source_vintage`)
- *   because ONE key can legitimately carry several distinct values from the same source at the same
- *   vintage (e.g. `classification` — a filer can be both a USF contributor AND an Incumbent LEC); only a
- *   literal repeat of the whole tuple is a duplicate to collapse.
+ *   **Attribute dedup — a real staging table, because `filer_attribute` has no PK.** Neither
+ *   `filer_attribute` nor `filer_cluster` carries a uniqueness constraint, so a same-source/ same-vintage
+ *   double-insert (e.g. the same 499 row processed twice, or two rows independently asserting the identical
+ *   fact) would silently duplicate. This builder makes the write path idempotent by staging every attribute
+ *   write into `filer_attribute_stage` — a build-only table (dropped before the artifact seals, same
+ *   lifecycle as `bdc_stage`) carrying a composite PRIMARY KEY on the natural key `(node_id, key, value,
+ *   source, source_vintage)` — then materializing into `filer_attribute` via `INSERT … SELECT`. `value` is
+ *   part of the key (not just `node_id, key, source, source_vintage`) because ONE key can legitimately carry
+ *   several distinct values from the same source at the same vintage (e.g. `classification` — a filer can be
+ *   both a USF contributor AND an Incumbent LEC); only a literal repeat of the whole tuple is a duplicate to
+ *   collapse.
  *
- *   `filer_cluster` is created (empty) for schema completeness — Task 6's `cluster-filers.ts` populates it
- *   in a later build pass; this builder never writes to it, so its own PK-less idempotency question is out
- *   of scope here.
+ *   `filer_cluster` is created (empty) for schema completeness — `cluster-filers.ts` populates it in a later
+ *   build pass; this builder never writes to it, so its own PK-less idempotency question is out of scope
+ *   here.
  *
  *   **Malformed input is loud, never silently deduped** (`peekProviderID`'s discipline,
- *   `bdc/sdk/build-bdc.ts`:237): an empty `form499ID` cannot be told apart from any other empty
- *   `form499ID` once mangled into a node identity — silently accepting it would mint ONE degenerate
- *   `form499_id:` node that every empty-ID row collapses into, merging unrelated filers under one
- *   identity. This throws instead, naming the offending row. Likewise an empty `frn` (on EITHER row
- *   shape — see {@linkcode mintFRNNodeID}) and an empty `lastFiledAt` (see {@linkcode assertLastFiledAt}
- *   — fix round 1, CRITICAL: an unguarded blank `lastFiledAt` was silently written into
- *   `source_vintage`/`valid_from` as `""`, which SQLite's `NOT NULL` does not reject, breaking decision
- *   7 / gate 1's "valid_from is MANDATORY" invariant). A `null` `frn` on a {@link Form499Row} (Task 2's
- *   {@link Form499Row.frn}) is the opposite case — common and legitimate (a filer not yet registered in
- *   CORES) — so it is never an error, only a counted {@link BuildFilerResult.skipped} opportunity.
+ *   `bdc/sdk/build-bdc.ts`:237): an empty `form499ID` cannot be told apart from any other empty `form499ID`
+ *   once mangled into a node identity — silently accepting it would mint ONE degenerate `form499_id:` node
+ *   that every empty-ID row collapses into, merging unrelated filers under one identity. This throws instead,
+ *   naming the offending row. Likewise an empty `frn` (on EITHER row shape — see {@linkcode mintFRNNodeID})
+ *   and an empty `lastFiledAt` (see {@linkcode assertLastFiledAt}: an unguarded blank `lastFiledAt` reaches
+ *   `source_vintage`/`valid_from` as `""`, which SQLite's `NOT NULL` does not reject, breaking decision 7 /
+ *   gate 1's "valid_from is MANDATORY" invariant). A `null` {@link Form499Row.frn} is the opposite case —
+ *   common and legitimate (a filer not yet registered in CORES) — so it is never an error, only a counted
+ *   {@link BuildFilerResult.skipped} opportunity.
  *
- *   **Edges emitted (all `assertion: "authoritative"` — Task 5 never writes inferred edges; that is
- *   Task 6's `cluster-filers.ts`, over `@mailwoman/match`):**
+ *   **Edges emitted from the 499 and provider-list rows (all `assertion: "authoritative"` — the only INFERRED
+ *   edge this builder writes is the EDGAR corroboration edge below; every other inferred edge in `filer.db`
+ *   comes from `cluster-filers.ts`, over `@mailwoman/match`):**
  *
  *   - From a {@link Form499Row} with a non-null `frn`: `FRN↔form499ID`, `FRN↔holdingCompanyName` (when
  *     `holdingCompany` is non-empty), `FRN↔managementCompanyName` (when `managementCompany` is
  *     non-empty — a SEPARATE edge from the holding-company one; spec §3.1 finding 1, ownership and
  *     operational control are different assertions, never collapsed). `source_vintage` and `valid_from`
  *     both take the row's own `lastFiledAt` (decision 7 — the only per-row date 499 offers).
- *   - From a {@link ProviderListRow}: `bdcProviderID↔FRN` (always — `frn` is never null on this row
- *     shape) and `bdcProviderID↔holdingCompanyName` (when `holdingCompany` is non-null). `source_vintage`
- *     takes `options.sourceVintage` (decision 7 — the provider list carries no per-row date, only a
- *     whole-file vintage) but `valid_from` takes the SEPARATE `options.validFrom` (review fix, round N,
- *     CRITICAL) — see {@link BuildFilerOptions.validFrom}'s docstring for why the two must never be the
- *     same field: `sourceVintage` is a free-text human label (`"2026-Q2"`) that is not guaranteed
- *     ISO-sortable, and `valid_from` participates in every downstream `asOf` predicate as a plain string
- *     comparison.
+ *   - From a {@link ProviderListRow}: `bdcProviderID↔FRN` (always — `frn` is never null on this row shape)
+ *     and `bdcProviderID↔holdingCompanyName` (when `holdingCompany` is non-null). `source_vintage` takes
+ *     `options.sourceVintage` (decision 7 — the provider list carries no per-row date, only a whole-file
+ *     vintage) but `valid_from` takes the SEPARATE `options.validFrom` — see {@link
+ *     BuildFilerOptions.validFrom}'s docstring for why the two must never be the same field: `sourceVintage`
+ *     is a free-text human label (`"2026-Q2"`) that is not guaranteed ISO-sortable, and `valid_from`
+ *     participates in every downstream `asOf` predicate as a plain string comparison.
  *
  *   The direction convention (documented, not semantically load-bearing — `filer_edge` asserts symmetric
  *   sameness, and the `to_node_id` index makes either traversal direction cheap): FRN is `from` for
  *   499-derived edges (it is the identifier hub — spec §3), `bdcProviderID` is `from` for provider-list
  *   edges (the row's own natural anchor).
  *
- *   **`relationship` is fully typed (3b Task 2, decisions 1, 2) — 3b Task 1 shipped a uniform `SameEntity`
- *   placeholder at every site below; this reclassifies each to its correct named kind.** `FRN↔form499ID`
- *   and `bdcProviderID↔FRN` assert identity — the same underlying filer under a different identifier — so
- *   both stay `FilerRelationship.SameEntity`. `FRN↔holdingCompanyName` AND `bdcProviderID↔holdingCompanyName`
- *   are ownership facts (`FilerRelationship.HoldingCompany`); `FRN↔managementCompanyName` is operational
- *   control, never collapsed into the holding-company kind (spec §3.1 finding 1) —
- *   `FilerRelationship.ManagementCompany`.
+ *   **`relationship` is fully typed (decisions 1, 2) — every edge below names its own kind, never a uniform
+ *   `SameEntity` placeholder.** `FRN↔form499ID` and `bdcProviderID↔FRN` assert identity — the same underlying
+ *   filer under a different identifier — so both stay `FilerRelationship.SameEntity`.
+ *   `FRN↔holdingCompanyName` AND `bdcProviderID↔holdingCompanyName` are ownership facts
+ *   (`FilerRelationship.HoldingCompany`); `FRN↔managementCompanyName` is operational control, never collapsed
+ *   into the holding-company kind (spec §3.1 finding 1) — `FilerRelationship.ManagementCompany`.
  *
  *   **`filer_family` is populated alongside every `HoldingCompany`/`ManagementCompany` edge.** A
  *   `holding_company_name` (or `management_company_name`) node with N distinct FRN/`bdcProviderID` members
@@ -106,10 +103,10 @@
  *   `dcAgent*` field into an edge; this is enforced by construction (the edge-emitting functions below
  *   never read those fields), not by a runtime check.
  *
- *   **EDGAR Exhibit 21 ingest — the optional `edgarRows` seam.** Task 0's `SECClient.getDocument`
- *   plus Task 7's `parseExhibit21` produce {@link EdgarSubsidiaryRow}s (a parent CIK, a raw subsidiary name,
- *   an optional jurisdiction, a filing date) somewhere upstream of this file; this builder only ever
- *   consumes them, the same "injected iterable" shape `form499Rows`/`providerRows` already use.
+ *   **EDGAR Exhibit 21 ingest — the optional `edgarRows` seam.** `sec-client.ts`'s `SECClient.getDocument`
+ *   plus `exhibit21.ts`'s `parseExhibit21` produce {@link EdgarSubsidiaryRow}s (a parent CIK, a raw
+ *   subsidiary name, an optional jurisdiction, a filing date) somewhere upstream of this file; this builder
+ *   only ever consumes them, the same "injected iterable" shape `form499Rows`/`providerRows` already use.
  *
  *   Two edges per row, at most, and they answer DIFFERENT questions:
  *
@@ -123,59 +120,57 @@
  *      minted the same "global name-node" way as `mintHoldingCompanyNodeID` — the raw string, unnormalized;
  *      see {@link FilerIdentifierType.SubsidiaryName}'s own docstring in `schema.ts`.
  *   2. **The corroboration edge — INFERENCE, not authority, and only when unambiguous.** Which FRN (if any) a
- *      disclosed subsidiary name actually IS is not itself in Exhibit 21 — this builder infers it by an
- *      EXACT canonicalized-name match against the `legalNameOfCarrier` this SAME build call's `form499Rows`
- *      already gave it (cluster-filers.ts's own inferred pass makes the identical simplification, for the
- *      identical reason: "nothing below an exact canonical match ever reaches the scorer"). When EXACTLY ONE
- *      FRN's latest legal name canonicalizes to the subsidiary name, this writes `frn -> cik`,
- *      `assertion: inferred`, `relationship: ParentCompany` (the inverse direction from edge 1 —
- *      `from: frn -> to: cik` with `Subsidiary` would assert the CIK is the FRN's subsidiary, the wrong way
- *      round; `ParentCompany` is what "the target is my parent" means here — this is the EXACT shape the
- *      Task 8 precondition regression test in `linkage-eval.test.ts` pins), carrying the `match_score`
- *      {@linkcode scoreEdgarSubsidiaryMatch} computes from the two RAW names. When ZERO FRNs match, nothing
- *      more is written — the disclosure edge above is the whole fact. When TWO OR MORE DISTINCT FRNs
- *      canonicalize to the SAME name (a genuine collision — 3a's false-identity-link lesson,
- *      `edgar-filings.ts`'s own `resolveCIKCandidates` docstring), this builder ABSTAINS rather than guess
- *      which one: no corroboration edge, no family row, for that subsidiary.
+ *      disclosed subsidiary name actually IS is not itself in Exhibit 21 — this builder infers it by an EXACT
+ *      canonicalized-name match against the `legalNameOfCarrier` this SAME build call's `form499Rows` already
+ *      gave it (cluster-filers.ts's own inferred pass makes the identical simplification, for the identical
+ *      reason: "nothing below an exact canonical match ever reaches the scorer"). When EXACTLY ONE FRN's
+ *      latest legal name canonicalizes to the subsidiary name, this writes `frn -> cik`, `assertion:
+ *      inferred`, `relationship: ParentCompany` (the inverse direction from edge 1 — `from: frn -> to: cik`
+ *      with `Subsidiary` would assert the CIK is the FRN's subsidiary, the wrong way round; `ParentCompany`
+ *      is what "the target is my parent" means here — the exact shape `filer/tools/linkage-eval.test.ts`
+ *      pins), carrying the `match_score` {@linkcode scoreEdgarSubsidiaryMatch} computes from the two RAW
+ *      names. When ZERO FRNs match, nothing more is written — the disclosure edge above is the whole fact.
+ *      When TWO OR MORE DISTINCT FRNs canonicalize to the SAME name (a genuine collision — 3a's
+ *      false-identity-link lesson, `edgar-filings.ts`'s own `resolveCIKCandidates` docstring), this builder
+ *      ABSTAINS rather than guess which one: no corroboration edge, no family row, for that subsidiary.
  *
- *      **The score is NOT a constant.** It used to be a flat `0.92` on every such link, which
- *      overstated the ambiguous case badly: the join is on the CANONICALIZED name, and
- *      `canonicalizeOrganizationName` maps `"American Broadband LLC"`, `"American Broadband, Inc."` and
- *      `"American Broadband Corp"` all to `"american broadband"` — so the match provably cannot tell three
- *      companies apart while reporting 0.92 for each. The abstention above does not cover that case, because
- *      it only fires on a collision WITHIN the 499 file: if 499 carries only the LLC and Exhibit 21 discloses
- *      the Inc., exactly one FRN matches and an edge is written for what may be the wrong company. It is now
- *      written at 0.5. See {@linkcode scoreEdgarSubsidiaryMatch} for the three-rung ladder and its ceiling.
+ *      **The score is NOT a constant.** One flat number on every such link would overstate the ambiguous case
+ *      badly: the join is on the CANONICALIZED name, and `canonicalizeOrganizationName` maps `"American
+ *      Broadband LLC"`, `"American Broadband, Inc."` and `"American Broadband Corp"` all to `"american
+ *      broadband"` — so the match provably cannot tell three companies apart. The abstention above does not
+ *      cover that case, because it only fires on a collision WITHIN the 499 file: if 499 carries only the LLC
+ *      and Exhibit 21 discloses the Inc., exactly one FRN matches and an edge is written for what may be the
+ *      wrong company; that edge scores 0.5. See {@linkcode scoreEdgarSubsidiaryMatch} for the three-rung
+ *      ladder and its ceiling.
  *
  *   **A `filer_family` row is written ALONGSIDE the corroboration edge — never for the disclosure edge
- *   alone.** This is the Task 8 precondition, stated as plainly as the regression test states it: a
- *   `filer_edge` row by itself is invisible to `familyRollup`/`filerLookup.families` — both answer
- *   "which family does this node belong to" from `filer_family` alone. So the SAME inferred FRN↔CIK
- *   relationship also becomes a `filer_family` row: `node_id` the FRN node, `family_id` AND `naming_node_id`
- *   both the CIK's OWN node id (`insertFamilyMembership`'s usual `mintFamilyID` canonicalization is not
- *   needed here — a CIK is already a stable, EDGAR-assigned, collision-free key, unlike a free-text
- *   holding-company name that two different spellings can drift across), `relationship: ParentCompany`,
- *   same `assertion: inferred`/`match_score`/`source`/`source_vintage`/`valid_from` as the edge,
- *   `valid_to: null`. This is the repo's first INFERRED `filer_family` row, and the reason that table
- *   gained `assertion`/`match_score` at all — see `schema.ts`'s file header: without them
- *   this name-match guess reached `familyRollup`/`filerLookup.families` shape-identical to a Form 499
+ *   alone.** A `filer_edge` row by itself is invisible to `familyRollup`/`filerLookup.families` — both answer
+ *   "which family does this node belong to" from `filer_family` alone, which is why the same fact must be
+ *   written to both tables (`filer/tools/linkage-eval.test.ts` pins it as a regression test). So the SAME
+ *   inferred FRN↔CIK relationship also becomes a `filer_family` row: `node_id` the FRN node, `family_id` AND
+ *   `naming_node_id` both the CIK's OWN node id (`insertFamilyMembership`'s usual `mintFamilyID`
+ *   canonicalization is not needed here — a CIK is already a stable, EDGAR-assigned, collision-free key,
+ *   unlike a free-text holding-company name that two different spellings can drift across), `relationship:
+ *   ParentCompany`, same `assertion: inferred`/`match_score`/`source`/`source_vintage`/`valid_from` as the
+ *   edge, `valid_to: null`. This is the only INFERRED `filer_family` row anything in the repo writes, and the
+ *   reason that table carries `assertion`/`match_score` at all — see `schema.ts`'s file header: without them
+ *   this name-match guess reaches `familyRollup`/`filerLookup.families` shape-identical to a Form 499
  *   holding-company membership the filer itself filed.
  *
- *   **`filer.db` is a single-vintage SNAPSHOT, not a multi-vintage archive (review finding, MINOR-B, fix
- *   round 1 — pin this before Task 6 reads the artifact).** The build-then-seal-then-swap discipline
- *   (`${out}.building` → `sealDatabase` → rename existing `out` to `.prev` → rename into place) means a
- *   SECOND `buildFilerDatabase` call against the SAME `out` with a LATER `sourceVintage` REPLACES the
+ *   **`filer.db` is a single-vintage SNAPSHOT, not a multi-vintage archive.** The build-then-seal-then-swap
+ *   discipline (`${out}.building` → `sealDatabase` → rename existing `out` to `.prev` → rename into place)
+ *   means a SECOND `buildFilerDatabase` call against the SAME `out` with a LATER `sourceVintage` REPLACES the
  *   whole artifact — the earlier vintage's rows do not survive alongside the new ones as additional
- *   `filer_edge`/`filer_attribute` rows. Decision 7's "two vintages can coexist as two rows" scenario is
- *   a property of the SCHEMA (the edge PK includes `valid_from`, so two DIFFERENT `valid_from` values for
- *   the same `(from, to, source)` are two distinct rows) — but it's reachable only by feeding rows
- *   spanning multiple vintages into ONE `buildFilerDatabase` call (e.g. a combined `form499Rows` iterable
- *   drawn from several historical filing snapshots), never by calling this function twice at different
- *   `sourceVintage`s against the same `out`. Any consumer that reads across builds (Task 6's
- *   `cluster-filers.ts`, any future incremental-build task) must NOT assume cross-build accumulation —
- *   each successful build is a complete, self-contained replacement of what "the crosswalk" means as of
- *   that one `sourceVintage`. Multi-vintage accumulation, if ever needed, would require an
- *   accumulate-into-existing-artifact build mode this function does not implement.
+ *   `filer_edge`/`filer_attribute` rows. Decision 7's "two vintages can coexist as two rows" scenario is a
+ *   property of the SCHEMA (the edge PK includes `valid_from`, so two DIFFERENT `valid_from` values for the
+ *   same `(from, to, source)` are two distinct rows) — but it's reachable only by feeding rows spanning
+ *   multiple vintages into ONE `buildFilerDatabase` call (e.g. a combined `form499Rows` iterable drawn from
+ *   several historical filing snapshots), never by calling this function twice at different `sourceVintage`s
+ *   against the same `out`. Any consumer that reads across builds (`cluster-filers.ts`, any future
+ *   incremental-build task) must NOT assume cross-build accumulation — each successful build is a complete,
+ *   self-contained replacement of what "the crosswalk" means as of that one `sourceVintage`. Multi-vintage
+ *   accumulation, if ever needed, would require an accumulate-into-existing-artifact build mode this function
+ *   does not implement.
  */
 
 import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"

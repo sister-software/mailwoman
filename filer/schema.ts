@@ -36,9 +36,9 @@
  *   and reconstructing `node_id` from a known `(identifier_type, identifier_value)` pair IS the lookup
  *   path, so there's no secondary index for that reverse direction either.
  *
- *   **3b Task 1 additions (decisions 1, 2; `schema_version` bumped to 2 in the manifest write path,
+ *   **Strength and kind are two orthogonal columns (decisions 1, 2; `schema_version` 2, written by
  *   `build-filer.ts`):** {@link FilerEdgeAssertion} grades HOW STRONGLY an assertion is evidenced
- *   (authoritative vs. inferred) — it says nothing about WHAT the assertion means. `filer_edge` gains a
+ *   (authoritative vs. inferred) — it says nothing about WHAT the assertion means. `filer_edge` carries a
  *   separate, orthogonal `relationship` column ({@link FilerRelationship}) for that: before this column
  *   existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (an edge into a
  *   `holding_company_name` node was "assumed" to mean ownership), a scheme that cannot distinguish a
@@ -54,27 +54,27 @@
  *   mirrors `filer_edge`'s reasoning exactly (composite on `(node_id, family_id, naming_node_id, source,
  *   valid_from)`, `relationship` excluded from it for the identical contradiction-vs-plurality reason).
  *
- *   **3b Task 3 fix round 4:** `filer_family` gained `naming_node_id` — the company node whose raw name
+ *   **`naming_node_id` carries a family fact's naming provenance** — the company node whose raw name
  *   PRODUCED this row's `family_id`. `family_id` is a canonicalized slug (`family-id.ts`'s `mintFamilyID`
- *   over `@mailwoman/record`'s `canonicalizeOrganizationName`), and until this column existed the ONLY way
- *   for a reader to get back to the human-readable name was to re-run that canonicalization at READ time
- *   and keep whichever edge target matched. That put a sealed, separately-versioned artifact's output at
+ *   over `@mailwoman/record`'s `canonicalizeOrganizationName`), so without this column the only way for a
+ *   reader to get back to the human-readable name would be to re-run that canonicalization at READ time
+ *   and keep whichever edge target matched. That puts a sealed, separately-versioned artifact's output at
  *   the mercy of a designation-list edit in another workspace: `canonicalizeOrganizationName`'s own
- *   docstring says its jurisdiction/domain packs "are grounded seeds, not exhaustive — extend them per ISO
- *   20275 as locales are added", and nothing in `filer_manifest` pins the canonicalizer's identity. A
+ *   docstring says its jurisdiction/domain packs "are grounded seeds, not exhaustive — extend them per
+ *   ISO 20275 as locales are added", and nothing in `filer_manifest` pins the canonicalizer's identity. A
  *   reviewer reproduced the consequence — a `family_id` minted before `"inc"` joined `BASE_DESIGNATIONS`
  *   stops matching anything the current canonicalizer produces, and every display name silently
  *   disappears with no error and no warning. Persisting the provenance rather than re-deriving it is also
  *   the plainly correct shape under this project's binding rule (provenance on every edge): a
- *   family-membership row recorded the FACT without recording what produced it.
+ *   family-membership row would otherwise record the FACT without recording what produced it.
  *
- *   **3b Task 8 fix round 1:** `filer_family` gained `assertion` + `match_score`, the two columns
- *   {@link FilerEdgeTable} has carried since 3a. Gate 2 ("inferred never merges with authoritative") was
- *   enforced on `filer_edge` alone, and Task 8's EDGAR ingest is the repo's first writer of an INFERRED
- *   family membership — a name-match guess at WHICH FRN a disclosed subsidiary name belongs to. Without
- *   these columns that guess was shape-identical, on every read surface, to a Form 499 holding-company
- *   membership the filer itself filed: the row recorded the fact and its `source` but not the STRENGTH of
- *   the claim behind it, so the gate never reached the table `familyRollup`/`filerLookup.families`
+ *   **`filer_family` carries `assertion` + `match_score` too** — the two columns {@link FilerEdgeTable}
+ *   has carried since 3a. Gate 2 ("inferred never merges with authoritative") enforced on `filer_edge`
+ *   alone stops at the table boundary, and `build-filer.ts`'s EDGAR ingest writes INFERRED family
+ *   memberships — a name-match guess at WHICH FRN a disclosed subsidiary name belongs to. Without these
+ *   columns that guess is shape-identical, on every read surface, to a Form 499 holding-company
+ *   membership the filer itself filed: the row records the fact and its `source` but not the STRENGTH of
+ *   the claim behind it, so the gate never reaches the table `familyRollup`/`filerLookup.families`
  *   actually answer family questions from. `source` is not a usable proxy for that strength either —
  *   `edgar-exhibit-21` writes BOTH an authoritative disclosure edge and an inferred corroboration edge,
  *   so one source name spans both grades.
@@ -140,12 +140,12 @@ export const FilerEdgeAssertion = {
 export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerEdgeAssertion]
 
 /**
- * The KIND of relationship a `filer_edge` or `filer_family` row asserts between two nodes (3b Task 1, decisions 1, 2) —
- * orthogonal to {@link FilerEdgeAssertion}, which grades how strongly the SAME assertion is evidenced, never what it
- * means. Before this column existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (e.g. an
- * edge into a `holding_company_name` node was "assumed" to mean ownership) — a scheme that cannot distinguish a holding
- * company from a parent CIK from a transfer-of-control, and had no way to express a corporate-family fact
- * (`filer_family`) at all.
+ * The KIND of relationship a `filer_edge` or `filer_family` row asserts between two nodes (decisions 1, 2) — orthogonal
+ * to {@link FilerEdgeAssertion}, which grades how strongly the SAME assertion is evidenced, never what it means. Before
+ * this column existed, relationship kind lived implicitly in the TARGET node's `identifier_type` (e.g. an edge into a
+ * `holding_company_name` node was "assumed" to mean ownership) — a scheme that cannot distinguish a holding company
+ * from a parent CIK from a transfer-of-control, and had no way to express a corporate-family fact (`filer_family`) at
+ * all.
  *
  * - `SameEntity` — the two nodes denote the SAME underlying filer under different identifiers (an FRN and its Form 499
  *   ID, a BDC `provider_id` and its FRN) — the crosswalk's original, still-dominant edge meaning, and the only kind
@@ -197,7 +197,7 @@ export interface FilerEdgeTable {
 	 */
 	assertion: string
 	/**
-	 * One of {@link FilerRelationship} (3b Task 1, decisions 1, 2). Orthogonal to `assertion` — see the file header and
+	 * One of {@link FilerRelationship} (decisions 1, 2). Orthogonal to `assertion` — see the file header and
 	 * {@link FilerRelationship}'s own docstring. NOT part of {@link createFilerEdgeTable}'s primary key: see that
 	 * function's docstring for why a same-instant conflicting `relationship` from one source is a contradiction to
 	 * reject, not a plurality to store.
@@ -267,10 +267,10 @@ export interface FilerClusterTable {
 }
 
 /**
- * Corporate-family membership (3b Task 1, decisions 1, 2) — the seam `filer_cluster` never had for telling apart an
- * ENTITY cluster (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY
- * (a holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id`
- * belongs to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
+ * Corporate-family membership (decisions 1, 2) — the seam `filer_cluster` never had for telling apart an ENTITY cluster
+ * (same filer, different identifiers — `filer_cluster`'s own, unchanged meaning) from a CORPORATE FAMILY (a
+ * holding/parent/subsidiary/management tree spanning several DIFFERENT filers). One row asserts that `node_id` belongs
+ * to `family_id` — named by `naming_node_id`'s raw spelling — under a specific {@link FilerRelationship}
  * `relationship`, at a specific {@link FilerEdgeAssertion} `assertion` strength, as reported by one source at one
  * vintage — provenance-plural and temporally scoped exactly like `filer_edge` (see {@link createFilerFamilyTable}'s
  * docstring for why its primary key mirrors `filer_edge`'s reasoning, `relationship` and `assertion` both excluded, and
@@ -315,8 +315,8 @@ export interface FilerFamilyTable {
 }
 
 /**
- * The `filer_manifest.schema_version` value `build-filer.ts` bumped to (3b Task 1, decisions 1, 2) when `filer_edge`
- * gained its NOT NULL `relationship` column and `filer_family` was introduced. Any reader that hard-depends on either
+ * The `filer_manifest.schema_version` value `build-filer.ts` bumped to (decisions 1, 2) when `filer_edge` gained its
+ * NOT NULL `relationship` column and `filer_family` was introduced. Any reader that hard-depends on either
  * (`filer-lookup.ts`'s `families` field, `family-rollup.ts`'s `familyRollup`) must refuse an artifact reporting an
  * EARLIER `schema_version` with a descriptive, rebuild-pointing error — not a raw "no such table: filer_family"
  * surfaced straight from SQLite (a `schema_version: 1` artifact hit exactly that before this guard existed).
@@ -373,7 +373,7 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * ROWID`. Call {@link createFilerEdgeToNodeIndex} separately, after bulk load, for the reverse (in-edges) traversal
  * path.
  *
- * `relationship` (3b Task 1, decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as
+ * `relationship` (decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as
  * load-bearing as `assertion`: the PK's job is telling apart DIFFERENT provenance (a different source, or the same
  * source at a later vintage) — two rows are a legitimate plurality there. Two rows from the SAME source at the SAME
  * `valid_from` for the SAME pair is a different situation: if `relationship` were in the key, one source could assert

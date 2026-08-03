@@ -29,14 +29,14 @@
  *   verbatim — so `"8" + R.toString(16) + shortHex.padStart(13, "0")` reassembles the identical full
  *   index `latLngToCell` would have produced at resolution R. See {@link res9ShortCellToRes6Parent}.
  *
- *   This same formula is exactly what `build-bdc.ts` MUST use (and does, after fix round 1) to derive the
+ *   This same formula is exactly what `build-bdc.ts` MUST use (and does) to derive the
  *   coverage cell it writes at build time — H3's cell hierarchy is not geometrically exact, so a
  *   `latLngToCell(centroid, 6)` computed independently of the stored res-9 cell disagrees with
  *   `cellToParent(res9Cell, 6)` for a real fraction of points (verified ~6% over CONUS). Builder and
- *   reader deriving the res-6 parent differently was a real bug: a genuinely-surveyed block
- *   (real rows, real `layer_coverage` entry) could read back as `unknown_block_count` while its own rows
- *   still populated `filings` — a self-contradiction. `filings` is now scoped to units that PASS the
- *   coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen again: a
+ *   reader deriving the res-6 parent differently is a self-contradiction waiting to happen: a
+ *   genuinely-surveyed block (real rows, real `layer_coverage` entry) reads back as
+ *   `unknown_block_count` while its own rows still populate `filings`. `filings` is scoped to units that
+ *   PASS the coverage check (see the `surveyedUnits` accumulator below) precisely so that can't happen: a
  *   block excluded from `surveyed_block_count` never contributes to `filings` either.
  */
 

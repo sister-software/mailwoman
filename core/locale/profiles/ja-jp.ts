@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ja-JP locale profile, used in Phase 0 §8 for the forward-compat sanity check (#8 task 8): does
- *   the core abstraction accept a locale that omits `street` and `house_number` entirely without
- *   throwing or tripping a type assertion? If this profile registers cleanly today, Phase 6 (Japan)
- *   does not need a core refactor.
+ *   Ja-JP locale profile, and the core abstraction's forward-compat sanity check (#8): does the
+ *   registry accept a locale that omits `street` entirely, and whose hierarchy runs
+ *   largest-to-smallest, without throwing or tripping a type assertion? While this profile registers
+ *   cleanly, Japan support needs no core refactor.
  *
- *   Note: no rule classifiers are listed because the JP profile is neural-only in Phase 6. The rule
- *   pipeline does not produce Japanese-specific tags; declaring an empty list here verifies the
- *   system does not assume there are rule classifiers for every locale.
+ *   No rule classifiers are listed because the JP profile is neural-only — the rule pipeline produces
+ *   no Japanese-specific tags. The empty list is itself the assertion that nothing in the system
+ *   assumes every locale has rule classifiers.
  */
 
 import type { LocaleProfile } from "../locale.ts"

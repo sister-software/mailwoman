@@ -3,25 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@link nearestInfrastructure} (2b task 4, decision 7). The fixture `poi.db` is built via
- *   the rows seam directly against Task 1's schema (`poi-schema.ts`) — the SAME idiom
+ *   Tests for {@link nearestInfrastructure} (decision 7). The fixture `poi.db` is built via
+ *   the rows seam directly against `poi-schema.ts` — the SAME idiom
  *   `resolver-wof-sqlite/poi-lookup.test.ts` uses (a tiny hand-built `poi`/`poi_category_codes` fixture,
  *   no DuckDB/network) — rather than `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s
  *   `buildPOIDatabase`: `bdc` cannot depend on the `mailwoman` workspace (the top-level CLI package
- *   already depends on `@mailwoman/bdc`, so the reverse edge would be circular), and the task brief's own
- *   dependency line only adds `@mailwoman/resolver-wof-sqlite` to `bdc`. Deviation from the brief's
- *   literal "`buildPOIDatabase`" wording, documented per its own "implementer picks and documents" rule
- *   — the ROWS-SEAM idiom itself (inject synthetic rows, skip DuckDB entirely) is preserved exactly.
+ *   already depends on `@mailwoman/bdc`, so the reverse edge would be circular). `bdc`'s only POI-side
+ *   dependency is `@mailwoman/resolver-wof-sqlite`, and the rows-seam idiom (inject synthetic rows, skip
+ *   DuckDB entirely) is preserved exactly.
  *
- *   Fixture rows, all telecom_exchange/tower_comms (poi-taxonomy task 1) except one deliberate
- *   non-telecom trap:
+ *   Fixture rows, all telecom_exchange/tower_comms (`@mailwoman/poi-taxonomy` categories) except one
+ *   deliberate non-telecom trap:
  *
  *   - Two rows a few hundred meters from a Springfield, IL center (`TELECOM_EXCHANGE_NEAR` closer,
  *     `TOWER_COMMS_NEAR` further).
  *   - One `telecom_exchange` row at EXACTLY res-9 gridDistance 20 from the center — inside this module's
  *     32-ring default (covers gridDistance ≤ 31) but OUTSIDE `POILookup`'s own internal default of 16
- *     rings (covers gridDistance ≤ 15). This is the direct acceptance test for the task brief's "maxRings
- *     default 32" deviation from `POILookup`'s own default — see `nearest-infrastructure.ts`'s docstring.
+ *     rings (covers gridDistance ≤ 15). This is the direct acceptance test for this module's `maxRings`
+ *     default of 32 overriding `POILookup`'s own — see `nearest-infrastructure.ts`'s docstring.
  *   - A `cafe` row (non-telecom) right next to the near rows, proving `categoryIDs` filtering isn't
  *     accidentally permissive.
  *

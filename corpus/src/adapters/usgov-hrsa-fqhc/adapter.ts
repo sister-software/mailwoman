@@ -8,9 +8,9 @@
  *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs that
  *   self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
  *   carries the site name, the postal-formatted street address, and the locality/region/postcode
- *   quad. Phase 1.6 §1.2 (#22) selects this source for its adversarial-value-per-row: every
- *   facility name is a human-typed venue string and the addresses pass through enough hands to
- *   accumulate the abbreviation drift + suite designator chaos that pure gazetteer data does not.
+ *   quad. The source earns its place on adversarial-value-per-row (#22): every facility name is a
+ *   human-typed venue string and the addresses pass through enough hands to accumulate the
+ *   abbreviation drift + suite designator chaos that pure gazetteer data does not.
  *
  *   The adapter consumes a CSV file the operator pre-downloads. The HRSA data is published as a
  *   single national CSV (~10K rows), small enough that the operator can re-fetch on every corpus

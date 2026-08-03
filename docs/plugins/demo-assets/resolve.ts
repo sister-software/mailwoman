@@ -74,8 +74,8 @@ export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): str
 //#region Webpack alias builder
 
 /**
- * Build the full workspace alias map for webpack. Centralises the alias logic that was previously inlined in
- * docusaurus.config.ts.
+ * Build the full workspace alias map for webpack — the single home for the demo's alias logic, spread into the
+ * Docusaurus webpack config by `plugin.ts`.
  */
 export function buildWorkspaceAliases(): Record<string, string> {
 	const aliases: Record<string, string> = {}
@@ -162,10 +162,10 @@ export function buildWorkspaceAliases(): Record<string, string> {
 			// `pipeline` + `errors` MUST be here: the demo imports `runPipeline` from
 			// `@mailwoman/core/pipeline` directly. Without a source alias, webpack resolves the package
 			// `exports` to the COMPILED `core/out/pipeline/index.js` — which `yarn start` never rebuilds
-			// (only CI's `ci:docs` runs `yarn compile` first). A `core/out` left over from before the
-			// #566 reconcile retirement then serves the old joint-reconcile-default pipeline, which mangles
-			// the parse (house number bundled into the street) so the street/situs tier can't fire and the
-			// geocode falls back to the admin centroid. Aliasing to source keeps dev on current code +
+			// (only CI's `ci:docs` runs `yarn compile` first). A stale `core/out` therefore serves whatever
+			// pipeline was last compiled: one predating the #566 reconcile retirement mangles the parse
+			// (house number bundled into the street) so the street/situs tier can't fire and the geocode
+			// falls back to the admin centroid. Aliasing to source keeps dev on current code +
 			// hot-reloads core edits, exactly like the bare `@mailwoman/core$` alias already does.
 			"pipeline",
 			"errors",
@@ -180,7 +180,8 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		// the async resolver chunk: `httpvfs-resolver.ts` saw `expandPlacetypeFilter` as `undefined` at
 		// runtime ("expandPlacetypeFilter is not a function"). The ONLY runtime value the bundled graph
 		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
-		// `createWOFResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
+		// `createWOFResolver` reaches the graph through the `/resolve` subpath alias below, never through
+		// this barrel — keep it that way. This alias is webpack-only — `tsc` still resolves the
 		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
 		// EXACT match (`$`): the bare `@mailwoman/resolver` import resolves to core's types module, but a
 		// SUBPATH like `@mailwoman/resolver/span-rescore` must NOT — it has to reach the real package
@@ -203,9 +204,9 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	if (resolverDir) {
 		aliases["@mailwoman/resolver/span-rescore"] = resolveWorkspaceFile(resolverDir, "span-rescore")
 		// `@mailwoman/resolver/resolve` — createWOFResolver/resolveTree for the demo's #861 shared
-		// cascade. The bare-barrel alias above (deliberately) reaches only core's types module — its
-		// "createWOFResolver is never bundled" premise went stale the day #861 landed, and the miss
-		// was invisible for days behind the manifest wire-key bug (the cascade never executed).
+		// cascade. The bare-barrel alias above deliberately reaches only core's types module, which
+		// carries neither, so the cascade has to come in by subpath. A missing alias here fails
+		// SILENTLY: the cascade simply never executes, with no resolution error to notice it by.
 		// Same subpath pattern as span-rescore; package exports carry "./resolve" for node/tsc.
 		aliases["@mailwoman/resolver/resolve"] = resolveWorkspaceFile(resolverDir, "resolve")
 	}
@@ -330,7 +331,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 		// file (fresh mtime) even when the bytes are identical, the watcher sees a "change" and reloads,
 		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
 		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
-		// so it was never affected.)
+		// so the loop is a dev-server-only hazard.)
 		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
 		copyFileSync(src, dest)
 

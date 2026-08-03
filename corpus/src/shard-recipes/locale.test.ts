@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the `locale` recipe's OA CITY-noise normalization (#241) and the country-append fraction (#728
- *   pattern, GB arc task 3). The `cleanCityNoise` classes come from the 2026-07-02 full-stream audit of the
+ *   pattern). The `cleanCityNoise` classes come from the 2026-07-02 full-stream audit of the
  *   ES/IT/NL sources — see the {@link cleanCityNoise} docstring for the audit numbers. The invariant under test:
  *   drop pseudo-localities, strip glued admin-code suffixes, and DON'T touch the audit-verified real names a naive
  *   suffix rule would mangle. `applyCountryAppend` is tested in isolation (not through the full `localeRecipe.run`,

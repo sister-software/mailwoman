@@ -4,15 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   `nearestInfrastructure` — a coverage-paired k-nearest read over the telecom-infrastructure POI
- *   categories (`telecom_exchange`/`tower_comms`, poi-taxonomy task 1 + the `--source osm` extractor,
- *   2b tasks 1–2) that a caller can join against ANY layer's own `layer_coverage` survey-completeness
- *   table (2b task 4, decision 7). Typical caller: a BDC filing scorer that wants "what's the nearest
- *   real infrastructure to this claimed Broadband Serviceable Location, and does OUR layer even have
- *   survey evidence for that area" in one call.
+ *   categories (`telecom_exchange`/`tower_comms` — `@mailwoman/poi-taxonomy` categories, populated by the
+ *   `--source osm` extractor) that a caller can join against ANY layer's own `layer_coverage`
+ *   survey-completeness table (decision 7). Typical caller: a BDC filing scorer that wants "what's the
+ *   nearest real infrastructure to this claimed Broadband Serviceable Location, and does OUR layer even
+ *   have survey evidence for that area" in one call.
  *
- *   Two deviations from the task brief's literal sketch, both forced by what `poi-lookup.ts` and
- *   `@mailwoman/core/layers` actually expose (documented per the brief's "implementer picks and
- *   documents" instruction):
+ *   Two shapes below are not the obvious ones, and both are forced by what `poi-lookup.ts` and
+ *   `@mailwoman/core/layers` actually expose:
  *
  *   - **`poiLookup` is an already-open {@link POILookup}, not a `POILookupOpts` this function
  *     constructs itself.** `POILookup`'s constructor eagerly loads the poi-taxonomy category dictionary
@@ -22,7 +21,7 @@
  *     `poi.db` ONCE and reuse the same `POILookup` — this wrapper takes that shape: the caller owns
  *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`), we just call
  *     `.search()` on it.
- *   - **`nearestInfrastructure` is `async`, not the brief's sync sketch.** `readLayerCoverage`
+ *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
  *     (`@mailwoman/core/layers`) is `Promise`-returning — every layer-contract read in this codebase is
  *     (`readLayerManifest`, `filingLandscape` itself) — so pairing each POI hit with its coverage cell
  *     means awaiting one `readLayerCoverage` call per hit. A sync signature can't await that.

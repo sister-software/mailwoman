@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file FCC Form 499 filer TSV — column vocabulary, row shape, classification mapping, and a
- *   streaming parser (3a Task 2, decisions 3 & 8).
+ *   streaming parser (3a decisions 3 & 8).
  *
  *   Re-homed from Nexus's `sync/fcc/universal-service.ts` (relicense-by-copy, no provenance
  *   headers) — ONLY the 17-column vocabulary (:27-44) and the `principalCommType` → classification

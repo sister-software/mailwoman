@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman filer linkage-eval` — the 3b Task 4 corporate-family recovery eval. Geocode-free,
+ *   `mailwoman filer linkage-eval` — the corporate-family recovery eval. Geocode-free,
  *   database-free (builds its own scratch `filer.db` artifacts from an embedded synthetic corpus); emits
  *   the markdown scorecard to stdout and, when `--out-md` is given, to that path too. `--date` overrides
  *   the report's dated H1 so the committed scorecard can be regenerated without editing code.

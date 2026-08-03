@@ -43,16 +43,14 @@ import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
- * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. Re-anchored
- * (final-review fix) from the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) down
- * to 19,209. This is not a bug fix — a real Task-3 cross-check rebuild fired the gate at exactly this delta and it was
- * adjudicated as the production fold correctly MERGING punctuation-variant duplicates the raw census counted separately
- * (e.g. "St Helens" vs "St. Helens" fold to the SAME `(child, parent)` key). The collision receipt: 221 merge groups —
- * 220 groups where 2 raw census lines collapse to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where
- * 3 raw lines collapse to 1 entry (1 × 2 collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 =
- * 19,209. See `.superpowers/sdd/progress.md`'s Task 3 entry for the adjudication record. A mismatch AGAINST 19,209 on a
- * real rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate
- * before trusting the artifact.
+ * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
+ * the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) because the production fold
+ * MERGES punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
+ * SAME `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
+ * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
+ * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
+ * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate before
+ * trusting the artifact.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
@@ -301,7 +299,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const built = builder.finish()
 		const { rowsKept, rowsSkipped, distribution } = built
 
-		// Task 6 falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
+		// Falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
 		// downstream eval can measure decode-layer degradation on pairs the index never saw. A no-op
 		// (`entries === built.entries` by value) when --holdout-fraction is the 0 default.
 		const { kept: entries, heldOut } = applyPairIndexHoldout(

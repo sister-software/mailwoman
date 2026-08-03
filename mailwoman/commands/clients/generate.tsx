@@ -9,8 +9,8 @@
  *   `feat/api-clients` branch) and a Rust crate (progenitor `generate_api!`, the salvaged Cargo.toml
  *   / lib.rs pattern), then VERIFY both actually build (`uv build` + a wheel import-check, `cargo
  *   check --examples`). Output lands under the gitignored `clients-build/` — nothing generated here
- *   is committed. This is the local, receipt-verified proof the gated CI job (Phase 5 Task 4)
- *   replays on dispatch. See `docs/articles/api.mdx` "Client libraries" for install/usage snippets
+ *   is committed. This is the local, receipt-verified proof the gated CI job replays on dispatch.
+ *   See `docs/articles/api.mdx` "Client libraries" for install/usage snippets
  *   and the not-yet-published status.
  */
 

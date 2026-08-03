@@ -245,7 +245,7 @@ describe("buildBDCDatabase", () => {
 		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
 	})
 
-	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted — the default path is unaffected by Task 8 (3a decision 6)", async () => {
+	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted (3a decision 6)", async () => {
 		expect(result.providersPopulated).toBe(0)
 
 		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
@@ -397,7 +397,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	})
 })
 
-describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)", () => {
+describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	const FRN_EARLY = toFRN("0001111111")!
 	const FRN_LATE = toFRN("0002222222")!
 	const FRN_SOLO = toFRN("0003333333")!
@@ -410,10 +410,9 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 	 * `provider_id` 700001 carries TWO FRN edges — the decision 6 cardinality `bdc_provider` cannot express. FRN_LATE's
 	 * own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's (2026-01-15), so FRN_LATE must win the
 	 * primary-FRN pick. `provider_id` 700002 carries exactly one FRN (FRN_SOLO) — no filer.db query is needed to resolve
-	 * its primary FRN. Also seeds `provider_id` 700001's TWO conflicting `holding_company_name` edges (review fix round
-	 *
-	 * 1. — the same cardinality problem `frn` has, proving both discarded values stay recoverable from filer.db even though
-	 *    `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
+	 * its primary FRN. Also seeds `provider_id` 700001's TWO conflicting `holding_company_name` edges — the same
+	 * cardinality problem `frn` has, proving both discarded values stay recoverable from filer.db even though
+	 * `bdc_provider.holding_company` can only hold one (here: neither, since they conflict).
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -603,7 +602,7 @@ describe("buildBDCDatabase — bdc_provider population (3a Task 8, decision 6)",
 			.executeTakeFirstOrThrow()
 
 		// No filer.db query was needed for this one — its lone FRN is primary by construction, and its single
-		// unambiguous holding_company populates directly (IMPORTANT-3's "no conflict ⇒ no rule needed" shortcut).
+		// unambiguous holding_company populates directly (the "no conflict ⇒ no rule needed" shortcut).
 		expect(singleFRNProvider.frn).toBe(FRN_SOLO)
 		expect(singleFRNProvider.brand_name).toBeNull()
 		expect(singleFRNProvider.holding_company).toBe("Solo Broadband")
@@ -743,7 +742,7 @@ describe("peekProviderID", () => {
 })
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
-	// CRITICAL (review): `peekProviderID`'s old `Number.parseInt(...) as ProviderID` had no finiteness guard. A
+	// `peekProviderID` needs a finiteness guard, not a bare `Number.parseInt(...) as ProviderID`. A
 	// non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id` (INTEGER NOT NULL) as
 	// SQLite NULL — `INSERT OR IGNORE` then silently drops EVERY row of the file, miscounted as ordinary `deduped`
 	// rows rather than surfaced as the malformed-file error it actually is. This test goes through `csvPaths` (the
