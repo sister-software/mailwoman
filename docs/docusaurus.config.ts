@@ -280,6 +280,10 @@ const config: Config = {
 					items: [
 						{ label: "Demo", to: "/demo" },
 						{ label: "Field notes", to: "/research" },
+						// /training is a published page with no other route into it since the navbar
+						// was cut back to the doors. This is the smallest fix for that, not a
+						// considered placement — revisit when the Resources door lands.
+						{ label: "Training", to: "/training" },
 					],
 				},
 				{

@@ -2,7 +2,7 @@
 title: Install Mailwoman and parse your first address
 description: Install three packages, write ten lines of Node, and read a messy address back as a labeled tree.
 role: tutorial
-verified-with: mailwoman 8.7.0
+verified-with: mailwoman 8.6.0
 ---
 
 # Install Mailwoman and parse your first address
@@ -15,8 +15,8 @@ API key, no server, no account. About ten minutes, most of it waiting on the dow
 
 Read these before you start — two of them will stop you partway through if they don't hold.
 
-- **Node.js 24.18.0 or later.** Mailwoman's published packages ship TypeScript source alongside the
-  compiled output, and the `engines` floor is `>=24.18.0`. Check with `node --version`.
+- **Node.js 24.18.0 or later.** The `mailwoman` package declares `engines.node` as `>=24.18.0`.
+  Check yours with `node --version`.
 - **About 750 MB of free disk.** Measured on Linux x64 on 2026-08-03, the three packages below plus
   their dependencies land 746 MB in `node_modules`. 500 MB of that is `onnxruntime-node`'s prebuilt
   binaries and 74 MB is the English model package. This is a one-time cost per project, not per
