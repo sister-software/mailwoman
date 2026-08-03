@@ -29,11 +29,23 @@
  *   {@linkcode parseTenKFilings}/{@linkcode resolveCIKCandidates} directly (pure functions) or passes a
  *   hand-rolled stub satisfying {@link SECGetClient} — the one method (`get<T>`) this module actually calls
  *   on the shared SEC client, so a test never has to build a full axios harness just to exercise this file.
+ *
+ *   **A third responsibility: which document IN a filing is the Exhibit 21.** `exhibit21.ts`'s
+ *   {@linkcode fetchExhibit21} parses a document once its URL is already known and says finding that URL is
+ *   out of scope. EDGAR's accession `index.json` can't answer it either — every file there is typed as a
+ *   GIF icon name (`"type":"text.gif"`). The accession's `…-index-headers.html` can: it carries the
+ *   submission's own SGML manifest (HTML-escaped, one `&lt;DOCUMENT&gt;…&lt;/DOCUMENT&gt;` block per filed
+ *   document) naming every document's `TYPE`/`FILENAME`. {@linkcode parseFilingDocuments} reads that
+ *   manifest; {@linkcode findExhibit21Documents} narrows it to the Exhibit 21 entries; both are pure
+ *   functions over an already-fetched string, and {@linkcode fetchExhibit21Documents} is the thin
+ *   fetch-then-parse pairing, same shape as `fetchCompanyTickers`/`fetchTenKFilings` above.
  */
 
 import { nameSimilarity } from "@mailwoman/match"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { Tagged } from "type-fest"
+
+import type { SECDocumentClient } from "./exhibit21.ts"
 
 /**
  * SEC EDGAR's Central Index Key: always a zero-padded 10-digit string. Branded over `string`, mirroring
@@ -234,6 +246,12 @@ export function resolveCIKCandidates(
 	return scored.slice(0, limit)
 }
 
+/**
+ * Uses `cik` ZERO-PADDED (`CIK` is always the 10-digit padded form — see the type's own docstring) — this is SEC's
+ * documented submissions API shape (`CIK0000320193.json`, never `CIK320193.json`). Contrast
+ * {@linkcode accessionArchiveURL} below, whose archive paths use the UNPADDED form instead; both conventions are real
+ * and both appear in this file.
+ */
 function submissionsURL(cik: CIK): string {
 	return `https://data.sec.gov/submissions/CIK${cik}.json`
 }
@@ -326,4 +344,100 @@ export async function fetchTenKFilings(client: SECGetClient, cik: CIK): Promise<
 	const raw = await client.get<unknown>(submissionsURL(cik))
 
 	return parseTenKFilings(cik, raw)
+}
+
+/**
+ * One document {@linkcode parseFilingDocuments} reads out of a filing's SGML manifest — `type` and `filename` exactly
+ * as EDGAR's own `&lt;TYPE&gt;`/`&lt;FILENAME&gt;` manifest lines spell them (never normalized/uppercased — see
+ * {@linkcode EXHIBIT_21_TYPE_PATTERN} for why matching stays case-insensitive instead of relying on a canonical
+ * spelling), plus the absolute archive `url` this module derives ({@linkcode accessionArchiveURL} + `filename`).
+ */
+export interface ExhibitDocument {
+	type: string
+	filename: string
+	url: string
+}
+
+/**
+ * Builds the archive folder URL for one accession. Uses `cik` UNPADDED (`Number(cik)` is what strips the zero-padding
+ * `CIK` always carries) — EDGAR's archive paths spell the CIK bare (`.../data/18926/...`), the opposite convention from
+ * {@linkcode submissionsURL} above, which zero-pads. Both are real EDGAR conventions and both appear in this file; a
+ * caller reaching for the wrong one gets a 404, not a wrong-but-plausible document. `accessionNumber` is accepted
+ * either dashed (`"0000018926-26-000014"`, the form every EDGAR-facing field spells it) or already undashed — the
+ * archive path itself never carries the dashes.
+ */
+export function accessionArchiveURL(cik: CIK, accessionNumber: string): string {
+	return `https://www.sec.gov/Archives/edgar/data/${Number(cik)}/${accessionNumber.replaceAll("-", "")}`
+}
+
+// Operates on `headerHTML` — the accession's `…-index-headers.html` body, which HTML-escapes EDGAR's own SGML
+// manifest (so `<DOCUMENT>` reads literally as `&lt;DOCUMENT&gt;` in the source). One block per filed document, in
+// filing order; a final unterminated block (malformed/truncated input) still yields everything after its opening tag
+// via the `$` fallback rather than being silently dropped.
+const DOCUMENT_BLOCK_PATTERN = /&lt;DOCUMENT&gt;([\s\S]*?)(?:&lt;\/DOCUMENT&gt;|$)/gi
+const DOCUMENT_TYPE_PATTERN = /&lt;TYPE&gt;([^\r\n<]+)/i
+const DOCUMENT_FILENAME_PATTERN = /&lt;FILENAME&gt;([^\r\n<]+)/i
+
+/**
+ * Matches every `TYPE` spelling EDGAR actually files an Exhibit 21 under (`EX-21`, `EX-21.1`, `EX-21.01`, lowercase
+ * `ex-21.2`, …) while rejecting a type that merely starts the same way — `EX-2`, `EX-2.1`, `EX-210`, `EX-23`, `EX-21A`
+ * are all distinct exhibits, not a spelling variant of Exhibit 21. The literal `21` must be the whole numeric part:
+ * optionally followed by ONLY a `.` and more digits, never another bare digit or letter.
+ */
+const EXHIBIT_21_TYPE_PATTERN = /^ex-?21(\.\d+)?$/i
+
+/**
+ * Reads EVERY document out of one accession's SGML manifest (`headerHTML`, the `…-index-headers.html` body) — not only
+ * the exhibits, so a caller wanting a different document type later doesn't need a second parser. A manifest block
+ * missing either its `TYPE` or its `FILENAME` line is dropped rather than emitted with a guessed value or a `url`
+ * ending in a bare slash — decision 6's "abstain, never guess" posture, carried from `exhibit21.ts`, applied here to a
+ * manifest row instead of a subsidiary row.
+ */
+export function parseFilingDocuments(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
+	const archiveURL = accessionArchiveURL(cik, accessionNumber)
+	const documents: ExhibitDocument[] = []
+
+	for (const match of headerHTML.matchAll(DOCUMENT_BLOCK_PATTERN)) {
+		const block = match[1]!
+		const type = DOCUMENT_TYPE_PATTERN.exec(block)?.[1]?.trim()
+		const filename = DOCUMENT_FILENAME_PATTERN.exec(block)?.[1]?.trim()
+
+		if (!type || !filename) continue
+
+		documents.push({ type, filename, url: `${archiveURL}/${filename}` })
+	}
+
+	return documents
+}
+
+/**
+ * Narrows one accession's full document manifest to its Exhibit 21 entries (see {@linkcode EXHIBIT_21_TYPE_PATTERN} for
+ * the accepted spellings). Returns `[]` — NEVER throws — when the manifest has no Exhibit 21 at all, which is ordinary,
+ * not exceptional: an absent exhibit is the FILER's choice (Consolidated Communications' and United States Cellular's
+ * latest 10-Ks both carry none), not an upstream contract break. This is the opposite posture from
+ * {@linkcode parseCompanyTickers}/{@linkcode parseTenKFilings} above, which throw on a malformed payload — those parse
+ * SEC's OWN documented API shapes, so a mismatch there means the upstream contract changed. A manifest with no Exhibit
+ * 21 hasn't broken any contract; it's just a filer that didn't file one this cycle.
+ */
+export function findExhibit21Documents(cik: CIK, accessionNumber: string, headerHTML: string): ExhibitDocument[] {
+	return parseFilingDocuments(cik, accessionNumber, headerHTML).filter((document) =>
+		EXHIBIT_21_TYPE_PATTERN.test(document.type)
+	)
+}
+
+/**
+ * Fetches one filing's accession manifest (`{@linkcode accessionArchiveURL}(filing.cik, filing.accessionNumber)` joined
+ * with `${filing.accessionNumber}-index-headers.html`, through the shared {@link SECDocumentClient} — `exhibit21.ts`'s
+ * one-method structural type, not the concrete SEC client, so a test never needs an axios harness) and returns its
+ * Exhibit 21 documents. See {@linkcode findExhibit21Documents} for why an absent exhibit is a `[]` result, not a thrown
+ * error.
+ */
+export async function fetchExhibit21Documents(
+	client: SECDocumentClient,
+	filing: TenKFiling
+): Promise<ExhibitDocument[]> {
+	const indexURL = `${accessionArchiveURL(filing.cik, filing.accessionNumber)}/${filing.accessionNumber}-index-headers.html`
+	const headerHTML = await client.getDocument(indexURL)
+
+	return findExhibit21Documents(filing.cik, filing.accessionNumber, headerHTML)
 }

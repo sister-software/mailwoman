@@ -2,26 +2,39 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for `edgar-filings.ts` — CIK resolution + 10-K discovery.
+ * @file Tests for `edgar-filings.ts` — CIK resolution + 10-K discovery + Exhibit 21 document discovery.
  *
- *   No live network anywhere here: `fetchCompanyTickers`/`fetchTenKFilings` are exercised against a
- *   hand-rolled stub satisfying {@link SECGetClient} (one method, `get<T>`), never a real `createSECClient()`
- *   or an axios harness. Everything else is a pure function over an authored fixture.
+ *   No live network anywhere here: `fetchCompanyTickers`/`fetchTenKFilings`/`fetchExhibit21Documents` are
+ *   exercised against hand-rolled stubs satisfying {@link SECGetClient}/{@link SECDocumentClient} (one method
+ *   each), never a real `createSECClient()` or an axios harness. Everything else is a pure function over an
+ *   authored fixture or `filer/test-fixtures/edgar/lumen-2025-index-headers.html` — a real, vendored EDGAR
+ *   accession manifest (162 documents per its own `PUBLIC-DOCUMENT-COUNT` header field; this file's own SGML
+ *   `&lt;DOCUMENT&gt;` block count is 161 — four sequence numbers, including 18, have no block of their own in
+ *   this manifest, a real-EDGAR quirk this suite counts rather than papers over).
  */
+
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
 
 import {
+	accessionArchiveURL,
 	fetchCompanyTickers,
+	fetchExhibit21Documents,
 	fetchTenKFilings,
+	findExhibit21Documents,
 	isCIK,
 	parseCompanyTickers,
+	parseFilingDocuments,
 	parseTenKFilings,
 	resolveCIKCandidates,
 	toCIK,
+	type CIK,
 	type CompanyTickerEntry,
 	type SECGetClient,
 } from "./edgar-filings.ts"
+import type { SECDocumentClient } from "./exhibit21.ts"
 
 describe("isCIK / toCIK", () => {
 	it("accepts a zero-padded 10-digit string", () => {
@@ -239,5 +252,115 @@ describe("fetchTenKFilings", () => {
 		expect(filings).toEqual([
 			{ cik: CIK, accessionNumber: "0000789019-24-000010", filingDate: "2024-07-30", primaryDocument: "x.htm" },
 		])
+	})
+})
+
+describe("Exhibit 21 document discovery", () => {
+	const headerHTML = readFileSync(
+		join(import.meta.dirname, "..", "test-fixtures", "edgar", "lumen-2025-index-headers.html"),
+		"utf8"
+	)
+
+	const LUMEN_CIK = "0000018926" as CIK
+
+	it("builds an accession archive URL with an UNPADDED cik and an undashed accession", () => {
+		expect(accessionArchiveURL(LUMEN_CIK, "0000018926-26-000014")).toBe(
+			"https://www.sec.gov/Archives/edgar/data/18926/000001892626000014"
+		)
+	})
+
+	it("finds exactly one EX-21 among the filing's real documents, with an absolute URL", () => {
+		expect(findExhibit21Documents(LUMEN_CIK, "0000018926-26-000014", headerHTML)).toEqual([
+			{
+				type: "EX-21",
+				filename: "lumn20251231ex21.htm",
+				url: "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/lumn20251231ex21.htm",
+			},
+		])
+	})
+
+	it("reads every document in the manifest, not only the exhibits", () => {
+		const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
+
+		// The fixture's own SGML manifest carries 161 `<DOCUMENT>` blocks — see the module docstring above for
+		// why this differs from the header's `PUBLIC-DOCUMENT-COUNT: 162`.
+		expect(documents).toHaveLength(161)
+		expect(documents[0]).toMatchObject({ type: "10-K", filename: "lumn-20251231.htm" })
+	})
+
+	it("accepts every EX-21 spelling EDGAR actually uses", () => {
+		for (const type of ["EX-21", "EX-21.1", "EX-21.01", "ex-21.2"]) {
+			const html = `&lt;DOCUMENT&gt;\n&lt;TYPE&gt;${type}\n&lt;FILENAME&gt;x.htm\n&lt;/DOCUMENT&gt;`
+
+			expect(findExhibit21Documents(LUMEN_CIK, "0000018926-26-000014", html)).toHaveLength(1)
+		}
+	})
+
+	it("does NOT mistake EX-2, EX-210 or EX-23 for an Exhibit 21", () => {
+		for (const type of ["EX-2", "EX-2.1", "EX-210", "EX-23", "EX-21A"]) {
+			const html = `&lt;DOCUMENT&gt;\n&lt;TYPE&gt;${type}\n&lt;FILENAME&gt;x.htm\n&lt;/DOCUMENT&gt;`
+
+			expect(findExhibit21Documents(LUMEN_CIK, "0000018926-26-000014", html)).toEqual([])
+		}
+	})
+
+	it("returns an empty array — never throws — for a filing whose manifest has no EX-21", () => {
+		expect(findExhibit21Documents(LUMEN_CIK, "0000018926-26-000014", "<html>no manifest here</html>")).toEqual([])
+	})
+
+	it("skips a block missing a FILENAME rather than emitting a URL ending in a slash", () => {
+		const html = "&lt;DOCUMENT&gt;\n&lt;TYPE&gt;EX-21\n&lt;/DOCUMENT&gt;"
+
+		expect(findExhibit21Documents(LUMEN_CIK, "0000018926-26-000014", html)).toEqual([])
+	})
+
+	describe("fetchExhibit21Documents", () => {
+		it("fetches the accession's index-headers document through the shared client and finds the EX-21", async () => {
+			let requestedURL: string | URL | undefined
+
+			const client: SECDocumentClient = {
+				getDocument: async (url) => {
+					requestedURL = url
+
+					return headerHTML
+				},
+			}
+
+			const filing = {
+				cik: LUMEN_CIK,
+				accessionNumber: "0000018926-26-000014",
+				filingDate: "2026-02-20",
+				primaryDocument: "lumn-20251231.htm",
+			}
+
+			const documents = await fetchExhibit21Documents(client, filing)
+
+			expect(requestedURL).toBe(
+				"https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/0000018926-26-000014-index-headers.html"
+			)
+
+			expect(documents).toEqual([
+				{
+					type: "EX-21",
+					filename: "lumn20251231ex21.htm",
+					url: "https://www.sec.gov/Archives/edgar/data/18926/000001892626000014/lumn20251231ex21.htm",
+				},
+			])
+		})
+
+		it("returns an empty array — never throws — when the filing's manifest has no EX-21", async () => {
+			const client: SECDocumentClient = {
+				getDocument: async () => "<html>no manifest here</html>",
+			}
+
+			const filing = {
+				cik: LUMEN_CIK,
+				accessionNumber: "0000018926-26-000014",
+				filingDate: "2026-02-20",
+				primaryDocument: "lumn-20251231.htm",
+			}
+
+			expect(await fetchExhibit21Documents(client, filing)).toEqual([])
+		})
 	})
 })
