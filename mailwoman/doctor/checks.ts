@@ -250,25 +250,28 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 }
 
 /**
- * Facts about the admin gazetteer discovery, mirroring exactly what the TOOLS pick up. `mailwoman geocode` / `serve`
- * resolve a candidate.db ONLY through `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`) — there is no
- * convention-path fallback — else they fall back to the WOF FTS shards. So a candidate.db sitting at the
- * `<data-root>/wof/candidate.db` convention path while the env is UNSET is a TRAP: on disk, but the tools won't touch
- * it.
+ * Facts about the admin gazetteer discovery, mirroring exactly what the TOOLS pick up. `resolveCandidateDBPath` reads
+ * an explicit option, then `$MAILWOMAN_CANDIDATE_DB`, then the `<data-root>/wof/candidate.db` convention path, and
+ * falls back to the WOF FTS shards only when none of the three is on disk.
  */
 export interface GazetteerObservation {
 	/**
-	 * A candidate.db the tools would actually use — explicit/`$MAILWOMAN_CANDIDATE_DB`, on disk. Green.
+	 * A candidate.db the tools would use, from the explicit option or `$MAILWOMAN_CANDIDATE_DB`. Green.
 	 */
 	envCandidate?: { path: string; sizeBytes?: number }
 	/**
-	 * A WOF admin shard on disk — the FTS backend the tools fall back to when no env candidate is set. Green.
-	 */
-	wofShard?: { path: string; sizeBytes?: number }
-	/**
-	 * A candidate.db at the convention path while `$MAILWOMAN_CANDIDATE_DB` is UNSET — the trap. Degraded, not green.
+	 * A candidate.db at the convention path, which the tools now pick up with nothing exported. Green.
+	 *
+	 * This used to be a TRAP worth its own degraded status: the file was on disk and every tool ignored it, because
+	 * candidate resolution stopped at the env. The convention fallback closed that, so the same observation is now the
+	 * ordinary healthy case — and reporting it as degraded would send a reader to export a variable that changes
+	 * nothing.
 	 */
 	conventionCandidate?: string
+	/**
+	 * A WOF admin shard on disk — the FTS backend the tools fall back to when no candidate.db is reachable. Green.
+	 */
+	wofShard?: { path: string; sizeBytes?: number }
 	/**
 	 * The paths probed, for the not-found detail.
 	 */
@@ -287,31 +290,23 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.envCandidate.path}${size}` }
 	}
 
+	// Ahead of the WOF shard, because that is the precedence `resolveCandidateDBPath` applies: a convention-path
+	// candidate.db wins over the FTS fallback, so reporting the shard here would name a backend the tools won't use.
+	if (o.conventionCandidate) {
+		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.conventionCandidate} (convention path)` }
+	}
+
 	if (o.wofShard) {
 		const size = o.wofShard.sizeBytes ? ` (${formatBytes(o.wofShard.sizeBytes)})` : ""
 
 		return { ...base, status: CheckStatus.OK, detail: `WOF admin shard · ${o.wofShard.path}${size}` }
 	}
 
-	// The trap: candidate.db is on disk at the convention path, but the tools resolve candidate only via the env — so
-	// they'd report "no gazetteer data found" while doctor could naively show green. Report degraded, not ok.
-	if (o.conventionCandidate) {
-		return {
-			...base,
-			status: CheckStatus.Degraded,
-			detail: `candidate.db on disk (${o.conventionCandidate}) but $MAILWOMAN_CANDIDATE_DB unset — geocode/serve won't use it`,
-			fix: `export MAILWOMAN_CANDIDATE_DB=${o.conventionCandidate}`,
-		}
-	}
-
 	return {
 		...base,
 		status: CheckStatus.Missing,
 		detail: `no candidate.db or WOF shard found (probed ${o.probed.length} path${o.probed.length === 1 ? "" : "s"})`,
-		// `mailwoman data pull candidate` (see `data-bundles.ts`) writes <data-root>/wof/candidate.db and prints
-		// this same export line on success — repeated here so `doctor` alone (before ever running `data pull`)
-		// still tells a reader the whole fix, not just the download half of it.
-		fix: `mailwoman data pull candidate   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)`,
+		fix: `mailwoman data pull candidate`,
 	}
 }
 

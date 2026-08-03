@@ -124,12 +124,6 @@ async function serve(): Promise<void> {
 	const wofPaths = wofShardPaths().filter(existsSync)
 	const adminDBPath = wofPaths[0]
 
-	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the
-	// FTS5-trigram typo fallback). Resolve it from --candidate-db / $MAILWOMAN_CANDIDATE_DB, else auto-use
-	// one already fetched to the data root (`mailwoman fetch-gazetteer` writes `<data-root>/wof/candidate.db`).
-	// Absent → admin-only (US-optimized) — the no-download default.
-	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
-
 	// #1009 kin: an EXPLICIT --candidate-db that doesn't exist must error loudly, not silently fall
 	// back to ambient data.
 	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
@@ -138,9 +132,10 @@ async function serve(): Promise<void> {
 		process.exit(1)
 	}
 
-	const candidateDb =
-		resolveCandidateDBPath(values["candidate-db"]) ??
-		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
+	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the
+	// FTS5-trigram typo fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the
+	// `<data-root>/wof/candidate.db` convention path. Absent → the admin FTS shards.
+	const candidateDb = resolveCandidateDBPath(values["candidate-db"])
 
 	// #1009: fail FRIENDLY before the resolver's internal shard error — same message shape as
 	// @mailwoman/photon's pre-flight (kept in lockstep; points at the ten-minute trial until the
@@ -150,7 +145,6 @@ async function serve(): Promise<void> {
 			buildNoGazetteerMessage({
 				dataRoot: mailwomanDataRoot(),
 				docsPath: "/docs/developers/get-started/ten-minute-trial",
-				requiresExplicitEnv: false,
 			})
 		)
 

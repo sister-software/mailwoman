@@ -57,6 +57,16 @@ const ParseConfigSchema = zod.object({
 				"Requires --resolve. Defaults from --locale's region subtag (en-US → US); pass 'none' to disable " +
 				"the filter and let ranking alone decide."
 		),
+	countryScope: zod
+		.enum(["auto", "locale", "none"])
+		.optional()
+		.default("auto")
+		.describe(
+			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
+				"'auto' (default) only on the FTS backend — the candidate backend ranks country-agnostically, " +
+				"so 'auto' leaves it unscoped. Pin 'locale' or 'none' to hold country policy fixed while " +
+				"changing backends. An explicit --default-country outranks all three."
+		),
 	adminCoherence: zod
 		.boolean()
 		.optional()
@@ -277,25 +287,42 @@ export function localeToCountry(locale: string | undefined): string | undefined 
 }
 
 /**
- * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set (with `none` meaning "no
- * filter"), otherwise inferred from `--locale`. Without it, a bare region abbreviation (`NY`) resolves to whatever the
- * gazetteer ranks highest globally — often a foreign homonym (a Scottish locality) rather than the US state. The FTS
- * backend therefore needs the locale default to match the demo.
+ * Whether the locale-inferred country scopes the resolver. `auto` defers to the backend; `locale` and `none` state the
+ * policy outright.
+ */
+export type CountryScope = "auto" | "locale" | "none"
+
+/**
+ * The resolver's `defaultCountry` for this invocation. An explicit `--default-country` outranks everything (`none`
+ * meaning "no filter"); otherwise `--country-scope` decides whether `--locale`'s region subtag becomes the scope.
  *
- * `candidateActive` flips that off: the candidate-table backend resolves population-first AND country-agnostic (the
- * demo's GLOBAL behavior — bare "Moscow" → the Russian city), so when it's the backend AND the user gave no explicit
- * country we impose NO default. An explicit `--default-country` (or `none`) still wins. This is what makes the
- * candidate-backed CLI match the demo out of the box.
+ * Without a scope, a bare region abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often
+ * a foreign homonym rather than the US state — so the FTS backend needs the locale default to match the demo. The
+ * candidate-table backend does not: it ranks population-first and country-agnostically, which is the demo's GLOBAL
+ * behavior (bare "Moscow" → the Russian city), and imposing a country on top of it would contradict the ranking it was
+ * built for. `auto` encodes exactly that, and is the default.
+ *
+ * `auto` also makes backend and country policy ONE switch, which is a hazard when measuring either: flipping the
+ * backend silently flips the country filter too, so a comparison between backends is really a comparison between four
+ * conditions. `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a
+ * backend difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
  */
 export function resolverDefaultCountry(
-	options: { defaultCountry?: string; locale?: string },
+	options: { defaultCountry?: string; locale?: string; countryScope?: CountryScope },
 	candidateActive = false
 ): string | undefined {
 	if (options.defaultCountry === "none") return undefined
 
 	if (options.defaultCountry) return options.defaultCountry
 
-	return candidateActive ? undefined : localeToCountry(options.locale)
+	switch (options.countryScope ?? "auto") {
+		case "none":
+			return undefined
+		case "locale":
+			return localeToCountry(options.locale)
+		default:
+			return candidateActive ? undefined : localeToCountry(options.locale)
+	}
 }
 
 function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {

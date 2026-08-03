@@ -81,10 +81,6 @@ async function serve(): Promise<void> {
 	const wofPaths = wofShardPaths().filter(existsSync)
 	const adminDBPath = wofPaths[0]
 
-	// Candidate gazetteer = worldwide resolution (see @mailwoman/nominatim). --candidate-db /
-	// $MAILWOMAN_CANDIDATE_DB, else auto-use one fetched to `<data-root>/wof/candidate.db`; absent → admin-only.
-	const conventionCandidate = join(mailwomanDataRoot(), "wof", "candidate.db")
-
 	// #1009 kin: an EXPLICIT --candidate-db that doesn't exist must error loudly, not silently fall
 	// back to whatever ambient data-root file happens to be present (a typo'd path would serve the
 	// wrong gazetteer without a word).
@@ -94,9 +90,9 @@ async function serve(): Promise<void> {
 		process.exit(1)
 	}
 
-	const candidateDb =
-		resolveCandidateDBPath(values["candidate-db"]) ??
-		(existsSync(conventionCandidate) ? conventionCandidate : undefined)
+	// Candidate gazetteer = worldwide resolution (see @mailwoman/nominatim). --candidate-db, else
+	// $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention path.
+	const candidateDb = resolveCandidateDBPath(values["candidate-db"])
 
 	// #1009: fail FRIENDLY before the resolver throws its internal "resolveShards: at least one shard
 	// is required" — a stranger's first `npx @mailwoman/photon serve` must say exactly what data is
@@ -107,7 +103,6 @@ async function serve(): Promise<void> {
 			buildNoGazetteerMessage({
 				dataRoot: mailwomanDataRoot(),
 				docsPath: "/docs/developers/get-started/ten-minute-trial",
-				requiresExplicitEnv: false,
 			})
 		)
 

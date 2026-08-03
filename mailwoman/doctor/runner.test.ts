@@ -98,10 +98,11 @@ describe("runDoctor (injected seams)", () => {
 		expect(byID(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
 	})
 
-	it("gazetteer discovery falls back to a WOF shard when no env candidate.db", async () => {
+	it("gazetteer discovery falls back to a WOF shard only when NO candidate.db is reachable", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
 			envCandidatePath: () => undefined,
+			conventionCandidatePath: () => undefined,
 			existsSync: (p) => p === "/data/wof/admin.db",
 		})
 
@@ -110,10 +111,10 @@ describe("runDoctor (injected seams)", () => {
 		expect(gaz.detail).toContain("WOF admin shard")
 	})
 
-	it("THE TRAP: candidate.db on disk at the convention path + env unset + no WOF shards → degraded, exit still 0", async () => {
+	it("candidate.db at the convention path with no env set → ok (the trap this used to report is closed)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, but the file sits at the convention path.
+			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, the file sits at the convention path.
 			envCandidatePath: () => undefined,
 			existsSync: () => false,
 			conventionCandidatePath: () => "/data/wof/candidate.db",
@@ -123,10 +124,9 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		const gaz = byID(report.checks, "gazetteer")
-		expect(gaz.status).toBe(CheckStatus.Degraded)
-		expect(gaz.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
-		expect(gaz.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
-		// A convention-only candidate is not a core failure — parse still runs.
+		expect(gaz.status).toBe(CheckStatus.OK)
+		expect(gaz.detail).toContain("/data/wof/candidate.db")
+		expect(gaz.fix).toBeUndefined()
 		expect(report.exitCode).toBe(0)
 	})
 

@@ -87,17 +87,12 @@ function wofPaths(): string[] {
 
 /**
  * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`) — a stranger's
- * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it. Unlike the drop-ins,
- * `mailwoman serve` resolves the candidate gazetteer ONLY via `resolveCandidateDBPath` (explicit opt or
- * `$MAILWOMAN_CANDIDATE_DB` — see this file's `candidateDb` derivation below), never a convention-path fallback —
- * doctor's documented trap (`doctor/checks.ts`'s `gazetteerCheck`) — so `requiresExplicitEnv: true` here, unlike the
- * drop-ins' `false`.
+ * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
  */
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({
 		dataRoot: DATA_ROOT,
 		docsPath: "/docs/developers/get-started/ten-minute-trial",
-		requiresExplicitEnv: true,
 	})
 }
 
