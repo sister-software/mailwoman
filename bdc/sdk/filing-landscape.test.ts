@@ -238,7 +238,7 @@ describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 	})
 })
 
-describe("filingLandscape — Gate 2 (extended, fix round 1): coverage-check is load-bearing, not a rows-shortcut proxy", () => {
+describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing, not a rows-shortcut proxy", () => {
 	// Gate 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
 	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
 	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately
@@ -316,7 +316,7 @@ describe("filingLandscape — Gate 2 (extended, fix round 1): coverage-check is 
 	})
 })
 
-describe("filingLandscape — fix round 1 (CRITICAL 1): builder/reader coverage-cell unification", () => {
+describe("filingLandscape — builder/reader coverage-cell unification", () => {
 	it("agrees with the builder's coverage cell even at a point where the two derivations used to disagree", async () => {
 		using db = openFixture()
 		const contractDB = db as unknown as Kysely<LayerContractDatabase>
@@ -437,7 +437,7 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 	})
 })
 
-describe("speed bucket boundaries (fix round 1)", () => {
+describe("speed bucket boundaries", () => {
 	it.each([
 		[0, BDC_SPEED_BUCKET_UNDER_25],
 		[24, BDC_SPEED_BUCKET_UNDER_25],

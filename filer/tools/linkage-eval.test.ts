@@ -121,7 +121,7 @@ describe("buildFilteredEvalInputs — decision 4's leakage exclusion (gate 4)", 
 	})
 })
 
-describe("buildTruthRegistrants — the scored unit (task 4 review fix, C2)", () => {
+describe("buildTruthRegistrants — the scored unit", () => {
 	it("folds two FRNs reported under ONE bdc_provider_id into a single registrant", () => {
 		const registrants = buildTruthRegistrants(buildLinkageEvalForm499Rows(), buildLinkageEvalProviderRows())
 		const shared = registrants.find((registrant) => registrant.frns.includes(FRN_SHARED_REGISTRANT_1))
@@ -217,7 +217,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		expect(rolled.get(toFRN("9100000091")!)).toBe(expected)
 	})
 
-	it("keeps every family id in the label when one registrant names TWO parents (task 4 re-review, m1)", () => {
+	it("keeps every family id in the label when one registrant names TWO parents", () => {
 		// Unreachable on the shipped corpus, reachable on any edit that adds a registrant naming two parents. Keying the
 		// accumulator on the union-find root as it stood MID-loop dropped whichever id was recorded before a later union
 		// re-rooted the component — the partition stayed correct, the published label silently lost a name.
@@ -270,7 +270,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 })
 
 describe("the corpus's own invariants", () => {
-	it("never restates one row's holdingCompany inside another row's name fields (task 4 re-review, m4)", () => {
+	it("never restates one row's holdingCompany inside another row's name fields", () => {
 		// The corpus docstring claims withholding cannot be defeated through a name field that happens to repeat a
 		// parent's name. Nothing checked it, and the leakage census could not see it: a legal name is an attribute, not
 		// an ownership row, so a restated parent would sail past the gate and quietly feed the entity-resolution pass.
@@ -306,7 +306,7 @@ describe("hashLinkageEvalInputs", () => {
 		expect(hashLinkageEvalInputs(mutated)).not.toBe(hashLinkageEvalInputs(inputs))
 	})
 
-	it("matches the SHA published in the committed scorecard (task 4 review fix, I3)", () => {
+	it("matches the SHA published in the committed scorecard", () => {
 		// Before this pin, the published hash lived only in the markdown file — editing the corpus staled the
 		// scorecard silently, with nothing failing.
 		expect(hashLinkageEvalInputs(buildFilteredEvalInputs())).toBe(PUBLISHED_WITHHELD_INPUTS_SHA256)
@@ -325,7 +325,7 @@ describe("filerLinkageEval — reproducibility (gate 4)", () => {
 		expect(second.markdown).toBe(first.markdown)
 	})
 
-	it("regenerates the committed scorecard byte for byte (task 4 review fix, I3)", async () => {
+	it("regenerates the committed scorecard byte for byte", async () => {
 		const { markdown } = await runEval()
 
 		expect(markdown).toBe(await readFile(PUBLISHED_REPORT_PATH, "utf8"))
@@ -395,7 +395,7 @@ describe("filerLinkageEval — the withheld run (the measurement)", () => {
 	})
 })
 
-describe("filerLinkageEval — what is really in the artifacts (task 4 review fix, I4)", () => {
+describe("filerLinkageEval — what is really in the artifacts", () => {
 	it("leaves NO ownership node, edge or scoreable family row in the withheld build", async () => {
 		const { withheld } = await runEval()
 
@@ -434,7 +434,7 @@ describe("filerLinkageEval — what is really in the artifacts (task 4 review fi
 	})
 })
 
-describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)", () => {
+describe("the standing guarantee: this baseline CAN be beaten", () => {
 	/**
 	 * The three Cascade registrants, joined to one ownership family by a relationship the BUILDER never emits —
 	 * `subsidiary`, the shape a corporate-filing importer is specified to produce. Injected into the withheld artifact
@@ -491,7 +491,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 		expect(injected.predictedFamilyIDsOf.get(FRN_CASCADE_1)).toEqual([INJECTED_FAMILY_ID])
 	})
 
-	it("counts the injected rows in the census (task 4 re-review, I2)", async () => {
+	it("counts the injected rows in the census", async () => {
 		const injected = await runInjected()
 
 		// The pre-fix census counted `holding_company` only and would have read 0 here, under a heading promising the
@@ -558,7 +558,7 @@ describe("the standing guarantee: this baseline CAN be beaten (task 4 re-review)
 		expect(injected.census.familyRows).toBe(5)
 	})
 
-	it("does NOT move when the same ownership fact arrives only as filer_edge rows (the Task 8 precondition)", async () => {
+	it("does NOT move when the same ownership fact arrives only as filer_edge rows (the EDGAR-importer precondition)", async () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 

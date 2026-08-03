@@ -263,7 +263,7 @@ describe("bboxCoverageCells", () => {
  * with the bbox polyfill above — including a zero-observed-rows cell, which must round-trip through
  * `writeLayerCoverage` / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
  */
-describe("buildPOIDatabase — --source osm build-local branch (bdc 2b task 3)", () => {
+describe("buildPOIDatabase — --source osm build-local branch", () => {
 	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
 
 	function osmFixtureRows(): POISourceRow[] {

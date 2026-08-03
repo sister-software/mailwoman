@@ -68,7 +68,7 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"Path to the FCC BDC provider list CSV (frn/provider_id/holding_company). When given, populates " +
-				"bdc_provider (decision 6, 3a task 8); omit to leave bdc_provider empty, as before task 8."
+				"bdc_provider (decision 6); omit to leave bdc_provider empty."
 		),
 	filerDbPath: zod
 		.string()

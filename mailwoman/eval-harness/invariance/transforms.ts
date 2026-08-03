@@ -301,14 +301,14 @@ export const TRANSFORMS: readonly Transform[] = [
 		id: "wrap-in-quotes",
 		label: "wrap-in-quotes",
 		literatureAnchor:
-			"Ribeiro et al. 2020 (CheckList) INV — irrelevant surrounding punctuation invariance (paired-punctuation audit, Task 9)",
+			"Ribeiro et al. 2020 (CheckList) INV — irrelevant surrounding punctuation invariance (paired-punctuation audit)",
 		apply: wrapInQuotes,
 	},
 	{
 		id: "add-parenthetical",
 		label: "add-parenthetical",
 		literatureAnchor:
-			"Ribeiro et al. 2020 (CheckList) INV — appending an irrelevant clause/aside invariance (paired-punctuation audit, Task 9)",
+			"Ribeiro et al. 2020 (CheckList) INV — appending an irrelevant clause/aside invariance (paired-punctuation audit)",
 		apply: addParenthetical,
 	},
 	{

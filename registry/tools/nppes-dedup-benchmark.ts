@@ -1135,7 +1135,7 @@ export async function nppesDedupBenchmark(
 	lines.push("")
 
 	lines.push(
-		`**Task 4 (#109) — H3-cell robustness check.** Re-keying the same building-grain co-location on an H3 cell ` +
+		`**H3-cell robustness check (#109).** Re-keying the same building-grain co-location on an H3 cell ` +
 			`(res ${H3_RES}) instead of the 50 m haversine radius — the deterministic, O(n) "geocode-first cell" the issue ` +
 			`suggested — gives GBT **org-name-h3 ${pct(gbtOrgH3.f1)}%** (${orgH3Count} classes), vs the haversine ` +
 			`${pct(gbtOrgCoord.f1)}% (${orgCoordCount}). ${

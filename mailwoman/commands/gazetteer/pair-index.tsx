@@ -151,7 +151,7 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"OPTIONAL — the decoder transition-entry bonus a probe hit contributes (+β into B-<tag> at the child's " +
-				"first piece; TRANSITION-BETA build, task-8 probe). Written into the PIX1 header ONLY when passed — " +
+				"first piece; TRANSITION-BETA build). Written into the PIX1 header ONLY when passed — " +
 				"omitting it builds a beta-less artifact (no transition term at decode, the pre-beta behavior). " +
 				"Per-country calibration like --delta: GB ships 5; NZ ships without it."
 		),
@@ -161,7 +161,7 @@ const OptionsSchema = zod.object({
 		.max(1)
 		.default(0)
 		.describe(
-			"DEV-ONLY falsifier flag (placetype-pair-prior arc, Task 6) — withhold this fraction of deduplicated pairs " +
+			"DEV-ONLY falsifier flag (placetype-pair-prior arc) — withhold this fraction of deduplicated pairs " +
 				"from the build (seeded, deterministic; see --holdout-seed), for measuring decode-layer degradation " +
 				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
 				"nonzero value for a shipped artifact build."

@@ -439,7 +439,7 @@ export function assertFamilySchemaVersion(schemaVersion: number, readerName: str
 	if (schemaVersion < FILER_FAMILY_SCHEMA_VERSION) {
 		throw new Error(
 			`${readerName}: filer.db schema_version ${schemaVersion} predates filer_family (introduced at ` +
-				`schema_version ${FILER_FAMILY_SCHEMA_VERSION}, 3b Task 1) — rebuild this artifact via ` +
+				`schema_version ${FILER_FAMILY_SCHEMA_VERSION}) — rebuild this artifact via ` +
 				"buildFilerDatabase to pick up the current schema before querying it with this reader."
 		)
 	}

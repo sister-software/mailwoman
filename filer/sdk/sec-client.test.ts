@@ -283,7 +283,7 @@ describe("createSECClient: host allowlist", () => {
 		expect(transport.calls).toHaveLength(0)
 	})
 
-	it("admits the apex host and the EDGAR full-text-search host (task 8's Exhibit 21 discovery path)", async () => {
+	it("admits the apex host and the EDGAR full-text-search host (the Exhibit 21 discovery path)", async () => {
 		const transport = stubTransport([{ body: { a: 1 } }, { body: { b: 2 } }])
 		const client = clientFor(transport)
 
@@ -514,7 +514,7 @@ describe("createSECClient: on-disk cache", () => {
 	})
 })
 
-describe("createSECClient: getDocument (3b task 0 — the raw-text path get() cannot provide)", () => {
+describe("createSECClient: getDocument — the raw-text path get() cannot provide", () => {
 	const archiveURL = "https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/ex21.htm"
 
 	it("returns the raw HTML body as text, not JSON-parsed", async () => {

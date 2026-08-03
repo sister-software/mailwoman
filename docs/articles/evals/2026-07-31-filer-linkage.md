@@ -1,4 +1,4 @@
-# 2026-07-31 — does filer.db recover corporate family without the disclosed parent? (3b task 4)
+# 2026-07-31 — does filer.db recover corporate family without the disclosed parent?
 
 **Corporate-family membership resolves correctly when the filer discloses its parent, and not at all when it doesn't.** Given the corpus with `holdingCompany` present, `filer.db` puts every one of the 6 same-family registrant pairs in the same family and invents none: precision 1.000, recall 1.000. Given the same corpus with that one field removed, it makes no family call at all — 0 of 6 pairs recovered, recall 0.000, precision and F1 undefined because there were no positive calls to score. Family membership in this pipeline is a disclosed field, transcribed and canonicalized; nothing in the build infers one from anything else.
 

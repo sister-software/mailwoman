@@ -192,7 +192,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.pass).toBe(false) // gates
 	})
 
-	it("final-review fix: the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
+	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
 		// Same case as the severity-gate test above (baseline DEGRADED, candidate LOST — a NEW,
 		// gating violation) — but this time asserting on the printed report LINE itself, not just the
 		// structured outcome. A violation line that hardcodes "baseline held INVARIANT" is false on its

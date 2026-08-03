@@ -341,7 +341,7 @@ describe("buildPlacetypePairPriors — disjointness", () => {
 	})
 })
 
-describe("buildPlacetypePairPriors — dual-key tie-break (fix round 2, re-review adjudication-3 minor)", () => {
+describe("buildPlacetypePairPriors — dual-key tie-break", () => {
 	it("prefers the space-joined form when it and the concatenated form would resolve to DIFFERENT tags", () => {
 		// A real index can't disagree with itself about the same real-world pair, but `probeWindowPair`'s
 		// search order is what actually GUARANTEES the stated preference rather than leaving it to chance:
@@ -360,7 +360,7 @@ describe("buildPlacetypePairPriors — dual-key tie-break (fix round 2, re-revie
 	})
 })
 
-describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix round 2, real PIX1 round trip)", () => {
+describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PIX1 round trip)", () => {
 	// A REAL PairIndexBuilder-shaped entry, through a REAL tokenizer, through the REAL PIX1
 	// serialize/deserialize round trip — not a hand-built `PairIndexLike` double. Mock-only coverage cannot
 	// reach this case at all: `makePieces` emits one synthetic ▁-per-word piece, so it can never reproduce a
@@ -421,7 +421,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 	)
 })
 
-describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now the ≥2-segment leg of the auto chain)", () => {
+describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥2-segment leg of the auto chain)", () => {
 	it('a venue-EMBEDDED name does NOT fire — "Queens Park Academy" (one segment, no internal comma) never reduces to the census child "queens park"', () => {
 		// The actual Task-6 venue-confound board FP verbatim (window mode): "Queens Park Academy, Queens Park
 		// Academy Chestnut Avenue, Chester, MK40 4HA" wrongly emitted dependent_locality=["Queens Park"] because
@@ -609,7 +609,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 	})
 })
 
-describe("buildPlacetypePairPriors — marker suppression must not cross segment boundaries (final-review fix)", () => {
+describe("buildPlacetypePairPriors — marker suppression must not cross segment boundaries", () => {
 	it('reviewer repro: "Fishburn, 5 Fishburn Road" biases Fishburn — successor "5" is in the NEXT segment, so it must never suppress', () => {
 		// Segment 0 is "Fishburn" alone; segment 1 is the whole 3-word "5 Fishburn Road" (no internal comma). Before
 		// the fix, `isMarkerSuppressed` read `nonEmptyGroups[x.endPos + 1]` unconditionally — for segment 0's
@@ -658,7 +658,7 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 	})
 })
 
-describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fixture tokenizer)", () => {
+describe("buildPlacetypePairPriors — paired punctuation (real fixture tokenizer)", () => {
 	// Segment mode's own doc comment claims a quoted venue is "one segment... which never equals the census's...
 	// entry" for the VENUE-CONFOUND class specifically. These cases check the OTHER direction: when the quoted text
 	// itself IS the real place name (occupying its own comma-delimited field, same shape as any other segment-exact

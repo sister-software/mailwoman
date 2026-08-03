@@ -766,7 +766,7 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 	const { date, withheld, control, withheldInputs, controlInputs, registrants, truthForm499Rows, truthGroupOf } = input
 
 	const lines: string[] = [
-		`# ${date} — does filer.db recover corporate family without the disclosed parent? (3b task 4)`,
+		`# ${date} — does filer.db recover corporate family without the disclosed parent?`,
 		"",
 		renderVerdict(withheld, control),
 		"",

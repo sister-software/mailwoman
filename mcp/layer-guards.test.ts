@@ -131,7 +131,7 @@ describe("assertBDCDatabaseExists", () => {
 	})
 })
 
-describe("openFilerDatabaseIfPresent (3a task 7)", () => {
+describe("openFilerDatabaseIfPresent", () => {
 	it("returns undefined when databasePath is undefined", () => {
 		expect(openFilerDatabaseIfPresent(undefined)).toBeUndefined()
 	})
@@ -150,7 +150,7 @@ describe("openFilerDatabaseIfPresent (3a task 7)", () => {
 	})
 })
 
-describe("assertFilerDatabaseExists (3a task 7)", () => {
+describe("assertFilerDatabaseExists", () => {
 	it("throws a friendly error naming the layer when the file is missing", () => {
 		expect(() => assertFilerDatabaseExists("mailwoman_filer_lookup", "/nonexistent/path/filer.db")).toThrow(
 			/mailwoman_filer_lookup: filer\.db not found at "\/nonexistent\/path\/filer\.db"/
