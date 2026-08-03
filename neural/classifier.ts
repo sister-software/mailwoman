@@ -38,7 +38,7 @@ import type { CountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
 import type { GazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import { DEFAULT_INTRA_OP_THREADS, type InferResult } from "./onnx-runner.ts"
+import type { InferResult } from "./onnx-runner.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
@@ -318,7 +318,7 @@ export class NeuralAddressClassifier {
 		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
 		// builtins they reference.
 		const [
-			{ ONNXRunner },
+			{ DEFAULT_INTRA_OP_THREADS, ONNXRunner },
 			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
 			{ parseAnchorLookup },
 			{ parseGazetteerLexicon },
