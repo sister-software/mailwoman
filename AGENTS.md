@@ -80,6 +80,26 @@ The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `t
 - `scripts/copy-weights.ts` — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
 - `scripts/publish-workspace.ts` — invoked per workspace by release-it. Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
+### Pitfall: the overlay `link-dev-weights.ts` is a copy-paste template
+
+The locale overlay packages (`neural-weights-de-de`, `-es-es`, `-it-it`, `-en-in`, …) each carry their
+own `scripts/link-dev-weights.ts`. The small ones are ~117 lines and were cloned from one another, so
+a new locale is added by copying a sibling. That reliably localizes the CODE and leaves the PROSE
+behind: `es-es` and `it-it` both shipped `de-de`'s docstring, telling the reader the script exists so
+`resolveWeights({locale: "de-de"})` resolves and that the index is inert without the `de` entries
+because "German addresses write 50733 Köln". The code was right in both; everything a reader would
+use to verify it pointed at the wrong country. Nothing catches this — the script works.
+
+If you add a locale overlay, rewrite the docstring for the locale you are adding, not just the paths.
+If you are adding several, extract the shared machinery first (the freshness guard, the md5-with-
+sidecar compare, the force-link, the index spawn) so a new overlay is a manifest plus a call — at the
+number of locales this is heading toward, the template is a defect generator.
+
+Related, and easy to "fix" wrongly: `LEADING_POSTCODE_COUNTRIES` in `neural/placetype-pair-prior.ts`
+lists `fr, de, es, it`. A country's ABSENCE there is not always a gap. `en-IN` is absent on purpose —
+the PIN goes last, so the trailing-postcode strip already folds its parent segment correctly, and its
+docstring says so. Membership is earned by a codex postcode shape plus a confound board.
+
 ### Pitfall: symlinks in the publish tarball
 
 `yarn npm publish` (and `npm publish`) refuse to upload tarballs containing symlinks — the registry returns HTTP 415 (`YN0035: Symbolic link is not allowed`). Two specific traps make this easy to hit:
@@ -140,6 +160,8 @@ If a release fails partway through publishing:
 
   Two leaf packages deliberately keep local copies rather than take a dependency: `nuts-lookup` and `timezone-lookup` re-implement the ray cast because reaching `@mailwoman/spatial` would pull `@mailwoman/core`'s ~11 MB of shipped data behind it, and `match/gbt.test.ts` keeps an LCG for the same reason. Each says so in place. When you find a duplicate, price the dependency before moving it — the answer is sometimes "leave it, and write down why".
 
+  **A duplicate is often a bug report about the shared tool.** The seven copies of a hand-rolled CSV splitter in `corpus/src/shard-recipes/` were the worked example: `CSVSpliterator` was ALREADY a dependency of every one of those workspaces, so nobody had failed to find it. They found it, hit 207 seconds on a whole-buffer parse, and wrote something fast that could not see quotes. The duplication was a rational local response to a real upstream defect (a quadratic `searchMatches`, fixed in spliterator 5.0.0), and seven independent authors routed around the same pothole without filing it. So when you meet a duplicate, the useful question is not "why didn't they know" — it's **"what was wrong with the shared thing?"** Sometimes nothing. Often: too slow, async against a sync caller, or shaped for a different call site. Fix that and the duplicates collapse on their own; delete them without fixing it and they grow back.
+
 - The **bare-import + subpath-import cycle** is a fragility surface. When a test file imports `@mailwoman/core` bare AND a subpath, Vite can leave the bare re-exports unbound while the slices interleave — base classes at the far side of the barrel evaluate as `undefined`. (`core/resources/libpostal.ts` had a top-level `await readdir` that contributed until #481 made it a lazy `getAvailableLanguages()` getter; the cycle turned out to be **structural** — Vite's bare/subpath interleaving — not TLA-driven, so it persists after the TLA removal.) Workaround: a side-effect `import "@mailwoman/core"` at the top of the affected test file forces full init first. Full fix = import-graph hygiene (tracked on #481).
 
 ## Database / inline SQL
@@ -172,6 +194,10 @@ On the query side, the migratable remainder is the cold, already-`async` `SELECT
 ## When in doubt
 
 Read the workspace-local docstrings before changing infrastructure files. The headers in `scripts/*.mjs`, `.release-it.json`, and `.github/workflows/*.yml` explain why each piece exists. If a file's purpose isn't documented inline and you're about to touch it, add the docstring as part of your change — future-you (or future-claude) will thank you.
+
+**The defects that survive review live in the input tail.** Every correctness bug the 2026-08-02 audit found was in code that worked on every input anyone had tried: a ReDoS that needs tab characters, an `expandH3Cell` that drops a leading zero only for base cells 0–7 (7 of 122), a quote-blind CSV splitter against sources where 6 of 8 carry no embedded newline, a quadratic scan whose every existing caller happened to be chunk-bounded, a freshness guard that compared zero checksums. Reading the code tells you what it does on the inputs you are imagining, which is exactly the set that already works. So when a change rests on a claim about data or scale — _this source has no quoted newlines_, _this path is fast enough now_, _this artifact is stale_ — spend the one command that settles it. Measuring found all five of those; each of the four audit findings that turned out WRONG had been reasoned to instead, and was disproved by someone implementing it.
+
+Corollary for the docstring you write afterwards: if the claim was established by measurement, put the number in. `27,405 ms → 175 ms on 8 MB` tells the next reader whether the constraint still binds. "This is slow" does not.
 
 ## Addendum
 
