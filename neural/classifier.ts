@@ -35,17 +35,19 @@ import {
 import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "@mailwoman/neural/onnx-runner"
 
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
-import type { AnchorLookup } from "./anchor-inference.ts"
+import { type AnchorLookup, parseAnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
-import type { CountryLexicon } from "./country-inference.ts"
+import { type CountryLexicon, parseCountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
-import type { GazetteerLexicon } from "./gazetteer-inference.ts"
+import { type GazetteerLexicon, parseGazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
+import { PairIndexResolver, peekPairIndexHeader } from "./pair-index-resolver.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
 	type PlacetypePairProbeTrace,
 } from "./placetype-pair-prior.ts"
+import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
@@ -314,34 +316,18 @@ export class NeuralAddressClassifier {
 			intraOpNumThreads?: number
 		} = {}
 	): Promise<NeuralAddressClassifier> {
-		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
-		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
-		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
-		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
-		// builtins they reference.
-		// The sanctioned crossing into the Node-only modules: dynamic + webpackIgnore, so the bundler never
-		// follows them. A STATIC import of either would be followed, which is what the lint rule guards.
+		// The sanctioned crossing into the three Node-only modules. `webpackIgnore` leaves the import
+		// statement intact, so it becomes a runtime native ESM import: resolvable in Node, and never
+		// followed into the browser chunk graph, where `node:fs` and `onnxruntime-node`'s binaries would
+		// fail to parse. A STATIC import of any of the three would be followed, which the lint rule guards.
 
 		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
-		const [
-			{ $public },
-			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels },
-			{ parseAnchorLookup },
-			{ parseGazetteerLexicon },
-			{ parseCountryLexicon },
-			{ PostcodeBinaryResolver },
-			{ PairIndexResolver, peekPairIndexHeader },
-			fs,
-		] = await Promise.all([
-			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
-			import(/* webpackIgnore: true */ "./weights.ts"),
-			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
-			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
-			import(/* webpackIgnore: true */ "./country-inference.ts"),
-			import(/* webpackIgnore: true */ "./postcode-binary-resolver.ts"),
-			import(/* webpackIgnore: true */ "./pair-index-resolver.ts"),
-			import(/* webpackIgnore: true */ "node:fs"),
-		])
+		const [{ $public }, { resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels }, fs] =
+			await Promise.all([
+				import(/* webpackIgnore: true */ "@mailwoman/core/env"),
+				import(/* webpackIgnore: true */ "./weights.ts"),
+				import(/* webpackIgnore: true */ "node:fs"),
+			])
 
 		/* oxlint-enable typescript/no-restricted-imports */
 		const resolved: ResolvedWeights = resolveWeights(opts)

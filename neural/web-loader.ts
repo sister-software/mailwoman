@@ -14,21 +14,16 @@
  */
 
 import { detectLocaleSync } from "@mailwoman/locale-gate"
-import {
-	type AnchorLookup,
-	type CountryLexicon,
-	type GazetteerLexicon,
-	MailwomanTokenizer,
-	NeuralAddressClassifier,
-	type NeuralAddressClassifierConfig,
-	PairIndexResolver,
-	parseCountryLexicon,
-	parseGazetteerLexicon,
-	type PlacetypePairPriorOpts,
-	PostcodeBinaryResolver,
-} from "@mailwoman/neural/browser"
 import { computeQueryShape } from "@mailwoman/query-shape"
 
+import type { AnchorLookup } from "./anchor-inference.ts"
+import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "./classifier.ts"
+import { type CountryLexicon, parseCountryLexicon } from "./country-inference.ts"
+import { type GazetteerLexicon, parseGazetteerLexicon } from "./gazetteer-inference.ts"
+import { PairIndexResolver } from "./pair-index-resolver.ts"
+import type { PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
+import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
+import { MailwomanTokenizer } from "./tokenizer.ts"
 import { WebONNXRunner, type WebONNXRunnerDiagnostics, type WebONNXRunnerOpts } from "./web-onnx-runner.ts"
 
 export { type WebONNXRunnerDiagnostics } from "./web-onnx-runner.ts"

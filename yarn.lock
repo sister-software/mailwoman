@@ -4644,7 +4644,7 @@ __metadata:
     "@mailwoman/cartographer": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
-    "@mailwoman/neural-web": "workspace:*"
+    "@mailwoman/neural": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
@@ -4666,6 +4666,7 @@ __metadata:
     clsx: "npm:^2.1.1"
     docusaurus-plugin-glossary: "npm:^3.3.4"
     maplibre-gl: "npm:^5.24.0"
+    onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
     prism-react-renderer: "npm:^2.4.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
@@ -4784,15 +4785,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-web@workspace:*, @mailwoman/neural-web@workspace:neural-web":
+"@mailwoman/neural-web@workspace:neural-web":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-web@workspace:neural-web"
   dependencies:
-    "@mailwoman/core": "workspace:*"
-    "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/neural": "workspace:*"
-    "@mailwoman/query-shape": "workspace:*"
-    onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
   languageName: unknown
   linkType: soft
 
@@ -4870,8 +4867,19 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/locale-gate": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/sentencepiece-wasm": "workspace:*"
     onnxruntime-node: "npm:^1.26.0"
+    onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
+  peerDependencies:
+    onnxruntime-node: ^1.26.0
+    onnxruntime-web: "*"
+  peerDependenciesMeta:
+    onnxruntime-node:
+      optional: true
+    onnxruntime-web:
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -16487,6 +16495,7 @@ __metadata:
     fast-glob: "npm:^3.3.3"
     h3-js: "npm:^4.5.0"
     ink: "npm:^7.1.1"
+    onnxruntime-node: "npm:^1.26.0"
     pastel: "npm:^4.0.1"
     path-ts: "npm:^2.1.0"
     pluralize: "npm:^8.0.0"

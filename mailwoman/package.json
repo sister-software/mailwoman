@@ -132,6 +132,7 @@
 		"fast-glob": "^3.3.3",
 		"h3-js": "^4.5.0",
 		"ink": "^7.1.1",
+		"onnxruntime-node": "^1.26.0",
 		"pastel": "^4.0.1",
 		"path-ts": "^2.1.0",
 		"pluralize": "^8.0.0",

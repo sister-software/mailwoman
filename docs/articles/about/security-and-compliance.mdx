@@ -26,7 +26,7 @@ Three boundaries make that statement literally true rather than roughly true:
 - **Building datasets downloads datasets.** `mailwoman gazetteer build` and its siblings fetch from
   the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC. These are commands you run
   deliberately, at build time, separate from parsing.
-- **The browser runtime downloads its model.** `@mailwoman/neural-web` fetches model and data
+- **The browser runtime downloads its model.** `@mailwoman/neural/web-loader` fetches model and data
   artifacts from a URL your application supplies, once. The query text stays in the page. Our hosted
   [demo](/demo) is a deployment of that runtime, and it serves those artifacts from
   `public.sister.software` and calls `tiles.sister.software` for coarse map centring — both of which

@@ -13,7 +13,7 @@ import { promisify } from "node:util"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 import { ZodError } from "zod"
 
 import { options as runOptions } from "../commands/corpus/run.tsx"
@@ -31,6 +31,16 @@ const CLI_SPAWN_TIMEOUT_MS = 45_000
  * which reads as "timed out" with no indication of what actually took the time.
  */
 const CLI_TEST_TIMEOUT_MS = 90_000
+
+/**
+ * Vitest's per-test budget for this whole file.
+ *
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
+ * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
+ * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
+ * report, surfacing as a bare timeout with no attribution.
+ */
+vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")

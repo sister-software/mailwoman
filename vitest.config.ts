@@ -96,7 +96,7 @@ export default defineConfig({
 		// so a module already cached by an earlier file in the same fork is returned as-is — mocks
 		// declared against it silently never apply. Any file that mocks a shared module MUST call
 		// `vi.resetModules()` before importing the module under test (reference:
-		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural-web/loader.tolerance.test.ts).
+		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,
 		exclude: [

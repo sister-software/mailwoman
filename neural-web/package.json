@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/neural-web",
 	"version": "8.7.0",
-	"description": "Browser-side mailwoman neural runtime. Pairs the existing tokenizer + decoder with an onnxruntime-web inference path (WebGPU primary, WASM SIMD fallback). Drop-in for @mailwoman/neural when targeting a static-asset deploy (Phase B of the demo plan).",
+	"description": "DEPRECATED — the browser neural runtime moved into @mailwoman/neural. This package re-exports it so existing imports keep working; migrate to @mailwoman/neural/web-loader and @mailwoman/neural/web-onnx-runner.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
@@ -36,10 +36,6 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/core": "workspace:*",
-		"@mailwoman/locale-gate": "workspace:*",
-		"@mailwoman/neural": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*",
-		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2"
+		"@mailwoman/neural": "workspace:*"
 	}
 }

@@ -22,10 +22,10 @@ import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "@mailwoman/neural/browser"
 import { describe, expect, test } from "vitest"
 
-import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "./loader.ts"
+import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "./pair-index-resolver.ts"
+import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "./web-loader.ts"
 
 const here = dirname(fileURLToPath(import.meta.url))
 

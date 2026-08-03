@@ -87,41 +87,36 @@ This is a **major**. Three breaks, none subtle:
 3. **Relative → self-referencing imports** inside `neural`. Invisible to consumers, but it touches
    every runtime-split call site.
 
-## Blocked on an unanswered resolution question
+## The resolution question, answered
 
-The design above assumes export conditions can carry the browser/Node boundary. **In the Docusaurus
-client build they currently do not**, and the reason is not yet known. Five experiments, each ending
-in `yarn workspace @mailwoman/docs build`:
+Export conditions DO carry the boundary — the confusion was about which compiler was failing.
 
-| change (cumulative)                                                    | result    |
-| ---------------------------------------------------------------------- | --------- |
-| `browser` condition on `exports["./onnx-runner"]` + a counterpart file | passes    |
-| ...plus `classifier.ts` importing `@mailwoman/neural/onnx-runner`      | **fails** |
-| ...plus `resolve.conditionNames` incl. `browser` on the client bundle  | fails     |
-| ...plus removing the `@mailwoman/neural/browser` alias                 | fails     |
-| ...plus `resolve.symlinks: false`                                      | fails     |
+Docusaurus builds two bundles. The **client** resolves under `browser` and picked the counterpart
+correctly from the first attempt. The **server** (SSR) resolves under `node`, correctly, because it
+targets Node — and that is the compile that failed. Its aggregated `[ERROR] Failed to compile` names
+neither side; the only signal is a `[webpackbar]` line two rows above reading
+`Client: Compiled successfully`.
 
-Failures are `Module parse failed: Unexpected character` — `onnxruntime-node`'s native assets
-reaching the client graph.
+```
+[CLIENT] target=browserslist  conditions=["webpack","production","browser"]
+[SERVER] target=node26.2      conditions=["webpack","production","node"]
+```
 
-The decisive test: pointing the `browser` condition at a file that does NOT exist produced no
-"Can't resolve" error, only the same binary parse failure. **The condition is never consulted.**
-Resolution reaches the Node module by a path that ignores `exports` entirely.
+No export condition can distinguish "webpack building for SSR" from "real Node", so the SSR bundle
+needs a config-side lever: a targeted alias for the one specifier, which
+`docs/plugins/demo-assets/plugin.ts` now carries under `isServer`. Adding `browser` to the server's
+`conditionNames` also works and is far broader — it flips every browser-conditioned package in
+`node_modules` for SSR, and `@mailwoman/neural` is the only workspace carrying such a condition.
 
-Two claims that were made and are FALSE, recorded so they are not re-derived:
+Two things that cost four wrong diagnoses, worth carrying forward:
 
-- _The docs webpack aliases are the blocker._ They are not. Removing
-  `aliases["@mailwoman/neural/browser"]` leaves the build passing — package exports already carry it.
-  That alias serves dev hot-reload, as its comment says, and is a simplification available today.
-- _`resolve.conditionNames` is the missing config._ Setting it changes nothing.
-
-What IS confirmed: `enhanced-resolve` invoked directly with `conditionNames: ["browser", …]` resolves
-to the browser counterpart, so the exports map is correct. The gap is specific to how the Docusaurus
-build resolves.
-
-**Step 0, before anything below: instrument that resolver** and find where
-`@mailwoman/neural/onnx-runner` actually lands and which mechanism chose it. Every step below assumes
-an answer to that.
+- **A stale resolve cache.** `docs/node_modules/.cache/webpack` is not evicted when
+  plugin-contributed `resolve` config changes: `buildDependencies.config` covers
+  `docusaurus.config.ts` and the theme, not the plugin files, and `ResolverCachePlugin` keys on
+  pre-merge options encoding neither aliases nor `conditionNames`. It had reached 1.4 GB. **Clear it
+  before any resolve-affecting build**, or the build reports the previous run's resolution.
+- **The webpack aliases are not the boundary.** Removing `aliases["@mailwoman/neural/browser"]`
+  leaves the build passing — package exports already carry it. That alias serves dev hot-reload only.
 
 ## Order of work
 

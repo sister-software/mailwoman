@@ -7,16 +7,18 @@
  *   tolerance, LOAD-ALL construction (every fetched index becomes a live resolver, no load-time gate),
  *   and the OPTIONAL config-default posture pin the `country` load-option now sets.
  *
- *   Strategy mirrors `loader.tolerance.test.ts`: mock onnxruntime-web (no model file) + partial-mock
- *   `@mailwoman/neural/browser` to stub the tokenizer + capture the classifier config, while keeping
- *   the REAL `serializePairIndex` / `PairIndexResolver`, so the fetch-construct path under test runs for
- *   real. The per-parse SELECTION among the loaded indexes lives in `loader.locale-gate.test.ts`
- *   (pure); the decode-level behavior (prior applied on selection, byte-stability without) lives in
- *   `loader.pair-prior-decode.test.ts`, which runs the REAL classifier end-to-end.
+ *   Strategy mirrors `web-loader.tolerance.test.ts`: mock onnxruntime-web (no model file) +
+ *   partial-mock `./tokenizer.ts` / `./classifier.ts` to stub the tokenizer + capture the classifier
+ *   config, while keeping the REAL `serializePairIndex` / `PairIndexResolver`, so the fetch-construct
+ *   path under test runs for real. The per-parse SELECTION among the loaded indexes lives in
+ *   `web-loader.locale-gate.test.ts` (pure); the decode-level behavior (prior applied on selection,
+ *   byte-stability without) lives in `web-loader.pair-prior-decode.test.ts`, which runs the REAL
+ *   classifier end-to-end.
  */
 
-import type { PairIndexHeader } from "@mailwoman/neural/browser"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
+
+import type { PairIndexHeader } from "./pair-index-resolver.ts"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -45,34 +47,34 @@ let capturedConfig: {
 	}
 } | null = null
 
-vi.mock("@mailwoman/neural/browser", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/neural/browser")>()
+// The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
+vi.mock("./tokenizer.ts", async (importOriginal) => ({
+	...(await importOriginal<typeof import("./tokenizer.ts")>()),
+	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
+}))
 
-	return {
-		...actual,
-		// The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
-		MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
-		// Capture-only stub: we only care that the load reached construction and WHAT placetypePair config it received.
-		NeuralAddressClassifier: class {
-			constructor(cfg: NonNullable<typeof capturedConfig>) {
-				capturedConfig = cfg
-			}
-		},
-	}
-})
+// Capture-only stub: we only care that the load reached construction and WHAT placetypePair config it received.
+vi.mock("./classifier.ts", async (importOriginal) => ({
+	...(await importOriginal<typeof import("./classifier.ts")>()),
+	NeuralAddressClassifier: class {
+		constructor(cfg: NonNullable<typeof capturedConfig>) {
+			capturedConfig = cfg
+		}
+	},
+}))
 
-// Shared-graph guard: the root vitest config runs `isolate: false`, so `./loader.ts` /
-// `@mailwoman/neural/browser` may already sit in the worker's cache — evaluated WITHOUT this file's
-// mocks by an earlier file (a cached module never re-evaluates, and vi.mock factories are only
-// consulted at evaluation). Reset on the way in so the chain re-evaluates against the mocks, and on
-// the way out so the NEXT file in this fork never inherits our mocked modules from the cache.
+// Shared-graph guard: the root vitest config runs `isolate: false`, so `./web-loader.ts` and its
+// dependencies may already sit in the worker's cache — evaluated WITHOUT this file's mocks by an
+// earlier file (a cached module never re-evaluates, and vi.mock factories are only consulted at
+// evaluation). Reset on the way in so the chain re-evaluates against the mocks, and on the way out
+// so the NEXT file in this fork never inherits our mocked modules from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import AFTER the mock declarations + reset. `serializePairIndex` + `PairIndexResolver` remain REAL
-// (the partial mock spreads `actual`), so the binaries built here decode through the real reader.
-const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/browser")
-const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import("./loader.ts")
+// Import AFTER the mock declarations + reset. `pair-index-resolver.ts` is NOT mocked, so the
+// binaries built here decode through the real reader.
+const { PairIndexResolver, serializePairIndex } = await import("./pair-index-resolver.ts")
+const { loadNeuralClassifierFromURLs, resolvePairGateCountry } = await import("./web-loader.ts")
 
 const SEQ = 128
 

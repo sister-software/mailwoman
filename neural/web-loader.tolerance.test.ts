@@ -17,9 +17,9 @@
  *   anchors; ALL 404 collapses to the anchor-off identity (undefined lookup) and STILL loads.
  *
  *   Strategy mirrors `web-onnx-runner.unit.test.ts` — mock onnxruntime-web so no real model file is
- *   needed — plus a partial mock of `@mailwoman/neural/browser` that stubs the tokenizer + classifier
- *   (which need a real tokenizer.model) while keeping the REAL `PostcodeBinaryResolver` +
- *   `serializePostcodeBinary`, so the postcode-load-and-merge path under test runs for real.
+ *   needed — plus partial mocks of `./tokenizer.ts` + `./classifier.ts` (which need a real
+ *   tokenizer.model) while keeping `PostcodeBinaryResolver` + `serializePostcodeBinary` real, so the
+ *   postcode-load-and-merge path under test runs for real.
  */
 
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
@@ -47,25 +47,25 @@ vi.mock("onnxruntime-web/webgpu", () => {
  */
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
-vi.mock("@mailwoman/neural/browser", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@mailwoman/neural/browser")>()
+// The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
+vi.mock("./tokenizer.ts", async (importOriginal) => ({
+	...(await importOriginal<typeof import("./tokenizer.ts")>()),
+	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
+}))
 
-	return {
-		...actual,
-		// The real tokenizer needs a valid SentencePiece model; stub the load (we feed dummy bytes).
-		MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
-		// Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
-		// that it is CONSTRUCTED (the load reached the end) and WHAT postcode lookup it received.
-		NeuralAddressClassifier: class {
-			constructor(cfg: { postcodeAnchorLookup?: Map<string, unknown> }) {
-				capturedConfig = cfg
-			}
-		},
-	}
-})
+// Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
+// that it is CONSTRUCTED (the load reached the end) and WHAT postcode lookup it received.
+vi.mock("./classifier.ts", async (importOriginal) => ({
+	...(await importOriginal<typeof import("./classifier.ts")>()),
+	NeuralAddressClassifier: class {
+		constructor(cfg: { postcodeAnchorLookup?: Map<string, unknown> }) {
+			capturedConfig = cfg
+		}
+	},
+}))
 
 // vi.resetModules() BEFORE these imports: the root vitest config runs `isolate: false` (one
-// shared module graph per worker), so `./loader.ts` / `@mailwoman/neural/browser` may already be
+// shared module graph per worker), so `./web-loader.ts` and its dependencies may already be
 // cached — evaluated WITHOUT this file's mocks by an earlier file. A cached module never
 // re-evaluates, so the mock factories above would be skipped and the REAL tokenizer/classifier
 // would try to parse the dummy fixture bytes (SentencePiece ParseFromArray failure). resetModules
@@ -74,11 +74,10 @@ vi.mock("@mailwoman/neural/browser", async (importOriginal) => {
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import AFTER the mock declarations + reset. `serializePostcodeBinary` + `PostcodeBinaryResolver`
-// remain REAL (the partial mock spreads `actual`), so the binaries we build here decode through
-// the real reader.
-const { serializePostcodeBinary } = await import("@mailwoman/neural/browser")
-const { loadNeuralClassifierFromURLs } = await import("./loader.ts")
+// Import AFTER the mock declarations + reset. `postcode-binary-resolver.ts` is NOT mocked, so the
+// binaries we build here decode through the real reader.
+const { serializePostcodeBinary } = await import("./postcode-binary-resolver.ts")
+const { loadNeuralClassifierFromURLs } = await import("./web-loader.ts")
 
 const SEQ = 128
 

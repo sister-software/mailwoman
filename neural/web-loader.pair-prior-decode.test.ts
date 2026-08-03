@@ -20,8 +20,10 @@
 import { readFileSync } from "node:fs"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { serializePairIndex, STAGE2_BIO_LABELS, type PairIndexHeader } from "@mailwoman/neural/browser"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
+
+import { STAGE2_BIO_LABELS } from "./labels.ts"
+import { serializePairIndex, type PairIndexHeader } from "./pair-index-resolver.ts"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -49,9 +51,9 @@ vi.mock("onnxruntime-web/webgpu", () => {
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import AFTER the ORT mock. `@mailwoman/neural/browser` is NOT mocked here — the load runs the real
+// Import AFTER the ORT mock. The tokenizer + classifier are NOT mocked here — the load runs the real
 // tokenizer + classifier so the parse below exercises the real shared decode.
-const { loadNeuralClassifierFromURLs } = await import("./loader.ts")
+const { loadNeuralClassifierFromURLs } = await import("./web-loader.ts")
 
 const SEQ = 128
 const L = STAGE2_BIO_LABELS.length

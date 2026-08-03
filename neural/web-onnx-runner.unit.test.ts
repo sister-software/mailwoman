@@ -22,8 +22,11 @@
  *       hosts, so a cross-runner parity test pins them together.
  */
 
-import { ANCHOR_FEATURE_DIM, COUNTRY_FEATURE_DIM, GAZETTEER_FEATURE_DIM } from "@mailwoman/neural/browser"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
+
+import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
+import { COUNTRY_FEATURE_DIM } from "./country-inference.ts"
+import { GAZETTEER_FEATURE_DIM } from "./gazetteer-inference.ts"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -316,7 +319,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 describe("defaultGazetteerLexiconURL", () => {
 	test("derives the sibling anchor-lexicon-v1.json beside the model URL", async () => {
-		const { defaultGazetteerLexiconURL } = await import("./loader.ts")
+		const { defaultGazetteerLexiconURL } = await import("./web-loader.ts")
 
 		expect(defaultGazetteerLexiconURL("https://public.sister.software/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
 			"https://public.sister.software/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
@@ -329,7 +332,7 @@ describe("defaultGazetteerLexiconURL", () => {
 
 describe("defaultCountryLexiconURL", () => {
 	test("derives the sibling country-surface-lexicon-v1.json beside the model URL", async () => {
-		const { defaultCountryLexiconURL } = await import("./loader.ts")
+		const { defaultCountryLexiconURL } = await import("./web-loader.ts")
 
 		expect(defaultCountryLexiconURL("https://public.sister.software/mailwoman/en-us/v6.2.0/model.onnx")).toBe(
 			"https://public.sister.software/mailwoman/en-us/v6.2.0/country-surface-lexicon-v1.json"

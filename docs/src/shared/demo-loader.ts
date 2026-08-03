@@ -98,13 +98,13 @@ export async function loadDemoAssets(
 	// remains a dev-preview fallback in the plugin, but the demo now reads the bucket.
 	const pairIndexBaseURL = "https://public.sister.software/mailwoman/pair-index"
 
-	// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the browser-safe entry. The runtime
-	// API is wider than its TS types (the bundle ships `postcodeAnchorLookup` the declaration omits), so we reach the
-	// runtime shape through `unknown`.
-	const neuralWeb = await import("@mailwoman/neural-web")
+	// Dynamic so the ~MB of runtime lands in its own chunk rather than the page's entry. The loader's
+	// runtime API is wider than its TS types (it returns `postcodeAnchorLookup`, which the declaration
+	// omits), so we reach the runtime shape through `unknown`.
+	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
-	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } =
-		(await neuralWeb.loadNeuralClassifierFromURLs({
+	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } = (await loadNeuralClassifierFromURLs(
+		{
 			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
 				hasAnchor: release.hasAnchor,
 				forceWASM: ctx.forceWASM,
@@ -114,12 +114,13 @@ export async function loadDemoAssets(
 			// `selectPairIndexForText` picks per parse via locale-gate. Fetched tolerantly — a 404 is
 			// skipped, so this is byte-stable if the bucket path ever regresses.
 			pairIndexURLs: pairIndexStagedURLs(pairIndexBaseURL),
-		})) as unknown as {
-			classifier: MailwomanClassifierLike
-			diagnostics?: { backend: string; modelBytes: number } | null
-			postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
-			selectPairIndexForText?: SelectPairIndex | null
 		}
+	)) as unknown as {
+		classifier: MailwomanClassifierLike
+		diagnostics?: { backend: string; modelBytes: number } | null
+		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
+		selectPairIndexForText?: SelectPairIndex | null
+	}
 
 	ctx.setBackend(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
