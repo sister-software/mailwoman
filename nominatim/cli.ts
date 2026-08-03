@@ -29,6 +29,7 @@ import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-looku
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
+	buildNoGazetteerMessage,
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
@@ -145,26 +146,30 @@ async function serve(): Promise<void> {
 	// @mailwoman/photon's pre-flight (kept in lockstep; docs/switching pages are the maintained pointer).
 	if (!candidateDb && !wofPaths.length) {
 		console.error(
-			[
-				"✗ no gazetteer data found — the endpoint needs a resolver database to answer queries.",
-				"",
-				"  Fastest path (worldwide resolution, ~1.4 GB, byte-range friendly):",
-				`    mkdir -p ${join(mailwomanDataRoot(), "wof")}`,
-				`    curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \\`,
-				`      -o ${conventionCandidate}`,
-				"",
-				"  Then re-run `serve` (the file is auto-detected at that path), or point at your own:",
-				"    --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)",
-				"    $MAILWOMAN_WOF_DB / <data-root>/wof/*.db          (admin WOF distribution)",
-				"",
-				"  Docs: https://mailwoman.sister.software/docs/switching/nominatim",
-			].join("\n")
+			buildNoGazetteerMessage({
+				dataRoot: mailwomanDataRoot(),
+				docsPath: "/docs/switching/nominatim",
+				requiresExplicitEnv: false,
+			})
 		)
 
 		process.exit(1)
 	}
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	// #1009: same friendly-failure discipline for the model weights — a stranger who installed only
+	// `@mailwoman/nominatim` (which DOES declare `@mailwoman/neural-weights-en-us`, so this should always
+	// resolve) still gets a named artifact + the one fix command instead of an unhandled-rejection
+	// stack trace if resolution ever fails (corrupt install, pruned node_modules, etc).
+	let classifier: NeuralAddressClassifier
+
+	try {
+		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+	} catch (error) {
+		console.error(`✗ ${error instanceof Error ? error.message : String(error)}`)
+
+		process.exit(1)
+	}
+
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())

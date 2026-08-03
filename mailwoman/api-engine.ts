@@ -27,7 +27,6 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
-import { join } from "node:path"
 
 import type { BatchRow, GeocodeOutcome, HealthData, MailwomanAPIEngine, ResolveTreeOutcome } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
@@ -48,7 +47,13 @@ import {
 	ShardProvider,
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
+import {
+	buildNoGazetteerMessage,
+	createResolverBackend,
+	mailwomanDataRoot,
+	resolveCandidateDBPath,
+	wofShardPaths,
+} from "./resolver-backend.ts"
 
 /**
  * Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
@@ -82,30 +87,14 @@ function wofPaths(): string[] {
 
 /**
  * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`) — a stranger's
- * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it — adapted to this
- * package's own override (`MAILWOMAN_WOF_DB`, a comma-separated FTS shard list) alongside the shared
- * candidate-gazetteer fast path (`MAILWOMAN_CANDIDATE_DB`).
+ * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it. Unlike the drop-ins,
+ * `mailwoman serve` resolves the candidate gazetteer ONLY via `resolveCandidateDBPath` (explicit opt or
+ * `$MAILWOMAN_CANDIDATE_DB` — see this file's `candidateDb` derivation below), never a convention-path fallback —
+ * doctor's documented trap (`doctor/checks.ts`'s `gazetteerCheck`) — so `requiresExplicitEnv: true` here, unlike the
+ * drop-ins' `false`.
  */
 function buildPreflightMessage(): string {
-	const conventionCandidate = join(DATA_ROOT, "wof", "candidate.db")
-
-	return [
-		"✗ no gazetteer data found — `mailwoman serve` needs a WOF SQLite distribution to geocode/resolve.",
-		"",
-		"  Fastest path (worldwide resolution, ~1.4 GB, byte-range friendly):",
-		`    mkdir -p ${join(DATA_ROOT, "wof")}`,
-		`    curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \\`,
-		`      -o ${conventionCandidate}`,
-		"",
-		"  Then point `$MAILWOMAN_CANDIDATE_DB` at that file and re-run `serve`:",
-		`    export MAILWOMAN_CANDIDATE_DB=${conventionCandidate}`,
-		"",
-		"  Or point at your own gazetteer:",
-		"    $MAILWOMAN_WOF_DB=<path1,path2,...>    (admin WOF SQLite shard(s) — the FTS backend)",
-		"    $MAILWOMAN_CANDIDATE_DB=<path>         (candidate-table gazetteer — population-first, demo-parity)",
-		"",
-		"  Docs: https://mailwoman.sister.software/docs",
-	].join("\n")
+	return buildNoGazetteerMessage({ dataRoot: DATA_ROOT, docsPath: "/docs", requiresExplicitEnv: true })
 }
 
 /**
