@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cold-start integration test for the three drop-in servers (`@mailwoman/photon`, `@mailwoman/nominatim`,
- *   `@mailwoman/libpostal`) — Task 7 of the docs reorg (#task-7). Spawns each COMPILED `cli.js` and asserts the
- *   doctor-grade cold-start contract the tutorial docs (Tasks 10–11) will print verbatim:
+ *   Cold-start integration test for the drop-in servers (`@mailwoman/photon`, `@mailwoman/nominatim`,
+ *   `@mailwoman/libpostal`) and the MCP server (`@mailwoman/mcp`) — Tasks 7 and 14 of the docs reorg. Spawns each
+ *   COMPILED `cli.js` and asserts the doctor-grade cold-start contract the tutorial docs print verbatim:
  *
  *   - `photon`/`nominatim` need a gazetteer to answer queries. With none present, `serve` must exit non-zero
  *     within 30 s and its stderr must name the fix (`mailwoman data pull`) — never an unhandled-rejection
@@ -14,8 +14,17 @@
  *   - `libpostal` needs ONLY the model weights, resolved from `node_modules` independent of the data root — a
  *     bare temp root is a legitimate, complete cold start for it. `serve` must bind and answer `GET /` with 200,
  *     no data pull required at all (the "lowest-dependency drop-in" the README claims).
+ *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
+ *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
+ *     all, and the first model-backed tool call must answer with the same `mailwoman data pull` fix as a tool
+ *     error — not the internal `resolveShards: at least one shard is required`, which is what it said before
+ *     Task 14. A second, network-free test asserts `@mailwoman/mcp` DECLARES `@mailwoman/neural-weights-en-us`;
+ *     it did not until 2026-08-03, so a standalone `npm install @mailwoman/mcp` could never load the model
+ *     (measured against the published 8.6.0 — the same defect Task 7 fixed in `@mailwoman/libpostal`). Nothing
+ *     inside this monorepo can catch that one at runtime, because yarn hoists every workspace sibling into
+ *     `node_modules` whether a package declares it or not.
  *
- *   These three assertions run in EVERY environment and download nothing (a bare `mkdtemp` data root, never
+ *   These assertions run in EVERY environment and download nothing (a bare `mkdtemp` data root, never
  *   populated). The full loop — actually `data pull candidate` (~1.65 GB) and confirm photon/nominatim ALSO
  *   bind + answer 200 against it, plus the Paris/Texas routing retest (#task-7's carry-forward finding: the FTS
  *   default backend misroutes a French address to its US homonym; the candidate backend does not) — is gated
@@ -25,7 +34,7 @@
  */
 
 import { execFile, spawn, type ChildProcess } from "node:child_process"
-import { existsSync, mkdtempSync, rmSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { promisify } from "node:util"
@@ -46,9 +55,12 @@ const PHOTON_CLI = repoRootPath("photon", "out", "cli.js")
 const NOMINATIM_CLI = repoRootPath("nominatim", "out", "cli.js")
 const LIBPOSTAL_CLI = repoRootPath("libpostal", "out", "cli.js")
 const MAILWOMAN_CLI = repoRootPath("mailwoman", "out", "cli.js")
+const MCP_CLI = repoRootPath("mcp", "out", "cli.js")
+const MCP_PACKAGE_JSON = repoRootPath("mcp", "package.json")
 
 const hasPhotonCLI = existsSync(PHOTON_CLI)
 const hasNominatimCLI = existsSync(NOMINATIM_CLI)
+const hasMCPCLI = existsSync(MCP_CLI)
 const hasLibpostalCLI = existsSync(LIBPOSTAL_CLI)
 const hasMailwomanCLI = existsSync(MAILWOMAN_CLI)
 
@@ -106,8 +118,15 @@ interface SpawnedServer {
 	stderr: string
 }
 
-function spawnServer(cliPath: string, args: string[], env: NodeJS.ProcessEnv): SpawnedServer {
-	const child = spawn("node", [cliPath, ...args], { env, stdio: ["ignore", "pipe", "pipe"] })
+function spawnServer(
+	cliPath: string,
+	args: string[],
+	env: NodeJS.ProcessEnv,
+	// The HTTP drop-ins never read stdin, so it stays closed for them. `@mailwoman/mcp` IS its stdin — the
+	// JSON-RPC transport runs over it — so the MCP round-trip below opens it.
+	stdin: "ignore" | "pipe" = "ignore"
+): SpawnedServer {
+	const child = spawn("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
 	const server: SpawnedServer = { child, stdout: "", stderr: "" }
 
 	child.stdout?.on("data", (chunk: Buffer) => {
@@ -175,6 +194,85 @@ async function stopServer(server: SpawnedServer): Promise<void> {
 			resolve()
 		})
 	})
+}
+
+/**
+ * Drive an MCP stdio server through one round trip: `initialize`, `notifications/initialized`, then each requested
+ * JSON-RPC call in order, resolving to the results in the same order. Hand-rolled rather than pulled from
+ * `@modelcontextprotocol/sdk` because the point of the test is the WIRE — a client object that reconnects, retries or
+ * reshapes an error would hide exactly the behaviour being asserted. The transport is newline-delimited JSON both ways
+ * (`StdioServerTransport`), so a line-buffered reader is the whole protocol.
+ */
+async function mcpRoundTrip(
+	cliPath: string,
+	env: NodeJS.ProcessEnv,
+	calls: ReadonlyArray<{ method: string; params: Record<string, unknown> }>
+): Promise<{ results: Array<Record<string, unknown>>; stderr: string }> {
+	const server = spawnServer(cliPath, [], env, "pipe")
+
+	cleanupServers.push(server)
+
+	let buffer = ""
+	const pending = new Map<number, (value: Record<string, unknown>) => void>()
+
+	server.child.stdout?.on("data", () => {
+		buffer = server.stdout
+		let start = 0
+		let index: number
+
+		while ((index = buffer.indexOf("\n", start)) >= 0) {
+			const line = buffer.slice(start, index).trim()
+
+			start = index + 1
+
+			if (!line) continue
+
+			try {
+				const message = JSON.parse(line) as { id?: number; result?: Record<string, unknown> }
+				const resolve = typeof message.id === "number" ? pending.get(message.id) : undefined
+
+				if (resolve && message.result) {
+					pending.delete(message.id!)
+					resolve(message.result)
+				}
+			} catch {
+				// A partial line — the next chunk completes it, and `server.stdout` accumulates the whole stream.
+			}
+		}
+	})
+
+	let nextID = 0
+
+	const request = (method: string, params: Record<string, unknown>): Promise<Record<string, unknown>> => {
+		const id = ++nextID
+
+		return new Promise((resolve, reject) => {
+			pending.set(id, resolve)
+			server.child.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`)
+
+			setTimeout(() => {
+				reject(new Error(`MCP ${method} timed out\nstderr:\n${server.stderr}`))
+			}, HEALTHY_TIMEOUT_MS)
+		})
+	}
+
+	await request("initialize", {
+		protocolVersion: "2024-11-05",
+		capabilities: {},
+		clientInfo: { name: "dropin-cold-start", version: "0.0.0" },
+	})
+
+	server.child.stdin?.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`)
+
+	const results: Array<Record<string, unknown>> = []
+
+	for (const call of calls) {
+		results.push(await request(call.method, call.params))
+	}
+
+	await stopServer(server)
+
+	return { results, stderr: server.stderr }
 }
 
 //#endregion
@@ -277,6 +375,58 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 
 				await stopServer(server)
 				expect(server.child.exitCode ?? server.child.signalCode).not.toBeNull()
+			})
+		},
+		TEST_TIMEOUT_MS
+	)
+})
+
+describe("mailwoman-mcp — cold start over stdio, no data", () => {
+	test("declares @mailwoman/neural-weights-en-us, so a standalone npm install can load the model", () => {
+		const manifest = JSON.parse(readFileSync(MCP_PACKAGE_JSON, "utf8")) as {
+			dependencies: Record<string, string>
+		}
+
+		// The regression this pins: `@mailwoman/mcp@8.6.0` shipped without it (checked against the registry
+		// 2026-08-03), so `npm install @mailwoman/mcp` in a clean directory installed no weights package and
+		// every model-backed tool answered `Could not resolve @mailwoman/neural-weights-en-us`. A runtime
+		// assertion cannot see this — yarn hoists the sibling workspace regardless — so the manifest IS the test.
+		expect(manifest.dependencies["@mailwoman/neural-weights-en-us"]).toBe("workspace:*")
+	})
+
+	test.skipIf(!hasMCPCLI)(
+		"connects and lists its tools with no data, and mailwoman_parse answers with the data-pull fix",
+		async () => {
+			const dataRoot = freshDataRoot()
+
+			cleanupRoots.push(dataRoot)
+
+			await withCLISpawnLockAsync(async () => {
+				const { results } = await mcpRoundTrip(
+					MCP_CLI,
+					childEnv({ MAILWOMAN_DATA_ROOT: dataRoot, MAILWOMAN_CANDIDATE_DB: "", NODE_NO_WARNINGS: "1" }),
+					[
+						{ method: "tools/list", params: {} },
+						{
+							method: "tools/call",
+							params: { name: "mailwoman_parse", arguments: { text: "1600 Pennsylvania Ave NW, Washington DC" } },
+						},
+					]
+				)
+
+				// Listing tools needs neither the model nor a gazetteer — the whole point of the lazy deps.
+				const [list, call] = results as [
+					{ tools: Array<{ name: string }> },
+					{ isError?: boolean; content: Array<{ text: string }> },
+				]
+
+				expect(list.tools.map((t) => t.name)).toContain("mailwoman_parse")
+				expect(list.tools.map((t) => t.name)).toContain("mailwoman_layer_manifest")
+
+				// Calling one does, and the failure has to name the fix rather than the internal shard error.
+				expect(call.isError).toBe(true)
+				expect(call.content[0]!.text).toContain("mailwoman data pull candidate")
+				expect(call.content[0]!.text).not.toContain("resolveShards")
 			})
 		},
 		TEST_TIMEOUT_MS

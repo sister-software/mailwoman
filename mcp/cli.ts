@@ -10,9 +10,15 @@
  *   manifest tool, and `@mailwoman/bdc`'s `filingLandscape`/`plausibilityCheck` for the two BDC tools.
  *
  *   Deps are LAZY: nothing here loads the neural weights or opens a gazetteer db at startup — an MCP client
- *   connects, lists tools, and may never call one (or may call `mailwoman_overpass_export`/`mailwoman_layer_manifest`,
- *   neither of which needs the classifier at all). The shared classifier+resolver are built once, on the FIRST call
- *   to any tool that needs them, and cached for the process lifetime.
+ *   connects, lists tools, and may never call one (or may call only the layer-database tools, none of which touch the
+ *   classifier). The shared classifier+resolver are built once, on the FIRST call to any tool that needs them, and
+ *   cached for the process lifetime. `mailwoman_overpass_export` DOES need them despite never executing a query — it
+ *   parses the input to find the subject and anchor before it can emit OverpassQL.
+ *
+ *   **Laziness moves the first failure into a tool call, so `loadCore` owns the friendly-failure messages** that
+ *   `photon`/`nominatim`/`mailwoman serve` print at boot. Both are thrown, not printed: `server.ts` catches a handler
+ *   throw and returns it as an `isError` tool result, so a thrown message reaches the agent where a `console.error` +
+ *   `process.exit(1)` would just kill the transport mid-conversation. See `loadCore` for the two.
  *
  *   **Graceful layer-absent guards (decision 6).** Both BDC-backed tools treat a missing/unreadable
  *   database file as absence, never a raw `node:sqlite` throw ("unable to open database file"): `bdcFilingLandscape`
@@ -57,6 +63,7 @@ import { createRuntimePipeline, type PipelineResult } from "mailwoman"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { emitOverpassQL } from "mailwoman/poi-overpass"
 import {
+	buildNoGazetteerMessage,
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
@@ -94,14 +101,59 @@ const poiDatabasePath = values["poi-db"]
  */
 let corePromise: Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> | undefined
 
+/**
+ * The four tools that need {@link loadCore} — every path through `getPlainPipeline`/`getPoiPipeline`/`resolveGeocode`.
+ * `mailwoman_layer_manifest`, `mailwoman_bdc_filing_landscape`, `mailwoman_filer_lookup` and `mailwoman_filer_family`
+ * never call it, so they keep working when this fails; `mailwoman_plausibility_check` only reaches it when it geocodes.
+ * Named in both guard messages below because an agent that just got one needs to know what it can still do.
+ */
+const CORE_BACKED_TOOLS = "mailwoman_parse, mailwoman_geocode, mailwoman_poi_search, mailwoman_overpass_export"
+
+const CORE_FREE_TOOLS =
+	"mailwoman_layer_manifest, mailwoman_bdc_filing_landscape, mailwoman_filer_lookup, mailwoman_filer_family"
+
 function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		const wofPaths = wofShardPaths().filter(existsSync)
 		const candidateDb = resolveCandidateDBPath()
+
+		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
+		// `isError` tool result carrying `error.message`, so the message an agent reads IS whatever is thrown
+		// here — which made the raw internal `resolveShards: at least one shard is required` the first thing a
+		// stranger saw from `mailwoman_parse` on a fresh install (measured 2026-08-03 against a standalone
+		// `npm install @mailwoman/mcp`). Same preflight as `photon`/`nominatim`/`mailwoman serve`, and
+		// `requiresExplicitEnv: true` because this CLI calls `resolveCandidateDBPath()` bare — no
+		// convention-path fallback, so `$MAILWOMAN_CANDIDATE_DB` has to be exported.
+		if (!candidateDb && !wofPaths.length) {
+			throw new Error(
+				`${buildNoGazetteerMessage({
+					dataRoot: mailwomanDataRoot(),
+					docsPath: "/docs/developers/how-to/use-the-mcp-server",
+					requiresExplicitEnv: true,
+				})}\n\n  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
+			)
+		}
+
 		const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 		const resolver = createWOFResolver(backend)
-		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+		// Same discipline for the model weights. `@mailwoman/neural-weights-en-us` is a declared dependency of
+		// this package as of 2026-08-03 — before that a standalone `npm install @mailwoman/mcp` resolved
+		// nothing and every core-backed tool answered with `resolveWeights`' raw not-found text. The guard keeps
+		// that text (it already names the exact fix command) and adds what an agent mid-conversation needs next:
+		// which tools are down and which are not.
+		let classifier: NeuralAddressClassifier
+
+		try {
+			classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		} catch (error) {
+			throw new Error(
+				`✗ ${error instanceof Error ? error.message : String(error)}\n\n` +
+					`  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
+			)
+		}
+
 		const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 
 		return { classifier, resolver, shards }
