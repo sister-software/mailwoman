@@ -426,6 +426,7 @@ export function assembleReport(checks: DoctorCheck[]): DoctorReport {
  * First line of a possibly-multiline error/stack, trimmed — keeps the checklist to one line per check.
  */
 function firstLine(message: string): string {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, and the limit argument stops after the first segment.
 	return message.split("\n", 1)[0]!.trim()
 }
 

@@ -115,6 +115,7 @@ async function main() {
 			return ""
 		}
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The report is a few dozen summary rows this script just wrote, already whole in memory from the read above.
 		for (const line of md.split("\n")) {
 			if (!line.includes("**neural**")) continue
 			const m = line.match(/[0-9]+\.[0-9]+%/)

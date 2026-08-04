@@ -11,17 +11,22 @@
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import type { GeoFeature, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
+
 import type { MultiPolygonCoords } from "./index.ts"
 
-interface NUTSFeature {
-	properties: { NUTS_ID: string; LEVL_CODE: number }
-	geometry: { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] }
+interface NUTSProperties {
+	NUTS_ID: string
+	LEVL_CODE: number
 }
+
+export type NUTSFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, NUTSProperties>
 
 /**
  * Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
  */
 export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: number } {
+	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nuts-lookup` does not depend on @mailwoman/core.
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NUTSFeature[] }
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS nuts_regions")

@@ -10,6 +10,7 @@
 
 import { tmpdir } from "node:os"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -151,6 +152,15 @@ describe("three-law selectivity — pure units", () => {
 	})
 })
 
+/**
+ * The street-type lexicon artifact, narrowed to the fields these tests read.
+ */
+interface StreetTypeLexicon {
+	rules: { digit_guard: boolean }
+	entries: Record<string, number>
+	code_entries: Record<string, number>
+}
+
 describe("street-type lexicon build", () => {
 	it("canonical lowercase words in entries, short abbreviations uppercase-gated", async () => {
 		const tmp = `${tmpdir()}/street-type-lexicon-test.json`
@@ -158,7 +168,7 @@ describe("street-type lexicon build", () => {
 
 		expect(built.entries).toBeGreaterThan(400)
 		const { readFileSync } = await import("node:fs")
-		const j = JSON.parse(readFileSync(tmp, "utf8"))
+		const j = parseJSONStrict<StreetTypeLexicon>(readFileSync(tmp, "utf8"))
 
 		// "rue" must match lowercase (the FR probe class); "R" only as an uppercase code.
 		expect(j.rules.digit_guard).toBe(true)
@@ -174,7 +184,7 @@ describe("street-type lexicon build", () => {
 
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
 		const { readFileSync } = await import("node:fs")
-		const j = JSON.parse(readFileSync(tmp, "utf8"))
+		const j = parseJSONStrict<StreetTypeLexicon>(readFileSync(tmp, "utf8"))
 
 		// "MOUNTAIN WAY WY 82601" / "SUSIE CT WY 83101" — the state token must carry NO street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {

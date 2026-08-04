@@ -18,6 +18,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import { buildGazetteerFeatures, parseGazetteerLexicon } from "./gazetteer-inference.ts"
@@ -36,7 +37,7 @@ interface Fixture {
 	cases: FixtureCase[]
 }
 
-const fixture: Fixture = JSON.parse(
+const fixture = parseJSONStrict<Fixture>(
 	readFileSync(join(import.meta.dirname, "test", "fixtures", "evidence-parity-v2.json"), "utf8")
 )
 

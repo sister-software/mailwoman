@@ -79,6 +79,7 @@ async function discoverLatestZip(): Promise<string | undefined> {
 async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `unzip -l` stdout, already buffered by execFile.
 	for (const line of listing.stdout.split("\n")) {
 		const match = /npidata_pfile\S+\.csv/i.exec(line)
 

@@ -25,6 +25,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 
 interface Args {
@@ -271,7 +272,7 @@ async function fetchJSON(url: string, headers: Record<string, string> = {}): Pro
 
 async function main(): Promise<void> {
 	const args = parseArgs()
-	const harness = JSON.parse(readFileSync(args.harnessPath, "utf8")) as HarnessRow[]
+	const harness = parseJSONStrict<HarnessRow[]>(readFileSync(args.harnessPath, "utf8"))
 	const bothFail = harness.filter((r) => !r.v0_pass && !r.neural_pass)
 
 	console.error(`Both-fail cases: ${bothFail.length}`)

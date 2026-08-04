@@ -15,6 +15,7 @@ import { existsSync } from "node:fs"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
@@ -132,7 +133,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
 		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
 		// in containment-nesting trees like region → locality).
-		const tree = JSON.parse(stripAnsiSpinner(result.stdout))
+		const tree = parseJSONStrict<Record<string, unknown>>(stripAnsiSpinner(result.stdout))
 		expect(tree).toHaveProperty("raw")
 		expect(tree).toHaveProperty("roots")
 
@@ -157,7 +158,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
-		const out = JSON.parse(stripAnsiSpinner(result.stdout))
+		const out = parseJSONStrict(stripAnsiSpinner(result.stdout))
 		// Libpostal-compat is flat: no `raw` / `roots` top-level keys.
 		expect(out).not.toHaveProperty("raw")
 		expect(out).not.toHaveProperty("roots")
@@ -165,7 +166,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 })
 
 /**
- * Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout.
+ * Strip ANSI escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
  */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu

@@ -19,6 +19,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -260,7 +261,7 @@ export interface ScoreTrendsResult {
 export function buildScoreTrends(options: ScoreTrendsOptions = {}): ScoreTrendsResult {
 	const ledgerPath = options.ledger ?? repoRootPath("evals", "scores-by-version.json")
 	const outPath = options.out ?? repoRootPath("docs", "records", "evals", "score-trends.md")
-	const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as { runs: Array<Record<string, unknown>> }
+	const ledger = parseJSONStrict<{ runs: Array<Record<string, unknown>> }>(readFileSync(ledgerPath, "utf8"))
 
 	let rows: Array<[version: string, scores: LocaleScores]> = []
 	const seenVersions = new Set<string>()

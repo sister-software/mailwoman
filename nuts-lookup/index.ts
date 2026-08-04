@@ -123,6 +123,7 @@ export class NUTSLookup {
 			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsID: string; geom: string }>
 
 			for (const row of rows) {
+				// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nuts-lookup` does not depend on @mailwoman/core.
 				if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return nutsFromID(row.nutsID)
 			}
 		}

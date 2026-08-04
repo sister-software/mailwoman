@@ -117,6 +117,7 @@ describe("renderGranularityReport", () => {
 	it("labels GeoNames-sourced rows gn rather than ovt", () => {
 		const markdown = renderGranularityReport([row("ZW", { locality: { nodes: 500, geonamesBackfilled: 500 } })], META)
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Markdown the renderer under test just returned in memory.
 		const line = markdown.split("\n").find((l) => l.startsWith("| ZW |"))
 
 		expect(line).toContain("100.0% gn")
@@ -134,6 +135,7 @@ describe("renderGranularityReport", () => {
 		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3230 } })], META)
 
 		// IE was measured for dependent_locality and has none: the cell must exist and read 0.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Markdown the renderer under test just returned in memory.
 		const ieLine = markdown.split("\n").find((line) => line.startsWith("| IE |"))
 
 		expect(ieLine).toBeDefined()

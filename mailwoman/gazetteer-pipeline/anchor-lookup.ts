@@ -141,7 +141,9 @@ function loadUs(): Map<string, Centroid> {
 function loadZCTA(path: string): Map<string, [number, number]> {
 	const out = new Map<string, [number, number]>()
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The Census ZCTA gazetteer is a fixed national file (6.8 MB, ~34k rows), not caller-sized.
 	for (const line of readFileSync(path, "utf8").split("\n")) {
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One already-materialized line of that fixed file.
 		const fields = line.split("\t").map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 

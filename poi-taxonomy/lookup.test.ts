@@ -200,6 +200,7 @@ describe("full Overture snapshot + curated overlay", () => {
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
 		// file is compared by PARSED content, not raw bytes: same data, formatting aside.
+		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const committed = JSON.parse(readFileSync(resolve(import.meta.dirname, "data/taxonomy.json"), "utf8"))
 		expect(committed).toEqual(generateTaxonomyTable())
 	})

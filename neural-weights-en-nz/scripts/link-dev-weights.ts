@@ -57,6 +57,7 @@ import {
 } from "node:fs"
 import { resolve } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -160,10 +161,10 @@ function peekPairIndexDeltaAndSourceMD5s(path: string): { delta: number; sourceM
 
 	const headerLen = view.getUint32(4, true)
 
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
+	const header = parseJSONStrict<{
 		delta: number
 		sourceMD5s?: string[]
-	}
+	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
 
 	return { delta: header.delta, sourceMD5s: header.sourceMD5s ?? [] }
 }

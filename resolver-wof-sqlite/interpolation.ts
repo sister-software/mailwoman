@@ -28,6 +28,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
@@ -211,7 +212,7 @@ export class StreetInterpolator implements InterpolationLookup {
 			}
 		}
 
-		const polyline = JSON.parse(best.geometry) as [number, number][]
+		const polyline = parseJSONStrict<[number, number][]>(best.geometry)
 		const span = best.to_hn - best.from_hn
 		const t = span === 0 ? 0.5 : clampFraction((n - best.from_hn) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)

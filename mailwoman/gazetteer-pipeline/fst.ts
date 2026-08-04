@@ -160,6 +160,7 @@ function scanDegenerateSurfaces(
 
 			if (!existsSync(path)) continue
 
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- Committed libpostal dictionary; the largest is 8.4 KB (`en/street_types.txt`) and the scan is memoized once per process.
 			for (const line of readFileSync(path, "utf8").split("\n")) {
 				for (const surface of surfacesOfLine(line)) {
 					const tokens = fold(surface)

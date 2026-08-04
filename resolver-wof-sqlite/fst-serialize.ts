@@ -23,6 +23,8 @@
  *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
@@ -378,7 +380,7 @@ export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
 		const jsonLen = buf.readUInt32LE(provenanceOffset)
 		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
 
-		return JSON.parse(jsonStr) as FSTProvenance
+		return tryParsingJSON<FSTProvenance>(jsonStr) ?? undefined
 	} catch {
 		return undefined
 	}

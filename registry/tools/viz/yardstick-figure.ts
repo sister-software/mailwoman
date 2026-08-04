@@ -151,6 +151,7 @@ export function yardstickFigure(
 			`<text x="${x.toFixed(1)}" y="${plotB + 36}" text-anchor="middle" font-size="10" fill="#6b7280">${g.classes} classes</text>`
 		)
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `g.note` is a literal label from the MODELS table, not a file.
 		g.note.split("\n").forEach((line, k) => {
 			push(
 				`<text x="${x.toFixed(1)}" y="${plotB + 50 + k * 12}" text-anchor="middle" font-size="9" fill="#9ca3af">${esc(line)}</text>`

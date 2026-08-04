@@ -12,13 +12,19 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import { NeuralAddressClassifier, type NeuralRunner } from "./classifier.ts"
 import { parseGazetteerLexicon } from "./gazetteer-inference.ts"
 import { MailwomanTokenizer } from "./tokenizer.ts"
 
-const fixture = JSON.parse(
+interface Fixture {
+	street_lexicon: Parameters<typeof parseGazetteerLexicon>[0]
+	locality_lexicon: Parameters<typeof parseGazetteerLexicon>[0]
+}
+
+const fixture = parseJSONStrict<Fixture>(
 	readFileSync(join(import.meta.dirname, "test", "fixtures", "evidence-parity-v2.json"), "utf8")
 )
 

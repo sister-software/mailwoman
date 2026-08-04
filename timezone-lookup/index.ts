@@ -107,6 +107,7 @@ export class TimezoneLookup {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>
 
 		for (const row of rows) {
+			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
 			if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return row.tzid
 		}
 

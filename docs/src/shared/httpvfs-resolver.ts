@@ -26,6 +26,7 @@
  *   contract test pins the library's export name against this file.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
@@ -758,11 +759,7 @@ export function makeHTTPVFSPolygonLookup(worker: HTTPVFSWorker) {
 
 			if (!rows.length) return null
 
-			try {
-				return JSON.parse(String(rows[0].geom))
-			} catch {
-				return null
-			}
+			return tryParsingJSON(String(rows[0].geom))
 		},
 	}
 }

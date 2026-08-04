@@ -24,6 +24,7 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
@@ -67,10 +68,10 @@ function readPairIndexFacts(path: string): PairIndexFacts {
 
 	const headerLen = view.getUint32(4, true)
 
-	const header = JSON.parse(bytes.subarray(8, 8 + headerLen).toString("utf8")) as {
+	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
-	}
+	}>(bytes.subarray(8, 8 + headerLen).toString("utf8"))
 
 	return {
 		pairs: view.getUint32(8 + headerLen, true),
@@ -86,7 +87,7 @@ describe("pair-index ↔ model-card parity", () => {
 		const cardPath = String(repoRootPath(pkg, "model-card.json"))
 
 		test.skipIf(!existsSync(binPath))(`${pkg}: the card describes the artifact on disk`, () => {
-			const card = JSON.parse(readFileSync(cardPath, "utf8")) as Record<string, unknown>
+			const card = parseJSONStrict<Record<string, unknown>>(readFileSync(cardPath, "utf8"))
 			const [outerKey, innerKey] = cardKeys
 			const outer = card[outerKey] as Record<string, unknown> | undefined
 			const block = outer?.[innerKey] as Record<string, unknown> | undefined

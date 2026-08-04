@@ -18,6 +18,7 @@ import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "n
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
 import { mailwomanDataRoot } from "../../resolver-backend.ts"
@@ -199,7 +200,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	if (existsSync(buildLogPath)) {
 		phase("build-log", buildLogPath)
-		const log = JSON.parse(readFileSync(buildLogPath, "utf8")) as { notes?: string[] }
+		const log = parseJSONStrict<{ notes?: string[] }>(readFileSync(buildLogPath, "utf8"))
 		const md5 = (await md5File(out)).slice(0, 8)
 		const stamp = new Date().toISOString().slice(0, 10)
 		log.notes ??= []

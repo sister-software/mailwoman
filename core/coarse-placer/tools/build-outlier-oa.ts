@@ -168,6 +168,7 @@ export async function buildOutlierOA(
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
 		} catch (error) {
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, not a file.
 			report?.(`  ${cc}: SKIP (${(error as Error).message.split("\n")[0]})`)
 
 			return []

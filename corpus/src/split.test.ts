@@ -8,6 +8,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
@@ -24,6 +25,15 @@ interface MinRow {
 	country: string
 	corpus_version: string
 	components: { region?: string }
+}
+
+/**
+ * The fields these assertions read off a written `SPLIT_MANIFEST.json`.
+ */
+interface SplitManifestOnDisk {
+	corpus_version: string
+	counts: Record<string, number>
+	holdouts: Record<string, string[]>
 }
 
 const row = (id: string, country: string, region?: string): MinRow => ({
@@ -152,7 +162,7 @@ describe("writeSplitManifests", () => {
 		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")])
 		await writeSplitManifests(m, scratch)
 		const train = await readFile(join(scratch, "train.txt"), "utf8")
-		const summary = JSON.parse(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
+		const summary = parseJSONStrict<SplitManifestOnDisk>(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
 		expect(train.trim()).toBe("us-2")
 		expect(summary.counts.total).toBe(3)
 		expect(summary.corpus_version).toBe("0.1.0")
@@ -166,6 +176,7 @@ describe("writeSplitManifests", () => {
 		await writeSplitManifests(splitRows(rows), scratch)
 		const second = await readFile(join(scratch, "train.txt"), "utf8")
 		expect(first).toBe(second)
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A three-row scratch manifest, already in memory.
 		expect(first.trim().split("\n")).toEqual(["a", "b", "c"])
 	})
 })
@@ -234,15 +245,17 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 		expect(result).toEqual({ train: 3, val: 2, test: 1, total: 6 })
 
 		const train = await readFile(join(scratch, "train.txt"), "utf8")
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A three-row scratch manifest, already in memory.
 		expect(train.trim().split("\n")).toEqual(["us-a", "us-b", "us-c"])
 
 		const val = await readFile(join(scratch, "val.txt"), "utf8")
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A two-row scratch manifest, already in memory.
 		expect(val.trim().split("\n")).toEqual(["vt-1", "vt-2"])
 
 		const test = await readFile(join(scratch, "test.txt"), "utf8")
 		expect(test.trim()).toBe("wy-1")
 
-		const summary = JSON.parse(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
+		const summary = parseJSONStrict<SplitManifestOnDisk>(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
 
 		expect(summary).toMatchObject({
 			corpus_version: "0.1.1",

@@ -32,6 +32,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import semver from "semver"
 
 const { values } = parseArgs({
@@ -54,7 +55,7 @@ if (!values.version) {
 }
 
 const rootManifestPath = resolve(repoRoot, "package.json")
-const rootManifest = JSON.parse(readFileSync(rootManifestPath, "utf8")) as { version?: string }
+const rootManifest = parseJSONStrict<{ version?: string }>(readFileSync(rootManifestPath, "utf8"))
 
 if (typeof rootManifest.version !== "string" || !semver.valid(rootManifest.version)) {
 	fail(`root package.json version is not a valid semver: ${String(rootManifest.version)}`)
@@ -80,9 +81,9 @@ if (values.version === "major" || values.version === "minor" || values.version =
 }
 
 // The SAME workspace list the publish loop uses (#756) — root + these is the full bump surface.
-const releaseItConfig = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8")) as {
+const releaseItConfig = parseJSONStrict<{
 	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-}
+}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
 
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
@@ -94,7 +95,7 @@ const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoR
 
 // Validate the whole set BEFORE writing anything — a half-bumped tree is worse than a failed run.
 const parsed = manifestPaths.map((path) => {
-	const manifest = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
+	const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(path, "utf8"))
 
 	if (typeof manifest.version !== "string") {
 		fail(`${path} has no version field`)

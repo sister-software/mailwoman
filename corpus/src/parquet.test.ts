@@ -11,6 +11,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ParquetReader } from "./parquet-wrapper/index.ts"
@@ -232,7 +233,10 @@ describe("writeShards", () => {
 		const valBack = await readParquet(valShard.path)
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
-		const manifestOnDisk = JSON.parse(await readFile(join(scratch, "corpus-v0.1.0", "MANIFEST.json"), "utf8"))
+		const manifestOnDisk = parseJSONStrict<{ total_rows: number; schema: string[]; row_group_size: number }>(
+			await readFile(join(scratch, "corpus-v0.1.0", "MANIFEST.json"), "utf8")
+		)
+
 		expect(manifestOnDisk.total_rows).toBe(4)
 		expect(manifestOnDisk.schema).toEqual([...PARQUET_COLUMNS])
 		expect(manifestOnDisk.row_group_size).toBe(ROW_GROUP_SIZE)

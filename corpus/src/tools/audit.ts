@@ -18,6 +18,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs"
 import { basename, join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { TextSpliterator } from "spliterator"
+
 /**
  * Share of a shard one source may hold before the mix is flagged as dominated by it.
  */
@@ -66,13 +69,11 @@ interface ParsedConfig {
  */
 function parseConfig(configPath: string): ParsedConfig | null {
 	if (!existsSync(configPath)) return null
-	const text = readFileSync(configPath, "utf8")
-	const lines = text.split("\n")
 	const weights: Record<string, number> = {}
 	let inBlock = false
 	let blockIndent = -1
 
-	for (const raw of lines) {
+	for (const raw of TextSpliterator.from(readFileSync(configPath))) {
 		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
 
 		if (sourceWeightsMatch) {
@@ -217,9 +218,9 @@ function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Shar
 
 	if (!existsSync(manifestPath)) return null
 
-	const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+	const manifest = parseJSONStrict<{
 		shards?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
-	}
+	}>(readFileSync(manifestPath, "utf8"))
 
 	if (!Array.isArray(manifest.shards)) return null
 	const bySplit: Record<string, Record<string, number>> = {}

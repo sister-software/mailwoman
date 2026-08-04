@@ -26,6 +26,7 @@
 import { readFileSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
 
 interface ShardDescriptor {
@@ -96,7 +97,7 @@ export interface OverlayManifestOptions {
 }
 
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
-	const base = JSON.parse(readFileSync(args.base, "utf8")) as BaseManifest
+	const base = parseJSONStrict<BaseManifest>(readFileSync(args.base, "utf8"))
 
 	if (base.shards.some((s) => s.source === args.source)) {
 		console.log(`WARN: base already contains source '${args.source}' — is this the right base?`)

@@ -18,6 +18,7 @@ const repoRoot = repoRootPath()
 function listFiles() {
 	const out = execSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `git ls-files` output is already fully buffered by execSync; there is no file here to stream.
 	return out
 		.split("\n")
 		.filter((p) => p.endsWith(".ts") || p.endsWith(".tsx"))

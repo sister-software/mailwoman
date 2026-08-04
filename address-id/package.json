@@ -36,6 +36,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"h3-js": "^4.5.0"
 	},

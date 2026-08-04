@@ -35,10 +35,10 @@
 	"dependencies": {
 		"@mailwoman/neural-weights-en-us": "workspace:*"
 	},
-	"mailwoman": {
-		"baseWeights": "@mailwoman/neural-weights-en-us"
-	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-en-us"
 	}
 }

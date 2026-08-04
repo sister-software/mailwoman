@@ -26,6 +26,8 @@
 
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 /**
  * Options for {@linkcode ledgerAppend}.
  */
@@ -121,7 +123,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		return 2
 	}
 
-	const verdict = JSON.parse(readFileSync(`${options.outDir}/verdict.json`, "utf8")) as Verdict
+	const verdict = parseJSONStrict<Verdict>(readFileSync(`${options.outDir}/verdict.json`, "utf8"))
 	const exceptions = options.operatorException ?? []
 	let exceptionNote = ""
 
@@ -185,7 +187,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		metrics[group][name] = entry.actual
 	}
 
-	const modelCard: ModelCard = existsSync(card) ? (JSON.parse(readFileSync(card, "utf8")) as ModelCard) : {}
+	const modelCard: ModelCard = existsSync(card) ? parseJSONStrict<ModelCard>(readFileSync(card, "utf8")) : {}
 	// The practiced corpus_version is the short label; the card's is a long provenance sentence.
 	const corpusVersion = (modelCard.training?.corpus_version ?? "unknown").split("=")[0]!.trim()
 
@@ -206,7 +208,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 			`${notes}${exceptionNote} [graded_artifact=${verdict.graded_artifact}; gate=${verdict.label}; out-dir=${options.outDir}]`.trim(),
 	}
 
-	const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as Ledger
+	const ledger = parseJSONStrict<Ledger>(readFileSync(ledgerPath, "utf8"))
 	const dup = ledger.runs.findIndex((r) => r.run_id === row.run_id || r.model_version === row.model_version)
 
 	if (dup !== -1 && !options.replace) {
@@ -226,7 +228,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 	const tmp = `${ledgerPath}.tmp`
 
 	writeFileSync(tmp, JSON.stringify(ledger, null, "\t") + "\n")
-	JSON.parse(readFileSync(tmp, "utf8")) // self-check before the swap
+	parseJSONStrict(readFileSync(tmp, "utf8")) // self-check before the swap
 	renameSync(tmp, ledgerPath)
 
 	console.log(`✓ appended ${row.model_version} (${row.run_id}) → ${ledgerPath} [${ledger.runs.length} runs]`)

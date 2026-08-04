@@ -16,6 +16,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -1281,7 +1282,7 @@ describe("buildFilerDatabase", () => {
 						.where("assertion", "=", FilerEdgeAssertion.Inferred)
 						.executeTakeFirstOrThrow()
 
-					expect(JSON.parse(edge.evidence!)).toEqual({
+					expect(parseJSONStrict(edge.evidence!)).toEqual({
 						subsidiaryName: "American Broadband, Inc.",
 						legalNameOfCarrier: "American Broadband LLC",
 						cik: CIK_PARENT,

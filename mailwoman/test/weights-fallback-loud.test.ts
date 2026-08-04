@@ -29,6 +29,7 @@ import { join } from "node:path"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -105,7 +106,7 @@ function parseStdoutJSON(stdout: string): unknown {
 	const opener = cleaned[start]
 	const closer = opener === "{" ? "}" : "]"
 
-	return JSON.parse(cleaned.slice(start, cleaned.lastIndexOf(closer) + 1))
+	return parseJSONStrict(cleaned.slice(start, cleaned.lastIndexOf(closer) + 1))
 }
 
 const ADDRESS = "350 5th Ave, New York, NY 10118"

@@ -15,12 +15,14 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 /**
  * The fields a shard-recipe assertion reads off an emitted row.
  *
- * `JSON.parse` hands back `any`; naming the shape is what lets the assertions be checked at all. The previous
- * `Record<string, never>` typed every property as `never`, so nothing could be read without a cast and nothing was ever
- * verified.
+ * `parseJSONStrict` without a type argument hands back `unknown`; naming the shape is what lets the assertions be
+ * checked at all. The previous `Record<string, never>` typed every property as `never`, so nothing could be read
+ * without a cast and nothing was ever verified.
  */
 export interface ShardRow {
 	raw: string
@@ -71,6 +73,6 @@ export function shardRunner<TStats>(prefix: string, recipe: ShardRecipe<TStats>,
 			(line) => lines.push(line)
 		)
 
-		return { stats, rows: lines.map((line) => JSON.parse(line) as ShardRow) }
+		return { stats, rows: lines.map((line) => parseJSONStrict<ShardRow>(line)) }
 	}
 }

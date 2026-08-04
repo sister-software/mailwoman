@@ -40,6 +40,8 @@ import { execSync } from "node:child_process"
 import { readdirSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 const SEP = ""
 const MIN_BIGRAM_COUNT = 2
 
@@ -86,9 +88,10 @@ for i in range(n):
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: Array<{ tokens: string[]; labels: string[] }> = []
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Subprocess stdout, already buffered by execSync.
 	for (const line of buf.toString("utf8").split("\n")) {
 		if (!line) continue
-		rows.push(JSON.parse(line))
+		rows.push(parseJSONStrict<{ tokens: string[]; labels: string[] }>(line))
 	}
 
 	return rows

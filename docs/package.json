@@ -5,7 +5,8 @@
 	"description": "Docusaurus knowledge base for Mailwoman Geocoder",
 	"imports": {
 		"#e2e": "./test/e2e/index.ts",
-		"#e2e/*": "./test/e2e/*"
+		"#e2e/*": "./test/e2e/*",
+		"#shared/*": "./src/shared/*.ts"
 	},
 	"exports": {
 		"./components/*": "./src/components/*.tsx",
@@ -38,6 +39,7 @@
 		"@docusaurus/preset-classic": "^3.10.2",
 		"@docusaurus/theme-mermaid": "^3.10.2",
 		"@mailwoman/cartographer": "workspace:*",
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
@@ -46,18 +48,22 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/react": "workspace:^",
 		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mdx-js/react": "^3.1.1",
 		"classnames": "^2.5.1",
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.3.4",
+		"h3-js": "^4.5.0",
+		"js-yaml": "^4.1.0",
 		"maplibre-gl": "^5.24.0",
 		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2",
 		"prism-react-renderer": "^2.4.1",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
-		"react-map-gl": "^8.1.2"
+		"react-map-gl": "^8.1.2",
+		"webpack": "^5.102.1"
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.10.2",
@@ -66,6 +72,7 @@
 		"@playwright/test": "^1.62.1",
 		"@storybook/addon-docs": "^10.5.5",
 		"@storybook/react-vite": "^10.5.5",
+		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^26.1.2",
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",

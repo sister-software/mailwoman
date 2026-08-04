@@ -42,6 +42,7 @@
  *   or first-write-wins at serialize time would hide a shard-build bug.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 
 /**
@@ -230,7 +231,7 @@ function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; offset: 
 	const headerLen = view.getUint32(o, true)
 	o += 4
 	const decoder = new TextDecoder()
-	const header = JSON.parse(decoder.decode(bytes.subarray(o, o + headerLen))) as PairIndexHeader
+	const header = parseJSONStrict<PairIndexHeader>(decoder.decode(bytes.subarray(o, o + headerLen)))
 	o += headerLen
 
 	if (header.schemaVersion > KNOWN_SCHEMA_VERSION) {

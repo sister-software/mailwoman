@@ -203,6 +203,7 @@ export class ONNXRunner {
 			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
 			console.warn(
 				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
+					// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message; only its first line is logged.
 					`(${(error as Error).message.split("\n")[0]}); falling back to CPU.`
 			)
 

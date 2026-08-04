@@ -177,6 +177,7 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
  * truncated short rows instead.
  */
 function splitForm499Line(line: string, tsvPath: string, lineNumber: number): Record<Form499Column, string> {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `line` is a single already-delimited row; the caller streams the file.
 	const fields = line.split("\t")
 
 	if (fields.length !== FORM_499_COLUMNS.length) {

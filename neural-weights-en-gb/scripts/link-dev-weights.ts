@@ -67,6 +67,7 @@ import { existsSync, readFileSync, statSync, renameSync, symlinkSync, unlinkSync
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -185,11 +186,11 @@ function peekPairIndexHeaderFields(path: string): {
 
 	const headerLen = view.getUint32(4, true)
 
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
+	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
 		sourceMD5s?: string[]
-	}
+	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
 
 	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
 }
@@ -203,9 +204,9 @@ console.log(`linked ${PKG_DIR}/{model.onnx,tokenizer.model}`)
 // linked default bytes against en-us's model-card `files_md5` (skipped under an
 // explicit MAILWOMAN_DEV_* override — deliberate experimentation).
 if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
-	const enUSCard = JSON.parse(
+	const enUSCard = parseJSONStrict<{ files_md5?: Record<string, string> }>(
 		readFileSync(resolve(PKG_DIR, "..", "neural-weights-en-us", "model-card.json"), "utf8")
-	) as { files_md5?: Record<string, string> }
+	)
 
 	const checks: Array<[string, string, string | undefined]> = [
 		["model", resolve(PKG_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],

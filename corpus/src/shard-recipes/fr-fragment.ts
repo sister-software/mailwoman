@@ -68,7 +68,7 @@
  *   blow-up). Disable that mask for any run including this shard.
  */
 
-import { readFileSync } from "node:fs"
+import { TextSpliterator } from "spliterator"
 
 import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
@@ -187,12 +187,15 @@ export const frFragmentRecipe: ShardRecipe = {
 			)
 		}
 
-		const excluded = new Set(
-			readFileSync(excludePath, "utf8")
-				.split("\n")
-				.map((line) => line.trim())
-				.filter((line) => line && !line.startsWith("#"))
-		)
+		const excluded = new Set<string>()
+
+		for await (const line of TextSpliterator.fromAsync(excludePath)) {
+			const trimmed = line.trim()
+
+			if (trimmed && !trimmed.startsWith("#")) {
+				excluded.add(trimmed)
+			}
+		}
 
 		if (!excluded.size) throw new Error(`fr-fragment: --exclude-surfaces "${excludePath}" listed no surfaces`)
 

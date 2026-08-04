@@ -30,6 +30,7 @@ import { spawnSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -69,10 +70,10 @@ function peekPairIndexHeaderFields(path: string): { delta: number; transitionBet
 
 	const headerLen = view.getUint32(4, true)
 
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
+	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
-	}
+	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
 
 	return { delta: header.delta, transitionBeta: header.transitionBeta }
 }

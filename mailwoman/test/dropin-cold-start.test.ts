@@ -31,6 +31,7 @@ import { join } from "node:path"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
@@ -346,7 +347,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 					})
 				)
 
-				const result = JSON.parse(stdout) as { lat: number; lon: number; countryCode: string | null }
+				const result = parseJSONStrict<{ lat: number; lon: number; countryCode: string | null }>(stdout)
 
 				expect(result.countryCode).toBe("FR")
 				// Paris, France — not Paris, TX (32.96, -96.84).

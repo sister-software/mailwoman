@@ -54,6 +54,8 @@
 import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 interface ShardEntry {
 	path: string
 	split?: string
@@ -101,7 +103,7 @@ function parseArgs(): Args {
 
 function main(): void {
 	const args = parseArgs()
-	const m: Manifest = JSON.parse(readFileSync(args.manifestPath, "utf8"))
+	const m = parseJSONStrict<Manifest>(readFileSync(args.manifestPath, "utf8"))
 	const shards = m.shards ?? []
 
 	const unacknowledged: ShardEntry[] = []

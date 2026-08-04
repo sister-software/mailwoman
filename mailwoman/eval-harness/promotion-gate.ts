@@ -52,6 +52,7 @@ import { basename, dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { $ } from "zx"
@@ -306,7 +307,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		return 2
 	}
 
-	const gate = JSON.parse(readFileSync(GATE, "utf8")) as GateSpec
+	const gate = parseJSONStrict<GateSpec>(readFileSync(GATE, "utf8"))
 	// A label-less spec must not crash the PASS path (the post-verdict ledger hint interpolates
 	// LABEL — bit on the first v7.0.0-base run, whose spec omitted the field).
 	const LABEL = gate.label ?? basename(GATE).replace(/\.json$/, "")
@@ -318,7 +319,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	mkdirSync(OUT_DIR, { recursive: true })
 
-	const card = JSON.parse(readFileSync(EFF_CARD, "utf8")) as ModelCard
+	const card = parseJSONStrict<ModelCard>(readFileSync(EFF_CARD, "utf8"))
 	const guardExit = await runLoreGuards({ WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card })
 
 	if (guardExit !== null) return guardExit

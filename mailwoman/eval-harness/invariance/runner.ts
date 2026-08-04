@@ -25,6 +25,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 
@@ -59,11 +60,12 @@ export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 
 	const rows: InvarianceRow[] = []
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The suite opens with `//` comment lines, which `JSONSpliterator` would throw on at row 0.
 	for (const line of readFileSync(path, "utf8").split("\n")) {
 		const trimmed = line.trim()
 
 		if (!trimmed || trimmed.startsWith("//")) continue
-		rows.push(JSON.parse(trimmed) as InvarianceRow)
+		rows.push(parseJSONStrict<InvarianceRow>(trimmed))
 	}
 
 	return rows

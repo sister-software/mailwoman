@@ -88,6 +88,7 @@ describe("browser-safety scope — locale-gate + query-shape are node-free (#127
 					offenders.push(`${file}: bare node global (require/process/__dirname)`)
 				}
 
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- `@mailwoman/neural` does not depend on spliterator; these are its own small source files.
 				for (const line of text.split("\n")) {
 					if (!isRuntimeImportLine(line)) continue
 					const spec = specifierOf(line)

@@ -19,6 +19,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { parseJSONStrict } from "../../objects.ts"
 import { dataRootPath } from "../../utils/data-root.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
@@ -62,7 +63,7 @@ export async function quantizeCoarsePlacer(
 	const inDir = options.in || dataRootPath("coarse-placer", "model")
 	const outDir = options.out || dataRootPath("coarse-placer", "model-int8")
 
-	const meta = JSON.parse(readFileSync(path.join(inDir, "meta.json"), "utf8")) as CoarsePlacerMeta
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(inDir, "meta.json"), "utf8"))
 	const buf = readFileSync(path.join(inDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	const w = new Float32Array(ab)

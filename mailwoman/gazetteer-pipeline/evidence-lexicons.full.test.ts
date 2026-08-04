@@ -24,6 +24,7 @@
 import { existsSync } from "node:fs"
 import { tmpdir } from "node:os"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
@@ -45,7 +46,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		expect(built.skippedDegenerate).toBeGreaterThan(0)
 		expect(built.skippedProminence).toBeGreaterThan(0)
 		const { readFileSync } = await import("node:fs")
-		const j = JSON.parse(readFileSync(tmp, "utf8"))
+		const j = parseJSONStrict<{ entries: Record<string, number> }>(readFileSync(tmp, "utf8"))
 
 		expect(j.entries.paris).toBe(3) // metro clears the person-name tier, homograph-flagged
 		expect(j.entries.joseph).toBeUndefined() // law 3
@@ -66,7 +67,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		expect(built.skippedRegionVocabulary).toBeGreaterThan(0)
 		expect(built.skippedSubPhrase).toBeGreaterThan(0)
 		const { readFileSync } = await import("node:fs")
-		const j = JSON.parse(readFileSync(tmp, "utf8"))
+		const j = parseJSONStrict<{ entries: Record<string, number> }>(readFileSync(tmp, "utf8"))
 
 		// Family F2b — directionals (neighbourhoods literally named these; law-1 closure):
 		for (const s of ["east", "west", "north", "south", "northeast", "southwest"]) {

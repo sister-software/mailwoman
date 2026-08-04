@@ -36,6 +36,7 @@ import { unlink } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 const REQUIRED_COLUMNS = [
@@ -168,7 +169,7 @@ export async function jsonlToParquet(
 		let lineNo = 0
 
 		// TextSpliterator, not JSONSpliterator: the staging write below streams the RAW line bytes to
-		// DuckDB verbatim (JSON.parse here only validates), so a re-serialized JSONSpliterator row would
+		// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
 		// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
 		// same as readline's crlfDelay:Infinity did.
 		for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
@@ -176,7 +177,7 @@ export async function jsonlToParquet(
 			const line = rawLine.trim()
 
 			if (!line) continue
-			const row = JSON.parse(line) as Record<string, unknown>
+			const row = parseJSONStrict<Record<string, unknown>>(line)
 			assertSpanTriple(row, lineNo)
 			// Write the validated line verbatim; DuckDB's `read_json` projects to the explicit `columns`
 			// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).

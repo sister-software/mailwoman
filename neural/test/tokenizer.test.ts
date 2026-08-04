@@ -21,6 +21,7 @@
 
 import { readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
@@ -35,7 +36,7 @@ interface FixtureEntry {
 	ids: number[]
 }
 
-const fixture: FixtureEntry[] = JSON.parse(readFileSync(FIXTURE_PATH, "utf8"))
+const fixture = parseJSONStrict<FixtureEntry[]>(readFileSync(FIXTURE_PATH, "utf8"))
 
 describe("MailwomanTokenizer — Python parity", () => {
 	test.each(fixture)("pieces+ids match Python for $raw", async ({ raw, pieces: expectedPieces, ids: expectedIds }) => {

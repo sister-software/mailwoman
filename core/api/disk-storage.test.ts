@@ -15,6 +15,7 @@ import { join } from "node:path"
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { parseJSONStrict } from "../objects.ts"
 import { APIClient } from "./APIClient.ts"
 import { buildDiskStorage } from "./disk-storage.ts"
 import { isTransientResourceError } from "./responses.ts"
@@ -226,7 +227,7 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 			// behind alongside the final one — the old bug's ENOENT path did exactly that).
 			expect(added).toHaveLength(1)
 
-			const entry = JSON.parse(readFileSync(join(directory, added[0]!), "utf8")) as CachedStorageValue
+			const entry = parseJSONStrict<CachedStorageValue>(readFileSync(join(directory, added[0]!), "utf8"))
 
 			expect(entry.data.data).toEqual(body)
 		}
