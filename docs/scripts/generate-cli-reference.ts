@@ -44,6 +44,8 @@ import { readFile, writeFile } from "node:fs/promises"
 import { createRequire } from "node:module"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
+// Types-only: Pastel's generateOptions/generateArguments return commander objects; nothing here
+// re-derives command parsing — the generator drives Pastel's own machinery end to end.
 import type { Argument, Option } from "commander"
 
 //#region Scope policy

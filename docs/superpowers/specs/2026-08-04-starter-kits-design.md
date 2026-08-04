@@ -12,7 +12,7 @@ The ten-minute trial still asks a developer to assemble a project by hand. Start
 
 1. **Four kits:** `geocoder` (Node parse+geocode app), `server` (self-hosted API with Docker), `browser` (web-loader + WASM resolver, self-hosted weights), `dropin` (Photon/Nominatim-compatible server for existing clients).
 2. **Single source:** a `templates/` tree in the monorepo is the only hand-edited copy. Everything else is generated from it.
-3. **One engine + thin shims:** `@mailwoman/create` carries the scaffolder and all four templates (`npm init @mailwoman` → picker; `-- --template x` scripted). `@mailwoman/create-{geocoder,server,browser,dropin}` are three-line shims enabling `npm init @mailwoman/geocoder`.
+3. **The engine lives in the mailwoman CLI** (operator amendment 2026-08-04: "ideally they have it from day 1"): `mailwoman create [template] [dir]` is a Pastel command in the entry package, templates bundled with it — anyone with mailwoman installed has the scaffolder. `@mailwoman/create` (`npm init @mailwoman` → picker) and `@mailwoman/create-{geocoder,server,browser,dropin}` (`npm init @mailwoman/geocoder`) are thin delegates over the same engine module, kept for the npm-init ergonomics only.
 4. **Generated repos live in the mailwoman GitHub org:** `mailwoman/starter-{geocoder,server,browser,dropin}` — template-flagged, force-synced from `templates/` at release time, banner marking them generated ("PRs go upstream"). Anything outside the monorepo goes in that org.
 5. **Executed before shipped:** monorepo CI runs a pack-based cold-scaffold smoke per template; each generated repo carries a scheduled action running the same smoke against published npm (the publish-reality canary).
 
