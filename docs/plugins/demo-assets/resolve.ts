@@ -217,6 +217,31 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		aliases["@mailwoman/resolver/resolve"] = resolveWorkspaceFile(resolverDir, "resolve")
 	}
 
+	// @mailwoman/codex — the per-locale pattern modules the bundled neural/core graph imports
+	// (`placetype-pair-prior` pulls `es`/`it`; the rest arrive through the same class). Webpack's own
+	// exports resolution lands on compiled `out/` (the `default` condition), which `yarn start` never
+	// rebuilds — and a tree whose `codex/out` predates a newly added subpath fails the whole build
+	// ("no valid target file was found"). Instead of hand-deriving source paths, ask Node's resolver
+	// (`require.resolve`, the CJS twin of `import.meta.resolve`): the dev exports map's `node`
+	// condition points every entry at its `.ts` source, so the alias lands on source with zero
+	// knowledge of the package layout. Enumerated rather than globbed so a new locale module is
+	// added here deliberately, like every other curated subpath in this file. EXACT match (`$`) on
+	// the bare barrel, same rationale as `@mailwoman/resolver$` above.
+	for (const sub of [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"]) {
+		const spec = sub ? `@mailwoman/codex/${sub}` : "@mailwoman/codex"
+
+		try {
+			const target = requireFromPlugin.resolve(spec)
+
+			if (!target.endsWith(".ts")) {
+				console.warn(`[demo-assets] ${spec} resolved to compiled output (${target}) — dev exports drift?`)
+			}
+			aliases[sub ? spec : "@mailwoman/codex$"] = target
+		} catch {
+			console.warn(`[demo-assets] ${spec} not resolvable — alias skipped`)
+		}
+	}
+
 	return aliases
 }
 
