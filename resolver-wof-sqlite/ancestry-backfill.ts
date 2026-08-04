@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Repair the only-self ancestry that {@link populateAncestors} (the parent_id closure in
- *   unified-schema.ts) leaves for places whose `wof:parent_id` is the WOF `-4` "ambiguous /
- *   multi-parent" sentinel.
+ *   Repair the truncated ancestry that {@link populateAncestors} (the parent_id closure in
+ *   unified-schema.ts) leaves wherever the closure dead-ends before reaching the top.
  *
  *   Root cause (#440 / #832): a place that straddles multiple parents — New York City spans five
  *   counties (its boroughs), London 30+ — carries `wof:parent_id = -4`, so the parent_id closure
@@ -14,16 +13,36 @@
  *   a correctly-parented namesake ("New York Mills", pop 3,190) wins over NYC's 8.8M. The same defect
  *   orphans London, Singapore, and ~2,850 other localities — the most demo-visible queries.
  *
+ *   **The dead end is inherited by children (#1445).** Repairing the `-4` place itself does not repair
+ *   anything BELOW it: the closure walks Brooklyn → New York and stops, because New York's own
+ *   `parent_id` is `-4`. Brooklyn-the-borough (pop 2.5M) therefore carried exactly two ancestor rows —
+ *   itself and New York — with no county, region or country, and the only US locality-tier place named
+ *   "Brooklyn" that survived a New-York-State descendant filter was Pillar Point, a Jefferson County
+ *   hamlet 411 km away carrying "Brooklyn" as an alternate name. All five NYC boroughs, every London
+ *   borough and Hyderabad's zones were in the same state.
+ *
+ *   So the candidate test is NOT "has only a self ancestor" — that misses every child of a repaired
+ *   place, which by construction has two. It is **"has no `country`-tier ancestor"**. Country is the
+ *   universal terminal for every non-{@link TOP_PLACETYPES} placetype, so its absence is exactly the
+ *   signal that the chain dead-ended somewhere, at whatever depth. On a wide-coverage build this
+ *   selects ~24k places against 2.55M rows.
+ *
+ *   A place whose `wof:hierarchy` genuinely stops short is NOT a candidate and needs no repair: the
+ *   source is the authority on what a place should have. American Samoa's localities, for instance,
+ *   have `{country_id, locality_id}` and no region in WOF itself — the artifact matching that is
+ *   correct, not truncated.
+ *
  *   The authoritative hierarchy IS in the source geojson: `wof:hierarchy` is an array of branches,
  *   each a `<placetype>_id` → id map (region_id, county_id, country_id, …), fully populated even when
- *   parent_id is -4. This reads it for every only-self place and inserts the missing ancestor rows
- *   (one per distinct ancestor across branches).
+ *   parent_id is -4. This reads it for every candidate and inserts the missing ancestor rows (one per
+ *   distinct ancestor across branches).
  *
  *   MUST run AFTER populateAncestors and BEFORE the build freezes (VACUUM INTO), so the rows land in
  *   the shipped artifact — `scripts/build-unified-wof.ts` Phase 3 calls it inline. The standalone
  *   `scripts/backfill-ancestors-from-hierarchy.ts` is a thin CLI over the same function for ad-hoc
- *   repair of an already-built DB. Idempotent: only touches places with <= 1 ancestor row (self), and
- *   inserts each (id, ancestor_id) at most once.
+ *   repair of an already-built DB. Idempotent by the per-pair existence check, not by the candidate
+ *   test: each (id, ancestor_id) is inserted at most once, so a second run over the same DB adds
+ *   nothing.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
@@ -45,8 +64,8 @@ export interface AncestryBackfillResult {
 	 */
 	rowsAdded: number
 	/**
-	 * Only-self candidates whose source geojson could not be found (non-WOF backfilled places, or repos not present
-	 * locally) — skipped, not an error.
+	 * Candidates whose source geojson could not be found (non-WOF backfilled places, or repos not present locally) —
+	 * skipped, not an error.
 	 */
 	noGeojson: number
 }
@@ -128,14 +147,14 @@ function placetypeFromKey(key: string): string | null {
 }
 
 /**
- * Insert missing ancestor rows for only-self places by reading `wof:hierarchy` from their source geojson under
- * `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a single transaction; caller owns connection
- * lifecycle (open, WAL checkpoint, close).
+ * Insert missing ancestor rows for every place whose ancestry chain dead-ended before reaching a country, by reading
+ * `wof:hierarchy` from its source geojson under `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a
+ * single transaction; caller owns connection lifecycle (open, WAL checkpoint, close).
  *
  * `opts.maxID` bounds the candidate scan to ids BELOW it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
  * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have NO `wof:hierarchy`
- * geojson, so probing them is pure waste: on a wide-coverage DB the only-self set is millions of Overture/GeoNames leaf
- * localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
+ * geojson, so probing them is pure waste: on a wide-coverage DB the country-less set is millions of Overture/GeoNames
+ * leaf localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
  * ~40-minute one (their ancestry comes from the parent_id closure, not this backfill). Correctness-preserving — the
  * skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
  */
@@ -146,11 +165,15 @@ export function backfillAncestorsFromHierarchy(
 ): AncestryBackfillResult {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
 
-	// `s.id < ?` first lets SQLite prune by the PK index before the correlated only-self subquery runs at all.
+	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
+	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
+	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
+	// `s.id < ?` first lets SQLite prune by the PK index before the correlated subquery runs at all.
 	const candidates = db
 		.prepare(
 			`SELECT s.id AS id, s.placetype AS placetype FROM spr s
-			 WHERE s.id < ? AND (SELECT count(*) FROM ancestors a WHERE a.id = s.id) <= 1`
+			 WHERE s.id < ?
+			   AND NOT EXISTS (SELECT 1 FROM ancestors a WHERE a.id = s.id AND a.ancestor_placetype = 'country')`
 		)
 		.all(maxID) as Array<{ id: number; placetype: string }>
 
