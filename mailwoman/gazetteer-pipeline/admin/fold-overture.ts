@@ -8,9 +8,15 @@
  *   `scripts/build-unified-wof.ts` (#1015/#1021) into the pipeline module.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync, StatementSync } from "node:sqlite"
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { simpleSHA3 } from "@mailwoman/core/crypto"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+// Type-only, so it is erased at build and adds no runtime edge to what is an optional peer here (the
+// caller reaches the package through a lazy `await import`).
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
+import { sql } from "kysely"
 
 /**
  * Synthetic id base for Overture-sourced rows — above any real WOF id (WOF ids are <~2e9), so a combined DB never
@@ -24,6 +30,144 @@ export const OVERTURE_ID_BASE = 8_000_000_000_000
  * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-gate the locale.
  */
 export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
+
+/**
+ * Width of the id range reserved for Overture rows — `OVERTURE_ID_BASE` up to the GeoNames fold's base at 9e12.
+ */
+const OVERTURE_ID_SPAN = 1_000_000_000_000
+
+/**
+ * Digest bytes to draw per GERS id. Six (48 bits, ~2.8e14) overshoots {@link OVERTURE_ID_SPAN} comfortably, so the
+ * modulo costs nothing in collision terms, and the value stays exactly representable as a JS number.
+ */
+const ID_DIGEST_BYTES = 6
+
+/**
+ * Radix of {@link simpleSHA3}'s hex digest.
+ */
+const HEX_RADIX = 16
+
+/**
+ * Map each Overture GERS id to a synthetic integer id, derived from the GERS id itself.
+ *
+ * Consumers store these ids — gold rows, cached results, cross-artifact joins — so an id has to be a function of the
+ * PLACE, not of the build that emitted it. GERS ids are stable by design; parquet scan order is not, and DuckDB's is a
+ * threaded read over a LEFT JOIN.
+ *
+ * Assignment is `idBase + (hash(gers) mod span)`. Two GERS ids can land on the same slot — at ~1.6 M rows in a 1e12
+ * span the birthday expectation is about one collision per build — so the loser probes forward. Probing is order-
+ * dependent, which is exactly what this function exists to avoid, so the input is SORTED first: a given GERS id's
+ * outcome then depends only on the set of ids that hash near it, not on how the query happened to return them.
+ *
+ * Re-ingesting a division already present recomputes the same id, so an incremental augment is idempotent.
+ */
+export function assignSyntheticIDs(gersIDs: readonly string[], idBase: number = OVERTURE_ID_BASE): Map<string, number> {
+	const idmap = new Map<string, number>()
+	const taken = new Set<number>()
+
+	for (const gers of gersIDs.toSorted()) {
+		if (idmap.has(gers)) continue
+
+		// SHAKE128 is an extendable-output function, so a six-byte digest is the primitive doing what it
+		// was designed for rather than a truncation of a wider hash.
+		let slot = Number.parseInt(simpleSHA3([gers], ID_DIGEST_BYTES), HEX_RADIX) % OVERTURE_ID_SPAN
+
+		while (taken.has(slot)) {
+			slot = (slot + 1) % OVERTURE_ID_SPAN
+		}
+
+		taken.add(slot)
+		idmap.set(gers, idBase + slot)
+	}
+
+	return idmap
+}
+
+/**
+ * Columns each bulk INSERT below writes, in the order its positional `run()` supplies them.
+ *
+ * `satisfies` checks every name against Kysely's `WOFDatabase` — the same interface `createUnifiedSchema` builds these
+ * tables from — so a renamed or dropped column is a compile error here rather than a runtime `no such column` in the
+ * middle of a multi-hour build. The statements themselves stay raw positional prepares: this is the throughput path
+ * (~1.6 M divisions, three writes each), which is the bulk-write carve-out the repo's SQL policy names.
+ *
+ * The run() argument order below MUST match these tuples.
+ */
+const SPR_COLUMNS = [
+	"id",
+	"parent_id",
+	"name",
+	"placetype",
+	"country",
+	"latitude",
+	"longitude",
+	"min_latitude",
+	"min_longitude",
+	"max_latitude",
+	"max_longitude",
+	"is_current",
+	"is_deprecated",
+	"is_ceased",
+	"is_superseded",
+	"is_superseding",
+	"lastmodified",
+] as const satisfies ReadonlyArray<keyof WOFDatabase["spr"]>
+
+const NAMES_COLUMNS = [
+	"id",
+	"name",
+	"placetype",
+	"country",
+	"language",
+	"official",
+	"lastmodified",
+] as const satisfies ReadonlyArray<keyof WOFDatabase["names"]>
+
+const POPULATION_COLUMNS = ["id", "population"] as const satisfies ReadonlyArray<keyof WOFDatabase["place_population"]>
+
+/**
+ * Compile a positional INSERT for one of the tuples above.
+ *
+ * Built through Kysely's `sql` helper rather than by concatenation: `sql.table`/`sql.ref` quote the identifiers, and
+ * the placeholder list is generated FROM the column list, so the two cannot fall out of step. The result is a plain SQL
+ * string for `db.prepare` — Kysely's own `insertInto().values()` binds a row per call, which is the wrong shape for a
+ * statement prepared once and run 1.6 M times.
+ */
+function compileInsert(
+	kdb: DatabaseClient<WOFDatabase>,
+	table: keyof WOFDatabase,
+	columns: readonly string[],
+	orReplace = false
+): string {
+	const conflict = orReplace ? sql`or replace ` : sql``
+	const names = sql.join(columns.map((column) => sql.ref(column)))
+	const placeholders = sql.join(columns.map(() => sql.raw("?")))
+
+	return sql`insert ${conflict}into ${sql.table(table)} (${names}) values (${placeholders})`.compile(kdb).sql
+}
+
+/**
+ * The three bulk-write statements, prepared against an open unified DB.
+ *
+ * Exported so a test can run them against a REAL `createUnifiedSchema` database. The `satisfies` above checks the
+ * column tuples against the `WOFDatabase` INTERFACE, which is a different artifact from the DDL that builds the tables
+ * — the two can drift, and the only thing that catches it is binding a row.
+ */
+export function prepareInserts(db: DatabaseSync): {
+	spr: StatementSync
+	names: StatementSync
+	population: StatementSync
+} {
+	// Wraps the caller's handle for statement compilation only — the same one-connection idiom
+	// `createUnifiedSchema` uses for its DDL. The caller owns `db`'s lifecycle, so this is not destroyed.
+	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+
+	return {
+		spr: db.prepare(compileInsert(kdb, "spr", SPR_COLUMNS, true)),
+		names: db.prepare(compileInsert(kdb, "names", NAMES_COLUMNS)),
+		population: db.prepare(compileInsert(kdb, "place_population", POPULATION_COLUMNS, true)),
+	}
+}
 
 /**
  * Backfill the Overture `divisions` theme into an already-open unified ingest DB, for locales the WOF GeoJSON repos
@@ -64,14 +208,14 @@ export async function ingestOvertureDivisions(
 	const con = await instance.connect()
 
 	await con.run(
-		"INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; INSTALL json; LOAD json; SET s3_region='us-west-2';"
+		/* sql */ `INSTALL httpfs; LOAD httpfs; INSTALL spatial; LOAD spatial; INSTALL json; LOAD json; SET s3_region='us-west-2';`
 	)
 
-	await con.run("SET memory_limit='4GB'; SET threads=4;")
+	await con.run(/* sql */ `SET memory_limit='4GB'; SET threads=4;`)
 
 	console.error(`  Overture divisions: querying ${countries.join(",")} @ release ${release}...`)
 
-	const result = await con.runAndReadAll(`
+	const result = await con.runAndReadAll(/*sql*/ `
 		WITH area AS (
 			SELECT division_id,
 				MIN(bbox.ymin) AS ymin, MAX(bbox.ymax) AS ymax, MIN(bbox.xmin) AS xmin, MAX(bbox.xmax) AS xmax
@@ -100,19 +244,12 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
 
-	// GERS string id → synthetic int, sequential and unique within this run.
-	const idmap = new Map<string, number>()
-	rows.forEach((r, i) => idmap.set(String(r.id), idBase + i))
-
-	const sprInsert = db.prepare(
-		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	const idmap = assignSyntheticIDs(
+		rows.map((r) => String(r.id)),
+		idBase
 	)
 
-	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, official, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?)`
-	)
-
-	const populationInsert = db.prepare(`INSERT OR REPLACE INTO place_population (id, population) VALUES (?, ?)`)
+	const { spr: sprInsert, names: namesInsert, population: populationInsert } = prepareInserts(db)
 
 	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
 	// Keep only Latin-script common-name aliases (English + major-language transliterations — the names a

@@ -8,7 +8,7 @@
  *   docstring relies on for `instanceof` to hold across both specifiers.
  *
  *   Nothing else exercises this package. It is imported by no workspace (that is the point of
- *   deprecating it), and the clean-install smoke closure skips it, so `tsc -b` was the only thing
+ *   deprecating it), and the clean-install smoke closure skips it, so `tsc -b` is the only other thing
  *   standing between a renamed neural export and a consumer's import-time crash. Type-checking does
  *   not see two failures this does: a binding that arrives `undefined` — the bare/subpath cycle
  *   hazard AGENTS.md documents for this package family, where the barrel's re-exports evaluate before

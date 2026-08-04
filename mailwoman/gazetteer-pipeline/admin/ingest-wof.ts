@@ -24,6 +24,19 @@ const BBOX_2D_LENGTH = 4
 
 /**
  * The admin placetype allowlist (postalcode builds pass their own set).
+ *
+ * `macrohood`/`microhood` are the nesting-depth siblings of `neighbourhood` and map to the same `dependent_locality`
+ * ComponentTag (`docs/engineering/reference/placetype-evidence.mdx`). WOF stocks them in quantity — a 20,000-file
+ * sample of `whosonfirst-data-admin-us` holds 561 microhood and 99 macrohood against 1,532 neighbourhood.
+ *
+ * They are ingested without being reachable by name. No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes
+ * absent from that table pass through unfiltered, so a `locality` query expands to exactly `[locality, borough,
+ * localadmin]`. Those rows answer only an UNFILTERED query, which ranks population-first and sorts a hood carrying no
+ * population last.
+ *
+ * `campus` is deliberately NOT here despite being commoner than macrohood in the same sample (1,368). It is a venue
+ * tier — universities, hospitals, airports — not an admin one, and it belongs to the sub-venue work, where its
+ * terminals and wings are the point.
  */
 export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
@@ -33,6 +46,8 @@ export const ADMIN_PLACETYPES: ReadonlySet<string> = new Set([
 	"localadmin",
 	"borough",
 	"neighbourhood",
+	"macrohood",
+	"microhood",
 	"macroregion",
 	"macrocounty",
 ])

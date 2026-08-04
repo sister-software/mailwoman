@@ -43,12 +43,9 @@ export function conventionCandidateDBPath(): string {
  * Resolve the candidate-db path: an explicit option, then `$MAILWOMAN_CANDIDATE_DB`, then the convention path. Each is
  * used only if it exists on disk. `none` at either the explicit or the env position pins the FTS backend instead.
  *
- * The convention fallback is what makes the candidate table the DEFAULT backend, and it is the same fallback
- * `photon`/`nominatim` already did on their own — `parse`, `geocode`, `serve` and `registry` were the outliers.
- * Measured on the two tier-1 locales with the country scope pinned identically across arms (150 rows each, graded at
- * the locality tier): US within-25 km 149/150 → 150/150 and worst-case 692 km → 20 km; FR within-25 km 126/150 →
- * 145/150, p90 144.2 km → 2.4 km, worst-case 572 km → 53 km. See docs/engineering/reference/resolver-backends.mdx for
- * the arms, the residuals, and how to reproduce.
+ * The convention fallback is what makes the candidate table the DEFAULT backend. See
+ * docs/engineering/reference/resolver-backends.mdx for the tier-1 measurement behind that default, the named residuals,
+ * and the 2×2 any comparison between the two backends has to run.
  */
 export function resolveCandidateDBPath(explicit?: string): string | undefined {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
@@ -87,9 +84,7 @@ export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/
  * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
  *
  * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath} reaches the convention path
- * this message names, so no export follows the download. (Until 2026-08-04 `mailwoman serve` was the exception — it
- * stopped at the env — and this message carried a `requiresExplicitEnv` branch to tell its readers to export something
- * the drop-ins' readers did not need.)
+ * this message names, so no export follows the download.
  */
 export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: string }): string {
 	const conventionCandidate = join(opts.dataRoot, "wof", "candidate.db")
