@@ -167,6 +167,27 @@ const sidebars: SidebarsConfig = {
 						"developers/knowledge-base/geocoding/why-addresses-are-hard",
 					],
 				},
+				{
+					type: "category",
+					label: "Address intelligence",
+					// Reading order, and it follows one parse from end to end. The first page is the
+					// whole chain on one messy input; the next three take a stage each in the order the
+					// parse runs them (pieces and labels, the gazetteer prior on the scores, the decode
+					// that picks a reading). Calibration comes fifth because it is about the number the
+					// first four produce, and training sixth because it explains where all of it was
+					// learned. `what-the-model-cannot-do` sits last for the same reason `falsehoods` and
+					// `why-addresses-are-hard` do on the shelves above — it is the distillation, and its
+					// limits read as limits rather than as a list once the machinery is familiar.
+					items: [
+						"developers/knowledge-base/address-intelligence/how-a-model-reads-an-address",
+						"developers/knowledge-base/address-intelligence/tokens-and-labels",
+						"developers/knowledge-base/address-intelligence/the-gazetteer-prior",
+						"developers/knowledge-base/address-intelligence/decoding-and-viterbi",
+						"developers/knowledge-base/address-intelligence/calibration-and-confidence",
+						"developers/knowledge-base/address-intelligence/training-and-the-corpus",
+						"developers/knowledge-base/address-intelligence/what-the-model-cannot-do",
+					],
+				},
 			],
 		},
 		"developers/status",

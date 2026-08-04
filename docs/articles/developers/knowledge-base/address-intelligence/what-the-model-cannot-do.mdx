@@ -1,0 +1,209 @@
+---
+title: What the model cannot do
+description: The parser's real boundaries — existence, irreducible ambiguity, locale and script limits, input register, silent truncation, and where hand-written rules still win.
+role: explanation
+---
+
+# What the model cannot do
+
+## The question
+
+Everything else on this shelf explains how the parser reads an address. This page is the other half:
+the inputs where it is wrong, the questions it is not answering, and the cases where the rule-based
+approach you were about to replace is still the better tool.
+
+Every claim below was produced by running the shipped parser. The wrong answers are real output, not
+constructed examples.
+
+## The analog
+
+A postal sorting machine reads what it can and passes the rest to a person. The machine's designers
+did not consider that a defect, because the machine's job was never to be right about everything —
+it was to be right about most things, fast, and clear about which envelopes it was handing over.
+
+The parser has no equivalent hand-off, and that is the single most important thing to know about it.
+There is no envelope it declines. Everything below follows from that.
+
+## It never abstains
+
+Every stage produces scores, and a set of scores always has a maximum, so there is always an answer.
+The parser has no "this is not an address" output and no failure mode that looks like a failure.
+
+```
+the blue house past the church     →  locality = "The Blue House Past The Church"
+```
+
+That is a working address in places where houses have no numbers, and it is not malformed. The parser
+returns the best address-shaped reading of it, with a score attached, and the score is about how
+confidently it read the string that way — not about whether reading it that way was sensible. A
+string of product SKUs will parse. So will a sentence.
+
+If your input can contain things that are not addresses, that classification is yours to make
+upstream, and the parse result is not the place to make it.
+
+## It says nothing about existence or delivery
+
+[What Mailwoman is](../../get-started/what-mailwoman-is.mdx) states the boundary and it is worth
+restating with the mechanism: a parse tells you a string reads like an address and where the
+components sit. It does not consult a register of real delivery points, because it does not have
+one — those are licensed products from postal authorities, and open data does not substitute for
+them.
+
+The failure mode is specific. A completely invented address parses with high scores on every
+component:
+
+```
+42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000
+  locality       0.923
+  street         0.921
+  postcode       0.914
+  house_number   0.908
+  street_suffix  0.891
+  region         0.462
+```
+
+Five of the six components are scored like a correct parse, because as a piece of reading the parse
+_is_ correct — `Zzyzx Falls` really is where a locality goes. Only `ZZ` is scored down, and only
+because it does not look like a state code. Those figures are the raw scan on
+[Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx), where the same row is used
+to show that the signal is there and the scale is what needs fixing.
+
+Existence is a different question with a different tool.
+[Validate an address before you use it](../../how-to/validate-addresses.mdx) covers what can be
+checked, and geocoding's resolution tier tells you what the coordinate is grounded in.
+
+## Some ambiguity cannot be removed by anything
+
+A share of inputs do not contain the information required to parse them, and no model, gazetteer or
+rule fixes that. Three shapes recur.
+
+**A bare name.** `springfield` returns a locality, which is a reasonable reading and could be any of
+dozens of places. The parse is not wrong; the input is under-determined, and the right response is a
+result that says so rather than a better guess.
+
+**A digit with no owner.** A number beside a name has at least two readings, and a short input carries
+no evidence for either:
+
+```
+1600 Pennsylvania    →  postcode = "1600",  region = "Pennsylvania"
+```
+
+Both readings of that pair are defensible. `Pennsylvania` is a state, and a four-digit leading number
+is a postcode shape in several countries. Add the one token that decides it — `1600 Pennsylvania Ave`
+— and the reading changes, because the evidence arrived. This is the general shape of the hardest
+class: the number's owner is determined by the tokens around it, and when they are absent nothing
+recovers it.
+
+**A name doing a job other than naming its own place.** A venue called after a city, a street named
+after a state. [Why addresses are hard](../geocoding/why-addresses-are-hard.mdx) is the full treatment
+of why this is structural rather than a backlog.
+
+## Locale and script boundaries are hard, and quiet
+
+The model was trained on Latin-script text, and its training corpus is uneven across the countries it
+does cover. Two different limits follow.
+
+**A locale with thin training data reads worse, and does not say so.** The
+[tier table](../../reference/locales-and-tiers.mdx) is the map: a locale is claimed when a
+coordinate-graded evaluation exists for it, and trained exposure is not a claim. Reading down the
+tiers tells you how much of a measurement sits behind any given country.
+
+**A script outside the training data produces a confident wrong reading, not an error.** The
+tokenizer encodes unknown characters byte by byte, so the pipeline never crashes — and the pieces it
+produces carry no learned meaning:
+
+```
+東京都千代田区丸の内1丁目      →  locality = "東京都千代田区丸の内1丁目"
+서울특별시 중구 세종대로 110    →  locality = "서울특별시 중구 세종대로 110"
+Тверская улица 7, Москва      →  locality = "Москва",  street = "Тверская улица 7"
+```
+
+The first two collapse the whole address into one locality. The third gets the city right and leaves
+the house number inside the street. Every one of them returns a well-formed tree with a confidence on
+it. Byte fallback is what stops a crash; it is not coverage of the script, and the two are easy to
+mistake for each other because they look identical from the outside.
+
+## The input register is bridged, and the bridge is narrow
+
+Users type in lowercase. The training corpus is labeled in mixed case. The parser closes that gap
+deterministically before the model runs: a fully lowercase pure-ASCII input is restored to canonical
+mixed case, with words of three or more letters title-cased and words of one or two letters
+uppercased, so `dc` reaches the model as `DC`. A shouting all-caps input is handled by the mirror
+of the same pass, which title-cases the long words and leaves the short ones shouting, since those
+are already the form the corpus uses for state codes and directionals.
+
+The restriction is in the phrase _pure ASCII_. Case conversion outside ASCII is language-dependent and
+can change a string's length, which would break the character offsets the whole result is built on, so
+an input containing any non-ASCII character is left exactly as typed. The consequence is visible:
+
+```
+montreal qc     →  locality = "Montreal",   region = "QC"
+montréal qc     →  locality = "montréal"
+```
+
+One accent, and the region is gone — the restoration did not run, so `qc` reached the model in a form
+it has little training signal for, and there was no comma to supply the structure instead. Add the
+comma back and `montréal, qc` recovers the region, in the lowercase form it arrived in.
+
+Lowercase is the register real users type, not degraded input. The bridge covers the ASCII majority
+of it. Accented lowercase is the gap, and it is largest in exactly the languages that use accents
+most.
+
+## Long input is truncated in silence
+
+The model reads a fixed window of 128 pieces. Beyond that, the input is cut, and nothing in the
+result records that it happened. A 408-character input with a mail-stop preamble in front of the
+address produced 128 pieces covering the first 328 characters, and the parse contained nothing from
+the address at the end:
+
+```
+{"street":"Mail Stop 7 Attn Accounts Payable Department Of Very Long Names",
+ "unit":"Suite 100","venue":"Building A"}
+```
+
+The tail of the string was never seen. Fragmented words spend the window faster than common ones, so
+the effective character limit is lower for languages that fragment more. If your input can carry long
+routing preambles, trim them before the parse rather than after.
+
+## Where rules still win
+
+The rule-based approach is not a worse version of this one. It is better at a specific set of jobs,
+and it is worth being precise about which.
+
+**A closed vocabulary in a fixed slot, with no homographs.** If the value must be one of a known list
+and the list has no collisions with other components, a lookup is exact, instant, and needs no
+training data. The model is the right tool where the same surface means different things in different
+contexts — `Georgia` as a state and as a country is the canonical case — and a lookup cannot be right
+about both without a hand-written guard. Where the collision does not exist, the lookup wins.
+
+**Format validation.** Whether a string is a well-formed United Kingdom postcode is a question about a
+grammar, answerable exactly by a pattern. The model has no notion of validity — it labels a span
+`postcode` because that is where a postcode goes, and `00000` scores as well as a real one.
+
+**Rendering.** Turning components back into a correctly ordered address string for a country is
+deterministic, and a rule table is the right implementation. The inverse of a hard problem is not
+always hard.
+
+**Anything needing a guarantee rather than a score.** A rule can promise never to emit a tag. A model
+can be measured at never having emitted it on the data anyone tried, which is a different and weaker
+statement.
+
+**Auditability.** A rule is readable, and the fix for a wrong rule is a diff a reviewer can evaluate.
+A wrong label is a property of a weight matrix, and the fix is training data, a run, and a gate. The
+first loop is minutes and the second is a release cycle, and that difference is a real engineering
+cost the accuracy comparison does not show.
+
+The composition is the practical answer, and it is what this system does: label with the model,
+constrain with tables where a constraint is exact, and check with rules where a guarantee is
+required.
+
+## Related
+
+- [Why addresses are hard](../geocoding/why-addresses-are-hard.mdx) — why the ambiguity is structural.
+- [Falsehoods about addresses](../postal/falsehoods-about-addresses.mdx) — twenty-five assumptions,
+  each with a counterexample.
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) — what is measured, and what is only trained.
+- [Validate an address before you use it](../../how-to/validate-addresses.mdx) — the checks that
+  answer the existence question.
+- [Handle messy input](../../how-to/handle-messy-input.mdx) — what the pipeline absorbs before you
+  write any cleanup.

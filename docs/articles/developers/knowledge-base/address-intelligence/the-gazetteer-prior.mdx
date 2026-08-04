@@ -1,0 +1,151 @@
+---
+title: The gazetteer prior
+description: The place lookup you already trust, made additive instead of decisive — what it can override, what it cannot, and why its absence is silent.
+role: explanation
+---
+
+# The gazetteer prior
+
+## The question
+
+You have a list of every place name in the world, with a type attached to each. Why does the parser
+not read the input, check each token against the list, and label the hits?
+
+The short answer is that the list is right about which strings name places and wrong about which
+strings are naming a place here. This page is about what to do with a place list once you accept
+that: keep it, keep consulting it, and stop letting it decide.
+
+## The analog
+
+The gazetteer lookup is the first thing anyone writes. Tokenize the input, take each token, probe a
+table of place names, and if the token is in there, it is a place.
+
+It is a good instinct and it works on a large fraction of real input. Then it meets `Park Avenue`,
+and `Park` names a place somewhere, so the street becomes a town. It meets `Paris, TX` and has no
+basis for preferring the Texas one to the French one, because nothing in the table is about the `TX`
+sitting next to it. It meets `Buffalo Health Clinic, Buffalo` and finds `Buffalo` twice, with nothing
+to say about which one is the business and which one is the town.
+
+Every one of those failures has the same shape. The lookup answers "is this string ever a place
+name", and the question in front of you is "is this string being used as a place name here". The
+first question is about the world, the second is about the sentence, and the table only holds
+answers to the first.
+
+So the fix is not a better table. It is to demote the table's answer from a verdict to a piece of
+evidence, and to combine it with evidence about the sentence — which is exactly what the per-piece
+scores already are.
+
+## The mechanism
+
+Before the model runs, the parser walks the input against a place index and collects every match.
+For each match it produces a small set of adjustments to the per-piece scores:
+
+- **A bonus on the matching component labels.** A locality match adds to `B-locality` and
+  `I-locality` on the pieces it covers.
+- **A penalty on the competing labels.** The same match subtracts from street, house number and
+  venue on those same pieces, because a span that names a known town is evidence against those
+  readings, not merely evidence for its own.
+
+Those adjustments are added to the scores the model produced, and the sum is what the decoder reads.
+That pattern has a name — shallow fusion, borrowed from speech recognition, where an acoustic model's
+scores get a language model's scores added to them at decode time rather than being replaced by them.
+The point of adding rather than substituting is that both opinions survive: the model contributes
+what the sentence looks like, the index contributes what the world contains, and neither one is
+consulted only when the other fails.
+
+The bonus is scaled by how prominent the matched place is and capped at three points of score. That
+cap is the whole safety property. Where the model's own top two readings are far apart, three points
+does not close the gap and the model's reading survives; where they are close, three points is
+decisive. The index gets a vote in proportion to how little the model had to say.
+
+Three details are worth knowing because they explain behavior you can observe.
+
+**Match length changes how hard the penalty bites, not how large the bonus is.** Length here is
+counted in words. A one-word match is weak evidence, because surnames, common words and street heads
+are place names somewhere, and a match spanning several words is stronger, because coincidence gets
+less likely with every word. The default response is to discount the penalty on the competing
+readings for a short match while leaving its bonus at full strength. That asymmetry is the point: a
+bare `Hollywood` is a one-word match, and the full bonus is what makes it come back a locality —
+discounting it would break the case the index is most needed for. What a wrong one-word match does
+damage with is the penalty, so the penalty is the half that gets softened.
+
+**A match in street-shaped surroundings gets no bonus at all.** When a matched name sits where a
+street name sits — a street-type word beside it, or a house number to its left — the runtime pipeline
+withholds the positive bonus entirely and keeps only the suppression. A street named after a town is
+therefore not pulled toward the town by the index: `800 Washington Ave, Portland, OR` and
+`123 Madison Ave, New York, NY 10016` both parse identically with the index wired and without it. The
+suppression side is never withheld, because the index is used as evidence for a reading and against
+its competitors, never as a penalty on a reading it has no opinion about.
+
+**One span can match several kinds of place at once**, and the index does not choose between them.
+`New York` is both a city and a state, and both entries are live. Each contributes a bonus to its own
+component labels on the same pieces, and which one wins is settled downstream by the decoder reading
+the rest of the line.
+
+## What it can and cannot do
+
+**It cannot resolve.** The index reports that a span could be a place of some type. It does not pick
+which place, and it produces no coordinate. That is the resolver's job, and it happens after the
+parse — see [Gazetteers](../geocoding/gazetteers.mdx) for the database and
+[The two architectures](../geocoding/the-two-architectures.mdx) for where the two jobs sit.
+
+**It speaks four component types.** A match only turns into a bonus when its place type is one the
+model has labels for: country, region, locality, postcode. The index itself holds more than that —
+querying `Boston` returns neighborhood entries alongside the locality — and every entry outside those
+four contributes nothing, because there is no label for the bonus to land on.
+
+**It carries administrative names, not streets and not venues.** A gazetteer of specific street names
+would be several million more entries and is not what ships. There is a separate, much smaller
+vocabulary of generic street-type words — `avenue`, `rue`, `straße` — and that one is a different
+mechanism from this page's, with a different wiring status. Venue names are open-ended and are not in
+any index, which matters more than it sounds: the hardest ambiguity in address parsing is a venue
+named after a place, and that is the case the index has the least to say about.
+
+**It cannot override a confident model.** By construction: the bonus is capped and the model's scores
+are not. If the parse is wrong in a way a place-name lookup would plainly fix, the index is
+not the thing that will fix it.
+
+**It is a prior, not a stage, so its absence is silent.** The runtime pipeline loads the index from
+the weights package on its first call and passes it to every parse. A classifier you construct and
+call directly receives nothing, and the parse still succeeds — it is worse, without announcing it,
+on exactly the inputs the index exists for. A bare `Hollywood` comes back as a street without it and
+a locality with it.
+[Library API](../../reference/library-api.mdx#wiring-the-gazetteer-index-on-a-bare-call) has the
+wiring and the measured difference.
+
+## What it costs
+
+**The index is the second-largest file in the weights package, after the model itself.** 21.8 MB
+against 39.4 MB, listed with everything else on [Footprints](../../reference/footprints.mdx). The
+design trades build time for query time: enumerating every place name into a walkable structure is
+done once, offline, so a parse only ever walks it. That is what lets the same index ship to a browser
+instead of living behind a lookup service.
+
+**A correction from the index does not raise the reported confidence.** The score attached to each
+span reports the model's own opinion of the label that was chosen, computed before the index was
+added in. So when the index flips a reading from wrong to right, the number on the corrected span is
+the number the model gave that reading on its own — which is low, because the model preferred
+something else. Measured on a bare `Hollywood`: 0.691 as a street without the index, 0.264 as a
+locality with it. The label improved and the number fell. If you threshold on confidence, that is a
+class of correct answer your threshold will route to review, and
+[Calibration and confidence](./calibration-and-confidence.mdx) is where to take it.
+
+**Coverage of the index is coverage of the gazetteer.** A town missing from the open data is a town
+the prior cannot help with, and the failure looks like the model being unsure rather than like a
+missing record.
+
+**On the venue-versus-place case it changes nothing, and that case is still wrong.**
+`Riverside Garden Center, Boston` reads as a single locality covering the whole leading phrase, with
+`Boston` dropped from the result entirely — identical output with the index wired and without it.
+`Riverside` and `Boston` are both in the index; neither match rescues the parse, because separating a
+business name from the town after it is a judgment about how the words are being used, and the index
+has no vocabulary for the business half. This is the shape of failure to expect from a prior that
+supplies world knowledge rather than sentence structure.
+
+## Related
+
+- [How a model reads an address](./how-a-model-reads-an-address.mdx) — where this sits in the chain.
+- [Gazetteers](../geocoding/gazetteers.mdx) — the place database, and what is in it.
+- [Decoding and the best path](./decoding-and-viterbi.mdx) — what reads the adjusted scores.
+- [Library API](../../reference/library-api.mdx) — the `fst` option, and what a bare classifier call misses.
+- [Footprints](../../reference/footprints.mdx) — measured file sizes, with the commands that produced them.

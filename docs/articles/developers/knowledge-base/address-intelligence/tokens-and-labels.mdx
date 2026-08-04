@@ -1,0 +1,141 @@
+---
+title: Tokens and labels
+description: Why the parser works in word fragments rather than words, and how a per-piece label becomes a labeled span.
+role: explanation
+---
+
+# Tokens and labels
+
+## The question
+
+The parser reports spans of your input string: characters 35 to 45 are a locality. Underneath, it is
+making one decision per piece of text, and the pieces are not words — `analytics` arrives at the
+model as `▁Ana ly t ic s`. Two questions follow from that. Why fragments rather than words? And how
+do five separate per-piece decisions add up to one span you can act on?
+
+## The analog
+
+You have written the word-list version of this. A set of known street suffixes, a set of state
+abbreviations, a table of city names — and a tokenizer that splits on whitespace so the tokens line
+up with the table keys.
+
+It works until it meets a word the table has never seen, and then it has nothing at all to say. Not a
+weaker opinion: no opinion, because the lookup either hits or misses. `Pennsylvana`, typed by a
+person in a hurry, is as unknown to a word table as `Xzqjrt`. And the table itself has no natural
+size — every new country, every new spelling, every business name is another key, and a table with
+millions of keys is not a table any more, it is the corpus.
+
+The fix is the printer's type case rather than the dictionary. Keep a fixed inventory of fragments,
+and spell every word out of them. Rare words cost more fragments; unseen words still get spelled.
+Nothing is unrepresentable.
+
+## Pieces, not words
+
+Mailwoman spells input with [SentencePiece](https://github.com/google/sentencepiece), an
+open-source subword tokenizer. The inventory holds 73,143 pieces, chosen by a unigram language-model
+fit over training text, and the `▁` prefix marks a piece that begins a new word. Common words are one
+piece; `▁Washington` is a single unit. Uncommon ones fragment, and the fragmentation carries
+information — a word that splits into five pieces is a word the training text did not see much of.
+
+Two properties matter downstream.
+
+**The inventory is closed and small.** A model's output layer and its embedding table are both sized
+by the inventory, so bounding it at 73,143 is what keeps the shipped model a 39.4 MB file rather than
+a multi-gigabyte one.
+
+**Nothing is out of vocabulary.** When a character is not covered by any piece, the tokenizer falls
+back to encoding it byte by byte. A Cyrillic street name or a stray emoji produces pieces rather than
+a failure. Those pieces carry no learned meaning — byte fallback is what stops the pipeline from
+crashing, and it is not coverage of the script. [What the model cannot do](./what-the-model-cannot-do.mdx)
+draws that line.
+
+## Pieces are not what you get back
+
+The piece boundaries are an implementation detail of the model, and the parse result never exposes
+them. Each piece carries the character range it came from, reported by the tokenizer itself rather
+than reconstructed afterward, and the decoder projects labels back onto those ranges. `▁Ana ly t ic s`
+covers characters 13 through 22 of the input, so a venue span that runs from `▁Beacon` to `s` is
+reported as characters 0 through 22 — one span, in your coordinate system.
+
+Keep the distinction in mind when you read a confidence score, because the score is per piece before
+it is per span. A five-piece word contributes five numbers that get aggregated into the one you
+see.
+
+There is one place the piece-versus-word distinction becomes visible in behavior. Because pieces are
+labeled independently, the five pieces of one word can disagree — three of them venue, two of them
+street — which is a reading no person would produce and no consumer wants. After decoding, the
+parser groups pieces back into their `▁`-delimited words and, for any word whose pieces disagree
+about which kind of component they belong to, holds a confidence-weighted vote and applies the winner
+across the whole word. It runs by default, and it operates strictly inside a word: `Saint Petersburg`
+is two words and is never merged by this pass.
+
+## BIO: the bridge from "matched" to "labeled"
+
+**The rule-world version:** a regular expression returns a span directly. It matched from here to
+there, and the span is the match.
+
+**What happens here:** the model produces one label per piece, and a label alone cannot express a
+boundary. If every piece of `Saint Petersburg, FL` were labeled just `locality`, `locality`,
+`region`, there would be no way to tell one two-word town from two one-word towns sitting side by
+side.
+
+BIO labeling is the standard fix, and it is older than any of this — it is what named-entity
+recognition has used since the 1990s. Each label carries a position as well as a type:
+
+- `B-locality` — a locality span **begins** at this piece.
+- `I-locality` — this piece is **inside** the locality span already open.
+- `O` — this piece is **outside** every component.
+
+So `Saint Petersburg, FL` labels as `B-locality`, `I-locality`, `O`, `B-region`, and the span
+reconstruction is a single walk: open at `B-`, extend at a matching `I-`, close at anything else. Two
+adjacent towns would read `B-locality`, `B-locality`, and the second `B-` is the boundary.
+
+The scheme has one structural weakness, and it is the reason the decoder exists: `I-locality` with no
+`B-locality` before it is not a reading of anything. A per-piece argmax will produce that sequence
+whenever the model is unsure about the first word and confident about the second, and the standard
+symptom is a town losing its first word. [Decoding and the best path](./decoding-and-viterbi.mdx) is
+where that gets ruled out.
+
+## Three counts, and why they differ
+
+Three numbers get quoted around the label space, and they answer different questions.
+
+The **schema** defines 25 component tags — everything a parse result is allowed to carry, including
+tags for Japanese address structure and tags no shipped model produces. At two labels per tag plus
+one shared `O`, that is a capacity of 51 labels.
+
+The **shipped model's head** is fixed at training time and carries 33 labels over 16 tags. That is
+the alphabet this model can write in. Nine tags in the schema are outside it: seven belong to a
+separate Japanese head that is not shipped, and two are carried for annotation and formatting rather
+than produced by the parser.
+
+The gap between the two is not a defect to work around, and it is not post-processing that fills in
+later. A tag outside the head never appears in a parse from this model.
+[Component tags](../../reference/component-tags.mdx) lists all 25 with meanings and examples, and
+states per model which are reachable.
+
+## What it costs
+
+**Boundaries are implicit, so they inherit label errors.** The model has no separate boundary head:
+a span begins where a `B-` label lands. That means it cannot hold a confident view of where a street
+ends while remaining unsure what the street is — boundary confusion is downstream of label confusion,
+always. When a house number gets absorbed into a street name, the fix is evidence about the label,
+not a boundary rule.
+
+**Fragmentation is uneven across languages.** A language whose text is thin in the training corpus
+spells into more pieces per word, and more pieces per word means a longer sequence, more chances for
+two pieces of one word to disagree, and less of the fixed 128-piece input window left for the rest of
+the address. The cost of thin coverage shows up here first, before it shows up as a wrong label.
+
+**The vote is per word, not per name.** The consistency pass keeps one word internally coherent and
+deliberately stops there. Multi-word names are left to the decoder and the priors, because a rule
+that forced agreement across a whitespace boundary would merge a locality into the street in front of
+it.
+
+## Related
+
+- [How a model reads an address](./how-a-model-reads-an-address.mdx) — the whole chain, on one input.
+- [Decoding and the best path](./decoding-and-viterbi.mdx) — the constraint that rules out an orphan
+  continuation.
+- [Component tags](../../reference/component-tags.mdx) — the 25 tags, and which the shipped model emits.
+- [Library API](../../reference/library-api.mdx) — where spans, offsets and options live in code.

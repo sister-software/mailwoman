@@ -1,0 +1,167 @@
+---
+title: Training and the corpus
+description: Where labeled address data comes from, what a training run optimizes, and why an evaluation gate stands between a better number and a release.
+role: explanation
+---
+
+# Training and the corpus
+
+## The question
+
+The model assigns one of 33 labels to each piece of your input, and it does so because it was shown
+examples. So: what examples, where do they come from, who labeled them, and what stops a run that
+improved one thing and broke another from shipping?
+
+## The analog
+
+In a rule-based parser you write the rules, and the rules are the specification. Anyone can read them
+and predict the parser's behavior on an input they invent, because the behavior is the rules.
+
+In a learned parser you write the examples, and the examples are the specification. Everything the
+parser does on unseen input is an extrapolation from what it was shown — including the extrapolations
+nobody intended. A corpus that is three-quarters one country teaches that country's ordering as a
+general fact about addresses. A corpus where the locality is nearly always the first token teaches
+"first token, therefore locality" as a shortcut that beats reading the token.
+
+That is the trade. Rules are auditable and bounded; you can read them and you can also read where they
+end. Examples generalize past what anyone enumerated and they are not auditable the same way — the
+only way to know what a corpus taught is to test the model on data it did not see.
+
+Everything below is a consequence of taking that trade seriously.
+
+## Where labeled rows come from
+
+Nobody hand-labels address text at the scale a model needs. The labels are derived, and the trick is
+that a large amount of open address data already comes in two halves: a structured record with the
+components separated into fields, and — or reconstructible from it — the address as a line of text.
+
+National address registers publish exactly this. So do census street files, open gazetteers, and
+collaborative address projects. Mailwoman's published attribution list names several of them: France's
+Base Adresse Nationale, Great Britain's Price Paid Data, New Zealand data derived from LINZ,
+OpenAddresses extracts for several European countries, Overture's addresses theme, and Who's On First
+for administrative names. Every row carries the license it arrived under, which is what makes the
+list an attribution list rather than an inventory.
+
+Turning a structured record into a training row is the **alignment** step, and it is more fragile
+than it sounds. Take the record's components, find each one inside the text line, and mark the first
+piece it covers `B-<tag>` and the rest `I-<tag>`. When a component cannot be located — the record
+says the region is `California` and the line says `CA`, or a diacritic differs, or the source's own
+fields disagree with its own address string — the row is **quarantined** rather than guessed at. It
+is written aside with the reason, and it does not train anything.
+
+That quarantine pile is worth more than it looks. A source whose quarantine rate jumps is a source
+whose schema changed, and it announces itself before the model does.
+
+## The multiplier, and the reason for it
+
+Real users do not type addresses the way registers store them. They abbreviate the street type, drop
+the commas, type in one case, and leave the accents off. A corpus built only from register text
+teaches the register's register.
+
+So each row is expanded into surface variants before alignment runs: shouted and whispered, with the
+commas and without them, the state name and its abbreviation, `Avenue` and `Ave`, `Apt` and
+`Apartment`. Which variants apply is a per-country decision — accent stripping is a French default
+and does nothing useful for United States rows. Each variant is aligned from scratch rather than
+having labels copied onto it, because changing the surface moves the boundaries, and a variant that
+fails to align is quarantined like anything else.
+
+This is why the same idea appears twice in the design. Case restoration at parse time handles the
+lowercase input the model was not trained on; case variants at training time reduce how much there is
+to handle. Neither one alone covers the register users type.
+
+## What a run optimizes
+
+One thing: for each piece, put as much score as possible on the correct label. That is per-position
+cross-entropy, and it is the whole loss. There is no sequence-level term — no reward for a
+well-formed reading, no penalty for an impossible transition, because impossibility is enforced at
+decode time instead. See
+[Decoding and the best path](./decoding-and-viterbi.mdx#why-the-transition-scores-are-constraints-not-weights)
+for what was tried on that front and why it is not what ships.
+
+Two levers shape what that loss rewards in practice.
+
+**Source weighting.** Sources differ in size by orders of magnitude, so training on the raw mixture
+lets the largest source define what an address looks like. Weighting lets an under-represented source
+be drawn more than its row count would suggest. The failure this exists to prevent is positional: a
+corpus dominated by one source's field order teaches the order rather than the components.
+
+**Coverage of what is missing.** A sequence labeler learns a tag partly by learning where it stops,
+which means teaching it a tag it never had sharpens the tags on either side. Before `unit` was a
+category the model could reach for, `Apt 456` had to land somewhere, and it landed on `street` —
+so `street` was absorbing anything on the road line and had no reliable end. Giving those pieces
+their own home moved them off `street`, and `street` got sharper as a side effect. Adding a category
+is not free in general — two categories that overlap in the data trade one confusion for another — but
+where the old label was swallowing a distinct thing, it is close to it.
+
+## Held-out means held-out
+
+The evaluation portion of the corpus is not a random sample of rows. It is a set of whole regions,
+chosen for low data density and lifted out of training entirely: Vermont, Wyoming and North Dakota
+for the United States, Corse, Lozère and Creuse for France, Saarland and Mecklenburg-Vorpommern for
+Germany. Rows from those regions are divided between validation and test by hashing each row's source
+identifier, and everything else trains.
+
+Split at random instead and the arithmetic flatters you, because addresses leak by neighborhood.
+`13 Main St, Springfield, IL` in training and `15 Main St, Springfield, IL` in evaluation scores well
+by recalling `Springfield`, not by reading the address — and a model can look like it generalizes
+while doing nothing but remembering place names. Holding out the whole region closes that path, and
+it makes the measurement answer the question a deployment asks on most of its input: what happens on
+a place the model has never met.
+
+One rule goes with it, and it is the one that keeps the discipline from decaying. A holdout added
+after a corpus was built is not a holdout. Every corpus version carries its split as a committed
+manifest, so a rerun reproduces the same division and nobody can decide after the fact which regions
+were meant to be unseen.
+
+## Why an evaluation stands between a run and a release
+
+A training run produces a checkpoint and a number. Neither is a reason to ship.
+
+The gate is per tag and per locale, not aggregate. An aggregate score moves when one large category
+moves, and it is unmoved when a small one collapses — which means shipping on an aggregate is
+shipping without having looked at the categories the aggregate is made of. First-class locales carry
+per-tag floors that block a release when a tag falls below them; other locales are measured, recorded
+and argued about rather than gating.
+[Locales and tiers](../../reference/locales-and-tiers.mdx) states which locales are in which tier and
+what the tier means, and the distinction it draws is the one that matters here: a locale is claimed
+when there is a graded evaluation behind it, not when there is training data for it.
+
+Two habits go with the gate.
+
+**Every shipped model carries its own numbers.** The model card inside the weights package publishes
+the label set, the architecture, the calibration measurements, the data attribution, and per-tag
+scores by locale. It ships to the registry with the model, so the claim and the artifact cannot drift
+apart — you can read what the model you installed was measured at, from the package you installed.
+
+**Numbers are recorded per version, not overwritten.** A per-version ledger is what makes a
+regression detectable at all: without the previous version's numbers, measured the same way, "better"
+has no referent.
+
+## What it costs
+
+**The corpus decides the competence, and it is uneven.** Coverage follows open data, which follows
+national policy, which has nothing to do with where your users are. A country with a published
+address register is a country the model reads well. A country without one is thin no matter how much
+compute goes into training.
+
+**A source's bias becomes a prior.** Every register encodes conventions — which fields are populated,
+how the region is spelled, whether the postcode leads or trails — and those conventions become
+expectations the model brings to inputs that do not share them.
+
+**Improvement is not monotonic.** Adding a locale can interfere with an existing one; adding a
+category can trade one confusion for another. This is the reason the gate is per tag and per locale
+rather than a single score with a threshold on it, and the reason a run that improves the headline
+number can still be the wrong thing to ship.
+
+**A small evaluation set cannot tell a small regression from noise.** Human-labeled evaluation data
+carries annotation error of its own, so a shift of a point or two is inside the noise band and has to
+be inspected case by case rather than read off the table.
+
+## Related
+
+- [Tokens and labels](./tokens-and-labels.mdx) — the label space alignment produces.
+- [Decoding and the best path](./decoding-and-viterbi.mdx) — what the loss deliberately leaves to decode time.
+- [What the model cannot do](./what-the-model-cannot-do.mdx) — where the corpus runs out.
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) — what a claimed locale means, and which
+  locales are claimed.
+- [What ships today](../../status.mdx) — versions, coverage, and the current gaps.

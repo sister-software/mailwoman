@@ -1,0 +1,180 @@
+---
+title: How a model reads an address
+description: One messy line walked end to end — pieces, per-piece scores, the place list, the best reading, the tree.
+role: explanation
+---
+
+# How a model reads an address
+
+## The question
+
+Hand the parser this, exactly as a user typed it into a phone:
+
+```
+beacon ridge analytics 800 f st nw washington dc 20004
+```
+
+No commas. No capitals. A company name sitting in front of the address. A street whose entire name is
+one letter. Six fields come back, and all six are right. What happened in between?
+
+This page walks that one line through the parser end to end. Every stage gets its rule-world name
+before its statistical one, because every stage is doing a job you have written by hand at some
+point — a lookup table, a regular expression, a tie-break. The machinery is those same jobs, done
+with scores instead of verdicts.
+
+## The analog
+
+Give the line to a person with a highlighter and ask them to mark it up. They will draw four
+stretches: the company, the number, the street, and the town-plus-state-plus-postcode tail. They will
+do it in one pass with the whole line in view, because the reason `dc` is a state is that
+`washington` sits to its left and five digits sit to its right — nobody reads `dc` in isolation and
+then moves on. And when they finish, they will glance back over the marking to check it reads: a
+"this continues the town" stroke with no "the town starts here" stroke before it is a slip of the
+pen, not a reading of the line.
+
+That is the whole design. Four moves: cut the line into pieces, score every possible mark on every
+piece, add what a place list already knows, and pick the marking that reads.
+
+## One: cut the line into pieces
+
+**The rule-world version:** split on spaces and punctuation, and you have words.
+
+**What happens here:** the pieces are smaller than words. `analytics` arrives at the model as five of
+them:
+
+```
+▁Ana  ly  t  ic  s
+```
+
+The `▁` marks a piece that starts a new word. The pieces come from a fixed inventory of 73,143 of
+them, built once from training text, and any string at all can be spelled out of that inventory —
+which is the property a word list does not have. A word list meets `Analytics` for the first time and
+has nothing to say; a piece inventory spells it out of pieces it has seen thousands of times.
+
+Two things are worth carrying out of this stage. Each piece records where it came from in your
+original string, so nothing downstream ever needs to know that pieces exist — you get character
+offsets into the text you passed in. And the text the model sees is not byte-for-byte the text you
+typed: a fully lowercase ASCII input is restored to mixed case first, because that is the register
+the training corpus was labeled in. `beacon` reaches the model as `Beacon`.
+[Tokens and labels](./tokens-and-labels.mdx) covers both properly.
+
+## Two: score every mark on every piece
+
+**The rule-world version:** a pattern that fires or does not. `if (/^\d{5}$/.test(token))` and you
+have a postcode.
+
+**What happens here:** nothing fires. Every piece receives a score for every one of the 33 available
+marks, and the marks compete. `▁2` gets a score for "postcode starts here", a score for "house number
+starts here", a score for "outside every component", and thirty more.
+
+The scores are computed with the entire line visible at once. That is the part a per-token rule
+cannot reach. `F` is scored as the beginning of a street name because `800` sits to its left and a
+locality-shaped word, a two-letter uppercase token and a five-digit number sit to its right — the
+same evidence the person with the highlighter used, and for the same reason. Nothing about the
+letter `F` on its own suggests a street.
+
+## Three: add what the place list already knows
+
+**The rule-world version:** the gazetteer lookup you have written before. Take the token, check it
+against a list of place names, and if it is in there, it is a place.
+
+**What happens here:** the same lookup, made additive instead of decisive. `Washington` matches the
+place index, so the pieces it covers get a bonus on the locality marks and a penalty on street, house
+number and venue. The bonus is capped, and it is withheld entirely where a match sits in
+street-shaped surroundings, so a street named after a town stays a street:
+`800 Washington Ave, Portland, OR` parses the same with the index wired and without it. In the run
+above, the place index was the one prior that found anything to say.
+[The gazetteer prior](./the-gazetteer-prior.mdx) is the full treatment.
+
+## Four: pick the marking that reads
+
+**The rule-world version:** run your classifiers, then reconcile the mess afterward with tie-break
+heuristics — prefer the longer span, drop the continuation that has no beginning, and so on.
+
+**What happens here:** whole readings are scored rather than repaired. A table built once from the
+label list says which mark may follow which — "continues the street" is legal after "street starts
+here" and after itself, and after nothing else — and the decoder searches for the highest-scoring
+reading that stays inside those rules. A continuation with no beginning is not fixed up after the
+fact; it never appears, because no legal reading contains one.
+[Decoding and the best path](./decoding-and-viterbi.mdx) has the mechanism.
+
+Here is the reading that came out for our line, captured from the parse itself, one row per piece:
+
+```
+piece        offsets  label            score
+▁Beacon      0..6     B-venue          0.869
+▁Ridge       7..12    I-venue          0.895
+▁Ana         13..16   I-venue          0.915
+ly           16..18   I-venue          0.901
+t            18..19   I-venue          0.895
+ic           19..21   I-venue          0.890
+s            21..22   I-venue          0.914
+▁8           23..24   B-house_number   0.899
+0            24..25   I-house_number   0.876
+0            25..26   I-house_number   0.899
+▁            27..27   O                0.744
+F            27..28   B-street         0.849
+▁S           29..30   I-street         0.858
+T            30..31   I-street         0.926
+▁N           32..33   I-street         0.917
+W            33..34   I-street         0.912
+▁Washington  35..45   B-locality       0.921
+▁            46..46   O                0.751
+DC           46..48   B-region         0.876
+▁2           49..50   B-postcode       0.905
+0            50..51   I-postcode       0.908
+0            51..52   I-postcode       0.906
+0            52..53   I-postcode       0.910
+4            53..54   I-postcode       0.898
+```
+
+`B-` marks where a span begins and `I-` marks a piece that continues it, which is how a per-piece
+decision becomes a span. Five pieces of `Analytics` carry five separate labels that together mean one
+thing.
+
+## What comes out
+
+Walk that column, open a span at each `B-`, extend it at each matching `I-`, and close it at anything
+else. Then nest the spans by geographic containment, and you have the result:
+
+```
+region        = "DC"                      46..48   0.876
+locality      = "Washington"              35..45   0.921
+street        = "F ST NW"                 27..34   0.892
+venue         = "Beacon Ridge Analytics"   0..22   0.897
+house_number  = "800"                     23..26   0.891
+postcode      = "20004"                   49..54   0.905
+```
+
+The offsets point into the string you passed in, not into the case-restored copy the model read. The
+values are the repaired forms — `F ST NW` rather than `f st nw` — which is why keeping your own copy
+of the raw input is worth the line of code.
+
+## What it costs
+
+**A wrong field does not name its own stage.** Four things can produce `street="Washington"`: the
+pieces split somewhere unhelpful, the scores were wrong, the place index missed, or the best legal
+reading was a bad one. The four are not separable from the output alone, which is why
+[Report a parsing bug](../../how-to/report-a-parsing-bug.mdx) asks for the input string rather than a
+description of the symptom.
+
+**Nothing in the chain abstains.** Every stage produces scores, and scores always have a maximum, so
+there is always an answer. Hand it a line that is not an address and you get an address-shaped
+reading of it. [What the model cannot do](./what-the-model-cannot-do.mdx) is the list of places that
+matters.
+
+**The number is narrower than the decision.** The score on each span reports how sure the model was
+about that label on its own, before the place index was added in. So a span the place index corrected
+can come back carrying a lower number than the wrong reading it replaced —
+[The gazetteer prior](./the-gazetteer-prior.mdx#what-it-costs) has the measurement. If you plan to
+route on the number, read [Calibration and confidence](./calibration-and-confidence.mdx) before you
+pick a threshold.
+
+## Related
+
+- [Tokens and labels](./tokens-and-labels.mdx) — what a piece is, and how per-piece labels become spans.
+- [The gazetteer prior](./the-gazetteer-prior.mdx) — the place lookup, made additive.
+- [Decoding and the best path](./decoding-and-viterbi.mdx) — how a reading gets chosen.
+- [Understand a parse](../../tutorials/understand-a-parse.mdx) — the same walk, as something you run.
+- [Component tags](../../reference/component-tags.mdx) — the 25 tags a parse can carry, and the 16
+  this model emits.
