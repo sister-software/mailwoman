@@ -43,6 +43,10 @@ const OptionsSchema = zod.object({
 	// tri-state — the OFF pin would read as "unset". Renamed here; the eval-harness module (and the
 	// scripts/eval shim the probes spawn) keep the original two-key contract.
 	adminCoherenceOff: zod.boolean().default(false).describe("#895 tri-state pin: force adminCoherence OFF"),
+	postcodeCountryCoherence: zod
+		.boolean()
+		.default(false)
+		.describe("#42 opt-in pin: postcode-country coherence ON (library default OFF) — the D-rule instrument"),
 	hierarchyCompletion: zod.boolean().default(false).describe("#405: recover the dual-role-place locality"),
 
 	// coordinate tiers
