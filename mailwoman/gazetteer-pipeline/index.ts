@@ -19,6 +19,7 @@
 
 import { execFileSync } from "node:child_process"
 import {
+	chmodSync,
 	copyFileSync,
 	existsSync,
 	lstatSync,
@@ -176,7 +177,13 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	const { ingestGeonamesAliases, buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
+	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileSync
+	// stamps the source mode onto a fresh copy — or writes THROUGH an existing destination keeping
+	// ITS mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
+	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
+	rmSync(opts.adminOut, { force: true })
 	copyFileSync(opts.adminIn, opts.adminOut)
+	chmodSync(opts.adminOut, 0o644)
 
 	const db = new DatabaseSync(opts.adminOut)
 
