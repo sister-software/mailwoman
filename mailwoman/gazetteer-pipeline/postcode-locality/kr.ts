@@ -32,7 +32,7 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-kr.db
  *
  *   PORT NOTE (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
- *   no PIP. Matching is point-nearest (haversine ported inline, asin form, to match Python exactly)
+ *   no PIP. Matching is point-nearest via `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python)
  *   with proximity-constrained Hangul name confirmation. The output is written DIRECTLY to
  *   `--output` (the Python `DROP TABLE …` then `CREATE TABLE` full single-country rebuild),
  *   preserving behavior.
@@ -68,13 +68,6 @@ function norm(s: string | null | undefined): string {
 
 function bare(s: string | null | undefined): string {
 	return norm(s).replace(SUFFIX, "")
-}
-
-/**
- * Python `math.radians`.
- */
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
 }
 
 /**

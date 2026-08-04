@@ -25,23 +25,14 @@
  *     node ban/out/scripts/build-street-centroid-shard.js --country fr --out /tmp/sc-fr.db
  */
 
-import {
-	createReadStream,
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	rmSync,
-	statSync,
-	writeFileSync,
-} from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath, md5File, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import {
 	createStreetCentroidIndexes,
@@ -204,21 +195,7 @@ async function main(): Promise<void> {
 	out.exec("ANALYZE")
 	await kdb.destroy()
 
-	// Atomic swap into place (move any prior aside first), then SEAL 0444.
-	if (existsSync(args.output)) {
-		renameSync(args.output, `${args.output}.prev`)
-	}
-
-	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(args.output + sfx, { force: true })
-	}
-
-	renameSync(tmp, args.output)
-
-	if (existsSync(`${args.output}.prev`)) {
-		rmSync(`${args.output}.prev`, { force: true })
-	}
-
+	swapDatabaseIntoPlace(tmp, args.output)
 	sealDatabase(args.output)
 
 	const md5 = await md5File(args.output)

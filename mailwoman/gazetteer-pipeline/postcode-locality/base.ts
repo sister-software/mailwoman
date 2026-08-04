@@ -45,13 +45,6 @@ import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-
 import { haversineKm } from "@mailwoman/spatial"
 
 /**
- * Python `math.radians`.
- */
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
-}
-
-/**
  * Plus name:* / label:* props, gathered below.
  */
 const ALT_NAME_KEYS = new Set(["wof:label"])

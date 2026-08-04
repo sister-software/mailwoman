@@ -22,10 +22,10 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
-import { existsSync, readFileSync, renameSync, rmSync } from "node:fs"
+import { readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 
 /**
  * Synthetic id base — distinct from the GeoNames postal range (9500000000000).
@@ -118,11 +118,7 @@ export async function buildNLPC6Shard(
 	db.close()
 
 	// Build-on-copy: the previous version moves aside; the new artifact swaps in atomically.
-	if (existsSync(outPath)) {
-		renameSync(outPath, `${outPath}.prev`)
-	}
-
-	renameSync(tmpPath, outPath)
+	swapDatabaseIntoPlace(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(outPath)
 

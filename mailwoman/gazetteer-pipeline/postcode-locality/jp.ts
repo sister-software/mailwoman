@@ -30,8 +30,8 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-jp.db
  *
  *   PORT NOTE (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
- *   here, so there is no PIP — matching is name + haversine proximity (haversine ported inline,
- *   asin form, to match Python exactly). The output is written DIRECTLY to `--output` (the Python
+ *   here, so there is no PIP — matching is name + haversine proximity, via `@mailwoman/spatial`'s
+ *   `haversineKm` (asin form, matching Python). The output is written DIRECTLY to `--output` (the Python
  *   `DROP TABLE …` + `CREATE TABLE` full single-country rebuild), preserving the original's
  *   behavior.
  */
@@ -78,13 +78,6 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 	const nw = norm(wofName).replace(SUFFIX, "")
 
 	return nw.length >= 2 && norm(postalMuni).includes(nw)
-}
-
-/**
- * Python `math.radians`.
- */
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
 }
 
 /**

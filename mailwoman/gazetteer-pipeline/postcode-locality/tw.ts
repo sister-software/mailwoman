@@ -116,10 +116,6 @@ export function normEn(s: string): string {
 	)
 }
 
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
-}
-
 /**
  * UTC ISO-8601 to the second.
  */

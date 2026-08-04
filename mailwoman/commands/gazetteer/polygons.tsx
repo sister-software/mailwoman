@@ -27,11 +27,11 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
-import { existsSync, readFileSync, renameSync, rmSync } from "node:fs"
+import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import zod from "zod"
 
@@ -289,18 +289,7 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 
 		await kdb.destroy() // closes the underlying `dbOut` handle
 
-		// Atomic swap: move the previous DB aside, slide the new one into place, drop the backup.
-		const backup = `${out}.old-${process.pid}`
-
-		if (existsSync(out)) {
-			renameSync(out, backup)
-		}
-
-		renameSync(tmpOut, out)
-
-		if (existsSync(backup)) {
-			rmSync(backup)
-		}
+		swapDatabaseIntoPlace(tmpOut, out)
 
 		const mb = Math.round((bytes.b || 0) / 1024 / 1024)
 

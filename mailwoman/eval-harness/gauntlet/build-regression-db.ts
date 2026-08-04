@@ -9,12 +9,12 @@
  *   Run: mailwoman eval gauntlet-build regression-db
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, rmSync } from "node:fs"
 import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 
 import { REGRESSION_CASES } from "./cases/regression.ts"
 import { createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
@@ -63,15 +63,7 @@ export async function buildRegressionDB(): Promise<void> {
 
 	await kdb.destroy()
 
-	if (existsSync(output)) {
-		renameSync(output, `${output}.prev`)
-	}
-
-	renameSync(tmp, output)
-
-	if (existsSync(`${output}.prev`)) {
-		rmSync(`${output}.prev`)
-	}
+	swapDatabaseIntoPlace(tmp, output)
 
 	console.log(`[gauntlet] built ${output} — ${REGRESSION_CASES.length} cases`)
 
