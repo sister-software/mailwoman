@@ -1,0 +1,51 @@
+---
+title: Cut the per-request bill
+description: Metered geocoding prices one lookup at a time, so the line item tracks your address volume. A flat license does not move when the volume does.
+role: landing
+audience: teams
+---
+
+# Cut the per-request bill
+
+Metered geocoding prices one lookup at a time, which makes the line item a function of address
+volume — and address volume is the input your team controls least. A migration reprocesses the book.
+A campaign lands. An integration retries a queue. Budgeting the year means forecasting query counts
+twelve months out, then defending a number that moves for reasons nobody in the room set.
+
+## What changes
+
+Mailwoman runs where your code runs. There is no meter, because the software executes on your
+machines and no request crosses a boundary anyone could count. The AGPL-3.0 release is free at any
+volume. The commercial license, which releases you from the AGPL's source-sharing condition, is a
+flat $250 a month per legal entity, and the rate is fixed at signup.
+
+Disk replaces the meter. A full install of the entry package with the `en-us` weights measures
+707 MB, of which 523 MB is the ONNX runtime, and the global admin gazetteer is a 1.65 GB download
+pulled once and kept. Both figures are measured, and the page carrying them prints the commands that
+produced them so you can re-run them rather than take our word:
+[Footprints](../developers/reference/footprints.mdx).
+
+## A book that grows
+
+Take a fulfillment back office geocoding 500,000 addresses a month, and the same product at
+5 million a month eighteen months later. Rates are the providers' to publish and this page quotes
+none of them, so take an illustrative $1 per 1,000 to see the shape: the metered line goes from $500
+a month to $5,000 a month. The commercial license is $250 a month at 500,000 addresses and $250 a
+month at 5 million, because nothing in the deployment reports a count back to us. Growth appears in
+one of those two lines and stays out of the other.
+
+## What you still carry
+
+The price covers the code. Reference data is a separate question: the gazetteer and layer artifacts
+come from open sources with their own terms, and some of those terms follow the data into your
+product — [Security and compliance](../about/security-and-compliance.mdx) draws that line and names
+the two cases worth reading before a review. You also carry the operations, which is a process to
+run, a disk to fill, and a decision about when to refresh. Those costs are flat in address volume,
+which is the property the meter did not have.
+
+## Next
+
+- [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx) — install it and geocode
+  an address against your own disk before anyone signs anything.
+- [Pricing](../pricing.mdx) — the three tiers, the size fence on the middle one, and what each
+  covers.

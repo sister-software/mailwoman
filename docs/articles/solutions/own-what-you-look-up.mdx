@@ -1,0 +1,49 @@
+---
+title: Own what you look up
+description: Metered geocoding is licensed rather than sold, and the terms reach past the request. A result computed on your own disk is an output you keep.
+role: landing
+audience: teams
+---
+
+# Own what you look up
+
+A coordinate you paid for is not automatically a coordinate you may keep. Metered geocoding is
+licensed rather than sold, and the terms commonly reach past the request itself to three further
+questions: how long you may cache a result, whether you may store it beside the record it belongs
+to, and whether you may pass it on. The answers vary by provider and by plan, this page quotes none
+of them, and the only authority on yours is your own agreement. Read it before you design around an
+assumption.
+
+Those terms shape your architecture. A cache window turns a one-time cost into a recurring one for a
+set of addresses that never changed, and a redistribution clause sits between your warehouse and
+every column derived from it.
+[The landscape](../developers/knowledge-base/geocoding/the-landscape.mdx) states the same trade from
+the engineering side.
+
+## What changes
+
+Mailwoman is AGPL-3.0 software that runs on your infrastructure. A geocode is a local read against
+files on your disk, so the result is an output of a program you are running rather than a deliverable
+someone licensed to you. Cache it permanently, join it to the record it came from, index it, and ship
+it inside your own product. There is no per-result grant to track and no expiry to schedule.
+
+The commercial license changes one thing about that and leaves the rest alone: it releases you from
+the AGPL's source-sharing condition, so your own source stays private. Published AGPL releases stay
+licensed to you permanently, which follows from the license itself — a grant already made cannot be
+withdrawn.
+
+## What you still carry
+
+The code license and the data license are separate questions, and only the first one is ours. The
+reference data comes from open sources with their own terms, and some of those follow the data into
+your product. Two specifics belong in a review rather than in a footnote. The OpenStreetMap precision
+tier is built but not enabled in any published artifact, so nothing you install today carries an ODbL
+obligation from it. And Who's On First is recorded as CC0 in one of our own files and as CC-BY 4.0 in
+another; until that is settled, attribute Who's On First. Both are written out, with the artifacts
+that carry them, on [Security and compliance](../about/security-and-compliance.mdx).
+
+## Next
+
+- [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx) — geocode an address on
+  your own machine and keep the output.
+- [Pricing](../pricing.mdx) — what the release from the AGPL's source-sharing condition costs.

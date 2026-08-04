@@ -1,0 +1,49 @@
+---
+title: Reverse-geocode a fleet
+description: Telemetry volume is set by ping interval and device count. A local reverse lookup is bounded by disk and CPU rather than by a quota.
+role: landing
+audience: teams
+---
+
+# Reverse-geocode a fleet
+
+Telemetry volume is set by your ping interval and your device count, so a fleet produces reverse
+lookups at a rate with no relationship to revenue. Priced per lookup, the bill starts shaping the
+telemetry design instead of following it: sample the pings, batch them overnight, or drop the lookup
+and store a raw coordinate that no report can read.
+
+## What changes
+
+Reverse geocoding becomes a local read. `WOFReverseGeocoder` pulls every place whose bounding box
+contains the point from an `R*Tree` index, smallest area first, then ray-casts each candidate's real
+boundary against a polygon sidecar; the first polygon containing the point wins. No socket opens, so
+the rate is bounded by disk and CPU rather than by a quota, and `reverseGeocodeSync` does the same
+work on the calling thread for an ingest path that is already synchronous.
+
+Every result carries a `containment` field reading `polygon` or `approximate`, which is how you tell
+a boundary-confirmed answer from a nearest-centroid one before anything downstream acts on it.
+
+## What you still carry
+
+Two limits decide whether this fits, and both arrive before the first lookup.
+
+**The database is a local build.** Reverse geocoding needs an admin gazetteer carrying the
+`place_bbox` index, and that is not one of the four published bundles — `mailwoman data pull` ships
+`candidate`, `us`, `fr` and `poi`, and none of them is the admin distribution. You build it with
+`mailwoman gazetteer build admin`, which costs hours of wall clock and tens of gigabytes of source
+data.
+
+**There is no address-level reverse.** The result is an administrative chain — neighborhood,
+locality, county, region, country — and never a house number. Having the US rooftop shards on disk
+does not change that, because the reverse path never consults an address-point database.
+
+[Reverse geocode a coordinate](../developers/how-to/reverse-geocode.mdx) carries both with their
+transcripts, including the failure worth designing for: a coordinate outside every boundary you hold
+polygons for still gets an answer, so threshold `distanceKm` whenever `containment` reads
+`approximate`.
+
+## Next
+
+- [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx) — the install and the
+  gazetteer pull, which come before the admin build.
+- [Pricing](../pricing.mdx) — the same monthly figure at any ping interval.

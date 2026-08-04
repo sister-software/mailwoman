@@ -230,18 +230,27 @@ const config: Config = {
 				src: "img/mailwoman-seal-magenta.svg",
 			},
 			// The doors, in reading order. `docSidebar` items point at sidebar ids declared in
-			// sidebars.ts — the Solutions / Resources doors land with their own tasks and are
-			// deliberately absent rather than stubbed, because a navbar entry pointing at an
-			// empty sidebar is a dead link with a label on it.
+			// sidebars.ts — the Resources door lands with its own task and is deliberately
+			// absent rather than stubbed, because a navbar entry pointing at an empty sidebar
+			// is a dead link with a label on it.
 			//
 			// Product leads Docs: a visitor who has not decided yet outnumbers the one who has,
-			// and every Product page ends in a handoff into the `developers` door.
+			// and every Product page ends in a handoff into the `developers` door. Solutions
+			// sits between them because it is the same undecided visitor arriving by their
+			// problem rather than by the feature list, and each of its pages ends in the
+			// ten-minute trial inside `developers`.
 			items: [
 				{
 					type: "docSidebar",
 					sidebarId: "product",
 					position: "left",
 					label: "Product",
+				},
+				{
+					type: "docSidebar",
+					sidebarId: "solutions",
+					position: "left",
+					label: "Solutions",
 				},
 				{
 					type: "docSidebar",

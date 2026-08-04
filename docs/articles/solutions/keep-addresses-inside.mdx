@@ -1,0 +1,45 @@
+---
+title: Keep addresses inside your network
+description: An address attached to a person is personal data. An in-process geocode opens no socket, so there is no third-party flow to paper.
+role: landing
+audience: teams
+---
+
+# Keep addresses inside your network
+
+A street address attached to a customer is personal data under the GDPR and personal information
+under the US state privacy statutes. Sending it to a third-party endpoint is a transfer, and a
+transfer is paperwork: a processor named in your record of processing activities, a data-processing
+agreement, a transfer mechanism when the endpoint sits in another jurisdiction, and a re-paper each
+time the provider's subprocessor list changes. The engineering is one HTTPS call. The review around
+it is the part that takes a quarter.
+
+## What changes
+
+Nothing leaves the process. A parse or a geocode reads model weights and gazetteer files from local
+disk and returns, so there is no recipient to name and no flow to document. No published package
+carries telemetry, analytics, crash reporting, a version check or a usage ping, and installing
+Mailwoman runs no lifecycle scripts of ours.
+
+Three boundaries make that statement checkable, and each one belongs in the review rather than in a
+discovery halfway through it. `RemoteResolver` exists so you can split parser nodes
+from a gazetteer service inside your own network; it throws unless you construct it with an endpoint
+URL, it is never a default, and it is not a service we operate. Building datasets downloads datasets,
+from the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC — commands you run deliberately at
+build time, separate from parsing. And the browser runtime fetches model artifacts once from a URL
+your own application supplies, with the query text staying in the page.
+
+## What you still carry
+
+The residency question moves rather than disappearing. The addresses are now on disk you operate,
+under your retention schedule and your access controls, and that is what a reviewer will ask about
+instead. [Security and compliance](../about/security-and-compliance.mdx) is written for that
+conversation: the three boundaries above with the packages they live in, the licensing position, the
+data provenance, and an SBOM published in both SPDX 2.3 and CycloneDX 1.5, generated from the
+published tarball rather than the working tree.
+
+## Next
+
+- [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx) — install it and see a
+  parse and a geocode complete with no endpoint configured.
+- [Pricing](../pricing.mdx) — flat per legal entity, with no per-address fee to reconcile.

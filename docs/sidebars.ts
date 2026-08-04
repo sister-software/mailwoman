@@ -12,14 +12,15 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // State as of the docs-reorg Task 5 skeleton cutover: the old seven-sidebar tree
 // (startHere / use / understand / reference / contribute / legal) is gone with the
 // content it indexed — everything it listed now lives unpublished under
-// docs/records/site-2026-08/. Three doors ship here, and they are the whole published site:
+// docs/records/site-2026-08/. Four doors ship here, and they are the whole published site:
 //
 // - `product` — what the engine does, where it runs, what it replaces, what data it pulls.
+// - `solutions` — the same engine addressed by the pain a buyer arrives with, not by feature.
 // - `developers` — the get-started trio, what ships today, and where to get help.
 // - `about` — the open-strategy pages, the compliance boundary, contact, and pricing.
 //
-// The Solutions / Resources doors land with their own tasks. They are NOT declared here as
-// empty sidebars: an empty sidebar renders a dead switcher tab (and
+// The Resources door lands with its own task. It is NOT declared here as an empty
+// sidebar: an empty sidebar renders a dead switcher tab (and
 // `useLayoutDocsSidebar(...).link` resolves to nothing), so a door arrives together with
 // the pages behind it or not at all.
 //
@@ -42,6 +43,26 @@ const sidebars: SidebarsConfig = {
 		"product/deployment-options",
 		"product/drop-in-replacements",
 		"product/data-products",
+	],
+	// Indexed by the pain a reader arrives with rather than by the feature that answers it,
+	// so a manager scanning the switcher recognizes their own problem before they have
+	// learned any of this project's vocabulary. Every page runs the same four beats —
+	// problem, what changes, what you still carry, the same two closing links — because the
+	// repetition is what makes the door scannable at the fifth page.
+	//
+	// Order is by how early the question lands in an evaluation: cost is the question that
+	// starts one, storage rights and residency are the two that stop one, and the last two
+	// are workload-shaped rather than commercial — they are read by someone who has already
+	// decided the commercial part and is now checking a specific job.
+	//
+	// Flat, no lead category, for the same reason as `product`: the switcher tab resolves
+	// through `useLayoutDocsSidebar("solutions").link` to the first entry.
+	solutions: [
+		"solutions/cut-the-per-request-bill",
+		"solutions/own-what-you-look-up",
+		"solutions/keep-addresses-inside",
+		"solutions/fleet-reverse-geocoding",
+		"solutions/resolve-a-messy-file",
 	],
 	developers: [
 		{
