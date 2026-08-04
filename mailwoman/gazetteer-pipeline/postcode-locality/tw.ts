@@ -215,8 +215,7 @@ export async function loadDistrictPolygons(path: string): Promise<DivisionPolygo
 		if (row.subtype !== "locality") continue
 
 		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object; tolerate a string too.
-		const geometry =
-			typeof row.geometry === "string" ? parseJSONStrict<GeojsonGeometry>(row.geometry) : row.geometry
+		const geometry = typeof row.geometry === "string" ? parseJSONStrict<GeojsonGeometry>(row.geometry) : row.geometry
 
 		let minLon = Infinity
 		let minLat = Infinity

@@ -45,6 +45,7 @@ import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
@@ -57,7 +58,6 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 
 /**
  * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`

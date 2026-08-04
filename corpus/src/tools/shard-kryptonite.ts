@@ -20,8 +20,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
-import { JSONSpliterator } from "spliterator"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import type { ShardManifest } from "../parquet.ts"

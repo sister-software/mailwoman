@@ -31,9 +31,9 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import {
 	createStreetCentroidIndexes,

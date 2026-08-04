@@ -17,8 +17,8 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
-import { join } from "path-ts"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { join } from "path-ts"
 
 /**
  * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.

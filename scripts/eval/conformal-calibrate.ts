@@ -51,12 +51,12 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, median } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 /**

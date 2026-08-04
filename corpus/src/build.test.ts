@@ -17,8 +17,8 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { repoRootPath } from "@mailwoman/core/utils"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -71,9 +71,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		const corpusManifest = parseJSONStrict<{
 			total_rows: number
 			shards: Array<{ split: string; format: string; path: string }>
-		}>(
-			await readFile(join(outDir, "corpus-v0.1.0", "MANIFEST.json"), "utf8")
-		)
+		}>(await readFile(join(outDir, "corpus-v0.1.0", "MANIFEST.json"), "utf8"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
 		expect(corpusManifest.shards.length).toBeGreaterThanOrEqual(1)

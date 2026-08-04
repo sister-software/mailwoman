@@ -32,8 +32,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
-import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"

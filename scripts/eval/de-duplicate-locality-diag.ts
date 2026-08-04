@@ -25,9 +25,9 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -114,7 +114,9 @@ async function main(): Promise<void> {
 	)
 
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
-	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8"))) : undefined
+	const postcodeAnchorLookup = anchorPath
+		? parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8")))
+		: undefined
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(

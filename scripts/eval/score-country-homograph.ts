@@ -7,12 +7,12 @@ import { parseArgs } from "node:util"
 // (the "trailing token = country" failure), and how often gold country is missed.
 // Usage: node scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { JSONSpliterator } from "spliterator"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({

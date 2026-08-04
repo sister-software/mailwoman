@@ -25,7 +25,6 @@ import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { parseJSONStrict } from "../../objects.ts"
-
 import { dataRootPath } from "../../utils/data-root.ts"
 import { corePackagePath } from "../../utils/repo.ts"
 import { median } from "../../utils/stats.ts"

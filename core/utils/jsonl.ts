@@ -26,12 +26,14 @@ import { TextSpliterator } from "spliterator"
 export function readJSONL<T>(path: string): T[] {
 	// The whole-buffer read and the throw-on-corrupt parse are both part of the shipped contract this
 	// function is deprecated FOR; rewriting either would change what remaining callers get.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator
-	return readFileSync(path, "utf8")
-		.split("\n")
-		.filter((line) => line.trim().length > 0)
-		// oxlint-disable-next-line no-restricted-properties
-		.map((line) => JSON.parse(line) as T)
+	return (
+		// oxlint-disable-next-line mailwoman/prefer-spliterator
+		readFileSync(path, "utf8")
+			.split("\n")
+			.filter((line) => line.trim().length > 0)
+			// oxlint-disable-next-line no-restricted-properties
+			.map((line) => JSON.parse(line) as T)
+	)
 }
 
 /**

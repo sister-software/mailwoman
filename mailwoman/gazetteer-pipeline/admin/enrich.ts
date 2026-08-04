@@ -20,8 +20,8 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
-import { corePackagePath } from "@mailwoman/core/utils"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { corePackagePath } from "@mailwoman/core/utils"
 
 export interface EnrichAdminOptions {
 	/**

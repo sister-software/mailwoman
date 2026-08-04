@@ -14,10 +14,9 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
-import { parseJSONStrict } from "../../objects.ts"
-
 import { JSONSpliterator } from "spliterator"
 
+import { parseJSONStrict } from "../../objects.ts"
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
