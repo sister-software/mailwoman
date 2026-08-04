@@ -32,8 +32,10 @@
 //      This is the real risk: Belgian place names collide with Dutch, French and Slovenian ones, so a
 //      cross-border miss is the failure mode worth catching. The first two arms leave the country
 //      unpinned so this is earned rather than assumed; the third pins it, which is the point of it.
-//   3. Locality — does the resolved commune match the one the address belongs to. The accepted forms
-//      are committed in `be-panel.json`, one list per row, covering the Dutch, French and English
+//   3. Locality — does the resolved commune match the one the address belongs to, reported as three
+//      separate counts (parsed span, gazetteer name match, name match AND inside Belgium). The last
+//      is the metric; see `localityChecks` for why the first two are not. The accepted forms are
+//      committed in `be-panel.json`, one list per row, covering the Dutch, French and English
 //      spellings a gazetteer may carry.
 //   4. Bilingual agreement — for each of the five pairs, how far apart the two language forms land.
 //      This one needs no ground truth at all: the two rows name the same street, so any distance
@@ -50,12 +52,14 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db. No other artifact is needed — that is the point of the panel.
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { readFileSync, realpathSync, writeFileSync } from "node:fs"
+import { createRequire } from "node:module"
+import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
@@ -113,32 +117,73 @@ function fold(name) {
 }
 
 /**
- * Two locality checks, deliberately kept apart.
+ * Three locality checks, deliberately kept apart.
  *
  * `parsed` reads `result.locality` — the span the model labeled. It is close to circular: the commune is right there in
  * the input string, so a high number here says the parser found a token, not that anything was resolved.
  *
- * `resolved` reads only the nodes the resolver decorated (`result.hierarchy`). That is the number that means the
- * gazetteer agreed. Collapsing the two into one metric was the first version of this harness, and it scored a row that
- * landed in Slovenia as a locality hit because the parsed span still said the right thing.
+ * `nameMatched` reads only the nodes the resolver decorated (`result.hierarchy`). It says the gazetteer returned a
+ * place carrying an accepted name — and a place name is not unique on Earth.
+ *
+ * `resolved` is `nameMatched` AND the coordinate landing inside Belgium. That conjunct is the metric, and it is the one
+ * this panel needs: `Oude Markt 1, 3000 Leuven` resolves to a hierarchy reading `["Leuven"]` in the NETHERLANDS, and
+ * `Place Saint-Lambert 1, 4000 Liège` to `["Le Liège", "Liège"]` in FRANCE. Both are name matches in the wrong country,
+ * and a panel built to catch cross-border misrouting scored both as locality hits until the conjunct was added.
  */
-function localityChecks(result, accepted) {
+function localityChecks(result, accepted, inBelgium) {
 	const acceptedSet = new Set(accepted.map(fold))
 
 	// A decorated node carries a gazetteer `name`; `value` is the parsed text the node was matched
 	// from. Both are collected because the two differ on an exonym (`Antwerp` against `Antwerpen`),
 	// and either is a legitimate way for the gazetteer to have agreed. Absent fields are dropped.
 	const hierarchyNames = (result.hierarchy ?? []).flatMap((node) => [node.name, node.value]).filter(Boolean)
+	const nameMatched = hierarchyNames.some((name) => acceptedSet.has(fold(name)))
 
 	return {
 		parsed: Boolean(result.locality) && acceptedSet.has(fold(result.locality)),
-		resolved: hierarchyNames.some((name) => acceptedSet.has(fold(name))),
+		nameMatched,
+		resolved: nameMatched && inBelgium,
 		hierarchyNames: [...new Set(hierarchyNames)],
 	}
 }
 
 function inBox(box, lat, lon) {
 	return lat >= box.minLat && lat <= box.maxLat && lon >= box.minLon && lon <= box.maxLon
+}
+
+/**
+ * Which weights actually answered, for one locale. `resolveWeights` runs the same resolution order the classifier does,
+ * so this reports the artifact that was loaded rather than the one that was asked for — including the base-package
+ * fallback an overlay locale takes for its `model.onnx`. Paths are dereferenced because a development checkout symlinks
+ * them into the workspace, and the symlink name says nothing about which checkpoint is behind it.
+ */
+function weightsStamp(locale) {
+	const resolved = resolveWeights({ locale })
+	const card = JSON.parse(readFileSync(resolved.modelCardPath, "utf8"))
+
+	return {
+		locale,
+		model: basename(realpathSync(resolved.modelPath)),
+		modelCard: `${card.name}@${card.version}`,
+		source: resolved.source,
+	}
+}
+
+/**
+ * The three versions a differing re-run has to be able to tell apart: the code, the model, and the reference data.
+ * Without them a reader whose numbers disagree with the published ones cannot tell data drift from code drift, which is
+ * the whole value of publishing the result file next to the script.
+ */
+function versionStamp() {
+	const require = createRequire(import.meta.url)
+	const base = weightsStamp(ARMS[0].locale)
+
+	return {
+		mailwoman: require("mailwoman/package.json").version,
+		model: base.model,
+		modelCard: base.modelCard,
+		gazetteer: basename(realpathSync(candidatePath)),
+	}
 }
 
 async function runArm(arm, panel) {
@@ -164,7 +209,8 @@ async function runArm(arm, panel) {
 			}
 
 			const hasCoordinate = typeof result.lat === "number" && typeof result.lon === "number"
-			const locality = localityChecks(result, row.acceptedLocality)
+			const inBelgium = hasCoordinate && inBox(panel.bbox, result.lat, result.lon)
+			const locality = localityChecks(result, row.acceptedLocality, inBelgium)
 
 			records.push({
 				id: row.id,
@@ -174,10 +220,16 @@ async function runArm(arm, panel) {
 				pair: row.pair,
 				lat: result.lat,
 				lon: result.lon,
+				// `tier` is the raw `resolution_tier` field, kept verbatim. `answeredAt` is the tier the
+				// row is counted under, and it is `none` when no coordinate came back: `resolution_tier`
+				// reports where the cascade ENDED, not whether it produced anything, so it still reads
+				// "admin" on a row that answered nothing.
 				tier: result.resolution_tier,
+				answeredAt: hasCoordinate ? (result.resolution_tier ?? "none") : "none",
 				countryCode: result.countryCode,
-				inBelgium: hasCoordinate && inBox(panel.bbox, result.lat, result.lon),
+				inBelgium,
 				localityParsed: locality.parsed,
+				localityNameMatched: locality.nameMatched,
 				localityResolved: locality.resolved,
 				hierarchyNames: locality.hierarchyNames,
 				parsed: {
@@ -222,10 +274,15 @@ async function runArm(arm, panel) {
 		}
 	})
 
+	// Bucketed on `answeredAt`, not on the raw tier field. Bucketing on `resolution_tier` alone put
+	// every unresolved row in the `admin` column, so the tier row read 30 while the resolve row above
+	// it read 27 — two lines of one table disagreeing about the same six rows.
 	const tiers = {}
 
 	for (const record of records) {
-		tiers[record.tier ?? "none"] = (tiers[record.tier ?? "none"] ?? 0) + 1
+		const bucket = record.answeredAt ?? "none"
+
+		tiers[bucket] = (tiers[bucket] ?? 0) + 1
 	}
 
 	return {
@@ -238,7 +295,9 @@ async function runArm(arm, panel) {
 			inBelgium: records.filter((r) => r.inBelgium).length,
 			countryCodeBE: records.filter((r) => r.countryCode === "BE").length,
 			localityParsed: records.filter((r) => r.localityParsed).length,
+			localityNameMatched: records.filter((r) => r.localityNameMatched).length,
 			localityResolved: records.filter((r) => r.localityResolved).length,
+			weights: weightsStamp(arm.locale),
 			tiers,
 			pairsDeclared: pairs.length,
 			pairsComparable: pairs.filter((p) => p.comparable).length,
@@ -265,6 +324,9 @@ const report = {
 	ranAt: new Date().toISOString(),
 	elapsedMs: Date.now() - startedAt,
 	panel: { rows: panel.rows.length, bbox: panel.bbox },
+	// The panel carries no data release because there is no Belgian register to carry one from — the
+	// only reference artifact is the gazetteer, and it is stamped below.
+	versions: versionStamp(),
 	config: {
 		gazetteer: "candidate.db",
 		nationalTier: "none — no Belgian rooftop register ships",

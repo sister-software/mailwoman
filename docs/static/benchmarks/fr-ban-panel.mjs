@@ -43,8 +43,9 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db and the BAN shard from <DATA_ROOT>/ban/address-points-fr.db.
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { readFileSync, realpathSync, writeFileSync } from "node:fs"
+import { createRequire } from "node:module"
+import { basename, dirname, join, resolve } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
@@ -52,12 +53,20 @@ import { parseArgs } from "node:util"
 import { BANShardProvider } from "@mailwoman/ban/sdk"
 import { median, mulberry32, percentile } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { geocodeAddress } from "mailwoman/geocode-core"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
+
+/**
+ * The weights locale. The `fr-FR` package is a data-only overlay: it ships the French postcode, pair-index and FST
+ * artifacts and takes `model.onnx` from the base package, which is what `versions.modelCard` against `versions.model`
+ * records in the result file.
+ */
+const LOCALE = "fr-FR"
 
 /** The committed draw seed. Changing it changes the panel, so it is a constant and not a flag. */
 const SEED = 20_260_804
@@ -208,15 +217,50 @@ function resample() {
 
 //#endregion
 
+//#region Versions
+
+/**
+ * The three versions a differing re-run has to be able to tell apart: the code, the model, and the reference data.
+ * Without them a reader whose numbers disagree with the published ones cannot tell data drift from code drift, which is
+ * the whole value of publishing the result file next to the script.
+ *
+ * `resolveWeights` runs the same resolution order the classifier does, so this reports the artifact that was loaded
+ * rather than the one that was asked for — including the base-package fallback the `fr-FR` overlay takes for its
+ * `model.onnx`. Paths are dereferenced because a development checkout symlinks them into the workspace, and the symlink
+ * name says nothing about which checkpoint is behind it. The BAN release itself is recorded separately, on the
+ * committed panel file, because it is a property of the addresses rather than of the run.
+ */
+function versionStamp() {
+	const require = createRequire(import.meta.url)
+	const resolved = resolveWeights({ locale: LOCALE })
+	const card = JSON.parse(readFileSync(resolved.modelCardPath, "utf8"))
+
+	return {
+		mailwoman: require("mailwoman/package.json").version,
+		model: basename(realpathSync(resolved.modelPath)),
+		modelCard: `${card.name}@${card.version}`,
+		gazetteer: basename(realpathSync(candidatePath)),
+		nationalShard: basename(realpathSync(banPath)),
+	}
+}
+
+//#endregion
+
 //#region Grading
 
 function summarize(records) {
 	const distances = records.filter((r) => r.km !== null).map((r) => r.km)
 	const within = (km) => records.filter((r) => r.km !== null && r.km <= km).length
+	// Bucketed on the tier that ANSWERED, which is `none` for a row that returned no coordinate:
+	// `resolution_tier` reports where the cascade ended, not whether it produced anything, so it still
+	// reads "admin" on a row that answered nothing. Every row on this panel resolved, so the two
+	// bucketings agree here — the guard is in place so they cannot silently disagree on a future run.
 	const tiers = {}
 
 	for (const record of records) {
-		tiers[record.tier ?? "none"] = (tiers[record.tier ?? "none"] ?? 0) + 1
+		const bucket = record.km === null ? "none" : (record.tier ?? "none")
+
+		tiers[bucket] = (tiers[bucket] ?? 0) + 1
 	}
 
 	return {
@@ -240,7 +284,7 @@ async function run() {
 	const panel = JSON.parse(readFileSync(flags.sample, "utf8"))
 	const rows = flags.limit ? panel.rows.slice(0, Number(flags.limit)) : panel.rows
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "fr-FR" })
+	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
 	const lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
 	const banShards = new BANShardProvider(dataRoot)
@@ -318,8 +362,9 @@ async function run() {
 			seed: panel.seed,
 			rows: rows.length,
 		},
+		versions: versionStamp(),
 		config: {
-			locale: "fr-FR",
+			locale: LOCALE,
 			defaultCountry: "FR",
 			gazetteer: "candidate.db",
 			nationalTier: "BAN FR rooftop shard",

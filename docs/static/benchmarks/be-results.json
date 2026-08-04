@@ -1,7 +1,7 @@
 {
 	"harness": "be-panel.mjs",
-	"ranAt": "2026-08-04T04:53:34.265Z",
-	"elapsedMs": 3703,
+	"ranAt": "2026-08-04T05:19:59.072Z",
+	"elapsedMs": 4273,
 	"panel": {
 		"rows": 30,
 		"bbox": {
@@ -11,6 +11,12 @@
 			"minLat": 49.49,
 			"maxLat": 51.51
 		}
+	},
+	"versions": {
+		"mailwoman": "8.7.0",
+		"model": "model-v401-base-step-060000-int8.onnx",
+		"modelCard": "neural-weights-en-us@7.0.0",
+		"gazetteer": "candidate-global-1026.db"
 	},
 	"config": {
 		"gazetteer": "candidate.db",
@@ -27,9 +33,17 @@
 			"inBelgium": 24,
 			"countryCodeBE": 24,
 			"localityParsed": 29,
-			"localityResolved": 26,
+			"localityNameMatched": 26,
+			"localityResolved": 24,
+			"weights": {
+				"locale": "en-US",
+				"model": "model-v401-base-step-060000-int8.onnx",
+				"modelCard": "neural-weights-en-us@7.0.0",
+				"source": "package:@mailwoman/neural-weights-en-us"
+			},
 			"tiers": {
-				"admin": 30
+				"admin": 27,
+				"none": 3
 			},
 			"pairsDeclared": 5,
 			"pairsComparable": 4,
@@ -45,9 +59,17 @@
 			"inBelgium": 24,
 			"countryCodeBE": 24,
 			"localityParsed": 29,
-			"localityResolved": 26,
+			"localityNameMatched": 26,
+			"localityResolved": 24,
+			"weights": {
+				"locale": "fr-FR",
+				"model": "model-v401-base-step-060000-int8.onnx",
+				"modelCard": "neural-weights-fr-fr@6.5.0",
+				"source": "package:@mailwoman/neural-weights-fr-fr+base"
+			},
 			"tiers": {
-				"admin": 30
+				"admin": 27,
+				"none": 3
 			},
 			"pairsDeclared": 5,
 			"pairsComparable": 4,
@@ -65,7 +87,14 @@
 			"inBelgium": 30,
 			"countryCodeBE": 30,
 			"localityParsed": 30,
+			"localityNameMatched": 30,
 			"localityResolved": 30,
+			"weights": {
+				"locale": "en-US",
+				"model": "model-v401-base-step-060000-int8.onnx",
+				"modelCard": "neural-weights-en-us@7.0.0",
+				"source": "package:@mailwoman/neural-weights-en-us"
+			},
 			"tiers": {
 				"admin": 30
 			},
@@ -214,9 +243,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -238,9 +269,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -262,9 +295,11 @@
 				"lat": null,
 				"lon": null,
 				"tier": "admin",
+				"answeredAt": "none",
 				"countryCode": null,
 				"inBelgium": false,
 				"localityParsed": true,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -283,9 +318,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -307,9 +344,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -331,9 +370,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -355,9 +396,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -379,9 +422,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -403,9 +448,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -427,9 +474,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -451,9 +500,11 @@
 				"lat": 51.22047,
 				"lon": 4.40026,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Antwerp",
@@ -475,9 +526,11 @@
 				"lat": 51.22047,
 				"lon": 4.40026,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Antwerp",
@@ -499,9 +552,11 @@
 				"lat": 51.0538286,
 				"lon": 3.7250121,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Gent"
@@ -522,9 +577,11 @@
 				"lat": 51.0538286,
 				"lon": 3.7250121,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Gent"
@@ -545,9 +602,11 @@
 				"lat": 51.20892,
 				"lon": 3.22424,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brugge"
@@ -568,10 +627,12 @@
 				"lat": 51.84417,
 				"lon": 5.09444,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "NL",
 				"inBelgium": false,
 				"localityParsed": true,
-				"localityResolved": true,
+				"localityNameMatched": true,
+				"localityResolved": false,
 				"hierarchyNames": [
 					"Leuven"
 				],
@@ -591,9 +652,11 @@
 				"lat": 50.93106,
 				"lon": 5.33781,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Hasselt"
@@ -614,9 +677,11 @@
 				"lat": 51.2258565,
 				"lon": 2.919496,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Oostende"
@@ -637,9 +702,11 @@
 				"lat": 51.0281381,
 				"lon": 4.4803453,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Mechelen"
@@ -660,10 +727,12 @@
 				"lat": 47.228695,
 				"lon": 1.109793,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "FR",
 				"inBelgium": false,
 				"localityParsed": true,
-				"localityResolved": true,
+				"localityNameMatched": true,
+				"localityResolved": false,
 				"hierarchyNames": [
 					"Le Liège",
 					"Liège"
@@ -684,9 +753,11 @@
 				"lat": 46.24313037410937,
 				"lon": 14.363868646747052,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "SI",
 				"inBelgium": false,
 				"localityParsed": false,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -705,9 +776,11 @@
 				"lat": 50.4665284,
 				"lon": 4.8661892,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Namur"
@@ -728,9 +801,11 @@
 				"lat": 50.4665284,
 				"lon": 4.8661892,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Namur"
@@ -751,9 +826,11 @@
 				"lat": 50.45413,
 				"lon": 3.95229,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Mons"
@@ -774,9 +851,11 @@
 				"lat": 50.4116233,
 				"lon": 4.444528,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Charleroi"
@@ -797,9 +876,11 @@
 				"lat": 50.5976885,
 				"lon": 4.3235854,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Nivelles"
@@ -820,9 +901,11 @@
 				"lat": 49.6834601,
 				"lon": 5.8167711,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Arlon"
@@ -843,9 +926,11 @@
 				"lat": 50.59324,
 				"lon": 5.867828,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Verviers"
@@ -866,9 +951,11 @@
 				"lat": null,
 				"lon": null,
 				"tier": "admin",
+				"answeredAt": "none",
 				"countryCode": null,
 				"inBelgium": false,
 				"localityParsed": true,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -887,9 +974,11 @@
 				"lat": null,
 				"lon": null,
 				"tier": "admin",
+				"answeredAt": "none",
 				"countryCode": null,
 				"inBelgium": false,
 				"localityParsed": true,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -910,9 +999,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -934,9 +1025,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -958,9 +1051,11 @@
 				"lat": null,
 				"lon": null,
 				"tier": "admin",
+				"answeredAt": "none",
 				"countryCode": null,
 				"inBelgium": false,
 				"localityParsed": true,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -979,9 +1074,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1003,9 +1100,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1027,9 +1126,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1051,9 +1152,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1075,9 +1178,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1099,9 +1204,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1123,9 +1230,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1147,9 +1256,11 @@
 				"lat": 51.22047,
 				"lon": 4.40026,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Antwerp",
@@ -1171,9 +1282,11 @@
 				"lat": 51.22047,
 				"lon": 4.40026,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Antwerp",
@@ -1195,9 +1308,11 @@
 				"lat": 51.0538286,
 				"lon": 3.7250121,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Gent"
@@ -1218,9 +1333,11 @@
 				"lat": 51.0538286,
 				"lon": 3.7250121,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Gent"
@@ -1241,9 +1358,11 @@
 				"lat": 51.20892,
 				"lon": 3.22424,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brugge"
@@ -1264,10 +1383,12 @@
 				"lat": 51.84417,
 				"lon": 5.09444,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "NL",
 				"inBelgium": false,
 				"localityParsed": true,
-				"localityResolved": true,
+				"localityNameMatched": true,
+				"localityResolved": false,
 				"hierarchyNames": [
 					"Leuven"
 				],
@@ -1287,9 +1408,11 @@
 				"lat": 50.93106,
 				"lon": 5.33781,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Hasselt"
@@ -1310,9 +1433,11 @@
 				"lat": 51.2258565,
 				"lon": 2.919496,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Oostende"
@@ -1333,9 +1458,11 @@
 				"lat": 51.0281381,
 				"lon": 4.4803453,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Mechelen"
@@ -1356,10 +1483,12 @@
 				"lat": 47.228695,
 				"lon": 1.109793,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "FR",
 				"inBelgium": false,
 				"localityParsed": true,
-				"localityResolved": true,
+				"localityNameMatched": true,
+				"localityResolved": false,
 				"hierarchyNames": [
 					"Le Liège",
 					"Liège"
@@ -1380,9 +1509,11 @@
 				"lat": 46.24313037410937,
 				"lon": 14.363868646747052,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "SI",
 				"inBelgium": false,
 				"localityParsed": false,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -1401,9 +1532,11 @@
 				"lat": 50.4665284,
 				"lon": 4.8661892,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Namur"
@@ -1424,9 +1557,11 @@
 				"lat": 50.4665284,
 				"lon": 4.8661892,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Namur"
@@ -1447,9 +1582,11 @@
 				"lat": 50.45413,
 				"lon": 3.95229,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Mons"
@@ -1470,9 +1607,11 @@
 				"lat": 50.4116233,
 				"lon": 4.444528,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Charleroi"
@@ -1493,9 +1632,11 @@
 				"lat": 50.5976885,
 				"lon": 4.3235854,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Nivelles"
@@ -1516,9 +1657,11 @@
 				"lat": 49.6834601,
 				"lon": 5.8167711,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Arlon"
@@ -1539,9 +1682,11 @@
 				"lat": 50.59324,
 				"lon": 5.867828,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Verviers"
@@ -1562,9 +1707,11 @@
 				"lat": null,
 				"lon": null,
 				"tier": "admin",
+				"answeredAt": "none",
 				"countryCode": null,
 				"inBelgium": false,
 				"localityParsed": true,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -1583,9 +1730,11 @@
 				"lat": null,
 				"lon": null,
 				"tier": "admin",
+				"answeredAt": "none",
 				"countryCode": null,
 				"inBelgium": false,
 				"localityParsed": true,
+				"localityNameMatched": false,
 				"localityResolved": false,
 				"hierarchyNames": [],
 				"parsed": {
@@ -1606,9 +1755,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1630,9 +1781,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1654,9 +1807,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1678,9 +1833,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1702,9 +1859,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1726,9 +1885,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1750,9 +1911,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1774,9 +1937,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1798,9 +1963,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1822,9 +1989,11 @@
 				"lat": 50.85045,
 				"lon": 4.34878,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brussels",
@@ -1846,9 +2015,11 @@
 				"lat": 51.22047,
 				"lon": 4.40026,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Antwerp",
@@ -1870,9 +2041,11 @@
 				"lat": 51.22047,
 				"lon": 4.40026,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Antwerp",
@@ -1894,9 +2067,11 @@
 				"lat": 51.0538286,
 				"lon": 3.7250121,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Gent"
@@ -1917,9 +2092,11 @@
 				"lat": 51.0538286,
 				"lon": 3.7250121,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Gent"
@@ -1940,9 +2117,11 @@
 				"lat": 51.20892,
 				"lon": 3.22424,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Brugge"
@@ -1963,9 +2142,11 @@
 				"lat": 50.879202,
 				"lon": 4.7011675,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Leuven"
@@ -1986,9 +2167,11 @@
 				"lat": 50.93106,
 				"lon": 5.33781,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Hasselt"
@@ -2009,9 +2192,11 @@
 				"lat": 51.2258565,
 				"lon": 2.919496,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Oostende"
@@ -2032,9 +2217,11 @@
 				"lat": 51.0281381,
 				"lon": 4.4803453,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Mechelen"
@@ -2055,9 +2242,11 @@
 				"lat": 50.6450944,
 				"lon": 5.5736112,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Liège"
@@ -2078,9 +2267,11 @@
 				"lat": 50.6450944,
 				"lon": 5.5736112,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Liège"
@@ -2101,9 +2292,11 @@
 				"lat": 50.4665284,
 				"lon": 4.8661892,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Namur"
@@ -2124,9 +2317,11 @@
 				"lat": 50.4665284,
 				"lon": 4.8661892,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Namur"
@@ -2147,9 +2342,11 @@
 				"lat": 50.45413,
 				"lon": 3.95229,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Mons"
@@ -2170,9 +2367,11 @@
 				"lat": 50.4116233,
 				"lon": 4.444528,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Charleroi"
@@ -2193,9 +2392,11 @@
 				"lat": 50.5976885,
 				"lon": 4.3235854,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Nivelles"
@@ -2216,9 +2417,11 @@
 				"lat": 49.6834601,
 				"lon": 5.8167711,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Arlon"
@@ -2239,9 +2442,11 @@
 				"lat": 50.59324,
 				"lon": 5.867828,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Verviers"
@@ -2262,9 +2467,11 @@
 				"lat": 50.6305665,
 				"lon": 6.0312717,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Eupen"
@@ -2285,9 +2492,11 @@
 				"lat": 50.2803881,
 				"lon": 6.1258953,
 				"tier": "admin",
+				"answeredAt": "admin",
 				"countryCode": "BE",
 				"inBelgium": true,
 				"localityParsed": true,
+				"localityNameMatched": true,
 				"localityResolved": true,
 				"hierarchyNames": [
 					"Sankt Vith"

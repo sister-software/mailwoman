@@ -47,10 +47,12 @@ rooftop register we can grade distances against, so this page claims no distance
 - **Country routing** — is the coordinate inside a bounding box drawn around Belgium's extremes, and
   does the result name `BE`. A coordinate outside the box did not land in Belgium; one inside it is
   not thereby correct.
-- **Locality**, split in two. `parsed` reads the span the model labeled, which is close to circular —
-  the commune is right there in the input string. `resolved` reads only the nodes the resolver
-  decorated. The second is the number that means the gazetteer agreed, and the gap between them is
-  the interesting part.
+- **Locality**, split in three, because the two obvious versions of it are each wrong on their own.
+  `parsed` reads the span the model labeled, which is close to circular — the commune is right there
+  in the input string. `name matched` reads only the nodes the resolver decorated, which says the
+  gazetteer returned an accepted spelling and says nothing about where. `resolved` is the name match
+  conjoined with the bounding-box check, and it is the one to read: a place name is not unique on
+  Earth, and this panel exists to catch the cases where the wrong one won.
 - **Bilingual agreement** — for each pair, the distance between the two language forms. This one needs
   no ground truth at all: the two rows name one street, so any distance between them is the pipeline
   disagreeing with itself.
@@ -65,26 +67,37 @@ Thirty rows per arm, from [`be-results.json`](/benchmarks/be-results.json):
 | Inside the Belgium bounding box | 24     | 24           | 30               |
 | Result names `BE`               | 24     | 24           | 30               |
 | Locality — parsed               | 29     | 29           | 30               |
-| Locality — resolved             | 26     | 26           | 30               |
+| Locality — name matched         | 26     | 26           | 30               |
+| Locality — resolved, in Belgium | 24     | 24           | 30               |
 | Bilingual pairs declared        | 5      | 5            | 5                |
 | Bilingual pairs comparable      | 4      | 4            | 5                |
 | Bilingual pairs agreeing        | 4      | 4            | 5                |
 | Worst pair separation           | 0 km   | 0 km         | 0 km             |
-| Answered at `admin`             | 30     | 30           | 30               |
+| Answered at `admin`             | 27     | 27           | 30               |
+| Answered at no tier             | 3      | 3            | 0                |
 
 Three readings, in order of how much they change what you would do:
 
-**The tier row is the same in every arm, and it is the whole ceiling.** Every row answers at `admin` —
-a commune centroid. Nothing on this panel is street-grade, because there is no Belgian artifact that
-could make it street-grade. A perfect score here means "resolved to the right commune", and a commune
-is kilometers wide.
+**Every row that answered at all answered at `admin`** — a commune centroid. Nothing on this panel is
+street-grade, because there is no Belgian artifact that could make it street-grade. A perfect score
+here means "resolved to the right commune", and a commune is kilometers wide. Three rows in the first
+two arms answered at no tier: they returned no coordinate, and they are counted as `none` rather than
+folded into the `admin` row.
+
+**The two locality rows are one metric and its check.** A name match says the gazetteer returned a
+place carrying an accepted spelling. It does not say the place is in Belgium, and on this panel that
+gap is exactly two rows in each of the first two arms — one Belgian commune name matched in the
+Netherlands, one in France. The row that means what a reader thinks "locality" means is the last of
+the two.
 
 **The French overlay changes nothing.** The `fr-overlay` arm is identical to `base` on every measure
-and on every one of the thirty per-row records. Half this panel is French-language, and reaching for
-the French weights package did not move a single row. Belgium is not a tier, and choosing the nearest
-tier does not make it one.
+and on every one of the thirty per-row records. The result file says why: both arms record
+`model-v401-base-step-060000-int8.onnx` under `versions.model`, because the French package is a
+data-only overlay that takes its `model.onnx` from the base package and ships only French postcode,
+pair-index and FST siblings. None of those siblings is consulted for a Belgian postcode. Belgium is
+not a tier, and choosing the nearest tier does not make it one.
 
-**Pinning the country fixes every failure.** `country-pinned` is 30 out of 30 on all five resolution
+**Pinning the country fixes every failure.** `country-pinned` is 30 out of 30 on all six resolution
 measures. That is one option in the call, and the section below is what it is repairing.
 
 ## Losses
@@ -139,7 +152,14 @@ carrying `4000` and no readable commune routes there. Under `country-pinned` thi
 right coordinate, and its parse is still wrong: house number `null`, street still `Rue Léopold 1`,
 postcode still `4000 Liège`. **The 30-out-of-30 above includes a row whose parse is broken.** That is
 the resolve-rate trap in its natural habitat, and it is the reason this page reports the parsed and
-resolved locality counts as two columns instead of one.
+resolved locality counts as separate rows instead of one.
+
+**Two of the six were scored as locality hits until the metric was fixed.** `Oude Markt 1, 3000
+Leuven` resolves to a hierarchy reading `["Leuven"]` and `Place Saint-Lambert 1, 4000 Liège` to
+`["Le Liège", "Liège"]`. Both are accepted spellings. Both are in the wrong country. A name match is
+not a resolution on a panel whose subject is cross-border misrouting, which is why the published
+metric is the name match conjoined with the bounding-box check — and why the two rows are reported
+separately rather than one replacing the other.
 
 **One bilingual pair could not be measured.** `Grote Markt 1, 1000 Brussel` returned no coordinate in
 the `base` and `fr-overlay` arms, so its French twin had nothing to be compared against. The pairs
@@ -154,12 +174,12 @@ set, no Belgian training tier, and no Belgian rooftop data. Everything above is 
 a global gazetteer. [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) draws the
 line this page sits outside of.
 
-**Every number is a commune-grade number.** All 90 row-runs answered at `admin`. Do not read
+**Every number is a commune-grade number.** All 84 answering row-runs answered at `admin`. Do not read
 `30 of 30` as street accuracy — read it as "the right commune centroid", with the error bounded by
 the size of the commune rather than by anything measured here.
 
 **The bounding-box check is coarse in one direction only.** A coordinate outside the box definitely
-missed Belgium. A coordinate inside it could still be the wrong commune, and the locality column is
+missed Belgium. A coordinate inside it could still be the wrong commune, and the locality row is
 what covers that case.
 
 **The locality expectations are ours.** Each row carries a committed list of accepted commune
@@ -183,6 +203,12 @@ The script is [`be-panel.mjs`](/benchmarks/be-panel.mjs), the panel is
 [`be-results.json`](/benchmarks/be-results.json) verbatim, including a per-row record for all thirty
 addresses in each of the three arms.
 
+That file's `versions` block records what this run used: Mailwoman 8.7.0,
+`model-v401-base-step-060000-int8.onnx` and `candidate-global-1026.db`. Each arm additionally carries
+its own `weights` entry, which is how the identical `base` and `fr-overlay` columns are traceable to
+one ONNX file behind two package names. There is no data-release field, because no Belgian register
+ships to have one.
+
 ```bash
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
             @mailwoman/neural-weights-fr-fr @mailwoman/resolver \
@@ -192,7 +218,7 @@ node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
 ```
 
 One 1.65 GB bundle, and no rooftop shard — that is the point of the panel. The three arms took
-3,703 ms together, model load excluded.
+4,273 ms together, model load excluded.
 
 ## Related
 

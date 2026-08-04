@@ -67,7 +67,7 @@ Both arms, 100 rows each, from [`fr-ban-results.json`](/benchmarks/fr-ban-result
 | Answered at `address_point` | 96       | 98          |
 | Answered at `admin`         | 4        | 2           |
 
-The two arms took 1,801 ms together, model load excluded.
+The two arms took 2,615 ms together, model load excluded.
 
 The reordered arm scores higher than the clean one, which is the opposite of what a robustness arm is
 built to show. Two rows explain the whole gap, and the mechanism is in the parse:
@@ -153,6 +153,11 @@ The script is [`fr-ban-panel.mjs`](/benchmarks/fr-ban-panel.mjs), the panel is
 [`fr-ban-sample.json`](/benchmarks/fr-ban-sample.json), and the output above is
 [`fr-ban-results.json`](/benchmarks/fr-ban-results.json) verbatim, including a per-row record for
 every address in both arms.
+
+That file's `versions` block records what this run used: Mailwoman 8.7.0,
+`neural-weights-fr-fr@6.5.0` resolving to `model-v401-base-step-060000-int8.onnx`,
+`candidate-global-1026.db`, and the BAN shard. The script writes those from the resolved artifact
+paths rather than from a constant, so a re-run stamps its own.
 
 ```bash
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-fr-fr \

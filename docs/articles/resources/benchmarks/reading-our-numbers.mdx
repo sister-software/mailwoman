@@ -9,7 +9,7 @@ role: explanation
 ## The question
 
 A geocoder reports that it resolved 98% of your file. What do you now know? Less than the sentence
-suggests, and the gap is where geocoding benchmarks go wrong — including ours, twice, on the two
+suggests, and the gap is where geocoding benchmarks go wrong — including ours, three times, on the two
 pages next door.
 
 This page is the reading guide for those pages. It is also the checklist we hold our own panels to,
@@ -43,8 +43,16 @@ Our [Belgian panel](./belgium-panel.mdx) reports 30 of 30 in its best arm. Every
 answered at `admin`. The panel's own summary says so on the line under the score, because a reader who
 takes 30 out of 30 for street accuracy has been misled by a true number.
 
-**What to ask of any benchmark, ours included:** what fraction answered at each tier? A published
-resolve rate with no tier breakdown is not measuring what the reader thinks.
+There is a second edge on this, and our own script fell off it. A tier field reports where the
+resolution cascade _ended_, not whether it produced anything — so a row that returned no coordinate
+still carries `admin`. Counting the field directly put three unresolved rows in the `admin` column of
+each of the first two Belgian arms, and the published table read `admin: 30` two lines under
+`returned a coordinate: 27`. The two rows disagreed about the same three addresses. The fix is to
+bucket on the tier that answered and count the rest as `none`, which is what the table shows now.
+
+**What to ask of any benchmark, ours included:** what fraction answered at each tier, and do the tier
+counts add up to the resolve count? A published resolve rate with no tier breakdown is not measuring
+what the reader thinks, and a tier breakdown that outnumbers the resolve rate is counting silence.
 
 ## Trap two: circularity
 
@@ -91,7 +99,7 @@ what n supports?
 
 ## Trap four: throughput does not survive the host
 
-Our panel pages report elapsed time — 1,801 ms for 200 French geocodes, 3,703 ms for 90 Belgian ones.
+Our panel pages report elapsed time — 2,615 ms for 200 French geocodes, 4,273 ms for 90 Belgian ones.
 Those numbers describe one machine doing one thing.
 
 Three mechanisms break the extrapolation:
@@ -115,18 +123,34 @@ published beside it, with the result file published beside it. That is the stand
 written against, and it is checkable rather than promised: if a page reports a count, the file it
 came from is one click away and carries the per-row records behind it.
 
-Two things follow from that, and both are visible on the pages:
+Three things follow from that, and all three are visible on the pages:
 
 **Losses get the same room as wins.** The French page publishes six failing rows with their distances
 and their broken parses. The Belgian page publishes six, plus a row that scores as correct while
 carrying a wrong parse underneath. A page that reports only the aggregate is not showing you the
 thing you would have had to debug.
 
-**Instrument defects get published too.** The Belgian script's first version collapsed the parsed and
-resolved locality checks into one metric and dropped an unmeasurable bilingual pair from its own
-denominator — turning a row that returned no coordinate into a clean sweep. Both are fixed in the
-published script and both are recorded on the page, because a benchmark's instrument is part of its
-result.
+**A result file names the versions it ran against.** Each one records `versions.mailwoman`,
+`versions.model` — the resolved artifact filename, not the package alias — and `versions.gazetteer`.
+A reader whose re-run disagrees with ours needs those three to tell data drift from code drift, and
+without them a differing number is uninterpretable rather than informative. The French file also
+records its BAN release, on the committed panel, because that is a property of the addresses.
+
+**Instrument defects get published too.** Three so far, all in the Belgian script, all found after
+its first numbers were written:
+
+1. It collapsed the parsed and resolved locality checks into one metric, scoring a row that landed in
+   Slovenia as a locality hit because the parsed span still read correctly.
+2. It dropped an unmeasurable bilingual pair from its own denominator, turning a row that returned no
+   coordinate into a clean 4-of-4.
+3. It counted a locality name match as a resolution without checking the country, scoring a Belgian
+   commune name matched in the Netherlands and another matched in France as hits — on a panel whose
+   subject is cross-border misrouting. That one cost two rows in each of two arms.
+
+Each is fixed in the published script, and each is named on the page rather than corrected without a
+note, because a benchmark's instrument is part of its result. The pattern across all three is the
+same: the metric counted something adjacent to the claim and the aggregate looked reasonable, so only
+reading the per-row records caught it.
 
 ## Related
 

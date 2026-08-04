@@ -64,9 +64,16 @@ bash run-all.sh ./benchmark-data
 The Belgian panel needs only the first bundle; run it alone with `node be-panel.mjs` if 6.95 GB of
 French rooftop data is not what you came for.
 
-Your numbers will differ from ours where the data releases differ — a newer BAN release moves rows,
-and a newer gazetteer moves rankings. Each panel records the release it ran against in its result
-file, so two runs can be compared rather than only contrasted.
+Your numbers will differ from ours where the versions differ — a newer BAN release moves rows, a newer
+gazetteer moves rankings, and a newer model moves parses. Each result file records a `versions` block
+naming the Mailwoman version, the resolved model artifact and the gazetteer file it ran against, so a
+disagreement can be attributed rather than only observed. The French panel additionally records its
+BAN release, on the committed sample file; the Belgian panel records no data release, because there
+is no Belgian register for it to record one from.
+
+Ours ran against Mailwoman 8.7.0, `model-v401-base-step-060000-int8.onnx` and
+`candidate-global-1026.db`. Note that npm currently serves 8.6.0, so an unpinned install is a version
+behind these pages.
 
 ## What is not here
 
