@@ -147,36 +147,35 @@ export async function backfillAncestorsFromHierarchy(
 	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
 	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
 	// The id bound is stated first so SQLite prunes by the PK index before the NOT EXISTS runs at all.
-	const candidates = await kdb
+	const candidateBase = kdb
 		.selectFrom("spr")
-		.select(["id", "placetype"])
 		.where("id", "<", maxID)
 		.where((eb) =>
 			eb.not(
 				eb.exists(
 					eb
-						.selectFrom("ancestors")
-						.select("ancestors.id")
-						.whereRef("ancestors.id", "=", "spr.id")
-						.where("ancestors.ancestor_placetype", "=", "country")
+						.selectFrom("ancestors as a")
+						.select("a.id")
+						.whereRef("a.id", "=", "spr.id")
+						.where("a.ancestor_placetype", "=", "country")
 				)
 			)
 		)
-		.execute()
+
+	const candidates = await candidateBase.select(["id", "placetype"]).execute()
 
 	// Every candidate's existing ancestors in ONE query rather than an indexed read each. The widened
 	// candidate test made that per-candidate read the dominant cost of the pass, and the set is bounded:
-	// a candidate reaching this point has a handful of rows at most.
+	// a candidate reaching this point has a handful of rows at most. The candidate set rides in as the
+	// SAME predicate re-issued as a subquery, never a materialized `IN (?, ?, …)` list — node:sqlite
+	// caps a statement at 32,766 bound variables and the wide-coverage build has 67,521 candidates
+	// (measured 2026-08-04).
 	const alreadyPresent = new Map<number, Set<number>>()
 
 	for (const row of await kdb
 		.selectFrom("ancestors")
 		.select(["id", "ancestor_id"])
-		.where(
-			"id",
-			"in",
-			candidates.map((c) => c.id)
-		)
+		.where("id", "in", candidateBase.select("spr.id"))
 		.execute()) {
 		let set = alreadyPresent.get(row.id)
 
