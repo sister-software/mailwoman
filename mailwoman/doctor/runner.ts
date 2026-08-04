@@ -13,13 +13,14 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
-import { accessSync, constants, existsSync, statSync } from "node:fs"
-import { createRequire } from "node:module"
+import { accessSync, constants, existsSync, readFileSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 
@@ -39,8 +40,6 @@ import {
 	type POIObservation,
 	type WeightsObservation,
 } from "./checks.ts"
-
-const req = createRequire(import.meta.url)
 
 /**
  * The resolved-weights shape the runner needs — a structural subset of `@mailwoman/neural`'s `ResolvedWeights`.
@@ -119,11 +118,20 @@ export interface DoctorDeps {
 }
 
 /**
- * Read `engines.node` from mailwoman's own package.json (self-reference export), defaulting to `">=0"` if unreadable.
+ * Read `engines.node` from mailwoman's own package.json, defaulting to `">=0"` if unreadable.
+ *
+ * Located by SELF-REFERENCE through the package's own `exports` map (`"./package.json": "./package.json"`), so this
+ * finds the right manifest from the source tree, the compiled `out/` tree and an installed tarball alike — none of the
+ * `__isCompiledTree` distance arithmetic `core/utils/repo.ts` needs. `import.meta.resolve` rather than a static `with {
+ * type: "json" }` import (the form `photon/app.ts` and friends use) because the tolerant fallback is the point:
+ * `mailwoman doctor` exists to report a broken environment, so an unresolvable manifest must degrade to `">=0"`, not
+ * throw at module load.
  */
 function readEnginesFloor(): string {
 	try {
-		const pkg = req("mailwoman/package.json") as { engines?: { node?: string } }
+		const pkg = parseJSONStrict<{ engines?: { node?: string } }>(
+			readFileSync(fileURLToPath(import.meta.resolve("mailwoman/package.json")), "utf8")
+		)
 
 		return pkg.engines?.node ?? ">=0"
 	} catch {

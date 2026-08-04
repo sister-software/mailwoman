@@ -18,7 +18,7 @@
  *
  *   That means depending on Pastel's internal file layout: its `exports` map publishes only the
  *   package root, so the three modules are resolved as siblings of the resolved package entry
- *   (`createRequire(...).resolve("pastel")`). A Pastel upgrade that moves them breaks this script
+ *   (`import.meta.resolve("pastel")`). A Pastel upgrade that moves them breaks this script
  *   loudly at docs-build time, which is the intended failure mode — a silent fallback would publish
  *   a page that no longer describes the binary.
  *
@@ -41,8 +41,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises"
-import { createRequire } from "node:module"
-import { fileURLToPath, pathToFileURL } from "node:url"
+import { fileURLToPath } from "node:url"
 
 // Types-only: Pastel's generateOptions/generateArguments return commander objects; nothing here
 // re-derives command parsing — the generator drives Pastel's own machinery end to end.
@@ -192,8 +191,10 @@ interface PastelModules {
  * package's `exports` map, and why a rename upstream should break the build rather than degrade.
  */
 async function loadPastelModules(): Promise<PastelModules> {
-	const require = createRequire(import.meta.url)
-	const entry = pathToFileURL(require.resolve("pastel"))
+	// `import.meta.resolve` already returns a `file://` URL string, so this needs neither `createRequire` nor
+	// `pathToFileURL` — verified to resolve to the same `node_modules/pastel/build/index.js` the CJS twin returned.
+	// This script runs under plain node (`docs`'s `prebuild`), never a bundler, so the native resolver is available.
+	const entry = import.meta.resolve("pastel")
 
 	const [readCommands, generateOptions, generateArguments] = await Promise.all([
 		import(new URL("./read-commands.js", entry).href) as Promise<{ default: PastelModules["readCommands"] }>,

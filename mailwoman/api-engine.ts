@@ -26,7 +26,7 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { createRequire } from "node:module"
+import { fileURLToPath } from "node:url"
 
 import type { BatchRow, GeocodeOutcome, HealthData, MailwomanAPIEngine, ResolveTreeOutcome } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
@@ -109,7 +109,13 @@ function readModelCard(): Record<string, unknown> | null {
 	}
 
 	try {
-		candidates.push(createRequire(import.meta.url).resolve("@mailwoman/neural-weights-en-us/model-card.json"))
+		// Native ESM resolution of the weights package's card. `@mailwoman/neural-weights-*` packages carry no `exports`
+		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
+		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
+		// `require.resolve` this replaced returned. It does NOT throw for a missing FILE inside a resolvable package,
+		// only for an unresolvable package; the `existsSync` below already gates every candidate, so that is a no-op
+		// here.
+		candidates.push(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json")))
 	} catch {
 		/* package not resolvable from here — fall through */
 	}
