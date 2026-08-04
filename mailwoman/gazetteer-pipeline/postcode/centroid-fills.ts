@@ -44,6 +44,11 @@ export interface CentroidFillOptions {
 
 export interface CentroidFillResult {
 	geonamesFixed: number
+	/**
+	 * Delivery-city name rows written from GeoNames postal. Zero means the shard's postcodes are nameless — the state
+	 * `postalcode-us.db` shipped in.
+	 */
+	geonamesNames: number
 	parentBorrowFixed: number
 	ancestorFixed: number
 	placedBefore: number
@@ -56,6 +61,143 @@ export interface CentroidFillResult {
  * country. A postcode on several GeoNames rows is averaged. Matched by the postcode string only — the WOF id is
  * untouched, so the eval keys stay WOF's.
  */
+/**
+ * GeoNames files a US territory under its OWN ISO code — Puerto Rico as `PR`, Guam as `GU` — while the WOF postcode
+ * repo files all of them as `US`. Reading only `US` rows therefore leaves every territory postcode unnamed and
+ * unplaced: 149 of them, verified against the 2024 Census ZCTA gazetteer, which is the entire set of five-digit ZIPs
+ * ZCTA lists and GeoNames appears to miss. GeoNames misses no mainland ZIP at all.
+ */
+const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
+	US: ["US", "PR", "VI", "GU", "MP", "AS"],
+}
+
+/**
+ * One postcode's accumulated GeoNames evidence: the mean of its centroids, and every distinct place name it appears
+ * under. A postcode legitimately carries several names — those are its delivery-city aliases, which is the point.
+ */
+interface GeonamesPostcode {
+	lat: number
+	lon: number
+	n: number
+	names: Set<string>
+}
+
+/**
+ * Read a country's GeoNames postal rows.
+ *
+ * Prefers the per-country `<CC>.txt` dump and falls back to scanning the combined `allCountries-postal.txt`, because
+ * the two layouts have different coverage on disk: the per-country directory is populated for the locales fetched one
+ * at a time, and the combined file is the one that carries the US. Without the fallback the US pass finds no file,
+ * `existsSync` short-circuits, and the whole thing silently no-ops — which is why `postalcode-us.db` shipped with
+ * 42,318 postcodes and an empty `names` table.
+ */
+const geonamesCache = new Map<string, Map<string, GeonamesPostcode>>()
+
+function readGeonamesPostal(geonamesDir: string, country: string): Map<string, GeonamesPostcode> {
+	// The centroid pass and the name pass ask for the same country, and the combined dump is 140 MB.
+	const cached = geonamesCache.get(`${geonamesDir}\u0000${country}`)
+
+	if (cached) return cached
+
+	const wanted = new Set(GEONAMES_COUNTRY_ALIASES[country] ?? [country])
+	const perCountry = join(geonamesDir, `${country}.txt`)
+	const combined = join(geonamesDir, "..", "geonames", "allCountries-postal.txt")
+	const source = existsSync(perCountry) ? perCountry : combined
+	const acc = new Map<string, GeonamesPostcode>()
+
+	if (!existsSync(source)) return acc
+
+	// Columns: country, postcode, place, admin1..3 (name+code pairs), latitude, longitude, accuracy.
+	for (const line of readFileSync(source, "utf8").split("\n")) {
+		if (!line) continue
+		const f = line.split("\t")
+
+		if (!wanted.has(f[0] ?? "")) continue
+
+		const pc = f[1]
+		const place = (f[2] ?? "").trim()
+		const lat = Number(f[9])
+		const lon = Number(f[10])
+
+		if (!pc || !Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) continue
+		const cur = acc.get(pc)
+
+		if (cur) {
+			cur.lat += lat
+			cur.lon += lon
+
+			cur.n++
+
+			if (place) {
+				cur.names.add(place)
+			}
+		} else {
+			acc.set(pc, { lat, lon, n: 1, names: new Set(place ? [place] : []) })
+		}
+	}
+
+	geonamesCache.set(`${geonamesDir}\u0000${country}`, acc)
+
+	return acc
+}
+
+/**
+ * Attach each postcode's GeoNames delivery-city name(s) to the shard's `names` table.
+ *
+ * Separate from the centroid pass because the two select different rows: a centroid is only wanted where one is
+ * MISSING, while a name is wanted on every postcode — 11201 has had a Census ZCTA coordinate all along and no name at
+ * all. Rows are the USPS delivery city, which is frequently not the geographic locality (11201 is Brooklyn, inside the
+ * locality New York), and for Queens is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
+ *
+ * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
+ */
+function geonamesNameFill(db: DatabaseSync, geonamesDir: string): number {
+	const countries = (
+		db.prepare(`SELECT DISTINCT country FROM spr WHERE placetype='postalcode' AND is_current!=0`).all() as Array<{
+			country: string
+		}>
+	).map((r) => r.country)
+
+	const select = db.prepare(
+		`SELECT id, name FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0 AND name=?`
+	)
+
+	// `official` stays 0: a delivery city is what the postal system calls the place, not an official
+	// name of it, and the #936 name-exact tier reads that bit.
+	const insert = db.prepare(
+		`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified)
+		 VALUES (?, ?, 'postalcode', ?, '', '', 0, 0)`
+	)
+
+	let inserted = 0
+
+	for (const cc of countries) {
+		const acc = readGeonamesPostal(geonamesDir, cc)
+
+		if (!acc.size) continue
+
+		db.exec("BEGIN")
+
+		for (const [pc, entry] of acc) {
+			if (!entry.names.size) continue
+
+			const row = select.get(cc, pc) as { id: number } | undefined
+
+			if (!row) continue
+
+			for (const place of entry.names) {
+				insert.run(row.id, place, cc)
+
+				inserted++
+			}
+		}
+
+		db.exec("COMMIT")
+	}
+
+	return inserted
+}
+
 async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<number> {
 	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
@@ -77,32 +219,9 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 	let fixed = 0
 
 	for (const cc of countries) {
-		const file = join(geonamesDir, `${cc}.txt`)
+		const acc = readGeonamesPostal(geonamesDir, cc)
 
-		if (!existsSync(file)) continue
-
-		// Build postcode → mean(lat,lon) from the TSV (cols: country, postcode, place, ...adm..., lat, lon, acc).
-		const acc = new Map<string, { lat: number; lon: number; n: number }>()
-
-		for (const line of readFileSync(file, "utf8").split("\n")) {
-			if (!line) continue
-			const f = line.split("\t")
-			const pc = f[1]
-			const lat = Number(f[9])
-			const lon = Number(f[10])
-
-			if (!pc || !Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) continue
-			const cur = acc.get(pc)
-
-			if (cur) {
-				cur.lat += lat
-				cur.lon += lon
-
-				cur.n++
-			} else {
-				acc.set(pc, { lat, lon, n: 1 })
-			}
-		}
+		if (!acc.size) continue
 
 		db.exec("BEGIN")
 
@@ -206,12 +325,16 @@ export async function fillPostcodeCentroids(
 
 	const placedBefore = placed()
 	let geonamesFixed = 0
+	let geonamesNames = 0
 	let ancestorFixed = 0
 
 	// Pass 2: GeoNames postal — runs FIRST so the postcode's own centroid wins over the coarser parent-borrow.
 	if (opts.geonamesDir && existsSync(opts.geonamesDir)) {
 		phase("fill-geonames", opts.geonamesDir)
 		geonamesFixed = await geonamesFill(db, opts.geonamesDir)
+
+		phase("name-geonames", "delivery-city names")
+		geonamesNames = geonamesNameFill(db, opts.geonamesDir)
 	}
 
 	if (opts.adminPath && existsSync(opts.adminPath)) {
@@ -261,5 +384,5 @@ export async function fillPostcodeCentroids(
 		db.prepare(`SELECT COUNT(*) n FROM spr WHERE placetype='postalcode' AND is_current!=0`).get() as { n: number }
 	).n
 
-	return { geonamesFixed, parentBorrowFixed, ancestorFixed, placedBefore, placedAfter, total }
+	return { geonamesFixed, geonamesNames, parentBorrowFixed, ancestorFixed, placedBefore, placedAfter, total }
 }
