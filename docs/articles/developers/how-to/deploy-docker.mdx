@@ -19,8 +19,8 @@ container was built or run here. Every command below is sourced from the reposit
 the published image — the repo-root `Dockerfile`, `docker/package.json`, `docker/docker-compose.yml` and
 `docker/README.md` — and the registry facts in step 1 come from the GHCR API. The
 [example server](/examples/mailwoman-server.mjs) in step 4 _was_ executed, outside a container, in both
-states the image can start in: with a gazetteer on disk, and with `MAILWOMAN_CANDIDATE_DB` set to a path
-that does not exist, which is what a first run with no volume looks like. Those transcripts are real.
+states the image can start in: with a gazetteer on disk, and with an empty data root, which is what a
+first run with no volume looks like. Those transcripts are real.
 Treat the `docker run` lines as sourced, not as executed output.
 
 ## Prerequisites

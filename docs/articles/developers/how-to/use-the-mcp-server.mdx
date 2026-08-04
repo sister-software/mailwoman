@@ -51,10 +51,10 @@ One variable is enough. The server finds the gazetteer at `<data root>/wof/candi
 `mailwoman data pull candidate` writes to, so pointing at the data root wires up all four model-backed
 tools. Add `"MAILWOMAN_CANDIDATE_DB"` beside it only for a gazetteer that lives outside that root.
 
-This is a change. Through `8.6.0` this server read the variable and nothing else — it was the one entry
-point that did not fall back to the convention path, and a config with only the data root in it left the
-model-backed tools without a resolver. `8.7.0` moved the fallback into the shared resolver, so the MCP
-server inherited it along with everything else.
+This is a change. Through `8.6.0` this server read the variable and nothing else, as most entry points
+did, so a config with only the data root in it left the model-backed tools without a resolver. Only the
+Nominatim and Photon drop-ins reached the convention path, and they did it by hand. `8.7.0` moved that
+fallback into the shared resolver, so the MCP server inherited it along with everything else.
 
 Add `"args": ["--poi-db", "/path/to/poi.db"]` if you have the POI layer. Without it, `mailwoman_poi_search`
 still extracts the query's intent — the subject and the spatial anchor — and returns that rather than
