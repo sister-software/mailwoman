@@ -29,7 +29,7 @@ import { abbreviationDictionary } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { buildGauntletDeps, runOne } from "./harness.ts"
-import type { GauntletLayerOptions } from "./regression.ts"
+import { type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
 
 /**
  * Shortest span body worth mutating — below it a perturbation changes the token entirely.
@@ -360,17 +360,7 @@ function bump(m: Map<string, Tally>, name: string, key: keyof Tally): void {
  * Run the metamorphic layer. Returns `pass` (no NEW INV/DIR/BAND violation beyond the tracked xfails).
  */
 export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
-	const deps = await buildGauntletDeps(
-		options.weightsCacheRoot
-			? { weightsCacheRoot: options.weightsCacheRoot }
-			: options.model
-				? {
-						modelPath: options.model,
-						...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
-						...(options.card ? { modelCardPath: options.card } : {}),
-					}
-				: {}
-	)
+	const deps = await buildGauntletDeps(layerDepsOptions(options))
 
 	const invTally = new Map<string, Tally>()
 	const bandTally = new Map<string, Tally>()

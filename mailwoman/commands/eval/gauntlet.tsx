@@ -34,13 +34,28 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe("Run ONE layer instead of the combined gate"),
 	n: zod.number().default(300).describe("held-out: fresh-draw sample size"),
+	postcodeCountryCoherence: zod
+		.boolean()
+		.default(false)
+		.describe("#42 resolver-lever pin: postcode-country coherence ON (library default OFF)"),
 })
 
 export { OptionsSchema as options }
 
 const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () => (await runGauntlet({ ...options, weightsCacheRoot: options.weightsCache })).exitCode,
+		async () =>
+			(
+				await runGauntlet({
+					...options,
+					weightsCacheRoot: options.weightsCache,
+					// An UNSET flag must stay unset, not become an explicit OFF pin. Pastel gives the schema's `false`
+					// default, and forwarding that verbatim would make the gate pin the lever OFF forever — so the day the
+					// library default flips to ON, the standard gate would silently keep grading the old configuration.
+					// Forwarding only the ON pin keeps "no flag" meaning "grade whatever production does".
+					postcodeCountryCoherence: options.postcodeCountryCoherence || undefined,
+				})
+			).exitCode,
 		(exitCode) => exitCode
 	)
 

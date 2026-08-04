@@ -19,7 +19,13 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
+import {
+	buildGauntletDeps,
+	type GauntletDepsOptions,
+	type GauntletResolverLevers,
+	type GauntletResult,
+	runOne,
+} from "./harness.ts"
 import type { GauntletDatabase } from "./schema.ts"
 
 /**
@@ -48,6 +54,35 @@ export interface GauntletLayerOptions {
 	 * like `eval parity --weights-cache`. Takes precedence over `model`/`tokenizer`/`card`.
 	 */
 	weightsCacheRoot?: string
+	/**
+	 * RESOLVER-side lever pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
+	 * above, so a resolver lever can be graded by the standard gate instead of by a bespoke probe. Omitted → production
+	 * defaults.
+	 */
+	levers?: GauntletResolverLevers
+}
+
+/**
+ * The {@linkcode buildGauntletDeps} argument a layer's options describe — the model-selection ladder (weights-cache →
+ * model[+tokenizer/card] → shipped default) with the resolver lever pins carried alongside. Shared by every layer so a
+ * new pin cannot reach one layer and silently miss another: the metamorphic layer had an independently-maintained copy
+ * of the ladder, which is exactly the shape that drifts.
+ */
+export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
+	const levers = options.levers ? { levers: options.levers } : {}
+
+	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...levers }
+
+	if (options.model) {
+		return {
+			modelPath: options.model,
+			...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
+			...(options.card ? { modelCardPath: options.card } : {}),
+			...levers,
+		}
+	}
+
+	return levers
 }
 
 const DEFAULT_TOL_M = 5000
@@ -73,6 +108,8 @@ function componentOf(r: GauntletResult, key: string): string | null {
 			return r.venue
 		case "dependent_locality":
 			return r.dependent_locality
+		case "unit":
+			return r.unit
 		default:
 			// LOUD: a silent null here made venue/dependent_locality expectations grade against
 			// nothing for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
@@ -133,22 +170,15 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		return issues
 	}
 
-	const deps = await buildGauntletDeps(
-		options.weightsCacheRoot
-			? { weightsCacheRoot: options.weightsCacheRoot }
-			: options.model
-				? {
-						modelPath: options.model,
-						...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
-						...(options.card ? { modelCardPath: options.card } : {}),
-					}
-				: {}
-	)
+	const deps = await buildGauntletDeps(layerDepsOptions(options))
 
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
 	let gated = 0
+	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row;
+	// otherwise it means "never reached", and the two are indistinguishable without this count.
+	const overrides: string[] = []
 
 	for (const c of cases) {
 		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
@@ -157,7 +187,15 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			...(c.country ? { caseCountry: c.country } : {}),
 		}
 
-		const issues = checkCase(c, await runOne(c.input, deps, geoOpts))
+		const result = await runOne(c.input, deps, geoOpts)
+
+		if (result.postcode_country_scope) {
+			overrides.push(
+				`  · ${c.id} "${c.input}" → country scoped to ${result.postcode_country_scope} (case default ${c.default_country ?? "none"})`
+			)
+		}
+
+		const issues = checkCase(c, result)
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 
 		if (c.status === "pass") {
@@ -188,6 +226,14 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 		for (const t of tracked) {
 			console.log(t)
+		}
+	}
+
+	if (options.levers?.postcodeCountryCoherence) {
+		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
+
+		for (const o of overrides) {
+			console.log(o)
 		}
 	}
 

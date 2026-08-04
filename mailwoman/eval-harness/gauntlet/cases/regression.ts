@@ -2288,4 +2288,145 @@ export const REGRESSION_CASES: SeedCase[] = [
 		addedAt: "2026-08-01",
 		note: "Tokyo-district venue name + BD house/road numbering.",
 	},
+
+	// #42 postcode-country coherence — the mis-scoped-locale block, added 2026-08-05 with the gauntlet's
+	// resolver-lever pin. The pin alone was not enough to grade the lever: the corpus carried exactly ONE case with
+	// a `defaultCountry` (an FR address under FR, where the pass exits cheaply by design), so the mechanism fired on
+	// 0/116 cases and the pinned run came back byte-identical to the unpinned one. An unchanged verdict from a
+	// mechanism that never ran is not evidence — hence these seven, which are the only cases in the corpus that put
+	// a country prior in tension with the address it is applied to.
+	//
+	// They come in two halves, and both halves are needed:
+	//
+	//   · four ADVERSARIAL rows at status=pass — real US addresses whose (postcode, locality) pair is exactly the
+	//     confound the mechanism could break (ZIP 75001 really IS Addison TX; Paris TX; Berlin NH carrying a
+	//     5-digit code the DE shape also accepts; Athens GA). They must hold with the lever pinned either way, and
+	//     they are the "zero newly-failing cases" bar with teeth.
+	//   · three RESCUE rows at status=improvement_target — a French, a British and a German address under
+	//     `defaultCountry: US`, the demo/CLI reality (locale en-US → US on every query). They FAIL today, which is
+	//     the point: they are the defect. Under `--postcode-country-coherence` they pass, and the runner's anti-rot
+	//     loop says so ("now PASSES — promote to status=pass"), which is what a default-on flip should look like
+	//     from inside the gate.
+	//
+	// Every coordinate below was measured through the compiled CLI at 2026-08-05 against the 2026-08-04 gazetteer,
+	// not copied from the design record.
+	{
+		id: "us-addison-zip-75001",
+		input: "4900 Airport Pkwy, Addison TX 75001",
+		source: "bug:#42",
+		addressKind: "us_business",
+		country: "US",
+		status: "pass",
+		defaultCountry: "US",
+		expectComponents: { locality: "Addison" },
+		expectLat: 32.965477444,
+		expectLon: -96.82785054,
+		expectToleranceM: 100,
+		expectTier: "address_point",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "THE collision: ZIP 75001 is Addison, Texas — the same string as Paris 1er's code. The US default is coherent here (0.3 km), so the coherence pass exits at step 1 and never asks France. If this row ever moves, the ordering that makes the mechanism safe has broken.",
+	},
+	{
+		id: "us-paris-tx-75460",
+		input: "2025 Clarksville St, Paris TX 75460",
+		source: "bug:#42",
+		addressKind: "us_residential",
+		country: "US",
+		status: "pass",
+		defaultCountry: "US",
+		expectComponents: { locality: "Paris" },
+		expectLat: 33.655196285,
+		expectLon: -95.534909408,
+		expectToleranceM: 150,
+		expectTier: "interpolated",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "The real Paris, Texas, with its real ZIP. Same name as the row the mechanism exists to fix, opposite verdict — coherent in the US at 5.7 km, so it exits cheaply.",
+	},
+	{
+		id: "us-berlin-nh-03570",
+		input: "45 Main St, Berlin NH 03570",
+		source: "bug:#42",
+		addressKind: "us_residential",
+		country: "US",
+		status: "pass",
+		defaultCountry: "US",
+		expectComponents: { locality: "Berlin" },
+		expectLat: 44.468622833,
+		expectLon: -71.182407033,
+		expectToleranceM: 150,
+		expectTier: "interpolated",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "The one that would hurt most: a US town named after a German capital, carrying a 5-digit code the DE postcode shape also accepts. ZIP 03570 is coherent with Berlin NH, so Germany is never asked.",
+	},
+	{
+		id: "us-athens-ga-30601",
+		input: "1 Broad St, Athens GA 30601",
+		source: "bug:#42",
+		addressKind: "us_business",
+		country: "US",
+		status: "pass",
+		defaultCountry: "US",
+		expectComponents: { locality: "Athens" },
+		expectLat: 33.950817,
+		expectLon: -83.368941,
+		expectToleranceM: 1000,
+		expectTier: "admin",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "The same trap with a country's capital for a name. Admin tier, so the assertion is the locality and the coordinate.",
+	},
+	{
+		id: "fr-rivoli-us-scoped",
+		input: "12 Rue de Rivoli, 75001 Paris",
+		source: "bug:#42",
+		addressKind: "fr_street_postcode",
+		country: "FR",
+		status: "improvement_target",
+		defaultCountry: "US",
+		expectComponents: { locality: "Paris" },
+		expectLat: 48.855602,
+		expectLon: 2.35995,
+		expectToleranceM: 100,
+		expectTier: "address_point",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "The case the whole mechanism was built for. Under the en-US locale this lands on 32.960,-96.838 — Addison, Texas — because the hard US country filter starves every admin lookup and postcode-consistency then drags the locality onto the ZIP point. With --postcode-country-coherence it is the BAN rooftop to the metre.",
+	},
+	{
+		id: "gb-downing-us-scoped",
+		input: "10 Downing Street, London SW1A 2AA",
+		source: "bug:#42",
+		addressKind: "gb_street_postcode",
+		country: "GB",
+		status: "improvement_target",
+		defaultCountry: "US",
+		expectComponents: { locality: "London" },
+		expectLat: 51.500525578,
+		expectLon: -0.109400835,
+		expectToleranceM: 2000,
+		expectTier: "admin",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "London, Ohio under a US default — the GB half of the same defect, and the row that shows the coherence pass is NOT the whole fix. It stays failing WITH the pin, because under the en-GB weights overlay this input parses `SW1A` as a region and `2AA` as a unit: there is no postcode node, so the pass is inert by construction (measured 2026-08-05 — the base en-US classifier parses the same string's postcode fine and the pass does fire, which is why the design record's hand-probe showed it FIXED). The blocker here is the GB postcode parse under the overlay, not the resolver. Fixing that should make this row pass with no change to #42.",
+	},
+	{
+		id: "de-linden-us-scoped",
+		input: "Unter den Linden 77, 10117 Berlin",
+		source: "bug:#42",
+		addressKind: "de_street",
+		country: "DE",
+		status: "improvement_target",
+		defaultCountry: "US",
+		expectComponents: { locality: "Berlin" },
+		expectLat: 52.5159555,
+		expectLon: 13.3799024,
+		expectToleranceM: 100,
+		expectTier: "address_point",
+		addedAt: "2026-08-05",
+		bugRef: "#42",
+		note: "Berlin, Connecticut under a US default (41.611,-72.776 — 6,242 km off). Pairs with us-berlin-nh-03570: same city name, same 5-digit shape, opposite correct answers, which is the argument that the mechanism reads geometry rather than names. The expected coordinate is the OSM rooftop the gate's own shard wiring reaches once the country is corrected — the CLI's default wiring stops at the DE locality centroid, so measure this row through the gate, not through `mailwoman geocode`.",
+	},
 ]

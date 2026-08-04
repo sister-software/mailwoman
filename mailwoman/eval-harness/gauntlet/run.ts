@@ -13,6 +13,13 @@
  *   Self-check (shipped default):  mailwoman eval gauntlet
  *   Promote gate (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
  *   One layer only:                mailwoman eval gauntlet --layer regression|metamorphic|holdout …
+ *   A RESOLVER lever, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
+ *
+ *   The last of those is the resolver-lever pin (#42, added 2026-08-05). The gate could swap the MODEL under test but
+ *   not the resolver configuration, so a resolver lever proposed for default-on had no way through the D-rule's
+ *   standard instrument — it could only be argued from bespoke probes. Run the gate unpinned and pinned and diff the
+ *   verdicts; the layers stamp which configuration they graded, and the regression layer reports how many cases the
+ *   lever actually fired on (an unchanged verdict from a mechanism that never ran proves nothing).
  *
  *   The retired `scripts/eval/gauntlet/run.ts` ran each layer in its own child process; the layers are
  *   in-process modules now — a layer that THROWS is caught, printed, and counted as a FAIL, preserving the
@@ -21,6 +28,7 @@
  *   Wire into the release flow as a `before:release` gate (RELEASING.md): a non-zero exit blocks the ship.
  */
 
+import { describeResolverLevers, type GauntletResolverLevers } from "./harness.ts"
 import { runHoldoutLayer } from "./holdout.ts"
 import { runMetamorphicLayer } from "./metamorphic.ts"
 import { type GauntletLayerOptions, runRegressionLayer } from "./regression.ts"
@@ -65,18 +73,47 @@ export interface GauntletRunOptions {
 	 * Held-out fresh-draw sample size. Default 300.
 	 */
 	n?: number
+	/**
+	 * RESOLVER-side lever pin (#42): force `postcodeCountryCoherence` ON for every layer. The library default is OFF, so
+	 * an unpinned run grades the shipped configuration — run the gate BOTH ways and diff the verdicts, which is what the
+	 * D-rule asks of a would-be default-on mechanism.
+	 */
+	postcodeCountryCoherence?: boolean
+}
+
+/**
+ * The resolver-lever pins a run's options describe, or undefined when nothing is pinned (→ production defaults). Pure
+ * and exported: the "a pin reaches every layer" contract is a mapping, and a mapping is cheap to test — the alternative
+ * is discovering a dropped pin from two identical gate logs, which is the failure this whole surface exists to
+ * prevent.
+ */
+export function runResolverLevers(options: GauntletRunOptions): GauntletResolverLevers | undefined {
+	return options.postcodeCountryCoherence !== undefined
+		? { postcodeCountryCoherence: options.postcodeCountryCoherence }
+		: undefined
+}
+
+/**
+ * The layer options a run's options describe — model selection plus the resolver lever pins. Exported for the same
+ * reason as {@linkcode runResolverLevers}.
+ */
+export function runLayerOptions(options: GauntletRunOptions): GauntletLayerOptions {
+	const levers = runResolverLevers(options)
+
+	return {
+		model: options.candidate,
+		tokenizer: options.tokenizer,
+		card: options.card,
+		weightsCacheRoot: options.weightsCacheRoot,
+		...(levers ? { levers } : {}),
+	}
 }
 
 /**
  * Run a single layer, mapping its result to an exit code. A throw prints and reads as exit 1.
  */
 async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Promise<number> {
-	const layerOptions: GauntletLayerOptions = {
-		model: options.candidate,
-		tokenizer: options.tokenizer,
-		card: options.card,
-		weightsCacheRoot: options.weightsCacheRoot,
-	}
+	const layerOptions = runLayerOptions(options)
 
 	switch (layer) {
 		case "regression":
@@ -92,6 +129,7 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 					tokenizer: options.tokenizer,
 					card: options.card,
 					weightsCacheRoot: options.weightsCacheRoot,
+					...(layerOptions.levers ? { levers: layerOptions.levers } : {}),
 				})
 			).exitCode
 	}
@@ -136,6 +174,9 @@ export async function runGauntlet(options: GauntletRunOptions = {}): Promise<{ e
 	const allPass = results.every((r) => r.pass)
 
 	console.log(`\n════════════════ GAUNTLET ════════════════`)
+	// The lever line prints on EVERY run, pinned or not. Two gate logs that differ only in a flag someone typed are
+	// not evidence about that flag unless each log says which configuration it graded.
+	console.log(`  ${describeResolverLevers(runResolverLevers(options))}`)
 
 	for (const r of results) {
 		console.log(`  ${r.pass ? "✓ PASS" : "✗ FAIL"}  ${r.name}`)
