@@ -262,10 +262,8 @@ export interface GazetteerObservation {
 	/**
 	 * A candidate.db at the convention path, which the tools now pick up with nothing exported. Green.
 	 *
-	 * This used to be a TRAP worth its own degraded status: the file was on disk and every tool ignored it, because
-	 * candidate resolution stopped at the env. The convention fallback closed that, so the same observation is now the
-	 * ordinary healthy case — and reporting it as degraded would send a reader to export a variable that changes
-	 * nothing.
+	 * Reporting this as degraded would tell a reader to export a variable that changes nothing — `resolveCandidateDBPath`
+	 * reaches the convention path on its own.
 	 */
 	conventionCandidate?: string
 	/**

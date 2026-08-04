@@ -25,17 +25,14 @@ const BBOX_2D_LENGTH = 4
 /**
  * The admin placetype allowlist (postalcode builds pass their own set).
  *
- * `macrohood`/`microhood` joined 2026-08-04. They are the nesting-depth siblings of `neighbourhood` and map to the same
- * `dependent_locality` ComponentTag (`docs/engineering/reference/placetype-evidence.mdx`), and WOF stocks them in
- * quantity — a 20,000-file sample of `whosonfirst-data-admin-us` holds 561 microhood and 99 macrohood against 1,532
- * neighbourhood, so the ingest was dropping roughly a third of the sub-locality rung.
+ * `macrohood`/`microhood` are the nesting-depth siblings of `neighbourhood` and map to the same `dependent_locality`
+ * ComponentTag (`docs/engineering/reference/placetype-evidence.mdx`). WOF stocks them in quantity — a 20,000-file
+ * sample of `whosonfirst-data-admin-us` holds 561 microhood and 99 macrohood against 1,532 neighbourhood.
  *
- * They are ingested ahead of being reachable, on purpose. No `PLACETYPE_FILTER_GROUPS` entry names either, and
- * placetypes absent from that table pass through unfiltered, so a `locality` query still expands to exactly `[locality,
- * borough, localadmin]` — the new rows answer nothing a caller asks for today. That leaves one exposure, an UNFILTERED
- * query ranking population-first across every row, where a hood with no population sorts last. The point of the
- * ordering is the cost asymmetry: capturing these needs a full 5 GB rebuild, and excluding them again if the
- * post-rebuild gauntlet dislikes them is a resolver-side constant.
+ * They are ingested without being reachable by name. No `PLACETYPE_FILTER_GROUPS` entry lists either, and placetypes
+ * absent from that table pass through unfiltered, so a `locality` query expands to exactly `[locality, borough,
+ * localadmin]`. Those rows answer only an UNFILTERED query, which ranks population-first and sorts a hood carrying no
+ * population last.
  *
  * `campus` is deliberately NOT here despite being commoner than macrohood in the same sample (1,368). It is a venue
  * tier — universities, hospitals, airports — not an admin one, and it belongs to the sub-venue work, where its

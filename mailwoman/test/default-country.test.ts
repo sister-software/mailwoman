@@ -106,6 +106,7 @@ describe("--country-scope separates country policy from the resolver backend", (
 
 	test("an explicit --default-country outranks every scope", () => {
 		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" }, true)).toBe("FR")
+
 		expect(
 			resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" }, false)
 		).toBeUndefined()

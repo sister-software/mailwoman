@@ -35,6 +35,9 @@ export default defineConfig({
 			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "core/objects.ts") },
 			// `fs` is the node build (core/fs/node.ts), not a directory index — must beat the generic rule.
 			{ find: /^@mailwoman\/core\/fs$/, replacement: resolve(here, "core/fs/node.ts") },
+			// `crypto` is the same shape: the subpath's node condition points at `core/crypto/node.ts`, so the
+			// generic `core/$1/index.ts` rule below resolves it to a file that does not exist.
+			{ find: /^@mailwoman\/core\/crypto$/, replacement: resolve(here, "core/crypto/node.ts") },
 			// `api/disk-storage` is a bare file kept OUT of the `api` barrel (it imports node:fs, and the
 			// barrel reaches a browser bundle), so it needs its own entry ahead of the generic dir rule.
 			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolve(here, "core/api/disk-storage.ts") },

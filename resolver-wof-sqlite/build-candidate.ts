@@ -143,14 +143,12 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let multiRegion = 0
 
 	// A place can carry more than one region-tier ancestor — 59 do on the 2026-08-03 artifact (42
-	// localities, mostly Chinese places on an ambiguous boundary), and #1445 raises how many places carry
-	// a region at all, so the count will grow. One `region_id` column can hold one of them.
+	// localities, mostly Chinese places on an ambiguous boundary). One `region_id` column holds one of
+	// them, and which one it ought to be is a real question this is not the place to answer.
 	//
-	// Which one is a real question and this is not the place to answer it; what this DOES fix is that the
-	// answer used to be "whichever the scan returned last", so the stamp for those places could differ
-	// between two builds of the same source. Same instability class as the synthetic Overture ids. MIN is
-	// arbitrary but stable, and the count is reported so a jump after the rebuild is visible rather than
-	// inferred.
+	// MIN is arbitrary but STABLE: an unordered pick lets the stamp for those places differ between two
+	// builds of the same source. The count is logged because the number is expected to grow, and should
+	// be visible rather than inferred.
 	for (const r of src
 		.prepare(
 			"SELECT id, MIN(ancestor_id) AS ancestor_id, COUNT(DISTINCT ancestor_id) AS n" +

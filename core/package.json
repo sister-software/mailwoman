@@ -42,6 +42,11 @@
 			"default": "./out/coarse-placer/tools/index.js",
 			"types": "./out/coarse-placer/tools/index.d.ts"
 		},
+		"./crypto": {
+			"node": "./crypto/node.ts",
+			"default": "./out/crypto/node.js",
+			"types": "./out/crypto/node.d.ts"
+		},
 		"./tokenization": {
 			"node": "./tokenization/index.ts",
 			"default": "./out/tokenization/index.js",

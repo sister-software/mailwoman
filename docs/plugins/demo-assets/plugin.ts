@@ -103,9 +103,9 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 			// move works here: hash the map and extend the version Docusaurus computed rather than
 			// replacing it, so its docusaurusVersion + themeAliasesHash keep their say. Measured on this
 			// site: warm rebuild 4.4s server / 7.0s client, and 27s / 32s after one alias entry changes —
-			// the cache does evict. Adding the plugin's sources to `buildDependencies.config` instead was
-			// measured NOT to work (touching resolve.ts left both compiles at their warm times), and it
-			// would key on mtime rather than on the resolved targets even if it had.
+			// the cache does evict. `buildDependencies.config` is the mechanism to reach for here and does
+			// NOT work: touching a plugin source leaves both compiles at their warm times, and it would key
+			// on mtime rather than on the resolved alias targets in any case.
 			//
 			// Guarded on the incoming cache's shape: with DOCUSAURUS_NO_PERSISTENT_CACHE set, Docusaurus
 			// leaves `cache` undefined, and merging a version onto that yields a type-less cache object

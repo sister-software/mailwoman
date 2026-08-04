@@ -11,9 +11,12 @@
  *   which is how an eval row scored a miss against two backends that had both answered correctly.
  */
 
+import { DatabaseSync } from "node:sqlite"
+
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { describe, expect, test } from "vitest"
 
-import { assignSyntheticIDs, OVERTURE_ID_BASE } from "./fold-overture.ts"
+import { assignSyntheticIDs, OVERTURE_ID_BASE, prepareInserts } from "./fold-overture.ts"
 
 /**
  * GERS-shaped ids. Real ones are opaque 32-char hex strings; the shape matters only in that the hash sees the whole
@@ -81,5 +84,55 @@ describe("assignSyntheticIDs", () => {
 		expect(idmap.size).toBe(many.length)
 		expect(new Set(idmap.values()).size).toBe(many.length)
 		expect(assignSyntheticIDs(many)).toEqual(idmap)
+	})
+})
+
+describe("the bulk-write statements bind against the real unified schema", () => {
+	// The column tuples are checked against the `WOFDatabase` INTERFACE at compile time. The tables are
+	// created by `createUnifiedSchema`'s DDL, which is a SEPARATE artifact — a column renamed in one and
+	// not the other type-checks perfectly and then fails partway through a multi-hour build. Binding a
+	// row against the real schema is the only thing that catches that.
+	async function openUnified(): Promise<DatabaseSync> {
+		const db = new DatabaseSync(":memory:")
+
+		await createUnifiedSchema(db)
+
+		return db
+	}
+
+	test("every prepared insert accepts a row", async () => {
+		const db = await openUnified()
+		const { spr, names, population } = prepareInserts(db)
+		const id = OVERTURE_ID_BASE + 1
+
+		spr.run(id, -1, "Testville", "locality", "US", 1.5, 2.5, 1, 2, 1.9, 2.9, 1, 0, 0, 0, 0, 0)
+		names.run(id, "Testville", "locality", "US", "", 0, 0)
+		population.run(id, 1234)
+
+		expect(db.prepare("SELECT name, placetype, country FROM spr WHERE id = ?").get(id)).toEqual({
+			name: "Testville",
+			placetype: "locality",
+			country: "US",
+		})
+
+		expect(db.prepare("SELECT population FROM place_population WHERE id = ?").get(id)).toEqual({ population: 1234 })
+		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
+
+		db.close()
+	})
+
+	test("spr uses OR REPLACE so a re-ingest updates the row rather than throwing on its primary key", async () => {
+		// Content-derived ids make a re-ingest recompute the SAME id, so this is the path a second run takes.
+		const db = await openUnified()
+		const { spr } = prepareInserts(db)
+		const id = OVERTURE_ID_BASE + 2
+
+		spr.run(id, -1, "Before", "locality", "US", 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+		spr.run(id, -1, "After", "locality", "US", 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+
+		expect(db.prepare("SELECT COUNT(*) AS n FROM spr WHERE id = ?").get(id)).toEqual({ n: 1 })
+		expect(db.prepare("SELECT name FROM spr WHERE id = ?").get(id)).toEqual({ name: "After" })
+
+		db.close()
 	})
 })
