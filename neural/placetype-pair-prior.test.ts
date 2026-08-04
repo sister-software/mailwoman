@@ -99,14 +99,19 @@ function makePiecesWithCommas(text: string): Array<{ piece: string; start: numbe
 }
 
 /**
- * A `PairIndexLike` double backed by a plain `(child, parent) -> tag` map, with recorded probe calls so tests can
+ * A `PairIndexLike` double backed by a plain `(child, parent) -> edge` map, with recorded probe calls so tests can
  * assert on the exact keys probed (the space-join proof needs this).
+ *
+ * An entry value is `"<childTag>"` or `"<childTag>>​<parentTag>"`. The short form means a `locality` parent — the shape
+ * every shipped register artifact carries, and the only default in play here: the SUT itself derives nothing (PIX2),
+ * this is a fixture shorthand.
  */
 function mockPairIndex(
 	entries: Record<string, string>,
 	delta?: number,
 	transitionBeta?: number,
-	country?: string
+	country?: string,
+	parentDelta?: number
 ): PairIndexLike & { calls: Array<[string, string]> } {
 	const calls: Array<[string, string]> = []
 
@@ -114,11 +119,18 @@ function mockPairIndex(
 		delta,
 		transitionBeta,
 		country,
+		parentDelta,
 		calls,
 		probe(child: string, parent: string) {
 			calls.push([child, parent])
 
-			return entries[`${child}|${parent}`] as never
+			const spec = entries[`${child}|${parent}`]
+
+			if (spec === undefined) return undefined
+
+			const [tag, parentTag = "locality"] = spec.split(">")
+
+			return { tag, parentTag } as never
 		},
 	}
 }
@@ -378,7 +390,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PI
 	// this test locks in that the DECODE side (tokenizer → groupPiecesIntoWords → dual-key window probe →
 	// real PIX1 resolver) resolves it correctly once it exists.
 	const REAL_BUILDER_ENTRIES: PairIndexEntry[] = [
-		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality" },
+		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality", parentTag: "locality" },
 	]
 
 	const REAL_HEADER: PairIndexHeaderInput = {
@@ -1209,11 +1221,11 @@ describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
 	})
 
 	it("a dependent_locality child biases the parent toward locality ALONE — the Brooklyn case", () => {
-		// `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`, so the parent window gets exactly one label
-		// lifted and `region` — the read the trailing "NY" pulls it to, by 4.21 nats on the shipped weights — gets
-		// nothing. This is the whole point of the fix: the edge the index asserts is (child, parent), and biasing
-		// only the child produced a tree with a dependent_locality and NO locality at all.
-		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10)
+		// The record says the parent is a `locality`, so the parent window gets exactly one label lifted and
+		// `region` — the read the trailing "NY" pulls it to, by 4.21 nats on the shipped weights — gets nothing.
+		// This is the whole point of the fix: the edge the index asserts is (child, parent), and biasing only the
+		// child produced a tree with a dependent_locality and NO locality at all.
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10)
 		const text = "Brooklyn, New York, NY"
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
@@ -1225,23 +1237,61 @@ describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
 		expect(matrix[3]![labelCol("I-region")]).toBe(0)
 	})
 
-	it("a locality child biases EVERY allowed parent equally — which is what makes the bias inert there", () => {
-		// `WESTERN_PARENT_OF.locality` is `["subregion", "region", "country"]`. All three move by the same δ, so
-		// whichever the model already preferred stays on top: the arithmetic behind bar B-1's byte-stability claim.
-		const index = mockPairIndex({ "springfield|illinois": "locality" }, 10)
+	it("biases EXACTLY the record's parentTag — not the containment set the child tag would allow (PIX2)", () => {
+		// `WESTERN_PARENT_OF.locality` is `["subregion", "region", "country"]`. The pre-PIX2 derivation lifted all
+		// three by the same δ, which left whichever the model already preferred on top and therefore moved nothing.
+		// The record names ONE parent tag and only that label moves.
+		const index = mockPairIndex({ "springfield|illinois": "locality>region" }, 10)
 		const text = "Springfield, Illinois"
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
 
 		expect(matrix[0]![labelCol("B-locality")]).toBe(10)
-
-		for (const tag of ["subregion", "region", "country"]) {
-			expect(matrix[2]![labelCol(`B-${tag}`)]).toBe(8)
-		}
-
-		// Nothing outside the allowed set moves — a `street` read at the parent would still lose to any of the three.
+		expect(matrix[2]![labelCol("B-region")]).toBe(8)
+		expect(matrix[2]![labelCol("B-subregion")]).toBe(0)
+		expect(matrix[2]![labelCol("B-country")]).toBe(0)
 		expect(matrix[2]![labelCol("B-street")]).toBe(0)
-		expect(matrix[2]![labelCol("B-dependent_locality")]).toBe(0)
+	})
+
+	it("carries a parent tag containment forbids — a dependent_locality under a BOROUGH", () => {
+		// The US WOF source's borough-parent edge ("Park Slope" under "Brooklyn"). `WESTERN_PARENT_OF` gives
+		// `dependent_locality` exactly one allowed parent, `locality`, so the derived mechanism could only ever
+		// have biased the wrong label here.
+		const index = mockPairIndex({ "park slope|brooklyn": "dependent_locality>dependent_locality" }, 10)
+		const text = "Park Slope, Brooklyn"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(8)
+		expect(matrix[3]![labelCol("B-locality")]).toBe(0)
+	})
+
+	it("reads parentDelta off the index HEADER when opts omits it — the default-on wire-up", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us", 5)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[2]![labelCol("B-locality")]).toBe(5)
+	})
+
+	it("an explicit opts.parentDelta OVERRIDES the header — the MAILWOMAN_PAIR_PARENT_DELTA sweep lever", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us", 5)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 20 }, pieces, LABELS)
+
+		expect(matrix[2]![labelCol("B-locality")]).toBe(20)
+	})
+
+	it("a header WITHOUT parentDelta writes no parent bias at all — the unmeasured-locale posture", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us")
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
 	})
 
 	it("the parent bias is emission-only — it never emits a transition adjustment", () => {

@@ -22,10 +22,12 @@
 		},
 		"pairIndexByCountry": {
 			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) \u2014 mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default \u2014 see `mailwoman gazetteer pair-index --help`). `source` is relative to the data root (NOT its `wof/`, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
+			"$comment_parentDelta": "`parentDelta` (#46, the whole-edge parent bias) is present on us/gb/nz/fr ONLY, at the \u03b4=5 the 2026-08-04 verdict recommended (docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md). de/in/es/it deliberately omit it: no board has graded the parent side on those locales, and the D-rule's answer to an unmeasured locale is a per-locale gate rather than an inherited magnitude. An ABSENT key means the shipped artifact carries no parentDelta and the parent bias is OFF for that locale \u2014 not zero.",
 			"gb": {
 				"source": "ppd/2026-07-22/gb-tuples.csv",
 				"delta": 10,
 				"transitionBeta": 5,
+				"parentDelta": 5,
 				"boroughDb": "wof/admin-global-priority.db",
 				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl,data/gazetteer/ni-pairs-v1.jsonl,data/gazetteer/gb-regions-v1.jsonl"
 			},
@@ -33,6 +35,7 @@
 				"$comment": "Hierarchy campaign R6 (2026-08-01). Source is the raw BAN dump (DINUM/IGN, Licence Ouverte 2.0) read through ban/sdk's cleanLieuDit — NOT WOF, whose French neighbourhood records are Paris quartiers that never appear in a postal address. The line French addresses DO carry is the lieu-dit.",
 				"delta": 10,
 				"transitionBeta": 5,
+				"parentDelta": 5,
 				"banDir": "corpus/sources/ban"
 			},
 			"in": {
@@ -63,11 +66,13 @@
 				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB \u2014 that is the pair the R5 bars were measured with.",
 				"delta": 10,
 				"transitionBeta": 5,
+				"parentDelta": 5,
 				"boroughDb": "wof/admin-global-priority.db"
 			},
 			"nz": {
 				"source": "openaddresses/extracted/nz/countrywide.csv",
-				"delta": 10
+				"delta": 10,
+				"parentDelta": 5
 			}
 		}
 	},

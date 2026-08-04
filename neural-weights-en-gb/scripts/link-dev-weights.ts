@@ -70,6 +70,8 @@ import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
+import { pairIndexStaleReason, peekPairIndexHeaderFields } from "../../scripts/weights-overlay-linker.ts"
+
 /**
  * Hex characters in an md5 digest.
  */
@@ -160,39 +162,6 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	console.log(`md5(${path}): computed and cached in sidecar`)
 
 	return hash
-}
-
-/**
- * Minimal PIX1 header-only reader: magic + header block, same validation as `PairIndexResolver`'s constructor and
- * `peekPairIndexHeader` (`neural/pair-index-resolver.ts`) — bad-magic throw, future-schema throw — but reimplemented
- * locally rather than imported, so this data-only weights package doesn't gain a dependency on `@mailwoman/neural`
- * (which pulls in onnxruntime-node) just to read four header fields. Kept intentionally tiny; if the PIX1 format ever
- * changes, `pair-index-resolver.ts`'s own header parse is the source of truth this must stay in sync with.
- */
-function peekPairIndexHeaderFields(path: string): {
-	delta: number
-	transitionBeta: number | undefined
-	sourceMD5s: string[]
-} {
-	const bytes = readFileSync(path)
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	const MAGIC = 0x31_58_49_50
-
-	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
-
-	if (view.getUint32(0, true) !== MAGIC) {
-		throw new Error(`pair index: bad magic reading ${path}`)
-	}
-
-	const headerLen = view.getUint32(4, true)
-
-	const header = parseJSONStrict<{
-		delta: number
-		transitionBeta?: number
-		sourceMD5s?: string[]
-	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
-
-	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
 }
 
 linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
@@ -340,6 +309,13 @@ const PAIR_INDEX_DELTA = 10
  * rebuild. NZ deliberately ships WITHOUT a beta (unmeasured there) — its link script has no counterpart const.
  */
 const PAIR_INDEX_TRANSITION_BETA = 5
+/**
+ * The GB artifact's WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04). δ=5 is the verdict's recommendation:
+ * the smallest magnitude that saturates bar B-2, with 0.00% parent-side false positives on B-3 and GB's own shipped
+ * board moving 66/69 → 69/69 whole-edge. See `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Held in
+ * lockstep with the shipped header like the two magnitudes above.
+ */
+const PAIR_INDEX_PARENT_DELTA = 5
 
 /**
  * Secondary pair sources (campaign R2/R3/R4b). Named here rather than inline at the call site because the freshness
@@ -363,29 +339,28 @@ let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const {
-			delta: existingDelta,
-			transitionBeta: existingTransitionBeta,
-			sourceMD5s: existingSourceMD5s,
-		} = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const existingSourceMD5s = header.sourceMD5s
 
-		if (existingDelta !== PAIR_INDEX_DELTA) {
-			console.log(
-				`STALE pair-index-gb.bin: header delta ${existingDelta} !== this script's PAIR_INDEX_DELTA ${PAIR_INDEX_DELTA} — rebuilding.`
-			)
-		} else if (existingTransitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
-			console.log(
-				`STALE pair-index-gb.bin: header transitionBeta ${existingTransitionBeta ?? "(absent)"} !== this script's ` +
-					`PAIR_INDEX_TRANSITION_BETA ${PAIR_INDEX_TRANSITION_BETA} — rebuilding.`
-			)
+		// Format + every calibrated magnitude, through the shared check (`scripts/weights-overlay-linker.ts`) so a
+		// new header field cannot be compared by some linkers and not others — which is how three of the four base
+		// linkers ended up unable to notice a schema bump.
+		const staleReason = pairIndexStaleReason(header, {
+			delta: PAIR_INDEX_DELTA,
+			transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+			parentDelta: PAIR_INDEX_PARENT_DELTA,
+		})
+
+		if (staleReason) {
+			console.log(`STALE pair-index-gb.bin: ${staleReason} — rebuilding.`)
 		} else if (!existsSync(String(PPD_SOURCE_CSV))) {
-			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
-			// delta match (the "missing source, can't build" branch below would fire anyway if this were
-			// stale and needed a rebuild).
+			// Magnitudes match but the source CSV isn't on disk to re-hash — can't do better than trust that
+			// match (the "missing source, can't build" branch below would fire anyway if this were stale and
+			// needed a rebuild).
 			pairIndexIsFresh = true
 
 			console.log(
-				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta + transitionBeta (source CSV absent, md5 freshness unverifiable)`
+				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has matching header magnitudes (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
 			// Compare EVERY source, not just the CSV. Checking `sourceMD5s[0]` alone leaves the guard blind
@@ -410,7 +385,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				pairIndexIsFresh = true
 
 				console.log(
-					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + transitionBeta + all ${currentSourceMD5s.length} source md5s match)`
+					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (header magnitudes + all ${currentSourceMD5s.length} source md5s match)`
 				)
 			} else {
 				console.log(
@@ -451,6 +426,8 @@ if (pairIndexIsFresh) {
 			String(PAIR_INDEX_DELTA),
 			"--transition-beta",
 			String(PAIR_INDEX_TRANSITION_BETA),
+			"--parent-delta",
+			String(PAIR_INDEX_PARENT_DELTA),
 			// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs
 			// join the build — without these flags a dev rebuild would silently DROP them.
 			"--borough-db",

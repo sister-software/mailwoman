@@ -36,7 +36,7 @@ import { parseArgs } from "node:util"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import { PairIndexResolver, peekPairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
+import { KNOWN_SCHEMA_VERSION, PairIndexResolver, peekPairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
@@ -191,8 +191,12 @@ function main(): void {
 			fail(`header delta ${header.delta} != 0 — a probe artifact must be uncalibrated`)
 		}
 
-		if (header.schemaVersion !== 2) {
-			fail(`header schemaVersion ${header.schemaVersion} != 2 (embedded-tag-table format, 2026-08-04)`)
+		// Against the reader's OWN constant, not a re-typed literal — this script and the format cannot disagree.
+		if (header.schemaVersion !== KNOWN_SCHEMA_VERSION) {
+			fail(
+				`header schemaVersion ${header.schemaVersion} != ${KNOWN_SCHEMA_VERSION} ` +
+					`(typed-parent-record format, PIX2, 2026-08-04)`
+			)
 		}
 
 		if (header.foldVersion !== 1) {
@@ -238,30 +242,41 @@ function main(): void {
 		const resolver = new PairIndexResolver(bytes)
 		let misses = 0
 		let wrongTag = 0
+		let wrongParentTag = 0
 
 		for (const [, [child, parent]] of expected) {
-			const tag = resolver.probe(child, parent)
+			const edge = resolver.probe(child, parent)
 
-			if (tag === undefined) {
+			if (edge === undefined) {
 				misses++
-			} else if (tag !== "locality") {
+			} else if (edge.tag !== "locality") {
 				wrongTag++
+			} else if (edge.parentTag !== "region") {
+				// PIX2: the sweep grades BOTH ends. The probe builder declares a locality→region edge in its
+				// header, so an entry whose recorded parent tag is anything else is a builder bug the pre-PIX2
+				// sweep could not have seen.
+				wrongParentTag++
 			}
 		}
 
-		if (misses === 0 && wrongTag === 0) {
-			console.log(`  SWEEP OK: all ${expected.size.toLocaleString()} expected pairs probe → locality`)
+		if (misses === 0 && wrongTag === 0 && wrongParentTag === 0) {
+			console.log(`  SWEEP OK: all ${expected.size.toLocaleString()} expected pairs probe → locality under region`)
 		} else {
-			fail(`membership sweep: ${misses} expected pairs missing, ${wrongTag} with a tag other than locality`)
+			fail(
+				`membership sweep: ${misses} expected pairs missing, ${wrongTag} with a tag other than locality, ` +
+					`${wrongParentTag} with a parent tag other than region`
+			)
 		}
 
 		// 4. Named receipts.
 		for (const probe of namedProbes) {
-			const tag = resolver.probe(normalizeFSTToken(probe.child), normalizeFSTToken(probe.parent))
-			const present = tag !== undefined
+			const edge = resolver.probe(normalizeFSTToken(probe.child), normalizeFSTToken(probe.parent))
+			const present = edge !== undefined
 			const ok = probe.expect === "present" ? present : !present
 
-			const line = `("${probe.child}", "${probe.parent}") → ${tag ?? "(no entry)"} [expect ${probe.expect}]`
+			const line = `("${probe.child}", "${probe.parent}") → ${
+				edge ? `${edge.tag} under ${edge.parentTag}` : "(no entry)"
+			} [expect ${probe.expect}]`
 
 			if (ok) {
 				console.log(`  PROBE OK: ${line}`)

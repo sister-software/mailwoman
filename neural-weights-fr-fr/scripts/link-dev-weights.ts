@@ -35,6 +35,8 @@ import { resolve } from "node:path"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
+import { pairIndexStaleReason, peekPairIndexHeaderFields } from "../../scripts/weights-overlay-linker.ts"
+
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
@@ -201,31 +203,15 @@ const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-fr.bin")
  */
 const PAIR_INDEX_DELTA = 10
 const PAIR_INDEX_TRANSITION_BETA = 5
-const BAN_DIR = dataRootPath("corpus", "sources", "ban")
-
 /**
- * Minimal PIX1 header reader — magic + header block only, reimplemented rather than imported so this data-only package
- * gains no dependency on `@mailwoman/neural`. `neural/pair-index-resolver.ts` owns the format.
+ * The FR artifact's WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5. FR
+ * is the leg that CAUGHT the mechanism's one real defect: biasing the parent's whole comma segment put the postcode
+ * inside `locality` and took `fr-lieudit-golden.jsonl` from 96.3% to 0.0% at δ≥6, invisible at δ=4. Fixed by scoping
+ * the write to the probe key's pieces (`CandidateWindow.keyPieceIndices`); FR then held 77/80 at every δ through 20.
+ * See `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
-function peekPairIndexHeaderFields(path: string): { delta: number; transitionBeta: number | undefined } {
-	const bytes = readFileSync(path)
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	// "PIX1" little-endian.
-	const MAGIC = 0x31_58_49_50
-
-	if (view.getUint32(0, true) !== MAGIC) {
-		throw new Error(`pair index: bad magic reading ${path}`)
-	}
-
-	const headerLen = view.getUint32(4, true)
-
-	const header = parseJSONStrict<{
-		delta: number
-		transitionBeta?: number
-	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
-
-	return { delta: header.delta, transitionBeta: header.transitionBeta }
-}
+const PAIR_INDEX_PARENT_DELTA = 5
+const BAN_DIR = dataRootPath("corpus", "sources", "ban")
 
 if (!existsSync(CLI)) {
 	console.error(`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run for pair-index-fr.bin.`)
@@ -238,14 +224,15 @@ if (!existsSync(CLI)) {
 
 	if (existsSync(PAIR_INDEX_BIN_DEST)) {
 		try {
-			const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+			// Format + every calibrated magnitude, through the shared check (`scripts/weights-overlay-linker.ts`).
+			const staleReason = pairIndexStaleReason(peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST), {
+				delta: PAIR_INDEX_DELTA,
+				transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+				parentDelta: PAIR_INDEX_PARENT_DELTA,
+			})
 
-			if (header.delta !== PAIR_INDEX_DELTA) {
-				console.log(`rebuilding pair-index-fr.bin — delta ${header.delta} → ${PAIR_INDEX_DELTA}`)
-			} else if (header.transitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
-				console.log(
-					`rebuilding pair-index-fr.bin — transitionBeta ${header.transitionBeta} → ${PAIR_INDEX_TRANSITION_BETA}`
-				)
+			if (staleReason) {
+				console.log(`rebuilding pair-index-fr.bin — ${staleReason}`)
 			} else {
 				needsRebuild = false
 			}
@@ -271,6 +258,8 @@ if (!existsSync(CLI)) {
 				String(PAIR_INDEX_DELTA),
 				"--transition-beta",
 				String(PAIR_INDEX_TRANSITION_BETA),
+				"--parent-delta",
+				String(PAIR_INDEX_PARENT_DELTA),
 				"--ban-dir",
 				String(BAN_DIR),
 			],

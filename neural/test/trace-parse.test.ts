@@ -134,7 +134,9 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		const index = {
 			delta: 6,
 			probe: (child: string, parent: string) =>
-				child === "moelfre" && parent === "abergele" ? ("dependent_locality" as const) : undefined,
+				child === "moelfre" && parent === "abergele"
+					? ({ tag: "dependent_locality", parentTag: "locality" } as const)
+					: undefined,
 		}
 
 		const commaText = "Moelfre, Abergele"

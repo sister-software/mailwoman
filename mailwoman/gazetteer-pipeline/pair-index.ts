@@ -9,13 +9,18 @@
  *   write.
  *
  *   {@link PairIndexBuilder} consumes one (rawCity, rawDistrict) row at a time — child = CITY,
- *   parent = DISTRICT, tag always `dependent_locality` (the PPD-tuples shape this arc's GB shard
- *   reads: CITY is the dependent_locality candidate, DISTRICT the enclosing post town — see
+ *   child tag always `dependent_locality` (the PPD-tuples shape this arc's GB shard reads: CITY is
+ *   the dependent_locality candidate, DISTRICT the enclosing post town — see
  *   `corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate). A row with an empty CITY (the
  *   PPD majority — the dependent_locality is legitimately absent on most rows) is skipped: it carries
  *   no dependent_locality to pair. Both fields are folded through `normalizeFSTToken` (the arc's one
  *   exported fold), matching `PairIndexHeader.foldVersion` — the same fold the PIX1
  *   reader's caller (`fst-prior.ts`'s `groupPiecesIntoWords`) applies at query time.
+ *
+ *   PARENT TAG (PIX2 / schema 3): the caller supplies it per row, because only the caller knows what
+ *   its source's parent COLUMN is. `addRow` will not default one — every source that feeds this
+ *   builder has to name the slot it read (post town → `locality`, WOF `borough` parent row →
+ *   `dependent_locality`, and so on), and the serializer refuses an entry that arrives without one.
  *
  *   Also tracks the pre-fold CITY word-length distribution (whitespace-split word count per raw,
  *   non-empty CITY) — this sizes the word-span window the decode-side prior walks (a
@@ -23,12 +28,15 @@
  *   evidence for that window, not a guess).
  */
 
+import type { ComponentTag } from "@mailwoman/core/types"
 import { SeededRandom } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import type { PairIndexEntry } from "@mailwoman/neural/pair-index-resolver"
 
 /**
- * The one tag this arc's GB extraction ever emits — CITY-under-DISTRICT is always a dependent_locality candidate.
+ * The one CHILD tag this arc's extractions ever emit — the CITY-slot candidate is always a dependent_locality. The
+ * PARENT tag is per-row and per-source, so it is a parameter rather than a constant (see
+ * {@link PairIndexBuilder.addRow}).
  */
 const PAIR_TAG = "dependent_locality" as const
 
@@ -104,8 +112,11 @@ export class PairIndexBuilder {
 	 * CSV read is fine either way — this trims again defensively). A row with an empty CITY is skipped: PPD's DISTRICT
 	 * (post town) is populated on virtually every row, but CITY (dependent_locality) legitimately isn't, and an empty
 	 * child has nothing to pair.
+	 *
+	 * `parentTag` is REQUIRED and caller-supplied: the builder cannot know whether `rawDistrict` came from a post-town
+	 * column, a commune column, or a WOF borough row, and PIX2 records the answer rather than deriving it.
 	 */
-	addRow(rawCity: string, rawDistrict: string): void {
+	addRow(rawCity: string, rawDistrict: string, parentTag: ComponentTag): void {
 		const trimmedCity = rawCity.trim()
 
 		if (!trimmedCity) {
@@ -129,8 +140,11 @@ export class PairIndexBuilder {
 		// delimiter could collide two distinct (child, parent) splits onto the same joined string.
 		const key = `${child.length}:${child}:${parent}`
 
+		// FIRST WRITE WINS on (child, parent), parent tag included. The sources are merged in a fixed order (register
+		// CSV → WOF → curated JSONL), so a pair both a register and WOF assert keeps the register's reading of the
+		// parent slot — the same precedence the pre-PIX2 dedupe already gave the whole entry.
 		if (!this.#seen.has(key)) {
-			this.#seen.set(key, { child, parent, tag: PAIR_TAG })
+			this.#seen.set(key, { child, parent, tag: PAIR_TAG, parentTag })
 		}
 	}
 

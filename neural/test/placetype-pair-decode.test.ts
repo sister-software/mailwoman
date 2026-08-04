@@ -55,7 +55,9 @@ function fixedPairIndex(child: string, parent: string, tag: string, delta = 6, t
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
-		probe: (c, p) => (c === child && p === parent ? (tag as never) : undefined),
+		// No `parentDelta`: these are decode-ORDER tests for the child-side bias, and adding a parent write
+		// would move spans they assert on for reasons unrelated to what they measure.
+		probe: (c, p) => (c === child && p === parent ? ({ tag, parentTag: "locality" } as never) : undefined),
 	}
 }
 

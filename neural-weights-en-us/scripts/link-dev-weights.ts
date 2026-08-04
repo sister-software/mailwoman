@@ -48,6 +48,8 @@ import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
+import { pairIndexStaleReason, peekPairIndexHeaderFields } from "../../scripts/weights-overlay-linker.ts"
+
 /**
  * Hex characters in an md5 digest.
  */
@@ -340,49 +342,28 @@ if (existsSync(MORPHOLOGY_SRC)) {
  * city/state/ZIP), so every pair comes from `--borough-db`. The command refuses a build with no source of any kind, so
  * dropping the flag fails loud rather than writing an empty index.
  *
- * Freshness guard, ported from en-gb: the test suite shells this script out on every run, so an unconditional rebuild
- * would cost minutes per `yarn test`. Peek the header instead and rebuild only when the calibrated delta, the
- * transition beta, or the source DB's md5 has moved. An ABSENT `transitionBeta` reads `undefined` and forces the
- * rebuild that stamps it in.
+ * Freshness guard: the test suite shells this script out on every run, so an unconditional rebuild would cost minutes
+ * per `yarn test`. Peek the header instead and rebuild only when the FORMAT (`schemaVersion`), a calibrated magnitude,
+ * or the source DB's md5 has moved. The format+magnitude half of that comparison lives in
+ * `scripts/weights-overlay-linker.ts`'s `pairIndexStaleReason` — shared with the other three base linkers and every
+ * overlay, because when each script carried its own copy three of the four could not notice a schema bump. The md5 half
+ * stays here: only this script knows which sources it passes. An ABSENT optional magnitude reads `undefined` and forces
+ * the rebuild that stamps it in.
  */
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-us.bin")
 /**
- * Calibrated soft-prior magnitude — the SAME pair the R5 bars were measured with (gauntlet unchanged, 0/60
- * venue-confound false positives, 60/60 tag-correct). Changing either number invalidates those receipts.
+ * Calibrated soft-prior magnitudes — the SAME set the R5 bars were measured with (gauntlet unchanged, 0/60
+ * venue-confound false positives, 60/60 tag-correct). Changing any of these numbers invalidates those receipts.
+ *
+ * `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US at the verdict's recommended δ=5 —
+ * the smallest magnitude that saturates bar B-2's brooklyn-class sub-board (18.3% → 98.3% whole-edge), flat from there
+ * to 20, with 0.00% parent-side false positives on B-3. See
+ * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
 const PAIR_INDEX_DELTA = 10
 const PAIR_INDEX_TRANSITION_BETA = 5
+const PAIR_INDEX_PARENT_DELTA = 5
 const PAIR_INDEX_SOURCE_DB = dataRootPath("wof", "admin-global-priority.db")
-
-/**
- * Minimal PIX1 header reader — magic + header block only. Reimplemented rather than imported so this data-only package
- * gains no dependency on `@mailwoman/neural` (which pulls onnxruntime-node) to read three fields. If PIX1 ever changes,
- * `neural/pair-index-resolver.ts`'s own parse is the source of truth this must follow.
- */
-function peekPairIndexHeaderFields(path: string): {
-	delta: number
-	transitionBeta: number | undefined
-	sourceMD5s: string[]
-} {
-	const bytes = readFileSync(path)
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const.
-	const MAGIC = 0x31_58_49_50
-
-	if (view.getUint32(0, true) !== MAGIC) {
-		throw new Error(`pair index: bad magic reading ${path}`)
-	}
-
-	const headerLen = view.getUint32(4, true)
-
-	const header = parseJSONStrict<{
-		delta: number
-		transitionBeta?: number
-		sourceMD5s?: string[]
-	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
-
-	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
-}
 
 /**
  * Read or compute the md5 of a file, using a sidecar `.md5` cache so a multi-gigabyte source isn't re-hashed on every
@@ -446,12 +427,14 @@ if (!existsSync(CLI)) {
 			const currentSourceMD5 = await md5FileWithSidecar(String(PAIR_INDEX_SOURCE_DB))
 			const [existingSourceMD5] = header.sourceMD5s
 
-			if (header.delta !== PAIR_INDEX_DELTA) {
-				console.log(`rebuilding pair-index-us.bin — delta ${header.delta} → ${PAIR_INDEX_DELTA}`)
-			} else if (header.transitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
-				console.log(
-					`rebuilding pair-index-us.bin — transitionBeta ${header.transitionBeta} → ${PAIR_INDEX_TRANSITION_BETA}`
-				)
+			const staleReason = pairIndexStaleReason(header, {
+				delta: PAIR_INDEX_DELTA,
+				transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+				parentDelta: PAIR_INDEX_PARENT_DELTA,
+			})
+
+			if (staleReason) {
+				console.log(`rebuilding pair-index-us.bin — ${staleReason}`)
 			} else if (header.sourceMD5s.length !== 1) {
 				console.log(
 					`rebuilding pair-index-us.bin — header records ${header.sourceMD5s.length} source md5s ` +
@@ -489,6 +472,8 @@ if (!existsSync(CLI)) {
 				String(PAIR_INDEX_DELTA),
 				"--transition-beta",
 				String(PAIR_INDEX_TRANSITION_BETA),
+				"--parent-delta",
+				String(PAIR_INDEX_PARENT_DELTA),
 				"--borough-db",
 				String(PAIR_INDEX_SOURCE_DB),
 			],

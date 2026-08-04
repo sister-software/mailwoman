@@ -132,7 +132,7 @@
 		"opset": 17,
 		"fp32_size_mb": 146.6,
 		"int8_size_mb": 37.6,
-		"pair_index_us_bin": "PIX1 binary, 1,323,912 bytes, 49,033 pairs, \u03b4=10, \u03b2=5"
+		"pair_index_us_bin": "PIX1 binary (schema 3), 1,341,264 bytes, 47,878 pairs, \u03b4=10, \u03b2=5, parentDelta=5"
 	},
 	"files": {
 		"model": "model.onnx",
@@ -716,9 +716,10 @@
 			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Park Slope\", \"Brooklyn\")",
 			"source": "Who's On First admin hierarchy ($MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db). NO postal register: USPS routes city/state/ZIP, so unlike GB's PPD there is no mail source carrying US dependent localities. Children: borough + neighbourhood. Parents: locality, localadmin AND borough \u2014 WOF parents US neighbourhoods to the locality (\"Astoria\" hangs off New York, not Queens), so a locality-only parent rule drops the borough-level pairs this instance exists for.",
 			"pairs": 47878,
-			"bytes": 1293031,
+			"bytes": 1341264,
 			"md5": "31e7cd899dab5af0b8d7ec03fe5cb548",
-			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from the GB calibration rather than re-swept, because the R5 finding is that the classifier's dependent_locality deficit is UNIFORM across locales (~7.0 logits mean, measured on the en-gb card), not GB-specific. The R5 bars were measured at exactly this pair; changing either number invalidates them.",
+			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's \u2014 +1 byte per pair, pair COUNT unchanged. Schema 1 and 2 binaries are refused; the artifact must be rebuilt.",
+			"delta_calibration": "\u03b4=10, transitionBeta=5, parentDelta=5 (whole-edge parent bias, #46 \u2014 the record's own parentTag gets +5 over the parent window). \u03b4=5 is the smallest magnitude that saturates bar B-2's brooklyn-class sub-board and is flat through 20, at 0.00% parent-side FP on B-3: docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md. The \u03b4/\u03b2 pair is inherited from the GB calibration rather than re-swept, because the R5 finding is that the classifier's dependent_locality deficit is UNIFORM across locales (~7.0 logits mean, measured on the en-gb card), not GB-specific. The R5 bars were measured at exactly this pair; changing either number invalidates them.",
 			"country_gate": "hard-gated on the header's country (us). Verified inert on GB input: the index misses all five GB canonical pairs (Shoreditch/London, Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester) \u2014 see neural/test/weights.test.ts.",
 			"not_committed": "derived artifact, .gitignore'd (same posture as postcode-us.bin) \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-us --country us --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`",
 			"behavior_change": "This changes DEFAULT en-us parse output. A US address carrying a neighbourhood or borough line previously emitted no dependent_locality AND SILENTLY DROPPED the second admin level (\"123 Main St, Park Slope, Brooklyn, NY\" \u2192 locality=Park Slope, Brooklyn discarded). It now emits dependent_locality=Park Slope, locality=Brooklyn.",

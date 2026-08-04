@@ -8,8 +8,9 @@ Model: shipped en-US weights, `model-v401-base-step-060000-int8.onnx` (md5 `c968
 2026-08-04 admin + candidate rebuild. Indexes: the `link-dev-weights` artifacts built the same day —
 `pair-index-us.bin` (47,878 pairs, δ=10, β=5), `-gb` (30,825), `-nz` (3,134), `-fr` (199,282).
 
-**Status: all four bars clear. NOT shipped — `parentDelta` stays `undefined` by default.** The ship
-decision, like R5's, is the operator's.
+**Status: all four bars clear.** The bars below graded the mechanism as first built, where the parent's
+tag was DERIVED from `WESTERN_PARENT_OF`. See the postscript at the foot of this page: the operator
+ruled for a format change instead, and the shipped mechanism reads the parent's tag off the record.
 
 ## B-1 — byte-stability where the set is unconstraining
 
@@ -181,3 +182,63 @@ The board builders and graders are gitignored scratchpad scripts (`scripts/scrat
 `pix1-b2.ts`, `build-b2-board.ts`, `build-b2-collide-board.ts`, `build-b3-board.ts`,
 `build-b3-fire-board.ts`, `build-locality-region-board.ts`). Every board they emit is derived from
 `$MAILWOMAN_DATA_ROOT` artifacts on a fixed seed, so they rebuild byte-identically.
+
+## Postscript — PIX2 (schema 3) and the ship, 2026-08-04
+
+The operator ruled against the derivation this page graded. `WESTERN_PARENT_OF` answers _which parents
+the tree builder will accept for a tag_, which is not the question a retrieval index is asking, and the
+two diverge in both directions:
+
+- It cannot express an edge the extraction actually observed. The US WOF source admits `borough` as a
+  parent placetype, so `pair-index-us.bin` carries ("park slope", "brooklyn") — a `dependent_locality`
+  under a `dependent_locality`. Containment gives `dependent_locality` exactly one allowed parent,
+  `locality`. The derived mechanism biased the wrong label on every such row.
+- Where its set has several members it biased them all equally, which is what B-1 called "inert" — a
+  `locality` child moved `subregion`/`region`/`country` alike and therefore moved nothing.
+
+**The format now records both ends.** PIX1 schema 3 adds one byte per pair, `parentTagIdx`, indexing
+the same header `tagTable`. Schemas 1 AND 2 are refused with rebuild guidance — a v2 record stops after
+`tagIdx`, so decoding one as v3 would swallow the next record's `childLen`. Every builder states its
+parent tag from its own source: the PPD/LINZ `DISTRICT` column and the curated GB JSONL sets are the
+post-town slot (`locality`); BAN's parent is the commune (`locality`); the WOF extractions read the
+parent ROW's placetype through `PLACETYPE_PROJECTION` (`locality`/`localadmin` → `locality`, `borough`
+→ `dependent_locality`); the hierarchy probe declares `region` in its own header.
+
+**Shipped default-on at δ=5 for us/gb/nz/fr**, carried in the artifact header (`PairIndexHeader.parentDelta`)
+exactly as `delta` and `transitionBeta` are, so the classifier auto-wires it with no code that knows
+which locale is which. `de`/`in`/`es`/`it` ship WITHOUT the key: no board has graded the parent side
+there, and the D-rule's answer to an unmeasured locale is a per-locale gate, not an inherited magnitude.
+`MAILWOMAN_PAIR_PARENT_DELTA` still overrides the header, for sweeps.
+
+### Gate receipts on the per-record mechanism
+
+Rebuilt all eight dev pair indexes at schema 3. OFF leg = the same artifacts with `parentDelta` removed
+from the header (entries, `buildDate` and every other field byte-identical — one key apart, a tighter
+control than a second build).
+
+```
+OFF: === Gauntlet · regression (54/55 gated cases pass, 61 tracked) ===
+ON:  === Gauntlet · regression (54/55 gated cases pass, 61 tracked) ===
+```
+
+The two runs are **byte-identical end to end** — `diff` over the whole transcript is empty, both legs
+`FAIL regression / PASS metamorphic` on the pre-existing `si-sentinel-apace` case. Zero newly-failing
+cases anywhere: the D-rule clears. Note the difference from the δ=6 derived-mechanism run above, which
+promoted `gb-op2-nine-elms-bare`; the per-record mechanism at δ=5 does not move that case either way.
+
+The gauntlet not moving is not the mechanism failing to fire. Rebuilt brooklyn-class sub-board, 60 rows,
+`<neighbourhood>, <city>, <state-abbrev>` drawn on seed 42 from `pair-index-us.bin` entries whose parent
+fold names a US state, gold from the admin gazetteer's ancestry:
+
+| parentDelta         | whole-edge       | child-only   |
+| ------------------- | ---------------- | ------------ |
+| OFF                 | 7/60 (11.7%)     | 60/60 (100%) |
+| 5 (from the header) | **60/60 (100%)** | 60/60 (100%) |
+
+Child-only is flat across both legs — only the parent moves, the same shape the derived mechanism showed
+(11/60 → 59/60). This is a REBUILD, not a replay: the original board builders were gitignored scratchpad
+scripts and no longer exist, so the row set differs and the two numbers are not strictly comparable.
+
+The named row, directly: `brooklyn, new york, ny` parses `dependent_locality=Brooklyn, locality=New York,
+region=NY` with the header's δ=5, and `dependent_locality=Brooklyn, locality=(none), region=New York`
+with `MAILWOMAN_PAIR_PARENT_DELTA=0`. That is the defect the arc was opened for, closed.

@@ -305,8 +305,8 @@ describe("resolveWeights — package auto-resolve", () => {
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("nz")
 			expect(resolver.header.delta).toBe(10)
-			expect(resolver.probe("plimmerton", "porirua")).toBe("dependent_locality")
-			expect(resolver.probe("mangawhai", "mangawhai")).toBe("dependent_locality")
+			expect(resolver.probe("plimmerton", "porirua")?.tag).toBe("dependent_locality")
+			expect(resolver.probe("mangawhai", "mangawhai")?.tag).toBe("dependent_locality")
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-nz" })
 			const tree = await cls.parse("7 Katipo Drive, Mangawhai, Northland")
@@ -341,7 +341,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			// the end-to-end parse below to prove anything about the wiring.
 			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("gb")
-			expect(resolver.probe("fishburn", "stocktonontees")).toBe("dependent_locality")
+			expect(resolver.probe("fishburn", "stocktonontees")?.tag).toBe("dependent_locality")
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const trace = await cls.traceParse(GB_DEPENDENT_LOCALITY_ADDRESS)
@@ -433,7 +433,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
 			// SPACE-preserved token ("holland fen"), not concatenated — see pair-index-resolver.ts's header
 			// doc on how normalizeFSTToken folds interior whitespace.
-			expect(resolver.probe("holland fen", "lincoln")).toBe("dependent_locality")
+			expect(resolver.probe("holland fen", "lincoln")?.tag).toBe("dependent_locality")
 
 			// GB_WIDE_MARGIN_ADDRESS is deliberately comma-LESS (see its docstring — the comma form scored
 			// LOWER for this exact pair). The prior defaults to `probeMode: "segment"`, under which a
@@ -484,7 +484,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			// PAIR_INDEX_TRANSITION_BETA lockstep guard rebuilds a stale binary before this line can see it).
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.header.transitionBeta).toBe(5)
-			expect(resolver.probe("upton", "bude")).toBe("dependent_locality")
+			expect(resolver.probe("upton", "bude")?.tag).toBe("dependent_locality")
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const row = "12 Church Road Glenfield Leicester LE3 8DP"
@@ -492,7 +492,13 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			// Beta-less view of the SAME index bytes: probe + delta identical, transitionBeta withheld — the
 			// exact decode every pre-TRANSITION-BETA build produces on this row (the measured current-main
 			// behavior: the emission bias fires, the fused path survives, the child span emits nothing).
+			// `parentDelta` is withheld ALONGSIDE `transitionBeta`, and that is not an oversight. The view models
+			// the pre-TRANSITION-BETA build, which also predates the whole-edge parent bias (#46). Carrying the
+			// artifact's parentDelta=5 through gives this row a SECOND recovery lever: the parent bias alone
+			// re-splits the fused span and `dependent_locality` comes back as "Glenfield", so the assertion below
+			// stops isolating β and starts measuring "either lever fired". Verified by trying it.
 			const betaLessView: PairIndexLike = { probe: (c, p) => resolver.probe(c, p), delta: resolver.delta }
+
 			const betaLessTrace = await cls.traceParse(row, { placetypePair: { index: betaLessView } })
 			expect(betaLessTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
 			const betaLessJSON = await cls.parseJSON(row, { placetypePair: { index: betaLessView } })
@@ -568,7 +574,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 						sourceMD5s: [],
 						buildDate: "2026-07-23",
 					},
-					[{ child: "holland fen", parent: "boston", tag: "dependent_locality" }]
+					[{ child: "holland fen", parent: "boston", tag: "dependent_locality", parentTag: "locality" }]
 				)
 			)
 
