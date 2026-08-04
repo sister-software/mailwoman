@@ -168,11 +168,11 @@ mailwoman reverse [options] <coordinate...>
 mailwoman serve [options]
 ```
 
-| Flag            | Type   | Default   | Description                      |
-| --------------- | ------ | --------- | -------------------------------- |
-| `--port [port]` | number | `3000`    | The port to listen on            |
-| `--host [host]` | string | `0.0.0.0` | The network interface to bind to |
-| `--cpus [cpus]` | number | —         | The number of CPUs to use        |
+| Flag            | Type   | Default   | Description                                                            |
+| --------------- | ------ | --------- | ---------------------------------------------------------------------- |
+| `--port [port]` | number | `3000`    | The port to listen on                                                  |
+| `--host [host]` | string | `0.0.0.0` | The network interface to bind to                                       |
+| `--cpus [cpus]` | number | —         | The number of worker processes to fork. Default: every available core. |
 
 ## `mailwoman data`
 

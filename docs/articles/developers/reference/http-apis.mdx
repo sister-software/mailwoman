@@ -21,16 +21,18 @@ definitions the server registers. Where this page and a document disagree, the d
 
 ## Surfaces
 
-| Surface   | Package                | Command                     | Default port | OpenAPI                                   |
-| --------- | ---------------------- | --------------------------- | ------------ | ----------------------------------------- |
-| Native    | `@mailwoman/api`       | `mailwoman serve`           | `3000`       | [mailwoman.json](/openapi/mailwoman.json) |
-| Nominatim | `@mailwoman/nominatim` | `mailwoman-nominatim serve` | `8080`       | [nominatim.json](/openapi/nominatim.json) |
-| Photon    | `@mailwoman/photon`    | `mailwoman-photon serve`    | `2322`       | [photon.json](/openapi/photon.json)       |
-| libpostal | `@mailwoman/libpostal` | `mailwoman-libpostal serve` | `8081`       | [libpostal.json](/openapi/libpostal.json) |
+| Surface   | Package                | Command           | Default port | OpenAPI                                   |
+| --------- | ---------------------- | ----------------- | ------------ | ----------------------------------------- |
+| Native    | `@mailwoman/api`       | `mailwoman serve` | `3000`       | [mailwoman.json](/openapi/mailwoman.json) |
+| Nominatim | `@mailwoman/nominatim` | `nominatim serve` | `8080`       | [nominatim.json](/openapi/nominatim.json) |
+| Photon    | `@mailwoman/photon`    | `photon serve`    | `2322`       | [photon.json](/openapi/photon.json)       |
+| libpostal | `@mailwoman/libpostal` | `libpostal serve` | `8081`       | [libpostal.json](/openapi/libpostal.json) |
 
-Each server binds `0.0.0.0` and takes `--port` and `--host`. Neither is settable by an environment
-variable, so a deployment that configures ports through the environment passes them as flags. Each
-server also serves its own document at `/openapi.json`.
+Each drop-in package declares one unscoped binary, so it installs as `nominatim`, `photon` or
+`libpostal` in `node_modules/.bin`, and `npx @mailwoman/nominatim serve` reaches it without naming
+the binary. Each server binds `0.0.0.0` and takes `--port` and `--host`. Neither is settable by an
+environment variable, so a deployment that configures ports through the environment passes them as
+flags. Each server also serves its own document at `/openapi.json`.
 
 ## URL anatomy
 
@@ -244,19 +246,19 @@ one and then fails validation. The body limit is 100 KiB rather than the native 
 
 ### Drop-in error shapes
 
-| Surface   | Status | Body                                                                                   |
-| --------- | ------ | -------------------------------------------------------------------------------------- |
-| Nominatim | `400`  | `{ "error": "lat and lon are required" }`                                              |
-| Nominatim | `400`  | `{ "error": "lat must be in [-90, 90] and lon in [-180, 180]" }`                       |
-| Nominatim | `500`  | `{ "error": "internal error" }`                                                        |
-| Nominatim | `501`  | `{ "error": "search not implemented" }`, and the same for reverse and lookup           |
-| Photon    | `400`  | `{ "type": "FeatureCollection", "features": [], "message": "q is required" }`          |
-| Photon    | `500`  | `{ "type": "FeatureCollection", "features": [], "message": "internal error" }`         |
-| Photon    | `501`  | `{ "type": "FeatureCollection", "features": [], "message": "search not implemented" }` |
-| libpostal | `400`  | `{ "error": "query is required" }` or `{ "error": "address is required" }`             |
-| libpostal | `413`  | `{ "error": "request body too large" }`                                                |
-| libpostal | `500`  | `{ "error": "internal error" }`                                                        |
-| libpostal | `501`  | `{ "error": "expand not implemented" }`                                                |
+| Surface   | Status | Body                                                                                    |
+| --------- | ------ | --------------------------------------------------------------------------------------- |
+| Nominatim | `400`  | `{ "error": "lat and lon are required" }`                                               |
+| Nominatim | `400`  | `{ "error": "lat must be in [-90, 90] and lon in [-180, 180]" }`                        |
+| Nominatim | `500`  | `{ "error": "internal error" }`                                                         |
+| Nominatim | `501`  | `{ "error": "search not implemented (see #802)" }`; reverse cites `#803`, lookup `#805` |
+| Photon    | `400`  | `{ "type": "FeatureCollection", "features": [], "message": "q is required" }`           |
+| Photon    | `500`  | `{ "type": "FeatureCollection", "features": [], "message": "internal error" }`          |
+| Photon    | `501`  | `{ "type": "FeatureCollection", "features": [], "message": "search not implemented" }`  |
+| libpostal | `400`  | `{ "error": "query is required" }` or `{ "error": "address is required" }`              |
+| libpostal | `413`  | `{ "error": "request body too large" }`                                                 |
+| libpostal | `500`  | `{ "error": "internal error" }`                                                         |
+| libpostal | `501`  | `{ "error": "expand not implemented" }`                                                 |
 
 Nominatim's `/status` is the one endpoint that answers `200` with no engine method wired, reporting
 `{ "status": 0, "message": "OK" }`. Every other absent method on every surface answers `501`.

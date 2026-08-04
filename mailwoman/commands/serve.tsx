@@ -237,7 +237,11 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 const ServerConfigSchema = zod.object({
 	port: zod.number().optional().default(3000).describe("The port to listen on"),
 	host: zod.string().optional().default("0.0.0.0").describe("The network interface to bind to"),
-	cpus: zod.number().optional().describe("The number of CPUs to use"),
+	// No zod `.default()` on purpose: the effective default is `availableParallelism()`, which is
+	// host-dependent, and baking it into the schema would print THIS machine's core count into
+	// `--help` and into the generated CLI reference. `ClusterManager` applies it at destructure time
+	// instead; the description carries it so neither surface under-reports single-process.
+	cpus: zod.number().optional().describe("The number of worker processes to fork. Default: every available core."),
 })
 
 export const options = ServerConfigSchema

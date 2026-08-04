@@ -40,9 +40,13 @@ Every variable below is read by shipped runtime code. Each has no default unless
 | `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer | Directory holding the coarse country placer                                     | You replace the bundled placer                                                             |
 | `MAILWOMAN_BATCH_MAX`            | `1000`             | The row cap on `POST /v1/batch` under `mailwoman serve`                         | You batch more than 1000 rows per request                                                  |
 
-`MAILWOMAN_CANDIDATE_DB` is the one most installs need. Downloading `candidate.db` does not wire it
-up: resolution is gated on the variable, so the file sits unused until you export it.
-`mailwoman data pull candidate` prints the exact export line on success.
+`MAILWOMAN_CANDIDATE_DB` is the one most installs need, and whether you must set it depends on which
+surface you run. `mailwoman parse`, `mailwoman geocode` and `mailwoman serve` resolve the candidate
+database only through this variable or an explicit flag, so downloading the file leaves it unused
+until you export the path. The `nominatim` and `photon` servers additionally fall back to the
+convention path `<data root>/wof/candidate.db`, so for those two a bare
+`mailwoman data pull candidate` is the whole setup. `data pull` prints the export line on success
+either way.
 
 Setting both `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` is not an error, and the candidate
 backend wins. With only the candidate variable set, `mailwoman parse --resolve` and
@@ -76,7 +80,7 @@ one off is the change that needs a reason. Each is an option, not an environment
 
 | Mechanism                 | Where                                      | Effect                                                                             | Turn it off when                                                       |
 | ------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `spanRescore`             | `ResolveOpts`                              | Re-ranks a resolved span against its neighbors inside a 50 km gate                 | You need output identical to a build without it                        |
+| `spanRescore`             | `ResolveOpts`                              | On an UNRESOLVED tree only, recovers a locality the subword tokenizer split        | You need output identical to a build without it                        |
 | `postcodeConsistency`     | `ResolveOpts`                              | A resolved postcode point pulls a same-named locality to the right one             | Your postcodes are unreliable                                          |
 | `hierarchyCompletion`     | `ResolveOpts`                              | Recovers a locality dropped when one name plays two administrative roles           | Never, in normal use                                                   |
 | `parentFallback`          | `ResolveOpts`                              | Retries once without the parent constraint when a filtered lookup comes back empty | Never, in normal use                                                   |
@@ -100,28 +104,33 @@ Two mechanisms are off by default and worth knowing about:
 The coordinate tiers are gated on data rather than on a measurement. They stay off because the shards
 are a 41.3 GB download for the United States, not because they cost accuracy.
 
-`false` is the disable signal for every option above, and it is not the same as omitting the option.
-Omitting means "give me the default"; `false` means "run as though this mechanism did not exist".
+For every boolean option above, `false` is the disable signal and it is not the same as omitting the
+option: omitting means "give me the default", while `false` means "run as though this mechanism did
+not exist". The three non-boolean options work differently. `calibrate` takes a calibrator function,
+and `addressPoints` and `interpolation` take lookup objects, so for those three, omitting is the
+only way to leave the mechanism off.
 
 ## Errors
 
-| Condition                                                  | Message or symptom                                            | Next step                                                                         |
-| ---------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| No gazetteer path set on a resolving command               | A startup error naming `$MAILWOMAN_WOF_DB` and `--resolve-db` | Set `MAILWOMAN_CANDIDATE_DB`, which satisfies every command except `registry run` |
-| `candidate.db` downloaded but resolution still looks wrong | Nothing. The variable is unset, so the file is not read       | `export MAILWOMAN_CANDIDATE_DB=<path>` and re-run                                 |
-| A reverse geocode reports approximate containment          | `MAILWOMAN_WOF_POLYGONS_DB` is unset                          | Point it at the polygon sidecar                                                   |
-| A batch request answers `413 batch too large`              | The request exceeded `MAILWOMAN_BATCH_MAX`                    | Raise the variable, or chunk the request                                          |
-| A variable you set has no effect                           | It is outside this page's boundary                            | Check the table above. Repository-only variables do nothing installed             |
+| Condition                                                               | Message or symptom                                            | Next step                                                                         |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| No gazetteer path set on a resolving command                            | A startup error naming `$MAILWOMAN_WOF_DB` and `--resolve-db` | Set `MAILWOMAN_CANDIDATE_DB`, which satisfies every command except `registry run` |
+| `candidate.db` downloaded but `parse` or `geocode` still resolves wrong | The variable is unset, so those commands never read the file  | `export MAILWOMAN_CANDIDATE_DB=<path>` and re-run                                 |
+| A reverse geocode reports approximate containment                       | `MAILWOMAN_WOF_POLYGONS_DB` is unset                          | Point it at the polygon sidecar                                                   |
+| A batch request answers `413 batch too large`                           | The request exceeded `MAILWOMAN_BATCH_MAX`                    | Raise the variable, or chunk the request                                          |
+| A variable you set has no effect                                        | It is outside this page's boundary                            | Check the table above. Repository-only variables do nothing installed             |
 
 `mailwoman doctor` reports which of these are resolved, and prints the one command that fixes each
 gap.
 
 ## Rationale
 
-Resolution is gated on an environment variable rather than on a file existing at a conventional path
-because adopting a database silently would change every result on the machine that downloaded it. A
-geocoder that answers differently depending on what happens to be on disk is not one you can reason
-about. The cost is the step this page keeps repeating: download, then export.
+The parsing and geocoding commands gate resolution on an environment variable rather than on a file
+existing at a conventional path, because adopting a database silently would change every result on
+the machine that downloaded it. A geocoder that answers differently depending on what happens to be
+on disk is not one you can reason about. The cost is the step this page keeps repeating: download,
+then export. The two drop-in servers take the opposite trade and read the convention path, because
+a drop-in that needs a second setup step is not a drop-in.
 
 The behavior defaults are on rather than opt-in because a default nobody turns on is a mechanism that
 does not exist. Each one shipped on by default only after clearing a gate against the shipped model,

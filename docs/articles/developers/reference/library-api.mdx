@@ -71,7 +71,7 @@ Two stages take an injected implementation. The rest carry production defaults.
 | `poiQueryKind`        | `boolean` or `{ poiDatabasePath }` | `true` (intent only)         | Detects a POI query and extracts its intent. The object form also executes it |
 | `normalizeCase`       | `boolean`                          | on                           | Title-cases detected all-caps ASCII input before the model                    |
 | `hardPlaceCountry`    | `boolean`                          | on                           | Promotes a confident country guess to a filter, inside a coverage safelist    |
-| `hardCountrySafelist` | `ReadonlySet<string>`              | the built-in safelist        | Which countries the hard filter applies to                                    |
+| `hardCountrySafelist` | `ReadonlySet<string>`              | the gazetteer's own manifest | Which countries the hard filter applies to. Falls back to a built-in list     |
 | `detectLocale`        | function                           | `@mailwoman/locale-gate`     | Stage 2                                                                       |
 | `classifyKind`        | function                           | `@mailwoman/kind-classifier` | Stage 2.5. An explicit override wins over the POI-aware default               |
 | `groupPhrases`        | function                           | `@mailwoman/phrase-grouper`  | Stage 2.7                                                                     |
@@ -164,14 +164,19 @@ static async loadFromWeights(opts?: {
 }): Promise<NeuralAddressClassifier>
 ```
 
-Resolution runs in one order: explicit paths in `opts`, then the `@mailwoman/neural-weights-<locale>`
-package, then a single actionable error. The method is Node-only — it imports `onnxruntime-node` and
-`node:fs` dynamically. In a browser, use `loadNeuralClassifierFromURLs` from `@mailwoman/neural-web`.
+Resolution runs in one order: an explicit `cacheRoot` holding both binaries, then explicit paths in
+`opts`, then the installed `@mailwoman/neural-weights-<locale>` package, then the user-level weights
+cache that `mailwoman parse --download-weights` writes, then a single actionable error naming all of
+them. A package that resolves but ships no binaries fails loudly rather than falling through to the
+cache — that is the metadata-only checkout trap, and silence there would look like a working install.
 
-`intraOpNumThreads` defaults to all available cores. Measured over 120 parses on 2026-08-03: one
-thread costs 18.3 ms per parse, two cost 12.5 ms, and four cost 9.2 ms against 9.3 ms for all cores.
-Pin it to 1 only when you are running several classifier instances in one process and want to bound
-total thread count.
+The method is Node-only: it imports `onnxruntime-node` and `node:fs` dynamically. In a browser, use
+`loadNeuralClassifierFromURLs` from `@mailwoman/neural-web`.
+
+`intraOpNumThreads` defaults to 4, which is a cap rather than a core count. Measured over 120 parses
+on 2026-08-03: one thread costs 18.3 ms per parse, two cost 12.5 ms, four cost 9.2 ms, and all cores
+cost 9.3 ms — so the cap is free. Pin it to 1 only when you are running several classifier instances
+in one process and want to bound total thread count, and expect twice the latency.
 
 One classifier instance holds one locale. Construct one per locale you serve.
 
@@ -193,23 +198,24 @@ dependency, so it reports where the gazetteer index is and leaves deserializatio
 
 These are the fields of `ParseOpts` a consumer sets. The remainder are marked internal in the source.
 
-| Field                      | Type                                | Default             | Effect                                               |
-| -------------------------- | ----------------------------------- | ------------------- | ---------------------------------------------------- |
-| `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`      | Which register the evidence channels run in          |
-| `queryShape`               | `QueryShapeLike`                    | none                | Known-format hits become additive emission biases    |
-| `normalizeCase`            | `boolean`                           | on                  | Title-cases detected all-caps ASCII input            |
-| `calibrate`                | `Calibrator`                        | off                 | Maps raw span confidence through a calibration table |
-| `enforceWordConsistency`   | `boolean` or `WordConsistencyOpts`  | on                  | Per-word BIO vote, skipping byte-fallback words      |
-| `postcodeRepair`           | `boolean`                           | off                 | Deterministic postcode repair pass                   |
-| `unitRepair`               | `boolean`                           | off                 | Deterministic unit repair pass                       |
-| `spanProposer`             | `boolean`                           | on                  | Span-proposal priors                                 |
-| `addressSystemConventions` | `"auto"` or a system code           | from the model card | Which address-system conventions apply               |
-| `placetypePair`            | `PlacetypePairPriorOpts` or `false` | from the model card | Omitting it inherits the card. Only `false` disables |
+| Field                      | Type                                | Default                          | Effect                                                     |
+| -------------------------- | ----------------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`                   | Which register the evidence channels run in                |
+| `queryShape`               | `QueryShapeLike`                    | none                             | Known-format hits become additive emission biases          |
+| `normalizeCase`            | `boolean`                           | on                               | Title-cases detected all-caps ASCII input                  |
+| `calibrate`                | `Calibrator`                        | off                              | Maps raw span confidence through a calibration table       |
+| `enforceWordConsistency`   | `boolean` or `WordConsistencyOpts`  | on                               | Per-word BIO vote, skipping byte-fallback words            |
+| `postcodeRepair`           | `boolean`                           | off                              | Deterministic postcode repair pass                         |
+| `unitRepair`               | `boolean`                           | off                              | Deterministic unit repair pass                             |
+| `spanProposer`             | `boolean`                           | on                               | Span-proposal priors                                       |
+| `addressSystemConventions` | `"auto"` or a system code           | from the model card              | Which address-system conventions apply                     |
+| `placetypePair`            | `PlacetypePairPriorOpts` or `false` | the weights package's pair index | Omitting it inherits the package. Only `false` disables it |
 
-The table above is the classifier's own defaults. `createRuntimePipeline` overrides two of them on
-every call it makes: it always passes `postcodeRepair: true` and always passes the shipped
-word-consistency settings. Those two are therefore on whenever you go through the pipeline and off
-by default only when you call the classifier directly.
+The table above is the classifier's own defaults, and `createRuntimePipeline` pins two of them on
+every call it makes: `postcodeRepair: true`, and the shipped word-consistency settings.
+`enforceWordConsistency` is on either way — the pin only removes the caller's ability to change it
+mid-pipeline. `postcodeRepair` is the one that differs: off on a bare classifier call, on
+through the pipeline.
 
 ## Geocoding
 
