@@ -7,6 +7,23 @@
  *   sub-entrypoints, copies + validates model artifacts, and builds the FST gazetteer binary.
  *
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
+ *
+ *   WHY `createRequire` AND NOT `import.meta.resolve` (2026-08-05 triage). Not availability —
+ *   `import.meta` demonstrably works here (it is the `createRequire` argument below), and every
+ *   specifier in this file was measured to resolve identically through both. The reason is what the
+ *   callers want back. `import.meta.resolve` answers "which ONE file does this specifier import",
+ *   which is precisely the answer these aliases exist to OVERRIDE: they point webpack at source
+ *   `.ts` rather than the `out/` JS the exports map's `default` condition selects, and at
+ *   `core/resolver/types` rather than the `@mailwoman/resolver` barrel that re-exports it. Using
+ *   the resolver to build them is circular for those. So {@link resolveWorkspaceDir} asks the
+ *   cheapest question that has a stable answer — where does this package LIVE — and the
+ *   `resolveWorkspaceFile` / `resolveWorkspaceDirEntry` helpers pick the entry by hand from there.
+ *   A package directory is not something `import.meta.resolve` returns.
+ *
+ *   The one sub-site that is a genuine plain resolution is the `@mailwoman/codex` loop below, which
+ *   deliberately asks the resolver instead of hand-deriving paths. It stays on `require.resolve` so
+ *   this file has one resolution mechanism rather than two; if it ever moves, move it knowing that
+ *   the docs build is the only thing that can verify a Docusaurus-loader change, not a unit test.
  */
 
 import { spawnSync } from "node:child_process"
