@@ -122,3 +122,52 @@ test("GeoNames postal names each postcode's delivery city, including territories
 
 	db.close()
 })
+
+test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
+	// The US case. `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt, so
+	// without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
+	const dir = mkdtempSync(join(tmpdir(), "centroid-combined-"))
+	const shardPath = join(dir, "postalcode-us.db")
+	const shard = new DatabaseSync(shardPath)
+
+	await createUnifiedSchema(shard)
+
+	shard
+		.prepare(
+			"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (1, -1, '11201', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)"
+		)
+		.run()
+
+	shard.close()
+
+	// An EMPTY per-country directory — the shape on disk that made this branch load-bearing.
+	const geonamesDir = join(dir, "geonames-postal")
+
+	mkdirSync(geonamesDir, { recursive: true })
+
+	const geonamesCombined = join(dir, "allCountries-postal.txt")
+
+	writeFileSync(
+		geonamesCombined,
+		["FI\t11201\tSomewhere\t\t\t\t\t\t\t60.1\t24.9\t4", "US\t11201\tBrooklyn\t\t\t\t\t\t\t40.694\t-73.9903\t4"].join(
+			"\n"
+		)
+	)
+
+	const db = new DatabaseSync(shardPath)
+
+	const r = await fillPostcodeCentroids(db, { geonamesDir, geonamesCombined })
+
+	expect(r.geonamesNames).toBe(1)
+
+	// FI carries the SAME postcode string — country scoping is what keeps Helsinki out of Brooklyn.
+	const row = db.prepare("SELECT n.name AS name FROM names n WHERE n.id = 1").get() as { name: string }
+
+	expect(row.name).toBe("Brooklyn")
+
+	const placed = db.prepare("SELECT latitude FROM spr WHERE id = 1").get() as { latitude: number }
+
+	expect(placed.latitude).toBeCloseTo(40.694, 3)
+
+	db.close()
+})

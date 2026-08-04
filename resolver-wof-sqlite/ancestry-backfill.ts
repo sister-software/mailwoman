@@ -46,8 +46,10 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
+
+import type { WOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { join, resolvePath } from "path-ts"
 
 /**
  * Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them.
@@ -109,24 +111,27 @@ export function discoverAdminDataRoots(reposRoot: string): string[] {
 }
 
 /**
+ * Characters per directory level in WOF's sharded GeoJSON layout.
+ */
+const ID_CHUNK = 3
+
+/**
  * WOF geojson lives sharded: an id resolves to `<3-char chunks>/<id>.geojson` under each data root.
  */
-function geojsonForID(id: number, roots: readonly string[]): Record<string, unknown> | null {
+function geojsonForID(id: number, roots: readonly string[]): WOFFeature | null {
 	const s = String(id)
 	const chunks: string[] = []
 
-	for (let i = 0; i < s.length; i += 3) {
-		chunks.push(s.slice(i, i + 3))
+	for (let i = 0; i < s.length; i += ID_CHUNK) {
+		chunks.push(s.slice(i, i + ID_CHUNK))
 	}
 
-	const rel = join(chunks.join("/"), `${s}.geojson`)
-
 	for (const root of roots) {
-		const fp = join(root, rel)
+		const fp = resolvePath(root, ...chunks, `${s}.geojson`)
 
 		if (existsSync(fp)) {
 			try {
-				return JSON.parse(readFileSync(fp, "utf8")) as Record<string, unknown>
+				return JSON.parse(readFileSync(fp, "utf8")) as WOFFeature
 			} catch {
 				return null
 			}
@@ -194,8 +199,7 @@ export function backfillAncestorsFromHierarchy(
 	for (const { id, placetype } of candidates) {
 		if (TOP_PLACETYPES.has(placetype)) continue
 		const gj = geojsonForID(id, geojsonRoots)
-		const props = (gj?.["properties"] ?? null) as Record<string, unknown> | null
-		const hierarchy = (props?.["wof:hierarchy"] ?? null) as Array<Record<string, number>> | null
+		const hierarchy = gj?.properties?.["wof:hierarchy"]
 
 		if (!hierarchy || !hierarchy.length) {
 			if (!gj) {

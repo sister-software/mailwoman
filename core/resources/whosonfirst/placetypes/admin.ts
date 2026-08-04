@@ -26,6 +26,12 @@ export interface WOFBaseProperties {
 	"wof:supersedes"?: number[]
 	"wof:country"?: string
 	"wof:concordances"?: Record<string, string | number>
+	/**
+	 * Every ancestor chain the place belongs to, coarsest key first — `[{ country_id, region_id, locality_id }, …]`. More
+	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel;
+	 * the keys present vary by branch, so a missing rung is absent rather than null.
+	 */
+	"wof:hierarchy"?: Array<Record<string, number>>
 	"wof:population"?: number
 	"wof:lastmodified"?: number
 	"geom:latitude"?: number
@@ -103,6 +109,7 @@ export function pluckPlacetypeSpec({
 	"wof:supersedes": supersedes,
 	"wof:country": country,
 	"wof:concordances": concordances,
+	"wof:hierarchy": _hierarchy,
 	"wof:population": wofPopulation,
 	"wof:lastmodified": lastmodified,
 	"geom:latitude": latitude,
