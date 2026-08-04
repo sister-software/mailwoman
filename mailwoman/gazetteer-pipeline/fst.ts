@@ -36,6 +36,7 @@ import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { TextSpliterator } from "spliterator"
 
 /**
  * The served Latin-script language tiers (see SCOPE.mdx) — uniform curation set for every locale FST.
@@ -160,8 +161,7 @@ function scanDegenerateSurfaces(
 
 			if (!existsSync(path)) continue
 
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- Committed libpostal dictionary; the largest is 8.4 KB (`en/street_types.txt`) and the scan is memoized once per process.
-			for (const line of readFileSync(path, "utf8").split("\n")) {
+			for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
 				for (const surface of surfacesOfLine(line)) {
 					const tokens = fold(surface)
 

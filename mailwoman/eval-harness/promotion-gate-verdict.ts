@@ -17,6 +17,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Options for {@linkcode assemblePromotionVerdict}.
@@ -60,8 +61,7 @@ function scorerF1(md: string, tag: string): number | undefined {
  * addition).
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory markdown table the caller already read; the header row is located by index.
-	const lines = md.split("\n")
+	const lines = [...TextSpliterator.from(md)]
 
 	const cells = (line: string): string[] =>
 		line

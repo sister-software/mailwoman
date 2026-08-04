@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { dirname, relative, resolve } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 const repoRoot = repoRootPath()
 
@@ -18,9 +19,7 @@ const repoRoot = repoRootPath()
 function listFiles() {
 	const out = execSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `git ls-files` output is already fully buffered by execSync; there is no file here to stream.
-	return out
-		.split("\n")
+	return [...TextSpliterator.from(out)]
 		.filter((p) => p.endsWith(".ts") || p.endsWith(".tsx"))
 		.map((p) => resolve(repoRoot, p))
 }

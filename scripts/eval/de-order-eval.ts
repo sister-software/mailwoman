@@ -27,6 +27,7 @@ import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 async function main() {
@@ -115,8 +116,7 @@ async function main() {
 			return ""
 		}
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The report is a few dozen summary rows this script just wrote, already whole in memory from the read above.
-		for (const line of md.split("\n")) {
+		for (const line of TextSpliterator.from(md)) {
 			if (!line.includes("**neural**")) continue
 			const m = line.match(/[0-9]+\.[0-9]+%/)
 

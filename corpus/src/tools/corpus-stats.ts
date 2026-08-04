@@ -36,11 +36,10 @@
  *   --output /tmp/corpus-stats-local.json
  */
 
-import { execSync } from "node:child_process"
 import { readdirSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { ParquetReader } from "../parquet-wrapper/index.ts"
 
 const SEP = ""
 const MIN_BIGRAM_COUNT = 2
@@ -67,37 +66,28 @@ function discoverShards(shardsArg: string): string[] {
 }
 
 /**
- * Use a Python subprocess to read parquet (pyarrow is heavier than parquet-wasm but already on the path here, and we
- * have nothing in the JS ecosystem that reads parquet cleanly at this scale). Emits one JSON object per line: `{tokens:
- * [...], labels: [...]}`.
+ * Stream a shard's `tokens`/`labels` columns.
+ *
+ * `limit` stops the iteration rather than filtering afterwards, so a capped run reads only the row groups it needs.
  */
-function streamShardRows(shardPath: string, limit?: number): Array<{ tokens: string[]; labels: string[] }> {
-	// Pipe the python script via stdin instead of `-c` to preserve newlines verbatim
-	// (JSON-encoding the script for -c collapses real newlines into literal `\n`).
-	const py = `
-import pyarrow.parquet as pq
-import json, sys
-t = pq.read_table(${JSON.stringify(shardPath)}, columns=['tokens', 'labels'])
-tokens_col = t['tokens'].to_pylist()
-labels_col = t['labels'].to_pylist()
-n = min(len(tokens_col), ${limit ?? "len(tokens_col)"})
-for i in range(n):
-    sys.stdout.write(json.dumps({"tokens": tokens_col[i], "labels": labels_col[i]}) + "\\n")
-`
+async function* streamShardRows(
+	shardPath: string,
+	limit?: number
+): AsyncIterable<{ tokens: string[]; labels: string[] }> {
+	await using reader = await ParquetReader.openFile<{ tokens: string[]; labels: string[] }>(shardPath)
 
-	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
-	const rows: Array<{ tokens: string[]; labels: string[] }> = []
+	let emitted = 0
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Subprocess stdout, already buffered by execSync.
-	for (const line of buf.toString("utf8").split("\n")) {
-		if (!line) continue
-		rows.push(parseJSONStrict<{ tokens: string[]; labels: string[] }>(line))
+	for await (const row of reader.project("tokens", "labels")) {
+		if (limit !== undefined && emitted >= limit) break
+
+		yield row
+
+		emitted++
 	}
-
-	return rows
 }
 
-export function buildCorpusStats(args: CorpusStatsOptions): void {
+export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> {
 	const shardPaths = discoverShards(args.shardsArg)
 
 	console.error(`Discovered ${shardPaths.length} parquet shard(s)`)
@@ -109,11 +99,10 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 	for (const path of shardPaths) {
 		console.error(`Reading ${path}...`)
 
-		const rows = streamShardRows(path, args.limitPerShard)
-		totalRows += rows.length
+		const before = totalRows
 
-		for (const row of rows) {
-			const { tokens, labels } = row
+		for await (const { tokens, labels } of streamShardRows(path, args.limitPerShard)) {
+			totalRows++
 
 			if (tokens.length !== labels.length) continue
 
@@ -146,7 +135,7 @@ export function buildCorpusStats(args: CorpusStatsOptions): void {
 		}
 
 		console.error(
-			`  ${rows.length} rows; running totals: ${tokenStats.size} unique tokens, ${bigramStats.size} unique bigrams`
+			`  ${totalRows - before} rows; running totals: ${tokenStats.size} unique tokens, ${bigramStats.size} unique bigrams`
 		)
 	}
 

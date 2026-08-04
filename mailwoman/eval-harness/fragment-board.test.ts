@@ -12,7 +12,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { JSONSpliterator } from "spliterator"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "./fragment-board.ts"
@@ -137,11 +137,9 @@ describe("the FR fragment board fixture", () => {
 
 	it("reserves every street surface it uses, so a shard can exclude them", () => {
 		const reserved = new Set(
-			// A committed fixture list, bounded by the board it belongs to.
-			// oxlint-disable-next-line mailwoman/prefer-spliterator
-			readFileSync("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt", "utf8")
-				.split("\n")
-				.filter((line) => line && !line.startsWith("#"))
+			[
+				...TextSpliterator.from(readFileSync("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt", "utf8")),
+			].filter((line) => line && !line.startsWith("#"))
 		)
 
 		for (const row of fixtures) {

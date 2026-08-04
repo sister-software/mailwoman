@@ -61,6 +61,7 @@ import { parseArgs as parseNodeArgs } from "node:util"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Cells a markdown table row needs before it carries a version/date/status triple.
@@ -166,8 +167,7 @@ function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The caller passes an already-read string, and the surfaces this scans are committed docs pages of a few hundred lines.
-	for (const line of markdown.split("\n")) {
+	for (const line of TextSpliterator.from(markdown)) {
 		const trimmed = line.trim()
 
 		if (!trimmed.startsWith("|")) continue

@@ -38,6 +38,7 @@ import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import {
@@ -325,8 +326,7 @@ function readCaLocalities(admin1: string): string[] {
 		return []
 	}
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Subprocess stdout, already buffered by spawnSync.
-	return [...new Set(r.stdout.split("\n").filter(cleanLocality))]
+	return [...new Set([...TextSpliterator.from(r.stdout)].filter(cleanLocality))]
 }
 
 /**
@@ -352,10 +352,10 @@ function readPostalTuples(
 	const seen = new Set<string>()
 	const validPostcode = opts.withState ? isAuPostcode : isNZPostcode
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Subprocess stdout, already buffered by spawnSync.
-	for (const line of r.stdout.split("\n")) {
+	for (const line of TextSpliterator.from(r.stdout)) {
 		if (!line) continue
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One in-memory line's columns, not a file.
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One row already streamed off the line above.
 		const cols = line.split("\t")
 		const postcode = (cols[1] ?? "").trim()
 		const locality = (cols[2] ?? "").trim()

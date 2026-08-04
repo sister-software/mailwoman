@@ -28,6 +28,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { TextSpliterator } from "spliterator"
 
 import { compareComponents, VERDICT_SEVERITY, type Verdict } from "./compare.ts"
 import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
@@ -60,11 +61,13 @@ export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 
 	const rows: InvarianceRow[] = []
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The suite opens with `//` comment lines, which `JSONSpliterator` would throw on at row 0.
-	for (const line of readFileSync(path, "utf8").split("\n")) {
+	// The suite is JSONL with a `//` comment header, so the rows are parsed here rather than by
+	// `JSONSpliterator`, which would throw on the first comment.
+	for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
 		const trimmed = line.trim()
 
 		if (!trimmed || trimmed.startsWith("//")) continue
+
 		rows.push(parseJSONStrict<InvarianceRow>(trimmed))
 	}
 

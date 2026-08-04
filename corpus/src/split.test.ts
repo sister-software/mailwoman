@@ -9,6 +9,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
@@ -176,8 +177,7 @@ describe("writeSplitManifests", () => {
 		await writeSplitManifests(splitRows(rows), scratch)
 		const second = await readFile(join(scratch, "train.txt"), "utf8")
 		expect(first).toBe(second)
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A three-row scratch manifest, already in memory.
-		expect(first.trim().split("\n")).toEqual(["a", "b", "c"])
+		expect([...TextSpliterator.from(first.trim())]).toEqual(["a", "b", "c"])
 	})
 })
 
@@ -245,12 +245,10 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 		expect(result).toEqual({ train: 3, val: 2, test: 1, total: 6 })
 
 		const train = await readFile(join(scratch, "train.txt"), "utf8")
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A three-row scratch manifest, already in memory.
-		expect(train.trim().split("\n")).toEqual(["us-a", "us-b", "us-c"])
+		expect([...TextSpliterator.from(train.trim())]).toEqual(["us-a", "us-b", "us-c"])
 
 		const val = await readFile(join(scratch, "val.txt"), "utf8")
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- A two-row scratch manifest, already in memory.
-		expect(val.trim().split("\n")).toEqual(["vt-1", "vt-2"])
+		expect([...TextSpliterator.from(val.trim())]).toEqual(["vt-1", "vt-2"])
 
 		const test = await readFile(join(scratch, "test.txt"), "utf8")
 		expect(test.trim()).toBe("wy-1")

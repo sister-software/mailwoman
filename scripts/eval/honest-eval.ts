@@ -35,6 +35,7 @@ import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 async function main() {
@@ -139,9 +140,7 @@ async function main() {
 
 		writeFileSync(`${TMP}/${tag}.eval.md`, evalOut.stdout)
 		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
-		// neural row: | **neural** | loc% | reg% | resolved% | p50 | p90 | p99 |
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The resolver eval's stdout is already fully buffered by `$`; there is no file to stream.
-		const row = evalOut.stdout.split("\n").find((l) => l.startsWith("| **neural** |")) ?? ""
+		const row = [...TextSpliterator.from(evalOut.stdout)].find((l) => l.startsWith("| **neural** |")) ?? ""
 		const cols = row.split("|").map((c) => c.replaceAll(" ", ""))
 		const loc = cols[2] ?? ""
 		const reg = cols[3] ?? ""
@@ -173,8 +172,7 @@ async function main() {
 
 	const US_ROW = await runLocale("US/VT held-out", US_SLICE, "US", `honest-us-${LABEL}`)
 
-	// --- emit the per-locale table ---
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `runLocale` returns a single nine-field TSV row it just built in memory.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One nine-field row `runLocale` just built in memory.
 	const u = US_ROW.split("\t")
 
 	const emit = [

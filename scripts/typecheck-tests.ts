@@ -22,6 +22,7 @@ import { join } from "node:path"
 import { promisify } from "node:util"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 const run = promisify(execFile)
 
@@ -52,8 +53,7 @@ async function check(workspace: string, repoRoot: string): Promise<Result> {
 	} catch (error) {
 		const output = String((error as { stdout?: string }).stdout ?? "")
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `tsc`'s diagnostics are already buffered in memory by execFile; there is no file to stream.
-		return { workspace, errors: output.split("\n").filter((line) => line.includes("error TS")) }
+		return { workspace, errors: [...TextSpliterator.from(output)].filter((line) => line.includes("error TS")) }
 	}
 }
 

@@ -24,6 +24,10 @@ import { LRUCache } from "lru-cache"
 /**
  * A Parquet record-like object, i.e. a record with string keys and JSON-serializable values.
  */
+/**
+ * Shape a row type must satisfy. Declare yours as a `type` alias — TypeScript gives an alias an implicit index
+ * signature and an `interface` none, so an otherwise-identical interface does not satisfy this.
+ */
 export type ParquetRecordLike = Record<string, unknown | undefined>
 
 /**

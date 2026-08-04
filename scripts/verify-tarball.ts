@@ -30,6 +30,7 @@
 import { spawnSync } from "node:child_process"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "./publish-exports.ts"
 
@@ -117,9 +118,7 @@ export function readTarball(tarballPath: string): TarballContents {
 	}
 
 	const shipped = new Set(
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `tar -tzf`'s listing is already fully buffered by spawnSync; there is no file to stream.
-		listing.stdout
-			.split("\n")
+		[...TextSpliterator.from(listing.stdout)]
 			.filter(Boolean)
 			.map((line) => normalizeEntry(line.replace(/^package\//, "")))
 	)

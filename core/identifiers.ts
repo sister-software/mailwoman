@@ -57,3 +57,50 @@ export function smartCapitalCase(input: string): string {
 
 	return capitalCase(input)
 }
+
+/**
+ * Python `str.isupper()`: at least one cased character, and every cased character uppercase.
+ *
+ * Distinct from {@link isUniformlyCased}, which reports `true` for a string with no cased characters at all — `"123"` is
+ * uniformly cased and is NOT `isupper()`. Ports that gate a titlecase on the Python predicate need this one.
+ */
+export function pyIsUpper(input: string): boolean {
+	let hasCased = false
+
+	for (const ch of input) {
+		if (ch.toLowerCase() === ch.toUpperCase()) continue
+
+		hasCased = true
+
+		if (ch !== ch.toUpperCase()) return false
+	}
+
+	return hasCased
+}
+
+/**
+ * Python `str.title()`: titlecase the first cased character of each run, lowercase the rest.
+ *
+ * Not `capitalCase` from change-case, which splits on word boundaries and drops punctuation — Python titlecases
+ * `"o'brien"` to `"O'Brien"` because the apostrophe ends a cased run.
+ */
+export function pyTitle(input: string): string {
+	let out = ""
+	let prevCased = false
+
+	for (const ch of input) {
+		const cased = ch.toLowerCase() !== ch.toUpperCase()
+
+		out += prevCased ? ch.toLowerCase() : ch.toUpperCase()
+		prevCased = cased
+	}
+
+	return out
+}
+
+/**
+ * Titlecase a SHOUTED string, leave anything else alone — the shape source dumps use when a field arrives ALL CAPS.
+ */
+export function titlecaseIfUpper(input: string): string {
+	return pyIsUpper(input) ? pyTitle(input) : input
+}

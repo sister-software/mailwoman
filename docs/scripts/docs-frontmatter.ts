@@ -18,6 +18,8 @@ import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { TextSpliterator } from "spliterator"
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 
 /**
@@ -73,13 +75,18 @@ function unquote(value: string): string {
 export function parseFrontmatter(source: string): { fields: Map<string, string>; declaredKeys: Set<string> } {
 	const fields = new Map<string, string>()
 	const declaredKeys = new Set<string>()
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `source` is an in-memory markdown string, and `docs` does not depend on spliterator.
-	const lines = source.split("\n")
 
-	if (lines[0]?.trim() !== "---") return { fields, declaredKeys }
+	let opened = false
 
-	for (let i = 1; i < lines.length; i++) {
-		const line = lines[i]!
+	for (const line of TextSpliterator.from(source)) {
+		if (!opened) {
+			// A file without the opening fence has no frontmatter at all.
+			if (line.trim() !== "---") break
+
+			opened = true
+
+			continue
+		}
 
 		if (line.trim() === "---") break
 

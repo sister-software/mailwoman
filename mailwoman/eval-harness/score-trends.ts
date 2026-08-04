@@ -20,7 +20,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { pyRound, repoRootPath } from "@mailwoman/core/utils"
 
 /**
  * Tags in report order. Anything the ledger carries that is absent here still appears, sorted, after the listed ones —
@@ -59,78 +59,6 @@ const G_PRECISION = 6
  * both bounds come from the format, not from anything about eval scores.
  */
 const G_MIN_FIXED_EXPONENT = -4
-
-/**
- * Digits of the exact decimal expansion to inspect — enough to decide a half-way tie on any double the ledger carries.
- */
-const EXACT_DECIMAL_DIGITS = 20
-
-/**
- * Python `format(x, ".{d}f")` — round-half-to-even on the exact decimal value of the double.
- */
-function pyFixed(x: number, d: number): string {
-	if (!Number.isFinite(x)) return Number.isNaN(x) ? "nan" : x > 0 ? "inf" : "-inf"
-
-	const neg = x < 0 || Object.is(x, -0)
-	const [intPart, frac = ""] = Math.abs(x).toFixed(EXACT_DECIMAL_DIGITS).split(".")
-
-	if (frac.length <= d) {
-		const body = d > 0 ? `${intPart}.${frac.padEnd(d, "0")}` : intPart!
-
-		return (neg ? "-" : "") + body
-	}
-
-	const keep = frac.slice(0, d)
-	const rest = frac.slice(d)
-	let roundUp: boolean
-
-	if (rest[0]! > "5") {
-		roundUp = true
-	} else if (rest[0]! < "5") {
-		roundUp = false
-	} else if (rest.slice(1).replace(/0+$/, "").length) {
-		roundUp = true
-	} else {
-		const lastKept = d > 0 ? (keep[d - 1] ?? "0") : (intPart![intPart!.length - 1] ?? "0")
-
-		roundUp = Number.parseInt(lastKept, 10) % 2 === 1
-	}
-
-	let digits = intPart! + keep
-
-	if (roundUp) {
-		const arr = digits.split("")
-		let i = arr.length - 1
-
-		for (; i >= 0; i--) {
-			if (arr[i] === "9") {
-				arr[i] = "0"
-			} else {
-				arr[i] = String(Number.parseInt(arr[i]!, 10) + 1)
-
-				break
-			}
-		}
-
-		if (i < 0) {
-			arr.unshift("1")
-		}
-
-		digits = arr.join("")
-	}
-
-	const di = digits.length - d
-	const body = d > 0 ? `${digits.slice(0, di) || "0"}.${digits.slice(di)}` : digits.slice(0, di) || "0"
-
-	return (neg ? "-" : "") + body
-}
-
-/**
- * Python `round(x, ndigits)` — the nearest double to the round-half-to-even decimal.
- */
-function pyRound(x: number, ndigits: number): number {
-	return Number(pyFixed(x, ndigits))
-}
 
 /**
  * Python/C `%g` formatting at the default precision.

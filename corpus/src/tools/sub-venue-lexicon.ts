@@ -482,6 +482,7 @@ export function extractAttestedPhrases(
 			if (entry.examples.size < IDENTIFIER_EXAMPLES_PER_SHAPE) {
 				entry.examples.add(row.ref.trim())
 			}
+
 			shapes.set(key, entry)
 		}
 	}

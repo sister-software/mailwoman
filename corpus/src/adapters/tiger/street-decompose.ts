@@ -19,6 +19,7 @@
 import { readFileSync } from "node:fs"
 
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 function loadDictionary(filename: string): Set<string> {
 	// `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the
@@ -29,8 +30,7 @@ function loadDictionary(filename: string): Set<string> {
 	const set = new Set<string>()
 
 	// The largest libpostal dictionary is 8.4 KB, and this runs once per process at module load.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator
-	for (const line of text.split("\n")) {
+	for (const line of TextSpliterator.from(text)) {
 		const trimmed = line.trim()
 
 		if (!trimmed || trimmed.startsWith("#")) continue

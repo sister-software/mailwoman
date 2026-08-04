@@ -309,6 +309,7 @@ export function parseOSMHstore(text: string | null | undefined): Record<string, 
 				if (i + 1 < text.length) {
 					value += text[i + 1]
 				}
+
 				i += 2
 
 				continue

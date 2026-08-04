@@ -8,6 +8,7 @@
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
+import { TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import { renderGranularityReport } from "./granularity-report.ts"
@@ -117,8 +118,7 @@ describe("renderGranularityReport", () => {
 	it("labels GeoNames-sourced rows gn rather than ovt", () => {
 		const markdown = renderGranularityReport([row("ZW", { locality: { nodes: 500, geonamesBackfilled: 500 } })], META)
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Markdown the renderer under test just returned in memory.
-		const line = markdown.split("\n").find((l) => l.startsWith("| ZW |"))
+		const line = [...TextSpliterator.from(markdown)].find((l) => l.startsWith("| ZW |"))
 
 		expect(line).toContain("100.0% gn")
 		expect(line).not.toContain("ovt")
@@ -134,9 +134,7 @@ describe("renderGranularityReport", () => {
 	it("renders a measured-and-empty rung as 0 rather than omitting it", () => {
 		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3230 } })], META)
 
-		// IE was measured for dependent_locality and has none: the cell must exist and read 0.
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Markdown the renderer under test just returned in memory.
-		const ieLine = markdown.split("\n").find((line) => line.startsWith("| IE |"))
+		const ieLine = [...TextSpliterator.from(markdown)].find((line) => line.startsWith("| IE |"))
 
 		expect(ieLine).toBeDefined()
 		expect(ieLine).toContain("| 0 |")

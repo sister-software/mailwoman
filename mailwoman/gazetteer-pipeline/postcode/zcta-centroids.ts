@@ -31,6 +31,8 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { TSVSpliterator } from "spliterator"
+
 /**
  * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
  */
@@ -60,10 +62,8 @@ export interface ZCTACentroid {
 export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 	const out = new Map<string, ZCTACentroid>()
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Deliberately synchronous (an async-into-sync wall, per AGENTS.md); the caller hands in an already-read string.
-	for (const line of text.split("\n")) {
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One already-materialized line, same sync contract.
-		const fields = line.split("\t").map((f) => f.trim())
+	for (const row of TSVSpliterator.from(text, { header: false })) {
+		const fields = row.map((f) => f.trim())
 		const geoid = fields[0]
 
 		if (!geoid || !/^\d{5}$/.test(geoid) || fields.length < GAZETTEER_ROW_COLUMNS) continue
@@ -138,11 +138,7 @@ export function fillPlaceholderCentroids(
 export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Deliberately synchronous (an async-into-sync wall, per AGENTS.md); the caller hands in an already-read string.
-	for (const line of text.split("\n")) {
-		if (!line.trim()) continue
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One already-materialized line, same sync contract.
-		const f = line.split("\t")
+	for (const f of TSVSpliterator.from(text, { header: false })) {
 		const pc = f[1]?.trim()
 		const lat = Number(f[9])
 		const lon = Number(f[10])

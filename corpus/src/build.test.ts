@@ -19,7 +19,7 @@ import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { JSONSpliterator } from "spliterator"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { wofAdminAdapter } from "./adapters/wof-admin-json/adapter.ts"
@@ -123,10 +123,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(trainRows.filter((r) => r.components.region === "Vermont")).toEqual([])
 
 		// The .txt manifests stay in lockstep with the per-split JSONL.
-		const trainIds = new Set(
-			// oxlint-disable-next-line mailwoman/prefer-spliterator -- A fixture this test just wrote, a few dozen rows.
-			(await readFile(join(outDir, "splits", "train.txt"), "utf8")).trim().split("\n").filter(Boolean)
-		)
+		const trainIds = new Set(await Array.fromAsync(TextSpliterator.fromAsync(join(outDir, "splits", "train.txt"))))
 
 		for (const r of vermontHeldOut) {
 			expect(trainIds.has(r.source_id)).toBe(false)

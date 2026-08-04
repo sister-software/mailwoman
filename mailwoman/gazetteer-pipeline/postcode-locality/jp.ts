@@ -42,7 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
-import { TSVSpliterator } from "spliterator"
+import { TSVSpliterator, TextSpliterator } from "spliterator"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -89,8 +89,7 @@ function loadKenall(path: string): Map<string, string> {
 
 	// KEN_ALL is Shift-JIS and the spliterator's text path decodes UTF-8, so streaming it means dropping
 	// to raw byte ranges and decoding per row — for an 11 MB file whose size Japan Post fixes.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator
-	for (const raw of text.split("\n")) {
+	for (const raw of TextSpliterator.from(text)) {
 		const line = raw.replace(/[\r\n]+$/, "")
 		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))
 

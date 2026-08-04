@@ -18,6 +18,8 @@
 import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 
+import { TextSpliterator } from "spliterator"
+
 /**
  * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions. Uppercase `<Component>`
  * is legitimate MDX JSX and lowercase `<word>` is usually real HTML — flagging them false-positives on valid docs (bit
@@ -60,11 +62,7 @@ export interface LintMDXAnglesSummary {
 function stagedDocsMarkdown(): string[] {
 	const out = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], { encoding: "utf8" })
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `git diff --cached` stdout, not a file.
-	return out
-		.split("\n")
-		.map((f) => f.trim())
-		.filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))
+	return [...TextSpliterator.from(out)].map((f) => f.trim()).filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))
 }
 
 /**

@@ -26,6 +26,7 @@
 import addressFormatter from "@fragaria/address-formatter"
 import fragariaTemplates from "@fragaria/address-formatter/src/templates/templates.json" with { type: "json" }
 import type { ClassificationMap, VisibleClassification, ComponentTag } from "@mailwoman/core/types"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Matches a `{{{slot}}}` mustache reference, tolerant of internal whitespace.
@@ -190,8 +191,7 @@ export function injectDependentLocalityLine(
 	locality: string | undefined,
 	dependentLocality: string
 ): string {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `raw` is a rendered address of a few lines held in memory, and `formatter` does not depend on spliterator.
-	const lines = raw.split("\n")
+	const lines = [...TextSpliterator.from(raw)]
 	const normalizedDepLoc = dependentLocality.trim().toLowerCase()
 
 	if (lines.some((line) => line.trim().toLowerCase() === normalizedDepLoc)) {

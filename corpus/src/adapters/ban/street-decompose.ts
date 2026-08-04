@@ -18,6 +18,7 @@
 import { readFileSync } from "node:fs"
 
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Tokens a BAN street needs before a type/article/name decomposition is attempted.
@@ -33,8 +34,7 @@ function loadDictionary(filename: string): Set<string> {
 	const set = new Set<string>()
 
 	// The largest libpostal dictionary is 8.4 KB, and this runs once per process at module load.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator
-	for (const line of text.split("\n")) {
+	for (const line of TextSpliterator.from(text)) {
 		const trimmed = line.trim()
 
 		if (!trimmed || trimmed.startsWith("#")) continue
