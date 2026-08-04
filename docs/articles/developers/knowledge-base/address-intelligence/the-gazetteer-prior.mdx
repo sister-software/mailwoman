@@ -135,12 +135,15 @@ the prior cannot help with, and the failure looks like the model being unsure ra
 missing record.
 
 **On the venue-versus-place case it changes nothing, and that case is still wrong.**
-`Riverside Garden Center, Boston` reads as a single locality covering the whole leading phrase, with
-`Boston` dropped from the result entirely — identical output with the index wired and without it.
-`Riverside` and `Boston` are both in the index; neither match rescues the parse, because separating a
-business name from the town after it is a judgment about how the words are being used, and the index
-has no vocabulary for the business half. This is the shape of failure to expect from a prior that
-supplies world knowledge rather than sentence structure.
+`Riverside Garden Center, Boston` comes back carrying two locality spans: the business name labeled a
+locality across characters 0 to 22, alongside a correctly read `Boston` at 0.784 through the pipeline.
+The town was never the problem. What fails is the decision that the leading phrase is a venue rather
+than a second place name, and the output is identical with the index wired and without it, through
+the pipeline and through a bare classifier call alike. `Riverside` and `Boston` are both in the
+index; neither match moves that decision, because separating a business name from the town after it
+is a judgment about how the words are being used, and the index has no vocabulary for the business
+half. This is the shape of failure to expect from a prior that supplies world knowledge rather than
+sentence structure.
 
 ## Related
 

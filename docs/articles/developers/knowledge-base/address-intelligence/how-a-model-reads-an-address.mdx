@@ -98,7 +98,8 @@ reading that stays inside those rules. A continuation with no beginning is not f
 fact; it never appears, because no legal reading contains one.
 [Decoding and the best path](./decoding-and-viterbi.mdx) has the mechanism.
 
-Here is the reading that came out for our line, captured from the parse itself, one row per piece:
+Here is the reading that came out for our line, captured from a direct classifier call with the
+gazetteer index wired, one row per piece:
 
 ```
 piece        offsets  label            score
@@ -149,6 +150,12 @@ postcode      = "20004"                   49..54   0.905
 The offsets point into the string you passed in, not into the case-restored copy the model read. The
 values are the repaired forms — `F ST NW` rather than `f st nw` — which is why keeping your own copy
 of the raw input is worth the line of code.
+
+Run the same string through `createRuntimePipeline`, which is the entry point most consumers use, and
+the tags, the values and the offsets come back identical. The confidences do not: the pipeline runs
+repair passes the bare classifier call does not, and the venue lands at 0.754 rather than 0.897 while
+the house number lands at 0.819 rather than 0.891. Read a confidence as attached to a path, not to a
+string.
 
 ## What it costs
 
