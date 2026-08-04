@@ -4,42 +4,28 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { JSONSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.ts"
 
+const scratch = useScratchDir("oa")
+
+const loadRows = () => readCanonicalRows(scratch.path, OPENADDRESSES_ADAPTER_ID)
+
 const fixtureGeojsonl = repoRootPath("corpus", "fixtures", "openaddresses", "sample-us.geojson")
-
-let scratch: string
-
-beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-oa-"))
-})
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
-
-function loadRows(): Promise<CanonicalRow[]> {
-	return Array.fromAsync(
-		JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, OPENADDRESSES_ADAPTER_ID, "canonical.jsonl"))
-	)
-}
 
 describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	it("emits a row per Feature with the country stamped from --country", async () => {
 		const manifest = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -56,7 +42,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -77,7 +63,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ defaultLicense: "ODbL-1.0", allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -90,7 +76,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -114,7 +100,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -129,7 +115,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			runAdapter({
 				adapter: createOpenaddressesAdapter(),
 				adapterOptions: { inputPath: fixtureGeojsonl },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/--country is required/)
@@ -139,7 +125,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		const manifest = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US", limit: 3 },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -149,7 +135,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("source_id prefers `hash`; falls back to `id`; then to a content hash", async () => {
 		// Build a tiny fixture with one of each shape inline.
-		const inline = join(scratch, "edge.geojsonl")
+		const inline = join(scratch.path, "edge.geojsonl")
 
 		const lines = [
 			JSON.stringify({
@@ -194,7 +180,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: inline, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -207,7 +193,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("skips blank lines, comments, and non-Feature objects without crashing", async () => {
-		const messy = join(scratch, "messy.geojsonl")
+		const messy = join(scratch.path, "messy.geojsonl")
 
 		const lines = [
 			"",
@@ -234,7 +220,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		const manifest = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: messy, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -247,16 +233,16 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		const a = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, OPENADDRESSES_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, OPENADDRESSES_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -269,7 +255,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -279,7 +265,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -295,7 +281,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: true }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -305,7 +291,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {
-		const upper = join(scratch, "upper.geojsonl")
+		const upper = join(scratch.path, "upper.geojsonl")
 
 		const line = JSON.stringify({
 			type: "Feature",
@@ -326,7 +312,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: upper, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
