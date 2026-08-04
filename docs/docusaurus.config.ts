@@ -230,9 +230,14 @@ const config: Config = {
 				src: "img/mailwoman-seal-magenta.svg",
 			},
 			// The doors, in reading order. `docSidebar` items point at sidebar ids declared in
-			// sidebars.ts — the Resources door lands with its own task and is deliberately
-			// absent rather than stubbed, because a navbar entry pointing at an empty sidebar
-			// is a dead link with a label on it.
+			// sidebars.ts.
+			//
+			// Resources sits after Docs: it is the evidence door (published benchmarks with their
+			// scripts, plus the capability-shape comparisons), and it is read by someone who has
+			// already met the thing being measured. Its sidebar absorbed the standalone "Field
+			// notes" navbar entry — long-form research writing belongs behind the same door as the
+			// measurements, and the navbar was heading for a seventh left-hand item. The footer's
+			// Field notes link is unchanged.
 			//
 			// Product leads Docs: a visitor who has not decided yet outnumbers the one who has,
 			// and every Product page ends in a handoff into the `developers` door. Solutions
@@ -260,6 +265,12 @@ const config: Config = {
 				},
 				{
 					type: "docSidebar",
+					sidebarId: "resources",
+					position: "left",
+					label: "Resources",
+				},
+				{
+					type: "docSidebar",
 					sidebarId: "about",
 					position: "left",
 					label: "About",
@@ -269,11 +280,6 @@ const config: Config = {
 					// nav-tree membership, but a reader looking for the price wants one click.
 					to: "/docs/pricing",
 					label: "Pricing",
-					position: "left",
-				},
-				{
-					to: "/research",
-					label: "Field notes",
 					position: "left",
 				},
 				{

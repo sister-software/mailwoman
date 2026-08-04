@@ -1,0 +1,76 @@
+---
+title: Benchmarks
+description: Published geocoding measurements, each with the script, the inputs and the result file that produced it.
+role: landing
+audience: teams
+---
+
+# Benchmarks
+
+Every number on these pages came out of a script published beside it, run on inputs published beside
+it, writing a result file published beside it. Our numbers ship with the code to re-run them, and the
+code is here rather than described.
+
+Two panels are published so far. Each is a panel, not a national accuracy figure, and each says so.
+
+## I want to see what a national register buys
+
+France has one — the Base Adresse Nationale — and the French rooftop tier is built from it. A hundred
+BAN addresses, rendered in two surface forms, graded against BAN's own coordinates: 96 of 100 land
+within a kilometer in the canonical order, 97 of 100 with the postcode moved to the front. Four rows
+lose part of the street name in the parse and two land on a same-named street in a neighbouring
+commune.
+
+The page states the circularity in the same breath as the score, because grading a BAN-backed tier
+against BAN measures parsing and routing rather than coordinate accuracy.
+
+[France — 100 addresses from the BAN](./france-ban.mdx)
+
+## I want to see what happens without one
+
+Belgium has no rooftop register, no locale of its own, and no eval tier. Thirty bilingual Belgian
+address lines through the global admin gazetteer, in three configurations: 24 of 30 land in Belgium
+out of the box, and 30 of 30 once the country is pinned. Six rows go wrong without the pin, five of
+them for one reason — a country prior that filters the right answer out before ranking runs.
+
+[Belgium — 30 addresses, three configurations](./belgium-panel.mdx)
+
+## I want to know how to read a geocoding benchmark
+
+Four ways one reads better than it is: a resolve rate that counts fallbacks as successes, an
+evaluation set drawn from the reference data it is graded against, a panel quoted as a population,
+and a timing figure that does not survive a change of host. Each is illustrated with one of our own
+numbers.
+
+[Reading our numbers](./reading-our-numbers.mdx)
+
+## Running them yourself
+
+[`run-all.sh`](/benchmarks/run-all.sh) pulls the two data bundles the panels need — the 1.65 GB global
+gazetteer and the 6.95 GB French rooftop shard — and runs both panels in one pass:
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
+            @mailwoman/neural-weights-fr-fr @mailwoman/resolver \
+            @mailwoman/resolver-wof-sqlite @mailwoman/ban @mailwoman/core @mailwoman/spatial
+curl -fsSLO https://mailwoman.sister.software/benchmarks/run-all.sh
+curl -fsSLO https://mailwoman.sister.software/benchmarks/fr-ban-panel.mjs
+curl -fsSLO https://mailwoman.sister.software/benchmarks/fr-ban-sample.json
+curl -fsSLO https://mailwoman.sister.software/benchmarks/be-panel.mjs
+curl -fsSLO https://mailwoman.sister.software/benchmarks/be-panel.json
+bash run-all.sh ./benchmark-data
+```
+
+The Belgian panel needs only the first bundle; run it alone with `node be-panel.mjs` if 6.95 GB of
+French rooftop data is not what you came for.
+
+Your numbers will differ from ours where the data releases differ — a newer BAN release moves rows,
+and a newer gazetteer moves rankings. Each panel records the release it ran against in its result
+file, so two runs can be compared rather than only contrasted.
+
+## What is not here
+
+No comparison against another geocoder's output. Benchmarking someone else's service means running it
+under terms we did not write, on a query mix we chose, and publishing an accuracy number for a system
+we do not maintain. [Compare](../compare/index.mdx) sets out what each of the alternatives is built
+for and when to choose it, without claiming an accuracy figure on its behalf.

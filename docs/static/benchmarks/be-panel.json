@@ -1,0 +1,323 @@
+{
+	"note": "Thirty Belgian address lines built from public street names, each paired with the postcode and commune it belongs to. Five Brussels rows appear twice — once in Dutch, once in French — as bilingual pairs sharing a `pair` id. No Belgian rooftop register ships today, so the house number is parsed but never looked up; the panel does not depend on any particular number existing at any of these streets.",
+	"acceptedLocality": "Normalized (lowercased, accent-stripped, punctuation-stripped) forms the resolved locality may take. A row passes the locality check when the resolved locality, or any node in the resolved hierarchy, matches one of them.",
+	"bbox": {
+		"note": "A bounding box drawn around Belgium's geographic extremes, used as a coarse country-routing check. A coordinate outside it did not land in Belgium; a coordinate inside it is not thereby correct.",
+		"minLon": 2.5,
+		"maxLon": 6.41,
+		"minLat": 49.49,
+		"maxLat": 51.51
+	},
+	"rows": [
+		{
+			"id": "bxl-loi-nl",
+			"input": "Wetstraat 16, 1000 Brussel",
+			"language": "nl",
+			"area": "Brussels-Capital",
+			"pair": "loi",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-loi-fr",
+			"input": "Rue de la Loi 16, 1000 Bruxelles",
+			"language": "fr",
+			"area": "Brussels-Capital",
+			"pair": "loi",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-grote-markt-nl",
+			"input": "Grote Markt 1, 1000 Brussel",
+			"language": "nl",
+			"area": "Brussels-Capital",
+			"pair": "grand-place",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-grand-place-fr",
+			"input": "Grand-Place 1, 1000 Bruxelles",
+			"language": "fr",
+			"area": "Brussels-Capital",
+			"pair": "grand-place",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-nieuwstraat-nl",
+			"input": "Nieuwstraat 1, 1000 Brussel",
+			"language": "nl",
+			"area": "Brussels-Capital",
+			"pair": "neuve",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-rue-neuve-fr",
+			"input": "Rue Neuve 1, 1000 Bruxelles",
+			"language": "fr",
+			"area": "Brussels-Capital",
+			"pair": "neuve",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-koningsstraat-nl",
+			"input": "Koningsstraat 1, 1000 Brussel",
+			"language": "nl",
+			"area": "Brussels-Capital",
+			"pair": "royale",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-rue-royale-fr",
+			"input": "Rue Royale 1, 1000 Bruxelles",
+			"language": "fr",
+			"area": "Brussels-Capital",
+			"pair": "royale",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-anspachlaan-nl",
+			"input": "Anspachlaan 1, 1000 Brussel",
+			"language": "nl",
+			"area": "Brussels-Capital",
+			"pair": "anspach",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "bxl-boulevard-anspach-fr",
+			"input": "Boulevard Anspach 1, 1000 Bruxelles",
+			"language": "fr",
+			"area": "Brussels-Capital",
+			"pair": "anspach",
+			"acceptedLocality": [
+				"brussel",
+				"bruxelles",
+				"brussels",
+				"city of brussels",
+				"ville de bruxelles",
+				"brussels capital"
+			]
+		},
+		{
+			"id": "antwerpen-grote-markt",
+			"input": "Grote Markt 1, 2000 Antwerpen",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["antwerpen", "anvers", "antwerp"]
+		},
+		{
+			"id": "antwerpen-meir",
+			"input": "Meir 1, 2000 Antwerpen",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["antwerpen", "anvers", "antwerp"]
+		},
+		{
+			"id": "gent-korenmarkt",
+			"input": "Korenmarkt 1, 9000 Gent",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["gent", "gand", "ghent"]
+		},
+		{
+			"id": "gent-veldstraat",
+			"input": "Veldstraat 1, 9000 Gent",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["gent", "gand", "ghent"]
+		},
+		{
+			"id": "brugge-markt",
+			"input": "Markt 1, 8000 Brugge",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["brugge", "bruges"]
+		},
+		{
+			"id": "leuven-oude-markt",
+			"input": "Oude Markt 1, 3000 Leuven",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["leuven", "louvain"]
+		},
+		{
+			"id": "hasselt-grote-markt",
+			"input": "Grote Markt 1, 3500 Hasselt",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["hasselt"]
+		},
+		{
+			"id": "oostende-kapellestraat",
+			"input": "Kapellestraat 1, 8400 Oostende",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["oostende", "ostende", "ostend"]
+		},
+		{
+			"id": "mechelen-grote-markt",
+			"input": "Grote Markt 1, 2800 Mechelen",
+			"language": "nl",
+			"area": "Flanders",
+			"pair": null,
+			"acceptedLocality": ["mechelen", "malines"]
+		},
+		{
+			"id": "liege-saint-lambert",
+			"input": "Place Saint-Lambert 1, 4000 Liège",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["liege", "luik", "luttich"]
+		},
+		{
+			"id": "liege-leopold",
+			"input": "Rue Léopold 1, 4000 Liège",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["liege", "luik", "luttich"]
+		},
+		{
+			"id": "namur-armes",
+			"input": "Place d'Armes 1, 5000 Namur",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["namur", "namen"]
+		},
+		{
+			"id": "namur-fer",
+			"input": "Rue de Fer 1, 5000 Namur",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["namur", "namen"]
+		},
+		{
+			"id": "mons-grand-place",
+			"input": "Grand-Place 1, 7000 Mons",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["mons", "bergen"]
+		},
+		{
+			"id": "charleroi-charles-ii",
+			"input": "Place Charles II 1, 6000 Charleroi",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["charleroi"]
+		},
+		{
+			"id": "nivelles-grand-place",
+			"input": "Grand-Place 1, 1400 Nivelles",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["nivelles", "nijvel"]
+		},
+		{
+			"id": "arlon-grand-place",
+			"input": "Grand-Place 1, 6700 Arlon",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["arlon", "aarlen", "arel"]
+		},
+		{
+			"id": "verviers-place-verte",
+			"input": "Place Verte 1, 4800 Verviers",
+			"language": "fr",
+			"area": "Wallonia",
+			"pair": null,
+			"acceptedLocality": ["verviers"]
+		},
+		{
+			"id": "eupen-rathausplatz",
+			"input": "Rathausplatz 1, 4700 Eupen",
+			"language": "de",
+			"area": "German-speaking Community",
+			"pair": null,
+			"acceptedLocality": ["eupen"]
+		},
+		{
+			"id": "sankt-vith-hauptstrasse",
+			"input": "Hauptstrasse 1, 4780 Sankt Vith",
+			"language": "de",
+			"area": "German-speaking Community",
+			"pair": null,
+			"acceptedLocality": ["sankt vith", "saintvith", "saint vith", "st vith"]
+		}
+	]
+}

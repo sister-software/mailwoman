@@ -1,0 +1,127 @@
+---
+title: Google Maps Platform
+description: A hosted geocoding service against an in-process library — what each shape is built to do, and when the hosted one is the right answer.
+role: explanation
+---
+
+# Google Maps Platform
+
+## The question
+
+You can be geocoding this afternoon with an API key and a fetch call, or you can install a package,
+download a gazetteer, and geocode in a process you already run. Both work. They are built for
+different situations, and the difference is not quality — it is where the data lives and who operates
+it.
+
+## What Google Maps Platform is
+
+The Geocoding API is a hosted HTTP service. Its own documentation, read on **2026-08-04**, defines it
+as:
+
+> "The Geocoding API is a service that accepts a place as an address, latitude and longitude
+> coordinates, or Place ID. It converts the address into latitude and longitude coordinates and a
+> Place ID, or converts latitude and longitude coordinates or a Place ID into an address."
+>
+> — [Geocoding API overview](https://developers.google.com/maps/documentation/geocoding/overview)
+
+The same page describes forward geocoding, reverse geocoding, and geocoding by Place ID, plus an
+Address Descriptors feature. It notes that developers in the European Economic Area are covered by
+different terms with effect from 8 July 2025.
+
+The Place ID is worth understanding before you compare anything else, because it is the design
+centre. A Place ID is a stable identifier into Google's own place graph, and once your records carry
+one you are holding a key that resolves in one system. That is a real capability — it is what makes
+the geocoder, the Places data, and the map rendering line up — and it is also the thing that does not
+travel.
+
+For what the service costs and what the terms permit, read
+[Google's pricing](https://developers.google.com/maps/billing-and-pricing/pricing) and
+[terms](https://cloud.google.com/maps-platform/terms). Those are the pages that change, they are
+specific to your usage, and quoting them in someone else's documentation is how a reader ends up
+planning against a stale number.
+
+## What each one is built to do
+
+|                      | Google Maps Platform                | Mailwoman                                                  |
+| -------------------- | ----------------------------------- | ---------------------------------------------------------- |
+| Shape                | Hosted HTTP service                 | npm package, in-process; HTTP servers optional             |
+| Where the query goes | Google's infrastructure             | Your process                                               |
+| Coverage             | Global, uniform, no setup           | Per-locale, measured where claimed; a download per country |
+| Reference data       | Google's, maintained by Google      | Public registers on your disk, refreshed by you            |
+| Identifier           | Place ID into Google's place graph  | A component decomposition, plus an address key you compute |
+| Non-address queries  | Landmarks, business names, partials | Not the design; the parser needs an address                |
+| What arrives         | A matched place                     | Labeled spans with offsets, plus a coordinate and a tier   |
+| Operating cost       | Per request                         | Infrastructure and disk                                    |
+
+Two rows carry most of the decision.
+
+**"Where the query goes"** is the one that ends evaluations early in either direction. If your
+addresses are patient records, employee home addresses, or anything your compliance function has an
+opinion about, an in-process library removes the conversation rather than winning it. If they are
+public business addresses, the conversation never starts and this row is not interesting.
+
+**"What arrives"** decides how much of your own code you write. A hosted geocoder returns a matched
+place, and if you needed to know which characters of your input were the street, you get to work that
+out downstream. A label-then-look-up parser returns the decomposition as the primary product, which
+is what deduplication, validation, formatting and record matching all need. If a coordinate is the
+whole requirement, this row costs you nothing either way.
+
+## When to choose Google Maps Platform
+
+Take this section at face value. There are situations where a hosted geocoder is the correct
+engineering decision and installing ours would be a mistake.
+
+- **Your queries are not addresses.** "Starbucks near Union Station", a business name with no street,
+  a half-typed landmark. That is a place-search problem over a business graph, and a parser has
+  nothing to label. Mailwoman will parse it into something and the something will be wrong.
+- **You need global coverage today, uniformly.** A hosted API covers every country the day you sign
+  up. Ours covers the locales where a coordinate-graded evaluation exists, and the rest is unverified
+  rather than merely thin — see [Locales and tiers](../../developers/reference/locales-and-tiers.mdx).
+  If your file spans 40 countries and you cannot wait for tiers, this is decisive.
+- **You are already inside the ecosystem.** If you render Google maps, use Places, and store Place
+  IDs, a second geocoder means two place graphs to reconcile. Consistency within one system is worth
+  more than the marginal properties of another one.
+- **Volume is low and engineering time is the scarce resource.** Below the volume where per-request
+  pricing becomes material, sourcing and refreshing reference data is a standing job you would be
+  taking on for no return.
+- **You have no place to put 1.65 GB.** The gazetteer has to live somewhere with a disk. A serverless
+  function with a small bundle limit and no attached volume is a poor host for this design, and
+  [Deploy serverless](../../developers/how-to/deploy-serverless.mdx) is upfront about the shapes that
+  work.
+
+## When to choose Mailwoman
+
+- **The addresses cannot leave.** No egress is the property; everything else follows from it.
+- **You need fields, not only a point.** Spans with offsets into your original string, so
+  deduplication and validation have something to work with.
+- **The volume makes per-request pricing the largest line item.** The trade is infrastructure and
+  disk, which have different curves.
+- **You want to store the results indefinitely.** Reference data on your disk carries whatever the
+  source licence permits, and you are reading that licence rather than a service agreement.
+- **You need to inspect or override a wrong answer.** Every resolved span names the gazetteer record
+  it landed on, so a bad result has a stage to examine.
+
+## Run it yourself
+
+Both claims above are checkable on your own file rather than on ours. Our published numbers are two
+panels with their scripts:
+
+```bash
+curl -fsSLO https://mailwoman.sister.software/benchmarks/be-panel.mjs
+curl -fsSLO https://mailwoman.sister.software/benchmarks/be-panel.json
+mailwoman data pull candidate
+node be-panel.mjs --data-root <DATA_ROOT>
+```
+
+[Benchmarks](../benchmarks/index.mdx) carries the results and the method. The panel to run against
+_your_ addresses is the one you write from `be-panel.mjs` — swap the panel file for your own rows and
+the same script grades them.
+
+## Related
+
+- [The landscape](../../developers/knowledge-base/geocoding/the-landscape.mdx) — hosted, self-hosted
+  and in-process, with the bounded case where none of them is needed.
+- [Cut the per-request bill](../../solutions/cut-the-per-request-bill.mdx) — the volume argument,
+  worked.
+- [Keep addresses inside](../../solutions/keep-addresses-inside.mdx) — the residency argument, worked.
+- [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) — the coverage boundary.

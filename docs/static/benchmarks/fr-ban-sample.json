@@ -1,0 +1,1311 @@
+{
+	"source": "Base Adresse Nationale (BAN), via `mailwoman data pull fr`",
+	"license": "Licence Ouverte / Open Licence — https://adresse.data.gouv.fr/",
+	"release": "2026-05-18",
+	"seed": 20260804,
+	"drawSize": 1200,
+	"centroidSampleCap": 2000,
+	"note": "One row per postcode. Coordinates are BAN's own; they are the grading target.",
+	"rows": [
+		{
+			"number": "37",
+			"street": "Chemin des Jardins",
+			"postcode": "38460",
+			"locality": "trept",
+			"lat": 45.686252,
+			"lon": 5.322105,
+			"postcodeCentroid": {
+				"lat": 45.71330291300004,
+				"lon": 5.247836590500002,
+				"n": 2000
+			}
+		},
+		{
+			"number": "6",
+			"street": "Rue Madeleine",
+			"postcode": "33730",
+			"locality": "villandraut",
+			"lat": 44.45581,
+			"lon": -0.373261,
+			"postcodeCentroid": {
+				"lat": 44.45344544049995,
+				"lon": -0.36436757599999886,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4430",
+			"street": "Route de Sospel",
+			"postcode": "06500",
+			"locality": "menton",
+			"lat": 43.816129,
+			"lon": 7.485638,
+			"postcodeCentroid": {
+				"lat": 43.78294967899999,
+				"lon": 7.492794926999995,
+				"n": 2000
+			}
+		},
+		{
+			"number": "45",
+			"street": "Lotissement du guerinet",
+			"postcode": "85250",
+			"locality": "saint-andre-goule-doie",
+			"lat": 46.82892,
+			"lon": -1.190163,
+			"postcodeCentroid": {
+				"lat": 46.86363344150013,
+				"lon": -1.2022726339999996,
+				"n": 2000
+			}
+		},
+		{
+			"number": "8",
+			"street": "Rue de l'Épine",
+			"postcode": "14630",
+			"locality": "emieville",
+			"lat": 49.150608,
+			"lon": -0.228067,
+			"postcodeCentroid": {
+				"lat": 49.14343275450006,
+				"lon": -0.24985869849999975,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Allée des Cerises",
+			"postcode": "33650",
+			"locality": "saint-selve",
+			"lat": 44.668475,
+			"lon": -0.478412,
+			"postcodeCentroid": {
+				"lat": 44.67630483450009,
+				"lon": -0.5341930689999986,
+				"n": 2000
+			}
+		},
+		{
+			"number": "24",
+			"street": "lotissement des Acacias",
+			"postcode": "09200",
+			"locality": "eycheil",
+			"lat": 42.966998,
+			"lon": 1.164711,
+			"postcodeCentroid": {
+				"lat": 42.975814899999996,
+				"lon": 1.1507954104999982,
+				"n": 2000
+			}
+		},
+		{
+			"number": "5",
+			"street": "Place du Calvaire à Montsaon",
+			"postcode": "52000",
+			"locality": "semoutiers-montsaon",
+			"lat": 48.084548,
+			"lon": 5.036532,
+			"postcodeCentroid": {
+				"lat": 48.110952388999976,
+				"lon": 5.12537443050001,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Rue de la Mairie",
+			"postcode": "70000",
+			"locality": "andelarre",
+			"lat": 47.589875,
+			"lon": 6.096303,
+			"postcodeCentroid": {
+				"lat": 47.60961880050005,
+				"lon": 6.141037112499999,
+				"n": 2000
+			}
+		},
+		{
+			"number": "15",
+			"street": "Rue de la Forêt",
+			"postcode": "41100",
+			"locality": "faye",
+			"lat": 47.804845,
+			"lon": 1.178946,
+			"postcodeCentroid": {
+				"lat": 47.80756819099991,
+				"lon": 1.0567046135000007,
+				"n": 2000
+			}
+		},
+		{
+			"number": "19",
+			"street": "Impasse du Montsion",
+			"postcode": "01390",
+			"locality": "mionnay",
+			"lat": 45.895923,
+			"lon": 4.929326,
+			"postcodeCentroid": {
+				"lat": 45.920399749999916,
+				"lon": 4.927992962500003,
+				"n": 2000
+			}
+		},
+		{
+			"number": "7",
+			"street": "Lotissement du Landrin",
+			"postcode": "56760",
+			"locality": "penestin",
+			"lat": 47.469266,
+			"lon": -2.485564,
+			"postcodeCentroid": {
+				"lat": 47.47311122099994,
+				"lon": -2.4785975015000026,
+				"n": 2000
+			}
+		},
+		{
+			"number": "17",
+			"street": "Route de la Belle Indienne",
+			"postcode": "86230",
+			"locality": "serigny",
+			"lat": 46.933981,
+			"lon": 0.306488,
+			"postcodeCentroid": {
+				"lat": 46.90227933549988,
+				"lon": 0.4178498265000006,
+				"n": 2000
+			}
+		},
+		{
+			"number": "601",
+			"street": "Route Impériale",
+			"postcode": "64270",
+			"locality": "ramous",
+			"lat": 43.519846,
+			"lon": -0.87851,
+			"postcodeCentroid": {
+				"lat": 43.48222589650005,
+				"lon": -0.9461882884999987,
+				"n": 2000
+			}
+		},
+		{
+			"number": "47",
+			"street": "Chemin du Clos Burtin",
+			"postcode": "69230",
+			"locality": "saint-genis-laval",
+			"lat": 45.705849,
+			"lon": 4.786308,
+			"postcodeCentroid": {
+				"lat": 45.6933901405,
+				"lon": 4.791314340499995,
+				"n": 2000
+			}
+		},
+		{
+			"number": "3",
+			"street": "Rue Paul Gauguin",
+			"postcode": "29520",
+			"locality": "chateauneuf-du-faou",
+			"lat": 48.179712,
+			"lon": -3.823526,
+			"postcodeCentroid": {
+				"lat": 48.166663688000064,
+				"lon": -3.824829159499996,
+				"n": 2000
+			}
+		},
+		{
+			"number": "2423",
+			"street": "La Vieille Route",
+			"postcode": "76190",
+			"locality": "valliquerville",
+			"lat": 49.615096,
+			"lon": 0.722259,
+			"postcodeCentroid": {
+				"lat": 49.61647230449997,
+				"lon": 0.7628083359999986,
+				"n": 2000
+			}
+		},
+		{
+			"number": "132",
+			"street": "Avenue des Calanques",
+			"postcode": "83990",
+			"locality": "saint-tropez",
+			"lat": 43.273837,
+			"lon": 6.679774,
+			"postcodeCentroid": {
+				"lat": 43.26408344750004,
+				"lon": 6.653903406499998,
+				"n": 2000
+			}
+		},
+		{
+			"number": "138 a",
+			"street": "Boulevard de la République",
+			"postcode": "33510",
+			"locality": "andernos-les-bains",
+			"lat": 44.738865,
+			"lon": -1.092187,
+			"postcodeCentroid": {
+				"lat": 44.742901668500046,
+				"lon": -1.0829943284999997,
+				"n": 2000
+			}
+		},
+		{
+			"number": "1",
+			"street": "Rue du Château d'Eau",
+			"postcode": "63800",
+			"locality": "perignat-sur-allier",
+			"lat": 45.731909,
+			"lon": 3.238258,
+			"postcodeCentroid": {
+				"lat": 45.734112597000085,
+				"lon": 3.2010264230000014,
+				"n": 2000
+			}
+		},
+		{
+			"number": "30",
+			"street": "Chemin de la Verrerie",
+			"postcode": "83440",
+			"locality": "tanneron",
+			"lat": 43.584546,
+			"lon": 6.88698,
+			"postcodeCentroid": {
+				"lat": 43.61606614750009,
+				"lon": 6.72088899450001,
+				"n": 2000
+			}
+		},
+		{
+			"number": "77",
+			"street": "Rue Gambetta",
+			"postcode": "92500",
+			"locality": "rueil-malmaison",
+			"lat": 48.880587,
+			"lon": 2.196147,
+			"postcodeCentroid": {
+				"lat": 48.87201886150007,
+				"lon": 2.182274176499997,
+				"n": 2000
+			}
+		},
+		{
+			"number": "23",
+			"street": "Route de Gy-les-Nonains",
+			"postcode": "45230",
+			"locality": "montbouy",
+			"lat": 47.863421,
+			"lon": 2.824939,
+			"postcodeCentroid": {
+				"lat": 47.8228098635,
+				"lon": 2.866840423999999,
+				"n": 2000
+			}
+		},
+		{
+			"number": "76",
+			"street": "Rue Jean Mermoz",
+			"postcode": "59400",
+			"locality": "cambrai",
+			"lat": 50.17217,
+			"lon": 3.264038,
+			"postcodeCentroid": {
+				"lat": 50.17322691750005,
+				"lon": 3.2431507630000063,
+				"n": 2000
+			}
+		},
+		{
+			"number": "35",
+			"street": "Rue de Kersivy Vraz",
+			"postcode": "22660",
+			"locality": "trelevern",
+			"lat": 48.8066,
+			"lon": -3.371963,
+			"postcodeCentroid": {
+				"lat": 48.81313028000011,
+				"lon": -3.3583647674999977,
+				"n": 2000
+			}
+		},
+		{
+			"number": "8",
+			"street": "Rue Claude Farinot",
+			"postcode": "89140",
+			"locality": "michery",
+			"lat": 48.304069,
+			"lon": 3.239003,
+			"postcodeCentroid": {
+				"lat": 48.288557738499904,
+				"lon": 3.1984547955000027,
+				"n": 2000
+			}
+		},
+		{
+			"number": "19",
+			"street": "Rue Ferdinande Wascheul",
+			"postcode": "59264",
+			"locality": "onnaing",
+			"lat": 50.382372,
+			"lon": 3.592809,
+			"postcodeCentroid": {
+				"lat": 50.38927834549997,
+				"lon": 3.5941469979999896,
+				"n": 2000
+			}
+		},
+		{
+			"number": "213",
+			"street": "Impasse de la Piboule",
+			"postcode": "12510",
+			"locality": "druelle balsac",
+			"lat": 44.367359,
+			"lon": 2.472627,
+			"postcodeCentroid": {
+				"lat": 44.354883604500074,
+				"lon": 2.5146960080000005,
+				"n": 2000
+			}
+		},
+		{
+			"number": "3",
+			"street": "Rue de Bias",
+			"postcode": "77580",
+			"locality": "crecy-la-chapelle",
+			"lat": 48.868931,
+			"lon": 2.9192,
+			"postcodeCentroid": {
+				"lat": 48.861137265500005,
+				"lon": 2.924101025000006,
+				"n": 2000
+			}
+		},
+		{
+			"number": "12",
+			"street": "Rue des Linières",
+			"postcode": "60750",
+			"locality": "choisy-au-bac",
+			"lat": 49.443746,
+			"lon": 2.88509,
+			"postcodeCentroid": {
+				"lat": 49.440548962963,
+				"lon": 2.8811985775034255,
+				"n": 1458
+			}
+		},
+		{
+			"number": "8 bis",
+			"street": "Rue Octave Piedon",
+			"postcode": "45150",
+			"locality": "jargeau",
+			"lat": 47.863393,
+			"lon": 2.116433,
+			"postcodeCentroid": {
+				"lat": 47.85117030750002,
+				"lon": 2.119713923500002,
+				"n": 2000
+			}
+		},
+		{
+			"number": "3",
+			"street": "Chemin des Hirondelles",
+			"postcode": "16190",
+			"locality": "montmoreau",
+			"lat": 45.40254,
+			"lon": 0.128338,
+			"postcodeCentroid": {
+				"lat": 45.393734778000045,
+				"lon": 0.1271988044999995,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Chemin Cryptomerias",
+			"postcode": "97413",
+			"locality": "cilaos",
+			"lat": -21.136557,
+			"lon": 55.491495,
+			"postcodeCentroid": {
+				"lat": -21.146363127999976,
+				"lon": 55.47325971900008,
+				"n": 2000
+			}
+		},
+		{
+			"number": "19",
+			"street": "Rue Saint Phocas",
+			"postcode": "80200",
+			"locality": "doingt",
+			"lat": 49.92066,
+			"lon": 2.946325,
+			"postcodeCentroid": {
+				"lat": 49.90848703999994,
+				"lon": 2.930879059499993,
+				"n": 2000
+			}
+		},
+		{
+			"number": "816",
+			"street": "Chemin de Loustalot",
+			"postcode": "40350",
+			"locality": "pouillon",
+			"lat": 43.622666,
+			"lon": -0.985934,
+			"postcodeCentroid": {
+				"lat": 43.61086618700001,
+				"lon": -0.9989866504999979,
+				"n": 2000
+			}
+		},
+		{
+			"number": "18 c",
+			"street": "Rue Pasteur",
+			"postcode": "33230",
+			"locality": "coutras",
+			"lat": 45.033267,
+			"lon": -0.126341,
+			"postcodeCentroid": {
+				"lat": 45.05024984300004,
+				"lon": -0.12564383249999994,
+				"n": 2000
+			}
+		},
+		{
+			"number": "6",
+			"street": "Impasse Jean Moulin",
+			"postcode": "22590",
+			"locality": "pordic",
+			"lat": 48.566242,
+			"lon": -2.81749,
+			"postcodeCentroid": {
+				"lat": 48.57042267199998,
+				"lon": -2.8313686020000013,
+				"n": 2000
+			}
+		},
+		{
+			"number": "103",
+			"street": "Rue du 8 Mai 1945",
+			"postcode": "50880",
+			"locality": "pont-hebert",
+			"lat": 49.170436,
+			"lon": -1.135661,
+			"postcodeCentroid": {
+				"lat": 49.16908524162161,
+				"lon": -1.136663508648648,
+				"n": 1850
+			}
+		},
+		{
+			"number": "5",
+			"street": "Rue de la Seigne de Pilles",
+			"postcode": "58220",
+			"locality": "couloutre",
+			"lat": 47.408676,
+			"lon": 3.212663,
+			"postcodeCentroid": {
+				"lat": 47.38632386399995,
+				"lon": 3.146429133500002,
+				"n": 2000
+			}
+		},
+		{
+			"number": "17",
+			"street": "Rue de la Charette",
+			"postcode": "59530",
+			"locality": "orsinval",
+			"lat": 50.269208,
+			"lon": 3.632612,
+			"postcodeCentroid": {
+				"lat": 50.24274066950024,
+				"lon": 3.6485550009999903,
+				"n": 2000
+			}
+		},
+		{
+			"number": "79",
+			"street": "Rue des Mélèzes",
+			"postcode": "88390",
+			"locality": "les forges",
+			"lat": 48.176047,
+			"lon": 6.410315,
+			"postcodeCentroid": {
+				"lat": 48.17710778049996,
+				"lon": 6.359708330999994,
+				"n": 2000
+			}
+		},
+		{
+			"number": "206",
+			"street": "Route des Riffauds",
+			"postcode": "16600",
+			"locality": "ruelle-sur-touvre",
+			"lat": 45.689507,
+			"lon": 0.254881,
+			"postcodeCentroid": {
+				"lat": 45.67595123000005,
+				"lon": 0.23840495049999993,
+				"n": 2000
+			}
+		},
+		{
+			"number": "30",
+			"street": "Rue Maréchal Leclerc",
+			"postcode": "71200",
+			"locality": "le creusot",
+			"lat": 46.806736,
+			"lon": 4.427724,
+			"postcodeCentroid": {
+				"lat": 46.81256228050005,
+				"lon": 4.4318372875000085,
+				"n": 2000
+			}
+		},
+		{
+			"number": "5",
+			"street": "Avenue Victor Hugo",
+			"postcode": "69550",
+			"locality": "saint-jean-la-bussiere",
+			"lat": 46.002158,
+			"lon": 4.3257,
+			"postcodeCentroid": {
+				"lat": 45.99042622100002,
+				"lon": 4.3515321690000075,
+				"n": 2000
+			}
+		},
+		{
+			"number": "31",
+			"street": "Rue Roeth",
+			"postcode": "67340",
+			"locality": "ingwiller",
+			"lat": 48.870002,
+			"lon": 7.469579,
+			"postcodeCentroid": {
+				"lat": 48.891094832500094,
+				"lon": 7.4815169765,
+				"n": 2000
+			}
+		},
+		{
+			"number": "98",
+			"street": "Rue Clos du Village",
+			"postcode": "38150",
+			"locality": "agnin",
+			"lat": 45.339659,
+			"lon": 4.858355,
+			"postcodeCentroid": {
+				"lat": 45.36281103999995,
+				"lon": 4.848244995499994,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Rue Beaufort Chopin",
+			"postcode": "38200",
+			"locality": "vienne",
+			"lat": 45.507265,
+			"lon": 4.853672,
+			"postcodeCentroid": {
+				"lat": 45.53348356300004,
+				"lon": 4.885816716999987,
+				"n": 2000
+			}
+		},
+		{
+			"number": "7",
+			"street": "Rue du Cimetière",
+			"postcode": "88170",
+			"locality": "chatenois",
+			"lat": 48.309578,
+			"lon": 5.837969,
+			"postcodeCentroid": {
+				"lat": 48.31719907050008,
+				"lon": 5.87371802900001,
+				"n": 2000
+			}
+		},
+		{
+			"number": "20",
+			"street": "Chemin de la Combe",
+			"postcode": "12740",
+			"locality": "la loubiere",
+			"lat": 44.366003,
+			"lon": 2.662987,
+			"postcodeCentroid": {
+				"lat": 44.40361863650001,
+				"lon": 2.6188228309999957,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Ruelle des Raffées",
+			"postcode": "21140",
+			"locality": "semur-en-auxois",
+			"lat": 47.484064,
+			"lon": 4.329137,
+			"postcodeCentroid": {
+				"lat": 47.48776984400003,
+				"lon": 4.343127460000008,
+				"n": 2000
+			}
+		},
+		{
+			"number": "43",
+			"street": "Rue des Saunées",
+			"postcode": "36330",
+			"locality": "le poinconnet",
+			"lat": 46.79213,
+			"lon": 1.729135,
+			"postcodeCentroid": {
+				"lat": 46.76458331300005,
+				"lon": 1.7089635260000005,
+				"n": 2000
+			}
+		},
+		{
+			"number": "5",
+			"street": "impasse de l'Elorn",
+			"postcode": "29480",
+			"locality": "le relecq-kerhuon",
+			"lat": 48.408172,
+			"lon": -4.389847,
+			"postcodeCentroid": {
+				"lat": 48.4031522964999,
+				"lon": -4.400593816,
+				"n": 2000
+			}
+		},
+		{
+			"number": "3 bis",
+			"street": "Route de la Forêt",
+			"postcode": "86470",
+			"locality": "boivre-la-vallee",
+			"lat": 46.562729,
+			"lon": 0.050212,
+			"postcodeCentroid": {
+				"lat": 46.54975812783909,
+				"lon": 0.08957340103828688,
+				"n": 1541
+			}
+		},
+		{
+			"number": "3",
+			"street": "Chemin Antoine",
+			"postcode": "88240",
+			"locality": "la voge-les-bains",
+			"lat": 48.027138,
+			"lon": 6.232468,
+			"postcodeCentroid": {
+				"lat": 48.00942048950016,
+				"lon": 6.270951763999998,
+				"n": 2000
+			}
+		},
+		{
+			"number": "229",
+			"street": "Chemin du Laubois",
+			"postcode": "47500",
+			"locality": "condezaygues",
+			"lat": 44.47407,
+			"lon": 0.903501,
+			"postcodeCentroid": {
+				"lat": 44.50285734150002,
+				"lon": 0.9669618905000009,
+				"n": 2000
+			}
+		},
+		{
+			"number": "22",
+			"street": "Rue des Paquerettes",
+			"postcode": "13250",
+			"locality": "saint-chamas",
+			"lat": 43.556686,
+			"lon": 5.036541,
+			"postcodeCentroid": {
+				"lat": 43.556258916999916,
+				"lon": 5.052752511000012,
+				"n": 2000
+			}
+		},
+		{
+			"number": "574",
+			"street": "Residence Grand Gaillon Normandie",
+			"postcode": "27600",
+			"locality": "gaillon",
+			"lat": 49.157916,
+			"lon": 1.340124,
+			"postcodeCentroid": {
+				"lat": 49.15877053899921,
+				"lon": 1.3261854249999891,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Chemin de la Joannerie",
+			"postcode": "61340",
+			"locality": "perche en noce",
+			"lat": 48.410357,
+			"lon": 0.668687,
+			"postcodeCentroid": {
+				"lat": 48.35510093400005,
+				"lon": 0.7162132009999996,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Rue Edgar Degas",
+			"postcode": "91220",
+			"locality": "bretigny-sur-orge",
+			"lat": 48.597434,
+			"lon": 2.283917,
+			"postcodeCentroid": {
+				"lat": 48.60638874099993,
+				"lon": 2.3073023315,
+				"n": 2000
+			}
+		},
+		{
+			"number": "96 b",
+			"street": "Avenue Charles de Gaulle",
+			"postcode": "69720",
+			"locality": "saint-bonnet-de-mure",
+			"lat": 45.697104,
+			"lon": 5.021165,
+			"postcodeCentroid": {
+				"lat": 45.689565624499984,
+				"lon": 5.034921981500004,
+				"n": 2000
+			}
+		},
+		{
+			"number": "64 b",
+			"street": "Rue Gaston Baratte",
+			"postcode": "59493",
+			"locality": "villeneuve-dascq",
+			"lat": 50.618481,
+			"lon": 3.158777,
+			"postcodeCentroid": {
+				"lat": 50.614991845,
+				"lon": 3.160830247500002,
+				"n": 2000
+			}
+		},
+		{
+			"number": "426",
+			"street": "Rue Chapu",
+			"postcode": "77350",
+			"locality": "le mee-sur-seine",
+			"lat": 48.537475,
+			"lon": 2.640992,
+			"postcodeCentroid": {
+				"lat": 48.538356629499916,
+				"lon": 2.6290481424999976,
+				"n": 2000
+			}
+		},
+		{
+			"number": "11",
+			"street": "Avenue Lavoisier",
+			"postcode": "13470",
+			"locality": "carnoux-en-provence",
+			"lat": 43.250827,
+			"lon": 5.54842,
+			"postcodeCentroid": {
+				"lat": 43.25699505015522,
+				"lon": 5.564013621509825,
+				"n": 1934
+			}
+		},
+		{
+			"number": "50",
+			"street": "Avenue du Général de Gaulle",
+			"postcode": "92250",
+			"locality": "la garenne-colombes",
+			"lat": 48.910187,
+			"lon": 2.254783,
+			"postcodeCentroid": {
+				"lat": 48.90743224300005,
+				"lon": 2.246803757499996,
+				"n": 2000
+			}
+		},
+		{
+			"number": "495",
+			"street": "Route des Secs",
+			"postcode": "81630",
+			"locality": "montvalen",
+			"lat": 43.856211,
+			"lon": 1.591605,
+			"postcodeCentroid": {
+				"lat": 43.91600193835961,
+				"lon": 1.6291874829342836,
+				"n": 1963
+			}
+		},
+		{
+			"number": "3",
+			"street": "Boulevard Pasteur",
+			"postcode": "27680",
+			"locality": "quillebeuf-sur-seine",
+			"lat": 49.472186,
+			"lon": 0.524585,
+			"postcodeCentroid": {
+				"lat": 49.43003802549997,
+				"lon": 0.5193222899999993,
+				"n": 2000
+			}
+		},
+		{
+			"number": "19",
+			"street": "Route du Hameau Asselin",
+			"postcode": "14350",
+			"locality": "souleuvre en bocage",
+			"lat": 48.91293,
+			"lon": -0.948034,
+			"postcodeCentroid": {
+				"lat": 48.94741897749995,
+				"lon": -0.8562486935000008,
+				"n": 2000
+			}
+		},
+		{
+			"number": "61",
+			"street": "Chemin du Moulin",
+			"postcode": "63500",
+			"locality": "aulhat-flat",
+			"lat": 45.567688,
+			"lon": 3.31276,
+			"postcodeCentroid": {
+				"lat": 45.54913663999985,
+				"lon": 3.2497058575000004,
+				"n": 2000
+			}
+		},
+		{
+			"number": "35 p2",
+			"street": "Rue du Charolais",
+			"postcode": "75012",
+			"locality": "paris",
+			"lat": 48.840403,
+			"lon": 2.385405,
+			"postcodeCentroid": {
+				"lat": 48.84121308599987,
+				"lon": 2.397090835000003,
+				"n": 2000
+			}
+		},
+		{
+			"number": "11",
+			"street": "Chemin de la Bisoire",
+			"postcode": "88460",
+			"locality": "tendon",
+			"lat": 48.116364,
+			"lon": 6.663968,
+			"postcodeCentroid": {
+				"lat": 48.14242258950012,
+				"lon": 6.619687896999999,
+				"n": 2000
+			}
+		},
+		{
+			"number": "3",
+			"street": "Rue Jean Jaurès",
+			"postcode": "54110",
+			"locality": "dombasle-sur-meurthe",
+			"lat": 48.61424,
+			"lon": 6.352009,
+			"postcodeCentroid": {
+				"lat": 48.6264749860001,
+				"lon": 6.349511926500007,
+				"n": 2000
+			}
+		},
+		{
+			"number": "154",
+			"street": "Rue de la Croix",
+			"postcode": "74500",
+			"locality": "publier",
+			"lat": 46.389009,
+			"lon": 6.549785,
+			"postcodeCentroid": {
+				"lat": 46.39593884450007,
+				"lon": 6.602026428500001,
+				"n": 2000
+			}
+		},
+		{
+			"number": "63",
+			"street": "Rue Charles de Gaulle",
+			"postcode": "78350",
+			"locality": "jouy-en-josas",
+			"lat": 48.769245,
+			"lon": 2.150345,
+			"postcodeCentroid": {
+				"lat": 48.76761015899995,
+				"lon": 2.1605958400000005,
+				"n": 2000
+			}
+		},
+		{
+			"number": "33",
+			"street": "Avenue du Centre",
+			"postcode": "91440",
+			"locality": "bures-sur-yvette",
+			"lat": 48.68649,
+			"lon": 2.146488,
+			"postcodeCentroid": {
+				"lat": 48.69147675599993,
+				"lon": 2.154678374500004,
+				"n": 2000
+			}
+		},
+		{
+			"number": "53",
+			"street": "Rue Léo Lagrange",
+			"postcode": "78130",
+			"locality": "les mureaux",
+			"lat": 48.986621,
+			"lon": 1.905597,
+			"postcodeCentroid": {
+				"lat": 48.98681532149996,
+				"lon": 1.9170582710000004,
+				"n": 2000
+			}
+		},
+		{
+			"number": "44",
+			"street": "Avenue du Colonel Arnaud BELTRAME",
+			"postcode": "17137",
+			"locality": "lhoumeau",
+			"lat": 46.194074,
+			"lon": -1.177264,
+			"postcodeCentroid": {
+				"lat": 46.21390390049994,
+				"lon": -1.1581579974999998,
+				"n": 2000
+			}
+		},
+		{
+			"number": "26 t",
+			"street": "Rue Jean Beau",
+			"postcode": "60940",
+			"locality": "cinqueux",
+			"lat": 49.316607,
+			"lon": 2.530048,
+			"postcodeCentroid": {
+				"lat": 49.31864480380098,
+				"lon": 2.527776941307993,
+				"n": 1789
+			}
+		},
+		{
+			"number": "3",
+			"street": "Rue Edmond Rostand",
+			"postcode": "30133",
+			"locality": "les angles",
+			"lat": 43.958719,
+			"lon": 4.765818,
+			"postcodeCentroid": {
+				"lat": 43.95734895000007,
+				"lon": 4.769831459499998,
+				"n": 2000
+			}
+		},
+		{
+			"number": "18",
+			"street": "Rue de la Maison Blanche",
+			"postcode": "77670",
+			"locality": "vernou-la-celle-sur-seine",
+			"lat": 48.389096,
+			"lon": 2.845184,
+			"postcodeCentroid": {
+				"lat": 48.39009769249989,
+				"lon": 2.8309693000000027,
+				"n": 2000
+			}
+		},
+		{
+			"number": "5",
+			"street": "Avenue des Ormeaux",
+			"postcode": "13500",
+			"locality": "martigues",
+			"lat": 43.410316,
+			"lon": 5.024974,
+			"postcodeCentroid": {
+				"lat": 43.40132456800002,
+				"lon": 5.042878700999997,
+				"n": 2000
+			}
+		},
+		{
+			"number": "20 bis",
+			"street": "Rue des Eglantiers",
+			"postcode": "56260",
+			"locality": "larmor-plage",
+			"lat": 47.716625,
+			"lon": -3.379086,
+			"postcodeCentroid": {
+				"lat": 47.713798108500065,
+				"lon": -3.3867829299999967,
+				"n": 2000
+			}
+		},
+		{
+			"number": "33",
+			"street": "Route Nationale",
+			"postcode": "62260",
+			"locality": "cauchy-a-la-tour",
+			"lat": 50.510999,
+			"lon": 2.44363,
+			"postcodeCentroid": {
+				"lat": 50.509775401000034,
+				"lon": 2.4592635550000006,
+				"n": 2000
+			}
+		},
+		{
+			"number": "4",
+			"street": "Allée de Kerallain",
+			"postcode": "29720",
+			"locality": "ploneour-lanvern",
+			"lat": 47.899169,
+			"lon": -4.272518,
+			"postcodeCentroid": {
+				"lat": 47.90381138649996,
+				"lon": -4.292979687999999,
+				"n": 2000
+			}
+		},
+		{
+			"number": "31",
+			"street": "Rue de la Liberté",
+			"postcode": "71250",
+			"locality": "cluny",
+			"lat": 46.432186,
+			"lon": 4.659884,
+			"postcodeCentroid": {
+				"lat": 46.447357877,
+				"lon": 4.631047360499996,
+				"n": 2000
+			}
+		},
+		{
+			"number": "138",
+			"street": "Rue de Chaussas",
+			"postcode": "31200",
+			"locality": "toulouse",
+			"lat": 43.621715,
+			"lon": 1.4269,
+			"postcodeCentroid": {
+				"lat": 43.63353602200004,
+				"lon": 1.4366923555000004,
+				"n": 2000
+			}
+		},
+		{
+			"number": "18",
+			"street": "Parluchen",
+			"postcode": "29242",
+			"locality": "ouessant",
+			"lat": 48.456028,
+			"lon": -5.114645,
+			"postcodeCentroid": {
+				"lat": 48.458672236619734,
+				"lon": -5.090232874647891,
+				"n": 710
+			}
+		},
+		{
+			"number": "1260",
+			"street": "Route du Coustinet",
+			"postcode": "24520",
+			"locality": "cours-de-pile",
+			"lat": 44.831231,
+			"lon": 0.552473,
+			"postcodeCentroid": {
+				"lat": 44.846936354000036,
+				"lon": 0.5812182429999994,
+				"n": 2000
+			}
+		},
+		{
+			"number": "22",
+			"street": "Lotissement le Château",
+			"postcode": "57685",
+			"locality": "augny",
+			"lat": 49.05964,
+			"lon": 6.117317,
+			"postcodeCentroid": {
+				"lat": 49.06491536387898,
+				"lon": 6.116740990213517,
+				"n": 1124
+			}
+		},
+		{
+			"number": "2429",
+			"street": "Chemin de la Bégude",
+			"postcode": "83740",
+			"locality": "la cadiere-dazur",
+			"lat": 43.215676,
+			"lon": 5.715683,
+			"postcodeCentroid": {
+				"lat": 43.19709626599997,
+				"lon": 5.740445769999992,
+				"n": 2000
+			}
+		},
+		{
+			"number": "22",
+			"street": "Avenue robert schuman",
+			"postcode": "13002",
+			"locality": "marseille",
+			"lat": 43.301211,
+			"lon": 5.366206,
+			"postcodeCentroid": {
+				"lat": 43.30290415100001,
+				"lon": 5.367871117000007,
+				"n": 2000
+			}
+		},
+		{
+			"number": "5",
+			"street": "La Poupardais",
+			"postcode": "35490",
+			"locality": "chauvigne",
+			"lat": 48.367979,
+			"lon": -1.437362,
+			"postcodeCentroid": {
+				"lat": 48.33550118550002,
+				"lon": -1.5117482659999997,
+				"n": 2000
+			}
+		},
+		{
+			"number": "44",
+			"street": "Impasse Jean de la Fontaine",
+			"postcode": "84500",
+			"locality": "bollene",
+			"lat": 44.26927,
+			"lon": 4.754945,
+			"postcodeCentroid": {
+				"lat": 44.28813480299989,
+				"lon": 4.751690402499999,
+				"n": 2000
+			}
+		},
+		{
+			"number": "104",
+			"street": "Chemin de Doudon",
+			"postcode": "13105",
+			"locality": "mimet",
+			"lat": 43.415713,
+			"lon": 5.499594,
+			"postcodeCentroid": {
+				"lat": 43.42254540988677,
+				"lon": 5.500609351184332,
+				"n": 1942
+			}
+		},
+		{
+			"number": "5",
+			"street": "Route de la Lande",
+			"postcode": "41300",
+			"locality": "souesmes",
+			"lat": 47.459383,
+			"lon": 2.179181,
+			"postcodeCentroid": {
+				"lat": 47.404157757500016,
+				"lon": 2.0420350615000022,
+				"n": 2000
+			}
+		},
+		{
+			"number": "133",
+			"street": "Rue d'Echauffour",
+			"postcode": "61000",
+			"locality": "alencon",
+			"lat": 48.434317,
+			"lon": 0.112386,
+			"postcodeCentroid": {
+				"lat": 48.43024065899998,
+				"lon": 0.09393371949999983,
+				"n": 2000
+			}
+		},
+		{
+			"number": "56",
+			"street": "route des coquetières",
+			"postcode": "49390",
+			"locality": "mouliherne",
+			"lat": 47.465652,
+			"lon": 0.002732,
+			"postcodeCentroid": {
+				"lat": 47.41413116400002,
+				"lon": 0.07327009450000002,
+				"n": 2000
+			}
+		},
+		{
+			"number": "19 a",
+			"street": "Chemin Jean Baptiste",
+			"postcode": "97418",
+			"locality": "le tampon",
+			"lat": -21.227806,
+			"lon": 55.552716,
+			"postcodeCentroid": {
+				"lat": -21.22533864349999,
+				"lon": 55.55128065549996,
+				"n": 2000
+			}
+		},
+		{
+			"number": "5",
+			"street": "Route du Tourmalet",
+			"postcode": "65120",
+			"locality": "bareges",
+			"lat": 42.90312,
+			"lon": 0.09716,
+			"postcodeCentroid": {
+				"lat": 42.85814912549997,
+				"lon": -0.00011683000000000084,
+				"n": 2000
+			}
+		},
+		{
+			"number": "457",
+			"street": "Route De Puyjubert",
+			"postcode": "19600",
+			"locality": "larche",
+			"lat": 45.124462,
+			"lon": 1.441115,
+			"postcodeCentroid": {
+				"lat": 45.11401867700018,
+				"lon": 1.4503141904999988,
+				"n": 2000
+			}
+		},
+		{
+			"number": "7",
+			"street": "Rue des Malgroux",
+			"postcode": "45140",
+			"locality": "ingre",
+			"lat": 47.921649,
+			"lon": 1.817205,
+			"postcodeCentroid": {
+				"lat": 47.924953177499965,
+				"lon": 1.8381798680000028,
+				"n": 2000
+			}
+		}
+	]
+}

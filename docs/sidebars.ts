@@ -18,11 +18,8 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // - `solutions` — the same engine addressed by the pain a buyer arrives with, not by feature.
 // - `developers` — the get-started trio, what ships today, and where to get help.
 // - `about` — the open-strategy pages, the compliance boundary, contact, and pricing.
-//
-// The Resources door lands with its own task. It is NOT declared here as an empty
-// sidebar: an empty sidebar renders a dead switcher tab (and
-// `useLayoutDocsSidebar(...).link` resolves to nothing), so a door arrives together with
-// the pages behind it or not at all.
+// - `resources` — the evidence door: published benchmarks with their runnable scripts, and the
+//   capability-shape comparisons against the alternatives.
 //
 // `pricing` is a root-level doc that sits in the `about` sidebar so it has a home in the
 // nav tree (the orphan check in scripts/check-docs-structure.ts requires one), while the
@@ -232,6 +229,50 @@ const sidebars: SidebarsConfig = {
 		"developers/support",
 	],
 	about: ["about/mission", "about/security-and-compliance", "about/contact", "pricing"],
+	// The evidence door. Benchmarks lead because they are the door's claim — the pages carry
+	// numbers, and every number's script, inputs and result file are published beside it under
+	// `static/benchmarks/`. Compare follows because a reader who has read a measurement is better
+	// equipped to read a capability comparison than the other way round.
+	//
+	// `benchmarks/index` sits first inside its own category so
+	// `useLayoutDocsSidebar("resources").link` resolves to it and the switcher tab lands on the
+	// evidence door's front page rather than mid-panel.
+	//
+	// Field notes moved here from the navbar in this task: it is long-form research writing, which
+	// is what this door is for, and the navbar was gaining a sixth item. It stays a `link` item
+	// because `/research` is a plugin route rather than a doc, and it sits last so it never
+	// resolves as the door's entry link. The footer keeps its own link, unchanged.
+	resources: [
+		{
+			type: "category",
+			label: "Benchmarks",
+			// Reading order: the door's front page, then the two panels in the order they were run,
+			// then the reading guide. The guide sits last on purpose — it is written against the two
+			// panels above it and illustrates every trap with one of their numbers, so it lands
+			// better once the measurements are familiar. It is reachable cold from either panel.
+			items: [
+				"resources/benchmarks/index",
+				"resources/benchmarks/france-ban",
+				"resources/benchmarks/belgium-panel",
+				"resources/benchmarks/reading-our-numbers",
+			],
+		},
+		{
+			type: "category",
+			label: "Compare",
+			// Ordered by how a reader arrives: hosted API first (the default alternative anyone has
+			// already found), then the self-hosted engine, then the open-source stack you meet when
+			// you decide to build rather than buy. Each page ends in a "when to choose them" section
+			// and none of them carries an accuracy claim about another system.
+			items: [
+				"resources/compare/index",
+				"resources/compare/google-maps",
+				"resources/compare/self-hosted-nominatim",
+				"resources/compare/pelias-and-libpostal",
+			],
+		},
+		{ type: "link", label: "Field notes", href: "/research" },
+	],
 }
 
 export default sidebars

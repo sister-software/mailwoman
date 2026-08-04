@@ -1,0 +1,141 @@
+---
+title: Pelias and libpostal
+description: A modular open-data search geocoder and the address parser much of the field is built on — what each is for, and when to choose them.
+role: explanation
+---
+
+# Pelias and libpostal
+
+## The question
+
+These two get one page because they are frequently met together and are frequently confused with each
+other. One is a geocoder assembled from services; the other is a parser that several geocoders —
+including the first one — use as a component. Knowing which of them you are comparing against decides
+what the comparison is even about.
+
+## What Pelias is
+
+Pelias is an open-data geocoder built as a set of cooperating services. Its documentation, read on
+**2026-08-04**, describes it as:
+
+> "A modular, open-source search engine for our world." … "Pelias is a search engine for places
+> worldwide, powered by open data. It turns addresses and place names into geographic coordinates,
+> and turns geographic coordinates into places and addresses."
+>
+> — [Pelias documentation](https://github.com/pelias/documentation)
+
+Its API exposes forward geocoding (`/v1/search`), reverse geocoding (`/v1/reverse`), autocomplete
+(`/v1/autocomplete`), structured geocoding (`/v1/search/structured`) and a place endpoint
+(`/v1/place`). The store is Elasticsearch, and the modularity is the design commitment: the importers,
+the query parser, the interpolation service and the API are separate pieces you can run, replace or
+skip.
+
+That modularity is the thing to weigh. It means you can import only the data you want, swap a
+component, and reason about each stage on its own — properties a monolith does not give you. It also
+means the system you operate is several services rather than one, and the composition is yours.
+
+## What libpostal is
+
+libpostal is not a geocoder, and its own README is direct about it:
+
+> "libpostal is a C library for parsing/normalizing street addresses around the world using
+> statistical NLP and open data."
+>
+> — [libpostal README](https://github.com/openvenues/libpostal), read 2026-08-04
+
+Its non-goals name "geocoding addresses to a lat/lon (that requires a database/search index)", and it
+states plainly that "libpostal is not itself a full geocoder". It exposes two functions:
+`parse_address`, which labels an address into components with a conditional random field, and
+`expand_address`, which normalizes a messy address into standardized forms for indexing. The README
+gives the default model as about 1.8 GB, with an alternative Senzing model at about 2.2 GB.
+
+libpostal is the labeling half of the design Mailwoman implements, and it is the reason that design
+is well understood in this field at all. A great deal of open geocoding — Pelias included — is built
+on top of it.
+
+## Where each one sits
+
+|                         | Pelias                               | libpostal                         | Mailwoman                                         |
+| ----------------------- | ------------------------------------ | --------------------------------- | ------------------------------------------------- |
+| What it is              | A geocoder, assembled from services  | A parsing and normalizing library | A parser with a resolver behind it                |
+| Returns a coordinate    | Yes                                  | No, by design                     | Yes                                               |
+| Returns a decomposition | Through the query parser             | Yes, this is the product          | Yes                                               |
+| Store                   | Elasticsearch                        | None — model files on disk        | Sealed SQLite files, read from disk               |
+| Model                   | Query parsing, then ranked retrieval | A conditional random field        | A neural sequence labeler with gazetteer evidence |
+| Autocomplete            | A first-class endpoint               | Not applicable                    | Supported, and not the design centre              |
+| Deployment              | Several services                     | A C library and its models        | An npm package; HTTP servers optional             |
+
+The row that matters against libpostal is the second one. If what you need is a coordinate, libpostal
+is a component of your answer rather than the answer, and comparing it to a geocoder on coordinate
+quality is comparing two different jobs.
+
+The row that matters against Pelias is the fifth. Both systems parse, and they parse for different
+purposes: Pelias parses to shape a query that a ranked retrieval then answers, and the index is still
+consulted over everything. Mailwoman parses to decide which index to consult, and the lookup that
+follows is constrained by the decision.
+[The two architectures](../../developers/knowledge-base/geocoding/the-two-architectures.mdx) works
+that difference through, including what it costs each design.
+
+## When to choose Pelias
+
+- **You want autocomplete as a primary surface.** A ranked list arriving as you type is what the
+  design produces by construction, and `/v1/autocomplete` is a supported endpoint rather than an
+  adaptation.
+- **You want to compose your own geocoder.** Import the sources you want, replace a component, run
+  the interpolation service or skip it. If your requirement is unusual enough that a fixed pipeline
+  will not fit it, modularity is the property to buy.
+- **You already operate Elasticsearch.** The store is the operational weight, and a team running it
+  well has paid most of the cost already.
+- **Your queries mix addresses and place names.** One ranked index over both is the design; a parser
+  has to decide which kind of query it received before it can be useful.
+- **You want a self-hosted geocoder over open data, with a documented API.** That is what it is, and
+  it has been doing it for a long time.
+
+## When to choose libpostal
+
+- **You need parsing only, in C or with C bindings.** It is the direct answer, it has bindings in a
+  long list of languages, and it is battle-tested across the field.
+- **You want `expand_address`.** Normalizing an address into every standardized form for indexing is
+  a distinct capability, and it is what makes libpostal the preprocessing step in a great deal of
+  record matching.
+- **Your platform is one where a C library is easier to deploy than a Node package.** Sometimes the
+  deciding factor is the runtime you already have.
+
+## When to choose Mailwoman
+
+- **You need the parse and the coordinate from one thing.** libpostal stops before the coordinate;
+  this does both, and the resolver walks the parse it produced rather than a re-derived one.
+- **You want the resident footprint small.** The reference data is read from disk rather than held in
+  an index, and coverage is a set of downloads.
+- **You want per-locale evidence.** Coverage is claimed where a coordinate-graded evaluation exists,
+  and the [benchmarks](../benchmarks/index.mdx) publish the scripts.
+- **You are on Node and want no second runtime.** The package installs and runs; the model is a file.
+- **You have libpostal clients already written.** `@mailwoman/libpostal` serves `/parse` and `/expand`
+  on a compatible surface.
+
+## Run it yourself
+
+Against libpostal the comparison is a parse comparison, and it does not need our scripts — run both
+over your own rows and diff the component labels. Against Pelias it is a geocode comparison, and the
+same advice as everywhere on these pages applies: look at how each one fails on your input rather than
+at how each one scores on ours.
+
+```bash
+curl -fsSLO https://mailwoman.sister.software/benchmarks/fr-ban-panel.mjs
+curl -fsSLO https://mailwoman.sister.software/benchmarks/fr-ban-sample.json
+mailwoman data pull candidate fr
+node fr-ban-panel.mjs --data-root <DATA_ROOT>
+```
+
+The French panel is the one to read first for a parsing comparison: its failure table is four
+street-span truncations and two same-name street collisions, which is the shape a parser-driven
+geocoder fails in.
+
+## Related
+
+- [The two architectures](../../developers/knowledge-base/geocoding/the-two-architectures.mdx) — where
+  Pelias sits, and where a libpostal-driven pipeline sits.
+- [Drop-in replacements](../../product/drop-in-replacements.mdx) — the libpostal-compatible endpoint.
+- [Component tags](../../developers/reference/component-tags.mdx) — the label vocabulary a parse
+  returns here.
+- [Benchmarks](../benchmarks/index.mdx) — our published measurements.

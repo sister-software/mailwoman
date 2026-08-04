@@ -1,0 +1,69 @@
+---
+title: Compare
+description: What each of the common geocoding alternatives is built to do, and when to choose it over Mailwoman.
+role: landing
+audience: teams
+---
+
+# Compare
+
+These pages describe what other geocoding systems are built to do, in their own published words, so
+you can tell which shape of tool your problem wants. Each one ends with a section on when to choose
+that tool over this one, and each of those sections is written to be taken seriously rather than
+survived.
+
+What you will not find here is an accuracy comparison. Running someone else's service under terms we
+did not write, on a query mix we chose, and publishing a score on their behalf is not a measurement
+we would trust from anyone else. [Benchmarks](../benchmarks/index.mdx) is where numbers live, and
+every number there is about our own output.
+
+## I am evaluating a hosted API
+
+A service you call over HTTPS with no data to download and no index to build. The trade is a per-
+request relationship, a component vocabulary that is theirs rather than yours, and a query that
+leaves your infrastructure.
+
+[Google Maps Platform](./google-maps.mdx)
+
+## I am evaluating a self-hosted engine
+
+A geocoder you run, over OpenStreetMap data, with the queries staying on your network. The trade is
+a provisioning and operations commitment that does not end at install.
+
+[Self-hosted Nominatim](./self-hosted-nominatim.mdx)
+
+## I am evaluating the open-source geocoding stack
+
+Pelias and libpostal are the two pieces most teams meet when they build a geocoder rather than buy
+one — a modular search-engine geocoder, and the address parser that a great deal of the field is
+built on.
+
+[Pelias and libpostal](./pelias-and-libpostal.mdx)
+
+## The one distinction underneath all three
+
+Two designs answer the geocoding question, and which one fits depends on what your input looks like
+rather than on any feature table.
+
+A **search-engine geocoder** indexes every place as a document and ranks your whole string against
+the index. It is strong on partial input, landmarks, misspellings and search boxes, and it wants the
+index resident.
+
+A **label-then-look-up geocoder** labels the spans of your string first — house number, street,
+locality, postcode — and then runs one constrained lookup per span. It returns a decomposition rather
+than a match, and the constraint is what lets the reference data stay on disk.
+
+Mailwoman is the second. Nominatim, Photon and Pelias are the first.
+[The two architectures](../../developers/knowledge-base/geocoding/the-two-architectures.mdx) works
+through what each design is good at and what each one costs, with the published hardware figures and
+dated citations. Read it before the pages above if you have not settled that question, because it
+decides more than any of them.
+
+## Related
+
+- [The landscape](../../developers/knowledge-base/geocoding/the-landscape.mdx) — hosted APIs,
+  self-hosted engines, in-process libraries, and the bounded case where a CSV and a regex beat all
+  three.
+- [Drop-in replacements](../../product/drop-in-replacements.mdx) — the Nominatim-, Photon- and
+  libpostal-compatible endpoints, for keeping a client you already wrote.
+- [Benchmarks](../benchmarks/index.mdx) — our measurements, with the scripts that produced them.

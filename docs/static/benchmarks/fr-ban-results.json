@@ -1,0 +1,4658 @@
+{
+	"harness": "fr-ban-panel.mjs",
+	"ranAt": "2026-08-04T04:53:30.189Z",
+	"elapsedMs": 1801,
+	"panel": {
+		"source": "Base Adresse Nationale (BAN), via `mailwoman data pull fr`",
+		"release": "2026-05-18",
+		"seed": 20260804,
+		"rows": 100
+	},
+	"config": {
+		"locale": "fr-FR",
+		"defaultCountry": "FR",
+		"gazetteer": "candidate.db",
+		"nationalTier": "BAN FR rooftop shard",
+		"routingRadiusKm": 15
+	},
+	"arms": {
+		"clean": {
+			"n": 100,
+			"resolved": 100,
+			"within1km": 96,
+			"within5km": 100,
+			"within25km": 100,
+			"exactRow": 94,
+			"routedToPostcodeArea": 100,
+			"medianKm": 0,
+			"p90Km": 0,
+			"maxKm": 4.612,
+			"tiers": {
+				"address_point": 96,
+				"admin": 4
+			}
+		},
+		"reordered": {
+			"n": 100,
+			"resolved": 100,
+			"within1km": 97,
+			"within5km": 100,
+			"within25km": 100,
+			"exactRow": 96,
+			"routedToPostcodeArea": 100,
+			"medianKm": 0,
+			"p90Km": 0,
+			"maxKm": 4.612,
+			"tiers": {
+				"address_point": 98,
+				"admin": 2
+			}
+		}
+	},
+	"records": {
+		"clean": [
+			{
+				"input": "37 Chemin des Jardins, 38460 Trept",
+				"expected": {
+					"lat": 45.686252,
+					"lon": 5.322105,
+					"postcode": "38460",
+					"locality": "trept"
+				},
+				"got": {
+					"lat": 45.686252,
+					"lon": 5.322105
+				},
+				"parsed": {
+					"house_number": "37",
+					"street": "Chemin des Jardins",
+					"postcode": "38460",
+					"locality": "Trept"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "6 Rue Madeleine, 33730 Villandraut",
+				"expected": {
+					"lat": 44.45581,
+					"lon": -0.373261,
+					"postcode": "33730",
+					"locality": "villandraut"
+				},
+				"got": {
+					"lat": 44.45581,
+					"lon": -0.373261
+				},
+				"parsed": {
+					"house_number": "6",
+					"street": "Rue Madeleine",
+					"postcode": "33730",
+					"locality": "Villandraut"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4430 Route de Sospel, 06500 Menton",
+				"expected": {
+					"lat": 43.816129,
+					"lon": 7.485638,
+					"postcode": "06500",
+					"locality": "menton"
+				},
+				"got": {
+					"lat": 43.816129,
+					"lon": 7.485638
+				},
+				"parsed": {
+					"house_number": "4430",
+					"street": "Route de Sospel",
+					"postcode": "06500",
+					"locality": "Menton"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "45 Lotissement du guerinet, 85250 Saint-Andre-Goule-Doie",
+				"expected": {
+					"lat": 46.82892,
+					"lon": -1.190163,
+					"postcode": "85250",
+					"locality": "saint-andre-goule-doie"
+				},
+				"got": {
+					"lat": 46.82892,
+					"lon": -1.190163
+				},
+				"parsed": {
+					"house_number": "45",
+					"street": "Lotissement du guerinet",
+					"postcode": "85250",
+					"locality": "Saint-Andre-Goule-Doie"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "8 Rue de l'Épine, 14630 Emieville",
+				"expected": {
+					"lat": 49.150608,
+					"lon": -0.228067,
+					"postcode": "14630",
+					"locality": "emieville"
+				},
+				"got": {
+					"lat": 49.150608,
+					"lon": -0.228067
+				},
+				"parsed": {
+					"house_number": "8",
+					"street": "Rue de l'Épine",
+					"postcode": "14630",
+					"locality": "Emieville"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4 Allée des Cerises, 33650 Saint-Selve",
+				"expected": {
+					"lat": 44.668475,
+					"lon": -0.478412,
+					"postcode": "33650",
+					"locality": "saint-selve"
+				},
+				"got": {
+					"lat": 44.668475,
+					"lon": -0.478412
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Allée des Cerises",
+					"postcode": "33650",
+					"locality": "Saint-Selve"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "24 lotissement des Acacias, 09200 Eycheil",
+				"expected": {
+					"lat": 42.966998,
+					"lon": 1.164711,
+					"postcode": "09200",
+					"locality": "eycheil"
+				},
+				"got": {
+					"lat": 42.966998,
+					"lon": 1.164711
+				},
+				"parsed": {
+					"house_number": "24",
+					"street": "lotissement des Acacias",
+					"postcode": "09200",
+					"locality": "Eycheil"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 Place du Calvaire à Montsaon, 52000 Semoutiers-Montsaon",
+				"expected": {
+					"lat": 48.084548,
+					"lon": 5.036532,
+					"postcode": "52000",
+					"locality": "semoutiers-montsaon"
+				},
+				"got": {
+					"lat": 48.063859,
+					"lon": 5.053687
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Place du Calvaire",
+					"postcode": "52000",
+					"locality": "Semoutiers-Montsaon"
+				},
+				"countryCode": "FR",
+				"tier": "admin",
+				"km": 2.63,
+				"routed": true
+			},
+			{
+				"input": "4 Rue de la Mairie, 70000 Andelarre",
+				"expected": {
+					"lat": 47.589875,
+					"lon": 6.096303,
+					"postcode": "70000",
+					"locality": "andelarre"
+				},
+				"got": {
+					"lat": 47.566314,
+					"lon": 6.146905
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Rue de la Mairie",
+					"postcode": "70000",
+					"locality": "Andelarre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 4.612,
+				"routed": true
+			},
+			{
+				"input": "15 Rue de la Forêt, 41100 Faye",
+				"expected": {
+					"lat": 47.804845,
+					"lon": 1.178946,
+					"postcode": "41100",
+					"locality": "faye"
+				},
+				"got": {
+					"lat": 47.804845,
+					"lon": 1.178946
+				},
+				"parsed": {
+					"house_number": "15",
+					"street": "Rue de la Forêt",
+					"postcode": "41100",
+					"locality": "Faye"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "19 Impasse du Montsion, 01390 Mionnay",
+				"expected": {
+					"lat": 45.895923,
+					"lon": 4.929326,
+					"postcode": "01390",
+					"locality": "mionnay"
+				},
+				"got": {
+					"lat": 45.895923,
+					"lon": 4.929326
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Impasse du Montsion",
+					"postcode": "01390",
+					"locality": "Mionnay"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "7 Lotissement du Landrin, 56760 Penestin",
+				"expected": {
+					"lat": 47.469266,
+					"lon": -2.485564,
+					"postcode": "56760",
+					"locality": "penestin"
+				},
+				"got": {
+					"lat": 47.469266,
+					"lon": -2.485564
+				},
+				"parsed": {
+					"house_number": "7",
+					"street": "Lotissement du Landrin",
+					"postcode": "56760",
+					"locality": "Penestin"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "17 Route de la Belle Indienne, 86230 Serigny",
+				"expected": {
+					"lat": 46.933981,
+					"lon": 0.306488,
+					"postcode": "86230",
+					"locality": "serigny"
+				},
+				"got": {
+					"lat": 46.933981,
+					"lon": 0.306488
+				},
+				"parsed": {
+					"house_number": "17",
+					"street": "Route de la Belle Indienne",
+					"postcode": "86230",
+					"locality": "Serigny"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "601 Route Impériale, 64270 Ramous",
+				"expected": {
+					"lat": 43.519846,
+					"lon": -0.87851,
+					"postcode": "64270",
+					"locality": "ramous"
+				},
+				"got": {
+					"lat": 43.519846,
+					"lon": -0.87851
+				},
+				"parsed": {
+					"house_number": "601",
+					"street": "Route Impériale",
+					"postcode": "64270",
+					"locality": "Ramous"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "47 Chemin du Clos Burtin, 69230 Saint-Genis-Laval",
+				"expected": {
+					"lat": 45.705849,
+					"lon": 4.786308,
+					"postcode": "69230",
+					"locality": "saint-genis-laval"
+				},
+				"got": {
+					"lat": 45.705849,
+					"lon": 4.786308
+				},
+				"parsed": {
+					"house_number": "47",
+					"street": "Chemin du Clos Burtin",
+					"postcode": "69230",
+					"locality": "Saint-Genis-Laval"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Rue Paul Gauguin, 29520 Chateauneuf-Du-Faou",
+				"expected": {
+					"lat": 48.179712,
+					"lon": -3.823526,
+					"postcode": "29520",
+					"locality": "chateauneuf-du-faou"
+				},
+				"got": {
+					"lat": 48.179712,
+					"lon": -3.823526
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue Paul Gauguin",
+					"postcode": "29520",
+					"locality": "Chateauneuf-Du-Faou"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "2423 La Vieille Route, 76190 Valliquerville",
+				"expected": {
+					"lat": 49.615096,
+					"lon": 0.722259,
+					"postcode": "76190",
+					"locality": "valliquerville"
+				},
+				"got": {
+					"lat": 49.615096,
+					"lon": 0.722259
+				},
+				"parsed": {
+					"house_number": "2423",
+					"street": "La Vieille Route",
+					"postcode": "76190",
+					"locality": "Valliquerville"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "132 Avenue des Calanques, 83990 Saint-Tropez",
+				"expected": {
+					"lat": 43.273837,
+					"lon": 6.679774,
+					"postcode": "83990",
+					"locality": "saint-tropez"
+				},
+				"got": {
+					"lat": 43.273837,
+					"lon": 6.679774
+				},
+				"parsed": {
+					"house_number": "132",
+					"street": "Avenue des Calanques",
+					"postcode": "83990",
+					"locality": "Saint-Tropez"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "138 a Boulevard de la République, 33510 Andernos-Les-Bains",
+				"expected": {
+					"lat": 44.738865,
+					"lon": -1.092187,
+					"postcode": "33510",
+					"locality": "andernos-les-bains"
+				},
+				"got": {
+					"lat": 44.738865,
+					"lon": -1.092187
+				},
+				"parsed": {
+					"house_number": "138 a",
+					"street": "Boulevard de la République",
+					"postcode": "33510",
+					"locality": "Andernos-Les-Bains"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "1 Rue du Château d'Eau, 63800 Perignat-Sur-Allier",
+				"expected": {
+					"lat": 45.731909,
+					"lon": 3.238258,
+					"postcode": "63800",
+					"locality": "perignat-sur-allier"
+				},
+				"got": {
+					"lat": 45.727486,
+					"lon": 3.234729
+				},
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue du Château",
+					"postcode": "63800",
+					"locality": "Perignat-Sur-Allier"
+				},
+				"countryCode": "FR",
+				"tier": "admin",
+				"km": 0.563,
+				"routed": true
+			},
+			{
+				"input": "30 Chemin de la Verrerie, 83440 Tanneron",
+				"expected": {
+					"lat": 43.584546,
+					"lon": 6.88698,
+					"postcode": "83440",
+					"locality": "tanneron"
+				},
+				"got": {
+					"lat": 43.584546,
+					"lon": 6.88698
+				},
+				"parsed": {
+					"house_number": "30",
+					"street": "Chemin de la Verrerie",
+					"postcode": "83440",
+					"locality": "Tanneron"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "77 Rue Gambetta, 92500 Rueil-Malmaison",
+				"expected": {
+					"lat": 48.880587,
+					"lon": 2.196147,
+					"postcode": "92500",
+					"locality": "rueil-malmaison"
+				},
+				"got": {
+					"lat": 48.880587,
+					"lon": 2.196147
+				},
+				"parsed": {
+					"house_number": "77",
+					"street": "Rue Gambetta",
+					"postcode": "92500",
+					"locality": "Rueil-Malmaison"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "23 Route de Gy-les-Nonains, 45230 Montbouy",
+				"expected": {
+					"lat": 47.863421,
+					"lon": 2.824939,
+					"postcode": "45230",
+					"locality": "montbouy"
+				},
+				"got": {
+					"lat": 47.863421,
+					"lon": 2.824939
+				},
+				"parsed": {
+					"house_number": "23",
+					"street": "Route de Gy-les-Nonains",
+					"postcode": "45230",
+					"locality": "Montbouy"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "76 Rue Jean Mermoz, 59400 Cambrai",
+				"expected": {
+					"lat": 50.17217,
+					"lon": 3.264038,
+					"postcode": "59400",
+					"locality": "cambrai"
+				},
+				"got": {
+					"lat": 50.17217,
+					"lon": 3.264038
+				},
+				"parsed": {
+					"house_number": "76",
+					"street": "Rue Jean Mermoz",
+					"postcode": "59400",
+					"locality": "Cambrai"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "35 Rue de Kersivy Vraz, 22660 Trelevern",
+				"expected": {
+					"lat": 48.8066,
+					"lon": -3.371963,
+					"postcode": "22660",
+					"locality": "trelevern"
+				},
+				"got": {
+					"lat": 48.8066,
+					"lon": -3.371963
+				},
+				"parsed": {
+					"house_number": "35",
+					"street": "Rue de Kersivy Vraz",
+					"postcode": "22660",
+					"locality": "Trelevern"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "8 Rue Claude Farinot, 89140 Michery",
+				"expected": {
+					"lat": 48.304069,
+					"lon": 3.239003,
+					"postcode": "89140",
+					"locality": "michery"
+				},
+				"got": {
+					"lat": 48.304069,
+					"lon": 3.239003
+				},
+				"parsed": {
+					"house_number": "8",
+					"street": "Rue Claude Farinot",
+					"postcode": "89140",
+					"locality": "Michery"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "19 Rue Ferdinande Wascheul, 59264 Onnaing",
+				"expected": {
+					"lat": 50.382372,
+					"lon": 3.592809,
+					"postcode": "59264",
+					"locality": "onnaing"
+				},
+				"got": {
+					"lat": 50.382372,
+					"lon": 3.592809
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Rue Ferdinande Wascheul",
+					"postcode": "59264",
+					"locality": "Onnaing"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "213 Impasse de la Piboule, 12510 Druelle Balsac",
+				"expected": {
+					"lat": 44.367359,
+					"lon": 2.472627,
+					"postcode": "12510",
+					"locality": "druelle balsac"
+				},
+				"got": {
+					"lat": 44.367359,
+					"lon": 2.472627
+				},
+				"parsed": {
+					"house_number": "213",
+					"street": "Impasse de la Piboule",
+					"postcode": "12510",
+					"locality": "Druelle Balsac"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Rue de Bias, 77580 Crecy-La-Chapelle",
+				"expected": {
+					"lat": 48.868931,
+					"lon": 2.9192,
+					"postcode": "77580",
+					"locality": "crecy-la-chapelle"
+				},
+				"got": {
+					"lat": 48.868931,
+					"lon": 2.9192
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue de Bias",
+					"postcode": "77580",
+					"locality": "Crecy-La-Chapelle"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "12 Rue des Linières, 60750 Choisy-Au-Bac",
+				"expected": {
+					"lat": 49.443746,
+					"lon": 2.88509,
+					"postcode": "60750",
+					"locality": "choisy-au-bac"
+				},
+				"got": {
+					"lat": 49.443746,
+					"lon": 2.88509
+				},
+				"parsed": {
+					"house_number": "12",
+					"street": "Rue des Linières",
+					"postcode": "60750",
+					"locality": "Choisy-Au-Bac"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "8 bis Rue Octave Piedon, 45150 Jargeau",
+				"expected": {
+					"lat": 47.863393,
+					"lon": 2.116433,
+					"postcode": "45150",
+					"locality": "jargeau"
+				},
+				"got": {
+					"lat": 47.863393,
+					"lon": 2.116433
+				},
+				"parsed": {
+					"house_number": "8 bis",
+					"street": "Rue Octave Piedon",
+					"postcode": "45150",
+					"locality": "Jargeau"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Chemin des Hirondelles, 16190 Montmoreau",
+				"expected": {
+					"lat": 45.40254,
+					"lon": 0.128338,
+					"postcode": "16190",
+					"locality": "montmoreau"
+				},
+				"got": {
+					"lat": 45.40254,
+					"lon": 0.128338
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Chemin des Hirondelles",
+					"postcode": "16190",
+					"locality": "Montmoreau"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4 Chemin Cryptomerias, 97413 Cilaos",
+				"expected": {
+					"lat": -21.136557,
+					"lon": 55.491495,
+					"postcode": "97413",
+					"locality": "cilaos"
+				},
+				"got": {
+					"lat": -21.136557,
+					"lon": 55.491495
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Chemin Cryptomerias",
+					"postcode": "97413",
+					"locality": "Cilaos"
+				},
+				"countryCode": null,
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "19 Rue Saint Phocas, 80200 Doingt",
+				"expected": {
+					"lat": 49.92066,
+					"lon": 2.946325,
+					"postcode": "80200",
+					"locality": "doingt"
+				},
+				"got": {
+					"lat": 49.92066,
+					"lon": 2.946325
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Rue Saint Phocas",
+					"postcode": "80200",
+					"locality": "Doingt"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "816 Chemin de Loustalot, 40350 Pouillon",
+				"expected": {
+					"lat": 43.622666,
+					"lon": -0.985934,
+					"postcode": "40350",
+					"locality": "pouillon"
+				},
+				"got": {
+					"lat": 43.622666,
+					"lon": -0.985934
+				},
+				"parsed": {
+					"house_number": "816",
+					"street": "Chemin de Loustalot",
+					"postcode": "40350",
+					"locality": "Pouillon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "18 c Rue Pasteur, 33230 Coutras",
+				"expected": {
+					"lat": 45.033267,
+					"lon": -0.126341,
+					"postcode": "33230",
+					"locality": "coutras"
+				},
+				"got": {
+					"lat": 45.033267,
+					"lon": -0.126341
+				},
+				"parsed": {
+					"house_number": "18 c",
+					"street": "Rue Pasteur",
+					"postcode": "33230",
+					"locality": "Coutras"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "6 Impasse Jean Moulin, 22590 Pordic",
+				"expected": {
+					"lat": 48.566242,
+					"lon": -2.81749,
+					"postcode": "22590",
+					"locality": "pordic"
+				},
+				"got": {
+					"lat": 48.566242,
+					"lon": -2.81749
+				},
+				"parsed": {
+					"house_number": "6",
+					"street": "Impasse Jean Moulin",
+					"postcode": "22590",
+					"locality": "Pordic"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "103 Rue du 8 Mai 1945, 50880 Pont-Hebert",
+				"expected": {
+					"lat": 49.170436,
+					"lon": -1.135661,
+					"postcode": "50880",
+					"locality": "pont-hebert"
+				},
+				"got": {
+					"lat": 49.170436,
+					"lon": -1.135661
+				},
+				"parsed": {
+					"house_number": "103",
+					"street": "Rue du 8 Mai 1945",
+					"postcode": "50880",
+					"locality": "Pont-Hebert"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 Rue de la Seigne de Pilles, 58220 Couloutre",
+				"expected": {
+					"lat": 47.408676,
+					"lon": 3.212663,
+					"postcode": "58220",
+					"locality": "couloutre"
+				},
+				"got": {
+					"lat": 47.408676,
+					"lon": 3.212663
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Rue de la Seigne de Pilles",
+					"postcode": "58220",
+					"locality": "Couloutre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "17 Rue de la Charette, 59530 Orsinval",
+				"expected": {
+					"lat": 50.269208,
+					"lon": 3.632612,
+					"postcode": "59530",
+					"locality": "orsinval"
+				},
+				"got": {
+					"lat": 50.269208,
+					"lon": 3.632612
+				},
+				"parsed": {
+					"house_number": "17",
+					"street": "Rue de la Charette",
+					"postcode": "59530",
+					"locality": "Orsinval"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "79 Rue des Mélèzes, 88390 Les Forges",
+				"expected": {
+					"lat": 48.176047,
+					"lon": 6.410315,
+					"postcode": "88390",
+					"locality": "les forges"
+				},
+				"got": {
+					"lat": 48.176047,
+					"lon": 6.410315
+				},
+				"parsed": {
+					"house_number": "79",
+					"street": "Rue des Mélèzes",
+					"postcode": "88390",
+					"locality": "Les Forges"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "206 Route des Riffauds, 16600 Ruelle-Sur-Touvre",
+				"expected": {
+					"lat": 45.689507,
+					"lon": 0.254881,
+					"postcode": "16600",
+					"locality": "ruelle-sur-touvre"
+				},
+				"got": {
+					"lat": 45.689507,
+					"lon": 0.254881
+				},
+				"parsed": {
+					"house_number": "206",
+					"street": "Route des Riffauds",
+					"postcode": "16600",
+					"locality": "Ruelle-Sur-Touvre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "30 Rue Maréchal Leclerc, 71200 Le Creusot",
+				"expected": {
+					"lat": 46.806736,
+					"lon": 4.427724,
+					"postcode": "71200",
+					"locality": "le creusot"
+				},
+				"got": {
+					"lat": 46.806736,
+					"lon": 4.427724
+				},
+				"parsed": {
+					"house_number": "30",
+					"street": "Rue Maréchal Leclerc",
+					"postcode": "71200",
+					"locality": "Le Creusot"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 Avenue Victor Hugo, 69550 Saint-Jean-La-Bussiere",
+				"expected": {
+					"lat": 46.002158,
+					"lon": 4.3257,
+					"postcode": "69550",
+					"locality": "saint-jean-la-bussiere"
+				},
+				"got": {
+					"lat": 46.002158,
+					"lon": 4.3257
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Avenue Victor Hugo",
+					"postcode": "69550",
+					"locality": "Saint-Jean-La-Bussiere"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "31 Rue Roeth, 67340 Ingwiller",
+				"expected": {
+					"lat": 48.870002,
+					"lon": 7.469579,
+					"postcode": "67340",
+					"locality": "ingwiller"
+				},
+				"got": {
+					"lat": 48.870002,
+					"lon": 7.469579
+				},
+				"parsed": {
+					"house_number": "31",
+					"street": "Rue Roeth",
+					"postcode": "67340",
+					"locality": "Ingwiller"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "98 Rue Clos du Village, 38150 Agnin",
+				"expected": {
+					"lat": 45.339659,
+					"lon": 4.858355,
+					"postcode": "38150",
+					"locality": "agnin"
+				},
+				"got": {
+					"lat": 45.336219,
+					"lon": 4.860145
+				},
+				"parsed": {
+					"house_number": "98",
+					"street": "Rue Clos du",
+					"postcode": "38150",
+					"locality": "Agnin"
+				},
+				"countryCode": "FR",
+				"tier": "admin",
+				"km": 0.4073,
+				"routed": true
+			},
+			{
+				"input": "4 Rue Beaufort Chopin, 38200 Vienne",
+				"expected": {
+					"lat": 45.507265,
+					"lon": 4.853672,
+					"postcode": "38200",
+					"locality": "vienne"
+				},
+				"got": {
+					"lat": 45.507265,
+					"lon": 4.853672
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Rue Beaufort Chopin",
+					"postcode": "38200",
+					"locality": "Vienne"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "7 Rue du Cimetière, 88170 Chatenois",
+				"expected": {
+					"lat": 48.309578,
+					"lon": 5.837969,
+					"postcode": "88170",
+					"locality": "chatenois"
+				},
+				"got": {
+					"lat": 48.309578,
+					"lon": 5.837969
+				},
+				"parsed": {
+					"house_number": "7",
+					"street": "Rue du Cimetière",
+					"postcode": "88170",
+					"locality": "Chatenois"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "20 Chemin de la Combe, 12740 La Loubiere",
+				"expected": {
+					"lat": 44.366003,
+					"lon": 2.662987,
+					"postcode": "12740",
+					"locality": "la loubiere"
+				},
+				"got": {
+					"lat": 44.366003,
+					"lon": 2.662987
+				},
+				"parsed": {
+					"house_number": "20",
+					"street": "Chemin de la Combe",
+					"postcode": "12740",
+					"locality": "La Loubiere"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4 Ruelle des Raffées, 21140 Semur-En-Auxois",
+				"expected": {
+					"lat": 47.484064,
+					"lon": 4.329137,
+					"postcode": "21140",
+					"locality": "semur-en-auxois"
+				},
+				"got": {
+					"lat": 47.484064,
+					"lon": 4.329137
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Ruelle des Raffées",
+					"postcode": "21140",
+					"locality": "Semur-En-Auxois"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "43 Rue des Saunées, 36330 Le Poinconnet",
+				"expected": {
+					"lat": 46.79213,
+					"lon": 1.729135,
+					"postcode": "36330",
+					"locality": "le poinconnet"
+				},
+				"got": {
+					"lat": 46.79213,
+					"lon": 1.729135
+				},
+				"parsed": {
+					"house_number": "43",
+					"street": "Rue des Saunées",
+					"postcode": "36330",
+					"locality": "Le Poinconnet"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 impasse de l'Elorn, 29480 Le Relecq-Kerhuon",
+				"expected": {
+					"lat": 48.408172,
+					"lon": -4.389847,
+					"postcode": "29480",
+					"locality": "le relecq-kerhuon"
+				},
+				"got": {
+					"lat": 48.408172,
+					"lon": -4.389847
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "impasse de l'Elorn",
+					"postcode": "29480",
+					"locality": "Le Relecq-Kerhuon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 bis Route de la Forêt, 86470 Boivre-La-Vallee",
+				"expected": {
+					"lat": 46.562729,
+					"lon": 0.050212,
+					"postcode": "86470",
+					"locality": "boivre-la-vallee"
+				},
+				"got": {
+					"lat": 46.562729,
+					"lon": 0.050212
+				},
+				"parsed": {
+					"house_number": "3 bis",
+					"street": "Route de la Forêt",
+					"postcode": "86470",
+					"locality": "Boivre-La-Vallee"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Chemin Antoine, 88240 La Voge-Les-Bains",
+				"expected": {
+					"lat": 48.027138,
+					"lon": 6.232468,
+					"postcode": "88240",
+					"locality": "la voge-les-bains"
+				},
+				"got": {
+					"lat": 48.027138,
+					"lon": 6.232468
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Chemin Antoine",
+					"postcode": "88240",
+					"locality": "La Voge-Les-Bains"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "229 Chemin du Laubois, 47500 Condezaygues",
+				"expected": {
+					"lat": 44.47407,
+					"lon": 0.903501,
+					"postcode": "47500",
+					"locality": "condezaygues"
+				},
+				"got": {
+					"lat": 44.47407,
+					"lon": 0.903501
+				},
+				"parsed": {
+					"house_number": "229",
+					"street": "Chemin du Laubois",
+					"postcode": "47500",
+					"locality": "Condezaygues"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "22 Rue des Paquerettes, 13250 Saint-Chamas",
+				"expected": {
+					"lat": 43.556686,
+					"lon": 5.036541,
+					"postcode": "13250",
+					"locality": "saint-chamas"
+				},
+				"got": {
+					"lat": 43.556686,
+					"lon": 5.036541
+				},
+				"parsed": {
+					"house_number": "22",
+					"street": "Rue des Paquerettes",
+					"postcode": "13250",
+					"locality": "Saint-Chamas"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "574 Residence Grand Gaillon Normandie, 27600 Gaillon",
+				"expected": {
+					"lat": 49.157916,
+					"lon": 1.340124,
+					"postcode": "27600",
+					"locality": "gaillon"
+				},
+				"got": {
+					"lat": 49.157916,
+					"lon": 1.340124
+				},
+				"parsed": {
+					"house_number": "574",
+					"street": "Residence Grand Gaillon Normandie",
+					"postcode": "27600",
+					"locality": "Gaillon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4 Chemin de la Joannerie, 61340 Perche En Noce",
+				"expected": {
+					"lat": 48.410357,
+					"lon": 0.668687,
+					"postcode": "61340",
+					"locality": "perche en noce"
+				},
+				"got": {
+					"lat": 48.410357,
+					"lon": 0.668687
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Chemin de la Joannerie",
+					"postcode": "61340",
+					"locality": "Perche En Noce"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4 Rue Edgar Degas, 91220 Bretigny-Sur-Orge",
+				"expected": {
+					"lat": 48.597434,
+					"lon": 2.283917,
+					"postcode": "91220",
+					"locality": "bretigny-sur-orge"
+				},
+				"got": {
+					"lat": 48.597434,
+					"lon": 2.283917
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Rue Edgar Degas",
+					"postcode": "91220",
+					"locality": "Bretigny-Sur-Orge"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "96 b Avenue Charles de Gaulle, 69720 Saint-Bonnet-De-Mure",
+				"expected": {
+					"lat": 45.697104,
+					"lon": 5.021165,
+					"postcode": "69720",
+					"locality": "saint-bonnet-de-mure"
+				},
+				"got": {
+					"lat": 45.697104,
+					"lon": 5.021165
+				},
+				"parsed": {
+					"house_number": "96 b",
+					"street": "Avenue Charles de Gaulle",
+					"postcode": "69720",
+					"locality": "Saint-Bonnet-De-Mure"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "64 b Rue Gaston Baratte, 59493 Villeneuve-Dascq",
+				"expected": {
+					"lat": 50.618481,
+					"lon": 3.158777,
+					"postcode": "59493",
+					"locality": "villeneuve-dascq"
+				},
+				"got": {
+					"lat": 50.618481,
+					"lon": 3.158777
+				},
+				"parsed": {
+					"house_number": "64 b",
+					"street": "Rue Gaston Baratte",
+					"postcode": "59493",
+					"locality": "Villeneuve-Dascq"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "426 Rue Chapu, 77350 Le Mee-Sur-Seine",
+				"expected": {
+					"lat": 48.537475,
+					"lon": 2.640992,
+					"postcode": "77350",
+					"locality": "le mee-sur-seine"
+				},
+				"got": {
+					"lat": 48.537475,
+					"lon": 2.640992
+				},
+				"parsed": {
+					"house_number": "426",
+					"street": "Rue Chapu",
+					"postcode": "77350",
+					"locality": "Le Mee-Sur-Seine"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "11 Avenue Lavoisier, 13470 Carnoux-En-Provence",
+				"expected": {
+					"lat": 43.250827,
+					"lon": 5.54842,
+					"postcode": "13470",
+					"locality": "carnoux-en-provence"
+				},
+				"got": {
+					"lat": 43.250827,
+					"lon": 5.54842
+				},
+				"parsed": {
+					"house_number": "11",
+					"street": "Avenue Lavoisier",
+					"postcode": "13470",
+					"locality": "Carnoux-En-Provence"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "50 Avenue du Général de Gaulle, 92250 La Garenne-Colombes",
+				"expected": {
+					"lat": 48.910187,
+					"lon": 2.254783,
+					"postcode": "92250",
+					"locality": "la garenne-colombes"
+				},
+				"got": {
+					"lat": 48.910187,
+					"lon": 2.254783
+				},
+				"parsed": {
+					"house_number": "50",
+					"street": "Avenue du Général de Gaulle",
+					"postcode": "92250",
+					"locality": "La Garenne-Colombes"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "495 Route des Secs, 81630 Montvalen",
+				"expected": {
+					"lat": 43.856211,
+					"lon": 1.591605,
+					"postcode": "81630",
+					"locality": "montvalen"
+				},
+				"got": {
+					"lat": 43.856211,
+					"lon": 1.591605
+				},
+				"parsed": {
+					"house_number": "495",
+					"street": "Route des Secs",
+					"postcode": "81630",
+					"locality": "Montvalen"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Boulevard Pasteur, 27680 Quillebeuf-Sur-Seine",
+				"expected": {
+					"lat": 49.472186,
+					"lon": 0.524585,
+					"postcode": "27680",
+					"locality": "quillebeuf-sur-seine"
+				},
+				"got": {
+					"lat": 49.472186,
+					"lon": 0.524585
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Boulevard Pasteur",
+					"postcode": "27680",
+					"locality": "Quillebeuf-Sur-Seine"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "19 Route du Hameau Asselin, 14350 Souleuvre En Bocage",
+				"expected": {
+					"lat": 48.91293,
+					"lon": -0.948034,
+					"postcode": "14350",
+					"locality": "souleuvre en bocage"
+				},
+				"got": {
+					"lat": 48.91293,
+					"lon": -0.948034
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Route du Hameau Asselin",
+					"postcode": "14350",
+					"locality": "Souleuvre En Bocage"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "61 Chemin du Moulin, 63500 Aulhat-Flat",
+				"expected": {
+					"lat": 45.567688,
+					"lon": 3.31276,
+					"postcode": "63500",
+					"locality": "aulhat-flat"
+				},
+				"got": {
+					"lat": 45.567688,
+					"lon": 3.31276
+				},
+				"parsed": {
+					"house_number": "61",
+					"street": "Chemin du Moulin",
+					"postcode": "63500",
+					"locality": "Aulhat-Flat"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "35 p2 Rue du Charolais, 75012 Paris",
+				"expected": {
+					"lat": 48.840403,
+					"lon": 2.385405,
+					"postcode": "75012",
+					"locality": "paris"
+				},
+				"got": {
+					"lat": 48.840403,
+					"lon": 2.385405
+				},
+				"parsed": {
+					"house_number": "35 p2",
+					"street": "Rue du Charolais",
+					"postcode": "75012",
+					"locality": "Paris"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "11 Chemin de la Bisoire, 88460 Tendon",
+				"expected": {
+					"lat": 48.116364,
+					"lon": 6.663968,
+					"postcode": "88460",
+					"locality": "tendon"
+				},
+				"got": {
+					"lat": 48.116364,
+					"lon": 6.663968
+				},
+				"parsed": {
+					"house_number": "11",
+					"street": "Chemin de la Bisoire",
+					"postcode": "88460",
+					"locality": "Tendon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Rue Jean Jaurès, 54110 Dombasle-Sur-Meurthe",
+				"expected": {
+					"lat": 48.61424,
+					"lon": 6.352009,
+					"postcode": "54110",
+					"locality": "dombasle-sur-meurthe"
+				},
+				"got": {
+					"lat": 48.634289,
+					"lon": 6.311422
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue Jean Jaurès",
+					"postcode": "54110",
+					"locality": "Dombasle-Sur-Meurthe"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 3.7241,
+				"routed": true
+			},
+			{
+				"input": "154 Rue de la Croix, 74500 Publier",
+				"expected": {
+					"lat": 46.389009,
+					"lon": 6.549785,
+					"postcode": "74500",
+					"locality": "publier"
+				},
+				"got": {
+					"lat": 46.389009,
+					"lon": 6.549785
+				},
+				"parsed": {
+					"house_number": "154",
+					"street": "Rue de la Croix",
+					"postcode": "74500",
+					"locality": "Publier"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "63 Rue Charles de Gaulle, 78350 Jouy-En-Josas",
+				"expected": {
+					"lat": 48.769245,
+					"lon": 2.150345,
+					"postcode": "78350",
+					"locality": "jouy-en-josas"
+				},
+				"got": {
+					"lat": 48.769245,
+					"lon": 2.150345
+				},
+				"parsed": {
+					"house_number": "63",
+					"street": "Rue Charles de Gaulle",
+					"postcode": "78350",
+					"locality": "Jouy-En-Josas"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "33 Avenue du Centre, 91440 Bures-Sur-Yvette",
+				"expected": {
+					"lat": 48.68649,
+					"lon": 2.146488,
+					"postcode": "91440",
+					"locality": "bures-sur-yvette"
+				},
+				"got": {
+					"lat": 48.692997,
+					"lon": 2.158492
+				},
+				"parsed": {
+					"house_number": "33",
+					"street": "Avenue du",
+					"postcode": "91440",
+					"locality": "Bures-Sur-Yvette"
+				},
+				"countryCode": "FR",
+				"tier": "admin",
+				"km": 1.1401,
+				"routed": true
+			},
+			{
+				"input": "53 Rue Léo Lagrange, 78130 Les Mureaux",
+				"expected": {
+					"lat": 48.986621,
+					"lon": 1.905597,
+					"postcode": "78130",
+					"locality": "les mureaux"
+				},
+				"got": {
+					"lat": 48.986621,
+					"lon": 1.905597
+				},
+				"parsed": {
+					"house_number": "53",
+					"street": "Rue Léo Lagrange",
+					"postcode": "78130",
+					"locality": "Les Mureaux"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "44 Avenue du Colonel Arnaud BELTRAME, 17137 Lhoumeau",
+				"expected": {
+					"lat": 46.194074,
+					"lon": -1.177264,
+					"postcode": "17137",
+					"locality": "lhoumeau"
+				},
+				"got": {
+					"lat": 46.194074,
+					"lon": -1.177264
+				},
+				"parsed": {
+					"house_number": "44",
+					"street": "Avenue du Colonel Arnaud BELTRAME",
+					"postcode": "17137",
+					"locality": "Lhoumeau"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "26 t Rue Jean Beau, 60940 Cinqueux",
+				"expected": {
+					"lat": 49.316607,
+					"lon": 2.530048,
+					"postcode": "60940",
+					"locality": "cinqueux"
+				},
+				"got": {
+					"lat": 49.316607,
+					"lon": 2.530048
+				},
+				"parsed": {
+					"house_number": "26 t",
+					"street": "Rue Jean Beau",
+					"postcode": "60940",
+					"locality": "Cinqueux"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "3 Rue Edmond Rostand, 30133 Les Angles",
+				"expected": {
+					"lat": 43.958719,
+					"lon": 4.765818,
+					"postcode": "30133",
+					"locality": "les angles"
+				},
+				"got": {
+					"lat": 43.958719,
+					"lon": 4.765818
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue Edmond Rostand",
+					"postcode": "30133",
+					"locality": "Les Angles"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "18 Rue de la Maison Blanche, 77670 Vernou-La-Celle-Sur-Seine",
+				"expected": {
+					"lat": 48.389096,
+					"lon": 2.845184,
+					"postcode": "77670",
+					"locality": "vernou-la-celle-sur-seine"
+				},
+				"got": {
+					"lat": 48.389096,
+					"lon": 2.845184
+				},
+				"parsed": {
+					"house_number": "18",
+					"street": "Rue de la Maison Blanche",
+					"postcode": "77670",
+					"locality": "Vernou-La-Celle-Sur-Seine"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 Avenue des Ormeaux, 13500 Martigues",
+				"expected": {
+					"lat": 43.410316,
+					"lon": 5.024974,
+					"postcode": "13500",
+					"locality": "martigues"
+				},
+				"got": {
+					"lat": 43.410316,
+					"lon": 5.024974
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Avenue des Ormeaux",
+					"postcode": "13500",
+					"locality": "Martigues"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "20 bis Rue des Eglantiers, 56260 Larmor-Plage",
+				"expected": {
+					"lat": 47.716625,
+					"lon": -3.379086,
+					"postcode": "56260",
+					"locality": "larmor-plage"
+				},
+				"got": {
+					"lat": 47.716625,
+					"lon": -3.379086
+				},
+				"parsed": {
+					"house_number": "20 bis",
+					"street": "Rue des Eglantiers",
+					"postcode": "56260",
+					"locality": "Larmor-Plage"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "33 Route Nationale, 62260 Cauchy-A-La-Tour",
+				"expected": {
+					"lat": 50.510999,
+					"lon": 2.44363,
+					"postcode": "62260",
+					"locality": "cauchy-a-la-tour"
+				},
+				"got": {
+					"lat": 50.510999,
+					"lon": 2.44363
+				},
+				"parsed": {
+					"house_number": "33",
+					"street": "Route Nationale",
+					"postcode": "62260",
+					"locality": "Cauchy-A-La-Tour"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "4 Allée de Kerallain, 29720 Ploneour-Lanvern",
+				"expected": {
+					"lat": 47.899169,
+					"lon": -4.272518,
+					"postcode": "29720",
+					"locality": "ploneour-lanvern"
+				},
+				"got": {
+					"lat": 47.899169,
+					"lon": -4.272518
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Allée de Kerallain",
+					"postcode": "29720",
+					"locality": "Ploneour-Lanvern"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "31 Rue de la Liberté, 71250 Cluny",
+				"expected": {
+					"lat": 46.432186,
+					"lon": 4.659884,
+					"postcode": "71250",
+					"locality": "cluny"
+				},
+				"got": {
+					"lat": 46.432186,
+					"lon": 4.659884
+				},
+				"parsed": {
+					"house_number": "31",
+					"street": "Rue de la Liberté",
+					"postcode": "71250",
+					"locality": "Cluny"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "138 Rue de Chaussas, 31200 Toulouse",
+				"expected": {
+					"lat": 43.621715,
+					"lon": 1.4269,
+					"postcode": "31200",
+					"locality": "toulouse"
+				},
+				"got": {
+					"lat": 43.621715,
+					"lon": 1.4269
+				},
+				"parsed": {
+					"house_number": "138",
+					"street": "Rue de Chaussas",
+					"postcode": "31200",
+					"locality": "Toulouse"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "18 Parluchen, 29242 Ouessant",
+				"expected": {
+					"lat": 48.456028,
+					"lon": -5.114645,
+					"postcode": "29242",
+					"locality": "ouessant"
+				},
+				"got": {
+					"lat": 48.456028,
+					"lon": -5.114645
+				},
+				"parsed": {
+					"house_number": "18",
+					"street": "Parluchen",
+					"postcode": "29242",
+					"locality": "Ouessant"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "1260 Route du Coustinet, 24520 Cours-De-Pile",
+				"expected": {
+					"lat": 44.831231,
+					"lon": 0.552473,
+					"postcode": "24520",
+					"locality": "cours-de-pile"
+				},
+				"got": {
+					"lat": 44.831231,
+					"lon": 0.552473
+				},
+				"parsed": {
+					"house_number": "1260",
+					"street": "Route du Coustinet",
+					"postcode": "24520",
+					"locality": "Cours-De-Pile"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "22 Lotissement le Château, 57685 Augny",
+				"expected": {
+					"lat": 49.05964,
+					"lon": 6.117317,
+					"postcode": "57685",
+					"locality": "augny"
+				},
+				"got": {
+					"lat": 49.05964,
+					"lon": 6.117317
+				},
+				"parsed": {
+					"house_number": "22",
+					"street": "Lotissement le Château",
+					"postcode": "57685",
+					"locality": "Augny"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "2429 Chemin de la Bégude, 83740 La Cadiere-Dazur",
+				"expected": {
+					"lat": 43.215676,
+					"lon": 5.715683,
+					"postcode": "83740",
+					"locality": "la cadiere-dazur"
+				},
+				"got": {
+					"lat": 43.215676,
+					"lon": 5.715683
+				},
+				"parsed": {
+					"house_number": "2429",
+					"street": "Chemin de la Bégude",
+					"postcode": "83740",
+					"locality": "La Cadiere-Dazur"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "22 Avenue robert schuman, 13002 Marseille",
+				"expected": {
+					"lat": 43.301211,
+					"lon": 5.366206,
+					"postcode": "13002",
+					"locality": "marseille"
+				},
+				"got": {
+					"lat": 43.301211,
+					"lon": 5.366206
+				},
+				"parsed": {
+					"house_number": "22",
+					"street": "Avenue robert schuman",
+					"postcode": "13002",
+					"locality": "Marseille"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 La Poupardais, 35490 Chauvigne",
+				"expected": {
+					"lat": 48.367979,
+					"lon": -1.437362,
+					"postcode": "35490",
+					"locality": "chauvigne"
+				},
+				"got": {
+					"lat": 48.367979,
+					"lon": -1.437362
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "La Poupardais",
+					"postcode": "35490",
+					"locality": "Chauvigne"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "44 Impasse Jean de la Fontaine, 84500 Bollene",
+				"expected": {
+					"lat": 44.26927,
+					"lon": 4.754945,
+					"postcode": "84500",
+					"locality": "bollene"
+				},
+				"got": {
+					"lat": 44.26927,
+					"lon": 4.754945
+				},
+				"parsed": {
+					"house_number": "44",
+					"street": "Impasse Jean de la Fontaine",
+					"postcode": "84500",
+					"locality": "Bollene"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "104 Chemin de Doudon, 13105 Mimet",
+				"expected": {
+					"lat": 43.415713,
+					"lon": 5.499594,
+					"postcode": "13105",
+					"locality": "mimet"
+				},
+				"got": {
+					"lat": 43.415713,
+					"lon": 5.499594
+				},
+				"parsed": {
+					"house_number": "104",
+					"street": "Chemin de Doudon",
+					"postcode": "13105",
+					"locality": "Mimet"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 Route de la Lande, 41300 Souesmes",
+				"expected": {
+					"lat": 47.459383,
+					"lon": 2.179181,
+					"postcode": "41300",
+					"locality": "souesmes"
+				},
+				"got": {
+					"lat": 47.459383,
+					"lon": 2.179181
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Route de la Lande",
+					"postcode": "41300",
+					"locality": "Souesmes"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "133 Rue d'Echauffour, 61000 Alencon",
+				"expected": {
+					"lat": 48.434317,
+					"lon": 0.112386,
+					"postcode": "61000",
+					"locality": "alencon"
+				},
+				"got": {
+					"lat": 48.434317,
+					"lon": 0.112386
+				},
+				"parsed": {
+					"house_number": "133",
+					"street": "Rue d'Echauffour",
+					"postcode": "61000",
+					"locality": "Alencon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "56 route des coquetières, 49390 Mouliherne",
+				"expected": {
+					"lat": 47.465652,
+					"lon": 0.002732,
+					"postcode": "49390",
+					"locality": "mouliherne"
+				},
+				"got": {
+					"lat": 47.465652,
+					"lon": 0.002732
+				},
+				"parsed": {
+					"house_number": "56",
+					"street": "route des coquetières",
+					"postcode": "49390",
+					"locality": "Mouliherne"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "19 a Chemin Jean Baptiste, 97418 Le Tampon",
+				"expected": {
+					"lat": -21.227806,
+					"lon": 55.552716,
+					"postcode": "97418",
+					"locality": "le tampon"
+				},
+				"got": {
+					"lat": -21.227806,
+					"lon": 55.552716
+				},
+				"parsed": {
+					"house_number": "19 a",
+					"street": "Chemin Jean Baptiste",
+					"postcode": "97418",
+					"locality": "Le Tampon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "5 Route du Tourmalet, 65120 Bareges",
+				"expected": {
+					"lat": 42.90312,
+					"lon": 0.09716,
+					"postcode": "65120",
+					"locality": "bareges"
+				},
+				"got": {
+					"lat": 42.90312,
+					"lon": 0.09716
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Route du Tourmalet",
+					"postcode": "65120",
+					"locality": "Bareges"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "457 Route De Puyjubert, 19600 Larche",
+				"expected": {
+					"lat": 45.124462,
+					"lon": 1.441115,
+					"postcode": "19600",
+					"locality": "larche"
+				},
+				"got": {
+					"lat": 45.124462,
+					"lon": 1.441115
+				},
+				"parsed": {
+					"house_number": "457",
+					"street": "Route De Puyjubert",
+					"postcode": "19600",
+					"locality": "Larche"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "7 Rue des Malgroux, 45140 Ingre",
+				"expected": {
+					"lat": 47.921649,
+					"lon": 1.817205,
+					"postcode": "45140",
+					"locality": "ingre"
+				},
+				"got": {
+					"lat": 47.921649,
+					"lon": 1.817205
+				},
+				"parsed": {
+					"house_number": "7",
+					"street": "Rue des Malgroux",
+					"postcode": "45140",
+					"locality": "Ingre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			}
+		],
+		"reordered": [
+			{
+				"input": "38460 Trept, 37 Chemin des Jardins",
+				"expected": {
+					"lat": 45.686252,
+					"lon": 5.322105,
+					"postcode": "38460",
+					"locality": "trept"
+				},
+				"got": {
+					"lat": 45.686252,
+					"lon": 5.322105
+				},
+				"parsed": {
+					"house_number": "37",
+					"street": "Chemin des Jardins",
+					"postcode": "38460",
+					"locality": "Trept"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "33730 Villandraut, 6 Rue Madeleine",
+				"expected": {
+					"lat": 44.45581,
+					"lon": -0.373261,
+					"postcode": "33730",
+					"locality": "villandraut"
+				},
+				"got": {
+					"lat": 44.45581,
+					"lon": -0.373261
+				},
+				"parsed": {
+					"house_number": "6",
+					"street": "Rue Madeleine",
+					"postcode": "33730",
+					"locality": "Villandraut"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "06500 Menton, 4430 Route de Sospel",
+				"expected": {
+					"lat": 43.816129,
+					"lon": 7.485638,
+					"postcode": "06500",
+					"locality": "menton"
+				},
+				"got": {
+					"lat": 43.816129,
+					"lon": 7.485638
+				},
+				"parsed": {
+					"house_number": "4430",
+					"street": "Route de Sospel",
+					"postcode": "06500",
+					"locality": "Menton"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "85250 Saint-Andre-Goule-Doie, 45 Lotissement du guerinet",
+				"expected": {
+					"lat": 46.82892,
+					"lon": -1.190163,
+					"postcode": "85250",
+					"locality": "saint-andre-goule-doie"
+				},
+				"got": {
+					"lat": 46.82892,
+					"lon": -1.190163
+				},
+				"parsed": {
+					"house_number": "45",
+					"street": "Lotissement du guerinet",
+					"postcode": "85250",
+					"locality": "Saint-Andre-Goule-Doie"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "14630 Emieville, 8 Rue de l'Épine",
+				"expected": {
+					"lat": 49.150608,
+					"lon": -0.228067,
+					"postcode": "14630",
+					"locality": "emieville"
+				},
+				"got": {
+					"lat": 49.150608,
+					"lon": -0.228067
+				},
+				"parsed": {
+					"house_number": "8",
+					"street": "Rue de l'Épine",
+					"postcode": "14630",
+					"locality": "Emieville"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "33650 Saint-Selve, 4 Allée des Cerises",
+				"expected": {
+					"lat": 44.668475,
+					"lon": -0.478412,
+					"postcode": "33650",
+					"locality": "saint-selve"
+				},
+				"got": {
+					"lat": 44.668475,
+					"lon": -0.478412
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Allée des Cerises",
+					"postcode": "33650",
+					"locality": "Saint-Selve"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "09200 Eycheil, 24 lotissement des Acacias",
+				"expected": {
+					"lat": 42.966998,
+					"lon": 1.164711,
+					"postcode": "09200",
+					"locality": "eycheil"
+				},
+				"got": {
+					"lat": 42.966998,
+					"lon": 1.164711
+				},
+				"parsed": {
+					"house_number": "24",
+					"street": "lotissement des Acacias",
+					"postcode": "09200",
+					"locality": "Eycheil"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "52000 Semoutiers-Montsaon, 5 Place du Calvaire à Montsaon",
+				"expected": {
+					"lat": 48.084548,
+					"lon": 5.036532,
+					"postcode": "52000",
+					"locality": "semoutiers-montsaon"
+				},
+				"got": {
+					"lat": 48.063859,
+					"lon": 5.053687
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Place du Calvaire",
+					"postcode": "52000",
+					"locality": "Semoutiers-Montsaon"
+				},
+				"countryCode": "FR",
+				"tier": "admin",
+				"km": 2.63,
+				"routed": true
+			},
+			{
+				"input": "70000 Andelarre, 4 Rue de la Mairie",
+				"expected": {
+					"lat": 47.589875,
+					"lon": 6.096303,
+					"postcode": "70000",
+					"locality": "andelarre"
+				},
+				"got": {
+					"lat": 47.566314,
+					"lon": 6.146905
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Rue de la Mairie",
+					"postcode": "70000",
+					"locality": "Andelarre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 4.612,
+				"routed": true
+			},
+			{
+				"input": "41100 Faye, 15 Rue de la Forêt",
+				"expected": {
+					"lat": 47.804845,
+					"lon": 1.178946,
+					"postcode": "41100",
+					"locality": "faye"
+				},
+				"got": {
+					"lat": 47.804845,
+					"lon": 1.178946
+				},
+				"parsed": {
+					"house_number": "15",
+					"street": "Rue de la Forêt",
+					"postcode": "41100",
+					"locality": "Faye"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "01390 Mionnay, 19 Impasse du Montsion",
+				"expected": {
+					"lat": 45.895923,
+					"lon": 4.929326,
+					"postcode": "01390",
+					"locality": "mionnay"
+				},
+				"got": {
+					"lat": 45.895923,
+					"lon": 4.929326
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Impasse du Montsion",
+					"postcode": "01390",
+					"locality": "Mionnay"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "56760 Penestin, 7 Lotissement du Landrin",
+				"expected": {
+					"lat": 47.469266,
+					"lon": -2.485564,
+					"postcode": "56760",
+					"locality": "penestin"
+				},
+				"got": {
+					"lat": 47.469266,
+					"lon": -2.485564
+				},
+				"parsed": {
+					"house_number": "7",
+					"street": "Lotissement du Landrin",
+					"postcode": "56760",
+					"locality": "Penestin"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "86230 Serigny, 17 Route de la Belle Indienne",
+				"expected": {
+					"lat": 46.933981,
+					"lon": 0.306488,
+					"postcode": "86230",
+					"locality": "serigny"
+				},
+				"got": {
+					"lat": 46.933981,
+					"lon": 0.306488
+				},
+				"parsed": {
+					"house_number": "17",
+					"street": "Route de la Belle Indienne",
+					"postcode": "86230",
+					"locality": "Serigny"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "64270 Ramous, 601 Route Impériale",
+				"expected": {
+					"lat": 43.519846,
+					"lon": -0.87851,
+					"postcode": "64270",
+					"locality": "ramous"
+				},
+				"got": {
+					"lat": 43.519846,
+					"lon": -0.87851
+				},
+				"parsed": {
+					"house_number": "601",
+					"street": "Route Impériale",
+					"postcode": "64270",
+					"locality": "Ramous"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "69230 Saint-Genis-Laval, 47 Chemin du Clos Burtin",
+				"expected": {
+					"lat": 45.705849,
+					"lon": 4.786308,
+					"postcode": "69230",
+					"locality": "saint-genis-laval"
+				},
+				"got": {
+					"lat": 45.705849,
+					"lon": 4.786308
+				},
+				"parsed": {
+					"house_number": "47",
+					"street": "Chemin du Clos Burtin",
+					"postcode": "69230",
+					"locality": "Saint-Genis-Laval"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "29520 Chateauneuf-Du-Faou, 3 Rue Paul Gauguin",
+				"expected": {
+					"lat": 48.179712,
+					"lon": -3.823526,
+					"postcode": "29520",
+					"locality": "chateauneuf-du-faou"
+				},
+				"got": {
+					"lat": 48.179712,
+					"lon": -3.823526
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue Paul Gauguin",
+					"postcode": "29520",
+					"locality": "Chateauneuf-Du-Faou"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "76190 Valliquerville, 2423 La Vieille Route",
+				"expected": {
+					"lat": 49.615096,
+					"lon": 0.722259,
+					"postcode": "76190",
+					"locality": "valliquerville"
+				},
+				"got": {
+					"lat": 49.615096,
+					"lon": 0.722259
+				},
+				"parsed": {
+					"house_number": "2423",
+					"street": "La Vieille Route",
+					"postcode": "76190",
+					"locality": "Valliquerville"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "83990 Saint-Tropez, 132 Avenue des Calanques",
+				"expected": {
+					"lat": 43.273837,
+					"lon": 6.679774,
+					"postcode": "83990",
+					"locality": "saint-tropez"
+				},
+				"got": {
+					"lat": 43.273837,
+					"lon": 6.679774
+				},
+				"parsed": {
+					"house_number": "132",
+					"street": "Avenue des Calanques",
+					"postcode": "83990",
+					"locality": "Saint-Tropez"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "33510 Andernos-Les-Bains, 138 a Boulevard de la République",
+				"expected": {
+					"lat": 44.738865,
+					"lon": -1.092187,
+					"postcode": "33510",
+					"locality": "andernos-les-bains"
+				},
+				"got": {
+					"lat": 44.738865,
+					"lon": -1.092187
+				},
+				"parsed": {
+					"house_number": "138 a",
+					"street": "Boulevard de la République",
+					"postcode": "33510",
+					"locality": "Andernos-Les-Bains"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "63800 Perignat-Sur-Allier, 1 Rue du Château d'Eau",
+				"expected": {
+					"lat": 45.731909,
+					"lon": 3.238258,
+					"postcode": "63800",
+					"locality": "perignat-sur-allier"
+				},
+				"got": {
+					"lat": 45.727486,
+					"lon": 3.234729
+				},
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue du Château",
+					"postcode": "63800",
+					"locality": "Perignat-Sur-Allier"
+				},
+				"countryCode": "FR",
+				"tier": "admin",
+				"km": 0.563,
+				"routed": true
+			},
+			{
+				"input": "83440 Tanneron, 30 Chemin de la Verrerie",
+				"expected": {
+					"lat": 43.584546,
+					"lon": 6.88698,
+					"postcode": "83440",
+					"locality": "tanneron"
+				},
+				"got": {
+					"lat": 43.584546,
+					"lon": 6.88698
+				},
+				"parsed": {
+					"house_number": "30",
+					"street": "Chemin de la Verrerie",
+					"postcode": "83440",
+					"locality": "Tanneron"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "92500 Rueil-Malmaison, 77 Rue Gambetta",
+				"expected": {
+					"lat": 48.880587,
+					"lon": 2.196147,
+					"postcode": "92500",
+					"locality": "rueil-malmaison"
+				},
+				"got": {
+					"lat": 48.880587,
+					"lon": 2.196147
+				},
+				"parsed": {
+					"house_number": "77",
+					"street": "Rue Gambetta",
+					"postcode": "92500",
+					"locality": "Rueil-Malmaison"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "45230 Montbouy, 23 Route de Gy-les-Nonains",
+				"expected": {
+					"lat": 47.863421,
+					"lon": 2.824939,
+					"postcode": "45230",
+					"locality": "montbouy"
+				},
+				"got": {
+					"lat": 47.863421,
+					"lon": 2.824939
+				},
+				"parsed": {
+					"house_number": "23",
+					"street": "Route de Gy-les-Nonains",
+					"postcode": "45230",
+					"locality": "Montbouy"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "59400 Cambrai, 76 Rue Jean Mermoz",
+				"expected": {
+					"lat": 50.17217,
+					"lon": 3.264038,
+					"postcode": "59400",
+					"locality": "cambrai"
+				},
+				"got": {
+					"lat": 50.17217,
+					"lon": 3.264038
+				},
+				"parsed": {
+					"house_number": "76",
+					"street": "Rue Jean Mermoz",
+					"postcode": "59400",
+					"locality": "Cambrai"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "22660 Trelevern, 35 Rue de Kersivy Vraz",
+				"expected": {
+					"lat": 48.8066,
+					"lon": -3.371963,
+					"postcode": "22660",
+					"locality": "trelevern"
+				},
+				"got": {
+					"lat": 48.8066,
+					"lon": -3.371963
+				},
+				"parsed": {
+					"house_number": "35",
+					"street": "Rue de Kersivy Vraz",
+					"postcode": "22660",
+					"locality": "Trelevern"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "89140 Michery, 8 Rue Claude Farinot",
+				"expected": {
+					"lat": 48.304069,
+					"lon": 3.239003,
+					"postcode": "89140",
+					"locality": "michery"
+				},
+				"got": {
+					"lat": 48.304069,
+					"lon": 3.239003
+				},
+				"parsed": {
+					"house_number": "8",
+					"street": "Rue Claude Farinot",
+					"postcode": "89140",
+					"locality": "Michery"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "59264 Onnaing, 19 Rue Ferdinande Wascheul",
+				"expected": {
+					"lat": 50.382372,
+					"lon": 3.592809,
+					"postcode": "59264",
+					"locality": "onnaing"
+				},
+				"got": {
+					"lat": 50.382372,
+					"lon": 3.592809
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Rue Ferdinande Wascheul",
+					"postcode": "59264",
+					"locality": "Onnaing"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "12510 Druelle Balsac, 213 Impasse de la Piboule",
+				"expected": {
+					"lat": 44.367359,
+					"lon": 2.472627,
+					"postcode": "12510",
+					"locality": "druelle balsac"
+				},
+				"got": {
+					"lat": 44.367359,
+					"lon": 2.472627
+				},
+				"parsed": {
+					"house_number": "213",
+					"street": "Impasse de la Piboule",
+					"postcode": "12510",
+					"locality": "Druelle Balsac"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "77580 Crecy-La-Chapelle, 3 Rue de Bias",
+				"expected": {
+					"lat": 48.868931,
+					"lon": 2.9192,
+					"postcode": "77580",
+					"locality": "crecy-la-chapelle"
+				},
+				"got": {
+					"lat": 48.868931,
+					"lon": 2.9192
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue de Bias",
+					"postcode": "77580",
+					"locality": "Crecy-La-Chapelle"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "60750 Choisy-Au-Bac, 12 Rue des Linières",
+				"expected": {
+					"lat": 49.443746,
+					"lon": 2.88509,
+					"postcode": "60750",
+					"locality": "choisy-au-bac"
+				},
+				"got": {
+					"lat": 49.443746,
+					"lon": 2.88509
+				},
+				"parsed": {
+					"house_number": "12",
+					"street": "Rue des Linières",
+					"postcode": "60750",
+					"locality": "Choisy-Au-Bac"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "45150 Jargeau, 8 bis Rue Octave Piedon",
+				"expected": {
+					"lat": 47.863393,
+					"lon": 2.116433,
+					"postcode": "45150",
+					"locality": "jargeau"
+				},
+				"got": {
+					"lat": 47.863393,
+					"lon": 2.116433
+				},
+				"parsed": {
+					"house_number": "8 bis",
+					"street": "Rue Octave Piedon",
+					"postcode": "45150",
+					"locality": "Jargeau"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "16190 Montmoreau, 3 Chemin des Hirondelles",
+				"expected": {
+					"lat": 45.40254,
+					"lon": 0.128338,
+					"postcode": "16190",
+					"locality": "montmoreau"
+				},
+				"got": {
+					"lat": 45.40254,
+					"lon": 0.128338
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Chemin des Hirondelles",
+					"postcode": "16190",
+					"locality": "Montmoreau"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "97413 Cilaos, 4 Chemin Cryptomerias",
+				"expected": {
+					"lat": -21.136557,
+					"lon": 55.491495,
+					"postcode": "97413",
+					"locality": "cilaos"
+				},
+				"got": {
+					"lat": -21.136557,
+					"lon": 55.491495
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Chemin Cryptomerias",
+					"postcode": "97413",
+					"locality": "Cilaos"
+				},
+				"countryCode": null,
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "80200 Doingt, 19 Rue Saint Phocas",
+				"expected": {
+					"lat": 49.92066,
+					"lon": 2.946325,
+					"postcode": "80200",
+					"locality": "doingt"
+				},
+				"got": {
+					"lat": 49.92066,
+					"lon": 2.946325
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Rue Saint Phocas",
+					"postcode": "80200",
+					"locality": "Doingt"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "40350 Pouillon, 816 Chemin de Loustalot",
+				"expected": {
+					"lat": 43.622666,
+					"lon": -0.985934,
+					"postcode": "40350",
+					"locality": "pouillon"
+				},
+				"got": {
+					"lat": 43.622666,
+					"lon": -0.985934
+				},
+				"parsed": {
+					"house_number": "816",
+					"street": "Chemin de Loustalot",
+					"postcode": "40350",
+					"locality": "Pouillon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "33230 Coutras, 18 c Rue Pasteur",
+				"expected": {
+					"lat": 45.033267,
+					"lon": -0.126341,
+					"postcode": "33230",
+					"locality": "coutras"
+				},
+				"got": {
+					"lat": 45.033267,
+					"lon": -0.126341
+				},
+				"parsed": {
+					"house_number": "18 c",
+					"street": "Rue Pasteur",
+					"postcode": "33230",
+					"locality": "Coutras"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "22590 Pordic, 6 Impasse Jean Moulin",
+				"expected": {
+					"lat": 48.566242,
+					"lon": -2.81749,
+					"postcode": "22590",
+					"locality": "pordic"
+				},
+				"got": {
+					"lat": 48.566242,
+					"lon": -2.81749
+				},
+				"parsed": {
+					"house_number": "6",
+					"street": "Impasse Jean Moulin",
+					"postcode": "22590",
+					"locality": "Pordic"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "50880 Pont-Hebert, 103 Rue du 8 Mai 1945",
+				"expected": {
+					"lat": 49.170436,
+					"lon": -1.135661,
+					"postcode": "50880",
+					"locality": "pont-hebert"
+				},
+				"got": {
+					"lat": 49.170436,
+					"lon": -1.135661
+				},
+				"parsed": {
+					"house_number": "103",
+					"street": "Rue du 8 Mai 1945",
+					"postcode": "50880",
+					"locality": "Pont-Hebert"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "58220 Couloutre, 5 Rue de la Seigne de Pilles",
+				"expected": {
+					"lat": 47.408676,
+					"lon": 3.212663,
+					"postcode": "58220",
+					"locality": "couloutre"
+				},
+				"got": {
+					"lat": 47.408676,
+					"lon": 3.212663
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Rue de la Seigne de Pilles",
+					"postcode": "58220",
+					"locality": "Couloutre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "59530 Orsinval, 17 Rue de la Charette",
+				"expected": {
+					"lat": 50.269208,
+					"lon": 3.632612,
+					"postcode": "59530",
+					"locality": "orsinval"
+				},
+				"got": {
+					"lat": 50.269208,
+					"lon": 3.632612
+				},
+				"parsed": {
+					"house_number": "17",
+					"street": "Rue de la Charette",
+					"postcode": "59530",
+					"locality": "Orsinval"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "88390 Les Forges, 79 Rue des Mélèzes",
+				"expected": {
+					"lat": 48.176047,
+					"lon": 6.410315,
+					"postcode": "88390",
+					"locality": "les forges"
+				},
+				"got": {
+					"lat": 48.176047,
+					"lon": 6.410315
+				},
+				"parsed": {
+					"house_number": "79",
+					"street": "Rue des Mélèzes",
+					"postcode": "88390",
+					"locality": "Les Forges"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "16600 Ruelle-Sur-Touvre, 206 Route des Riffauds",
+				"expected": {
+					"lat": 45.689507,
+					"lon": 0.254881,
+					"postcode": "16600",
+					"locality": "ruelle-sur-touvre"
+				},
+				"got": {
+					"lat": 45.689507,
+					"lon": 0.254881
+				},
+				"parsed": {
+					"house_number": "206",
+					"street": "Route des Riffauds",
+					"postcode": "16600",
+					"locality": "Ruelle-Sur-Touvre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "71200 Le Creusot, 30 Rue Maréchal Leclerc",
+				"expected": {
+					"lat": 46.806736,
+					"lon": 4.427724,
+					"postcode": "71200",
+					"locality": "le creusot"
+				},
+				"got": {
+					"lat": 46.806736,
+					"lon": 4.427724
+				},
+				"parsed": {
+					"house_number": "30",
+					"street": "Rue Maréchal Leclerc",
+					"postcode": "71200",
+					"locality": "Le Creusot"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "69550 Saint-Jean-La-Bussiere, 5 Avenue Victor Hugo",
+				"expected": {
+					"lat": 46.002158,
+					"lon": 4.3257,
+					"postcode": "69550",
+					"locality": "saint-jean-la-bussiere"
+				},
+				"got": {
+					"lat": 46.002158,
+					"lon": 4.3257
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Avenue Victor Hugo",
+					"postcode": "69550",
+					"locality": "Saint-Jean-La-Bussiere"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "67340 Ingwiller, 31 Rue Roeth",
+				"expected": {
+					"lat": 48.870002,
+					"lon": 7.469579,
+					"postcode": "67340",
+					"locality": "ingwiller"
+				},
+				"got": {
+					"lat": 48.870002,
+					"lon": 7.469579
+				},
+				"parsed": {
+					"house_number": "31",
+					"street": "Rue Roeth",
+					"postcode": "67340",
+					"locality": "Ingwiller"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "38150 Agnin, 98 Rue Clos du Village",
+				"expected": {
+					"lat": 45.339659,
+					"lon": 4.858355,
+					"postcode": "38150",
+					"locality": "agnin"
+				},
+				"got": {
+					"lat": 45.339659,
+					"lon": 4.858355
+				},
+				"parsed": {
+					"house_number": "98",
+					"street": "Rue Clos du Village",
+					"postcode": "38150",
+					"locality": "Agnin"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "38200 Vienne, 4 Rue Beaufort Chopin",
+				"expected": {
+					"lat": 45.507265,
+					"lon": 4.853672,
+					"postcode": "38200",
+					"locality": "vienne"
+				},
+				"got": {
+					"lat": 45.507265,
+					"lon": 4.853672
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Rue Beaufort Chopin",
+					"postcode": "38200",
+					"locality": "Vienne"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "88170 Chatenois, 7 Rue du Cimetière",
+				"expected": {
+					"lat": 48.309578,
+					"lon": 5.837969,
+					"postcode": "88170",
+					"locality": "chatenois"
+				},
+				"got": {
+					"lat": 48.309578,
+					"lon": 5.837969
+				},
+				"parsed": {
+					"house_number": "7",
+					"street": "Rue du Cimetière",
+					"postcode": "88170",
+					"locality": "Chatenois"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "12740 La Loubiere, 20 Chemin de la Combe",
+				"expected": {
+					"lat": 44.366003,
+					"lon": 2.662987,
+					"postcode": "12740",
+					"locality": "la loubiere"
+				},
+				"got": {
+					"lat": 44.366003,
+					"lon": 2.662987
+				},
+				"parsed": {
+					"house_number": "20",
+					"street": "Chemin de la Combe",
+					"postcode": "12740",
+					"locality": "La Loubiere"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "21140 Semur-En-Auxois, 4 Ruelle des Raffées",
+				"expected": {
+					"lat": 47.484064,
+					"lon": 4.329137,
+					"postcode": "21140",
+					"locality": "semur-en-auxois"
+				},
+				"got": {
+					"lat": 47.484064,
+					"lon": 4.329137
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Ruelle des Raffées",
+					"postcode": "21140",
+					"locality": "Semur-En-Auxois"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "36330 Le Poinconnet, 43 Rue des Saunées",
+				"expected": {
+					"lat": 46.79213,
+					"lon": 1.729135,
+					"postcode": "36330",
+					"locality": "le poinconnet"
+				},
+				"got": {
+					"lat": 46.79213,
+					"lon": 1.729135
+				},
+				"parsed": {
+					"house_number": "43",
+					"street": "Rue des Saunées",
+					"postcode": "36330",
+					"locality": "Le Poinconnet"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "29480 Le Relecq-Kerhuon, 5 impasse de l'Elorn",
+				"expected": {
+					"lat": 48.408172,
+					"lon": -4.389847,
+					"postcode": "29480",
+					"locality": "le relecq-kerhuon"
+				},
+				"got": {
+					"lat": 48.408172,
+					"lon": -4.389847
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "impasse de l'Elorn",
+					"postcode": "29480",
+					"locality": "Le Relecq-Kerhuon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "86470 Boivre-La-Vallee, 3 bis Route de la Forêt",
+				"expected": {
+					"lat": 46.562729,
+					"lon": 0.050212,
+					"postcode": "86470",
+					"locality": "boivre-la-vallee"
+				},
+				"got": {
+					"lat": 46.562729,
+					"lon": 0.050212
+				},
+				"parsed": {
+					"house_number": "3 bis",
+					"street": "Route de la Forêt",
+					"postcode": "86470",
+					"locality": "Boivre-La-Vallee"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "88240 La Voge-Les-Bains, 3 Chemin Antoine",
+				"expected": {
+					"lat": 48.027138,
+					"lon": 6.232468,
+					"postcode": "88240",
+					"locality": "la voge-les-bains"
+				},
+				"got": {
+					"lat": 48.027138,
+					"lon": 6.232468
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Chemin Antoine",
+					"postcode": "88240",
+					"locality": "La Voge-Les-Bains"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "47500 Condezaygues, 229 Chemin du Laubois",
+				"expected": {
+					"lat": 44.47407,
+					"lon": 0.903501,
+					"postcode": "47500",
+					"locality": "condezaygues"
+				},
+				"got": {
+					"lat": 44.47407,
+					"lon": 0.903501
+				},
+				"parsed": {
+					"house_number": "229",
+					"street": "Chemin du Laubois",
+					"postcode": "47500",
+					"locality": "Condezaygues"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "13250 Saint-Chamas, 22 Rue des Paquerettes",
+				"expected": {
+					"lat": 43.556686,
+					"lon": 5.036541,
+					"postcode": "13250",
+					"locality": "saint-chamas"
+				},
+				"got": {
+					"lat": 43.556686,
+					"lon": 5.036541
+				},
+				"parsed": {
+					"house_number": "22",
+					"street": "Rue des Paquerettes",
+					"postcode": "13250",
+					"locality": "Saint-Chamas"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "27600 Gaillon, 574 Residence Grand Gaillon Normandie",
+				"expected": {
+					"lat": 49.157916,
+					"lon": 1.340124,
+					"postcode": "27600",
+					"locality": "gaillon"
+				},
+				"got": {
+					"lat": 49.157916,
+					"lon": 1.340124
+				},
+				"parsed": {
+					"house_number": "574",
+					"street": "Residence Grand Gaillon Normandie",
+					"postcode": "27600",
+					"locality": "Gaillon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "61340 Perche En Noce, 4 Chemin de la Joannerie",
+				"expected": {
+					"lat": 48.410357,
+					"lon": 0.668687,
+					"postcode": "61340",
+					"locality": "perche en noce"
+				},
+				"got": {
+					"lat": 48.410357,
+					"lon": 0.668687
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Chemin de la Joannerie",
+					"postcode": "61340",
+					"locality": "Perche En Noce"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "91220 Bretigny-Sur-Orge, 4 Rue Edgar Degas",
+				"expected": {
+					"lat": 48.597434,
+					"lon": 2.283917,
+					"postcode": "91220",
+					"locality": "bretigny-sur-orge"
+				},
+				"got": {
+					"lat": 48.597434,
+					"lon": 2.283917
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Rue Edgar Degas",
+					"postcode": "91220",
+					"locality": "Bretigny-Sur-Orge"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "69720 Saint-Bonnet-De-Mure, 96 b Avenue Charles de Gaulle",
+				"expected": {
+					"lat": 45.697104,
+					"lon": 5.021165,
+					"postcode": "69720",
+					"locality": "saint-bonnet-de-mure"
+				},
+				"got": {
+					"lat": 45.697104,
+					"lon": 5.021165
+				},
+				"parsed": {
+					"house_number": "96 b",
+					"street": "Avenue Charles de Gaulle",
+					"postcode": "69720",
+					"locality": "Saint-Bonnet-De-Mure"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "59493 Villeneuve-Dascq, 64 b Rue Gaston Baratte",
+				"expected": {
+					"lat": 50.618481,
+					"lon": 3.158777,
+					"postcode": "59493",
+					"locality": "villeneuve-dascq"
+				},
+				"got": {
+					"lat": 50.618481,
+					"lon": 3.158777
+				},
+				"parsed": {
+					"house_number": "64 b",
+					"street": "Rue Gaston Baratte",
+					"postcode": "59493",
+					"locality": "Villeneuve-Dascq"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "77350 Le Mee-Sur-Seine, 426 Rue Chapu",
+				"expected": {
+					"lat": 48.537475,
+					"lon": 2.640992,
+					"postcode": "77350",
+					"locality": "le mee-sur-seine"
+				},
+				"got": {
+					"lat": 48.537475,
+					"lon": 2.640992
+				},
+				"parsed": {
+					"house_number": "426",
+					"street": "Rue Chapu",
+					"postcode": "77350",
+					"locality": "Le Mee-Sur-Seine"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "13470 Carnoux-En-Provence, 11 Avenue Lavoisier",
+				"expected": {
+					"lat": 43.250827,
+					"lon": 5.54842,
+					"postcode": "13470",
+					"locality": "carnoux-en-provence"
+				},
+				"got": {
+					"lat": 43.250827,
+					"lon": 5.54842
+				},
+				"parsed": {
+					"house_number": "11",
+					"street": "Avenue Lavoisier",
+					"postcode": "13470",
+					"locality": "Carnoux-En-Provence"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "92250 La Garenne-Colombes, 50 Avenue du Général de Gaulle",
+				"expected": {
+					"lat": 48.910187,
+					"lon": 2.254783,
+					"postcode": "92250",
+					"locality": "la garenne-colombes"
+				},
+				"got": {
+					"lat": 48.910187,
+					"lon": 2.254783
+				},
+				"parsed": {
+					"house_number": "50",
+					"street": "Avenue du Général de Gaulle",
+					"postcode": "92250",
+					"locality": "La Garenne-Colombes"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "81630 Montvalen, 495 Route des Secs",
+				"expected": {
+					"lat": 43.856211,
+					"lon": 1.591605,
+					"postcode": "81630",
+					"locality": "montvalen"
+				},
+				"got": {
+					"lat": 43.856211,
+					"lon": 1.591605
+				},
+				"parsed": {
+					"house_number": "495",
+					"street": "Route des Secs",
+					"postcode": "81630",
+					"locality": "Montvalen"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "27680 Quillebeuf-Sur-Seine, 3 Boulevard Pasteur",
+				"expected": {
+					"lat": 49.472186,
+					"lon": 0.524585,
+					"postcode": "27680",
+					"locality": "quillebeuf-sur-seine"
+				},
+				"got": {
+					"lat": 49.472186,
+					"lon": 0.524585
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Boulevard Pasteur",
+					"postcode": "27680",
+					"locality": "Quillebeuf-Sur-Seine"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "14350 Souleuvre En Bocage, 19 Route du Hameau Asselin",
+				"expected": {
+					"lat": 48.91293,
+					"lon": -0.948034,
+					"postcode": "14350",
+					"locality": "souleuvre en bocage"
+				},
+				"got": {
+					"lat": 48.91293,
+					"lon": -0.948034
+				},
+				"parsed": {
+					"house_number": "19",
+					"street": "Route du Hameau Asselin",
+					"postcode": "14350",
+					"locality": "Souleuvre En Bocage"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "63500 Aulhat-Flat, 61 Chemin du Moulin",
+				"expected": {
+					"lat": 45.567688,
+					"lon": 3.31276,
+					"postcode": "63500",
+					"locality": "aulhat-flat"
+				},
+				"got": {
+					"lat": 45.567688,
+					"lon": 3.31276
+				},
+				"parsed": {
+					"house_number": "61",
+					"street": "Chemin du Moulin",
+					"postcode": "63500",
+					"locality": "Aulhat-Flat"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "75012 Paris, 35 p2 Rue du Charolais",
+				"expected": {
+					"lat": 48.840403,
+					"lon": 2.385405,
+					"postcode": "75012",
+					"locality": "paris"
+				},
+				"got": {
+					"lat": 48.840403,
+					"lon": 2.385405
+				},
+				"parsed": {
+					"house_number": "35 p2",
+					"street": "Rue du Charolais",
+					"postcode": "75012",
+					"locality": "Paris"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "88460 Tendon, 11 Chemin de la Bisoire",
+				"expected": {
+					"lat": 48.116364,
+					"lon": 6.663968,
+					"postcode": "88460",
+					"locality": "tendon"
+				},
+				"got": {
+					"lat": 48.116364,
+					"lon": 6.663968
+				},
+				"parsed": {
+					"house_number": "11",
+					"street": "Chemin de la Bisoire",
+					"postcode": "88460",
+					"locality": "Tendon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "54110 Dombasle-Sur-Meurthe, 3 Rue Jean Jaurès",
+				"expected": {
+					"lat": 48.61424,
+					"lon": 6.352009,
+					"postcode": "54110",
+					"locality": "dombasle-sur-meurthe"
+				},
+				"got": {
+					"lat": 48.634289,
+					"lon": 6.311422
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue Jean Jaurès",
+					"postcode": "54110",
+					"locality": "Dombasle-Sur-Meurthe"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 3.7241,
+				"routed": true
+			},
+			{
+				"input": "74500 Publier, 154 Rue de la Croix",
+				"expected": {
+					"lat": 46.389009,
+					"lon": 6.549785,
+					"postcode": "74500",
+					"locality": "publier"
+				},
+				"got": {
+					"lat": 46.389009,
+					"lon": 6.549785
+				},
+				"parsed": {
+					"house_number": "154",
+					"street": "Rue de la Croix",
+					"postcode": "74500",
+					"locality": "Publier"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "78350 Jouy-En-Josas, 63 Rue Charles de Gaulle",
+				"expected": {
+					"lat": 48.769245,
+					"lon": 2.150345,
+					"postcode": "78350",
+					"locality": "jouy-en-josas"
+				},
+				"got": {
+					"lat": 48.769245,
+					"lon": 2.150345
+				},
+				"parsed": {
+					"house_number": "63",
+					"street": "Rue Charles de Gaulle",
+					"postcode": "78350",
+					"locality": "Jouy-En-Josas"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "91440 Bures-Sur-Yvette, 33 Avenue du Centre",
+				"expected": {
+					"lat": 48.68649,
+					"lon": 2.146488,
+					"postcode": "91440",
+					"locality": "bures-sur-yvette"
+				},
+				"got": {
+					"lat": 48.68649,
+					"lon": 2.146488
+				},
+				"parsed": {
+					"house_number": "33",
+					"street": "Avenue du Centre",
+					"postcode": "91440",
+					"locality": "Bures-Sur-Yvette"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "78130 Les Mureaux, 53 Rue Léo Lagrange",
+				"expected": {
+					"lat": 48.986621,
+					"lon": 1.905597,
+					"postcode": "78130",
+					"locality": "les mureaux"
+				},
+				"got": {
+					"lat": 48.986621,
+					"lon": 1.905597
+				},
+				"parsed": {
+					"house_number": "53",
+					"street": "Rue Léo Lagrange",
+					"postcode": "78130",
+					"locality": "Les Mureaux"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "17137 Lhoumeau, 44 Avenue du Colonel Arnaud BELTRAME",
+				"expected": {
+					"lat": 46.194074,
+					"lon": -1.177264,
+					"postcode": "17137",
+					"locality": "lhoumeau"
+				},
+				"got": {
+					"lat": 46.194074,
+					"lon": -1.177264
+				},
+				"parsed": {
+					"house_number": "44",
+					"street": "Avenue du Colonel Arnaud BELTRAME",
+					"postcode": "17137",
+					"locality": "Lhoumeau"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "60940 Cinqueux, 26 t Rue Jean Beau",
+				"expected": {
+					"lat": 49.316607,
+					"lon": 2.530048,
+					"postcode": "60940",
+					"locality": "cinqueux"
+				},
+				"got": {
+					"lat": 49.316607,
+					"lon": 2.530048
+				},
+				"parsed": {
+					"house_number": "26 t",
+					"street": "Rue Jean Beau",
+					"postcode": "60940",
+					"locality": "Cinqueux"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "30133 Les Angles, 3 Rue Edmond Rostand",
+				"expected": {
+					"lat": 43.958719,
+					"lon": 4.765818,
+					"postcode": "30133",
+					"locality": "les angles"
+				},
+				"got": {
+					"lat": 43.958719,
+					"lon": 4.765818
+				},
+				"parsed": {
+					"house_number": "3",
+					"street": "Rue Edmond Rostand",
+					"postcode": "30133",
+					"locality": "Les Angles"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "77670 Vernou-La-Celle-Sur-Seine, 18 Rue de la Maison Blanche",
+				"expected": {
+					"lat": 48.389096,
+					"lon": 2.845184,
+					"postcode": "77670",
+					"locality": "vernou-la-celle-sur-seine"
+				},
+				"got": {
+					"lat": 48.389096,
+					"lon": 2.845184
+				},
+				"parsed": {
+					"house_number": "18",
+					"street": "Rue de la Maison Blanche",
+					"postcode": "77670",
+					"locality": "Vernou-La-Celle-Sur-Seine"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "13500 Martigues, 5 Avenue des Ormeaux",
+				"expected": {
+					"lat": 43.410316,
+					"lon": 5.024974,
+					"postcode": "13500",
+					"locality": "martigues"
+				},
+				"got": {
+					"lat": 43.410316,
+					"lon": 5.024974
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Avenue des Ormeaux",
+					"postcode": "13500",
+					"locality": "Martigues"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "56260 Larmor-Plage, 20 bis Rue des Eglantiers",
+				"expected": {
+					"lat": 47.716625,
+					"lon": -3.379086,
+					"postcode": "56260",
+					"locality": "larmor-plage"
+				},
+				"got": {
+					"lat": 47.716625,
+					"lon": -3.379086
+				},
+				"parsed": {
+					"house_number": "20 bis",
+					"street": "Rue des Eglantiers",
+					"postcode": "56260",
+					"locality": "Larmor-Plage"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "62260 Cauchy-A-La-Tour, 33 Route Nationale",
+				"expected": {
+					"lat": 50.510999,
+					"lon": 2.44363,
+					"postcode": "62260",
+					"locality": "cauchy-a-la-tour"
+				},
+				"got": {
+					"lat": 50.510999,
+					"lon": 2.44363
+				},
+				"parsed": {
+					"house_number": "33",
+					"street": "Route Nationale",
+					"postcode": "62260",
+					"locality": "Cauchy-A-La-Tour"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "29720 Ploneour-Lanvern, 4 Allée de Kerallain",
+				"expected": {
+					"lat": 47.899169,
+					"lon": -4.272518,
+					"postcode": "29720",
+					"locality": "ploneour-lanvern"
+				},
+				"got": {
+					"lat": 47.899169,
+					"lon": -4.272518
+				},
+				"parsed": {
+					"house_number": "4",
+					"street": "Allée de Kerallain",
+					"postcode": "29720",
+					"locality": "Ploneour-Lanvern"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "71250 Cluny, 31 Rue de la Liberté",
+				"expected": {
+					"lat": 46.432186,
+					"lon": 4.659884,
+					"postcode": "71250",
+					"locality": "cluny"
+				},
+				"got": {
+					"lat": 46.432186,
+					"lon": 4.659884
+				},
+				"parsed": {
+					"house_number": "31",
+					"street": "Rue de la Liberté",
+					"postcode": "71250",
+					"locality": "Cluny"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "31200 Toulouse, 138 Rue de Chaussas",
+				"expected": {
+					"lat": 43.621715,
+					"lon": 1.4269,
+					"postcode": "31200",
+					"locality": "toulouse"
+				},
+				"got": {
+					"lat": 43.621715,
+					"lon": 1.4269
+				},
+				"parsed": {
+					"house_number": "138",
+					"street": "Rue de Chaussas",
+					"postcode": "31200",
+					"locality": "Toulouse"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "29242 Ouessant, 18 Parluchen",
+				"expected": {
+					"lat": 48.456028,
+					"lon": -5.114645,
+					"postcode": "29242",
+					"locality": "ouessant"
+				},
+				"got": {
+					"lat": 48.456028,
+					"lon": -5.114645
+				},
+				"parsed": {
+					"house_number": "18",
+					"street": "Parluchen",
+					"postcode": "29242",
+					"locality": "Ouessant"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "24520 Cours-De-Pile, 1260 Route du Coustinet",
+				"expected": {
+					"lat": 44.831231,
+					"lon": 0.552473,
+					"postcode": "24520",
+					"locality": "cours-de-pile"
+				},
+				"got": {
+					"lat": 44.831231,
+					"lon": 0.552473
+				},
+				"parsed": {
+					"house_number": "1260",
+					"street": "Route du Coustinet",
+					"postcode": "24520",
+					"locality": "Cours-De-Pile"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "57685 Augny, 22 Lotissement le Château",
+				"expected": {
+					"lat": 49.05964,
+					"lon": 6.117317,
+					"postcode": "57685",
+					"locality": "augny"
+				},
+				"got": {
+					"lat": 49.05964,
+					"lon": 6.117317
+				},
+				"parsed": {
+					"house_number": "22",
+					"street": "Lotissement le Château",
+					"postcode": "57685",
+					"locality": "Augny"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "83740 La Cadiere-Dazur, 2429 Chemin de la Bégude",
+				"expected": {
+					"lat": 43.215676,
+					"lon": 5.715683,
+					"postcode": "83740",
+					"locality": "la cadiere-dazur"
+				},
+				"got": {
+					"lat": 43.215676,
+					"lon": 5.715683
+				},
+				"parsed": {
+					"house_number": "2429",
+					"street": "Chemin de la Bégude",
+					"postcode": "83740",
+					"locality": "La Cadiere-Dazur"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "13002 Marseille, 22 Avenue robert schuman",
+				"expected": {
+					"lat": 43.301211,
+					"lon": 5.366206,
+					"postcode": "13002",
+					"locality": "marseille"
+				},
+				"got": {
+					"lat": 43.301211,
+					"lon": 5.366206
+				},
+				"parsed": {
+					"house_number": "22",
+					"street": "Avenue robert schuman",
+					"postcode": "13002",
+					"locality": "Marseille"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "35490 Chauvigne, 5 La Poupardais",
+				"expected": {
+					"lat": 48.367979,
+					"lon": -1.437362,
+					"postcode": "35490",
+					"locality": "chauvigne"
+				},
+				"got": {
+					"lat": 48.367979,
+					"lon": -1.437362
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "La Poupardais",
+					"postcode": "35490",
+					"locality": "Chauvigne"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "84500 Bollene, 44 Impasse Jean de la Fontaine",
+				"expected": {
+					"lat": 44.26927,
+					"lon": 4.754945,
+					"postcode": "84500",
+					"locality": "bollene"
+				},
+				"got": {
+					"lat": 44.26927,
+					"lon": 4.754945
+				},
+				"parsed": {
+					"house_number": "44",
+					"street": "Impasse Jean de la Fontaine",
+					"postcode": "84500",
+					"locality": "Bollene"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "13105 Mimet, 104 Chemin de Doudon",
+				"expected": {
+					"lat": 43.415713,
+					"lon": 5.499594,
+					"postcode": "13105",
+					"locality": "mimet"
+				},
+				"got": {
+					"lat": 43.415713,
+					"lon": 5.499594
+				},
+				"parsed": {
+					"house_number": "104",
+					"street": "Chemin de Doudon",
+					"postcode": "13105",
+					"locality": "Mimet"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "41300 Souesmes, 5 Route de la Lande",
+				"expected": {
+					"lat": 47.459383,
+					"lon": 2.179181,
+					"postcode": "41300",
+					"locality": "souesmes"
+				},
+				"got": {
+					"lat": 47.459383,
+					"lon": 2.179181
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Route de la Lande",
+					"postcode": "41300",
+					"locality": "Souesmes"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "61000 Alencon, 133 Rue d'Echauffour",
+				"expected": {
+					"lat": 48.434317,
+					"lon": 0.112386,
+					"postcode": "61000",
+					"locality": "alencon"
+				},
+				"got": {
+					"lat": 48.434317,
+					"lon": 0.112386
+				},
+				"parsed": {
+					"house_number": "133",
+					"street": "Rue d'Echauffour",
+					"postcode": "61000",
+					"locality": "Alencon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "49390 Mouliherne, 56 route des coquetières",
+				"expected": {
+					"lat": 47.465652,
+					"lon": 0.002732,
+					"postcode": "49390",
+					"locality": "mouliherne"
+				},
+				"got": {
+					"lat": 47.465652,
+					"lon": 0.002732
+				},
+				"parsed": {
+					"house_number": "56",
+					"street": "route des coquetières",
+					"postcode": "49390",
+					"locality": "Mouliherne"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "97418 Le Tampon, 19 a Chemin Jean Baptiste",
+				"expected": {
+					"lat": -21.227806,
+					"lon": 55.552716,
+					"postcode": "97418",
+					"locality": "le tampon"
+				},
+				"got": {
+					"lat": -21.227806,
+					"lon": 55.552716
+				},
+				"parsed": {
+					"house_number": "19 a",
+					"street": "Chemin Jean Baptiste",
+					"postcode": "97418",
+					"locality": "Le Tampon"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "65120 Bareges, 5 Route du Tourmalet",
+				"expected": {
+					"lat": 42.90312,
+					"lon": 0.09716,
+					"postcode": "65120",
+					"locality": "bareges"
+				},
+				"got": {
+					"lat": 42.90312,
+					"lon": 0.09716
+				},
+				"parsed": {
+					"house_number": "5",
+					"street": "Route du Tourmalet",
+					"postcode": "65120",
+					"locality": "Bareges"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "19600 Larche, 457 Route De Puyjubert",
+				"expected": {
+					"lat": 45.124462,
+					"lon": 1.441115,
+					"postcode": "19600",
+					"locality": "larche"
+				},
+				"got": {
+					"lat": 45.124462,
+					"lon": 1.441115
+				},
+				"parsed": {
+					"house_number": "457",
+					"street": "Route De Puyjubert",
+					"postcode": "19600",
+					"locality": "Larche"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			},
+			{
+				"input": "45140 Ingre, 7 Rue des Malgroux",
+				"expected": {
+					"lat": 47.921649,
+					"lon": 1.817205,
+					"postcode": "45140",
+					"locality": "ingre"
+				},
+				"got": {
+					"lat": 47.921649,
+					"lon": 1.817205
+				},
+				"parsed": {
+					"house_number": "7",
+					"street": "Rue des Malgroux",
+					"postcode": "45140",
+					"locality": "Ingre"
+				},
+				"countryCode": "FR",
+				"tier": "address_point",
+				"km": 0,
+				"routed": true
+			}
+		]
+	}
+}

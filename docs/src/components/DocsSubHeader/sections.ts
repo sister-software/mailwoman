@@ -24,5 +24,6 @@ export const DOCS_SECTIONS: readonly DocsSectionDef[] = [
 	{ id: "product", label: "Product" },
 	{ id: "solutions", label: "Solutions" },
 	{ id: "developers", label: "Developers" },
+	{ id: "resources", label: "Resources" },
 	{ id: "about", label: "About" },
 ]

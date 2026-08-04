@@ -1,0 +1,204 @@
+---
+title: Belgium — 30 addresses, three configurations
+description: A bilingual thirty-address Belgian panel through the local pipeline, and the country prior that decides whether six of them land in the right country.
+role: evidence
+---
+
+# Belgium — 30 addresses, three configurations
+
+## What ran
+
+On **2026-08-04** we ran 30 Belgian address lines through a local install three times, changing one
+thing each time. Belgium was chosen because it is _not_ a measured locale: no Belgian rooftop register
+ships, no `nl-BE` or `fr-BE` weights package exists, and the global admin gazetteer is the only
+artifact answering. This panel reports what that gets you.
+
+It also carries a case Belgium is well suited to. Five Brussels streets appear twice, once in Dutch
+and once in French — `Wetstraat` and `Rue de la Loi`, `Grote Markt` and `Grand-Place` — so a pair
+tests whether two surface forms of one street reach one place.
+
+The result the page turns on: out of the box, six of the 30 rows do not land in Belgium. Setting one
+option fixes all six.
+
+## Method
+
+The panel is [`be-panel.json`](/benchmarks/be-panel.json): thirty address lines built from public
+street names, each paired with the postcode and commune it belongs to. Ten are the five bilingual
+Brussels pairs; nine are in Flanders, nine in Wallonia, and two in the German-speaking Community. No
+Belgian rooftop register ships, so the house number is parsed and never looked up — the panel does not
+depend on any particular number existing at any of these streets.
+
+Three arms, each named for the question a reader arrives with:
+
+| Arm              | Weights | Configured             | Question                                       |
+| ---------------- | ------- | ---------------------- | ---------------------------------------------- |
+| `base`           | `en-US` | nothing                | What does an install plus a gazetteer give me? |
+| `fr-overlay`     | `fr-FR` | nothing                | Does the nearest measured locale help?         |
+| `country-pinned` | `en-US` | `defaultCountry: "BE"` | What if I tell it the file is Belgian?         |
+
+The first two leave the country unpinned, because country routing is the measurement. Belgian place
+names collide with Dutch, French and Slovenian ones, and a cross-border miss is the failure worth
+catching.
+
+Four things are graded, and there is no ground-truth coordinate set among them. Belgium has no public
+rooftop register we can grade distances against, so this page claims no distance to a true building.
+
+- **Resolution** — did a coordinate come back, and at which tier.
+- **Country routing** — is the coordinate inside a bounding box drawn around Belgium's extremes, and
+  does the result name `BE`. A coordinate outside the box did not land in Belgium; one inside it is
+  not thereby correct.
+- **Locality**, split in two. `parsed` reads the span the model labeled, which is close to circular —
+  the commune is right there in the input string. `resolved` reads only the nodes the resolver
+  decorated. The second is the number that means the gazetteer agreed, and the gap between them is
+  the interesting part.
+- **Bilingual agreement** — for each pair, the distance between the two language forms. This one needs
+  no ground truth at all: the two rows name one street, so any distance between them is the pipeline
+  disagreeing with itself.
+
+## Numbers
+
+Thirty rows per arm, from [`be-results.json`](/benchmarks/be-results.json):
+
+| Measure                         | `base` | `fr-overlay` | `country-pinned` |
+| ------------------------------- | ------ | ------------ | ---------------- |
+| Returned a coordinate           | 27     | 27           | 30               |
+| Inside the Belgium bounding box | 24     | 24           | 30               |
+| Result names `BE`               | 24     | 24           | 30               |
+| Locality — parsed               | 29     | 29           | 30               |
+| Locality — resolved             | 26     | 26           | 30               |
+| Bilingual pairs declared        | 5      | 5            | 5                |
+| Bilingual pairs comparable      | 4      | 4            | 5                |
+| Bilingual pairs agreeing        | 4      | 4            | 5                |
+| Worst pair separation           | 0 km   | 0 km         | 0 km             |
+| Answered at `admin`             | 30     | 30           | 30               |
+
+Three readings, in order of how much they change what you would do:
+
+**The tier row is the same in every arm, and it is the whole ceiling.** Every row answers at `admin` —
+a commune centroid. Nothing on this panel is street-grade, because there is no Belgian artifact that
+could make it street-grade. A perfect score here means "resolved to the right commune", and a commune
+is kilometers wide.
+
+**The French overlay changes nothing.** The `fr-overlay` arm is identical to `base` on every measure
+and on every one of the thirty per-row records. Half this panel is French-language, and reaching for
+the French weights package did not move a single row. Belgium is not a tier, and choosing the nearest
+tier does not make it one.
+
+**Pinning the country fixes every failure.** `country-pinned` is 30 out of 30 on all five resolution
+measures. That is one option in the call, and the section below is what it is repairing.
+
+## Losses
+
+Six rows fail in the `base` arm. Five are one defect and the sixth is a different one.
+
+| Address                             | Where it landed                  | Named |
+| ----------------------------------- | -------------------------------- | ----- |
+| `Grote Markt 1, 1000 Brussel`       | no coordinate                    | —     |
+| `Rathausplatz 1, 4700 Eupen`        | no coordinate                    | —     |
+| `Hauptstrasse 1, 4780 Sankt Vith`   | no coordinate                    | —     |
+| `Oude Markt 1, 3000 Leuven`         | 51.844, 5.094 — the Netherlands  | `NL`  |
+| `Place Saint-Lambert 1, 4000 Liège` | 47.229, 1.110 — Le Liège, France | `FR`  |
+| `Rue Léopold 1, 4000 Liège`         | 46.243, 14.364 — Slovenia        | `SI`  |
+
+The gazetteer is not the problem. Probing `candidate.db` directly for the names these rows carry:
+
+```
+leuven      → Leuven/BE pop=102275  |  Leuven/BE pop=101032  |  Leuven/NL pop=0
+liege       → Liège/BE pop=197013   |  Liège/BE pop=195278   |  … |  Le Liège/FR pop=238
+eupen       → Eupen/BE pop=19254
+sankt vith  → Sankt Vith/BE pop=9481
+```
+
+The Belgian answer is present and ranked first in each case. A 102,275-person Belgian city loses to a
+zero-population Dutch hamlet of the same name, and a 197,013-person Belgian city loses to a
+238-person French commune, so ranking is not what decided these.
+
+The country prior is. Re-running the six failures with the country filter disabled, same weights, same
+gazetteer, same input strings:
+
+```
+default                  hardPlaceCountry: false
+─────────────────────    ────────────────────────
+(none)             →     BE  50.850, 4.349   Grote Markt 1, 1000 Brussel
+(none)             →     BE  50.631, 6.031   Rathausplatz 1, 4700 Eupen
+(none)             →     BE  50.280, 6.126   Hauptstrasse 1, 4780 Sankt Vith
+NL 51.844, 5.094   →     BE  50.879, 4.701   Oude Markt 1, 3000 Leuven
+FR 47.229, 1.110   →     BE  50.645, 5.574   Place Saint-Lambert 1, 4000 Liège
+SI 46.243, 14.364  →     SI  46.243, 14.364  Rue Léopold 1, 4000 Liège
+```
+
+Five of the six recover. The mechanism is that a confident whole-string country guess is promoted from
+a ranking bias to a filter, and when the guess is wrong the correct candidates are removed before
+ranking runs. That is also why three of the six returned nothing rather than something wrong: with
+every Belgian candidate filtered out, there was nothing left to rank.
+
+**The sixth row is a parse failure and survives every fix.** `Rue Léopold 1, 4000 Liège` parses as
+street `Rue Léopold 1`, postcode `4000 Liège`, house number `null` — the number is swallowed into the
+street span and the commune into the postcode span. Slovenia's postcode 4000 is Kranj, and a query
+carrying `4000` and no readable commune routes there. Under `country-pinned` this row returns the
+right coordinate, and its parse is still wrong: house number `null`, street still `Rue Léopold 1`,
+postcode still `4000 Liège`. **The 30-out-of-30 above includes a row whose parse is broken.** That is
+the resolve-rate trap in its natural habitat, and it is the reason this page reports the parsed and
+resolved locality counts as two columns instead of one.
+
+**One bilingual pair could not be measured.** `Grote Markt 1, 1000 Brussel` returned no coordinate in
+the `base` and `fr-overlay` arms, so its French twin had nothing to be compared against. The pairs
+row reads `4 comparable of 5 declared` rather than `4 of 4` because an early version of the script
+dropped the unmeasurable pair from its own denominator and reported a clean sweep. Of the pairs that
+could be compared, every one agreed to within the reporting precision, in every arm.
+
+## Caveats
+
+**Belgium is not a measured locale, and this panel does not make it one.** There is no Belgian eval
+set, no Belgian training tier, and no Belgian rooftop data. Everything above is 30 addresses through
+a global gazetteer. [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) draws the
+line this page sits outside of.
+
+**Every number is a commune-grade number.** All 90 row-runs answered at `admin`. Do not read
+`30 of 30` as street accuracy — read it as "the right commune centroid", with the error bounded by
+the size of the commune rather than by anything measured here.
+
+**The bounding-box check is coarse in one direction only.** A coordinate outside the box definitely
+missed Belgium. A coordinate inside it could still be the wrong commune, and the locality column is
+what covers that case.
+
+**The locality expectations are ours.** Each row carries a committed list of accepted commune
+spellings in `be-panel.json`, covering the Dutch, French and English forms a gazetteer may hold. We
+wrote those lists. They are public facts and checkable, and they are still our lists.
+
+**n = 30, and the rows are civic addresses on well-known streets.** That is an easier population than
+a delivery manifest. A harder panel would score worse, and we have not run one.
+
+## What to do with this
+
+Pin the country when you know it. For a file you already know is Belgian, `defaultCountry: "BE"` took
+this panel from 24 correct to 30, and it is the same one-line change in the library, the CLI and the
+server. The country prior exists to help an input that arrives with no context; a file that _has_
+context should say so rather than let the prior guess.
+
+## Reproduce
+
+The script is [`be-panel.mjs`](/benchmarks/be-panel.mjs), the panel is
+[`be-panel.json`](/benchmarks/be-panel.json), and the output above is
+[`be-results.json`](/benchmarks/be-results.json) verbatim, including a per-row record for all thirty
+addresses in each of the three arms.
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \
+            @mailwoman/neural-weights-fr-fr @mailwoman/resolver \
+            @mailwoman/resolver-wof-sqlite @mailwoman/spatial
+mailwoman data pull candidate
+node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
+```
+
+One 1.65 GB bundle, and no rooftop shard — that is the point of the panel. The three arms took
+3,703 ms together, model load excluded.
+
+## Related
+
+- [France — 100 addresses from the BAN](./france-ban.mdx) — the same machinery where a national
+  register does exist.
+- [Reading our numbers](./reading-our-numbers.mdx) — why the resolve rate and the precision are
+  different numbers.
+- [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) — which countries are measured.
+- [Runtime flags](../../developers/reference/runtime-flags.mdx) — the country prior and its filter.

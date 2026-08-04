@@ -1,0 +1,130 @@
+---
+title: Self-hosted Nominatim
+description: The OpenStreetMap search engine against a label-then-look-up parser — what each is built to do, and when to run Nominatim.
+role: explanation
+---
+
+# Self-hosted Nominatim
+
+## The question
+
+Both of these run on your own hardware, keep queries off the network, and cost infrastructure rather
+than per request. So the residency argument does not separate them, and neither does the licensing
+one. What separates them is what happens to your string after it arrives.
+
+## What Nominatim is
+
+Nominatim is the search engine behind OpenStreetMap's own place search. Its documentation, read on
+**2026-08-04** at version 5.3.2, defines it as:
+
+> "Nominatim (from the Latin, 'by name') is a tool to search OSM data by name and address and to
+> generate synthetic addresses of OSM points (reverse geocoding)."
+>
+> — [Nominatim manual](https://nominatim.org/release-docs/latest/)
+
+It offers search, reverse geocoding, address lookup, details and status endpoints, and the manual
+notes a "limited capability to search features by their type (pubs, hotels, churches, etc)."
+
+Its published install requirements, read the same day:
+
+> "A minimum of 2GB of RAM is required or installation will fail. For a full planet import 128GB of
+> RAM or more are strongly recommended." … "For a full planet install you will need at least 1TB of
+> hard disk space."
+>
+> — [Nominatim installation](https://nominatim.org/release-docs/latest/admin/Installation/)
+
+Read that as what it is: a planet-scale recommendation for smooth operation under load, published by
+a project that would rather you provision correctly than discover the ceiling in production. A
+country-scale import is a different and much smaller thing, and the same page is where you would find
+that out.
+
+## What each one is built to do
+
+Nominatim indexes every OSM place as a searchable record and ranks your whole string against the
+index. Mailwoman labels the spans of your string first and then runs one constrained lookup per span.
+That single difference produces the rest of this table.
+
+|                        | Nominatim                                  | Mailwoman                                                |
+| ---------------------- | ------------------------------------------ | -------------------------------------------------------- |
+| Design                 | Search over an index of every place        | Label the string, then look up each span                 |
+| Store                  | PostgreSQL with spatial extensions         | Sealed SQLite files, read from disk                      |
+| Reference data         | OpenStreetMap                              | Who's On First, plus national registers per country      |
+| Ambiguity              | Surfaced as a ranked result list           | Resolved to one reading, with alternatives attached      |
+| Partial or fuzzy input | A strength — scoring is continuous         | A weakness — a failed parse has nothing to look up       |
+| Non-address queries    | Answers them; place types are searchable   | Not the design                                           |
+| What arrives           | A matched record with an address breakdown | Labeled spans with offsets, plus a coordinate and a tier |
+| Setup                  | An import and an index build               | A package install and a download                         |
+
+**Where Nominatim is stronger, without qualification.** It answers queries that are not addresses.
+It degrades gracefully — a misspelled or half-remembered string still returns a ranked list, where a
+parser that mislabels a span looks up the wrong index and returns nothing at all. Its data is
+OpenStreetMap, so a place that exists in OSM is reachable the day it is mapped, with no locale tier
+to wait for. And a ranked list is the right shape for a search box, which is what it was built to
+serve.
+
+**Where the designs diverge on output.** Nominatim returns the record that matched. Mailwoman returns
+which characters of your input were the street and which were the town, with offsets. If your next
+step is deduplication, validation or record matching, that decomposition is the product and a matched
+record is a step short of it.
+
+## When to choose Nominatim
+
+- **Your queries are exploratory.** Search boxes, partial strings, landmarks, place types. This is its
+  home ground, and a parser is the wrong instrument because there is frequently nothing to parse.
+- **You want OpenStreetMap specifically.** If your workflow depends on OSM identifiers, OSM tags, or
+  contributing corrections upstream and seeing them in your own results, that loop is worth more than
+  any property of a different engine.
+- **You are already operating PostgreSQL well.** The database is the operational burden, and a team
+  that runs Postgres competently has already paid most of it.
+- **You need a country outside the measured tiers.** OSM coverage is a property of the map, not of a
+  locale tier. Where our coverage is unverified,
+  [What ships today](../../developers/status.mdx) says so, and an engine with global OSM coverage is
+  the more predictable choice.
+- **Your workload is reverse geocoding over dense OSM features.** Coordinate to nearest mapped
+  feature, across every feature class, is what the index is arranged for.
+
+## When to choose Mailwoman
+
+- **Your input is postal.** Rows from a form, a CRM export, a delivery manifest — strings that are
+  addresses, where the parse is the useful part.
+- **You need the decomposition.** Spans with offsets, not a matched record you post-process into
+  fields.
+- **You want a smaller resident footprint.** The gazetteer is read from disk rather than held in
+  memory, which is what the constrained-probe design buys.
+- **You want to scope the data to what you serve.** Coverage is a set of downloads, so a France-only
+  deployment carries France-sized artifacts.
+- **You have Nominatim clients already written.** `@mailwoman/nominatim` serves `/search`, `/reverse`
+  and `/status` on a compatible surface, so the swap does not touch calling code —
+  [Swap in for Nominatim](../../developers/tutorials/swap-in-for-nominatim.mdx) walks it.
+
+## The two compose
+
+A pipeline can label first, take the constrained lookup when it succeeds, and fall back to a ranked
+search over the raw string when the labeling produces nothing usable. That inherits both sets of
+costs and is a real design — it is the shape to reach for when your input is mostly postal with a
+tail that is not.
+
+## Run it yourself
+
+The comparison that decides this is not ours to run for you: take a thousand rows of your own input,
+send them through both, and look at how each one fails rather than at how each one scores. Our own
+published panels and their scripts:
+
+```bash
+curl -fsSLO https://mailwoman.sister.software/benchmarks/fr-ban-panel.mjs
+curl -fsSLO https://mailwoman.sister.software/benchmarks/fr-ban-sample.json
+mailwoman data pull candidate fr
+node fr-ban-panel.mjs --data-root <DATA_ROOT>
+```
+
+[Benchmarks](../benchmarks/index.mdx) carries the method and the results, including the rows that
+missed.
+
+## Related
+
+- [The two architectures](../../developers/knowledge-base/geocoding/the-two-architectures.mdx) — the
+  design split this page is a case of, with the hardware figures for four engines.
+- [Swap in for Nominatim](../../developers/tutorials/swap-in-for-nominatim.mdx) — the compatible
+  endpoint, end to end.
+- [Drop-in replacements](../../product/drop-in-replacements.mdx) — what the compatible surfaces cover.
+- [Footprints](../../developers/reference/footprints.mdx) — our measured install and download sizes.

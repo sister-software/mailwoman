@@ -1,0 +1,2304 @@
+{
+	"harness": "be-panel.mjs",
+	"ranAt": "2026-08-04T04:53:34.265Z",
+	"elapsedMs": 3703,
+	"panel": {
+		"rows": 30,
+		"bbox": {
+			"note": "A bounding box drawn around Belgium's geographic extremes, used as a coarse country-routing check. A coordinate outside it did not land in Belgium; a coordinate inside it is not thereby correct.",
+			"minLon": 2.5,
+			"maxLon": 6.41,
+			"minLat": 49.49,
+			"maxLat": 51.51
+		}
+	},
+	"config": {
+		"gazetteer": "candidate.db",
+		"nationalTier": "none — no Belgian rooftop register ships",
+		"pairAgreementKm": 0.1
+	},
+	"arms": {
+		"base": {
+			"arm": "base",
+			"locale": "en-US",
+			"geocodeOpts": {},
+			"n": 30,
+			"resolved": 27,
+			"inBelgium": 24,
+			"countryCodeBE": 24,
+			"localityParsed": 29,
+			"localityResolved": 26,
+			"tiers": {
+				"admin": 30
+			},
+			"pairsDeclared": 5,
+			"pairsComparable": 4,
+			"pairsAgreeing": 4,
+			"worstPairKm": 0
+		},
+		"fr-overlay": {
+			"arm": "fr-overlay",
+			"locale": "fr-FR",
+			"geocodeOpts": {},
+			"n": 30,
+			"resolved": 27,
+			"inBelgium": 24,
+			"countryCodeBE": 24,
+			"localityParsed": 29,
+			"localityResolved": 26,
+			"tiers": {
+				"admin": 30
+			},
+			"pairsDeclared": 5,
+			"pairsComparable": 4,
+			"pairsAgreeing": 4,
+			"worstPairKm": 0
+		},
+		"country-pinned": {
+			"arm": "country-pinned",
+			"locale": "en-US",
+			"geocodeOpts": {
+				"defaultCountry": "BE"
+			},
+			"n": 30,
+			"resolved": 30,
+			"inBelgium": 30,
+			"countryCodeBE": 30,
+			"localityParsed": 30,
+			"localityResolved": 30,
+			"tiers": {
+				"admin": 30
+			},
+			"pairsDeclared": 5,
+			"pairsComparable": 5,
+			"pairsAgreeing": 5,
+			"worstPairKm": 0
+		}
+	},
+	"pairs": {
+		"base": [
+			{
+				"pair": "loi",
+				"nl": "Wetstraat 16, 1000 Brussel",
+				"fr": "Rue de la Loi 16, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "grand-place",
+				"nl": "Grote Markt 1, 1000 Brussel",
+				"fr": "Grand-Place 1, 1000 Bruxelles",
+				"comparable": false,
+				"km": null,
+				"sameTier": true
+			},
+			{
+				"pair": "neuve",
+				"nl": "Nieuwstraat 1, 1000 Brussel",
+				"fr": "Rue Neuve 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "royale",
+				"nl": "Koningsstraat 1, 1000 Brussel",
+				"fr": "Rue Royale 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "anspach",
+				"nl": "Anspachlaan 1, 1000 Brussel",
+				"fr": "Boulevard Anspach 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			}
+		],
+		"fr-overlay": [
+			{
+				"pair": "loi",
+				"nl": "Wetstraat 16, 1000 Brussel",
+				"fr": "Rue de la Loi 16, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "grand-place",
+				"nl": "Grote Markt 1, 1000 Brussel",
+				"fr": "Grand-Place 1, 1000 Bruxelles",
+				"comparable": false,
+				"km": null,
+				"sameTier": true
+			},
+			{
+				"pair": "neuve",
+				"nl": "Nieuwstraat 1, 1000 Brussel",
+				"fr": "Rue Neuve 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "royale",
+				"nl": "Koningsstraat 1, 1000 Brussel",
+				"fr": "Rue Royale 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "anspach",
+				"nl": "Anspachlaan 1, 1000 Brussel",
+				"fr": "Boulevard Anspach 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			}
+		],
+		"country-pinned": [
+			{
+				"pair": "loi",
+				"nl": "Wetstraat 16, 1000 Brussel",
+				"fr": "Rue de la Loi 16, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "grand-place",
+				"nl": "Grote Markt 1, 1000 Brussel",
+				"fr": "Grand-Place 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "neuve",
+				"nl": "Nieuwstraat 1, 1000 Brussel",
+				"fr": "Rue Neuve 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "royale",
+				"nl": "Koningsstraat 1, 1000 Brussel",
+				"fr": "Rue Royale 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			},
+			{
+				"pair": "anspach",
+				"nl": "Anspachlaan 1, 1000 Brussel",
+				"fr": "Boulevard Anspach 1, 1000 Bruxelles",
+				"comparable": true,
+				"km": 0,
+				"sameTier": true
+			}
+		]
+	},
+	"records": {
+		"base": [
+			{
+				"id": "bxl-loi-nl",
+				"input": "Wetstraat 16, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "loi",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "16",
+					"street": "Wetstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-loi-fr",
+				"input": "Rue de la Loi 16, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "loi",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "16",
+					"street": "Rue de la Loi",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-grote-markt-nl",
+				"input": "Grote Markt 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "grand-place",
+				"lat": null,
+				"lon": null,
+				"tier": "admin",
+				"countryCode": null,
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-grand-place-fr",
+				"input": "Grand-Place 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "grand-place",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-nieuwstraat-nl",
+				"input": "Nieuwstraat 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "neuve",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Nieuwstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-rue-neuve-fr",
+				"input": "Rue Neuve 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "neuve",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue Neuve",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-koningsstraat-nl",
+				"input": "Koningsstraat 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "royale",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Koningsstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-rue-royale-fr",
+				"input": "Rue Royale 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "royale",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue Royale",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-anspachlaan-nl",
+				"input": "Anspachlaan 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "anspach",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Anspachlaan",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-boulevard-anspach-fr",
+				"input": "Boulevard Anspach 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "anspach",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Boulevard Anspach",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "antwerpen-grote-markt",
+				"input": "Grote Markt 1, 2000 Antwerpen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.22047,
+				"lon": 4.40026,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Antwerp",
+					"Antwerpen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "2000",
+					"locality": "Antwerpen"
+				}
+			},
+			{
+				"id": "antwerpen-meir",
+				"input": "Meir 1, 2000 Antwerpen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.22047,
+				"lon": 4.40026,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Antwerp",
+					"Antwerpen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Meir",
+					"postcode": "2000",
+					"locality": "Antwerpen"
+				}
+			},
+			{
+				"id": "gent-korenmarkt",
+				"input": "Korenmarkt 1, 9000 Gent",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0538286,
+				"lon": 3.7250121,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Gent"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Korenmarkt",
+					"postcode": "9000",
+					"locality": "Gent"
+				}
+			},
+			{
+				"id": "gent-veldstraat",
+				"input": "Veldstraat 1, 9000 Gent",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0538286,
+				"lon": 3.7250121,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Gent"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Veldstraat",
+					"postcode": "9000",
+					"locality": "Gent"
+				}
+			},
+			{
+				"id": "brugge-markt",
+				"input": "Markt 1, 8000 Brugge",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.20892,
+				"lon": 3.22424,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brugge"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Markt",
+					"postcode": "8000",
+					"locality": "Brugge"
+				}
+			},
+			{
+				"id": "leuven-oude-markt",
+				"input": "Oude Markt 1, 3000 Leuven",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.84417,
+				"lon": 5.09444,
+				"tier": "admin",
+				"countryCode": "NL",
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Leuven"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Oude Markt",
+					"postcode": "3000",
+					"locality": "Leuven"
+				}
+			},
+			{
+				"id": "hasselt-grote-markt",
+				"input": "Grote Markt 1, 3500 Hasselt",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 50.93106,
+				"lon": 5.33781,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Hasselt"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "3500",
+					"locality": "Hasselt"
+				}
+			},
+			{
+				"id": "oostende-kapellestraat",
+				"input": "Kapellestraat 1, 8400 Oostende",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.2258565,
+				"lon": 2.919496,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Oostende"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Kapellestraat",
+					"postcode": "8400",
+					"locality": "Oostende"
+				}
+			},
+			{
+				"id": "mechelen-grote-markt",
+				"input": "Grote Markt 1, 2800 Mechelen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0281381,
+				"lon": 4.4803453,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Mechelen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "2800",
+					"locality": "Mechelen"
+				}
+			},
+			{
+				"id": "liege-saint-lambert",
+				"input": "Place Saint-Lambert 1, 4000 Liège",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 47.228695,
+				"lon": 1.109793,
+				"tier": "admin",
+				"countryCode": "FR",
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Le Liège",
+					"Liège"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Saint-Lambert",
+					"postcode": "4000",
+					"locality": "Liège"
+				}
+			},
+			{
+				"id": "liege-leopold",
+				"input": "Rue Léopold 1, 4000 Liège",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 46.24313037410937,
+				"lon": 14.363868646747052,
+				"tier": "admin",
+				"countryCode": "SI",
+				"inBelgium": false,
+				"localityParsed": false,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": null,
+					"street": "Rue Léopold 1",
+					"postcode": "4000 Liège",
+					"locality": null
+				}
+			},
+			{
+				"id": "namur-armes",
+				"input": "Place d'Armes 1, 5000 Namur",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4665284,
+				"lon": 4.8661892,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Namur"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place d'Armes",
+					"postcode": "5000",
+					"locality": "Namur"
+				}
+			},
+			{
+				"id": "namur-fer",
+				"input": "Rue de Fer 1, 5000 Namur",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4665284,
+				"lon": 4.8661892,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Namur"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue de Fer",
+					"postcode": "5000",
+					"locality": "Namur"
+				}
+			},
+			{
+				"id": "mons-grand-place",
+				"input": "Grand-Place 1, 7000 Mons",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.45413,
+				"lon": 3.95229,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Mons"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "7000",
+					"locality": "Mons"
+				}
+			},
+			{
+				"id": "charleroi-charles-ii",
+				"input": "Place Charles II 1, 6000 Charleroi",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4116233,
+				"lon": 4.444528,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Charleroi"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Charles II",
+					"postcode": "6000",
+					"locality": "Charleroi"
+				}
+			},
+			{
+				"id": "nivelles-grand-place",
+				"input": "Grand-Place 1, 1400 Nivelles",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.5976885,
+				"lon": 4.3235854,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Nivelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "1400",
+					"locality": "Nivelles"
+				}
+			},
+			{
+				"id": "arlon-grand-place",
+				"input": "Grand-Place 1, 6700 Arlon",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 49.6834601,
+				"lon": 5.8167711,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Arlon"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "6700",
+					"locality": "Arlon"
+				}
+			},
+			{
+				"id": "verviers-place-verte",
+				"input": "Place Verte 1, 4800 Verviers",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.59324,
+				"lon": 5.867828,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Verviers"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Verte",
+					"postcode": "4800",
+					"locality": "Verviers"
+				}
+			},
+			{
+				"id": "eupen-rathausplatz",
+				"input": "Rathausplatz 1, 4700 Eupen",
+				"language": "de",
+				"area": "German-speaking Community",
+				"pair": null,
+				"lat": null,
+				"lon": null,
+				"tier": "admin",
+				"countryCode": null,
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rathausplatz",
+					"postcode": "4700",
+					"locality": "Eupen"
+				}
+			},
+			{
+				"id": "sankt-vith-hauptstrasse",
+				"input": "Hauptstrasse 1, 4780 Sankt Vith",
+				"language": "de",
+				"area": "German-speaking Community",
+				"pair": null,
+				"lat": null,
+				"lon": null,
+				"tier": "admin",
+				"countryCode": null,
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": "1",
+					"street": "Hauptstrasse",
+					"postcode": "4780",
+					"locality": "Sankt Vith"
+				}
+			}
+		],
+		"fr-overlay": [
+			{
+				"id": "bxl-loi-nl",
+				"input": "Wetstraat 16, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "loi",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "16",
+					"street": "Wetstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-loi-fr",
+				"input": "Rue de la Loi 16, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "loi",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "16",
+					"street": "Rue de la Loi",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-grote-markt-nl",
+				"input": "Grote Markt 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "grand-place",
+				"lat": null,
+				"lon": null,
+				"tier": "admin",
+				"countryCode": null,
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-grand-place-fr",
+				"input": "Grand-Place 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "grand-place",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-nieuwstraat-nl",
+				"input": "Nieuwstraat 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "neuve",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Nieuwstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-rue-neuve-fr",
+				"input": "Rue Neuve 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "neuve",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue Neuve",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-koningsstraat-nl",
+				"input": "Koningsstraat 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "royale",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Koningsstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-rue-royale-fr",
+				"input": "Rue Royale 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "royale",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue Royale",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-anspachlaan-nl",
+				"input": "Anspachlaan 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "anspach",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Anspachlaan",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-boulevard-anspach-fr",
+				"input": "Boulevard Anspach 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "anspach",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Boulevard Anspach",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "antwerpen-grote-markt",
+				"input": "Grote Markt 1, 2000 Antwerpen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.22047,
+				"lon": 4.40026,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Antwerp",
+					"Antwerpen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "2000",
+					"locality": "Antwerpen"
+				}
+			},
+			{
+				"id": "antwerpen-meir",
+				"input": "Meir 1, 2000 Antwerpen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.22047,
+				"lon": 4.40026,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Antwerp",
+					"Antwerpen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Meir",
+					"postcode": "2000",
+					"locality": "Antwerpen"
+				}
+			},
+			{
+				"id": "gent-korenmarkt",
+				"input": "Korenmarkt 1, 9000 Gent",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0538286,
+				"lon": 3.7250121,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Gent"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Korenmarkt",
+					"postcode": "9000",
+					"locality": "Gent"
+				}
+			},
+			{
+				"id": "gent-veldstraat",
+				"input": "Veldstraat 1, 9000 Gent",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0538286,
+				"lon": 3.7250121,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Gent"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Veldstraat",
+					"postcode": "9000",
+					"locality": "Gent"
+				}
+			},
+			{
+				"id": "brugge-markt",
+				"input": "Markt 1, 8000 Brugge",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.20892,
+				"lon": 3.22424,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brugge"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Markt",
+					"postcode": "8000",
+					"locality": "Brugge"
+				}
+			},
+			{
+				"id": "leuven-oude-markt",
+				"input": "Oude Markt 1, 3000 Leuven",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.84417,
+				"lon": 5.09444,
+				"tier": "admin",
+				"countryCode": "NL",
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Leuven"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Oude Markt",
+					"postcode": "3000",
+					"locality": "Leuven"
+				}
+			},
+			{
+				"id": "hasselt-grote-markt",
+				"input": "Grote Markt 1, 3500 Hasselt",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 50.93106,
+				"lon": 5.33781,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Hasselt"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "3500",
+					"locality": "Hasselt"
+				}
+			},
+			{
+				"id": "oostende-kapellestraat",
+				"input": "Kapellestraat 1, 8400 Oostende",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.2258565,
+				"lon": 2.919496,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Oostende"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Kapellestraat",
+					"postcode": "8400",
+					"locality": "Oostende"
+				}
+			},
+			{
+				"id": "mechelen-grote-markt",
+				"input": "Grote Markt 1, 2800 Mechelen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0281381,
+				"lon": 4.4803453,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Mechelen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "2800",
+					"locality": "Mechelen"
+				}
+			},
+			{
+				"id": "liege-saint-lambert",
+				"input": "Place Saint-Lambert 1, 4000 Liège",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 47.228695,
+				"lon": 1.109793,
+				"tier": "admin",
+				"countryCode": "FR",
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Le Liège",
+					"Liège"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Saint-Lambert",
+					"postcode": "4000",
+					"locality": "Liège"
+				}
+			},
+			{
+				"id": "liege-leopold",
+				"input": "Rue Léopold 1, 4000 Liège",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 46.24313037410937,
+				"lon": 14.363868646747052,
+				"tier": "admin",
+				"countryCode": "SI",
+				"inBelgium": false,
+				"localityParsed": false,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": null,
+					"street": "Rue Léopold 1",
+					"postcode": "4000 Liège",
+					"locality": null
+				}
+			},
+			{
+				"id": "namur-armes",
+				"input": "Place d'Armes 1, 5000 Namur",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4665284,
+				"lon": 4.8661892,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Namur"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place d'Armes",
+					"postcode": "5000",
+					"locality": "Namur"
+				}
+			},
+			{
+				"id": "namur-fer",
+				"input": "Rue de Fer 1, 5000 Namur",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4665284,
+				"lon": 4.8661892,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Namur"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue de Fer",
+					"postcode": "5000",
+					"locality": "Namur"
+				}
+			},
+			{
+				"id": "mons-grand-place",
+				"input": "Grand-Place 1, 7000 Mons",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.45413,
+				"lon": 3.95229,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Mons"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "7000",
+					"locality": "Mons"
+				}
+			},
+			{
+				"id": "charleroi-charles-ii",
+				"input": "Place Charles II 1, 6000 Charleroi",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4116233,
+				"lon": 4.444528,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Charleroi"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Charles II",
+					"postcode": "6000",
+					"locality": "Charleroi"
+				}
+			},
+			{
+				"id": "nivelles-grand-place",
+				"input": "Grand-Place 1, 1400 Nivelles",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.5976885,
+				"lon": 4.3235854,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Nivelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "1400",
+					"locality": "Nivelles"
+				}
+			},
+			{
+				"id": "arlon-grand-place",
+				"input": "Grand-Place 1, 6700 Arlon",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 49.6834601,
+				"lon": 5.8167711,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Arlon"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "6700",
+					"locality": "Arlon"
+				}
+			},
+			{
+				"id": "verviers-place-verte",
+				"input": "Place Verte 1, 4800 Verviers",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.59324,
+				"lon": 5.867828,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Verviers"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Verte",
+					"postcode": "4800",
+					"locality": "Verviers"
+				}
+			},
+			{
+				"id": "eupen-rathausplatz",
+				"input": "Rathausplatz 1, 4700 Eupen",
+				"language": "de",
+				"area": "German-speaking Community",
+				"pair": null,
+				"lat": null,
+				"lon": null,
+				"tier": "admin",
+				"countryCode": null,
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rathausplatz",
+					"postcode": "4700",
+					"locality": "Eupen"
+				}
+			},
+			{
+				"id": "sankt-vith-hauptstrasse",
+				"input": "Hauptstrasse 1, 4780 Sankt Vith",
+				"language": "de",
+				"area": "German-speaking Community",
+				"pair": null,
+				"lat": null,
+				"lon": null,
+				"tier": "admin",
+				"countryCode": null,
+				"inBelgium": false,
+				"localityParsed": true,
+				"localityResolved": false,
+				"hierarchyNames": [],
+				"parsed": {
+					"house_number": "1",
+					"street": "Hauptstrasse",
+					"postcode": "4780",
+					"locality": "Sankt Vith"
+				}
+			}
+		],
+		"country-pinned": [
+			{
+				"id": "bxl-loi-nl",
+				"input": "Wetstraat 16, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "loi",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "16",
+					"street": "Wetstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-loi-fr",
+				"input": "Rue de la Loi 16, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "loi",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "16",
+					"street": "Rue de la Loi",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-grote-markt-nl",
+				"input": "Grote Markt 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "grand-place",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-grand-place-fr",
+				"input": "Grand-Place 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "grand-place",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-nieuwstraat-nl",
+				"input": "Nieuwstraat 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "neuve",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Nieuwstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-rue-neuve-fr",
+				"input": "Rue Neuve 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "neuve",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue Neuve",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-koningsstraat-nl",
+				"input": "Koningsstraat 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "royale",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Koningsstraat",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-rue-royale-fr",
+				"input": "Rue Royale 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "royale",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue Royale",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "bxl-anspachlaan-nl",
+				"input": "Anspachlaan 1, 1000 Brussel",
+				"language": "nl",
+				"area": "Brussels-Capital",
+				"pair": "anspach",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Brussel"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Anspachlaan",
+					"postcode": "1000",
+					"locality": "Brussel"
+				}
+			},
+			{
+				"id": "bxl-boulevard-anspach-fr",
+				"input": "Boulevard Anspach 1, 1000 Bruxelles",
+				"language": "fr",
+				"area": "Brussels-Capital",
+				"pair": "anspach",
+				"lat": 50.85045,
+				"lon": 4.34878,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brussels",
+					"Bruxelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Boulevard Anspach",
+					"postcode": "1000",
+					"locality": "Bruxelles"
+				}
+			},
+			{
+				"id": "antwerpen-grote-markt",
+				"input": "Grote Markt 1, 2000 Antwerpen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.22047,
+				"lon": 4.40026,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Antwerp",
+					"Antwerpen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "2000",
+					"locality": "Antwerpen"
+				}
+			},
+			{
+				"id": "antwerpen-meir",
+				"input": "Meir 1, 2000 Antwerpen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.22047,
+				"lon": 4.40026,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Antwerp",
+					"Antwerpen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Meir",
+					"postcode": "2000",
+					"locality": "Antwerpen"
+				}
+			},
+			{
+				"id": "gent-korenmarkt",
+				"input": "Korenmarkt 1, 9000 Gent",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0538286,
+				"lon": 3.7250121,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Gent"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Korenmarkt",
+					"postcode": "9000",
+					"locality": "Gent"
+				}
+			},
+			{
+				"id": "gent-veldstraat",
+				"input": "Veldstraat 1, 9000 Gent",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0538286,
+				"lon": 3.7250121,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Gent"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Veldstraat",
+					"postcode": "9000",
+					"locality": "Gent"
+				}
+			},
+			{
+				"id": "brugge-markt",
+				"input": "Markt 1, 8000 Brugge",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.20892,
+				"lon": 3.22424,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Brugge"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Markt",
+					"postcode": "8000",
+					"locality": "Brugge"
+				}
+			},
+			{
+				"id": "leuven-oude-markt",
+				"input": "Oude Markt 1, 3000 Leuven",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 50.879202,
+				"lon": 4.7011675,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Leuven"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Oude Markt",
+					"postcode": "3000",
+					"locality": "Leuven"
+				}
+			},
+			{
+				"id": "hasselt-grote-markt",
+				"input": "Grote Markt 1, 3500 Hasselt",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 50.93106,
+				"lon": 5.33781,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Hasselt"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "3500",
+					"locality": "Hasselt"
+				}
+			},
+			{
+				"id": "oostende-kapellestraat",
+				"input": "Kapellestraat 1, 8400 Oostende",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.2258565,
+				"lon": 2.919496,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Oostende"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Kapellestraat",
+					"postcode": "8400",
+					"locality": "Oostende"
+				}
+			},
+			{
+				"id": "mechelen-grote-markt",
+				"input": "Grote Markt 1, 2800 Mechelen",
+				"language": "nl",
+				"area": "Flanders",
+				"pair": null,
+				"lat": 51.0281381,
+				"lon": 4.4803453,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Mechelen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grote Markt",
+					"postcode": "2800",
+					"locality": "Mechelen"
+				}
+			},
+			{
+				"id": "liege-saint-lambert",
+				"input": "Place Saint-Lambert 1, 4000 Liège",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.6450944,
+				"lon": 5.5736112,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Liège"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Saint-Lambert",
+					"postcode": "4000",
+					"locality": "Liège"
+				}
+			},
+			{
+				"id": "liege-leopold",
+				"input": "Rue Léopold 1, 4000 Liège",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.6450944,
+				"lon": 5.5736112,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Liège"
+				],
+				"parsed": {
+					"house_number": null,
+					"street": "Rue Léopold 1",
+					"postcode": "4000 Liège",
+					"locality": "Liège"
+				}
+			},
+			{
+				"id": "namur-armes",
+				"input": "Place d'Armes 1, 5000 Namur",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4665284,
+				"lon": 4.8661892,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Namur"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place d'Armes",
+					"postcode": "5000",
+					"locality": "Namur"
+				}
+			},
+			{
+				"id": "namur-fer",
+				"input": "Rue de Fer 1, 5000 Namur",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4665284,
+				"lon": 4.8661892,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Namur"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rue de Fer",
+					"postcode": "5000",
+					"locality": "Namur"
+				}
+			},
+			{
+				"id": "mons-grand-place",
+				"input": "Grand-Place 1, 7000 Mons",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.45413,
+				"lon": 3.95229,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Mons"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "7000",
+					"locality": "Mons"
+				}
+			},
+			{
+				"id": "charleroi-charles-ii",
+				"input": "Place Charles II 1, 6000 Charleroi",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.4116233,
+				"lon": 4.444528,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Charleroi"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Charles II",
+					"postcode": "6000",
+					"locality": "Charleroi"
+				}
+			},
+			{
+				"id": "nivelles-grand-place",
+				"input": "Grand-Place 1, 1400 Nivelles",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.5976885,
+				"lon": 4.3235854,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Nivelles"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "1400",
+					"locality": "Nivelles"
+				}
+			},
+			{
+				"id": "arlon-grand-place",
+				"input": "Grand-Place 1, 6700 Arlon",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 49.6834601,
+				"lon": 5.8167711,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Arlon"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Grand-Place",
+					"postcode": "6700",
+					"locality": "Arlon"
+				}
+			},
+			{
+				"id": "verviers-place-verte",
+				"input": "Place Verte 1, 4800 Verviers",
+				"language": "fr",
+				"area": "Wallonia",
+				"pair": null,
+				"lat": 50.59324,
+				"lon": 5.867828,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Verviers"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Place Verte",
+					"postcode": "4800",
+					"locality": "Verviers"
+				}
+			},
+			{
+				"id": "eupen-rathausplatz",
+				"input": "Rathausplatz 1, 4700 Eupen",
+				"language": "de",
+				"area": "German-speaking Community",
+				"pair": null,
+				"lat": 50.6305665,
+				"lon": 6.0312717,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Eupen"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Rathausplatz",
+					"postcode": "4700",
+					"locality": "Eupen"
+				}
+			},
+			{
+				"id": "sankt-vith-hauptstrasse",
+				"input": "Hauptstrasse 1, 4780 Sankt Vith",
+				"language": "de",
+				"area": "German-speaking Community",
+				"pair": null,
+				"lat": 50.2803881,
+				"lon": 6.1258953,
+				"tier": "admin",
+				"countryCode": "BE",
+				"inBelgium": true,
+				"localityParsed": true,
+				"localityResolved": true,
+				"hierarchyNames": [
+					"Sankt Vith"
+				],
+				"parsed": {
+					"house_number": "1",
+					"street": "Hauptstrasse",
+					"postcode": "4780",
+					"locality": "Sankt Vith"
+				}
+			}
+		]
+	}
+}

@@ -1,0 +1,187 @@
+---
+title: France — 100 addresses from the BAN
+description: A hundred French addresses drawn from the Base Adresse Nationale, graded against BAN's own rooftop coordinate, in two surface forms.
+role: evidence
+---
+
+# France — 100 addresses from the BAN
+
+## What ran
+
+On **2026-08-04** we drew 100 addresses from the Base Adresse Nationale release dated 2026-05-18,
+rendered each one twice, and geocoded all 200 strings against a local install: the base weights under
+the `fr-FR` overlay, the 1.65 GB global admin gazetteer, and the French BAN rooftop shard. The
+grading target is BAN's own coordinate for the row the address came from. There is no second
+geocoder in this measurement and no third-party reference set — this compares the pipeline against
+the register the pipeline reads.
+
+That last sentence is the whole caveat, and it has a section of its own below.
+
+## Method
+
+The panel is a committed file rather than a fresh draw, so a re-run on your machine grades the same
+100 rows. [`fr-ban-sample.json`](/benchmarks/fr-ban-sample.json) was produced by a seeded pass over
+BAN rowids (seed `20260804`, 1200 draws, one row kept per postcode), which is why the panel spans 100
+distinct postcodes across 58 departments including Réunion, and why it is mostly rural: BAN rows are
+distributed like French addresses are, and France is mostly not Paris. One Paris row made it in.
+
+Each row is rendered in two surface forms:
+
+| Arm         | Form                                | What it tests                                      |
+| ----------- | ----------------------------------- | -------------------------------------------------- |
+| `clean`     | `28 Avenue de l'Opéra, 75002 Paris` | The canonical French order                         |
+| `reordered` | `75002 Paris, 28 Avenue de l'Opéra` | The same tokens with postcode and commune in front |
+
+Nothing about the target changes between arms. Only the order does.
+
+Three numbers need their definitions stated before you read them:
+
+- **Distance** is the great-circle distance from the returned coordinate to BAN's coordinate for that
+  row. `exact` means within one meter, which on this panel means the pipeline found the row itself.
+- **Routed to the postcode area** means the returned coordinate is within 15 km of the centroid of
+  the BAN points sharing that postcode. French postcodes are not one size — a Paris arrondissement
+  spans about 2 km, a rural postcode can span 20 — so this is a check against gross misrouting and
+  not a precision claim. The precision claim is the distance row above it.
+- **Tier** is which artifact answered: `address_point` is the BAN rooftop shard, `admin` is the
+  gazetteer centroid the cascade falls back to when the rooftop probe finds nothing.
+
+The country is pinned to `FR`. This panel is a French dataset run through a French pipeline, so it
+measures resolution inside France and makes no claim about country disambiguation. The Belgian panel
+is where that question gets asked, and [it answers differently](./belgium-panel.mdx).
+
+## Numbers
+
+Both arms, 100 rows each, from [`fr-ban-results.json`](/benchmarks/fr-ban-results.json):
+
+| Measure                     | `clean`  | `reordered` |
+| --------------------------- | -------- | ----------- |
+| Returned a coordinate       | 100      | 100         |
+| Within 1 km                 | 96       | 97          |
+| Within 5 km                 | 100      | 100         |
+| Within 25 km                | 100      | 100         |
+| Exact row (within 1 m)      | 94       | 96          |
+| Routed to the postcode area | 100      | 100         |
+| Median distance             | 0 km     | 0 km        |
+| 90th percentile distance    | 0 km     | 0 km        |
+| Worst distance              | 4.612 km | 4.612 km    |
+| Answered at `address_point` | 96       | 98          |
+| Answered at `admin`         | 4        | 2           |
+
+The two arms took 1,801 ms together, model load excluded.
+
+The reordered arm scores higher than the clean one, which is the opposite of what a robustness arm is
+built to show. Two rows explain the whole gap, and the mechanism is in the parse:
+
+```
+clean       98 Rue Clos du Village, 38150 Agnin   → street parsed as "Rue Clos du"
+reordered   38150 Agnin, 98 Rue Clos du Village   → street parsed as "Rue Clos du Village"
+
+clean       33 Avenue du Centre, 91440 Bures-Sur-Yvette   → street parsed as "Avenue du"
+reordered   91440 Bures-Sur-Yvette, 33 Avenue du Centre   → street parsed as "Avenue du Centre"
+```
+
+In the canonical order the street is followed by a comma and then the postcode, and the trailing
+common noun of the street name is dropped from the span. Moved to the end of the string with nothing
+after it, the same street name survives whole, the rooftop probe finds its row, and the tier goes from
+`admin` to `address_point`. The truncation is the defect; the reordering does not fix it so much as
+avoid the position where it fires.
+
+## Losses
+
+Six rows in the `clean` arm did not land on their own coordinate. Four of them also miss in the
+`reordered` arm.
+
+| Address                                                     | Distance | Tier            | What the parse produced    |
+| ----------------------------------------------------------- | -------- | --------------- | -------------------------- |
+| `5 Place du Calvaire à Montsaon, 52000 Semoutiers-Montsaon` | 2.630 km | `admin`         | street `Place du Calvaire` |
+| `4 Rue de la Mairie, 70000 Andelarre`                       | 4.612 km | `address_point` | street `Rue de la Mairie`  |
+| `3 Rue Jean Jaurès, 54110 Dombasle-Sur-Meurthe`             | 3.724 km | `address_point` | street `Rue Jean Jaurès`   |
+| `1 Rue du Château d'Eau, 63800 Perignat-Sur-Allier`         | 0.563 km | `admin`         | street `Rue du Château`    |
+| `33 Avenue du Centre, 91440 Bures-Sur-Yvette`               | 1.140 km | `admin`         | street `Avenue du`         |
+| `98 Rue Clos du Village, 38150 Agnin`                       | 0.407 km | `admin`         | street `Rue Clos du`       |
+
+They are two defects wearing one number.
+
+**Street-span truncation, four rows.** `Rue du Château d'Eau` loses `d'Eau`, `Avenue du Centre` loses
+`Centre`, `Rue Clos du Village` loses `Village`, and `Place du Calvaire à Montsaon` loses its hamlet
+qualifier. Each truncated span then fails the rooftop probe and the cascade falls back to the admin
+centroid, which is why all four answer at `admin`. The two that recover under reordering are listed
+above; the other two miss in both arms.
+
+**Same-name street inside one postcode, two rows.** `Rue de la Mairie` and `Rue Jean Jaurès` are among
+the most repeated street names in France. Both rows answered at `address_point`, so the rooftop probe
+succeeded — it succeeded on the wrong row, in a neighbouring commune sharing the postcode. These are
+the two largest errors on the panel, 4.612 km and 3.724 km, and they are the reason the worst-case
+number is what it is. A rooftop tier that answers confidently from the wrong commune is a worse
+failure than one that declines, and the tier field does not distinguish them.
+
+Both defects were found by this panel and neither is fixed here. They are recorded as measured.
+
+## Caveats
+
+**The circularity, stated plainly.** The French rooftop tier _is_ the BAN. `mailwoman data pull fr`
+downloads a shard built from the same register this panel grades against, so a within-one-meter hit
+means the pipeline found the row it was looking for in the table it was looking in. The claim this
+panel supports is **"a French address that exists in BAN resolves to its BAN rooftop"** — a statement
+about parsing and routing, not about coordinate accuracy. It cannot tell you whether BAN's coordinate
+for a building is correct, because it has no independent view of that building. An address absent
+from BAN is outside the panel entirely.
+
+**A 90th-percentile distance of 0 km is not a precision claim.** It is a consequence of the same
+circularity: 94 of 100 rows land on the exact source coordinate, so every percentile up to the 94th
+is zero by construction. Read the count of exact rows and the count of misses; the percentiles carry
+no information this panel earned.
+
+**The commune strings are accent-stripped.** BAN's `locality_norm` column is lowercased and
+unaccented by the shard builder, so the panel asks for `Orleans` where the commune is `Orléans` and
+`45140 Ingre` where it is `Ingré`. Every row is affected. This makes the panel slightly harder than a
+correctly-accented input set and it is not corrected, because unaccented input is what a keyboard
+produces.
+
+**One row per postcode is a sampling decision with a cost.** It buys geographic spread — 100
+postcodes, 58 departments — and it removes the dense-urban repetition that a uniform draw over 26
+million rows would have produced. A panel weighted toward cities would report different numbers, and
+we have not measured which way.
+
+**n = 100.** This is a panel. It supports statements about these hundred addresses and about the two
+defects they exposed. It does not support a national accuracy figure for France, and none is claimed.
+[Reading our numbers](./reading-our-numbers.mdx) sets out the rest of the traps.
+
+## Reproduce
+
+The script is [`fr-ban-panel.mjs`](/benchmarks/fr-ban-panel.mjs), the panel is
+[`fr-ban-sample.json`](/benchmarks/fr-ban-sample.json), and the output above is
+[`fr-ban-results.json`](/benchmarks/fr-ban-results.json) verbatim, including a per-row record for
+every address in both arms.
+
+```bash
+npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-fr-fr \
+            @mailwoman/resolver @mailwoman/resolver-wof-sqlite @mailwoman/ban \
+            @mailwoman/core @mailwoman/spatial
+mailwoman data pull candidate fr
+node fr-ban-panel.mjs --data-root <DATA_ROOT> --out fr-ban-results.json
+```
+
+The two bundles are about 8.6 GB together. [`run-all.sh`](/benchmarks/run-all.sh) does the pull and
+runs both published panels in one pass.
+
+To redraw the panel against a newer BAN release rather than grading the committed one:
+
+```bash
+node fr-ban-panel.mjs --resample --data-root <DATA_ROOT>
+```
+
+The seed is a constant in the script, not a flag, because changing it changes which addresses are
+being reported on. A different BAN release renumbers the rows and will produce a different panel from
+the same seed, which is why the sample is committed rather than drawn at run time.
+
+## Related
+
+- [Belgium — 30 addresses, three configurations](./belgium-panel.mdx) — the same machinery in a
+  country with no rooftop register and no locale of its own.
+- [Reading our numbers](./reading-our-numbers.mdx) — resolve rate against precision, and the rest of
+  the traps.
+- [Locales and tiers](../../developers/reference/locales-and-tiers.mdx) — what `fr` covers and what it
+  does not.
+- [How close is close enough?](../../developers/knowledge-base/geocoding/how-close-is-close-enough.mdx)
+  — deciding the tolerance these distances should be read against.

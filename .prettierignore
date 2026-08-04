@@ -4,6 +4,15 @@
 **/LICENSE
 **/LICENSE.md
 
+## Benchmark artifacts written by docs/static/benchmarks/*.mjs
+## Both files are script output — `--resample` rewrites the sample, every run rewrites the results —
+## and `JSON.stringify` cannot reproduce the formatter's array-wrapping decisions. Formatting them
+## means a reader who re-runs a published panel fails `yarn lint:oxfmt` on the artifact the panel
+## exists to produce. Measured 2026-08-04: be-results.json was the file that tripped it.
+## be-panel.json is hand-written input and stays formatted.
+docs/static/benchmarks/fr-ban-sample.json
+docs/static/benchmarks/*-results.json
+
 ## Build asset directories
 /build
 docs/build

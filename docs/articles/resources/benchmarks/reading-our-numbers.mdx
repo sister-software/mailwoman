@@ -1,0 +1,138 @@
+---
+title: Reading our numbers
+description: Resolve rate against precision, circularity, panel size and host scaling — the four ways a geocoding benchmark reads better than it is.
+role: explanation
+---
+
+# Reading our numbers
+
+## The question
+
+A geocoder reports that it resolved 98% of your file. What do you now know? Less than the sentence
+suggests, and the gap is where geocoding benchmarks go wrong — including ours, twice, on the two
+pages next door.
+
+This page is the reading guide for those pages. It is also the checklist we hold our own panels to,
+which is why each trap below is illustrated with one of our own numbers rather than someone else's.
+
+## Trap one: the resolve rate is not the accuracy
+
+A resolve rate counts rows that came back with a coordinate. It says nothing about whether the
+coordinate is right, and nothing about how right.
+
+Every geocoder has a fallback, and ours is no exception. On **2026-08-04** we sent five invented
+street names in real French cities through the same configuration the French panel uses — starting
+with `12 Rue Inexistante, 75002 Paris`. All five returned a coordinate. The Paris row came back at
+48.857, 2.343, which is the Paris commune centroid, about 1.5 km from the 2nd arrondissement the
+postcode names and an unbounded distance from a street that does not exist.
+
+A null would have been less useful to most callers, so the fallback is the right behavior. It also
+means a file of invented street names in real cities scores 5 out of 5 on a resolve rate.
+
+So the resolve rate and the precision are two numbers, and the one that carries the meaning is the
+**tier**: which artifact answered.
+
+| Tier            | What answered                  | What the number means |
+| --------------- | ------------------------------ | --------------------- |
+| `address_point` | A rooftop or parcel register   | The building          |
+| `interpolated`  | An estimate along the street   | The block             |
+| `street`        | A street centroid              | The street            |
+| `admin`         | A commune or locality centroid | The town              |
+
+Our [Belgian panel](./belgium-panel.mdx) reports 30 of 30 in its best arm. Every one of those 30
+answered at `admin`. The panel's own summary says so on the line under the score, because a reader who
+takes 30 out of 30 for street accuracy has been misled by a true number.
+
+**What to ask of any benchmark, ours included:** what fraction answered at each tier? A published
+resolve rate with no tier breakdown is not measuring what the reader thinks.
+
+## Trap two: circularity
+
+If the evaluation set and the reference data come from the same place, a high score is partly a
+statement about bookkeeping.
+
+The [French panel](./france-ban.mdx) is the clean example. The French rooftop tier _is_ the Base
+Adresse Nationale; the panel draws its addresses from BAN and grades against BAN's coordinates. Ninety-
+four of a hundred rows land within one meter, which sounds like a precision result and is not one. It
+means the pipeline found the row it was looking for, in the table it was looking in. What that
+measures is the parse and the routing. What it cannot measure is whether BAN's coordinate for the
+building is correct, because the panel has no second opinion about the building.
+
+This is not a reason to discard the number — parsing and routing are most of what goes wrong, and a
+panel that isolates them is worth running. It is a reason to state the claim at the size it earned:
+"a French address that exists in BAN resolves to its BAN rooftop", not "our French geocoding is
+accurate to one meter".
+
+**What to ask:** where did the evaluation addresses come from, and where did the reference coordinates
+come from? If the answer is the same dataset, the number is about retrieval and not about accuracy.
+
+## Trap three: a panel is not a population
+
+The French page reports on 100 addresses. The Belgian page reports on 30. Neither is a sample from
+which a national figure can be computed, and neither page computes one.
+
+Two things go wrong when a panel is read as a population.
+
+**The confidence interval is wider than the digits suggest.** At n = 30, a score of 24 has an
+uncertainty of several rows in either direction. Reporting it as 80.0% adds a decimal place the panel
+did not buy. We report counts rather than percentages on the panel pages for that reason.
+
+**The panel's composition decides the answer.** Our Belgian rows are civic addresses on well-known
+streets — an easier population than a delivery manifest with apartment numbers and typos. Our French
+rows are one per postcode, which spreads them across 58 departments and thins out the dense urban
+cases a uniform draw would have produced. Both choices are defensible. Both change the number, and
+neither page claims to know by how much.
+
+A panel earns statements about the addresses in it and about the defects those addresses exposed.
+Both of our panels found real defects that way, and that is the work a panel is good for.
+
+**What to ask:** how large is n, how were the rows chosen, and does the reported precision exceed
+what n supports?
+
+## Trap four: throughput does not survive the host
+
+Our panel pages report elapsed time — 1,801 ms for 200 French geocodes, 3,703 ms for 90 Belgian ones.
+Those numbers describe one machine doing one thing.
+
+Three mechanisms break the extrapolation:
+
+- **Model load is excluded, and it is not free.** Both figures start after the weights are in memory.
+  A process that loads the model per request measures something else entirely.
+- **Inference is CPU-bound and thread-capped.** The parse runs on a bounded thread pool, so a second
+  concurrent request does not get its own free core, and a smaller host does not scale down linearly.
+- **The gazetteer is read from disk.** A warm page cache and a cold one give different numbers for the
+  same query, and our panels run warm — the same shards were open moments earlier.
+
+Timing here is a sanity check on the order of magnitude, not a throughput specification. Measure on
+your own hardware, with your own data root, at your own concurrency.
+
+**What to ask:** was the model load counted, what was the concurrency, and was the cache warm?
+
+## What we hold ourselves to
+
+Every number on a benchmark page here comes from a run of a script published beside it, on inputs
+published beside it, with the result file published beside it. That is the standard the pages are
+written against, and it is checkable rather than promised: if a page reports a count, the file it
+came from is one click away and carries the per-row records behind it.
+
+Two things follow from that, and both are visible on the pages:
+
+**Losses get the same room as wins.** The French page publishes six failing rows with their distances
+and their broken parses. The Belgian page publishes six, plus a row that scores as correct while
+carrying a wrong parse underneath. A page that reports only the aggregate is not showing you the
+thing you would have had to debug.
+
+**Instrument defects get published too.** The Belgian script's first version collapsed the parsed and
+resolved locality checks into one metric and dropped an unmeasurable bilingual pair from its own
+denominator — turning a row that returned no coordinate into a clean sweep. Both are fixed in the
+published script and both are recorded on the page, because a benchmark's instrument is part of its
+result.
+
+## Related
+
+- [France — 100 addresses from the BAN](./france-ban.mdx) — the circularity case.
+- [Belgium — 30 addresses, three configurations](./belgium-panel.mdx) — the tier case.
+- [How close is close enough?](../../developers/knowledge-base/geocoding/how-close-is-close-enough.mdx)
+  — deciding the tolerance a distance should be read against.
+- [Calibration and confidence](../../developers/knowledge-base/address-intelligence/calibration-and-confidence.mdx)
+  — what the per-result confidence number is, and is not.
