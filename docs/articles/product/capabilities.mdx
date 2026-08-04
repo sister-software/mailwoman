@@ -1,0 +1,73 @@
+---
+title: Capabilities
+description: The seven jobs the engine does — parsing, forward and reverse geocoding, autocomplete, validation, record matching and annotations — each with the page that runs it.
+role: landing
+audience: teams
+---
+
+# Capabilities
+
+Everything below runs from one install. Parsing needs the model alone; the jobs that place an address
+on the map need a gazetteer database on disk as well. Each entry names the page that runs it end to
+end, with the output that page captured.
+
+## Reading an address
+
+**Parsing** turns a string into tagged components — house number, street, locality, region, postcode
+— each carrying a span and a confidence score.
+[Read everything a parse returns](../developers/tutorials/understand-a-parse.mdx)
+
+**Validation** checks that a parsed address is complete, well-formed for its country, and read
+confidently enough to use. It is a check on the string, not on whether a letterbox exists.
+[Validate an address before you use it](../developers/how-to/validate-addresses.mdx)
+
+## Placing it
+
+**Forward geocoding** walks the parsed tree and attaches coordinates from the gazetteer, reporting
+which tier answered and how much uncertainty rides on it.
+[Geocode a CSV of customer addresses](../developers/tutorials/geocode-a-csv.mdx)
+
+**Reverse geocoding** turns a latitude/longitude into an administrative hierarchy. It answers at
+admin level and never consults an address-point database, so it does not hand back a house number.
+[Reverse geocode a coordinate](../developers/how-to/reverse-geocode.mdx)
+
+**Autocomplete** serves ranked place completions from the index that ships inside the weights
+package. Places only — a user typing a house number gets nothing useful from it — and the ranking is
+importance rather than proximity.
+[Add place autocomplete](../developers/how-to/add-autocomplete.mdx)
+
+## Working with records
+
+**Record matching** collapses the same organization written four ways into one entity, blocking on
+geography first and then scoring the pairs it kept.
+[Match messy records to one entity each](../developers/how-to/match-messy-records.mdx)
+
+**Annotations** enrich a resolved coordinate with timezone, currency, coordinate formats and region
+codes, emitted in either the native shape or OpenCage's.
+[Use annotations](../developers/how-to/use-annotations.mdx)
+
+## What each one needs on disk
+
+| Job               | What has to be there                                    |
+| ----------------- | ------------------------------------------------------- |
+| Parsing           | The weights package                                     |
+| Validation        | The weights package                                     |
+| Autocomplete      | The weights package — the 21.8 MB index is inside it    |
+| Forward geocoding | The weights package plus the `candidate` bundle         |
+| Record matching   | The same, since it blocks on geography before it scores |
+| Reverse geocoding | An admin distribution you build yourself                |
+| Annotations       | A coordinate you already have                           |
+
+The admin distribution reverse geocoding reads is not one of the four published bundles — it is a
+local build, and [Data products](./data-products.mdx) covers which artifacts you download and which
+you build.
+
+## Where the claim thins out
+
+Coverage is whatever open data covers, and it is uneven by country. Per-locale detail, including the
+locales where the claim is thin, is on
+[Locales and tiers](../developers/reference/locales-and-tiers.mdx), and the limits the model carries
+are collected on
+[What the model cannot do](../developers/knowledge-base/address-intelligence/what-the-model-cannot-do.mdx).
+
+[Start with the tutorials →](../developers/tutorials/understand-a-parse.mdx)

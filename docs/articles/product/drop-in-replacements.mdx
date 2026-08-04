@@ -1,0 +1,81 @@
+---
+title: Drop-in replacements
+description: Three servers that answer on the Nominatim, Photon and libpostal shapes, so an existing client moves with a base-URL change.
+role: landing
+audience: teams
+---
+
+# Drop-in replacements
+
+A drop-in is a server that speaks a request and response shape your client already sends, running on
+your hardware against your data. Moving a client is a base-URL change rather than a rewrite, and each
+server keeps its original's error shape rather than substituting ours, because a client written
+against the original parses that shape.
+
+Three shapes ship today.
+
+## Nominatim
+
+`/search`, `/reverse` and `/status`, with `/lookup` routed but answering `501`. Results carry an
+OpenCage-style `annotations` block the original does not have.
+
+```bash
+npx @mailwoman/nominatim serve
+```
+
+## Photon
+
+`/api` and `/reverse`, answering GeoJSON FeatureCollections. Failures come back as an empty
+collection carrying a `message`, so a client iterating `features` needs no new branch.
+
+```bash
+npx @mailwoman/photon serve
+```
+
+## libpostal
+
+`/parse` and `/expand`, over `GET` or `POST`. This is the one that needs no gazetteer at all — the
+model arrives as a package dependency, so it starts on a machine that has downloaded nothing.
+
+```bash
+npx @mailwoman/libpostal serve
+```
+
+## What each one honors
+
+Compatibility is not the same as equivalence, and the difference is worth reading before you cut
+over. Every request parameter on all three surfaces carries one of three verdicts — **honored**,
+**accepted with no effect**, or **not read** — and the tables that assign them are on the swap
+tutorial, one per surface. They are read off the route handlers and then checked against a running
+server.
+
+The shape of what they say: free-text and structured field queries are honored, and country
+restriction is a hard filter. Language and category parameters are accepted and change nothing, so a
+client sending them gets a valid unfiltered answer rather than an error. Bounding-box parameters are
+not read at all. And nothing here is keyed to an OpenStreetMap object, so `osm_id` and `osm_type` are
+never set.
+
+[What each drop-in honors](../developers/tutorials/swap-in-for-nominatim.mdx#7-what-each-drop-in-honors)
+
+## Two things to settle before you cut over
+
+**Forward geocoding works from the gazetteer download; reverse geocoding does not.** `/reverse` on
+the Nominatim and Photon shapes runs point-in-polygon over an admin distribution that
+`mailwoman data pull` does not ship, so it answers an empty result until you build one and put it
+there.
+
+**There is no authentication in front of any of them**, and each binds `0.0.0.0` by default. Bind
+`127.0.0.1` or put the server behind your own ingress before it reaches anything shared.
+
+## Ports and packages
+
+| Shape     | Package                | Command           | Default port |
+| --------- | ---------------------- | ----------------- | ------------ |
+| Nominatim | `@mailwoman/nominatim` | `nominatim serve` | `8080`       |
+| Photon    | `@mailwoman/photon`    | `photon serve`    | `2322`       |
+| libpostal | `@mailwoman/libpostal` | `libpostal serve` | `8081`       |
+
+Each server also serves its own OpenAPI document at `/openapi.json`. The endpoint tables, query
+parameters and error bodies are on [HTTP APIs](../developers/reference/http-apis.mdx#drop-in-surfaces).
+
+[Swap one in against your own client →](../developers/tutorials/swap-in-for-nominatim.mdx)

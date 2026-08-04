@@ -21,6 +21,7 @@ export interface DocsSectionDef {
  * has no entry link), so a door is added to both files at once or to neither.
  */
 export const DOCS_SECTIONS: readonly DocsSectionDef[] = [
+	{ id: "product", label: "Product" },
 	{ id: "developers", label: "Developers" },
 	{ id: "about", label: "About" },
 ]

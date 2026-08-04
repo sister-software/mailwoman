@@ -12,13 +12,14 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // State as of the docs-reorg Task 5 skeleton cutover: the old seven-sidebar tree
 // (startHere / use / understand / reference / contribute / legal) is gone with the
 // content it indexed — everything it listed now lives unpublished under
-// docs/records/site-2026-08/. Two doors ship here, and they are the whole published site:
+// docs/records/site-2026-08/. Three doors ship here, and they are the whole published site:
 //
+// - `product` — what the engine does, where it runs, what it replaces, what data it pulls.
 // - `developers` — the get-started trio, what ships today, and where to get help.
 // - `about` — the open-strategy pages, the compliance boundary, contact, and pricing.
 //
-// The Product / Solutions / Resources doors land with their own tasks. They are NOT
-// declared here as empty sidebars: an empty sidebar renders a dead switcher tab (and
+// The Solutions / Resources doors land with their own tasks. They are NOT declared here as
+// empty sidebars: an empty sidebar renders a dead switcher tab (and
 // `useLayoutDocsSidebar(...).link` resolves to nothing), so a door arrives together with
 // the pages behind it or not at all.
 //
@@ -26,6 +27,22 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // nav tree (the orphan check in scripts/check-docs-structure.ts requires one), while the
 // navbar links it directly at /docs/pricing.
 const sidebars: SidebarsConfig = {
+	// Evaluation order, and every page here routes rather than instructs: a reader arrives
+	// deciding whether Mailwoman fits, not building against it. Overview defines the thing;
+	// capabilities answers what it does; deployment options answers where it runs; drop-in
+	// replacements answers what it can stand in for; data products answers what you carry.
+	// Each page hands off into the `developers` door, so this sidebar is the shallow end
+	// rather than a parallel set of instructions.
+	//
+	// Flat, no lead category: `useLayoutDocsSidebar("product").link` resolves to the first
+	// entry, so the switcher tab lands on the overview.
+	product: [
+		"product/overview",
+		"product/capabilities",
+		"product/deployment-options",
+		"product/drop-in-replacements",
+		"product/data-products",
+	],
 	developers: [
 		{
 			type: "category",

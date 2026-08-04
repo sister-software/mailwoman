@@ -1,0 +1,71 @@
+---
+title: Data products
+description: The four bundles mailwoman data pull publishes, what you build yourself, where the data came from, and why no refresh cadence is committed.
+role: landing
+audience: teams
+---
+
+# Data products
+
+The model travels with the npm package. The reference data does not, because the smallest useful
+gazetteer is 1.65 GB and a registry tarball that size would be paid for by every consumer who wanted
+the parser alone. So the data is a separate download, pulled once and kept.
+
+`mailwoman data pull` fetches it. Four bundles publish today, and those four are the whole published
+set — the command exits with an error and lists them if you name anything else.
+
+## What you can pull today
+
+| Bundle      | Size    | What it covers                                                |
+| ----------- | ------- | ------------------------------------------------------------- |
+| `candidate` | 1.65 GB | The global admin gazetteer, 244 countries. Start here         |
+| `poi`       | 3.89 GB | 13.68 million points of interest across the US, CA, MX and FR |
+| `fr`        | 6.95 GB | French rooftop address points                                 |
+| `us`        | 41.3 GB | US rooftop and interpolation, one shard pair per state        |
+
+The `us` bundle is 103 files, so pull the states you serve rather than the tier:
+`mailwoman data pull us --only nh`. Every size above is the registered artifact total, and
+`mailwoman data pull <bundle> --dry-run` prints the same figures without touching the network.
+
+[Footprints](../developers/reference/footprints.mdx#data-bundles)
+
+## What you build yourself
+
+Everything else on the shelf is a local build, and three cases are worth naming because people ask
+for them by name.
+
+**The admin distribution reverse geocoding needs.** Not a published bundle. It is hours of work and
+tens of gigabytes of source data.
+
+**Timezone, NUTS and UN/LOCODE lookups.** `@mailwoman/timezone-lookup`, `@mailwoman/nuts-lookup` and
+`@mailwoman/un-locode-lookup` publish code to npm and build their own databases locally. No bundle in
+the bucket serves them.
+
+**OpenStreetMap rooftop shards.** Built, and deliberately unpublished — ODbL is share-alike on a
+derived database, and no shard goes to npm or the bucket until counsel has reviewed how that applies
+to serving a coordinate from one. Build one and the obligation is yours.
+
+[Build the planet](../developers/tutorials/full-planet-build.mdx)
+
+## Where the data came from
+
+Every source is recorded with its license at the point it enters the pipeline, and each built
+artifact carries an `ATTRIBUTION.json` naming the source, release and license behind it. Two items
+matter to a review and are stated in full on the compliance page: the OpenStreetMap tier is enabled
+in no published artifact, so nothing you install today carries an ODbL obligation from it, and one
+source's license is recorded inconsistently in our own files, so attribute Who's On First until that
+is settled.
+
+[Data provenance](../about/security-and-compliance.mdx#data-provenance)
+
+## When it changes
+
+No cadence is committed. Artifacts are rebuilt when coverage changes or an ingest bug is fixed,
+rather than on a schedule, and this is the one to plan against: do not build a pipeline that assumes
+a weekly or a monthly artifact.
+
+What you get instead is that each artifact is sealed and dated, and the vintage travels in the remote
+path, so you can always tell which build you are running without downloading anything. A new build is
+a new path, which arrives in a new release of the `mailwoman` package.
+
+[Keep your data current →](../developers/how-to/keep-data-fresh.mdx)

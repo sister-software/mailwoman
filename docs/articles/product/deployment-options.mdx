@@ -1,0 +1,81 @@
+---
+title: Deployment options
+description: Five shapes the same engine runs in — library, container, serverless, browser and MCP — with what each one costs and what each one gives up.
+role: landing
+audience: teams
+---
+
+# Deployment options
+
+The engine is the same in every shape below. What changes is what has to be resident on the machine,
+and what you give up to get it there. Pick by the constraint you cannot move.
+
+## As a library
+
+`npm install` and call a function. This is the shape with the fewest moving parts and the one every
+other shape is built on: no port, no process to supervise, and a parse that cannot fail on a network
+it never touches.
+
+Pick it when Mailwoman runs inside an application you already deploy: there is no second service to
+operate, and no serialization cost on the call.
+
+[Library API](../developers/reference/library-api.mdx)
+
+## As a self-hosted server
+
+`mailwoman serve` gives you `/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve` and `/v1/format`
+over HTTP, with an OpenAPI document the server emits itself. Run it in a container and mount the
+gazetteer read-only.
+
+Pick it when several services need addresses and you would rather run one geocoder than embed one in
+each. Two constraints are worth knowing before you commit: the published image is `linux/amd64` only,
+since `onnxruntime-node` has no musl prebuild and arm64 has not been verified, and the `:latest` tag
+is behind the npm line — pin a digest rather than assuming it tracks.
+
+[Run the API server](../developers/tutorials/run-the-api-server.mdx)
+
+## On a serverless runtime
+
+It fits, with trimming. On the host the guide measured, `node_modules` installed at 746 MB, of which
+500 MB was ONNX Runtime builds for hardware that machine did not have; deleting those took it to
+303 MB. A cold start ran about 1.1 s there, 70% of it the one-time model load.
+
+Pick it for spiky traffic you would rather not keep a box warm for. The floor is the constraint:
+303 MB before weights does not fit AWS Lambda's 250 MB unzipped ceiling, so that platform means a
+container image or a layer. And the data root has to be a real filesystem, because SQLite needs
+`pread` on a local file descriptor.
+
+[Deploy on a serverless runtime](../developers/how-to/deploy-serverless.mdx)
+
+## In the browser
+
+`@mailwoman/neural-web` parses in the tab, with the query text never leaving the page. The load is
+about 50.4 MB of model files plus one `onnxruntime-web` build between 12.5 MB and 25.4 MB, and a cold
+load measured 1.7 s from `127.0.0.1`.
+
+Pick it for form autofill and validation as somebody types. Two constraints decide whether it suits
+you. **You host the weights yourself** — `public.sister.software` answers cross-origin requests only
+for the demo's own domain, so a page on your domain gets no `Access-Control-Allow-Origin` header and
+the fetch fails. And the browser runtime parses without resolving: geocoding in the tab means either
+a slim database you built for your own coverage or a server call with the parsed components.
+
+[Parse in the browser](../developers/tutorials/parse-in-the-browser.mdx)
+
+## As an MCP server
+
+`@mailwoman/mcp` exposes nine tools to a coding agent over stdio — parse, geocode, POI search and the
+layer readers among them. There is no port and nothing to deploy.
+
+Pick it when the consumer is an agent rather than an application. The constraint is transport: stdio
+only, so a client that cannot launch a subprocess cannot use it, and the `en-US` weights are the only
+ones loaded.
+
+[Use the MCP server from an agent](../developers/how-to/use-the-mcp-server.mdx)
+
+## What every shape shares
+
+One worker is one parse. Inference blocks the JavaScript thread in all five, so a single process
+serves one request at a time however deep the queue gets, and concurrency comes from instances,
+containers or processes rather than from the runtime.
+
+[Deploy it with Docker →](../developers/how-to/deploy-docker.mdx)

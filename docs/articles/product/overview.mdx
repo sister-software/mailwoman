@@ -1,0 +1,79 @@
+---
+title: Overview
+description: One engine you install rather than call — a 39.4 MB model reads the address, a gazetteer on your disk places it, and no request leaves your process.
+role: landing
+audience: teams
+---
+
+# Overview
+
+Mailwoman is an address parser and geocoder that runs inside your own process. `npm install` puts a
+39.4 MB model file on your disk, and a parse after that is a function call with no network in it.
+
+Reading an address and placing it are two passes, and they become available at different times. The
+model reads: it takes a string and returns tagged components with a confidence score on each.
+Placing those components on the map is a second pass over a gazetteer database you download once and
+keep. There is no account, no API key and no meter, because there is nothing on our side of the call
+to meter.
+
+## What it does
+
+Parsing, forward and reverse geocoding, autocomplete, validation, record matching and annotations run
+from the same install. Each one has a page that runs it end to end.
+
+[Capabilities](./capabilities.mdx)
+
+## What it costs to carry
+
+A full install of the entry package plus the English weights is 707 MB, and 523 MB of that is the
+ONNX runtime rather than anything of ours. The model inside it is 39.4 MB. Geocoding adds a 1.65 GB
+gazetteer download, which is why it is a second decision rather than part of the first. Every figure
+is stated with the command that produced it.
+
+[Footprints](../developers/reference/footprints.mdx)
+
+## Where it runs
+
+A Node library, a container, a serverless instance, a browser tab, or an MCP server an agent talks
+to over stdio. The shapes differ in what has to be resident and what each one gives up.
+
+[Deployment options](./deployment-options.mdx)
+
+## What it can stand in for
+
+Three servers answer on the request and response shapes Nominatim, Photon and libpostal clients
+already send, so an existing client moves with a base-URL change.
+
+[Drop-in replacements](./drop-in-replacements.mdx)
+
+## One parse, start to finish
+
+With the packages installed, this is the whole round trip:
+
+```bash
+npx mailwoman parse "350 5th Ave, New York, NY 10118"
+```
+
+```json
+{
+	"region": "NY",
+	"locality": "New York",
+	"street": "5th",
+	"house_number": "350",
+	"street_suffix": "Ave",
+	"postcode": "10118"
+}
+```
+
+That command opened no socket. The same call from the library returns the tree behind this flattened
+view, with a span and a confidence score per component.
+
+## What it is not
+
+It is not a hosted service, and it is not an authoritative register of delivery points. It reads the
+string you hand it and matches what it can against open data, so it will tell you that a string looks
+like an address in Manhattan and where that is — it will not tell you that mail arrives there.
+[What Mailwoman is](../developers/get-started/what-mailwoman-is.mdx) has the full shape of that
+boundary.
+
+[Run the ten-minute trial →](../developers/get-started/ten-minute-trial.mdx)
