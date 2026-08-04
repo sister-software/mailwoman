@@ -96,6 +96,17 @@ export interface GeocodeResult {
 	 */
 	dependent_locality: string | null
 	/**
+	 * The PARSED unit / sub-venue span (#1041 posture, same as `venue` above: the parse view, populated regardless of
+	 * tier) — `Terminal 5`, `Suite 300`, `Gate 12`.
+	 *
+	 * Surfaced 2026-08-05 for the same reason `venue` was in 2026-08-01, and found the same way: the gauntlet's sub-venue
+	 * cases (added 2026-08-01) assert `unit`, no result field carried it, and `componentOf`'s deliberately-loud
+	 * unknown-key throw meant the whole regression layer died the moment the corpus was rebuilt from its own seed. The
+	 * committed corpus had been ungradeable since the day those cases landed; only the staleness of the built artifact
+	 * hid it.
+	 */
+	unit: string | null
+	/**
 	 * ISO-3166 alpha-2 of the resolved place (the gazetteer/candidate country of the deepest resolved node), or null.
 	 * #1014 — lets a forward consumer fill `country`/`countrycode` without a full ancestry walk (the candidate backend
 	 * carries the country code even when it has no `ancestors()` table).
@@ -120,6 +131,17 @@ export interface GeocodeResult {
 		countryCode: string | null
 		placeID?: string
 	}>
+	/**
+	 * The country #42's postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when the pass actually
+	 * overrode {@link GeocodeDeps.defaultCountry} — off, abstained and agreed-with-the-default all read null.
+	 *
+	 * This is the FIRING RECEIPT, and it exists because the alternative is unreadable evidence. A gate run with the lever
+	 * OFF and one with it ON can come back identical for two opposite reasons: the mechanism ran on every row and changed
+	 * nothing (the result worth having), or it never ran at all (the 2026-08-04 oa-resolver trap, where an identical 1.94
+	 * MB dump turned out to mean the eval's shard set carried no US postcodes). A magnitude never carries its own
+	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
+	 */
+	postcode_country_scope: string | null
 }
 
 /**
@@ -1101,8 +1123,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		street,
 		venue: allNodes.find((n) => n.tag === "venue")?.value ?? null,
 		dependent_locality: allNodes.find((n) => n.tag === "dependent_locality")?.value?.trim() || null,
+		unit: allNodes.find((n) => n.tag === "unit")?.value?.trim() || null,
 		countryCode,
 		hierarchy,
 		candidates,
+		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
 	}
 }

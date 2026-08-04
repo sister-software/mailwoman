@@ -142,9 +142,15 @@ export const GeocodeOutcomeSchema = z
 		venue: z.string().nullable(),
 		// The parsed dependent-locality span (parse view; `hierarchy` is the resolved view).
 		dependent_locality: z.string().nullable(),
+		// The parsed unit / sub-venue span (parse view) — "Terminal 5", "Suite 300".
+		unit: z.string().nullable(),
 		countryCode: z.string().nullable(),
 		hierarchy: z.array(GeocodeHierarchyEntrySchema),
 		candidates: z.array(GeocodeCandidateSchema),
+		// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when it
+		// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
+		// evidence bought the change instead of reading it as a bug.
+		postcode_country_scope: z.string().nullable(),
 	})
 	.loose()
 	.openapi("GeocodeOutcome")

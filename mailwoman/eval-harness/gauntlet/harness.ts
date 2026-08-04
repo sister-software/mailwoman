@@ -26,6 +26,80 @@ export interface GauntletDeps {
 }
 
 /**
+ * Everything {@linkcode buildGauntletDeps} needs: which MODEL to grade, and which RESOLVER configuration to grade it in.
+ */
+export interface GauntletDepsOptions {
+	/**
+	 * Candidate ONNX (swaps ONLY the model — see {@linkcode buildGauntletDeps}).
+	 */
+	modelPath?: string
+	/**
+	 * Candidate tokenizer (a SPLICE candidate's new vocab).
+	 */
+	tokenizerPath?: string
+	/**
+	 * Candidate model-card, paired with `tokenizerPath`.
+	 */
+	modelCardPath?: string
+	/**
+	 * Package-shaped candidate weights dir — the #718-safe path.
+	 */
+	weightsCacheRoot?: string
+	/**
+	 * Resolver-side lever pins applied to every geocode this deps object performs.
+	 */
+	levers?: GauntletResolverLevers
+}
+
+/**
+ * RESOLVER-side levers a gauntlet run can PIN — the counterpart to the model-side `modelPath`/`tokenizerPath` swaps.
+ * Both kinds of pin exist for the same reason: the gate has to be able to grade the exact configuration a ship would
+ * use, and a lever that cannot be switched here has never been through the D-rule's standard instrument.
+ *
+ * The idiom is `eval oa-resolver`'s (`adminCoherence` / `postcodeCountryCoherence` boolean pins forwarded verbatim into
+ * the resolve): a pin here is a DEFAULT-OVERRIDE, not a new mechanism — every field maps 1:1 onto a
+ * {@linkcode geocodeAddress} dep of the same name, and an absent field leaves the production default in force.
+ *
+ * `undefined` means "production default", not "off": the library defaults are the thing under test, so the pin only
+ * ever speaks when the runner set it.
+ */
+export interface GauntletResolverLevers {
+	/**
+	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong
+	 * `defaultCountry`. Library default OFF; this pin is the D-rule evidence path to default-on.
+	 */
+	postcodeCountryCoherence?: boolean
+}
+
+/**
+ * The geocode deps a lever set turns into — spread into every {@linkcode geocodeAddress} call the run makes. Pure and
+ * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB shard set.
+ */
+export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): { postcodeCountryCoherence?: boolean } {
+	if (!levers) return {}
+
+	// A key is emitted only when the runner SET it — an `undefined` value would still be an own property, and
+	// `{postcodeCountryCoherence: undefined}` spread into the geocode deps reads as an explicit pin to a reader.
+	return levers.postcodeCountryCoherence === undefined
+		? {}
+		: { postcodeCountryCoherence: levers.postcodeCountryCoherence }
+}
+
+/**
+ * One-line description of the pinned levers for the run banner. Prints on EVERY run, including the unpinned one, so a
+ * reader of two gauntlet logs can tell which configuration each graded — an OFF/ON pair whose logs are
+ * indistinguishable is not evidence about the lever.
+ */
+export function describeResolverLevers(levers: GauntletResolverLevers | undefined): string {
+	const deps = resolverLeverDeps(levers)
+	const entries = Object.entries(deps)
+
+	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
+
+	return `resolver levers: ${entries.map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`).join(", ")}`
+}
+
+/**
  * Per-query resolution priors a case can carry (forwarded verbatim to {@linkcode geocodeAddress}).
  */
 export interface GauntletGeocodeOpts {
@@ -89,9 +163,7 @@ function assertShippedModelMatchesCard(materializedMd5: string): void {
  * anchor + gazetteer soft-feeds the model requires); pair it with the matching shipped trio on the production side so
  * the ONLY variables are the ONNX + the vocab (see holdout.ts).
  */
-export async function buildGauntletDeps(
-	opts: { modelPath?: string; tokenizerPath?: string; modelCardPath?: string; weightsCacheRoot?: string } = {}
-): Promise<GauntletDeps> {
+export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 
 	// A candidate laid out as a package-shaped weights dir (`<cacheRoot>/node_modules/@mailwoman/neural-weights-en-us`).
@@ -211,6 +283,10 @@ export async function buildGauntletDeps(
 	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
 	const banProvider = new BANShardProvider(mailwomanDataRoot())
 
+	const leverDeps = resolverLeverDeps(opts.levers)
+
+	console.error(`[gauntlet] ${describeResolverLevers(opts.levers)}`)
+
 	return {
 		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry, ...forwarded } = geoOpts ?? {}
@@ -221,6 +297,7 @@ export async function buildGauntletDeps(
 				shards: shardProvider.for,
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
+				...leverDeps,
 				...forwarded,
 			})
 		},
@@ -250,6 +327,17 @@ export interface GauntletResult {
 	street: string | null
 	venue: string | null
 	dependent_locality: string | null
+	/**
+	 * The parsed unit / sub-venue span — asserted by the 2026-08-01 sub-venue cases, which had never once been graded: no
+	 * result field carried it, so `componentOf` threw the instant the corpus was rebuilt from its own seed.
+	 */
+	unit: string | null
+	/**
+	 * The country #42's coherence pass scoped this row to, or null when nothing was overridden. Not asserted by any case
+	 * — it is the FIRING COUNT, so a lever-pinned run can say how many rows the mechanism actually spoke on rather than
+	 * leaving an unchanged verdict to mean either "harmless" or "never ran".
+	 */
+	postcode_country_scope: string | null
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -267,5 +355,7 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 		street: g.street,
 		venue: g.venue,
 		dependent_locality: g.dependent_locality,
+		unit: g.unit,
+		postcode_country_scope: g.postcode_country_scope,
 	}
 }

@@ -18,7 +18,7 @@ import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
+import { buildGauntletDeps, type GauntletDeps, type GauntletResolverLevers } from "./harness.ts"
 
 /**
  * Two-sided 95% critical value of the standard normal. The gate blocks only on a SIGNIFICANT regression, so a candidate
@@ -58,6 +58,12 @@ export interface HoldoutLayerOptions {
 	 * clean.
 	 */
 	weightsCacheRoot?: string
+	/**
+	 * RESOLVER-side lever pins, applied to BOTH arms. A resolver lever is a property of the configuration, not of the
+	 * model under test, so pinning it on one side would confound the z-test with the very thing the layer holds
+	 * constant.
+	 */
+	levers?: GauntletResolverLevers
 }
 
 /**
@@ -231,11 +237,17 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	// through the SHIPPED (model, tokenizer, card) trio via createScorer — otherwise the two sides have different
 	// anchor/gazetteer wiring and the z-test is confounded. resolveWeights gives the shipped trio for production.
 	const shipped = CAND_TOKENIZER || CAND_CACHE ? resolveWeights({ locale: "en-us" }) : null
+	const levers = options.levers ? { levers: options.levers } : {}
 
 	const prodDeps = await buildGauntletDeps(
 		shipped
-			? { modelPath: shipped.modelPath, tokenizerPath: shipped.tokenizerPath, modelCardPath: shipped.modelCardPath }
-			: {}
+			? {
+					modelPath: shipped.modelPath,
+					tokenizerPath: shipped.tokenizerPath,
+					modelCardPath: shipped.modelCardPath,
+					...levers,
+				}
+			: { ...levers }
 	)
 
 	const prod = await score(prodDeps, sample)
@@ -243,10 +255,10 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 	const candDeps = await buildGauntletDeps(
 		CAND_CACHE
-			? { weightsCacheRoot: CAND_CACHE }
+			? { weightsCacheRoot: CAND_CACHE, ...levers }
 			: CAND_TOKENIZER
-				? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined }
-				: { modelPath: CANDIDATE }
+				? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined, ...levers }
+				: { modelPath: CANDIDATE, ...levers }
 	)
 
 	const cand = await score(candDeps, sample)
