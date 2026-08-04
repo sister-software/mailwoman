@@ -40,6 +40,14 @@ export type {
 	StreetLocalityEvidence,
 } from "./street-evidence.ts"
 
+export {
+	findPostcodeCountryScope,
+	firstLocalityValue,
+	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
+	stampPostcodeCountryScope,
+} from "./postcode-country-coherence.ts"
+
+export type { PostcodeCountryScope, PostcodeCountryScopeOpts } from "./postcode-country-coherence.ts"
 export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 

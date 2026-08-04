@@ -35,6 +35,11 @@
 			"default": "./out/resolve.js",
 			"types": "./out/resolve.d.ts"
 		},
+		"./postcode-country-coherence": {
+			"node": "./postcode-country-coherence.ts",
+			"default": "./out/postcode-country-coherence.js",
+			"types": "./out/postcode-country-coherence.d.ts"
+		},
 		"./span-rescore": {
 			"node": "./span-rescore.ts",
 			"default": "./out/span-rescore.js",

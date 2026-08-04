@@ -175,6 +175,12 @@ export interface OAResolverEvalOptions {
 	 */
 	normalizeCase?: boolean
 	/**
+	 * #42 opt-in pin: turn postcode-country coherence ON (the library default is OFF). The D-rule instrument — this is
+	 * the leg that measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat
+	 * on a US panel, which is the one number a default-on proposal needs and cannot get from a confound board.
+	 */
+	postcodeCountryCoherence?: boolean
+	/**
 	 * Write the aggregate JSON dump here.
 	 */
 	outJSON?: string
@@ -843,6 +849,8 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
+		// #42: opt-in, so a single ON pin is the whole tri-state — unset already means the library default (OFF).
+		...(options.postcodeCountryCoherence ? { postcodeCountryCoherence: true } : {}),
 	}
 
 	const {

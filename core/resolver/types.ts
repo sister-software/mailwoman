@@ -586,6 +586,39 @@ export interface ResolveOpts {
 	 */
 	postcodeConsistencyGateKm?: number
 	/**
+	 * Postcode-country coherence (#42) — the ONLY mechanism permitted to override {@link defaultCountry}, and the only
+	 * one that runs BEFORE the walk rather than re-picking after it.
+	 *
+	 * `12 Rue de Rivoli, 75001 Paris` under the en-US locale resolves to Paris, **Texas**: the locale's region subtag
+	 * becomes `defaultCountry: "US"`, the backend turns that into a hard `spr.country = 'US'` filter, and the candidate
+	 * pool is all-US before ranking begins — so a coarse placer that called the address FR at confidence 0.9999908844 has
+	 * nothing to promote (a soft re-rank downstream of a hard filter is inert by construction). With the postal shards
+	 * attached it degrades further: the postcode resolves to ZIP 75001 (Addison TX) and {@link postcodeConsistency} then
+	 * drags the locality onto that point.
+	 *
+	 * The postcode's SHAPE cannot settle this — `75001` is a valid US ZIP, French CP and German PLZ, and the gazetteer
+	 * holds the literal string in four countries. Its GEOMETRY can: this pass asks, per candidate country from codex's
+	 * shape test, whether the postcode resolves there AND a same-named locality sits within
+	 * {@link postcodeCountryCoherenceGateKm} of it — then scopes the whole walk to the country where the pair is
+	 * consistent. Measured over 800 real pairs (400 US ZIP+city, 400 FR CP+commune): **zero** border crossings at both
+	 * the 15 km and 25 km gates.
+	 *
+	 * Soft by construction, per the positive-evidence-only rule: the caller's `defaultCountry` is tested FIRST and a
+	 * coherent default always wins (returning immediately, ≤2 lookups, byte-identical walk), and both zero coherent
+	 * countries and two-or-more abstain. It fires only when a `defaultCountry` is in force AND the tree carries both a
+	 * postcode and a locality AND the default cannot make them consistent.
+	 *
+	 * **Default OFF** (D-rule: opt-in until the resolver gauntlet clears it on the tier-1 locales). Costs 2 lookups on
+	 * the byte-stable path, at most 8 when it fires.
+	 */
+	postcodeCountryCoherence?: boolean
+	/**
+	 * Gate radius (km) for {@link postcodeCountryCoherence} — how near a same-named locality must sit to the resolved
+	 * postcode to count that country as consistent. Default 25 (what the 800-pair scale run measured; the confound board
+	 * returned identical verdicts at 15, 25 and 50, so the pass is not gate-tuned).
+	 */
+	postcodeCountryCoherenceGateKm?: number
+	/**
 	 * Admin descendant-consistency (#263). When a region resolved but its child locality did NOT — the greedy region pick
 	 * (name + population) chose a foreign namesake whose descendants hold no such locality ("Portland, ME" → Messina IT;
 	 * "Portland" then finds nothing beneath it and falls back to the region centroid) — re-pick the (region, locality)

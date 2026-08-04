@@ -133,6 +133,16 @@ const OptionsSchema = zod.object({
 				"--default-country / locale pins it. ON by default after the M2 misroute gate (0 misroutes); pass " +
 				"--no-place-country to disable."
 		),
+	postcodeCountryCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#42, OPT-IN: let a (postcode, locality) pair that is geographically consistent in exactly ONE country " +
+				"override a wrong --default-country / locale scope. '12 Rue de Rivoli, 75001 Paris' under en-US " +
+				"otherwise geocodes to Addison, Texas (ZIP 75001). Abstains when the default country is already " +
+				"consistent, when no country is, or when more than one is."
+		),
 	placeCountryThreshold: zod
 		.number()
 		.optional()
@@ -294,6 +304,8 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
+			// #42: opt-in, so only the explicit pin needs threading (an unset dep is already OFF downstream).
+			...(options.postcodeCountryCoherence ? { postcodeCountryCoherence: true } : {}),
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).

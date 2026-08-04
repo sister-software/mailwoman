@@ -31,6 +31,11 @@ import {
 import { haversineKm } from "@mailwoman/spatial"
 
 import { foldName } from "./fold-name.ts"
+import {
+	findPostcodeCountryScope,
+	type PostcodeCountryScope,
+	stampPostcodeCountryScope,
+} from "./postcode-country-coherence.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
 
@@ -773,10 +778,40 @@ class WOFResolver implements Resolver {
 			resolvedRegionNode: null,
 		}
 
+		// Postcode-country coherence (#42): the ONE pre-walk pass, and the only mechanism allowed to override
+		// `defaultCountry`. Its three sibling coherence passes re-pick nodes AFTER the walk; that shape cannot
+		// work here, because what needs correcting is the walk's country SCOPE — which poisons the postcode
+		// node's own resolution, the postcode-consistency fallback that then drags the locality onto it, and
+		// the hard `country` filter on every admin lookup. So the verdict is taken once, up front, and the
+		// walk runs under the corrected country. Opt-in (D-rule); needs a default country to correct and both
+		// a postcode and a locality to be coherent about; abstains unless EXACTLY one country (never the
+		// already-coherent default) makes the pair consistent. See postcode-country-coherence.ts.
+		let postcodeScope: PostcodeCountryScope | null = null
+
+		if (opts.postcodeCountryCoherence && state.defaultCountry && state.postcode) {
+			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
+				postcode: state.postcode,
+				defaultCountry: state.defaultCountry,
+				...(opts.postcodeCountryCoherenceGateKm !== undefined ? { gateKm: opts.postcodeCountryCoherenceGateKm } : {}),
+			})
+
+			if (postcodeScope) {
+				// The override. `hardCountry` is not cleared because it is never consulted while a
+				// `defaultCountry` is set (`#lookupAndPick`'s precedence chain reaches it only as the last
+				// fallback), so replacing the default is sufficient to re-scope the entire walk.
+				state.defaultCountry = postcodeScope.country
+			}
+		}
+
 		const newRoots: AddressNode[] = []
 
 		for (const root of tree.roots) {
 			newRoots.push(await this.#walk(root, /* parentResolved */ null, state))
+		}
+
+		// Attribution for the override, stamped on the two nodes that bought it. Additive metadata only.
+		if (postcodeScope) {
+			stampPostcodeCountryScope(newRoots, postcodeScope)
 		}
 
 		// Dual-role hierarchy completion (#405/#415). Only when enabled, a region resolved, and the parser

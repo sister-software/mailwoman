@@ -280,6 +280,19 @@ export interface GeocodeDeps {
 	 * out.
 	 */
 	adminCoherence?: boolean
+	/**
+	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
+	 * geographically consistent in exactly ONE country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
+	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal shards attached in Addison. **Default
+	 * OFF** (D-rule: opt-in until the resolver gauntlet clears the tier-1 locales).
+	 *
+	 * On this path it also re-selects the rooftop tier. Shard selection happens BEFORE the resolve and keys off
+	 * `defaultCountry ?? placedCountry`, so a US-scoped call would pick no national/OSM shard and leave the corrected FR
+	 * address at its commune centroid. When the resolver reports an override (the `postcode_country_scope` stamp), the
+	 * rooftop/street shards are re-selected for the corrected country and the tree is resolved ONCE more. Self-gating:
+	 * the second pass costs nothing unless an override actually fired.
+	 */
+	postcodeCountryCoherence?: boolean
 }
 
 /**
@@ -695,40 +708,35 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	// National open-register rooftop tier (#1012): a non-US parse first consults an authoritative government
-	// address register (BAN-FR today) AHEAD of OSM — it's denser + coordinate-authoritative. Bbox
-	// fall-through is ON here too (like OSM below): the register's ROWS carry postcode + commune, but the
-	// QUERY often doesn't ("181 Rue du Chevaleret, Paris" — no postcode, and BAN communes are
-	// INSEE-arrondissement-granular so the locality probe keys "paris" ≠ "paris 13e arrondissement"). The
-	// resolved locality's box then scopes the (street, number) probe; measured safe — zero ambiguous
-	// (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN shard.
-	if (!addressPoints) {
-		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+	// Rooftop tier for a NON-US parse, in precedence order:
+	//
+	//   1. National open-register (#1012) — an authoritative government address register (BAN-FR today), denser +
+	//      coordinate-authoritative, so it goes AHEAD of OSM.
+	//   2. OSM (#247) — the community fallback, only when no national register covered the country.
+	//
+	// Bbox fall-through is ON for both: the rows carry postcode + commune but the QUERY often doesn't ("181 Rue du
+	// Chevaleret, Paris" — no postcode, and BAN communes are INSEE-arrondissement-granular so the locality probe keys
+	// "paris" ≠ "paris 13e arrondissement"). The resolved locality's box then scopes the (street, number) probe;
+	// measured safe — zero ambiguous (street, number) pairs across Paris arrondissements in the 2026-05-18 BAN shard.
+	//
+	// Factored into a function because #42's postcode-country coherence can correct the country AFTER the resolve, and
+	// the corrected country then needs the same selection re-run (see the second pass at the bottom).
+	const rooftopFor = (country: string | undefined): AddressPointLookup | undefined => {
+		if (!country || country.toLowerCase() === "us") return undefined
+		const slug = country.toLowerCase()
 
-		if (country && country !== "us") {
-			const national = deps.nationalShards?.(country)
-
-			if (national?.addressPoints) {
-				addressPoints = national.addressPoints
-				opts.addressPointBboxFallback = true
-			}
-		}
+		return deps.nationalShards?.(slug)?.addressPoints ?? deps.osmShards?.(slug)?.addressPoints
 	}
 
-	// OSM international rooftop tier (#247): the community fallback, only when neither a US situs shard nor a
-	// national register (above) covered the country. An explicit defaultCountry wins; otherwise the coarse
-	// placer's country. Bbox fall-through is ON for OSM — its points often carry no postcode/locality tag, so
-	// the resolved locality's box scopes the (street, number) probe.
+	// An explicit defaultCountry wins; otherwise the coarse placer's country.
+	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+
 	if (!addressPoints) {
-		const country = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
+		const rooftop = rooftopFor(preResolveCountry)
 
-		if (country && country !== "us") {
-			const osm = deps.osmShards?.(country)
-
-			if (osm?.addressPoints) {
-				addressPoints = osm.addressPoints
-				opts.addressPointBboxFallback = true
-			}
+		if (rooftop) {
+			addressPoints = rooftop
+			opts.addressPointBboxFallback = true
 		}
 	}
 
@@ -742,20 +750,21 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// no-house-number (a numbered query is byte-identical) and unions these hints with the RESOLVED-tree countries,
 	// because the pre-resolution country of a bare thoroughfare is unreliable (bare-locality tree / placer mis-route).
 	// US never supplies a street shard, so `provider("us")` is undefined and the US path stays byte-stable.
+	const streetHints: string[] = []
+
 	if (deps.nationalShards) {
 		const provider = deps.nationalShards
 
 		opts.streetCentroids = (country: string) => provider(country).streetCentroids
-		const hints: string[] = []
 
 		for (const c of [deps.defaultCountry?.toLowerCase(), placedCountry?.toLowerCase(), streetPlacerCountry]) {
-			if (c && !hints.includes(c)) {
-				hints.push(c)
+			if (c && !streetHints.includes(c)) {
+				streetHints.push(c)
 			}
 		}
 
-		if (hints.length) {
-			opts.streetCountryHints = hints
+		if (streetHints.length) {
+			opts.streetCountryHints = streetHints
 		}
 	}
 
@@ -783,9 +792,63 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	const resolved = await deps.resolver.resolveTree(tree, opts)
+	// #42 postcode-country coherence (opt-in). The resolver owns the verdict — it is the only place that can test the
+	// (postcode, locality) pair against the gazetteer — so it is switched on here and its answer read back off the tree.
+	if (deps.postcodeCountryCoherence) {
+		opts.postcodeCountryCoherence = true
+	}
+
+	let resolved = await deps.resolver.resolveTree(tree, opts)
+
+	// Second pass, ONLY when the coherence pass actually overrode the country. Rooftop + street-centroid shards are
+	// selected BEFORE the resolve (they have to be — they're resolver inputs), off a country that has now been shown
+	// wrong, so a corrected FR address would otherwise sit at its commune centroid with no BAN shard ever consulted.
+	// Re-select for the corrected country and resolve once more. `opts.defaultCountry` is deliberately left alone so
+	// the coherence pass re-derives the same verdict (2 lookups) and its `postcode_country_scope` receipt survives onto
+	// the returned tree. Bounded at one extra resolve, and unreachable unless an override fired.
+	const scopeCountry = postcodeCountryScopeOf(resolved)
+
+	if (scopeCountry && scopeCountry.toLowerCase() !== preResolveCountry && !usShards.addressPoints) {
+		const rooftop = rooftopFor(scopeCountry)
+		let changed = false
+
+		if (rooftop) {
+			opts.addressPoints = rooftop
+			opts.addressPointBboxFallback = true
+			changed = true
+		}
+
+		if (opts.streetCentroids && !streetHints.includes(scopeCountry.toLowerCase())) {
+			opts.streetCountryHints = [scopeCountry.toLowerCase(), ...streetHints]
+			changed = true
+		}
+
+		if (changed) {
+			resolved = await deps.resolver.resolveTree(tree, opts)
+		}
+	}
 
 	return extractGeocodeResult(input, resolved)
+}
+
+/**
+ * The country #42's postcode-country coherence pass scoped the walk to, read back off the resolved tree's
+ * `postcode_country_scope` stamp. `undefined` when the pass was off, abstained, or agreed with the caller's default —
+ * i.e. whenever nothing was overridden.
+ */
+function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
+	const stack: AddressNode[] = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+		const scope = n.metadata?.["postcode_country_scope"]
+
+		if (typeof scope === "string" && scope.length) return scope
+
+		stack.push(...n.children)
+	}
+
+	return undefined
 }
 
 /**
