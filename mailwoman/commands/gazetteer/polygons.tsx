@@ -31,8 +31,8 @@ import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import zod from "zod"
 
@@ -259,8 +259,9 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 			}
 
 			try {
-				const feat = tryParsingJSON<{ geometry?: RawGeometry }>(readFileSync(path, "utf8"), {})
-				const simp = feat.geometry ? simplify(feat.geometry, tol) : null
+				// A malformed GeoJSON file nulls out and lands in the `dropped` tally with the rest.
+				const feat = tryParsingJSON<{ geometry?: RawGeometry }>(readFileSync(path, "utf8"))
+				const simp = feat?.geometry ? simplify(feat.geometry, tol) : null
 
 				if (!simp) {
 					dropped++

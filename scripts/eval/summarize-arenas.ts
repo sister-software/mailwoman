@@ -19,8 +19,9 @@
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
-import { pyFixed } from "@mailwoman/core/utils"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runIfScript } from "@mailwoman/core/scripting"
+import { pyFixed } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
@@ -98,6 +99,4 @@ async function main(): Promise<void> {
 	}
 }
 
-if (import.meta.main) {
-	await main()
-}
+runIfScript(import.meta, main)

@@ -51,8 +51,8 @@ import { dirname } from "node:path"
 
 import { ParquetReader } from "@dsnp/parquetjs"
 import { $private } from "@mailwoman/core/env"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createNewlineWriter } from "spliterator"
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -408,21 +408,17 @@ function parseCandidates(text: string): Candidate[] {
 	// Strip markdown fences the model sometimes wraps around JSON
 	const cleaned = text.replaceAll(/^```(?:json)?\n?|\n?```$/g, "").trim()
 
-	try {
-		const parsed = tryParsingJSON(cleaned)
+	const parsed = tryParsingJSON(cleaned)
 
-		if (Array.isArray(parsed)) return parsed as Candidate[]
+	if (Array.isArray(parsed)) return parsed as Candidate[]
 
-		// Some providers wrap in {"variants": [...]} or {"candidates": [...]}
-		if (typeof parsed === "object" && parsed !== null) {
-			for (const key of ["variants", "candidates", "results"]) {
-				const v = (parsed as Record<string, unknown>)[key]
+	// Some providers wrap in {"variants": [...]} or {"candidates": [...]}
+	if (typeof parsed === "object" && parsed !== null) {
+		for (const key of ["variants", "candidates", "results"]) {
+			const v = (parsed as Record<string, unknown>)[key]
 
-				if (Array.isArray(v)) return v as Candidate[]
-			}
+			if (Array.isArray(v)) return v as Candidate[]
 		}
-	} catch {
-		// fall through
 	}
 
 	return []

@@ -40,10 +40,10 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { haversineKm } from "@mailwoman/spatial"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -225,10 +225,10 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	for (const fp of geojsonFiles(join(adminRepo!, "data"))) {
 		try {
 			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: GeojsonGeometry }>(
-				readFileSync(fp, "utf8"),
-				{}
+				readFileSync(fp, "utf8")
 			)
 
+			if (!g) continue
 			const p: Record<string, unknown> = g.properties ?? {}
 
 			if (p["wof:placetype"] !== "locality" || (p["mz:is_current"] ?? 1) === 0) continue
