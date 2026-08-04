@@ -146,7 +146,9 @@ const pairs: Pair[] = []
 for await (const row of JSONSpliterator.fromAsync<never>(panel.path)) {
 	const pair = panel.read(row)
 
-	if (pair) pairs.push(pair)
+	if (pair) {
+		pairs.push(pair)
+	}
 
 	if (pairs.length >= limit) break
 }

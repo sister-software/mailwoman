@@ -38,6 +38,7 @@ describe("describeResolverLevers — the run banner", () => {
 		expect(describeResolverLevers({ postcodeCountryCoherence: true })).toBe(
 			"resolver levers: postcodeCountryCoherence=ON"
 		)
+
 		expect(describeResolverLevers({ postcodeCountryCoherence: false })).toBe(
 			"resolver levers: postcodeCountryCoherence=OFF"
 		)
