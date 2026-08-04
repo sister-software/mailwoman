@@ -20,7 +20,13 @@ the sizes of everything here, see [Footprints](./footprints.mdx).
 
 Every published package releases in lockstep on one version number, the model bundles included, so a
 weights package version tracks the release rather than the model's own lineage. All packages are ESM
-only, require Node 24.18 or later, and carry `AGPL-3.0-only OR LicenseRef-Commercial`.
+only, and the `mailwoman` entry package declares a Node floor of 24.18; the scoped packages declare
+no `engines` field of their own.
+
+Every package declares `AGPL-3.0-only OR LicenseRef-Commercial` except two:
+`@mailwoman/neural-weights-es-es` and `@mailwoman/neural-weights-it-it` declare `AGPL-3.0`, both in
+the repository and in what the registry serves. Verify any package's declaration with
+`npm view <package> license` rather than assuming the project-wide string.
 
 ## Start here
 
