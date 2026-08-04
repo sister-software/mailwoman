@@ -27,6 +27,8 @@ import { createRequire } from "node:module"
 import { homedir } from "node:os"
 import { dirname, resolve } from "node:path"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 const req = createRequire(import.meta.url)
 
 /**
@@ -439,11 +441,11 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
  */
 function resolveBaseWeightsDir(packageDir: string): string | undefined {
 	try {
-		const pkg = JSON.parse(readFileSync(resolve(packageDir, "package.json"), "utf8")) as {
-			mailwoman?: { baseWeights?: string }
-		}
+		const pkg = tryParsingJSON<{ mailwoman?: { baseWeights?: string } }>(
+			readFileSync(resolve(packageDir, "package.json"), "utf8")
+		)
 
-		const base = pkg.mailwoman?.baseWeights
+		const base = pkg?.mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return undefined
 
@@ -473,13 +475,7 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const labels = (parsed as { labels?: unknown }).labels
@@ -553,13 +549,7 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const requires = (parsed as { requires?: unknown }).requires
@@ -676,13 +666,7 @@ export function readCapabilityManifest(modelCardPath: string | undefined): Capab
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const capabilities = (parsed as { capabilities?: unknown }).capabilities
@@ -743,13 +727,7 @@ export function readCRFTransitions(crfPath: string | undefined): CRFTransitions 
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const obj = parsed as Record<string, unknown>

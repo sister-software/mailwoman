@@ -15,6 +15,7 @@
 
 import { spawn } from "node:child_process"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
@@ -151,13 +152,13 @@ export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetR
 		const line = (raw.charCodeAt(0) === 0x1e ? raw.slice(1) : raw).trim()
 
 		if (!line) continue
-		let f: { properties?: { name?: string }; geometry?: { type?: string; coordinates?: number[][] } }
 
-		try {
-			f = JSON.parse(line)
-		} catch {
-			continue
-		}
+		const f = tryParsingJSON<{
+			properties?: { name?: string }
+			geometry?: { type?: string; coordinates?: number[][] }
+		}>(line)
+
+		if (!f) continue
 
 		const name = f.properties?.name
 

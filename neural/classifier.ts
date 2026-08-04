@@ -24,6 +24,7 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	proposeSpans,
 	type ProposedSpan,
@@ -347,7 +348,9 @@ export class NeuralAddressClassifier {
 
 		if (resolved.semiCRFTransitionsPath) {
 			try {
-				semiCRFGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCRFTransitionsPath, "utf8")))
+				semiCRFGrammar = parseSemiCRFTransitions(
+					parseJSONStrict(fs.readFileSync(resolved.semiCRFTransitionsPath, "utf8"))
+				)
 			} catch (error) {
 				console.error(
 					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCRFTransitionsPath} — ` +
@@ -389,7 +392,7 @@ export class NeuralAddressClassifier {
 			try {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
 					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
-					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
+					: parseAnchorLookup(parseJSONStrict(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
 			} catch (error) {
 				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(error as Error).message}`)
 			}
@@ -408,7 +411,9 @@ export class NeuralAddressClassifier {
 
 		if (resolved.gazetteerLexiconPath) {
 			try {
-				gazetteerLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8")))
+				gazetteerLexicon = parseGazetteerLexicon(
+					parseJSONStrict(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8"))
+				)
 			} catch (error) {
 				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(error as Error).message}`)
 			}
@@ -430,7 +435,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.countryLexiconPath) {
 			try {
-				countryLexicon = parseCountryLexicon(JSON.parse(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
+				countryLexicon = parseCountryLexicon(parseJSONStrict(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
 			} catch (error) {
 				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(error as Error).message}`)
 			}
@@ -451,7 +456,9 @@ export class NeuralAddressClassifier {
 
 		if (resolved.streetTypeLexiconPath) {
 			try {
-				streetTypeLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8")))
+				streetTypeLexicon = parseGazetteerLexicon(
+					parseJSONStrict(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8"))
+				)
 			} catch (error) {
 				warnUnfedChannel(
 					"street_type",
@@ -465,7 +472,7 @@ export class NeuralAddressClassifier {
 		if (resolved.localitySurfaceLexiconPath) {
 			try {
 				localitySurfaceLexicon = parseGazetteerLexicon(
-					JSON.parse(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
+					parseJSONStrict(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
 				)
 			} catch (error) {
 				warnUnfedChannel(

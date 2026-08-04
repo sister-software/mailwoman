@@ -33,6 +33,7 @@ import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -117,9 +118,13 @@ function readModelCard(): Record<string, unknown> | null {
 
 	for (const p of candidates) {
 		try {
-			if (existsSync(p)) return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>
+			if (existsSync(p)) {
+				const card = tryParsingJSON<Record<string, unknown>>(readFileSync(p, "utf8"))
+
+				if (card) return card
+			}
 		} catch {
-			/* unreadable / malformed — try the next candidate */
+			/* unreadable — try the next candidate */
 		}
 	}
 

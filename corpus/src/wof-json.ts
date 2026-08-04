@@ -31,6 +31,7 @@
 
 import { readFile } from "node:fs/promises"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import FastGlob from "fast-glob"
 
 /**
@@ -195,13 +196,9 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 			continue
 		}
 
-		let parsed: WOFFeature
+		const parsed = tryParsingJSON<WOFFeature>(text)
 
-		try {
-			parsed = JSON.parse(text) as WOFFeature
-		} catch {
-			continue
-		}
+		if (parsed === null) continue
 
 		const rec = recordFromFeature(parsed)
 

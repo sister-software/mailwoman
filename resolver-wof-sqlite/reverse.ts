@@ -30,6 +30,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 import { ancestorLineage, placetypeDepth } from "./ancestry.ts"
 import { PLACE_BBOX_TABLE } from "./fts.ts"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.ts"
@@ -445,15 +447,8 @@ export class WOFReverseGeocoder implements Disposable {
 		}
 
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
-		let geometry: GeojsonGeometry | null = null
-
-		if (row) {
-			try {
-				geometry = JSON.parse(row.geom) as GeojsonGeometry
-			} catch {
-				geometry = null // malformed row — treat as no-polygon rather than failing the query
-			}
-		}
+		// Malformed row parses to null — treat as no-polygon rather than failing the query.
+		const geometry = row ? tryParsingJSON<GeojsonGeometry>(row.geom) : null
 
 		this.#geometryCache.set(id, geometry)
 

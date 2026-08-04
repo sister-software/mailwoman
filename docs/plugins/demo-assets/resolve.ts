@@ -15,7 +15,10 @@ import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+
+import type { ReleaseInfo } from "#shared/demo-helpers"
 
 //#region Workspace resolution helpers
 
@@ -224,7 +227,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 /**
  * Read the model-card.json from the weights package to get version metadata.
  */
-export function readModelCard(): { version: string; modelSize: number; tokenizerVocab: number; step: string } | null {
+export function readModelCard(): ReleaseInfo | null {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
 
 	if (!weightsDir) return null
@@ -232,11 +235,7 @@ export function readModelCard(): { version: string; modelSize: number; tokenizer
 
 	if (!existsSync(cardPath)) return null
 
-	try {
-		return JSON.parse(readFileSync(cardPath, "utf8"))
-	} catch {
-		return null
-	}
+	return tryParsingJSON<ReleaseInfo>(readFileSync(cardPath, "utf8"), null)
 }
 
 /**

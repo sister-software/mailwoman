@@ -13,6 +13,7 @@ import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 
@@ -55,11 +56,9 @@ function assertShippedModelMatchesCard(materializedMd5: string): void {
 	if (!existsSync(cardPath)) return
 	// Soft-return on an UNPARSEABLE card too — the docstring's contract is that a card-format problem is
 	// not this guard's job (the model file itself is always existsSync-gated by the caller).
-	let card: { version?: string; files_md5?: Record<string, string> }
+	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(readFileSync(cardPath, "utf8"))
 
-	try {
-		card = JSON.parse(readFileSync(cardPath, "utf8")) as { version?: string; files_md5?: Record<string, string> }
-	} catch {
+	if (!card) {
 		console.error(`[gauntlet] model-card ${cardPath} is not valid JSON — skipping the #1024 md5 guard`)
 
 		return
@@ -182,6 +181,7 @@ export async function buildGauntletDeps(
 				warnedOverlays.add(overlayLocale)
 
 				console.error(
+					// oxlint-disable-next-line mailwoman/prefer-spliterator -- An Error message, not a data file.
 					`[gauntlet] ⚠ ${overlayLocale} overlay unavailable (${(error as Error).message.split("\n")[0]}) — ` +
 						`grading ${caseCountry} cases BASE-ONLY (no pair-index/deploc prior). ` +
 						`For production-true grading, include @mailwoman/neural-weights-${overlayLocale.toLowerCase()} in the weights cache.`

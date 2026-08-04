@@ -66,6 +66,7 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { openBuiltDatabase, sealDatabase } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
@@ -346,13 +347,9 @@ interface GeoJSONMultiPolygon {
 export function geometryCentroid(geometryJSON: string | null): { lat: number; lon: number } | undefined {
 	if (!geometryJSON) return undefined
 
-	let geometry: GeoJSONPolygon | GeoJSONMultiPolygon
+	const geometry = tryParsingJSON<GeoJSONPolygon | GeoJSONMultiPolygon>(geometryJSON)
 
-	try {
-		geometry = JSON.parse(geometryJSON)
-	} catch {
-		return undefined
-	}
+	if (!geometry) return undefined
 
 	const exteriorRings: number[][][] =
 		geometry.type === "Polygon"

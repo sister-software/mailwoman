@@ -15,6 +15,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -112,11 +113,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		if (c.expect_components != null) {
 			// From our own builder's JSON.stringify, so malformed = a corrupt DB row — surface it as a
 			// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole gate.
-			let exp: Record<string, string>
+			const exp = tryParsingJSON<Record<string, string>>(c.expect_components)
 
-			try {
-				exp = JSON.parse(c.expect_components) as Record<string, string>
-			} catch {
+			if (!exp) {
 				issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
 
 				return issues

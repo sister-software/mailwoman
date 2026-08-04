@@ -23,7 +23,9 @@ import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
 
 /**
@@ -186,7 +188,7 @@ function main(): number {
 		return 2
 	}
 
-	const rows: ResolvedRow[] = JSON.parse(readFileSync(src, "utf8"))
+	const rows = parseJSONStrict<ResolvedRow[]>(readFileSync(src, "utf8"))
 	const overall: Counter = {}
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []
@@ -261,6 +263,4 @@ function main(): number {
 	return 0
 }
 
-if (import.meta.main) {
-	process.exit(main())
-}
+runIfScript(import.meta, main)

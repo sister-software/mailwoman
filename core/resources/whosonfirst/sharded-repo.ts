@@ -15,6 +15,7 @@ import { existsSync, readFileSync } from "node:fs"
 
 import { resolvePath } from "path-ts"
 
+import { tryParsingJSON } from "../../objects.ts"
 import type { WOFFeature } from "./placetypes/admin.ts"
 
 /**
@@ -57,8 +58,9 @@ export function readWOFFeature(id: number, roots: readonly string[]): WOFFeature
 		if (!existsSync(path)) continue
 
 		try {
-			return JSON.parse(readFileSync(path, "utf8")) as WOFFeature
+			return tryParsingJSON<WOFFeature>(readFileSync(path, "utf8"))
 		} catch {
+			// The file vanished or turned unreadable between existsSync and the read — same "no evidence" verdict.
 			return null
 		}
 	}

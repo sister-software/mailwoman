@@ -33,6 +33,7 @@
 import { readdir } from "node:fs/promises"
 import { join } from "node:path"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { reconcileComponents } from "../../format.ts"
@@ -257,8 +258,8 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			let emitted = 0
 			outer: for (const shard of shards) {
 				if (opts.signal?.aborted) break
-				// TextSpliterator streams string lines; the per-line try/catch below keeps the reader
-				// tolerant of malformed rows (skip silently), so TextSpliterator + explicit JSON.parse —
+				// TextSpliterator streams string lines; the per-line tryParsingJSON below keeps the reader
+				// tolerant of malformed rows (skip silently), so TextSpliterator + a non-throwing parse —
 				// not JSONSpliterator, which would throw. The path string lets the lib own + dispose each
 				// shard's file handle, including on the `break outer` early exit.
 				const lines = TextSpliterator.fromAsync(join(opts.inputPath, shard))
@@ -270,13 +271,9 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 
 					if (!line) continue
 
-					let record: NADRecord
+					const record = tryParsingJSON<NADRecord>(line)
 
-					try {
-						record = JSON.parse(line) as NADRecord
-					} catch {
-						continue // malformed line — skip silently
-					}
+					if (record === null) continue // malformed line — skip silently
 
 					const state = (record.State ?? "").toString().trim().toUpperCase()
 

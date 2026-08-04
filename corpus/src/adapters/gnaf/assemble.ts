@@ -30,7 +30,8 @@ import { createWriteStream } from "node:fs"
 import { readdir, readFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { PSVSpliterator } from "spliterator"
+import { tryParsingJSON } from "@mailwoman/core/objects"
+import { PSVSpliterator, TextSpliterator } from "spliterator"
 
 export interface GNAFAssembleOptions {
 	/**
@@ -109,19 +110,14 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
  */
 async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()
-	const text = await readFile(path, "utf8")
 
-	for (const line of text.split("\n")) {
+	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (!line.trim()) continue
 
-		try {
-			const c = (JSON.parse(line) as { components?: Record<string, string> }).components
+		const c = tryParsingJSON<{ components?: Record<string, string> }>(line)?.components
 
-			if (c?.street && c?.locality && c?.postcode) {
-				keys.add(gnafHoldoutKey(c.street, c.locality, c.postcode))
-			}
-		} catch {
-			/* skip malformed */
+		if (c?.street && c?.locality && c?.postcode) {
+			keys.add(gnafHoldoutKey(c.street, c.locality, c.postcode))
 		}
 	}
 

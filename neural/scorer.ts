@@ -24,6 +24,7 @@
 import { existsSync, readFileSync } from "node:fs"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
@@ -142,7 +143,7 @@ function defaultLocalitySurfaceLexicon(locale: string | undefined): string | und
 function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLookup {
 	return source.binary
 		? new PostcodeBinaryResolver(new Uint8Array(readFileSync(source.path))).toAnchorLookup()
-		: parseAnchorLookup(JSON.parse(readFileSync(source.path, "utf8")))
+		: parseAnchorLookup(parseJSONStrict(readFileSync(source.path, "utf8")))
 }
 
 /**
@@ -422,7 +423,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	} else {
 		gazetteerLexicon =
 			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
-				? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
+				? parseGazetteerLexicon(parseJSONStrict(readFileSync(gazetteerLexiconPath, "utf8")))
 				: undefined
 
 		if (gazetteerRequired && !gazetteerLexicon) {
@@ -450,7 +451,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	} else {
 		countryLexicon =
 			countryLexiconPath && existsSync(countryLexiconPath)
-				? parseCountryLexicon(JSON.parse(readFileSync(countryLexiconPath, "utf8")))
+				? parseCountryLexicon(parseJSONStrict(readFileSync(countryLexiconPath, "utf8")))
 				: undefined
 
 		if (countryRequired && !countryLexicon) {
@@ -480,7 +481,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	} else {
 		streetTypeLexicon =
 			streetTypeLexiconPath && existsSync(streetTypeLexiconPath)
-				? parseGazetteerLexicon(JSON.parse(readFileSync(streetTypeLexiconPath, "utf8")))
+				? parseGazetteerLexicon(parseJSONStrict(readFileSync(streetTypeLexiconPath, "utf8")))
 				: undefined
 
 		if (streetTypeRequired && !streetTypeLexicon) {
@@ -507,7 +508,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	} else {
 		localitySurfaceLexicon =
 			localitySurfaceLexiconPath && existsSync(localitySurfaceLexiconPath)
-				? parseGazetteerLexicon(JSON.parse(readFileSync(localitySurfaceLexiconPath, "utf8")))
+				? parseGazetteerLexicon(parseJSONStrict(readFileSync(localitySurfaceLexiconPath, "utf8")))
 				: undefined
 
 		if (localitySurfaceRequired && !localitySurfaceLexicon) {

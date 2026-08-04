@@ -37,6 +37,7 @@ import { spawnSync } from "node:child_process"
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 
@@ -156,7 +157,7 @@ function run(cmd: string, args: string[], options: { cwd?: string } = {}): void 
  * (`api`, `libpostal`, `photon`, `nominatim`) already release at in lockstep.
  */
 function readMailwomanVersion(): string {
-	const pkg = JSON.parse(readFileSync(repoRootPath("mailwoman", "package.json"), "utf8")) as { version: string }
+	const pkg = parseJSONStrict<{ version: string }>(readFileSync(repoRootPath("mailwoman", "package.json"), "utf8"))
 
 	return pkg.version
 }
@@ -361,7 +362,6 @@ __all__ = (
 #: trial; the other three surfaces are self-host only.
 PHOTON_HOSTED_BASE_URL = "https://photon.sister.software"
 
-
 class PhotonClient(_PhotonBase):
     """Client for the Photon-compatible autocomplete / reverse geocoding API (\`/api\`, \`/reverse\`).
 
@@ -380,7 +380,6 @@ class PhotonClient(_PhotonBase):
         """Return a client pointed at the hosted public trial endpoint (:data:\`PHOTON_HOSTED_BASE_URL\`)."""
         return cls(base_url=PHOTON_HOSTED_BASE_URL, **kwargs)
 
-
 class NominatimClient(_NominatimBase):
     """Client for the Nominatim-compatible geocoding API (\`/search\`, \`/reverse\`, \`/lookup\`, \`/status\`).
 
@@ -393,7 +392,6 @@ class NominatimClient(_NominatimBase):
     def __init__(self, base_url: str | None = None, **kwargs) -> None:
         super().__init__(base_url=base_url or self.DEFAULT_BASE_URL, **kwargs)
 
-
 class LibpostalClient(_LibpostalBase):
     """Client for the libpostal-compatible parse / expand API (\`/parse\`, \`/expand\`).
 
@@ -405,7 +403,6 @@ class LibpostalClient(_LibpostalBase):
 
     def __init__(self, base_url: str | None = None, **kwargs) -> None:
         super().__init__(base_url=base_url or self.DEFAULT_BASE_URL, **kwargs)
-
 
 class MailwomanClient(_MailwomanBase):
     """Client for the native Mailwoman \`/v1/*\` surface (\`/v1/parse\`, \`/v1/geocode\`, \`/v1/batch\`,

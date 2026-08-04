@@ -20,6 +20,7 @@
  *       carries a `street` field.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { makeLcg } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
@@ -88,8 +89,8 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 		async *rows(options: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const random = makeLcg(opts.seed ?? Date.now())
 
-			// TextSpliterator streams string lines; the per-line try/catch below keeps this reader
-			// tolerant of malformed rows (skipped++), so TextSpliterator + explicit JSON.parse — not
+			// TextSpliterator streams string lines; the per-line tryParsingJSON below keeps this reader
+			// tolerant of malformed rows (skipped++), so TextSpliterator + a non-throwing parse — not
 			// JSONSpliterator, which would throw on the first bad line.
 			const lines = TextSpliterator.fromAsync(options.inputPath)
 
@@ -106,11 +107,9 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 				if (!trimmed) continue
 
-				let input: PoBoxInputRow
+				const input = tryParsingJSON<PoBoxInputRow>(trimmed)
 
-				try {
-					input = JSON.parse(trimmed) as PoBoxInputRow
-				} catch {
+				if (input === null) {
 					skipped++
 
 					continue

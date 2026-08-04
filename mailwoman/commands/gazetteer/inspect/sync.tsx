@@ -13,11 +13,11 @@ import {
 	PLACETYPES_REPO_SOURCE,
 	type RepositorySource,
 	synchronizeRepo,
-	takeInParallel,
 } from "@mailwoman/core"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 import { useMemo, useState } from "react"
+import { asyncParallelIterator } from "spliterator"
 import zod from "zod"
 import { $ } from "zx"
 
@@ -79,7 +79,7 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 
 		const abortController = new AbortController()
 
-		const batchIterator = takeInParallel(
+		const batchIterator = asyncParallelIterator(
 			sources,
 			BATCH_SIZE,
 			async (entry) => {

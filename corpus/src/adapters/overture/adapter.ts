@@ -30,6 +30,7 @@
  *   `postcode` | | `locality`| `locality` (Overture address_levels municipality, or postal_city) |
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
@@ -63,13 +64,9 @@ function parseLine(line: string): OvertureCorpusRow | null {
 
 	if (!t || t.startsWith("#")) return null
 
-	try {
-		const o = JSON.parse(t)
+	const o = tryParsingJSON(t)
 
-		return o && typeof o === "object" ? (o as OvertureCorpusRow) : null
-	} catch {
-		return null
-	}
+	return o && typeof o === "object" ? (o as OvertureCorpusRow) : null
 }
 
 export function createOvertureAdapter(): CorpusAdapter {

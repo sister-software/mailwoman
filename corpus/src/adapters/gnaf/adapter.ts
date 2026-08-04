@@ -28,6 +28,7 @@
  *   line). Open G-NAF licence — attribute "Geoscape Australia".
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
@@ -87,7 +88,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 			// Input is the assembled component JSONL (one tuple per line). TextSpliterator auto-disposes on
 			// loop completion and on an early `break` (abort / limit), so the old explicit handle teardown is
-			// gone; JSON.parse tolerates a trailing CR on CRLF sources and the `!line.trim()` guard skips blanks.
+			// gone; the parse tolerates a trailing CR on CRLF sources and the `!line.trim()` guard skips blanks.
 			// The render order rotates (i % 3), matching v1.9.1's rerender.
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break
@@ -96,13 +97,9 @@ export function createGNAFAdapter(): CorpusAdapter {
 
 				if (!line.trim()) continue
 
-				let t: GNAFTuple
+				const t = tryParsingJSON<GNAFTuple>(line)
 
-				try {
-					t = JSON.parse(line) as GNAFTuple
-				} catch {
-					continue
-				}
+				if (t === null) continue
 
 				if (!t.house_number || !t.street || !t.locality || !t.postcode) continue
 

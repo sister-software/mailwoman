@@ -96,7 +96,7 @@ The heavy-lift command. Designed to process 100K+ individual `.geojson` files (o
 
 - Main thread globs `**/*.geojson` from the admin directory via `fast-glob` streaming.
 - Files are batched via `takeAsync(matchStream, BATCH_SIZE)` — yields arrays of filenames, one per available CPU core.
-- Each batch is dispatched to workers via `takeInParallel(fileNames, BATCH_SIZE, delegateInsertion)`.
+- Each batch is dispatched to workers via `asyncParallelIterator(fileNames, BATCH_SIZE, delegateInsertion)`.
 - Workers run `_app_worker.mts::insertRecord(filePath)`: reads the file, parses GeoJSON, calls `pluckPlacetypeSpec` to extract structured fields.
 
 **What `pluckPlacetypeSpec` produces:**
@@ -185,7 +185,7 @@ The `spliterator` package (published separately at `@sister-software/spliterator
 
 - **`TextSpliterator`** — line-delimited iteration over file streams without loading entire files into memory. Used by `loader.ts` for reading the large WOF GeoJSON bundles.
 - **`AsyncSpliterator.asMany(source, delimiter, concurrency)`** — splits a single large file into N concurrent byte-range iterators for parallel processing. Designed for the case where WOF data arrives as a single NDJSON dump (e.g. from data.geocode.earth) rather than 100K individual files. Marked `@internal`; never exercised at scale because the individual-file path was sufficient for the repos we actually use.
-- **`asyncParallelIterator` / `takeAsync`** — the batching primitives that `commands/wof/prepare` uses to dispatch work to Piscina workers. `takeInParallel` in `core/resources/collections.ts` is the local equivalent (bounded-concurrency async generator).
+- **`asyncParallelIterator` / `takeAsync`** — the batching primitives that `commands/wof/prepare` uses to dispatch work to Piscina workers.
 
 The relationship: Spliterator handles the **read** parallelism (splitting a file into chunks); Piscina handles the **compute** parallelism (processing parsed records across CPU cores); `PlacetypeDataSource` handles the **write** (structured storage). The pipeline needs all three layers; today only the first two are wired.
 

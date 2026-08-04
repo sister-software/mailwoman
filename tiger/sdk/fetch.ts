@@ -33,6 +33,7 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
@@ -296,17 +297,14 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 				child.on("close", (code) => resolve(code ?? 0))
 			})
 
-			// GeoJSONSeq is line-delimited; keep the per-line `JSON.parse` in a try/catch so a malformed
-			// record is tolerated (skipped), not thrown.
+			// GeoJSONSeq is line-delimited; per-line `tryParsingJSON` so a malformed record is
+			// tolerated (skipped), not thrown.
 			for await (const line of TextSpliterator.fromAsync(child.stdout)) {
 				if (!line) continue
-				let feat: { properties?: Record<string, unknown>; geometry?: unknown }
 
-				try {
-					feat = JSON.parse(line)
-				} catch {
-					continue
-				}
+				const feat = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: unknown }>(line)
+
+				if (!feat) continue
 
 				if (!feat.properties) continue
 

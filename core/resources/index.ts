@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./collections.ts"
 export * from "./debugging.ts"
 export * from "./git.ts"
 export * from "./languages/index.ts"

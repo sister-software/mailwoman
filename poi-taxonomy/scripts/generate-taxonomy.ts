@@ -48,6 +48,9 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runIfScript } from "@mailwoman/core/scripting"
+
 import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "../types.ts"
 
 /**
@@ -200,7 +203,7 @@ export function taxonomyPaths() {
 export function generateTaxonomyTable(): POITaxonomyTable {
 	const paths = taxonomyPaths()
 	const snapshot = parseOvertureCSV(readFileSync(paths.csv, "utf8"))
-	const overlay = JSON.parse(readFileSync(paths.overlay, "utf8")) as CuratedOverlay
+	const overlay = parseJSONStrict<CuratedOverlay>(readFileSync(paths.overlay, "utf8"))
 
 	return buildTaxonomyTable(snapshot, overlay)
 }
@@ -228,7 +231,4 @@ async function main(): Promise<void> {
 	)
 }
 
-// Run only as the entry script — importing this module (tests) stays side-effect-free.
-if (import.meta.main) {
-	await main()
-}
+runIfScript(import.meta, main)

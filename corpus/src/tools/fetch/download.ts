@@ -12,6 +12,8 @@ import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 /**
  * Rate limited — retryable, the server is asking us to back off.
  */
@@ -127,11 +129,11 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 export async function readManifest<T>(path: string): Promise<T | null> {
 	if (!existsSync(path)) return null
 
-	try {
-		return JSON.parse(await readFile(path, "utf8")) as T
-	} catch {
-		return null
-	}
+	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like corrupt
+	// JSON does; tryParsingJSON returns null for the non-string sentinel.
+	const text = await readFile(path, "utf8").catch(() => null)
+
+	return tryParsingJSON<T>(text)
 }
 
 /**

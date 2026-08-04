@@ -8,8 +8,9 @@ import * as fs from "node:fs/promises"
 
 import FastGlob from "fast-glob"
 import type { PathBuilder } from "path-ts"
+import { asyncParallelIterator } from "spliterator"
 
-import { takeInParallel } from "../../collections.ts"
+import { parseJSONStrict } from "../../../objects.ts"
 import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"
 import {
 	normalizePlacetypeDefinition,
@@ -79,9 +80,9 @@ export class Placetype implements Disposable {
 			absolute: true,
 		})
 
-		const batchIterator = takeInParallel(definitionPaths, batchSize, async (definitionPath) => {
+		const batchIterator = asyncParallelIterator(definitionPaths, batchSize, async (definitionPath) => {
 			const definitionContent = await fs.readFile(definitionPath, "utf8")
-			const definition: PlacetypeDefinition = JSON.parse(definitionContent)
+			const definition = parseJSONStrict<PlacetypeDefinition>(definitionContent)
 
 			Placetype.register(definition)
 

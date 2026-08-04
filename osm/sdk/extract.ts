@@ -17,6 +17,7 @@
 
 import { spawn } from "node:child_process"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -143,19 +144,19 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 		proc.on("close", resolve)
 	})
 
-	// Keep the per-line `JSON.parse` try/catch so a malformed record is tolerated (skipped), not thrown.
+	// Per-line `tryParsingJSON` so a malformed record is tolerated (skipped), not thrown.
 	for await (const raw of TextSpliterator.fromAsync(proc.stdout)) {
 		// GeoJSONSeq is newline-delimited; some GDAL builds prefix each record with an RS (0x1e).
 		const line = raw.replace(/^/, "").trim()
 
 		if (!line) continue
-		let feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } }
 
-		try {
-			feature = JSON.parse(line)
-		} catch {
-			continue
-		}
+		const feature = tryParsingJSON<{
+			properties?: Record<string, unknown>
+			geometry?: { type?: string; coordinates?: unknown }
+		}>(line)
+
+		if (!feature) continue
 
 		const rec = toRecord(feature)
 

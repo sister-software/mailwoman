@@ -39,6 +39,9 @@ import { execSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { JSONSpliterator } from "spliterator"
+
 /**
  * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
  */
@@ -129,6 +132,7 @@ interface ShardRow {
 }
 
 function readShard(shardPath: string): ShardRow[] {
+	// TODO: We have Parquet in Node. This is bad.
 	const py = `
 import pyarrow.parquet as pq
 import json, sys
@@ -142,9 +146,8 @@ for i in range(len(tokens_col)):
 	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
 	const rows: ShardRow[] = []
 
-	for (const line of buf.toString("utf8").split("\n")) {
-		if (!line) continue
-		rows.push(JSON.parse(line))
+	for (const row of JSONSpliterator.from<ShardRow>(buf)) {
+		rows.push(row)
 	}
 
 	return rows
@@ -480,7 +483,7 @@ export function lintCorpusShard(
 ): LintCorpusShardSummary {
 	const rulesPath = options.rulesPath ?? defaultRulesPath()
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
-	const corpus: CorpusStats = JSON.parse(readFileSync(options.statsPath, "utf8"))
+	const corpus = parseJSONStrict<CorpusStats>(readFileSync(options.statsPath, "utf8"))
 
 	report?.(
 		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
@@ -494,7 +497,7 @@ export function lintCorpusShard(
 	const shard = statsFromShard(rows)
 
 	report?.(`Loading rules from ${rulesPath}...`)
-	const rulesFile: LintRulesFile = JSON.parse(readFileSync(rulesPath, "utf8"))
+	const rulesFile = parseJSONStrict<LintRulesFile>(readFileSync(rulesPath, "utf8"))
 
 	report?.(`Running checks...`)
 

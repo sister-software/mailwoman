@@ -135,6 +135,8 @@ const NODE_BUILTIN_PATTERN = "node:*"
 
 export default {
 	...config,
+	// The repo-local plugin (`oxlint.plugin.ts`) rides alongside the bundled Sister Software one.
+	jsPlugins: [...((config.jsPlugins as string[] | undefined) ?? []), "./oxlint.plugin.ts"],
 	overrides: [
 		...((config.overrides as unknown[] | undefined) ?? []),
 		{
@@ -170,6 +172,27 @@ export default {
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
+		// `split("\n")`/`split("\t")` materializes every segment into one array before the first is
+		// read — the whole-buffer parse spliterator exists to avoid. Warn severity: a nudge toward
+		// streaming, not a gate; bounded-input sites keep split behind a scoped disable saying so.
+		"mailwoman/prefer-spliterator": "warn",
+		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either
+		// wraps it in its own try/catch or lets the exception escape untyped. `tryParsingJSON<T>`
+		// (`@mailwoman/core/objects`) is the house wrapper: typed result, non-throwing, explicit
+		// fallback. Sites where throw-on-corrupt IS the contract — sealed-artifact readers, JSONL
+		// bulk loaders that must fail loudly with position info — keep `JSON.parse` behind a scoped
+		// disable stating why. Note the wrapper returns the fallback for non-string input, so a
+		// `JSON.parse(buffer)` site converts with an explicit `.toString()` or not at all.
+		"no-restricted-properties": [
+			"error",
+			{
+				object: "JSON",
+				property: "parse",
+				message:
+					'Prefer `tryParsingJSON` from "@mailwoman/core/objects" — typed, non-throwing, explicit fallback. ' +
+					"If a throw on corrupt input is the contract here, import and use `parseJSONStrict` instead.",
+			},
+		],
 		"typescript/no-explicit-any": "error",
 		"unicorn/no-new-array": "off",
 		// Several suites assert through helpers that throw rather than calling `expect` inline —

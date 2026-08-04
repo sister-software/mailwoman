@@ -47,6 +47,7 @@
 
 import { spawn } from "node:child_process"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -348,13 +349,13 @@ async function* runPOILayer(
 		const line = raw.trim()
 
 		if (!line) continue
-		let feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } }
 
-		try {
-			feature = JSON.parse(line)
-		} catch {
-			continue
-		}
+		const feature = tryParsingJSON<{
+			properties?: Record<string, unknown>
+			geometry?: { type?: string; coordinates?: unknown }
+		}>(line)
+
+		if (!feature) continue
 
 		const row = toPOISourceRow(feature, rules, tagKeys)
 

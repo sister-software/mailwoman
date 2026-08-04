@@ -13,6 +13,7 @@ import type { DatabaseSync, StatementSync } from "node:sqlite"
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { simpleSHA3 } from "@mailwoman/core/crypto"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 // Type-only, so it is erased at build and adds no runtime edge to what is an optional peer here (the
 // caller reaches the package through a lazy `await import`).
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
@@ -298,8 +299,10 @@ export async function ingestOvertureDivisions(
 		// The candidate build explodes every alias here into its own name_key. Overture `common` is the
 		// standard name per language (no variant axis), so #936 officialness is the language test alone.
 		if (r.common_json) {
-			try {
-				const common = JSON.parse(String(r.common_json)) as Record<string, string>
+			// A malformed common map nulls out — keep the primary, skip aliases.
+			const common = tryParsingJSON<Record<string, string>>(String(r.common_json))
+
+			if (common) {
 				const seen = new Set([name])
 
 				for (const [lang, alias] of Object.entries(common)) {
@@ -308,8 +311,6 @@ export async function ingestOvertureDivisions(
 						namesInsert.run(nid, alias, subtype, country, lang, isOfficialLanguage(country, lang) ? 1 : 0, 0)
 					}
 				}
-			} catch {
-				/* malformed common map — keep the primary, skip aliases */
 			}
 		}
 

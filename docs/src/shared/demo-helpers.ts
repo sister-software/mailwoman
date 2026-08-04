@@ -55,13 +55,22 @@ export interface ReleasesManifest {
 /**
  * The raw wire shape of one releases.json entry — either key generation may appear.
  */
-interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
+export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
 	hasFST?: boolean
 	hasWOFDb?: boolean
 	/**
 	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
+	 *
+	 * @deprecated
 	 */
+	// oxlint-disable-next-line sister-software/no-title-case-acronym
 	hasFst?: boolean
+	/**
+	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
+	 *
+	 * @deprecated
+	 */
+	// oxlint-disable-next-line sister-software/no-title-case-acronym
 	hasWofDb?: boolean
 }
 

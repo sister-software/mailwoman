@@ -12,10 +12,9 @@ import type { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
 import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import type { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
-import { TextSpliterator } from "spliterator"
+import { TextSpliterator, takeAsync } from "spliterator"
 
 import { resourceDictionaryPathBuilder } from "../utils/repo.ts"
-import { takeAsync } from "./collections.ts"
 import { LocaleIndex } from "./LocaleIndex.ts"
 
 const batchSize = availableParallelism()

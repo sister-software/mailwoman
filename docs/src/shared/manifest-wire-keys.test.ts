@@ -16,9 +16,11 @@ import { readFileSync } from "node:fs"
 
 import { describe, expect, test } from "vitest"
 
+import type { WireReleaseEntry } from "#shared/demo-helpers"
+
 import { normalizeReleasesManifest } from "./demo-helpers.ts"
 
-const entry = (over: Record<string, unknown>) => ({
+const entry = (over: Partial<WireReleaseEntry>) => ({
 	version: "vX",
 	label: "",
 	description: "",

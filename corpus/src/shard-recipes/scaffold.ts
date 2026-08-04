@@ -9,6 +9,7 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "../adapter.ts"
@@ -102,7 +103,7 @@ export function* readCSVRecords(source: Uint8Array): Generator<CSVRecord> {
  */
 export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 	// TextSpliterator (not JSONSpliterator) so a malformed line is SKIPPED, not thrown — the
-	// per-line try/catch below is the tolerance this reader has always had.
+	// per-line tryParsingJSON below is the tolerance this reader has always had.
 	const { TextSpliterator } = await import("spliterator")
 
 	for await (const line of TextSpliterator.fromAsync(input)) {
@@ -110,10 +111,10 @@ export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 
 		if (!trimmed) continue
 
-		try {
-			yield JSON.parse(trimmed) as ShardTuple
-		} catch {
-			// skip malformed line
+		const tuple = tryParsingJSON<ShardTuple>(trimmed)
+
+		if (tuple !== null) {
+			yield tuple
 		}
 	}
 }

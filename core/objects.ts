@@ -6,6 +6,7 @@
  *   Utility functions for working with objects.
  */
 
+import type { PathBuilderLike } from "path-ts"
 import type { JsonObject } from "type-fest"
 
 import { isIterable } from "./collections.ts"
@@ -172,17 +173,49 @@ export function omitNullable<T extends object>(input: T): NonNullableObject<T> {
 
 /**
  * Given serialized JSON, attempt to parse it.
+ *
+ * Non-throwing: invalid JSON — and any non-string input, `Buffer` included — returns the fallback (`null` unless one is
+ * given). Callers that need a throw on corrupt input, or `JSON.parse`'s reviver parameter, use `JSON.parse` directly
+ * behind a scoped lint disable.
  */
-export function tryParsingJSON<T = unknown>(input: unknown, fallback?: undefined): T | undefined
-export function tryParsingJSON<T = unknown>(input: unknown, fallback: null): T | null
+export function tryParsingJSON<T = unknown>(input: unknown): T | null
+export function tryParsingJSON<T = unknown, F = T>(input: unknown, fallback: F): T | F
 
-export function tryParsingJSON<T = unknown, F = null>(input: unknown, fallback?: F): T | F {
-	if (typeof input !== "string") return (fallback ?? null) as F
+export function tryParsingJSON<T = unknown, F = T>(input: unknown, fallback?: F): T | F | null {
+	if (typeof input !== "string") return fallback ?? null
 
 	try {
-		return JSON.parse(input)
+		// oxlint-disable-next-line no-restricted-properties -- The wrapper the rule recommends.
+		return JSON.parse(input) as T
 	} catch {
-		return (fallback ?? null) as F
+		return fallback ?? null
+	}
+}
+
+export class JSONParseError extends Error {
+	constructor(message: string, options?: ErrorOptions) {
+		super(message, options)
+		this.name = "JSONParseError"
+	}
+}
+
+/**
+ * Parses JSON input or throws a `JSONParseError` if parsing fails.
+ *
+ * @param input - The JSON input to parse.
+ *
+ * @returns The parsed object.
+ */
+export function parseJSONStrict<T = unknown>(input: PathBuilderLike): T {
+	if (!input) {
+		throw new JSONParseError(`Expected JSON input, got ${input}`)
+	}
+
+	try {
+		// oxlint-disable-next-line no-restricted-properties -- The wrapper the rule recommends.
+		return JSON.parse(String(input)) as T
+	} catch (error: unknown) {
+		throw new JSONParseError(`Failed to parse JSON`, { cause: error })
 	}
 }
 

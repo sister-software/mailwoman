@@ -17,6 +17,8 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "./convention.ts"
 
 export class SqliteConventionSource implements ConventionSource {
@@ -49,11 +51,11 @@ export class SqliteConventionSource implements ConventionSource {
 				.get(wofID) as { convention: string } | undefined
 
 			if (row?.convention) {
-				value = JSON.parse(row.convention) as Convention
+				value = tryParsingJSON<Convention>(row.convention)
 			}
 		} catch {
-			// Malformed JSON or a missing table → treat as no override (the chain falls back to
-			// WORLD_DEFAULT). The build script validates structure, so this is purely defensive.
+			// A missing table → treat as no override (the chain falls back to WORLD_DEFAULT); malformed
+			// JSON already nulls out above. The build script validates structure, so this is purely defensive.
 			value = null
 		}
 

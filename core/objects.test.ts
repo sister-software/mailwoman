@@ -88,8 +88,8 @@ test("tryParsingJSON: a non-string input falls back to null by default", () => {
 })
 
 test("tryParsingJSON: an explicit fallback is returned for invalid or non-string input", () => {
-	expect(tryParsingJSON("not json", "fallback" as never)).toBe("fallback")
-	expect(tryParsingJSON(42, "fallback" as never)).toBe("fallback")
+	expect(tryParsingJSON("not json", "fallback")).toBe("fallback")
+	expect(tryParsingJSON(42, "fallback")).toBe("fallback")
 })
 
 test("flattenObject: flattens nested keys to dot-separated paths", () => {

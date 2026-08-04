@@ -23,6 +23,8 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 /**
  * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). The codegen is
  * repo-only, and in the repo `@mailwoman/codex/tools` always loads from source via the `node` exports condition, so
@@ -62,7 +64,10 @@ interface LanguagePopulation {
 }
 
 async function loadCLDR(file: string, cldrDir: string | undefined, cldrVersion: string): Promise<unknown> {
-	if (cldrDir) return JSON.parse(readFileSync(join(cldrDir, `cldr-${file}.json`), "utf8"))
+	if (cldrDir) {
+		return parseJSONStrict(readFileSync(join(cldrDir, `cldr-${file}.json`), "utf8"))
+	}
+
 	const url = `https://cdn.jsdelivr.net/npm/cldr-core@${cldrVersion}/supplemental/${file}.json`
 	const res = await fetch(url)
 
