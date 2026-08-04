@@ -27,11 +27,12 @@
  */
 
 import { existsSync, realpathSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode, type ServerHandle } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
 import { createServeEngine } from "../api-engine.ts"
@@ -113,6 +114,28 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(body.status).toBe("ok")
 		expect(typeof body.data.situs_states).toBe("number")
 		expect(typeof body.data.interpolation_states).toBe("number")
+	})
+
+	// `readModelCard`'s FIRST non-env candidate is `import.meta.resolve` of the weights package's card. Pin the
+	// resolver itself, not just the observable: the third candidate is a CWD-relative dev-tree path
+	// (`neural-weights-en-us/model-card.json`) which happens to exist when the suite runs from the repo root, so the
+	// /health assertion below would survive a broken resolution. This one would not.
+	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
+		expect(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json"))).toBe(
+			repoRootPath("neural-weights-en-us", "model-card.json")
+		)
+	})
+
+	// The `model` block is `readModelCard`'s only observable. Deterministic in a checkout WITHOUT dev weights linked:
+	// the card is one of the metadata files the weights workspace commits (the binaries are not).
+	test("GET /health: the model block comes from the resolved weights package's card", async () => {
+		const res = await app.request("/health")
+		const body = (await res.json()) as { model: { name?: unknown; locale?: unknown; labels?: unknown } | null }
+
+		expect(body.model).not.toBeNull()
+		expect(body.model!.name).toBe("neural-weights-en-us")
+		expect(body.model!.locale).toBe("en-us")
+		expect(typeof body.model!.labels).toBe("number")
 	})
 })
 

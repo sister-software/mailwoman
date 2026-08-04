@@ -23,13 +23,30 @@
  */
 
 import { existsSync, readFileSync } from "node:fs"
-import { createRequire } from "node:module"
 import { homedir } from "node:os"
 import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 
-const req = createRequire(import.meta.url)
+/**
+ * A weights package's own directory, located with Node's native ESM resolver.
+ *
+ * WHY THE `package.json` SUBPATH AND NOT `findPackageJSON`. `node:module`'s `findPackageJSON` reads like the obvious
+ * tool for "give me a package's root", and it is the one that keeps working if a weights package ever grows an
+ * `exports` map that omits `./package.json` (none has one today — they are data-only packages with no `exports` at all,
+ * which is why the subpath resolves). But measured in this yarn workspace it returns the node_modules SYMLINK path
+ * (`node_modules/@mailwoman/neural-weights-en-us`) where `import.meta.resolve` — like the `require.resolve` this
+ * replaced — realpaths through to the workspace directory (`neural-weights-en-us`). That string is not internal: it
+ * lands in {@link ResolvedWeights.modelPath}, in the "missing model files" error, and (via the caller) in `mailwoman
+ * doctor` output. So the subpath form is the one that is byte-identical to the previous behavior.
+ *
+ * Throws `ERR_MODULE_NOT_FOUND` when the package is not installed (the CJS twin threw `MODULE_NOT_FOUND`; no caller
+ * branches on the code — both sites catch broadly and fall through).
+ */
+function resolvePackageDirectory(packageName: string): string {
+	return dirname(fileURLToPath(import.meta.resolve(`${packageName}/package.json`)))
+}
 
 /**
  * The user-level npm-prefix cache the CLI weights guard installs into (`mailwoman parse --download-weights`, plan 3).
@@ -176,7 +193,7 @@ export interface ResolvedWeights {
 	 */
 	pairIndexPath?: string
 	/**
-	 * "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve.
+	 * "explicit" if both paths came from opts; "package:<name>" if located via {@link resolvePackageDirectory}.
 	 */
 	source: string
 }
@@ -218,9 +235,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 
 	// 1. Installed package (workspace or node_modules).
 	try {
-		const pkgJsonPath = req.resolve(`${packageName}/package.json`)
-
-		return resolveFromPackageDir(dirname(pkgJsonPath), locale, opts, `package:${packageName}`, tried)
+		return resolveFromPackageDir(resolvePackageDirectory(packageName), locale, opts, `package:${packageName}`, tried)
 	} catch (error) {
 		// A resolvable package with missing model files stays LOUD (the metadata-only dev-checkout
 		// trap) — only a failed module resolution falls through to the cache probe.
@@ -449,7 +464,7 @@ function resolveBaseWeightsDir(packageDir: string): string | undefined {
 
 		if (typeof base !== "string" || !base) return undefined
 
-		return dirname(req.resolve(`${base}/package.json`))
+		return resolvePackageDirectory(base)
 	} catch {
 		return undefined
 	}

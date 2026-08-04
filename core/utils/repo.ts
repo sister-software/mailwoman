@@ -46,6 +46,24 @@ const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias
  * (Earlier this checked `resolve("..", "..")`, which overshoots `out/` to `core/` and so was always false — the
  * compiled tree then resolved `CorePackageAbsolutePath` to `core/out` instead of `core/`, landing dictionary reads at
  * the nonexistent `core/out/data` and requiring an external symlink bridge to find `core/data`. #481.)
+ *
+ * WHY NOT NATIVE RESOLUTION (2026-08-05 triage). `node:module`'s `findPackageJSON` looks like it retires this
+ * arithmetic, and for HALF of it, it would: measured, `dirname(findPackageJSON(import.meta.url))` yields `core/` from
+ * BOTH `core/utils/repo.ts` and `core/out/utils/repo.js` (tsc emits no `core/out/package.json`, so the upward walk
+ * lands in the same place from either depth) — i.e. it computes {@link CorePackageAbsolutePath} with no
+ * `__isCompiledTree` at all. Two things stop it.
+ *
+ * First, it only covers that half. {@link RepoRootAbsolutePath} is the MONOREPO root, which is not a package on any
+ * resolution path from here — no native resolver can name it — so the flag survives for `__upCount` regardless. The
+ * arithmetic does not go away; it stops being shared by two consumers, which is worse, not better.
+ *
+ * Second, this module is reachable from a BUNDLED graph — `core/resources/libpostal.ts` imports it and
+ * `@mailwoman/core/resources` is a webpack alias in the demo — and that build resolves every `node:` specifier to an
+ * empty shim (`docs/plugins/demo-assets/plugin.ts`: a `NormalModuleReplacementPlugin(/^node:/)` plus a `fallback` map
+ * that lists `node:module` right beside `node:path` and `node:url`). A shimmed builtin fails SILENTLY — the import
+ * succeeds and the binding is `undefined` — so anything new taken from `node:` here would be an undefined call at
+ * module top level rather than a resolution error someone sees. The current code takes only what already survives that
+ * treatment. Keep the string arithmetic.
  */
 const __isCompiledTree = basename(resolve(__dirname, "..")) === OutDirectoryName
 const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
