@@ -36,7 +36,7 @@ import {
 	PairIndexResolver,
 	serializePairIndex,
 	type PairIndexEntry,
-	type PairIndexHeader,
+	type PairIndexHeaderInput,
 	type PairIndexLike,
 } from "./pair-index-resolver.ts"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "./placetype-pair-prior.ts"
@@ -381,10 +381,9 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PI
 		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality" },
 	]
 
-	const REAL_HEADER: PairIndexHeader = {
+	const REAL_HEADER: PairIndexHeaderInput = {
 		country: "gb",
 		delta: 6,
-		schemaVersion: 1,
 		foldVersion: 1,
 		sourceMD5s: [],
 		buildDate: "2026-07-22",

@@ -10,6 +10,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -18,15 +19,74 @@ import {
 	serializePairIndex,
 	type PairIndexEntry,
 	type PairIndexHeader,
+	type PairIndexHeaderInput,
 } from "./pair-index-resolver.ts"
 
-const HEADER: PairIndexHeader = {
+const HEADER: PairIndexHeaderInput = {
 	country: "gb",
 	delta: 0.42,
-	schemaVersion: 1,
 	foldVersion: 1,
 	sourceMD5s: ["abc123", "def456"],
 	buildDate: "2026-07-22",
+}
+
+/**
+ * What the serializer emits for {@link HEADER}: the input fields plus the two format-owned fields the serializer stamps
+ * itself — `schemaVersion: 2` and the embedded tag table (see the tagTable describe block below).
+ */
+const HEADER_AS_WRITTEN: PairIndexHeader = { ...HEADER, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] }
+
+/**
+ * Hand-build a PIX1 binary independent of `serializePairIndex`, so tests can express states the serializer refuses to
+ * produce (legacy headers without `tagTable`, foreign tag tables, out-of-range indices) — and so the layout-conformance
+ * block below checks the serializer against the DOCUMENTED format (docs/engineering/reference/pix1.ksy) rather than
+ * against itself.
+ */
+function buildRawIndex(
+	headerObj: Record<string, unknown>,
+	records: Array<[child: string, parent: string, tagIdx: number]>
+): Uint8Array {
+	const enc = new TextEncoder()
+	const headerBytes = enc.encode(JSON.stringify(headerObj))
+
+	const encoded = records.map(([child, parent, tagIdx]) => ({
+		child: enc.encode(child),
+		parent: enc.encode(parent),
+		tagIdx,
+	}))
+
+	let size = 12 + headerBytes.length
+
+	for (const r of encoded) {
+		size += 2 + r.child.length + 2 + r.parent.length + 1
+	}
+
+	const out = new Uint8Array(size)
+	const view = new DataView(out.buffer)
+	let o = 0
+
+	view.setUint32(o, 0x31_58_49_50, true) // "PIX1" little-endian
+	o += 4
+	view.setUint32(o, headerBytes.length, true)
+	o += 4
+	out.set(headerBytes, o)
+	o += headerBytes.length
+	view.setUint32(o, encoded.length, true)
+	o += 4
+
+	for (const r of encoded) {
+		view.setUint16(o, r.child.length, true)
+		o += 2
+		out.set(r.child, o)
+		o += r.child.length
+		view.setUint16(o, r.parent.length, true)
+		o += 2
+		out.set(r.parent, o)
+		o += r.parent.length
+		out[o++] = r.tagIdx
+	}
+
+	return out
 }
 
 const ENTRIES: PairIndexEntry[] = [
@@ -35,7 +95,7 @@ const ENTRIES: PairIndexEntry[] = [
 	{ child: "camden", parent: "london", tag: "dependent_locality" },
 ]
 
-function resolver(entries: PairIndexEntry[] = ENTRIES, header: PairIndexHeader = HEADER): PairIndexResolver {
+function resolver(entries: PairIndexEntry[] = ENTRIES, header: PairIndexHeaderInput = HEADER): PairIndexResolver {
 	return new PairIndexResolver(serializePairIndex(header, entries))
 }
 
@@ -62,10 +122,10 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		expect(r.probe("shoreditch", "greater london")).toBeUndefined()
 	})
 
-	it("exposes the header verbatim, including delta", () => {
+	it("exposes the header as written (input fields + the embedded tag table), including delta", () => {
 		const r = resolver()
 
-		expect(r.header).toEqual(HEADER)
+		expect(r.header).toEqual(HEADER_AS_WRITTEN)
 		expect(r.header.delta).toBe(0.42)
 	})
 
@@ -80,14 +140,14 @@ describe("serializePairIndex / PairIndexResolver", () => {
 	})
 
 	it("rejects a header claiming a schemaVersion newer than this reader knows", () => {
-		const bytes = serializePairIndex({ ...HEADER, schemaVersion: 1 }, ENTRIES)
+		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 		const headerLen = view.getUint32(4, true)
 		const headerJSON = parseJSONStrict<PairIndexHeader>(new TextDecoder().decode(bytes.subarray(8, 8 + headerLen)))
 
 		// Rewrite the header JSON with a schemaVersion the reader doesn't know, re-serializing the whole
 		// buffer so the length prefix stays correct.
-		const bumped = { ...headerJSON, schemaVersion: 2 }
+		const bumped = { ...headerJSON, schemaVersion: 3 }
 		const bumpedBytes = new TextEncoder().encode(JSON.stringify(bumped))
 		const rest = bytes.subarray(8 + headerLen)
 		const out = new Uint8Array(4 + 4 + bumpedBytes.length + rest.length)
@@ -105,7 +165,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		const r = resolver([])
 
 		expect(r.probe("anything", "anything")).toBeUndefined()
-		expect(r.header).toEqual(HEADER)
+		expect(r.header).toEqual(HEADER_AS_WRITTEN)
 	})
 
 	it("rejects duplicate (child, parent) pairs at serialize time", () => {
@@ -149,11 +209,11 @@ describe("serializePairIndex / PairIndexResolver", () => {
 
 describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 	it("round-trips a header WITH transitionBeta: header fidelity + the resolver accessor + peek all agree", () => {
-		const header: PairIndexHeader = { ...HEADER, transitionBeta: 5 }
+		const header: PairIndexHeaderInput = { ...HEADER, transitionBeta: 5 }
 		const bytes = serializePairIndex(header, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
-		expect(r.header).toEqual(header)
+		expect(r.header).toEqual({ ...header, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] })
 		expect(r.transitionBeta).toBe(5)
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBe(5)
 		// The rest of the format is untouched — entries still probe.
@@ -161,17 +221,19 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 	})
 
 	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
-		// HEADER carries no transitionBeta — serializing it produces byte-for-byte the same header JSON an
-		// artifact built before this field existed carries (no key at all, not null/0), so this IS the
-		// old-binary case, not a simulation of it.
+		// HEADER carries no transitionBeta, so the emitted header JSON has no such key at all (not
+		// null/0) — the same absence an artifact built before the field existed carries. (Since the
+		// tagTable build the serializer is no longer byte-identical to pre-field artifacts; the true
+		// legacy-binary path is exercised with hand-built bytes in the tagTable describe block.)
 		const bytes = serializePairIndex(HEADER, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
 		expect(r.transitionBeta).toBeUndefined()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
-		// schemaVersion stays 1 — absence-tolerant readers need no version gate (forward + backward compatible).
-		expect(r.header.schemaVersion).toBe(1)
+		// transitionBeta stays absence-tolerant WITHIN v2 — optional fields ride on the JSON header without
+		// version bumps; only the tag table (structural, decode-bearing) is version-gated.
+		expect(r.header.schemaVersion).toBe(2)
 	})
 })
 
@@ -187,7 +249,7 @@ describe("peekPairIndexHeader", () => {
 
 		const bytes = serializePairIndex(HEADER, bigEntries)
 
-		expect(peekPairIndexHeader(bytes)).toEqual(HEADER)
+		expect(peekPairIndexHeader(bytes)).toEqual(HEADER_AS_WRITTEN)
 		// Cross-check against the constructor's own header parse — peek and full-parse must never disagree.
 		expect(peekPairIndexHeader(bytes)).toEqual(new PairIndexResolver(bytes).header)
 	})
@@ -209,7 +271,105 @@ describe("peekPairIndexHeader", () => {
 		// Keep magic + headerLen + header JSON + the pairCount u32 itself, drop every entry record byte.
 		const truncated = bytes.subarray(0, pairCountOffset + 4)
 
-		expect(peekPairIndexHeader(truncated)).toEqual(HEADER)
+		expect(peekPairIndexHeader(truncated)).toEqual(HEADER_AS_WRITTEN)
 		expect(() => new PairIndexResolver(truncated)).toThrow(/Offset is outside the bounds/)
+	})
+})
+
+describe("tagTable header field (schemaVersion 2 — self-describing tag decode)", () => {
+	const V2_BASE = { ...HEADER, schemaVersion: 2 }
+
+	it("the serializer embeds the live COMPONENT_TAGS as the header's tagTable", () => {
+		expect(peekPairIndexHeader(serializePairIndex(HEADER, ENTRIES)).tagTable).toEqual([...COMPONENT_TAGS])
+	})
+
+	it("decodes tagIdx through the EMBEDDED table, not COMPONENT_TAGS position", () => {
+		// A table in reversed order: if the reader consulted COMPONENT_TAGS positionally, this index
+		// would decode to whatever tag happens to mirror "locality" — the reordering bug the table
+		// exists to kill.
+		const reversed = [...COMPONENT_TAGS].toReversed()
+		const idxOfLocality = reversed.indexOf("locality")
+		const bytes = buildRawIndex({ ...V2_BASE, tagTable: reversed }, [["london", "greater london", idxOfLocality]])
+
+		expect(new PairIndexResolver(bytes).probe("london", "greater london")).toBe("locality")
+	})
+
+	it("throws on a record whose tagTable entry is not a known ComponentTag, naming the tag", () => {
+		const bytes = buildRawIndex({ ...V2_BASE, tagTable: ["definitely_not_a_tag"] }, [["a", "b", 0]])
+
+		expect(() => new PairIndexResolver(bytes)).toThrow(/definitely_not_a_tag/)
+	})
+
+	it("tolerates unknown tagTable entries that no record references (forward compatibility within v2)", () => {
+		// A binary built where COMPONENT_TAGS has grown a tag this reader predates: loadable as long as
+		// no record uses the unknown tag.
+		const bytes = buildRawIndex({ ...V2_BASE, tagTable: ["locality", "some_future_tag"] }, [["a", "b", 0]])
+
+		expect(new PairIndexResolver(bytes).probe("a", "b")).toBe("locality")
+	})
+
+	it("throws on a tagIdx outside the embedded table", () => {
+		const bytes = buildRawIndex({ ...V2_BASE, tagTable: ["locality"] }, [["a", "b", 7]])
+
+		expect(() => new PairIndexResolver(bytes)).toThrow(/tagIdx/)
+	})
+
+	it("REFUSES a v1 binary (no tagTable, positional tags) with rebuild guidance", () => {
+		// The v1 shape: schemaVersion 1, no tagTable, tagIdx positional into COMPONENT_TAGS. The break
+		// is deliberate (2026-08-04, operator-approved): a positional fallback would keep the
+		// tag-reordering trap alive for every artifact that never rebuilt.
+		const v1Header = { ...HEADER, schemaVersion: 1 }
+		const bytes = buildRawIndex(v1Header, [["london", "greater london", COMPONENT_TAGS.indexOf("locality")]])
+
+		expect(() => new PairIndexResolver(bytes)).toThrow(/gazetteer pair-index/)
+		expect(() => peekPairIndexHeader(bytes)).toThrow(/gazetteer pair-index/)
+	})
+})
+
+describe("PIX1 layout conformance (docs/engineering/reference/pix1.ksy)", () => {
+	it("serializer output walks byte-for-byte per the documented layout", () => {
+		const bytes = serializePairIndex(HEADER, ENTRIES)
+		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+		const decoder = new TextDecoder()
+
+		// magic: the ASCII bytes "PIX1"
+		expect(decoder.decode(bytes.subarray(0, 4))).toBe("PIX1")
+
+		// header_len: u4le, then header_json: UTF-8 JSON of exactly that many bytes
+		const headerLen = view.getUint32(4, true)
+		const header = parseJSONStrict<PairIndexHeader>(decoder.decode(bytes.subarray(8, 8 + headerLen)))
+
+		expect(header.schemaVersion).toBe(2)
+		expect(Array.isArray(header.tagTable)).toBe(true)
+
+		// pair_count: u4le
+		let o = 8 + headerLen
+		const pairCount = view.getUint32(o, true)
+		o += 4
+		expect(pairCount).toBe(ENTRIES.length)
+
+		// pair records: u2le child_len, child, u2le parent_len, parent, u1 tag_idx —
+		// sorted by (child, parent), consuming the buffer exactly.
+		let prevChild = ""
+		let prevParent = ""
+
+		for (let i = 0; i < pairCount; i++) {
+			const childLen = view.getUint16(o, true)
+			o += 2
+			const child = decoder.decode(bytes.subarray(o, o + childLen))
+			o += childLen
+			const parentLen = view.getUint16(o, true)
+			o += 2
+			const parent = decoder.decode(bytes.subarray(o, o + parentLen))
+			o += parentLen
+			const tagIdx = bytes[o++]!
+
+			expect(tagIdx).toBeLessThan(header.tagTable.length)
+			expect(child > prevChild || (child === prevChild && parent > prevParent)).toBe(true)
+			prevChild = child
+			prevParent = parent
+		}
+
+		expect(o).toBe(bytes.length)
 	})
 })

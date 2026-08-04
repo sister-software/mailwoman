@@ -58,7 +58,11 @@ export interface PairIndexOverlay {
  * Minimal PIX1 header reader — magic + header only, reimplemented so a data-only overlay gains no dependency on
  * `@mailwoman/neural` (which pulls onnxruntime-node) to read two fields.
  */
-function peekPairIndexHeaderFields(path: string): { delta: number; transitionBeta: number | undefined } {
+function peekPairIndexHeaderFields(path: string): {
+	delta: number
+	transitionBeta: number | undefined
+	schemaVersion: number
+} {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	// "PIX1" little-endian.
@@ -73,10 +77,18 @@ function peekPairIndexHeaderFields(path: string): { delta: number; transitionBet
 	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
+		schemaVersion: number
 	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
 
-	return { delta: header.delta, transitionBeta: header.transitionBeta }
+	return { delta: header.delta, transitionBeta: header.transitionBeta, schemaVersion: header.schemaVersion }
 }
+
+/**
+ * The PIX1 schema this tree's reader requires (`neural/pair-index-resolver.ts` KNOWN_SCHEMA_VERSION). The freshness
+ * guard must compare it: a guard that checks only delta + source md5 reads a format-obsolete binary as "current" and
+ * leaves every dev checkout with artifacts the runtime refuses — the R5 freshness-guard lesson, format edition.
+ */
+const REQUIRED_PAIR_INDEX_SCHEMA = 2
 
 /**
  * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at
@@ -112,7 +124,9 @@ export function buildPairIndexOverlay({ packageDir, country, delta, transitionBe
 		try {
 			const header = peekPairIndexHeaderFields(DEST)
 
-			if (header.delta !== delta) {
+			if (header.schemaVersion !== REQUIRED_PAIR_INDEX_SCHEMA) {
+				console.log(`rebuilding ${ARTIFACT} — schemaVersion ${header.schemaVersion} → ${REQUIRED_PAIR_INDEX_SCHEMA}`)
+			} else if (header.delta !== delta) {
 				console.log(`rebuilding ${ARTIFACT} — delta ${header.delta} → ${delta}`)
 			} else if (header.transitionBeta !== transitionBeta) {
 				console.log(`rebuilding ${ARTIFACT} — transitionBeta ${header.transitionBeta} → ${transitionBeta}`)

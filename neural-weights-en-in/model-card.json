@@ -3,19 +3,19 @@
 	"version": "7.0.0",
 	"locale": "en-IN",
 	"license": "AGPL-3.0",
-	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with @mailwoman/neural-weights-en-us via mailwoman.baseWeights \u2014 this package ships ONLY the IN placetype-pair index.",
+	"$comment": "Data-only overlay. Shares model.onnx + tokenizer.model with @mailwoman/neural-weights-en-us via mailwoman.baseWeights — this package ships ONLY the IN placetype-pair index.",
 	"in_artifacts": {
 		"$comment": "Hierarchy campaign R10 (2026-08-02). The Indian instance of the dependent-locality prior.",
 		"pair_index_in_bin": {
-			"format": "PIX1 placetype-pair index \u2014 a retrieval-augmented (area, city) dependent_locality prior, e.g. (\"Indiranagar\", \"Bengaluru\")",
-			"source": "Who's On First admin hierarchy. India Post routes house/street, area, city, state, PIN \u2014 the AREA line is the dependent-locality slot, and it is written on essentially every Indian address.",
-			"pairs": 176086,
-			"bytes": 4342440,
-			"delta_calibration": "\u03b4=10, transitionBeta=5 \u2014 inherited from GB per R5's uniform-deficit finding.",
+			"format": "PIX1 placetype-pair index — a retrieval-augmented (area, city) dependent_locality prior, e.g. (\"Indiranagar\", \"Bengaluru\")",
+			"source": "Who's On First admin hierarchy. India Post routes house/street, area, city, state, PIN — the AREA line is the dependent-locality slot, and it is written on essentially every Indian address.",
+			"pairs": 176092,
+			"bytes": 4342946,
+			"delta_calibration": "δ=10, transitionBeta=5 — inherited from GB per R5's uniform-deficit finding.",
 			"country_gate": "hard-gated on the header's country (in).",
-			"parent_alias_expansion": "ENABLED. WOF stores Bangalore; an address today says Bengaluru (renamed 2014, an `eng` VARIANT). Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT: India has 22 official languages and WOF carries Devanagari, Tamil and Bengali forms this Latin model never sees. Widening from eng-only to official-languages+Latin at R11 moved the count 175744 \u2192 176086.",
-			"deprecated_records": "53.4% of WOF's Indian borough/neighbourhood nodes carry edtf:deprecated (100,860 of 189,002), against 0.0-2.5% for every other shipped locale. Only live records are indexed. A raw-repo node count for India overstates usable yield by roughly 2x \u2014 the number to trust is measured through the ingest, not off the repo.",
-			"not_committed": "derived artifact, .gitignore'd \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-in --country in --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
+			"parent_alias_expansion": "ENABLED. WOF stores Bangalore; an address today says Bengaluru (renamed 2014, an `eng` VARIANT). Aliases are drawn from names whose language is OFFICIAL for the country (codex isOfficialLanguage) plus English, and must be LATIN-SCRIPT: India has 22 official languages and WOF carries Devanagari, Tamil and Bengali forms this Latin model never sees. Widening from eng-only to official-languages+Latin at R11 moved the count 175744 → 176086; the 2026-08-04 admin rebuild (ancestry backfill, #1447) moved it 176086 → 176092.",
+			"deprecated_records": "53.4% of WOF's Indian borough/neighbourhood nodes carry edtf:deprecated (100,860 of 189,002), against 0.0-2.5% for every other shipped locale. Only live records are indexed. A raw-repo node count for India overstates usable yield by roughly 2x — the number to trust is measured through the ingest, not off the repo.",
+			"not_committed": "derived artifact, .gitignore'd — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-in --country in --delta 10 --transition-beta 5 --borough-db <wof/admin-global-priority.db>`"
 		}
 	},
 	"eval": {

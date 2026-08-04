@@ -18,7 +18,7 @@
 
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
-import type { PairIndexHeader } from "./pair-index-resolver.ts"
+import type { PairIndexHeaderInput } from "./pair-index-resolver.ts"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -95,11 +95,10 @@ const TOKENIZER_URL = "https://cdn.example/mailwoman/v10/tokenizer.model"
 const GB_INDEX = "https://cdn.example/mailwoman/v10/pair-index-gb.bin"
 const NZ_INDEX = "https://cdn.example/mailwoman/v10/pair-index-nz.bin"
 
-function pairHeader(country: string, transitionBeta?: number): PairIndexHeader {
+function pairHeader(country: string, transitionBeta?: number): PairIndexHeaderInput {
 	return {
 		country,
 		delta: 5,
-		schemaVersion: 1,
 		foldVersion: 1,
 		sourceMD5s: [],
 		buildDate: "2026-07-24",

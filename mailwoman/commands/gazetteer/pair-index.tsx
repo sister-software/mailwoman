@@ -32,7 +32,7 @@ import { dataRootPath, md5File } from "@mailwoman/core/utils"
 // type-imports from a sibling module; pair-index-resolver only imports core/types) — safe value
 // imports at module level, no heavy ONNX runtime pulled in (mirrors postcode-binary.tsx's comment).
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
+import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
 import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import zod from "zod"
@@ -317,10 +317,10 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 
 		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
 		// beta-less binary, byte-shape-identical to every pre-TRANSITION-BETA artifact) — not a null/0.
-		const pairIndexHeader: PairIndexHeader = {
+		// schemaVersion + tagTable are stamped by serializePairIndex — format-owned, not builder claims.
+		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
 			delta: options.delta,
-			schemaVersion: 1,
 			foldVersion: 1,
 			sourceMD5s,
 			buildDate: new Date().toISOString(),

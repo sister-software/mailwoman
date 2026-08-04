@@ -23,7 +23,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import { serializePairIndex, type PairIndexHeader } from "./pair-index-resolver.ts"
+import { serializePairIndex, type PairIndexHeaderInput } from "./pair-index-resolver.ts"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
@@ -95,10 +95,9 @@ function fusedLatticeSession(): void {
  * Real PIX1 bytes at the neural fixture's calibration: δ=6, β=5 — the flip needs both (see file header).
  */
 function gbIndexBytes(): Uint8Array {
-	const header: PairIndexHeader = {
+	const header: PairIndexHeaderInput = {
 		country: "gb",
 		delta: 6,
-		schemaVersion: 1,
 		foldVersion: 1,
 		sourceMD5s: [],
 		buildDate: "2026-07-24",

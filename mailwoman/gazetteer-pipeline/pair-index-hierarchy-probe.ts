@@ -25,7 +25,7 @@
  *
  *   Format: PIX1 verbatim (`serializePairIndex` / `PairIndexResolver` — zero changes to `neural/`).
  *   The header rides the absence-tolerant JSON extension precedent set by `transitionBeta`
- *   (`schemaVersion` stays 1): extra keys `edge`, `source`, and `probeArtifact` describe the
+ *   (schema-owned fields are stamped by the serializer): extra keys `edge`, `source`, and `probeArtifact` describe the
  *   hierarchy edge in ComponentTag space, the WOF extraction provenance, and the uncalibrated-probe
  *   status. Old readers parse the header and never consult the extra keys.
  *
@@ -63,7 +63,7 @@ import {
 	PairIndexResolver,
 	serializePairIndex,
 	type PairIndexEntry,
-	type PairIndexHeader,
+	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair-index-resolver"
 
 /**
@@ -99,7 +99,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ch
 /**
  * The PIX1 header this probe writes: the shipped shape plus the absence-tolerant hierarchy extension keys.
  */
-export interface HierarchyPairIndexHeader extends PairIndexHeader {
+export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 	/**
 	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit; parent is context).
 	 */
@@ -263,7 +263,6 @@ async function main(): Promise<void> {
 			// Uncalibrated PROBE — zero on purpose: even an accidentally-wired probe artifact biases
 			// nothing. The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
-			schemaVersion: 1,
 			foldVersion: 1,
 			sourceMD5s: [sourceMD5],
 			buildDate: new Date().toISOString(),
