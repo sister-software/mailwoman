@@ -143,8 +143,8 @@ better-targeted, and folding first destroys the case signal that proper nouns an
 
 ## Verify
 
-`geocodeAddress` already does this, so the check is that calling it twice — once on the mess, once on
-the output of `normalize` — gives you the same answer:
+Run the stage on a deliberately messy string and parse both forms, so you can see what the stage
+changed and what it did not:
 
 ```bash
 node normalize-demo.mjs
@@ -154,12 +154,15 @@ node normalize-demo.mjs
 raw:         "  1275   Pennsylvania Ave  NW , Washington，DC 20004  "
 normalized:  "1275 Pennsylvania Ave NW , Washington,DC 20004"
 transforms:  [{"kind":"nfc","changed":false},{"kind":"normalize_cjk","folded":1,"stripped":0},{"kind":"collapse_whitespace","runs":4}]
+raw         region="DC" locality="Washington" street="Pennsylvania Ave  NW" house_number="1275" postcode="20004"
+normalized  region="DC" locality="Washington" street="Pennsylvania Ave NW" house_number="1275" postcode="20004"
 ```
 
-Parsing both strings returns the same five components. The difference is in the values: the raw parse
-returns `street="Pennsylvania Ave  NW"` with the double space still in it, and the normalized parse
-returns `street="Pennsylvania Ave NW"`. If those values go into a database column or a match key, run
-the stage first.
+Read the last two lines against each other. Both parses return the same five components — the stage
+did not change what the model found — and the difference is in one value: the raw parse keeps the
+double space in `street`, the normalized parse does not. So preprocessing is not what rescues this
+address; it is what makes the extracted value fit to store. If those values go into a database column
+or a match key, run the stage first.
 
 ## Limits
 

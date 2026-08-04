@@ -53,10 +53,13 @@
  *     `releases.json` pinning either family to a version routes the download to the VERSIONED
  *     filename (`resolveBundleArtifacts`, below) so a later `mailwoman geocode` run resolves it.
  *   - `fr`: `<dataRoot>/ban/address-points-fr.db` — `ban/scripts/build-address-point-shard.ts`'s own
- *     default `--out` (`dataRootPath("ban", "address-points-fr.db")`). NOT YET auto-discovered by
- *     `mailwoman geocode`/`ShardProvider` (that only wires the US `-us-<slug>` family) — pulling this
- *     bundle stages the artifact where a local BAN build would have put it; wiring FR into the
- *     resolver's shard-selection is tracked separately, not this task.
+ *     default `--out` (`dataRootPath("ban", "address-points-fr.db")`), which is also where
+ *     `BANShardProvider` looks. `mailwoman geocode` wires that provider (`commands/geocode.tsx`
+ *     imports `@mailwoman/ban/sdk` and passes `nationalShards`), so pulling this bundle is sufficient
+ *     — a French address resolves to the `address_point` tier with no further configuration
+ *     (re-verified 2026-08-04 on four Paris addresses, uncertainty 1 m). What FR still lacks is the
+ *     INTERPOLATION tier: a BAN miss falls straight through to admin rather than estimating along the
+ *     street, because no French interpolation shard is built.
  */
 
 import type { DataReleaseManifest } from "./data-release.ts"

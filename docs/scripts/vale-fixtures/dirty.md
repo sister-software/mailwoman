@@ -44,3 +44,18 @@ Point the datalayer at a data-layer alias, run a text search, then a coordinate 
 
 The FTS5 full-text search index is deliberately NOT a hit here — the `text search` swap
 carries a leading-character guard so the shipped FTS vocabulary survives the rule.
+
+The centre of the neighbourhood is 400 metres away, one kilometre from the sorting
+centres in the adjacent neighbourhoods.
+
+We normalise the licence text, then normalising it again after normalisation is
+normalised; the licences were licenced and the rows were labelled during labelling,
+which is a capitalisation problem we capitalise, capitalised and capitalises around.
+
+Two negative assertions for Spelling.yml live on the next line, and both must stay
+quiet: the placetype identifier `neighbourhood` and the Nominatim field `licence` are
+backticked, so the markdown parser hands neither to the rule.
+
+```json
+{ "licence": "ODbL", "placetype": "neighbourhood", "radius_metres": 400 }
+```

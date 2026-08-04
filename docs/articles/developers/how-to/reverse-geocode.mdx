@@ -11,18 +11,18 @@ verified-with: mailwoman 8.7.0
 from the result whether that chain was confirmed against a real boundary or inferred from the closest
 centroid.
 
-Reverse geocoding here resolves to administrative places — neighbourhood, locality, county, region,
-country. It does not resolve to a street address. There is no rooftop reverse at head, and the sections
-below say what that rules out.
+Reverse geocoding here resolves to administrative places — `neighbourhood`, `locality`, `county`,
+`region`, `country`, the placetype names the transcripts below print. It does not resolve to a street
+address. There is no rooftop reverse at head, and the sections below say what that rules out.
 
 ## Prerequisites
 
 - The library install from
   [Install and first parse](../get-started/install-and-first-parse.mdx), plus
   `@mailwoman/resolver-wof-sqlite`.
-- **An admin gazetteer database carrying the `place_bbox` R\*Tree.** This one is not in the published
-  bundle set — `mailwoman data pull` ships `candidate`, `us`, `fr` and `poi`, and none of them is the
-  admin distribution. You build it:
+- **A full WOF distribution carrying the `place_bbox` R\*Tree.** This is a different database from the
+  `candidate` gazetteer the geocode pages use, and it is not in the published bundle set —
+  `mailwoman data pull` ships `candidate`, `us`, `fr` and `poi`, and none of them is it. You build it:
 
   ```bash
   mailwoman gazetteer build admin
@@ -36,7 +36,7 @@ below say what that rules out.
   Without it, every result is `containment: "approximate"` by construction, because the geocoder never
   attempts a point-in-polygon test. Point `$MAILWOMAN_WOF_POLYGONS_DB` at it.
 
-Every transcript below ran against a locally-built admin distribution and a US-only polygon sidecar.
+Every transcript below ran against a locally-built full WOF distribution and a US-only polygon sidecar.
 
 ## 1. Run it from the command line
 
@@ -79,7 +79,7 @@ containment: approximate
   country          United States [wof:85633793]
 ```
 
-That chain is correct, and it still reads `approximate` — because the deepest entry is a neighbourhood
+That chain is correct, and it still reads `approximate` — because the deepest entry is a `neighbourhood`
 with no polygon in the sidecar, so it won on nearest centroid at 0.3 km. The county, region and country
 above it are not in question. `approximate` is a statement about the last step, not about the whole
 chain.
@@ -157,7 +157,7 @@ every boundary you hold polygons for gets an answer regardless.
 
 ## Limits
 
-- **There is no address-level reverse.** `WOFReverseGeocoder` reads the admin gazetteer's bounding
+- **There is no address-level reverse.** `WOFReverseGeocoder` reads the full WOF distribution's bounding
   boxes, polygons and ancestor chains. It never consults an address-point database, so having the US
   rooftop shards on disk does not add a house number to the result. Forward geocoding is where the
   address-point tier lives — see
@@ -166,7 +166,7 @@ every boundary you hold polygons for gets an answer regardless.
   answer is `approximate`. With one, only the countries in that sidecar get boundary confirmation.
 - **`approximate` outside all coverage is a confident wrong answer.** See the verify step. Check
   `distanceKm`.
-- **The admin distribution is a local build.** It is not one of the four published bundles, and it is
+- **The full WOF distribution is a local build.** It is not one of the four published bundles, and it is
   hours of work plus tens of gigabytes of source data. If you need reverse geocoding without that
   build, run one of the drop-in servers against someone else's deployment instead —
   [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx) covers the `/reverse` endpoint.
@@ -180,5 +180,5 @@ every boundary you hold polygons for gets an answer regardless.
   Nominatim-compatible `/reverse` endpoint.
 - [Use annotations](./use-annotations.mdx) — enriching a coordinate with timezone, currency, calling
   code and coordinate formats.
-- [Build the planet](../tutorials/full-planet-build.mdx) — building the admin distribution this page
+- [Build the planet](../tutorials/full-planet-build.mdx) — building the full WOF distribution this page
   needs.

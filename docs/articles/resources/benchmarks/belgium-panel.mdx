@@ -10,7 +10,7 @@ role: evidence
 
 On **2026-08-04** we ran 30 Belgian address lines through a local install three times, changing one
 thing each time. Belgium was chosen because it is _not_ a measured locale: no Belgian rooftop register
-ships, no `nl-BE` or `fr-BE` weights package exists, and the global admin gazetteer is the only
+ships, no `nl-BE` or `fr-BE` weights package exists, and the global candidate gazetteer is the only
 artifact answering. This panel reports what that gets you.
 
 It also carries a case Belgium is well suited to. Five Brussels streets appear twice, once in Dutch
@@ -92,7 +92,10 @@ the two.
 
 **The French overlay changes nothing.** The `fr-overlay` arm is identical to `base` on every measure
 and on every one of the thirty per-row records. The result file says why: both arms record
-`model-v401-base-step-060000-int8.onnx` under `versions.model`, because the French package is a
+`model-v401-base-step-060000-int8.onnx` under their own `weights.model` — the per-arm field, not the
+single `versions.model` run stamp — while their `weights.source` differs
+(`package:@mailwoman/neural-weights-en-us` against `package:@mailwoman/neural-weights-fr-fr+base`).
+That pair of fields is the evidence: two package names, one ONNX file. The French package is a
 data-only overlay that takes its `model.onnx` from the base package and ships only French postcode,
 pair-index and FST siblings. None of those siblings is consulted for a Belgian postcode. Belgium is
 not a tier, and choosing the nearest tier does not make it one.

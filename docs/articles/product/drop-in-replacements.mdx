@@ -60,7 +60,7 @@ never set.
 ## Two things to settle before you cut over
 
 **Forward geocoding works from the gazetteer download; reverse geocoding does not.** `/reverse` on
-the Nominatim and Photon shapes runs point-in-polygon over an admin distribution that
+the Nominatim and Photon shapes runs point-in-polygon over a full WOF distribution that
 `mailwoman data pull` does not ship, so it answers an empty result until you build one and put it
 there.
 

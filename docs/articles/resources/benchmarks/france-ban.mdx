@@ -10,7 +10,7 @@ role: evidence
 
 On **2026-08-04** we drew 100 addresses from the Base Adresse Nationale release dated 2026-05-18,
 rendered each one twice, and geocoded all 200 strings against a local install: the base weights under
-the `fr-FR` overlay, the 1.65 GB global admin gazetteer, and the French BAN rooftop shard. The
+the `fr-FR` overlay, the 1.65 GB global candidate gazetteer, and the French BAN rooftop shard. The
 grading target is BAN's own coordinate for the row the address came from. There is no second
 geocoder in this measurement and no third-party reference set — this compares the pipeline against
 the register the pipeline reads.
@@ -110,7 +110,7 @@ above; the other two miss in both arms.
 
 **Same-name street inside one postcode, two rows.** `Rue de la Mairie` and `Rue Jean Jaurès` are among
 the most repeated street names in France. Both rows answered at `address_point`, so the rooftop probe
-succeeded — it succeeded on the wrong row, in a neighbouring commune sharing the postcode. These are
+succeeded — it succeeded on the wrong row, in a neighboring commune sharing the postcode. These are
 the two largest errors on the panel, 4.612 km and 3.724 km, and they are the reason the worst-case
 number is what it is. A rooftop tier that answers confidently from the wrong commune is a worse
 failure than one that declines, and the tier field does not distinguish them.

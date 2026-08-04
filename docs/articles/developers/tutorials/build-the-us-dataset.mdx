@@ -7,7 +7,7 @@ verified-with: mailwoman 8.7.0
 
 # Build the US address dataset from public sources
 
-Let's say the hosted shards are not an option for you — an air-gapped deployment, a licence review that
+Let's say the hosted shards are not an option for you — an air-gapped deployment, a license review that
 wants provenance per row, or a state whose published shard is stale. By the end of this page you'll have
 built one state's address data yourself, from Overture's US address slice and Census TIGER, and geocoded
 a real street address against it at the rooftop tier. Vermont takes about half an hour, and 21 minutes of
@@ -161,7 +161,7 @@ npx mailwoman situs address-points --state VT --release 2026-06-17.0
 the parquet is scanned once per state and every state after the first is seconds.
 
 The provenance block is per-row, not per-file. Every Vermont point traces to `NAD`, so this shard carries
-one licence. A California build prints 57 OpenAddresses county sources under that heading, and each of
+one license. A California build prints 57 OpenAddresses county sources under that heading, and each of
 them wants credit — which is what step 5 is for.
 
 ## 4. Build the same state's interpolation shard
@@ -244,7 +244,7 @@ the ones you owe credit to when you redistribute a shard.
 ## 6. Add the gazetteer
 
 The two shards you built hold streets and house numbers, and nothing in either resolves the word
-"Burlington". That comes from the admin gazetteer, which mailwoman publishes as a download rather than
+"Burlington". That comes from the candidate gazetteer, which mailwoman publishes as a download rather than
 asking you to build it — the build needs the Who's On First data repositories cloned first, and the
 database it produces is over 5 GB before the query-time one is derived from it.
 [Build the planet](./full-planet-build.mdx) covers that path; here, take the download:
@@ -416,7 +416,7 @@ coverage:
 
 A data root holding one state's address data that you built rather than downloaded: 333,610 rooftop points
 with per-row provenance back to a named federal dataset, 137,256 TIGER segment-sides behind them, and an
-`ATTRIBUTION.json` that says which licence each row arrived under. The same commands, given a longer
+`ATTRIBUTION.json` that says which license each row arrived under. The same commands, given a longer
 `--states` list, produce the other 49 against the parquet already on your disk.
 
 ## Next

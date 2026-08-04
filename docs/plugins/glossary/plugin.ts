@@ -18,18 +18,35 @@
  *   - Emits `backlinks`: for each term, the docs pages that reference it (title + permalink),
  *     computed in `allContentLoaded` from the docs plugin's loaded content. The scan mirrors the
  *     remark auto-linker's matching rules (term + aliases, word boundaries with plural allowance,
- *     case-insensitive, proper-noun guard — see remark.ts) so the backlink list tracks the pages
- *     that actually render tooltips for the term.
+ *     case-insensitive, proper-noun guard, homonym guard — see remark.ts) so the backlink list
+ *     tracks the pages that actually render tooltips for the term. The homonym guard shares
+ *     `isSuppressedSurface` with remark.ts rather than re-implementing it: a suppressed surface that
+ *     still produced a backlink would advertise a tooltip the page does not render.
  */
 
 import path from "node:path"
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
-import type { GlossaryData, GlossaryPluginOptions, GlossaryTerm } from "docusaurus-plugin-glossary"
+import type {
+	GlossaryData,
+	GlossaryPluginOptions as BaseGlossaryPluginOptions,
+	GlossaryTerm,
+} from "docusaurus-plugin-glossary"
 import baseGlossaryPlugin from "docusaurus-plugin-glossary"
 import { load as parseYAML } from "js-yaml"
 
-export { type GlossaryPluginOptions } from "docusaurus-plugin-glossary"
+import { isSuppressedSurface } from "./remark.ts"
+
+/**
+ * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads. Passed to BOTH this plugin
+ * and the remark plugin from docusaurus.config.ts, from one shared constant, so the linker and the backlink scan cannot
+ * disagree about which surfaces link.
+ */
+export type MailwomanGlossaryPluginOptions = BaseGlossaryPluginOptions & {
+	noAutoLink?: readonly string[]
+}
+
+export type { MailwomanGlossaryPluginOptions as GlossaryPluginOptions }
 
 /**
  * A glossary term carrying the `tags` extension this wrapper enforces.
@@ -97,9 +114,18 @@ const MAX_BACKLINKS_PER_TERM = 8
 
 /**
  * Does `needle` occur in `text` as a whole word (with the upstream matcher's plural allowance), outside a capitalized
- * multi-word phrase? Mirrors remark.ts's guard on raw text.
+ * multi-word phrase and not on the `noAutoLink` list? Mirrors remark.ts's two guards on raw text.
  */
-function referencesPhrase(text: string, textLower: string, needle: string, commonNoun: boolean): boolean {
+function referencesPhrase(
+	text: string,
+	textLower: string,
+	needle: string,
+	commonNoun: boolean,
+	noAutoLink: readonly string[]
+): boolean {
+	// Guard 2 is surface-level, so a suppressed phrase can never produce a backlink from any page.
+	if (isSuppressedSurface(needle, noAutoLink)) return false
+
 	let searchIndex = 0
 
 	while (searchIndex < textLower.length) {
@@ -150,8 +176,9 @@ function stripUnlinkableMarkdown(source: string): string {
 		.replaceAll(/^#{1,6}\s.*$/gm, " ") // headings (skipped by the auto-linker)
 }
 
-export default function mailwomanGlossaryPlugin(context: LoadContext, options: GlossaryPluginOptions): Plugin {
-	const base = baseGlossaryPlugin(context, options) as Plugin
+export default function mailwomanGlossaryPlugin(context: LoadContext, options: MailwomanGlossaryPluginOptions): Plugin {
+	const { noAutoLink = [], ...baseOptions } = options
+	const base = baseGlossaryPlugin(context, baseOptions as BaseGlossaryPluginOptions) as Plugin
 	const { routePath = "/glossary" } = options
 	const tagsPath = path.resolve(context.siteDir, "tags.yml")
 
@@ -262,7 +289,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: G
 				const textLower = text.toLowerCase()
 
 				for (const { term, commonNoun, phrases } of phrasesByTerm) {
-					if (!phrases.some((phrase) => referencesPhrase(text, textLower, phrase, commonNoun))) continue
+					if (!phrases.some((phrase) => referencesPhrase(text, textLower, phrase, commonNoun, noAutoLink))) continue
 
 					const entry = (backlinks[term] ??= { refs: [], total: 0 })
 

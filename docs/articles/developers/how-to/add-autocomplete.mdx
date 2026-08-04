@@ -10,7 +10,7 @@ verified-with: mailwoman 8.7.0
 **Outcome.** A search box returns ranked place completions as the user types, served from a file you
 already have, with a measured per-keystroke cost.
 
-Autocomplete here completes **place names** — localities, boroughs, counties, neighbourhoods — from a
+Autocomplete here completes **place names** — localities, boroughs, counties, neighborhoods — from a
 finite-state transducer built over the gazetteer. It does not complete street addresses or house
 numbers, and it is a different index from the one forward geocoding uses.
 
@@ -64,7 +64,12 @@ import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 // resolveWeights finds the installed weights package, so you never hard-code a node_modules path.
-const { fstPath } = await resolveWeights({ locale: "en-US" })
+// It is synchronous — there is nothing to await.
+const { fstPath } = resolveWeights({ locale: "en-US" })
+
+// fstPath is optional: it is only set when the index file is actually present in the resolved
+// package, so a weights bundle without one gives you `undefined` rather than an error.
+if (!fstPath) throw new Error("no FST index in the resolved weights package — autocomplete is unavailable")
 
 // Deserialize once, at startup. The returned object IS the matcher — do not wrap it.
 const fst = deserializeFST(readFileSync(fstPath))

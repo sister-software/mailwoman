@@ -18,7 +18,7 @@ set — the command exits with an error and lists them if you name anything else
 
 | Bundle      | Size    | What it covers                                                |
 | ----------- | ------- | ------------------------------------------------------------- |
-| `candidate` | 1.65 GB | The global admin gazetteer, 244 countries. Start here         |
+| `candidate` | 1.65 GB | The global candidate gazetteer, 244 countries. Start here     |
 | `poi`       | 3.89 GB | 13.68 million points of interest across the US, CA, MX and FR |
 | `fr`        | 6.95 GB | French rooftop address points                                 |
 | `us`        | 41.3 GB | US rooftop and interpolation, one shard pair per state        |
@@ -34,8 +34,9 @@ The `us` bundle is 103 files, so pull the states you serve rather than the tier:
 Everything else on the shelf is a local build, and three cases are worth naming because people ask
 for them by name.
 
-**The admin distribution reverse geocoding needs.** Not a published bundle. It is hours of work and
-tens of gigabytes of source data.
+**The full WOF distribution reverse geocoding needs.** Not a published bundle, and not the
+`candidate` gazetteer above — a separate build carrying the `place_bbox` R\*Tree. It is hours of work
+and tens of gigabytes of source data.
 
 **Timezone, NUTS and UN/LOCODE lookups.** `@mailwoman/timezone-lookup`, `@mailwoman/nuts-lookup` and
 `@mailwoman/un-locode-lookup` publish code to npm and build their own databases locally. No bundle in

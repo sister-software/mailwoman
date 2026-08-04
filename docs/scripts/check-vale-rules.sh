@@ -12,10 +12,17 @@
 # words from a fence/import/JSX/details block into real alerts, shows up here
 # as the wrong fixture producing the wrong verdict.
 #
-# dirty.md also carries one NEGATIVE assertion: the phrase "full-text search"
-# sits in plain prose and must NOT trip Terms.yml's `text search` swap. That
-# swap is guarded precisely so the FTS5 vocabulary this repo ships survives it,
-# and the guard is only checked by that line staying quiet.
+# dirty.md also carries NEGATIVE assertions, each checked only by its line
+# staying quiet:
+#
+#   - The phrase "full-text search" sits in plain prose and must NOT trip
+#     Terms.yml's `text search` swap. That swap is guarded precisely so the
+#     FTS5 vocabulary this repo ships survives it.
+#   - A backticked `neighbourhood` (a real Who's On First placetype) and a
+#     backticked `licence` (Nominatim's response field) must NOT trip
+#     Spelling.yml, nor must the JSON fence carrying both. Vale's markdown
+#     parser skips inline code and fences natively, which is the whole reason
+#     those two en-GB-looking identifiers can stay on the swap list.
 #
 # Run from anywhere:
 #   docs/scripts/check-vale-rules.sh
@@ -33,9 +40,10 @@ DOCS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # without a bump; only a rule that STOPS firing fails. Raised 5 -> 29 when the
 # derived writing system (docs/engineering/writing-system.md) added the
 # API-key / data-layer / geocoding-direction terms and the ease-claim stock
-# phrases, and dirty.md grew one hit for each.
-MIN_DIRTY_ERRORS=29
-RULE_FILES=(BannedWords StockPhrases Anthropomorphism Weasel Terms)
+# phrases, and dirty.md grew one hit for each. Raised 29 -> 48 when
+# Spelling.yml (US English) landed with one fixture line per inflection.
+MIN_DIRTY_ERRORS=48
+RULE_FILES=(BannedWords StockPhrases Anthropomorphism Weasel Terms Spelling)
 
 cd "$DOCS_DIR"
 

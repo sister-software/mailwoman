@@ -40,6 +40,14 @@ It fits, with trimming. On the host the guide measured, `node_modules` installed
 500 MB was ONNX Runtime builds for hardware that machine did not have; deleting those took it to
 303 MB. A cold start ran about 1.1 s there, 70% of it the one-time model load.
 
+Those two numbers are not the 707 MB and 523 MB that
+[Footprints](../developers/reference/footprints.mdx) and [Overview](./overview.mdx) report, and the
+difference is the host rather than the package: the serverless guide measured a different machine,
+where the runtime builds npm selected for its platform and Node version differ from the ones the
+footprints host got. Both are `du` on a real install. Read the figures as the shape of the problem —
+most of the install is runtime binaries you do not execute — and re-measure your own target before
+sizing a bundle to either number.
+
 Pick it for spiky traffic you would rather not keep a box warm for. The floor is the constraint:
 303 MB before weights does not fit AWS Lambda's 250 MB unzipped ceiling, so that platform means a
 container image or a layer. And the data root has to be a real filesystem, because SQLite needs

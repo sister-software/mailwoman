@@ -56,7 +56,7 @@ of one.
 
 | Layer                  | Scope                       | Published today                                       |
 | ---------------------- | --------------------------- | ----------------------------------------------------- |
-| Admin gazetteer        | 244 countries, one database | `candidate.db`, 1.65 GB                               |
+| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 1.65 GB                               |
 | Rooftop address points | Per country                 | US (30.3 GB, 52 shards) and France (6.95 GB, 1 shard) |
 | Street interpolation   | Per country                 | US only (11.0 GB, 51 shards)                          |
 | POI                    | Per country                 | US, Canada, Mexico, France in one 3.89 GB layer       |
@@ -173,7 +173,7 @@ npm; if you are working from a checkout instead, the same file is at
 For a country with no open register, OpenStreetMap is the fallback. Two constraints come before the
 command, because both of them stop the step rather than complicate it.
 
-**The licence.** OSM is ODbL, which is share-alike on a derived database, and a shard built here is a
+**The license.** OSM is ODbL, which is share-alike on a derived database, and a shard built here is a
 derived database. Mailwoman publishes no OSM shard to npm, R2 or the demo, and will not until counsel has
 reviewed how share-alike applies to serving a coordinate from one. If you build one, the obligation is
 yours and it rides on the file.
@@ -193,7 +193,7 @@ npm error 404  The requested resource '@mailwoman/osm@*' could not be found or y
 ```
 
 That is the state today, with no date attached to it — the package is absent from the registry while the
-licence review is open, and this page will not guess when that changes. Until it does, the builder comes
+license review is open, and this page will not guess when that changes. Until it does, the builder comes
 from a checkout:
 
 ```bash
@@ -337,7 +337,7 @@ Postcode-level resolution for GB still works, out of the gazetteer.
 
 **Korea has no adopted open data path**, and that is a data-licensing constraint, not an
 engineering one. **Australia's G-NAF** is in the repository, but as a training-corpus adapter
-(`mailwoman gnaf assemble` emits labelled JSONL), not a shard builder — there is no
+(`mailwoman gnaf assemble` emits labeled JSONL), not a shard builder — there is no
 `address-points-au` to build today. **New Hampshire** is a hole inside the country that does have a tier:
 its published rooftop shard is 20,480 bytes and holds zero rows, because the state appears in neither
 Overture nor the OpenAddresses set the build falls back to.
@@ -352,7 +352,7 @@ other claimed locale parses against a coordinate panel while resolving at the ad
 
 ## What you have now
 
-Two rooftop shards over Corsica built from different sources under different licences, a global gazetteer
+Two rooftop shards over Corsica built from different sources under different licenses, a global gazetteer
 under both of them, and a row count for what each source holds instead of an assumption about it.
 The same two commands, given a country code the normalizer knows and an extract or a register dump,
 produce the next one.

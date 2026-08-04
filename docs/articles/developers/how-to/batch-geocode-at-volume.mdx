@@ -267,9 +267,17 @@ the default. Fewer threads per worker and more workers won on this box, and won 
 steadiest configuration in the whole sweep: its three runs landed within 1.7% of each other, where the
 default-thread runs at four workers spread 10%.
 
-Two numbers, then, and the second one is the one to chase. Sweep worker count first at the default
-threads to find the shape, then re-sweep with `intraOpNumThreads: 1` to see whether your box prefers
-width over depth. Take the peak and stop tuning.
+The throughput is bought with latency, and the receipt is in the source. `DEFAULT_INTRA_OP_THREADS`'s
+docstring (`neural/onnx-runner.ts`) records the curve it was chosen from: over 120 warm parses of
+short addresses on a 16-core box, one thread costs **18.3 ms/parse**, two cost 12.5, and four cost
+**9.2**. Dropping to one thread therefore nearly doubles the time any single parse takes. On a batch
+that is invisible — you are measuring rows per second, and the rows queue anyway. On a request path
+it is the only number the caller feels. So `intraOpNumThreads: 1` belongs in a batch worker and
+nowhere near an interactive server.
+
+Two numbers, then, and the second one is the one to chase for batch. Sweep worker count first at the
+default threads to find the shape, then re-sweep with `intraOpNumThreads: 1` to see whether your box
+prefers width over depth. Take the peak and stop tuning.
 
 ## Verify
 

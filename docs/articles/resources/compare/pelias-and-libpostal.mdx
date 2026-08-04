@@ -62,7 +62,7 @@ on top of it.
 | Returns a decomposition | Through the query parser             | Yes, this is the product          | Yes                                               |
 | Store                   | Elasticsearch                        | None — model files on disk        | Sealed SQLite files, read from disk               |
 | Model                   | Query parsing, then ranked retrieval | A conditional random field        | A neural sequence labeler with gazetteer evidence |
-| Autocomplete            | A first-class endpoint               | Not applicable                    | Supported, and not the design centre              |
+| Autocomplete            | A first-class endpoint               | Not applicable                    | Supported, and not the design center              |
 | Deployment              | Several services                     | A C library and its models        | An npm package; HTTP servers optional             |
 
 The row that matters against libpostal is the second one. If what you need is a coordinate, libpostal

@@ -23,8 +23,9 @@ coordinate is right, and nothing about how right.
 Every geocoder has a fallback, and ours is no exception. On **2026-08-04** we sent five invented
 street names in real French cities through the same configuration the French panel uses — starting
 with `12 Rue Inexistante, 75002 Paris`. All five returned a coordinate. The Paris row came back at
-48.857, 2.343, which is the Paris commune centroid, about 1.5 km from the 2nd arrondissement the
-postcode names and an unbounded distance from a street that does not exist.
+48.857, 2.343, which is the Paris commune centroid — 1.281 km from the centroid of the 3,386 BAN
+address points carrying the 75002 postcode, and an unbounded distance from a street that does not
+exist.
 
 A null would have been less useful to most callers, so the fallback is the right behavior. It also
 means a file of invented street names in real cities scores 5 out of 5 on a resolve rate.

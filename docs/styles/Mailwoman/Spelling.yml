@@ -1,0 +1,66 @@
+## Mailwoman house style: US English spelling.
+##
+## The site's base register is US English (docs/engineering/writing-system.md
+## §Canonical terms), but nothing enforced it until this rule: an en-GB spelling
+## sailed through every gate, and Task 17's review found ten of them sitting in
+## the glossary — including `locality`, whose tooltip is injected into every
+## page on the site.
+##
+## SCOPE IS PROSE ONLY, and that falls out of the parser rather than out of this
+## file. Measured on @vvago/vale 3.17.0 with a two-entry probe rule: a hit in
+## running prose fires, the SAME word inside a fenced block does not, and the
+## same word inside an inline `code span` does not either. That measurement is
+## what makes `neighbourhood` safe to list. It is a real Who's On First
+## placetype, it is printed verbatim by `mailwoman autocomplete` and
+## `mailwoman reverse`, and it is a field name a reader will type — so every
+## legitimate use of it is a code fence or a backticked identifier, which is
+## exactly the set Vale skips. Prose that says "neighbourhood" is prose that
+## means the English word, and that spelling is the one this rule corrects.
+##
+## Inflections get their own entries rather than one `metres?`-style pattern,
+## because a substitution rule maps every match of a key to that key's single
+## replacement — `metres?` would tell a writer that "metre" should be "meters".
+## Sharing a stem across entries is safe: the combined pattern carries word
+## boundaries, so "normalisation" cannot be reported as "normalise" (measured
+## against scripts/vale-fixtures/dirty.md, which carries both).
+##
+## `licence` is listed and the Nominatim response field of the same name is not
+## affected: the drop-in pages carry it as `licence` in a JSON fence and as
+## `` `licence` `` inline, both invisible to the rule by the measurement above.
+##
+## One PROSE exception exists and lives in
+## styles/config/vocabularies/Mailwoman/accept.txt, because accept.txt takes no
+## comments: `Licence Ouverte` is the proper name of the French open licence the
+## BAN ships under, so its spelling is the French government's and not ours. The
+## accept-list is what exempts it — measured: adding the entry silences the two
+## `Licence Ouverte` hits on the tutorial pages while `metre` on the same page
+## keeps firing, so vocabulary entries do filter this substitution rule and the
+## exemption is scoped to the phrase rather than to the word.
+extends: substitution
+message: "US English on this site: use '%s' instead of '%s'."
+level: error
+ignorecase: true
+swap:
+  metres: meters
+  metre: meter
+  kilometres: kilometers
+  kilometre: kilometer
+  centres: centers
+  centre: center
+  neighbourhoods: neighborhoods
+  neighbourhood: neighborhood
+  neighbouring: neighboring
+  normalisation: normalization
+  normalises: normalizes
+  normalised: normalized
+  normalising: normalizing
+  normalise: normalize
+  licences: licenses
+  licenced: licensed
+  licence: license
+  labelled: labeled
+  labelling: labeling
+  capitalisation: capitalization
+  capitalised: capitalized
+  capitalises: capitalizes
+  capitalise: capitalize

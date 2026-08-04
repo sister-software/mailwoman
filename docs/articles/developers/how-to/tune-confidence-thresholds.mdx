@@ -82,8 +82,11 @@ const tree = await classifier.parse(raw, { calibrate })
 ```
 
 `createCalibrator` returns a pure `(raw: number) => number`, monotone and piecewise-linear over the
-table's twenty bins, clamped to `[0, 1]` outside its range. Nothing else in the call changes: the same
-spans, the same tags, the same offsets, different numbers on `confidence`.
+table's twenty bins. Outside the range of bin centers it does not clamp to `[0, 1]` — it returns the
+nearest bin's own calibrated value, which for the shipped `en-us` table is 0.0444 below and 0.9908
+above. A raw 1.0 therefore calibrates to 0.991, and no input to this function can ever produce a
+calibrated 1.0. Nothing else in the call changes: the same spans, the same tags, the same offsets,
+different numbers on `confidence`.
 
 What it does to the rows above:
 
@@ -225,7 +228,7 @@ failures you have already seen in production before you read the numbers.
 ## Limits
 
 - **Confidence is about the parse, not about the place.** A high score means the model read the string
-  the way the corpus would have labelled it. It says nothing about whether the address exists — see
+  the way the corpus would have labeled it. It says nothing about whether the address exists — see
   [Validate an address before you use it](./validate-addresses.mdx), and use `resolution_tier` for that
   question.
 - **Calibration is per locale.** The package also ships `calibration-per-locale.json`. A table fit on

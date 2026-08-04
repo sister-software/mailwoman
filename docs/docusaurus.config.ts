@@ -5,8 +5,25 @@ import type { Config } from "@docusaurus/types"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
-// Upstream remark auto-linker wrapped with the proper-noun guard (see plugins/glossary/remark.ts).
+// Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
+
+/**
+ * Surfaces the glossary auto-linker must never link, whatever term claims them. Two false-positive classes earn a word
+ * a place here, both measured across the built site:
+ *
+ * 1. A common English word that is also a glossary ALIAS. `state` is an alias of `region`, so every ordinary use — "the
+ *    state of the pipeline", "stateless", "US state law" — tooltipped the address component. It fired on 38 pages, and
+ *    almost none of them meant the component.
+ * 2. A common English word that is also a glossary TERM in a narrower sense. `tier` is defined as the model's label tier,
+ *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
+ *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
+ *
+ * Suppression is by SURFACE, not by term: `region` still links, and so does the full phrase `label tier`. Multi-word
+ * terms like `input register` are untouched — they carry their sense in the phrase, which is exactly what keeps them
+ * out of this list.
+ */
+const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
@@ -110,6 +127,8 @@ const config: Config = {
 				routePath: "/glossary",
 				expandAcronymsOnFirstUse: true,
 				autoLinkTerms: true,
+				// Same list the remark linker gets, so backlinks and tooltips agree.
+				noAutoLink: GLOSSARY_NO_AUTO_LINK,
 			} satisfies GlossaryPluginOptions,
 		],
 	],
@@ -140,6 +159,7 @@ const config: Config = {
 								glossaryPath: "glossary/glossary.json",
 								routePath: "/glossary",
 								siteDir: __dirname,
+								noAutoLink: GLOSSARY_NO_AUTO_LINK,
 							},
 						],
 					],

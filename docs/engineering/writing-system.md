@@ -298,4 +298,4 @@ One per role, in [`page-templates/`](./page-templates/): [tutorial](./page-templ
 [evidence](./page-templates/evidence.md). Each carries a frontmatter skeleton that satisfies the contract in
 `docs/scripts/docs-frontmatter-contract.ts`, the section order for its role, the opening move, and one
 exemplar paragraph in this voice. Start a new page by copying the template for its role, not by copying a
-neighbouring page.
+neighboring page.

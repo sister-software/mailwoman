@@ -258,7 +258,7 @@
 		{
 			"term": "CEDEX",
 			"abbreviation": "Courrier d'Entreprise à Distribution Exceptionnelle",
-			"definition": "A French postal routing for high-volume business mail: a CEDEX code delivers directly from a sorting centre, bypassing the local post office. A common negative-space format Mailwoman must parse.",
+			"definition": "A French postal routing for high-volume business mail: a CEDEX code delivers directly from a sorting center, bypassing the local post office. A common negative-space format Mailwoman must parse.",
 			"tags": ["postcode", "fr-fr", "domain"],
 			"relatedTerms": ["postcode", "negative space", "conventions mask"]
 		},
@@ -295,7 +295,7 @@
 		},
 		{
 			"term": "City State Product",
-			"definition": "The USPS file mapping each ZIP to its 'preferred' and 'acceptable' city names. One ZIP can carry several city names because a post office serves multiple neighbourhoods and adjacent municipalities.",
+			"definition": "The USPS file mapping each ZIP to its 'preferred' and 'acceptable' city names. One ZIP can carry several city names because a post office serves multiple neighborhoods and adjacent municipalities.",
 			"tags": ["domain", "en-us", "postcode"],
 			"relatedTerms": ["postal city", "postcode"]
 		},
@@ -345,7 +345,7 @@
 		},
 		{
 			"term": "component tag",
-			"definition": "One of the 33 labels in Mailwoman's address schema — street, locality, region, postcode, house_number, unit, po_box, country, venue, intersection, and others. Each parsed span carries exactly one component tag.",
+			"definition": "One of the 25 labels in Mailwoman's address schema — street, locality, region, postcode, house_number, unit, po_box, country, venue, intersection, and others. Each parsed span carries exactly one component tag.",
 			"tags": ["architecture"],
 			"aliases": ["ComponentTag", "label"],
 			"relatedTerms": ["span", "BIO tagging", "classification"]
@@ -491,7 +491,7 @@
 		},
 		{
 			"term": "dependent locality",
-			"definition": "A sub-locality (neighbourhood or borough) hierarchically inside a larger locality — e.g. Brooklyn within New York City. Provides finer geographic specification below the primary locality.",
+			"definition": "A sub-locality (neighborhood or borough) hierarchically inside a larger locality — e.g. Brooklyn within New York City. Provides finer geographic specification below the primary locality.",
 			"tags": ["locality", "domain"],
 			"aliases": ["sub-locality"],
 			"relatedTerms": ["locality", "borough", "placetype"]
@@ -1084,7 +1084,7 @@
 		},
 		{
 			"term": "kind classifier",
-			"definition": "Stage 2.5 of the runtime pipeline: categorizes the input into one of seven query kinds (structured_address, postcode_only, locality_only, intersection, po_box, landmark, vague) so the coordinator can route to the right parsing strategy.",
+			"definition": "Stage 2.5 of the runtime pipeline: categorizes the input into one of eight query kinds (structured_address, postcode_only, locality_only, intersection, po_box, landmark, poi_query, vague) so the coordinator can route to the right parsing strategy.",
 			"tags": ["staged-pipeline"],
 			"relatedTerms": ["staged pipeline", "query shape", "locale gate"]
 		},
@@ -1187,14 +1187,14 @@
 		},
 		{
 			"term": "locality",
-			"definition": "The city / town / settlement component of an address: a populated place sitting between region and neighbourhood in the hierarchy.",
+			"definition": "The city / town / settlement component of an address: a populated place sitting between region and neighborhood in the hierarchy.",
 			"tags": ["locality"],
 			"aliases": ["city", "municipality"],
 			"relatedTerms": ["region", "dependent locality", "component tag"]
 		},
 		{
 			"term": "locality centroid",
-			"definition": "The representative centre point of a city or locality, used as a coarse coordinate when no exact address point is available — the coarsest tier of the geocode cascade.",
+			"definition": "The representative center point of a city or locality, used as a coarse coordinate when no exact address point is available — the coarsest tier of the geocode cascade.",
 			"tags": ["geocoding", "locality"],
 			"aliases": ["city centroid"],
 			"relatedTerms": ["geocode cascade", "rooftop", "interpolation"]
@@ -1245,7 +1245,7 @@
 		},
 		{
 			"term": "microhood",
-			"definition": "A Who's On First placetype for a very fine-grained neighbourhood subdivision, sitting below neighbourhood in the hierarchy.",
+			"definition": "A Who's On First placetype for a very fine-grained neighborhood subdivision, sitting below neighborhood in the hierarchy.",
 			"tags": ["locality", "resolver"],
 			"relatedTerms": ["placetype", "dependent locality", "WOF"]
 		},
@@ -1511,7 +1511,7 @@
 		},
 		{
 			"term": "parent vouch",
-			"definition": "The lexicon prominence rule for neighbourhoods, which structurally lack population rows: a neighbourhood surface's prominence-floor input is max(own importance, parent locality importance) — Montmartre is prominent BECAUSE Paris is. Person-name surfaces are exempt (only OWN metropolis-tier importance clears them).",
+			"definition": "The lexicon prominence rule for neighborhoods, which structurally lack population rows: a neighborhood surface's prominence-floor input is max(own importance, parent locality importance) — Montmartre is prominent BECAUSE Paris is. Person-name surfaces are exempt (only OWN metropolis-tier importance clears them).",
 			"tags": ["lexicon", "evidence"],
 			"aliases": [],
 			"relatedTerms": ["four-law selectivity", "importance score"]
@@ -1580,7 +1580,7 @@
 		},
 		{
 			"term": "placetype",
-			"definition": "The Who's On First hierarchical classification of places: planet → continent → country → region → county → locality → neighbourhood. The resolver uses placetype to rank candidates — an exact locality match outranks a county-level match.",
+			"definition": "The Who's On First hierarchical classification of places: planet → continent → country → region → county → locality → neighborhood. The resolver uses placetype to rank candidates — an exact locality match outranks a county-level match.",
 			"tags": ["resolver"],
 			"relatedTerms": ["WOF", "resolver", "locality resolution"]
 		},
@@ -1661,7 +1661,7 @@
 		},
 		{
 			"term": "prominence signal",
-			"definition": "A ranking input that favours the better-known place among same-named candidates — the original Eiffel Tower in Paris over a replica in Las Vegas. Closely related to the importance score.",
+			"definition": "A ranking input that favors the better-known place among same-named candidates — the original Eiffel Tower in Paris over a replica in Las Vegas. Closely related to the importance score.",
 			"tags": ["resolver"],
 			"aliases": ["prominence score"],
 			"relatedTerms": ["importance score", "Wikipedia importance", "resolver"]
@@ -1755,7 +1755,7 @@
 		},
 		{
 			"term": "rooftop",
-			"definition": "Geocoding precision at the building or parcel level — coordinates within a few metres — the highest tier of the geocode cascade. Sourced from address-point and situs data.",
+			"definition": "Geocoding precision at the building or parcel level — coordinates within a few meters — the highest tier of the geocode cascade. Sourced from address-point and situs data.",
 			"tags": ["geocoding"],
 			"aliases": ["rooftop-level", "address-point geocoding"],
 			"relatedTerms": ["geocode cascade", "situs data", "locality centroid"]
@@ -1902,7 +1902,7 @@
 		},
 		{
 			"term": "station entrance",
-			"definition": "One of several access points to a large transit station. Entrances at stations like Tokyo or Shibuya can be hundreds of metres apart, so entrance-level precision matters for navigation.",
+			"definition": "One of several access points to a large transit station. Entrances at stations like Tokyo or Shibuya can be hundreds of meters apart, so entrance-level precision matters for navigation.",
 			"tags": ["venue", "ja-jp"],
 			"relatedTerms": ["point of interest", "named intersection"]
 		},

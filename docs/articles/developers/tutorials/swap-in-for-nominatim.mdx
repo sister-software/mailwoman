@@ -32,7 +32,7 @@ Read the last two before you start. They decide whether this page can answer the
   Running the drop-in beside the original on a spare port is the right shape for a swap anyway: you
   can diff the two answers before you cut over.
 - **`/reverse` needs a database this page does not download.** Reverse geocoding on the Photon and
-  Nominatim drop-ins runs point-in-polygon over a Who's On First admin distribution at
+  Nominatim drop-ins runs point-in-polygon over a full WOF distribution at
   `<data-root>/wof/admin-global-priority.db`. `mailwoman data pull` does not ship one, so `/reverse`
   answers an empty result until you put one there. Step 3 shows what that looks like so you don't
   mistake it for a broken install. Forward geocoding — the path most callers use — works from step 1.
@@ -172,7 +172,7 @@ curl -s "http://127.0.0.1:2323/reverse?lat=52.52&lon=13.405" | jq -c
 ```
 
 An empty collection, not an error. That is the `wof: (none found)` line from step 2 showing through:
-with no admin distribution on disk the reverse geocoder is never constructed, and the route answers
+with no full WOF distribution on disk the reverse geocoder is never constructed, and the route answers
 the empty shape rather than a 500. Put `admin-global-priority.db` in `<data-root>/wof/` and restart
 to change that answer.
 
@@ -391,20 +391,20 @@ means in the third column.
 
 ### Photon: `/api` and `/reverse`
 
-| Parameter or field                       | Verdict             | What that means here                                                                                 |
-| ---------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `q`                                      | Honored             | Parsed and resolved. Empty or over 512 characters answers an empty collection                        |
-| `limit`                                  | Honored             | Caps the features returned. `/reverse` returns at most one regardless                                |
-| `lat` + `lon` on `/api`                  | Honored             | Soft proximity bias, both required. Re-ranks candidates, never filters                               |
-| `format=jsonld`                          | Honored, addition   | Re-serializes the same collection as schema.org `Place[]`. Upstream Photon has no such format        |
-| `lang`                                   | Accepted, no effect | Names come back as the gazetteer stores them. `?q=cologne&lang=en` still answers `Köln`              |
-| `osm_tag`                                | Accepted, no effect | No category filter. A request for `amenity:cafe` returns the same places as one without it           |
-| `layer`                                  | Accepted, no effect | No layer filter                                                                                      |
-| `radius` on `/reverse`                   | Accepted, no effect | The reverse geocoder returns the containing place, not a radius search                               |
-| `bbox`                                   | Not read            | The handler parses no bounding box. Use `lat`/`lon` for viewport influence                           |
-| `osm_key`/`osm_value`/`type`             | Always present      | Derived from the resolved place's type so clients can dereference them. Not OpenStreetMap tag values |
-| `osm_id` / `osm_type`                    | Never set           | Nothing here is keyed to an OpenStreetMap object. A client that stores them stores `undefined`       |
-| `/reverse` without an admin distribution | Empty collection    | See the prerequisites                                                                                |
+| Parameter or field                         | Verdict             | What that means here                                                                                 |
+| ------------------------------------------ | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `q`                                        | Honored             | Parsed and resolved. Empty or over 512 characters answers an empty collection                        |
+| `limit`                                    | Honored             | Caps the features returned. `/reverse` returns at most one regardless                                |
+| `lat` + `lon` on `/api`                    | Honored             | Soft proximity bias, both required. Re-ranks candidates, never filters                               |
+| `format=jsonld`                            | Honored, addition   | Re-serializes the same collection as schema.org `Place[]`. Upstream Photon has no such format        |
+| `lang`                                     | Accepted, no effect | Names come back as the gazetteer stores them. `?q=cologne&lang=en` still answers `Köln`              |
+| `osm_tag`                                  | Accepted, no effect | No category filter. A request for `amenity:cafe` returns the same places as one without it           |
+| `layer`                                    | Accepted, no effect | No layer filter                                                                                      |
+| `radius` on `/reverse`                     | Accepted, no effect | The reverse geocoder returns the containing place, not a radius search                               |
+| `bbox`                                     | Not read            | The handler parses no bounding box. Use `lat`/`lon` for viewport influence                           |
+| `osm_key`/`osm_value`/`type`               | Always present      | Derived from the resolved place's type so clients can dereference them. Not OpenStreetMap tag values |
+| `osm_id` / `osm_type`                      | Never set           | Nothing here is keyed to an OpenStreetMap object. A client that stores them stores `undefined`       |
+| `/reverse` without a full WOF distribution | Empty collection    | See the prerequisites                                                                                |
 
 ### Nominatim: `/search`, `/reverse`, `/lookup`, `/status`
 
@@ -425,7 +425,7 @@ means in the third column.
 | `licence`                                                    | Substituted         | `Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER` — the sources these answers come from                                               |
 | `annotations`                                                | Addition            | The OpenCage-style block from step 5                                                                                                                       |
 | `/lookup`                                                    | `501`               | Not implemented                                                                                                                                            |
-| `/reverse` without an admin distribution                     | `null`              | See the prerequisites                                                                                                                                      |
+| `/reverse` without a full WOF distribution                   | `null`              | See the prerequisites                                                                                                                                      |
 
 ### libpostal: `/parse` and `/expand`
 
