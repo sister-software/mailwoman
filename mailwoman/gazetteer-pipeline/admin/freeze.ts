@@ -74,7 +74,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 	let backfillPlacesFixed = 0
 
 	if (opts.dataDir) {
-		phase("hierarchy-backfill", "multi-parent -4 places")
+		phase("hierarchy-backfill", "places whose ancestry chain never reaches a country")
 		const geojsonRoots = discoverAdminDataRoots(opts.dataDir)
 
 		if (!geojsonRoots.length) {

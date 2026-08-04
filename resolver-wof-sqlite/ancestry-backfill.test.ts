@@ -95,3 +95,107 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 
 	db.close()
 })
+
+test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its parent's dead end (#1445)", () => {
+	const db = new DatabaseSync(":memory:")
+	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
+	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
+
+	// New York City: the multi-parent locality, ALREADY repaired by an earlier pass — it has a full
+	// ancestor set, so it is not a candidate this time.
+	const nycID = 85_977_539
+	const brooklynID = 421_205_765
+	const nyStateID = 85_688_543
+	const kingsCountyID = 102_082_361
+	const usID = 85_633_793
+
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(nycID)
+
+	for (const [aid, pt] of [
+		[nycID, "locality"],
+		[usID, "country"],
+		[nyStateID, "region"],
+		[kingsCountyID, "county"],
+	] as Array<[number, string]>) {
+		db.prepare("INSERT INTO ancestors VALUES (?, ?, ?, 0)").run(nycID, aid, pt)
+	}
+
+	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC and
+	// stopped — NYC's own parent_id is the -4 sentinel. TWO ancestor rows, which the previous
+	// "<= 1 ancestor row" candidate test excluded, leaving the borough with no region ancestor.
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'borough')").run(brooklynID)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'borough', 0)").run(brooklynID, brooklynID)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(brooklynID, nycID)
+
+	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
+	mkdirSync(join(dataRoot, "421", "205", "765"), { recursive: true })
+
+	// Brooklyn's real source hierarchy — the whole chain is present even though parent_id is not -4.
+	writeFileSync(
+		join(dataRoot, "421", "205", "765", `${brooklynID}.geojson`),
+		JSON.stringify({
+			properties: {
+				"wof:parent_id": nycID,
+				"wof:hierarchy": [
+					{
+						borough_id: brooklynID,
+						continent_id: 102_191_575,
+						country_id: usID,
+						county_id: kingsCountyID,
+						locality_id: nycID,
+						region_id: nyStateID,
+					},
+				],
+			},
+		})
+	)
+
+	const result = backfillAncestorsFromHierarchy(db, [dataRoot])
+
+	// continent + country + county + region = 4 new rows. Self is excluded, and the locality row
+	// (NYC) is already present, so neither is re-inserted.
+	expect(result.placesFixed).toBe(1)
+	expect(result.rowsAdded).toBe(4)
+
+	const byPlacetype = db
+		.prepare("SELECT ancestor_placetype AS pt, ancestor_id AS aid FROM ancestors WHERE id = ? ORDER BY pt")
+		.all(brooklynID) as Array<{ pt: string; aid: number }>
+
+	// The region ancestor is the whole point: without it the resolver's region-descendant filter
+	// cannot reach the borough, and "Brooklyn, NY" resolves to a Jefferson County hamlet instead.
+	expect(byPlacetype.find((row) => row.pt === "region")?.aid).toBe(nyStateID)
+	expect(byPlacetype.find((row) => row.pt === "county")?.aid).toBe(kingsCountyID)
+	expect(byPlacetype.find((row) => row.pt === "country")?.aid).toBe(usID)
+	expect(byPlacetype.filter((row) => row.aid === nycID)).toHaveLength(1)
+
+	// NYC itself was never a candidate — it already had a country ancestor.
+	expect(db.prepare("SELECT COUNT(*) AS n FROM ancestors WHERE id = ?").get(nycID)).toEqual({ n: 4 })
+
+	const again = backfillAncestorsFromHierarchy(db, [dataRoot])
+	expect(again.rowsAdded).toBe(0)
+
+	db.close()
+})
+
+test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", () => {
+	const db = new DatabaseSync(":memory:")
+	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
+	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
+
+	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region. The
+	// artifact matching that is correct, not truncated — and because it HAS a country ancestor it is
+	// not a candidate at all, so no geojson probe happens for it.
+	const id = 101_734_391
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(id, id)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(id, 85_633_793)
+
+	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
+	const result = backfillAncestorsFromHierarchy(db, [dataRoot])
+
+	expect(result.placesFixed).toBe(0)
+	expect(result.rowsAdded).toBe(0)
+	expect(result.noGeojson).toBe(0)
+
+	db.close()
+})
