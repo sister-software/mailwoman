@@ -132,6 +132,11 @@
 			"default": "./out/api/test-clocks.js",
 			"types": "./out/api/test-clocks.d.ts"
 		},
+		"./api/test-transport": {
+			"node": "./api/test-transport.ts",
+			"default": "./out/api/test-transport.js",
+			"types": "./out/api/test-transport.d.ts"
+		},
 		"./logging": {
 			"node": "./logging/index.ts",
 			"default": "./out/logging/index.js",

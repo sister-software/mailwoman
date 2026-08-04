@@ -10,7 +10,10 @@
  *   `Date` specifically, because `axios-cache-interceptor` stamps `createdAt` off `Date.now()` rather
  *   than off this client's injectable clock.
  *
- *   The stub errors are built structurally (`isAxiosError: true` plus `config`/`response`/`code`)
+ *   The stub adapter and its Axios-shaped error builder live in
+ *   `@mailwoman/core/api/test-transport`, beside the test clocks — `bdc/sdk/client.test.ts` had grown
+ *   its own near-identical copy, which is what happens when a second client is migrated from the
+ *   first's tests. Both are built structurally (`isAxiosError: true` plus `config`/`response`/`code`)
  *   rather than with `new AxiosError(...)`: `filer` depends on neither `axios` nor
  *   `axios-cache-interceptor`, reaching both only through `@mailwoman/core`, and a test file is not a
  *   reason to breach that.
@@ -20,13 +23,13 @@ import { mkdtempSync, readdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import type { APIClientConfig } from "@mailwoman/core/api"
 import {
 	createFakeClock,
 	drainMicrotasks,
 	maxCountInSlidingWindow,
 	VirtualClock,
 } from "@mailwoman/core/api/test-clocks"
+import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceErrorShape`). The value arrives
 // via the post-reset dynamic import below; a `const` carries no type side, so the type position needs its own static
 // import. Type-only, so it never evaluates the mocked module chain.
@@ -73,124 +76,6 @@ const {
 } = await import("./sec-client.ts")
 
 const TEST_USER_AGENT = "Test Harness test@example.com"
-
-/**
- * The interesting subset of an Axios request config, as a stub adapter sees it.
- */
-interface StubRequestConfig {
-	url?: string
-	headers?: Record<string, unknown>
-	timeout?: number
-}
-
-/**
- * One scripted adapter outcome.
- */
-interface StubOutcome {
-	status?: number
-	statusText?: string
-	/**
-	 * The RAW body, as the transport would hand it to Axios's `transformResponse`. A string here is what an upstream
-	 * serving HTML under a 200 actually looks like.
-	 */
-	body?: unknown
-	headers?: Record<string, string>
-	/**
-	 * A transport-level failure — no HTTP response ever arrives. `code` picks the class: `ERR_NETWORK` for a dropped
-	 * socket, `ECONNABORTED` for this attempt's own timeout firing.
-	 */
-	throws?: { message: string; code: string }
-}
-
-/**
- * The Axios overrides `createSECClient` accepts, reached through `APIClientConfig` rather than by importing `axios`.
- */
-type AxiosOverrides = NonNullable<APIClientConfig["axios"]>
-
-interface StubTransport {
-	/**
-	 * Spread into `createSECClient()` as its `axios` override.
-	 */
-	axios: AxiosOverrides
-	calls: string[]
-	configs: StubRequestConfig[]
-	dispatchTimes: number[]
-}
-
-const HTTP_OK = 200
-const HTTP_MULTIPLE_CHOICES = 300
-
-/**
- * Build an Axios-shaped rejection without importing `axios`. `isAxiosError(payload)` is `isObject(payload) &&
- * payload.isAxiosError === true`, and everything downstream reads `config`, `code`, and `response` — so this is the
- * full contract that matters here.
- */
-function axiosLikeError(message: string, code: string, config: StubRequestConfig, response?: unknown): Error {
-	const error = new Error(message) as Error & Record<string, unknown>
-
-	error.isAxiosError = true
-	error.code = code
-	error.config = config
-
-	if (response) {
-		error.response = response
-	}
-
-	return error
-}
-
-/**
- * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted) and records every dispatch.
- * It reproduces what Axios's real adapters do on a failing status — reject with an Axios-shaped error carrying the
- * response — because `validateStatus` is applied by the adapter, not by the interceptor chain.
- */
-function stubTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubTransport {
-	const calls: string[] = []
-	const configs: StubRequestConfig[] = []
-	const dispatchTimes: number[] = []
-	let index = 0
-
-	const adapter = async (config: StubRequestConfig): Promise<unknown> => {
-		calls.push(String(config.url))
-		configs.push(config)
-
-		if (clock) {
-			dispatchTimes.push(clock.now())
-		}
-
-		const outcome = outcomes[Math.min(index, outcomes.length - 1)]!
-
-		index++
-
-		if (outcome.throws) {
-			throw axiosLikeError(outcome.throws.message, outcome.throws.code, config)
-		}
-
-		const status = outcome.status ?? HTTP_OK
-
-		const response = {
-			// Axios's `transformResponse` runs on the RAW body, so hand it a string exactly like the wire would.
-			data: typeof outcome.body === "string" ? outcome.body : JSON.stringify(outcome.body ?? { ok: true }),
-			status,
-			statusText: outcome.statusText ?? "OK",
-			headers: outcome.headers ?? {},
-			config,
-		}
-
-		if (status >= HTTP_OK && status < HTTP_MULTIPLE_CHOICES) return response
-
-		throw axiosLikeError(
-			`Request failed with status code ${status}`,
-			status >= 500 ? "ERR_BAD_RESPONSE" : "ERR_BAD_REQUEST",
-			config,
-			response
-		)
-	}
-
-	// Structurally an Axios adapter. The precise `AxiosAdapter` signature isn't nameable here without
-	// importing `axios`, which this workspace deliberately does not depend on.
-	return { axios: { adapter } as AxiosOverrides, calls, configs, dispatchTimes }
-}
 
 let cacheDir: string
 
@@ -637,7 +522,7 @@ describe("createSECClient: rate limiting", () => {
 		expect(SEC_DEFAULT_REQUESTS_PER_SECOND).toBeLessThan(SEC_MAX_REQUESTS_PER_SECOND)
 
 		const clock = new VirtualClock()
-		const transport = stubTransport([{ body: { ok: true } }], clock)
+		const transport = stubTransport([{ body: { ok: true } }], { clock })
 
 		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock, ...transport })
 
