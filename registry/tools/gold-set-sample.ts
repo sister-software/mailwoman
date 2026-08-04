@@ -26,6 +26,8 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
+import { norm } from "./shared.ts"
+
 /**
  * Options for {@linkcode goldSetSample}.
  */
@@ -55,8 +57,6 @@ export interface GoldSetSampleOptions {
 	 */
 	outJSONL?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 const STOP = new Set([
 	"llc",

@@ -36,6 +36,8 @@ import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
 
+import { norm } from "./shared.ts"
+
 /**
  * Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated.
  */
@@ -66,8 +68,6 @@ export interface DedupCeilingOptions {
 	 */
 	outMd?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which carry the

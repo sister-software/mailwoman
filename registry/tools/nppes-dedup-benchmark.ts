@@ -45,11 +45,7 @@ import {
 import { latLngToCell } from "h3-js"
 
 import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
-
-/**
- * Groups below this size are too small for a held-out split to mean anything.
- */
-const MIN_GROUP_SIZE = 5
+import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "./shared.ts"
 
 /**
  * F1 gap within which two blocking strategies are treated as equivalent.
@@ -122,35 +118,6 @@ export interface NPPESDedupBenchmarkOptions {
 /**
  * NPPES column names (verbatim from the file headers).
  */
-const C = {
-	npi: "NPI",
-	entityType: "Entity Type Code",
-	orgLegal: "Provider Organization Name (Legal Business Name)",
-	last: "Provider Last Name (Legal Name)",
-	first: "Provider First Name",
-	pAddr: "Provider First Line Business Practice Location Address",
-	pCity: "Provider Business Practice Location Address City Name",
-	pState: "Provider Business Practice Location Address State Name",
-	pZip: "Provider Business Practice Location Address Postal Code",
-	mAddr: "Provider First Line Business Mailing Address",
-	mCity: "Provider Business Mailing Address City Name",
-	mState: "Provider Business Mailing Address State Name",
-	mZip: "Provider Business Mailing Address Postal Code",
-	otherOrg: "Provider Other Organization Name",
-	authLast: "Authorized Official Last Name",
-	authFirst: "Authorized Official First Name",
-	isSubpart: "Is Organization Subpart",
-	parentLBN: "Parent Organization LBN",
-	parentTIN: "Parent Organization TIN",
-	// #625 taxonomy discriminator: the 15 taxonomy slots; collected as a set (any shared code = agreement).
-	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
-}
-
-const norm = (s: string | undefined) => (s ?? "").trim()
-
-const addr = (line: string, city: string, st: string, zip: string) =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
-
 /**
  * Org-name similarity for the org-name entity-truth (the gold-set rule: same address + same org name ⇒ same entity,
  * even when NPPES doesn't flag the subpart). Strip corporate-form + articles, keep domain words (the distinguishing
