@@ -18,7 +18,7 @@ import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
 import type { ClassifierCandidate } from "./reconcile.ts"
 import { reconcileSpans } from "./reconcile.ts"
 import { aggregateSpanLogits } from "./span-logit-aggregation.ts"
-import { WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
+import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
 import type {
 	AddressClassifier,
 	ClassifierOpts,
@@ -28,6 +28,7 @@ import type {
 	LocaleTag,
 	NormalizedInputLite,
 	PhraseProposal,
+	PipelineFault,
 	PipelineOpts,
 	PipelineResult,
 	PlacetypePairPassthrough,
@@ -308,6 +309,9 @@ export async function runPipeline(
 	opts?: PipelineOpts
 ): Promise<PipelineResult> {
 	const timing: Record<string, number> = {}
+	// One list per run, threaded into each `safe*` wrapper. Every return site below surfaces it, so an empty array is a
+	// positive statement ("no stage faulted"), not a field that happened not to be set.
+	const faults: PipelineFault[] = []
 	const t0 = performance.now()
 
 	const normalize = stages.normalize ?? identityNormalize
@@ -407,6 +411,7 @@ export async function runPipeline(
 				tree,
 				poiIntent: poiOutcome,
 				timing,
+				faults,
 				path: "poi",
 			}
 		}
@@ -422,7 +427,7 @@ export async function runPipeline(
 		if (stages.resolver) {
 			throwIfAborted(opts)
 			const tResolve = performance.now()
-			tree = await safeResolve(stages.resolver, tree, effectiveOpts)
+			tree = await safeResolve(faults, stages.resolver, tree, effectiveOpts)
 			timing["resolve"] = performance.now() - tResolve
 		}
 
@@ -435,6 +440,7 @@ export async function runPipeline(
 			phraseProposals: [],
 			tree,
 			timing,
+			faults,
 			path: "fast-path",
 		}
 	}
@@ -447,7 +453,7 @@ export async function runPipeline(
 	if (stages.groupPhrases) {
 		throwIfAborted(opts)
 		const tGroup = performance.now()
-		phraseProposals = await safeGroupPhrases(stages.groupPhrases, normalized, queryShape, locale)
+		phraseProposals = await safeGroupPhrases(faults, stages.groupPhrases, normalized, queryShape, locale)
 		timing["phrase-grouper"] = performance.now() - tGroup
 	}
 
@@ -553,17 +559,14 @@ export async function runPipeline(
 		throwIfAborted(opts)
 		const tClassify = performance.now()
 
-		tree = await safeClassify(
-			stages.classifier,
-			normalized.normalized,
-			queryShape,
-			stages.fst,
-			opts?.normalizeCase,
-			opts?.placetypePair,
-			stages.streetMorphology,
+		tree = await safeClassify(faults, stages.classifier, normalized.normalized, queryShape, {
+			fst: stages.fst,
+			normalizeCase: opts?.normalizeCase,
+			placetypePair: opts?.placetypePair,
+			streetMorphology: stages.streetMorphology,
 			// Decision A: explicit caller register wins; otherwise the kind verdict decides. NEVER case-keyed.
-			opts?.inputMode ?? deriveInputMode(kind.kind)
-		)
+			inputMode: opts?.inputMode ?? deriveInputMode(kind.kind),
+		})
 
 		timing["token-classify"] = performance.now() - tClassify
 	}
@@ -584,7 +587,7 @@ export async function runPipeline(
 			effectiveOpts = opts
 		}
 
-		tree = await safeResolve(stages.resolver, tree, effectiveOpts)
+		tree = await safeResolve(faults, stages.resolver, tree, effectiveOpts)
 		timing["resolve"] = performance.now() - tResolve
 	}
 
@@ -597,6 +600,7 @@ export async function runPipeline(
 		phraseProposals,
 		tree,
 		timing,
+		faults,
 		path: "full",
 	}
 }
@@ -615,18 +619,47 @@ function throwIfAborted(opts?: PipelineOpts): void {
 }
 
 /**
- * Defensive wrapper: if the classifier throws, return an empty tree rather than abort the pipeline.
+ * Normalize a caught throw into a {@link PipelineFault} and append it to the run's fault list.
+ *
+ * The wrappers below all call this instead of `catch {}`. A bare `catch {}` is what made a classifier crash
+ * indistinguishable from a clean no-match (#40 / mailfail finding 4) — the tree came back empty, the grouper-audit
+ * refilled it from rule-based proposals, and the caller saw a tidy parse. Degrading is still the right behavior; doing
+ * it silently was not.
+ */
+function recordFault(faults: PipelineFault[], stage: PipelineFaultStage, cause: unknown): void {
+	faults.push({
+		stage,
+		name: cause instanceof Error ? cause.name : "Error",
+		message: cause instanceof Error ? cause.message : String(cause),
+		cause,
+	})
+}
+
+/**
+ * Defensive wrapper: if the classifier throws, return an empty tree rather than abort the pipeline — and record the
+ * throw on `faults` so the degrade is visible to the caller.
+ *
+ * The measured reason this matters (mailfail, 2026-08-02): with the 128-piece `pieces`/`logits` desync live, 10 of 110
+ * probe inputs crashed the classifier while the pipeline reported success. `size-10kb` — 10 KB of repeated addresses —
+ * came back as `{"house_number":"350","street":"5th Ave","locality":"Ave","region":"NY","postcode":"10118"}` off a
+ * 3,031-node tree, which reads exactly like a correct parse of one address. The fault list is what lets a caller tell
+ * those apart without instrumenting the classifier.
  */
 async function safeClassify(
+	faults: PipelineFault[],
 	classifier: AddressClassifier,
 	text: string,
 	queryShape: QueryShapeLite,
-	fst?: FSTMatcherLike,
-	normalizeCase?: boolean,
-	placetypePair?: PlacetypePairPassthrough,
-	streetMorphology?: FSTMatcherLike,
-	inputMode?: InputMode
+	knobs: {
+		fst?: FSTMatcherLike
+		normalizeCase?: boolean
+		placetypePair?: PlacetypePairPassthrough
+		streetMorphology?: FSTMatcherLike
+		inputMode?: InputMode
+	} = {}
 ): Promise<AddressTree> {
+	const { fst, normalizeCase, placetypePair, streetMorphology, inputMode } = knobs
+
 	try {
 		// Postcode regex repair on by default (v0.7 #35, operator-signed). #690 normalizeCase forwards as-is —
 		// default-ON at the classifier since #895 (unset runs it; explicit false pins the raw-case parse).
@@ -645,7 +678,9 @@ async function safeClassify(
 			...(placetypePair !== undefined ? { placetypePair } : {}),
 			...streetContextGateFor({ fst, streetMorphology }),
 		})
-	} catch {
+	} catch (error) {
+		recordFault(faults, PipelineFaultStage.Classifier, error)
+
 		return { raw: text, roots: [] }
 	}
 }
@@ -682,9 +717,10 @@ function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?:
 }
 
 /**
- * Defensive wrapper: a grouper failure returns an empty proposal list rather than abort.
+ * Defensive wrapper: a grouper failure returns an empty proposal list rather than abort, and records the throw.
  */
 async function safeGroupPhrases(
+	faults: PipelineFault[],
 	groupPhrases: NonNullable<RuntimePipelineStages["groupPhrases"]>,
 	normalized: NormalizedInputLite,
 	shape: QueryShapeLite,
@@ -692,7 +728,9 @@ async function safeGroupPhrases(
 ): Promise<PhraseProposal[]> {
 	try {
 		return await groupPhrases(normalized, shape, locale)
-	} catch {
+	} catch (error) {
+		recordFault(faults, PipelineFaultStage.PhraseGrouper, error)
+
 		return []
 	}
 }
@@ -829,16 +867,21 @@ export function grouperAudit(
 }
 
 /**
- * Defensive wrapper: a resolver failure leaves the classifier tree intact.
+ * Defensive wrapper: a resolver failure leaves the classifier tree intact, and records the throw. Unresolved-because-
+ * the-backend-threw and unresolved-because-nothing-matched produce the same tree, so without the fault the caller
+ * cannot tell a dead gazetteer from a genuine no-match.
  */
 async function safeResolve(
+	faults: PipelineFault[],
 	resolver: NonNullable<RuntimePipelineStages["resolver"]>,
 	tree: AddressTree,
 	opts?: PipelineOpts
 ): Promise<AddressTree> {
 	try {
 		return await resolver.resolveTree(tree, opts?.resolveOpts)
-	} catch {
+	} catch (error) {
+		recordFault(faults, PipelineFaultStage.Resolver, error)
+
 		return tree
 	}
 }
