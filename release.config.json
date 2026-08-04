@@ -1,9 +1,8 @@
 {
-	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode \u2014 see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to `weights.dataRoot` (override the root with MAILWOMAN_DATA_ROOT, or the individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
+	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode \u2014 see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to the data root ($MAILWOMAN_DATA_ROOT, resolved by `mailwomanDataRoot()` \u2014 override individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "7.8.1",
 	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "es-es", "it-it", "en-nz"],
 	"weights": {
-		"dataRoot": "/mnt/playpen/mailwoman-data",
 		"model": "models/quantized/model-v3230-guard-step-004000-int8.onnx",
 		"tokenizer": "models/tokenizer/v0.9.0-multisplice/tokenizer.model",
 		"tokenizerVersion": "0.9.0-multisplice",
@@ -11,7 +10,7 @@
 		"lineage": "v3.23.0-bundle-guard — v3230 step-4000 (Option-A evidence bundle, the 5-run productionization arc v3.19→v3.23, 2026-07-28). init_from v385 on v385's own feed (v0.13.0-latam) + street_type[1] + locality_surface[2] evidence channels, absence curriculum + evidence-noise 0.15, four-law curated lexicons (street v3 / locality-surface v6) with rules.digit_guard — evidence never paints beside a digit. Fragment register (the bundle's purpose, inputMode=fragmented): admin-street-homonym +0.245 asis / +0.765 lower+heal (ON 0.948), bare-street +0.583 lower, particle +0.407, ALL +0.261; house-number classes protected by the guard (+0.013/+0.030 lower). Formatted register (channels off): v6.0.0-shipped-baseline PASS 17/17 (us.micro 87.1 vs shipped 86.8; fr.cedex 83.3 under the noise-honest 82.2 floor, NAMED WATCH — plateaued fine-tune forgetting, re-anchors at the next from-scratch retrain). Invariance zero new classes; gauntlet ×3; canary 20/20 formatted."
 	},
 	"softFeed": {
-		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to weights.dataRoot/wof. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) \u2014 the publish workflow places them via the HF fetch step.",
+		"$comment": "Soft-feed artifacts (#718 D1) materialized into each neural-weights-<locale> workspace at publish time by copy-weights.ts so the library default `loadFromWeights` feeds the channels the anchor+gazetteer-trained model expects (closing the anchor-OFF crater). The PCB1 postcode binary is built from the WOF postcode shard (per locale's country code); the gazetteer lexicon is the codex-generated repo file. Paths under `db` are relative to the data root\u0027s `wof/`. Like the weights binaries, these are skipped in CI (MAILWOMAN_SKIP_WEIGHTS_COPY) \u2014 the publish workflow places them via the HF fetch step.",
 		"gazetteerLexicon": "data/gazetteer/anchor-lexicon-v1.json",
 		"streetTypeLexicon": "data/gazetteer/street-type-lexicon-v3.json",
 		"localitySurfaceLexicon": "gazetteer/locality-surface-lexicon-v6.json",
@@ -22,7 +21,7 @@
 			"gb": "postalcode-gb.db"
 		},
 		"pairIndexByCountry": {
-			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) \u2014 mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default \u2014 see `mailwoman gazetteer pair-index --help`). `source` is relative to weights.dataRoot (NOT weights.dataRoot/wof, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
+			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) \u2014 mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default \u2014 see `mailwoman gazetteer pair-index --help`). `source` is relative to the data root (NOT its `wof/`, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
 			"gb": {
 				"source": "ppd/2026-07-22/gb-tuples.csv",
 				"delta": 10,
