@@ -181,7 +181,10 @@ export function backfillAncestorsFromHierarchy(
 		"INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)"
 	)
 
-	const hasRow = db.prepare("SELECT 1 FROM ancestors WHERE id = ? AND ancestor_id = ? LIMIT 1")
+	// One indexed read per CANDIDATE, not one per (candidate, ancestor) pair. A candidate that reaches
+	// this point has a handful of existing rows at most, and the widened candidate test (above) made the
+	// per-pair variant the dominant cost of the whole pass — this is the same check, batched.
+	const existingAncestors = db.prepare("SELECT ancestor_id AS ancestor_id FROM ancestors WHERE id = ?")
 
 	let placesFixed = 0
 	let rowsAdded = 0
@@ -220,11 +223,16 @@ export function backfillAncestorsFromHierarchy(
 			}
 		}
 
+		const alreadyPresent = new Set(
+			(existingAncestors.all(id) as Array<{ ancestor_id: number }>).map((row) => Number(row.ancestor_id))
+		)
+
 		let added = 0
 
 		for (const [aid, pt] of seen) {
-			if (hasRow.get(id, aid)) continue
+			if (alreadyPresent.has(aid)) continue
 			insert.run(id, aid, pt)
+			alreadyPresent.add(aid)
 
 			added++
 		}
