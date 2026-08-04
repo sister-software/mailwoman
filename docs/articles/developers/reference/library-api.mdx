@@ -223,6 +223,59 @@ every call it makes: `postcodeRepair: true`, and the shipped word-consistency se
 mid-pipeline. `postcodeRepair` is the one that differs: off on a bare classifier call, on
 through the pipeline.
 
+### Wiring the gazetteer index on a bare call
+
+`fst` is the option a bare classifier call has to pass, and the one whose absence is hardest to
+notice. The gazetteer index turns a gazetteer match into an additive emission bias, and it is what
+tells the model that a bare token naming a real place is a locality rather than a street. Nothing
+loads it for you outside `createRuntimePipeline`: the pipeline reads the index out of the
+classifier's weights package on its first call and passes it to every parse, while a classifier you
+call directly receives no index at all. `geocodeAddress` does not wire it either, and `GeocodeDeps`
+has no field for it.
+
+The parse still succeeds without it. It is a prior, not a stage, so most inputs are unaffected and
+the failure is silent — which is why this section exists rather than a note on the table row.
+
+Wire it from the path the classifier already resolved. `fstPath` is optional, because a locale
+overlay that ships no gazetteer index leaves it undefined, so guard it rather than reading it
+straight into `readFileSync`.
+
+```ts
+import { readFileSync } from "node:fs"
+
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+// `fstPath` is optional — a locale overlay that ships no gazetteer index leaves it undefined.
+const fst = classifier.fstPath ? deserializeFST(readFileSync(classifier.fstPath)) : undefined
+
+for (const input of ["Hollywood", "big spring"]) {
+	console.log(input)
+	console.log("  without fst:", JSON.stringify(await classifier.parseJSON(input)))
+	console.log("  with fst:   ", JSON.stringify(await classifier.parseJSON(input, { fst })))
+}
+```
+
+Output:
+
+```
+Hollywood
+  without fst: {"street":"Hollywood"}
+  with fst:    {"locality":"Hollywood"}
+big spring
+  without fst: {"street":"Big","street_suffix":"Spring"}
+  with fst:    {"locality":"Big Spring"}
+```
+
+`resolveWeights` from `@mailwoman/neural/weights` returns the same `fstPath` without constructing a
+classifier. It is synchronous, so do not await it, and its `fstPath` is optional for the same reason.
+
+This is the main reason to prefer the pipeline for a single parse: it wires the index, the
+street-morphology gate and the street-evidence rerank, and a bare classifier call gets none of the
+three.
+
 ## Geocoding
 
 `mailwoman/geocode-core` turns a string into a coordinate with a resolution tier and an uncertainty
@@ -315,7 +368,9 @@ practice. `for` is a property rather than a method so it can be passed unbound a
 ### Example
 
 This file resolves against a downloaded `candidate.db` with no street shards wired, so it answers on
-the admin tier.
+the admin tier. It also runs without the gazetteer emission priors: `geocodeAddress` never wires the
+index, and `GeocodeDeps` has no field for it — see [Wiring the gazetteer index on a bare
+call](#wiring-the-gazetteer-index-on-a-bare-call).
 
 ```ts
 import { NeuralAddressClassifier } from "@mailwoman/neural"
