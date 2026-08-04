@@ -8,22 +8,30 @@
  *
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
  *
- *   WHY `createRequire` AND NOT `import.meta.resolve` (2026-08-05 triage). Not availability —
- *   `import.meta` demonstrably works here (it is the `createRequire` argument below), and every
- *   specifier in this file was measured to resolve identically through both. The reason is what the
- *   callers want back. `import.meta.resolve` answers "which ONE file does this specifier import",
- *   which is precisely the answer these aliases exist to OVERRIDE: they point webpack at source
- *   `.ts` rather than the `out/` JS the exports map's `default` condition selects, and at
- *   `core/resolver/types` rather than the `@mailwoman/resolver` barrel that re-exports it. Using
- *   the resolver to build them is circular for those. So {@link resolveWorkspaceDir} asks the
- *   cheapest question that has a stable answer — where does this package LIVE — and the
- *   `resolveWorkspaceFile` / `resolveWorkspaceDirEntry` helpers pick the entry by hand from there.
- *   A package directory is not something `import.meta.resolve` returns.
+ *   WHY `createRequire` AND NOT `import.meta.resolve` (2026-08-05 triage). Two reasons, and the
+ *   second is the one that would bite.
  *
- *   The one sub-site that is a genuine plain resolution is the `@mailwoman/codex` loop below, which
- *   deliberately asks the resolver instead of hand-deriving paths. It stays on `require.resolve` so
- *   this file has one resolution mechanism rather than two; if it ever moves, move it knowing that
- *   the docs build is the only thing that can verify a Docusaurus-loader change, not a unit test.
+ *   What the callers want back is a package DIRECTORY, which `import.meta.resolve` does not return.
+ *   It answers "which ONE file does this specifier import" — precisely the answer these aliases
+ *   exist to OVERRIDE. They point webpack at source `.ts` rather than the `out/` JS the exports
+ *   map's `default` condition selects, and at `core/resolver/types` rather than the
+ *   `@mailwoman/resolver` barrel that re-exports it, so resolving them WITH the resolver is
+ *   circular. {@link resolveWorkspaceDir} therefore asks the cheapest question with a stable answer
+ *   — where does this package live — and `resolveWorkspaceFile` / `resolveWorkspaceDirEntry` pick
+ *   the entry from there.
+ *
+ *   And this file does not run under plain Node; it runs under Docusaurus's config loader, where
+ *   `import.meta.resolve` is not something to assume. `docs` declares no `"type": "module"`, and
+ *   the sibling `plugin.ts` calls a BARE `require.resolve` (no `createRequire`) inside its
+ *   `NormalModuleReplacementPlugin` hook — which only works if the loader hands these modules a CJS
+ *   `require`, and CJS has no `import.meta` at all. `createRequire(import.meta.url)` survives that
+ *   because transpilers rewrite `import.meta.url`; `import.meta.resolve` has no such rewrite.
+ *   (Contrast `docs/scripts/generate-cli-reference.ts`, which the `prebuild` runs as `node <file>`
+ *   — real ESM, and it uses `import.meta.resolve`.)
+ *
+ *   So the one sub-site here that IS a plain resolution — the `@mailwoman/codex` loop below, which
+ *   deliberately asks the resolver instead of hand-deriving paths — stays on `require.resolve` too.
+ *   Only a docs BUILD can verify a change to that, never a unit test.
  */
 
 import { spawnSync } from "node:child_process"
