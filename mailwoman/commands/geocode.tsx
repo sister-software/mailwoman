@@ -37,6 +37,7 @@ import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
+import { argument } from "pastel"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
@@ -54,7 +55,10 @@ import { resolverDefaultCountry } from "./parse.tsx"
 
 //#region CLI contract — args + options
 
-const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address to geocode"))
+const ArgumentsSchema = zod
+	.array(zod.string())
+	.describe(argument({ name: "address", description: "A formatted postal address to geocode" }))
+
 export { ArgumentsSchema as args, OptionsSchema as options }
 
 const OptionsSchema = zod.object({

@@ -21,6 +21,7 @@ import { existsSync, statSync } from "node:fs"
 import { APIClient } from "@mailwoman/core/api"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Text } from "ink"
+import { argument } from "pastel"
 import { resolvePath } from "path-ts"
 import zod from "zod"
 
@@ -38,7 +39,12 @@ import { formatBytes } from "../../doctor/checks.ts"
 const ArgumentsSchema = zod
 	.array(zod.string())
 	.default([])
-	.describe(`Bundle name(s) to report on. Default: every bundle (${Object.keys(BUNDLES).join(", ")})`)
+	.describe(
+		argument({
+			name: "bundle",
+			description: `Bundle name(s) to report on. Default: every bundle (${Object.keys(BUNDLES).join(", ")})`,
+		})
+	)
 
 const OptionsSchema = zod.object({
 	checkRemote: zod

@@ -1,0 +1,140 @@
+---
+title: Runtime flags
+description: The environment variables the shipped packages read, and the behavior defaults worth knowing about.
+role: reference
+source-of-truth: core/env/schema.ts, core/utils/data-root.ts, mailwoman/resolver-backend.ts, resolver/resolve.ts, core/pipeline/runtime-pipeline.ts, mailwoman/runtime-pipeline.ts
+---
+
+# Runtime flags
+
+## Scope
+
+Two things configure a running Mailwoman: environment variables, and the defaults on the mechanisms
+inside the pipeline. This page covers both, restricted to what a consumer of the published packages
+can act on.
+
+The boundary matters, because the repository's own environment schema is wider than this page. That
+schema splits its variables by whether they are safe to log rather than by whether a consumer should
+set them, so it also declares the release-publishing settings, the weights dev-linking overrides, the
+corpus fetch knobs, and the switches the evaluation scripts read. None of those does anything in an
+installed package, and several are declared but read nowhere. If a variable is not on this page,
+setting it changes nothing you can observe.
+
+Behavior defaults are listed after the variables. They are not environment variables — each is an
+option on `createRuntimePipeline`, `geocodeAddress`, or the resolver, and the table states where.
+
+## Environment variables
+
+Every variable below is read by shipped runtime code. Each has no default unless the table says so.
+
+| Variable                         | Default            | Effect                                                                          | Set it when                                                                                |
+| -------------------------------- | ------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `MAILWOMAN_DATA_ROOT`            | a built-in path    | The root directory for every downloaded artifact: gazetteers, shards, POI layer | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
+| `MAILWOMAN_CANDIDATE_DB`         | unset              | Path to `candidate.db`. When set, the resolver uses the candidate backend       | Always, once you have run `mailwoman data pull candidate`                                  |
+| `MAILWOMAN_WOF_DB`               | unset              | Path to a full Who's On First SQLite distribution, used by the search backend   | You resolve against a full distribution rather than `candidate.db`                         |
+| `MAILWOMAN_WOF_ADMIN_DB`         | unset              | Path to the admin gazetteer for `mailwoman reverse`                             | You reverse geocode                                                                        |
+| `MAILWOMAN_WOF_POLYGONS_DB`      | unset              | Path to the polygon sidecar. Without it every reverse result is approximate     | You need polygon-exact containment                                                         |
+| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset              | Path to the postal-city alias database, which adds an alias-aware scoring pass  | You geocode United States mailing addresses at volume                                      |
+| `MAILWOMAN_FST_BIN`              | unset              | Path to the gazetteer index `mailwoman autocomplete` reads                      | You run autocomplete against an index outside a weights package                            |
+| `MAILWOMAN_MODEL_CARD`           | the package's card | Path to a model card, read by the server's `/health` report                     | You serve a model whose card is not beside it                                              |
+| `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer | Directory holding the coarse country placer                                     | You replace the bundled placer                                                             |
+| `MAILWOMAN_BATCH_MAX`            | `1000`             | The row cap on `POST /v1/batch` under `mailwoman serve`                         | You batch more than 1000 rows per request                                                  |
+
+`MAILWOMAN_CANDIDATE_DB` is the one most installs need. Downloading `candidate.db` does not wire it
+up: resolution is gated on the variable, so the file sits unused until you export it.
+`mailwoman data pull candidate` prints the exact export line on success.
+
+Setting both `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` is not an error, and the candidate
+backend wins. With only the candidate variable set, `mailwoman parse --resolve` and
+`mailwoman geocode` need no other gazetteer path. `mailwoman registry run` is the exception: it
+checks for `MAILWOMAN_WOF_DB` or `--resolve-db` at startup and refuses to run without one, then
+ignores the path it insisted on and resolves against the candidate database anyway. Give it any valid
+path to get past the check.
+
+The batch cap has two values, and both are correct. `@mailwoman/api` used as a library defaults to
+500; `mailwoman serve` passes `MAILWOMAN_BATCH_MAX`, which defaults to 1000.
+
+## Precedence
+
+A command-line flag beats an environment variable, which beats the built-in default. The flag names
+are on [CLI](./cli.mdx); each flag's description names the variable it falls back to.
+
+```
+--resolve-db <path>   >   $MAILWOMAN_WOF_DB   >   error, with the fix printed
+--candidate-db <path> >   $MAILWOMAN_CANDIDATE_DB > the search backend instead
+--data-root <path>    >   $MAILWOMAN_DATA_ROOT >  a built-in path
+```
+
+A `.env` file in the working directory is read once at startup and the live environment layers on top
+of it, so an exported variable beats a `.env` entry.
+
+## Behavior defaults
+
+Every mechanism below is on by default. Each cleared a gate against the shipped model on the
+first-class locales before it was promoted, so the defaults are the measured configuration and turning
+one off is the change that needs a reason. Each is an option, not an environment variable.
+
+| Mechanism                 | Where                                      | Effect                                                                             | Turn it off when                                                       |
+| ------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `spanRescore`             | `ResolveOpts`                              | Re-ranks a resolved span against its neighbors inside a 50 km gate                 | You need output identical to a build without it                        |
+| `postcodeConsistency`     | `ResolveOpts`                              | A resolved postcode point pulls a same-named locality to the right one             | Your postcodes are unreliable                                          |
+| `hierarchyCompletion`     | `ResolveOpts`                              | Recovers a locality dropped when one name plays two administrative roles           | Never, in normal use                                                   |
+| `parentFallback`          | `ResolveOpts`                              | Retries once without the parent constraint when a filtered lookup comes back empty | Never, in normal use                                                   |
+| `adminCoherence`          | `ResolveOpts`, `GeocodeDeps`               | Picks the administratively consistent combination rather than the most populous    | You want the older population-first ranking                            |
+| `placeCountry`            | `CreateRuntimePipelineOpts`, `GeocodeDeps` | A confident whole-string country guess biases ranking. It never filters            | You already pin the country and want no prior at all                   |
+| `hardPlaceCountry`        | `CreateRuntimePipelineOpts`, `GeocodeDeps` | Promotes that guess to a filter, inside a coverage safelist                        | You geocode outside the safelist and want recall over precision        |
+| `normalizeCase`           | pipeline, classifier, `GeocodeDeps`        | Title-cases detected all-caps ASCII input before the model                         | Your input's casing carries meaning                                    |
+| `enforceWordConsistency`  | the pipeline's classify call               | Arbitrates disagreeing tags inside one word                                        | You call the classifier directly and want raw per-token labels         |
+| `postcodeRepair`          | the pipeline's classify call               | A deterministic postcode repair pass                                               | You call the classifier directly. It is off there by default           |
+| `spanProposer`            | classifier config                          | Span-proposal priors from Stage 2.7                                                | You need output identical to a build without it                        |
+| `poiQueryKind`            | `CreateRuntimePipelineOpts`                | Detects a POI query and extracts its intent, without executing it                  | You only ever parse addresses and want the earlier kind classification |
+| Gazetteer index auto-load | `CreateRuntimePipelineOpts.fst`            | Loads the index from the classifier's weights package and biases emissions         | You need output identical to a build without the index                 |
+
+Two mechanisms are off by default and worth knowing about:
+
+| Mechanism                        | Where         | Effect                                                         | Turn it on when                                                              |
+| -------------------------------- | ------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `calibrate`                      | `ParseOpts`   | Maps raw span confidence through the shipped calibration table | You threshold on confidence. See [Library API](./library-api.mdx#confidence) |
+| `addressPoints`, `interpolation` | `ResolveOpts` | The rooftop and interpolation coordinate tiers                 | You have pulled the street shards for your region                            |
+
+The coordinate tiers are gated on data rather than on a measurement. They stay off because the shards
+are a 41.3 GB download for the United States, not because they cost accuracy.
+
+`false` is the disable signal for every option above, and it is not the same as omitting the option.
+Omitting means "give me the default"; `false` means "run as though this mechanism did not exist".
+
+## Errors
+
+| Condition                                                  | Message or symptom                                            | Next step                                                                         |
+| ---------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| No gazetteer path set on a resolving command               | A startup error naming `$MAILWOMAN_WOF_DB` and `--resolve-db` | Set `MAILWOMAN_CANDIDATE_DB`, which satisfies every command except `registry run` |
+| `candidate.db` downloaded but resolution still looks wrong | Nothing. The variable is unset, so the file is not read       | `export MAILWOMAN_CANDIDATE_DB=<path>` and re-run                                 |
+| A reverse geocode reports approximate containment          | `MAILWOMAN_WOF_POLYGONS_DB` is unset                          | Point it at the polygon sidecar                                                   |
+| A batch request answers `413 batch too large`              | The request exceeded `MAILWOMAN_BATCH_MAX`                    | Raise the variable, or chunk the request                                          |
+| A variable you set has no effect                           | It is outside this page's boundary                            | Check the table above. Repository-only variables do nothing installed             |
+
+`mailwoman doctor` reports which of these are resolved, and prints the one command that fixes each
+gap.
+
+## Rationale
+
+Resolution is gated on an environment variable rather than on a file existing at a conventional path
+because adopting a database silently would change every result on the machine that downloaded it. A
+geocoder that answers differently depending on what happens to be on disk is not one you can reason
+about. The cost is the step this page keeps repeating: download, then export.
+
+The behavior defaults are on rather than opt-in because a default nobody turns on is a mechanism that
+does not exist. Each one shipped on by default only after clearing a gate against the shipped model,
+and turning one off takes `false` rather than a rebuild.
+
+The environment schema is broader than this page because its split is about logging safety — a
+variable is in the non-secret half when printing it cannot leak a credential. That is the right axis
+for a log line and the wrong axis for a configuration reference, so this page draws the line
+somewhere else and says where.
+
+## See also
+
+- [CLI](./cli.mdx) — every flag, including the ones that override these variables.
+- [Library API](./library-api.mdx) — the options tables these defaults belong to.
+- [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) — turning the coordinate tiers on.
+- [Tune confidence thresholds](../how-to/tune-confidence-thresholds.mdx) — turning calibration on.

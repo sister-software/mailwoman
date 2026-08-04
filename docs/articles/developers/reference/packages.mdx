@@ -1,0 +1,141 @@
+---
+title: Packages
+description: The published packages a consumer installs directly — what each one is for and when you need it.
+role: reference
+source-of-truth: package.json across the published workspaces, release.config.json, AGENTS.md
+---
+
+# Packages
+
+## Scope
+
+This page is curated rather than exhaustive. Mailwoman is 52 workspaces and 48 of them are on npm, but
+most arrive as a dependency of something else and are never named in an install command. Listed here
+are the packages a consumer installs on purpose.
+
+For the full workspace inventory, including the build tooling and the pipeline stages this page
+leaves out, read
+[`AGENTS.md`](https://github.com/sister-software/mailwoman/blob/main/AGENTS.md) in the repository. For
+the sizes of everything here, see [Footprints](./footprints.mdx).
+
+Every published package releases in lockstep on one version number, the model bundles included, so a
+weights package version tracks the release rather than the model's own lineage. All packages are ESM
+only, require Node 24.18 or later, and carry `AGPL-3.0-only OR LicenseRef-Commercial`.
+
+## Start here
+
+| Package                                                                                            | What it is                          | Install it when                                  |
+| -------------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------ |
+| [`mailwoman`](https://www.npmjs.com/package/mailwoman)                                             | The CLI and `createRuntimePipeline` | Always. This is the entry point                  |
+| [`@mailwoman/neural-weights-en-us`](https://www.npmjs.com/package/@mailwoman/neural-weights-en-us) | The trained model bundle            | Always. Nothing parses without a weights package |
+
+Those two are the whole install for parsing. `mailwoman` pulls `@mailwoman/core`, `@mailwoman/neural`
+and the pipeline stages behind it, so you do not name them.
+
+## Locale bundles
+
+Each adds a locale to a running install. All of them overlay the `en-us` encoder rather than replacing
+it, so installing several costs locale data rather than several models.
+
+| Package                           | Locale        | What the overlay adds                              |
+| --------------------------------- | ------------- | -------------------------------------------------- |
+| `@mailwoman/neural-weights-en-us` | United States | The base model, the tokenizer, and US locale data  |
+| `@mailwoman/neural-weights-fr-fr` | France        | Postcode anchors, a pair index, a locale gazetteer |
+| `@mailwoman/neural-weights-en-gb` | Great Britain | Postcode anchors, a pair index, a locale gazetteer |
+| `@mailwoman/neural-weights-en-nz` | New Zealand   | A pair index                                       |
+| `@mailwoman/neural-weights-de-de` | Germany       | A pair index                                       |
+| `@mailwoman/neural-weights-es-es` | Spain         | A pair index                                       |
+| `@mailwoman/neural-weights-it-it` | Italy         | A pair index                                       |
+| `@mailwoman/neural-weights-en-in` | India         | A pair index                                       |
+
+What each overlay contains, and what a locale claim means, is on [Locales and
+tiers](./locales-and-tiers.mdx).
+
+## Geocoding
+
+Parsing needs none of these. Turning a parse into a coordinate needs the resolver and a backend.
+
+| Package                          | What it is                                                         | Install it when                     |
+| -------------------------------- | ------------------------------------------------------------------ | ----------------------------------- |
+| `@mailwoman/resolver`            | Walks a parse and decorates nodes with coordinates and attribution | You geocode. It is backend-agnostic |
+| `@mailwoman/resolver-wof-sqlite` | The Node gazetteer backend, over `node:sqlite`                     | You geocode on a server             |
+| `@mailwoman/resolver-wof-wasm`   | The browser gazetteer backend, over `@sqlite.org/sqlite-wasm`      | You geocode in a browser            |
+
+The gazetteer database itself is a separate download and is in no package. Run
+`mailwoman data pull candidate` — see [Geocode a CSV](../tutorials/geocode-a-csv.mdx).
+
+## Browser
+
+| Package                        | What it is                                            | Install it when                                            |
+| ------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------- |
+| `@mailwoman/neural-web`        | The browser inference runtime, over `onnxruntime-web` | You parse client-side. WebGPU, with a WebAssembly fallback |
+| `@mailwoman/resolver-wof-wasm` | The browser gazetteer backend                         | You also geocode client-side                               |
+
+[Parse in the browser](../tutorials/parse-in-the-browser.mdx) wires both.
+
+## Servers
+
+| Package                | Serves                                                         | Install it when                               |
+| ---------------------- | -------------------------------------------------------------- | --------------------------------------------- |
+| `@mailwoman/api`       | The native `/v1` surface                                       | You want the shape this project controls      |
+| `@mailwoman/nominatim` | `/search`, `/reverse`, `/lookup`, `/status`                    | You are replacing a Nominatim deployment      |
+| `@mailwoman/photon`    | `/api`, `/reverse`                                             | You are replacing a Photon deployment         |
+| `@mailwoman/libpostal` | `/parse`, `/expand`                                            | You are replacing a libpostal HTTP deployment |
+| `@mailwoman/mcp`       | An MCP server over stdio: parse, geocode, POI search, and more | You are giving an agent a spatial toolset     |
+
+Each server ships its own binary, so `npx @mailwoman/nominatim serve` runs without a wrapper. The
+endpoint tables are on [HTTP APIs](./http-apis.mdx).
+
+## Record work
+
+| Package                 | What it is                                                                  | Install it when                                    |
+| ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| `@mailwoman/registry`   | The record-matching application: resolve messy records to geocoded entities | You are deduplicating a customer or vendor list    |
+| `@mailwoman/match`      | The matcher itself: blocking, scoring, clustering                           | You are building your own matching pipeline        |
+| `@mailwoman/record`     | The record schema and its per-field normalizers                             | You are feeding `@mailwoman/match` directly        |
+| `@mailwoman/formatter`  | The inverse of the parser: components to a string and a canonical match key | You render addresses, or you need a comparison key |
+| `@mailwoman/address-id` | A stable address primary key                                                | You need exact-match joins rather than fuzzy ones  |
+
+[Match messy records](../how-to/match-messy-records.mdx) is the worked example.
+
+## Data and annotations
+
+| Package                       | What it is                                                                  | Install it when                                    |
+| ----------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| `@mailwoman/annotations`      | The annotation contract, with a native shape and an OpenCage-compatible one | You want timezone, currency, or code annotations   |
+| `@mailwoman/codex`            | Per-address-system postal reference data and branded types                  | You validate postcodes or street suffixes yourself |
+| `@mailwoman/spatial`          | Distance, bounding box, projection, point-in-polygon                        | You do spatial math beside a geocode               |
+| `@mailwoman/timezone-lookup`  | Server-side IANA timezone lookup by point                                   | You need a timezone and are not using annotations  |
+| `@mailwoman/nuts-lookup`      | EU NUTS region lookup by point                                              | You report against EU statistical regions          |
+| `@mailwoman/un-locode-lookup` | Nearest UN/LOCODE                                                           | You work with trade or logistics codes             |
+
+The three lookup packages read databases built like the gazetteer, so each needs its data file as
+well as its package. `@mailwoman/annotations` is the seam the drop-in servers already use, so a
+Nominatim-shaped response carries these without your installing anything.
+
+## Errors
+
+| Condition                                                      | Meaning                                                   | Next step                                                                        |
+| -------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `Could not resolve @mailwoman/neural-weights-<locale>`         | The weights package for that locale is not installed      | Install it, or run `mailwoman parse --download-weights`                          |
+| `ERR_REQUIRE_ESM` or a `require()` failure                     | Every package is ESM only                                 | Use `import`, or a dynamic `import()` from CommonJS                              |
+| A `503` from a geocoding endpoint                              | The resolver package or the gazetteer database is missing | Install `@mailwoman/resolver-wof-sqlite` and run `mailwoman data pull candidate` |
+| Versions differ across `@mailwoman/*` packages after an update | The release is lockstep; a partial update is a mixed tree | Update them together, or run `mailwoman doctor`                                  |
+
+## Rationale
+
+Lockstep versioning means one number answers "which release do I have" across every package at once.
+The cost is that the release number says nothing about the model: most releases are code-only, so
+consecutive releases can carry the same model. Each weights package carries its own model card
+with the lineage.
+
+The pipeline stages are published but unlisted here because naming them in an install is a signal you
+are building a pipeline rather than using one. They are real packages with real contracts; they are
+just not the install surface.
+
+## See also
+
+- [Footprints](./footprints.mdx) — measured sizes for everything on this page.
+- [Locales and tiers](./locales-and-tiers.mdx) — what each locale bundle carries a claim for.
+- [What ships today](../status.mdx) — the current release and its limits.
+- [Install and first parse](../get-started/install-and-first-parse.mdx) — the two-package install, executed.

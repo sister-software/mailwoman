@@ -1,0 +1,192 @@
+---
+title: Footprints
+description: Measured sizes — what each package, model artifact, and data bundle costs on disk.
+role: reference
+source-of-truth: npm registry metadata, the neural-weights-en-us model card, mailwoman/data-bundles.ts
+---
+
+# Footprints
+
+## Scope
+
+This page carries the sizes. Every number states how it was obtained, because the three sources
+disagree in ways that matter: a registry figure is the unpacked tarball, a disk figure is what an
+install occupies on disk, and a model-card figure is what the training pipeline recorded. A number
+without its basis is not checkable.
+
+Measured on 2026-08-03 against release `8.6.0`, the release npm serves. The commands that produced
+each table are given, so you can re-run them rather than trust this page.
+
+Runtime memory and build-time disk are not re-measured here. They were measured by the tutorials that
+run those workloads, and this page links them.
+
+## Installing
+
+The number that surprises people first: a full install of the entry package is 707 MB, and 523 MB of
+that is the ONNX runtime.
+
+```bash
+npm init -y && npm install --omit=dev mailwoman @mailwoman/neural-weights-en-us
+du -sb node_modules
+```
+
+| What                                                   | On disk | Basis                       |
+| ------------------------------------------------------ | ------- | --------------------------- |
+| `mailwoman` plus the `en-us` weights, every dependency | 707 MB  | `du -sb` on a clean install |
+| `@mailwoman/neural` plus the same weights              | 626 MB  | `du -sb` on a clean install |
+| Everything under `@mailwoman/`                         | 95 MB   | `du -sb` on a clean install |
+| `onnxruntime-node`                                     | 523 MB  | `du -sb` on a clean install |
+
+`onnxruntime-node` publishes prebuilt binaries for three platforms in one tarball: 311 MB of Linux,
+134 MB of Windows, 78 MB of macOS. Two of the three are dead weight on any given machine. In a
+container image, deleting the platform directories you do not run reclaims most of that — the paths
+are under `node_modules/onnxruntime-node/bin/napi-v6/`. See [Deploy with
+Docker](../how-to/deploy-docker.mdx).
+
+Nothing else is close. The next largest dependency after the ONNX runtime is 7.7 MB.
+
+## Published packages
+
+Unpacked tarball sizes from the registry. Reproduce any row with
+`npm view <package> dist.unpackedSize`.
+
+| Package                           | Unpacked | Files |
+| --------------------------------- | -------- | ----- |
+| `@mailwoman/neural-weights-en-us` | 73.8 MB  | 16    |
+| `@mailwoman/neural-weights-fr-fr` | 23.3 MB  | —     |
+| `@mailwoman/neural-weights-en-gb` | 12.4 MB  | —     |
+| `@mailwoman/core`                 | 8.55 MB  | 1778  |
+| `@mailwoman/neural-weights-en-nz` | 7.79 MB  | —     |
+| `mailwoman`                       | 4.99 MB  | 1136  |
+| `@mailwoman/neural-weights-de-de` | 2.17 MB  | —     |
+| `@mailwoman/registry`             | 1.59 MB  | —     |
+| `@mailwoman/neural`               | 1.25 MB  | —     |
+| `@mailwoman/resolver-wof-sqlite`  | 1.23 MB  | —     |
+| `@mailwoman/codex`                | 1.07 MB  | —     |
+| `@mailwoman/spatial`              | 381 kB   | —     |
+| `@mailwoman/resolver`             | 320 kB   | —     |
+| `@mailwoman/nominatim`            | 172 kB   | —     |
+| `@mailwoman/match`                | 171 kB   | —     |
+| `@mailwoman/neural-web`           | 144 kB   | —     |
+| `@mailwoman/photon`               | 144 kB   | —     |
+| `@mailwoman/mcp`                  | 115 kB   | —     |
+| `@mailwoman/api`                  | 111 kB   | —     |
+| `@mailwoman/resolver-wof-wasm`    | 93 kB    | —     |
+| `@mailwoman/libpostal`            | 77 kB    | —     |
+| `@mailwoman/record`               | 72 kB    | —     |
+| `@mailwoman/formatter`            | 63 kB    | —     |
+| `@mailwoman/annotations`          | 39 kB    | —     |
+| `@mailwoman/timezone-lookup`      | 30 kB    | —     |
+| `@mailwoman/neural-weights-it-it` | 110 kB   | —     |
+| `@mailwoman/neural-weights-es-es` | 107 kB   | —     |
+| `@mailwoman/neural-weights-en-in` | 8.9 kB   | —     |
+| `@mailwoman/address-id`           | 23 kB    | —     |
+
+`@mailwoman/core` carries 1778 files because it ships reference data: libpostal dictionaries, Who's On
+First metadata, and Unicode locale tables. `mailwoman` carries 1136 for the same reason plus the
+compiled command tree.
+
+## Model artifacts
+
+The `en-us` weights package is the model. Sizes measured with `stat` on the files the package's
+manifest lists.
+
+| File                               | Bytes      | Size    | What it is                           |
+| ---------------------------------- | ---------- | ------- | ------------------------------------ |
+| `model.onnx`                       | 39,419,629 | 39.4 MB | The int8-quantized encoder, opset 17 |
+| `fst-en-us.bin`                    | 21,757,160 | 21.8 MB | The gazetteer prior index            |
+| `locality-surface-lexicon-v6.json` | 7,346,004  | 7.35 MB | Locality surface forms               |
+| `postcode-us.bin`                  | 1,904,322  | 1.90 MB | The US postcode anchor table         |
+| `tokenizer.model`                  | 1,632,289  | 1.63 MB | The SentencePiece model              |
+| `pair-index-us.bin`                | 1,293,031  | 1.29 MB | The locality and region pair index   |
+| `fst-street-morphology.bin`        | 327,516    | 328 kB  | The street-morphology matcher        |
+| `anchor-lexicon-v1.json`           | 11,238     | 11.2 kB | Anchor surface forms                 |
+| `street-type-lexicon-v3.json`      | 9,882      | 9.88 kB | Street-type surface forms            |
+| `calibration-per-locale.json`      | 9,074      | 9.07 kB | Per-country confidence calibration   |
+| `calibration.json`                 | 8,722      | 8.72 kB | The confidence calibration table     |
+| `country-surface-lexicon-v1.json`  | 7,023      | 7.02 kB | Country surface forms                |
+
+Those twelve files total 73,725,890 bytes. The published tarball is 73,796,933 bytes across 16
+files; the extra 71 kB is the model card, the README, the manifest, and the development-linking
+script the package's file globs pick up.
+
+The model card reports the encoder as 37.6 MB and the unquantized original as 146.6 MB. That first
+figure is the same file as `model.onnx` above, counted in mebibytes: 39,419,629 bytes is 37.6 MiB and
+39.4 MB. Quantization to int8 is what took it from 146.6 to 37.6 in those units, a factor of 3.9.
+
+Structure, from the model card:
+
+| Property                | Value                                   |
+| ----------------------- | --------------------------------------- |
+| Encoder                 | 6 layers, 384 hidden, 6 attention heads |
+| Maximum sequence length | 128 tokens                              |
+| Tokenizer vocabulary    | 73,143 SentencePiece pieces             |
+| Output labels           | 33 BIO labels over 16 component tags    |
+| Trainable parameters    | About 29 million                        |
+| Quantization            | int8 dynamic, from fp32                 |
+
+## Data bundles
+
+Downloaded with `mailwoman data pull`, never through npm. Sizes are the registered artifact totals in
+`mailwoman/data-bundles.ts`, surveyed against the bucket on 2026-08-03. `mailwoman data pull <bundle>
+--dry-run` prints the same figures without touching the network.
+
+| Bundle      | Artifacts | Size    | What it covers                             |
+| ----------- | --------- | ------- | ------------------------------------------ |
+| `candidate` | 1         | 1.65 GB | The global admin gazetteer, 244 countries  |
+| `poi`       | 1         | 3.89 GB | 13.68 million points across US, CA, MX, FR |
+| `fr`        | 1         | 6.95 GB | French rooftop address points              |
+| `us`        | 103       | 41.3 GB | US rooftop and interpolation, per state    |
+
+The `us` bundle is 52 rooftop shards and 51 interpolation shards, one pair per state plus DC and the
+US Virgin Islands, which has no interpolation shard. Pull one state with
+`mailwoman data pull us --only nh` rather than the whole tier.
+
+Four state pairs account for 31.9% of that total: California at 4.25 GB, Florida at 3.74 GB, Texas at
+3.29 GB, and North Carolina at 1.89 GB.
+
+## Runtime and build envelopes
+
+These were measured by the tutorials that run the workloads, and are not re-measured here.
+
+| Workload                               | Envelope                                | Measured in                                                   |
+| -------------------------------------- | --------------------------------------- | ------------------------------------------------------------- |
+| Geocoding a CSV against `candidate.db` | 2 GB of free disk for the download path | [Geocode a CSV](../tutorials/geocode-a-csv.mdx)               |
+| Building one US state, Vermont         | 8.94 GB of disk, 8 GB of free RAM       | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
+| The same build, peak resident memory   | 7.45 GiB, by `/usr/bin/time -v`         | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
+| A whole-planet gazetteer build         | Tens of gigabytes, hours of wall clock  | [Full planet build](../tutorials/full-planet-build.mdx)       |
+| Parsing in a browser                   | The model over the network, then WebGPU | [Parse in the browser](../tutorials/parse-in-the-browser.mdx) |
+
+Parse latency is not a footprint and is not on this page. It is measured per host and reported by
+`mailwoman parse --benchmark <n>`, which prints per-stage percentiles and a heap delta.
+
+## Errors
+
+| Condition                                         | Meaning                                                   | Next step                                              |
+| ------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------ |
+| An install is far larger than 707 MB              | Development dependencies were included                    | Install with `--omit=dev`                              |
+| A container image is over a gigabyte              | The ONNX runtime ships three platforms                    | Delete the platform directories you do not run         |
+| `npm view` reports a size this page does not list | This page documents `8.6.0`; npm serves the latest        | `npm view mailwoman version`. Trust npm over this page |
+| A pulled bundle is smaller than the table says    | The download did not finish, or an artifact is superseded | `mailwoman data status`, then re-pull                  |
+
+## Rationale
+
+The gazetteer stays outside npm because it is 1.65 GB, and a registry tarball that size would be paid
+for by every consumer who wanted only the parser. Splitting it into a download makes parsing a 74 MB
+proposition and geocoding an explicit second decision.
+
+The model ships quantized because the accuracy cost was small and the size cost was not: int8 took the
+encoder from 146.6 MB to 37.6 MB in the card's units, which is the difference between a package a
+serverless function can cold-start and one it cannot.
+
+The ONNX runtime's 523 MB is not this project's choice and cannot be fixed from here. It is stated
+prominently because it dominates every other number on this page, and a reader sizing a container who
+budgets from the package sizes alone will be wrong by a factor of seven.
+
+## See also
+
+- [Packages](./packages.mdx) — what each package on this page is for.
+- [Locales and tiers](./locales-and-tiers.mdx) — which bundles a locale needs.
+- [What ships today](../status.mdx) — the release these numbers describe.
+- [Deploy with Docker](../how-to/deploy-docker.mdx) — trimming the image.
+- [Deploy serverless](../how-to/deploy-serverless.mdx) — where the cold-start size binds.

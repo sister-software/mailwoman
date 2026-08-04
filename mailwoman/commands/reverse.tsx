@@ -19,6 +19,7 @@
 import { Spinner } from "@inkjs/ui"
 import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
+import { argument } from "pastel"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
@@ -33,9 +34,12 @@ const MAX_ABS_LATITUDE = 90
  */
 const MAX_ABS_LONGITUDE = 180
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.describe("Positional args: <lat> <lon> — WGS-84 decimal degrees (e.g. 40.7128 -74.0060).")
+const ArgumentsSchema = zod.array(zod.string()).describe(
+	argument({
+		name: "coordinate",
+		description: "Two positional values, latitude then longitude, in WGS-84 decimal degrees (e.g. 40.7128 -74.0060).",
+	})
+)
 
 const OptionsSchema = zod.object({
 	adminDb: zod

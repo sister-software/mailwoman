@@ -1,0 +1,484 @@
+---
+title: Library API
+description: The TypeScript surface — createRuntimePipeline, NeuralAddressClassifier, geocode-core, geocode-stream, and createCalibrator.
+role: reference
+source-of-truth: mailwoman/runtime-pipeline.ts, mailwoman/geocode-core.ts, mailwoman/geocode-stream.ts, neural/classifier.ts, core/decoder/calibration.ts, core/pipeline/types.ts
+---
+
+# Library API
+
+## Scope
+
+This page describes the five entry points a consumer calls from TypeScript: `createRuntimePipeline`,
+`NeuralAddressClassifier`, the geocoding functions in `mailwoman/geocode-core`, the batch iterator in
+`mailwoman/geocode-stream`, and `createCalibrator`. Each section carries a full runnable file and the
+output that file produced.
+
+It does not describe the stage packages (`@mailwoman/normalize`, `@mailwoman/query-shape`,
+`@mailwoman/locale-gate`, `@mailwoman/kind-classifier`, `@mailwoman/phrase-grouper`). Those are wired
+by `createRuntimePipeline` with production defaults, and a consumer who calls them directly is
+building a pipeline rather than using one. For the command line, see [CLI](./cli.mdx). For HTTP, see
+[HTTP APIs](./http-apis.mdx).
+
+Every example below ran under Node 26 against the packages in this repository at the version this
+page documents. Options marked internal in the source are omitted here: they are instrument knobs for
+evaluation runs, and their defaults are the shipped behavior.
+
+## Import map
+
+`mailwoman` exports eight import paths, one of which takes a wildcard suffix. On Node the package
+serves TypeScript source directly, so no build step stands between an installed package and a running
+script.
+
+| Import                         | What it carries                                                           |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports     |
+| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `ShardProvider`, the result types    |
+| `mailwoman/geocode-stream`     | `geocodeStream`                                                           |
+| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers |
+| `mailwoman/cli-kit`            | Ink and Pastel helpers for building a command                             |
+| `mailwoman/test-kit`           | The parser test helpers                                                   |
+| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                |
+| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules        |
+
+`geocodeAddress` and its result types are reachable only through `mailwoman/geocode-core`. They are
+not re-exported from the bare specifier.
+
+## createRuntimePipeline
+
+```ts
+function createRuntimePipeline(
+	opts?: CreateRuntimePipelineOpts
+): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
+```
+
+The factory is synchronous and the returned function is async. Every lazy load — the coarse country
+placer, the gazetteer index, the street-morphology matcher, the street-evidence index — happens on
+the first call to the returned function, not in the factory.
+
+### Options
+
+Two stages take an injected implementation. The rest carry production defaults.
+
+| Option                | Type                               | Default                      | Effect                                                                        |
+| --------------------- | ---------------------------------- | ---------------------------- | ----------------------------------------------------------------------------- |
+| `classifier`          | `AddressClassifier`                | none                         | Stage 3. Without it the pipeline runs the structural stages only              |
+| `resolver`            | `Resolver`                         | none                         | Stage 6. Without it the tree carries no coordinates                           |
+| `fst`                 | `FSTMatcher` or `false`            | auto-load                    | Gazetteer emission priors. Loaded from the classifier's weights package       |
+| `streetMorphology`    | `FSTMatcher` or `false`            | auto-load                    | Signal source for the street-context gate                                     |
+| `streetEvidence`      | `StreetLocalityEvidence`, `false`  | auto-load                    | Reranks the street on atlas-confirmed evidence. Requires a span-head model    |
+| `placeCountry`        | function or `false`                | the bundled coarse placer    | A confident country guess becomes a soft ranking prior. It never filters      |
+| `poiQueryKind`        | `boolean` or `{ poiDatabasePath }` | `true` (intent only)         | Detects a POI query and extracts its intent. The object form also executes it |
+| `normalizeCase`       | `boolean`                          | on                           | Title-cases detected all-caps ASCII input before the model                    |
+| `hardPlaceCountry`    | `boolean`                          | on                           | Promotes a confident country guess to a filter, inside a coverage safelist    |
+| `hardCountrySafelist` | `ReadonlySet<string>`              | the built-in safelist        | Which countries the hard filter applies to                                    |
+| `detectLocale`        | function                           | `@mailwoman/locale-gate`     | Stage 2                                                                       |
+| `classifyKind`        | function                           | `@mailwoman/kind-classifier` | Stage 2.5. An explicit override wins over the POI-aware default               |
+| `groupPhrases`        | function                           | `@mailwoman/phrase-grouper`  | Stage 2.7                                                                     |
+
+Passing `false` to `fst`, `streetMorphology`, `streetEvidence`, `placeCountry` or `poiQueryKind`
+suppresses both the auto-load and any explicit value, which is how a caller gets output identical to a
+build without that mechanism.
+
+### Per-call options
+
+The second argument to the returned function is `PipelineOpts`. A per-call value overrides the
+factory default.
+
+| Field               | Type                            | Default                    | Effect                                                    |
+| ------------------- | ------------------------------- | -------------------------- | --------------------------------------------------------- |
+| `locale`            | `string`                        | derived by the locale gate | BCP-47 tag, for example `en-US`                           |
+| `inputMode`         | `"fragmented"` or `"formatted"` | derived from the kind      | Which register the evidence channels run in               |
+| `resolveOpts`       | `ResolveOpts`                   | none                       | Passed through to the resolver                            |
+| `normalizeCase`     | `boolean`                       | the factory value          | Overrides the factory default for this call               |
+| `hardPlaceCountry`  | `boolean`                       | the factory value          | Overrides the factory default for this call               |
+| `forceFullPipeline` | `boolean`                       | off                        | Disables the structural fast paths. A debugging aid       |
+| `jointReconcile`    | `boolean`                       | off                        | Retired as a default in 2026-06. Kept for comparison runs |
+| `signal`            | `AbortSignal`                   | none                       | Cancels the call                                          |
+
+### Return shape
+
+| Field             | Type                                | Meaning                                                             |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------------- |
+| `input`           | `string`                            | The raw string as passed                                            |
+| `normalized`      | `NormalizedInputLite`               | Stage 1 output                                                      |
+| `queryShape`      | `QueryShapeLite`                    | Character class, segmentation, known-format hits                    |
+| `locale`          | `LocaleHint`                        | Tag, confidence, alternatives, and whether it was detected or given |
+| `kind`            | `QueryKindResult`                   | The query kind, for example `structured_address`                    |
+| `phraseProposals` | `PhraseProposal[]`                  | Stage 2.7 proposals. Empty when a fast path skipped the stage       |
+| `tree`            | `AddressTree`                       | The parse                                                           |
+| `poiIntent`       | `POIIntentOutcome` or absent        | Present only when `path` is `"poi"`                                 |
+| `timing`          | `Record<string, number>`            | Milliseconds per stage                                              |
+| `path`            | `"fast-path"`, `"full"`, or `"poi"` | Which route the input took                                          |
+
+### Example
+
+```ts
+import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createRuntimePipeline } from "mailwoman"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+const pipeline = createRuntimePipeline({ classifier })
+const result = await pipeline("350 5th Ave, New York, NY 10118")
+
+console.log(JSON.stringify(decodeAsJSON(result.tree), null, 2))
+console.log(result.kind.kind, "|", result.path, "|", result.locale.locale)
+```
+
+Output:
+
+```
+{
+  "region": "NY",
+  "locality": "New York",
+  "street": "5th",
+  "house_number": "350",
+  "street_suffix": "Ave",
+  "postcode": "10118"
+}
+structured_address | full | en-US
+```
+
+`decodeAsJSON` flattens the tree to a tag-to-value object and drops the containment nesting. Read
+`result.tree` directly when the nesting matters.
+
+## NeuralAddressClassifier
+
+Reach for the classifier directly in three cases: you need the label distribution rather than the
+argmax tree, you are serving several locales from one process and want to hold each model open, or
+you are running the model in an environment `createRuntimePipeline` does not fit. For a single parse,
+the pipeline is the shorter path and it applies the structural stages the model was trained beside.
+
+```ts
+static async loadFromWeights(opts?: {
+	locale?: string
+	modelPath?: string
+	tokenizerPath?: string
+	modelCardPath?: string
+	tier?: "server" | "pocket"
+	cacheRoot?: string
+	postcodeAnchorLookup?: AnchorLookup
+	executionProviders?: string[]
+	intraOpNumThreads?: number
+}): Promise<NeuralAddressClassifier>
+```
+
+Resolution runs in one order: explicit paths in `opts`, then the `@mailwoman/neural-weights-<locale>`
+package, then a single actionable error. The method is Node-only — it imports `onnxruntime-node` and
+`node:fs` dynamically. In a browser, use `loadNeuralClassifierFromURLs` from `@mailwoman/neural-web`.
+
+`intraOpNumThreads` defaults to all available cores. Measured over 120 parses on 2026-08-03: one
+thread costs 18.3 ms per parse, two cost 12.5 ms, and four cost 9.2 ms against 9.3 ms for all cores.
+Pin it to 1 only when you are running several classifier instances in one process and want to bound
+total thread count.
+
+One classifier instance holds one locale. Construct one per locale you serve.
+
+| Method                         | Returns                                          | Use it for                                       |
+| ------------------------------ | ------------------------------------------------ | ------------------------------------------------ |
+| `parse(text, opts?)`           | `Promise<AddressTree>`                           | The nested tree                                  |
+| `parseJSON(text, opts?)`       | `Promise<Partial<Record<ComponentTag, string>>>` | A flat tag-to-value object                       |
+| `parseTuples(text, opts?)`     | `Promise<Array<[ComponentTag, string]>>`         | Ordered tag/value pairs                          |
+| `parseXML(text, opts?)`        | `Promise<string>`                                | An XML projection                                |
+| `parseWithLogits(text, opts?)` | `Promise<ParseWithLogitsResult>`                 | The tree plus per-token logits and piece offsets |
+| `traceParse(text, opts?)`      | `Promise<NeuralParseTrace>`                      | Stage-by-stage diagnostics                       |
+
+Three readonly properties surface paths and grammar the caller's layer consumes: `fstPath`,
+`streetMorphologyPath`, and `spanGrammar`. `@mailwoman/neural` deliberately carries no resolver
+dependency, so it reports where the gazetteer index is and leaves deserialization to the caller.
+`createRuntimePipeline` reads all three.
+
+### Parse options
+
+These are the fields of `ParseOpts` a consumer sets. The remainder are marked internal in the source.
+
+| Field                      | Type                                | Default             | Effect                                               |
+| -------------------------- | ----------------------------------- | ------------------- | ---------------------------------------------------- |
+| `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`      | Which register the evidence channels run in          |
+| `queryShape`               | `QueryShapeLike`                    | none                | Known-format hits become additive emission biases    |
+| `normalizeCase`            | `boolean`                           | on                  | Title-cases detected all-caps ASCII input            |
+| `calibrate`                | `Calibrator`                        | off                 | Maps raw span confidence through a calibration table |
+| `enforceWordConsistency`   | `boolean` or `WordConsistencyOpts`  | on                  | Per-word BIO vote, skipping byte-fallback words      |
+| `postcodeRepair`           | `boolean`                           | off                 | Deterministic postcode repair pass                   |
+| `unitRepair`               | `boolean`                           | off                 | Deterministic unit repair pass                       |
+| `spanProposer`             | `boolean`                           | on                  | Span-proposal priors                                 |
+| `addressSystemConventions` | `"auto"` or a system code           | from the model card | Which address-system conventions apply               |
+| `placetypePair`            | `PlacetypePairPriorOpts` or `false` | from the model card | Omitting it inherits the card. Only `false` disables |
+
+The table above is the classifier's own defaults. `createRuntimePipeline` overrides two of them on
+every call it makes: it always passes `postcodeRepair: true` and always passes the shipped
+word-consistency settings. Those two are therefore on whenever you go through the pipeline and off
+by default only when you call the classifier directly.
+
+## Geocoding
+
+`mailwoman/geocode-core` turns a string into a coordinate with a resolution tier and an uncertainty
+radius.
+
+```ts
+function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult>
+```
+
+`geocodeAddress` always returns a result. With no coordinate shards wired it returns the admin tier
+rather than failing. It throws only on a fatal parse or resolve error, so batch callers catch per
+row.
+
+### Dependencies
+
+| Field                    | Type                       | Default               | Effect                                                         |
+| ------------------------ | -------------------------- | --------------------- | -------------------------------------------------------------- |
+| `classifier`             | `GeocodeClassifier`        | required              | The parser                                                     |
+| `resolver`               | `Resolver`                 | required              | The gazetteer walk                                             |
+| `shards`                 | `ShardResolver`            | none                  | Per-state rooftop and interpolation lookups                    |
+| `nationalShards`         | `(country) => StateShards` | none                  | Per-country shards, for example the French rooftop shard       |
+| `defaultCountry`         | `string`                   | none                  | Scopes the resolver to one country                             |
+| `bias`                   | proximity points           | none                  | Soft re-rank toward a viewport or a user location              |
+| `interpCalibration`      | `number` or a table        | the shard's own value | Multiplier on the interpolation tier's uncertainty radius      |
+| `normalizeCase`          | `boolean`                  | on                    | Title-cases detected all-caps input                            |
+| `normalizeInput`         | `boolean`                  | on                    | Runs the normalize stage                                       |
+| `placeCountry`           | function or `false`        | the bundled placer    | Soft country prior                                             |
+| `hardPlaceCountry`       | `boolean`                  | on                    | Hard country filter inside the coverage safelist               |
+| `adminCoherence`         | `boolean`                  | on                    | Joint admin-consistency re-pick                                |
+| `postcodeCountryPrior`   | `boolean`                  | on                    | Postcode shape informs the country                             |
+| `retryAlternateRegister` | `boolean`                  | on                    | Retries the parse in the other input register on a weak result |
+| `parsedTree`             | `AddressTree`              | none                  | Skips the parse when you already have the tree                 |
+
+### Resolution tiers
+
+The tier states which artifact produced the coordinate, best first. Gate any house-grade rendering on
+the tier, not on the presence of `house_number`: the parsed span is populated whatever tier answered.
+
+| Tier            | Coordinate source                    | `uncertainty_m`                          |
+| --------------- | ------------------------------------ | ---------------------------------------- |
+| `address_point` | Rooftop or parcel centroid           | A small floor, about 1 m                 |
+| `interpolated`  | House-number estimate along a street | The calibrated bracket span              |
+| `street`        | Street centroid for a street query   | Half the street bounding-box diagonal    |
+| `admin`         | Admin centroid from the gazetteer    | `null` — no sub-locality estimate exists |
+
+### Result
+
+| Field                | Type                       | Meaning                                                             |
+| -------------------- | -------------------------- | ------------------------------------------------------------------- |
+| `input`              | `string`                   | The raw string as passed                                            |
+| `lat`, `lon`         | `number` or `null`         | The resolved coordinate                                             |
+| `resolution_tier`    | `ResolutionTier`           | Which tier produced it                                              |
+| `uncertainty_m`      | `number` or `null`         | Radius in meters. `null` on the admin tier                          |
+| `locality`           | `string` or `null`         | Parsed locality span                                                |
+| `region`             | `string` or `null`         | Parsed region span                                                  |
+| `postcode`           | `string` or `null`         | Parsed postcode span                                                |
+| `house_number`       | `string` or `null`         | Parsed house number, whatever the tier                              |
+| `street`             | `string` or `null`         | Parsed street, reassembled from prefix, base and suffix             |
+| `venue`              | `string` or `null`         | Parsed venue span                                                   |
+| `dependent_locality` | `string` or `null`         | Parsed sub-locality span                                            |
+| `countryCode`        | `string` or `null`         | ISO 3166 alpha-2 of the deepest resolved node                       |
+| `hierarchy`          | array, most specific first | The resolved admin chain, each with a name and a gazetteer place ID |
+| `candidates`         | array, winner first        | Ranked alternatives for the primary place                           |
+
+`hierarchy` is the resolved view and carries only nodes the resolver decorated. The flat span fields
+are the parsed view. The two disagree whenever the parse found something the gazetteer did not.
+
+### Shards
+
+`ShardProvider` opens per-state rooftop and interpolation databases on demand, caches the handles, and
+swaps them atomically when the data release changes.
+
+```ts
+class ShardProvider {
+	constructor(factory: ShardLookupFactory, dataRoot: string)
+	readonly for: ShardResolver
+	versions(): DataReleaseManifest | null
+	reload(): DataReleaseManifest | null
+	close(): void
+}
+```
+
+The constructor is positional. `factory` is the `@mailwoman/resolver-wof-sqlite` module namespace in
+practice. `for` is a property rather than a method so it can be passed unbound as `deps.shards`.
+
+### Example
+
+This file resolves against a downloaded `candidate.db` with no street shards wired, so it answers on
+the admin tier.
+
+```ts
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createWOFResolver } from "@mailwoman/resolver"
+import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import { geocodeAddress } from "mailwoman/geocode-core"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+// Replace <CANDIDATE_DB> with the path `mailwoman data pull candidate` printed.
+const lookup = new WOFCandidateTableLookup({ databasePath: "<CANDIDATE_DB>" })
+const resolver = createWOFResolver(lookup)
+
+const result = await geocodeAddress("350 5th Ave, New York, NY 10118", { classifier, resolver })
+
+console.log(JSON.stringify(result, null, 2))
+lookup.close()
+```
+
+Output:
+
+```
+{
+  "input": "350 5th Ave, New York, NY 10118",
+  "lat": 40.694457,
+  "lon": -73.93045,
+  "resolution_tier": "admin",
+  "uncertainty_m": null,
+  "locality": "New York",
+  "region": "NY",
+  "postcode": "10118",
+  "house_number": "350",
+  "street": "5th Ave",
+  "venue": null,
+  "dependent_locality": null,
+  "countryCode": "US",
+  "hierarchy": [
+    {
+      "tag": "locality",
+      "value": "New York",
+      "name": "New York",
+      "lat": 40.694457,
+      "lon": -73.93045,
+      "placeID": "wof:85977539"
+    },
+    {
+      "tag": "region",
+      "value": "NY",
+      "name": "New York",
+      "lat": 42.921227,
+      "lon": -75.596537,
+      "placeID": "wof:85688543"
+    }
+  ],
+  "candidates": [
+    {
+      "name": "New York",
+      "tag": "locality",
+      "lat": 40.694457,
+      "lon": -73.93045,
+      "countryCode": "US",
+      "placeID": "wof:85977539"
+    }
+  ]
+}
+```
+
+## Batch
+
+```ts
+function geocodeStream(
+	records: AsyncIterable<SourceRecord> | Iterable<SourceRecord>,
+	opts: GeocodeStreamOptions
+): AsyncIterableIterator<SourceRecord>
+```
+
+`geocodeStream` runs a worker pool over a record stream and yields enriched records in completion
+order, not input order. It parses once per row and shares the tree between the returned components
+and the geocode.
+
+| Option        | Type                  | Default                               | Effect                                       |
+| ------------- | --------------------- | ------------------------------------- | -------------------------------------------- |
+| `mapping`     | `ColumnMapping`       | required                              | Which columns hold the address               |
+| `geocode`     | `GeocodeStreamConfig` | required                              | `wofDBPath`, `dataRoot`, `locale`, `country` |
+| `concurrency` | `number`              | `Math.min(4, availableParallelism())` | Worker count                                 |
+| `batchSize`   | `number`              | `32`                                  | Records handed to a worker at a time         |
+| `worker`      | `string` or `URL`     | the bundled worker                    | A replacement worker entry point             |
+
+One constraint decides whether this function fits your setup. Its worker constructs a
+`WOFSqlitePlaceLookup` directly, so it resolves against a full Who's On First SQLite distribution and
+cannot use a `candidate.db`. If your setup is the `candidate.db` one the tutorials teach, run your own
+pool over `geocodeAddress` instead — [Batch geocode at
+volume](../how-to/batch-geocode-at-volume.mdx) has that loop.
+
+Concurrency is low on purpose. A measured sweep over a single 4 GB database on a 16-core host peaked
+at two workers, about 1.4 times baseline, and degraded above that.
+
+## Confidence
+
+Span confidences from the shipped model are under-confident. `createCalibrator` builds the mapping
+that corrects them.
+
+```ts
+function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator
+type Calibrator = (rawConfidence: number) => number
+```
+
+The returned function clamps its input to the range 0 to 1, mapping a non-numeric input to 0. Below
+the first bin center and above the last it returns that bin's calibrated value. Between two centers
+it interpolates linearly. It is not a nearest-bin lookup, and it does not return the input unchanged
+anywhere.
+
+The table ships inside each weights package as `calibration.json`, and a per-country sibling ships as
+`calibration-per-locale.json`. The per-country file has no top-level `table` key, so pass one of its
+`tables` entries to the bare-array form.
+
+```ts
+import { readFileSync } from "node:fs"
+
+import { createCalibrator } from "@mailwoman/core/decoder"
+
+// Replace <WEIGHTS_DIR> with your node_modules/@mailwoman/neural-weights-en-us directory.
+const table = JSON.parse(readFileSync("<WEIGHTS_DIR>/calibration.json", "utf8"))
+const calibrate = createCalibrator(table)
+
+for (const raw of [0, 0.25, 0.5, 0.75, 0.9, 0.99, 1]) {
+	console.log(raw.toFixed(2), "->", calibrate(raw).toFixed(4))
+}
+```
+
+Output:
+
+```
+0.00 -> 0.0444
+0.25 -> 0.6341
+0.50 -> 0.8258
+0.75 -> 0.9354
+0.90 -> 0.9631
+0.99 -> 0.9908
+1.00 -> 0.9908
+```
+
+A raw 0.50 is worth 0.83 after calibration, which is the under-confidence this table corrects. The
+curve saturates at 0.9908, the top bin's calibrated value, so a calibrated score never reaches 1.
+
+Pass the calibrator per parse as `ParseOpts.calibrate`. It is opt-in: omitting it leaves the raw
+softmax confidences, which is the byte-stable default.
+
+## Errors
+
+| Condition                                                 | What happens                                                       | Next step                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| The weights package for a locale is absent                | `loadFromWeights` throws one actionable error naming the package   | `npm install @mailwoman/neural-weights-<locale>`                         |
+| The weights package resolves but the model fails to load  | `loadFromWeights` throws with the underlying error preserved       | Reinstall the package. A partial or truncated bundle is the usual cause  |
+| A model card declares a channel the package does not ship | The classifier warns once and runs that channel off                | Reinstall. A soft-fed channel changes accuracy, not correctness          |
+| `createRuntimePipeline` has no `classifier`               | The pipeline runs the structural stages only; `tree` may be empty  | Pass a classifier                                                        |
+| `createRuntimePipeline` has no `resolver`                 | The tree carries no coordinates                                    | Pass a `createWOFResolver` instance                                      |
+| The gazetteer index fails to deserialize                  | A warning on `stderr`, and the parse runs without gazetteer priors | Reinstall the weights package                                            |
+| `createCalibrator` gets an empty table                    | Throws `createCalibrator: empty calibration table`                 | Pass the parsed `calibration.json`, not an empty array                   |
+| `geocodeAddress` hits a fatal parse or resolve error      | Throws                                                             | Catch per row. Every non-fatal case returns a result on the `admin` tier |
+
+## Rationale
+
+The classifier and the resolver are the two stages with no default, and that is deliberate rather
+than unfinished. The model is a 39 MB download and the gazetteer is 1.65 GB. A factory that acquired
+either implicitly would make `import "mailwoman"` an unpredictable amount of disk and network for a
+caller who wanted to parse one string.
+
+Everything else defaults on. Each mechanism that reached default-on cleared a gate against the shipped
+model on the first-class locales, so the shipped defaults are the measured configuration and a
+deviation from them is the thing that needs justifying.
+
+`false` rather than omission is the disable signal for the auto-loading options because omission has
+to keep meaning "give me the default". A caller who needs byte-identical output against a build
+without a mechanism has one unambiguous way to say so.
+
+## See also
+
+- [CLI](./cli.mdx) — the same pipeline behind a command.
+- [Component tags](./component-tags.mdx) — what each tag in a parse means.
+- [Runtime flags](./runtime-flags.mdx) — the environment variables these functions read.
+- [Understand a parse](../tutorials/understand-a-parse.mdx) — the same calls, walked through.
+- [Tune confidence thresholds](../how-to/tune-confidence-thresholds.mdx) — using the calibrator against your own data.

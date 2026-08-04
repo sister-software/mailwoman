@@ -1,0 +1,152 @@
+---
+title: Locales and tiers
+description: What a locale tier means, which locales carry a measured claim, and what ships for each one.
+role: reference
+source-of-truth: docs/engineering/SCOPE.mdx, the neural-weights-* package manifests, mailwoman/data-bundles.ts
+---
+
+# Locales and tiers
+
+## Scope
+
+A locale is claimed when a coordinate-graded evaluation exists for it. Trained exposure is not a
+claim, and neither is a published package. This page states what each tier means, lists the locales in
+each, and separately lists what ships per locale.
+
+Read the two lists as answering different questions. The tier table answers "how well is this
+measured". The shipping table answers "what will `npm install` and `mailwoman data pull` give me".
+They do not line up, and the mismatch is the point.
+
+Tiers are maintained in the scope declaration at
+[`SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and
+reproduced here. The table below is the declaration of 2026-07-02; several packages listed under
+[What ships](#what-ships) postdate it.
+
+## Tiers
+
+| Tier | Locales                                                | What the tier means                                                            |
+| ---- | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| 1    | US, FR                                                 | Per-tag floors gated in the release process, plus real-world evaluation slices |
+| 2    | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Trained, with a per-locale coordinate panel behind the claim                   |
+| 3    | NO, SE                                                 | Trained exposure, thinly measured. Claims beyond the panel are unverified      |
+| 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in release 5.1.0             |
+| 5    | JP                                                     | Resolver route only: postcode resolution, with no parser training claim        |
+
+A locale appearing in two tiers is not an error. Tier 4 records a tokenizer capability rather than an
+evaluation, so CZ and PL hold both a coordinate panel and a splice.
+
+Tier 1 is the only tier whose numbers gate a release. A regression on US or FR blocks a ship; a
+regression on a tier-2 locale is recorded and argued about.
+
+### Queued
+
+Queued behind an external constraint rather than an engineering one: GB, IE, SE, HU and RO corpora via
+OpenStreetMap, which is gated on the share-alike review; and KR, which has no adopted open data path.
+The constraint on Korean is data licensing. There is no engineering estimate to give, because there is
+nothing to estimate until a corpus is available.
+
+## What ships
+
+Two things ship per locale, and they are independent. A weights package makes the parser locale-aware.
+A data bundle gives the resolver coordinates to answer with.
+
+### Weights packages
+
+Every overlay layers on the `en-us` encoder rather than replacing it, so a second locale downloads
+locale data rather than a second model.
+
+| Package                           | Locale        | Postcode anchors | Pair index | Locale gazetteer index |
+| --------------------------------- | ------------- | ---------------- | ---------- | ---------------------- |
+| `@mailwoman/neural-weights-en-us` | United States | Yes              | Yes        | Yes                    |
+| `@mailwoman/neural-weights-fr-fr` | France        | Yes              | Yes        | Yes                    |
+| `@mailwoman/neural-weights-en-gb` | Great Britain | Yes              | Yes        | Yes                    |
+| `@mailwoman/neural-weights-en-nz` | New Zealand   | No               | Yes        | No                     |
+| `@mailwoman/neural-weights-de-de` | Germany       | No               | Yes        | No                     |
+| `@mailwoman/neural-weights-es-es` | Spain         | No               | Yes        | No                     |
+| `@mailwoman/neural-weights-it-it` | Italy         | No               | Yes        | No                     |
+| `@mailwoman/neural-weights-en-in` | India         | No               | Yes        | No                     |
+
+`en-us` is the base and carries the model, the tokenizer, and the calibration tables. The rest carry
+locale data only, so `@mailwoman/neural-weights-en-us` is installed alongside any of them.
+
+The New Zealand overlay ships no postcode anchor table. The encoder is anchor-trained, so New Zealand
+parses run with the anchor channel off. That is a declared gap, recorded in the package's model card,
+not a silent one.
+
+### Data bundles
+
+`mailwoman data pull <bundle>` downloads these. Sizes are the registered artifact totals at head.
+
+| Bundle      | Covers                | Artifacts | Size    | Tiers it unlocks                   |
+| ----------- | --------------------- | --------- | ------- | ---------------------------------- |
+| `candidate` | 244 countries         | 1         | 1.65 GB | `admin` everywhere                 |
+| `us`        | 50 states, DC, and VI | 103       | 41.3 GB | `address_point` and `interpolated` |
+| `fr`        | France                | 1         | 6.95 GB | `address_point` only               |
+| `poi`       | US, CA, MX, FR        | 1         | 3.89 GB | POI search, not address resolution |
+
+`candidate` is the one every install needs. It answers on the `admin` tier globally, which is a
+locality or region centroid rather than a rooftop coordinate.
+
+The `us` bundle is per state: `mailwoman data pull us --only nh` fetches New Hampshire alone rather
+than the full 41.3 GB. The French bundle ships rooftop points with no interpolation tier, so a French
+address whose exact point is absent falls straight through to `admin` rather than to a house-number
+estimate along the street.
+
+The US Virgin Islands ship a rooftop shard and no interpolation shard. That is a data gap, not an
+omission from this table.
+
+### The combination
+
+| Locale          | Weights overlay | Street data bundle | Best tier available from published artifacts |
+| --------------- | --------------- | ------------------ | -------------------------------------------- |
+| United States   | Yes             | `us`               | `address_point`                              |
+| France          | Yes             | `fr`               | `address_point`                              |
+| Great Britain   | Yes             | None               | `admin`                                      |
+| New Zealand     | Yes             | None               | `admin`                                      |
+| Germany         | Yes             | None               | `admin`                                      |
+| Spain           | Yes             | None               | `admin`                                      |
+| Italy           | Yes             | None               | `admin`                                      |
+| India           | Yes             | None               | `admin`                                      |
+| Everywhere else | None            | `candidate` only   | `admin`                                      |
+
+Two locales reach a rooftop coordinate from published downloads: the United States and France. Every
+other locale resolves to an administrative centroid unless you build street data yourself — [Build the
+US dataset](../tutorials/build-the-us-dataset.mdx) and [Full planet
+build](../tutorials/full-planet-build.mdx) are those builds.
+
+Canada, Mexico and France have POI coverage without a locale weights overlay, because the POI layer is
+built from a source that spans countries rather than from per-locale training.
+
+## Errors
+
+| Condition                                              | Meaning                                                                | Next step                                                              |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `Could not resolve @mailwoman/neural-weights-<locale>` | No overlay is published for that locale                                | Use `en-US`. The base model parses non-tier-1 input at lower accuracy  |
+| Every result comes back on the `admin` tier            | No street bundle is installed for that country                         | Check the combination table. Only US and FR have published street data |
+| A Japanese address parses poorly                       | There is no Japanese parser claim. The resolver route is postcode-only | Resolve by postcode                                                    |
+| A Korean address parses poorly                         | No open Korean data path has been adopted                              | None today. The constraint is licensing, not engineering               |
+| A tier-2 locale is worse than the panel suggests       | Panels are 1000 rows per locale, and a slice can be unrepresentative   | Report it with the input strings                                       |
+
+## Rationale
+
+A tier is a measurement, not a promise, and the levels exist so that "we support this locale" cannot
+be said without saying how well it was checked. The alternative — one flat list of supported locales
+— makes a locale with a 1000-row coordinate panel indistinguishable from one that appeared in a
+training mix, and those are not the same product.
+
+Publishing an overlay before its tier moves is deliberate. A pair index is useful to somebody parsing
+German addresses today whether or not a coordinate panel exists for German, and holding the package
+back until the evaluation lands would help nobody. It does mean the two tables on this page disagree,
+which is why they are two tables.
+
+The queued locales are queued on licensing rather than on effort. Share-alike terms on a corpus decide
+whether a trained model can ship under this project's license, and that question is answered by
+counsel rather than by a training run.
+
+## See also
+
+- [Packages](./packages.mdx) — installing a locale overlay.
+- [Footprints](./footprints.mdx) — what each of these downloads costs.
+- [What ships today](../status.mdx) — the release these tables describe.
+- [Keep data fresh](../how-to/keep-data-fresh.mdx) — when a bundle is superseded.
+- [`SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) — where the tiers are maintained.

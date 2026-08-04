@@ -15,6 +15,7 @@ import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
+import { argument } from "pastel"
 import type React from "react"
 import zod from "zod"
 
@@ -30,7 +31,10 @@ const BYTES_PER_KIB = 1024
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
-const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address"))
+const ArgumentsSchema = zod
+	.array(zod.string())
+	.describe(argument({ name: "address", description: "A formatted postal address" }))
+
 export { ArgumentsSchema as args, ParseConfigSchema as options }
 
 const ParseConfigSchema = zod.object({

@@ -48,6 +48,7 @@ import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tool
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
+import { argument } from "pastel"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
@@ -64,9 +65,15 @@ export const isDefault = true
 //#region CLI contract — args + options
 
 const ArgumentsSchema = zod
-	.array(zod.string().describe("Path to a CSV file of contact / organization records"))
+	.array(zod.string())
 	.optional()
-	.describe("CSV path(s). Optional when --sources is given (multi-source mode supplies the inputs).")
+	.describe(
+		argument({
+			name: "csv",
+			description:
+				"Path(s) to a CSV file of contact / organization records. Optional when --sources is given (multi-source mode supplies the inputs).",
+		})
+	)
 
 const OptionsSchema = zod.object({
 	mapping: zod

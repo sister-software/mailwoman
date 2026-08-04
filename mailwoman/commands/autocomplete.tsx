@@ -19,13 +19,16 @@ import { readFileSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
+import { argument } from "pastel"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
-const ArgumentsSchema = zod.array(zod.string().describe("Prefix string to complete"))
+const ArgumentsSchema = zod
+	.array(zod.string())
+	.describe(argument({ name: "prefix", description: "Prefix string to complete" }))
 
 /**
  * Config accepted by `mailwoman autocomplete`, validated before the server starts so a bad flag fails fast.

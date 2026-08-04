@@ -1,0 +1,302 @@
+---
+title: HTTP APIs
+description: The native /v1 surface and the three drop-in servers — endpoints, request shapes, error tables, and the emitted OpenAPI documents.
+role: reference
+source-of-truth: api/routes.ts, api/schema.ts, api/app.ts, api-kit/error.ts, nominatim/routes.ts, photon/routes.ts, libpostal/routes.ts
+---
+
+# HTTP APIs
+
+## Scope
+
+Mailwoman serves four HTTP surfaces. One is native. Three answer on the wire shapes that Nominatim,
+Photon and libpostal clients already send, so an existing client changes a base URL and nothing else.
+
+This page is the endpoint and error contract for all four. It is not a tutorial: for a running
+server with real responses, follow [Run the API server](../tutorials/run-the-api-server.mdx), and for
+replacing an existing deployment, [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx).
+
+Every surface emits its own OpenAPI document, and those documents are generated from the same route
+definitions the server registers. Where this page and a document disagree, the document is right.
+
+## Surfaces
+
+| Surface   | Package                | Command                     | Default port | OpenAPI                                   |
+| --------- | ---------------------- | --------------------------- | ------------ | ----------------------------------------- |
+| Native    | `@mailwoman/api`       | `mailwoman serve`           | `3000`       | [mailwoman.json](/openapi/mailwoman.json) |
+| Nominatim | `@mailwoman/nominatim` | `mailwoman-nominatim serve` | `8080`       | [nominatim.json](/openapi/nominatim.json) |
+| Photon    | `@mailwoman/photon`    | `mailwoman-photon serve`    | `2322`       | [photon.json](/openapi/photon.json)       |
+| libpostal | `@mailwoman/libpostal` | `mailwoman-libpostal serve` | `8081`       | [libpostal.json](/openapi/libpostal.json) |
+
+Each server binds `0.0.0.0` and takes `--port` and `--host`. Neither is settable by an environment
+variable, so a deployment that configures ports through the environment passes them as flags. Each
+server also serves its own document at `/openapi.json`.
+
+## URL anatomy
+
+Every request to every surface has the same four parts.
+
+```
+http://localhost:3000/v1/geocode
+└──┬──┘└─────┬──────┘└┬┘└──┬───┘
+   │         │        │    │
+   │         │        │    └─ endpoint — the operation
+   │         │        └────── version prefix — native surface only; the drop-ins have none
+   │         └─────────────── host and port — 3000 native, 8080 / 2322 / 8081 for the drop-ins
+   └───────────────────────── scheme — the servers speak HTTP; terminate TLS in front
+```
+
+The version prefix is the one part that differs by surface. `/v1` exists on the native API alone,
+because the drop-ins reproduce paths their originals already fixed.
+
+## Native API
+
+`@mailwoman/api` takes an engine object in which every method is optional. An absent method answers a
+status rather than throwing, which is what makes a partial deployment legible.
+
+| Method | Path          | Body or query                            | 200 response                                                        |
+| ------ | ------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| `GET`  | `/v1/parse`   | `?address`, `?debug=true`, `?input_mode` | `input`, `components[]`, `tree`, `debug?`                           |
+| `POST` | `/v1/parse`   | `{ address, debug?, input_mode? }`       | `input`, `components[]`, `tree`, `debug?`                           |
+| `POST` | `/v1/geocode` | `{ address, input_mode? }`               | The geocode result: `lat`, `lon`, `resolution_tier`, `hierarchy`, … |
+| `POST` | `/v1/batch`   | `{ addresses: string[], input_mode? }`   | `{ results: [] }`, each a geocode result or `{ input, error }`      |
+| `POST` | `/v1/resolve` | `{ tree, opts? }`                        | `{ tree }`                                                          |
+| `POST` | `/v1/format`  | `{ components, country, options? }`      | `{ formatted, canonicalKey }`                                       |
+| `POST` | `/v1/reload`  | none                                     | `{ reloaded, versions }`                                            |
+| `GET`  | `/health`     | none                                     | `status`, `uptime_s`, plus whatever the engine reports              |
+| `GET`  | `/metrics`    | none                                     | `uptime_s`, `timings`                                               |
+
+`address` is required on `/v1/parse` and `/v1/geocode`. `input_mode` is `fragmented` or `formatted`;
+`/v1/batch` defaults it to `formatted` while the other two derive it from the input. On `/v1/format`,
+a `components` entry whose value is an array collapses to its first element.
+
+Four behaviors decide how a client reads a response, and none of them is visible in the table.
+
+- `/v1/format` needs no engine method at all. It is wired in-package from `@mailwoman/formatter`.
+- `/health` answers `200` with no engine wired, so it reports process liveness rather than readiness.
+  When `mailwoman serve` wires the real engine it also reports the loaded model and the data root:
+  `model.name`, `model.version`, `model.labels`, `data.data_root`, `data.wof_dbs`,
+  `data.situs_states`, `data.interpolation_states`.
+- `/v1/batch` with `addresses: []` answers `200 { "results": [] }` before it checks for an engine.
+- `/metrics` counts only `/v1/geocode` and `/v1/batch`, and reports
+  `{ uptime_s, timings: { total, errors, tiers, latency_ms, latency_samples } }`. `latency_ms` is
+  `null` until the first sample and a tier never seen is absent rather than zero. Counters reset on
+  restart, and under `mailwoman serve --cpus N` each worker keeps its own.
+
+### Request and response
+
+```bash
+curl -sS localhost:3000/v1/parse \
+  -H 'content-type: application/json' \
+  -d '{"address":"221B Baker St, London NW1 6XE"}'
+```
+
+The full response, piped through `python3 -m json.tool`:
+
+```
+{
+    "input": "221B Baker St, London NW1 6XE",
+    "components": [
+        { "tag": "house_number", "value": "221B" },
+        { "tag": "street", "value": "Baker" },
+        { "tag": "street_suffix", "value": "St" },
+        { "tag": "locality", "value": "London" },
+        { "tag": "postcode", "value": "NW1 6XE" }
+    ],
+    "tree": {
+        "raw": "221B Baker St, London NW1 6XE",
+        "roots": [
+            {
+                "tag": "locality",
+                "start": 15,
+                "end": 21,
+                "value": "London",
+                "confidence": 0.9503604529684699,
+                "children": [
+                    {
+                        "tag": "street",
+                        "start": 5,
+                        "end": 10,
+                        "value": "Baker",
+                        "confidence": 0.9047541558664625,
+                        "children": [
+                            {
+                                "tag": "house_number",
+                                "start": 0,
+                                "end": 4,
+                                "value": "221B",
+                                "confidence": 0.9040313732694398,
+                                "children": []
+                            },
+                            {
+                                "tag": "street_suffix",
+                                "start": 11,
+                                "end": 13,
+                                "value": "St",
+                                "confidence": 0.8870032167591001,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "tag": "postcode",
+                        "start": 22,
+                        "end": 29,
+                        "value": "NW1 6XE",
+                        "confidence": 0.6799167287312248,
+                        "children": []
+                    }
+                ]
+            }
+        ]
+    }
+}
+```
+
+`components` is the flat projection and `tree` is the same parse with containment preserved: the
+postcode and the street sit under the locality, and the house number and suffix sit under the street.
+`confidence` on each node is the raw span confidence and is under-confident by default — see
+`createCalibrator` in [Library API](./library-api.mdx#confidence).
+
+An omitted `address` answers the envelope:
+
+```bash
+curl -sS localhost:3000/v1/parse -H 'content-type: application/json' -d '{}'
+```
+
+```
+{"error":"address is required"}
+```
+
+### Errors
+
+The native surface returns one envelope: an `error` string a caller matches on, and an optional
+`detail` a human reads. No other key appears, and the raw validator output is never surfaced.
+
+| Status | `error`                                     | `detail`                                    | Meaning                                            | Next step                                                     |
+| ------ | ------------------------------------------- | ------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------- |
+| `400`  | `address is required`                       | absent                                      | `address` was missing, empty, or whitespace        | Send a non-empty `address`                                    |
+| `400`  | `body must be { addresses: string[] }`      | absent                                      | `/v1/batch` body failed validation                 | Fix the body shape                                            |
+| `400`  | `body must be { tree: AddressTree, opts? }` | absent                                      | `/v1/resolve` body failed validation               | Send a `{ tree }` object                                      |
+| `400`  | `invalid request body`                      | `<field>: <message>`                        | A validated field failed                           | Read `detail`; it names the field                             |
+| `400`  | `invalid request body`                      | `malformed JSON`                            | The body did not parse as JSON                     | Send well-formed JSON                                         |
+| `413`  | `request body too large`                    | absent                                      | The body exceeded the limit, 2 MiB by default      | Split the request                                             |
+| `413`  | `batch too large: <n> > <max>`              | absent                                      | More rows than the batch cap allows                | Chunk to the cap; set `MAILWOMAN_BATCH_MAX` to raise it       |
+| `500`  | `internal error`                            | the underlying message                      | The engine faulted                                 | Read `detail`, then report it                                 |
+| `501`  | `parse not implemented`                     | absent                                      | The engine has no `parse` — the model is not wired | Install the weights package for your locale                   |
+| `503`  | `geocoder not available`                    | the install line for the missing dependency | `geocode`, `batch` or `reload` is absent           | Follow `detail`. It names the packages and the database paths |
+| `503`  | `resolver not available`                    | the same install line                       | `resolveTree` is absent                            | Follow `detail`                                               |
+
+The `501` and `503` split is deliberate. `501` means the surface exists and the capability was never
+wired. `503` means the code is present and a deployment dependency — a gazetteer database, a resolver
+package — is missing. The first is a build decision; the second is fixable by installing something.
+
+Two orderings matter to a caller writing retry logic: the batch-size check runs before the engine
+check, so an oversized batch against an unwired engine answers `413` rather than `503`; and an
+unmatched path answers Hono's plain-text `404 Not Found` rather than this envelope.
+
+## Drop-in surfaces
+
+Each drop-in keeps its original's error shape rather than the native envelope, because a client
+written against the original parses that shape. That is the whole point of a drop-in.
+
+### Nominatim
+
+| Method | Path       | Query                                                                                                                                                | Response                                    |
+| ------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `GET`  | `/search`  | `q`, `street`, `city`, `county`, `state`, `country`, `postalcode`, `countrycodes`, `bounded`, `limit`, `addressdetails`, `format`, `accept-language` | Result array, FeatureCollection, or JSON-LD |
+| `GET`  | `/reverse` | `lat`, `lon`, `zoom`, `addressdetails`, `format`, `accept-language`                                                                                  | One result, `null`, a Feature, or JSON-LD   |
+| `GET`  | `/lookup`  | `osm_ids`, `addressdetails`, `format`                                                                                                                | Result array or FeatureCollection           |
+| `GET`  | `/status`  | none                                                                                                                                                 | `{ status, message, data_updated? }`        |
+
+`lat` and `lon` are required on `/reverse`. `format` accepts `jsonv2` (the default), `json`,
+`geojson` and `jsonld`; `limit` defaults to `10`. Results carry an OpenCage-style `annotations` block
+— see [Use annotations](../how-to/use-annotations.mdx).
+
+`/lookup` accepts `format=jsonld` and answers with the `jsonv2` array anyway. That is the original's
+behavior, preserved.
+
+### Photon
+
+| Method | Path       | Query                                                            | Response                              |
+| ------ | ---------- | ---------------------------------------------------------------- | ------------------------------------- |
+| `GET`  | `/api`     | `q`, `limit`, `lang`, `lat`, `lon`, `osm_tag`, `layer`, `format` | GeoJSON FeatureCollection, or JSON-LD |
+| `GET`  | `/reverse` | `lat`, `lon`, `limit`, `lang`, `radius`, `format`                | GeoJSON FeatureCollection, or JSON-LD |
+
+`q` is required on `/api`; `lat` and `lon` are required on `/reverse`. `limit` defaults to `15`.
+`osm_tag` and `layer` are repeatable.
+
+Photon's error shape is an empty FeatureCollection carrying a `message`, never an `error` key, so a
+client that iterates `features` handles a failure without a branch. Photon serves no health endpoint.
+
+### libpostal
+
+| Method | Path      | Body or query                  | Response                   |
+| ------ | --------- | ------------------------------ | -------------------------- |
+| `GET`  | `/parse`  | `?query` or `?address`         | `[{ label, value }, …]`    |
+| `POST` | `/parse`  | `{ query? }` or `{ address? }` | `[{ label, value }, …]`    |
+| `GET`  | `/expand` | `?address`                     | `{ expansions: string[] }` |
+| `POST` | `/expand` | `{ address? }`                 | `{ expansions: string[] }` |
+
+Precedence on `/parse` is fixed: body `query`, then `?query`, then body `address`, then `?address`.
+Precedence is by presence rather than by truthiness, so a present empty string wins over a lower
+one and then fails validation. The body limit is 100 KiB rather than the native surface's 2 MiB.
+
+### Drop-in error shapes
+
+| Surface   | Status | Body                                                                                   |
+| --------- | ------ | -------------------------------------------------------------------------------------- |
+| Nominatim | `400`  | `{ "error": "lat and lon are required" }`                                              |
+| Nominatim | `400`  | `{ "error": "lat must be in [-90, 90] and lon in [-180, 180]" }`                       |
+| Nominatim | `500`  | `{ "error": "internal error" }`                                                        |
+| Nominatim | `501`  | `{ "error": "search not implemented" }`, and the same for reverse and lookup           |
+| Photon    | `400`  | `{ "type": "FeatureCollection", "features": [], "message": "q is required" }`          |
+| Photon    | `500`  | `{ "type": "FeatureCollection", "features": [], "message": "internal error" }`         |
+| Photon    | `501`  | `{ "type": "FeatureCollection", "features": [], "message": "search not implemented" }` |
+| libpostal | `400`  | `{ "error": "query is required" }` or `{ "error": "address is required" }`             |
+| libpostal | `413`  | `{ "error": "request body too large" }`                                                |
+| libpostal | `500`  | `{ "error": "internal error" }`                                                        |
+| libpostal | `501`  | `{ "error": "expand not implemented" }`                                                |
+
+Nominatim's `/status` is the one endpoint that answers `200` with no engine method wired, reporting
+`{ "status": 0, "message": "OK" }`. Every other absent method on every surface answers `501`.
+
+## OpenAPI
+
+Each server serves its document at `/openapi.json` and each CLI emits it to a file:
+
+```bash
+node mailwoman/out/cli.js openapi --out ./mailwoman.json
+```
+
+`--flavor` selects `3.1` (the default, emitting `3.1.0`) or `3.0` (emitting `3.0.3`). Output is
+single-line JSON. The four documents published with this site are regenerated on every docs build
+from the same route definitions the servers register:
+[mailwoman.json](/openapi/mailwoman.json), [nominatim.json](/openapi/nominatim.json),
+[photon.json](/openapi/photon.json), [libpostal.json](/openapi/libpostal.json).
+
+Each document declares `servers[0]` as `http://{host}:{port}` with `host` defaulting to `127.0.0.1`.
+The servers bind `0.0.0.0`; the document states the address a client dials, not the address the
+process binds.
+
+## Rationale
+
+The drop-ins exist because the cost of changing a geocoder is rarely the geocoder. It is the client
+code, the response parsing, and the tests written against a particular JSON shape. Answering on the
+shape a deployment already parses moves that cost to zero and makes the swap reversible: point the
+base URL back and the old system answers again.
+
+The native surface carries the `/v1` prefix the drop-ins lack because it is the one shape this
+project controls and therefore the one that has to survive its own revisions.
+
+Absent engine methods answer statuses rather than throwing because a partial deployment is a normal
+state, not a bug. A parser with no gazetteer is a useful service; it should say `503` on `/v1/geocode`
+and keep answering `/v1/parse`.
+
+## See also
+
+- [CLI](./cli.mdx) — the `serve` commands and their flags.
+- [Library API](./library-api.mdx) — the same operations, called in process.
+- [Run the API server](../tutorials/run-the-api-server.mdx) — a server booted, with real responses.
+- [Swap in for Nominatim](../tutorials/swap-in-for-nominatim.mdx) — replacing a running deployment.
+- [Use annotations](../how-to/use-annotations.mdx) — the `annotations` block on Nominatim results.

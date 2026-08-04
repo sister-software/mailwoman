@@ -43,6 +43,7 @@ import { pipeline } from "node:stream/promises"
 import { APIClient } from "@mailwoman/core/api"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Text } from "ink"
+import { argument } from "pastel"
 import { resolvePath } from "path-ts"
 import zod from "zod"
 
@@ -58,7 +59,9 @@ import {
 import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
 import { formatBytes } from "../../doctor/checks.ts"
 
-const ArgumentsSchema = zod.array(zod.string()).describe(`Bundle name(s) to pull: ${Object.keys(BUNDLES).join(", ")}`)
+const ArgumentsSchema = zod
+	.array(zod.string())
+	.describe(argument({ name: "bundle", description: `Bundle name(s) to pull: ${Object.keys(BUNDLES).join(", ")}` }))
 
 const OptionsSchema = zod.object({
 	dryRun: zod
