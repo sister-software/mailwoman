@@ -17,9 +17,11 @@ import {
 	fetchNAD,
 	fetchNPPES,
 	fetchOpenAddresses,
+	fetchOurAirports,
 	fetchStateHISchools,
 	fetchStateSources,
 	fetchTigerFull,
+	fetchWikidataSubVenue,
 } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { argument } from "pastel"
@@ -36,14 +38,17 @@ const ArgsSchema = zod.tuple([
 			"imls-pls",
 			"nppes",
 			"openaddresses",
+			"ourairports",
 			"state-sources",
 			"state-hi-schools",
 			"tiger-full",
+			"wikidata-subvenue",
 		])
 		.describe(
 			argument({
 				name: "source",
-				description: "Fetch source id (ban, nad, hrsa, imls-pls, nppes, openaddresses, state-sources, …)",
+				description:
+					"Fetch source id (ban, nad, hrsa, imls-pls, nppes, openaddresses, ourairports, state-sources, wikidata-subvenue, …)",
 			})
 		),
 ])
@@ -107,6 +112,10 @@ function runSource(source: FetchSourceID, options: Options): Promise<FetchSummar
 			return fetchNPPES(base, report)
 		case "openaddresses":
 			return fetchOpenAddresses({ ...base, country: options.country }, report)
+		case "ourairports":
+			return fetchOurAirports(base, report)
+		case "wikidata-subvenue":
+			return fetchWikidataSubVenue(base, report)
 		case "state-sources":
 			return fetchStateSources(base, report)
 		case "state-hi-schools":

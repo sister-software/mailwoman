@@ -40,6 +40,13 @@
  *       Tier A (US PD).
  *   - `openaddresses` — OpenAddresses country collections (default: Canada / `ca`). Tier B/C mixed
  *       — per-row filter.
+ *   - `ourairports` — OurAirports global airport CSVs (~83K airports + the country/region/runway
+ *       joins). Tier A (public domain). The VENUE half of the sub-venue arc (#35); it carries no
+ *       interior structure, which comes from `@mailwoman/osm/sdk`'s `extractOSMSubVenues`.
+ *   - `wikidata-subvenue` — the multilingual sub-venue DESIGNATOR vocabulary, pulled as the labels
+ *       and aliases of eight Wikidata concepts (terminal, gate, concourse, campus, …) plus the
+ *       airport-terminal instance labels as attested usage. Tier A (CC0). The only module in this
+ *       family built on `APIClient` — see its docstring for why.
  *   - `state-sources` — NY/TX/DE/OR notaries, IA contractors, WA health providers, HI lobbyists.
  *       Tier A (state PD-equivalent).
  *   - `state-hi-schools` — Hawaii DOE school directory (XLSX → CSV via openpyxl). Tier A (state
@@ -91,9 +98,11 @@ import { fetchIMLSPLS } from "./imls-pls.ts"
 import { fetchNAD } from "./nad.ts"
 import { fetchNPPES } from "./nppes.ts"
 import { fetchOpenAddresses } from "./openaddresses.ts"
+import { fetchOurAirports } from "./ourairports.ts"
 import { fetchStateHISchools } from "./state-hi-schools.ts"
 import { fetchStateSources } from "./state-sources.ts"
 import { fetchTigerFull } from "./tiger-full.ts"
+import { fetchWikidataSubVenue } from "./wikidata-subvenue.ts"
 
 export * from "./ban.ts"
 export * from "./hrsa.ts"
@@ -101,9 +110,11 @@ export * from "./imls-pls.ts"
 export * from "./nad.ts"
 export * from "./nppes.ts"
 export * from "./openaddresses.ts"
+export * from "./ourairports.ts"
 export * from "./state-hi-schools.ts"
 export * from "./state-sources.ts"
 export * from "./tiger-full.ts"
+export * from "./wikidata-subvenue.ts"
 
 /**
  * The fetch-source registry: id → module entry point. Each entry point takes its own options interface.
@@ -115,9 +126,11 @@ export const FETCH_SOURCES = {
 	"imls-pls": fetchIMLSPLS,
 	nppes: fetchNPPES,
 	openaddresses: fetchOpenAddresses,
+	ourairports: fetchOurAirports,
 	"state-sources": fetchStateSources,
 	"state-hi-schools": fetchStateHISchools,
 	"tiger-full": fetchTigerFull,
+	"wikidata-subvenue": fetchWikidataSubVenue,
 } as const
 
 export type FetchSourceID = keyof typeof FETCH_SOURCES
