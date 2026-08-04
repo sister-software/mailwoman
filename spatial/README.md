@@ -40,6 +40,10 @@ Optional: `@googlemaps/google-maps-services-js` for Google Maps API integration.
 - [`@mailwoman/match`](../match) — uses H3 cells for geo-first record blocking
 - [`@mailwoman/address-id`](../address-id) — uses H3 for stable address primary keys
 - [`@mailwoman/core`](../core) — consumes spatial types
+- [`@mailwoman/codex/country`](../codex/country) — ISO 3166-1 country codes and names. This
+  package once carried a byte-identical second copy of that table under `countries/` (salvaged
+  from isp-nexus alongside the geometry code, never imported by anything). It was deleted
+  2026-08-04; country reference data belongs to `codex`, not to the math home.
 
 ## License
 
