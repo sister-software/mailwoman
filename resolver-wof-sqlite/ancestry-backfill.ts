@@ -45,11 +45,14 @@
  *   nothing.
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { readdirSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
 
-import type { WOFFeature } from "@mailwoman/core/resources/whosonfirst"
-import { join, resolvePath } from "path-ts"
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { join } from "path-ts"
+
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them.
@@ -110,37 +113,6 @@ export function discoverAdminDataRoots(reposRoot: string): string[] {
 	return roots
 }
 
-/**
- * Characters per directory level in WOF's sharded GeoJSON layout.
- */
-const ID_CHUNK = 3
-
-/**
- * WOF geojson lives sharded: an id resolves to `<3-char chunks>/<id>.geojson` under each data root.
- */
-function geojsonForID(id: number, roots: readonly string[]): WOFFeature | null {
-	const s = String(id)
-	const chunks: string[] = []
-
-	for (let i = 0; i < s.length; i += ID_CHUNK) {
-		chunks.push(s.slice(i, i + ID_CHUNK))
-	}
-
-	for (const root of roots) {
-		const fp = resolvePath(root, ...chunks, `${s}.geojson`)
-
-		if (existsSync(fp)) {
-			try {
-				return JSON.parse(readFileSync(fp, "utf8")) as WOFFeature
-			} catch {
-				return null
-			}
-		}
-	}
-
-	return null
-}
-
 // `<placetype>_id` key → ancestor placetype. WOF hierarchy keys are e.g. region_id, county_id. Self
 // is filtered downstream by the `aid === id` check, so we do NOT special-case locality here: for a
 // locality candidate `locality_id` IS self (dropped by aid===id), but for a neighbourhood candidate
@@ -163,33 +135,62 @@ function placetypeFromKey(key: string): string | null {
  * ~40-minute one (their ancestry comes from the parent_id closure, not this backfill). Correctness-preserving — the
  * skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
  */
-export function backfillAncestorsFromHierarchy(
+export async function backfillAncestorsFromHierarchy(
 	db: DatabaseSync,
 	geojsonRoots: readonly string[],
 	opts: { maxID?: number } = {}
-): AncestryBackfillResult {
+): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
+	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 
 	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
 	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
 	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
-	// `s.id < ?` first lets SQLite prune by the PK index before the correlated subquery runs at all.
-	const candidates = db
-		.prepare(
-			`SELECT s.id AS id, s.placetype AS placetype FROM spr s
-			 WHERE s.id < ?
-			   AND NOT EXISTS (SELECT 1 FROM ancestors a WHERE a.id = s.id AND a.ancestor_placetype = 'country')`
+	// The id bound is stated first so SQLite prunes by the PK index before the NOT EXISTS runs at all.
+	const candidates = await kdb
+		.selectFrom("spr")
+		.select(["id", "placetype"])
+		.where("id", "<", maxID)
+		.where((eb) =>
+			eb.not(
+				eb.exists(
+					eb
+						.selectFrom("ancestors")
+						.select("ancestors.id")
+						.whereRef("ancestors.id", "=", "spr.id")
+						.where("ancestors.ancestor_placetype", "=", "country")
+				)
+			)
 		)
-		.all(maxID) as Array<{ id: number; placetype: string }>
+		.execute()
+
+	// Every candidate's existing ancestors in ONE query rather than an indexed read each. The widened
+	// candidate test made that per-candidate read the dominant cost of the pass, and the set is bounded:
+	// a candidate reaching this point has a handful of rows at most.
+	const alreadyPresent = new Map<number, Set<number>>()
+
+	for (const row of await kdb
+		.selectFrom("ancestors")
+		.select(["id", "ancestor_id"])
+		.where(
+			"id",
+			"in",
+			candidates.map((c) => c.id)
+		)
+		.execute()) {
+		let set = alreadyPresent.get(row.id)
+
+		if (!set) {
+			set = new Set()
+			alreadyPresent.set(row.id, set)
+		}
+
+		set.add(Number(row.ancestor_id))
+	}
 
 	const insert = db.prepare(
 		"INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)"
 	)
-
-	// One indexed read per CANDIDATE, not one per (candidate, ancestor) pair. A candidate that reaches
-	// this point has a handful of existing rows at most, and the widened candidate test (above) made the
-	// per-pair variant the dominant cost of the whole pass — this is the same check, batched.
-	const existingAncestors = db.prepare("SELECT ancestor_id AS ancestor_id FROM ancestors WHERE id = ?")
 
 	let placesFixed = 0
 	let rowsAdded = 0
@@ -197,8 +198,8 @@ export function backfillAncestorsFromHierarchy(
 	db.exec("BEGIN")
 
 	for (const { id, placetype } of candidates) {
-		if (TOP_PLACETYPES.has(placetype)) continue
-		const gj = geojsonForID(id, geojsonRoots)
+		if (placetype && TOP_PLACETYPES.has(placetype)) continue
+		const gj = readWOFFeature(id, geojsonRoots)
 		const hierarchy = gj?.properties?.["wof:hierarchy"]
 
 		if (!hierarchy || !hierarchy.length) {
@@ -227,16 +228,20 @@ export function backfillAncestorsFromHierarchy(
 			}
 		}
 
-		const alreadyPresent = new Set(
-			(existingAncestors.all(id) as Array<{ ancestor_id: number }>).map((row) => Number(row.ancestor_id))
-		)
+		let present = alreadyPresent.get(id)
+
+		if (!present) {
+			present = new Set()
+			alreadyPresent.set(id, present)
+		}
 
 		let added = 0
 
 		for (const [aid, pt] of seen) {
-			if (alreadyPresent.has(aid)) continue
+			if (present.has(aid)) continue
+
 			insert.run(id, aid, pt)
-			alreadyPresent.add(aid)
+			present.add(aid)
 
 			added++
 		}

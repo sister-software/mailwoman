@@ -86,7 +86,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 			// Only real WOF places have `wof:hierarchy` geojson; synthetic Overture/GeoNames rows (ids >=
 			// OVERTURE_ID_BASE) never do, and probing millions of them across every repo root turned this step into a
 			// ~40-min stall on the wide-coverage build (#1015). Their ancestry comes from the parent_id closure.
-			const bf = backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })
+			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })
 			backfillPlacesFixed = bf.placesFixed
 			phase("hierarchy-backfill", `+${bf.rowsAdded} rows for ${bf.placesFixed} places (${bf.noGeojson} no-geojson)`)
 		}

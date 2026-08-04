@@ -24,7 +24,7 @@ import { existsSync, readFileSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import type { WOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { PathBuilder } from "path-ts"
@@ -70,6 +70,12 @@ export interface CentroidFillResult {
  * country. A postcode on several GeoNames rows is averaged. Matched by the postcode string only — the WOF id is
  * untouched, so the eval keys stay WOF's.
  */
+/**
+ * Rows per multi-row INSERT. SQLite binds one variable per column per row and caps the total per statement
+ * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds); eight columns at this width leaves ample headroom.
+ */
+const INSERT_CHUNK = 1000
+
 /**
  * GeoNames files a US territory under its OWN ISO code — Puerto Rico as `PR`, Guam as `GU` — while the WOF postcode
  * repo files all of them as `US`. Reading only `US` rows therefore leaves every territory postcode unnamed and
@@ -275,34 +281,6 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string, combinedPath:
 }
 
 /**
- * Characters per directory level in WOF's sharded GeoJSON layout: `123/456/789/123456789.geojson`.
- */
-const ID_CHUNK = 3
-
-/**
- * Rows per multi-row INSERT. SQLite binds one variable per column per row and caps the total per statement
- * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds); eight columns at this width leaves ample headroom.
- */
-const INSERT_CHUNK = 1000
-
-/**
- * WOF id → the repo-relative GeoJSON path segments: the id chunked into groups of {@link ID_CHUNK}, then
- * `<id>.geojson`. Segments rather than a joined string so a caller can append them to a {@link PathBuilder}.
- */
-function wofIDSegments(id: number): string[] {
-	const s = String(id)
-	const parts: string[] = []
-
-	for (let i = 0; i < s.length; i += ID_CHUNK) {
-		parts.push(s.slice(i, i + ID_CHUNK))
-	}
-
-	parts.push(`${s}.geojson`)
-
-	return parts
-}
-
-/**
  * Pass-4 fallback: for postcodes still coordinate-less after the parent-borrow (their immediate parent locality is
  * absent from the admin DB — common for city-states like Berlin), borrow the finest available ANCESTOR centroid from
  * the GeoJSON hierarchy. County is preferred over region for tighter placement.
@@ -326,13 +304,11 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	db.exec("BEGIN")
 
 	for (const row of unplaced) {
-		const file = repos(`whosonfirst-data-postalcode-${row.country.toLowerCase()}`, "data", ...wofIDSegments(row.id))
+		const dataDir = repos(`whosonfirst-data-postalcode-${row.country.toLowerCase()}`, "data").toString()
 		let hierarchy: Record<string, number> | undefined
 
 		try {
-			const feature = JSON.parse(readFileSync(file.toString(), "utf8")) as WOFFeature
-
-			hierarchy = feature.properties?.["wof:hierarchy"]?.[0]
+			hierarchy = readWOFFeature(row.id, [dataDir])?.properties?.["wof:hierarchy"]?.[0]
 		} catch {
 			continue // file missing or unreadable — leave unplaced
 		}
