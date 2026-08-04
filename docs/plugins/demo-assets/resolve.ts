@@ -235,7 +235,8 @@ export function readModelCard(): ReleaseInfo | null {
 
 	if (!existsSync(cardPath)) return null
 
-	return tryParsingJSON<ReleaseInfo>(readFileSync(cardPath, "utf8"), null)
+	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
+	return tryParsingJSON<ReleaseInfo, null>(readFileSync(cardPath, "utf8"), null)
 }
 
 /**
