@@ -37,7 +37,7 @@ function row(over: Record<number, string>): string {
 	return f.join("\t")
 }
 
-beforeAll(() => {
+beforeAll(async () => {
 	dir = mkdtempSync(join(tmpdir(), "geonames-admin-"))
 
 	const lines = [
@@ -77,7 +77,7 @@ beforeAll(() => {
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 
-	ingestGeonamesAliases(db, ["GE"], dir, () => {}, { adminForCountries: new Set(["GE"]) })
+	await ingestGeonamesAliases(db, ["GE"], dir, () => {}, { adminForCountries: new Set(["GE"]) })
 })
 
 afterAll(() => {
@@ -121,7 +121,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	expect(regionAnc).toContain(country.id)
 })
 
-test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", () => {
+test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", async () => {
 	const db2 = new DatabaseSync(":memory:")
 
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -134,7 +134,7 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	db2.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db2.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
-	ingestGeonamesAliases(db2, ["GE"], dir, () => {})
+	await ingestGeonamesAliases(db2, ["GE"], dir, () => {})
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors").get() as Row).n).toBe(0)
@@ -142,7 +142,7 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 	db2.close()
 })
 
-test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", () => {
+test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", async () => {
 	const d = mkdtempSync(join(tmpdir(), "geonames-pcls-"))
 
 	writeFileSync(
@@ -175,7 +175,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 
 	hk.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
-	ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
+	await ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
 	// PCLS is a country-level code; the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(

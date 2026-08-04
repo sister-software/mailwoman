@@ -166,6 +166,8 @@
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.4"
+		"kysely": "^0.29.4",
+		"path-ts": "^2.1.0",
+		"spliterator": "^5.0.0"
 	}
 }

@@ -70,7 +70,7 @@ function freshDb(): DatabaseSync {
 	return db
 }
 
-beforeAll(() => {
+beforeAll(async () => {
 	dir = mkdtempSync(join(tmpdir(), "geonames-official-"))
 	altDir = mkdtempSync(join(tmpdir(), "geonames-official-alt-"))
 
@@ -113,10 +113,10 @@ afterAll(() => {
 	rmSync(altDir, { recursive: true, force: true })
 })
 
-test("V2 tags mark the official-language preferred name; transliterations and historic forms stay 0", () => {
+test("V2 tags mark the official-language preferred name; transliterations and historic forms stay 0", async () => {
 	const db = freshDb()
 
-	ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: altDir })
+	await ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: altDir })
 
 	const byName = (name: string): Row =>
 		db.prepare(`SELECT language, privateuse, official FROM names WHERE name = ?`).get(name) as Row
@@ -133,10 +133,10 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	db.close()
 })
 
-test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", () => {
+test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
 	const db = freshDb()
 
-	ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: join(altDir, "nope") })
+	await ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: join(altDir, "nope") })
 
 	const rows = db.prepare(`SELECT name, language, privateuse, official FROM names ORDER BY name`).all() as Row[]
 

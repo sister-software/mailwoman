@@ -180,7 +180,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	const db = new DatabaseSync(opts.adminOut)
 
-	const ingested = ingestGeonamesAliases(
+	const ingested = await ingestGeonamesAliases(
 		db,
 		[...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)],
 		opts.geonamesDir ?? geonamesDir(),

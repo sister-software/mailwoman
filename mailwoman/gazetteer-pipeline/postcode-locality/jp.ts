@@ -42,6 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
+import { TSVSpliterator } from "spliterator"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -108,12 +109,12 @@ function loadKenall(path: string): Map<string, string> {
 /**
  * GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins).
  */
-function loadGeonamesPoints(path: string): Map<string, [number, number]> {
+async function loadGeonamesPoints(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	for (const line of readFileSync(path, "utf8").split("\n")) {
-		const f = line.replace(/\n$/, "").split("\t")
-
+	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB). `header: false` is
+	// load-bearing: the GeoNames postal dump is headerless, so row 1 would be read as column names.
+	for await (const f of TSVSpliterator.fromAsync(path, { header: false })) {
 		if (f.length > 10 && f[1]) {
 			const lat = pyFloat(f[9])
 			const lon = pyFloat(f[10])
@@ -150,7 +151,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		process.exit(1)
 	}
 
-	const points = loadGeonamesPoints(args.geonames)
+	const points = await loadGeonamesPoints(args.geonames)
 
 	const admin = new DatabaseSync(args.adminDb)
 	const ph = PLACETYPES.map(() => "?").join(",")

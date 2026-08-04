@@ -54,7 +54,7 @@ function fixtureDB(): DatabaseSync {
 }
 
 describe("ingestGeonamesPostal", () => {
-	it("folds one medoid row per normalized code, with the display form as an alt name", () => {
+	it("folds one medoid row per normalized code, with the display form as an alt name", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "gn-postal-"))
 
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
@@ -72,7 +72,7 @@ describe("ingestGeonamesPostal", () => {
 		)
 
 		const db = fixtureDB()
-		const result = ingestGeonamesPostal(db, ["CZ"], dir)
+		const result = await ingestGeonamesPostal(db, ["CZ"], dir)
 
 		expect(result.inserted).toBe(2)
 		expect(result.byCountry.CZ).toBe(2)
@@ -99,10 +99,10 @@ describe("ingestGeonamesPostal", () => {
 		expect(names).toEqual(["110 00", "11000"])
 	})
 
-	it("reports missing country files instead of throwing", () => {
+	it("reports missing country files instead of throwing", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "gn-postal-empty-"))
 		const db = fixtureDB()
-		const result = ingestGeonamesPostal(db, ["FI"], dir)
+		const result = await ingestGeonamesPostal(db, ["FI"], dir)
 
 		expect(result.inserted).toBe(0)
 		expect(result.missing).toEqual(["FI"])

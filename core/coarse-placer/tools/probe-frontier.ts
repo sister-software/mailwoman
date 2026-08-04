@@ -21,6 +21,9 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
+import { join } from "path-ts"
+import { TSVSpliterator } from "spliterator"
+
 import { dataRootPath } from "../../utils/data-root.ts"
 import { corePackagePath } from "../../utils/repo.ts"
 import { median } from "../../utils/stats.ts"
@@ -127,7 +130,7 @@ export async function probeFrontier(
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
 	const { ISO2_TO_NAME } = await import("@mailwoman/codex/country")
 
-	const meta = JSON.parse(readFileSync(`${modelDir}/meta.json`, "utf8")) as CoarsePlacerMeta
+	const meta = JSON.parse(readFileSync(join(String(modelDir), "meta.json"), "utf8")) as CoarsePlacerMeta
 	// The deployed bundle is int8-per-row quantized — fromArtifactDir dequantizes via meta.scales.
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)
@@ -143,9 +146,8 @@ export async function probeFrontier(
 
 	const all: Q[] = []
 
-	for (const line of readFileSync(CITIES, "utf8").split("\n")) {
-		if (!line) continue
-		const f = line.split("\t")
+	// `header: false` — cities15000 is headerless, so row 1 is a city.
+	for await (const f of TSVSpliterator.fromAsync(CITIES, { header: false })) {
 		const name = f[1]
 		const cc = f[8]
 
