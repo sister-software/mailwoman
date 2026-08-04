@@ -94,7 +94,8 @@ record is a step short of it.
 - **You want to scope the data to what you serve.** Coverage is a set of downloads, so a France-only
   deployment carries France-sized artifacts.
 - **You have Nominatim clients already written.** `@mailwoman/nominatim` serves `/search`, `/reverse`
-  and `/status` on a compatible surface, so the swap does not touch calling code —
+  and `/status` on a compatible surface, so the swap does not touch calling code for `/search` and
+  `/status` — `/reverse` returns an empty result until you build a full WOF distribution and mount it —
   [Swap in for Nominatim](../../developers/tutorials/swap-in-for-nominatim.mdx) walks it.
 
 ## The two compose

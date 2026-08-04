@@ -95,7 +95,7 @@ for the shipped model.
 - [`@mailwoman/core`](../core) — pipeline coordinator, types, decoder
 - [Neural Classification concepts](https://mailwoman.sister.software/articles/concepts/neural-classification/)
 - [ONNX Runtime concepts](https://mailwoman.sister.software/articles/concepts/onnx-runtime/)
-- [What Mailwoman Is](https://mailwoman.sister.software/articles/concepts/what-mailwoman-is/)
+- [What Mailwoman Is](https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is)
 
 ## License
 

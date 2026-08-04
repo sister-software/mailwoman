@@ -75,8 +75,8 @@ before blocking can use them.
 - **Scoring model:** Fellegi-Sunter with label-free EM, term frequency adjustment
 - **Learned scorer:** the bundled `DEDUP_GBT_MODEL`, on by default for single-dataset dedup
 - **Threshold:** `DEDUP_GBT_META.recommendedThreshold` (2.8324) while the bundled model is active,
-  otherwise 0. The unit is a match weight in bits, not a probability, so a 0-to-1 value is a category
-  error here. Higher is stricter.
+  otherwise 0. The unit is the GBT's own logit, not a Fellegi-Sunter match weight in bits and not a
+  probability, so a 0-to-1 value is a category error here. Higher is stricter.
 - **Linkage:** single (connected components), with average linkage available for the over-merge case
 
 ## CLI

@@ -192,6 +192,11 @@ builds without renaming anything.
 
 ## Verify
 
+If you built [your own image](#4-build-your-own-image-when-the-published-one-does-not-fit) in step 4:
+those pins are ahead of npm as this page is written — `mailwoman.Dockerfile` names 8.7.0, `npm view
+mailwoman version` reports 8.6.0 — so that build fails at `npm install` until 8.7.0 publishes. Check the
+published version before you build, and back the pins off to it if you hit this first.
+
 The health route is the image's own health-check target, so a green check and a successful curl are the
 same signal:
 

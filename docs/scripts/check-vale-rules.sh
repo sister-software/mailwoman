@@ -42,7 +42,10 @@ DOCS_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 # API-key / data-layer / geocoding-direction terms and the ease-claim stock
 # phrases, and dirty.md grew one hit for each. Raised 29 -> 48 when
 # Spelling.yml (US English) landed with one fixture line per inflection.
-MIN_DIRTY_ERRORS=48
+# Raised 48 -> 52 when the wave-2 review found four Spelling.yml swap
+# entries (metre, kilometres, neighbouring, normalises) with no fixture line
+# exercising them; dirty.md now carries one hit for each.
+MIN_DIRTY_ERRORS=52
 RULE_FILES=(BannedWords StockPhrases Anthropomorphism Weasel Terms Spelling)
 
 cd "$DOCS_DIR"

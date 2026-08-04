@@ -19,10 +19,11 @@
  *
  *   GUARD 2 — homonyms. Un-links a node whose MATCHED SURFACE (not its term) is listed in the
  *   `noAutoLink` option. This is a surface-level suppression, so the term itself keeps its tooltip
- *   wherever it is written in full: suppressing "state" leaves "region" linking, and suppressing
- *   "tier" leaves "label tier" linking. See the option's comment in docusaurus.config.ts for the two
- *   false-positive classes it exists for. Surfaces are compared lowercased, with the same "s"/"es"
- *   plural allowance the upstream matcher applies, so one entry covers "State", "states" and "States".
+ *   wherever it is written in full: suppressing "state" leaves "region" linking, and leaves the FST
+ *   alias "finite-state transducer" linking too, even though it contains "state". See the option's
+ *   comment in docusaurus.config.ts for the two false-positive classes it exists for. Surfaces are
+ *   compared lowercased, with the same "s"/"es" plural allowance the upstream matcher applies, so one
+ *   entry covers "State", "states" and "States".
  */
 
 import { remarkPlugin as baseRemarkPlugin } from "docusaurus-plugin-glossary"

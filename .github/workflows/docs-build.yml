@@ -148,9 +148,11 @@ jobs:
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: docs/scripts/check-vale-rules.sh
 
-      # Whole-corpus run — the nine-page seed site plus the writing system + templates under
-      # docs/engineering (see lint:prose's targets in docs/package.json). Measured at head: 16
-      # files, 0 alerts, sub-second, so there's no changed-files scoping to maintain.
+      # Whole-corpus run — every page under docs/articles plus the writing system + templates under
+      # docs/engineering (see lint:prose's targets in docs/package.json). Measured at head: 85 files
+      # (78 published pages), 0 alerts, sub-second, so there's no changed-files scoping to maintain.
+      # The count will drift as pages are added; the point that matters doesn't — this step is cheap
+      # enough to run against the whole corpus every time rather than scope itself to changed files.
       - name: Prose lint
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
         run: yarn workspace @mailwoman/docs lint:prose

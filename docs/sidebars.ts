@@ -12,7 +12,7 @@ import type { SidebarsConfig } from "@docusaurus/plugin-content-docs"
 // State as of the docs-reorg Task 5 skeleton cutover: the old seven-sidebar tree
 // (startHere / use / understand / reference / contribute / legal) is gone with the
 // content it indexed — everything it listed now lives unpublished under
-// docs/records/site-2026-08/. Four doors ship here, and they are the whole published site:
+// docs/records/site-2026-08/. Five doors ship here, and they are the whole published site:
 //
 // - `product` — what the engine does, where it runs, what it replaces, what data it pulls.
 // - `solutions` — the same engine addressed by the pain a buyer arrives with, not by feature.

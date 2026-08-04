@@ -9,10 +9,10 @@
  *   its artifacts live on the public bucket, where they land on disk, and the present/missing/stale
  *   decision. `commands/data/pull.tsx` and `commands/data/status.tsx` own the IO (network + fs).
  *
- *   SURVEY (2026-08-03, this task): `rclone lsjson -R --files-only :s3:nexus-public/mailwoman`
- *   against the `nexus-public` R2 bucket (creds: `RCLONE_S3_PUBLIC_*` in the repo `.env`, mapped onto
- *   the on-the-fly `:s3:` remote per `commands/tiles/publish.tsx`'s documented env-var swap). 413
- *   files total. What's there, by top-level prefix:
+ *   SURVEY (2026-08-03, this task): a one-time enumeration of what the public bucket serves, recorded
+ *   here as the paper trail behind the `BUNDLES` table below. Every artifact resolves against
+ *   `PUBLIC_BUCKET_BASE_URL` — a public, unauthenticated HTTPS base. No bucket name, no credentials,
+ *   nothing a consumer of this package configures. 413 files total. What's there, by top-level prefix:
  *
  *   - `gazetteer/<date>/candidate.db` — 12 dated builds, `2026-06-20b` .. `2026-07-07a`. Only the
  *     LATEST is live (matches `doctor/checks.ts`'s `CANDIDATE_URL` before this change): 1,652,916,224

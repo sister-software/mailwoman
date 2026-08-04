@@ -23,7 +23,9 @@ run those workloads, and this page links them.
 ## Installing
 
 The number that surprises people first: a full install of the entry package is 707 MB, and 523 MB of
-that is the ONNX runtime.
+that is the ONNX runtime. A different host gets different numbers for the same install —
+[Deployment options](../../product/deployment-options.mdx#on-a-serverless-runtime) measures 746/500/303
+on a serverless host and reconciles the gap against these two figures.
 
 ```bash
 npm init -y && npm install --omit=dev mailwoman @mailwoman/neural-weights-en-us

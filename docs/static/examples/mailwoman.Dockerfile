@@ -19,6 +19,11 @@ WORKDIR /app
 
 # Pin the line you tested against. The published image uses "latest" on purpose, so that each rebuild
 # integration-tests the current release; a deployment usually wants the opposite.
+#
+# These pins are ahead of npm as this file is written: npm's latest is 8.6.0, this Dockerfile names
+# 8.7.0, and the build fails on `npm install` until 8.7.0 publishes. That gap is accepted, not
+# overlooked — pin the line you actually tested against, check `npm view mailwoman version` before you
+# build, and back the numbers off to the published line if you hit it first.
 RUN npm init -y >/dev/null \
 	&& npm install --omit=dev --no-audit --no-fund --loglevel=error \
 		mailwoman@8.7.0 \

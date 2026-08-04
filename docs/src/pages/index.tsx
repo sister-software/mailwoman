@@ -44,8 +44,9 @@ function HomepageHeader(): ReactNode {
 }
 
 /**
- * The three-way fork. A visitor arrives wanting one of three things — to wire it up, to price it, or to see whether it
- * works at all — and each card ends in exactly one link.
+ * The five-way fork. A visitor arrives wanting one of five things — to wire it up, to price it, to see whether it works
+ * at all, to make the case for it to someone else, or to check the claims against published numbers — and each card
+ * ends in exactly one link.
  */
 function Fork(): ReactNode {
 	return (
@@ -101,6 +102,36 @@ function Fork(): ReactNode {
 							</code>
 							<p className={styles.cardLinks}>
 								<Link to="/demo">Open the demo →</Link>
+							</p>
+						</div>
+					</div>
+					<div className="col col--4">
+						<div className={styles.galleryCard}>
+							<p className={styles.cardJob}>Make the case for it</p>
+							<h3 className={styles.cardTitle}>A flat number, not a meter</h3>
+							<p className={styles.cardBody}>
+								Metered geocoding prices every lookup, so the bill moves with your address volume — the input your team
+								controls least. A flat license fixes the number finance budgets against, whatever the volume does this
+								quarter.
+							</p>
+							<code className={styles.cardTransform}>metered: $/request · flat: $250/mo, any volume</code>
+							<p className={styles.cardLinks}>
+								<Link to="/docs/solutions/cut-the-per-request-bill">Read the case →</Link>
+							</p>
+						</div>
+					</div>
+					<div className="col col--4">
+						<div className={styles.galleryCard}>
+							<p className={styles.cardJob}>See the proof</p>
+							<h3 className={styles.cardTitle}>Every number ships with its command</h3>
+							<p className={styles.cardBody}>
+								Published panels against the French national address register and a Belgian sample, plus the reading
+								guide for the ways a geocoding benchmark reads better than it is. Script, inputs and result file,
+								published beside every score.
+							</p>
+							<code className={styles.cardTransform}>resolve rate ≠ accuracy · panel ≠ population</code>
+							<p className={styles.cardLinks}>
+								<Link to="/docs/resources/benchmarks">See the benchmarks →</Link>
 							</p>
 						</div>
 					</div>

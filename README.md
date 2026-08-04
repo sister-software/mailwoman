@@ -88,7 +88,7 @@ console.log(decodeAsJson(tree))
 The full library surface — confidence, the per-stage pipeline result, resolution, browser
 loading, and configuration — is documented in the [`mailwoman` package
 README](./mailwoman/README.md) and in [Getting
-started](https://mailwoman.sister.software/articles/getting-started/).
+started](https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse).
 
 ## Drop-in servers
 

@@ -19,7 +19,8 @@ import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
  *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
  *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
  *
- * Suppression is by SURFACE, not by term: `region` still links, and so does the full phrase `label tier`. Multi-word
+ * Suppression is by SURFACE, not by term: `region` still links, and so does a multi-word phrase that merely contains a
+ * suppressed word, like the FST alias `finite-state transducer` (contains "state", still links in full). Multi-word
  * terms like `input register` are untouched — they carry their sense in the phrase, which is exactly what keeps them
  * out of this list.
  */
@@ -281,7 +282,7 @@ const config: Config = {
 					type: "docSidebar",
 					sidebarId: "developers",
 					position: "left",
-					label: "Docs",
+					label: "Developers",
 				},
 				{
 					type: "docSidebar",

@@ -40,14 +40,15 @@ Each line is one assumption and one address that breaks it.
 
 ## Streets
 
-- **A street name ends in a type word.** `Piccadilly`, `Broadway`, `The Strand`. Three of the
+- **A street name ends in a type word.** `Piccadilly`, `Broadway`, `Strand`. Three of the
   best-known streets in the English-speaking world carry no suffix.
 - **There is exactly one type word, and it comes last.** `rue de Rivoli` puts it first.
   `Avenue Road` in Toronto is built from two of them, so a suffix-stripping pass leaves nothing behind.
 - **A street name contains no digits.** `Plein 1944` in Nijmegen is named after a year, and it takes
   house numbers after that year.
-- **A street name is unique within a city.** London has seventeen High Streets, so `10 High Street` in
-  London is seventeen addresses.
+- **A street name is unique within a city.** London has sixteen streets whose name is some form of
+  High Street — plain in several postcodes, with a place folded in elsewhere, like Islington High
+  Street and Camden High Street — so `High Street, London` alone never picks out a single one.
 - **Every address has a street.** Japanese addresses number blocks rather than streets. Mannheim
   writes `R 5, 6-13`, where `R 5` is a block in a lettered grid.
 

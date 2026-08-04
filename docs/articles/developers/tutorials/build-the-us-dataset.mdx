@@ -25,9 +25,12 @@ Read the first two before you start anything. They are the ones that stop a run 
   Census TIGER archives for Vermont's 14 counties, 140 MB of finished shards, and a 1.65 GB gazetteer.
   That sums to 8.94 GB, which `du -sh` will report back to you as `8.4G` because `du` counts in GiB.
   Step 9 gives the national figures.
-- **8 GB of free RAM.** The ingest peaked at 7.45 GB resident (`/usr/bin/time -v`, maximum resident set
-  size 7,445,032 KB). Everything after it stays under 500 MB. If you have less, the ingest is the step
-  that fails, and it fails at the end of a 21-minute run.
+- **8 GB of free RAM.** The ingest peaked at 7.62 GB resident (`/usr/bin/time -v` reports "maximum
+  resident set size 7,445,032 KB", and that field is kibibytes despite the label, so the GB figure is
+  7,445,032 × 1024 ÷ 1e9). Everything after it stays under 500 MB. That leaves under 400 MB of headroom
+  against the 8 GB figure above, tighter than it looks — treat 8 GB as a floor, not a comfortable
+  margin. If you have less, the ingest is the step that fails, and it fails at the end of a 21-minute
+  run.
 - **The CLI, and Node 24.18 or newer:**
 
   ```bash

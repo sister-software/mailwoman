@@ -9,7 +9,7 @@ role: explanation
 ## The question
 
 A geocoder reports that it resolved 98% of your file. What do you now know? Less than the sentence
-suggests, and the gap is where geocoding benchmarks go wrong — including ours, three times, on the two
+suggests, and the gap is where geocoding benchmarks go wrong — including ours, four times, on the two
 pages next door.
 
 This page is the reading guide for those pages. It is also the checklist we hold our own panels to,
@@ -107,8 +107,11 @@ Three mechanisms break the extrapolation:
 
 - **Model load is excluded, and it is not free.** Both figures start after the weights are in memory.
   A process that loads the model per request measures something else entirely.
-- **Inference is CPU-bound and thread-capped.** The parse runs on a bounded thread pool, so a second
-  concurrent request does not get its own free core, and a smaller host does not scale down linearly.
+- **Inference blocks the JavaScript thread.** `onnxruntime-node`'s `session.run()` runs synchronously on
+  the event loop rather than on a worker pool, so a second concurrent request does not get its own free
+  core, and a smaller host does not scale down linearly.
+  [Geocode a large file at volume](../../developers/how-to/batch-geocode-at-volume.mdx) has the
+  measurements.
 - **The gazetteer is read from disk.** A warm page cache and a cold one give different numbers for the
   same query, and our panels run warm — the same shards were open moments earlier.
 
@@ -137,7 +140,7 @@ A reader whose re-run disagrees with ours needs those three to tell data drift f
 without them a differing number is uninterpretable rather than informative. The French file also
 records its BAN release, on the committed panel, because that is a property of the addresses.
 
-**Instrument defects get published too.** Three so far, all in the Belgian script, all found after
+**Instrument defects get published too.** Four so far, all in the Belgian script, all found after
 its first numbers were written:
 
 1. It collapsed the parsed and resolved locality checks into one metric, scoring a row that landed in
@@ -147,9 +150,12 @@ its first numbers were written:
 3. It counted a locality name match as a resolution without checking the country, scoring a Belgian
    commune name matched in the Netherlands and another matched in France as hits — on a panel whose
    subject is cross-border misrouting. That one cost two rows in each of two arms.
+4. It read the tier field alone, so a row that returned no coordinate still carried `admin` — three
+   rows in each of the first two arms, which is why an early table read `admin: 30` one line under
+   `returned a coordinate: 27`.
 
 Each is fixed in the published script, and each is named on the page rather than corrected without a
-note, because a benchmark's instrument is part of its result. The pattern across all three is the
+note, because a benchmark's instrument is part of its result. The pattern across all four is the
 same: the metric counted something adjacent to the claim and the aggregate looked reasonable, so only
 reading the per-row records caught it.
 
