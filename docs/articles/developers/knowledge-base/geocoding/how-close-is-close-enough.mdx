@@ -31,14 +31,14 @@ it gave.
 Take one resolved address and hand it to three systems.
 
 **A jurisdiction check** wants to know which city, county or regulatory area this facility falls in.
-It needs the point to land inside the correct polygon, and a couple of kilometres of slop inside a
-polygon that spans tens of kilometres changes nothing. A town centroid is a complete answer.
+It needs the point to land inside the correct polygon, and a couple of kilometers of slop inside a
+polygon that spans tens of kilometers changes nothing. A town centroid is a complete answer.
 
 **A record matcher** wants to know whether two records describe the same _building_. Its tolerance is
-tens of metres, because a town centroid fuses every facility in town into one entity. A coordinate
+tens of meters, because a town centroid fuses every facility in town into one entity. A coordinate
 that satisfied the jurisdiction check destroys this one.
 
-**A dispatcher** wants the door. Its tolerance is metres, and it cares about the tail rather than the
+**A dispatcher** wants the door. Its tolerance is meters, and it cares about the tail rather than the
 median — a routing system that is excellent on average and catastrophic once a week is a routing
 system with a weekly incident.
 
@@ -58,7 +58,7 @@ result moving from the bottom rung to the top one after a per-state download.
 
 The practical rule is that a consumer with a building-grain tolerance should treat an
 administrative-tier result as a building it has not located — even when the centroid happens to be
-three kilometres away and looks close on a map. The tier tells you what kind of thing you were given,
+three kilometers away and looks close on a map. The tier tells you what kind of thing you were given,
 and no distance can substitute for that.
 
 ## The radius is a promise, not an error bar
@@ -80,7 +80,7 @@ Once the radius means what it says, "close enough" becomes arithmetic you can ru
 > My tolerance is 50 m. This result reports a 90% radius of 141 m. That is not close enough — abstain,
 > or escalate this one.
 
-Which is a far better position than trusting a bare coordinate that is secretly a city centre.
+Which is a far better position than trusting a bare coordinate that is secretly a city center.
 
 ## The two ways a number can be absent
 
@@ -119,7 +119,7 @@ The tier and the radius are the fields that carry the precision claim. The coord
 ## What it costs
 
 Reporting a grain and a radius instead of one score pushes a decision onto the consumer, and that is a
-real cost: you have to decide your own tolerance, in metres, and write the comparison. Systems that
+real cost: you have to decide your own tolerance, in meters, and write the comparison. Systems that
 return a single confidence score are easier to consume and are answering a question they were never
 given the inputs for, because "close enough" is a comparison against a tolerance the geocoder was
 never told.

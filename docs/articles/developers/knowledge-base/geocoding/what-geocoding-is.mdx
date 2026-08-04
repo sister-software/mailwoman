@@ -39,7 +39,7 @@ polygon, a county polygon and a country polygon at once, so which one answers th
 
 Mailwoman does both. On the reverse path it takes the places whose bounding boxes contain the point,
 smallest area first, tests each one's real boundary, and reports in a `containment` field whether the
-deepest answer was confirmed by a polygon or fell back to the nearest centre. [Reverse geocode a
+deepest answer was confirmed by a polygon or fell back to the nearest center. [Reverse geocode a
 coordinate](../../how-to/reverse-geocode.mdx) is the working version, and that field is why
 [Gazetteers](./gazetteers.mdx) spends a section on which places have a boundary and which have only a
 dot.
@@ -51,16 +51,16 @@ This is the distinction that costs people the most, so it is worth being slow ab
 When a geocoder resolves `Springfield, IL`, two separate things come back. There is the **place**: a
 record in a gazetteer, with a stable identifier, a name, a type (this is a city, not a county), and a
 chain of parents (in Sangamon County, in Illinois, in the United States). And there is the
-**coordinate**, which is a property of that record — the centre of whatever geometry the gazetteer
+**coordinate**, which is a property of that record — the center of whatever geometry the gazetteer
 holds for it, where it holds one at all.
 
 Those two can fail independently, and that is the whole reason to keep them apart in your head:
 
 - **Right place, coarse coordinate.** The geocoder found the correct city and returned a point in the
   middle of it. Every downstream question about jurisdiction, coverage or territory is answered
-  correctly. Every question about routing is answered wrongly, by kilometres.
+  correctly. Every question about routing is answered wrongly, by kilometers.
 - **Wrong place, fine coordinate.** The geocoder found a different Springfield and returned a rooftop
-  in it. The coordinate carries eight decimal places and is off by four hundred kilometres.
+  in it. The coordinate carries eight decimal places and is off by four hundred kilometers.
 
 The second failure is the dangerous one, because nothing in the output looks wrong. Eight decimal
 places of latitude is about a millimetre of ground, and decimals are a property of the number's
@@ -100,11 +100,11 @@ the one you meant or it is not, and the distance between them is beside the poin
 returns the wrong Springfield is not 400 km accurate, it is wrong.
 
 **How far is the coordinate from the true location?** A distance question, and the only one of the
-three that a number in metres answers. It is meaningful only once the first question is settled yes.
+three that a number in meters answers. It is meaningful only once the first question is settled yes.
 
 **Is it close enough for what I am doing?** A comparison, not a property. Assigning a facility to a
-regulator wants the right polygon and does not care about kilometres. Sending a van to a loading dock
-cares about metres and does not care that the town was right. Both consumers can read the same result
+regulator wants the right polygon and does not care about kilometers. Sending a van to a loading dock
+cares about meters and does not care that the town was right. Both consumers can read the same result
 and disagree about whether it worked.
 
 A single accuracy number cannot answer all three, which is why a result worth trusting reports its

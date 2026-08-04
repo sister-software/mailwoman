@@ -21,11 +21,11 @@ So what is in one, what is not, and how good is it?
 A gazetteer is the index at the back of an atlas, with one addition: it records which places sit
 inside which. `Sangamon County` knows it is in `Illinois`, which knows it is in the `United States`.
 That chain — the **containment hierarchy** — is what turns a list of names into something you can
-reason with. Without it, `Springfield` is ninety-two names. With it, `Springfield` inside `Illinois`
-is one.
+reason with. Without it, `Springfield` is ninety-two names in the United States alone. With it,
+`Springfield` inside `Illinois` narrows to the handful that sit in one state.
 
 What a gazetteer is not is an address database. It holds places — countries, regions, counties,
-towns, neighbourhoods, sometimes venues. It does not hold `413 S 8th St`. Rooftop coordinates come
+towns, neighborhoods, sometimes venues. It does not hold `413 S 8th St`. Rooftop coordinates come
 from a different kind of artifact entirely: national address registers, survey files, per-state point
 files. A geocoder that resolves to a building is consulting at least two datasets, and only one of
 them is the gazetteer.
@@ -42,7 +42,7 @@ built at Mapzen and now maintained around the SFO Museum. Four properties made i
   administrative levels nest. OpenStreetMap does not supply one; GeoNames supplies part of one.
 - **Names in every language a place has them in**, including historical and colloquial forms, so
   `Munich`, `München` and `Monaco di Baviera` land on the same record.
-- **An open licence** compatible with shipping the derived artifacts.
+- **An open license** compatible with shipping the derived artifacts.
 
 The reference build these docs are written against — `admin-global-priority.db`, sealed 2026-08-02,
 md5 `515beab21eaaea13f77defc6afd9374d` — carries **4,765,307 current places across 244 countries**.
@@ -51,7 +51,7 @@ That is the shape of the world Mailwoman can name.
 ## The part nobody warns you about: half of it is dots
 
 A gazetteer record's position can be one of two very different things. It can be a **polygon** — the
-place's actual boundary, from which a centre can be computed and inside which a point can be tested.
+place's actual boundary, from which a center can be computed and inside which a point can be tested.
 Or it can be a **point** — one coordinate, with no extent, because whoever contributed the record had
 a coordinate and not a shape.
 
@@ -74,7 +74,7 @@ quality problem. Of Japan's 43,868 current locality-rank places, 43,368 are poin
 47 regions and 1,738 counties carries a real extent. So the boundaries exist at prefecture and county
 grain and stop there — which mirrors how Japanese addressing works, since it numbers blocks within
 wards rather than buildings along named streets. The gazetteer is not broken; it is recording a
-country whose fine-grained administrative units were contributed as centres.
+country whose fine-grained administrative units were contributed as centers.
 
 The consequence for a geocoder is direct. A containment test against a point cannot succeed, because a
 point has no inside. Any operation that asks "which locality contains this coordinate" loses every
@@ -83,7 +83,7 @@ gap that a spot check in Berlin will never find and a spot check in Osaka will f
 
 Mailwoman's reverse path reports the difference rather than hiding it. Its `containment` field reads
 `polygon` when a real boundary confirmed the deepest place and `approximate` when nothing had a
-boundary and the nearest centre won instead. Read that field, and a country's point-shaped records
+boundary and the nearest center won instead. Read that field, and a country's point-shaped records
 announce themselves in the output. [Reverse geocode a coordinate](../../how-to/reverse-geocode.mdx)
 has the walkthrough.
 
@@ -94,13 +94,13 @@ sentence sounds like a truism and it is the source of a whole class of productio
 failure does not look like a missing record. It looks like a wrong answer.
 
 The pattern: a name the postal service accepts as a city is carried by the gazetteer at a different
-rank — a neighbourhood, a borough, an alias attached to some other town — and the resolver, looking
+rank — a neighborhood, a borough, an alias attached to some other town — and the resolver, looking
 for a locality, does not find the record you expected. What it finds instead is whatever else in that
 region happens to carry the name. The output is a coordinate, in the right country, at the right
 administrative tier, for the wrong place. Nothing in it is flagged, because from the resolver's
 position nothing went wrong.
 
-The defence is to read the ancestry rather than the coordinate. A result that names the record it
+The defense is to read the ancestry rather than the coordinate. A result that names the record it
 landed on lets you check that the record is the one you meant; a result that gives you only a point
 does not. [Two addresses, one building](../postal/two-addresses-one-building.mdx) covers the postal
 side of this — why a building's postal city and its municipality are different names for different
@@ -116,7 +116,7 @@ was involved in getting from one to the other. That constraint is also what keep
 enough to run from disk — see [The two architectures](./the-two-architectures.mdx).
 
 This is also why a gazetteer's hierarchy is more valuable than its coordinate precision for most
-questions. Getting the town's centre wrong by two kilometres costs you two kilometres. Getting the
+questions. Getting the town's center wrong by two kilometers costs you two kilometers. Getting the
 town's parent wrong costs you the state.
 
 ## What it costs

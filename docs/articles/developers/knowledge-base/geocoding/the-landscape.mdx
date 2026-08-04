@@ -31,7 +31,7 @@ If your addresses live in a known universe — a utility's service addresses, a 
 one city's delivery points — you may not have a geocoding problem at all. You have a matching problem,
 and it is much easier.
 
-The approach is to normalise both sides and compare. Lowercase, strip punctuation, expand the standard
+The approach is to normalize both sides and compare. Lowercase, strip punctuation, expand the standard
 abbreviations, drop the tokens your database does not carry, then take the best fuzzy match above a
 threshold. Against a bounded, curated universe this is accurate, fast, trivially debuggable, and takes
 an afternoon. Nothing in this shelf argues against it, and a team that ships it and moves on has made
@@ -40,20 +40,20 @@ a good decision.
 The same is true of two other reductions:
 
 - **Postcode-only.** Pull the postcode with one pattern per country, look it up in a
-  postcode-to-coordinate table, return the centre. In countries where a postcode covers a handful of
+  postcode-to-coordinate table, return the center. In countries where a postcode covers a handful of
   delivery points this is nearly building-grain. In countries where it covers a rural route it is not,
   and the approach has no way to tell you which case you are in.
-- **Locality-only.** Find the town name, return its centre, ignore the rest. For counting customers by
+- **Locality-only.** Find the town name, return its center, ignore the rest. For counting customers by
   metro area or assigning sales territories, the finer detail was never going to change the answer.
 
 What all three share is a boundary condition, and it is worth naming because it is where they stop:
 they work on the addresses you already know about. A new customer, a building finished last month, an
-address in a format the abbreviation table never met — the normaliser returns nothing, the postcode
+address in a format the abbreviation table never met — the normalizer returns nothing, the postcode
 pattern extracts nothing, and there is no gradient between a match and no match to escalate on. They
 also give you no signal about which case you are in, so the failure arrives as silence.
 
 Pick the cheapest approach that clears your actual requirement, and stop there. A geocode accurate to
-five metres when the application needs five kilometres is engineering you paid for and cannot use.
+five meters when the application needs five kilometers is engineering you paid for and cannot use.
 
 ## Hosted APIs
 
@@ -126,7 +126,7 @@ Where it does not fit, stated plainly:
 
 ## The one thing worth deciding first
 
-Not which tool. Your tolerance — in metres, written down — and whether your address universe is
+Not which tool. Your tolerance — in meters, written down — and whether your address universe is
 bounded or open. Those two facts eliminate most of this page. Everything else is a question about
 operations, and operations questions are easier to answer once the requirement is a number instead of
 "as accurate as possible".

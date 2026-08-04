@@ -39,7 +39,7 @@ like a description of addresses rather than a description of one country's conve
 
 Germany writes the house number after the street. France writes the postcode before the town.
 Japanese addresses start at the prefecture and work inward, and number blocks rather than streets —
-so there is no street name to parse at all. Mannheim's city centre is a lettered grid where `R 5` is a
+so there is no street name to parse at all. Mannheim's city center is a lettered grid where `R 5` is a
 block, not a road. [Addressing around the world](../postal/addressing-around-the-world.mdx) walks
 those conventions properly.
 
@@ -47,7 +47,7 @@ The structural point is not that there are exceptions. It is that there is no pr
 the exceptions to be exceptions to. Each convention is complete and internally consistent in its own
 country, so a grammar cannot be extended into a universal one — it can only be replaced by a
 per-country set, and the number of countries is not the problem. The problem is that a single input
-string does not come labelled with which set to apply, so choosing the grammar requires having
+string does not come labeled with which set to apply, so choosing the grammar requires having
 already partly understood the string.
 
 ## Two: the ambiguity is intrinsic, not incidental
@@ -75,8 +75,8 @@ is what the classifier has not looked at yet.
 There are two ways out and neither removes the ambiguity. One is to reverse the order: propose the
 boundaries first, from structural cues rather than dictionaries, and only then ask what each proposed
 span is. The other is to decide both at once, over the whole string, so the label for one span can
-depend on its neighbours. Mailwoman does both — a grouping stage before the labelling stage, and a
-labelling stage that reads the entire input rather than one token at a time — which moves the decision
+depend on its neighbours. Mailwoman does both — a grouping stage before the labeling stage, and a
+labeling stage that reads the entire input rather than one token at a time — which moves the decision
 to where the most evidence is. It does not make the input unambiguous. `Springfield` on its own is
 undecidable no matter what reads it, because the information required is not in the string.
 
@@ -87,7 +87,7 @@ output for them is not a better guess. It is a result that says so.
 
 Gazetteers store `Montréal`, `İstanbul`, `São Paulo`, in title case, with the accents, under the
 official name. Users type `montreal`, on a phone, in one lowercase run, having learned from a decade
-of map search boxes that capitalisation is not required and diacritics are not reachable.
+of map search boxes that capitalization is not required and diacritics are not reachable.
 
 Lowercase is not degraded input. It is the register real users type, and a system that treats it as an
 error case has misidentified where its users live. The same is true of the colloquial name (`Bombay`
@@ -95,15 +95,15 @@ for `Mumbai`, `Saigon` for `Ho Chi Minh City`) — both names in each pair are i
 millions of people, and the choice between them can carry political weight. Rejecting one is rejecting
 real usage; silently rewriting it is making a decision on the user's behalf that they did not ask for.
 
-And the same is true of the wrong-but-workable name: the neighbourhood given as the city, the
+And the same is true of the wrong-but-workable name: the neighborhood given as the city, the
 independent city given as its larger neighbour, the postal town that is not the municipality. In every
 one of those cases the person supplied enough for a knowledgeable local to find the place. The parser
 failed because it was built for addresses rather than for people.
 
 The practical consequence is that case, accents and colloquial forms are signal to be handled rather
-than noise to be stripped — and that a normalisation which flattens them can destroy the evidence the
-labelling stage needed. [Handle messy input](../../how-to/handle-messy-input.mdx) shows what the
-pipeline absorbs unaided, what the normalise stage repairs, and the one case where stripping does harm.
+than noise to be stripped — and that a normalization which flattens them can destroy the evidence the
+labeling stage needed. [Handle messy input](../../how-to/handle-messy-input.mdx) shows what the
+pipeline absorbs unaided, what the normalize stage repairs, and the one case where stripping does harm.
 
 ## What follows from all three
 
