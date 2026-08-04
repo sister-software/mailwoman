@@ -25,7 +25,7 @@ a boundary-confirmed answer from a nearest-centroid one before anything downstre
 
 ## What you still carry
 
-Two limits decide whether this fits, and both arrive before the first lookup.
+Three limits decide whether this fits, and all three arrive before the first lookup.
 
 **The database is a local build.** Reverse geocoding needs an admin gazetteer carrying the
 `place_bbox` index, and that is not one of the four published bundles — `mailwoman data pull` ships
@@ -33,11 +33,18 @@ Two limits decide whether this fits, and both arrive before the first lookup.
 `mailwoman gazetteer build admin`, which costs hours of wall clock and tens of gigabytes of source
 data.
 
+**The polygon sidecar is a second build, and its coverage is per-country.** `mailwoman gazetteer
+polygons` produces it. Without it every result reads `approximate` by construction, because no
+point-in-polygon test is attempted; with it, only the countries in that sidecar get boundary
+confirmation. So a fleet running outside those countries reads `approximate` on every row, and the
+`containment` discriminator above stops discriminating. Decide the sidecar's country list from where
+your vehicles are, before you build it.
+
 **There is no address-level reverse.** The result is an administrative chain — neighborhood,
 locality, county, region, country — and never a house number. Having the US rooftop shards on disk
 does not change that, because the reverse path never consults an address-point database.
 
-[Reverse geocode a coordinate](../developers/how-to/reverse-geocode.mdx) carries both with their
+[Reverse geocode a coordinate](../developers/how-to/reverse-geocode.mdx) carries these with their
 transcripts, including the failure worth designing for: a coordinate outside every boundary you hold
 polygons for still gets an answer, so threshold `distanceKm` whenever `containment` reads
 `approximate`.
