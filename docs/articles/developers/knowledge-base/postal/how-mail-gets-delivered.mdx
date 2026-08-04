@@ -1,0 +1,90 @@
+---
+title: How mail gets delivered
+description: The address format exists because two readers use it in sequence — a sorting machine reading upward from the postcode, then a carrier reading downward from the name.
+role: explanation
+---
+
+# How mail gets delivered
+
+## The question
+
+Why is an address written in that order? The recipient's name goes at the top, where no machine needs
+it, and the routing code goes at the bottom, where a human reader arrives last. Turn the question
+around and it answers itself: who reads an envelope, in what order, and what does each reader need?
+
+## The analog
+
+Two readers, in sequence, with opposite requirements.
+
+The first is a sorting machine, and it reads from the bottom. It wants the country, then the postcode,
+then whatever narrows the delivery office — the coarse fields, which is why they sit on the last line.
+Give it those and it can put the envelope on the right truck without understanding a word of the rest.
+
+The second is a carrier, on foot or in a van, holding a tray already sorted into the order they walk.
+They read from the top: the name, the unit, the floor, the house number. The coarse fields are noise
+to them, because every envelope in the tray shares them.
+
+The format is the compromise. Fine detail at the top for the human, coarse routing at the bottom for
+the machine, and the address is read in both directions by different parties on the same journey.
+
+## What happens in between
+
+An envelope enters at a processing facility and passes an optical reader. If the reader resolves the
+address, a barcode is sprayed on the envelope and nothing reads the text again — the barcode carries
+the machine down to the delivery point, and the walk-sequence sort falls out of it.
+
+The interesting part is what happens when the reader fails. The image is sent to a person. In the US
+that is the Remote Encoding Center in Salt Lake City, "the first such center in use and the last one
+still standing," which receives about 2.3 million address images a day, all day, all year. The reason
+one facility can absorb that is that the machines improved: in the 1990s they "were able to read
+fewer than half of the addresses," and today "about 99 percent are readable"
+([USPS](https://news.usps.com/2024/04/23/the-postal-services-digital-detectives-are-marking-a-milestone/)).
+
+Below the keying operators there is another layer, and it is the one no database has. The carrier
+knows the building whose mailbox number does not match its door, the new block that reuses the
+address of the warehouse that stood there, the household that moved in March. Below that, and only
+then, is return-to-sender.
+
+## The escalation ladder
+
+Read those four layers as a design and the postal system's attitude to ambiguity becomes explicit:
+
+- The machine handles the easy majority for a cost close to zero.
+- A person keys the residue, for a cost that is small but not zero.
+- The carrier repairs what survives both, using knowledge that exists in one head on one route.
+- What survives all three is returned, not guessed at.
+
+Nothing in that chain resolves an ambiguous address by picking the most popular candidate. Each layer
+either resolves the item or hands it up to a more expensive reader with the ambiguity intact. That is
+a system built by people who found out what confident wrong answers cost.
+
+## What this implies for parsing
+
+A parser sits above the first rung of that ladder, and it can imitate the ladder's discipline or
+break it. Breaking it looks like answering a bare `Springfield` with one coordinate at high
+confidence because one of the [92 US places by that name](./falsehoods-about-addresses.mdx) is the most
+populous.
+
+Imitating it means three habits, and Mailwoman is built for all three. Report a confidence per
+component, so that a downstream system can route the uncertain ones to a person the way a processing
+plant routes an unreadable image
+([Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx)). Repair what is
+mechanically repairable and leave the rest alone
+([Handle messy input](../../how-to/handle-messy-input.mdx)). And separate "this string parsed" from
+"this address exists", which is the check a postal file answers and a parse cannot
+([Validate an address before you use it](../../how-to/validate-addresses.mdx)).
+
+## What it costs
+
+The escalation model is expensive for the postal service and cheap for the sender, and software
+inherits the same asymmetry pointing the other way. Surfacing uncertainty means your callers have to
+handle it: a confidence score nobody reads is worse than useless, because it looks like diligence.
+The value arrives only when something downstream — a review queue, a second data source, a form that
+asks the user again — is wired to the low-confidence branch.
+
+## Related
+
+- [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — the routing code the first reader needs.
+- [What an address is](./what-is-an-address.mdx) — why the instruction is addressed to an organization.
+- [Addressing around the world](./addressing-around-the-world.mdx) — the same two readers, in postal
+  systems that order the fields differently.

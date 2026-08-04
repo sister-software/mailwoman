@@ -1,0 +1,93 @@
+---
+title: Two addresses, one building
+description: Corner frontages, building names and unit numbering give one structure several correct addresses — what "the" address means, and what a geocoder owes you when systems disagree.
+role: explanation
+---
+
+# Two addresses, one building
+
+## The question
+
+Your database has two records. Same building, same footprint, two addresses that share no components
+beyond the town. Neither record is a typo and neither system that produced them is wrong. Which one is
+the address, and what should a geocoder hand back when it is asked about the other?
+
+## The analog
+
+Ask four people for a building's address and you get four answers, because each is answering for a
+different organization.
+
+The postal service answers with the form its address file accepts, which is the form that gets mail
+sorted. Emergency dispatch answers with the entrance a vehicle can reach, which is a different door on
+a different street when the building takes a corner. A tax assessor answers with the parcel, which may
+carry a number from before the building existed. A visitor answers with the name on the front — and a
+name works as an address for a courier who has been there and for nobody's sorting machine.
+
+There is no fifth answer underneath these four that the four are approximating. The address is
+selected by the asker.
+
+## Where the copies come from
+
+**Corner frontages.** A building on the corner of two named streets has two street frontages and can
+be numbered on either. The postal address takes one; the other stays a valid way to describe the same
+door, and it is the one a caller reports when they walked in from that side.
+
+**Names used as addresses.** A building with a name is addressed by that name in the register of
+things people say, and by a number in the register a postal file accepts. The two coexist for the same
+structure, and the name-shaped one carries prestige, which is why it survives being useless to a
+sorting machine.
+
+**Unit numbering.** One street address and two hundred delivery points is the normal condition for an
+apartment block or an office tower. The building's footprint is one polygon; the addresses are two
+hundred labels attached to it, distinguished by a component that has no geometry of its own — a floor,
+a suite, a letter.
+
+**Boundaries under the building.** A structure can sit across a municipal line, so its legal
+municipality and its postal town disagree by design. It can be in an annexed area whose postal town
+still names the town that annexed it. Brooklyn is a postal city that the Postal Service accepts, and
+the legal municipality is New York; both appear in real records, and a system that treats one as a
+misspelling of the other loses information.
+
+## What a geocoder owes you
+
+The behavior worth asking for is that the result state what kind of answer it is, rather than
+flattening four kinds into one coordinate.
+
+A Mailwoman geocode carries that in the result: `resolution_tier` names the data that answered,
+`uncertainty_m` bounds it, `hierarchy` gives the administrative chain the components resolved
+through, and `candidates` keeps the places considered rather than discarding them. With the US
+address data installed, `350 5th Ave, New York, NY 10118` returns `resolution_tier: "interpolated"`
+with `uncertainty_m: 64` — a position estimated along the block from the street network, not a point
+the building itself contributed. That is a different claim from a rooftop hit and it is labeled as
+one. The four tiers and what each measures are on
+[Improve geocode precision](../../tutorials/improve-geocode-precision.mdx).
+
+Two consequences follow for code that consumes this. Branch on the tier rather than on the coordinate
+looking plausible, because a city centroid is a valid coordinate in the middle of the wrong claim. And
+when a building's identity matters — the same structure under two addresses — compare resolved
+components and the hierarchy rather than comparing coordinates, since two entrances on two streets can
+sit tens of meters apart and two records for the same door can differ by more than that.
+
+## What it costs
+
+The main cost is that "the" address stops being available. Software that has to pick one is making an
+administrative choice on the user's behalf, and the useful version of that choice is an explicit one:
+this pipeline stores the postal form, this map shows the entrance, and the join between them is a
+place identifier rather than a string.
+
+There is a data-side limit worth stating too. A postal town resolves only if the gazetteer carries it
+as a place under that name, at a rank the resolver treats as a locality; a name filed under a
+different rank, or under a canonical form that differs from the postal one, can miss even when the
+place plainly exists. Read `hierarchy` on the result to see which place answered, instead of assuming
+the name in your input is the name that matched.
+
+## Related
+
+- [What an address is](./what-is-an-address.mdx) — why an address is an instruction to an
+  organization, not a property of the building.
+- [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — why two systems assign different codes to
+  one structure.
+- [PO boxes and other non-street addresses](./po-boxes-and-alternatives.mdx) — the case where the
+  address has no building at all.
+- [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) — the tier ladder, run
+  end to end.

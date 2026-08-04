@@ -1,0 +1,120 @@
+---
+title: Falsehoods about addresses
+description: Twenty-five assumptions that break address software, each with one real counterexample, grouped by the part of the address they break.
+role: explanation
+---
+
+# Falsehoods about addresses
+
+## The question
+
+Every address validator starts as a short list of reasonable rules. House numbers are numbers.
+Streets end in `Street` or `Road`. Every address has a town and a postcode. The list is reasonable
+because it describes the addresses the person writing it has seen. Which assumptions on that list are
+wrong, and how wrong?
+
+## Where this comes from
+
+Michael Tandy has maintained a
+[catalogue of address falsehoods](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
+since 2013, and the UK and Dutch counterexamples below are drawn from it. The framing worth keeping is
+his: these are the cases a rule set fails on first, and they arrive in production data at a rate that
+makes them ordinary rather than exotic.
+
+Each line is one assumption and one address that breaks it.
+
+## Format
+
+- **Addresses are ASCII.** `東京都千代田区丸の内1-1-1` is a Tokyo address. A validator built on
+  `[a-zA-Z]` for names and `\d` for numbers cannot see it at all.
+- **Punctuation can be stripped.** The Hague's Dutch name is `'s-Gravenhage`. Strip the leading
+  apostrophe and you have a different word. A Devon village is spelled `Westward Ho!`, exclamation mark
+  included.
+- **Components come in a fixed order.** Germany writes the house number after the street name.
+  Japanese addresses start at the prefecture and work inward. The order is a local convention, not a
+  property of addresses.
+- **An address fits in five lines.** A UK government office address carrying a department, a division,
+  a building name, an industrial estate, a town and a postcode runs to eight.
+- **Place names contain no rude words.** Scunthorpe and Penistone are real English towns, and
+  profanity filters reject both.
+
+## Streets
+
+- **A street name ends in a type word.** `Piccadilly`, `Broadway`, `The Strand`. Three of the
+  best-known streets in the English-speaking world carry no suffix.
+- **There is exactly one type word, and it comes last.** `rue de Rivoli` puts it first.
+  `Avenue Road` in Toronto is built from two of them, so a suffix-stripping pass leaves nothing behind.
+- **A street name contains no digits.** `Plein 1944` in Nijmegen is named after a year, and it takes
+  house numbers after that year.
+- **A street name is unique within a city.** London has seventeen High Streets, so `10 High Street` in
+  London is seventeen addresses.
+- **Every address has a street.** Japanese addresses number blocks rather than streets. Mannheim
+  writes `R 5, 6-13`, where `R 5` is a block in a lettered grid.
+
+## Numbers
+
+- **Building numbers are positive integers.** `0 Egmont Road, Middlesbrough` exists. So do hyphenated
+  ranges such as `4-5 Bonhill Street, London`, and half-numbers, which appear as `43 1/2`, `43.5` or
+  `43½` depending on which database you are reading.
+- **A number at the front of the address is the building number.** `Minusone Priory Road, Newbury` has
+  no building number. The word is part of the street name.
+- **A street and a number identify one place.** There are two `50 Ammanford Road` addresses about four
+  miles apart, in different towns, under different postcodes.
+- **A spelled-out number equals its digits.** `Ten Post Office Square` and `10 Post Office Square` in
+  Boston are different buildings. Normalizing one to the other merges two locations.
+- **Leading zeros can be dropped.** Apartment `001` and apartment `1` have been different apartments
+  on different floors of the same building.
+
+## Postcodes
+
+- **Postcodes are numeric.** `SW1A 1AA` in the UK, `K1A 0B1` in Canada, `D02 X285` in Ireland.
+- **Postcodes do not start with zero.** `02109` is Boston. In France `06130` is Grasse and `6130`
+  routes to a different département, so an integer column silently relocates the address.
+- **A postcode names one town.** The US Postal Service publishes preferred and acceptable city names
+  for a ZIP Code, so one code carrying several town names is the design rather than a data defect.
+- **A postcode covers a group of buildings.** A ZIP+4 can identify "a firm within a building"
+  ([USPS](https://pe.usps.com/text/dmm300/602.htm)), and a building with enough mail volume holds a ZIP
+  Code of its own. In the other direction, one Irish Eircode is one delivery point.
+- **Every address has a postcode, and postcodes hold still.** Ireland had none before Eircode launched
+  in 2015 and Hong Kong uses none domestically, while UK postcode boundaries change continuously as
+  addresses are built and mail volumes shift
+  ([ONS](https://www.ons.gov.uk/methodology/geography/ukgeographies/postalgeography)).
+
+## Hierarchy
+
+- **Every address has a state.** No UK, French or Japanese address carries a level that corresponds to
+  one.
+- **Every address has a county.** UK addresses have not formally required one since 1996, when
+  automated postcode sorting made it redundant
+  ([Post & Parcel, 2010](https://postandparcel.info/34128/news/uk-counties-to-be-axed-from-postal-addresses/)).
+- **A town name is unique within a country.** The candidate gazetteer these docs download carries 92
+  distinct US places named Springfield at city rank, spread across 34 states. `Springfield` on its own
+  is a 92-way question.
+- **The postal town is the municipality.** Brooklyn is a postal city that the Postal Service accepts;
+  the municipality is New York. Both are correct, for different readers.
+- **Administrative boundaries hold still.** The county of Gwent was abolished. Annexation moves a
+  building into a new municipality without moving the building, and the postal town can lag the legal
+  one by years.
+
+## What they have in common
+
+Every line above is a place where a person reading the address sees what is going on and a pattern
+cannot. That is the argument for learning the distribution rather than enumerating the rules: a rule
+set has to name each case, and the cases combine — a Cyrillic street name, in a non-English order,
+with an apostrophe in it, in a town that was renamed last year.
+
+Learning has its own version of the same limit, and it is worth stating plainly. A model that has seen
+no fractional house numbers will not invent the category; it will assign the pieces to whatever labels
+its training distribution makes likely. The counterexamples above are useful to a model only insofar
+as the training corpus contains their shapes, which is why locale claims here are made per locale and
+measured rather than asserted for the world
+([Locales and tiers](../../reference/locales-and-tiers.mdx)).
+
+## Related
+
+- [Addressing around the world](./addressing-around-the-world.mdx) — the conventions these assumptions
+  come from.
+- [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — the postcode section, at length.
+- [Two addresses, one building](./two-addresses-one-building.mdx) — the hierarchy section, at length.
+- [Handle messy input](../../how-to/handle-messy-input.mdx) — what the pipeline repairs today, and
+  what it leaves alone.

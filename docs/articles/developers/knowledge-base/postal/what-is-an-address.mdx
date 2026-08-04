@@ -1,0 +1,83 @@
+---
+title: What an address is
+description: An address is an instruction for reaching a delivery point, not a coordinate — which is why one building can carry several correct addresses at once.
+role: explanation
+---
+
+# What an address is
+
+## The question
+
+You have a column of addresses and you want coordinates. It reads like a lookup: each string names a
+place, each place has a location, so the work is finding the row. Then two strings that describe the
+same building disagree with each other, a third turns out to contain no street, and a fourth resolves
+to a town four states from where you expected. What is an address, such that this keeps happening?
+
+## The analog
+
+An address is an instruction for reaching a delivery point — the smallest unit a postal service will
+deliver to. One letterbox. One post office box. One loading dock behind a warehouse. The UK's unit
+postcode groups about fifteen of them, and never more than a hundred
+([Office for National Statistics](https://www.ons.gov.uk/methodology/geography/ukgeographies/postalgeography)).
+The US Postal Service added two digits to the ZIP+4 in 1991 so that mail could be sorted "directly to
+a residence or business" ([USPS](https://facts.usps.com/decoding-the-zip-code/)).
+
+Read an address as an instruction and its shape follows. It has to narrow the world to one delivery
+point, in words the receiving postal service recognizes, in the order that service reads them. It
+does not have to describe the building, name who owns it, or place it on a map. `PO Box 1234, San
+Francisco, CA 94119` is a complete address with no geometry in it at all: the courier's work ends at
+a shelf behind a counter, and the person who rents that shelf may live twenty miles away.
+
+## Why one building carries several
+
+Once the address is an instruction rather than a property of the building, one building can be the
+subject of several instructions at once, each written for a different reader.
+
+The postal service wants the form its own file accepts, which is why an office tower with enough mail
+volume can hold a ZIP Code of its own, and why a tenant inside it gets a distinct ZIP+4 — the last
+four digits identify units as fine as "a floor or group of floors in a building, a firm within a
+building" ([USPS Domestic Mail Manual 602](https://pe.usps.com/text/dmm300/602.htm)). Emergency
+dispatch wants the entrance a vehicle can reach. A tax assessor wants the parcel. A visitor wants the
+name on the front of the building, which is how `Empire State Building` works as an address for a
+tourist and fails as one for a sorting machine.
+
+None of these is the shadow of a truer address underneath. They are four instructions to four
+organizations, and a building that touches two streets, sits on a municipal boundary, or holds two
+hundred tenants will accumulate more of them.
+
+## What that means for software
+
+An address string is evidence about a place rather than an identifier for one. Two strings that
+disagree can both be usable, and the disagreement is information: it tells you which system the
+string came out of.
+
+That is the division of labor Mailwoman is built around. A parse takes the string apart and labels
+the spans — this run of characters is a house number, that one is a locality — without deciding which
+postal system the writer had in mind; the label vocabulary is on
+[Component tags](../../reference/component-tags.mdx). Attaching coordinates is a second pass over the
+labeled result, and it reports which tier of data answered, because a rooftop point and a city
+centroid are different claims that would otherwise look identical.
+
+## What it costs
+
+Two things, and both of them bite in production.
+
+You cannot key a record on an address string. The same delivery point will arrive spelled four ways
+across four source systems, and none of the four is canonical. Matching records means comparing
+components after a parse, not comparing text.
+
+And a geocode that returns a coordinate has not told you that the delivery point exists. Mailwoman
+reads what you hand it and matches what it can against open data; the question of whether mail arrives
+at that address belongs to a postal authority's address file, which is a licensed register of real
+letterboxes. [What Mailwoman is](../../get-started/what-mailwoman-is.mdx) draws that line in more
+detail.
+
+## Related
+
+- [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — what the routing code encodes, and why it
+  makes a poor locator.
+- [Two addresses, one building](./two-addresses-one-building.mdx) — the multiple-instruction problem
+  worked through.
+- [How mail gets delivered](./how-mail-gets-delivered.mdx) — the chain the instruction travels down,
+  and why the format is ordered the way it is.
+- [Component tags](../../reference/component-tags.mdx) — the 25 labels a parse can assign.

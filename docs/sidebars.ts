@@ -119,6 +119,35 @@ const sidebars: SidebarsConfig = {
 				"developers/reference/footprints",
 			],
 		},
+		{
+			type: "category",
+			label: "Knowledge base",
+			// Background rather than instruction: nothing here changes a reader's filesystem, and every
+			// page hands off to the tutorial, how-to or reference that does. Shelves are separate
+			// categories so a reader can tell domain knowledge (postal systems) apart from the machinery.
+			items: [
+				{
+					type: "category",
+					label: "Postal systems",
+					// Reading order. The first four build one idea: an address is an instruction to a
+					// postal service (what an address is), the routing code inside it is a path through a
+					// sorting network (postcodes), the network is why the format is ordered as it is (how
+					// mail gets delivered), and every country ordered it differently (around the world).
+					// The next two are the hard cases that follow from the idea, and falsehoods sits last
+					// because it distills all six into one line each — useful as a checklist once the
+					// reasoning is familiar, and reachable cold for a reader who arrives at it directly.
+					items: [
+						"developers/knowledge-base/postal/what-is-an-address",
+						"developers/knowledge-base/postal/postcodes-and-zip-codes",
+						"developers/knowledge-base/postal/how-mail-gets-delivered",
+						"developers/knowledge-base/postal/addressing-around-the-world",
+						"developers/knowledge-base/postal/two-addresses-one-building",
+						"developers/knowledge-base/postal/po-boxes-and-alternatives",
+						"developers/knowledge-base/postal/falsehoods-about-addresses",
+					],
+				},
+			],
+		},
 		"developers/status",
 		"developers/support",
 	],
