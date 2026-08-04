@@ -42,6 +42,56 @@ export const mean = (xs: readonly number[]): number => xs.reduce((a, b) => a + b
 export const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
 /**
+ * NPPES registry column headers, by the short name the probes read them under.
+ *
+ * The NPI registry export is a ~330-column TSV with headers this long, so every probe that touches it needs this map,
+ * and five of them had grown their own copy. The copies were a NESTED SUPERSET chain, not a disagreement -- each new
+ * probe took the previous one's map and appended what it additionally read -- so this is the widest of the five, and no
+ * consumer loses a column. Reading extra keys costs nothing: they are inert strings, and nothing enumerates this object
+ * (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`), so adding a column can never
+ * change a probe's behavior.
+ */
+export const NPPES_COLUMNS = {
+	npi: "NPI",
+	entityType: "Entity Type Code",
+	orgLegal: "Provider Organization Name (Legal Business Name)",
+	last: "Provider Last Name (Legal Name)",
+	first: "Provider First Name",
+	pAddr: "Provider First Line Business Practice Location Address",
+	pCity: "Provider Business Practice Location Address City Name",
+	pState: "Provider Business Practice Location Address State Name",
+	pZip: "Provider Business Practice Location Address Postal Code",
+	mAddr: "Provider First Line Business Mailing Address",
+	mCity: "Provider Business Mailing Address City Name",
+	mState: "Provider Business Mailing Address State Name",
+	mZip: "Provider Business Mailing Address Postal Code",
+	otherOrg: "Provider Other Organization Name",
+	authLast: "Authorized Official Last Name",
+	authFirst: "Authorized Official First Name",
+	isSubpart: "Is Organization Subpart",
+	parentLBN: "Parent Organization LBN",
+	parentTIN: "Parent Organization TIN",
+	// #625 taxonomy discriminator: the 15 taxonomy slots; collected as a set (any shared code = agreement).
+	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
+}
+
+/**
+ * Groups below this size are too small for a held-out split to mean anything.
+ */
+export const MIN_GROUP_SIZE = 5
+
+/**
+ * Gradient-boosting rounds. Fixed rather than early-stopped so seeds stay comparable.
+ */
+export const TRAINING_EPOCHS = 400
+
+/**
+ * Smallest mean F1 gap counted as a real difference between models rather than seed noise. Verdicts inside ±this are
+ * reported as a tie.
+ */
+export const MIN_MEANINGFUL_F1_DELTA = 0.02
+
+/**
  * `n + 1` evenly-spaced order statistics of an already-sorted sample, de-duplicated — the candidate split thresholds a
  * GBT node considers. `[0]` for an empty sample so a degenerate feature still yields one (useless but well-formed)
  * threshold rather than an empty split set.

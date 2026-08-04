@@ -4,43 +4,29 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { JSONSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { alignRow } from "../../align.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { USGOV_HRSA_FQHC_ADAPTER_ID, USGOV_HRSA_FQHC_DEFAULT_LICENSE, createUsgovHrsaFqhcAdapter } from "./adapter.ts"
 
+const scratch = useScratchDir("usgov-hrsa")
+
+const loadRows = () => readCanonicalRows(scratch.path, USGOV_HRSA_FQHC_ADAPTER_ID)
+
 const fixtureCSV = repoRootPath("corpus", "fixtures", "usgov-hrsa-fqhc", "sample.csv")
-
-let scratch: string
-
-beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-usgov-hrsa-"))
-})
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
-
-function loadRows(): Promise<CanonicalRow[]> {
-	return Array.fromAsync(
-		JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, USGOV_HRSA_FQHC_ADAPTER_ID, "canonical.jsonl"))
-	)
-}
 
 describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 	it("emits one row per valid CSV record + drops invalid ones", async () => {
 		const m = await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -58,7 +44,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -80,7 +66,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -93,7 +79,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -115,7 +101,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -128,7 +114,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -142,7 +128,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -156,7 +142,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -168,7 +154,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -181,7 +167,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 			runAdapter({
 				adapter: createUsgovHrsaFqhcAdapter(),
 				adapterOptions: { inputPath: fixtureCSV, country: "FR" },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/only US supported/)
@@ -191,7 +177,7 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		const m = await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV, limit: 3 },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -203,16 +189,16 @@ describe("usgov-hrsa-fqhc adapter against fixture sample.csv", () => {
 		const a = await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, USGOV_HRSA_FQHC_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, USGOV_HRSA_FQHC_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createUsgovHrsaFqhcAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 

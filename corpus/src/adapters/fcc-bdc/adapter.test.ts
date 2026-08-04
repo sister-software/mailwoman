@@ -4,27 +4,28 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { JSONSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, buildPostcode, createFccBdcAdapter } from "./adapter.ts"
+
+const scratch = useScratchDir("fcc-bdc")
+
+const loadRows = () => readCanonicalRows(scratch.path, FCC_BDC_ADAPTER_ID)
 
 const fixtureSQLPath = repoRootPath("corpus", "fixtures", "fcc-bdc", "fixture.sql")
 
-let scratch: string
 let dbPath: string
 
 async function buildFixtureDB(): Promise<string> {
 	const sql = await readFile(fixtureSQLPath, "utf8")
-	const path = join(scratch, "fcc-bdc-fixture.db")
+	const path = join(scratch.path, "fcc-bdc-fixture.db")
 	const db = new DatabaseSync(path)
 	db.exec(sql)
 	db.close()
@@ -33,17 +34,8 @@ async function buildFixtureDB(): Promise<string> {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-fcc-bdc-"))
 	dbPath = await buildFixtureDB()
 })
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
-
-function loadRows(): Promise<CanonicalRow[]> {
-	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, FCC_BDC_ADAPTER_ID, "canonical.jsonl")))
-}
 
 describe("buildPostcode", () => {
 	it("returns the bare zip when no suffix is present", () => {
@@ -70,7 +62,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		const m = await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -91,7 +83,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -103,7 +95,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -129,7 +121,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -144,7 +136,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -158,7 +150,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -174,7 +166,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -188,7 +180,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -203,7 +195,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 			runAdapter({
 				adapter: createFccBdcAdapter(),
 				adapterOptions: { inputPath: dbPath, country: "FR" },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/only US supported/)
@@ -213,7 +205,7 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		const m = await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath, limit: 3 },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -225,16 +217,16 @@ describe("fcc-bdc adapter against fixture.sql", () => {
 		const a = await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, FCC_BDC_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, FCC_BDC_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createFccBdcAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 

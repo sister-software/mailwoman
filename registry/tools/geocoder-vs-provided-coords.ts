@@ -27,6 +27,7 @@ import { haversineKm } from "@mailwoman/match"
 import { streamRows } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { norm } from "./shared.ts"
 
 /**
  * Largest absolute latitude in WGS-84 degrees.
@@ -59,8 +60,6 @@ export interface GeocoderVsProvidedCoordsOptions {
 	 */
 	outMd?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Parse a `lat,lon` string into a coordinate, or null if malformed / out of range.

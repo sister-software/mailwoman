@@ -4,44 +4,32 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { JSONSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { BAN_ADAPTER_ID, createBanAdapter } from "./adapter.ts"
 
+const scratch = useScratchDir("ban")
+
 const fixtureCSV = repoRootPath("corpus", "fixtures", "ban", "sample.csv")
-
-let scratch: string
-
-beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-ban-"))
-})
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
 
 describe("ban adapter against fixture sample.csv", () => {
 	it("emits a row per CSV record with FR country + Licence Ouverte (the elected BAN license, #26)", async () => {
 		const manifest = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
 		expect(manifest.yielded).toBe(7)
 
-		const rows = await Array.fromAsync(
-			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"))
-		)
+		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
 
 		expect(rows).toHaveLength(7)
 		expect(rows.every((r) => r.country === "FR")).toBe(true)
@@ -54,13 +42,11 @@ describe("ban adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		const rows = await Array.fromAsync(
-			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"))
-		)
+		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
 
 		const rivoli = rows.find((r) => r.raw.includes("Rivoli") && r.components.house_number === "1")
 		expect(rivoli?.raw).toBe("1 Rue de Rivoli, 75001 Paris")
@@ -83,7 +69,7 @@ describe("ban adapter against fixture sample.csv", () => {
 			runAdapter({
 				adapter: createBanAdapter(),
 				adapterOptions: { inputPath: fixtureCSV, country: "US" },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/only FR supported/)
@@ -93,7 +79,7 @@ describe("ban adapter against fixture sample.csv", () => {
 		const manifest = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV, limit: 2 },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -105,13 +91,11 @@ describe("ban adapter against fixture sample.csv", () => {
 		await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		const rows = await Array.fromAsync(
-			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"))
-		)
+		const rows = await readCanonicalRows(scratch.path, BAN_ADAPTER_ID)
 
 		expect(rows[0]!.source_id).toBe("ban-75108_0001_00001")
 	})
@@ -120,16 +104,16 @@ describe("ban adapter against fixture sample.csv", () => {
 		const a = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, BAN_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, BAN_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createBanAdapter(),
 			adapterOptions: { inputPath: fixtureCSV },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 

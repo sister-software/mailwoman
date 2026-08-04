@@ -21,20 +21,21 @@ import { parseArgs } from "node:util"
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
 import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
-import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
 import {
-	buildNoGazetteerMessage,
-	createResolverBackend,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofShardPaths,
-} from "mailwoman/resolver-backend"
+	corsBannerLine,
+	gazetteerBannerLines,
+	loadClassifierOrExit,
+	parseOpenAPIFlags,
+	resolveGazetteerOrExit,
+	runDropInCLI,
+} from "mailwoman/cli-kit/dropin"
+import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
+import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {
 	createNominatimApp,
@@ -66,6 +67,8 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
  * defensively so a giant query returns no results instead of faulting.
  */
 const MAX_QUERY_LEN = 512
+
+const BINARY_NAME = "mailwoman-nominatim"
 
 function joinNonEmpty(...parts: Array<string | undefined>): string {
 	return parts.filter(Boolean).join(", ")
@@ -121,49 +124,9 @@ async function serve(): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const wofPaths = wofShardPaths().filter(existsSync)
-	const adminDBPath = wofPaths[0]
-
-	// #1009 kin: an EXPLICIT --candidate-db that doesn't exist must error loudly, not silently fall
-	// back to ambient data.
-	if (values["candidate-db"] && !existsSync(values["candidate-db"])) {
-		console.error(`✗ --candidate-db not found: ${values["candidate-db"]}`)
-
-		process.exit(1)
-	}
-
-	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the
-	// FTS5-trigram typo fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the
-	// `<data-root>/wof/candidate.db` convention path. Absent → the admin FTS shards.
-	const candidateDb = resolveCandidateDBPath(values["candidate-db"])
-
-	// #1009: fail FRIENDLY before the resolver's internal shard error — same message shape as
-	// @mailwoman/photon's pre-flight (kept in lockstep; points at the ten-minute trial until the
-	// switching pages land — docs-reorg wave 2).
-	if (!candidateDb && !wofPaths.length) {
-		console.error(
-			buildNoGazetteerMessage({
-				dataRoot: mailwomanDataRoot(),
-				docsPath: "/docs/developers/get-started/ten-minute-trial",
-			})
-		)
-
-		process.exit(1)
-	}
-
-	// #1009: same friendly-failure discipline for the model weights — a stranger who installed only
-	// `@mailwoman/nominatim` (which DOES declare `@mailwoman/neural-weights-en-us`, so this should always
-	// resolve) still gets a named artifact + the one fix command instead of an unhandled-rejection
-	// stack trace if resolution ever fails (corrupt install, pruned node_modules, etc).
-	let classifier: NeuralAddressClassifier
-
-	try {
-		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-	} catch (error) {
-		console.error(`✗ ${error instanceof Error ? error.message : String(error)}`)
-
-		process.exit(1)
-	}
+	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
+	const { adminDBPath, candidateDb, wofPaths } = gazetteer
+	const classifier = await loadClassifierOrExit()
 
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWOFResolver(backend)
@@ -343,13 +306,12 @@ async function serve(): Promise<void> {
 		hostname: host,
 		onListen: () => {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
-			console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
-			console.error(
-				candidateDb
-					? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`
-					: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
-			)
-			console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)
+
+			for (const line of gazetteerBannerLines(gazetteer)) {
+				console.error(line)
+			}
+
+			console.error(corsBannerLine(values.cors))
 			console.error(`  endpoints: GET /  GET /search  GET /reverse  GET /lookup  GET /status  GET /openapi.json`)
 		},
 	})
@@ -363,43 +325,17 @@ async function serve(): Promise<void> {
  * of the default 3.1.0.
  */
 function openapi(): void {
-	const { values } = parseArgs({
-		options: {
-			flavor: { type: "string", default: "3.1" },
-			out: { type: "string" },
-		},
-		allowPositionals: true,
-	})
-
-	if (values.flavor !== "3.1" && values.flavor !== "3.0") {
-		console.error(`✗ --flavor must be "3.1" or "3.0" (got "${values.flavor}")`)
-		console.error("Usage: mailwoman-nominatim openapi [--flavor 3.1|3.0] [--out <path>]")
-
-		process.exit(1)
-	}
-
 	const app = createNominatimApp({})
 
-	printOpenAPIDocument(app, NOMINATIM_DOC_INFO, values)
+	printOpenAPIDocument(app, NOMINATIM_DOC_INFO, parseOpenAPIFlags(BINARY_NAME))
 }
 
-// Subcommand dispatch via parseArgs (strict:false — the per-command parsers own their flags).
-const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
-
-switch (command) {
-	case "serve":
-		await serve()
-		break
-	case "openapi":
-		openapi()
-		break
-	default:
-		console.error(
-			[
-				"Usage: mailwoman-nominatim <command>",
-				"  serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",
-				"  openapi [--flavor 3.1|3.0] [--out <path>]",
-			].join("\n")
-		)
-		process.exit(command ? 1 : 0)
-}
+await runDropInCLI({
+	binaryName: BINARY_NAME,
+	openapi,
+	serve,
+	usage: [
+		"  serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",
+		"  openapi [--flavor 3.1|3.0] [--out <path>]",
+	],
+})

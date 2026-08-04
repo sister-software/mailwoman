@@ -47,7 +47,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { uniqueQuantiles } from "./shared.ts"
+import { addr, norm, NPPES_COLUMNS as N, uniqueQuantiles } from "./shared.ts"
 
 /**
  * Share of entities assigned to fit; the rest are held out.
@@ -91,22 +91,6 @@ export interface TrainCrossSourceGBTOptions {
 	 */
 	date?: string
 }
-
-const N = {
-	npi: "NPI",
-	entityType: "Entity Type Code",
-	last: "Provider Last Name (Legal Name)",
-	first: "Provider First Name",
-	pAddr: "Provider First Line Business Practice Location Address",
-	pCity: "Provider Business Practice Location Address City Name",
-	pState: "Provider Business Practice Location Address State Name",
-	pZip: "Provider Business Practice Location Address Postal Code",
-}
-
-const norm = (s: string | undefined) => (s ?? "").trim()
-
-const addr = (line: string, city: string, st: string, zip: string) =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
 interface MessyRow {
 	npi: string

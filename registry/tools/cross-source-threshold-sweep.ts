@@ -46,7 +46,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs, type SourceSpec } from "./shared.ts"
+import { buildSpecs, norm, type SourceSpec } from "./shared.ts"
 
 /**
  * Independent sources that must agree before a cluster counts as cross-source corroborated.
@@ -83,8 +83,6 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	outMd?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Distinct provenance labels an entity's records span.

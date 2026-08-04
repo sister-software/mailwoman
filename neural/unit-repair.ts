@@ -31,17 +31,21 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
+import {
+	type RepairResult,
+	selectNonOverlappingMatches,
+	type SpanMatch,
+	tagOf,
+	tokenIndicesOverlapping,
+} from "./span-repair.ts"
+
+export type { RepairResult } from "./span-repair.ts"
+
 /**
- * A detected secondary-unit substring with its char range.
+ * A detected secondary-unit substring with its char range. Units carry no confidence class — every pattern here
+ * requires an explicit designator, so there is no `kind` split like postcode-repair's.
  */
-interface UnitMatch {
-	start: number
-	end: number
-	/**
-	 * Pattern priority (lower = more specific, wins overlap resolution).
-	 */
-	priority: number
-}
+type UnitMatch = SpanMatch
 
 /**
  * Secondary-unit shape patterns, ordered most-specific → least. Case-insensitive (unit designators appear in every
@@ -88,13 +92,6 @@ function isUnitLabel(label: string): boolean {
 }
 
 /**
- * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
- */
-function tagOf(label: string): string | null {
-	return label === "O" ? null : label.slice(2)
-}
-
-/**
  * Collect non-overlapping unit matches, preferring more-specific (earlier) patterns + longest.
  */
 function collectMatches(text: string): UnitMatch[] {
@@ -108,24 +105,7 @@ function collectMatches(text: string): UnitMatch[] {
 		}
 	})
 
-	// Longest-match-wins, then most-specific; reject anything overlapping an accepted match.
-	candidates.sort((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
-	const accepted: UnitMatch[] = []
-
-	for (const c of candidates) {
-		if (accepted.some((a) => c.start < a.end && a.start < c.end)) continue
-		accepted.push(c)
-	}
-
-	return accepted
-}
-
-export interface RepairResult {
-	tokens: DecoderToken[]
-	/**
-	 * Number of token labels changed — for telemetry / logging.
-	 */
-	changed: number
+	return selectNonOverlappingMatches(candidates)
 }
 
 /**
@@ -149,16 +129,7 @@ export function repairUnitLabels(text: string, input: readonly DecoderToken[]): 
 	}
 
 	for (const m of matches) {
-		// Tokens whose char span intersects the match.
-		const overlap: number[] = []
-
-		for (let i = 0; i < tokens.length; i++) {
-			const t = tokens[i]!
-
-			if (t.start < m.end && m.start < t.end) {
-				overlap.push(i)
-			}
-		}
+		const overlap = tokenIndicesOverlapping(tokens, m.start, m.end)
 
 		if (!overlap.length) continue
 

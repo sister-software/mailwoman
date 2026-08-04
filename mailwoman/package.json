@@ -88,6 +88,11 @@
 			"default": "./out/cli-kit/index.js",
 			"types": "./out/cli-kit/index.d.ts"
 		},
+		"./cli-kit/dropin": {
+			"node": "./cli-kit/dropin.ts",
+			"default": "./out/cli-kit/dropin.js",
+			"types": "./out/cli-kit/dropin.d.ts"
+		},
 		"./test-kit": {
 			"node": "./test-kit/index.ts",
 			"default": "./out/test-kit/index.js",

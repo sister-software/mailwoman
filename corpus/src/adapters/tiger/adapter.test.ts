@@ -4,27 +4,28 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { JSONSpliterator } from "spliterator"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "./adapter.ts"
+
+const scratch = useScratchDir("tiger")
+
+const loadRows = () => readCanonicalRows(scratch.path, TIGER_ADAPTER_ID)
 
 const fixtureSQLPath = repoRootPath("corpus", "fixtures", "tiger", "fixture.sql")
 
-let scratch: string
 let dbPath: string
 
 async function buildFixtureDB(): Promise<string> {
 	const sql = await readFile(fixtureSQLPath, "utf8")
-	const path = join(scratch, "tiger-fixture.db")
+	const path = join(scratch.path, "tiger-fixture.db")
 	const db = new DatabaseSync(path)
 	db.exec(sql)
 	db.close()
@@ -33,24 +34,15 @@ async function buildFixtureDB(): Promise<string> {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-tiger-"))
 	dbPath = await buildFixtureDB()
 })
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
-
-function loadRows(): Promise<CanonicalRow[]> {
-	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, TIGER_ADAPTER_ID, "canonical.jsonl")))
-}
 
 describe("tiger adapter against fixture.sql", () => {
 	it("emits street rows + place variants and stamps US country + Public Domain license", async () => {
 		const m = await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -70,7 +62,7 @@ describe("tiger adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -95,7 +87,7 @@ describe("tiger adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -122,7 +114,7 @@ describe("tiger adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -137,7 +129,7 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("zipl !== zipr produces two street variants (one per side)", async () => {
 		// Build a mini DB with one segment whose left and right ZIPs differ.
-		const inline = join(scratch, "split-zip.db")
+		const inline = join(scratch.path, "split-zip.db")
 		const db = new DatabaseSync(inline)
 
 		db.exec(`
@@ -151,7 +143,7 @@ describe("tiger adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: inline },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -168,7 +160,7 @@ describe("tiger adapter against fixture.sql", () => {
 	})
 
 	it("street with no ZIPs emits a single zipless variant", async () => {
-		const inline = join(scratch, "no-zip.db")
+		const inline = join(scratch.path, "no-zip.db")
 		const db = new DatabaseSync(inline)
 
 		db.exec(`
@@ -182,7 +174,7 @@ describe("tiger adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: inline },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -194,7 +186,7 @@ describe("tiger adapter against fixture.sql", () => {
 	})
 
 	it("rows with an unrecognized state FIPS code are dropped", async () => {
-		const inline = join(scratch, "bad-fips.db")
+		const inline = join(scratch.path, "bad-fips.db")
 		const db = new DatabaseSync(inline)
 
 		db.exec(`
@@ -209,7 +201,7 @@ describe("tiger adapter against fixture.sql", () => {
 		await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: inline },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -222,7 +214,7 @@ describe("tiger adapter against fixture.sql", () => {
 			runAdapter({
 				adapter: createTigerAdapter(),
 				adapterOptions: { inputPath: dbPath, country: "FR" },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/only US supported/)
@@ -232,7 +224,7 @@ describe("tiger adapter against fixture.sql", () => {
 		const m = await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath, limit: 5 },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -244,16 +236,16 @@ describe("tiger adapter against fixture.sql", () => {
 		const a = await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, TIGER_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, TIGER_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createTigerAdapter(),
 			adapterOptions: { inputPath: dbPath },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 

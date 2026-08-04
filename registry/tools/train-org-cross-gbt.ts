@@ -42,7 +42,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { uniqueQuantiles } from "./shared.ts"
+import { addr, norm, uniqueQuantiles } from "./shared.ts"
 
 /**
  * Share of entities assigned to fit; the rest are held out.
@@ -82,11 +82,6 @@ export interface TrainOrgCrossSourceGBTOptions {
 	 */
 	date?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
-
-const addr = (line: string, city: string, st: string, zip: string) =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
 
 interface MessyRow {
 	/**

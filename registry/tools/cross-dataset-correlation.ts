@@ -35,6 +35,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { norm } from "./shared.ts"
 
 /**
  * Distinct sources an entity needs to count toward the triple-corroborated tally.
@@ -78,8 +79,6 @@ export interface CrossDatasetCorrelationOptions {
 	 */
 	outGeojson?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Compose a row's address the SAME way {@link ingestRows} does (`pick`: join the mapped columns with a space, drop

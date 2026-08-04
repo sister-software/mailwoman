@@ -42,6 +42,7 @@ export default defineConfig({
 			// barrel reaches a browser bundle), so it needs its own entry ahead of the generic dir rule.
 			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolve(here, "core/api/disk-storage.ts") },
 			{ find: /^@mailwoman\/core\/api\/test-clocks$/, replacement: resolve(here, "core/api/test-clocks.ts") },
+			{ find: /^@mailwoman\/core\/api\/test-transport$/, replacement: resolve(here, "core/api/test-transport.ts") },
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
