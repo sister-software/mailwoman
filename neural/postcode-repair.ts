@@ -33,20 +33,24 @@
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
+import {
+	type RepairResult,
+	selectNonOverlappingMatches,
+	type SpanMatch,
+	tagOf,
+	tokenIndicesOverlapping,
+} from "./span-repair.ts"
+
+export type { RepairResult } from "./span-repair.ts"
+
 /**
  * A detected postcode-shaped substring with its char range and confidence class.
  */
-export interface PostcodeMatch {
-	start: number
-	end: number
+export interface PostcodeMatch extends SpanMatch {
 	/**
 	 * "alnum" shapes may ADD; "numeric" shapes may only SNAP an existing span.
 	 */
 	kind: "alnum" | "numeric"
-	/**
-	 * Pattern priority (lower = more specific, wins overlap resolution).
-	 */
-	priority: number
 }
 
 /**
@@ -98,13 +102,6 @@ function isPostcodeLabel(label: string): boolean {
 }
 
 /**
- * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
- */
-function tagOf(label: string): string | null {
-	return label === "O" ? null : label.slice(2)
-}
-
-/**
  * Collect non-overlapping postcode matches, preferring more-specific (earlier) patterns.
  */
 export function collectMatches(text: string): PostcodeMatch[] {
@@ -118,26 +115,7 @@ export function collectMatches(text: string): PostcodeMatch[] {
 		}
 	})
 
-	// Greedy longest-match-wins: accept by (length desc, then priority asc); reject anything
-	// overlapping an accepted match. Longest-first lets a US ZIP+4 ("94610-2737") claim its span
-	// before the shorter NL-shaped false positive in its tail ("2737 CA") can.
-	candidates.sort((a, b) => b.end - b.start - (a.end - a.start) || a.priority - b.priority)
-	const accepted: PostcodeMatch[] = []
-
-	for (const c of candidates) {
-		if (accepted.some((a) => c.start < a.end && a.start < c.end)) continue
-		accepted.push(c)
-	}
-
-	return accepted
-}
-
-export interface RepairResult {
-	tokens: DecoderToken[]
-	/**
-	 * Number of token labels changed — for telemetry / logging.
-	 */
-	changed: number
+	return selectNonOverlappingMatches(candidates)
 }
 
 /**
@@ -161,16 +139,7 @@ export function repairPostcodeLabels(text: string, input: readonly DecoderToken[
 	}
 
 	for (const m of matches) {
-		// Tokens whose char span intersects the match.
-		const overlap: number[] = []
-
-		for (let i = 0; i < tokens.length; i++) {
-			const t = tokens[i]!
-
-			if (t.start < m.end && m.start < t.end) {
-				overlap.push(i)
-			}
-		}
+		const overlap = tokenIndicesOverlapping(tokens, m.start, m.end)
 
 		if (!overlap.length) continue
 
