@@ -38,11 +38,14 @@ export function dataRootPath(...segments: string[]): string {
 
 /**
  * The default WOF shard list the FTS backend probes when no single `--wof-db` is given: the global admin-priority shard
- * + the US postcode shard + the GeoNames-postal tail shard (#920 — postcode coverage for the namesake-tail locales
- * FI/CZ/SK/SI/DK/NO/HR/PL; country-aware routing in `pickShardForPlacetype` sends each postcode query to the shard that
- * claims its country). All under `dataRoot` (defaults to the configured {@link mailwomanDataRoot}; callers thread a
- * `--data-root` option through). A fresh array each call; callers filter with `existsSync`, so a deployment without the
- * tail shard degrades to the pre-#920 pair.
+ * + the US postcode shard + the GeoNames-postal tail shard (#920; country-aware routing in `pickShardForPlacetype`
+ * sends each postcode query to the shard that claims its country). All under `dataRoot` (defaults to the configured
+ * {@link mailwomanDataRoot}; callers thread a `--data-root` option through). A fresh array each call; callers filter
+ * with `existsSync`, so a deployment without the tail shard degrades to the pre-#920 pair.
+ *
+ * The tail shard carries TEN countries, not the eight this comment claimed until 2026-08-05: the namesake-tail set
+ * FI/CZ/SK/SI/DK/NO/HR/PL, plus SE, plus GB. GB is 1,839,678 of its 1,895,753 rows and ~946 MB of its ~946 MB — it is a
+ * GB shard with nine other countries riding along. Rebuild: `mailwoman gazetteer build postcode-geonames`.
  */
 export function wofShardPaths(dataRoot: string = mailwomanDataRoot()): [string, string, string, string, string] {
 	// TODO: Redo this as an object.
