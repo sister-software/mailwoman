@@ -26,7 +26,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!scripts/**"
 	],
 	"publishConfig": {
 		"access": "public"
@@ -36,5 +37,8 @@
 	},
 	"mailwoman": {
 		"baseWeights": "@mailwoman/neural-weights-en-us"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
 	}
 }

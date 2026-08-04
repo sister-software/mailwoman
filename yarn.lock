@@ -4797,6 +4797,8 @@ __metadata:
 "@mailwoman/neural-weights-base-latn@workspace:neural-weights-base-latn":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-base-latn@workspace:neural-weights-base-latn"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -4812,6 +4814,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4828,6 +4831,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-nz@workspace:neural-weights-en-nz"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4835,6 +4839,8 @@ __metadata:
 "@mailwoman/neural-weights-en-us@workspace:*, @mailwoman/neural-weights-en-us@workspace:neural-weights-en-us":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-us@workspace:neural-weights-en-us"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -4850,6 +4856,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
   languageName: unknown
   linkType: soft
