@@ -1195,3 +1195,124 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		expect(transitionAdjustments).toEqual([{ pieceIndex: 0, toLabel: "B-dependent_locality", bonus: 5 }])
 	})
 })
+
+describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
+	it("omitting parentDelta is byte-identical to the pre-#46 build — only the child span carries a bias", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		// "New York" is pieces 2..3 (piece 1 is the comma). Nothing is written there.
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[3]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it("a dependent_locality child biases the parent toward locality ALONE — the Brooklyn case", () => {
+		// `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`, so the parent window gets exactly one label
+		// lifted and `region` — the read the trailing "NY" pulls it to, by 4.21 nats on the shipped weights — gets
+		// nothing. This is the whole point of the fix: the edge the index asserts is (child, parent), and biasing
+		// only the child produced a tree with a dependent_locality and NO locality at all.
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[2]![labelCol("B-locality")]).toBe(8)
+		expect(matrix[3]![labelCol("I-locality")]).toBe(8)
+		expect(matrix[2]![labelCol("B-region")]).toBe(0)
+		expect(matrix[3]![labelCol("I-region")]).toBe(0)
+	})
+
+	it("a locality child biases EVERY allowed parent equally — which is what makes the bias inert there", () => {
+		// `WESTERN_PARENT_OF.locality` is `["subregion", "region", "country"]`. All three move by the same δ, so
+		// whichever the model already preferred stays on top: the arithmetic behind bar B-1's byte-stability claim.
+		const index = mockPairIndex({ "springfield|illinois": "locality" }, 10)
+		const text = "Springfield, Illinois"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-locality")]).toBe(10)
+
+		for (const tag of ["subregion", "region", "country"]) {
+			expect(matrix[2]![labelCol(`B-${tag}`)]).toBe(8)
+		}
+
+		// Nothing outside the allowed set moves — a `street` read at the parent would still lose to any of the three.
+		expect(matrix[2]![labelCol("B-street")]).toBe(0)
+		expect(matrix[2]![labelCol("B-dependent_locality")]).toBe(0)
+	})
+
+	it("the parent bias is emission-only — it never emits a transition adjustment", () => {
+		// `transitionBeta` is the CHILD's calibrated path-fusion lever (β=5, measured on the child span's entry
+		// transition). The parent bias has no such calibration and must not inherit one.
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10, 5)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+
+		const { transitionAdjustments } = buildPlacetypePairPriors(
+			{ index, inputText: text, parentDelta: 8 },
+			pieces,
+			LABELS
+		)
+
+		expect(transitionAdjustments).toEqual([{ pieceIndex: 0, toLabel: "B-dependent_locality", bonus: 5 }])
+	})
+
+	it("the anchored (comma-free) leg biases its parent too", () => {
+		const index = mockPairIndex({ "shoreditch|london": "dependent_locality" }, 10)
+		const text = "12 Redchurch Street Shoreditch London"
+		const pieces = makePieces(text)
+
+		const { matrix } = buildPlacetypePairPriors(
+			{ index, inputText: text, probeMode: "anchored", parentDelta: 8 },
+			pieces,
+			LABELS
+		)
+
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[4]![labelCol("B-locality")]).toBe(8)
+	})
+
+	it("the parent bias covers the KEY's span, not the whole segment — a same-field postcode is excluded", () => {
+		// The FR shape: the parent field is "12210 Montpeyroux" and #1308 strips the LEADING postcode from the probe
+		// key. Biasing the whole segment toward `locality` emits `locality = "12210 Montpeyroux"`, postcode included.
+		// Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at parentDelta ≥ 6, child still right on
+		// 77/80. Only the postcode-free pieces may carry the parent bias.
+		const index = mockPairIndex({ "pinsonnac|montpeyroux": "dependent_locality" }, 10, undefined, "fr")
+		const text = "Pinsonnac, 12210 Montpeyroux"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		// Piece 1 is the comma, piece 2 is "12210", piece 3 is "Montpeyroux".
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[3]![labelCol("B-locality")]).toBe(8)
+	})
+
+	it("the GB trailing-postcode shape is excluded from the parent bias for the same reason", () => {
+		const index = mockPairIndex({ "henbury|macclesfield": "dependent_locality" }, 10, undefined, "gb")
+		const text = "Henbury, Macclesfield SK11 9PD"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[2]![labelCol("B-locality")]).toBe(8)
+		// "SK11" and "9PD" are pieces 3 and 4 — the stripped trailing run.
+		expect(matrix[3]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[4]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it("probeTrace records every fired child tag — the sort key for bar B-1's population split", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const probeTrace: PlacetypePairProbeTrace = {}
+
+		buildPlacetypePairPriors({ index, inputText: text, probeTrace }, pieces, LABELS)
+
+		expect(probeTrace.firedChildTags).toEqual(["dependent_locality"])
+	})
+})
