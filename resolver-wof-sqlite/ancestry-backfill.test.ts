@@ -177,6 +177,39 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	db.close()
 })
 
+test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bound-variable cap", async () => {
+	const db = new DatabaseSync(":memory:")
+	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
+	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
+	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze runs its index phase
+	// before this backfill; without it the correlated NOT EXISTS is quadratic over 33k rows.
+	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
+
+	// node:sqlite caps a statement at 32,766 bound variables; the 2026-08-04 wide-coverage admin build
+	// carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
+	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
+	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")
+	db.exec("BEGIN")
+
+	for (let id = 1; id <= 33_000; id++) {
+		insertSpr.run(id)
+		insertAnc.run(id, id)
+	}
+
+	db.exec("COMMIT")
+
+	// Empty roots: every geojson probe misses without touching the filesystem 33,000 times.
+	const result = await backfillAncestorsFromHierarchy(db, [])
+
+	// No geojson exists for any of them — every candidate is skipped, none fixed. The assertion that
+	// matters is that the pass completes at all instead of throwing "too many SQL variables".
+	expect(result.placesFixed).toBe(0)
+	expect(result.rowsAdded).toBe(0)
+	expect(result.noGeojson).toBe(33_000)
+
+	db.close()
+})
+
 test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", async () => {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
