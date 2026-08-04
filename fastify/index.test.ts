@@ -47,6 +47,7 @@ function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline 
 			phraseProposals: [],
 			tree,
 			timing: {},
+			faults: [],
 			path: "full",
 			...overrides,
 		}

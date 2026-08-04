@@ -791,3 +791,95 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 		expect(seen[0]).toMatchObject({ anchorPosterior: { US: 0.96 }, anchorWeight: 1 })
 	})
 })
+
+/**
+ * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught EVERY classifier throw and returned an empty
+ * tree, which the grouper-audit then repopulated from rule-based phrase proposals. The caller got a normal-looking
+ * parse with no indication the model never ran: measured on the mailfail probes, 10 of 110 inputs crashed the
+ * classifier while the pipeline reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
+ * The contract now is that the wrapper still degrades — it does not abort the pipeline — but it RECORDS what it caught
+ * on `PipelineResult.faults`, so "the model faulted" is distinguishable from "the model found nothing".
+ */
+describe("stage faults — a swallowed stage crash is recorded, never silent (#40)", () => {
+	const throwingClassifier = (error: unknown): AddressClassifier => ({
+		parse: vi.fn(async () => {
+			throw error
+		}),
+	})
+
+	it("a clean run reports an EMPTY fault list (absence is stated, not implied)", async () => {
+		const result = await runPipeline("350 5th Ave, New York, NY 10118", {
+			classifier: fakeClassifier(fakeTree("350 5th Ave, New York, NY 10118")),
+		})
+
+		expect(result.faults).toEqual([])
+	})
+
+	it("records a classifier throw as a `classifier` fault while still returning a tree", async () => {
+		// The real shape from the 128-piece desync (neural/word-consistency.ts:238).
+		const boom = new TypeError("emissions[pi] is not iterable")
+
+		const result = await runPipeline("350 5th Ave, New York, NY 10118", { classifier: throwingClassifier(boom) })
+
+		expect(result.path).toBe("full")
+		expect(result.faults).toHaveLength(1)
+
+		expect(result.faults[0]).toMatchObject({
+			stage: "classifier",
+			name: "TypeError",
+			message: "emissions[pi] is not iterable",
+		})
+
+		// The thrown value is kept verbatim so a caller can rethrow it or read its stack.
+		expect(result.faults[0]!.cause).toBe(boom)
+	})
+
+	it("survives a non-Error throw (a string) without losing the fault", async () => {
+		const result = await runPipeline("350 5th Ave", { classifier: throwingClassifier("kaboom") })
+
+		expect(result.faults).toHaveLength(1)
+		expect(result.faults[0]).toMatchObject({ stage: "classifier", name: "Error", message: "kaboom" })
+	})
+
+	it("records grouper and resolver throws the same way", async () => {
+		const result = await runPipeline("350 5th Ave, New York, NY 10118", {
+			classifier: fakeClassifier(fakeTree("350 5th Ave, New York, NY 10118")),
+			groupPhrases: vi.fn(async () => {
+				throw new RangeError("grouper blew up")
+			}),
+			resolver: {
+				resolveTree: vi.fn(async () => {
+					throw new Error("backend closed")
+				}),
+			},
+		})
+
+		expect(result.faults.map((f) => f.stage)).toEqual(["phrase-grouper", "resolver"])
+		expect(result.faults[0]).toMatchObject({ name: "RangeError", message: "grouper blew up" })
+		expect(result.faults[1]).toMatchObject({ name: "Error", message: "backend closed" })
+	})
+
+	it("records a resolver throw on the FAST path too", async () => {
+		const postcodeShape: QueryShapeLite = {
+			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
+			totalLength: 5,
+			characterClass: "numeric",
+		}
+
+		const result = await runPipeline("10118", {
+			computeQueryShape: () => postcodeShape,
+			classifyKind: async () => ({ kind: "postcode_only" as const, confidence: 0.97, alternatives: [] }),
+			resolver: {
+				resolveTree: vi.fn(async () => {
+					throw new Error("backend closed")
+				}),
+			},
+		})
+
+		expect(result.path).toBe("fast-path")
+
+		expect(result.faults).toEqual([
+			expect.objectContaining({ stage: "resolver", name: "Error", message: "backend closed" }),
+		])
+	})
+})

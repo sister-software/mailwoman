@@ -22,6 +22,7 @@ const anchorResult = (raw: string): PipelineResult => ({
 	phraseProposals: [],
 	tree: { raw, roots: [] },
 	timing: {},
+	faults: [],
 	path: "full",
 })
 

@@ -472,6 +472,21 @@ function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void 
 }
 
 /**
+ * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
+ * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model produced a tidy-looking parse
+ * with nothing on stdout OR stderr to say so. Same `⚠` register as the encoder-load warnings above; stderr only, so
+ * stdout stays the machine-readable parse.
+ */
+function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name: string; message: string }> }): void {
+	for (const fault of result.faults) {
+		console.error(
+			`⚠ degraded parse: the ${fault.stage} stage threw and the pipeline continued without it — ` +
+				`${fault.name}: ${fault.message}`
+		)
+	}
+}
+
+/**
  * Encoder-less structural parse (plan 3), WITHOUT the banner: the REAL pipeline stages (normalize → query-shape →
  * locale-gate → kind → grouper fast-paths) with no neural classifier. The tree carries what the structural stages can
  * prove (postcode_only / locality_only fast-paths populate it; free-form addresses may yield an empty tree). The caller
@@ -481,6 +496,7 @@ function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void 
 async function runStructuralPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
+	emitFaultWarnings(result)
 
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -572,6 +588,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
 			const result = await pipeline(input, pipelineOpts)
+			emitFaultWarnings(result)
 
 			return options.debug
 				? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -582,6 +599,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	const fst = await tryBuildFST(options)
 	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence, poiQueryKind: options.poi })
 	const result = await pipeline(input, pipelineOpts)
+	emitFaultWarnings(result)
 
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -799,6 +817,13 @@ function serializeResult(
 		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),
 		path: result.path,
 		timing: result.timing,
+		// #40: only when non-empty — the key's presence IS the signal, and its absence keeps the clean-run shape
+		// byte-identical for anything diffing `--debug` output. `cause` is dropped: an Error serializes to `{}`.
+		...(result.faults.length
+			? {
+					faults: result.faults.map(({ stage, name, message }) => ({ stage, name, message })),
+				}
+			: {}),
 		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,
 	}
 }

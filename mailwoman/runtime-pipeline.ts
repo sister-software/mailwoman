@@ -489,6 +489,7 @@ export type {
 	PhraseGrouper,
 	PhraseKind,
 	PhraseProposal,
+	PipelineFault,
 	PipelineOpts,
 	PipelineResult,
 	PipelineTiming,
