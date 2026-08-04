@@ -22,9 +22,10 @@ import { readdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { TextSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 
-import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "./pair-index-resolver.ts"
+import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "./pair-index-resolver.ts"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "./web-loader.ts"
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -88,8 +89,7 @@ describe("browser-safety scope — locale-gate + query-shape are node-free (#127
 					offenders.push(`${file}: bare node global (require/process/__dirname)`)
 				}
 
-				// oxlint-disable-next-line mailwoman/prefer-spliterator -- `@mailwoman/neural` does not depend on spliterator; these are its own small source files.
-				for (const line of text.split("\n")) {
+				for (const line of TextSpliterator.from(text)) {
 					if (!isRuntimeImportLine(line)) continue
 					const spec = specifierOf(line)
 
@@ -147,10 +147,9 @@ describe("detectPairIndexCountry — structural country from the input shape", (
 // ── Per-parse index selection ────────────────────────────────────────────────────────────────────────
 
 function indexFor(country: string): LoadedPairIndex {
-	const header: PairIndexHeader = {
+	const header: PairIndexHeaderInput = {
 		country,
 		delta: 5,
-		schemaVersion: 1,
 		foldVersion: 1,
 		sourceMD5s: [],
 		buildDate: "2026-07-24",

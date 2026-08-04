@@ -191,8 +191,8 @@ function main(): void {
 			fail(`header delta ${header.delta} != 0 — a probe artifact must be uncalibrated`)
 		}
 
-		if (header.schemaVersion !== 1) {
-			fail(`header schemaVersion ${header.schemaVersion} != 1`)
+		if (header.schemaVersion !== 2) {
+			fail(`header schemaVersion ${header.schemaVersion} != 2 (embedded-tag-table format, 2026-08-04)`)
 		}
 
 		if (header.foldVersion !== 1) {

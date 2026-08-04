@@ -564,7 +564,6 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 					{
 						country: "gb",
 						delta: 5,
-						schemaVersion: 1,
 						foldVersion: 1,
 						sourceMD5s: [],
 						buildDate: "2026-07-23",

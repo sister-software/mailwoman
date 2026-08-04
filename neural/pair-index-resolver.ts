@@ -20,8 +20,11 @@
  *   u16 childLen, child utf8[childLen], u16 parentLen, parent utf8[parentLen], u8 tagIdx
  *   ```
  *
- *   sorted by (child, parent) UTF-16 code-unit order. `tagIdx` indexes `COMPONENT_TAGS` (u8 caps at
- *   256 tags; asserted at serialize time — the table is nowhere near that today).
+ *   sorted by (child, parent) UTF-16 code-unit order. `tagIdx` indexes the header's `tagTable` — the
+ *   copy of `COMPONENT_TAGS` embedded at serialize time (schema 2; u8 caps at 256 tags, asserted at
+ *   serialize — the table is nowhere near that today), so the binary is self-describing and immune to
+ *   reordering of the runtime tag union. Normative outside-contributor spec:
+ *   `docs/engineering/reference/pix1.ksy` (kept honest by the layout-conformance test).
  *
  *   This departs from PCB1's fixed-width key table on purpose: postcodes are bounded (~7 ASCII
  *   chars), but place names vary widely in byte length, so a fixed-width key would either truncate
@@ -54,7 +57,15 @@ const MAX_TAGS_PER_BYTE = 256
  * "PIX1" little-endian (P=0x50 I=0x49 X=0x58 1=0x31)
  */
 const MAGIC = 0x31_58_49_50
-const KNOWN_SCHEMA_VERSION = 1
+
+/**
+ * Schema 2 (2026-08-04): the header carries a REQUIRED `tagTable`, and `tagIdx` decodes through it rather than through
+ * `COMPONENT_TAGS` position. v1 binaries decoded positionally, which coupled every shipped artifact to the ORDER of the
+ * tag union — a reorder or mid-list insert would have silently re-mapped every tag with no error. The break is
+ * deliberate (operator-approved): a positional fallback would keep that trap alive for any artifact that never rebuilt,
+ * and the release pipeline rebuilds pair indexes anyway (`copy-weights` → `gazetteer pair-index`).
+ */
+const KNOWN_SCHEMA_VERSION = 2
 
 export interface PairIndexEntry {
 	/**
@@ -80,7 +91,15 @@ export interface PairIndexHeader {
 	 * The soft-prior bias magnitude a probe hit should contribute (consumer-interpreted).
 	 */
 	delta: number
-	schemaVersion: 1
+	schemaVersion: 2
+	/**
+	 * The tag universe `tagIdx` indexes into, embedded at serialize time (a copy of `COMPONENT_TAGS` as of the build).
+	 * Makes the binary self-describing — an outside reader decodes tags with no mailwoman import — and decouples every
+	 * shipped artifact from the ORDER of the runtime tag union. The reader resolves each record's name against the
+	 * runtime's known tags and throws on a referenced unknown; unknown names no record references are tolerated, so a
+	 * binary built after the union grows still loads on an older reader as long as the new tag is unused.
+	 */
+	tagTable: string[]
 	/**
 	 * Which fold (`normalizeFSTToken`-style normalization) the entries were built against.
 	 */
@@ -99,12 +118,19 @@ export interface PairIndexHeader {
 	 * first piece — the path-fusion recovery lever the task-8 transition-level probe measured (β=5: 13/17 comma-free GB
 	 * misses recovered, zero measured collateral on 47 correct rows + 200 venue-confound rows). ABSENT = no transition
 	 * term at all (today's emission-only behavior) — backward compatible (old binaries lack the field and keep working)
-	 * AND forward compatible (old readers parse the header JSON and simply never consult the extra key; `schemaVersion`
-	 * stays 1 because absence-tolerant readers need no gate). Calibrated per country like `delta`: the GB artifact ships
-	 * 5; the NZ artifact deliberately ships WITHOUT it (unmeasured there, and comma-free NZ is already at 99.2%).
+	 * AND forward compatible (old readers parse the header JSON and simply never consult the extra key; optional fields
+	 * ride the JSON header without a schema bump). Calibrated per country like `delta`: the GB artifact ships 5; the NZ
+	 * artifact deliberately ships WITHOUT it (unmeasured there, and comma-free NZ is already at 99.2%).
 	 */
 	transitionBeta?: number
 }
+
+/**
+ * The caller-supplied half of {@link PairIndexHeader}: everything except the two format-owned fields (`schemaVersion`,
+ * `tagTable`), which {@link serializePairIndex} stamps itself — the format version is the serializer's fact, not the
+ * builder's claim.
+ */
+export type PairIndexHeaderInput = Omit<PairIndexHeader, "schemaVersion" | "tagTable">
 
 /**
  * Join a (child, parent) pair into a single unambiguous Map key. Folded place names can contain spaces (the fold leaves
@@ -124,12 +150,16 @@ function pairKey(child: string, parent: string): string {
  * isn't silently resolved here), or if a child/parent string exceeds the u16 length prefix (65,535 UTF-8 bytes — no
  * real place name approaches this).
  */
-export function serializePairIndex(header: PairIndexHeader, entries: readonly PairIndexEntry[]): Uint8Array {
+export function serializePairIndex(header: PairIndexHeaderInput, entries: readonly PairIndexEntry[]): Uint8Array {
 	if (COMPONENT_TAGS.length > MAX_TAGS_PER_BYTE) {
 		throw new Error(
 			`pair index: COMPONENT_TAGS has ${COMPONENT_TAGS.length} tags, which exceeds the u8 tagIdx cap (256)`
 		)
 	}
+
+	// The serializer owns the format-level fields: the schema version it writes and the tag table its
+	// tagIdx values index into are one fact, stamped together.
+	const fullHeader: PairIndexHeader = { ...header, schemaVersion: KNOWN_SCHEMA_VERSION, tagTable: [...COMPONENT_TAGS] }
 
 	const tagIndex = new Map<ComponentTag, number>(COMPONENT_TAGS.map((tag, i) => [tag, i]))
 
@@ -166,7 +196,7 @@ export function serializePairIndex(header: PairIndexHeader, entries: readonly Pa
 		return { child, parent, tagIdx }
 	})
 
-	const headerBytes = encoder.encode(JSON.stringify(header))
+	const headerBytes = encoder.encode(JSON.stringify(fullHeader))
 
 	let size = 4 /* magic */ + 4 /* headerLen */ + headerBytes.length + 4
 
@@ -234,6 +264,13 @@ function readHeaderBlock(bytes: Uint8Array): { header: PairIndexHeader; offset: 
 	const header = parseJSONStrict<PairIndexHeader>(decoder.decode(bytes.subarray(o, o + headerLen)))
 	o += headerLen
 
+	if (header.schemaVersion < KNOWN_SCHEMA_VERSION) {
+		throw new Error(
+			`pair index: schemaVersion ${header.schemaVersion} predates the embedded tag table (v2, 2026-08-04) — ` +
+				`rebuild the artifact via \`mailwoman gazetteer pair-index\``
+		)
+	}
+
 	if (header.schemaVersion > KNOWN_SCHEMA_VERSION) {
 		throw new Error(
 			`pair index: schemaVersion ${header.schemaVersion} is newer than this reader knows (known up to ${KNOWN_SCHEMA_VERSION})`
@@ -264,6 +301,11 @@ export class PairIndexResolver {
 		const decoder = new TextDecoder()
 		const map = new Map<string, ComponentTag>()
 
+		// Decode through the EMBEDDED table, validated per-record against the runtime's known tags:
+		// a referenced unknown name (or an out-of-range tagIdx) is a hard error, while unknown table
+		// entries no record references are tolerated — see the tagTable docstring.
+		const knownTags = new Set<string>(COMPONENT_TAGS)
+
 		for (let i = 0; i < pairCount; i++) {
 			const childLen = view.getUint16(o, true)
 			o += 2
@@ -274,8 +316,17 @@ export class PairIndexResolver {
 			const parent = decoder.decode(bytes.subarray(o, o + parentLen))
 			o += parentLen
 			const tagIdx = bytes[o++]!
+			const tagName = header.tagTable[tagIdx]
 
-			map.set(pairKey(child, parent), COMPONENT_TAGS[tagIdx]!)
+			if (tagName === undefined) {
+				throw new Error(`pair index: tagIdx ${tagIdx} is outside the header's tagTable (${header.tagTable.length})`)
+			}
+
+			if (!knownTags.has(tagName)) {
+				throw new Error(`pair index: tagTable entry "${tagName}" is not a ComponentTag this reader knows`)
+			}
+
+			map.set(pairKey(child, parent), tagName as ComponentTag)
 		}
 
 		this.#probeMap = map
