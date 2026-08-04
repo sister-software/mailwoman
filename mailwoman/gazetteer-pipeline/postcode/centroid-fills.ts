@@ -25,6 +25,7 @@ import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { CSVSpliterator, Delimiters } from "spliterator"
 
 export interface CentroidFillOptions {
 	/**
@@ -93,7 +94,7 @@ interface GeonamesPostcode {
  */
 const geonamesCache = new Map<string, Map<string, GeonamesPostcode>>()
 
-function readGeonamesPostal(geonamesDir: string, country: string): Map<string, GeonamesPostcode> {
+async function readGeonamesPostal(geonamesDir: string, country: string): Promise<Map<string, GeonamesPostcode>> {
 	// The centroid pass and the name pass ask for the same country, and the combined dump is 140 MB.
 	const cached = geonamesCache.get(`${geonamesDir}\u0000${country}`)
 
@@ -107,19 +108,27 @@ function readGeonamesPostal(geonamesDir: string, country: string): Map<string, G
 
 	if (!existsSync(source)) return acc
 
-	// Columns: country, postcode, place, admin1..3 (name+code pairs), latitude, longitude, accuracy.
-	for (const line of readFileSync(source, "utf8").split("\n")) {
-		if (!line) continue
-		const f = line.split("\t")
+	// Streamed, because `source` is a per-country dump of ~1 MB OR the 140 MB combined file, and only
+	// the caller knows which. Reading it whole would hold the entire file as one string plus a string
+	// per line — the combined dump is 1.5 M lines.
+	//
+	// Columns: country, postcode, place, admin1..3 (name + code pairs), latitude, longitude, accuracy.
+	// Headerless, and quote handling stays OFF: GeoNames does not quote, and a bare `"` inside a place
+	// name would otherwise swallow the rest of the file.
+	for await (const cells of CSVSpliterator.fromAsync(source, {
+		columnDelimiter: Delimiters.Tab,
+		header: false,
+		enableQuoteHandling: false,
+	})) {
+		if (!wanted.has(cells[0] ?? "")) continue
 
-		if (!wanted.has(f[0] ?? "")) continue
-
-		const pc = f[1]
-		const place = (f[2] ?? "").trim()
-		const lat = Number(f[9])
-		const lon = Number(f[10])
+		const pc = cells[1]
+		const place = (cells[2] ?? "").trim()
+		const lat = Number(cells[9])
+		const lon = Number(cells[10])
 
 		if (!pc || !Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) continue
+
 		const cur = acc.get(pc)
 
 		if (cur) {
@@ -151,7 +160,7 @@ function readGeonamesPostal(geonamesDir: string, country: string): Map<string, G
  *
  * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
  */
-function geonamesNameFill(db: DatabaseSync, geonamesDir: string): number {
+async function geonamesNameFill(db: DatabaseSync, geonamesDir: string): Promise<number> {
 	const countries = (
 		db.prepare(`SELECT DISTINCT country FROM spr WHERE placetype='postalcode' AND is_current!=0`).all() as Array<{
 			country: string
@@ -172,7 +181,7 @@ function geonamesNameFill(db: DatabaseSync, geonamesDir: string): number {
 	let inserted = 0
 
 	for (const cc of countries) {
-		const acc = readGeonamesPostal(geonamesDir, cc)
+		const acc = await readGeonamesPostal(geonamesDir, cc)
 
 		if (!acc.size) continue
 
@@ -219,7 +228,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string): Promise<numb
 	let fixed = 0
 
 	for (const cc of countries) {
-		const acc = readGeonamesPostal(geonamesDir, cc)
+		const acc = await readGeonamesPostal(geonamesDir, cc)
 
 		if (!acc.size) continue
 
@@ -334,7 +343,7 @@ export async function fillPostcodeCentroids(
 		geonamesFixed = await geonamesFill(db, opts.geonamesDir)
 
 		phase("name-geonames", "delivery-city names")
-		geonamesNames = geonamesNameFill(db, opts.geonamesDir)
+		geonamesNames = await geonamesNameFill(db, opts.geonamesDir)
 	}
 
 	if (opts.adminPath && existsSync(opts.adminPath)) {
