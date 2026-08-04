@@ -144,7 +144,7 @@ rows that contain `New York`, and `Springfield` are **real place names inside aw
 correct behavior. Only the 14/35 `no-resolve` violations are the defect: `1` → Zona 1, `0` → Purwa 0, `a` → A,
 `home` → Home, `Aug` → Aug, `boom` → Boom, `amet` → Amet, `all` → All, `null` → Null, `DROP` → Drop, `Quote` → Quote,
 `NEAR` → Near Acres Estates. One row (`g76`, a SQL statement containing `'New York'`) carries `no-resolve` and
-contains a genuine city name — that bar is arguably mis-set.
+contains the city name `New York` — that bar is arguably mis-set.
 
 ### Score distributions (locality nodes)
 
@@ -228,7 +228,7 @@ the model is more sure about than any real address it read.
    the minimum of that cluster. Any threshold work must re-derive this on a multi-locale, fragment-shaped control
    before it means anything.
 2. Corroboration costs "0 of 149" only because every control row is a full street address. `Springfield` — a bare
-   city name a user genuinely types, and a row in this very fixture — is uncorroborated by construction. A
+   city name a user types, and a row in this very fixture — is uncorroborated by construction. A
    corroboration-only rule would delete the bare-locality search path, which is the map-search register the product
    is aimed at.
 3. n=14 and n=12. These are directional results on a small violation set, not calibrated numbers.
@@ -308,7 +308,7 @@ one preserved beside it as `resolver_score_raw`.
   separating; a monotone remap of a barely-separating signal is a barely-separating signal in nicer units. Design C
   is a prerequisite for cross-backend comparison, **not** a solution to abstention.
 - **Evidence required to promote.** A held-out calibration set per backend (score → observed correctness rate), a
-  reliability curve showing the calibrated value is actually a probability, and a demonstration that the ordering
+  reliability curve showing the calibrated value is a probability, and a demonstration that the ordering
   survives the remap on the resolver evals. Plus the usual major-version consumer sweep.
 
 **If you only take one thing:** Designs B and C are complementary, not alternatives, and B does not depend on C.
