@@ -504,7 +504,15 @@ export class NeuralAddressClassifier {
 				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
 				if (peekedHeader.country === localeCountry) {
-					placetypePair = { index: new PairIndexResolver(pairIndexBytes) }
+					// `parentDelta` (#46, the whole-edge parent bias) is UNSET unless the env names one — the shipped
+					// default stays child-only until the preregistration's four bars clear. See
+					// `MAILWOMAN_PAIR_PARENT_DELTA` in `core/env/schema.ts`.
+					placetypePair = {
+						index: new PairIndexResolver(pairIndexBytes),
+						...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined
+							? {}
+							: { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
+					}
 				} else {
 					console.warn(
 						`[mailwoman/neural] loadFromWeights: pair-index country "${peekedHeader.country}" ` +

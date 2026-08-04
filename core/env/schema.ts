@@ -118,6 +118,16 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_DUMP_MISS_TAG: z.string().optional(),
 	MAILWOMAN_WORD_CONSISTENCY: z.string().optional(),
 	/**
+	 * PIX1 whole-edge parent bias (#46) — the δ applied to the PARENT window of a placetype-pair hit, over the child
+	 * tag's allowed parents in `containmentFor(system)`. UNSET (the default) = child-only, byte-identical to every
+	 * pre-#46 build.
+	 *
+	 * A bar-gated toggle, not a shipped knob: the mechanism stays off until the four bars in
+	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear, and this is how the ON leg of B-1's
+	 * ON-vs-OFF comparison is driven through `mailwoman eval gauntlet` without a code edit between the two runs.
+	 */
+	MAILWOMAN_PAIR_PARENT_DELTA: blankAsAbsent(z.coerce.number().optional()),
+	/**
 	 * Gates the with-data half of `mailwoman/test/dropin-cold-start.test.ts` — a real `mailwoman data pull candidate`
 	 * (~1.65 GB) plus booting all three drop-in servers against it. Unset in CI; the always-on half (missing-data +
 	 * libpostal's zero-data boot) downloads nothing and needs no guard.
