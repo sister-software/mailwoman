@@ -820,7 +820,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
     { name = "pyyaml", specifier = ">=6" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.16.0" },
-    { name = "sentencepiece", specifier = ">=0.2.2" },
+    { name = "sentencepiece", specifier = "==0.2.2" },
     { name = "torch", marker = "extra == 'train'", specifier = "==2.12.0" },
     { name = "tqdm", marker = "extra == 'train'", specifier = ">=4.69.1" },
     { name = "trackio", marker = "extra == 'train'" },

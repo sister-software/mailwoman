@@ -3719,3 +3719,71 @@ def sync_jp_probe():
         "  leg2 configs present:",
         os.path.isfile(f"{src}/configs/v8-leg2-charword.yaml") and os.path.isfile(f"{src}/configs/v8-leg2-sp.yaml"),
     )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_jp_full():
+    """v8 CJK Phase 3/4: sync the char-path training code + the v8-jp-full-2026-08-04 corpus.
+
+    The shard (#1458) is 2,000,000 train / 20,000 val / 20,000 board span-triple parquet plus the
+    sealed 2,237-char train-split vocab — 138 MB, glob-layout (train/ + val/, no MANIFEST), so no
+    re-rooting concerns. It carries the JP-native 47-label surface (``label_set: stage3-jp``), which
+    is why this is a SEPARATE corpus dir from v8-jp-probe rather than an overlay: the probe's
+    1,918-char vocab and 33-label mapping are not forward-compatible with it.
+
+    Also pulls the probe's ``jp-muni-centroids.json`` if it is not already on the volume. That table
+    is keyed on raw kanji ``pref|muni`` and was built from the FULL Overture-JP parquet, so it is
+    label-set independent and the board scorer reuses it unchanged across both boards.
+
+    Prerequisite: the shard must be in R2 at ``corpus/v8-jp-full-2026-08-04/`` — upload it from the
+    lab first (the CLI-write path to this volume is broken; container-side rclone only, see
+    ``sync_v050``'s note). Clears stale pyc.
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v8-jp-full code + corpus from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v8-jp-full-2026-08-04/ "
+        f"{VOL_MOUNT}/corpus/versioned/v8-jp-full-2026-08-04/ {R}",
+        # The centroid table the board scorer resolves against (probe-dir copy, label-set independent).
+        f"rclone copy :s3:{BUCKET}/corpus/v8-jp-probe/jp-muni-centroids.json "
+        f"{VOL_MOUNT}/corpus/versioned/v8-jp-probe/ {R}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv8-jp-full sync complete. Volume committed.")
+
+    src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v8-jp-full-2026-08-04"
+    print("  v8-jp-full config present:", os.path.isfile(f"{src}/configs/v8-jp-full.yaml"))
+    print("  v8-jp-full-2k config present:", os.path.isfile(f"{src}/configs/v8-jp-full-2k.yaml"))
+    print("  stage3-jp label set present:", "STAGE3_JP_BIO_LABELS" in open(f"{src}/labels.py").read())
+    print("  train part-0000 present:", os.path.isfile(f"{corpus}/train/part-0000.parquet"))
+    print("  train part-0007 present:", os.path.isfile(f"{corpus}/train/part-0007.parquet"))
+    print("  val shard present:", os.path.isfile(f"{corpus}/val/part-0000.parquet"))
+    print("  char vocab present:", os.path.isfile(f"{corpus}/char-vocab-jp-full.json"))
+    print("  board present:", os.path.isfile(f"{corpus}/jp-board.jsonl"))
+    print("  build report present:", os.path.isfile(f"{corpus}/build-report.json"))
+    print(
+        "  centroid table present:",
+        os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v8-jp-probe/jp-muni-centroids.json"),
+    )
