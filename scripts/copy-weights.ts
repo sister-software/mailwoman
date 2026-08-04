@@ -104,13 +104,41 @@ function stashDerived(dir: string, filename: string): void {
 }
 
 /**
- * The slice of `release.config.json` this script reads. `softFeed` stays loose — its per-locale shape is validated at
- * each use site, and a schema here would be a second place to update when a locale gains an artifact.
+ * Per-country pair-index build inputs. Every field the `gazetteer pair-index` command accepts is represented — see the
+ * docstring on {@link PAIR_INDEX_BY_COUNTRY} for why a silently-dropped flag is a shipping defect.
+ */
+interface PairIndexBuildInputs {
+	source?: string
+	delta: number
+	transitionBeta?: number
+	boroughDb?: string
+	pairsJsonl?: string
+	banDir?: string
+}
+
+/**
+ * The soft-feed slice of `release.config.json`, typed to exactly the fields this script consumes. The pre-2026-08-04
+ * `Record<string, unknown>` only compiled because `JSON.parse` returned `any`; `parseJSONStrict` surfaces every use
+ * site, so the honest options are a typed slice here or casts scattered at each read — this is the single place. Fields
+ * a locale hasn't earned stay absent; keys this script doesn't read pass through the index signature.
+ */
+interface SoftFeedConfig {
+	gazetteerLexicon?: string
+	countryLexicon?: string
+	streetTypeLexicon?: string
+	localitySurfaceLexicon?: string
+	pairIndexByCountry?: Record<string, PairIndexBuildInputs>
+	postcodeDBByCountry?: Record<string, string>
+	[key: string]: unknown
+}
+
+/**
+ * The slice of `release.config.json` this script reads.
  */
 interface ReleaseConfig {
 	locales: string[]
 	weights: { model: string; tokenizer: string }
-	softFeed?: Record<string, unknown>
+	softFeed?: SoftFeedConfig
 }
 
 const config = parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
@@ -158,10 +186,7 @@ const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
  * `source` is OPTIONAL: it is the GB postal register (PPD), and countries whose pairs come entirely from the WOF admin
  * DB (US) have no equivalent — the command itself refuses a build with no source of any kind.
  */
-const PAIR_INDEX_BY_COUNTRY: Record<
-	string,
-	{ source?: string; delta: number; transitionBeta?: number; boroughDb?: string; pairsJsonl?: string; banDir?: string }
-> = SOFT_FEED.pairIndexByCountry ?? {}
+const PAIR_INDEX_BY_COUNTRY: Record<string, PairIndexBuildInputs> = SOFT_FEED.pairIndexByCountry ?? {}
 
 /**
  * Weights workspaces to materialize, derived from the release config's locale list.
