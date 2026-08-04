@@ -56,22 +56,22 @@ Task 8  publish runbook + operator handoff (bless list, repo-creation checklist)
 - [ ] Each kit: template + smoke (server smoke curls health; browser smoke = node-side loader check per the browser tutorial's measurement basis; dropin smoke = the Task 7 cold-start sequence).
 - [ ] All three smokes green against packed tarballs (transcripts). Commit `feat(templates): server, browser, dropin kits`.
 
-### Task 3: `@mailwoman/create` engine
+### Task 3: the engine — `mailwoman create` (operator amendment: day-1 in the entry package)
 
-**Files:** Create `create/{package.json,index.ts,cli.ts,prompts.ts,test/create.test.ts}` (new workspace; follow repo TS conventions; bin `create-mailwoman`).
+**Files:** Create `mailwoman/scaffold/{index.ts,prompts.ts}` (pure engine: template resolution from the package's bundled `templates/`, name validation, offer-not-run data-pull print, `npm install` invocation injectable), `mailwoman/commands/create.tsx` (Pastel command — house stack, sibling style), `mailwoman/test/scaffold.test.ts`; Modify `mailwoman/package.json` (`files` += rendered `templates/`; `prepack` renders via Task 1's renderer with CURRENT versions).
 
-- [ ] TDD: template resolution (bundled rendered templates), name validation, `--template` bypasses picker, offer-not-run data-pull print, `npm install` invocation mockable. RED → GREEN.
-- [ ] Build step: `prepack` renders all four templates with the CURRENT workspace versions into `create/templates/` (consumes Task 1's renderer).
-- [ ] End-to-end: pack the create package, `npm init` from the tarball in a temp dir, scaffold geocoder, run its smoke. Transcript.
-- [ ] Commit `feat(create): the npm-init engine`.
+- [ ] TDD the pure engine: RED → GREEN per the cases above.
+- [ ] Pastel command: `mailwoman create [template] [dir]` — picker when no template; sibling `useCommandTask`/`CheckList` conventions.
+- [ ] End-to-end: `yarn compile`, pack the mailwoman workspace, install in a temp dir, `mailwoman create geocoder demo` from the tarball, run the kit's smoke. Transcript.
+- [ ] Commit `feat(cli): mailwoman create — the scaffolder ships in the box`.
 
-### Task 4: shims + workspace wiring
+### Task 4: npm-init delegates
 
-**Files:** Create `create-geocoder/`, `create-server/`, `create-browser/`, `create-dropin/` (each: package.json + a bin that execs the engine with the template preselected — three lines each), root workspace list updated.
+**Files:** Create `create/` (`@mailwoman/create`: bin `create-mailwoman` → resolves and execs the installed engine — depends on `mailwoman`) and `create-{geocoder,server,browser,dropin}/` (each: package.json + a bin passing the preselected template — three lines each); root workspace list updated.
 
-- [ ] Shim test: each bin invokes the engine with the right argument (unit) + one end-to-end via tarball for `create-geocoder`.
-- [ ] Publish wiring: `files` arrays, publishConfig access public, license fields matching the dual-license convention (the es-es/it-it lesson — verify against a correctly-configured sibling).
-- [ ] Commit `feat(create): four npm-init shims`.
+- [ ] Delegate test: each bin reaches the engine with the right argument (unit) + one end-to-end via tarball for `npm init @mailwoman/geocoder`.
+- [ ] Publish wiring: `files`, publishConfig access public, dual-license fields (the es-es/it-it lesson — verify against a correctly-configured sibling).
+- [ ] Commit `feat(create): five npm-init delegates over mailwoman create`.
 
 ### Task 5: monorepo CI smoke
 
