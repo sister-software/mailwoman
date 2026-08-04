@@ -94,11 +94,6 @@ const ParseConfigSchema = zod.object({
 		.optional()
 		.default(false)
 		.describe("[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline)."),
-	noNeural: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
 	poi: zod
 		.boolean()
 		.optional()
@@ -208,13 +203,12 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 
 const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	// The weights guard wraps the DEFAULT pipeline path only — explicit --model/--tokenizer paths and
-	// the legacy/benchmark/noNeural paths keep their existing loading semantics untouched (plan 3;
+	// the legacy/benchmark/degraded paths keep their existing loading semantics untouched (plan 3;
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
 		options.benchmark === undefined &&
 		!(options.policy && options.policy.length) &&
 		!options.neural &&
-		!options.noNeural &&
 		!options.model &&
 		!options.tokenizer
 
@@ -463,10 +457,10 @@ function serializeTree(
 
 /**
  * The generic degraded-mode banner (stderr — stdout stays machine-parseable). Emitted when the guard hands back a
- * `declined` outcome (interactive "n" / `--degraded` / a failed download) or the explicit `--no-neural` skip — paths
- * that never attempt an encoder load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire. The
- * attempted-and-failed case is announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT
- * emitted there (it would double up).
+ * `declined` outcome (interactive "n" / `--degraded` / a failed download) — the paths that never attempt an encoder
+ * load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire. The attempted-and-failed case is
+ * announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT emitted there (it would double
+ * up).
  */
 function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void {
 	console.error(
@@ -508,8 +502,8 @@ async function runStructuralPipeline(input: string, options: zod.infer<typeof Pa
 }
 
 /**
- * Structural parse fronted by the generic degraded banner — the guard's `declined` / `--no-neural` entry point (the
- * caller here did NOT attempt an encoder load, so it owns the notice).
+ * Structural parse fronted by the generic degraded banner — the guard's `declined` entry point (the caller here did NOT
+ * attempt an encoder load, so it owns the notice).
  */
 async function runDegraded(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	emitDegradedBanner(options)
@@ -525,19 +519,18 @@ async function runDegraded(input: string, options: zod.infer<typeof ParseConfigS
 async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning when the load
 	// fails, so an attempted-but-failed encoder load is NEVER silent — including on the --resolve/--debug
-	// paths, which don't route through the degraded banner below (#1108). The explicit --no-neural skip
-	// attempts no load (and gets no such warning); the degraded banner covers it instead.
-	const attemptedNeural = !options.noNeural
-	const classifier = attemptedNeural ? await tryLoadNeural(options) : undefined
+	// paths, which don't route through the degraded banner below (#1108). Every route into this function
+	// attempts the load: the deliberate skip is `--degraded`, which the guard answers with `declined`
+	// before we get here (see ParseTask).
+	const classifier = await tryLoadNeural(options)
 
 	// When the encoder isn't loaded and there's no resolver/debug work to do, the full pipeline can only
 	// emit QueryShape fast-path structure. Route to the structural path so the CLI still produces useful
 	// output for the fast-path kinds (postcode_only, locality_only). `--debug` stays on the pipeline so
 	// the operator gets the requested PipelineResult JSON shape.
 	if (!classifier && !options.resolve && !options.debug) {
-		// tryLoadNeural already warned when the load was attempted; only the explicit --no-neural skip
-		// still needs the generic degraded banner (it never called tryLoadNeural).
-		return attemptedNeural ? runStructuralPipeline(input, options) : runDegraded(input, options)
+		// `tryLoadNeural` already emitted the precise warning, so the generic banner would double up.
+		return runStructuralPipeline(input, options)
 	}
 
 	const wantAlternatives = options.candidates !== undefined
@@ -650,7 +643,9 @@ async function runBenchmark(
 	options: zod.infer<typeof ParseConfigSchema>,
 	iterations: number
 ): Promise<string> {
-	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
+	// `--degraded` is the encoder-less benchmark: the weights guard never runs on this path (it is
+	// gated on `benchmark === undefined`), so the flag has to be read here or it silently does nothing.
+	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
 
 	const runOne = async (
 		pipeline: ReturnType<typeof createRuntimePipeline>

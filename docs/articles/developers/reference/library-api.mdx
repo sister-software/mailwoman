@@ -21,8 +21,9 @@ building a pipeline rather than using one. For the command line, see [CLI](./cli
 [HTTP APIs](./http-apis.mdx).
 
 Every example below ran under Node 26 against the packages in this repository at the version this
-page documents. Options marked internal in the source are omitted here: they are instrument knobs for
-evaluation runs, and their defaults are the shipped behavior.
+page documents. The options tables are a subset: bias-magnitude and gate-threshold knobs that exist
+to be swept during evaluation are omitted, and their defaults are the shipped behavior. Where a table
+is a subset, it says so and says what it left out.
 
 ## Import map
 
@@ -196,10 +197,15 @@ dependency, so it reports where the gazetteer index is and leaves deserializatio
 
 ### Parse options
 
-These are the fields of `ParseOpts` a consumer sets. The remainder are marked internal in the source.
+These are the fields of `ParseOpts` a consumer sets. `ParseOpts` has 20 fields; the ten omitted here
+are the FST bias magnitudes and gate thresholds (`fstBiasScale`, `fstStreetContextGate` and their
+siblings, four of which the source marks internal), the `queryShapeBiasScale` magnitude, the
+morphology-prior override, the pre-v4.4.0 `bridgePunctuationGaps` switch, and `trailingLocality`,
+which is deprecated and scheduled for deletion at the next major.
 
 | Field                      | Type                                | Default                          | Effect                                                     |
 | -------------------------- | ----------------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| `fst`                      | `FSTMatcherLike`                    | none                             | Gazetteer matches become additive emission biases          |
 | `inputMode`                | `"fragmented"` or `"formatted"`     | `"fragmented"`                   | Which register the evidence channels run in                |
 | `queryShape`               | `QueryShapeLike`                    | none                             | Known-format hits become additive emission biases          |
 | `normalizeCase`            | `boolean`                           | on                               | Title-cases detected all-caps ASCII input                  |
@@ -232,23 +238,27 @@ row.
 
 ### Dependencies
 
-| Field                    | Type                       | Default               | Effect                                                         |
-| ------------------------ | -------------------------- | --------------------- | -------------------------------------------------------------- |
-| `classifier`             | `GeocodeClassifier`        | required              | The parser                                                     |
-| `resolver`               | `Resolver`                 | required              | The gazetteer walk                                             |
-| `shards`                 | `ShardResolver`            | none                  | Per-state rooftop and interpolation lookups                    |
-| `nationalShards`         | `(country) => StateShards` | none                  | Per-country shards, for example the French rooftop shard       |
-| `defaultCountry`         | `string`                   | none                  | Scopes the resolver to one country                             |
-| `bias`                   | proximity points           | none                  | Soft re-rank toward a viewport or a user location              |
-| `interpCalibration`      | `number` or a table        | the shard's own value | Multiplier on the interpolation tier's uncertainty radius      |
-| `normalizeCase`          | `boolean`                  | on                    | Title-cases detected all-caps input                            |
-| `normalizeInput`         | `boolean`                  | on                    | Runs the normalize stage                                       |
-| `placeCountry`           | function or `false`        | the bundled placer    | Soft country prior                                             |
-| `hardPlaceCountry`       | `boolean`                  | on                    | Hard country filter inside the coverage safelist               |
-| `adminCoherence`         | `boolean`                  | on                    | Joint admin-consistency re-pick                                |
-| `postcodeCountryPrior`   | `boolean`                  | on                    | Postcode shape informs the country                             |
-| `retryAlternateRegister` | `boolean`                  | on                    | Retries the parse in the other input register on a weak result |
-| `parsedTree`             | `AddressTree`              | none                  | Skips the parse when you already have the tree                 |
+`GeocodeDeps` has 18 fields. The 16 below are the ones a consumer sets; `osmShards` and
+`hardCountrySafelist` are omitted as evaluation and build-time wiring.
+
+| Field                    | Type                           | Default               | Effect                                                         |
+| ------------------------ | ------------------------------ | --------------------- | -------------------------------------------------------------- |
+| `classifier`             | `GeocodeClassifier`            | required              | The parser                                                     |
+| `inputMode`              | `"fragmented"` / `"formatted"` | from the query kind   | Which register the evidence channels run in                    |
+| `resolver`               | `Resolver`                     | required              | The gazetteer walk                                             |
+| `shards`                 | `ShardResolver`                | none                  | Per-state rooftop and interpolation lookups                    |
+| `nationalShards`         | `(country) => StateShards`     | none                  | Per-country shards, for example the French rooftop shard       |
+| `defaultCountry`         | `string`                       | none                  | Scopes the resolver to one country                             |
+| `bias`                   | proximity points               | none                  | Soft re-rank toward a viewport or a user location              |
+| `interpCalibration`      | `number` or a table            | the shard's own value | Multiplier on the interpolation tier's uncertainty radius      |
+| `normalizeCase`          | `boolean`                      | on                    | Title-cases detected all-caps input                            |
+| `normalizeInput`         | `boolean`                      | on                    | Runs the normalize stage                                       |
+| `placeCountry`           | function or `false`            | the bundled placer    | Soft country prior                                             |
+| `hardPlaceCountry`       | `boolean`                      | on                    | Hard country filter inside the coverage safelist               |
+| `adminCoherence`         | `boolean`                      | on                    | Joint admin-consistency re-pick                                |
+| `postcodeCountryPrior`   | `boolean`                      | on                    | Postcode shape informs the country                             |
+| `retryAlternateRegister` | `boolean`                      | on                    | Retries the parse in the other input register on a weak result |
+| `parsedTree`             | `AddressTree`                  | none                  | Skips the parse when you already have the tree                 |
 
 ### Resolution tiers
 

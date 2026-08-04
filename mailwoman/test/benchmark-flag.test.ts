@@ -4,8 +4,13 @@
  * @author Teffen Ellis, et al.
  *
  *   CLI `--benchmark` flag tests. Validates the schema and exercises the runner end-to-end against
- *   the compiled CLI (no neural model load — uses --no-neural so the test is deterministic +
- *   fast).
+ *   the compiled CLI with `--degraded`, so no encoder loads and the run stays deterministic + fast.
+ *
+ *   This used to pass `--no-neural`, which did NOT skip the load: `parse.tsx` declared both `neural`
+ *   and `noNeural`, Commander derived `--no-neural` from the FORMER (its `attributeName()` is
+ *   `neural`), and `options.noNeural` was therefore never settable from the command line. The
+ *   benchmark reported `classifier: loaded (en-US)` throughout. `noNeural` is gone; `--degraded` is
+ *   the flag that skips the encoder, and the benchmark path now honours it.
  */
 
 import { execFile } from "node:child_process"
@@ -48,16 +53,19 @@ describe("--benchmark schema", () => {
 	})
 })
 
-describe("npx mailwoman parse --benchmark <N> --no-neural '<input>'", () => {
+describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 	test("emits the percentile report and exits 0", async () => {
 		const { stdout } = await exec(
 			process.execPath,
-			[cliBin, "parse", "--benchmark", "10", "--no-neural", "350 5th Ave, New York, NY 10118"],
+			[cliBin, "parse", "--benchmark", "10", "--degraded", "350 5th Ave, New York, NY 10118"],
 			{ env: childEnv({ MAILWOMAN_TEST_MODE: "1" }) }
 		)
 
 		expect(stdout).toContain("iterations + 5 warmup")
 		expect(stdout).toContain("stage")
+		// The regression guard for the flag this file used to pass: if the encoder loads, the header
+		// says so, and the run is neither deterministic nor fast.
+		expect(stdout).toContain("classifier: none")
 		expect(stdout).toContain("p50")
 		expect(stdout).toContain("TOTAL")
 		expect(stdout).toContain("normalize")

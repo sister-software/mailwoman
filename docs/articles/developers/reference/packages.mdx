@@ -20,8 +20,10 @@ the sizes of everything here, see [Footprints](./footprints.mdx).
 
 Every published package releases in lockstep on one version number, the model bundles included, so a
 weights package version tracks the release rather than the model's own lineage. All packages are ESM
-only, and the `mailwoman` entry package declares a Node floor of 24.18; the scoped packages declare
-no `engines` field of their own.
+only. Eight of the 49 publishable manifests declare a Node floor of 24.18: the `mailwoman` entry
+package and seven data-pipeline packages, `@mailwoman/spatial` among them. The rest declare no
+`engines` field, so nothing stops npm installing them under an older Node — the floor is real for
+all of them, and only eight state it.
 
 Every package declares `AGPL-3.0-only OR LicenseRef-Commercial` except two:
 `@mailwoman/neural-weights-es-es` and `@mailwoman/neural-weights-it-it` declare `AGPL-3.0`, both in
@@ -89,8 +91,11 @@ The gazetteer database itself is a separate download and is in no package. Run
 | `@mailwoman/libpostal` | `/parse`, `/expand`                                            | You are replacing a libpostal HTTP deployment |
 | `@mailwoman/mcp`       | An MCP server over stdio: parse, geocode, POI search, and more | You are giving an agent a spatial toolset     |
 
-Each server ships its own binary, so `npx @mailwoman/nominatim serve` runs without a wrapper. The
-endpoint tables are on [HTTP APIs](./http-apis.mdx).
+The three drop-ins each declare one unscoped binary, so `npx @mailwoman/nominatim serve` reaches it
+without naming the binary, and an install puts `nominatim`, `photon` and `libpostal` in
+`node_modules/.bin`. `@mailwoman/mcp` declares `mailwoman-mcp`. `@mailwoman/api` declares none: it is
+a library, and `mailwoman serve` is its command. The endpoint tables are on
+[HTTP APIs](./http-apis.mdx).
 
 ## Record work
 

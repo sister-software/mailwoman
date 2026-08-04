@@ -79,6 +79,8 @@
 		"@types/react-map-gl": "^6.1.8",
 		"@vitejs/plugin-react": "^6.0.5",
 		"@vvago/vale": "^3.17.0",
+		"commander": "^14.0.1",
+		"pastel": "^4.0.1",
 		"spliterator": "^5.0.0",
 		"sql.js-httpvfs": "^0.8.12",
 		"storybook": "^10.5.5",
