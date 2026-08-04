@@ -29,9 +29,7 @@
  *   License: stamped `"Public Domain"` per Hawaii state government open-data terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -83,16 +81,11 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 				throw new Error(`state-hi-schools adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			const state = lookupStateAbbreviation(HI_STATE_ABBR)
 
@@ -102,67 +95,63 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<HiSchoolRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<HiSchoolRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const name = (record.name ?? "").trim()
-					const address = (record.address ?? "").trim()
-					const city = (record.city ?? "").trim()
-					const zip = normalizeZip(record.zip ?? "")
+				const name = (record.name ?? "").trim()
+				const address = (record.address ?? "").trim()
+				const city = (record.city ?? "").trim()
+				const zip = normalizeZip(record.zip ?? "")
 
-					if (!name || !address || !city || !zip) continue
+				if (!name || !address || !city || !zip) continue
 
-					const split = splitStreetLine(address)
+				const split = splitStreetLine(address)
 
-					if (!split) continue
+				if (!split) continue
 
-					const components: CanonicalRow["components"] = {
-						venue: name,
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode: zip,
-					}
-
-					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
-
-					const raw = [
-						name,
-						streetPart,
-						[city, [HI_STATE_ABBR, zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
-					]
-						.filter(Boolean)
-						.join(", ")
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					const code = (record.code ?? "").toString().trim()
-
-					const sourceID = code
-						? `${STATE_HI_SCHOOLS_ADAPTER_ID}-${code}`
-						: stableSourceID(STATE_HI_SCHOOLS_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: STATE_HI_SCHOOLS_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				const components: CanonicalRow["components"] = {
+					venue: name,
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode: zip,
 				}
-			} finally {
-				stream.destroy()
+
+				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
+				const raw = [
+					name,
+					streetPart,
+					[city, [HI_STATE_ABBR, zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+				]
+					.filter(Boolean)
+					.join(", ")
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const code = (record.code ?? "").toString().trim()
+
+				const sourceID = code
+					? `${STATE_HI_SCHOOLS_ADAPTER_ID}-${code}`
+					: stableSourceID(STATE_HI_SCHOOLS_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: STATE_HI_SCHOOLS_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

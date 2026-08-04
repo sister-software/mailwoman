@@ -16,9 +16,7 @@
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -60,85 +58,76 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 				throw new Error(`state-ia-contractors adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<IaContractorRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<IaContractorRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const businessName = (record["Business Name"] ?? "").trim()
-					const address1 = (record["Address 1"] ?? "").trim()
-					const address2 = (record["Address 2"] ?? "").trim()
-					const city = (record.City ?? "").trim()
-					const stateAbbr = (record.State ?? "").trim()
-					const zip = (record["Zip Code"] ?? "").trim()
+				const businessName = (record["Business Name"] ?? "").trim()
+				const address1 = (record["Address 1"] ?? "").trim()
+				const address2 = (record["Address 2"] ?? "").trim()
+				const city = (record.City ?? "").trim()
+				const stateAbbr = (record.State ?? "").trim()
+				const zip = (record["Zip Code"] ?? "").trim()
 
-					if (!city || !zip) continue
+				if (!city || !zip) continue
 
-					const state = lookupStateAbbreviation(stateAbbr)
+				const state = lookupStateAbbreviation(stateAbbr)
 
-					if (!state) continue
+				if (!state) continue
 
-					const fullAddress = [address1, address2].filter(Boolean).join(" ")
-					const split = splitStreetLine(fullAddress)
+				const fullAddress = [address1, address2].filter(Boolean).join(" ")
+				const split = splitStreetLine(fullAddress)
 
-					if (!split) continue
+				if (!split) continue
 
-					const venue = businessName || undefined
+				const venue = businessName || undefined
 
-					const components: CanonicalRow["components"] = {
-						...(venue ? { venue } : {}),
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode: zip,
-					}
-
-					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
-
-					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
-						.filter(Boolean)
-						.join(", ")
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					const regNum = (record["Registration #"] ?? "").trim()
-
-					const sourceID = regNum
-						? `${STATE_IA_CONTRACTORS_ADAPTER_ID}-${regNum}`
-						: stableSourceID(STATE_IA_CONTRACTORS_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: STATE_IA_CONTRACTORS_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				const components: CanonicalRow["components"] = {
+					...(venue ? { venue } : {}),
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode: zip,
 				}
-			} finally {
-				stream.destroy()
+
+				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
+				const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
+					.filter(Boolean)
+					.join(", ")
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const regNum = (record["Registration #"] ?? "").trim()
+
+				const sourceID = regNum
+					? `${STATE_IA_CONTRACTORS_ADAPTER_ID}-${regNum}`
+					: stableSourceID(STATE_IA_CONTRACTORS_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: STATE_IA_CONTRACTORS_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: STATE_IA_CONTRACTORS_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

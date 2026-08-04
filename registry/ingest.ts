@@ -24,7 +24,6 @@
 
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
-import { parse as parseCSVSync } from "csv-parse/sync"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
 import type { SourceRecord } from "./types.ts"
@@ -186,9 +185,15 @@ export interface IngestOptions {
 
 /**
  * Parse a CSV string (with a header row) into row objects keyed by column name.
+ *
+ * Keys and values are trimmed, and keys keep the source's own header spelling so a {@link ColumnMapping} written against
+ * those headers matches — the same contract {@link streamRows} holds for the streaming path.
  */
 export function parseCSV(text: string): Record<string, string>[] {
-	return parseCSVSync(text, { columns: true, skip_empty_lines: true, trim: true, relax_column_count: true })
+	return Array.from(
+		CSVSpliterator.from(text, { mode: "object", normalizeKeys: false, enableQuoteHandling: true }),
+		(row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim(), String(value ?? "").trim()]))
+	)
 }
 
 /**

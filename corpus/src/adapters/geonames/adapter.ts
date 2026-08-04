@@ -28,10 +28,10 @@
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
 
-import { createReadStream, existsSync, readFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { existsSync } from "node:fs"
 
-import { parse as csvParse } from "csv-parse"
+import { dirname, join } from "path-ts"
+import { TSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
@@ -69,16 +69,14 @@ const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 /**
  * Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent.
  */
-function loadAdmin1(dir: string): Map<string, string> {
+async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "admin1CodesASCII.txt")
 
 	if (!existsSync(fp)) return map
 
-	for (const line of readFileSync(fp, "utf8").split("\n")) {
-		if (!line) continue
-		const cols = line.split("\t")
-
+	// `header: false` — the file is headerless, and the spliterator eats row 1 as a header otherwise.
+	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
 		if (cols[0] && cols[1]) {
 			map.set(cols[0], cols[1])
 		}
@@ -90,15 +88,16 @@ function loadAdmin1(dir: string): Map<string, string> {
 /**
  * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented.
  */
-function loadCountries(dir: string): Map<string, string> {
+async function loadCountries(dir: string): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "countryInfo.txt")
 
 	if (!existsSync(fp)) return map
 
-	for (const line of readFileSync(fp, "utf8").split("\n")) {
-		if (!line || line.startsWith("#")) continue
-		const cols = line.split("\t")
+	// `header: false` — the file's header IS a `#` comment, so it falls out with the other comments
+	// rather than being consumed as column names.
+	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
+		if (cols[0]?.startsWith("#")) continue
 
 		// ISO(0), ISO3(1), iso-numeric(2), fips(3), Country(4), ...
 		if (cols[0] && cols[4]) {
@@ -118,85 +117,78 @@ export function createGeonamesAdapter(): CorpusAdapter {
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			const dir = dirname(opts.inputPath)
-			const admin1 = loadAdmin1(dir)
-			const countries = loadCountries(dir)
+			const admin1 = await loadAdmin1(dir)
+			const countries = await loadCountries(dir)
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({ delimiter: "\t", quote: false, relax_column_count: true, skip_empty_lines: true })
-			)
+			// `header: false` — the per-country dump is headerless.
+			const rows = TSVSpliterator.fromAsync(opts.inputPath, { header: false })
 
 			let emitted = 0
 
-			try {
-				for await (const rec of parser as AsyncIterable<string[]>) {
-					if (opts.signal?.aborted) break
+			for await (const rec of rows) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					if (rec[COL.featureClass] !== "P") continue
+				if (rec[COL.featureClass] !== "P") continue
 
-					if (NON_CURRENT_PPL.has(rec[COL.featureCode] ?? "")) continue
+				if (NON_CURRENT_PPL.has(rec[COL.featureCode] ?? "")) continue
 
-					const cc = (rec[COL.country] ?? "").trim()
+				const cc = (rec[COL.country] ?? "").trim()
 
-					if (!cc) continue
+				if (!cc) continue
 
-					if (opts.country && cc !== opts.country) continue
+				if (opts.country && cc !== opts.country) continue
 
-					const locality = (rec[COL.name] ?? "").trim()
+				const locality = (rec[COL.name] ?? "").trim()
 
-					if (!locality) continue
-					const geonameid = (rec[COL.geonameid] ?? "").trim()
-					const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
-					const country = countries.get(cc)
+				if (!locality) continue
+				const geonameid = (rec[COL.geonameid] ?? "").trim()
+				const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
+				const country = countries.get(cc)
 
-					// Two hierarchy variants (domestic + international order) — but only emit the
-					// distinct ones the available names support.
-					const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
+				// Two hierarchy variants (domestic + international order) — but only emit the
+				// distinct ones the available names support.
+				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
 
-					if (region) {
-						variants.push({ slot: "lr", comp: { locality, region }, raw: `${locality}, ${region}` })
+				if (region) {
+					variants.push({ slot: "lr", comp: { locality, region }, raw: `${locality}, ${region}` })
 
-						if (country) {
-							variants.push({
-								slot: "lrc",
-								comp: { locality, region, country },
-								raw: `${locality}, ${region}, ${country}`,
-							})
-						}
-					} else if (country) {
-						variants.push({ slot: "lc", comp: { locality, country }, raw: `${locality}, ${country}` })
-					} else {
-						variants.push({ slot: "l", comp: { locality }, raw: locality })
+					if (country) {
+						variants.push({
+							slot: "lrc",
+							comp: { locality, region, country },
+							raw: `${locality}, ${region}, ${country}`,
+						})
 					}
-
-					for (const v of variants) {
-						if (opts.limit !== undefined && emitted >= opts.limit) break
-						const aligned = reconcileComponents(v.comp, v.raw)
-
-						if (!Object.keys(aligned).length) continue
-
-						const sourceID = geonameid
-							? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`
-							: stableSourceID(GEONAMES_ADAPTER_ID, aligned)
-
-						yield {
-							raw: v.raw,
-							components: aligned,
-							country: cc,
-							source: GEONAMES_ADAPTER_ID,
-							source_id: sourceID,
-							corpus_version: "",
-							license: GEONAMES_DEFAULT_LICENSE,
-						}
-
-						emitted++
-					}
+				} else if (country) {
+					variants.push({ slot: "lc", comp: { locality, country }, raw: `${locality}, ${country}` })
+				} else {
+					variants.push({ slot: "l", comp: { locality }, raw: locality })
 				}
-			} finally {
-				stream.destroy()
+
+				for (const v of variants) {
+					if (opts.limit !== undefined && emitted >= opts.limit) break
+					const aligned = reconcileComponents(v.comp, v.raw)
+
+					if (!Object.keys(aligned).length) continue
+
+					const sourceID = geonameid
+						? `${GEONAMES_ADAPTER_ID}-${geonameid}-${v.slot}`
+						: stableSourceID(GEONAMES_ADAPTER_ID, aligned)
+
+					yield {
+						raw: v.raw,
+						components: aligned,
+						country: cc,
+						source: GEONAMES_ADAPTER_ID,
+						source_id: sourceID,
+						corpus_version: "",
+						license: GEONAMES_DEFAULT_LICENSE,
+					}
+
+					emitted++
+				}
 			}
 		},
 	}

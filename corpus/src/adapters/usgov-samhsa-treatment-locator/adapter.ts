@@ -28,9 +28,7 @@
  *   distribution terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -135,76 +133,65 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 				throw new Error(`usgov-samhsa adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<SamhsaSiteRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<SamhsaSiteRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const venue = composeVenue(record.name1 ?? "", record.name2)
-					const street = joinTwoLineStreet(record.street1 ?? "", record.street2)
-					const split = splitStreetLine(street)
-					const city = (record.city ?? "").trim()
-					const stateAbbr = (record.state ?? "").trim()
-					const postcode = (record.zip ?? "").trim()
+				const venue = composeVenue(record.name1 ?? "", record.name2)
+				const street = joinTwoLineStreet(record.street1 ?? "", record.street2)
+				const split = splitStreetLine(street)
+				const city = (record.city ?? "").trim()
+				const stateAbbr = (record.state ?? "").trim()
+				const postcode = (record.zip ?? "").trim()
 
-					if (!venue || !split || !city || !postcode) continue
-					const state = lookupStateAbbreviation(stateAbbr)
+				if (!venue || !split || !city || !postcode) continue
+				const state = lookupStateAbbreviation(stateAbbr)
 
-					if (!state) continue
+				if (!state) continue
 
-					// venue first — same kryptonite-defending insertion order as HRSA.
-					const components: CanonicalRow["components"] = {
-						venue,
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode,
-					}
-
-					const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
-
-					if (!raw) continue
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (!Object.keys(aligned).length) continue
-
-					const frID = (record.frid ?? "").trim()
-
-					const sourceID = frID
-						? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}`
-						: stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: USGOV_SAMHSA_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: USGOV_SAMHSA_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				// venue first — same kryptonite-defending insertion order as HRSA.
+				const components: CanonicalRow["components"] = {
+					venue,
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode,
 				}
-			} finally {
-				stream.destroy()
+
+				const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+
+				if (!raw) continue
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (!Object.keys(aligned).length) continue
+
+				const frID = (record.frid ?? "").trim()
+
+				const sourceID = frID ? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}` : stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: USGOV_SAMHSA_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: USGOV_SAMHSA_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

@@ -25,14 +25,13 @@
  *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
  *   The model card MUST carry the BAN attribution (Tier B obligation).
  *
- *   The adapter is streaming-aware: it uses `csv-parse` in streaming mode so a 25M-row dump never
- *   sits in memory. Honors `opts.limit` for fixture / smoke runs, `opts.signal` for cancellation,
- *   and `opts.country` for a self-consistency check (errors if country !== FR).
+ *   The adapter is streaming-aware: `CSVSpliterator.fromAsync` reads the `;`-delimited dump row by
+ *   row, so a 25M-row file never sits in memory. Honors `opts.limit` for fixture / smoke runs,
+ *   `opts.signal` for cancellation, and `opts.country` for a self-consistency check (errors if
+ *   country !== FR).
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
@@ -108,86 +107,77 @@ export function createBanAdapter(): CorpusAdapter {
 				throw new Error(`ban adapter: only FR supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					delimiter: ";",
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				columnDelimiter: ";",
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<BanRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<BanRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const house = composeHouseNumber(record.numero ?? "", record.rep ?? "")
-					const street = (record.nom_voie ?? "").trim()
-					const postcode = (record.code_postal ?? "").trim()
-					const locality = (record.nom_commune ?? "").trim()
+				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "")
+				const street = (record.nom_voie ?? "").trim()
+				const postcode = (record.code_postal ?? "").trim()
+				const locality = (record.nom_commune ?? "").trim()
 
-					if (!street || !locality) continue
+				if (!street || !locality) continue
 
-					if (!house && !postcode) continue
+				if (!house && !postcode) continue
 
-					const decomposed = decomposeFrStreet(street)
+				const decomposed = decomposeFrStreet(street)
 
-					const components: CanonicalRow["components"] = {}
+				const components: CanonicalRow["components"] = {}
 
-					if (house) {
-						components.house_number = house
-					}
-
-					if (decomposed.prefix) {
-						components.street_prefix = decomposed.prefix
-					}
-
-					if (decomposed.street) {
-						components.street = decomposed.street
-					}
-
-					if (postcode) {
-						components.postcode = postcode
-					}
-
-					if (locality) {
-						components.locality = locality
-					}
-
-					const raw = composeRaw(house, street, postcode, locality)
-
-					if (!raw) continue
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (!Object.keys(aligned).length) continue
-
-					const sourceID = record.id?.trim()
-						? `${BAN_ADAPTER_ID}-${record.id.trim()}`
-						: stableSourceID(BAN_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "FR",
-						locale: "fr-FR",
-						source: BAN_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: "Licence Ouverte 2.0",
-					}
-
-					emitted++
+				if (house) {
+					components.house_number = house
 				}
-			} finally {
-				stream.destroy()
+
+				if (decomposed.prefix) {
+					components.street_prefix = decomposed.prefix
+				}
+
+				if (decomposed.street) {
+					components.street = decomposed.street
+				}
+
+				if (postcode) {
+					components.postcode = postcode
+				}
+
+				if (locality) {
+					components.locality = locality
+				}
+
+				const raw = composeRaw(house, street, postcode, locality)
+
+				if (!raw) continue
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (!Object.keys(aligned).length) continue
+
+				const sourceID = record.id?.trim()
+					? `${BAN_ADAPTER_ID}-${record.id.trim()}`
+					: stableSourceID(BAN_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "FR",
+					locale: "fr-FR",
+					source: BAN_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: "Licence Ouverte 2.0",
+				}
+
+				emitted++
 			}
 		},
 	}

@@ -19,9 +19,7 @@
  *   federal).
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
@@ -91,74 +89,68 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 				throw new Error(`usgov-irs-bmf adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({ columns: true, skip_empty_lines: true, relax_quotes: true, relax_column_count: true, trim: true })
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<IrsBmfRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<IrsBmfRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const ein = (record.EIN ?? "").trim()
-					const venue = (record.NAME ?? "").trim() || undefined
-					const street = (record.STREET ?? "").trim()
-					const city = (record.CITY ?? "").trim()
-					const state = (record.STATE ?? "").trim()
-					const zipRaw = (record.ZIP ?? "").trim()
+				const ein = (record.EIN ?? "").trim()
+				const venue = (record.NAME ?? "").trim() || undefined
+				const street = (record.STREET ?? "").trim()
+				const city = (record.CITY ?? "").trim()
+				const state = (record.STATE ?? "").trim()
+				const zipRaw = (record.ZIP ?? "").trim()
 
-					if (!city || !zipRaw) continue
-					const postcode = zipRaw.split("-")[0]!.trim() // 5-digit; drop the optional +4
+				if (!city || !zipRaw) continue
+				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit; drop the optional +4
 
-					const split = splitStreetLineOrPOBox(street)
+				const split = splitStreetLineOrPOBox(street)
 
-					if (!split) continue
+				if (!split) continue
 
-					const streetPart =
-						"po_box" in split ? split.po_box : [split.house_number, split.street].filter(Boolean).join(" ")
+				const streetPart =
+					"po_box" in split ? split.po_box : [split.house_number, split.street].filter(Boolean).join(" ")
 
-					const components: CanonicalRow["components"] = {
-						...(venue ? { venue } : {}),
-						...("po_box" in split
-							? { po_box: split.po_box }
-							: { ...(split.house_number ? { house_number: split.house_number } : {}), street: split.street }),
-						locality: city,
-						...(state ? { region: state } : {}),
-						postcode,
-					}
-
-					const raw = composeRaw(venue, streetPart, city, state, postcode)
-
-					if (!raw) continue
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					const sourceID = ein
-						? `${USGOV_IRS_BMF_ADAPTER_ID}-${ein}`
-						: stableSourceID(USGOV_IRS_BMF_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: USGOV_IRS_BMF_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: USGOV_IRS_BMF_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				const components: CanonicalRow["components"] = {
+					...(venue ? { venue } : {}),
+					...("po_box" in split
+						? { po_box: split.po_box }
+						: { ...(split.house_number ? { house_number: split.house_number } : {}), street: split.street }),
+					locality: city,
+					...(state ? { region: state } : {}),
+					postcode,
 				}
-			} finally {
-				stream.destroy()
+
+				const raw = composeRaw(venue, streetPart, city, state, postcode)
+
+				if (!raw) continue
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const sourceID = ein ? `${USGOV_IRS_BMF_ADAPTER_ID}-${ein}` : stableSourceID(USGOV_IRS_BMF_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: USGOV_IRS_BMF_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: USGOV_IRS_BMF_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}
