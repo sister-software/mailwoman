@@ -182,4 +182,5 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 }
 
 export * from "./centroid-fills.ts"
+export * from "./geonames-tail.ts"
 export * from "./zcta-centroids.ts"

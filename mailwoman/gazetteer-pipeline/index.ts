@@ -65,17 +65,24 @@ export const DEFAULT_FOLD_COUNTRIES = [
 ]
 
 /**
- * The canonical postcode-shard set (filenames under `<data-root>/wof/`) that reproduces the shipped gazetteer's ~1.79 M
- * postcode coverage: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU) + Overture postcode
- * centroids (CA + the EU-coverage locales). GB (2.6 M) and JP are left out for size. Missing shards are skipped, not
- * fatal.
+ * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
+ * GeoNames intl shard (PT/AU) + the GeoNames-postal tail shard (ten countries, GB included) + Overture postcode
+ * centroids (CA + the EU-coverage locales). Missing shards are skipped, not fatal.
+ *
+ * What is left out, corrected 2026-08-05: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB) and
+ * **`postalcode-jp.db`** (142,604 rows, 37 MB). This comment previously read "GB (2.6 M) and JP are left out for size",
+ * which a reader takes as _no GB postcode coverage_. GB coverage is present — 1,839,678 GeoNames `GB_full` postcodes
+ * arrive in `postalcode-geonames-tail.db` below, a 946 MB shard, i.e. LARGER than the GB shard the size rationale
+ * excludes. The excluded thing is the WOF-sourced GB shard, not GB.
  */
 export const DEFAULT_POSTCODE_SHARDS = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
-	// #920: the GeoNames-postal namesake-tail shard (FI/CZ/SK/SI/DK/NO/HR/PL/SE) — the nine
-	// countries the deployed candidate build predated. existsSync-filtered like the rest.
+	// #920: the GeoNames-postal tail shard — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/GB
+	// (1,895,753 rows; GB is 1,839,678 of them). Nine were the namesake-tail set the deployed candidate
+	// build predated; GB was appended from the `GB_full` dump. existsSync-filtered like the rest.
+	// Rebuild: `mailwoman gazetteer build postcode-geonames`.
 	"postalcode-geonames-tail.db",
 	"postcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
