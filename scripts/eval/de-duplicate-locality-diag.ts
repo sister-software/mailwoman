@@ -114,6 +114,7 @@ async function main(): Promise<void> {
 	)
 
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+
 	const postcodeAnchorLookup = anchorPath
 		? parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8")))
 		: undefined

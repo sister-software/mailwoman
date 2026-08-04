@@ -100,6 +100,7 @@ describe("runAdapter", () => {
 		const manifestOnDisk = parseJSONStrict<{ sha256: string }>(
 			await readFile(join(scratch, "syn", "MANIFEST.json"), "utf8")
 		)
+
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
 	})
 

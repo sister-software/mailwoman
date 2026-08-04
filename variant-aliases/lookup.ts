@@ -10,29 +10,37 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
 
 const moduleDir = import.meta.dirname
 
+/**
+ * Read the shipped alias table.
+ *
+ * `data/` sits at the package root (it is a `files` entry), and this module sits either at that root — running from
+ * source — or under `out/` when compiled, so there are exactly two places to look. The probe tests for the FILE:
+ * probing by attempting a parse folds a corrupt table into "not this candidate", and the package then reports a missing
+ * table it is looking straight at.
+ *
+ * `@mailwoman/poi-taxonomy` carries the same loader against its own tables. The duplication is deliberate — both
+ * packages declare ZERO dependencies and publish independently, so sharing one would mean one taking a dependency on
+ * the other for eight lines.
+ */
 function loadTable(): VariantAliasTable {
-	const candidates = [
-		resolve(moduleDir, "data/aliases.json"),
-		resolve(moduleDir, "../data/aliases.json"),
-		resolve(moduleDir, "../../variant-aliases/data/aliases.json"),
-	]
+	const candidates = [resolve(moduleDir, "data", "aliases.json"), resolve(moduleDir, "..", "data", "aliases.json")]
+	const found = candidates.find((candidate) => existsSync(candidate))
 
-	for (const path of candidates) {
-		try {
-			return JSON.parse(readFileSync(path, "utf8")) as VariantAliasTable
-		} catch {
-			// try next
-		}
+	if (!found) {
+		throw new Error(`variant-aliases: could not find data/aliases.json — looked in ${candidates.join(", ")}`)
 	}
 
-	throw new Error("variant-aliases: could not find data/aliases.json")
+	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. Zero dependencies here, so
+	// `@mailwoman/core`'s parse wrappers are deliberately out of reach.
+	// oxlint-disable-next-line no-restricted-properties
+	return JSON.parse(readFileSync(found, "utf8")) as VariantAliasTable
 }
 
 const TABLE = loadTable()

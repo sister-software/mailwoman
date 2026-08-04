@@ -12,33 +12,11 @@
  *   (`table.ts`) — this module only owns the `node:fs` load + the module-level singleton.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { createLookupCore } from "./lookup-core.ts"
+import { readPackagedTable } from "./packaged-data.ts"
 import type { CategoryRecord, POITaxonomyTable } from "./types.ts"
 
-const moduleDir = import.meta.dirname
-
-function loadTable(): POITaxonomyTable {
-	const candidates = [
-		resolve(moduleDir, "data/taxonomy.json"),
-		resolve(moduleDir, "../data/taxonomy.json"),
-		resolve(moduleDir, "../../poi-taxonomy/data/taxonomy.json"),
-	]
-
-	for (const path of candidates) {
-		try {
-			return JSON.parse(readFileSync(path, "utf8")) as POITaxonomyTable
-		} catch {
-			// try next
-		}
-	}
-
-	throw new Error("poi-taxonomy: could not find data/taxonomy.json")
-}
-
-const TABLE = loadTable()
+const TABLE = readPackagedTable<POITaxonomyTable>("taxonomy.json")
 const CORE = createLookupCore(TABLE)
 
 export type { CategoryMatch } from "./lookup-core.ts"
