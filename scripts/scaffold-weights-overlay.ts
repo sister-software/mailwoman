@@ -37,6 +37,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 const { values } = parseArgs({
@@ -71,7 +72,9 @@ if (existsSync(pkgDir)) {
  * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
  * exists to catch.
  */
-const rootVersion = JSON.parse(readFileSync(String(repoRootPath("package.json")), "utf8")).version as string
+const rootVersion = parseJSONStrict<{ version: string }>(
+	readFileSync(String(repoRootPath("package.json")), "utf8")
+).version
 
 mkdirSync(resolve(pkgDir, "scripts"), { recursive: true })
 
@@ -204,7 +207,7 @@ const registered: string[] = []
 
 // 1. Root workspaces.
 const rootPath = String(repoRootPath("package.json"))
-const rootPkg = JSON.parse(readFileSync(rootPath, "utf8")) as { workspaces: string[] }
+const rootPkg = parseJSONStrict<{ workspaces: string[] }>(readFileSync(rootPath, "utf8"))
 
 if (!rootPkg.workspaces.includes(`neural-weights-${slug}`)) {
 	rootPkg.workspaces.splice(rootPkg.workspaces.indexOf("neural-weights-en-nz") + 1, 0, `neural-weights-${slug}`)

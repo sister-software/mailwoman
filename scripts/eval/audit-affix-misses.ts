@@ -18,10 +18,12 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Longest suffix still likely an abbreviation when it carries no trailing period.
@@ -41,23 +43,22 @@ const { values: args } = parseArgs({
 
 if (!args.model) throw new Error("--model required")
 
-const rows = readFileSync(args.file!, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((l) => JSON.parse(l) as { raw: string; components: Record<string, string> })
+const rows = await Array.fromAsync(
+	JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!)
+)
 
 // Mirror score-affix's SHIP-CONFIG construction exactly — loadFromWeights ignores a modelPath
 // and grades the default symlink with no anchor channel (the zero-fill crash signature this
 // audit's first run produced — caught by the misses-vs-scorer discrepancy).
-const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+const card = parseJSONStrict<{ labels: string[] }>(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(args.model!)])
 
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
 	labels: card.labels,
-	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
-	gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(args["gazetteer-lexicon"]!, "utf8"))),
+	postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(LK, "utf8"))),
+	gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(args["gazetteer-lexicon"]!, "utf8"))),
 	suppressGazetteerNearPostcode: true,
 })
 

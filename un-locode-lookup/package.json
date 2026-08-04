@@ -44,6 +44,6 @@
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"csv-parse": "^7.0.1"
+		"spliterator": "^5.0.0"
 	}
 }

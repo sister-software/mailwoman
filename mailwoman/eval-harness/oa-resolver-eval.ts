@@ -52,7 +52,7 @@
  *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { lookupGermanState } from "@mailwoman/codex/de"
@@ -66,6 +66,7 @@ import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
+import { JSONSpliterator } from "spliterator"
 
 import type { ShardProvider } from "../geocode-core.ts"
 import { renderOaResolverReport } from "./oa-resolver-report.ts"
@@ -730,11 +731,10 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		.split(",")
 		.map((s) => s.trim())
 
-	const rows: OaRow[] = readFileSync(evalPath, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-		.map((l) => JSON.parse(l))
-		.slice(0, limit === Infinity ? undefined : limit)
+	const rows: OaRow[] = (await Array.fromAsync(JSONSpliterator.fromAsync<OaRow>(evalPath))).slice(
+		0,
+		limit === Infinity ? undefined : limit
+	)
 
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#722): createScorer reads the model-card's
 	// `requires` block and feeds EVERY declared channel — anchor + gazetteer + conventions(=auto) +

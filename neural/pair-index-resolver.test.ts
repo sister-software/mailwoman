@@ -9,6 +9,7 @@
  *   empty entries).
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -82,7 +83,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		const bytes = serializePairIndex({ ...HEADER, schemaVersion: 1 }, ENTRIES)
 		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 		const headerLen = view.getUint32(4, true)
-		const headerJSON = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + headerLen))) as PairIndexHeader
+		const headerJSON = parseJSONStrict<PairIndexHeader>(new TextDecoder().decode(bytes.subarray(8, 8 + headerLen)))
 
 		// Rewrite the header JSON with a schemaVersion the reader doesn't know, re-serializing the whole
 		// buffer so the length prefix stays correct.

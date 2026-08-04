@@ -61,7 +61,6 @@
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
-		"csv-parse": "^7.0.1",
 		"h3-js": "^4.5.0",
 		"spliterator": "^5.0.0"
 	},

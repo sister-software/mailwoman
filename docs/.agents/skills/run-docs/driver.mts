@@ -117,6 +117,7 @@ function reportRoute(path: string, result: RouteResult) {
 	console.log(`check ${path}: ${flags.join(", ")}`)
 
 	for (const e of result.errors) {
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `e` is an in-memory console-error string; only its first line is wanted.
 		console.log(`  ${e.split("\n")[0]}`)
 	}
 }
@@ -147,8 +148,10 @@ async function cmdSmoke() {
 			fail++
 
 			if (error instanceof Error) {
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message; only its first line is logged.
 				console.log(`check ${r}: THREW ${error.message.split("\n")[0]}`)
 			} else {
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message; only its first line is logged.
 				console.log(`check ${r}: THREW ${String(error).split("\n")[0]}`)
 			}
 		}

@@ -29,9 +29,7 @@
  *   terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -110,78 +108,69 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 				throw new Error(`usgov-hrsa-fqhc adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<HrsaSiteRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<HrsaSiteRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const venue = (record["Site Name"] ?? "").trim()
-					const split = splitStreetLine(record["Site Address"] ?? "")
-					const city = (record["Site City"] ?? "").trim()
-					const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
-					const postcode = (record["Site Postal Code"] ?? "").trim()
+				const venue = (record["Site Name"] ?? "").trim()
+				const split = splitStreetLine(record["Site Address"] ?? "")
+				const city = (record["Site City"] ?? "").trim()
+				const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
+				const postcode = (record["Site Postal Code"] ?? "").trim()
 
-					if (!venue || !split || !city || !postcode) continue
-					const state = lookupStateAbbreviation(stateAbbr)
+				if (!venue || !split || !city || !postcode) continue
+				const state = lookupStateAbbreviation(stateAbbr)
 
-					if (!state) continue
+				if (!state) continue
 
-					// Insertion order matters here. `venue` first so alignment claims its span
-					// (which may contain a token like "Buffalo") before `locality` runs its
-					// search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
-					// otherwise mis-labels the venue's "Buffalo" as locality.
-					const components: CanonicalRow["components"] = {
-						venue,
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode,
-					}
-
-					const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
-
-					if (!raw) continue
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (!Object.keys(aligned).length) continue
-
-					const siteID = (record["Site ID"] ?? "").trim()
-
-					const sourceID = siteID
-						? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
-						: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: USGOV_HRSA_FQHC_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				// Insertion order matters here. `venue` first so alignment claims its span
+				// (which may contain a token like "Buffalo") before `locality` runs its
+				// search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
+				// otherwise mis-labels the venue's "Buffalo" as locality.
+				const components: CanonicalRow["components"] = {
+					venue,
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode,
 				}
-			} finally {
-				stream.destroy()
+
+				const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+
+				if (!raw) continue
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (!Object.keys(aligned).length) continue
+
+				const siteID = (record["Site ID"] ?? "").trim()
+
+				const sourceID = siteID
+					? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
+					: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: USGOV_HRSA_FQHC_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

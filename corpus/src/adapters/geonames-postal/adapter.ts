@@ -23,9 +23,7 @@
  *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { TSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
 import { reconcileComponents } from "../../format.ts"
@@ -55,67 +53,61 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 			"GeoNames postal codes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({ delimiter: "\t", quote: false, relax_column_count: true, skip_empty_lines: true })
-			)
+			// `header: false` — the GeoNames postal dump is headerless, and the spliterator would
+			// otherwise consume row 1 as column names and lose its first postcode.
+			const rows = TSVSpliterator.fromAsync(opts.inputPath, { header: false })
 
 			let emitted = 0
 
-			try {
-				for await (const rec of parser as AsyncIterable<string[]>) {
-					if (opts.signal?.aborted) break
+			for await (const rec of rows as AsyncIterable<string[]>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const cc = (rec[COL.country] ?? "").trim()
+				const cc = (rec[COL.country] ?? "").trim()
 
-					if (!cc) continue
+				if (!cc) continue
 
-					if (opts.country && cc !== opts.country) continue
+				if (opts.country && cc !== opts.country) continue
 
-					const postcode = (rec[COL.postcode] ?? "").trim()
-					const locality = (rec[COL.place] ?? "").trim()
+				const postcode = (rec[COL.postcode] ?? "").trim()
+				const locality = (rec[COL.place] ?? "").trim()
 
-					if (!postcode || !locality) continue
-					const region = (rec[COL.admin1Name] ?? "").trim()
+				if (!postcode || !locality) continue
+				const region = (rec[COL.admin1Name] ?? "").trim()
 
-					// Postcode-first (international) variants. Skip the region variant when admin1 just
-					// repeats the place (common for city-states / micro-admin) to avoid "X X" noise.
-					const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = [
-						{ slot: "pl", comp: { postcode, locality }, raw: `${postcode} ${locality}` },
-					]
+				// Postcode-first (international) variants. Skip the region variant when admin1 just
+				// repeats the place (common for city-states / micro-admin) to avoid "X X" noise.
+				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = [
+					{ slot: "pl", comp: { postcode, locality }, raw: `${postcode} ${locality}` },
+				]
 
-					if (region && region.toLowerCase() !== locality.toLowerCase()) {
-						variants.push({
-							slot: "plr",
-							comp: { postcode, locality, region },
-							raw: `${postcode} ${locality}, ${region}`,
-						})
-					}
-
-					for (const v of variants) {
-						if (opts.limit !== undefined && emitted >= opts.limit) break
-						const aligned = reconcileComponents(v.comp, v.raw)
-
-						if (Object.keys(aligned).length < 2) continue
-
-						yield {
-							raw: v.raw,
-							components: aligned,
-							country: cc,
-							source: GEONAMES_POSTAL_ADAPTER_ID,
-							source_id: `${stableSourceID(GEONAMES_POSTAL_ADAPTER_ID, aligned)}-${v.slot}`,
-							corpus_version: "",
-							license: GEONAMES_POSTAL_DEFAULT_LICENSE,
-						}
-
-						emitted++
-					}
+				if (region && region.toLowerCase() !== locality.toLowerCase()) {
+					variants.push({
+						slot: "plr",
+						comp: { postcode, locality, region },
+						raw: `${postcode} ${locality}, ${region}`,
+					})
 				}
-			} finally {
-				stream.destroy()
+
+				for (const v of variants) {
+					if (opts.limit !== undefined && emitted >= opts.limit) break
+					const aligned = reconcileComponents(v.comp, v.raw)
+
+					if (Object.keys(aligned).length < 2) continue
+
+					yield {
+						raw: v.raw,
+						components: aligned,
+						country: cc,
+						source: GEONAMES_POSTAL_ADAPTER_ID,
+						source_id: `${stableSourceID(GEONAMES_POSTAL_ADAPTER_ID, aligned)}-${v.slot}`,
+						corpus_version: "",
+						license: GEONAMES_POSTAL_DEFAULT_LICENSE,
+					}
+
+					emitted++
+				}
 			}
 		},
 	}

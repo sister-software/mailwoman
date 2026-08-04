@@ -29,6 +29,8 @@
 
 import { spawnSync } from "node:child_process"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 import { collectExportTargets } from "./publish-exports.ts"
 
 /**
@@ -115,13 +117,14 @@ export function readTarball(tarballPath: string): TarballContents {
 	}
 
 	const shipped = new Set(
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `tar -tzf`'s listing is already fully buffered by spawnSync; there is no file to stream.
 		listing.stdout
 			.split("\n")
 			.filter(Boolean)
 			.map((line) => normalizeEntry(line.replace(/^package\//, "")))
 	)
 
-	return { manifest: JSON.parse(manifestRead.stdout), shipped }
+	return { manifest: parseJSONStrict<TarballContents["manifest"]>(manifestRead.stdout), shipped }
 }
 
 export interface TarballAudit {

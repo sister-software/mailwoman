@@ -11,19 +11,15 @@
  *   capture scripts (this guard cannot catch value edits).
  */
 
-import { readFileSync } from "node:fs"
-
+import { JSONSpliterator } from "spliterator"
 import { expect, test } from "vitest"
 
-function readRows(path: string): unknown[] {
-	return readFileSync(path, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line))
+function readRows(path: string): Promise<unknown[]> {
+	return Array.fromAsync(JSONSpliterator.fromAsync(path))
 }
 
-test("parity-inputs.jsonl: every row has a file, an input, and expected records", () => {
-	const rows = readRows("mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl") as Array<{
+test("parity-inputs.jsonl: every row has a file, an input, and expected records", async () => {
+	const rows = (await readRows("mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl")) as Array<{
 		file?: string
 		input?: string
 		expected?: unknown[]
@@ -38,9 +34,12 @@ test("parity-inputs.jsonl: every row has a file, an input, and expected records"
 	}
 })
 
-test("parity-raw.jsonl: aligned 1:1 with parity-inputs", () => {
-	const inputs = readRows("mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl")
-	const raw = readRows("mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl") as Array<{ solutions?: unknown[] }>
+test("parity-raw.jsonl: aligned 1:1 with parity-inputs", async () => {
+	const inputs = await readRows("mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl")
+
+	const raw = (await readRows("mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl")) as Array<{
+		solutions?: unknown[]
+	}>
 
 	expect(raw).toHaveLength(inputs.length)
 
@@ -49,8 +48,8 @@ test("parity-raw.jsonl: aligned 1:1 with parity-inputs", () => {
 	}
 })
 
-test("v1-parse-golden.jsonl: outcomes carry solutions arrays", () => {
-	const rows = readRows("mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl") as Array<{
+test("v1-parse-golden.jsonl: outcomes carry solutions arrays", async () => {
+	const rows = (await readRows("mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl")) as Array<{
 		input?: string
 		outcome?: { solutions?: unknown[] }
 	}>
@@ -63,8 +62,8 @@ test("v1-parse-golden.jsonl: outcomes carry solutions arrays", () => {
 	}
 })
 
-test("libpostal parse-golden.jsonl: wire rows are [{label, value}] under status 200", () => {
-	const rows = readRows("libpostal/test-fixtures/parse-golden.jsonl") as Array<{
+test("libpostal parse-golden.jsonl: wire rows are [{label, value}] under status 200", async () => {
+	const rows = (await readRows("libpostal/test-fixtures/parse-golden.jsonl")) as Array<{
 		status?: number
 		body?: Array<{ label?: string; value?: string }>
 	}>
@@ -81,8 +80,11 @@ test("libpostal parse-golden.jsonl: wire rows are [{label, value}] under status 
 	}
 })
 
-test("nominatim search-golden.jsonl: full responses captured", () => {
-	const rows = readRows("nominatim/test-fixtures/search-golden.jsonl") as Array<{ query?: string; status?: number }>
+test("nominatim search-golden.jsonl: full responses captured", async () => {
+	const rows = (await readRows("nominatim/test-fixtures/search-golden.jsonl")) as Array<{
+		query?: string
+		status?: number
+	}>
 
 	expect(rows.length).toBeGreaterThanOrEqual(100)
 

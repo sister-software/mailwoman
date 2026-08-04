@@ -13,11 +13,11 @@
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-import { mailwomanDataRoot } from "../../resolver-backend.ts"
 import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
 
 /**
@@ -90,7 +90,7 @@ interface SourceDef {
 function holdoutSources(): Record<string, SourceDef> {
 	return {
 		fr: {
-			file: `${mailwomanDataRoot()}/corpus/staging/ban-france.csv`,
+			file: String(dataRootPath("corpus", "staging", "ban-france.csv")),
 			label: "FR/BAN",
 			// BAN columns: numero(2) nom_voie(4) nom_commune(7) lon(12) lat(13)
 			parse(c) {
@@ -107,7 +107,7 @@ function holdoutSources(): Record<string, SourceDef> {
 			},
 		},
 		us: {
-			file: `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`,
+			file: String(dataRootPath("corpus", "staging", "fdic-us.csv")),
 			label: "US/FDIC",
 			// fdic-us.csv columns: address(0) city(1) state(2) zip(3) lat(4) lon(5)
 			parse(c) {

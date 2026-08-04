@@ -59,15 +59,21 @@ interface NameRow {
 }
 
 /**
- * Walk parent chain up to 6 levels.
+ * Walk parent chain up to 6 levels, over a place table already resident in memory.
+ *
+ * `resolve` is the escape hatch for a parent outside the preloaded set (a chain that leaves the country); it is a point
+ * query, so keeping the common case out of it is the whole point.
  */
-function chainOf(db: DatabaseSync, startID: number, _jpnNames: Map<number, string>): PlaceRow[] {
-	const stmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
+function chainOf(
+	byID: Map<number, PlaceRow>,
+	resolve: (id: number) => PlaceRow | undefined,
+	startID: number
+): PlaceRow[] {
 	const out: PlaceRow[] = []
 	let id = startID
 
 	for (let i = 0; i < MAX_ANCESTRY_DEPTH && id > 0; i++) {
-		const row = stmt.get(id) as PlaceRow | undefined
+		const row = byID.get(id) ?? resolve(id)
 
 		if (!row) break
 		out.push(row)
@@ -151,9 +157,29 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 					}
 				}
 
-				const seeds = db.prepare(`SELECT id FROM spr WHERE country='JP' AND placetype='neighbourhood'`).all() as {
-					id: number
-				}[]
+				// One read of the JP place table instead of a fresh `prepare` + up to six point queries per
+				// seed; there are tens of thousands of neighbourhood seeds.
+				const byID = new Map<number, PlaceRow>()
+
+				for (const row of db
+					.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
+					.all() as unknown as PlaceRow[]) {
+					byID.set(row.id, row)
+				}
+
+				const outsideStmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
+
+				const resolveOutside = (id: number): PlaceRow | undefined => {
+					const row = outsideStmt.get(id) as unknown as PlaceRow | undefined
+
+					if (row) {
+						byID.set(id, row)
+					}
+
+					return row
+				}
+
+				const seeds = [...byID.values()].filter((row) => row.placetype === "neighbourhood")
 
 				let emitted = 0
 
@@ -162,7 +188,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 
 					if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const chain = chainOf(db, seed.id, jpnNames)
+					const chain = chainOf(byID, resolveOutside, seed.id)
 					const synth = synthesizeJpAddress(chain, jpnNames)
 
 					if (!synth) continue

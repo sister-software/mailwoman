@@ -31,6 +31,7 @@ import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -185,6 +186,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
 
 	const csv = await fetchText(url)
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- An HTTP response body `fetchText` has already buffered; the header row is read by index.
 	const lines = csv.split("\n")
 	const header = lines[0]!.split(",")
 	const idx = (col: string) => header.indexOf(col)
@@ -223,7 +225,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (existsSync(RANKED_FILE)) {
-		return JSON.parse(readFileSync(RANKED_FILE, "utf8"))
+		return parseJSONStrict<CountyRecord[]>(readFileSync(RANKED_FILE, "utf8"))
 	}
 
 	const records = await fetchAndBuildRanking()
@@ -489,6 +491,7 @@ function buildStateShard(
 	const counties = countyMatch ? Number(countyMatch[1]) : 0
 
 	// Echo the child's output with a state prefix.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Captured child-process stdout, not a file.
 	for (const line of stdout.trim().split("\n")) {
 		if (line) {
 			console.error(`  [${stateAbbr}] ${line}`)
@@ -496,6 +499,7 @@ function buildStateShard(
 	}
 
 	if (stderr.trim()) {
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Captured child-process stderr, not a file.
 		for (const line of stderr.trim().split("\n")) {
 			if (line) {
 				console.error(`  [${stateAbbr}:stderr] ${line}`)

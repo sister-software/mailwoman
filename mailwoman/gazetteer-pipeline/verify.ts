@@ -66,15 +66,23 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 
 	// 1. node-census (#1026): every required (country, placetype) node exists.
 	{
-		const probe = db.prepare(
-			"SELECT COUNT(*) n FROM spr WHERE country = ? AND placetype = ? AND is_current != 0 AND is_deprecated = 0"
-		)
+		// One grouped read, not one probe per (country, placetype): the baseline names ~200 countries,
+		// most with two placetypes.
+		const present = new Set<string>()
+
+		for (const row of db
+			.prepare(
+				"SELECT country, placetype FROM spr WHERE is_current != 0 AND is_deprecated = 0 GROUP BY country, placetype"
+			)
+			.all() as Array<{ country: string; placetype: string }>) {
+			present.add(`${row.country}/${row.placetype}`)
+		}
 
 		const missing: string[] = []
 
 		for (const [cc, placetypes] of Object.entries(baseline.requiredNodes)) {
 			for (const pt of placetypes) {
-				if ((probe.get(cc, pt) as { n: number }).n === 0) {
+				if (!present.has(`${cc}/${pt}`)) {
 					missing.push(`${cc}/${pt}`)
 				}
 			}
@@ -152,19 +160,16 @@ export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyR
 	// 6. bbox-extents (#1015): spot countries with region rows must have at least one REAL extent
 	//    (dLat > 0.05°) — a degenerate label-point bbox is invisible to reverse bbox-containment.
 	{
-		const bad: string[] = []
+		const placeholders = EXTENT_SPOT_COUNTRIES.map(() => "?").join(",")
 
-		for (const cc of EXTENT_SPOT_COUNTRIES) {
-			const c = db
-				.prepare(
-					"SELECT COUNT(*) total, SUM(CASE WHEN max_latitude - min_latitude > 0.05 THEN 1 ELSE 0 END) real FROM spr WHERE country = ? AND placetype = 'region' AND is_current != 0"
-				)
-				.get(cc) as { total: number; real: number | null }
+		const extents = db
+			.prepare(
+				`SELECT country, COUNT(*) total, SUM(CASE WHEN max_latitude - min_latitude > 0.05 THEN 1 ELSE 0 END) real ` +
+					`FROM spr WHERE country IN (${placeholders}) AND placetype = 'region' AND is_current != 0 GROUP BY country`
+			)
+			.all(...EXTENT_SPOT_COUNTRIES) as Array<{ country: string; total: number; real: number | null }>
 
-			if (c.total > 0 && (c.real ?? 0) === 0) {
-				bad.push(cc)
-			}
-		}
+		const bad = extents.filter((row) => row.total > 0 && (row.real ?? 0) === 0).map((row) => row.country)
 
 		checks.push({
 			check: "bbox-extents",

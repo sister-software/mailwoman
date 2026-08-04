@@ -9,6 +9,7 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { AddressPointLookup, InterpolationLookup, ResolveOpts } from "@mailwoman/core/resolver"
 import { describe, expect, test, vi } from "vitest"
 
@@ -59,7 +60,7 @@ describe("RemoteResolver", () => {
 
 		expect(got).toEqual(resolved)
 		const [, init] = (fetchSpy as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0]!
-		const body = JSON.parse(init.body as string)
+		const body = parseJSONStrict<{ tree: AddressTree; opts: unknown }>(init.body as string)
 		expect(body.tree.raw).toBe(tree.raw)
 		expect(body.opts).toEqual({ defaultCountry: "US" }) // addressPoints stripped
 	})

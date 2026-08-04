@@ -13,11 +13,11 @@
  */
 
 import { mkdirSync } from "node:fs"
-import { dirname } from "node:path"
 
 import type { Classification } from "@mailwoman/core"
 import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
-import { readJSONL, writeJSONL } from "@mailwoman/core/utils"
+import { dirname } from "path-ts"
+import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 import type { ParityCase } from "./parity-extract.ts"
 
@@ -87,7 +87,7 @@ export interface ParityFixture {
 	droppedTags?: string[]
 }
 
-const cases = readJSONL<ParityCase>(IN_PATH)
+const cases = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>(IN_PATH))
 const fixtures: ParityFixture[] = []
 const droppedTagCounts = new Map<string, number>()
 const perFileIndex = new Map<string, number>()
@@ -158,7 +158,16 @@ for (const parityCase of cases) {
 }
 
 mkdirSync(dirname(OUT_PATH), { recursive: true })
-const written = writeJSONL(OUT_PATH, fixtures)
+
+{
+	await using out = createNewlineWriter(OUT_PATH)
+
+	for (const fixture of fixtures) {
+		await out.write(JSON.stringify(fixture))
+	}
+}
+
+const written = fixtures.length
 const dropped = fixtures.filter((f) => f.dropped).length
 
 console.error(`converted ${written} fixtures (${written - dropped} live, ${dropped} tombstones)`)

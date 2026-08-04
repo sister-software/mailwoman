@@ -37,6 +37,7 @@
  *   uses — `foldVersion` in the header records which), so one query-time fold serves both artifacts.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 
 /**
@@ -212,7 +213,7 @@ export class PlacetypeCensusResolver {
 
 		const decoder = new TextDecoder()
 
-		this.header = JSON.parse(decoder.decode(bytes.subarray(offset, offset + headerLen))) as PlacetypeCensusHeader
+		this.header = parseJSONStrict<PlacetypeCensusHeader>(decoder.decode(bytes.subarray(offset, offset + headerLen)))
 		offset += headerLen
 
 		if (this.header.schemaVersion !== KNOWN_SCHEMA_VERSION) {

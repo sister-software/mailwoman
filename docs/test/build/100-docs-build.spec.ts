@@ -76,6 +76,7 @@ test.describe("docs build", () => {
 		}
 
 		const combined = `${stdout}\n${stderr}`
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `combined` is the captured build output already in memory, and `docs` does not depend on spliterator.
 		const offending = combined.split("\n").filter((line) => PROBLEM_MARKERS.some((re) => re.test(line)))
 
 		expect(failed, `docusaurus build exited non-zero:\n${stderr}`).toBe(false)

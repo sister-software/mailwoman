@@ -46,7 +46,7 @@ test("discoverAdminDataRoots: missing root yields empty list, never throws", () 
 	expect(discoverAdminDataRoots(join(root, "does-not-exist"))).toEqual([])
 })
 
-test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", () => {
+test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
@@ -76,7 +76,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 		})
 	)
 
-	const result = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 	// region + country + county = 3 distinct ancestors across branches (self/locality excluded).
 	expect(result.placesFixed).toBe(1)
 	expect(result.rowsAdded).toBe(3)
@@ -89,14 +89,14 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	expect(ancestorIds).toEqual([85_633_793, 85_688_543, 102_081_863].toSorted((a, b) => a - b))
 
 	// Re-run: idempotent — already-present rows are not duplicated.
-	const again = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
 	expect(again.rowsAdded).toBe(0)
 	expect(again.placesFixed).toBe(0)
 
 	db.close()
 })
 
-test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its parent's dead end (#1445)", () => {
+test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its parent's dead end (#1445)", async () => {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
@@ -150,7 +150,7 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 		})
 	)
 
-	const result = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 
 	// continent + country + county + region = 4 new rows. Self is excluded, and the locality row
 	// (NYC) is already present, so neither is re-inserted.
@@ -171,13 +171,13 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	// NYC itself was never a candidate — it already had a country ancestor.
 	expect(db.prepare("SELECT COUNT(*) AS n FROM ancestors WHERE id = ?").get(nycID)).toEqual({ n: 4 })
 
-	const again = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
 	expect(again.rowsAdded).toBe(0)
 
 	db.close()
 })
 
-test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", () => {
+test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", async () => {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
@@ -191,7 +191,7 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(id, 85_633_793)
 
 	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
-	const result = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 
 	expect(result.placesFixed).toBe(0)
 	expect(result.rowsAdded).toBe(0)

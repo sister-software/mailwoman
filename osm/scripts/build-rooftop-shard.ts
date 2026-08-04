@@ -20,13 +20,13 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, rmSync } from "node:fs"
 import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -197,16 +197,8 @@ async function main(): Promise<void> {
 	out.exec("ANALYZE")
 	await kdb.destroy()
 
-	// Build-on-copy: only now swap the freshly-built shard into place (move any prior aside first).
-	if (existsSync(args.output)) {
-		renameSync(args.output, `${args.output}.prev`)
-	}
-
-	renameSync(tmp, args.output)
-
-	if (existsSync(`${args.output}.prev`)) {
-		rmSync(`${args.output}.prev`)
-	}
+	// Build-on-copy: only now swap the freshly-built shard into place.
+	swapDatabaseIntoPlace(tmp, args.output)
 
 	const gap = total > 0 ? ((noStreet / total) * 100).toFixed(1) : "0.0"
 

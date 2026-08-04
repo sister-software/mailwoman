@@ -41,11 +41,10 @@
  *   the Norwegian reading so a future AU intra-word-split shard cannot generalize over it unnoticed.
  */
 
-import { readFileSync } from "node:fs"
-
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { JSONSpliterator } from "spliterator"
 
 import { wilson } from "./fragment-board.ts"
 
@@ -106,11 +105,9 @@ const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, ta
 		.join(" ")
 
 export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<DigitBoardOutcome> {
-	const fixtures = readFileSync(options.fixturesPath ?? DIGIT_BOARD_FIXTURES, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line) as DigitFixture)
-		.filter((fixture) => !options.klass || fixture.klass === options.klass)
+	const fixtures = (
+		await Array.fromAsync(JSONSpliterator.fromAsync<DigitFixture>(options.fixturesPath ?? DIGIT_BOARD_FIXTURES))
+	).filter((fixture) => !options.klass || fixture.klass === options.klass)
 
 	if (!fixtures.length) throw new Error(`digit board: no fixtures matched (klass=${options.klass ?? "*"})`)
 

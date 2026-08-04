@@ -8,14 +8,15 @@
 
 import { readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import Pastel from "pastel"
 
 // Read the real version from this package's package.json rather than hardcoding it (it drifted to
 // 0.1.0 while the package shipped 4.x). `import.meta.url` points at the compiled out/cli.js, so
 // `../package.json` resolves to the installed package root in every layout (dev, tarball, global).
-const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
-	version: string
-}
+const { version } = parseJSONStrict<{ version: string }>(
+	readFileSync(new URL("../package.json", import.meta.url), "utf8")
+)
 
 const app = new Pastel({
 	importMeta: import.meta,

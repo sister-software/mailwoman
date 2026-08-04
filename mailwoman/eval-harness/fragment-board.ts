@@ -30,11 +30,10 @@
  *   Row-disjoint leaks the surface across the boundary and measures memorization.
  */
 
-import { readFileSync } from "node:fs"
-
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Fixture set backing the fragment board — bare-street and partial-address probes.
@@ -109,11 +108,9 @@ function flatten(nodes: ReadonlyArray<{ tag: string; value: string; start: numbe
 }
 
 export async function runFragmentBoard(options: FragmentBoardOptions = {}): Promise<FragmentBoardOutcome> {
-	const fixtures = readFileSync(options.fixturesPath ?? FRAGMENT_BOARD_FIXTURES, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line) as FragmentFixture)
-		.filter((fixture) => !options.klass || fixture.klass === options.klass)
+	const fixtures = (
+		await Array.fromAsync(JSONSpliterator.fromAsync<FragmentFixture>(options.fixturesPath ?? FRAGMENT_BOARD_FIXTURES))
+	).filter((fixture) => !options.klass || fixture.klass === options.klass)
 
 	if (!fixtures.length) throw new Error(`fragment board: no fixtures matched (klass=${options.klass ?? "*"})`)
 

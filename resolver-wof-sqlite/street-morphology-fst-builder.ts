@@ -26,6 +26,8 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
+import { TextSpliterator } from "spliterator"
+
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry } from "./fst-types.ts"
@@ -130,7 +132,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 		const filePath = join(opts.dictionariesDir, locale, STREET_TYPES_FILENAME)
 		const content = readFileSync(filePath, "utf8")
 
-		for (const line of content.split("\n")) {
+		for (const line of TextSpliterator.from(content)) {
 			const parsed = parseLine(line)
 
 			if (!parsed) continue

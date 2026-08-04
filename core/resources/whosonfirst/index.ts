@@ -7,4 +7,5 @@
 export * from "./DataSourceCache.ts"
 export * from "./loader.ts"
 export * from "./PlacetypeDataSource.ts"
+export * from "./sharded-repo.ts"
 export * from "./placetypes/index.ts"

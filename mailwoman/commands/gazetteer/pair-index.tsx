@@ -34,7 +34,7 @@ import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
@@ -281,11 +281,9 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			for (const path of splitPathList(options.pairsJsonl)) {
 				const before = builder.distinctCount
 
-				for (const line of readFileSync(path, "utf8").split("\n")) {
-					if (!line.trim()) continue
-
-					const pair = JSON.parse(line) as { child: string; parent: string }
-
+				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
+				// ward export already runs to hundreds of thousands of rows.
+				for await (const pair of JSONSpliterator.fromAsync<{ child: string; parent: string }>(path)) {
 					builder.addRow(pair.child, pair.parent)
 				}
 

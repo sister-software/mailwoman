@@ -17,6 +17,7 @@
  *   query cost.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import {
 	canonicalizeRouteKey,
@@ -224,7 +225,7 @@ export class HTTPVFSInterpolator {
 			}
 		}
 
-		const polyline = JSON.parse(String(best.geometry)) as [number, number][]
+		const polyline = parseJSONStrict<[number, number][]>(String(best.geometry))
 		const span = Number(best.to_hn) - Number(best.from_hn)
 		const t = span === 0 ? 0.5 : clampFraction((n - Number(best.from_hn)) / span)
 		const [lon, lat, lengthKm] = pointAlong(polyline, t)

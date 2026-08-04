@@ -64,6 +64,7 @@ interface SourceManifest {
 async function listZipEntries(zipPath: string): Promise<string[]> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `unzip -l` stdout, already buffered by execFile.
 	return listing.stdout
 		.split("\n")
 		.map((line) => line.trim().split(/\s+/).pop() ?? "")

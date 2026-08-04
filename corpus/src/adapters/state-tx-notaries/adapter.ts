@@ -15,9 +15,7 @@
  *   License: stamped `"Public Domain"` per Texas state government open-data terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -59,99 +57,90 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 				throw new Error(`state-tx-notaries adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<TxNotaryRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<TxNotaryRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const rawAddress = (record.Address ?? "").trim()
+				const rawAddress = (record.Address ?? "").trim()
 
-					if (!rawAddress) continue
+				if (!rawAddress) continue
 
-					const firstName = (record["First Name"] ?? "").trim()
-					const lastName = (record["Last Name"] ?? "").trim()
-					const notaryID = (record["Notary ID"] ?? "").trim()
+				const firstName = (record["First Name"] ?? "").trim()
+				const lastName = (record["Last Name"] ?? "").trim()
+				const notaryID = (record["Notary ID"] ?? "").trim()
 
-					// Parse embedded city/state/zip from the trailing portion of the address.
-					// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
-					const addrSingleLine = rawAddress.replaceAll("\n", ", ")
-					const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
+				// Parse embedded city/state/zip from the trailing portion of the address.
+				// Addresses look like: "1215 MCMILLAN DR\nCEDAR HILL, TX 75104"
+				const addrSingleLine = rawAddress.replaceAll("\n", ", ")
+				const cszMatch = CITY_STATE_ZIP_SUFFIX.exec(addrSingleLine)
 
-					if (!cszMatch) continue
+				if (!cszMatch) continue
 
-					const city = (cszMatch[1] ?? "").trim()
-					const stateAbbr = (cszMatch[2] ?? "").trim()
-					const zip = (cszMatch[3] ?? "").trim()
+				const city = (cszMatch[1] ?? "").trim()
+				const stateAbbr = (cszMatch[2] ?? "").trim()
+				const zip = (cszMatch[3] ?? "").trim()
 
-					if (!city || !stateAbbr) continue
+				if (!city || !stateAbbr) continue
 
-					const state = lookupStateAbbreviation(stateAbbr)
+				const state = lookupStateAbbreviation(stateAbbr)
 
-					if (!state) continue
+				if (!state) continue
 
-					// Extract the street portion (everything before the city/state/zip)
-					const streetPortion = addrSingleLine.slice(0, cszMatch.index).replace(/,\s*$/, "").trim()
+				// Extract the street portion (everything before the city/state/zip)
+				const streetPortion = addrSingleLine.slice(0, cszMatch.index).replace(/,\s*$/, "").trim()
 
-					if (!streetPortion) continue
+				if (!streetPortion) continue
 
-					const split = splitStreetLine(streetPortion)
+				const split = splitStreetLine(streetPortion)
 
-					if (!split) continue
+				if (!split) continue
 
-					const venue = [firstName, lastName].filter(Boolean).join(" ") || undefined
+				const venue = [firstName, lastName].filter(Boolean).join(" ") || undefined
 
-					const components: CanonicalRow["components"] = {
-						...(venue ? { venue } : {}),
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						...(zip ? { postcode: zip } : {}),
-					}
-
-					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
-
-					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
-						.filter(Boolean)
-						.join(", ")
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					const sourceID = notaryID
-						? `${STATE_TX_NOTARIES_ADAPTER_ID}-${notaryID}`
-						: stableSourceID(STATE_TX_NOTARIES_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: STATE_TX_NOTARIES_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				const components: CanonicalRow["components"] = {
+					...(venue ? { venue } : {}),
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					...(zip ? { postcode: zip } : {}),
 				}
-			} finally {
-				stream.destroy()
+
+				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
+				const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
+					.filter(Boolean)
+					.join(", ")
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const sourceID = notaryID
+					? `${STATE_TX_NOTARIES_ADAPTER_ID}-${notaryID}`
+					: stableSourceID(STATE_TX_NOTARIES_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: STATE_TX_NOTARIES_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: STATE_TX_NOTARIES_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

@@ -24,6 +24,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { Spinner } from "@inkjs/ui"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import {
@@ -191,12 +192,13 @@ export function loadMapping(
 
 	if (option) {
 		const text = option.trim().startsWith("{") ? option : readFileSync(option, "utf8")
+		const parsed = tryParsingJSON<Partial<ColumnMapping>>(text)
 
-		try {
-			provided = JSON.parse(text) as Partial<ColumnMapping>
-		} catch (error) {
-			throw commandError(`--mapping is neither a readable file nor valid JSON: ${(error as Error).message}`)
+		if (!parsed) {
+			throw commandError(`--mapping is neither a readable file nor a JSON object: ${text}`)
 		}
+
+		provided = parsed
 	}
 
 	return { ...base, ...provided, ...(source ? { source } : {}) }
@@ -368,12 +370,10 @@ interface MultiSourceSpec {
  */
 export function loadSources(option: string): MultiSourceSpec[] {
 	const text = /^[[{]/.test(option.trim()) ? option : readFileSync(option, "utf8")
-	let parsed: unknown
+	const parsed = tryParsingJSON(text)
 
-	try {
-		parsed = JSON.parse(text)
-	} catch (error) {
-		throw commandError(`--sources is neither a readable file nor valid JSON: ${(error as Error).message}`)
+	if (parsed === null) {
+		throw commandError(`--sources is neither a readable file nor valid JSON: ${text}`)
 	}
 
 	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {

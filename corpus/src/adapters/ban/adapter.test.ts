@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
+import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.ts"
@@ -37,12 +38,10 @@ describe("ban adapter against fixture sample.csv", () => {
 		})
 
 		expect(manifest.yielded).toBe(7)
-		const jsonl = await readFile(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"), "utf8")
 
-		const rows = jsonl
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as CanonicalRow)
+		const rows = await Array.fromAsync(
+			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"))
+		)
 
 		expect(rows).toHaveLength(7)
 		expect(rows.every((r) => r.country === "FR")).toBe(true)
@@ -59,12 +58,9 @@ describe("ban adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const jsonl = await readFile(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"), "utf8")
-
-		const rows = jsonl
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as CanonicalRow)
+		const rows = await Array.fromAsync(
+			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"))
+		)
 
 		const rivoli = rows.find((r) => r.raw.includes("Rivoli") && r.components.house_number === "1")
 		expect(rivoli?.raw).toBe("1 Rue de Rivoli, 75001 Paris")
@@ -113,12 +109,9 @@ describe("ban adapter against fixture sample.csv", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const jsonl = await readFile(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"), "utf8")
-
-		const rows = jsonl
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as CanonicalRow)
+		const rows = await Array.fromAsync(
+			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, BAN_ADAPTER_ID, "canonical.jsonl"))
+		)
 
 		expect(rows[0]!.source_id).toBe("ban-75108_0001_00001")
 	})

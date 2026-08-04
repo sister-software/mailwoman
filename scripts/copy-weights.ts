@@ -9,11 +9,12 @@
  *   git (gitignored model.onnx + tokenizer.model); this script materializes the binaries at release
  *   time.
  *
- *   The source model + tokenizer paths come from `release.config.json` (`weights.dataRoot` +
- *   `weights.model` / `weights.tokenizer`) so the version-bearing filenames live in one place
- *   rather than hardcoded here. Override at release time via env vars:
+ *   The source model + tokenizer FILENAMES come from `release.config.json` (`weights.model` /
+ *   `weights.tokenizer`) so the version-bearing names live in one place rather than hardcoded here.
+ *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
+ *   at release time via env vars:
  *
- *   - MAILWOMAN_DATA_ROOT: override `weights.dataRoot` (the machine's data dir)
+ *   - MAILWOMAN_DATA_ROOT: the machine's data dir
  *   - MAILWOMAN_PUBLISH_MODEL: absolute path to the int8 quantized model.onnx (wins outright)
  *   - MAILWOMAN_PUBLISH_TOKENIZER: absolute path to the matching tokenizer.model (wins outright)
  *
@@ -40,8 +41,9 @@ import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 
 import { derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
 
@@ -101,8 +103,18 @@ function stashDerived(dir: string, filename: string): void {
 	}
 }
 
-const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
-const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
+/**
+ * The slice of `release.config.json` this script reads. `softFeed` stays loose — its per-locale shape is validated at
+ * each use site, and a schema here would be a second place to update when a locale gains an artifact.
+ */
+interface ReleaseConfig {
+	locales: string[]
+	weights: { model: string; tokenizer: string }
+	softFeed?: Record<string, unknown>
+}
+
+const config = parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+const dataRoot = String(mailwomanDataRoot())
 /**
  * Model binary to copy into each weights workspace before packing.
  */

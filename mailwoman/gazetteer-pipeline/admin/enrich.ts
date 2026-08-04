@@ -20,6 +20,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { corePackagePath } from "@mailwoman/core/utils"
 
 export interface EnrichAdminOptions {
@@ -45,11 +46,24 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 
 	// idempotent re-run
 
-	const countries = (
-		db.prepare("SELECT DISTINCT country FROM spr WHERE placetype='region'").all() as Array<{ country: string }>
-	)
-		.map((r) => r.country)
-		.filter(Boolean)
+	// One read of every region row, bucketed by country — the per-country query it replaces was
+	// re-`prepare`d inside the loop, once for each of ~200 countries.
+	const regionsByCountry = new Map<string, Array<{ id: number; name: string }>>()
+
+	for (const row of db.prepare("SELECT id, name, country FROM spr WHERE placetype='region'").all() as Array<{
+		id: number
+		name: string
+		country: string
+	}>) {
+		if (!row.country) continue
+		let bucket = regionsByCountry.get(row.country)
+
+		if (!bucket) {
+			regionsByCountry.set(row.country, (bucket = []))
+		}
+
+		bucket.push({ id: row.id, name: row.name })
+	}
 
 	const insert = db.prepare(
 		"INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'region', ?, 'abbr', 0)"
@@ -57,11 +71,11 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 
 	let added = 0
 
-	for (const cc of countries) {
+	for (const [cc, regions] of regionsByCountry) {
 		const specPath = join(specsDir, `${cc}.json`)
 
 		if (!existsSync(specPath)) continue
-		const spec = JSON.parse(readFileSync(specPath, "utf8")) as { sub_keys?: string; sub_names?: string }
+		const spec = parseJSONStrict<{ sub_keys?: string; sub_names?: string }>(readFileSync(specPath, "utf8"))
 
 		if (!spec.sub_keys || !spec.sub_names) continue
 		const keys = spec.sub_keys.split("~")
@@ -75,11 +89,6 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 				nameToAbbr.set(n, keys[i]!)
 			}
 		}
-
-		const regions = db.prepare("SELECT id, name FROM spr WHERE placetype='region' AND country = ?").all(cc) as Array<{
-			id: number
-			name: string
-		}>
 
 		db.exec("BEGIN")
 
@@ -105,5 +114,5 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 	db.exec("CREATE INDEX place_abbr_by_id ON place_abbr (id)")
 	const placeAbbrRows = (db.prepare("SELECT COUNT(*) n FROM place_abbr").get() as { n: number }).n
 
-	return { abbrevNamesAdded: added, abbrevCountries: countries.length, placeAbbrRows }
+	return { abbrevNamesAdded: added, abbrevCountries: regionsByCountry.size, placeAbbrRows }
 }

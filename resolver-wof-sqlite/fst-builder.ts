@@ -29,6 +29,11 @@ const DEFAULT_PLACETYPES: PlacetypeID[] = [
 
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
+/**
+ * Ids per `IN (…)` batch. SQLITE_MAX_VARIABLE_NUMBER defaults to 32,766; 500 matches the name-load batch a few phases
+ * down, so both read paths bind the same shape.
+ */
+const ANCESTOR_CHUNK = 500
 
 interface SprRow {
 	id: number
@@ -89,19 +94,40 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	// Also load parent rows that might be outside our placetype filter (e.g., country for region).
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
 
-	// Fallback: use ancestors table when parent_id is a sentinel (-1, -4, etc.).
-	let ancestorStmt: ReturnType<typeof db.prepare> | null = null
+	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table. Read in chunked `IN (…)`
+	// batches ONCE — the point-query version fired per orphan row, and on a global build the orphans
+	// run to six figures. Ordering is county → region → country, preserved by the same CASE the
+	// per-row query used, with `id` leading so one pass groups the rows.
+	const ancestorsByID = new Map<number, number[]>()
 
 	try {
-		ancestorStmt = db.prepare(
-			`SELECT DISTINCT ancestor_id FROM ancestors
-			 WHERE id = ? AND ancestor_placetype IN ('country', 'region', 'county')
-			 ORDER BY CASE ancestor_placetype
-			   WHEN 'county' THEN 1
-			   WHEN 'region' THEN 2
-			   WHEN 'country' THEN 3
-			 END`
-		)
+		const orphanIDs = sprRows.filter((row) => row.parent_id <= 0).map((row) => row.id)
+
+		for (let i = 0; i < orphanIDs.length; i += ANCESTOR_CHUNK) {
+			const chunk = orphanIDs.slice(i, i + ANCESTOR_CHUNK)
+
+			const rows = db
+				.prepare(
+					`SELECT DISTINCT id, ancestor_id FROM ancestors
+					 WHERE id IN (${chunk.map(() => "?").join(",")}) AND ancestor_placetype IN ('country', 'region', 'county')
+					 ORDER BY id, CASE ancestor_placetype
+					   WHEN 'county' THEN 1
+					   WHEN 'region' THEN 2
+					   WHEN 'country' THEN 3
+					 END`
+				)
+				.all(...chunk) as unknown as Array<{ id: number; ancestor_id: number }>
+
+			for (const row of rows) {
+				let chain = ancestorsByID.get(row.id)
+
+				if (!chain) {
+					ancestorsByID.set(row.id, (chain = []))
+				}
+
+				chain.push(row.ancestor_id)
+			}
+		}
 	} catch {
 		progress("ancestors", "No ancestors table — sentinel parent_ids will produce empty chains")
 	}
@@ -112,10 +138,8 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		if (!row) return []
 
 		// If parent_id is a sentinel (≤ 0), use ancestors table.
-		if (row.parent_id <= 0 && ancestorStmt) {
-			const ancestors = ancestorStmt.all(id) as unknown as Array<{ ancestor_id: number }>
-
-			return ancestors.map((a) => a.ancestor_id).filter((aid) => aid !== id)
+		if (row.parent_id <= 0) {
+			return (ancestorsByID.get(id) ?? []).filter((ancestorID) => ancestorID !== id)
 		}
 
 		// Normal case: walk parent_id chain.

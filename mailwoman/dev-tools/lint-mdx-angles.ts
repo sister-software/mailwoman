@@ -60,6 +60,7 @@ export interface LintMDXAnglesSummary {
 function stagedDocsMarkdown(): string[] {
 	const out = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], { encoding: "utf8" })
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `git diff --cached` stdout, not a file.
 	return out
 		.split("\n")
 		.map((f) => f.trim())
@@ -72,6 +73,7 @@ function stagedDocsMarkdown(): string[] {
 function violations(file: string): string[] {
 	const hits: string[] = []
 	let fenced = false
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Diagnostics report 1-based line numbers, which needs the indexed array.
 	const lines = readFileSync(file, "utf8").split("\n")
 
 	for (const [i, line] of lines.entries()) {

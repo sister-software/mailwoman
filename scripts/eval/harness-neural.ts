@@ -33,6 +33,7 @@ import { basename, join } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import type { ClassificationRecord } from "@mailwoman/core/types"
 import {
@@ -47,6 +48,7 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 import { createRuntimePipeline } from "mailwoman"
+import { TextSpliterator } from "spliterator"
 import ts from "typescript"
 
 //#region Args
@@ -534,22 +536,20 @@ interface FalsehoodRow {
 	expected_failure?: boolean
 }
 
-function loadFalsehoods(dir: string): ExtractedAssertion[] {
+async function loadFalsehoods(dir: string): Promise<ExtractedAssertion[]> {
 	const out: ExtractedAssertion[] = []
 
 	for (const entry of readdirSync(dir)) {
 		if (!entry.endsWith(".jsonl")) continue
 		const file = basename(entry, ".jsonl")
-		const text = readFileSync(join(dir, entry), "utf8")
 
-		for (const line of text.split("\n")) {
+		for await (const line of TextSpliterator.fromAsync(join(dir, entry))) {
 			if (!line.trim()) continue
-			let row: FalsehoodRow
 
-			try {
-				row = JSON.parse(line)
-			} catch (error) {
-				console.error(`[harness] WARN: bad JSON in ${entry}: ${(error as Error).message}`)
+			const row = tryParsingJSON<FalsehoodRow>(line)
+
+			if (!row) {
+				console.error(`[harness] WARN: bad JSON in ${entry}: ${line.slice(0, 120)}`)
 
 				continue
 			}
@@ -701,7 +701,7 @@ async function main(): Promise<void> {
 	console.error("Extracting assertions...")
 
 	const fromTests = discoverAssertions(args.testsDir)
-	const fromFalsehoods = args.falsehoodsDir ? loadFalsehoods(args.falsehoodsDir) : []
+	const fromFalsehoods = args.falsehoodsDir ? await loadFalsehoods(args.falsehoodsDir) : []
 	const all = [...fromTests, ...fromFalsehoods]
 
 	console.error(`  ${fromTests.length} from tests, ${fromFalsehoods.length} from falsehoods, ${all.length} total`)
@@ -711,7 +711,7 @@ async function main(): Promise<void> {
 	let neural: NeuralAddressClassifier
 
 	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
-		const modelCard = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
+		const modelCard = parseJSONStrict<{ labels: readonly string[] }>(readFileSync(args.modelCardPath, "utf8"))
 		const labels: readonly string[] = modelCard.labels
 
 		const [tokenizer, runner] = await Promise.all([
@@ -725,13 +725,13 @@ async function main(): Promise<void> {
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {
-			gazetteerLexicon = parseGazetteerLexicon(JSON.parse(readFileSync(args.gazetteerLexiconPath, "utf8")))
+			gazetteerLexicon = parseGazetteerLexicon(parseJSONStrict(readFileSync(args.gazetteerLexiconPath, "utf8")))
 		}
 
 		let postcodeAnchorLookup: AnchorLookup | undefined
 
 		if (args.anchorLookupPath) {
-			postcodeAnchorLookup = parseAnchorLookup(JSON.parse(readFileSync(args.anchorLookupPath, "utf8")))
+			postcodeAnchorLookup = parseAnchorLookup(parseJSONStrict(readFileSync(args.anchorLookupPath, "utf8")))
 		}
 
 		neural = new NeuralAddressClassifier({

@@ -30,8 +30,8 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-jp.db
  *
  *   PORT NOTE (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
- *   here, so there is no PIP — matching is name + haversine proximity (haversine ported inline,
- *   asin form, to match Python exactly). The output is written DIRECTLY to `--output` (the Python
+ *   here, so there is no PIP — matching is name + haversine proximity, via `@mailwoman/spatial`'s
+ *   `haversineKm` (asin form, matching Python). The output is written DIRECTLY to `--output` (the Python
  *   `DROP TABLE …` + `CREATE TABLE` full single-country rebuild), preserving the original's
  *   behavior.
  */
@@ -42,6 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
+import { TSVSpliterator } from "spliterator"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -80,19 +81,15 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 }
 
 /**
- * Python `math.radians`.
- */
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
-}
-
-/**
  * JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}.
  */
 function loadKenall(path: string): Map<string, string> {
 	const out = new Map<string, string>()
 	const text = new TextDecoder("shift_jis").decode(readFileSync(path))
 
+	// KEN_ALL is Shift-JIS and the spliterator's text path decodes UTF-8, so streaming it means dropping
+	// to raw byte ranges and decoding per row — for an 11 MB file whose size Japan Post fixes.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator
 	for (const raw of text.split("\n")) {
 		const line = raw.replace(/[\r\n]+$/, "")
 		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))
@@ -108,12 +105,12 @@ function loadKenall(path: string): Map<string, string> {
 /**
  * GeoNames postal file → {postcode (NNN-NNNN): [lat, lon]} (last row for a postcode wins).
  */
-function loadGeonamesPoints(path: string): Map<string, [number, number]> {
+async function loadGeonamesPoints(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	for (const line of readFileSync(path, "utf8").split("\n")) {
-		const f = line.replace(/\n$/, "").split("\t")
-
+	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB). `header: false` is
+	// load-bearing: the GeoNames postal dump is headerless, so row 1 would be read as column names.
+	for await (const f of TSVSpliterator.fromAsync(path, { header: false })) {
 		if (f.length > 10 && f[1]) {
 			const lat = pyFloat(f[9])
 			const lon = pyFloat(f[10])
@@ -150,7 +147,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		process.exit(1)
 	}
 
-	const points = loadGeonamesPoints(args.geonames)
+	const points = await loadGeonamesPoints(args.geonames)
 
 	const admin = new DatabaseSync(args.adminDb)
 	const ph = PLACETYPES.map(() => "?").join(",")

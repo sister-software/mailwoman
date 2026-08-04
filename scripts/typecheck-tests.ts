@@ -52,6 +52,7 @@ async function check(workspace: string, repoRoot: string): Promise<Result> {
 	} catch (error) {
 		const output = String((error as { stdout?: string }).stdout ?? "")
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `tsc`'s diagnostics are already buffered in memory by execFile; there is no file to stream.
 		return { workspace, errors: output.split("\n").filter((line) => line.includes("error TS")) }
 	}
 }

@@ -101,12 +101,13 @@ addition to `publish.yml`).
 
 ## Source data for the weights packages
 
-`copy-weights.ts` reads the trained-binary paths from **`release.config.json`** (`weights.dataRoot` +
-`weights.model` / `weights.tokenizer`) — the single place the version-bearing filenames live. Bump the model
-there when a new model ships; the script resolves and copies the real artifacts. Override per-run via env:
+`copy-weights.ts` reads the trained-binary filenames from **`release.config.json`** (`weights.model` /
+`weights.tokenizer`) — the single place the version-bearing names live — and resolves them against
+`$MAILWOMAN_DATA_ROOT`. Bump the model there when a new model ships; the script resolves and copies the real
+artifacts. Override per-run via env:
 
 ```bash
-MAILWOMAN_DATA_ROOT=/some/other/root          # override weights.dataRoot
+MAILWOMAN_DATA_ROOT=/some/other/root          # the machine's data dir
 MAILWOMAN_PUBLISH_MODEL=/path/to/model.onnx \  # absolute path, wins outright
 MAILWOMAN_PUBLISH_TOKENIZER=/path/to/tokenizer.model \
   yarn release

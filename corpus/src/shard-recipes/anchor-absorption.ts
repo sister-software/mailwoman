@@ -14,6 +14,7 @@
 
 import { readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
@@ -31,7 +32,7 @@ const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
  * The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list).
  */
 function loadRealUsZips(path: string): string[] {
-	const d = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>
+	const d = parseJSONStrict<Record<string, unknown>>(readFileSync(path, "utf8"))
 	const zips: string[] = []
 
 	for (const [pc, v] of Object.entries(d)) {

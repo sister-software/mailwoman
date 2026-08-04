@@ -25,6 +25,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test, vi } from "vitest"
@@ -176,14 +177,14 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 			)
 		)
 
-		const result = JSON.parse(stdout) as {
+		const result = parseJSONStrict<{
 			lat: number | null
 			lon: number | null
 			resolution_tier: string
 			uncertainty_m: number | null
 			locality: string | null
 			region: string | null
-		}
+		}>(stdout)
 
 		// We got a coordinate.
 		expect(result.lat).not.toBeNull()
@@ -243,12 +244,12 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 			)
 		)
 
-		const place = JSON.parse(stdout) as {
+		const place = parseJSONStrict<{
 			"@context": string
 			"@type": string
 			geo?: { "@type": string; latitude: number; longitude: number }
 			address?: { "@type": string; streetAddress?: string; addressRegion?: string; addressCountry?: string }
-		}
+		}>(stdout)
 
 		expect(place["@context"]).toBe("https://schema.org")
 		expect(place["@type"]).toBe("Place")
@@ -276,13 +277,13 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb)(`geocode admin-only degradation â€
 			})
 		)
 
-		const result = JSON.parse(stdout) as {
+		const result = parseJSONStrict<{
 			lat: number | null
 			lon: number | null
 			resolution_tier: string
 			locality: string | null
 			region: string | null
-		}
+		}>(stdout)
 
 		// Even without street-level shards, admin resolution should produce a coordinate.
 		expect(result.lat).not.toBeNull()

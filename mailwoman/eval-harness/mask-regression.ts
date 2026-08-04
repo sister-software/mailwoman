@@ -45,13 +45,14 @@
  *   `<out-dir>/mask-regression.md`.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, writeFileSync } from "node:fs"
 
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Options for {@linkcode maskRegressionGate}.
@@ -144,15 +145,14 @@ interface Row {
 	components: Record<string, string>
 }
 
-function loadRows(files: string[]): Row[] {
+async function loadRows(files: string[]): Promise<Row[]> {
 	const rows: Row[] = []
 
 	for (const f of files) {
 		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
 
-		for (const line of readFileSync(f, "utf8").split("\n")) {
-			if (!line.trim()) continue
-			rows.push(JSON.parse(line) as Row)
+		for await (const row of JSONSpliterator.fromAsync<Row>(f)) {
+			rows.push(row)
 		}
 	}
 
@@ -261,7 +261,7 @@ export async function maskRegressionGate(
 	const deltas: Delta[] = []
 
 	for (const spec of LOCALES) {
-		const rows = loadRows(spec.files)
+		const rows = await loadRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 		// Full SHIP-CONFIG otherwise (anchor-on + gazetteer-on — createScorer's defaults). Only the

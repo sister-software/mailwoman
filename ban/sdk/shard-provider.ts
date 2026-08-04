@@ -16,6 +16,7 @@
 import { existsSync } from "node:fs"
 
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { join } from "path-ts"
 
 import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.ts"
 
@@ -43,11 +44,11 @@ export class BANShardProvider {
 	}
 
 	#shardPath(countryCode: string): string {
-		return `${this.#dataRoot}/ban/address-points-${countryCode}.db`
+		return join(this.#dataRoot, "ban", `address-points-${countryCode}.db`)
 	}
 
 	#streetCentroidPath(countryCode: string): string {
-		return `${this.#dataRoot}/ban/street-centroids-${countryCode}.db`
+		return join(this.#dataRoot, "ban", `street-centroids-${countryCode}.db`)
 	}
 
 	/**

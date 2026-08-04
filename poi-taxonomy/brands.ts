@@ -16,33 +16,11 @@
  *   of the brand-lexicon work) can chain `variant-aliases` → this table itself.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { createBrandLookupCore } from "./brands-lookup-core.ts"
+import { readPackagedTable } from "./packaged-data.ts"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "./types.ts"
 
-const moduleDir = import.meta.dirname
-
-function loadBrandTable(): POIBrandTable {
-	const candidates = [
-		resolve(moduleDir, "data/brands.json"),
-		resolve(moduleDir, "../data/brands.json"),
-		resolve(moduleDir, "../../poi-taxonomy/data/brands.json"),
-	]
-
-	for (const path of candidates) {
-		try {
-			return JSON.parse(readFileSync(path, "utf8")) as POIBrandTable
-		} catch {
-			// try next
-		}
-	}
-
-	throw new Error("poi-taxonomy: could not find data/brands.json")
-}
-
-const TABLE = loadBrandTable()
+const TABLE = readPackagedTable<POIBrandTable>("brands.json")
 const CORE = createBrandLookupCore(TABLE)
 
 export type { BrandMatch } from "./brands-lookup-core.ts"

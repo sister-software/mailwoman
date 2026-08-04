@@ -190,6 +190,7 @@ export function injectDependentLocalityLine(
 	locality: string | undefined,
 	dependentLocality: string
 ): string {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `raw` is a rendered address of a few lines held in memory, and `formatter` does not depend on spliterator.
 	const lines = raw.split("\n")
 	const normalizedDepLoc = dependentLocality.trim().toLowerCase()
 

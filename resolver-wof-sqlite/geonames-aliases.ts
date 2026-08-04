@@ -24,11 +24,12 @@
  *   (TSV).
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { join } from "path-ts"
+import { TSVSpliterator } from "spliterator"
 
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
@@ -65,19 +66,13 @@ interface V2Alias {
 
 /**
  * Parse a country's alternateNamesV2 file into `geonameid -> spelling -> attribution`, restricted to the populated
- * places (`P`) present in `lines`.
+ * places (`P`) in `wanted`.
  */
-function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map<number, Map<string, V2Alias>> {
-	const wanted = new Set<number>()
-
-	for (const line of lines) {
-		const f = line.split("\t")
-
-		if (f[6] === "P") {
-			wanted.add(Number(f[0]))
-		}
-	}
-
+async function parseAlternateNamesV2(
+	v2File: string,
+	cc: string,
+	wanted: ReadonlySet<number>
+): Promise<Map<number, Map<string, V2Alias>>> {
 	const v2 = new Map<number, Map<string, V2Alias>>()
 
 	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
@@ -89,13 +84,13 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
 	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
 	// Do NOT gate on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
 	// is unflagged; FI has 1,746 flags across the whole dump).
-	const v2Lines = readFileSync(v2File, "utf8").split("\n")
+	//
+	// Both passes STREAM the file rather than sharing one materialized array: NO's V2 dump is 33 MB,
+	// and a second read off the page cache costs less than holding half a million line strings.
+	// `header: false` — the dump is headerless.
 	const historicNames = new Set<string>()
 
-	for (const line of v2Lines) {
-		if (!line) continue
-		const f = line.split("\t")
-
+	for await (const f of TSVSpliterator.fromAsync(v2File, { header: false })) {
 		if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
 			const alt = (f[3] ?? "").trim()
 
@@ -105,9 +100,7 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
 		}
 	}
 
-	for (const line of v2Lines) {
-		if (!line) continue
-		const f = line.split("\t")
+	for await (const f of TSVSpliterator.fromAsync(v2File, { header: false })) {
 		const gid = Number(f[1])
 
 		if (!wanted.has(gid)) continue
@@ -153,7 +146,7 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
  * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach
  * the candidate build's alias pass.
  */
-export function ingestGeonamesAliases(
+export async function ingestGeonamesAliases(
 	db: DatabaseSync,
 	countries: string[],
 	geonamesDir: string,
@@ -177,7 +170,7 @@ export function ingestGeonamesAliases(
 		 */
 		alternateDir?: string
 	}
-): number {
+): Promise<number> {
 	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",
 	// airport codes), 2–60 chars, at least one letter (drops bare postcodes/numbers).
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
@@ -234,15 +227,43 @@ export function ingestGeonamesAliases(
 		let nc = 0
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
+		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
+		const readV2 = Boolean(v2File && existsSync(v2File))
+
+		// Survey pass. The dump is STREAMED — NO's is 71 MB and only the caller knows which country
+		// comes next — so what a later pass needs has to be collected here rather than re-scanned off a
+		// materialized array. Two things qualify, and both are small: the P-class geonameid set the V2
+		// decoration is restricted to, and the handful of A-class rows the admin pre-pass writes (one
+		// PCL* + the ADM1s). Everything else is re-read in the emit pass below. Neither is wanted
+		// without V2 tags or admin, and then the pass is skipped rather than read for nothing.
+		//
 		// GeoNames dump columns (0-indexed): 0 geonameid, 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon,
 		// 6 feature_class, 7 feature_code, 10 admin1 code, 14 pop.
-		const lines = readFileSync(file, "utf8").split("\n")
+		//
+		// `header: false` — the dump is headerless, so row 1 is a place, not column names.
+		const wanted = new Set<number>()
+		const adminRows: string[][] = []
+
+		if (readV2 || addAdmin) {
+			for await (const f of TSVSpliterator.fromAsync(file, { header: false })) {
+				if (f[6] === "P") {
+					if (readV2) {
+						wanted.add(Number(f[0]))
+					}
+
+					continue
+				}
+
+				if (addAdmin && f[6] === "A" && (f[7]?.startsWith("PCL") || (f[7] === "ADM1" && f[10]))) {
+					adminRows.push(f)
+				}
+			}
+		}
 
 		// #936: V2 tags for this country's P-class rows — geonameid → exact alias spelling → tag. The V2
 		// dump repeats one spelling under several languages ("Åbo" sv/da/no); the merged tag is official /
 		// preferred if ANY qualifying row is.
-		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
-		const v2 = v2File && existsSync(v2File) ? parseAlternateNamesV2(v2File, cc, lines) : undefined
+		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : undefined
 
 		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
 		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
@@ -250,10 +271,7 @@ export function ingestGeonamesAliases(
 		const adminMap = new Map<string, number>()
 
 		if (addAdmin) {
-			for (const line of lines) {
-				const f = line.split("\t")
-
-				if (f[6] !== "A") continue
+			for (const f of adminRows) {
 				const aname = clean(f[2] ?? "") ?? clean(f[1] ?? "")
 
 				if (!aname) continue
@@ -287,10 +305,8 @@ export function ingestGeonamesAliases(
 			}
 		}
 
-		for (const line of lines) {
-			if (!line) continue
-			const f = line.split("\t")
-
+		// Emit pass — a second stream over the same file, off the page cache the survey pass just warmed.
+		for await (const f of TSVSpliterator.fromAsync(file, { header: false })) {
 			if (f[6] !== "P") continue // populated places only
 			const lat = Number(f[4])
 			const lon = Number(f[5])

@@ -32,18 +32,18 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-kr.db
  *
  *   PORT NOTE (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
- *   no PIP. Matching is point-nearest (haversine ported inline, asin form, to match Python exactly)
+ *   no PIP. Matching is point-nearest via `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python)
  *   with proximity-constrained Hangul name confirmation. The output is written DIRECTLY to
  *   `--output` (the Python `DROP TABLE …` then `CREATE TABLE` full single-country rebuild),
  *   preserving behavior.
  */
 
-import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
+import { TSVSpliterator } from "spliterator"
 
 /**
  * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
@@ -68,13 +68,6 @@ function norm(s: string | null | undefined): string {
 
 function bare(s: string | null | undefined): string {
 	return norm(s).replace(SUFFIX, "")
-}
-
-/**
- * Python `math.radians`.
- */
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
 }
 
 /**
@@ -186,9 +179,9 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	// GeoNames postal KR: group by postcode (first row wins; multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
-	for (const line of readFileSync(args.geonames, "utf8").split("\n")) {
-		const f = line.replace(/\n$/, "").split("\t")
-
+	// Streamed — `args.geonames` is a caller-supplied national dump. `header: false` is load-bearing:
+	// the GeoNames postal dump is headerless, so row 1 would be read as column names.
+	for await (const f of TSVSpliterator.fromAsync(args.geonames, { header: false })) {
 		if (f.length > 10 && f[1]) {
 			const lat = pyFloat(f[9])
 			const lon = pyFloat(f[10])

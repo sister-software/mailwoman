@@ -11,6 +11,7 @@
  */
 
 import { $public } from "../env/index.ts"
+import { parseJSONStrict } from "../objects.ts"
 import { featurize } from "./featurize.ts"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
@@ -152,7 +153,7 @@ export class CoarsePlacer {
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
 		const { readFile } = await import("node:fs/promises")
 		const { join } = await import("node:path")
-		const meta = JSON.parse(await readFile(join(dir, "meta.json"), "utf8")) as CoarsePlacerMeta
+		const meta = parseJSONStrict<CoarsePlacerMeta>(await readFile(join(dir, "meta.json"), "utf8"))
 		const buf = await readFile(join(dir, "weights.bin"))
 		// Copy out of the (possibly pooled, possibly mis-aligned) Buffer into a fresh ArrayBuffer so the
 		// typed-array view is always validly aligned.

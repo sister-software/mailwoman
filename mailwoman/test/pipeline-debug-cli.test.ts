@@ -15,6 +15,7 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
@@ -36,7 +37,7 @@ function extractJSON(stdout: string): unknown {
 		throw new Error(`No JSON object in stdout:\n${stdout}`)
 	}
 
-	return JSON.parse(cleaned.slice(objStart, objEnd + 1))
+	return parseJSONStrict(cleaned.slice(objStart, objEnd + 1))
 }
 
 describe("parse --debug (runtime pipeline)", () => {

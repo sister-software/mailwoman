@@ -73,6 +73,7 @@ function unquote(value: string): string {
 export function parseFrontmatter(source: string): { fields: Map<string, string>; declaredKeys: Set<string> } {
 	const fields = new Map<string, string>()
 	const declaredKeys = new Set<string>()
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `source` is an in-memory markdown string, and `docs` does not depend on spliterator.
 	const lines = source.split("\n")
 
 	if (lines[0]?.trim() !== "---") return { fields, declaredKeys }

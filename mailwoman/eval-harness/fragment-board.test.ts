@@ -12,14 +12,12 @@
 
 import { readFileSync } from "node:fs"
 
+import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "./fragment-board.ts"
 
-const fixtures = readFileSync(FRAGMENT_BOARD_FIXTURES, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((line) => JSON.parse(line) as FragmentFixture)
+const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<FragmentFixture>(FRAGMENT_BOARD_FIXTURES))
 
 describe("wilson", () => {
 	it("brackets the point estimate", () => {
@@ -139,6 +137,8 @@ describe("the FR fragment board fixture", () => {
 
 	it("reserves every street surface it uses, so a shard can exclude them", () => {
 		const reserved = new Set(
+			// A committed fixture list, bounded by the board it belongs to.
+			// oxlint-disable-next-line mailwoman/prefer-spliterator
 			readFileSync("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt", "utf8")
 				.split("\n")
 				.filter((line) => line && !line.startsWith("#"))

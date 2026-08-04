@@ -52,6 +52,7 @@ import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "./adapter.ts"
@@ -188,7 +189,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 			existsSync(cachedManifest) &&
 			existsSync(join(adapterDir, "canonical.jsonl"))
 		) {
-			const cached = JSON.parse(readFileSync(cachedManifest, "utf8")) as AdapterRunManifest
+			const cached = parseJSONStrict<AdapterRunManifest>(readFileSync(cachedManifest, "utf8"))
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
 			adapterRuns.push(cached)
 

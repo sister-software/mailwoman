@@ -58,6 +58,7 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 
@@ -118,7 +119,7 @@ interface SurfaceResult {
  * against the model it actually ships.
  */
 function readModelVersion(cardPath: string): string {
-	const card = JSON.parse(readFileSync(cardPath, "utf8")) as { version?: string }
+	const card = parseJSONStrict<{ version?: string }>(readFileSync(cardPath, "utf8"))
 
 	if (!card.version) throw new Error(`model card ${cardPath} has no "version" field`)
 
@@ -129,9 +130,9 @@ function readModelVersion(cardPath: string): string {
  * Check 1 — the eval ledger carries a run for this model version.
  */
 function checkLedger(version: string, ledgerPath: string): SurfaceResult {
-	const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
+	const ledger = parseJSONStrict<{
 		runs?: Array<{ model_version?: string }>
-	}
+	}>(readFileSync(ledgerPath, "utf8"))
 
 	const runs = ledger.runs ?? []
 	const found = runs.some((run) => run.model_version === version)
@@ -165,6 +166,7 @@ function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The caller passes an already-read string, and the surfaces this scans are committed docs pages of a few hundred lines.
 	for (const line of markdown.split("\n")) {
 		const trimmed = line.trim()
 

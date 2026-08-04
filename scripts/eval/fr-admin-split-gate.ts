@@ -20,7 +20,7 @@
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
@@ -29,6 +29,7 @@ import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from 
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 /**
@@ -157,10 +158,14 @@ async function main() {
 	const wofDBArg = stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db")
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
-	const rows = readFileSync(goldenPath, "utf8")
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l))
+	const rows = await Array.fromAsync(
+		JSONSpliterator.fromAsync<{
+			raw: string
+			components?: Record<string, string>
+			lat: number
+			lon: number
+		}>(goldenPath)
+	)
 
 	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
 		await Promise.all([

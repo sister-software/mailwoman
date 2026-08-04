@@ -24,9 +24,11 @@ interface ParityRow {
 	expected: Array<Record<string, unknown> | string>
 }
 
+// oxlint-disable-next-line mailwoman/prefer-spliterator -- `@mailwoman/nominatim` does not depend on spliterator.
 const parity = readFileSync(PARITY_PATH, "utf8")
 	.split("\n")
 	.filter(Boolean)
+	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nominatim` does not depend on @mailwoman/core.
 	.map((line) => JSON.parse(line) as ParityRow)
 
 // The streetParts leg only fires when a house number is in play — feed it the cases that have one.
@@ -36,6 +38,7 @@ const withHouseNumber = parity
 	)
 	.map((row) => row.input)
 
+// oxlint-disable-next-line mailwoman/prefer-spliterator -- `@mailwoman/nominatim` does not depend on spliterator.
 const syntheticInputs = readFileSync(SYNTHETIC_PATH, "utf8")
 	.split("\n")
 	.map((line) => line.trim())

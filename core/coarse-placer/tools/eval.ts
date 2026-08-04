@@ -14,6 +14,9 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
+import { parseJSONStrict } from "../../objects.ts"
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
@@ -80,15 +83,12 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = JSON.parse(readFileSync(path.join(modelDir, "meta.json"), "utf8")) as CoarsePlacerMeta
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
 	const weights = new Float32Array(readFileSync(path.join(modelDir, "weights.bin")).buffer)
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
 	// --- In-distribution test: accuracy + per-class + ECE ---
-	const test: TestRow[] = readFileSync(path.join(dataDir, "test.jsonl"), "utf8")
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as TestRow)
+	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl")))
 
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
@@ -165,10 +165,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const msPath = repoRootPath("data", "eval", "multi-script", "v0.5.0-a0.jsonl")
 
 	try {
-		const ms: MultiScriptRow[] = readFileSync(msPath, "utf8")
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as MultiScriptRow)
+		const ms = await Array.fromAsync(JSONSpliterator.fromAsync<MultiScriptRow>(msPath))
 
 		const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
 		// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way

@@ -45,6 +45,7 @@ import { existsSync, readFileSync, renameSync, statSync, symlinkSync, unlinkSync
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -73,9 +74,9 @@ const PKG_DIR = repoRootPath("neural-weights-en-us")
  * The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4 re-verifies against the
  * published tarball — so dev symlinks, the card, and npm agree.
  */
-const CARD = JSON.parse(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
+const CARD = parseJSONStrict<{
 	files_md5?: Record<string, string>
-}
+}>(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8"))
 
 /**
  * Expected model digest from the model card, checked so a stale or truncated link is caught here rather than at
@@ -374,11 +375,11 @@ function peekPairIndexHeaderFields(path: string): {
 
 	const headerLen = view.getUint32(4, true)
 
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
+	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
 		sourceMD5s?: string[]
-	}
+	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
 
 	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
 }

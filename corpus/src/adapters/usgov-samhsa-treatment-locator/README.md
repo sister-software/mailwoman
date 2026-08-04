@@ -102,7 +102,7 @@ Related: #26 (Tier A licensing — applies when source is found), epic #15.
 ## Input
 
 A CSV file the operator pre-downloads from the SAMHSA Open Data
-Foundry. Streamed via `csv-parse`; no SQLite step needed.
+Foundry. Streamed via `CSVSpliterator`; no SQLite step needed.
 
 > **Source-availability caveat.** As of 2026-05-22 the Open Data Foundry
 > bulk CSV is no longer publicly distributed (see

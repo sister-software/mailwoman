@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 /**
@@ -23,6 +23,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -88,11 +89,16 @@ async function main() {
 			continue
 		}
 
-		const rows = readFileSync(file, "utf8")
-			.trim()
-			.split("\n")
-			.slice(0, N)
-			.map((l) => JSON.parse(l))
+		const rows = (
+			await Array.fromAsync(
+				JSONSpliterator.fromAsync<{
+					raw: string
+					components?: Record<string, string>
+					lat: number
+					lon: number
+				}>(file)
+			)
+		).slice(0, N)
 
 		const s = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
 		const sT1: number[] = []

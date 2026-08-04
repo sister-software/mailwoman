@@ -16,7 +16,6 @@
  */
 
 import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
 
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
 
@@ -26,38 +25,31 @@ import { resourceDictionaryPath } from "@mailwoman/core/utils"
 const MIN_TOKENS_FOR_DECOMPOSE = 3
 
 function loadDictionary(filename: string): Set<string> {
-	const candidates = [
-		resourceDictionaryPath("libpostal", "fr", filename),
-		resourceDictionaryPath("libpostal", "fr", filename),
-		resolve(process.cwd(), "core/data/libpostal/dictionaries/fr", filename),
-	]
+	// `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source and from the
+	// packaged `out/` tree. The candidate list this replaced named it TWICE and then guessed a third path
+	// off `process.cwd()`, and swallowed every error while probing, so a corrupt dictionary reported as a
+	// missing one.
+	const text = readFileSync(resourceDictionaryPath("libpostal", "fr", filename), "utf8")
+	const set = new Set<string>()
 
-	for (const path of candidates) {
-		try {
-			const text = readFileSync(path, "utf8")
-			const set = new Set<string>()
+	// The largest libpostal dictionary is 8.4 KB, and this runs once per process at module load.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator
+	for (const line of text.split("\n")) {
+		const trimmed = line.trim()
 
-			for (const line of text.split("\n")) {
-				const trimmed = line.trim()
+		if (!trimmed || trimmed.startsWith("#")) continue
 
-				if (!trimmed || trimmed.startsWith("#")) continue
+		// libpostal format: canonical|abbr|abbr|... — index all forms
+		for (const form of trimmed.split("|")) {
+			const f = form.trim().toLowerCase()
 
-				for (const form of trimmed.split("|")) {
-					const f = form.trim().toLowerCase()
-
-					if (f) {
-						set.add(f)
-					}
-				}
+			if (f) {
+				set.add(f)
 			}
-
-			return set
-		} catch {
-			// try next
 		}
 	}
 
-	throw new Error(`Could not load FR libpostal dictionary: ${filename}`)
+	return set
 }
 
 const STREET_TYPES_FR = loadDictionary("street_types.txt")

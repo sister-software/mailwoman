@@ -9,10 +9,10 @@
  *   Usage: mailwoman dev generate language-types
  */
 
-import { createReadStream } from "node:fs"
 import * as fs from "node:fs/promises"
 
 import { pascalCase } from "change-case"
+import { CSVSpliterator } from "spliterator"
 
 import { repoRootPath, resourceDictionaryPath } from "../utils/index.ts"
 
@@ -50,19 +50,10 @@ export async function generateLanguageTypes(
 
 	report?.(`Reading ${dataSourcePath}`)
 
-	// csv-parse is an optional peer — lazy import (the pipeline convention).
-	const csv = await import("csv-parse")
-
-	const parser = csv.parse({
-		delimiter: ",",
-		columns: false,
-		skip_empty_lines: true,
-		from_line: 2,
-	})
-
-	const stream = createReadStream(dataSourcePath).pipe(parser)
-
-	for await (const columns of stream) {
+	// Quote handling is on and load-bearing: six labels wrap an embedded comma
+	// (`gre,el,"Greek, Modern (1453-)"`), and the spliterator leaves quoting off by default.
+	// `header` defaults true, which is what skips the `alpha3-b,alpha2,English` line.
+	for await (const columns of CSVSpliterator.fromAsync(dataSourcePath, { enableQuoteHandling: true })) {
 		const alpha3b = columns[0] as string
 		const alpha2 = columns[1] as string
 		const labelsConcatenated = columns[2] as string

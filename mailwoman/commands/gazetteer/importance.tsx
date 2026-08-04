@@ -153,6 +153,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			totalRows++
 
 			if (totalRows === 1 && line.startsWith("language")) continue
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- One line already streamed off `TextSpliterator` above.
 			const parts = line.split("\t")
 
 			if (parts.length < MIN_WIKIDATA_COLUMNS) continue

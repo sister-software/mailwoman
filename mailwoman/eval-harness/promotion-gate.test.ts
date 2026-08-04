@@ -13,6 +13,7 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import { listGateSpecs, resolveGateSpecPath } from "./promotion-gate.ts"
@@ -142,7 +143,7 @@ describe("resolveGateSpecPath", () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
 		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO gate specs and the
 		// installed `mailwoman eval gate --gate <name>` found an empty gates dir.
-		const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { files: string[] }
+		const pkg = parseJSONStrict<{ files: string[] }>(readFileSync(new URL("../package.json", import.meta.url), "utf8"))
 
 		for (const spec of listGateSpecs()) {
 			const rel = `eval-harness/gates/${spec}`

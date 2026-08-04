@@ -39,7 +39,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath, readJSONL, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -178,7 +179,7 @@ interface EvalGoldRow {
 /**
  * Load the eval's crossings so neither train nor golden ever sees them.
  */
-function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
+async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<string> }> {
 	const nodes = new Set<number>()
 	const pairs = new Set<string>()
 
@@ -188,7 +189,7 @@ function readEvalExclusions(): { nodes: Set<number>; pairs: Set<string> } {
 		return { nodes, pairs }
 	}
 
-	for (const row of readJSONL<EvalGoldRow>(EVAL_GOLD_PATH)) {
+	for await (const row of JSONSpliterator.fromAsync<EvalGoldRow>(EVAL_GOLD_PATH)) {
 		nodes.add(Number(row.node))
 		pairs.add(pairKey(row.components.intersection_a, row.components.intersection_b))
 	}
@@ -465,7 +466,7 @@ export const intersectionRecipe: ShardRecipe = {
 		const source = opts.sourceName ?? "synth-intersection"
 		const edgesDir = opts.edgesDir ?? DEFAULT_EDGES_DIR
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES
-		const exclusions = readEvalExclusions()
+		const exclusions = await readEvalExclusions()
 
 		console.error(`  eval exclusions: ${exclusions.nodes.size} nodes, ${exclusions.pairs.size} pairs`)
 

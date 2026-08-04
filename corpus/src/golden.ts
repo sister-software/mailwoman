@@ -19,10 +19,11 @@
  *   creep in over time as new entries land.
  */
 
-import { readdir, readFile } from "node:fs/promises"
-import { extname, join } from "node:path"
+import { readdir } from "node:fs/promises"
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+import { join } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { reconcileComponents } from "./format.ts"
 
@@ -61,6 +62,9 @@ export interface GoldenReport {
  * Parse a single JSONL line into a `GoldenEntry`. Throws on schema violations.
  */
 export function parseGoldenLine(line: string): GoldenEntry {
+	// The throw IS the result: `validateGoldenFile` catches it and records the message against the line
+	// number, so a tolerant parse would report a corrupt row as valid.
+	// oxlint-disable-next-line no-restricted-properties
 	const obj = JSON.parse(line) as Partial<GoldenEntry> & Record<string, unknown>
 
 	if (typeof obj.raw !== "string" || !obj.raw.length) {
@@ -113,20 +117,22 @@ export function unreachableComponents(entry: GoldenEntry): ComponentTag[] {
 /**
  * Validate one `.jsonl` file end-to-end, returning a list of issues.
  *
- * Reads and splits by hand rather than using `readJSONL` from `@mailwoman/core/utils`: every issue this returns carries
- * the LINE NUMBER it was found on, and a malformed line has to be reported rather than thrown. `readJSONL` maps
- * straight to a typed array and throws on the first bad line — correct for consumers that want the rows, wrong for the
- * validator whose whole job is locating the bad ones.
+ * Parses line by line over `TextSpliterator` rather than `JSONSpliterator`: every issue this returns carries the LINE
+ * NUMBER it was found on, and a malformed line has to be REPORTED rather than thrown. `JSONSpliterator` parses each row
+ * for you and throws on the first bad one — correct for consumers that want the rows, wrong for the validator whose
+ * whole job is locating the bad ones.
  */
 export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
-	const text = await readFile(path, "utf8")
-	const lines = text.split("\n")
 	const issues: GoldenIssue[] = []
+	// Counted over EVERY row including blanks, so the number matches what an editor shows.
+	let lineNumber = 0
 
-	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i]!.trim()
+	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
+		lineNumber++
+		const line = raw.trim()
 
 		if (!line) continue
+		const i = lineNumber - 1
 
 		try {
 			const entry = parseGoldenLine(line)
@@ -151,7 +157,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
  * Validate every `.jsonl` in a golden directory.
  */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = (await readdir(dir)).filter((n) => extname(n) === ".jsonl").toSorted()
+	const files = (await readdir(dir)).filter((n) => n.endsWith(".jsonl")).toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 
@@ -159,8 +165,12 @@ export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
 		const fullPath = join(dir, name)
 		const fileIssues = await validateGoldenFile(fullPath)
 		issues.push(...fileIssues)
-		const text = await readFile(fullPath, "utf8")
-		entries += text.split("\n").filter((l) => l.trim()).length
+
+		for await (const line of TextSpliterator.fromAsync(fullPath)) {
+			if (line.trim()) {
+				entries++
+			}
+		}
 	}
 
 	return { entries, files: files.length, issues }

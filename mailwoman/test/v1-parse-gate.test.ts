@@ -74,7 +74,7 @@
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
 
-import { existsSync, readFileSync, realpathSync } from "node:fs"
+import { existsSync, realpathSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -85,6 +85,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
+import { JSONSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 
 import { v0RecordToTree } from "../eval-harness/v0-tree-adapter.ts"
@@ -103,12 +104,13 @@ type RulesRecord = Partial<Record<string, string[]>>
  * Load the frozen rules baseline: `input → the top solution's classifications`. This replaces the deleted live
  * `createAddressParser().parse(...)` call — the record is a byte-stable snapshot of that exact parser (PR #1092).
  */
-function loadRulesGolden(): Map<string, RulesRecord> {
+async function loadRulesGolden(): Promise<Map<string, RulesRecord>> {
 	const byInput = new Map<string, RulesRecord>()
 
-	for (const line of readFileSync(PARITY_RAW_GOLDEN, "utf8").split("\n")) {
-		if (!line) continue
-		const row = JSON.parse(line) as { input: string; solutions?: Array<{ classifications?: RulesRecord }> }
+	for await (const row of JSONSpliterator.fromAsync<{
+		input: string
+		solutions?: Array<{ classifications?: RulesRecord }>
+	}>(PARITY_RAW_GOLDEN)) {
 		byInput.set(row.input, row.solutions?.[0]?.classifications ?? {})
 	}
 
@@ -205,16 +207,16 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 	"v7 swap gate — coordinate acceptability + plausibility",
 	() => {
 		test("neural resolution is coordinate-safe and the garbage tail is bounded by the plausibility guard", async () => {
-			const rulesGolden = loadRulesGolden()
+			const rulesGolden = await loadRulesGolden()
 			const neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 			const backend = new WOFSqlitePlaceLookup({ databasePath: [ADMIN_DB, POSTCODE_DB] })
 			const resolver = createWOFResolver(backend)
 
-			const fixtures = readFileSync("mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl", "utf8")
-				.split("\n")
-				.filter(Boolean)
-				.map((l) => JSON.parse(l) as ParityFixture)
-				.filter((f) => !f.dropped && f.expect)
+			const fixtures = (
+				await Array.fromAsync(
+					JSONSpliterator.fromAsync<ParityFixture>("mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl")
+				)
+			).filter((f) => !f.dropped && f.expect)
 
 			const rows: Measured[] = []
 

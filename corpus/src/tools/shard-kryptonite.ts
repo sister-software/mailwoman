@@ -20,7 +20,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
-import { iterateJSONL } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import type { ShardManifest } from "../parquet.ts"
@@ -42,7 +43,7 @@ export interface ShardKryptoniteOptions {
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
-	for await (const raw of iterateJSONL<Record<string, unknown>>(jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(jsonl)) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
 
@@ -111,7 +112,7 @@ export async function buildKryptoniteShard(
 	}
 
 	// Compose the final corpus-v0.4.0 manifest: every shard from base + the new shard(s).
-	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
+	const base = parseJSONStrict<ShardManifest>(readFileSync(options.baseManifest, "utf8"))
 
 	const combined: ShardManifest = {
 		corpus_version: corpusVersion,

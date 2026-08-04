@@ -26,13 +26,17 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!scripts/**"
 	],
 	"publishConfig": {
 		"access": "public"
 	},
 	"dependencies": {
 		"@mailwoman/neural-weights-en-us": "workspace:*"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
 	},
 	"mailwoman": {
 		"baseWeights": "@mailwoman/neural-weights-en-us"

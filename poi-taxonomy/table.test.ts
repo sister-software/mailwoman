@@ -94,6 +94,7 @@ describe("createPOITaxonomyLookup", () => {
 		const { readFileSync } = await import("node:fs")
 		const { resolve } = await import("node:path")
 
+		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const table = JSON.parse(
 			readFileSync(resolve(import.meta.dirname, "data/taxonomy.json"), "utf8")
 		) as POITaxonomyTable
@@ -182,6 +183,7 @@ describe("createPOIBrandLookup", () => {
 	it("agrees with the node entry on a shared phrase from the real committed brand table", async () => {
 		const { readFileSync } = await import("node:fs")
 		const { resolve } = await import("node:path")
+		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const table = JSON.parse(readFileSync(resolve(import.meta.dirname, "data/brands.json"), "utf8")) as POIBrandTable
 
 		const injectedLookup = createPOIBrandLookup(table)

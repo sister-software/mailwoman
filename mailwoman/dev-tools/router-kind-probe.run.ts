@@ -7,11 +7,10 @@
  *   derived from the parity fixtures own gold tags (no synthesis bias). Run from the repo root:
  *   `node mailwoman/dev-tools/router-kind-probe.run.ts`
  */
-import { readFileSync } from "node:fs"
-
 import { classifyKind } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { JSONSpliterator } from "spliterator"
 
 interface Fixture {
 	id: string
@@ -21,11 +20,9 @@ interface Fixture {
 	dropped?: string
 }
 
-const fixtures: Fixture[] = readFileSync("mailwoman/eval-harness/fixtures/parity-corpus.jsonl", "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((l) => JSON.parse(l))
-	.filter((f: Fixture) => !f.dropped && f.expect)
+const fixtures: Fixture[] = (
+	await Array.fromAsync(JSONSpliterator.fromAsync<Fixture>("mailwoman/eval-harness/fixtures/parity-corpus.jsonl"))
+).filter((f) => !f.dropped && f.expect)
 
 function classOf(expect: Record<string, string[]>): string {
 	const tags = Object.keys(expect)

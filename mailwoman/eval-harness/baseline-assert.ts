@@ -51,6 +51,8 @@
 import { existsSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 /**
  * A registered baseline row, as stored in `baselines.json`.
  */
@@ -174,7 +176,7 @@ function resolveBaselineFilePath(): string {
 
 function loadBaselineFile(): BaselineFile {
 	if (!cachedFile) {
-		cachedFile = JSON.parse(readFileSync(resolveBaselineFilePath(), "utf8")) as BaselineFile
+		cachedFile = parseJSONStrict<BaselineFile>(readFileSync(resolveBaselineFilePath(), "utf8"))
 	}
 
 	return cachedFile

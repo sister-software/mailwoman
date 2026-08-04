@@ -54,6 +54,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"kysely": "^0.29.4",
+		"path-ts": "^2.1.0",
 		"spliterator": "^5.0.0"
 	},
 	"engines": {

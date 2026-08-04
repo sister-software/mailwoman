@@ -30,6 +30,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
@@ -95,10 +96,10 @@ export function crossDatasetMap(
 	const OUT = options.outHTML || "/tmp/cross-dataset-map.html"
 	const CROSS_AGENCY_ONLY = options.crossAgencyOnly ?? false
 
-	const parsed = JSON.parse(readFileSync(IN, "utf8")) as {
+	const parsed = parseJSONStrict<{
 		type: "FeatureCollection"
 		features: Array<{ properties: Record<string, unknown> | null }>
-	}
+	}>(readFileSync(IN, "utf8"))
 
 	const total = parsed.features.length
 

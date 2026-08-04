@@ -26,6 +26,7 @@ import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
@@ -106,7 +107,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 		const src = options.src
 		const output = options.output ?? dataRootPath("wof", "conventions.db")
 
-		const rows = JSON.parse(readFileSync(src, "utf8")) as AuthoredConvention[]
+		const rows = parseJSONStrict<AuthoredConvention[]>(readFileSync(src, "utf8"))
 
 		if (!Array.isArray(rows)) throw commandError(`${src} must be a JSON array of authored conventions`)
 		validate(rows, KNOWN)

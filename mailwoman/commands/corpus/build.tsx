@@ -14,6 +14,7 @@
  *   the CLI handles partial builds during development.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { buildCorpus, defaultAdapterRegistry, type BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
@@ -72,7 +73,7 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 		let inputsParsed: Record<string, zod.infer<typeof AdapterInputSchema>>
 
 		try {
-			inputsParsed = InputsSchema.parse(JSON.parse(options.inputs))
+			inputsParsed = InputsSchema.parse(parseJSONStrict(options.inputs))
 		} catch (error) {
 			throw commandError(`invalid --inputs JSON: ${(error as Error).message}`)
 		}

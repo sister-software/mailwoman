@@ -30,7 +30,6 @@
  *   <spm> --model-card <json>
  */
 
-import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -38,6 +37,7 @@ import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { JSONSpliterator } from "spliterator"
 
 interface GoldenEntry {
 	raw: string
@@ -86,18 +86,15 @@ export interface ErrorAnalysisOptions {
 	strict?: boolean
 }
 
-function loadGolden(dir: string): GoldenEntry[] {
+async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 	const entries: GoldenEntry[] = []
 
 	for (const file of ["us.jsonl", "fr.jsonl", "adversarial.jsonl"]) {
 		const path = resolve(dir, file)
 
 		try {
-			const text = readFileSync(path, "utf8")
-
-			for (const line of text.split("\n")) {
-				if (!line.trim()) continue
-				entries.push(JSON.parse(line))
+			for await (const entry of JSONSpliterator.fromAsync<GoldenEntry>(path)) {
+				entries.push(entry)
 			}
 		} catch {
 			// file may not exist
@@ -131,7 +128,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		return 1
 	}
 
-	const golden = loadGolden(options.golden)
+	const golden = await loadGolden(options.golden)
 
 	console.error(`Loaded ${golden.length} golden entries`)
 

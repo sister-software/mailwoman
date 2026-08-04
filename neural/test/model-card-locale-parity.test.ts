@@ -17,10 +17,26 @@
 
 import { readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-const readCard = (rel: string) => JSON.parse(readFileSync(repoRootPath("neural", "test", rel), "utf8"))
+/**
+ * The slice of the model card this parity guard reads. Deliberately partial — a field is added here only when an
+ * assertion below needs it.
+ */
+interface ModelCard {
+	labels: string[]
+	components_supported: string[]
+	requires: {
+		anchor?: { required?: boolean }
+		gazetteer?: { required?: boolean }
+		conventions?: { mode?: string }
+		suppress_gazetteer_near_postcode?: boolean
+	}
+}
+
+const readCard = (rel: string) => parseJSONStrict<ModelCard>(readFileSync(repoRootPath("neural", "test", rel), "utf8"))
 const enUs = readCard("../../neural-weights-en-us/model-card.json")
 const frFr = readCard("../../neural-weights-fr-fr/model-card.json")
 

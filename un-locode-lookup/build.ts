@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { parse } from "csv-parse/sync"
+import { CSVSpliterator } from "spliterator"
 
 import { foldName, parseUnLocodeCoords } from "./index.ts"
 
@@ -27,11 +27,14 @@ interface CSVRow {
  * Read the code-list CSV at `csvPath` and write the lookup DB to `dbPath`.
  */
 export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number; withCoords: number } {
-	const records = parse(readFileSync(csvPath), {
-		columns: true,
-		skip_empty_lines: true,
-		relax_quotes: true,
-	}) as CSVRow[]
+	// `normalizeKeys: false` keeps the UNECE header casing the row shape above is written against
+	// (`NameWoDiacritics`, not `name_wo_diacritics`). Location names carry commas, so quote handling
+	// is on — it is off by default.
+	const records = CSVSpliterator.from(readFileSync(csvPath), {
+		mode: "object",
+		normalizeKeys: false,
+		enableQuoteHandling: true,
+	}) as Iterable<CSVRow>
 
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS un_locode")
@@ -43,9 +46,12 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 	const insert = db.prepare("INSERT INTO un_locode (country, location, name, nameNorm, lat, lon) VALUES (?,?,?,?,?,?)")
 
 	let withCoords = 0
+	let rows = 0
 	db.exec("BEGIN")
 
 	for (const r of records) {
+		rows++
+
 		if (!r.Country || !r.Location) continue // header/country rows carry no Location
 		const coords = r.Coordinates ? parseUnLocodeCoords(r.Coordinates) : null
 
@@ -62,5 +68,5 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 	db.exec("CREATE INDEX idx_locode_bbox ON un_locode (lat, lon)")
 	db.close()
 
-	return { rows: records.length, withCoords }
+	return { rows, withCoords }
 }

@@ -34,6 +34,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import type { BuiltLexicon } from "./evidence-lexicons.ts"
@@ -167,7 +168,7 @@ function buildAgainstFixture(
 	buildFixtureAdmin(dbPath)
 
 	const built = buildLocalitySurfaceLexicon({ countries, placetypes, dbPath, output })
-	const lexicon = JSON.parse(readFileSync(output, "utf8")) as { entries: Record<string, number> }
+	const lexicon = parseJSONStrict<{ entries: Record<string, number> }>(readFileSync(output, "utf8"))
 
 	return { built, surfaces: lexicon.entries }
 }

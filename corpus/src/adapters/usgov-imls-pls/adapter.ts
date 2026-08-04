@@ -18,9 +18,7 @@
  *   License: stamped `"Public Domain"` per IMLS federal government distribution terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -59,90 +57,77 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 				throw new Error(`usgov-imls-pls adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<ImlsOutletRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<ImlsOutletRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const libName = (record.LIBNAME ?? "").trim()
-					const address = (record.ADDRESS ?? "").trim()
-					const city = (record.CITY ?? "").trim()
-					const zip = (record.ZIP ?? "").trim()
-					const stateAbbr = (record.STABR ?? "").trim()
-					const county = (record.CNTY ?? "").trim()
+				const libName = (record.LIBNAME ?? "").trim()
+				const address = (record.ADDRESS ?? "").trim()
+				const city = (record.CITY ?? "").trim()
+				const zip = (record.ZIP ?? "").trim()
+				const stateAbbr = (record.STABR ?? "").trim()
+				const county = (record.CNTY ?? "").trim()
 
-					if (!libName || !city || !zip) continue
+				if (!libName || !city || !zip) continue
 
-					const state = lookupStateAbbreviation(stateAbbr)
+				const state = lookupStateAbbreviation(stateAbbr)
 
-					if (!state) continue
+				if (!state) continue
 
-					const split = splitStreetLine(address)
+				const split = splitStreetLine(address)
 
-					if (!split) continue
+				if (!split) continue
 
-					const components: CanonicalRow["components"] = {
-						venue: libName,
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode: zip,
-						// #552: no subregion — US postal addresses don't surface the county, so emitting
-						// subregion creates a phantom component with no raw-span to align to, quarantining
-						// ~21% of rows. The county is still available in the source CSV; it just isn't
-						// a postal-surface component here.
-					}
-
-					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
-
-					const raw = [
-						libName,
-						streetPart,
-						[city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
-					]
-						.filter(Boolean)
-						.join(", ")
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					const fscsKey = (record.FSCSKEY ?? "").trim()
-
-					const sourceID = fscsKey
-						? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`
-						: stableSourceID(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: USGOV_IMLS_PLS_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: USGOV_IMLS_PLS_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				const components: CanonicalRow["components"] = {
+					venue: libName,
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode: zip,
+					// #552: no subregion — US postal addresses don't surface the county, so emitting
+					// subregion creates a phantom component with no raw-span to align to, quarantining
+					// ~21% of rows. The county is still available in the source CSV; it just isn't
+					// a postal-surface component here.
 				}
-			} finally {
-				stream.destroy()
+
+				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
+				const raw = [libName, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
+					.filter(Boolean)
+					.join(", ")
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const fscsKey = (record.FSCSKEY ?? "").trim()
+
+				const sourceID = fscsKey
+					? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`
+					: stableSourceID(USGOV_IMLS_PLS_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: USGOV_IMLS_PLS_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: USGOV_IMLS_PLS_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

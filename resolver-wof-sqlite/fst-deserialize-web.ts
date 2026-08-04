@@ -10,6 +10,8 @@
  *   build-time operation).
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
@@ -194,7 +196,7 @@ export function readFSTProvenanceWeb(input: ArrayBuffer | Uint8Array): FSTProven
 		const jsonLen = view.getUint32(provenanceOffset, true)
 		const jsonStr = decoder.decode(bytes.subarray(provenanceOffset + 4, provenanceOffset + 4 + jsonLen))
 
-		return JSON.parse(jsonStr) as FSTProvenance
+		return tryParsingJSON<FSTProvenance>(jsonStr) ?? undefined
 	} catch {
 		return undefined
 	}

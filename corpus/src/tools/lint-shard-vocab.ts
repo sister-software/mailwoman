@@ -37,6 +37,7 @@
 import { readdirSync } from "node:fs"
 import { join } from "node:path"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -162,8 +163,8 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 	const rows: CorpusRow[] = []
 
 	for (const r of raw) {
-		const tokens = JSON.parse(String(r.tokens)) as unknown
-		const labels = JSON.parse(String(r.labels)) as unknown
+		const tokens = tryParsingJSON(String(r.tokens))
+		const labels = tryParsingJSON(String(r.labels))
 
 		if (!Array.isArray(tokens) || !Array.isArray(labels)) continue
 

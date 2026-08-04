@@ -21,7 +21,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!scripts/**"
 	],
 	"type": "module",
 	"exports": {
@@ -45,5 +46,8 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
 	}
 }

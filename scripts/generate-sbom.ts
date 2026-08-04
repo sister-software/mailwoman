@@ -37,11 +37,14 @@
  *     SPDX:       uvx --from spdx-tools pyspdxtools -i docs/static/sbom/mailwoman-<version>.spdx.json
  *     CycloneDX:  cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-<version>.cdx.json
  */
+
 import { execFileSync } from "node:child_process"
 import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { parseArgs } from "node:util"
+
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 const repoRoot = resolve(import.meta.dirname, "..")
 
@@ -53,7 +56,8 @@ const { values } = parseArgs({
 })
 
 const version =
-	values.version ?? (JSON.parse(readFileSync(join(repoRoot, "mailwoman", "package.json"), "utf8")).version as string)
+	values.version ??
+	parseJSONStrict<{ version: string }>(readFileSync(join(repoRoot, "mailwoman", "package.json"), "utf8")).version
 
 const outDir = values.out ? resolve(values.out) : join(repoRoot, "docs", "static", "sbom")
 
@@ -117,7 +121,7 @@ try {
 
 	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`) — never part of the consumer closure.
 	const manifestPath = join(pkgDir, "package.json")
-	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
+	const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(manifestPath, "utf8"))
 	delete manifest.devDependencies
 	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
 
@@ -130,7 +134,9 @@ try {
 	console.log("[sbom] generating SPDX 2.3…")
 
 	const spdx = normalizeSPDX(
-		JSON.parse(run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir))
+		parseJSONStrict<SPDXDocument>(
+			run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir)
+		)
 	)
 
 	const spdxPath = join(outDir, `mailwoman-${version}.spdx.json`)
@@ -138,7 +144,7 @@ try {
 
 	console.log("[sbom] generating CycloneDX 1.5…")
 
-	const cdx = JSON.parse(
+	const cdx = parseJSONStrict(
 		run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
 	)
 

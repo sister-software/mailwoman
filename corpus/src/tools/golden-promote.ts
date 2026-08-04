@@ -34,7 +34,8 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { readJSONL, sha256File, writeJSONL } from "@mailwoman/core/utils"
+import { sha256File } from "@mailwoman/core/utils"
+import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -162,10 +163,10 @@ function isSuspicious(entry: GoldenEntry): boolean {
 /**
  * Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket.
  */
-function readJSONLIfPresent<T>(path: string): T[] {
+async function readJSONLIfPresent<T>(path: string): Promise<T[]> {
 	if (!existsSync(path)) return []
 
-	return readJSONL<T>(path)
+	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────
@@ -180,7 +181,7 @@ export async function promoteGolden(
 	const dryRun = options.dryRun ?? false
 
 	report?.(`reading candidates: ${options.input}`)
-	const candidates = readJSONLIfPresent<GoldenEntry>(options.input)
+	const candidates = await readJSONLIfPresent<GoldenEntry>(options.input)
 	report?.(`  ${candidates.length} candidates loaded`)
 
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
@@ -192,7 +193,7 @@ export async function promoteGolden(
 	if (existsSync(priorDir)) {
 		for (const f of readdirSync(priorDir).filter((n) => n.endsWith(".jsonl"))) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = readJSONLIfPresent<GoldenEntry>(join(priorDir, f))
+			const entries = await readJSONLIfPresent<GoldenEntry>(join(priorDir, f))
 			priorEntries.push({ country, entries })
 
 			for (const e of entries) {
@@ -325,7 +326,15 @@ export async function promoteGolden(
 	for (const [key, entries] of buckets) {
 		const filename = `${key.toLowerCase()}.jsonl`
 		const path = join(outDir, filename)
-		writeJSONL(path, entries)
+
+		{
+			await using out = createNewlineWriter(path)
+
+			for (const entry of entries) {
+				await out.write(JSON.stringify(entry))
+			}
+		}
+
 		manifest.files[filename] = { entries: entries.length, sha256: await sha256File(path) }
 	}
 

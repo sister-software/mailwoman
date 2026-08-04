@@ -123,6 +123,7 @@ async function main() {
 
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- The harness's stdout is already fully buffered by `$`; there is no file to stream.
 		console.log(r.stdout.split("\n").slice(-40).join("\n"))
 	}
 

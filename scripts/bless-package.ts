@@ -26,6 +26,7 @@ import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -119,7 +120,7 @@ interface Pkg {
 }
 
 async function readPkg(dir: string): Promise<Pkg> {
-	return JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"))
+	return parseJSONStrict<Pkg>(await readFile(path.join(dir, "package.json"), "utf8"))
 }
 
 function parseRepo(repository: Pkg["repository"]): string | undefined {

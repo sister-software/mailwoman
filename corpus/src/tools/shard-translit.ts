@@ -32,7 +32,9 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
-import { iterateJSONL, mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import { ParquetWriter } from "../parquet-wrapper/index.ts"
@@ -182,7 +184,7 @@ export async function buildTranslitShard(
 	const quarantine: string[] = []
 	let totalIn = 0
 
-	for await (const raw of iterateJSONL<Record<string, unknown>>(options.jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(options.jsonl)) {
 		totalIn++
 		const canon = toCanonicalRow(raw, corpusVersion)
 		const result = alignRow(canon)
@@ -225,7 +227,7 @@ export async function buildTranslitShard(
 	// Compose final MANIFEST: rewrite base.shards paths from /mnt/playpen/... → /data/... and append
 	// the new translit shards. Kryptonite shard already lives in the base manifest (it was written
 	// there by Thread B).
-	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
+	const base = parseJSONStrict<ShardManifest>(readFileSync(options.baseManifest, "utf8"))
 
 	const rewrittenBase = base.shards.map((sh) => ({
 		...sh,

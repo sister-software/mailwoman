@@ -28,12 +28,11 @@
  *   the harness, and the fix is to make the gate incapable of choosing the wrong path.
  */
 
-import { readFileSync } from "node:fs"
-
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { JSONSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 
 interface ConfoundRow {
@@ -50,10 +49,7 @@ interface ConfoundRow {
 
 const BOARD = String(repoRootPath("mailwoman", "eval-harness", "fixtures", "venue-structure-confounds.jsonl"))
 
-const rows: ConfoundRow[] = readFileSync(BOARD, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((line) => JSON.parse(line) as ConfoundRow)
+const rows: ConfoundRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<ConfoundRow>(BOARD))
 
 let classifier: NeuralAddressClassifier | undefined
 

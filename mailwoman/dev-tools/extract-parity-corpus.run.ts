@@ -9,9 +9,9 @@
  */
 
 import { readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
 
-import { writeJSONL } from "@mailwoman/core/utils"
+import { join } from "path-ts"
+import { createNewlineWriter } from "spliterator"
 
 import { extractAssertCalls, type ParityCase } from "./parity-extract.ts"
 
@@ -34,7 +34,15 @@ for (const entry of readdirSync(TEST_DIR).toSorted()) {
 	cases.push(...extractAssertCalls(text, path))
 }
 
-const written = writeJSONL(OUT_PATH, cases)
+{
+	await using out = createNewlineWriter(OUT_PATH)
+
+	for (const parityCase of cases) {
+		await out.write(JSON.stringify(parityCase))
+	}
+}
+
+const written = cases.length
 const nonLiteralCount = cases.filter((c) => c.nonLiteral).length
 
 console.error(

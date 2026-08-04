@@ -15,10 +15,9 @@
  *   `--weights-cache` package-shaped dirs ONLY (#718 zero-fill trap).
  */
 
-import { readFileSync } from "node:fs"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { JSONSpliterator } from "spliterator"
 
 export interface FragmentDevOptions {
 	locale?: string
@@ -47,10 +46,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 	tagAccuracy: number
 	trailingNumberToPostcode: number
 }> {
-	const rows: DevRow[] = readFileSync(options.fixturesPath, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line) as DevRow)
+	const rows: DevRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<DevRow>(options.fixturesPath))
 
 	const sample = options.limit && options.limit > 0 ? rows.slice(0, options.limit) : rows
 

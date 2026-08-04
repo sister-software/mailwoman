@@ -39,6 +39,7 @@
 	"dependencies": {
 		"@hono/zod-openapi": "^1.5.1",
 		"@mailwoman/api-kit": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",

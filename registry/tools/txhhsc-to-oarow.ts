@@ -17,6 +17,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { TSVSpliterator } from "spliterator"
 
 /**
  * Texas bounding box, used to reject rows whose coordinates landed in the wrong state.
@@ -64,22 +65,31 @@ export function convertTXHHSC(
 	const src = options.src || String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
 	const out = options.out || "/tmp/txhhsc-oarow.jsonl"
 
-	const lines = readFileSync(src, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-
-	const header = lines[0]!.split("\t")
-	const col = (name: string) => header.indexOf(name)
-	const cAddr = col("Physical Address")
-	const cCity = col("Physical Address CITY")
-	const cZip = col("Physical Address Zipcode")
-	const cGeo = col("Geo Location")
-
 	const records: string[] = []
 	let skipped = 0
 
-	for (const line of lines.slice(1)) {
-		const f = line.split("\t")
+	// Column indices, captured from the first non-blank row. `header: false` keeps that row in the stream so the
+	// blank-row guard below applies to it too.
+	let cAddr = -1
+	let cCity = -1
+	let cZip = -1
+	let cGeo = -1
+	let sawHeader = false
+
+	for (const f of TSVSpliterator.from(readFileSync(src, "utf8"), { header: false })) {
+		if (f.every((value) => !value.trim())) continue
+
+		if (!sawHeader) {
+			sawHeader = true
+			const col = (name: string) => f.indexOf(name)
+			cAddr = col("Physical Address")
+			cCity = col("Physical Address CITY")
+			cZip = col("Physical Address Zipcode")
+			cGeo = col("Geo Location")
+
+			continue
+		}
+
 		const addr = (f[cAddr] ?? "").trim()
 		const city = (f[cCity] ?? "").trim()
 		const zip = (f[cZip] ?? "").trim()

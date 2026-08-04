@@ -34,9 +34,11 @@
  *   the model card like the existing GeoNames alias fold.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
+
+import { join } from "path-ts"
+import { TSVSpliterator } from "spliterator"
 
 /**
  * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank and are skipped. See the
@@ -81,11 +83,11 @@ export interface GeonamesPostalIngestResult {
  * the display form as an extra `names` row when it differs. The caller owns the FTS rebuild (rows ride the standard
  * freeze phase).
  */
-export function ingestGeonamesPostal(
+export async function ingestGeonamesPostal(
 	db: DatabaseSync,
 	countries: readonly string[],
 	postalDir: string
-): GeonamesPostalIngestResult {
+): Promise<GeonamesPostalIngestResult> {
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
 	)
@@ -116,9 +118,10 @@ export function ingestGeonamesPostal(
 		// Group member settlement points per NORMALIZED code; remember one display form.
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
-		for (const line of readFileSync(file, "utf8").split("\n")) {
-			const cols = line.split("\t")
-
+		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the caller
+		// knows which country is next. `header: false` is load-bearing; the GeoNames postal dump is
+		// headerless, so row 1 would be consumed as column names and its postcode lost.
+		for await (const cols of TSVSpliterator.fromAsync(file, { header: false })) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
 			const display = cols[1]!.trim()
 			const name = normalizePostcodeName(display)

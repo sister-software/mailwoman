@@ -14,9 +14,7 @@
  *   License: stamped `"Public Domain"` per New York state government open-data terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -69,97 +67,88 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 				throw new Error(`state-ny-notaries adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const rawRecord of parser as AsyncIterable<Record<string, string>>) {
-					if (opts.signal?.aborted) break
+			for await (const rawRecord of rows as AsyncIterable<Record<string, string>>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					// NY CSV has columns with leading spaces, so we normalize by trimming keys.
-					const record: Record<string, string> = {}
+				// NY CSV has columns with leading spaces, so we normalize by trimming keys.
+				const record: Record<string, string> = {}
 
-					for (const key of Object.keys(rawRecord)) {
-						record[key.trim()] = rawRecord[key] ?? ""
-					}
-
-					const holderName = (record["Commission Holder Name"] ?? "").trim()
-					const businessName = (record["Business Name (if available)"] ?? "").trim()
-					const address1 = (record["Business Address 1 (if available)"] ?? "").trim()
-					const address2 = (record["Business Address 2 (if available)"] ?? "").trim()
-					const city = (record["Business City (if available)"] ?? "").trim()
-					const stateAbbr = (record["Business State (if available)"] ?? "").trim()
-					const zip = (record["Business Zip (if available)"] ?? "").trim()
-					const county = (record["Commissioned County"] ?? "").trim()
-
-					if (!city || !stateAbbr || !zip) continue
-
-					if (!address1 && !address2) continue
-
-					const state = lookupStateAbbreviation(stateAbbr)
-
-					if (!state) continue
-
-					const fullAddress = [address1, address2].filter(Boolean).join(" ")
-					const split = splitStreetLine(fullAddress)
-
-					if (!split) continue
-
-					const venue = businessName || holderName || undefined
-
-					const components: CanonicalRow["components"] = {
-						...(venue ? { venue } : {}),
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode: zip,
-						...(county ? { subregion: county } : {}),
-					}
-
-					const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
-
-					const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
-						.filter(Boolean)
-						.join(", ")
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (Object.keys(aligned).length <= 2) continue
-
-					const commNum = (record["Commission Number (UID)"] ?? "").trim()
-
-					const sourceID = commNum
-						? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`
-						: stableSourceID(STATE_NY_NOTARIES_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: STATE_NY_NOTARIES_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				for (const key of Object.keys(rawRecord)) {
+					record[key.trim()] = rawRecord[key] ?? ""
 				}
-			} finally {
-				stream.destroy()
+
+				const holderName = (record["Commission Holder Name"] ?? "").trim()
+				const businessName = (record["Business Name (if available)"] ?? "").trim()
+				const address1 = (record["Business Address 1 (if available)"] ?? "").trim()
+				const address2 = (record["Business Address 2 (if available)"] ?? "").trim()
+				const city = (record["Business City (if available)"] ?? "").trim()
+				const stateAbbr = (record["Business State (if available)"] ?? "").trim()
+				const zip = (record["Business Zip (if available)"] ?? "").trim()
+				const county = (record["Commissioned County"] ?? "").trim()
+
+				if (!city || !stateAbbr || !zip) continue
+
+				if (!address1 && !address2) continue
+
+				const state = lookupStateAbbreviation(stateAbbr)
+
+				if (!state) continue
+
+				const fullAddress = [address1, address2].filter(Boolean).join(" ")
+				const split = splitStreetLine(fullAddress)
+
+				if (!split) continue
+
+				const venue = businessName || holderName || undefined
+
+				const components: CanonicalRow["components"] = {
+					...(venue ? { venue } : {}),
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode: zip,
+					...(county ? { subregion: county } : {}),
+				}
+
+				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+
+				const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
+					.filter(Boolean)
+					.join(", ")
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (Object.keys(aligned).length <= 2) continue
+
+				const commNum = (record["Commission Number (UID)"] ?? "").trim()
+
+				const sourceID = commNum
+					? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`
+					: stableSourceID(STATE_NY_NOTARIES_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: STATE_NY_NOTARIES_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: STATE_NY_NOTARIES_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

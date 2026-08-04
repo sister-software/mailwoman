@@ -59,7 +59,7 @@ export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions):
 	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
 
 	const placesIngested = opts.countries.length
-		? ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
+		? await ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {
 				alternateDir,
 				adminForCountries: opts.adminForCountries,
 			})
@@ -69,7 +69,7 @@ export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions):
 
 	if (opts.postalCountries && opts.postalCountries.length) {
 		const postalDir = opts.postalDir ?? String(dataRootPath("geonames-postal"))
-		postalIngested = ingestGeonamesPostal(db, [...opts.postalCountries], postalDir).inserted
+		postalIngested = (await ingestGeonamesPostal(db, [...opts.postalCountries], postalDir)).inserted
 	}
 
 	return { placesIngested, postalIngested }

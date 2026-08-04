@@ -13,6 +13,7 @@ import { readFile } from "node:fs/promises"
 import type { DatabaseSync } from "node:sqlite"
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
 import FastGlob from "fast-glob"
 import { asyncParallelIterator } from "spliterator"
@@ -80,7 +81,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 	// admin.ts) rather than reading `any`. This file used to name all seventeen `wof:`/`geom:`/`edtf:`/`mz:` keys as
 	// bare strings, which meant a typo — `wof:superceded_by` — would have compiled, read `undefined`, and silently
 	// ingested every superseded record in the corpus. A type-only import: erased at build, zero runtime cost.
-	const feature = JSON.parse(text) as WOFFeature
+	const feature = parseJSONStrict<WOFFeature>(text)
 	const props: WOFProperties | undefined = feature.properties
 
 	if (!props) return null

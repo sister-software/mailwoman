@@ -43,8 +43,10 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -181,16 +183,18 @@ async function main(): Promise<void> {
 	const outPath = values["out"] || "data/eval/calibration/confidences.jsonl"
 	const limit = Number(values["limit"] || "0") || Infinity
 
-	const rows: CalibRow[] = readFileSync(setPath, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-		.map((l) => JSON.parse(l))
-		.slice(0, limit === Infinity ? undefined : limit)
+	const rows: CalibRow[] = (await Array.fromAsync(JSONSpliterator.fromAsync<CalibRow>(setPath))).slice(
+		0,
+		limit === Infinity ? undefined : limit
+	)
 
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
+
+	const modelCard = parseJSONStrict<{ labels: string[] }>(
+		readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8")
+	)
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
@@ -207,8 +211,8 @@ async function main(): Promise<void> {
 		tokenizer,
 		runner,
 		labels: modelCard.labels,
-		postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))),
-		gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(gazPath, "utf8"))),
+		postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8"))),
+		gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(gazPath, "utf8"))),
 		suppressGazetteerNearPostcode: true,
 		addressSystemConventions: "auto",
 		bridgePunctuationGaps: true,

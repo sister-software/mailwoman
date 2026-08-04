@@ -137,6 +137,7 @@ function scanDirectionalSurfaces(fold: (surface: string) => string[]): Set<strin
 
 		if (!existsSync(path)) continue
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Committed libpostal dictionary; the largest is 8.4 KB (`en/street_types.txt`) and the scan is memoized once per process.
 		for (const line of readFileSync(path, "utf8").split("\n")) {
 			for (const surface of line.split("|")) {
 				const tokens = fold(surface)
@@ -266,6 +267,7 @@ function scanPersonNameSurfaces(): Set<string> {
 	for (const f of files) {
 		if (!existsSync(f)) continue
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Committed libpostal dictionary; the largest is 8.4 KB (`en/street_types.txt`) and the scan is memoized once per process.
 		for (const line of readFileSync(f, "utf8").split("\n")) {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)

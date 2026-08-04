@@ -21,8 +21,9 @@
 import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
-import { dataRootPath, percentile, readJSONL } from "@mailwoman/core/utils"
+import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Distance within which a postcode anchor counts as correct, in kilometres.
@@ -75,11 +76,11 @@ interface EvalRow {
 	lon?: number
 }
 
-function main(): void {
+async function main(): Promise<void> {
 	const { evalPath, country, shards } = parseArgs()
 	const lookup = new WOFPostcodeLookup(shards)
 
-	const rows = readJSONL<EvalRow>(evalPath)
+	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<EvalRow>(evalPath))
 	let withPostcode = 0
 	let placed = 0
 	let inGazetteerNoCentroid = 0
@@ -141,4 +142,4 @@ function main(): void {
 	)
 }
 
-main()
+await main()

@@ -23,6 +23,7 @@ interface TimezoneFeature {
  * Read the GeoJSON at `geojsonPath` and write the polygon DB to `dbPath` (overwriting its table).
  */
 export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features: number } {
+	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: TimezoneFeature[] }
 	const db = new DatabaseSync(dbPath)
 	db.exec("DROP TABLE IF EXISTS timezone_polygons")

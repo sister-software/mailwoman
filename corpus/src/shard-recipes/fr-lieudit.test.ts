@@ -14,8 +14,10 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { gzipSync } from "node:zlib"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { afterEach, describe, expect, it } from "vitest"
 
+import type { ShardRow } from "../../test-kit/shard-recipe.ts"
 import { frLieuditRecipe } from "./fr-lieudit.ts"
 import type { ShardRecipeOpts } from "./scaffold.ts"
 
@@ -62,9 +64,9 @@ describe("fr-lieudit recipe", () => {
 
 		expect(stats.emitted).toBe(1)
 		expect(stats.skipped).toBe(0)
-		const parsed = JSON.parse(lines[0]!)
-		expect(parsed.components.dependent_locality).toBe("Le Bourg")
-		expect(parsed.components.locality).toBe("Altier")
+		const parsed = parseJSONStrict<ShardRow>(lines[0]!)
+		expect(parsed.components!.dependent_locality).toBe("Le Bourg")
+		expect(parsed.components!.locality).toBe("Altier")
 		expect(parsed.raw).toBe("6 Route de Pomaret\nLe Bourg\n48800 Altier")
 		expect(parsed.source).toBe("synth-fr-lieudit")
 		// The dependent_locality line sits BEFORE the postcode+commune line.
@@ -89,7 +91,7 @@ describe("fr-lieudit recipe", () => {
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
 
 		expect(stats.emitted).toBe(1)
-		expect(JSON.parse(lines[0]!).components.dependent_locality).toBe("Le Bourg")
+		expect(parseJSONStrict<ShardRow>(lines[0]!).components!.dependent_locality).toBe("Le Bourg")
 	})
 
 	it("is deterministic under a fixed seed (same output twice)", async () => {
@@ -118,9 +120,9 @@ describe("fr-lieudit recipe", () => {
 
 		await frLieuditRecipe.run(baseOpts({ banDir, countryFraction: 1 }), (l) => lines.push(l))
 
-		const parsed = JSON.parse(lines[0]!)
-		expect(parsed.components.country).toBeDefined()
-		expect(parsed.raw.endsWith(parsed.components.country)).toBe(true)
+		const parsed = parseJSONStrict<ShardRow>(lines[0]!)
+		expect(parsed.components!.country).toBeDefined()
+		expect(parsed.raw.endsWith(parsed.components!.country!)).toBe(true)
 	})
 
 	it("--country-fraction=0 (default) never appends a country component", async () => {
@@ -135,7 +137,7 @@ describe("fr-lieudit recipe", () => {
 		await frLieuditRecipe.run(baseOpts({ banDir }), (l) => lines.push(l))
 
 		for (const l of lines) {
-			expect(JSON.parse(l).components.country).toBeUndefined()
+			expect(parseJSONStrict<ShardRow>(l).components!.country).toBeUndefined()
 		}
 	})
 
@@ -148,7 +150,7 @@ describe("fr-lieudit recipe", () => {
 
 		await frLieuditRecipe.run(baseOpts({ banDir, sourceName: "synth-fr-lieudit-test" }), (l) => lines.push(l))
 
-		expect(JSON.parse(lines[0]!).source).toBe("synth-fr-lieudit-test")
+		expect(parseJSONStrict<ShardRow>(lines[0]!).source).toBe("synth-fr-lieudit-test")
 	})
 
 	it("throws when no BAN dept files are found", async () => {
