@@ -140,12 +140,35 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- region_id per place (its region-tier ancestor) for same-name disambiguation ---
 	progress("region", "loading region ancestry")
 	const regionOf = new Map<number, number>()
+	let multiRegion = 0
 
-	for (const r of src.prepare("SELECT id, ancestor_id FROM ancestors WHERE ancestor_placetype='region'").iterate()) {
+	// A place can carry more than one region-tier ancestor — 59 do on the 2026-08-03 artifact (42
+	// localities, mostly Chinese places on an ambiguous boundary), and #1445 raises how many places carry
+	// a region at all, so the count will grow. One `region_id` column can hold one of them.
+	//
+	// Which one is a real question and this is not the place to answer it; what this DOES fix is that the
+	// answer used to be "whichever the scan returned last", so the stamp for those places could differ
+	// between two builds of the same source. Same instability class as the synthetic Overture ids. MIN is
+	// arbitrary but stable, and the count is reported so a jump after the rebuild is visible rather than
+	// inferred.
+	for (const r of src
+		.prepare(
+			"SELECT id, MIN(ancestor_id) AS ancestor_id, COUNT(DISTINCT ancestor_id) AS n" +
+				" FROM ancestors WHERE ancestor_placetype='region' GROUP BY id"
+		)
+		.iterate()) {
 		regionOf.set(Number(r.id), Number(r.ancestor_id))
+
+		if (Number(r.n) > 1) {
+			multiRegion++
+		}
 	}
 
-	progress("region", `${regionOf.size.toLocaleString()} places carry a region`)
+	progress(
+		"region",
+		`${regionOf.size.toLocaleString()} places carry a region` +
+			(multiRegion ? ` (${multiRegion.toLocaleString()} carry more than one; stamped with the lowest id)` : "")
+	)
 
 	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
 	// node:sqlite insert) rather than a per-row query builder. Placeholders come from CANDIDATE_COLUMNS so

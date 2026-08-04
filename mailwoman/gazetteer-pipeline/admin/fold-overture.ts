@@ -8,6 +8,7 @@
  *   `scripts/build-unified-wof.ts` (#1015/#1021) into the pipeline module.
  */
 
+import { createHash } from "node:crypto"
 import type { DatabaseSync } from "node:sqlite"
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
@@ -24,6 +25,54 @@ export const OVERTURE_ID_BASE = 8_000_000_000_000
  * (Brussels → nearest FOREIGN place across the border), and forward resolution can't country-gate the locale.
  */
 export const OVERTURE_DIVISION_SUBTYPES = ["country", "locality", "region", "county", "localadmin"]
+
+/**
+ * Width of the id range reserved for Overture rows — `OVERTURE_ID_BASE` up to the GeoNames fold's base at 9e12.
+ */
+const OVERTURE_ID_SPAN = 1_000_000_000_000
+
+/**
+ * Map each Overture GERS id to a synthetic integer id, derived from the GERS id ITSELF rather than from the row's
+ * position in the parquet scan.
+ *
+ * Position-derived ids are not stable across builds, and the instability is silent. Measured on two shipped artifacts:
+ * `8000001092006` is _Dolok Merawan, Indonesia_ in `admin-global-priority.db` and _Skałówki, Poland_ in
+ * `candidate-global-1026.db`, and the eval row whose gold pointed at it scored as a miss against both while BOTH
+ * backends had in fact returned the right place. Any consumer that stored one of these ids — a gold row, a cached
+ * result, a cross-artifact join — silently reads a different place after the next build. GERS ids are stable by design;
+ * scan order is not, and DuckDB's is a threaded read over a LEFT JOIN.
+ *
+ * Assignment is `idBase + (hash(gers) mod span)`. Two GERS ids can land on the same slot — at ~1.6 M rows in a 1e12
+ * span the birthday expectation is about one collision per build — so the loser probes forward. Probing is order-
+ * dependent, which is exactly what this function exists to avoid, so the input is SORTED first: a given GERS id's
+ * outcome then depends only on the set of ids that hash near it, not on how the query happened to return them.
+ *
+ * A useful consequence: re-ingesting a division that is already present now recomputes the SAME id, so an incremental
+ * augment is idempotent by construction. The `idBase` parameter previously had to be hand-set to `max(spr.id) + 1` or
+ * the second run's `INSERT OR REPLACE` clobbered the first's rows.
+ */
+export function assignSyntheticIDs(gersIDs: readonly string[], idBase: number = OVERTURE_ID_BASE): Map<string, number> {
+	const idmap = new Map<string, number>()
+	const taken = new Set<number>()
+
+	for (const gers of gersIDs.toSorted()) {
+		if (idmap.has(gers)) continue
+
+		// Six bytes (48 bits) is comfortably more entropy than the 1e12 span consumes, so the modulo
+		// costs nothing in collision terms and keeps the id inside the reserved range.
+		const digest = createHash("sha256").update(gers).digest()
+		let slot = Number(digest.readUIntBE(0, 6) % OVERTURE_ID_SPAN)
+
+		while (taken.has(slot)) {
+			slot = (slot + 1) % OVERTURE_ID_SPAN
+		}
+
+		taken.add(slot)
+		idmap.set(gers, idBase + slot)
+	}
+
+	return idmap
+}
 
 /**
  * Backfill the Overture `divisions` theme into an already-open unified ingest DB, for locales the WOF GeoJSON repos
@@ -100,9 +149,10 @@ export async function ingestOvertureDivisions(
 
 	console.error(`  Overture divisions: ${rows.length.toLocaleString()} pulled`)
 
-	// GERS string id → synthetic int, sequential and unique within this run.
-	const idmap = new Map<string, number>()
-	rows.forEach((r, i) => idmap.set(String(r.id), idBase + i))
+	const idmap = assignSyntheticIDs(
+		rows.map((r) => String(r.id)),
+		idBase
+	)
 
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
