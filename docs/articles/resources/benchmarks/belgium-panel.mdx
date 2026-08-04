@@ -91,12 +91,12 @@ Netherlands, one in France. The row that means what a reader thinks "locality" m
 the two.
 
 **The French overlay changes nothing.** The `fr-overlay` arm is identical to `base` on every measure
-and on every one of the thirty per-row records. The result file says why: both arms record
-`model-v401-base-step-060000-int8.onnx` under their own `weights.model` — the per-arm field, not the
-single `versions.model` run stamp — while their `weights.source` differs
-(`package:@mailwoman/neural-weights-en-us` against `package:@mailwoman/neural-weights-fr-fr+base`).
-That pair of fields is the evidence: two package names, one ONNX file. The French package is a
-data-only overlay that takes its `model.onnx` from the base package and ships only French postcode,
+and on every one of the thirty per-row records. The result file says why, in the per-arm `weights`
+entry rather than the single `versions.model` run stamp. Both arms record the same `weights.model`,
+`model.onnx`, while their `weights.source` differs — and the difference is the giveaway:
+`package:@mailwoman/neural-weights-en-us` against `package:@mailwoman/neural-weights-fr-fr+base`. That
+`+base` suffix is the loader reporting that the French package resolved _through_ to the base one. The
+French package is a data-only overlay: it ships no `model.onnx` at all, only French postcode,
 pair-index and FST siblings. None of those siblings is consulted for a Belgian postcode. Belgium is
 not a tier, and choosing the nearest tier does not make it one.
 
@@ -206,11 +206,11 @@ The script is [`be-panel.mjs`](/benchmarks/be-panel.mjs), the panel is
 [`be-results.json`](/benchmarks/be-results.json) verbatim, including a per-row record for all thirty
 addresses in each of the three arms.
 
-That file's `versions` block records what this run used: Mailwoman 8.7.0,
-`model-v401-base-step-060000-int8.onnx` and `candidate-global-1026.db`. Each arm additionally carries
-its own `weights` entry, which is how the identical `base` and `fr-overlay` columns are traceable to
-one ONNX file behind two package names. There is no data-release field, because no Belgian register
-ships to have one.
+That file's `versions` block records what this run used: Mailwoman 8.7.0, `model.onnx` from
+`neural-weights-en-us@7.0.0`, and `candidate-global-1026.db`. Each arm additionally carries its own
+`weights` entry, which is how the identical `base` and `fr-overlay` columns are traceable to one ONNX
+file behind two package names. There is no data-release field, because no Belgian register ships to
+have one.
 
 ```bash
 npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-en-us \

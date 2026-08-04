@@ -74,12 +74,21 @@ The gazetteer database itself is a separate download and is in no package. Run
 
 ## Browser
 
-| Package                        | What it is                                            | Install it when                                            |
-| ------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------- |
-| `@mailwoman/neural-web`        | The browser inference runtime, over `onnxruntime-web` | You parse client-side. WebGPU, with a WebAssembly fallback |
-| `@mailwoman/resolver-wof-wasm` | The browser gazetteer backend                         | You also geocode client-side                               |
+| Package                        | What it is                                                                  | Install it when                                            |
+| ------------------------------ | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `@mailwoman/neural`            | Carries the browser runtime too, at `./web-loader` and `./web-onnx-runner`  | You parse client-side. WebGPU, with a WebAssembly fallback |
+| `onnxruntime-web`              | The inference runtime itself — an **optional peer**, so install it yourself | You parse client-side                                      |
+| `@mailwoman/resolver-wof-wasm` | The browser gazetteer backend                                               | You also geocode client-side                               |
 
-[Parse in the browser](../tutorials/parse-in-the-browser.mdx) wires both.
+Both ONNX runtimes are optional peer dependencies of `@mailwoman/neural`: a browser app installs
+`onnxruntime-web`, a Node service installs `onnxruntime-node`, and neither pays for the other's
+binaries. Neither is installed for you.
+
+`@mailwoman/neural-web` still publishes, and is now a **deprecated re-export shim** over those two
+subpaths. Existing imports keep working — every name is re-exported at its original identity — but new
+code should import from `@mailwoman/neural`.
+
+[Parse in the browser](../tutorials/parse-in-the-browser.mdx) wires it up.
 
 ## Servers
 

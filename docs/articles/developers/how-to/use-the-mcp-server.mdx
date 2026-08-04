@@ -17,8 +17,8 @@ talks to it, and stops it. There is no port to open and nothing to deploy.
 
 - Node.js ≥ 24.18.0 and an MCP client. Claude Code is the one configured below; the wiring is the same
   for any client that launches a stdio server.
-- A candidate gazetteer and `$MAILWOMAN_CANDIDATE_DB` pointing at it, if you want the four model-backed
-  tools. [Your first ten minutes](../get-started/ten-minute-trial.mdx) pulls one.
+- A candidate gazetteer under the data root you configure, if you want the four model-backed tools.
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx) pulls one.
 - `@mailwoman/mcp` 8.7.0 or later. Earlier releases did not declare the weights package, so a standalone
   install could not load the model.
 
@@ -40,18 +40,21 @@ Claude Code reads `.mcp.json` in the project root:
 		"mailwoman": {
 			"command": "mailwoman-mcp",
 			"env": {
-				"MAILWOMAN_DATA_ROOT": "/path/to/mailwoman-data",
-				"MAILWOMAN_CANDIDATE_DB": "/path/to/mailwoman-data/wof/candidate.db"
+				"MAILWOMAN_DATA_ROOT": "/path/to/mailwoman-data"
 			}
 		}
 	}
 }
 ```
 
-`$MAILWOMAN_CANDIDATE_DB` has to be set explicitly. This server resolves the gazetteer from the
-environment variable only — it does not fall back to the conventional `<data-root>/wof/candidate.db`
-path the way the Photon and Nominatim drop-ins do. Setting only the data root leaves the model-backed
-tools without a resolver.
+One variable is enough. The server finds the gazetteer at `<data root>/wof/candidate.db`, the path
+`mailwoman data pull candidate` writes to, so pointing at the data root wires up all four model-backed
+tools. Add `"MAILWOMAN_CANDIDATE_DB"` beside it only for a gazetteer that lives outside that root.
+
+This is a change. Through `8.6.0` this server read the variable and nothing else — it was the one entry
+point that did not fall back to the convention path, and a config with only the data root in it left the
+model-backed tools without a resolver. `8.7.0` moved the fallback into the shared resolver, so the MCP
+server inherited it along with everything else.
 
 Add `"args": ["--poi-db", "/path/to/poi.db"]` if you have the POI layer. Without it, `mailwoman_poi_search`
 still extracts the query's intent — the subject and the spatial anchor — and returns that rather than
@@ -109,7 +112,7 @@ child.kill()
 ```
 
 ```bash
-MAILWOMAN_CANDIDATE_DB=/path/to/wof/candidate.db node probe.mjs mailwoman-mcp
+MAILWOMAN_DATA_ROOT=/path/to/mailwoman-data node probe.mjs mailwoman-mcp
 ```
 
 ```
@@ -122,7 +125,7 @@ mailwoman_bdc_filing_landscape
 mailwoman_plausibility_check
 mailwoman_filer_lookup
 mailwoman_filer_family
-[resolver] candidate-table backend (demo-parity, population-first): /path/to/wof/candidate.db
+[resolver] candidate-table backend (demo-parity, population-first): /path/to/mailwoman-data/wof/candidate.db
 {
   "input": "1600 Pennsylvania Ave NW, Washington, DC 20500",
   "lat": 38.904831,
@@ -201,8 +204,7 @@ data still connects and lists all nine tools; the failure arrives inside the fir
   Fastest path (worldwide resolution, population-first ranking, ~1.65 GB):
     mailwoman data pull candidate
 
-  Then point $MAILWOMAN_CANDIDATE_DB at the pulled file and re-run:
-    export MAILWOMAN_CANDIDATE_DB=/tmp/mw-bare-1/wof/candidate.db
+  The file lands at /tmp/mw-bare-1/wof/candidate.db and is auto-detected there — just re-run.
 
   Or point at your own:
     --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB   (candidate gazetteer)

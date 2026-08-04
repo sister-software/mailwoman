@@ -205,6 +205,16 @@ for needle in 'Model weights (en-us)' 'Node runtime' 'ONNX runtime' 'mailwoman d
 		fail "doctor output missing expected '$needle' — ten-minute-trial.mdx's doctor transcript no longer matches"
 	fi
 done
+
+# The gazetteer fix line is ONE command now. Through 8.6.0 it read
+# `mailwoman data pull candidate   (then: export MAILWOMAN_CANDIDATE_DB=…)`, because writing the file
+# did not wire it up; the convention-path fallback removed that second half. The positive check above
+# passes either way — it is a substring — so assert the absence too, or the page's transcript can drift
+# back without failing anything.
+if [[ "$doctor_out" == *"export MAILWOMAN_CANDIDATE_DB"* ]]; then
+	echo "$doctor_out" >&2
+	fail "doctor still prints an export line — ten-minute-trial.mdx teaches the bare pull as the whole fix"
+fi
 log "  ok — doctor output matches the page"
 
 log "ten-minute-trial.mdx step 3: mailwoman parse (shell)…"
@@ -264,8 +274,12 @@ else
 	fi
 fi
 
-log "ten-minute-trial.mdx step 5: mailwoman geocode (US address)…"
-if ! us_out=$(MAILWOMAN_DATA_ROOT="$DATA_ROOT" MAILWOMAN_CANDIDATE_DB="$CANDIDATE_DB" node "$CLI" geocode "350 5th Ave, New York, NY 10118" 2>&1); then
+# NO $MAILWOMAN_CANDIDATE_DB below, deliberately. The page stopped telling readers to export it when
+# the candidate backend became the default (mailwoman 8.7.0), so these two calls assert the thing the
+# page now promises: that `<data root>/wof/candidate.db` is found with nothing configured. Exporting
+# the variable here would pass whether or not that fallback works.
+log "ten-minute-trial.mdx step 5: mailwoman geocode (US address, convention-path discovery)…"
+if ! us_out=$(MAILWOMAN_DATA_ROOT="$DATA_ROOT" node "$CLI" geocode "350 5th Ave, New York, NY 10118" 2>&1); then
 	echo "$us_out" >&2
 	fail "mailwoman geocode (US) failed"
 fi
@@ -279,7 +293,7 @@ done
 log "  ok — US geocode resolves in the US"
 
 log "ten-minute-trial.mdx step 5: mailwoman geocode (FR address — the ledgered routing case)…"
-if ! fr_out=$(MAILWOMAN_DATA_ROOT="$DATA_ROOT" MAILWOMAN_CANDIDATE_DB="$CANDIDATE_DB" node "$CLI" geocode "12 Rue de Rivoli, 75001 Paris" 2>&1); then
+if ! fr_out=$(MAILWOMAN_DATA_ROOT="$DATA_ROOT" node "$CLI" geocode "12 Rue de Rivoli, 75001 Paris" 2>&1); then
 	echo "$fr_out" >&2
 	fail "mailwoman geocode (FR) failed"
 fi

@@ -214,8 +214,9 @@ held pipeline is on the first-parse page. Everything before it costs about 4 ms 
 Names collide. Drop the state, and `Madison` has to be chosen rather than looked up. `--resolve` runs the
 tree through the gazetteer and `--candidates` keeps the runners-up on each resolved node.
 
-Export `MAILWOMAN_CANDIDATE_DB` first, using the line `mailwoman doctor` prints for your own data root
-rather than a path copied from here — that is the whole reason `doctor` prints it. Then:
+This is the first step on the page that needs the gazetteer. Run `mailwoman doctor` and check that its
+`Admin gazetteer` line is green; if it is not, its `fix:` line is the download. Nothing to export —
+`--resolve` finds `candidate.db` under your data root. Then:
 
 ```bash
 npx mailwoman parse --resolve --candidates 3 "1 madison ave madison" | jq '.roots[0] | {tag, value, placeID, lat, lon, alternatives: [.alternatives[] | {name, placetype, lat, lon, score}]}'

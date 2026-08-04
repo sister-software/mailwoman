@@ -20,11 +20,12 @@ const PORT = Number(process.env.PORT ?? 3000)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
-// Geocoding is opt-in on a gazetteer being THERE, not on the environment variable being set. An image
-// that bakes `MAILWOMAN_CANDIDATE_DB` as a default — the Dockerfile beside this file does — leaves it set
-// on every run, mounted volume or not, so a truthiness check would open a file that does not exist and
-// kill the process with SQLITE_CANTOPEN on a first run with no data. `resolveCandidateDBPath` is the
-// shipped helper for exactly this: it reads the variable and returns undefined unless the file exists.
+// Geocoding is opt-in on a gazetteer being THERE, not on anything being configured.
+// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit path, then
+// `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/wof/candidate.db`, and returns undefined unless one of
+// them is a file that exists. That last position is why an image needs only its volume mount, and the
+// existence check is why a first run WITHOUT one still boots: a truthiness check on the variable would
+// open a file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
 // Same guard the published image's server.mjs uses.
 const candidateDB = resolveCandidateDBPath()
 
@@ -55,7 +56,7 @@ createServer(async (req, res) => {
 		}
 
 		if (url.pathname === "/geocode") {
-			if (!resolver) return send(res, 503, { error: "no gazetteer found at $MAILWOMAN_CANDIDATE_DB" })
+			if (!resolver) return send(res, 503, { error: "no gazetteer found — mount one at <data-root>/wof/candidate.db" })
 
 			return send(res, 200, await geocodeAddress(address, { classifier, resolver, defaultCountry: "US" }))
 		}

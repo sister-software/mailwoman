@@ -23,10 +23,10 @@ Three things, and the second one will stop you partway through if it isn't done.
   npm install @mailwoman/resolver @mailwoman/resolver-wof-sqlite spliterator
   ```
 
-- **`candidate.db` on disk, and `$MAILWOMAN_CANDIDATE_DB` pointing at it.** Coordinates come from the
-  gazetteer, which is a 1.65 GB download you do once.
-  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command and the
-  export line. Every transcript below assumes you ran them.
+- **`candidate.db` on disk**, at `<data root>/wof/candidate.db`. Coordinates come from the gazetteer,
+  which is a 1.65 GB download you do once, and it lands at that path.
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command. Every
+  transcript below assumes you ran it; none of them exports anything.
 - **A CSV whose columns you know.** This page uses
   [customers.csv](/examples/customers.csv) — twenty invented companies at real street addresses across
   New York, Illinois, California, Massachusetts and the District of Columbia. Download it next to your
@@ -65,11 +65,12 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
-import { mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const lookup = new WOFCandidateTableLookup({ databasePath: process.env.MAILWOMAN_CANDIDATE_DB })
+// The same search the CLI runs: --candidate-db, then $MAILWOMAN_CANDIDATE_DB, then <data root>/wof/candidate.db.
+const lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 // Street shards, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
 const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
@@ -221,12 +222,14 @@ between twenty-one usable coordinates and twenty.
 `mailwoman registry run` does ingest, geocode and export in one call. It is the CLI in front of the
 record matcher, so what it writes is an entity set rather than a row dump.
 
-Two things about it before you run it. It wants `--resolve-db` even when `$MAILWOMAN_CANDIDATE_DB` is
-what answers, so pass the same path twice. And its output properties are the record matcher's normalized
+Two things about it before you run it. Unlike `geocode`, it will not start without a `--resolve-db` or
+`$MAILWOMAN_WOF_DB`, even though the candidate gazetteer is what answers — so pass the
+gazetteer's own path to satisfy the check. And its output properties are the record matcher's normalized
 view of your row, not your row: your `customer_id` rides in `sourceIds`.
 
 ```bash
-npx mailwoman registry run customers.csv --infer-mapping --resolve-db "$MAILWOMAN_CANDIDATE_DB" --out customers.geojson
+npx mailwoman registry run customers.csv --infer-mapping \
+  --resolve-db "$MAILWOMAN_DATA_ROOT/wof/candidate.db" --out customers.geojson
 ```
 
 ```

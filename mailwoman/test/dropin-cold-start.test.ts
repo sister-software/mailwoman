@@ -40,7 +40,7 @@ import { join } from "node:path"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { afterEach, describe, expect, test, vi } from "vitest"
@@ -227,16 +227,14 @@ async function mcpRoundTrip(
 
 			if (!line) continue
 
-			try {
-				const message = JSON.parse(line) as { id?: number; result?: Record<string, unknown> }
-				const resolve = typeof message.id === "number" ? pending.get(message.id) : undefined
+			// A partial line parses to null and is simply skipped — the next chunk completes it, and
+			// `server.stdout` accumulates the whole stream. Degrading is the contract here, not an error.
+			const message = tryParsingJSON<{ id?: number; result?: Record<string, unknown> }>(line)
+			const resolve = message && typeof message.id === "number" ? pending.get(message.id) : undefined
 
-				if (resolve && message.result) {
-					pending.delete(message.id!)
-					resolve(message.result)
-				}
-			} catch {
-				// A partial line — the next chunk completes it, and `server.stdout` accumulates the whole stream.
+			if (resolve && message?.result) {
+				pending.delete(message.id!)
+				resolve(message.result)
 			}
 		}
 	})
@@ -383,9 +381,7 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 
 describe("mailwoman-mcp — cold start over stdio, no data", () => {
 	test("declares @mailwoman/neural-weights-en-us, so a standalone npm install can load the model", () => {
-		const manifest = JSON.parse(readFileSync(MCP_PACKAGE_JSON, "utf8")) as {
-			dependencies: Record<string, string>
-		}
+		const manifest = parseJSONStrict<{ dependencies: Record<string, string> }>(readFileSync(MCP_PACKAGE_JSON, "utf8"))
 
 		// The regression this pins: `@mailwoman/mcp@8.6.0` shipped without it (checked against the registry
 		// 2026-08-03), so `npm install @mailwoman/mcp` in a clean directory installed no weights package and
@@ -457,8 +453,9 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 					})
 				)
 
-				// photon: auto-detects the convention-path candidate.db — NO $MAILWOMAN_CANDIDATE_DB export needed
-				// (see `buildNoGazetteerMessage`'s `requiresExplicitEnv: false` for photon/nominatim).
+				// photon: auto-detects the convention-path candidate.db — NO $MAILWOMAN_CANDIDATE_DB export needed.
+				// Since #1444 that fallback lives in `resolveCandidateDBPath` itself, so it is no longer a
+				// photon/nominatim special case: every entry point reads the convention path.
 				await withCLISpawnLockAsync(async () => {
 					const server = spawnServer(
 						PHOTON_CLI,

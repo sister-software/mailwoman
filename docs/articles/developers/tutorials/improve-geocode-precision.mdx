@@ -14,8 +14,8 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 ## Prerequisites
 
-- **`candidate.db` on disk and `$MAILWOMAN_CANDIDATE_DB` exported.**
-  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) covers both.
+- **`candidate.db` on disk**, at `<data root>/wof/candidate.db`.
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) covers the download.
 - **About 127 MB of free disk** for the street shards this page pulls, and `$MAILWOMAN_DATA_ROOT`
   pointing where you want them. The full US street tier is 103 files and about 41.3 GB, so this page
   pulls one jurisdiction — the District of Columbia, small on disk and dense enough in rooftop coverage
@@ -26,12 +26,13 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 ## The backend this assumes
 
-One paragraph of recap, because everything below depends on it. `$MAILWOMAN_CANDIDATE_DB` selects the
-candidate-table gazetteer, which ranks same-named places population-first and is the backend the hosted
-demo uses. Leave it unset and the resolver falls back to a full-text-search path over a WOF admin
-distribution, which ranks by relevance instead and answers some queries differently — but that database
-is not one you can obtain here, because `data pull` publishes no bundle for it and it has to be built
-locally, which is why every page on this site sets the variable. The setup is on
+One paragraph of recap, because everything below depends on it. The candidate-table gazetteer ranks
+same-named places population-first, is the backend the hosted demo uses, and since `8.7.0` is the
+default: a `candidate.db` at `<data root>/wof/candidate.db` is picked up with nothing configured. The
+alternative is a full-text-search path over a WOF admin distribution, which ranks by relevance instead
+and answers some queries differently. You reach it by pinning `--candidate-db none`, and it is not a
+comparison you can run here anyway, because `data pull` publishes no bundle for that database and it
+has to be built locally. The download is on
 [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it); this page assumes you did it.
 
 ## 1. See the tier you have

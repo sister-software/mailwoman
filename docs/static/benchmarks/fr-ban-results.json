@@ -1,7 +1,7 @@
 {
 	"harness": "fr-ban-panel.mjs",
-	"ranAt": "2026-08-04T05:19:49.737Z",
-	"elapsedMs": 2615,
+	"ranAt": "2026-08-04T15:32:42.996Z",
+	"elapsedMs": 4485,
 	"panel": {
 		"source": "Base Adresse Nationale (BAN), via `mailwoman data pull fr`",
 		"release": "2026-05-18",
@@ -10,7 +10,7 @@
 	},
 	"versions": {
 		"mailwoman": "8.7.0",
-		"model": "model-v401-base-step-060000-int8.onnx",
+		"model": "model.onnx",
 		"modelCard": "neural-weights-fr-fr@6.5.0",
 		"gazetteer": "candidate-global-1026.db",
 		"nationalShard": "address-points-fr.db"

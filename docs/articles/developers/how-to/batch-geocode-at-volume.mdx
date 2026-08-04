@@ -18,8 +18,8 @@ a constant.
 ## Prerequisites
 
 - The library install from [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx), plus
-  `candidate.db` on disk and `$MAILWOMAN_CANDIDATE_DB` pointing at it. Every transcript below assumes
-  both.
+  `candidate.db` on disk at `<data root>/wof/candidate.db`. Every transcript below assumes both. The
+  scripts find it through `resolveCandidateDBPath()`, so nothing needs exporting.
 - [customers.csv](/examples/customers.csv) next to your scripts — twenty rows, repeated to make a file
   worth timing.
 - A machine whose core count you know. `nproc` on Linux, `sysctl -n hw.ncpu` on macOS.
@@ -40,7 +40,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
-import { mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const repeats = Number(process.argv[2] ?? 250)
@@ -54,7 +54,7 @@ for (let i = 0; i < repeats; i++) queries.push(...rows)
 
 const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const lookup = new WOFCandidateTableLookup({ databasePath: process.env.MAILWOMAN_CANDIDATE_DB })
+const lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
 const startupMs = performance.now() - t0
@@ -88,9 +88,12 @@ startup 0.68 s
 ```
 
 Run it three times. During the sweep this page reports, the three runs landed at 136.0, 138.9 and 137.9
-rows/s; a later run on the same machine under lighter load reached 153.3. That 12% spread between
-sessions is why the table in step 4 is worth more than any single figure in it: every row of that table
-was measured in one sitting, so the ratios hold even where the absolute rates drift.
+rows/s; a later run on the same machine under lighter load reached 153.3. Re-running the same script on
+the same box a day later, against `8.7.0` at head, gave 111.0, 111.6 and 113.3. That is a 27% spread
+across sessions on one machine with one model and one gazetteer, and none of it is a code change — it
+is what a shared box does. It is also why the table in step 4 is worth more than any single figure in
+it: every row of that table was measured in one sitting, so the ratios hold even where the absolute
+rates drift. Compare your ratios to ours, not your rows per second.
 
 ## 2. Confirm that async concurrency does not help
 
@@ -166,6 +169,7 @@ And this as `pool.mjs`:
 import { createWriteStream } from "node:fs"
 import { Worker } from "node:worker_threads"
 
+import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const workerCount = Number(process.argv[2] ?? 4)
@@ -182,11 +186,14 @@ for (let i = 0; i < repeats; i++) queries.push(...rows)
 const batches = []
 for (let i = 0; i < queries.length; i += batchSize) batches.push(queries.slice(i, i + batchSize))
 
+// Resolve the paths ONCE in the driver and hand each worker the answer. Every worker would otherwise
+// repeat the same filesystem search, and a worker that resolved it independently could disagree with
+// the driver if the environment differed between them.
 const workerData = {
 	locale: "en-US",
 	country: "US",
-	candidateDB: process.env.MAILWOMAN_CANDIDATE_DB,
-	dataRoot: process.env.MAILWOMAN_DATA_ROOT,
+	candidateDB: resolveCandidateDBPath(),
+	dataRoot: mailwomanDataRoot(),
 }
 
 const out = createWriteStream("customers.pooled.jsonl")
@@ -328,8 +335,8 @@ you can run today.
 - **The peak is per-machine and per-dataset.** The module doc for `mailwoman/geocode-stream` records a
   different sweep — an NPPES run against a single 4 GB WOF database that peaked at 2 workers and
   degraded from there. Same shape, different peak. Re-run step 4 when the data root or the box changes.
-- **This is CPU inference.** The browser runtime (`@mailwoman/neural-web`) has a WebGPU path; the Node
-  runtime does not, and no amount of pool tuning substitutes for that. See
+- **This is CPU inference.** The browser runtime (`@mailwoman/neural/web-onnx-runner`) has a WebGPU
+  path; the Node runtime does not, and no amount of pool tuning substitutes for that. See
   [Parse in the browser](../tutorials/parse-in-the-browser.mdx).
 - **Batching inside one session was measured and does not pay.** Re-exported so the graph could accept
   a batch at all, throughput peaked at 1.12× for a batch of 4 and went backwards past 8 — 0.62× at 64.

@@ -74,11 +74,10 @@ PASS (1/1 checks)
 ```
 
 The paths in every transcript on this page are the data root it was verified against; yours read
-differently. The file lands at `<data-root>/wof/candidate.db` and the three drop-ins find it there on
-their own — the `export` line the pull prints is for `mailwoman geocode` and `mailwoman serve`, which
-resolve the candidate gazetteer only from `$MAILWOMAN_CANDIDATE_DB` or an explicit flag. The drop-ins
-also accept `--candidate-db <path>` if your copy lives somewhere else. Exporting the variable anyway
-costs nothing and makes every entry point agree.
+differently. The file lands at `<data-root>/wof/candidate.db` and every entry point finds it there on
+its own — the drop-ins, `mailwoman geocode` and `mailwoman serve` alike. The `export` line the pull
+prints is a leftover from `8.6.0`, when only the drop-ins had that fallback; following it changes
+nothing. Pass `--candidate-db <path>` if your copy lives somewhere else.
 
 Re-running the pull is safe: with the file already on disk it reports `already present … skipped` and
 downloads nothing, so this is a line you can leave in a provisioning script.

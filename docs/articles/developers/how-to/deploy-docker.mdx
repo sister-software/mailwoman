@@ -55,9 +55,13 @@ tag rather than assuming `:latest` tracks the current package line.
 ```bash
 docker run --rm -p 3000:3000 \
   -v /path/to/mailwoman-data:/data:ro \
-  -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
   ghcr.io/sister-software/mailwoman:latest
 ```
+
+The mount is the whole configuration. The image sets `$MAILWOMAN_DATA_ROOT=/data`, and since `8.7.0`
+the resolver falls back to `<data root>/wof/candidate.db`, so a gazetteer at that path inside the
+volume is picked up with no `-e` flag. Earlier versions of this page passed
+`-e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db`; that is now redundant.
 
 `:ro` is correct for both resolver backends: every runtime lookup opens SQLite read-only, and the only
 writable open is an explicit FTS index build, which no serve path performs.
@@ -65,7 +69,9 @@ writable open is an explicit FTS index build, which no serve path performs.
 Two mount details decide whether this works on the first try.
 
 - **A symlinked `wof/candidate.db` dangles inside the container.** Host-side symlinks point at host
-  paths. Set `MAILWOMAN_CANDIDATE_DB` to the real filename inside the mount.
+  paths, and discovery follows the link, so a dangling one reads as absent — the container boots with
+  geocoding off rather than reporting a broken path. Mount the real file, or point
+  `-e MAILWOMAN_CANDIDATE_DB=` at its real filename inside the mount.
 - **Per-state rooftop shards are WAL-mode.** Their `-wal` and `-shm` siblings have to be in the same
   mount. A missing sidecar drops that address to a coarser resolution tier rather than failing the
   request, which makes it a quiet failure worth checking for.
@@ -90,7 +96,6 @@ The same image ships the three compatible servers. Override the command:
 ```bash
 # Nominatim-compatible — /search /reverse /status, port 8080
 docker run --rm -p 8080:8080 -v /path/to/data:/data:ro \
-  -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
   ghcr.io/sister-software/mailwoman:latest \
   node node_modules/@mailwoman/nominatim/out/cli.js serve
 ```
@@ -134,7 +139,7 @@ three routes, everything expensive built once at module scope. It was run outsid
 real gazetteer:
 
 ```bash
-PORT=13783 MAILWOMAN_CANDIDATE_DB=/tmp/mw-fresh-demo/wof/candidate.db node mailwoman-server.mjs
+PORT=13783 MAILWOMAN_DATA_ROOT=/tmp/mw-fresh-demo node mailwoman-server.mjs
 curl -s "http://127.0.0.1:13783/health"
 curl -s "http://127.0.0.1:13783/geocode?address=1600+Pennsylvania+Ave+NW,+Washington,+DC+20500"
 ```
@@ -145,39 +150,48 @@ listening on http://0.0.0.0:13783 (geocoder: ready)
 {"lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","locality":"Washington"}
 ```
 
-One line in it is why a first run with no volume works at all:
+Note what is not in that command: a candidate-database path. `/tmp/mw-fresh-demo` is a data root
+holding one file, `wof/candidate.db`, which is the shape of the mounted volume above. One line in the
+server is why that is enough — and why the same server also boots when the volume is missing:
 
 ```js
-// Gate on the gazetteer being THERE, not on the variable being set.
+// Gate on the gazetteer being THERE, not on anything being configured.
 const candidateDB = resolveCandidateDBPath()
 ```
 
-The Dockerfile bakes `MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db` as a default, so a reader who mounts
-a volume needs no `-e` flag — which also means the variable is set on **every** run, volume or not. A
-server that checked it for truthiness would open a file that does not exist and die at import with
-`SQLITE_ERROR: unable to open database file`, before binding a port. `resolveCandidateDBPath` from
-`mailwoman/resolver-backend` reads the variable and returns nothing unless the file is on disk; the
+`resolveCandidateDBPath` from `mailwoman/resolver-backend` tries an explicit path, then
+`$MAILWOMAN_CANDIDATE_DB`, then `<data root>/wof/candidate.db`, and returns nothing unless one of them
+is on disk. The last position is what made the `-e` flag unnecessary. The existence check is what keeps
+a no-volume run alive: a server that took a configured path on trust would open a file that is not
+there and die at import with `SQLITE_ERROR: unable to open database file`, before binding a port. The
 published image's own entrypoint uses the same guard.
 
-That is verifiable without Docker — set the variable to a path that does not exist, which is exactly the
-container's first-run state, and run it under plain node:
+That is verifiable without Docker — point the data root at a directory with no gazetteer in it, which
+is exactly the container's first-run state, and run it under plain node:
 
 ```bash
-PORT=13781 MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db node mailwoman-server.mjs
-curl -s "http://127.0.0.1:13781/health"
-curl -s "http://127.0.0.1:13781/geocode?address=1600+Pennsylvania+Ave+NW"
-curl -s -o /dev/null -w 'parse status %{http_code}\n' "http://127.0.0.1:13781/parse?address=1600+Pennsylvania+Ave+NW,+Washington+DC"
+PORT=13782 MAILWOMAN_DATA_ROOT=/tmp/mw-verify-trial node mailwoman-server.mjs
+curl -s "http://127.0.0.1:13782/health"
+curl -s "http://127.0.0.1:13782/geocode?address=1600+Pennsylvania+Ave+NW"
+curl -s -o /dev/null -w 'parse status %{http_code}\n' "http://127.0.0.1:13782/parse?address=1600+Pennsylvania+Ave+NW,+Washington+DC"
 ```
 
 ```
-listening on http://0.0.0.0:13781 (geocoder: off)
+listening on http://0.0.0.0:13782 (geocoder: off)
 {"ok":true,"geocoder":false}
-{"error":"no gazetteer found at $MAILWOMAN_CANDIDATE_DB"}
+{"error":"no gazetteer found — mount one at <data-root>/wof/candidate.db"}
 parse status 200
 ```
 
 The process is alive, parsing answers 200, and geocoding reports 503. That is the "parse works with no
 volume" claim from step 1, demonstrated rather than assumed.
+
+One trap survives the change, and it is worth knowing because it is the opposite of what the fallback
+suggests. A `$MAILWOMAN_CANDIDATE_DB` that names a file which is not there does **not** fall through to
+the convention path — discovery stops at the first position that is set and reports nothing found. So a
+stale `-e` flag turns a correctly mounted volume into a container with geocoding off. Measured with the
+same server on `8.7.0`: the variable set to `/data/wof/candidate.db` with no volume gives the transcript
+above, and it gives it even when `/tmp/mw-fresh-demo/wof/candidate.db` exists.
 
 Build it with the two example files side by side, saved under the names the docs site serves them as:
 
@@ -203,7 +217,6 @@ same signal:
 ```bash
 docker run -d --name mw -p 3000:3000 \
   -v /path/to/mailwoman-data:/data:ro \
-  -e MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db \
   ghcr.io/sister-software/mailwoman:latest
 
 docker inspect --format '{{.State.Health.Status}}' mw

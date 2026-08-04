@@ -254,7 +254,6 @@ database it produces is over 5 GB before the query-time one is derived from it.
 
 ```bash
 npx mailwoman data pull candidate
-export MAILWOMAN_CANDIDATE_DB="$MAILWOMAN_DATA_ROOT/wof/candidate.db"
 ```
 
 ```
@@ -280,7 +279,7 @@ npx mailwoman doctor
 ✓ Node runtime: node v26.2.0 (engines: >=24.18.0)
 ✓ ONNX runtime: onnxruntime-node loadable
 ✓ Data root: /tmp/mw-us-build ($MAILWOMAN_DATA_ROOT) — exists, writable
-✓ Admin gazetteer: candidate.db · /tmp/mw-us-build/wof/candidate.db (1652.9 MB)
+✓ Admin gazetteer: candidate.db · /tmp/mw-us-build/wof/candidate.db (convention path)
 ✗ POI layer: /tmp/mw-us-build/poi/poi.db not found (optional)
     fix: mailwoman gazetteer build poi   (or: mailwoman data pull poi)
 
@@ -288,7 +287,9 @@ PASS — core checks ok (weights + runtime); parse is ready
 ```
 
 The POI layer is a separate artifact and geocoding does not need it, which is why `doctor` marks it
-optional and passes anyway.
+optional and passes anyway. `(convention path)` on the gazetteer line means it was found at
+`<data root>/wof/candidate.db` with nothing configured — which is why step 6 was one command and no
+`export`, and why the `export` line the pull printed can be ignored.
 
 Now run the other check, and read its verdict carefully:
 

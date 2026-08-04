@@ -142,10 +142,11 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { geocodeAddress } from "mailwoman/geocode-core"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 // Module scope: paid once per instance, reused by every warm invocation.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const lookup = new WOFCandidateTableLookup({ databasePath: process.env.MAILWOMAN_CANDIDATE_DB })
+const lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 
 export async function handler(event) {
@@ -164,22 +165,35 @@ Every runtime lookup opens its database with `readOnly: true`, the FTS admin bac
 (`resolver-wof-sqlite/lookup.ts`). A read-only mount is the correct shape for both backends, and the
 only writable open is an explicit FTS index build, which is not a serve path.
 
-Set `$MAILWOMAN_DATA_ROOT` to the mount point and `$MAILWOMAN_CANDIDATE_DB` to the file. The candidate
-gazetteer is resolved from the environment variable, not from a convention path, so exporting the root
-alone is not enough:
+Set `$MAILWOMAN_DATA_ROOT` to the mount point. If the gazetteer sits at `wof/candidate.db` underneath
+it, that is the whole configuration — the candidate database is resolved from the convention path when
+nothing overrides it:
 
 ```bash
 MAILWOMAN_DATA_ROOT=/mnt/mailwoman-data
-MAILWOMAN_CANDIDATE_DB=/mnt/mailwoman-data/wof/candidate.db
+```
+
+Set `$MAILWOMAN_CANDIDATE_DB` as well only when the file lives somewhere that convention does not
+reach:
+
+```bash
+MAILWOMAN_CANDIDATE_DB=/mnt/gazetteer/candidate-2026-07-07a.db
 ```
 
 Both are read on each call rather than cached at import, so setting them after the module graph loads
-still works.
+still works. That is why the snippet in step 4 calls `resolveCandidateDBPath()` rather than reading
+either variable itself: the helper applies the full flag-then-variable-then-convention search, it is
+what the CLI and the drop-in servers use, and it returns nothing rather than a path when the file is
+absent — so a cold instance with a broken mount fails at the resolver you can see instead of inside
+SQLite.
 
 Two mount details that bite. If `wof/candidate.db` is a symlink on the host, point
-`$MAILWOMAN_CANDIDATE_DB` at the real file — an absolute-path symlink dangles inside a container. And
-the per-state shards are WAL-mode: their `-wal` and `-shm` siblings have to be in the same mount, or
-that address falls back to a coarser tier rather than failing.
+`$MAILWOMAN_CANDIDATE_DB` at the real file — an absolute-path symlink dangles inside a container.
+Discovery uses `existsSync`, which follows the link, so a dangling one reads as absent: the convention
+path finds nothing, the instance silently falls back to the FTS backend, and with no WOF distribution
+mounted your geocode route answers 503 instead of failing at boot. And the per-state shards are
+WAL-mode: their `-wal` and `-shm` siblings have to be in the same mount, or that address falls back to
+a coarser tier rather than failing.
 
 ## Verify
 
@@ -223,7 +237,8 @@ The `onnxruntime` check is the one that catches a trim that went too far.
   serves one geocode at a time no matter how deep the request queue gets. Scale with instances.
   [Geocode a large file at volume](./batch-geocode-at-volume.mdx) measures this.
 - **There is no GPU path in Node.** WebGPU exists only in the browser runtime
-  (`@mailwoman/neural-web`); removing the CUDA provider above costs nothing because nothing loads it.
+  (`@mailwoman/neural/web-onnx-runner`); removing the CUDA provider above costs nothing because nothing
+  loads it.
 - **Cold start is about 1.1 s and the model load is 70% of it.** If your platform charges for
   initialization time, budget for it rather than trying to shrink it.
 

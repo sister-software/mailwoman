@@ -172,7 +172,9 @@ them. A package that resolves but ships no binaries fails loudly rather than fal
 cache — that is the metadata-only checkout trap, and silence there would look like a working install.
 
 The method is Node-only: it imports `onnxruntime-node` and `node:fs` dynamically. In a browser, use
-`loadNeuralClassifierFromURLs` from `@mailwoman/neural-web`.
+`loadNeuralClassifierFromURLs` from `@mailwoman/neural/web-loader`. Both runtimes are optional peer
+dependencies, so whichever side you are on, install it yourself: `onnxruntime-node` on a server,
+`onnxruntime-web` in a browser build.
 
 `intraOpNumThreads` defaults to 4, which is a cap rather than a core count. Measured over 120 parses
 on 2026-08-03: one thread costs 18.3 ms per parse, two cost 12.5 ms, four cost 9.2 ms, and all cores

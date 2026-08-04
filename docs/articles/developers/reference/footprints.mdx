@@ -45,6 +45,14 @@ container image, deleting the platform directories you do not run reclaims most 
 are under `node_modules/onnxruntime-node/bin/napi-v6/`. See [Deploy with
 Docker](../how-to/deploy-docker.mdx).
 
+**This shape changes at the next release, and only for one of the two rows above.** At `8.6.0` both
+ONNX runtimes are ordinary dependencies of `@mailwoman/neural`, which is why installing it drags 523 MB
+behind it. On the unreleased line they become _optional peer dependencies_, so a
+`@mailwoman/neural`-only install stops pulling a runtime at all and you choose one — `onnxruntime-node`
+on a server, `onnxruntime-web` in a browser build. The `mailwoman` row does not move: the CLI is an
+application and declares `onnxruntime-node` outright. Re-measure after the release rather than
+subtracting from these figures.
+
 Nothing else is close. The next largest dependency after the ONNX runtime is 7.7 MB.
 
 ## Published packages
@@ -52,37 +60,37 @@ Nothing else is close. The next largest dependency after the ONNX runtime is 7.7
 Unpacked tarball sizes from the registry. Reproduce any row with
 `npm view <package> dist.unpackedSize`.
 
-| Package                           | Unpacked | Files |
-| --------------------------------- | -------- | ----- |
-| `@mailwoman/neural-weights-en-us` | 73.8 MB  | 16    |
-| `@mailwoman/neural-weights-fr-fr` | 23.3 MB  | —     |
-| `@mailwoman/neural-weights-en-gb` | 12.4 MB  | —     |
-| `@mailwoman/core`                 | 8.55 MB  | 1778  |
-| `@mailwoman/neural-weights-en-nz` | 7.79 MB  | —     |
-| `mailwoman`                       | 4.99 MB  | 1136  |
-| `@mailwoman/neural-weights-de-de` | 2.17 MB  | —     |
-| `@mailwoman/registry`             | 1.59 MB  | —     |
-| `@mailwoman/neural`               | 1.25 MB  | —     |
-| `@mailwoman/resolver-wof-sqlite`  | 1.23 MB  | —     |
-| `@mailwoman/codex`                | 1.07 MB  | —     |
-| `@mailwoman/spatial`              | 381 kB   | —     |
-| `@mailwoman/resolver`             | 320 kB   | —     |
-| `@mailwoman/nominatim`            | 172 kB   | —     |
-| `@mailwoman/match`                | 171 kB   | —     |
-| `@mailwoman/neural-web`           | 144 kB   | —     |
-| `@mailwoman/photon`               | 144 kB   | —     |
-| `@mailwoman/mcp`                  | 115 kB   | —     |
-| `@mailwoman/api`                  | 111 kB   | —     |
-| `@mailwoman/neural-weights-it-it` | 110 kB   | —     |
-| `@mailwoman/neural-weights-es-es` | 107 kB   | —     |
-| `@mailwoman/resolver-wof-wasm`    | 93 kB    | —     |
-| `@mailwoman/libpostal`            | 77 kB    | —     |
-| `@mailwoman/record`               | 72 kB    | —     |
-| `@mailwoman/formatter`            | 63 kB    | —     |
-| `@mailwoman/annotations`          | 39 kB    | —     |
-| `@mailwoman/timezone-lookup`      | 30 kB    | —     |
-| `@mailwoman/address-id`           | 23 kB    | —     |
-| `@mailwoman/neural-weights-en-in` | 8.9 kB   | —     |
+| Package                              | Unpacked | Files |
+| ------------------------------------ | -------- | ----- |
+| `@mailwoman/neural-weights-en-us`    | 73.8 MB  | 16    |
+| `@mailwoman/neural-weights-fr-fr`    | 23.3 MB  | —     |
+| `@mailwoman/neural-weights-en-gb`    | 12.4 MB  | —     |
+| `@mailwoman/core`                    | 8.55 MB  | 1778  |
+| `@mailwoman/neural-weights-en-nz`    | 7.79 MB  | —     |
+| `mailwoman`                          | 4.99 MB  | 1136  |
+| `@mailwoman/neural-weights-de-de`    | 2.17 MB  | —     |
+| `@mailwoman/registry`                | 1.59 MB  | —     |
+| `@mailwoman/neural`                  | 1.25 MB  | —     |
+| `@mailwoman/resolver-wof-sqlite`     | 1.23 MB  | —     |
+| `@mailwoman/codex`                   | 1.07 MB  | —     |
+| `@mailwoman/spatial`                 | 381 kB   | —     |
+| `@mailwoman/resolver`                | 320 kB   | —     |
+| `@mailwoman/nominatim`               | 172 kB   | —     |
+| `@mailwoman/match`                   | 171 kB   | —     |
+| `@mailwoman/neural-web` (deprecated) | 144 kB   | —     |
+| `@mailwoman/photon`                  | 144 kB   | —     |
+| `@mailwoman/mcp`                     | 115 kB   | —     |
+| `@mailwoman/api`                     | 111 kB   | —     |
+| `@mailwoman/neural-weights-it-it`    | 110 kB   | —     |
+| `@mailwoman/neural-weights-es-es`    | 107 kB   | —     |
+| `@mailwoman/resolver-wof-wasm`       | 93 kB    | —     |
+| `@mailwoman/libpostal`               | 77 kB    | —     |
+| `@mailwoman/record`                  | 72 kB    | —     |
+| `@mailwoman/formatter`               | 63 kB    | —     |
+| `@mailwoman/annotations`             | 39 kB    | —     |
+| `@mailwoman/timezone-lookup`         | 30 kB    | —     |
+| `@mailwoman/address-id`              | 23 kB    | —     |
+| `@mailwoman/neural-weights-en-in`    | 8.9 kB   | —     |
 
 `@mailwoman/core` carries 1778 files because it ships reference data: libpostal dictionaries, Who's On
 First metadata, and Unicode locale tables. `mailwoman` carries 1136 for the same reason plus the

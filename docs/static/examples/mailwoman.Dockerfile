@@ -50,13 +50,15 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends libgomp1 \
 	&& rm -rf /var/lib/apt/lists/*
 
-# MAILWOMAN_CANDIDATE_DB is baked as a DEFAULT so a reader who mounts a volume needs no `-e` flag. It is
-# therefore set on every run, volume or not, which is why the entrypoint gates on the file existing
-# rather than on the variable being set — see the note in mailwoman-server.mjs. Point it at the real
-# file, not a symlink: an absolute-path symlink created on the host dangles inside the container.
+# MAILWOMAN_DATA_ROOT is the only gazetteer setting this image needs. Since mailwoman 8.7.0 the
+# resolver falls back to `<data-root>/wof/candidate.db`, so mounting a volume at /data is the whole
+# configuration and no `-e MAILWOMAN_CANDIDATE_DB=...` follows it. This image used to bake that variable
+# too; it is redundant now, and setting it is actively worse when it is wrong, because a variable that
+# names a missing file does NOT fall through to the convention path. Set it only for a gazetteer that
+# lives outside the data root — and point it at the real file, not a symlink: an absolute-path symlink
+# created on the host dangles inside the container, and a dangling link reads as absent.
 ENV NODE_ENV=production \
-	MAILWOMAN_DATA_ROOT=/data \
-	MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db
+	MAILWOMAN_DATA_ROOT=/data
 
 WORKDIR /app
 

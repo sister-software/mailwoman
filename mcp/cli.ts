@@ -122,15 +122,15 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 		// `isError` tool result carrying `error.message`, so the message an agent reads IS whatever is thrown
 		// here — which made the raw internal `resolveShards: at least one shard is required` the first thing a
 		// stranger saw from `mailwoman_parse` on a fresh install (measured 2026-08-03 against a standalone
-		// `npm install @mailwoman/mcp`). Same preflight as `photon`/`nominatim`/`mailwoman serve`, and
-		// `requiresExplicitEnv: true` because this CLI calls `resolveCandidateDBPath()` bare — no
-		// convention-path fallback, so `$MAILWOMAN_CANDIDATE_DB` has to be exported.
+		// `npm install @mailwoman/mcp`). Same preflight as `photon`/`nominatim`/`mailwoman serve`, and the same
+		// discovery: #1444 moved the `<data-root>/wof/candidate.db` convention fallback INTO
+		// `resolveCandidateDBPath`, so this bare call picks a pulled gazetteer up with nothing exported. The
+		// `MAILWOMAN_DATA_ROOT` in the client's `env` block is enough on its own.
 		if (!candidateDb && !wofPaths.length) {
 			throw new Error(
 				`${buildNoGazetteerMessage({
 					dataRoot: mailwomanDataRoot(),
 					docsPath: "/docs/developers/how-to/use-the-mcp-server",
-					requiresExplicitEnv: true,
 				})}\n\n  Needs it: ${CORE_BACKED_TOOLS}\n  Works without it: ${CORE_FREE_TOOLS}`
 			)
 		}

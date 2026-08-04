@@ -48,12 +48,17 @@ An explicit `--default-country` outranks all three.
 inconvenience. `12 Rue de Rivoli, 75001 Paris` resolving to Paris TX on FTS and Paris FR on candidate
 looks like a backend difference and is entirely the country filter:
 
-| arm                   | result                                |
-| --------------------- | ------------------------------------- |
-| FTS + `dc=US`         | 33.668553, −95.544350 — Paris **TX**  |
-| FTS + `dc=none`       | 48.856599, 2.342841 — Paris **FR**    |
-| candidate + `dc=US`   | 32.960001, −96.838499 — Dallas **TX** |
-| candidate + `dc=none` | 48.856599, 2.342841 — Paris **FR**    |
+| arm                   | result                                          |
+| --------------------- | ----------------------------------------------- |
+| FTS + `dc=US`         | 33.668553, −95.544350 — `Paris` **TX**          |
+| FTS + `dc=none`       | 48.856599, 2.342841 — `Paris` **FR**            |
+| candidate + `dc=US`   | 32.960001, −96.838499 — `Paris Township` **TX** |
+| candidate + `dc=none` | 48.856599, 2.342841 — `Paris` **FR**            |
+
+The names are the gazetteer's own `name` field, re-read 2026-08-04. The `dc=US` candidate row was
+first written up as "Dallas TX", which is where the coordinate lands but not what the row is called;
+the place `wof:404526387` is `Paris Township`. Worth the correction, because the whole point of the
+table is that both backends are matching the string `Paris` — a metro name in that cell hides it.
 
 **Any comparison between backends must pin `--country-scope` to `locale` or `none` across both
 arms**, or run the full 2×2. See

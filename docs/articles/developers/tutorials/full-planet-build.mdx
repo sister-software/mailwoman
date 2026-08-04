@@ -73,7 +73,6 @@ region and locality resolve — not that a street does.
 
 ```bash
 npx mailwoman data pull candidate
-export MAILWOMAN_CANDIDATE_DB="$MAILWOMAN_DATA_ROOT/wof/candidate.db"
 ```
 
 ```
@@ -84,9 +83,10 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-planet/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-Four minutes for 1.65 GB here. Take the download unless you have a reason not to, because the build behind
-it is the heaviest thing in this repository, and this page does not run it. What it involves, so you can
-price it:
+Four minutes for 1.65 GB here. The `export` line is a leftover the pull still prints; the file landed at
+`<data root>/wof/candidate.db` and is found there without it. Take the download unless you have a reason
+not to, because the build behind it is the heaviest thing in this repository, and this page does not run
+it. What it involves, so you can price it:
 
 ```bash
 # 1. Clone the Who's On First data repositories. 823 non-archived repos in the org

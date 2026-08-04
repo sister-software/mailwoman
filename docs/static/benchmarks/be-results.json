@@ -1,7 +1,7 @@
 {
 	"harness": "be-panel.mjs",
-	"ranAt": "2026-08-04T05:19:59.072Z",
-	"elapsedMs": 4273,
+	"ranAt": "2026-08-04T15:32:09.952Z",
+	"elapsedMs": 4221,
 	"panel": {
 		"rows": 30,
 		"bbox": {
@@ -14,7 +14,7 @@
 	},
 	"versions": {
 		"mailwoman": "8.7.0",
-		"model": "model-v401-base-step-060000-int8.onnx",
+		"model": "model.onnx",
 		"modelCard": "neural-weights-en-us@7.0.0",
 		"gazetteer": "candidate-global-1026.db"
 	},
@@ -37,7 +37,7 @@
 			"localityResolved": 24,
 			"weights": {
 				"locale": "en-US",
-				"model": "model-v401-base-step-060000-int8.onnx",
+				"model": "model.onnx",
 				"modelCard": "neural-weights-en-us@7.0.0",
 				"source": "package:@mailwoman/neural-weights-en-us"
 			},
@@ -63,7 +63,7 @@
 			"localityResolved": 24,
 			"weights": {
 				"locale": "fr-FR",
-				"model": "model-v401-base-step-060000-int8.onnx",
+				"model": "model.onnx",
 				"modelCard": "neural-weights-fr-fr@6.5.0",
 				"source": "package:@mailwoman/neural-weights-fr-fr+base"
 			},
@@ -91,7 +91,7 @@
 			"localityResolved": 30,
 			"weights": {
 				"locale": "en-US",
-				"model": "model-v401-base-step-060000-int8.onnx",
+				"model": "model.onnx",
 				"modelCard": "neural-weights-en-us@7.0.0",
 				"source": "package:@mailwoman/neural-weights-en-us"
 			},

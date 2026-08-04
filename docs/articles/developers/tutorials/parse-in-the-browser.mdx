@@ -1,6 +1,6 @@
 ---
 title: Parse in the browser
-description: Serve the model from your own origin, load it with @mailwoman/neural-web, and parse addresses in the tab with no server call — plus what the cold load costs and where the resolver stops.
+description: Serve the model from your own origin, load it with @mailwoman/neural/web-loader, and parse addresses in the tab with no server call — plus what the cold load costs and where the resolver stops.
 role: tutorial
 verified-with: mailwoman 8.7.0
 ---
@@ -8,8 +8,13 @@ verified-with: mailwoman 8.7.0
 # Parse in the browser
 
 The parser is a 39.4 MB ONNX graph and a SentencePiece tokenizer. Neither needs a server: a browser
-can hold both, and `onnxruntime-web` can run the graph. `@mailwoman/neural-web` is the runner that
-wires them together, and it produces the same `AddressTree` the Node runtime does.
+can hold both, and `onnxruntime-web` can run the graph. `@mailwoman/neural/web-loader` is what wires
+them together, and it produces the same `AddressTree` the Node runtime does.
+
+If you have seen `@mailwoman/neural-web` referenced before, that package is now a deprecated
+re-export shim. The browser runtime moved into `@mailwoman/neural` itself, as the `./web-loader` and
+`./web-onnx-runner` subpaths, and the shim re-exports both at their original identity so existing
+imports keep working. Everything on this page uses the new subpaths.
 
 [The demo](/demo) is the finished version of this — the same loader, the same model files, plus a
 gazetteer and a map. By the end of this page you'll have the parse half of it in your own page: eight
@@ -32,7 +37,7 @@ The third item decides how this page is structured, so read it before you copy a
   `Access-Control-Allow-Origin` header back and the fetch fails. Host your own copies. Step 1 is
   where they come from, and they arrive in an npm package you already have if you have installed the
   parser at all.
-- **The resolver is not part of this.** `@mailwoman/neural-web` turns text into components. Turning
+- **The resolver is not part of this.** The browser runtime turns text into components. Turning
   those components into coordinates needs a gazetteer, and the browser story there is narrower than
   the parse story — [Resolving in the browser](#resolving-in-the-browser) says exactly how narrow
   and what the next step is.
@@ -43,8 +48,14 @@ The browser assets are the same files `@mailwoman/neural` reads on the server. T
 weights package:
 
 ```bash
-npm install @mailwoman/neural-web @mailwoman/neural-weights-en-us
+npm install @mailwoman/neural @mailwoman/neural-weights-en-us onnxruntime-web
 ```
+
+`onnxruntime-web` is named explicitly because `@mailwoman/neural` declares both ONNX runtimes as
+**optional peer dependencies**, so neither arrives on its own. That is the point: a browser app
+installs `onnxruntime-web`, a Node service installs `onnxruntime-node`, and neither pays for the
+other's binaries. It also means the runtime is a dependency you can see and pin in your own manifest
+rather than one that appears transitively.
 
 Eight files go into whatever directory your bundler serves. Four of them are lexicons the loader
 looks for beside `model.onnx` by name, so keep them together:
@@ -86,7 +97,7 @@ One call. It fetches the files in parallel, builds the tokenizer, creates the in
 runs a warm-up pass before it returns.
 
 ```ts
-import { loadNeuralClassifierFromURLs } from "@mailwoman/neural-web"
+import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web-loader"
 
 const { classifier, diagnostics, labels } = await loadNeuralClassifierFromURLs({
 	modelURL: "/mailwoman/model.onnx",
@@ -252,14 +263,14 @@ you built for your own coverage, or send the parsed components to a server that 
 
 Steps 2 and 3 ran under Node.js 26.2.0 rather than in a browser, against the same `onnxruntime-web`
 build a browser loads and through the same `loadNeuralClassifierFromURLs` entry point. It is one code
-path, not two: `@mailwoman/neural-web`'s own test suite exercises the WASM execution provider in Node
-for the same reason. The parse output, the label count, the byte counts and the timings are therefore
+path, not two: the browser runtime's own test suite exercises the WASM execution provider in Node for
+the same reason. The parse output, the label count, the byte counts and the timings are therefore
 measured. Step 1's file set was copied out of this repository's own weights workspace, which is what
 the npm package publishes, and served over HTTP from a local directory for the step-2 run.
 
 Three claims are not measured here, and each is marked where it appears. WebGPU cannot be exercised
 without a browser, so the provider order and the fallback come from
-[`web-onnx-runner.ts`](https://github.com/sister-software/mailwoman/blob/main/neural-web/web-onnx-runner.ts).
+[`web-onnx-runner.ts`](https://github.com/sister-software/mailwoman/blob/main/neural/web-onnx-runner.ts).
 Which `.wasm` build a browser takes is a browser decision, and the sizes above are the files on disk.
 And the cross-origin behavior of the demo's asset host was checked with a request carrying an `Origin`
 header rather than from a page.

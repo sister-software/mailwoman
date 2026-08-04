@@ -57,21 +57,28 @@ review, say — wire the calibrator shipped in the weights package first (`creat
 
 ## Geocode
 
-Geocoding needs a gazetteer database on disk. The standard setup is the candidate-table backend, not
-the bare FTS admin default:
+Geocoding needs a gazetteer database on disk. Downloading it is the whole setup:
 
 ```bash
 npx mailwoman data pull candidate
-export MAILWOMAN_CANDIDATE_DB=<path data pull printed>
 npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 ```
 
-Set `$MAILWOMAN_CANDIDATE_DB` even if an admin WOF database is already configured. The FTS admin
-resolver ranks matches by bm25/exact-match tiering, so a bare non-US place name can resolve to its
-US homonym — a measured failure mode, not a hypothetical one. The candidate backend ranks
-population-first and is a strict improvement on the US eval too (locality accuracy 96.8% → 97.3%,
-coordinate p99 error 692 km → 28 km) while adding global coverage. Once the env var is set, both
-`geocode` and `parse --resolve` pick it up automatically — no other flag needed.
+The file lands at `<data-root>/wof/candidate.db`, and since `8.7.0` every entry point looks there —
+`geocode`, `parse --resolve`, `serve`, `registry`, the MCP server and the drop-in servers alike. The
+`export MAILWOMAN_CANDIDATE_DB=...` line the pull prints is a leftover from when that was required;
+ignore it. Set the variable only for a gazetteer outside the data root, or to the literal `none` to
+pin the older FTS admin backend.
+
+Do not pin `none` casually. The FTS admin resolver ranks matches by bm25/exact-match tiering, so a
+bare non-US place name can resolve to its US homonym — a measured failure mode, not a hypothetical
+one. The candidate backend ranks population-first, and on 150 committed OpenAddresses rows per locale
+it is ahead on both tier-1 locales: US within-25 km 149/150 → 150/150 with worst case 692 km → 20 km,
+FR within-25 km 126/150 → 145/150 with p90 144.2 km → 2.4 km.
+
+One trap worth knowing: a `$MAILWOMAN_CANDIDATE_DB` naming a file that is not there does **not** fall
+back to the convention path. It resolves to nothing and you land on the FTS backend. Unset it rather
+than fixing it.
 
 `npx mailwoman data status` reports what's already on disk; add `--check-remote` to compare against
 the live remote size instead of trusting the local file.

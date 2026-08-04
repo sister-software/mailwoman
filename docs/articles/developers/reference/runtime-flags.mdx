@@ -27,33 +27,42 @@ option on `createRuntimePipeline`, `geocodeAddress`, or the resolver, and the ta
 
 Every variable below is read by shipped runtime code. Each has no default unless the table says so.
 
-| Variable                         | Default            | Effect                                                                          | Set it when                                                                                |
-| -------------------------------- | ------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `MAILWOMAN_DATA_ROOT`            | a built-in path    | The root directory for every downloaded artifact: gazetteers, shards, POI layer | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
-| `MAILWOMAN_CANDIDATE_DB`         | unset              | Path to `candidate.db`. When set, the resolver uses the candidate backend       | Always, once you have run `mailwoman data pull candidate`                                  |
-| `MAILWOMAN_WOF_DB`               | unset              | Path to a full Who's On First SQLite distribution, used by the search backend   | You resolve against a full distribution rather than `candidate.db`                         |
-| `MAILWOMAN_WOF_ADMIN_DB`         | unset              | Path to the full WOF distribution for `mailwoman reverse`                       | You reverse geocode                                                                        |
-| `MAILWOMAN_WOF_POLYGONS_DB`      | unset              | Path to the polygon sidecar. Without it every reverse result is approximate     | You need polygon-exact containment                                                         |
-| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset              | Path to the postal-city alias database, which adds an alias-aware scoring pass  | You geocode United States mailing addresses at volume                                      |
-| `MAILWOMAN_FST_BIN`              | unset              | Path to the gazetteer index `mailwoman autocomplete` reads                      | You run autocomplete against an index outside a weights package                            |
-| `MAILWOMAN_MODEL_CARD`           | the package's card | Path to a model card, read by the server's `/health` report                     | You serve a model whose card is not beside it                                              |
-| `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer | Directory holding the coarse country placer                                     | You replace the bundled placer                                                             |
-| `MAILWOMAN_BATCH_MAX`            | `1000`             | The row cap on `POST /v1/batch` under `mailwoman serve`                         | You batch more than 1000 rows per request                                                  |
+| Variable                         | Default                        | Effect                                                                                      | Set it when                                                                                |
+| -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `MAILWOMAN_DATA_ROOT`            | a built-in path                | The root directory for every downloaded artifact: gazetteers, shards, POI layer             | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
+| `MAILWOMAN_CANDIDATE_DB`         | `<data root>/wof/candidate.db` | Path to `candidate.db`, overriding the convention path. `none` pins the FTS backend instead | Your copy lives outside the data root, or you want the FTS backend                         |
+| `MAILWOMAN_WOF_DB`               | unset                          | Path to a full Who's On First SQLite distribution, used by the search backend               | You resolve against a full distribution rather than `candidate.db`                         |
+| `MAILWOMAN_WOF_ADMIN_DB`         | unset                          | Path to the full WOF distribution for `mailwoman reverse`                                   | You reverse geocode                                                                        |
+| `MAILWOMAN_WOF_POLYGONS_DB`      | unset                          | Path to the polygon sidecar. Without it every reverse result is approximate                 | You need polygon-exact containment                                                         |
+| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset                          | Path to the postal-city alias database, which adds an alias-aware scoring pass              | You geocode United States mailing addresses at volume                                      |
+| `MAILWOMAN_FST_BIN`              | unset                          | Path to the gazetteer index `mailwoman autocomplete` reads                                  | You run autocomplete against an index outside a weights package                            |
+| `MAILWOMAN_MODEL_CARD`           | the package's card             | Path to a model card, read by the server's `/health` report                                 | You serve a model whose card is not beside it                                              |
+| `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer             | Directory holding the coarse country placer                                                 | You replace the bundled placer                                                             |
+| `MAILWOMAN_BATCH_MAX`            | `1000`                         | The row cap on `POST /v1/batch` under `mailwoman serve`                                     | You batch more than 1000 rows per request                                                  |
 
-`MAILWOMAN_CANDIDATE_DB` is the one most installs need, and whether you must set it depends on which
-surface you run. `mailwoman parse`, `mailwoman geocode` and `mailwoman serve` resolve the candidate
-database only through this variable or an explicit flag, so downloading the file leaves it unused
-until you export the path. The `nominatim` and `photon` servers additionally fall back to the
-convention path `<data root>/wof/candidate.db`, so for those two a bare
-`mailwoman data pull candidate` is the whole setup. `data pull` prints the export line on success
-either way.
+`MAILWOMAN_CANDIDATE_DB` is the variable most installs no longer need to set. Since `8.7.0` the
+candidate gazetteer is the default backend, and it is discovered rather than configured. Every
+surface that resolves places — `parse`, `geocode`, `serve`, `poi`, `registry`, the MCP server, and
+the `nominatim` and `photon` drop-ins — reads an explicit `--candidate-db`, then this variable, then
+the convention path `<data root>/wof/candidate.db`, taking the first that exists on disk.
+`mailwoman data pull candidate` writes that path, so a bare pull is the whole setup. (The `libpostal`
+drop-in never appears in that list: it parses and expands, and resolves nothing.)
+
+Two things the variable is still for. Point it at a copy that lives outside the data root, or set it
+to the literal `none` (equivalently `--candidate-db none`) to pin the older FTS backend over a full
+Who's On First distribution. `data pull` still prints an `export` line on success; it is a leftover
+from when the export was required, and following it changes nothing unless your file is elsewhere.
+
+The change has a real edge: a machine that had `candidate.db` sitting at the convention path while
+running on the FTS backend switches backends on upgrade, with no configuration edited. `none` is the
+way back.
 
 Setting both `MAILWOMAN_CANDIDATE_DB` and `MAILWOMAN_WOF_DB` is not an error, and the candidate
-backend wins. With only the candidate variable set, `mailwoman parse --resolve` and
-`mailwoman geocode` need no other gazetteer path. `mailwoman registry run` is the exception: it
-checks for `MAILWOMAN_WOF_DB` or `--resolve-db` at startup and refuses to run without one, then
-ignores the path it insisted on and resolves against the candidate database anyway. Give it any valid
-path to get past the check.
+backend wins. With a reachable `candidate.db`, `mailwoman parse --resolve` and `mailwoman geocode`
+need no gazetteer path at all. `mailwoman registry run` is the exception: it checks for
+`MAILWOMAN_WOF_DB` or `--resolve-db` at startup and refuses to run without one, then ignores the path
+it insisted on and resolves against the candidate database anyway. Give it any valid path to get past
+the check.
 
 The batch cap has two values, and both are correct. `@mailwoman/api` used as a library defaults to
 500; `mailwoman serve` passes `MAILWOMAN_BATCH_MAX`, which defaults to 1000.
@@ -64,10 +73,15 @@ A command-line flag beats an environment variable, which beats the built-in defa
 are on [CLI](./cli.mdx); each flag's description names the variable it falls back to.
 
 ```
---resolve-db <path>   >   $MAILWOMAN_WOF_DB   >   error, with the fix printed
---candidate-db <path> >   $MAILWOMAN_CANDIDATE_DB > the search backend instead
---data-root <path>    >   $MAILWOMAN_DATA_ROOT >  a built-in path
+--resolve-db <path>   >   $MAILWOMAN_WOF_DB        >  error, with the fix printed
+--candidate-db <path> >   $MAILWOMAN_CANDIDATE_DB  >  <data root>/wof/candidate.db  >  the search backend
+--data-root <path>    >   $MAILWOMAN_DATA_ROOT     >  a built-in path
 ```
+
+The candidate row has one wrinkle the other two do not. Each position is used only if the file it
+names is on disk, so a stale `$MAILWOMAN_CANDIDATE_DB` pointing at a deleted file does not fall
+through to the convention path — it resolves to nothing and you land on the search backend. And
+`none` at either of the first two positions is a pin, not a path: it stops the search there.
 
 A `.env` file in the working directory is read once at startup and the live environment layers on top
 of it, so an exported variable beats a `.env` entry.
@@ -112,13 +126,13 @@ only way to leave the mechanism off.
 
 ## Errors
 
-| Condition                                                               | Message or symptom                                            | Next step                                                                         |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| No gazetteer path set on a resolving command                            | A startup error naming `$MAILWOMAN_WOF_DB` and `--resolve-db` | Set `MAILWOMAN_CANDIDATE_DB`, which satisfies every command except `registry run` |
-| `candidate.db` downloaded but `parse` or `geocode` still resolves wrong | The variable is unset, so those commands never read the file  | `export MAILWOMAN_CANDIDATE_DB=<path>` and re-run                                 |
-| A reverse geocode reports approximate containment                       | `MAILWOMAN_WOF_POLYGONS_DB` is unset                          | Point it at the polygon sidecar                                                   |
-| A batch request answers `413 batch too large`                           | The request exceeded `MAILWOMAN_BATCH_MAX`                    | Raise the variable, or chunk the request                                          |
-| A variable you set has no effect                                        | It is outside this page's boundary                            | Check the table above. Repository-only variables do nothing installed             |
+| Condition                                                             | Message or symptom                                            | Next step                                                                                       |
+| --------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| No gazetteer reachable on a resolving command                         | A startup error naming `$MAILWOMAN_WOF_DB` and `--resolve-db` | Run `mailwoman data pull candidate`. `registry run` also wants a `--resolve-db` it then ignores |
+| `candidate.db` downloaded but a command still uses the search backend | `$MAILWOMAN_CANDIDATE_DB` is set to a path that is not there  | Unset it. A variable naming a missing file does not fall through to the convention path         |
+| A reverse geocode reports approximate containment                     | `MAILWOMAN_WOF_POLYGONS_DB` is unset                          | Point it at the polygon sidecar                                                                 |
+| A batch request answers `413 batch too large`                         | The request exceeded `MAILWOMAN_BATCH_MAX`                    | Raise the variable, or chunk the request                                                        |
+| A variable you set has no effect                                      | It is outside this page's boundary                            | Check the table above. Repository-only variables do nothing installed                           |
 
 `mailwoman doctor` reports which of these are resolved, and prints the one command that fixes each
 gap.

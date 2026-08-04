@@ -71,9 +71,14 @@ disagreement can be attributed rather than only observed. The French panel addit
 BAN release, on the committed sample file; the Belgian panel records no data release, because there
 is no Belgian register for it to record one from.
 
-Ours ran against Mailwoman 8.7.0, `model-v401-base-step-060000-int8.onnx` and
+Ours ran against Mailwoman 8.7.0, `model.onnx` from `neural-weights-en-us@7.0.0`, and
 `candidate-global-1026.db`. Note that npm currently serves 8.6.0, so an unpinned install is a version
 behind these pages.
+
+Earlier versions of these pages named that model file `model-v401-base-step-060000-int8.onnx`. Same
+bytes — md5 `c968c24ad1a3e59658ff1d92c5720575` either way — but that name only ever existed on the
+machine that trained it, reaching the result files through a development symlink. `model.onnx` is what
+the weights package publishes and therefore what your own re-run will stamp.
 
 ## What is not here
 

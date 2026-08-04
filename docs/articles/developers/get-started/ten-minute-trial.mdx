@@ -52,7 +52,7 @@ mailwoman doctor
 ✗ Data root: /tmp/mw-trial/mailwoman-data ($MAILWOMAN_DATA_ROOT) does not exist (optional)
     fix: mkdir -p /tmp/mw-trial/mailwoman-data   (or set $MAILWOMAN_DATA_ROOT to an existing dir)
 ✗ Admin gazetteer: no candidate.db or WOF shard found (probed 5 paths) (optional)
-    fix: mailwoman data pull candidate   (then: export MAILWOMAN_CANDIDATE_DB=<data-root>/wof/candidate.db)
+    fix: mailwoman data pull candidate
 ✗ POI layer: /tmp/mw-trial/mailwoman-data/poi/poi.db not found (optional)
     fix: mailwoman gazetteer build poi   (or: mailwoman data pull poi)
 ✗ Locale overlay (fr-fr): @mailwoman/neural-weights-fr-fr not installed (optional — only needed for fr-fr parsing) (optional)
@@ -100,9 +100,8 @@ French is one more package (`@mailwoman/neural-weights-fr-fr`) and no other chan
 **Geocoding needs the resolver database.** Turning `New York` into a
 latitude/longitude means looking it up, and the gazetteer that answers is a file you download once
 and keep. At the `2026-07-07a` build the candidate gazetteer, `candidate.db`, is 1.65 GB. Your `doctor`
-output prints the exact command and the environment variable to set once it lands — those two lines
-are the whole procedure, and they are generated from the build the CLI you installed knows about, so
-prefer them over any command copied from a page. Run them next.
+output prints the exact command that fetches it — one line, and it is generated from the build the CLI
+you installed knows about, so prefer it over any command copied from a page. Run it next.
 
 Point-of-interest search ("coffee near Honolulu") is a third layer with its own database, also
 optional, also reported by `doctor`.
@@ -126,11 +125,17 @@ PASS (1/1 checks)
 ```
 
 Took about four minutes on this connection. The two `[DEBUG]` lines are the download client checking
-the remote file's size before it starts; harmless. Export the line the command printed, then geocode
-a US address:
+the remote file's size before it starts; harmless.
+
+Ignore the `export` line. The file landed at `<data-root>/wof/candidate.db`, and that path is where
+every entry point looks when nothing points it elsewhere, so the download is the whole setup. The
+line is a leftover from when the variable was required; setting it changes nothing here. What the
+variable is still for is on [Runtime flags](../reference/runtime-flags.mdx#environment-variables) —
+a copy that lives somewhere else, or `none` to pin the older backend.
+
+Geocode a US address:
 
 ```bash
-export MAILWOMAN_CANDIDATE_DB=/tmp/mw-trial/mailwoman-data/wof/candidate.db
 npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 ```
 
@@ -237,11 +242,13 @@ npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
 }
 ```
 
-Right country, right city. That is not automatic, and it is why this page has you set
-`$MAILWOMAN_CANDIDATE_DB` instead of leaving `geocode` on its own default. Pointed at a full admin
-database instead (a separate, locally-built file `data pull` does not publish — see
-[`resolver-backend.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/resolver-backend.ts)),
-the same input resolves to Paris, Texas:
+Right country, right city, and no flag asked for either. That is worth a paragraph, because it is
+recent: the file you downloaded is the default backend as of `8.7.0`, and before that it was
+opt-in behind the variable you were told to ignore above.
+
+You can still run the older path. `--candidate-db none` pins it, and it needs a full admin database —
+a separate, locally-built file `data pull` does not publish, so this is a comparison you read here
+rather than reproduce. Same input, same machine:
 
 ```
 {
@@ -252,18 +259,28 @@ the same input resolves to Paris, Texas:
 }
 ```
 
-Measured 2026-08-03, against this gazetteer's own population column: Paris, Texas carries 24,969;
-Paris, France carries 2,187,526 — about 88 times larger. The default admin backend ranks matches by
-full-text-search relevance, which does not read that column, so a same-named place wins or loses on
-relevance scoring alone. The candidate backend you pulled above ranks population-first instead, the
-same ranking the hosted demo uses, which is why it is the setup this page has you build.
+Paris, Texas. The tempting reading is that the older backend ranks worse, and it is wrong. What
+produced Texas is the **country filter**, not the ranking: `--locale` defaults to `en-US`, `en-US`
+implies `--default-country US`, and that filter is applied on the older backend and not on this one.
+Cross the two levers and the confound comes apart (measured 2026-08-04, this gazetteer, this model):
+
+| backend             | country filter US                      | no country filter |
+| ------------------- | -------------------------------------- | ----------------- |
+| candidate.db        | `Paris Township`, TX (32.960, −96.838) | **Paris, France** |
+| full admin (`none`) | `Paris`, TX (33.669, −95.544)          | **Paris, France** |
+
+Both backends are right when nothing filters them to the United States, and both are wrong when
+something does. So the claim this page makes is the narrow one: `candidate.db` is the default,
+and the default does not apply a country filter, which is why a French address geocoded correctly
+without you configuring anything. `--country-scope locale|none` (on `parse` and `geocode`) is the
+switch that holds the filter fixed if you ever need to compare the two backends yourself.
 
 ## What you have now
 
 A parser and a geocoder, both running against your own disk. `mailwoman parse` (or
 `createRuntimePipeline`) gives you tagged components; `mailwoman geocode` gives you a coordinate, once
-`candidate.db` is on disk and `$MAILWOMAN_CANDIDATE_DB` points at it. You also have the command that
-will answer the "which half do I have" question again after any change to your install.
+`candidate.db` is on disk at `<data-root>/wof/candidate.db`. You also have the command that will
+answer the "which half do I have" question again after any change to your install.
 
 ## Next
 

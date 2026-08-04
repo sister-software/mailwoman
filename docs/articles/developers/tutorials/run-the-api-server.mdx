@@ -18,9 +18,9 @@ Read the memory line before you start — it is the one that bites.
 
 - **The first-parse install**: `mailwoman`, `@mailwoman/neural`, `@mailwoman/neural-weights-en-us`, on
   Node.js 24.18.0 or later.
-- **`candidate.db` and `$MAILWOMAN_CANDIDATE_DB`**, if you want the geocode routes to return
+- **`candidate.db` at `<data root>/wof/candidate.db`**, if you want the geocode routes to return
   coordinates. Parse works without it.
-  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has both commands.
+  [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command.
 - **`jq`**, for every `curl` below. Drop the pipe if you'd rather read the raw response.
 - **Roughly 450 MB of memory per worker.** `--cpus` defaults to every core the box reports, and each
   worker is a separate process that loads its own copy of the model and opens its own database handles.
@@ -38,7 +38,6 @@ ceiling is database and memory bandwidth, not core count. The reasoning is writt
 ```bash
 # Replace <YOUR_DATA_ROOT> with the data root `mailwoman doctor` reports for your install.
 export MAILWOMAN_DATA_ROOT=<YOUR_DATA_ROOT>
-export MAILWOMAN_CANDIDATE_DB=<YOUR_DATA_ROOT>/wof/candidate.db
 npx mailwoman serve --port 7788 --cpus 2
 ```
 
@@ -55,7 +54,8 @@ Workers:
 
 The two lines above the frame are the resolver naming the backend that answered, once per worker, on
 standard error — the path in them is the data root this page was verified against, so yours reads
-differently.
+differently. Note that only the data root was set: `serve` looks for `wof/candidate.db` underneath it,
+so the backend it names is the one it found rather than one you selected.
 
 Measured on this machine, `/health` answered 3.8 s after launch and the first parse request 4.0 s after
 launch, with the model file already in the page cache from an earlier run; a first-ever start pays the

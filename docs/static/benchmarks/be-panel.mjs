@@ -58,6 +58,7 @@ import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -159,7 +160,7 @@ function inBox(box, lat, lon) {
  */
 function weightsStamp(locale) {
 	const resolved = resolveWeights({ locale })
-	const card = JSON.parse(readFileSync(resolved.modelCardPath, "utf8"))
+	const card = parseJSONStrict(readFileSync(resolved.modelCardPath, "utf8"))
 
 	return {
 		locale,
@@ -311,7 +312,7 @@ async function runArm(arm, panel) {
 	}
 }
 
-const panel = JSON.parse(readFileSync(flags.panel, "utf8"))
+const panel = parseJSONStrict(readFileSync(flags.panel, "utf8"))
 const startedAt = Date.now()
 const results = {}
 

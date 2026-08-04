@@ -85,8 +85,9 @@ Five sections, and each one exists because it is a place agents go wrong:
 - **Parse.** The CLI form and the library form, the tree shape, and a pointer to the `ComponentTag` type
   in `@mailwoman/core/types` for the tag vocabulary. It points at the shipped type rather than at a
   documentation URL, because the skill installs into projects that may be offline.
-- **Geocode.** `mailwoman data pull candidate` plus the `$MAILWOMAN_CANDIDATE_DB` export as the standard
-  setup, and the measured difference the candidate backend makes against the default.
+- **Geocode.** `mailwoman data pull candidate` as the whole setup — the file lands where every entry
+  point looks — plus the measured case for leaving that default alone, and the one trap in the
+  override.
 - **Filing a bug.** The five things a report needs, covered on
   [Report a parsing bug](./report-a-parsing-bug.mdx).
 - **Installing this skill in a new project.** So an agent that has read it once can set up the next

@@ -51,6 +51,7 @@ import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { BANShardProvider } from "@mailwoman/ban/sdk"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { median, mulberry32, percentile } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -233,7 +234,7 @@ function resample() {
 function versionStamp() {
 	const require = createRequire(import.meta.url)
 	const resolved = resolveWeights({ locale: LOCALE })
-	const card = JSON.parse(readFileSync(resolved.modelCardPath, "utf8"))
+	const card = parseJSONStrict(readFileSync(resolved.modelCardPath, "utf8"))
 
 	return {
 		mailwoman: require("mailwoman/package.json").version,
@@ -281,7 +282,7 @@ function summarize(records) {
 //#endregion
 
 async function run() {
-	const panel = JSON.parse(readFileSync(flags.sample, "utf8"))
+	const panel = parseJSONStrict(readFileSync(flags.sample, "utf8"))
 	const rows = flags.limit ? panel.rows.slice(0, Number(flags.limit)) : panel.rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
