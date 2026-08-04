@@ -192,9 +192,29 @@ export function serializePlacetypeCensus(header: PlacetypeCensusHeader, nodes: r
 }
 
 /**
+ * Minimal subset of {@link PlacetypeCensusResolver} a consumer module reads — structural typing so callers depend on
+ * the shape, not the class (the same `…Like` convention as `PairIndexLike` / `QueryShapeLike`). The observability rung
+ * (`placetype-pair-prior.ts`'s census probe) needs exactly these two: presence (`probe`) and magnitude (`lift`).
+ *
+ * `share` is deliberately NOT on this interface. Within-parent share was measured at ~100% for the dominant class
+ * everywhere, so a share-proportional consumer reads a constant — `lift` (share ÷ the country base rate) is the only
+ * one of the two that varies with the parent, and naming just it keeps a future consumer from reaching for the flat
+ * one.
+ */
+export interface PlacetypeCensusLike {
+	probe(parent: string): PlacetypeCensusNode | null
+	lift(parent: string, tag: ComponentTag): number
+	/**
+	 * The census header's ISO country code, when the implementation carries a header. Optional for the same reason
+	 * `PairIndexLike.country` is: a hand-built test double may omit it.
+	 */
+	readonly country?: string
+}
+
+/**
  * Map-backed reader over PCN1 bytes. Pure JS, no Node imports — the browser runtime loads the same artifact.
  */
-export class PlacetypeCensusResolver {
+export class PlacetypeCensusResolver implements PlacetypeCensusLike {
 	readonly header: PlacetypeCensusHeader
 	readonly #nodes: Map<string, PlacetypeCensusNode>
 
@@ -257,6 +277,14 @@ export class PlacetypeCensusResolver {
 
 	get size(): number {
 		return this.#nodes.size
+	}
+
+	/**
+	 * Exposes the header's ISO country code so the resolver conforms to {@link PlacetypeCensusLike} — the country gate at
+	 * the load site reads it to refuse a census built for a different country than the locale being parsed.
+	 */
+	get country(): string {
+		return this.header.country
 	}
 
 	/**

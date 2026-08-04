@@ -258,6 +258,10 @@
 			"applied": false
 		},
 		{
+			"kind": "placetypeCensus",
+			"applied": false
+		},
+		{
 			"kind": "conventionsMask",
 			"applied": false
 		}
