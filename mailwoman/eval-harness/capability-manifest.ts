@@ -42,6 +42,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
@@ -367,7 +368,9 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 
 		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
-		if (JSON.parse(original).capabilities !== undefined) {
+		// Strict, not tolerant: a corrupt model card must abort the splice rather than read as
+		// "no capabilities block" and append a second one.
+		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities !== undefined) {
 			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
 			throw new Error(
 				`${paths.modelCard} already has a \`capabilities\` block — \`git checkout\` it first, then re-run --write ` +
@@ -375,6 +378,8 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			)
 		}
 
+		// Re-indenting a string this function just built.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator
 		const block = JSON.stringify(capabilities, null, "\t")
 			.split("\n")
 			.map((line) => "\t" + line)

@@ -19,6 +19,7 @@ import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -49,15 +50,15 @@ const rows = await Array.fromAsync(
 // Mirror score-affix's SHIP-CONFIG construction exactly — loadFromWeights ignores a modelPath
 // and grades the default symlink with no anchor channel (the zero-fill crash signature this
 // audit's first run produced — caught by the misses-vs-scorer discrepancy).
-const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+const card = parseJSONStrict<{ labels: string[] }>(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(args.model!)])
 
 const neural = new NeuralAddressClassifier({
 	tokenizer,
 	runner,
 	labels: card.labels,
-	postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
-	gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(args["gazetteer-lexicon"]!, "utf8"))),
+	postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(LK, "utf8"))),
+	gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(args["gazetteer-lexicon"]!, "utf8"))),
 	suppressGazetteerNearPostcode: true,
 })
 

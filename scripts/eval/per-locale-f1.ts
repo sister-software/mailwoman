@@ -57,6 +57,7 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 /**
  * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
@@ -391,7 +392,7 @@ async function main(): Promise<void> {
 			)
 		}
 
-		const card = JSON.parse(readFileSync(args.modelCardPath, "utf8"))
+		const card = parseJSONStrict<{ labels: string[] }>(readFileSync(args.modelCardPath, "utf8"))
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
@@ -407,14 +408,14 @@ async function main(): Promise<void> {
 
 		const postcodeAnchorLookup =
 			anchorLookupPath && existsSync(anchorLookupPath)
-				? parseAnchorLookup(JSON.parse(readFileSync(anchorLookupPath, "utf8")))
+				? parseAnchorLookup(parseJSONStrict(readFileSync(anchorLookupPath, "utf8")))
 				: undefined
 
 		// Gazetteer-anchor lexicon (#464): fed so a gazetteer-trained model gets its clues. Harmless for
 		// older models (the runner skips inputs the ONNX lacks).
 		const gazetteerLexicon =
 			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
-				? parseGazetteerLexicon(JSON.parse(readFileSync(gazetteerLexiconPath, "utf8")))
+				? parseGazetteerLexicon(parseJSONStrict(readFileSync(gazetteerLexiconPath, "utf8")))
 				: undefined
 
 		console.error(

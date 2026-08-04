@@ -21,6 +21,7 @@ import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 import { alignRow } from "../align.ts"
 import type { ShardManifest } from "../parquet.ts"
@@ -111,7 +112,7 @@ export async function buildKryptoniteShard(
 	}
 
 	// Compose the final corpus-v0.4.0 manifest: every shard from base + the new shard(s).
-	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
+	const base = parseJSONStrict<ShardManifest>(readFileSync(options.baseManifest, "utf8"))
 
 	const combined: ShardManifest = {
 		corpus_version: corpusVersion,

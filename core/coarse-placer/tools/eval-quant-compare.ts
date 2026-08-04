@@ -14,6 +14,8 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { parseJSONStrict } from "../../objects.ts"
+
 import { JSONSpliterator } from "spliterator"
 
 import { dataRootPath } from "../../utils/data-root.ts"
@@ -76,7 +78,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
 	function loadFp32(dir: string): CoarsePlacer {
-		const meta = JSON.parse(readFileSync(path.join(dir, "meta.json"), "utf8")) as CoarsePlacerMeta
+		const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(dir, "meta.json"), "utf8"))
 		const buf = readFileSync(path.join(dir, "weights.bin"))
 		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 		const weights = new Float32Array(ab)
@@ -85,7 +87,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	}
 
 	function loadInt8(dir: string): CoarsePlacer {
-		const meta = JSON.parse(readFileSync(path.join(dir, "meta.json"), "utf8")) as CoarsePlacerMeta
+		const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(dir, "meta.json"), "utf8"))
 		const buf = readFileSync(path.join(dir, "weights.bin"))
 		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 		const int8 = new Int8Array(ab)
@@ -111,7 +113,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 
 	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl")))
 
-	const classes = (JSON.parse(readFileSync(path.join(fp32Dir, "meta.json"), "utf8")) as CoarsePlacerMeta).classes
+	const classes = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(fp32Dir, "meta.json"), "utf8")).classes
 	let okF = 0
 	let okI = 0
 	let agree = 0

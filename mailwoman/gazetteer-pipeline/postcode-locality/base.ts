@@ -43,6 +43,7 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { haversineKm } from "@mailwoman/spatial"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -223,11 +224,15 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	for (const fp of geojsonFiles(join(adminRepo!, "data"))) {
 		try {
-			const g = JSON.parse(readFileSync(fp, "utf8"))
+			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: GeojsonGeometry }>(
+				readFileSync(fp, "utf8"),
+				{}
+			)
+
 			const p: Record<string, unknown> = g.properties ?? {}
 
 			if (p["wof:placetype"] !== "locality" || (p["mz:is_current"] ?? 1) === 0) continue
-			const geom = g.geometry as GeojsonGeometry | undefined
+			const geom = g.geometry
 
 			if (!geom || (geom.type !== "Polygon" && geom.type !== "MultiPolygon")) continue
 			const xs: number[] = []

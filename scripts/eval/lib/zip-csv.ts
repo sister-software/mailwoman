@@ -68,6 +68,8 @@ async function* withoutBOM(source: AsyncIterable<Uint8Array | string>): AsyncIte
 export function firstCSVEntry(zipPath: string): string {
 	const r = spawnSync("unzip", ["-Z1", zipPath], { encoding: "utf8", maxBuffer: 1 << 28 })
 
+	// `unzip -Z1` output, already buffered whole by `spawnSync`.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator
 	const names = (r.stdout || "")
 		.split("\n")
 		.map((s) => s.trim())

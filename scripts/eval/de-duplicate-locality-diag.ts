@@ -27,6 +27,7 @@ import { parseArgs } from "node:util"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -107,9 +108,13 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier, parseAnchorLookup } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
+
+	const modelCard = parseJSONStrict<{ labels: string[] }>(
+		readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8")
+	)
+
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
-	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))) : undefined
+	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8"))) : undefined
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(

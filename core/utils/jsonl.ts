@@ -24,9 +24,13 @@ import { TextSpliterator } from "spliterator"
  *   as one string, which throws `ERR_STRING_TOO_LONG` past V8's 512 MiB cap.
  */
 export function readJSONL<T>(path: string): T[] {
+	// The whole-buffer read and the throw-on-corrupt parse are both part of the shipped contract this
+	// function is deprecated FOR; rewriting either would change what remaining callers get.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator
 	return readFileSync(path, "utf8")
 		.split("\n")
 		.filter((line) => line.trim().length > 0)
+		// oxlint-disable-next-line no-restricted-properties
 		.map((line) => JSON.parse(line) as T)
 }
 
@@ -60,6 +64,7 @@ export function writeJSONL(path: string, rows: Iterable<unknown>): number {
 export async function* iterateJSONL<T>(path: string): AsyncIterable<T> {
 	for await (const line of TextSpliterator.fromAsync(path)) {
 		if (!line.trim()) continue
+		// oxlint-disable-next-line no-restricted-properties -- Throw-on-corrupt is this function's shipped contract.
 		yield JSON.parse(line) as T
 	}
 }

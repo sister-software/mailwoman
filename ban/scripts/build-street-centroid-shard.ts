@@ -33,6 +33,7 @@ import { parseArgs } from "node:util"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import {
 	createStreetCentroidIndexes,
@@ -79,10 +80,10 @@ function parse(): BuildArgs {
  */
 function sourceMD5(country: string): string | null {
 	try {
-		const rec = JSON.parse(readFileSync(dataRootPath("ban", "ATTRIBUTION.json"), "utf8")) as {
-			artifact?: string
-			md5?: string
-		}
+		const rec = tryParsingJSON<{ artifact?: string; md5?: string }>(
+			readFileSync(dataRootPath("ban", "ATTRIBUTION.json"), "utf8"),
+			{}
+		)
 
 		return rec.artifact === `address-points-${country}.db` ? (rec.md5 ?? null) : null
 	} catch {

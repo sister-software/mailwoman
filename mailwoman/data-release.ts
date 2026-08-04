@@ -18,6 +18,7 @@
 import { existsSync, readFileSync } from "node:fs"
 
 import { join } from "path-ts"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 
 /**
  * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.
@@ -29,7 +30,7 @@ export type DataReleaseManifest = Record<string, string>
  */
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {
-		const raw = JSON.parse(readFileSync(join(dataRoot, "releases.json"), "utf8")) as unknown
+		const raw = tryParsingJSON(readFileSync(join(dataRoot, "releases.json"), "utf8"))
 
 		if (!raw || typeof raw !== "object") return null
 		const out: DataReleaseManifest = {}

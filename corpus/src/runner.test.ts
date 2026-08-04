@@ -9,6 +9,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter, type RunnerProgress } from "./runner.ts"
@@ -96,7 +97,7 @@ describe("runAdapter", () => {
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
 		expect(lines[0]!.source).toBe("syn")
 
-		const manifestOnDisk = JSON.parse(await readFile(join(scratch, "syn", "MANIFEST.json"), "utf8"))
+		const manifestOnDisk = parseJSONStrict<{ sha256: string }>(await readFile(join(scratch, "syn", "MANIFEST.json"), "utf8"))
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
 	})
 

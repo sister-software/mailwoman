@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { pyFixed } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
@@ -47,7 +48,9 @@ async function main(): Promise<void> {
 		let res: Result[]
 
 		try {
-			res = JSON.parse(readFileSync(`${outDir}/${a}.results.json`, "utf8"))
+			// Strict: the catch below re-throws anything that is not a missing file, so a corrupt
+			// sidecar must surface rather than read as an empty arena.
+			res = parseJSONStrict<Result[]>(readFileSync(`${outDir}/${a}.results.json`, "utf8"))
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				console.log(`| ${a} | (no results) |`)

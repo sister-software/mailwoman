@@ -46,6 +46,7 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -190,7 +191,10 @@ async function main(): Promise<void> {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8"))
+
+	const modelCard = parseJSONStrict<{ labels: string[] }>(
+		readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8")
+	)
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
@@ -207,8 +211,8 @@ async function main(): Promise<void> {
 		tokenizer,
 		runner,
 		labels: modelCard.labels,
-		postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(anchorPath, "utf8"))),
-		gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(gazPath, "utf8"))),
+		postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8"))),
+		gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(gazPath, "utf8"))),
 		suppressGazetteerNearPostcode: true,
 		addressSystemConventions: "auto",
 		bridgePunctuationGaps: true,

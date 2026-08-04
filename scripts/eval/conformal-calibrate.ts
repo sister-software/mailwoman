@@ -56,6 +56,7 @@ import { dataRootPath, median } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 /**
@@ -219,7 +220,7 @@ async function buildCascade(paths: {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = JSON.parse(readFileSync(paths.modelCardPath, "utf8")) as { labels: string[] }
+	const modelCard = parseJSONStrict<{ labels: string[] }>(readFileSync(paths.modelCardPath, "utf8"))
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(paths.tokenizerPath),

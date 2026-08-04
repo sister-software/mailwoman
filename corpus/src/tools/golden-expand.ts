@@ -52,6 +52,7 @@ import { dirname } from "node:path"
 import { ParquetReader } from "@dsnp/parquetjs"
 import { $private } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createNewlineWriter } from "spliterator"
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -408,7 +409,7 @@ function parseCandidates(text: string): Candidate[] {
 	const cleaned = text.replaceAll(/^```(?:json)?\n?|\n?```$/g, "").trim()
 
 	try {
-		const parsed = JSON.parse(cleaned) as unknown
+		const parsed = tryParsingJSON(cleaned)
 
 		if (Array.isArray(parsed)) return parsed as Candidate[]
 

@@ -33,6 +33,7 @@ import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
 import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
@@ -226,7 +227,7 @@ export async function buildTranslitShard(
 	// Compose final MANIFEST: rewrite base.shards paths from /mnt/playpen/... → /data/... and append
 	// the new translit shards. Kryptonite shard already lives in the base manifest (it was written
 	// there by Thread B).
-	const base = JSON.parse(readFileSync(options.baseManifest, "utf8")) as ShardManifest
+	const base = parseJSONStrict<ShardManifest>(readFileSync(options.baseManifest, "utf8"))
 
 	const rewrittenBase = base.shards.map((sh) => ({
 		...sh,

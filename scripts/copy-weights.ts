@@ -41,6 +41,7 @@ import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 
@@ -102,7 +103,17 @@ function stashDerived(dir: string, filename: string): void {
 	}
 }
 
-const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+/**
+ * The slice of `release.config.json` this script reads. `softFeed` stays loose — its per-locale shape is validated at
+ * each use site, and a schema here would be a second place to update when a locale gains an artifact.
+ */
+interface ReleaseConfig {
+	locales: string[]
+	weights: { model: string; tokenizer: string }
+	softFeed?: Record<string, unknown>
+}
+
+const config = parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
 const dataRoot = String(mailwomanDataRoot())
 /**
  * Model binary to copy into each weights workspace before packing.

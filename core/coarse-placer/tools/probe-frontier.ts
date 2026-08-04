@@ -24,6 +24,8 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
+import { parseJSONStrict } from "../../objects.ts"
+
 import { dataRootPath } from "../../utils/data-root.ts"
 import { corePackagePath } from "../../utils/repo.ts"
 import { median } from "../../utils/stats.ts"
@@ -130,7 +132,7 @@ export async function probeFrontier(
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
 	const { ISO2_TO_NAME } = await import("@mailwoman/codex/country")
 
-	const meta = JSON.parse(readFileSync(join(String(modelDir), "meta.json"), "utf8")) as CoarsePlacerMeta
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(join(String(modelDir), "meta.json"), "utf8"))
 	// The deployed bundle is int8-per-row quantized — fromArtifactDir dequantizes via meta.scales.
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)
@@ -237,6 +239,7 @@ export async function probeFrontier(
 
 	const md = L.join("\n")
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-splitting a string joined two lines above.
 	console.log(md.split("\n").slice(0, 12).join("\n"))
 	console.log("…")
 

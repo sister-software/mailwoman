@@ -35,6 +35,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
+import { parseJSONStrict } from "../../objects.ts"
 
 import { JSONSpliterator } from "spliterator"
 
@@ -194,7 +195,7 @@ export async function evalOpenSet(
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 	const fitPerClass = options.fitPerClass ?? 2000
 
-	const meta = JSON.parse(readFileSync(path.join(modelDir, "meta.json"), "utf8")) as CoarsePlacerMeta
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
 	const W = new Float32Array(readFileSync(path.join(modelDir, "weights.bin")).buffer)
 	const bias = Float32Array.from(meta.bias)
 	const C = meta.classes.length

@@ -21,6 +21,7 @@ import { join } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
 import { corePackagePath } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 export interface EnrichAdminOptions {
 	/**
@@ -74,7 +75,7 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 		const specPath = join(specsDir, `${cc}.json`)
 
 		if (!existsSync(specPath)) continue
-		const spec = JSON.parse(readFileSync(specPath, "utf8")) as { sub_keys?: string; sub_names?: string }
+		const spec = parseJSONStrict<{ sub_keys?: string; sub_names?: string }>(readFileSync(specPath, "utf8"))
 
 		if (!spec.sub_keys || !spec.sub_names) continue
 		const keys = spec.sub_keys.split("~")

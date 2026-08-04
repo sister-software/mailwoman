@@ -87,6 +87,9 @@ function loadKenall(path: string): Map<string, string> {
 	const out = new Map<string, string>()
 	const text = new TextDecoder("shift_jis").decode(readFileSync(path))
 
+	// KEN_ALL is Shift-JIS and the spliterator's text path decodes UTF-8, so streaming it means dropping
+	// to raw byte ranges and decoding per row — for an 11 MB file whose size Japan Post fixes.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator
 	for (const raw of text.split("\n")) {
 		const line = raw.replace(/[\r\n]+$/, "")
 		const f = line.split(",").map((c) => c.replace(/^"+/, "").replace(/"+$/, ""))

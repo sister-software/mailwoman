@@ -18,6 +18,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -63,20 +64,29 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
 		// Top-level manifest written
-		const onDisk = JSON.parse(await readFile(join(outDir, "MANIFEST.json"), "utf8"))
+		const onDisk = parseJSONStrict<{ corpus_version: string }>(await readFile(join(outDir, "MANIFEST.json"), "utf8"))
 		expect(onDisk.corpus_version).toBe("0.1.0")
 
 		// Per-stage artifacts exist
-		const corpusManifest = JSON.parse(await readFile(join(outDir, "corpus-v0.1.0", "MANIFEST.json"), "utf8"))
+		const corpusManifest = parseJSONStrict<{
+			total_rows: number
+			shards: Array<{ split: string; format: string; path: string }>
+		}>(
+			await readFile(join(outDir, "corpus-v0.1.0", "MANIFEST.json"), "utf8")
+		)
+
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
 		expect(corpusManifest.shards.length).toBeGreaterThanOrEqual(1)
 
-		const splitManifest = JSON.parse(await readFile(join(outDir, "splits", "SPLIT_MANIFEST.json"), "utf8"))
+		const splitManifest = parseJSONStrict<{ corpus_version: string; holdouts: Record<string, string[]> }>(
+			await readFile(join(outDir, "splits", "SPLIT_MANIFEST.json"), "utf8")
+		)
+
 		expect(splitManifest.corpus_version).toBe("0.1.0")
 		expect(splitManifest.holdouts.US).toContain("Vermont")
 
 		// At least one `.parquet` shard exists and round-trips through `ParquetReader`.
-		const trainShard = corpusManifest.shards.find((s: { split: string }) => s.split === "train")
+		const trainShard = corpusManifest.shards.find((s) => s.split === "train")!
 		expect(trainShard).toBeDefined()
 		expect(trainShard.format).toBe("parquet")
 		expect(trainShard.path).toMatch(/\.parquet$/)
@@ -116,6 +126,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 		// The .txt manifests stay in lockstep with the per-split JSONL.
 		const trainIds = new Set(
+			// oxlint-disable-next-line mailwoman/prefer-spliterator -- A fixture this test just wrote, a few dozen rows.
 			(await readFile(join(outDir, "splits", "train.txt"), "utf8")).trim().split("\n").filter(Boolean)
 		)
 

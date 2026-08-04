@@ -137,6 +137,8 @@ describe("the FR fragment board fixture", () => {
 
 	it("reserves every street surface it uses, so a shard can exclude them", () => {
 		const reserved = new Set(
+			// A committed fixture list, bounded by the board it belongs to.
+			// oxlint-disable-next-line mailwoman/prefer-spliterator
 			readFileSync("mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt", "utf8")
 				.split("\n")
 				.filter((line) => line && !line.startsWith("#"))

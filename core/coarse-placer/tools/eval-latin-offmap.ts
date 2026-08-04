@@ -15,6 +15,7 @@
 
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
+import { parseJSONStrict } from "../../objects.ts"
 
 import { JSONSpliterator } from "spliterator"
 
@@ -69,7 +70,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = JSON.parse(readFileSync(path.join(modelDir, "meta.json"), "utf8")) as CoarsePlacerMeta
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
 	const buf = readFileSync(path.join(modelDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	let weights: Float32Array

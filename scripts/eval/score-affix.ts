@@ -11,6 +11,7 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { JSONSpliterator } from "spliterator"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -76,7 +77,7 @@ const WEIGHTS_CACHE = values["weights-cache"] || ""
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 	: await (async () => {
-			const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+			const card = parseJSONStrict<{ labels: string[] }>(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 
 			const [tokenizer, runner] = await Promise.all([
 				MailwomanTokenizer.loadFromFile(TOK),
@@ -87,8 +88,8 @@ const neural = WEIGHTS_CACHE
 				tokenizer,
 				runner,
 				labels: card.labels,
-				postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
-				...(GAZ ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
+				postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(LK, "utf8"))),
+				...(GAZ ? { gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(GAZ, "utf8"))) } : {}),
 				suppressGazetteerNearPostcode: suppressGaz,
 				// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
 				...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
