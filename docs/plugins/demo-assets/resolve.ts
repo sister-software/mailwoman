@@ -217,22 +217,28 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		aliases["@mailwoman/resolver/resolve"] = resolveWorkspaceFile(resolverDir, "resolve")
 	}
 
-	// @mailwoman/codex per-locale sub-entrypoints — the pattern modules the bundled neural/core graph
-	// imports (`placetype-pair-prior` pulls `es`/`it`; the rest arrive through the same class). Without
-	// source aliases these resolve through the package `exports` to compiled `out/`, which `yarn start`
-	// never rebuilds — the same staleness trap the core loop above documents, with a sharper edge: a
-	// tree whose `codex/out` predates a newly added subpath fails the whole build ("no valid target
-	// file was found"), not just serves stale code. Enumerated rather than globbed so a new locale
-	// module is added here deliberately, like every other curated subpath in this file.
-	const codexDir = resolveWorkspaceDir("@mailwoman/codex")
+	// @mailwoman/codex — the per-locale pattern modules the bundled neural/core graph imports
+	// (`placetype-pair-prior` pulls `es`/`it`; the rest arrive through the same class). Webpack's own
+	// exports resolution lands on compiled `out/` (the `default` condition), which `yarn start` never
+	// rebuilds — and a tree whose `codex/out` predates a newly added subpath fails the whole build
+	// ("no valid target file was found"). Instead of hand-deriving source paths, ask Node's resolver
+	// (`require.resolve`, the CJS twin of `import.meta.resolve`): the dev exports map's `node`
+	// condition points every entry at its `.ts` source, so the alias lands on source with zero
+	// knowledge of the package layout. Enumerated rather than globbed so a new locale module is
+	// added here deliberately, like every other curated subpath in this file. EXACT match (`$`) on
+	// the bare barrel, same rationale as `@mailwoman/resolver$` above.
+	for (const sub of [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"]) {
+		const spec = sub ? `@mailwoman/codex/${sub}` : "@mailwoman/codex"
 
-	if (codexDir) {
-		// EXACT match (`$`) for the bare barrel, same rationale as `@mailwoman/resolver$` above: the
-		// prefix form would shadow the subpath aliases below.
-		aliases["@mailwoman/codex$"] = resolve(codexDir, "index.ts")
+		try {
+			const target = requireFromPlugin.resolve(spec)
 
-		for (const sub of ["country", "de", "es", "fr", "gb", "it", "nz", "us"]) {
-			aliases[`@mailwoman/codex/${sub}`] = resolveWorkspaceDirEntry(codexDir, sub)
+			if (!target.endsWith(".ts")) {
+				console.warn(`[demo-assets] ${spec} resolved to compiled output (${target}) — dev exports drift?`)
+			}
+			aliases[sub ? spec : "@mailwoman/codex$"] = target
+		} catch {
+			console.warn(`[demo-assets] ${spec} not resolvable — alias skipped`)
 		}
 	}
 
