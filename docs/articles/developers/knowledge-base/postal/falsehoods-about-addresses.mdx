@@ -87,9 +87,11 @@ Each line is one assumption and one address that breaks it.
 - **Every address has a county.** UK addresses have not formally required one since 1996, when
   automated postcode sorting made it redundant
   ([Post & Parcel, 2010](https://postandparcel.info/34128/news/uk-counties-to-be-axed-from-postal-addresses/)).
-- **A town name is unique within a country.** The candidate gazetteer these docs download carries 92
-  distinct US places named Springfield at city rank, spread across 34 states. `Springfield` on its own
-  is a 92-way question.
+- **A town name is unique within a country.** Count the primary city-rank names in the candidate
+  gazetteer build this shelf was measured against (`candidate-global-1026.db`) and the US holds 92
+  distinct places called Springfield: 86 of them across 33 states, and six with no state recorded
+  against them at all — an absence in the gazetteer rather than a fact about those six places.
+  `Springfield` on its own is a 92-way question.
 - **The postal town is the municipality.** Brooklyn is a postal city that the Postal Service accepts;
   the municipality is New York. Both are correct, for different readers.
 - **Administrative boundaries hold still.** The county of Gwent was abolished. Annexation moves a

@@ -61,11 +61,16 @@ a system built by people who found out what confident wrong answers cost.
 ## What this implies for parsing
 
 A parser sits above the first rung of that ladder, and it can imitate the ladder's discipline or
-break it. Breaking it looks like answering a bare `Springfield` with one coordinate at high
-confidence because one of the [92 US places by that name](./falsehoods-about-addresses.mdx) is the most
-populous.
+break it. Breaking it looks like answering a bare `Springfield` with one coordinate because one of
+the [92 US places by that name](./falsehoods-about-addresses.mdx) is the most populous.
 
-Imitating it means three habits, and Mailwoman is built for all three. Report a confidence per
+Mailwoman's default geocode path does exactly that, and it is worth being plain about it. A bare
+`Springfield` comes back as Springfield, Missouri — the most populous — at the `admin` tier, with a
+single entry in `candidates`. The underspecification is reported one field over, as
+`kind: locality_only`: the input was a place name with nothing beside it to disambiguate against. A
+caller reading only the coordinate never sees that, which is the failure mode to design against.
+
+Three habits keep the ladder's discipline where the pipeline keeps it. Report a confidence per
 component, so that a downstream system can route the uncertain ones to a person the way a processing
 plant routes an unreadable image
 ([Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx)). Repair what is

@@ -54,13 +54,17 @@ The behavior worth asking for is that the result state what kind of answer it is
 flattening four kinds into one coordinate.
 
 A Mailwoman geocode carries that in the result: `resolution_tier` names the data that answered,
-`uncertainty_m` bounds it, `hierarchy` gives the administrative chain the components resolved
-through, and `candidates` keeps the places considered rather than discarding them. With the US
-address data installed, `350 5th Ave, New York, NY 10118` returns `resolution_tier: "interpolated"`
-with `uncertainty_m: 64` — a position estimated along the block from the street network, not a point
-the building itself contributed. That is a different claim from a rooftop hit and it is labeled as
-one. The four tiers and what each measures are on
+`uncertainty_m` bounds it, and `hierarchy` gives the administrative chain the components resolved
+through. With the US address data installed, `350 5th Ave, New York, NY 10118` returns
+`resolution_tier: "interpolated"` with `uncertainty_m: 64` — a position estimated along the block from
+the street network, not a point the building itself contributed. That is a different claim from a
+rooftop hit and it is labeled as one. The four tiers and what each measures are on
 [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx).
+
+A fourth field, `candidates`, lists the gazetteer places the answer was built from, and it holds more
+than one when several match the resolved scope: `Springfield, IL` returns three — the city, a township
+of the same name, and a second Springfield about 8 km north. It is not a record of everything the
+resolver looked at, though. A bare `Springfield` returns one entry, and the gazetteer holds 92.
 
 Two consequences follow for code that consumes this. Branch on the tier rather than on the coordinate
 looking plausible, because a city centroid is a valid coordinate in the middle of the wrong claim. And
