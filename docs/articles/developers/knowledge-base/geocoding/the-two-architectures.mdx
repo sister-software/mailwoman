@@ -1,0 +1,173 @@
+---
+title: The two architectures
+description: Search-engine-with-a-map versus understand-then-look-up — what each one is good at, and why their published hardware requirements differ by two orders of magnitude.
+role: explanation
+---
+
+# The two architectures
+
+## The question
+
+Two geocoders answer the same question. You type an address, they give you a point. One of them
+recommends 128 GB of memory before you start. The other is an npm install and a file on disk. They
+are not doing the same amount of work, and the difference is not that one is written better. It is
+that there are two ways to build a geocoder, and they put the work in different places.
+
+This page is about those two ways: what each one is, what each is good at, and what you are buying
+when you pick one.
+
+## The analog
+
+You are at the front desk of a large building and you want to find someone. There are two ways to
+ask.
+
+The first: hand the receptionist everything you know — a half-remembered name, a floor, the word
+"accounts" — and have them search every directory in the building for anything resembling any of it,
+then read you the best matches in order. This works remarkably well. It works even when half of what
+you said was wrong, even when you gave them a nickname, even when what you wanted was not a person at
+all but a room. The cost is that the receptionist has to hold every directory in the building open at
+once, and has to be good at ranking, because everything matches a little.
+
+The second: read what you wrote, work out that "accounts" is the department and the rest is a
+person's name, walk to the accounts department's own list, and look up the name there. Fewer pages
+get opened. The answer arrives with its reasoning attached — you know it was the accounts list, so
+you know what the answer means. The cost is that somebody had to understand your note first, and if
+they read "accounts" as a surname they will go to the wrong list and come back with nothing at all,
+rather than with something approximate.
+
+Every geocoder is one of those two receptionists.
+
+## Architecture one: search engine with a map
+
+Take every place you know about — countries, regions, towns, neighbourhoods, streets, address points,
+points of interest — and turn each one into a document in a full-text search index. Give each document
+its name, its alternate names in every language, its parents, and its coordinate. At query time, throw
+the user's whole string at the index and rank what comes back.
+
+There is no parser in this design, which is the point. The system never decides that `Springfield` is
+a locality; it decides that some documents score well against the token `springfield` and ranks them.
+Ambiguity is not resolved, it is surfaced as a result list. Adding a country means adding documents.
+Adding a language means adding name variants to documents that already exist. No grammar is written
+for either.
+
+This is the architecture behind Nominatim, Photon and Pelias, and behind the tantivy-based
+[Airmail](https://github.com/ellenhp/airmail). The engines differ — a relational database with spatial
+extensions in one case, OpenSearch in another — but the shape is the same: one index over everything,
+queried as text.
+
+**What it is good at**, and this is not a consolation prize:
+
+- **Fuzzy recall over a huge corpus.** A misspelled name, half an address, a landmark instead of a
+  street — the index still returns something ranked, because scoring is continuous. A design that
+  parses first has nothing to look up when the parse fails.
+- **Inputs that are not addresses.** "The station", "castle museum", a venue name with a toponym
+  inside it. These are documents in the index like any other. They are not addresses and a parser has
+  no label for them.
+- **Every script, immediately.** The index stores text. A Korean place name and a Polish one are the
+  same kind of document, and neither needed a locale rule written for it.
+- **A ranked list is the right shape for autocomplete.** A search box wants five plausible
+  completions, not one confident answer, and this architecture produces five by construction.
+
+**What it costs.** The ranking happens against the whole corpus at query time, so the corpus wants to
+be resident and the ranking function has to be tuned against all of it at once — a change that helps
+one country's recall can cost another's precision without announcing itself, and you find out from the
+aggregate. And the answer is a document, not a decomposition: you learn which record matched, not
+which part of your string matched what. If you needed to know that `Ave` was a street suffix rather than part of a venue
+name, this architecture never formed that opinion.
+
+## Architecture two: understand, then look up
+
+Label the string first. Decide that this span is a house number, this one a street, this one a
+locality, this one a postcode — without consulting any place database, because that decision is about
+how the words are being _used_, not about which places exist. Then run one constrained lookup per
+labelled span against a gazetteer: not "what matches this string" but "what locality carries this
+name, inside this region".
+
+The lookups are cheap because they are constrained. A locality probe scoped to a resolved region
+never considers the rest of the planet, so the index it hits is a small indexed read rather than a
+ranked scan. That is the property that lets the data stay on disk: the query touches a handful of
+pages instead of the corpus.
+
+Mailwoman is this architecture. So, in part, is any pipeline built on libpostal — libpostal is the
+labelling half without the lookup half, which is why it is a parser rather than a geocoder.
+
+**What it is good at:**
+
+- **A decomposition, not a match.** You get back which piece of the input was the street and which was
+  the town, with offsets into your original string. Anything downstream that needs fields rather than
+  a point — deduplication, validation, formatting, record matching — needs exactly this.
+- **Answers that carry their own provenance.** Each resolved span names the gazetteer record it
+  landed on, so a wrong answer can be traced to the span that went wrong.
+- **A small resident footprint.** The model is a file; the gazetteer is a sealed read-only database
+  read from disk.
+- **The scope of the data is yours to choose.** Coverage is a set of downloads rather than a property
+  of the install, so a US-only deployment carries US-sized artifacts.
+
+**What it costs.** Someone has to train the labeller, on a labelled corpus, per locale — and where
+that corpus is thin, the labels are wrong in a way no amount of gazetteer data repairs. When the
+labelling goes wrong the failure is quiet and total: a span labelled `street` that was a locality gets
+looked up in the street index, finds nothing, and the result comes back empty rather than
+approximately right. The search architecture would have returned something. And a query that is not an
+address at all has no useful labelling, so it has no useful lookup.
+
+## What the hardware numbers measure
+
+Each project publishes what it wants you to provision. The figures below are quoted from each
+project's own documentation and were read on **2026-08-04**; where a project publishes no figure, the
+row says so rather than estimating one.
+
+| Engine          | Index                                     | Published requirement                                                                                                                                                                                                          | Source                                                                                     |
+| --------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Nominatim 5.3.2 | PostgreSQL, over the OpenStreetMap planet | "A minimum of 2GB of RAM is required or installation will fail. For a full planet import 128GB of RAM or more are strongly recommended." "For a full planet install you will need at least 1TB of hard disk space."            | [Nominatim installation](https://nominatim.org/release-docs/latest/admin/Installation/)    |
+| Photon          | OpenSearch, embedded by default           | "A planet-wide database requires about 95GB disk space (as of 2026, grows by about 10% a year)." "At least 64GB RAM are recommended for smooth operations…"                                                                    | [Photon README](https://github.com/komoot/photon)                                          |
+| Addok           | Redis                                     | No hardware figure is published. The deployment behind France's national address register is described as "26+ million addresses indexed", "~2000 searches/second", "~15 minutes full import time".                            | [Addok README](https://github.com/addok/addok)                                             |
+| Pelias          | Elasticsearch                             | The published requirements document covers software dependencies rather than hardware. Its one size figure is that "Libpostal requires about 4GB of disk space to download all the required data."                             | [Pelias requirements](https://github.com/pelias/documentation/blob/master/requirements.md) |
+| Mailwoman 8.6.0 | Sealed SQLite files, read from disk       | 707 MB installed, of which 523 MB is the ONNX runtime; the model itself is 39.4 MB. The global admin gazetteer is a 1.65 GB download. US rooftop and interpolation coverage is 41.3 GB across 103 artifacts, pulled per state. | [Footprints](../../reference/footprints.mdx)                                               |
+
+Four things are worth saying about that table before anyone reads a verdict into it.
+
+**The rows are not measuring the same thing.** Nominatim's and Photon's figures are for a
+planet-scale install and are recommendations for smooth operation under load. Mailwoman's are measured
+install and download sizes, on a page that says plainly that runtime memory is measured per workload
+elsewhere and is not re-measured there. A missing number is not a small number.
+
+**Addok is the row that breaks the dichotomy**, and it earns its place for that. It is a
+search-shaped index — Redis, ranked matching, no parser — and it has no memory problem, because it
+indexes one country's address register rather than a planet. Scope the corpus down and the
+architectural cost of the search design mostly disappears. If your addresses are all in one country
+and that country publishes a register, that is a serious answer and the rest of this page does not
+argue against it.
+
+**Disk is not free either.** Mailwoman's US rooftop tier is 41.3 GB if you take all of it. The trade
+is not "small versus large", it is that the large part is optional, per-state, and idle until queried.
+
+**Both designs are paying for the same thing, in different currencies.** Geocoding needs the world's
+places somewhere it can reach them. The search design reaches them by ranking, which wants them
+resident. The label-then-look-up design reaches them by constrained probe, which lets them stay on
+disk — and pays for that constraint with a model and a labelled corpus per locale, which is a cost
+that arrives before you ever run a query and shows up on no hardware page at all.
+
+## Where the verdict lands
+
+Not on a hardware table. It lands on what your input looks like.
+
+If your queries are exploratory — search boxes, partial strings, landmarks, "the thing near the
+station" — the search architecture is doing the job it was designed for, and a parser is the wrong
+tool because there is frequently nothing to parse. If your queries are addresses that arrived from a
+form, a CRM export or a delivery manifest, and what you need back is fields as much as a point, the
+labelling architecture is doing the job it was designed for, and a ranked document list is an answer
+you will have to post-process into fields anyway.
+
+The two also compose. A pipeline can label first, take the constrained lookup when it succeeds, and
+fall back to a ranked full-text search over the raw string when the labelling produces nothing usable.
+That is a real design and it inherits both sets of costs.
+
+## Related
+
+- [What geocoding is](./what-geocoding-is.mdx) — the job both architectures are doing.
+- [The landscape](./the-landscape.mdx) — hosted APIs, self-hosted engines, and in-process libraries.
+- [Gazetteers](./gazetteers.mdx) — the place database underneath both designs.
+- [Footprints](../../reference/footprints.mdx) — Mailwoman's measured sizes, with the commands that
+  produced them.
+- [Swap in for Nominatim](../../tutorials/swap-in-for-nominatim.mdx) — running the label-then-look-up
+  design behind a Nominatim-compatible endpoint.

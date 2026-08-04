@@ -1,0 +1,138 @@
+---
+title: Why addresses are hard
+description: Three structural reasons address parsing resists rules — no universal grammar, ambiguity that cannot be removed, and a user register that no gazetteer stores.
+role: explanation
+---
+
+# Why addresses are hard
+
+## The question
+
+Addresses look like the easiest structured data in the world. They have parts, the parts come in an
+order, and every one of us can read one at a glance. Any engineer given the problem writes a plausible
+parser in an afternoon, and it works. Then it meets production data and the afternoon turns into a
+year.
+
+The interesting question is not which addresses break it — [Falsehoods about
+addresses](../postal/falsehoods-about-addresses.mdx) is twenty-five of those, each with a real
+counterexample, and this page will not repeat them. The question is _why the list never ends_. What is
+it about addresses that makes the failures structural rather than a backlog?
+
+Three things, and none of them is fixed by trying harder.
+
+## The analog
+
+A postal address is not a data format. It is a note written to a person, and it succeeds when a human
+courier can act on it. That is a much weaker constraint than a schema, and it is why addresses have
+the properties they do: anything a knowledgeable local can act on is a valid address, including things
+no format would permit. "The blue house past the church" is a working address in places where houses
+have no numbers. It is also unparseable, and it is not malformed — it is doing its job.
+
+Everything below follows from that one fact. We are parsing something that was never designed to be
+parsed.
+
+## One: there is no universal grammar
+
+The first reflex is to write a grammar. Number, then street, then town, then region, then postcode. It
+describes a large fraction of the addresses most engineers have seen, which is exactly why it feels
+like a description of addresses rather than a description of one country's convention.
+
+Germany writes the house number after the street. France writes the postcode before the town.
+Japanese addresses start at the prefecture and work inward, and number blocks rather than streets —
+so there is no street name to parse at all. Mannheim's city centre is a lettered grid where `R 5` is a
+block, not a road. [Addressing around the world](../postal/addressing-around-the-world.mdx) walks
+those conventions properly.
+
+The structural point is not that there are exceptions. It is that there is no privileged ordering for
+the exceptions to be exceptions to. Each convention is complete and internally consistent in its own
+country, so a grammar cannot be extended into a universal one — it can only be replaced by a
+per-country set, and the number of countries is not the problem. The problem is that a single input
+string does not come labelled with which set to apply, so choosing the grammar requires having
+already partly understood the string.
+
+## Two: the ambiguity is intrinsic, not incidental
+
+Here is the part that resists every amount of engineering: **you cannot group the words correctly
+without knowing what they are, and you cannot tell what they are without knowing how they group.**
+
+Take `Saint Petersburg, FL`. Split it into words and classify each one independently, which is what a
+rule-based approach does, and every individual verdict is defensible. `Saint` really is a common
+street prefix. `Petersburg` really is the name of populated places. `FL` really is a state
+abbreviation. Each classifier is right, and the combination is wrong, because `Saint Petersburg` is
+one town and the boundary was drawn before anyone asked what the pieces were.
+
+Worse, the confidence looks fine. Every component scored high, because every component's evidence was
+real. A consumer reading the scores sees a clean parse. This is the failure mode that makes the
+problem structural rather than merely difficult: the error is in the combination, and per-piece
+confidence has nowhere to record it.
+
+The same shape appears wherever a name is doing a job other than naming its own place. A venue called
+after a city. A street named after a state. A town whose name is also a direction word. Any string
+that appears in both the place vocabulary and the address vocabulary will be classified wrongly, with
+high confidence, whenever the surrounding structure is what decides it — and the surrounding structure
+is what the classifier has not looked at yet.
+
+There are two ways out and neither removes the ambiguity. One is to reverse the order: propose the
+boundaries first, from structural cues rather than dictionaries, and only then ask what each proposed
+span is. The other is to decide both at once, over the whole string, so the label for one span can
+depend on its neighbours. Mailwoman does both — a grouping stage before the labelling stage, and a
+labelling stage that reads the entire input rather than one token at a time — which moves the decision
+to where the most evidence is. It does not make the input unambiguous. `Springfield` on its own is
+undecidable no matter what reads it, because the information required is not in the string.
+
+That last point is the one worth carrying: some inputs are irreducibly ambiguous, and the correct
+output for them is not a better guess. It is a result that says so.
+
+## Three: the register users type is not the register data is stored in
+
+Gazetteers store `Montréal`, `İstanbul`, `São Paulo`, in title case, with the accents, under the
+official name. Users type `montreal`, on a phone, in one lowercase run, having learned from a decade
+of map search boxes that capitalisation is not required and diacritics are not reachable.
+
+Lowercase is not degraded input. It is the register real users type, and a system that treats it as an
+error case has misidentified where its users live. The same is true of the colloquial name (`Bombay`
+for `Mumbai`, `Saigon` for `Ho Chi Minh City`) — both names in each pair are in current use by
+millions of people, and the choice between them can carry political weight. Rejecting one is rejecting
+real usage; silently rewriting it is making a decision on the user's behalf that they did not ask for.
+
+And the same is true of the wrong-but-workable name: the neighbourhood given as the city, the
+independent city given as its larger neighbour, the postal town that is not the municipality. In every
+one of those cases the person supplied enough for a knowledgeable local to find the place. The parser
+failed because it was built for addresses rather than for people.
+
+The practical consequence is that case, accents and colloquial forms are signal to be handled rather
+than noise to be stripped — and that a normalisation which flattens them can destroy the evidence the
+labelling stage needed. [Handle messy input](../../how-to/handle-messy-input.mdx) shows what the
+pipeline absorbs unaided, what the normalise stage repairs, and the one case where stripping does harm.
+
+## What follows from all three
+
+If the grammar is per-country, the ambiguity is intrinsic, and the input register is not the storage
+register, then a parser cannot be finished. There is no state in which the rule set covers the cases,
+because the cases combine: a Cyrillic street name, in a non-English order, with an apostrophe in it,
+in a town that was renamed last year.
+
+So the design goal moves. It stops being "return the right answer" and becomes "return an answer whose
+own reliability is legible" — surface the alternatives when several readings are live, report the
+grain of the coordinate rather than only the coordinate, and let the consumer decide how much
+ambiguity its task can absorb. That is the same discipline the postal system itself runs on: the
+sorting machine passes what it cannot read to a person, and the person passes what they cannot resolve
+to the carrier who knows the route. Each link hands the next one enough to decide.
+
+There is a limit on the learning side too, and it belongs in the same breath. A model that has seen no
+fractional house numbers will not invent the category; it will assign the pieces to whatever its
+training distribution makes likely. Learning the distribution beats enumerating the rules, and it is
+not a way of escaping the need for data about the shapes you care about.
+
+## Related
+
+- [Falsehoods about addresses](../postal/falsehoods-about-addresses.mdx) — the specimens, twenty-five
+  of them.
+- [Addressing around the world](../postal/addressing-around-the-world.mdx) — the conventions the first
+  section refers to.
+- [Handle messy input](../../how-to/handle-messy-input.mdx) — what the pipeline repairs, and what it
+  leaves alone.
+- [Understand a parse](../../tutorials/understand-a-parse.mdx) — reading spans, offsets and
+  confidence on a real result.
+- [How close is close enough?](./how-close-is-close-enough.mdx) — what to do with an answer that
+  reports its own uncertainty.

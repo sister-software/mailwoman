@@ -1,0 +1,135 @@
+---
+title: How close is close enough?
+description: Why there is no single accuracy number, what an uncertainty radius promises, and how to decide whether a coordinate is good enough for your task.
+role: explanation
+---
+
+# How close is close enough?
+
+## The question
+
+A geocoder hands you `39.797779, -89.645386` and the obvious thing to ask is whether it is right.
+That question has no answer. Not because geocoders are unknowable, but because "right" assumes one
+tolerance and there isn't one: the same coordinate can be completely adequate for deciding which
+county regulates a facility and completely useless for sending a van to its loading dock.
+
+The question with an answer is a different one. Close enough _for what?_
+
+## The analog
+
+Think about how you'd give directions to two different people. To someone flying in from abroad you
+say "it's in Springfield, Illinois" and that is a complete answer — they need to book a flight, and
+the town is the unit of the decision. To the courier standing outside you say "it's the brown house,
+third from the corner, blue door", and "Springfield, Illinois" would be a joke. Neither answer is more
+accurate than the other. They are answers at different grains, and each is wrong at the other's job.
+
+A geocoder cannot know which of those two people is asking. What it can do is tell you which answer
+it gave.
+
+## Three consumers, three tolerances
+
+Take one resolved address and hand it to three systems.
+
+**A jurisdiction check** wants to know which city, county or regulatory area this facility falls in.
+It needs the point to land inside the correct polygon, and a couple of kilometres of slop inside a
+polygon that spans tens of kilometres changes nothing. A town centroid is a complete answer.
+
+**A record matcher** wants to know whether two records describe the same _building_. Its tolerance is
+tens of metres, because a town centroid fuses every facility in town into one entity. A coordinate
+that satisfied the jurisdiction check destroys this one.
+
+**A dispatcher** wants the door. Its tolerance is metres, and it cares about the tail rather than the
+median — a routing system that is excellent on average and catastrophic once a week is a routing
+system with a weekly incident.
+
+A single number — "median error 3 km" — answers none of the three on its own. It is a fact about a
+distribution, and each consumer needs a fact about _this result_.
+
+## The tier is the grain
+
+The first half of a per-result answer is which method produced the coordinate. A geocoder does not
+have one way of placing a point; it has a ladder, and the rung it reached is the grain of the answer.
+
+Mailwoman reports the rung in `resolution_tier`, with four values. A registered address point, an
+estimate interpolated along a street segment, a street centroid, and an administrative centroid — the
+last of which always exists, because it is what the gazetteer knows. [Improve geocode
+precision](../../tutorials/improve-geocode-precision.mdx) walks all four with real output and shows a
+result moving from the bottom rung to the top one after a per-state download.
+
+The practical rule is that a consumer with a building-grain tolerance should treat an
+administrative-tier result as a building it has not located — even when the centroid happens to be
+three kilometres away and looks close on a map. The tier tells you what kind of thing you were given,
+and no distance can substitute for that.
+
+## The radius is a promise, not an error bar
+
+The second half is a number, and it is the one that gets misread.
+
+`uncertainty_m` is a **radius**, and the claim attached to it is a coverage claim: the true location
+falls inside that radius about 90% of the time. It is not "the answer is off by this much". It is
+"draw this circle and the answer is inside it, nine times in ten".
+
+That distinction matters because a radius is only worth anything if it has been calibrated against
+measured error. An uncalibrated radius — half the length of the matched street segment, say — sounds
+principled and is decoration if the truth falls outside it three times in ten. Mailwoman's
+interpolation radius is calibrated per region for exactly that reason, and the tutorial above shows
+the resulting numbers alongside the results they describe.
+
+Once the radius means what it says, "close enough" becomes arithmetic you can run:
+
+> My tolerance is 50 m. This result reports a 90% radius of 141 m. That is not close enough — abstain,
+> or escalate this one.
+
+Which is a far better position than trusting a bare coordinate that is secretly a city centre.
+
+## The two ways a number can be absent
+
+Two absences look alike in a result and mean opposite things.
+
+At the top tier, Mailwoman reports `uncertainty_m: 1` — a floor rather than a measurement. A
+registered address point is a surveyed position; the 1 is there to say "this is as good as this
+system's units get", not to claim millimetre knowledge.
+
+At the administrative tier it reports `uncertainty_m: null`, and that is not zero uncertainty. It is
+the absence of an estimate: no finer method fired, so there is nothing to price. A consumer that reads
+a missing radius as a small radius has inverted the meaning of the field. Branch on the tier, then read
+the radius — not the other way round.
+
+## Precision is not the frontier; coverage is
+
+Where a fine tier fires, the accuracy is a property of the underlying register rather than of any
+model, and it is good. The interesting question is how much of your data a fine tier fires on at all,
+and that is decided by whether a shard covers the place — a data question, answered by downloads and
+by what open data exists for a country.
+
+This has a consequence for how you read a disappointing result. An administrative-tier answer in a
+country with rooftop coverage is worth investigating, because something upstream probably went wrong.
+The same answer in a country with no rooftop register is the system working correctly and saying so.
+[Locales and tiers](../../reference/locales-and-tiers.mdx) is where the per-locale picture lives.
+
+## The false confidence of decimals
+
+One habit worth breaking. A coordinate printed to eight decimal places looks authoritative — eight
+decimals of latitude is about a millimetre of ground — and consumers treat it accordingly. But
+decimal places are a property of the number's formatting, and they survive every rounding of the
+truth beneath them. A city centroid printed to eight decimals is a city centroid.
+
+The tier and the radius are the fields that carry the precision claim. The coordinate never did.
+
+## What it costs
+
+Reporting a grain and a radius instead of one score pushes a decision onto the consumer, and that is a
+real cost: you have to decide your own tolerance, in metres, and write the comparison. Systems that
+return a single confidence score are easier to consume and are answering a question they were never
+given the inputs for, because "close enough" is a comparison against a tolerance the geocoder was
+never told.
+
+## Related
+
+- [What geocoding is](./what-geocoding-is.mdx) — where precision tiers come from.
+- [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) — the four tiers with
+  real output.
+- [Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx) — the parser's separate
+  confidence number and how to act on it.
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) — which locales carry which coverage.
+- [Gazetteers](./gazetteers.mdx) — why the administrative tier exists everywhere.

@@ -146,6 +146,27 @@ const sidebars: SidebarsConfig = {
 						"developers/knowledge-base/postal/falsehoods-about-addresses",
 					],
 				},
+				{
+					type: "category",
+					label: "Geocoding",
+					// Reading order, and it builds the same way the postal shelf does. The first page
+					// defines the job (forward and reverse, place against coordinate, precision tiers);
+					// the second is the shelf's argument — the two ways the job is built, and what each
+					// costs to run; the third is the place database both designs sit on. Those three are
+					// the machinery. The last three are the judgment calls that follow from it: how to
+					// decide whether a coordinate is good enough, how to choose among the shapes on the
+					// market, and why the parsing half resists rules in the first place.
+					// `why-addresses-are-hard` sits last for the same reason `falsehoods` does next door —
+					// it is the distillation, and it reads better once the machinery is familiar.
+					items: [
+						"developers/knowledge-base/geocoding/what-geocoding-is",
+						"developers/knowledge-base/geocoding/the-two-architectures",
+						"developers/knowledge-base/geocoding/gazetteers",
+						"developers/knowledge-base/geocoding/how-close-is-close-enough",
+						"developers/knowledge-base/geocoding/the-landscape",
+						"developers/knowledge-base/geocoding/why-addresses-are-hard",
+					],
+				},
 			],
 		},
 		"developers/status",

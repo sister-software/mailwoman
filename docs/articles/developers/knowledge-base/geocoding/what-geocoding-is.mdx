@@ -1,0 +1,131 @@
+---
+title: What geocoding is
+description: Forward and reverse geocoding, why a place and a coordinate are different answers, and the three things people mean when they call a geocode accurate.
+role: explanation
+---
+
+# What geocoding is
+
+## The question
+
+You have `350 5th Ave, New York, NY 10118` and you need a dot on a map. Something has to turn the
+first into the second. That something is a geocoder, and the moment you start comparing two of them
+you find they disagree — not about which building, but about what the answer even is. One returns a
+coordinate. One returns a coordinate, a place name, and an ancestry. One returns six of each. So what
+is the job, and what is it that comes back?
+
+## The analog
+
+Before the phone in your pocket there was a street atlas, and the way you used it was to look up the
+street name in the index at the back. The index did not give you a doorstep. It gave you a page and a
+grid square — `137 J4` — and you turned to page 137 and found the square and read the street off the
+map yourself. Two things happened there, and they are still the two things a geocoder does.
+
+The first is identification: the index decided which `Church Street` you meant, out of the ones the
+atlas carried. The second is location: having decided, it handed back a position at whatever grain
+the atlas was drawn to. A grid square is not a point. Nobody was confused by that, because the square
+was drawn on the page and you could see how big it was.
+
+A geocoder does both jobs and then loses the square. It hands you a latitude/longitude, which looks
+like a doorstep whether or not it is one.
+
+## Forward and reverse
+
+Address to coordinate is **forward geocoding**. Coordinate to address is **reverse geocoding**. They
+sound like the same operation run backwards and they are not, because the inputs have nothing in
+common: forward geocoding starts with a string a person typed, and reverse geocoding starts with a
+number a device measured. Forward geocoding's hard problem is ambiguity — which Church Street. Reverse geocoding's hard problem is containment — this point falls inside a locality
+polygon, a county polygon and a country polygon at once, so which one answers the question.
+
+Mailwoman does both. On the reverse path it takes the places whose bounding boxes contain the point,
+smallest area first, tests each one's real boundary, and reports in a `containment` field whether the
+deepest answer was confirmed by a polygon or fell back to the nearest centre. [Reverse geocode a
+coordinate](../../how-to/reverse-geocode.mdx) is the working version, and that field is why
+[Gazetteers](./gazetteers.mdx) spends a section on which places have a boundary and which have only a
+dot.
+
+## A place is not a coordinate
+
+This is the distinction that costs people the most, so it is worth being slow about.
+
+When a geocoder resolves `Springfield, IL`, two separate things come back. There is the **place**: a
+record in a gazetteer, with a stable identifier, a name, a type (this is a city, not a county), and a
+chain of parents (in Sangamon County, in Illinois, in the United States). And there is the
+**coordinate**, which is a property of that record — the centre of whatever geometry the gazetteer
+holds for it, where it holds one at all.
+
+Those two can fail independently, and that is the whole reason to keep them apart in your head:
+
+- **Right place, coarse coordinate.** The geocoder found the correct city and returned a point in the
+  middle of it. Every downstream question about jurisdiction, coverage or territory is answered
+  correctly. Every question about routing is answered wrongly, by kilometres.
+- **Wrong place, fine coordinate.** The geocoder found a different Springfield and returned a rooftop
+  in it. The coordinate carries eight decimal places and is off by four hundred kilometres.
+
+The second failure is the dangerous one, because nothing in the output looks wrong. Eight decimal
+places of latitude is about a millimetre of ground, and decimals are a property of the number's
+format rather than of the measurement behind it. A coordinate cannot tell you which of the two
+failures you are looking at. Something else has to.
+
+## Precision comes from the source, not the geocoder
+
+The something else is the coordinate's provenance, and the vocabulary for it is **precision tiers**.
+The idea is that a geocoder does not have one way of producing a coordinate; it has several, arranged
+worst-to-best, and it uses the best one that has data for your address. Which one answered is the
+single most useful fact about a result.
+
+The tiers are roughly the same everywhere, whatever the software is called:
+
+- A **registered address point** — someone surveyed the building and wrote down where it is. This is
+  as good as it gets, and it exists only where a register exists.
+- An **interpolated point** — nobody surveyed the building, but the street segment is known to run
+  from number 100 to number 198, so number 150 is estimated about halfway along. That holds where the
+  numbering runs evenly along the segment and fails where it does not, and nothing in the result says
+  which case you got.
+- A **street centroid** — the middle of the street, used when the input carries no house number.
+- An **administrative centroid** — the middle of the town, the postcode, or the region. This tier
+  always exists, because a gazetteer that knows the place at all knows roughly where it is.
+
+Mailwoman names its four in a field called `resolution_tier` and prices the top three with a radius.
+[Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) walks all four with real
+output and the download that moves a result from the bottom tier to the top one.
+
+## Three things people mean by accurate
+
+"Is this geocode accurate?" is three questions wearing one coat, and an argument about geocoders is
+two people answering different ones.
+
+**Did it pick the right place?** A yes/no question about identity. Either the record it resolved is
+the one you meant or it is not, and the distance between them is beside the point — a geocoder that
+returns the wrong Springfield is not 400 km accurate, it is wrong.
+
+**How far is the coordinate from the true location?** A distance question, and the only one of the
+three that a number in metres answers. It is meaningful only once the first question is settled yes.
+
+**Is it close enough for what I am doing?** A comparison, not a property. Assigning a facility to a
+regulator wants the right polygon and does not care about kilometres. Sending a van to a loading dock
+cares about metres and does not care that the town was right. Both consumers can read the same result
+and disagree about whether it worked.
+
+A single accuracy number cannot answer all three, which is why a result worth trusting reports its
+tier and its radius rather than compressing them into one score. [How close is close
+enough?](./how-close-is-close-enough.mdx) is that argument at length.
+
+## What this costs
+
+Splitting identity from location means the output is wider than a coordinate pair, and a consumer who
+reads only `lat` and `lon` gets none of the benefit. That cost is real and it lands on you: the
+fields that tell you how much to trust the point are fields you have to read. A geocoder that returned
+only a coordinate would be easier to consume and would be lying by omission every time it fell back a
+tier.
+
+## Related
+
+- [The two architectures](./the-two-architectures.mdx) — the two ways this job is built, and what
+  each one costs to run.
+- [Gazetteers](./gazetteers.mdx) — the place database the identification half depends on.
+- [Why addresses are hard](./why-addresses-are-hard.mdx) — why the identification half is not a
+  lookup.
+- [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) — Mailwoman's four
+  tiers, with the output.
+- [Reverse geocode a coordinate](../../how-to/reverse-geocode.mdx) — the other direction.
