@@ -13,7 +13,14 @@
  *
  *   `--delta` is REQUIRED with no default: it's the soft-prior bias magnitude a probe hit will
  *   contribute at decode time, and the calibration task (not this one) owns the real value — a
- *   silent default here would let an uncalibrated number ship unnoticed.
+ *   silent default here would let an uncalibrated number ship unnoticed. `--parent-delta` follows the
+ *   same discipline one step weaker: OPTIONAL, no default, and omitting it writes NO header key, so
+ *   an artifact whose locale nobody has boarded the parent side of ships with the parent bias OFF
+ *   rather than with an inherited magnitude (the D-rule's per-locale gate, expressed in the build).
+ *
+ *   PARENT TAGS (PIX2 / schema 3). Every entry records the parent's own `ComponentTag`, and each
+ *   source states it from its own semantics — see {@link SOURCE_PARENT_TAGS} for the table and the
+ *   evidence line behind each row. Nothing here defaults one.
  *
  *   Self-verifying (the sealed-artifact spirit — see AGENTS.md's database section, which this
  *   mirrors for a flat binary): after writing, the command re-reads the bytes through a fresh
@@ -27,6 +34,7 @@
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 // @mailwoman/neural's fst-prior and pair-index-resolver subpaths are self-contained (fst-prior only
 // type-imports from a sibling module; pair-index-resolver only imports core/types) — safe value
@@ -125,6 +133,27 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 }
 
 /**
+ * The parent-slot `ComponentTag` each source column carries (PIX2 / schema 3). PIX2 records the parent's tag per entry
+ * rather than deriving it from the child's, so every source has to name the slot it read. The evidence for each:
+ *
+ * - `registerDistrict` — the `--source` CSV's `DISTRICT` column. On GB's PPD tuples that is the POST TOWN
+ *   (`corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate reads it as the locality line); on the NZ
+ *   LINZ/OpenAddresses countrywide export it is the town/city above the suburb in `CITY`. Both are the locality slot.
+ * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
+ *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
+ *   Belfast-area, R7), `gb-regions-v1.jsonl` (10,708 Scotland/Wales/England villages under their post town or civil
+ *   parish, R8 — with the parish's administrative suffix STRIPPED precisely so the parent reads as the town an address
+ *   writes). A line may override with its own `parentTag` when a future source is not that shape.
+ *
+ * The two remaining sources state their own and are not in this table: `--borough-db` reads the WOF parent ROW's
+ * placetype per pair (`borough-pairs.ts`), and `--ban-dir` is always the commune (`lieudit-pairs.ts`).
+ */
+const SOURCE_PARENT_TAGS = {
+	registerDistrict: "locality",
+	secondaryPairsJSONL: "locality",
+} as const satisfies Record<string, ComponentTag>
+
+/**
  * Split a comma-separated path list, tolerating whitespace and an absent value. Each secondary source stays its OWN
  * file rather than being pre-merged into a blob, so every one keeps a distinct provenance md5 in the header — which is
  * what lets a freshness guard notice that exactly one of them changed.
@@ -154,6 +183,16 @@ const OptionsSchema = zod.object({
 				"first piece; TRANSITION-BETA build). Written into the PIX1 header ONLY when passed — " +
 				"omitting it builds a beta-less artifact (no transition term at decode, the pre-beta behavior). " +
 				"Per-country calibration like --delta: GB ships 5; NZ ships without it."
+		),
+	parentDelta: zod
+		.number()
+		.optional()
+		.describe(
+			"OPTIONAL, no default — the WHOLE-EDGE bias magnitude a probe hit contributes to the PARENT window " +
+				"(+parentDelta on the record's own parentTag; #46). Written into the PIX1 header ONLY when passed — " +
+				"omitting it builds an artifact whose parent bias is OFF, which is the correct posture for any locale " +
+				"whose parent side no board has graded (the D-rule per-locale gate). us/gb/nz/fr ship 5 " +
+				"(docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md); de/in/es/it ship without it."
 		),
 	holdoutFraction: zod
 		.number()
@@ -237,7 +276,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 					continue
 				}
 
-				builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "")
+				builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "", SOURCE_PARENT_TAGS.registerDistrict)
 			}
 		}
 
@@ -248,8 +287,10 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (options.boroughDb) {
 			const before = builder.distinctCount
 
+			// `pair.parentTag` is the WOF parent ROW's placetype projection, not a per-source constant — a
+			// locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
 			for (const pair of extractBoroughPairs(options.boroughDb, country.toUpperCase())) {
-				builder.addRow(pair.child, pair.parent)
+				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
 			boroughsAdded = builder.distinctCount - before
@@ -264,7 +305,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			const { pairs, rowsWithLieuDit, filesRead } = await extractLieuDitPairs(options.banDir)
 
 			for (const pair of pairs) {
-				builder.addRow(pair.child, pair.parent)
+				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
 			boroughsAdded += builder.distinctCount - before
@@ -283,8 +324,16 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 
 				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
 				// ward export already runs to hundreds of thousands of rows.
-				for await (const pair of JSONSpliterator.fromAsync<{ child: string; parent: string }>(path)) {
-					builder.addRow(pair.child, pair.parent)
+				// A line MAY carry its own `parentTag`; all three shipped files are (neighbourhood, post town)
+				// sets, so absent means `SOURCE_PARENT_TAGS.secondaryPairsJSONL` — see that table's evidence
+				// line. The per-line key exists so a future source of a different shape declares itself rather
+				// than inheriting a reading that was only ever true of these three.
+				for await (const pair of JSONSpliterator.fromAsync<{
+					child: string
+					parent: string
+					parentTag?: ComponentTag
+				}>(path)) {
+					builder.addRow(pair.child, pair.parent, pair.parentTag ?? SOURCE_PARENT_TAGS.secondaryPairsJSONL)
 				}
 
 				boroughsAdded += builder.distinctCount - before
@@ -315,8 +364,9 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
 		]
 
-		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
-		// beta-less binary, byte-shape-identical to every pre-TRANSITION-BETA artifact) — not a null/0.
+		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes NO header key at
+		// all — not a null/0. For both, ABSENT means the mechanism is off, which is a different statement from
+		// "off because the magnitude happens to be zero", and the reader treats them that way.
 		// schemaVersion + tagTable are stamped by serializePairIndex — format-owned, not builder claims.
 		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
@@ -325,6 +375,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			sourceMD5s,
 			buildDate: new Date().toISOString(),
 			...(options.transitionBeta !== undefined ? { transitionBeta: options.transitionBeta } : {}),
+			...(options.parentDelta !== undefined ? { parentDelta: options.parentDelta } : {}),
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
@@ -347,10 +398,12 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const probeLines = countryProbePairs.map(([city, district]) => {
 			const child = normalizeFSTToken(city)
 			const parent = normalizeFSTToken(district)
-			const tag = resolver.probe(child, parent)
+			const edge = resolver.probe(child, parent)
 
-			return tag
-				? `PROBE OK: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → ${tag}`
+			// Print BOTH ends: a readback that shows only the child tag cannot catch a builder that wrote the
+			// wrong parent tag, which is the failure mode PIX2 newly makes possible.
+			return edge
+				? `PROBE OK: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → ${edge.tag} under ${edge.parentTag}`
 				: `PROBE MISS: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → (no entry)`
 		})
 
@@ -395,7 +448,8 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
 			`header: delta=${options.delta}` +
-				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)"),
+				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)") +
+				(options.parentDelta !== undefined ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
 			...(holdoutLine ? [holdoutLine] : []),

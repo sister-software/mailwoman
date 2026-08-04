@@ -259,7 +259,7 @@
  *   venue-title preposition ("New Inn at Hoff") keeps the emission bias but draws NO transition
  *   adjustment — see {@link TITLE_PREPOSITION_PREDECESSORS} for the rationale and growth discipline.
  *
- *   **Whole-edge parent bias (issue #46, OFF by default).** Everything above biases the CHILD only, on the stated
+ *   **Whole-edge parent bias (issue #46).** Everything above biases the CHILD only, on the stated
  *   assumption that "the parent keeps the model's own — typically strong `locality` — read". Nothing checks that
  *   assumption: `buildPlacetypePairPriors` never receives the emissions. Where it fails, the mechanism REMOVES an admin
  *   level instead of adding one — measured on `brooklyn, new york, ny` (shipped en-US weights,
@@ -268,13 +268,17 @@
  *   tree, where `brooklyn` was `B-locality` at p=0.942. See
  *   `docs/records/evals/2026-08-04-pix1-parent-assumption.md`.
  *
- *   {@link PlacetypePairPriorOpts.parentDelta} writes the other half of the edge: every tag in
- *   `containmentFor(system)[childTag]` gets `+parentDelta` over the parent window (see
- *   {@link applyParentContainmentBias} for why the parent's allowed tags are DERIVED from the containment map rather
- *   than carried in the artifact, and for the construction argument about where the bias is inert). Emission-only — the
- *   child's calibrated `transitionBeta` is not inherited. `undefined` (the default) is byte-identical to every pre-#46
- *   build, and stays the default until the four bars in
- *   `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear.
+ *   The parent bias writes the other half of the edge: the record's OWN `parentTag` gets `+parentDelta` over the parent
+ *   window (see {@link applyParentTagBias}). Emission-only — the child's calibrated `transitionBeta` is not inherited.
+ *   The magnitude resolves as `opts.parentDelta ?? index.parentDelta`: the artifact header carries the calibrated
+ *   per-country value (5 on us/gb/nz/fr, absent on de/in/es/it — see `PairIndexHeader.parentDelta`) exactly as `delta`
+ *   and `transitionBeta` do, and an explicit opt (which `MAILWOMAN_PAIR_PARENT_DELTA` feeds) overrides it so an eval can
+ *   sweep without rebuilding artifacts. Both absent → no parent write at all, byte-identical to every pre-#46 build.
+ *
+ *   PIX2 (schema 3) is what made this per-record. The first implementation derived the parent's allowed tags from
+ *   `containmentFor(system)[childTag]` and biased every member equally, which is inert wherever the set has more than
+ *   one member and cannot express an edge containment disallows (the US source's `dependent_locality` under a BOROUGH).
+ *   The tag now comes off the record.
  *
  *   One interaction worth naming: in segment/window mode every candidate takes the X (child) role in its own iteration,
  *   so a chain `A, B, C` where both (A,B) and (B,C) fire writes a CHILD bias and a PARENT bias onto B, toward different
@@ -291,11 +295,10 @@ import { CODE_POSTAL_PATTERN } from "@mailwoman/codex/fr"
 import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
 import { CAP_PATTERN } from "@mailwoman/codex/it"
 import { NZ_POSTCODE_PATTERN } from "@mailwoman/codex/nz"
-import { type AddressSystem, containmentFor } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import { groupPiecesIntoWords, type WordGroup } from "./fst-prior.ts"
-import type { PairIndexLike } from "./pair-index-resolver.ts"
+import type { PairEdge, PairIndexLike } from "./pair-index-resolver.ts"
 import { collectMatches } from "./postcode-repair.ts"
 import type { TokenLike } from "./query-shape-prior.ts"
 
@@ -404,10 +407,11 @@ export interface PlacetypePairProbeTrace {
 	 * Every CHILD tag a pair hit asserted on this input, in fire order, duplicates included (#46). Recorded on the hit —
 	 * not on the emission write — so a hit whose tag this checkpoint's label set lacks still shows up here.
 	 *
-	 * Exists because the whole-edge parent bias is only as constrained as the child tag: `containmentFor(system)[T]` is a
-	 * single-element set for `dependent_locality` and a three-element one for `locality`, and bar B-1 grades
-	 * byte-stability on exactly the ≥2-element population. Reading the fired tags is the only way to sort a row into that
-	 * population without re-deriving the probe.
+	 * Added for bar B-1, which graded byte-stability on the rows whose child tag allowed ≥2 parents under the containment
+	 * DERIVATION the parent bias used at the time. PIX2 (schema 3) retired that derivation — the parent tag now comes off
+	 * the record — so the population B-1 sorted on no longer exists. Kept because it is the only way to read which tags a
+	 * probe actually asserted on a row without re-deriving the probe, which board builders and flip attribution both
+	 * want.
 	 */
 	firedChildTags?: ComponentTag[]
 }
@@ -445,20 +449,15 @@ export interface PlacetypePairPriorOpts {
 	probeTrace?: PlacetypePairProbeTrace
 	/**
 	 * WHOLE-EDGE bias magnitude for the PARENT window (issue #46 — see the module docstring's "Whole-edge parent bias"
-	 * section). `undefined` (the default) = child-only, byte-identical to every pre-#46 build.
+	 * section). OVERRIDES the loaded index's own `parentDelta` header field; omit it to use the artifact's calibrated
+	 * value. Both absent = child-only, byte-identical to every pre-#46 build.
 	 *
 	 * Deliberately its OWN number rather than reusing `index.delta`. The child δ was sized to clear a ~7.0-logit TRAINING
 	 * deficit on a tag the shipped lineage never learned; the parent bias instead argues with a normal, healthy model
 	 * read (4.21 nats on "new york" in `brooklyn, new york, ny`), so inheriting the child's δ would be an uncalibrated
-	 * guess. Calibrating it is pre-registered bar B-4.
+	 * guess. Bar B-4 calibrated it independently and landed on 5.
 	 */
 	parentDelta?: number
-	/**
-	 * Addressing system whose containment map supplies the parent's allowed tags (see {@link containmentFor}). Only read
-	 * when {@link parentDelta} is set. `undefined` = the default Western hierarchy, which is what every system resolves to
-	 * today; the parameter exists so a future system-specific map threads through without a call-site change.
-	 */
-	system?: AddressSystem
 }
 
 /**
@@ -527,11 +526,11 @@ interface CandidateWindow {
 	 * The pieces the probe KEY actually covers, when that is narrower than {@link pieceIndices} — i.e. a segment whose key
 	 * had a same-field postcode stripped (#1308 / the leading-postcode countries). Absent when the two coincide.
 	 *
-	 * Read ONLY by the whole-edge parent write ({@link applyParentContainmentBias}). The child write deliberately keeps
-	 * spanning the whole segment, which is what it has always done. The distinction is not cosmetic: a French parent
-	 * segment is "12210 Montpeyroux", the key is "montpeyroux", and biasing the whole segment toward `locality` emits
-	 * `locality = "12210 Montpeyroux"` — postcode included. Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% →
-	 * 0.0% at parentDelta ≥ 6 before this field existed, with the child still correct on 77/80.
+	 * Read ONLY by the whole-edge parent write ({@link applyParentTagBias}). The child write deliberately keeps spanning
+	 * the whole segment, which is what it has always done. The distinction is not cosmetic: a French parent segment is
+	 * "12210 Montpeyroux", the key is "montpeyroux", and biasing the whole segment toward `locality` emits `locality =
+	 * "12210 Montpeyroux"` — postcode included. Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at
+	 * parentDelta ≥ 6 before this field existed, with the child still correct on 77/80.
 	 */
 	keyPieceIndices?: number[]
 }
@@ -785,15 +784,15 @@ function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {
  * order and returns the first hit; a window's two forms collapse to one string when it's a single word, so this is a
  * single probe (not four) for the common case.
  */
-function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateWindow): ComponentTag | undefined {
+function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateWindow): PairEdge | undefined {
 	const xKeys = x.key === x.concatKey ? [x.key] : [x.key, x.concatKey]
 	const yKeys = y.key === y.concatKey ? [y.key] : [y.key, y.concatKey]
 
 	for (const xKey of xKeys) {
 		for (const yKey of yKeys) {
-			const tag = index.probe(xKey, yKey)
+			const edge = index.probe(xKey, yKey)
 
-			if (tag) return tag
+			if (edge) return edge
 		}
 	}
 
@@ -867,7 +866,7 @@ function resolveAnchorParentEnd(
  * immediately left of the parent (`child.endPos + 1 === parent.startPos`), both tried longest-first — which is what
  * implements the left-maximality rule: for a given parent, the longest child pairing with it is found (and returned)
  * before any of its right-suffixes can be probed. Returns the FIRST hit — the child span the caller biases, the PARENT
- * window it matched against (for the whole-edge parent bias, {@link applyParentContainmentBias}), and the tag.
+ * window it matched against (for the whole-edge parent bias, {@link applyParentTagBias}), and the typed edge.
  *
  * Marker suppression: an adjacent child's successor word is always the parent's own first word, identical for every
  * child length under that parent — so one suppressed child suppresses the whole child loop for that parent (`break`,
@@ -877,7 +876,7 @@ function probeAnchoredAdjacentPair(
 	index: PairIndexLike,
 	nonEmptyGroups: readonly WordGroup[],
 	parentEnd: number
-): { child: CandidateWindow; parent: CandidateWindow; tag: ComponentTag } | undefined {
+): { child: CandidateWindow; parent: CandidateWindow; edge: PairEdge } | undefined {
 	// parentStart must leave at least one word-group to its left for a child, so parentLen caps at parentEnd.
 	const maxParentLen = Math.min(WINDOW_MAX_WORDS, parentEnd)
 
@@ -892,9 +891,9 @@ function probeAnchoredAdjacentPair(
 
 			if (isMarkerSuppressed(nonEmptyGroups, child)) break
 
-			const tag = probeWindowPair(index, child, parent)
+			const edge = probeWindowPair(index, child, parent)
 
-			if (tag) return { child, parent, tag }
+			if (edge) return { child, parent, edge }
 		}
 	}
 
@@ -943,8 +942,8 @@ function recordFiredChildTag(trace: PlacetypePairProbeTrace | undefined, tag: Co
  * index asserting a tag this checkpoint never learned) — the caller then skips the transition adjustment too, so a hit
  * the emission side dropped never leaves a half-applied bias behind.
  *
- * Shared by the CHILD write ({@link applyWindowBias}) and the WHOLE-EDGE parent write
- * ({@link applyParentContainmentBias}) so the two can never drift on B/I placement or on `Math.max` composition.
+ * Shared by the CHILD write ({@link applyWindowBias}) and the WHOLE-EDGE parent write ({@link applyParentTagBias}) so
+ * the two can never drift on B/I placement or on `Math.max` composition.
  */
 function writeSpanBias(
 	matrix: number[][],
@@ -974,42 +973,28 @@ function writeSpanBias(
  * A pair hit asserts a typed (child, parent) hierarchical edge. Biasing only the child asserts half of it, on the
  * unchecked assumption that the parent already reads as the child's containing level; where that assumption fails the
  * mechanism REMOVES an admin level instead of adding one (`brooklyn, new york, ny` → `dependent_locality` + no locality
- * at all, worse than the pre-prior tree). This writes the other half: on a hit with child tag `T`, every tag in
- * `containmentFor(system)[T]` gets `+parentDelta` over the PARENT window.
+ * at all, worse than the pre-prior tree). This writes the other half: `+parentDelta` on the record's OWN `parentTag`
+ * over the PARENT window.
  *
- * The parent's allowed tags are DERIVED from the containment map, never carried in the artifact. `WESTERN_PARENT_OF`
- * already owns that fact and agrees with every builder edge in the tree; a copy in every index would denormalize it and
- * go stale the first time containment changes.
- *
- * Every member of the allowed set gets the SAME δ, so the model's own read breaks ties among them. That is what makes
- * the bias inert exactly where the child tag does not constrain the parent (a `locality` child allows `{subregion,
- * region, country}` — biasing all three equally leaves whichever the model already preferred on top) and decisive where
- * it does (a `dependent_locality` child allows `{locality}` alone, so a competing `region` read loses). That is a
- * construction ARGUMENT about the arithmetic, not a measured result — bar B-1 tests it.
+ * The tag comes off the RECORD (PIX2 / schema 3), not from `containmentFor(system)[childTag]`. The containment map
+ * answers a different question — which parents the tree builder will ACCEPT for a tag — and the two diverge in both
+ * directions. It cannot express the US source's `dependent_locality` under a borough (containment allows `locality`
+ * alone), and where its set has several members the derivation biased them all equally and therefore moved nothing.
  *
  * Emission-only by design: no transition adjustment. `transitionBeta` is the child's calibrated path-fusion lever (β=5,
  * measured on the child span's entry transition); the parent bias has no such calibration and must not inherit one.
  */
-function applyParentContainmentBias(
+function applyParentTagBias(
 	matrix: number[][],
 	labelToCol: ReadonlyMap<string, number>,
 	parent: CandidateWindow,
-	childTag: ComponentTag,
-	parentDelta: number,
-	system: AddressSystem | undefined
+	parentTag: ComponentTag,
+	parentDelta: number
 ): void {
-	const allowed = containmentFor(system)[childTag]
-
-	if (!allowed?.length) return
-
 	// The KEY's span, not the whole segment — see `CandidateWindow.keyPieceIndices` for the FR measurement that forced
 	// the distinction. The child write keeps the whole segment; only the parent needs the narrower one, because only
 	// the parent's segment carries a same-field postcode.
-	const pieceIndices = parent.keyPieceIndices ?? parent.pieceIndices
-
-	for (const parentTag of allowed) {
-		writeSpanBias(matrix, labelToCol, pieceIndices, parentTag, parentDelta)
-	}
+	writeSpanBias(matrix, labelToCol, parent.keyPieceIndices ?? parent.pieceIndices, parentTag, parentDelta)
 }
 
 /**
@@ -1077,8 +1062,11 @@ export function buildPlacetypePairPriors(
 	const { index } = opts
 	const bias = index.delta ?? opts.biasScale ?? DEFAULT_DELTA
 	const transitionBeta = index.transitionBeta
-	// `undefined` = child-only, the pre-#46 behavior. Read once here so every emitting path shares one resolution.
-	const parentDelta = opts.parentDelta
+	// Explicit opt WINS over the header — that ordering is what lets `MAILWOMAN_PAIR_PARENT_DELTA` sweep δ against a
+	// shipped artifact without rebuilding it. Both absent = child-only, the pre-#46 behavior. Read once here so every
+	// emitting path shares one resolution. (`delta` resolves the other way round on purpose: its `opts.biasScale` is a
+	// FALLBACK for a hand-built double, not an override.)
+	const parentDelta = opts.parentDelta ?? index.parentDelta
 
 	const labelToCol = new Map<string, number>()
 
@@ -1126,21 +1114,21 @@ export function buildPlacetypePairPriors(
 		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd)
 
 		if (hit) {
-			recordFiredChildTag(opts.probeTrace, hit.tag)
+			recordFiredChildTag(opts.probeTrace, hit.edge.tag)
 
 			applyWindowBias(
 				nonEmptyGroups,
 				matrix,
 				labelToCol,
 				hit.child,
-				hit.tag,
+				hit.edge.tag,
 				bias,
 				transitionBeta,
 				transitionAdjustments
 			)
 
 			if (parentDelta !== undefined) {
-				applyParentContainmentBias(matrix, labelToCol, hit.parent, hit.tag, parentDelta, opts.system)
+				applyParentTagBias(matrix, labelToCol, hit.parent, hit.edge.parentTag, parentDelta)
 			}
 
 			if (opts.probeTrace) {
@@ -1174,7 +1162,7 @@ export function buildPlacetypePairPriors(
 		const previous = probeMode !== "window" && wi > 0 ? windows[wi - 1]! : undefined
 		const isIdentityRepeat = previous !== undefined && previous.endPos + 1 === x.startPos && sharesFoldForm(previous, x)
 
-		let matchedTag: ComponentTag | undefined
+		let matchedEdge: PairEdge | undefined
 		// The PARENT window of the matched pair, retained for the whole-edge parent bias (#46). `x` is the child by
 		// construction — `probeWindowPair(index, x, y)` probes the index in (child, parent) key order — so the `y` that
 		// produced the hit IS the asserted parent.
@@ -1185,24 +1173,24 @@ export function buildPlacetypePairPriors(
 
 			if (isIdentityRepeat && sharesFoldForm(x, y)) continue
 
-			const tag = probeWindowPair(index, x, y)
+			const edge = probeWindowPair(index, x, y)
 
-			if (tag) {
-				matchedTag = tag
+			if (edge) {
+				matchedEdge = edge
 				matchedParent = y
 
 				break
 			}
 		}
 
-		if (!matchedTag) continue
+		if (!matchedEdge) continue
 
-		recordFiredChildTag(opts.probeTrace, matchedTag)
+		recordFiredChildTag(opts.probeTrace, matchedEdge.tag)
 
-		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedTag, bias, transitionBeta, transitionAdjustments)
+		applyWindowBias(nonEmptyGroups, matrix, labelToCol, x, matchedEdge.tag, bias, transitionBeta, transitionAdjustments)
 
 		if (parentDelta !== undefined) {
-			applyParentContainmentBias(matrix, labelToCol, matchedParent!, matchedTag, parentDelta, opts.system)
+			applyParentTagBias(matrix, labelToCol, matchedParent!, matchedEdge.parentTag, parentDelta)
 		}
 
 		anyApplied = true

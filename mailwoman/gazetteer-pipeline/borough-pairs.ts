@@ -25,6 +25,9 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import type { ComponentTag } from "@mailwoman/core/types"
+
+import { PLACETYPE_PROJECTION } from "./placetype-census.ts"
 
 /**
  * One borough pair in the pair-index entry shape (`normalizeFSTToken`-folded keys are the BUILDER's job — this module
@@ -34,6 +37,34 @@ export interface BoroughPair {
 	child: string
 	parent: string
 	tag: "dependent_locality"
+	/**
+	 * The parent row's own `ComponentTag` (PIX2 / schema 3) — the WOF `placetype` of the ancestor this pair was drawn
+	 * from, projected through {@link PLACETYPE_PROJECTION}. Per-ROW, not per-source: `PAIR_PLACETYPES_BY_COUNTRY` admits
+	 * `locality`, `localadmin` AND `borough` as parents on several countries, and those do not project to the same tag
+	 * (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`). Deriving it from the CHILD's tag instead
+	 * — the pre-PIX2 containment approach — cannot express the borough-parent case at all: `WESTERN_PARENT_OF` gives
+	 * `dependent_locality` exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
+	 */
+	parentTag: ComponentTag
+}
+
+/**
+ * Project a WOF parent placetype onto the `ComponentTag` the parent span carries. Throws rather than defaulting: every
+ * placetype this module can select is in {@link PLACETYPE_PROJECTION} by construction (the SQL's parent list is drawn
+ * from `PAIR_PLACETYPES_BY_COUNTRY`), so a miss means someone added a placetype to that table without deciding what it
+ * projects to — which is exactly the decision PIX2 exists to stop being made silently.
+ */
+function parentTagFor(placetype: string): ComponentTag {
+	const tag = PLACETYPE_PROJECTION[placetype]
+
+	if (!tag) {
+		throw new Error(
+			`extractBoroughPairs: WOF placetype "${placetype}" has no ComponentTag projection — ` +
+				`add it to PLACETYPE_PROJECTION deliberately rather than defaulting a parent tag`
+		)
+	}
+
+	return tag
 }
 
 /**
@@ -125,7 +156,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 		const rows = db
 			.prepare(
-				`SELECT DISTINCT s.name AS child, p.name AS parent
+				`SELECT DISTINCT s.name AS child, p.name AS parent, p.placetype AS parent_placetype
 				 FROM spr s
 				 JOIN ancestors a ON a.id = s.id
 				 JOIN spr p ON p.id = a.ancestor_id
@@ -138,7 +169,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 				   AND p.is_current != 0
 				   AND p.is_deprecated = 0`
 			)
-			.all(country) as Array<{ child: string; parent: string }>
+			.all(country) as Array<{ child: string; parent: string; parent_placetype: string }>
 
 		// Parent ALIAS expansion. A writer uses the name they know, which is not always WOF's preferred one: WOF stores
 		// Bangalore, while an Indian address today almost always says Bengaluru (renamed 2014, and WOF carries it as an
@@ -192,21 +223,25 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		const seen = new Set<string>()
 		const pairs: BoroughPair[] = []
 
-		for (const { child, parent } of rows) {
+		for (const { child, parent, parent_placetype } of rows) {
 			const key = `${child} ${parent}`
 
 			if (seen.has(key) || !child || !parent || child === parent) continue
 
+			const parentTag = parentTagFor(parent_placetype)
+
 			seen.add(key)
-			pairs.push({ child, parent, tag: "dependent_locality" })
+			pairs.push({ child, parent, tag: "dependent_locality", parentTag })
 
 			for (const alias of aliasesByParent.get(parent) ?? []) {
 				const aliasKey = `${child} ${alias}`
 
 				if (seen.has(aliasKey) || child === alias) continue
 
+				// An alias is a second SURFACE for the same parent row, so it carries that row's placetype and
+				// therefore the same tag — the alias query is scoped to the same parent placetype list.
 				seen.add(aliasKey)
-				pairs.push({ child, parent: alias, tag: "dependent_locality" })
+				pairs.push({ child, parent: alias, tag: "dependent_locality", parentTag })
 			}
 		}
 

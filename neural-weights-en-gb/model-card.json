@@ -24,9 +24,10 @@
 			"format": "PIX1 placetype-pair index (placetype-pair-prior arc, Task 3) \u2014 a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Fishburn\", \"Stockton-on-Tees\")",
 			"source": "HM Land Registry Price Paid Data (PPD) tuples CSV, $MAILWOMAN_DATA_ROOT/ppd/2026-07-22/gb-tuples.csv, md5 dbd675bdc970ea60f96f0a470429a128, 25,674,048 rows",
 			"pairs": 30825,
-			"bytes": 762269,
+			"bytes": 793449,
 			"md5": "(staged at release time \u2014 see $comment_md5)",
-			"delta_calibration": "\u03b4=10 (Option-A sweep on the SHIPPED v385, task-8 report 2026-07-23 \u2014 supersedes 6.6.0's \u03b4=5.0, which was calibrated for the never-promoted feed-8k candidate and is provably inert on v385: 0/69). v385's dead-row deficit is uniform (~7.0 logits mean, 4.95 min), so the emit/correct curves and the venue-FP curve all saturate together at \u03b4=10 (\u03b4=12/15 byte-flat). \u03b4 remains a recall/FP dial in general \u2014 the sweep table lives in eval.delta_sweep_v385 below.",
+			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's \u2014 +1 byte per pair, pair COUNT unchanged. Schema 1 and 2 binaries are refused; the artifact must be rebuilt.",
+			"delta_calibration": "parentDelta=5 (whole-edge parent bias, #46 \u2014 the record's own parentTag gets +5 over the parent window). \u03b4=5 is the smallest magnitude that saturates bar B-2's brooklyn-class sub-board and is flat through 20, at 0.00% parent-side FP on B-3: docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md. GB's own shipped board moved 66/69 \u2192 69/69 whole-edge with it on. \u03b4=10 (Option-A sweep on the SHIPPED v385, task-8 report 2026-07-23 \u2014 supersedes 6.6.0's \u03b4=5.0, which was calibrated for the never-promoted feed-8k candidate and is provably inert on v385: 0/69). v385's dead-row deficit is uniform (~7.0 logits mean, 4.95 min), so the emit/correct curves and the venue-FP curve all saturate together at \u03b4=10 (\u03b4=12/15 byte-flat). \u03b4 remains a recall/FP dial in general \u2014 the sweep table lives in eval.delta_sweep_v385 below.",
 			"probe_mode": "\"auto\" (@mailwoman/neural \u22657.7.0 default): the segment path on comma'd input (whole comma-delimited segments \u2014 byte-identical to the previous \"segment\" default by construction AND re-measurement), the ANCHORED-ADJACENT path on comma-free input (parent window anchored immediately left of the postcode-shaped span or string-final; child window immediately adjacent, left-maximal; bias on the child span only). Window mode (any-to-any geometry) remains opt-in-only: 79% venue-confound FP at \u03b4=10 \u2014 the geometry, not the probing, is its flaw (see the 2026-07-24 brainstorm-response doc).",
 			"country_gate": "hard-gated \u2014 the prior only fires when the resolved locale's country matches the index header's country (gb). Never crosses into en-us parses (see neural/test/weights.test.ts).",
 			"not_committed": "derived artifact, .gitignore'd (same posture as postcode-gb.bin) \u2014 rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-gb --country gb --source <ppd-csv> --delta 10`",
@@ -211,7 +212,7 @@
 	"format": {
 		"$comment": "Model/tokenizer format is the base's \u2014 see neural-weights-en-us/model-card.json. This overlay's own artifacts:",
 		"postcode_gb_bin": "PCB1 binary, outward-code granularity",
-		"pair_index_gb_bin": "PIX1 binary, 457,843 bytes, 19,209 pairs, \u03b4=10"
+		"pair_index_gb_bin": "PIX1 binary (schema 3), 793,449 bytes, 30,825 pairs, \u03b4=10, \u03b2=5, parentDelta=5"
 	},
 	"files": {
 		"model_card": "model-card.json",

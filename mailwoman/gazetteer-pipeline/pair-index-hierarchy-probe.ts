@@ -221,7 +221,11 @@ async function main(): Promise<void> {
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
 		// Phase 3: fold + dedupe into PIX1 entries. Tag = the CHILD's ComponentTag — what a decode hit
-		// resolves the child span to (mirrors the GB register build, where every entry is the child tag).
+		// resolves the child span to. `parentTag` (PIX2 / schema 3) = the PARENT's, which this builder knows
+		// from its own edge declaration rather than from the row: `edge.parent` below is `region`, and BOTH
+		// WOF parent placetypes this spec selects (`region`, FR's `macroregion`) project onto that one
+		// ComponentTag — a département and a région are alike region-tagged surfaces in a French address,
+		// which is exactly why the spec pairs them.
 		const seen = new Map<string, PairIndexEntry>()
 		let surfacePairs = 0
 		let emptyChildFolds = 0
@@ -250,7 +254,7 @@ async function main(): Promise<void> {
 					const key = `${child.length}:${child}:${parent}`
 
 					if (!seen.has(key)) {
-						seen.set(key, { child, parent, tag: "locality" })
+						seen.set(key, { child, parent, tag: "locality", parentTag: "region" })
 					}
 				}
 			}
@@ -305,10 +309,12 @@ async function main(): Promise<void> {
 		console.log(`  header: delta=0 (probe), edge=locality→region, parents=[${spec.parentWOFPlacetypes.join(", ")}]`)
 
 		for (const [child, parent] of probePairs) {
-			const tag = resolver.probe(normalizeFSTToken(child), normalizeFSTToken(parent))
+			const edge = resolver.probe(normalizeFSTToken(child), normalizeFSTToken(parent))
 
 			console.log(
-				tag ? `  PROBE OK: ("${child}", "${parent}") → ${tag}` : `  PROBE MISS: ("${child}", "${parent}") → (no entry)`
+				edge
+					? `  PROBE OK: ("${child}", "${parent}") → ${edge.tag} under ${edge.parentTag}`
+					: `  PROBE MISS: ("${child}", "${parent}") → (no entry)`
 			)
 		}
 	}

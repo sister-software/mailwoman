@@ -155,7 +155,9 @@ function indexFor(country: string): LoadedPairIndex {
 		buildDate: "2026-07-24",
 	}
 
-	const bytes = serializePairIndex(header, [{ child: "shoreditch", parent: "london", tag: "dependent_locality" }])
+	const bytes = serializePairIndex(header, [
+		{ child: "shoreditch", parent: "london", tag: "dependent_locality", parentTag: "locality" },
+	])
 
 	return { url: `https://cdn.example/pair-index-${country}.bin`, country, resolver: new PairIndexResolver(bytes) }
 }

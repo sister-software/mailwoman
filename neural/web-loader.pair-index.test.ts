@@ -43,7 +43,12 @@ vi.mock("onnxruntime-web/webgpu", () => {
  */
 let capturedConfig: {
 	placetypePair?: {
-		index: { probe(c: string, p: string): string | undefined; delta?: number; transitionBeta?: number }
+		index: {
+			probe(c: string, p: string): { tag: string; parentTag: string } | undefined
+			delta?: number
+			transitionBeta?: number
+			parentDelta?: number
+		}
 	}
 } | null = null
 
@@ -110,11 +115,15 @@ function pairHeader(country: string, transitionBeta?: number): PairIndexHeaderIn
  * Real PIX1 bytes: one (shoreditch, london) → dependent_locality entry under the given header.
  */
 function gbIndexBytes(): Uint8Array {
-	return serializePairIndex(pairHeader("gb", 5), [{ child: "shoreditch", parent: "london", tag: "dependent_locality" }])
+	return serializePairIndex(pairHeader("gb", 5), [
+		{ child: "shoreditch", parent: "london", tag: "dependent_locality", parentTag: "locality" },
+	])
 }
 
 function nzIndexBytes(): Uint8Array {
-	return serializePairIndex(pairHeader("nz"), [{ child: "mangawhai", parent: "mangawhai", tag: "dependent_locality" }])
+	return serializePairIndex(pairHeader("nz"), [
+		{ child: "mangawhai", parent: "mangawhai", tag: "dependent_locality", parentTag: "locality" },
+	])
 }
 
 /**
@@ -216,7 +225,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(gb!.url).toBe(GB_INDEX)
 		expect(gb!.country).toBe("gb")
 		expect(gb!.resolver).toBeInstanceOf(PairIndexResolver)
-		expect(gb!.resolver.probe("shoreditch", "london")).toBe("dependent_locality")
+		expect(gb!.resolver.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
 		// Omitting the posture is NOT a misconfiguration — no warn (contrast #1300's gate).
 		expect(warn).not.toHaveBeenCalled()
 
@@ -233,7 +242,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		// The node-construction mirror: `{ index }` alone — delta/transitionBeta ride the header via the
 		// resolver's getters, probeMode is left to the builder's "auto" default.
 		expect(capturedConfig?.placetypePair).toEqual({ index: wired })
-		expect(wired!.probe("shoreditch", "london")).toBe("dependent_locality")
+		expect(wired!.probe("shoreditch", "london")?.tag).toBe("dependent_locality")
 		expect(wired!.delta).toBe(5)
 		expect(wired!.transitionBeta).toBe(5)
 
@@ -288,7 +297,7 @@ describe("loadNeuralClassifierFromURLs — placetype-pair index (#1278)", () => 
 		expect(gb).toEqual({ url: GB_INDEX, country: "gb", resolver: wired })
 		expect(nz!.country).toBe("nz")
 		expect(nz!.resolver).toBeInstanceOf(PairIndexResolver)
-		expect(nz!.resolver.probe("mangawhai", "mangawhai")).toBe("dependent_locality")
+		expect(nz!.resolver.probe("mangawhai", "mangawhai")?.tag).toBe("dependent_locality")
 		// The pin was honored — nothing to warn about.
 		expect(warn).not.toHaveBeenCalled()
 

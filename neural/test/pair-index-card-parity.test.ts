@@ -51,6 +51,7 @@ interface PairIndexFacts {
 	pairs: number
 	delta: number
 	transitionBeta: number | undefined
+	parentDelta: number | undefined
 	bytes: number
 }
 
@@ -71,12 +72,14 @@ function readPairIndexFacts(path: string): PairIndexFacts {
 	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
+		parentDelta?: number
 	}>(bytes.subarray(8, 8 + headerLen).toString("utf8"))
 
 	return {
 		pairs: view.getUint32(8 + headerLen, true),
 		delta: header.delta,
 		transitionBeta: header.transitionBeta,
+		parentDelta: header.parentDelta,
 		bytes: bytes.length,
 	}
 }
@@ -117,6 +120,26 @@ describe("pair-index ↔ model-card parity", () => {
 					`${cardDelta}${String(block!.transition_beta ?? "")}`,
 					`${pkg}: artifact carries transitionBeta=${facts.transitionBeta} but the card does not record it`
 				).toContain(String(facts.transitionBeta))
+			}
+
+			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and OFF (no
+			// header key) for the ones that don't. Both directions are graded: a card that omits a shipped
+			// parentDelta misdescribes the behaviour, and a card that CLAIMS one the artifact lacks is worse —
+			// it reads as though the D-rule's per-locale gate had been cleared when it hasn't. The assertion
+			// spells out `parentDelta=<n>` rather than the bare number because δ and β are both 5 today, so a
+			// substring match on "5" would pass on a card that never mentioned the parent at all.
+			const parentClaim = `parentDelta=${facts.parentDelta}`
+
+			if (facts.parentDelta === undefined) {
+				expect(
+					cardDelta,
+					`${pkg}: card claims a parentDelta but the artifact carries none — the parent bias is OFF for this locale`
+				).not.toContain("parentDelta=")
+			} else {
+				expect(
+					cardDelta,
+					`${pkg}: artifact carries ${parentClaim} but the card's delta_calibration does not record it`
+				).toContain(parentClaim)
 			}
 		})
 	}

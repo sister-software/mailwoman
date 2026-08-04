@@ -111,6 +111,12 @@ interface PairIndexBuildInputs {
 	source?: string
 	delta: number
 	transitionBeta?: number
+	/**
+	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
+	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
+	 * per-locale gate rather than an oversight.
+	 */
+	parentDelta?: number
 	boroughDb?: string
 	pairsJsonl?: string
 	banDir?: string
@@ -464,6 +470,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 			String(entry.delta),
 			...(source ? ["--source", source] : []),
 			...(entry.transitionBeta !== undefined ? ["--transition-beta", String(entry.transitionBeta)] : []),
+			...(entry.parentDelta !== undefined ? ["--parent-delta", String(entry.parentDelta)] : []),
 			...(boroughDb ? ["--borough-db", boroughDb] : []),
 			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
 			...(banDir ? ["--ban-dir", banDir] : []),

@@ -55,14 +55,30 @@ export interface PairIndexOverlay {
 }
 
 /**
- * Minimal PIX1 header reader — magic + header only, reimplemented so a data-only overlay gains no dependency on
- * `@mailwoman/neural` (which pulls onnxruntime-node) to read two fields.
+ * The header fields a dev-weights freshness guard reads.
  */
-function peekPairIndexHeaderFields(path: string): {
+export interface PairIndexHeaderFields {
 	delta: number
 	transitionBeta: number | undefined
+	parentDelta: number | undefined
 	schemaVersion: number
-} {
+	/**
+	 * One md5 per source the build read, in fold order. Empty on a header that recorded none.
+	 */
+	sourceMD5s: string[]
+}
+
+/**
+ * Minimal PIX1 header reader — magic + header only, reimplemented so a data-only weights package gains no dependency on
+ * `@mailwoman/neural` (which pulls onnxruntime-node) to read a few fields. `neural/pair-index-resolver.ts`'s own header
+ * parse is the source of truth this must follow.
+ *
+ * Shared by the overlay build below AND by the four hand-written base linkers
+ * (`neural-weights-{en-us,en-gb,en-nz,fr-fr}/scripts/link-dev-weights.ts`), which each carried their own near-copy
+ * before 2026-08-04 — the ×5 clone the taste audit named, and the reason three of them were schema-blind while this one
+ * was not.
+ */
+export function peekPairIndexHeaderFields(path: string): PairIndexHeaderFields {
 	const bytes = readFileSync(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	// "PIX1" little-endian.
@@ -77,18 +93,72 @@ function peekPairIndexHeaderFields(path: string): {
 	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
+		parentDelta?: number
 		schemaVersion: number
+		sourceMD5s?: string[]
 	}>(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8"))
 
-	return { delta: header.delta, transitionBeta: header.transitionBeta, schemaVersion: header.schemaVersion }
+	return {
+		delta: header.delta,
+		transitionBeta: header.transitionBeta,
+		parentDelta: header.parentDelta,
+		schemaVersion: header.schemaVersion,
+		sourceMD5s: header.sourceMD5s ?? [],
+	}
 }
 
 /**
- * The PIX1 schema this tree's reader requires (`neural/pair-index-resolver.ts` KNOWN_SCHEMA_VERSION). The freshness
- * guard must compare it: a guard that checks only delta + source md5 reads a format-obsolete binary as "current" and
- * leaves every dev checkout with artifacts the runtime refuses — the R5 freshness-guard lesson, format edition.
+ * The calibrated magnitudes a linker bakes into its artifact. `undefined` means the flag is NOT passed and the header
+ * carries no such key — a real state, distinct from zero (see `PairIndexHeader.parentDelta`), so the comparison below
+ * is `!==` against `undefined` rather than a truthiness test.
  */
-const REQUIRED_PAIR_INDEX_SCHEMA = 2
+export interface PairIndexCalibration {
+	delta: number
+	transitionBeta?: number
+	parentDelta?: number
+}
+
+/**
+ * Why an existing `pair-index-*.bin` is stale against `expected`, or `undefined` when its header matches. Covers the
+ * FORMAT (schemaVersion) and every calibrated magnitude; source-md5 freshness stays with the caller, because each base
+ * linker passes a different set of sources and only it knows what they are.
+ *
+ * One place so a magnitude added to the header cannot be checked by some linkers and not others — which is exactly how
+ * three of the four base linkers ended up unable to notice a schema bump.
+ */
+export function pairIndexStaleReason(
+	header: PairIndexHeaderFields,
+	expected: PairIndexCalibration
+): string | undefined {
+	if (header.schemaVersion !== REQUIRED_PAIR_INDEX_SCHEMA) {
+		return `schemaVersion ${header.schemaVersion} → ${REQUIRED_PAIR_INDEX_SCHEMA}`
+	}
+
+	if (header.delta !== expected.delta) return `delta ${header.delta} → ${expected.delta}`
+
+	if (header.transitionBeta !== expected.transitionBeta) {
+		return `transitionBeta ${header.transitionBeta ?? "(absent)"} → ${expected.transitionBeta ?? "(absent)"}`
+	}
+
+	if (header.parentDelta !== expected.parentDelta) {
+		return `parentDelta ${header.parentDelta ?? "(absent)"} → ${expected.parentDelta ?? "(absent)"}`
+	}
+
+	return undefined
+}
+
+/**
+ * The PIX1 schema this tree's reader requires. MUST equal `KNOWN_SCHEMA_VERSION` in `neural/pair-index-resolver.ts` —
+ * they are two ends of one fact, and this copy exists only because a data-only overlay must not gain a dependency on
+ * `@mailwoman/neural` (onnxruntime-node) to read one header field. Bump BOTH in the same commit; a schema bump that
+ * leaves this behind makes every dev checkout rebuild-loop or serve an artifact the runtime refuses.
+ *
+ * The freshness guard must compare it: a guard that checks only delta + source md5 reads a format-obsolete binary as
+ * "current" and leaves every dev checkout with artifacts the runtime refuses — the R5 freshness-guard lesson, format
+ * edition. Also compared by the four hand-written base linkers (`neural-weights-{en-us,en-gb,en-nz,fr-fr}`), which
+ * import this constant rather than re-typing the number.
+ */
+export const REQUIRED_PAIR_INDEX_SCHEMA = 3
 
 /**
  * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at
@@ -122,14 +192,14 @@ export function buildPairIndexOverlay({ packageDir, country, delta, transitionBe
 
 	if (existsSync(DEST)) {
 		try {
-			const header = peekPairIndexHeaderFields(DEST)
+			// No `parentDelta` in the expectation: the overlay locales (de/in/es/it) ship WITHOUT the whole-edge
+			// parent bias — unmeasured there, and the D-rule's answer to an unmeasured locale is a per-locale
+			// gate, not an inherited magnitude. `PairIndexOverlay` therefore has no `parentDelta` field to pass;
+			// adding one is a deliberate act that should arrive with a board.
+			const reason = pairIndexStaleReason(peekPairIndexHeaderFields(DEST), { delta, transitionBeta })
 
-			if (header.schemaVersion !== REQUIRED_PAIR_INDEX_SCHEMA) {
-				console.log(`rebuilding ${ARTIFACT} — schemaVersion ${header.schemaVersion} → ${REQUIRED_PAIR_INDEX_SCHEMA}`)
-			} else if (header.delta !== delta) {
-				console.log(`rebuilding ${ARTIFACT} — delta ${header.delta} → ${delta}`)
-			} else if (header.transitionBeta !== transitionBeta) {
-				console.log(`rebuilding ${ARTIFACT} — transitionBeta ${header.transitionBeta} → ${transitionBeta}`)
+			if (reason) {
+				console.log(`rebuilding ${ARTIFACT} — ${reason}`)
 			} else {
 				console.log(`skipped ${ARTIFACT} build — ${DEST} is current`)
 

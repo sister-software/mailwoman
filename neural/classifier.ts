@@ -504,9 +504,11 @@ export class NeuralAddressClassifier {
 				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
 				if (peekedHeader.country === localeCountry) {
-					// `parentDelta` (#46, the whole-edge parent bias) is UNSET unless the env names one — the shipped
-					// default stays child-only until the preregistration's four bars clear. See
-					// `MAILWOMAN_PAIR_PARENT_DELTA` in `core/env/schema.ts`.
+					// `parentDelta` (#46, the whole-edge parent bias) rides the ARTIFACT, exactly as `delta` and
+					// `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta` off the header, so a
+					// calibrated locale (us/gb/nz/fr at 5) is default-on and an unmeasured one (de/in/es/it, no header
+					// field) stays off, with no code here knowing which is which. The env is an OVERRIDE for eval
+					// sweeps only and wins when set; see `MAILWOMAN_PAIR_PARENT_DELTA` in `core/env/schema.ts`.
 					placetypePair = {
 						index: new PairIndexResolver(pairIndexBytes),
 						...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined

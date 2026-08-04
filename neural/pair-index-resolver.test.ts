@@ -32,33 +32,37 @@ const HEADER: PairIndexHeaderInput = {
 
 /**
  * What the serializer emits for {@link HEADER}: the input fields plus the two format-owned fields the serializer stamps
- * itself — `schemaVersion: 2` and the embedded tag table (see the tagTable describe block below).
+ * itself — `schemaVersion: 3` and the embedded tag table (see the tagTable describe block below).
  */
-const HEADER_AS_WRITTEN: PairIndexHeader = { ...HEADER, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] }
+const HEADER_AS_WRITTEN: PairIndexHeader = { ...HEADER, schemaVersion: 3, tagTable: [...COMPONENT_TAGS] }
 
 /**
  * Hand-build a PIX1 binary independent of `serializePairIndex`, so tests can express states the serializer refuses to
- * produce (legacy headers without `tagTable`, foreign tag tables, out-of-range indices) — and so the layout-conformance
- * block below checks the serializer against the DOCUMENTED format (docs/engineering/reference/pix1.ksy) rather than
- * against itself.
+ * produce (legacy headers without `tagTable`, foreign tag tables, out-of-range indices, records missing the schema-3
+ * parent byte) — and so the layout-conformance block below checks the serializer against the DOCUMENTED format
+ * (docs/engineering/reference/pix1.ksy) rather than against itself.
+ *
+ * `records` are `[child, parent, tagIdx, parentTagIdx]`. Passing `parentTagIdx: undefined` writes the schema-2 record
+ * shape (no trailing parent byte), which is how the v2-refusal test builds a genuine legacy binary.
  */
 function buildRawIndex(
 	headerObj: Record<string, unknown>,
-	records: Array<[child: string, parent: string, tagIdx: number]>
+	records: Array<[child: string, parent: string, tagIdx: number, parentTagIdx?: number]>
 ): Uint8Array {
 	const enc = new TextEncoder()
 	const headerBytes = enc.encode(JSON.stringify(headerObj))
 
-	const encoded = records.map(([child, parent, tagIdx]) => ({
+	const encoded = records.map(([child, parent, tagIdx, parentTagIdx]) => ({
 		child: enc.encode(child),
 		parent: enc.encode(parent),
 		tagIdx,
+		parentTagIdx,
 	}))
 
 	let size = 12 + headerBytes.length
 
 	for (const r of encoded) {
-		size += 2 + r.child.length + 2 + r.parent.length + 1
+		size += 2 + r.child.length + 2 + r.parent.length + 1 + (r.parentTagIdx === undefined ? 0 : 1)
 	}
 
 	const out = new Uint8Array(size)
@@ -84,28 +88,38 @@ function buildRawIndex(
 		out.set(r.parent, o)
 		o += r.parent.length
 		out[o++] = r.tagIdx
+
+		if (r.parentTagIdx !== undefined) {
+			out[o++] = r.parentTagIdx
+		}
 	}
 
 	return out
 }
 
 const ENTRIES: PairIndexEntry[] = [
-	{ child: "shoreditch", parent: "london", tag: "dependent_locality" },
-	{ child: "london", parent: "greater london", tag: "locality" },
-	{ child: "camden", parent: "london", tag: "dependent_locality" },
+	{ child: "shoreditch", parent: "london", tag: "dependent_locality", parentTag: "locality" },
+	{ child: "london", parent: "greater london", tag: "locality", parentTag: "region" },
+	{ child: "camden", parent: "london", tag: "dependent_locality", parentTag: "locality" },
 ]
+
+/**
+ * The edge a probe hit returns for each of {@link ENTRIES} — the whole typed edge, not half of it (schema 3).
+ */
+const DEP_LOC_UNDER_LOCALITY = { tag: "dependent_locality", parentTag: "locality" }
+const LOCALITY_UNDER_REGION = { tag: "locality", parentTag: "region" }
 
 function resolver(entries: PairIndexEntry[] = ENTRIES, header: PairIndexHeaderInput = HEADER): PairIndexResolver {
 	return new PairIndexResolver(serializePairIndex(header, entries))
 }
 
 describe("serializePairIndex / PairIndexResolver", () => {
-	it("round-trips multiple entries: every (child, parent) probes to its tag", () => {
+	it("round-trips multiple entries: every (child, parent) probes to its whole typed edge", () => {
 		const r = resolver()
 
-		expect(r.probe("shoreditch", "london")).toBe("dependent_locality")
-		expect(r.probe("london", "greater london")).toBe("locality")
-		expect(r.probe("camden", "london")).toBe("dependent_locality")
+		expect(r.probe("shoreditch", "london")).toEqual(DEP_LOC_UNDER_LOCALITY)
+		expect(r.probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
+		expect(r.probe("camden", "london")).toEqual(DEP_LOC_UNDER_LOCALITY)
 	})
 
 	it("returns undefined for an unknown (child, parent) pair", () => {
@@ -118,7 +132,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 
 		// "london" is a child of "greater london" AND a parent of "shoreditch"/"camden" — the probe key
 		// must be the full (child, parent) tuple, not just the child.
-		expect(r.probe("london", "greater london")).toBe("locality")
+		expect(r.probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
 		expect(r.probe("shoreditch", "greater london")).toBeUndefined()
 	})
 
@@ -147,7 +161,7 @@ describe("serializePairIndex / PairIndexResolver", () => {
 
 		// Rewrite the header JSON with a schemaVersion the reader doesn't know, re-serializing the whole
 		// buffer so the length prefix stays correct.
-		const bumped = { ...headerJSON, schemaVersion: 3 }
+		const bumped = { ...headerJSON, schemaVersion: 4 }
 		const bumpedBytes = new TextEncoder().encode(JSON.stringify(bumped))
 		const rest = bytes.subarray(8 + headerLen)
 		const out = new Uint8Array(4 + 4 + bumpedBytes.length + rest.length)
@@ -170,8 +184,8 @@ describe("serializePairIndex / PairIndexResolver", () => {
 
 	it("rejects duplicate (child, parent) pairs at serialize time", () => {
 		const dupes: PairIndexEntry[] = [
-			{ child: "london", parent: "greater london", tag: "locality" },
-			{ child: "london", parent: "greater london", tag: "locality" },
+			{ child: "london", parent: "greater london", tag: "locality", parentTag: "region" },
+			{ child: "london", parent: "greater london", tag: "locality", parentTag: "region" },
 		]
 
 		expect(() => serializePairIndex(HEADER, dupes)).toThrow(/duplicate/i)
@@ -182,23 +196,23 @@ describe("serializePairIndex / PairIndexResolver", () => {
 		const a = new PairIndexResolver(serializePairIndex(HEADER, ENTRIES))
 		const b = new PairIndexResolver(serializePairIndex(HEADER, reversed))
 
-		expect(a.probe("shoreditch", "london")).toBe(b.probe("shoreditch", "london"))
-		expect(a.probe("camden", "london")).toBe(b.probe("camden", "london"))
+		expect(a.probe("shoreditch", "london")).toEqual(b.probe("shoreditch", "london"))
+		expect(a.probe("camden", "london")).toEqual(b.probe("camden", "london"))
 	})
 
 	it("distinguishes pairs that would collide under naive concatenation", () => {
 		// Both entries would produce "new york ny" under space-join of child + parent,
 		// requiring the key to encode (child, parent) as a tuple, not a concatenation.
 		const collisionEntries: PairIndexEntry[] = [
-			{ child: "new york", parent: "ny", tag: "locality" },
-			{ child: "new", parent: "york ny", tag: "locality" },
+			{ child: "new york", parent: "ny", tag: "locality", parentTag: "region" },
+			{ child: "new", parent: "york ny", tag: "locality", parentTag: "region" },
 		]
 
 		const r = resolver(collisionEntries)
 
 		// Each (child, parent) pair must resolve to its own tag.
-		expect(r.probe("new york", "ny")).toBe("locality")
-		expect(r.probe("new", "york ny")).toBe("locality")
+		expect(r.probe("new york", "ny")).toEqual(LOCALITY_UNDER_REGION)
+		expect(r.probe("new", "york ny")).toEqual(LOCALITY_UNDER_REGION)
 
 		// Cross probes and malformed probes must miss.
 		expect(r.probe("new york ny", "")).toBeUndefined()
@@ -213,11 +227,11 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		const bytes = serializePairIndex(header, ENTRIES)
 		const r = new PairIndexResolver(bytes)
 
-		expect(r.header).toEqual({ ...header, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] })
+		expect(r.header).toEqual({ ...header, schemaVersion: 3, tagTable: [...COMPONENT_TAGS] })
 		expect(r.transitionBeta).toBe(5)
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBe(5)
 		// The rest of the format is untouched — entries still probe.
-		expect(r.probe("shoreditch", "london")).toBe("dependent_locality")
+		expect(r.probe("shoreditch", "london")).toEqual(DEP_LOC_UNDER_LOCALITY)
 	})
 
 	it("old-binary compat: a header WITHOUT the field reads back transitionBeta === undefined", () => {
@@ -231,9 +245,32 @@ describe("transitionBeta header field (TRANSITION-BETA build)", () => {
 		expect(r.transitionBeta).toBeUndefined()
 		expect(peekPairIndexHeader(bytes).transitionBeta).toBeUndefined()
 		expect("transitionBeta" in r.header).toBe(false)
-		// transitionBeta stays absence-tolerant WITHIN v2 — optional fields ride on the JSON header without
-		// version bumps; only the tag table (structural, decode-bearing) is version-gated.
-		expect(r.header.schemaVersion).toBe(2)
+		// transitionBeta stays absence-tolerant WITHIN a schema — optional fields ride on the JSON header without
+		// version bumps; only the RECORD-shaping fields (the tag table, the parent byte) are version-gated.
+		expect(r.header.schemaVersion).toBe(3)
+	})
+})
+
+describe("parentDelta header field (whole-edge default-on, #46)", () => {
+	it("round-trips a header WITH parentDelta: header fidelity + the resolver accessor + peek all agree", () => {
+		const header: PairIndexHeaderInput = { ...HEADER, parentDelta: 5 }
+		const bytes = serializePairIndex(header, ENTRIES)
+		const r = new PairIndexResolver(bytes)
+
+		expect(r.header).toEqual({ ...header, schemaVersion: 3, tagTable: [...COMPONENT_TAGS] })
+		expect(r.parentDelta).toBe(5)
+		expect(peekPairIndexHeader(bytes).parentDelta).toBe(5)
+	})
+
+	it("absence-tolerant: a header WITHOUT the field reads back parentDelta === undefined", () => {
+		// Absent means "no parent bias", NOT "0" — the same absence contract transitionBeta carries, and the
+		// one de/in/es/it artifacts ship under (unmeasured locales, per-locale gate).
+		const bytes = serializePairIndex(HEADER, ENTRIES)
+		const r = new PairIndexResolver(bytes)
+
+		expect(r.parentDelta).toBeUndefined()
+		expect(peekPairIndexHeader(bytes).parentDelta).toBeUndefined()
+		expect("parentDelta" in r.header).toBe(false)
 	})
 })
 
@@ -245,6 +282,7 @@ describe("peekPairIndexHeader", () => {
 			child: `child-${i}`,
 			parent: `parent-${i % 50}`,
 			tag: "dependent_locality" as const,
+			parentTag: "locality" as const,
 		}))
 
 		const bytes = serializePairIndex(HEADER, bigEntries)
@@ -276,8 +314,8 @@ describe("peekPairIndexHeader", () => {
 	})
 })
 
-describe("tagTable header field (schemaVersion 2 — self-describing tag decode)", () => {
-	const V2_BASE = { ...HEADER, schemaVersion: 2 }
+describe("tagTable header field (self-describing tag decode)", () => {
+	const V3_BASE = { ...HEADER, schemaVersion: 3 }
 
 	it("the serializer embeds the live COMPONENT_TAGS as the header's tagTable", () => {
 		expect(peekPairIndexHeader(serializePairIndex(HEADER, ENTRIES)).tagTable).toEqual([...COMPONENT_TAGS])
@@ -289,35 +327,103 @@ describe("tagTable header field (schemaVersion 2 — self-describing tag decode)
 		// exists to kill.
 		const reversed = [...COMPONENT_TAGS].toReversed()
 		const idxOfLocality = reversed.indexOf("locality")
-		const bytes = buildRawIndex({ ...V2_BASE, tagTable: reversed }, [["london", "greater london", idxOfLocality]])
+		const idxOfRegion = reversed.indexOf("region")
 
-		expect(new PairIndexResolver(bytes).probe("london", "greater london")).toBe("locality")
+		const bytes = buildRawIndex({ ...V3_BASE, tagTable: reversed }, [
+			["london", "greater london", idxOfLocality, idxOfRegion],
+		])
+
+		expect(new PairIndexResolver(bytes).probe("london", "greater london")).toEqual(LOCALITY_UNDER_REGION)
 	})
 
 	it("throws on a record whose tagTable entry is not a known ComponentTag, naming the tag", () => {
-		const bytes = buildRawIndex({ ...V2_BASE, tagTable: ["definitely_not_a_tag"] }, [["a", "b", 0]])
+		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["definitely_not_a_tag", "locality"] }, [["a", "b", 0, 1]])
 
 		expect(() => new PairIndexResolver(bytes)).toThrow(/definitely_not_a_tag/)
 	})
 
-	it("tolerates unknown tagTable entries that no record references (forward compatibility within v2)", () => {
+	it("throws on a record whose PARENT tagTable entry is not a known ComponentTag, naming it", () => {
+		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["locality", "definitely_not_a_parent_tag"] }, [
+			["a", "b", 0, 1],
+		])
+
+		expect(() => new PairIndexResolver(bytes)).toThrow(/definitely_not_a_parent_tag/)
+	})
+
+	it("tolerates unknown tagTable entries that no record references (forward compatibility within v3)", () => {
 		// A binary built where COMPONENT_TAGS has grown a tag this reader predates: loadable as long as
 		// no record uses the unknown tag.
-		const bytes = buildRawIndex({ ...V2_BASE, tagTable: ["locality", "some_future_tag"] }, [["a", "b", 0]])
+		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["dependent_locality", "locality", "some_future_tag"] }, [
+			["a", "b", 0, 1],
+		])
 
-		expect(new PairIndexResolver(bytes).probe("a", "b")).toBe("locality")
+		expect(new PairIndexResolver(bytes).probe("a", "b")).toEqual(DEP_LOC_UNDER_LOCALITY)
 	})
 
 	it("throws on a tagIdx outside the embedded table", () => {
-		const bytes = buildRawIndex({ ...V2_BASE, tagTable: ["locality"] }, [["a", "b", 7]])
+		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["locality"] }, [["a", "b", 7, 0]])
 
 		expect(() => new PairIndexResolver(bytes)).toThrow(/tagIdx/)
 	})
 
+	it("throws on a parentTagIdx outside the embedded table", () => {
+		const bytes = buildRawIndex({ ...V3_BASE, tagTable: ["locality"] }, [["a", "b", 0, 7]])
+
+		expect(() => new PairIndexResolver(bytes)).toThrow(/parentTagIdx/)
+	})
+})
+
+describe("parentTag record field (schemaVersion 3 — the typed parent)", () => {
+	it("round-trips the parent tag independently of the child tag", () => {
+		const r = resolver()
+
+		// Same child tag, different parent tag — proves the parent byte is read per-record and not
+		// derived from the child (the WESTERN_PARENT_OF containment derivation this schema replaces).
+		expect(r.probe("shoreditch", "london")).toEqual({ tag: "dependent_locality", parentTag: "locality" })
+		expect(r.probe("london", "greater london")).toEqual({ tag: "locality", parentTag: "region" })
+	})
+
+	it("carries a parent tag the containment map would NOT have derived", () => {
+		// `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`. The US borough source legitimately
+		// emits a dependent_locality UNDER a borough (also dependent_locality) — a derived parent tag
+		// could never say that; a recorded one can.
+		const r = resolver([
+			{ child: "park slope", parent: "brooklyn", tag: "dependent_locality", parentTag: "dependent_locality" },
+		])
+
+		expect(r.probe("park slope", "brooklyn")).toEqual({
+			tag: "dependent_locality",
+			parentTag: "dependent_locality",
+		})
+	})
+
+	it("refuses an entry with no parentTag at all", () => {
+		const entries = [{ child: "a", parent: "b", tag: "locality" }] as unknown as PairIndexEntry[]
+
+		expect(() => serializePairIndex(HEADER, entries)).toThrow(/parentTag/)
+	})
+
+	it("refuses an entry whose parentTag is not a ComponentTag, naming it", () => {
+		const entries = [
+			{ child: "a", parent: "b", tag: "locality", parentTag: "not_a_tag" },
+		] as unknown as PairIndexEntry[]
+
+		expect(() => serializePairIndex(HEADER, entries)).toThrow(/not_a_tag/)
+	})
+
+	it("REFUSES a v2 binary (child tag only, no parent byte) with rebuild guidance", () => {
+		// The v2 shape: a tagTable in the header, but records that stop after `tagIdx`. Reading those
+		// bytes as v3 would swallow the NEXT record's child_len as a parent tag — refusing is the only
+		// safe read, and the break is deliberate (operator-ruled 2026-08-04).
+		const v2Header = { ...HEADER, schemaVersion: 2, tagTable: [...COMPONENT_TAGS] }
+		const bytes = buildRawIndex(v2Header, [["london", "greater london", COMPONENT_TAGS.indexOf("locality")]])
+
+		expect(() => new PairIndexResolver(bytes)).toThrow(/gazetteer pair-index/)
+		expect(() => peekPairIndexHeader(bytes)).toThrow(/gazetteer pair-index/)
+	})
+
 	it("REFUSES a v1 binary (no tagTable, positional tags) with rebuild guidance", () => {
-		// The v1 shape: schemaVersion 1, no tagTable, tagIdx positional into COMPONENT_TAGS. The break
-		// is deliberate (2026-08-04, operator-approved): a positional fallback would keep the
-		// tag-reordering trap alive for every artifact that never rebuilt.
+		// The v1 shape: schemaVersion 1, no tagTable, tagIdx positional into COMPONENT_TAGS.
 		const v1Header = { ...HEADER, schemaVersion: 1 }
 		const bytes = buildRawIndex(v1Header, [["london", "greater london", COMPONENT_TAGS.indexOf("locality")]])
 
@@ -339,7 +445,7 @@ describe("PIX1 layout conformance (docs/engineering/reference/pix1.ksy)", () => 
 		const headerLen = view.getUint32(4, true)
 		const header = parseJSONStrict<PairIndexHeader>(decoder.decode(bytes.subarray(8, 8 + headerLen)))
 
-		expect(header.schemaVersion).toBe(2)
+		expect(header.schemaVersion).toBe(3)
 		expect(Array.isArray(header.tagTable)).toBe(true)
 
 		// pair_count: u4le
@@ -348,7 +454,7 @@ describe("PIX1 layout conformance (docs/engineering/reference/pix1.ksy)", () => 
 		o += 4
 		expect(pairCount).toBe(ENTRIES.length)
 
-		// pair records: u2le child_len, child, u2le parent_len, parent, u1 tag_idx —
+		// pair records: u2le child_len, child, u2le parent_len, parent, u1 tag_idx, u1 parent_tag_idx —
 		// sorted by (child, parent), consuming the buffer exactly.
 		let prevChild = ""
 		let prevParent = ""
@@ -363,13 +469,32 @@ describe("PIX1 layout conformance (docs/engineering/reference/pix1.ksy)", () => 
 			const parent = decoder.decode(bytes.subarray(o, o + parentLen))
 			o += parentLen
 			const tagIdx = bytes[o++]!
+			const parentTagIdx = bytes[o++]!
 
 			expect(tagIdx).toBeLessThan(header.tagTable.length)
+			expect(parentTagIdx).toBeLessThan(header.tagTable.length)
 			expect(child > prevChild || (child === prevChild && parent > prevParent)).toBe(true)
 			prevChild = child
 			prevParent = parent
 		}
 
 		expect(o).toBe(bytes.length)
+	})
+
+	it("the parent byte costs exactly one byte per pair versus the schema-2 record shape", () => {
+		// The format claim in prose ("+1 byte per pair") stated as an arithmetic identity over the
+		// serializer's own output, so a future record-shape change cannot quietly falsify the model
+		// cards' byte deltas.
+		const bytes = serializePairIndex(HEADER, ENTRIES)
+		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+		const headerLen = view.getUint32(4, true)
+		const encoder = new TextEncoder()
+
+		const recordBytes = ENTRIES.reduce(
+			(sum, e) => sum + 2 + encoder.encode(e.child).length + 2 + encoder.encode(e.parent).length + 2,
+			0
+		)
+
+		expect(bytes).toHaveLength(4 + 4 + headerLen + 4 + recordBytes)
 	})
 })

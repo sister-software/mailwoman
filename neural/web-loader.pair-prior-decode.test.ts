@@ -104,7 +104,9 @@ function gbIndexBytes(): Uint8Array {
 		transitionBeta: 5,
 	}
 
-	return serializePairIndex(header, [{ child: "shoreditch", parent: "london", tag: "dependent_locality" }])
+	return serializePairIndex(header, [
+		{ child: "shoreditch", parent: "london", tag: "dependent_locality", parentTag: "locality" },
+	])
 }
 
 function makeFetch(): typeof fetch {
