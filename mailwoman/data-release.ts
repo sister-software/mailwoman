@@ -17,6 +17,8 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
+import { join } from "path-ts"
+
 /**
  * Family (shard subdir + filename prefix, e.g. `"address-points"`) → current version string.
  */
@@ -27,7 +29,7 @@ export type DataReleaseManifest = Record<string, string>
  */
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {
-		const raw = JSON.parse(readFileSync(`${dataRoot}/releases.json`, "utf8")) as unknown
+		const raw = JSON.parse(readFileSync(join(dataRoot, "releases.json"), "utf8")) as unknown
 
 		if (!raw || typeof raw !== "object") return null
 		const out: DataReleaseManifest = {}
@@ -57,12 +59,12 @@ export function resolveShardPath(
 	const version = manifest?.[family]
 
 	if (version) {
-		const versioned = `${dataRoot}/${family}/${family}-us-${slug}-${version}.db`
+		const versioned = join(dataRoot, family, `${family}-us-${slug}-${version}.db`)
 
 		if (existsSync(versioned)) return versioned
 	}
 
-	const legacy = `${dataRoot}/${family}/${family}-us-${slug}.db`
+	const legacy = join(dataRoot, family, `${family}-us-${slug}.db`)
 
 	return existsSync(legacy) ? legacy : null
 }

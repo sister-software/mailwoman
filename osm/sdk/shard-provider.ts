@@ -15,6 +15,7 @@
 import { existsSync } from "node:fs"
 
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { join } from "path-ts"
 
 import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.ts"
 
@@ -38,7 +39,7 @@ export class OSMShardProvider {
 	}
 
 	#shardPath(countryCode: string): string {
-		return `${this.#dataRoot}/osm/address-points-${countryCode}-${countryCode}.db`
+		return join(this.#dataRoot, "osm", `address-points-${countryCode}-${countryCode}.db`)
 	}
 
 	/**

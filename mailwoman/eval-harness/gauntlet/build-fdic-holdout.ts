@@ -17,7 +17,7 @@
 
 import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
-import { mailwomanDataRoot } from "../../resolver-backend.ts"
+import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
  * Southern edge of the US including Puerto Rico and Hawaii.
@@ -90,7 +90,7 @@ async function fetchPage(offset: number): Promise<Loc[]> {
  * Fetch the FDIC BankFind branch pool and swap it into the staging path (build-on-copy).
  */
 export async function buildFDICHoldout(): Promise<void> {
-	const OUT = `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`
+	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
 	const tmp = `${OUT}.tmp-${process.pid}`
 
 	if (existsSync(tmp)) {
