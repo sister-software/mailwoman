@@ -36,6 +36,8 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -229,17 +231,14 @@ export async function evalOpenSet(
 	 */
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
-	function load(file: string): DataRow[] {
-		return readFileSync(path.join(dataDir, file), "utf8")
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as DataRow)
+	function load(file: string): Promise<DataRow[]> {
+		return Array.fromAsync(JSONSpliterator.fromAsync<DataRow>(path.join(dataDir, file)))
 	}
 
 	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
 	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
 	report?.("fitting Mahalanobis on in-map train logits…")
-	const trainRows = load("train.jsonl")
+	const trainRows = await load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
 
 	for (const r of trainRows) {
@@ -387,8 +386,8 @@ export async function evalOpenSet(
 		}
 	}
 
-	const inmapTest = load("test.jsonl").filter((r) => r.country !== "OTHER") // the 11 countries only
-	const heldout = load("test-latin-offmap.jsonl").filter((r) => r.group === "heldout")
+	const inmapTest = (await load("test.jsonl")).filter((r) => r.country !== "OTHER") // the 11 countries only
+	const heldout = (await load("test-latin-offmap.jsonl")).filter((r) => r.group === "heldout")
 
 	const inmapScored = inmapTest.map((r) => scoreRow(r.raw, r.country))
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))

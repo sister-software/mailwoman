@@ -20,7 +20,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
-import { iterateJSONL } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import type { ShardManifest } from "../parquet.ts"
@@ -42,7 +42,7 @@ export interface ShardKryptoniteOptions {
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
-	for await (const raw of iterateJSONL<Record<string, unknown>>(jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(jsonl)) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
 

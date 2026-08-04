@@ -51,7 +51,8 @@ import { dirname } from "node:path"
 
 import { ParquetReader } from "@dsnp/parquetjs"
 import { $private } from "@mailwoman/core/env"
-import { dataRootPath, writeJSONL } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { createNewlineWriter } from "spliterator"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -555,7 +556,14 @@ export async function expandGolden(
 
 	await Promise.all(workers)
 
-	writeJSONL(outputPath, outRows)
+	{
+		await using out = createNewlineWriter(outputPath)
+
+		for (const row of outRows) {
+			await out.write(JSON.stringify(row))
+		}
+	}
+
 	report?.(`=== summary ===`)
 	report?.(`seeds processed:  ${seeds.length}`)
 	report?.(`candidates kept:  ${kept}`)

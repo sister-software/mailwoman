@@ -9,11 +9,10 @@
  *   Run from the repo root: `node mailwoman/dev-tools/us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */
 
-import { readFileSync } from "node:fs"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Samples a bucket needs before its flip rate is worth reporting rather than noise.
@@ -32,11 +31,9 @@ interface GoldenRow {
 	components: Record<string, string>
 }
 
-const rows: GoldenRow[] = readFileSync("data/eval/golden/v0.1.2/dev/us.jsonl", "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((l) => JSON.parse(l))
-	.slice(0, SAMPLE)
+const rows: GoldenRow[] = (
+	await Array.fromAsync(JSONSpliterator.fromAsync<GoldenRow>("data/eval/golden/v0.1.2/dev/us.jsonl"))
+).slice(0, SAMPLE)
 
 const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 const candidate = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: candidateRoot })

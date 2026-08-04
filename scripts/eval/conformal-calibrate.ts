@@ -55,6 +55,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, median } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 /**
@@ -262,10 +263,7 @@ async function main(): Promise<void> {
 	const seed = Number(values["seed"] || "20260614")
 
 	// --- load holdout ---
-	const rows: HoldoutRow[] = readFileSync(holdoutPath, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-		.map((l) => JSON.parse(l) as HoldoutRow)
+	const rows: HoldoutRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath))
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
 	console.error(`[conformal-calibrate] situs: ${addressPointsDb}  interp: ${interpolationDb}`)

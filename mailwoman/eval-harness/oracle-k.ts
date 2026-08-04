@@ -25,11 +25,10 @@
  *   the rerank ceiling tracker.
  */
 
-import { readFileSync } from "node:fs"
-
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { JSONSpliterator } from "spliterator"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 import { assertProfile, BaselineDeviationError, formatVerdict } from "./baseline-assert.ts"
@@ -78,7 +77,7 @@ const PUNCTUATION_ONLY = /^[^\p{L}\p{N}]+$/u
 /**
  * Smoothed empirical segment-type transition table from gold component orderings.
  */
-export function buildTransitionTable(goldenDir: string): (from: string, to: string) => number {
+export async function buildTransitionTable(goldenDir: string): Promise<(from: string, to: string) => number> {
 	const counts = new Map<string, number>()
 	const fromTotals = new Map<string, number>()
 
@@ -88,18 +87,17 @@ export function buildTransitionTable(goldenDir: string): (from: string, to: stri
 	}
 
 	for (const file of TRANSITION_GOLDEN_FILES) {
-		let text: string
+		let goldenRows: Array<{ raw?: string; components?: Record<string, string> }>
 
 		try {
-			text = readFileSync(`${goldenDir}/${file}`, "utf8")
+			goldenRows = await Array.fromAsync(
+				JSONSpliterator.fromAsync<{ raw?: string; components?: Record<string, string> }>(`${goldenDir}/${file}`)
+			)
 		} catch {
 			continue
 		}
 
-		for (const line of text.split("\n")) {
-			if (!line.trim()) continue
-			const row = JSON.parse(line) as { raw?: string; components?: Record<string, string> }
-
+		for (const row of goldenRows) {
 			if (!row.components || !row.raw) continue
 			const folded = fold(row.raw)
 
@@ -334,13 +332,11 @@ function extractSurface(
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
 
-	const fixtures = readFileSync(options.fixturesPath ?? PARITY_FIXTURES_PATH, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line) as ParityFixture)
-		.filter((fixture) => !fixture.dropped && fixture.expect)
+	const fixtures = (
+		await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(options.fixturesPath ?? PARITY_FIXTURES_PATH))
+	).filter((fixture) => !fixture.dropped && fixture.expect)
 
-	const logTransition = buildTransitionTable(options.goldenDir ?? "data/eval/golden/v0.1.2/dev")
+	const logTransition = await buildTransitionTable(options.goldenDir ?? "data/eval/golden/v0.1.2/dev")
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",

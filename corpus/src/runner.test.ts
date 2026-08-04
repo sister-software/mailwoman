@@ -8,6 +8,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter, type RunnerProgress } from "./runner.ts"
@@ -87,12 +88,9 @@ describe("runAdapter", () => {
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
-		const jsonl = await readFile(join(scratch, "syn", "canonical.jsonl"), "utf8")
-
-		const lines = jsonl
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as CanonicalRow)
+		const lines = await Array.fromAsync(
+			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, "syn", "canonical.jsonl"))
+		)
 
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")

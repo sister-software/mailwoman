@@ -14,6 +14,8 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
@@ -85,10 +87,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
 	// --- In-distribution test: accuracy + per-class + ECE ---
-	const test: TestRow[] = readFileSync(path.join(dataDir, "test.jsonl"), "utf8")
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as TestRow)
+	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl")))
 
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
@@ -165,10 +164,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const msPath = repoRootPath("data", "eval", "multi-script", "v0.5.0-a0.jsonl")
 
 	try {
-		const ms: MultiScriptRow[] = readFileSync(msPath, "utf8")
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as MultiScriptRow)
+		const ms = await Array.fromAsync(JSONSpliterator.fromAsync<MultiScriptRow>(msPath))
 
 		const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
 		// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way

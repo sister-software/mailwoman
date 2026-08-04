@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 /**
@@ -17,6 +16,7 @@ import { parseArgs } from "node:util"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -42,11 +42,11 @@ async function main() {
 	const n = Number(values["n"] || "30")
 	const cc = values["default-country"] || "PT"
 
-	const rows = readFileSync(values["golden"] || "", "utf8")
-		.trim()
-		.split("\n")
-		.slice(0, n)
-		.map((l) => JSON.parse(l))
+	const rows = (
+		await Array.fromAsync(
+			JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(values["golden"] || "")
+		)
+	).slice(0, n)
 
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")

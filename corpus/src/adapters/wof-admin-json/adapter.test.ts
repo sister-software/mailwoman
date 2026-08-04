@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
+import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.ts"
@@ -27,13 +28,10 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-async function loadRows(): Promise<CanonicalRow[]> {
-	const jsonl = await readFile(join(scratch, WOF_ADMIN_ADAPTER_ID, "canonical.jsonl"), "utf8")
-
-	return jsonl
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as CanonicalRow)
+function loadRows(): Promise<CanonicalRow[]> {
+	return Array.fromAsync(
+		JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, WOF_ADMIN_ADAPTER_ID, "canonical.jsonl"))
+	)
 }
 
 describe("variantsFor (pure)", () => {

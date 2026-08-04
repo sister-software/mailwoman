@@ -32,7 +32,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 
-import { iterateJSONL, mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import { ParquetWriter } from "../parquet-wrapper/index.ts"
@@ -182,7 +183,7 @@ export async function buildTranslitShard(
 	const quarantine: string[] = []
 	let totalIn = 0
 
-	for await (const raw of iterateJSONL<Record<string, unknown>>(options.jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(options.jsonl)) {
 		totalIn++
 		const canon = toCanonicalRow(raw, corpusVersion)
 		const result = alignRow(canon)

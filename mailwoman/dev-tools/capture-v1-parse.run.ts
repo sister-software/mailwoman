@@ -10,9 +10,7 @@
  *   Run from the repo root: `node mailwoman/dev-tools/capture-v1-parse.run.ts`
  */
 
-import { readFileSync } from "node:fs"
-
-import { readJSONL, writeJSONL } from "@mailwoman/core/utils"
+import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterator"
 
 import { createServeEngine } from "../api-engine.ts"
 import type { ParityCase } from "./parity-extract.ts"
@@ -21,14 +19,11 @@ const PARITY_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const SYNTHETIC_PATH = "mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"
 const OUT_PATH = "mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl"
 
-const parityInputs = readJSONL<ParityCase>(PARITY_PATH).map((c) => c.input)
+const parityInputs = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>(PARITY_PATH), (c) => c.input)
 
-const syntheticInputs = readFileSync(SYNTHETIC_PATH, "utf8")
-	.split("\n")
-	.map((line) => line.trim())
-	.filter(Boolean)
+const syntheticInputs = await Array.fromAsync(TextSpliterator.fromAsync(SYNTHETIC_PATH), (line) => line.trim())
 
-const inputs = [...new Set([...parityInputs, ...syntheticInputs])]
+const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter(Boolean)])]
 
 const { engine, preflight } = await createServeEngine()
 
@@ -45,6 +40,12 @@ for (const input of inputs) {
 	rows.push({ input, outcome: await engine.parse(input, { debug: false }) })
 }
 
-writeJSONL(OUT_PATH, rows)
+{
+	await using out = createNewlineWriter(OUT_PATH)
+
+	for (const row of rows) {
+		await out.write(JSON.stringify(row))
+	}
+}
 
 console.error(`captured ${rows.length} /v1/parse outcomes`)

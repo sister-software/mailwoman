@@ -13,13 +13,12 @@
  *   compares the assembled neural street-name family against the gold `street` values.
  */
 
-import { readFileSync } from "node:fs"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import { JSONSpliterator } from "spliterator"
 
 import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
 
@@ -90,18 +89,15 @@ export interface ParityEvalOutcome {
 
 const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-function loadFixtures(path: string): ParityFixture[] {
-	return readFileSync(path, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line) as ParityFixture)
+function loadFixtures(path: string): Promise<ParityFixture[]> {
+	return Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(path))
 }
 
 /**
  * Run the parity-corpus eval; narrates per-label + per-country tables and a floor verdict on stdout.
  */
 export async function runParityEval(options: ParityEvalOptions = {}): Promise<ParityEvalOutcome> {
-	const fixtures = loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
+	const fixtures = await loadFixtures(options.fixturesPath ?? PARITY_FIXTURES_PATH)
 	const live = fixtures.filter((fixture) => !fixture.dropped && fixture.expect)
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({

@@ -26,6 +26,7 @@ import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -101,10 +102,7 @@ function firstByTag(tree: AddressTree, tag: string): AddressNode | undefined {
 async function main(): Promise<void> {
 	const evalPath = values["eval"] || "data/eval/external/openaddresses-de-sample.jsonl"
 
-	const rows: OaRow[] = readFileSync(evalPath, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-		.map((l) => JSON.parse(l))
+	const rows: OaRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<OaRow>(evalPath))
 
 	const { NeuralAddressClassifier, parseAnchorLookup } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")

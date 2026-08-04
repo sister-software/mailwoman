@@ -8,9 +8,8 @@
  *   fakes, matching the "no db needed" discipline `fragment-board.test.ts` set for the interval math.
  */
 
-import { readFileSync } from "node:fs"
-
 import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
+import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -23,10 +22,7 @@ import {
 	type POIBoardOutcome,
 } from "./poi-board.ts"
 
-const fixtures = readFileSync(POI_BOARD_FIXTURES, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((line) => JSON.parse(line) as POIBoardFixture)
+const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
 
 function intentOutcome(poiIntent: POIIntentOutcome): POIBoardOutcome {
 	return { path: "poi", poiIntent }

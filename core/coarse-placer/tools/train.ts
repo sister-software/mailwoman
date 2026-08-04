@@ -12,8 +12,10 @@
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
+
+import { JSONSpliterator } from "spliterator"
 
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
@@ -93,11 +95,10 @@ export async function trainCoarsePlacer(
 	const D = FEATURE_DIM
 	const classIdx = new Map<string, number>(COARSE_CLASSES.map((c, i): [string, number] => [c, i]))
 
-	function load(split: string): Sample[] {
-		const rows = readFileSync(path.join(dataDir, `${split}.jsonl`), "utf8")
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as { raw: string; country: string })
+	async function load(split: string): Promise<Sample[]> {
+		const rows = await Array.fromAsync(
+			JSONSpliterator.fromAsync<{ raw: string; country: string }>(path.join(dataDir, `${split}.jsonl`))
+		)
 
 		// Precompute features once: Int32Array of active indices + label id per row.
 		const out: Sample[] = []
@@ -113,8 +114,8 @@ export async function trainCoarsePlacer(
 	}
 
 	report?.("featurizing…")
-	const train = load("train")
-	const val = load("val")
+	const train = await load("train")
+	const val = await load("val")
 	report?.(`train ${train.length}  val ${val.length}  classes ${C}  dim ${D}`)
 
 	const W = new Float32Array(C * D)

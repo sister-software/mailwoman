@@ -18,6 +18,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { wofAdminAdapter } from "./adapters/wof-admin-json/adapter.ts"
@@ -102,12 +103,8 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		// Vermont-bearing rows after the refactor live in labeled-val.jsonl or labeled-test.jsonl,
 		// never in labeled-train.jsonl. Scan all three for the Vermont component and assert the
 		// train stream produced none.
-		const readJsonl = async (path: string) =>
-			(await readFile(path, "utf8"))
-				.trim()
-				.split("\n")
-				.filter(Boolean)
-				.map((line) => JSON.parse(line) as { source_id: string; components: { region?: string } })
+		const readJsonl = (path: string) =>
+			Array.fromAsync(JSONSpliterator.fromAsync<{ source_id: string; components: { region?: string } }>(path))
 
 		const trainRows = await readJsonl(join(outDir, "intermediate", "labeled-train.jsonl"))
 		const valRows = await readJsonl(join(outDir, "intermediate", "labeled-val.jsonl"))

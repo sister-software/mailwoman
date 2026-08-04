@@ -11,6 +11,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -80,10 +81,7 @@ const neural = WEIGHTS_CACHE
 			})
 		})()
 
-const rows = readFileSync(file, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((l) => JSON.parse(l))
+const rows = await Array.fromAsync(JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(file))
 
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}

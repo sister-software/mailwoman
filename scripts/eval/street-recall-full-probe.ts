@@ -20,10 +20,10 @@
  *   --model-card neural-weights-en-us/model-card.json --n 2660
  */
 
-import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { JSONSpliterator } from "spliterator"
 
 const { values: args } = parseArgs({
 	options: {
@@ -55,11 +55,9 @@ const load = (modelPath: string) =>
 
 const [base, cand] = await Promise.all([load(args.baseline!), load(args.candidate!)])
 
-const rows = readFileSync(args.golden!, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.slice(0, N)
-	.map((l) => JSON.parse(l) as { raw: string; components: Record<string, string> })
+const rows = (
+	await Array.fromAsync(JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.golden!))
+).slice(0, N)
 
 let full = 0
 let baseOk = 0

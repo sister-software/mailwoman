@@ -27,14 +27,14 @@
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { dataRootPath, iterateJSONL, md5File } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
 // @mailwoman/neural's fst-prior and pair-index-resolver subpaths are self-contained (fst-prior only
 // type-imports from a sibling module; pair-index-resolver only imports core/types) — safe value
 // imports at module level, no heavy ONNX runtime pulled in (mirrors postcode-binary.tsx's comment).
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
@@ -283,7 +283,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 
 				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
 				// ward export already runs to hundreds of thousands of rows.
-				for await (const pair of iterateJSONL<{ child: string; parent: string }>(path)) {
+				for await (const pair of JSONSpliterator.fromAsync<{ child: string; parent: string }>(path)) {
 					builder.addRow(pair.child, pair.parent)
 				}
 

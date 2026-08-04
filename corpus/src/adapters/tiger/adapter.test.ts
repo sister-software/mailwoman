@@ -10,6 +10,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.ts"
@@ -40,13 +41,8 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-async function loadRows(): Promise<CanonicalRow[]> {
-	const jsonl = await readFile(join(scratch, TIGER_ADAPTER_ID, "canonical.jsonl"), "utf8")
-	const trimmed = jsonl.trim()
-
-	if (!trimmed) return []
-
-	return trimmed.split("\n").map((l) => JSON.parse(l) as CanonicalRow)
+function loadRows(): Promise<CanonicalRow[]> {
+	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, TIGER_ADAPTER_ID, "canonical.jsonl")))
 }
 
 describe("tiger adapter against fixture.sql", () => {

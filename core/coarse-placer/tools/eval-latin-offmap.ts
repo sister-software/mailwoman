@@ -16,6 +16,8 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { formatPercent } from "../../utils/stats.ts"
@@ -93,10 +95,9 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
-	const rows: OffMapRow[] = readFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), "utf8")
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as OffMapRow)
+	const rows = await Array.fromAsync(
+		JSONSpliterator.fromAsync<OffMapRow>(path.join(dataDir, "test-latin-offmap.jsonl"))
+	)
 
 	const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
 	const by: Record<string, { n: number; ok: number }> = {} // key → {n, ok}

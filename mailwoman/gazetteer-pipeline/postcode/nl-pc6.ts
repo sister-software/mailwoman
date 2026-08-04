@@ -22,10 +22,11 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
-import { readFileSync, rmSync } from "node:fs"
+import { rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { CSVSpliterator } from "spliterator"
 
 /**
  * Synthetic id base — distinct from the GeoNames postal range (9500000000000).
@@ -59,11 +60,6 @@ export async function buildNLPC6Shard(
 	const outPath = opts.out ?? String(dataRootPath("wof", "postalcode-nl-pc6.db"))
 	const tmpPath = `${outPath}.tmp`
 
-	const lines = readFileSync(csvPath, "utf8").trim().split("\n")
-	const header = lines.shift()
-
-	if (header !== "pc6,lon,lat") throw new Error(`unexpected CSV header: ${header}`)
-
 	rmSync(tmpPath, { force: true })
 	const db = new DatabaseSync(tmpPath)
 	db.exec("PRAGMA journal_mode = OFF")
@@ -82,8 +78,20 @@ export async function buildNLPC6Shard(
 	let skipped = 0
 	db.exec("BEGIN")
 
-	for (const line of lines) {
-		const [pc6Raw, lonS, latS] = line.split(",")
+	// `header: false` so the header row arrives as data and can be CHECKED — the CBS export has
+	// reordered its columns before, and a silent lon/lat swap puts every Dutch postcode in Somalia.
+	let headerSeen = false
+
+	for await (const [pc6Raw, lonS, latS] of CSVSpliterator.fromAsync(csvPath, { header: false })) {
+		if (!headerSeen) {
+			headerSeen = true
+			const header = [pc6Raw, lonS, latS].join(",")
+
+			if (header !== "pc6,lon,lat") throw new Error(`unexpected CSV header: ${header}`)
+
+			continue
+		}
+
 		const pc6 = (pc6Raw ?? "").trim().toUpperCase()
 		const lon = Number(lonS)
 		const lat = Number(latS)

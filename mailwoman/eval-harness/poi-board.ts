@@ -34,13 +34,14 @@
  *   so the interval/distance math is tested against synthetic outcomes.
  */
 
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync } from "node:fs"
 
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { createRuntimePipeline } from "mailwoman"
+import { JSONSpliterator } from "spliterator"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
 
@@ -467,10 +468,7 @@ function computeStats(values: number[]): QuantileStats | null {
 export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoardRunResult> {
 	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
 
-	const fixtures = readFileSync(fixturesPath, "utf8")
-		.split("\n")
-		.filter(Boolean)
-		.map((line) => JSON.parse(line) as POIBoardFixture)
+	const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(fixturesPath))
 
 	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 

@@ -45,6 +45,7 @@ import { parseArgs } from "node:util"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -181,11 +182,10 @@ async function main(): Promise<void> {
 	const outPath = values["out"] || "data/eval/calibration/confidences.jsonl"
 	const limit = Number(values["limit"] || "0") || Infinity
 
-	const rows: CalibRow[] = readFileSync(setPath, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-		.map((l) => JSON.parse(l))
-		.slice(0, limit === Infinity ? undefined : limit)
+	const rows: CalibRow[] = (await Array.fromAsync(JSONSpliterator.fromAsync<CalibRow>(setPath))).slice(
+		0,
+		limit === Infinity ? undefined : limit
+	)
 
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")

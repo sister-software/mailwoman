@@ -56,6 +56,7 @@ import {
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { computeQueryShape } from "@mailwoman/query-shape"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Default anchor + gazetteer feed paths — the SAME ones `score-country-homograph.ts` and the verdict `oa-resolver-eval`
@@ -442,13 +443,19 @@ async function main(): Promise<void> {
 
 	for (const file of args.files) {
 		const path = resolve(args.goldenDir, file)
+
+		// Checked before the read: the spliterator reports a missing path as "invalid async data
+		// resource", which is accurate about its argument and useless about the file.
+		if (!existsSync(path)) {
+			console.error(`  skip ${file}: not found at ${path}`)
+
+			continue
+		}
+
 		let rows: GoldenRow[]
 
 		try {
-			rows = readFileSync(path, "utf8")
-				.split("\n")
-				.filter(Boolean)
-				.map((l) => JSON.parse(l))
+			rows = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenRow>(path))
 		} catch (error) {
 			console.error(`  skip ${file}: ${(error as Error).message}`)
 

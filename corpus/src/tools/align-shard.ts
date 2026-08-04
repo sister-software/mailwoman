@@ -27,7 +27,7 @@ import { createWriteStream } from "node:fs"
  * --corpus-version 0.5.0
  */
 import { alignRow } from "@mailwoman/corpus"
-import { TextSpliterator } from "spliterator"
+import { JSONSpliterator } from "spliterator"
 
 export interface AlignShardOptions {
 	input: string
@@ -36,16 +36,13 @@ export interface AlignShardOptions {
 }
 
 export async function alignCanonicalShard(args: AlignShardOptions): Promise<void> {
-	// Read phase only — the write path stays on createWriteStream. TextSpliterator + JSON.parse keeps the
-	// original tolerance: the `!line.trim()` guard skips blank lines and a trailing CR is valid JSON whitespace.
+	// Read phase only — the write path stays on createWriteStream.
 	const outStream = createWriteStream(args.output, { encoding: "utf8" })
 	let labeled = 0
 	let quarantined = 0
 	const quarantineReasons: Record<string, number> = {}
 
-	for await (const line of TextSpliterator.fromAsync(args.input)) {
-		if (!line.trim()) continue
-		const canonical = JSON.parse(line) as Parameters<typeof alignRow>[0]
+	for await (const canonical of JSONSpliterator.fromAsync<Parameters<typeof alignRow>[0]>(args.input)) {
 		// Stamp the target corpus version so the emitted row's provenance matches the run it joins.
 		canonical.corpus_version = args.corpusVersion
 		const result = alignRow(canonical)

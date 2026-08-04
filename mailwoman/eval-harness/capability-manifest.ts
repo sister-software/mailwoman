@@ -45,6 +45,7 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Options for {@linkcode generateCapabilityManifest}.
@@ -155,15 +156,14 @@ interface Row {
 	components: Record<string, string>
 }
 
-function loadRows(files: string[]): Row[] {
+async function loadRows(files: string[]): Promise<Row[]> {
 	const rows: Row[] = []
 
 	for (const f of files) {
 		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
 
-		for (const line of readFileSync(f, "utf8").split("\n")) {
-			if (!line.trim()) continue
-			rows.push(JSON.parse(line) as Row)
+		for await (const row of JSONSpliterator.fromAsync<Row>(f)) {
+			rows.push(row)
 		}
 	}
 
@@ -250,7 +250,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 		capabilities[tier] = {}
 
 		for (const spec of LOCALES) {
-			const rows = loadRows(spec.files)
+			const rows = await loadRows(spec.files)
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 

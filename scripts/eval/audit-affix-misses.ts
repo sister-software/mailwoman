@@ -22,6 +22,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Longest suffix still likely an abbreviation when it carries no trailing period.
@@ -41,10 +42,9 @@ const { values: args } = parseArgs({
 
 if (!args.model) throw new Error("--model required")
 
-const rows = readFileSync(args.file!, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((l) => JSON.parse(l) as { raw: string; components: Record<string, string> })
+const rows = await Array.fromAsync(
+	JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!)
+)
 
 // Mirror score-affix's SHIP-CONFIG construction exactly — loadFromWeights ignores a modelPath
 // and grades the default symlink with no anchor channel (the zero-fill crash signature this

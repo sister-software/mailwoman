@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
+import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "../../runner.ts"
@@ -34,13 +35,8 @@ async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	return p
 }
 
-async function loadRows(): Promise<CanonicalRow[]> {
-	const jsonl = await readFile(join(scratch, OVERTURE_ADAPTER_ID, "canonical.jsonl"), "utf8")
-
-	return jsonl
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as CanonicalRow)
+function loadRows(): Promise<CanonicalRow[]> {
+	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, OVERTURE_ADAPTER_ID, "canonical.jsonl")))
 }
 
 const ES = [

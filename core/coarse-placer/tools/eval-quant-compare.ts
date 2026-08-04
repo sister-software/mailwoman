@@ -14,6 +14,8 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -107,10 +109,7 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	const fp32 = loadFp32(fp32Dir)
 	const int8 = loadInt8(int8Dir)
 
-	const test: TestRow[] = readFileSync(path.join(dataDir, "test.jsonl"), "utf8")
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as TestRow)
+	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl")))
 
 	const classes = (JSON.parse(readFileSync(path.join(fp32Dir, "meta.json"), "utf8")) as CoarsePlacerMeta).classes
 	let okF = 0
