@@ -32,6 +32,7 @@ import { siBareVillageRecipe } from "./si-bare-village.ts"
 import { streetAffixRecipe } from "./street-affix.ts"
 import { streetBareRecipe } from "./street-bare.ts"
 import { streetRecipe } from "./street.ts"
+import { subVenueRecipe } from "./sub-venue.ts"
 import { unitRecipe } from "./unit.ts"
 
 export * from "./scaffold.ts"
@@ -64,6 +65,7 @@ const RECIPES: readonly ShardRecipe[] = [
 	countryBalancedRecipe,
 	boundaryStressRecipe,
 	anchorAbsorptionRecipe,
+	subVenueRecipe,
 ]
 
 /**

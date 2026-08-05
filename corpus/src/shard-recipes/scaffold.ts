@@ -208,6 +208,30 @@ export interface ShardRecipeOpts {
 	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted. Default 3.
 	 */
 	longNumberMinDigits?: number
+	/**
+	 * `sub-venue`: the sub-venue lexicon JSON. Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved
+	 * through the package manifest so it works from the source tree and from `out/`.
+	 */
+	lexicon?: string
+	/**
+	 * `sub-venue`: directory of `sub-venue-extract` JSONLs, one per region. Default
+	 * `$MAILWOMAN_DATA_ROOT/sub-venue/extracts`.
+	 */
+	extractsDir?: string
+	/**
+	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound pools (the two of poi.db's
+	 * four countries this shard has legs for). Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
+	 */
+	poiDb?: string
+	/**
+	 * `sub-venue`: GB/US/FR address-context tuples JSONL. Default the house-venue v3 tuples
+	 * (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`); DE and ES read OpenAddresses directly.
+	 */
+	subVenueTuples?: string
+	/**
+	 * `sub-venue`: share of emitted rows that are confound NEGATIVES. Default 0.3.
+	 */
+	negativeFraction?: number
 }
 
 /**
