@@ -129,6 +129,17 @@ function defaultStreetTypeLexicon(locale: string | undefined): string | undefine
 	}
 }
 
+/**
+ * Spread-in for the optional FST path.
+ *
+ * A module-level helper rather than an inline `...(x ? {k: x} : {})` because `createScorer` sits one branch under the
+ * complexity ceiling (86 against a maximum of 85 with the ternary inlined), and a lint error is a worse place to learn
+ * that than here.
+ */
+function fstPathEntry(fstPath: string | undefined): { fstPath?: string } {
+	return fstPath ? { fstPath } : {}
+}
+
 function defaultLocalitySurfaceLexicon(locale: string | undefined): string | undefined {
 	try {
 		return resolveWeights({ locale }).localitySurfaceLexiconPath
@@ -209,6 +220,20 @@ export interface CreateScorerOpts {
 	 * Path to the `model-card.json` (label vocab + the `requires` ship-config).
 	 */
 	modelCardPath: string
+	/**
+	 * Per-locale FST gazetteer path (`fst-<locale>.bin`), surfaced on the built classifier as
+	 * {@link NeuralAddressClassifier.fstPath} so a caller assembling `createRuntimePipeline` gets the decode-time
+	 * gazetteer bias.
+	 *
+	 * PATH ONLY — `neural` carries no `resolver-wof-sqlite` dependency, so the deserialize happens in the caller's layer,
+	 * exactly as it does for the `loadFromWeights` route.
+	 *
+	 * WHY THIS EXISTS (#1497). `loadFromWeights` sets `fstPath` from the resolved weights package; `createScorer` builds
+	 * a classifier from EXPLICIT artifact paths and had no way to say which FST goes with them. Every eval that pins a
+	 * candidate model goes through this constructor, so every one of them was assembling a pipeline whose gazetteer prior
+	 * was silently OFF — which is why an FST change could not be measured by any eval in the tree.
+	 */
+	fstPath?: string
 	/**
 	 * Postcode→anchor lookup path. Default {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the soft-feed sibling
 	 * shipped in the `@mailwoman/neural-weights-<locale>` package (#718 D1).
@@ -575,6 +600,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	return new NeuralAddressClassifier({
 		tokenizer,
 		runner,
+		...fstPathEntry(opts.fstPath),
 		...(labels ? { labels } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
 		...(postcodeAnchorSpanMode ? { postcodeAnchorSpanMode } : {}),
