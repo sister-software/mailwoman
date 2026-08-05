@@ -26,22 +26,17 @@ import { expect, test } from "vitest"
 const UNIT = "123 Main St, Springfield, IL 62701, "
 
 /**
- * Timing samples per size. Three is enough for the minimum to skip a transient spike without making the test slow.
+ * Timing samples per size. Five keeps the minimum honest against back-to-back load spikes (three let one through on
+ * 2026-08-05 — see the threshold note below) without making the test slow.
  */
-const TIMING_SAMPLES = 3
+const TIMING_SAMPLES = 5
 
 /**
- * Best of {@link TIMING_SAMPLES} runs.
- *
  * Contention can only ever ADD time to a sample, never remove it, so the minimum is the run least polluted by whatever
  * else the machine was doing. A mean or a single sample inherits every load spike, which on a shared CI runner is the
  * difference between measuring the algorithm and measuring the neighbours.
  */
-function timeAt(reps: number): number {
-	const input = UNIT.repeat(reps)
-	// Warm first — a cold JIT on the smaller sample would inflate the ratio and fail spuriously.
-	computeQueryShape(input)
-
+function timeAt(input: string): number {
 	const start = performance.now()
 
 	computeQueryShape(input)
@@ -49,26 +44,43 @@ function timeAt(reps: number): number {
 	return performance.now() - start
 }
 
-function bestOf(chars: number): number {
-	let best = Number.POSITIVE_INFINITY
+/**
+ * Sample both sizes INTERLEAVED (small, large, small, large, …) rather than all-small-then-all-large: runner load and
+ * thermal state drift over the test's lifetime, and a block design hands the drift entirely to one side of the ratio.
+ * Interleaving gives both sizes an equal draw from every load regime, so the two minimums are comparable.
+ */
+function bestOfBoth(smallReps: number, largeReps: number): { small: number; large: number } {
+	const smallInput = UNIT.repeat(smallReps)
+	const largeInput = UNIT.repeat(largeReps)
+
+	// Warm first — a cold JIT on the smaller sample would inflate the ratio and fail spuriously.
+	computeQueryShape(smallInput)
+	computeQueryShape(largeInput)
+
+	let small = Number.POSITIVE_INFINITY
+	let large = Number.POSITIVE_INFINITY
 
 	for (let i = 0; i < TIMING_SAMPLES; i++) {
-		best = Math.min(best, timeAt(chars))
+		small = Math.min(small, timeAt(smallInput))
+		large = Math.min(large, timeAt(largeInput))
 	}
 
-	return best
+	return { small, large }
 }
 
 test("computeQueryShape stays linear as segment count doubles", () => {
 	// Large enough that fixed overheads do not dominate the ratio.
-	const small = bestOf(4000)
-	const large = bestOf(8000)
+	const { small, large } = bestOfBoth(4000, 8000)
 	const ratio = large / Math.max(small, 0.001)
 
+	// 3.5, not 3: the 3x bar produced two false failures on loaded CI runners on 2026-08-05 (measured
+	// 3.13x, 15.3ms -> 48.0ms, best-of-three block design). Quadratic doubles to ~4x at these sizes —
+	// fixed overhead is <1ms against 15ms+ samples — so 3.5 still separates the real failure from a
+	// noisy neighbour.
 	expect(
 		ratio,
 		`doubling the input multiplied the cost by ${ratio.toFixed(2)}x (${small.toFixed(1)}ms -> ${large.toFixed(1)}ms). ` +
 			`Linear is ~2x; quadratic is ~4x. Something in the query-shape stage is scanning pairs again — see ` +
 			`region-abbreviations.ts for the two-pointer merge this replaced.`
-	).toBeLessThan(3)
+	).toBeLessThan(3.5)
 })
