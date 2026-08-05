@@ -4,7 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Build the curated regression Gauntlet (`$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`) from the
- *   committed seed (`cases/regression.ts`). Build-on-copy: write a temp DB, then swap it into place.
+ *   committed seed (`cases/<cc>/*.jsonl`). Build-on-copy: write a temp DB, then swap it into place.
+ *
+ *   Row order in the DB is the loader's order (country dir, then case id) — not the pre-2026-08-05
+ *   chronological array order. Nothing grades on it: the regression runner reads every row, and the ablation
+ *   board id hashes a sorted fingerprint. The one consumer that SEES it is `ablation --limit N`, which slices
+ *   the first N rows and so now samples alphabetically by country rather than by entry date.
  *
  *   Run: mailwoman eval gauntlet-build regression-db
  */
@@ -16,13 +21,14 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 
-import { REGRESSION_CASES } from "./cases/regression.ts"
+import { loadRegressionCases } from "./cases/load.ts"
 import { createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
 
 /**
  * Build the curated regression DB from the committed seed and swap it into place.
  */
 export async function buildRegressionDB(): Promise<void> {
+	const cases = await loadRegressionCases()
 	const output = dataRootPath("gauntlet", "regression.db")
 	const tmp = `${output}.tmp-${process.pid}`
 
@@ -38,7 +44,7 @@ export async function buildRegressionDB(): Promise<void> {
 
 	const insert = db.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
 
-	for (const c of REGRESSION_CASES) {
+	for (const c of cases) {
 		// Positional, in GAUNTLET_CASE_COLUMNS order.
 		insert.run(
 			c.id,
@@ -66,11 +72,11 @@ export async function buildRegressionDB(): Promise<void> {
 
 	swapDatabaseIntoPlace(tmp, output)
 
-	console.log(`[gauntlet] built ${output} — ${REGRESSION_CASES.length} cases`)
+	console.log(`[gauntlet] built ${output} — ${cases.length} cases`)
 
 	const kinds = new Map<string, number>()
 
-	for (const c of REGRESSION_CASES) {
+	for (const c of cases) {
 		kinds.set(`${c.country}/${c.addressKind}`, (kinds.get(`${c.country}/${c.addressKind}`) ?? 0) + 1)
 	}
 
