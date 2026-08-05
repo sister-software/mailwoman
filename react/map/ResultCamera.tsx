@@ -19,10 +19,30 @@
  *   value-key dance, no dependency-lint suppression.
  */
 
+import type { FitBoundsOptions } from "maplibre-gl"
 import { type ReactNode, useEffect } from "react"
 import { useMap } from "react-map-gl/maplibre"
 
 import type { MapCameraTarget } from "./place-render.ts"
+
+/**
+ * The `fitBounds` options for a `bounds` target — and the reason this is a named function rather than an object literal
+ * at the call site.
+ *
+ * `duration` is present ONLY on the non-animated path, and its ABSENCE on the animated one is load-bearing. maplibre's
+ * `Camera.flyTo` (which `fitBounds` funnels into via `_fitInternal`) branches on `'duration' in options`, not on the
+ * value: an explicitly-passed `duration: undefined` therefore survives the key test and is coerced with `+undefined` →
+ * `NaN`. Every ease frame then computes `k = easing(elapsed / NaN)` → `NaN`, the flight-path math yields a `NaN` world
+ * coordinate, and the FIRST frame throws `Invalid LngLat object: (NaN, NaN)` out of the RAF loop — before the map has
+ * moved at all, and with no `move` event to notice it by.
+ *
+ * Measured 2026-08-05 against maplibre-gl 5.24.0, same bounds and same map: `{padding: 40, duration: undefined}` →
+ * `map._easeOptions.duration = NaN` + the throw; `{padding: 40}` → `3937.7 ms` + a normal flight. So pass the key or
+ * don't — never pass it holding `undefined`.
+ */
+export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
+	return animate ? { padding } : { padding, duration: 0 }
+}
 
 export interface ResultCameraProps {
 	/**
@@ -57,7 +77,7 @@ export function ResultCamera({ target, animate = true }: ResultCameraProps): Rea
 			return
 		}
 
-		instance.fitBounds(target.bounds, { padding: target.padding, duration: animate ? undefined : 0 })
+		instance.fitBounds(target.bounds, fitBoundsOptionsFor(target.padding, animate))
 	}, [map, target, animate])
 
 	return null
