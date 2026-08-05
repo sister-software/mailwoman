@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unpack the Code-Point Open archive. `codepo_gb.zip` (14 MB) holds 121 per-postcode-area CSVs under
+ *   Unpack the Code-Point Open archive. `codepo_gb.zip` (14 MB) holds 120 per-postcode-area CSVs under
  *   `Data/CSV/` — `ab.csv`, `al.csv`, … `ze.csv`, one per outward-code area, 162 MB unpacked — plus a
  *   small `Doc/` tree carrying the licence text, the column headers, and a metadata file that turns out
  *   to be the most useful thing in the archive.
@@ -144,9 +144,13 @@ export interface ExtractCodePointResult {
 	 */
 	metadata: CodePointMetadata
 	/**
-	 * `Doc/licence.txt` verbatim, so the shard's provenance quotes OS's own words rather than ours. Note the file is
-	 * Latin-1-ish and writes `©` as a byte the archive does not declare an encoding for; it is read as UTF-8 and any
-	 * undecodable byte is left as the replacement character rather than guessed at.
+	 * `Doc/licence.txt` verbatim, so the shard's provenance quotes OS's own words rather than ours.
+	 *
+	 * Decoded as **Latin-1**, and that is load-bearing rather than fussy. The archive declares no encoding, and the
+	 * file's only non-ASCII byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns
+	 * every copyright symbol into U+FFFD, so the first build baked `Contains Ordnance Survey data � Crown copyright` into
+	 * the shard's `meta`. Mojibake in a decorative string is cosmetic; mojibake in the attribution text a redistributor
+	 * is legally required to carry is not.
 	 */
 	licenseText: string
 	totalBytes: number
@@ -205,7 +209,8 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 
 	const metadataPath = String(join(docDir, "metadata.txt"))
 	const metadata = parseCodePointMetadata(await readFile(metadataPath, "utf8"))
-	const licenseText = await readFile(String(join(docDir, "licence.txt")), "utf8").catch(() => "")
+	// Latin-1, deliberately — see `ExtractCodePointResult.licenseText`.
+	const licenseText = await readFile(String(join(docDir, "licence.txt")), "latin1").catch(() => "")
 
 	return { csvPaths, docDir, metadata, licenseText, totalBytes }
 }

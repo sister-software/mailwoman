@@ -41,9 +41,11 @@
  */
 
 import { existsSync, unlinkSync } from "node:fs"
+import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
@@ -133,6 +135,31 @@ function datestamp(now: Date): string {
 }
 
 /**
+ * What the shard records when an offline rebuild cannot recover a provenance field. A sentinel STRING rather than an
+ * empty one: a consumer reading `source_release: ""` cannot tell "no release label exists" from "nobody looked", and
+ * the meaning-of-zero rule says those are different claims.
+ */
+const UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json)"
+
+/**
+ * The sidecar {@link downloadCodePointOpen} writes beside the archive.
+ */
+interface AcquisitionSidecar {
+	product?: { version?: string }
+	md5?: string
+}
+
+/**
+ * Recover acquisition provenance from `acquisition.json`. Absent is not fatal — the caller substitutes
+ * {@link UNKNOWN_PROVENANCE} and says so in the shard.
+ */
+async function readAcquisitionSidecar(sourceDir: string): Promise<AcquisitionSidecar | null> {
+	const raw = await readFile(String(join(sourceDir, "acquisition.json")), "utf8").catch(() => null)
+
+	return raw ? tryParsingJSON<AcquisitionSidecar>(raw) : null
+}
+
+/**
  * Build the sealed GB Code-Point Open postcode shard.
  */
 export async function buildPostcodeCodePoint(
@@ -145,10 +172,26 @@ export async function buildPostcodeCodePoint(
 	const out = options.out ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`))
 
 	// --- Acquire.
-	let archiveMD5 = ""
-	let osVersion = ""
+	//
+	// An OFFLINE build must not silently produce an artifact with blank provenance. `downloadCodePointOpen`
+	// leaves an `acquisition.json` sidecar next to the archive precisely so a later offline rebuild can
+	// recover the release label and md5 it would otherwise have to invent; when even that is missing, the
+	// meta records the ABSENCE in words rather than an empty string, because "" reads as "no release" to
+	// anyone grepping it.
+	let archiveMD5: string
+	let osVersion: string
 
-	if (!options.offline) {
+	if (options.offline) {
+		const sidecar = await readAcquisitionSidecar(sourceDir)
+
+		archiveMD5 = sidecar?.md5 ?? UNKNOWN_PROVENANCE
+		osVersion = sidecar?.product?.version ?? UNKNOWN_PROVENANCE
+
+		phase(
+			"offline",
+			sidecar ? `provenance from acquisition.json (${osVersion})` : "NO acquisition.json — provenance unknown"
+		)
+	} else {
 		const download = await downloadCodePointOpen({ destDir: sourceDir, onPhase: phase })
 
 		archiveMD5 = download.md5
