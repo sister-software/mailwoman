@@ -196,7 +196,16 @@ export async function evalOpenSet(
 	const fitPerClass = options.fitPerClass ?? 2000
 
 	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
-	const W = new Float32Array(readFileSync(path.join(modelDir, "weights.bin")).buffer)
+	const weightBytes = readFileSync(path.join(modelDir, "weights.bin"))
+
+	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
+	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
+	const W = new Float32Array(
+		weightBytes.buffer,
+		weightBytes.byteOffset,
+		weightBytes.byteLength / Float32Array.BYTES_PER_ELEMENT
+	)
+
 	const bias = Float32Array.from(meta.bias)
 	const C = meta.classes.length
 	const D = meta.featureDim
