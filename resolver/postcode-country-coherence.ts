@@ -68,8 +68,11 @@
  *   — when the default is incoherent. Nothing runs at all unless a `defaultCountry` is in force AND
  *   the tree carries both a postcode and a locality.
  *
- *   Opt-in via `ResolveOpts.postcodeCountryCoherence` (D-rule: default-off until the resolver
- *   gauntlet says otherwise).
+ *   **Default-ON** since the operator promotion of 2026-08-05 (#1477) — the resolver gauntlet, pinned
+ *   both ways, returned zero newly-failing gated cases, and 56,000 pair evaluations across both
+ *   backends returned zero false positives. `ResolveOpts.postcodeCountryCoherence: false` opts out,
+ *   and the walk is byte-stable then. Receipts:
+ *   `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`.
  */
 
 // `postcode-systems` has no dedicated export subpath; the barrel is where every other consumer

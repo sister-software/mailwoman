@@ -260,8 +260,9 @@ function isResolvedWithCoord(n: AddressNode): boolean {
  *    (right area, the safe answer) and flag `postcode_city_mismatch`.
  *
  * Only fires where the postcode resolved to a point, so it composes with postcode coverage (#193) — add a country's
- * postcodes and this immediately disambiguates its same-named towns. Default-off via `opts.postcodeConsistency`;
- * byte-stable when unset.
+ * postcodes and this immediately disambiguates its same-named towns. **Default-ON** since the #370 operator promotion
+ * (2026-07-04, commit `0010bb8c`) — `opts.postcodeConsistency: false` opts out, and the pass is byte-stable on every
+ * tree with no resolved postcode point (the `!anchor` early return below).
  */
 function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number): void {
 	// The resolved postcode anchor (first one with a real coordinate).
