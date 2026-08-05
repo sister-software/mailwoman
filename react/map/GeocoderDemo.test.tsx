@@ -42,9 +42,14 @@ async function settle<T>(get: () => T | null, timeout = 8000): Promise<T | null>
 }
 
 test("submit drives the result panel + a map marker over the fake runtime", async () => {
-	// applyResultCamera=false keeps this deterministic: the marker + outline still render, but the animated fly/fit
-	// (which maplibre runs on a zero-size headless canvas → NaN LngLat in its RAF loop) is skipped, exactly as the
-	// phase-2 overlays test uses applyCamera=false.
+	// applyResultCamera=false keeps this deterministic: the marker + outline still render, but the animated fly/fit is
+	// skipped, exactly as the phase-2 overlays test uses applyCamera=false.
+	//
+	// This comment used to blame "a zero-size headless canvas" for the NaN LngLat that appears when the camera is on.
+	// The canvas was innocent: `<ResultCamera>` passed `duration: undefined` to `fitBounds`, maplibre read the KEY
+	// rather than the value, and `+undefined` → NaN poisoned every ease frame (fixed 2026-08-05). Turning the camera
+	// off here is still the right call for THIS test — it grades the panel + marker, not the flight — but the camera
+	// now has its own guard with a live map: see `ResultCamera.test.tsx`.
 	const { container } = renderComponent(
 		<GeocoderDemo
 			runtime={makeDemoRuntime()}
