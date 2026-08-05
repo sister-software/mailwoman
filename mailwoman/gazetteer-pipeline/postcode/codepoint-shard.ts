@@ -54,6 +54,7 @@ import {
 	CODEPOINT_COVERAGE_NOTE,
 	CODEPOINT_LICENSE,
 	CODEPOINT_LICENSE_URL,
+	NORTHERN_IRELAND_OPTIONS_NOTE,
 	type CodePointMetadata,
 	type CodePointParseStats,
 	codePointAttribution,
@@ -438,8 +439,9 @@ async function writeShardMeta(db: DatabaseSync, input: ShardMetaInput): Promise<
 			"ZERO Northern Ireland (BT) postcodes — measured, not assumed: the source's country codes are exactly " +
 				"E92000001/S92000003/W92000004 across all rows. NI postcode geography is administered by Land & Property " +
 				"Services (LPS) and is not published under OGL; filling this gap requires a separate licence, not a " +
-				"different build. See the shard's README/report for the options note.",
+				"different build.",
 		],
+		["coverage_gap_northern_ireland_options", NORTHERN_IRELAND_OPTIONS_NOTE],
 		[
 			"method",
 			"#920 laws: `name` stored in the sanitized-query token shape (every non-letter/number stripped) with the " +

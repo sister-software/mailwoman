@@ -66,6 +66,27 @@ documentation site. They are **not** redistributed in any published npm package.
 postcode shards and the training corpus, under
 [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
+### Ordnance Survey Code-Point Open — Open Government Licence v3.0
+
+[Code-Point Open](https://osdatahub.os.uk/downloads/open/CodePointOpen) is the source of the GB
+unit-postcode gazetteer shard (`postalcode-gb-codepoint-<date>.db`, built by
+`mailwoman gazetteer build postcode-codepoint`). All three lines of the following block are
+required by OS, and each names a different rightsholder — Ordnance Survey for the geography,
+Royal Mail for the postcodes, National Statistics for the administrative codes:
+
+> Contains OS data © Crown copyright and database right 2026.
+> Contains Royal Mail data © Royal Mail copyright and database right 2026.
+> Contains National Statistics data © Crown copyright and database right 2026.
+
+Licensed under the
+[Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/).
+The same block, plus the source md5 and OS's own `Doc/licence.txt` verbatim, is baked into the
+shard's `meta` table so a consumer reads the obligation at open rather than trusting a runbook.
+
+Coverage is England, Scotland and Wales. Northern Ireland (`BT`), the Isle of Man and the
+Channel Islands are **not** in this product — that geography is administered separately and is
+outside OS OpenData.
+
 ### OpenAddresses — various
 
 [OpenAddresses](https://openaddresses.io/) address points are used in the training corpus and

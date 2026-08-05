@@ -142,7 +142,59 @@ export interface CodePointProduct {
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
 	"Northern Ireland (BT postcodes), the Isle of Man and the Channel Islands are NOT included — NI postcode " +
-	"data is administered by Land & Property Services and lies outside OS OpenData and outside ONS's OGL grant."
+	"data is administered by Land & Property Services and lies outside OS OpenData and outside ONS's OGL grant. " +
+	"See NORTHERN_IRELAND_OPTIONS_NOTE for why the gap cannot be filled from a free source."
+
+/**
+ * What it would actually take to fill the Northern Ireland hole — researched 2026-08-05, because the obvious answer is
+ * wrong in a way that would get us in trouble.
+ *
+ * The obvious answer is ONSPD: the ONS Postcode Directory is free, is published on the Open Geography Portal under OGL,
+ * and DOES carry BT postcodes with coordinates (derived from LPS's Pointer, on the Irish National Grid). Take it and
+ * the gap closes. That reading is wrong, and the wrongness is explicit in ONS's own words rather than a matter of
+ * interpretation. From the ONS licences page, covering ONSPD and NSPL alike: "You may re-use this information **(not
+ * including logos or Northern Ireland data)** free of charge", and BT rows ship only with "a Northern Ireland End User
+ * Licence (for internal business use only)". The ONSPD User Guide (May 2021, §3) said it flatter still: "Open
+ * Government Licensing terms do not apply to NI postcodes."
+ *
+ * And the LPS End User Licence itself is not merely a commercial-use gate. It is PERSONAL (§1.2 "personal to you and
+ * the licence granted herein is for your benefit only"), INTERNAL-ONLY (§2 "solely for your own internal business use …
+ * all other uses are prohibited"), and NON-SUBLICENSABLE (§9 "you may not novate, assign, transfer, sub-contract or
+ * otherwise part with this Licence"). Shipping BT rows in a published package is therefore out under any reading,
+ * commercial or not — and that applies equally to the ONSPD re-publishers (doogal, FreeMapTools), whose own terms
+ * reproduce the same exclusion. NISRA's Central Postcode Directory is free but no better: its MOU forbids passing
+ * copies to third parties and permits only internal use and non-commercial statistics.
+ *
+ * There is also no NI counterpart to Code-Point Open to fall back on. LPS's OSNI Open Data catalogue is 77 datasets,
+ * all OGL v3, and contains boundaries, terrain, raster mapping and two gazetteers (place names, street names) — no
+ * postcode centroids and no address points. That is a checked negative from the catalogue, not an assumption.
+ *
+ * So the real options are three, and only one of them is free:
+ *
+ * (a) LICENCE POINTER FROM LPS. The authoritative NI address database, ~1 M points with UPRNs. The OSNI mapshop lists
+ * full NI coverage at £9,224 excl. VAT; orders over £3,000 need a formal licence application with a ≥12-month term.
+ * This is the ONLY route to complete NI centroids in a permissively-licensed package. (b) SHIP NI AS ODbL from
+ * OpenStreetMap `addr:postcode`. Coverage is partial and uneven, and ODbL's share-alike would infect the artifact — the
+ * same posture `@mailwoman/osm` already sits in, awaiting counsel. Note the OSM community explicitly forbids importing
+ * LPS/ONSPD centroids into OSM, so this cannot be laundered. (c) SHIP NO NI POSTCODE CENTROIDS. Fall back to the
+ * OGL-clean OSNI Streetnames gazetteer (every NI street with Irish Grid coordinates) for street-level NI resolution.
+ *
+ * (c) is the low-risk default and is what the shard does today. Scale of what is being given up: ONSPD Feb 2025 counts
+ * 50,032 LIVE NI postcodes (62,980 including terminated). The incumbent GeoNames snapshot's 48,990 BT rows sit between
+ * the May 2020 and May 2021 live figures, i.e. a live-only extract roughly five years stale and ~2 % short of current.
+ */
+export const NORTHERN_IRELAND_OPTIONS_NOTE =
+	"Northern Ireland (BT) postcode centroids CANNOT be filled from a free source. ONSPD/NSPL carry BT coordinates " +
+	"(from LPS Pointer) but carve them out of OGL: ONS grants re-use 'not including logos or Northern Ireland data', " +
+	"and BT rows come only under an LPS Northern Ireland End User Licence that is personal (§1.2), internal-business-use " +
+	"only (§2), and non-sublicensable (§9) — so redistribution in a published artifact is barred regardless of " +
+	"commercial intent, including via re-publishers such as doogal/FreeMapTools. NISRA's Central Postcode Directory is " +
+	"free but equally non-redistributable. LPS's OSNI Open Data catalogue (77 datasets, all OGL v3) contains NO postcode " +
+	"centroids or address points — verified against the catalogue. Options: (a) licence Pointer from LPS (~£9,224 excl. " +
+	"VAT full NI coverage; >£3,000 orders need a formal >=12-month licence) — the only route to complete NI centroids in " +
+	"a permissively-licensed package; (b) ship NI as ODbL from OpenStreetMap addr:postcode — partial coverage plus " +
+	"share-alike contamination; (c) ship no NI centroids and use the OGL-clean OSNI Streetnames gazetteer for " +
+	"street-level NI resolution. (c) is what this shard does. Scale: ONSPD Feb 2025 counts 50,032 live NI postcodes."
 
 /**
  * Build the OS Downloads API client.
