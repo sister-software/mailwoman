@@ -46,7 +46,13 @@ const OptionsSchema = zod.object({
 	postcodeCountryCoherence: zod
 		.boolean()
 		.default(false)
-		.describe("#42 opt-in pin: postcode-country coherence ON (library default OFF) — the D-rule instrument"),
+		.describe("#42 tri-state pin: force postcodeCountryCoherence ON (library default is ON since 2026-08-05)"),
+	// Same commander constraint as `adminCoherenceOff` above — a literal `--no-x` flag would negate `--x` on the
+	// same attribute and collapse the tri-state.
+	postcodeCountryCoherenceOff: zod
+		.boolean()
+		.default(false)
+		.describe("#42 tri-state pin: force postcodeCountryCoherence OFF (the pre-promotion configuration)"),
 	hierarchyCompletion: zod.boolean().default(false).describe("#405: recover the dual-role-place locality"),
 
 	// coordinate tiers
@@ -77,8 +83,15 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalOAResolver: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const { adminCoherenceOff, ...rest } = options
-	const state = useCommandTask(() => oaResolverEval({ ...rest, noAdminCoherence: adminCoherenceOff }))
+	const { adminCoherenceOff, postcodeCountryCoherenceOff, ...rest } = options
+
+	const state = useCommandTask(() =>
+		oaResolverEval({
+			...rest,
+			noAdminCoherence: adminCoherenceOff,
+			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
+		})
+	)
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

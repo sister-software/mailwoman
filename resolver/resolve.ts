@@ -783,12 +783,13 @@ class WOFResolver implements Resolver {
 		// work here, because what needs correcting is the walk's country SCOPE — which poisons the postcode
 		// node's own resolution, the postcode-consistency fallback that then drags the locality onto it, and
 		// the hard `country` filter on every admin lookup. So the verdict is taken once, up front, and the
-		// walk runs under the corrected country. Opt-in (D-rule); needs a default country to correct and both
-		// a postcode and a locality to be coherent about; abstains unless EXACTLY one country (never the
-		// already-coherent default) makes the pair consistent. See postcode-country-coherence.ts.
+		// walk runs under the corrected country. Default-ON (operator-promoted 2026-08-05; `false` opts out) —
+		// needs a default country to correct and both a postcode and a locality to be coherent about; abstains
+		// unless EXACTLY one country (never the already-coherent default) makes the pair consistent. See
+		// postcode-country-coherence.ts.
 		let postcodeScope: PostcodeCountryScope | null = null
 
-		if (opts.postcodeCountryCoherence && state.defaultCountry && state.postcode) {
+		if (opts.postcodeCountryCoherence !== false && state.defaultCountry && state.postcode) {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
 				defaultCountry: state.defaultCountry,

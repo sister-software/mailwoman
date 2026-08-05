@@ -172,13 +172,18 @@ export interface OAResolverEvalOptions {
 	 */
 	noAdminCoherence?: boolean
 	/**
+	 * #42 tri-state pin: force postcodeCountryCoherence OFF — the pre-2026-08-05 configuration. This is the leg that
+	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat on a US panel,
+	 * which is the one number the default-on promotion needed and could not get from a confound board.
+	 */
+	noPostcodeCountryCoherence?: boolean
+	/**
 	 * #690/#895 tri-state pin: force normalizeCase ON.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #42 opt-in pin: turn postcode-country coherence ON (the library default is OFF). The D-rule instrument — this is
-	 * the leg that measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat
-	 * on a US panel, which is the one number a default-on proposal needs and cannot get from a confound board.
+	 * #42 tri-state pin: force postcodeCountryCoherence ON. The library default has been ON since 2026-08-05, so this pin
+	 * is now a no-op restatement; it stays because a gate leg that says what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -845,12 +850,20 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
 
+	// #42: default-ON in the resolver since 2026-08-05, so the pin is a full tri-state like adminCoherence's —
+	// `--postcode-country-coherence` ON, `--postcode-country-coherence-off` OFF, neither = the library default.
+	const postcodeCountryCoherence =
+		(options.postcodeCountryCoherence ?? false)
+			? true
+			: (options.noPostcodeCountryCoherence ?? false)
+				? false
+				: undefined
+
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
-		// #42: opt-in, so a single ON pin is the whole tri-state — unset already means the library default (OFF).
-		...(options.postcodeCountryCoherence ? { postcodeCountryCoherence: true } : {}),
+		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
 	}
 
 	const {

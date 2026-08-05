@@ -37,23 +37,38 @@ const OptionsSchema = zod.object({
 	postcodeCountryCoherence: zod
 		.boolean()
 		.default(false)
-		.describe("#42 resolver-lever pin: postcode-country coherence ON (library default OFF)"),
+		.describe("#42 tri-state resolver-lever pin: force postcode-country coherence ON (library default is ON)"),
+	// NOTE: spelled `-off` rather than `--no-postcode-country-coherence` for the reason `eval oa-resolver`'s
+	// `adminCoherenceOff` is — commander treats a literal `--no-x` flag as the negation of `--x` (same
+	// attribute), which collapses the tri-state: the OFF pin would arrive indistinguishable from "unset".
+	postcodeCountryCoherenceOff: zod
+		.boolean()
+		.default(false)
+		.describe("#42 tri-state resolver-lever pin: force postcode-country coherence OFF (the pre-2026-08-05 default)"),
 })
 
 export { OptionsSchema as options }
 
 const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+	// `postcodeCountryCoherenceOff` is a CLI-only spelling of the OFF half of one tri-state; it is destructured
+	// out so it never reaches `runGauntlet` as a field of its own.
+	const { postcodeCountryCoherenceOff, ...rest } = options
+
 	const state = useCommandTask(
 		async () =>
 			(
 				await runGauntlet({
-					...options,
+					...rest,
 					weightsCacheRoot: options.weightsCache,
-					// An UNSET flag must stay unset, not become an explicit OFF pin. Pastel gives the schema's `false`
-					// default, and forwarding that verbatim would make the gate pin the lever OFF forever — so the day the
-					// library default flips to ON, the standard gate would silently keep grading the old configuration.
-					// Forwarding only the ON pin keeps "no flag" meaning "grade whatever production does".
-					postcodeCountryCoherence: options.postcodeCountryCoherence || undefined,
+					// An UNSET flag must stay unset, not become an explicit pin either way. Pastel gives the schema's
+					// `false` default for BOTH halves, and forwarding one verbatim would pin the lever forever — which is
+					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard gate. Neither
+					// flag set keeps "no flag" meaning "grade whatever production does".
+					postcodeCountryCoherence: options.postcodeCountryCoherence
+						? true
+						: postcodeCountryCoherenceOff
+							? false
+							: undefined,
 				})
 			).exitCode,
 		(exitCode) => exitCode

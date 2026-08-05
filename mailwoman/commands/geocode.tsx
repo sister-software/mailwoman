@@ -149,12 +149,13 @@ const OptionsSchema = zod.object({
 	postcodeCountryCoherence: zod
 		.boolean()
 		.optional()
-		.default(false)
+		.default(true)
 		.describe(
-			"#42, OPT-IN: let a (postcode, locality) pair that is geographically consistent in exactly ONE country " +
-				"override a wrong --default-country / locale scope. '12 Rue de Rivoli, 75001 Paris' under en-US " +
-				"otherwise geocodes to Addison, Texas (ZIP 75001). Abstains when the default country is already " +
-				"consistent, when no country is, or when more than one is."
+			"#42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a " +
+				"wrong --default-country / locale scope. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise geocodes " +
+				"to Addison, Texas (ZIP 75001). Abstains when the default country is already consistent, when no country " +
+				"is, or when more than one is. ON by default (promoted 2026-08-05); pass " +
+				"--no-postcode-country-coherence to restore the un-overridden country scope."
 		),
 	placeCountryThreshold: zod
 		.number()
@@ -317,8 +318,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
-			// #42: opt-in, so only the explicit pin needs threading (an unset dep is already OFF downstream).
-			...(options.postcodeCountryCoherence ? { postcodeCountryCoherence: true } : {}),
+			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
+			// threading (an unset dep already reads as ON downstream).
+			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
