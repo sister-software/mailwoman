@@ -59,6 +59,8 @@
  */
 
 import { spawn } from "node:child_process"
+import { once } from "node:events"
+import { createWriteStream } from "node:fs"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
@@ -592,4 +594,48 @@ export async function* extractOSMSubVenues(
 	for (const layer of SUBVENUE_LAYERS) {
 		yield* runSubVenueLayer(pbfPath, layer, rules)
 	}
+}
+
+export interface WriteSubVenueJSONLOptions {
+	pbfPath: string
+	outPath: string
+	/**
+	 * ISO 3166-1 alpha-2 stamped onto every row. A Geofabrik extract's country is a property of the INVOCATION — see the
+	 * module docstring — so it arrives here rather than out of a feature.
+	 */
+	country?: string
+	rules?: SubVenueTagRule[]
+}
+
+/**
+ * Run the extractor over one `.osm.pbf` and write the rows as JSONL, one object per line.
+ *
+ * The step between a Geofabrik download and `mailwoman corpus sub-venue-lexicon`, factored out of the ad-hoc script
+ * wave 1 used because wave 2 runs it five times. Backpressure is honoured (`drain`) — the Japan extract is 184,000 rows
+ * and 40 MB, and an unawaited `write` loop buffers all of it. Measured on this box: 340 MB of Hessen produced 27,234
+ * rows in 44 s, 2.5 GB of Japan produced 183,999 in 371 s, both dominated by ogr2ogr rather than by this loop.
+ *
+ * Returns the row count.
+ */
+export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
+	const stream = createWriteStream(options.outPath)
+	let rows = 0
+
+	for await (const row of extractOSMSubVenues(options.pbfPath, options.rules)) {
+		if (options.country) {
+			row.country = options.country
+		}
+
+		if (!stream.write(JSON.stringify(row) + "\n")) {
+			await once(stream, "drain")
+		}
+
+		rows++
+	}
+
+	await new Promise<void>((resolve, reject) => {
+		stream.end((error?: Error | null) => (error ? reject(error) : resolve()))
+	})
+
+	return rows
 }
