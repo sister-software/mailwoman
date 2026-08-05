@@ -395,6 +395,32 @@ curl -s .../en-us/releases.json | jq -r .defaultVersion         # HF and R2, bot
 curl -s .../en-us/v<NEW>/model.onnx | md5sum                     # HF and R2, both == the gated md5
 ```
 
+#### Pair-index binaries are VERSIONED (2026-08-05); the un-versioned path is FROZEN
+
+`--pair-indexes` above stages the binaries on **Hugging Face**. The copies the browser demo reads are a separate
+push: they only reach the bucket through `publish-demo-assets-to-r2.py`, from a `--src` tree you assemble by hand.
+Nothing else produces them — not `publish.yml` (it downloads them from HF into the weights workspaces for the npm
+tarballs), not the docs demo-assets plugin (that copies them into the Pages deploy for dev preview only).
+
+Stage them under a generation segment:
+
+```
+<src>/pair-index/<generation>/pair-index-{gb,nz}.bin      # e.g. pair-index/2026-08-05/
+```
+
+- The generation is `PAIR_INDEX_VERSION` in `docs/src/shared/resources.tsx` — **bump it in the same commit you
+  stage a new one**, the way `ADMIN_GAZETTEER_VERSION` / `POI_LAYER_VERSION` / `NATIONAL_STREET_SHARD_VERSION`
+  already work. The demo bundle is the mutable pointer; the binaries are immutable at a fresh URL.
+- Why: these objects ship `Cache-Control: public, max-age=604800, immutable`. The PIX schema-3 re-cut was
+  uploaded over the flat `mailwoman/pair-index/pair-index-<cc>.bin` keys, so Cloudflare kept serving schema-1
+  bytes that the site's reader rejects outright — the demo lost the GB/NZ `dependent_locality` priors until a
+  manual purge.
+- `publish-demo-assets-to-r2.py` now REFUSES a `--src` that puts a pair-index binary at the flat key, so this is
+  enforced rather than remembered.
+- The flat keys stay in place, frozen, and nothing new is written to them. The demo HEAD-probes the versioned
+  path and falls back to them with a `console.warn` until the first release train stages a generation; delete
+  `resolvePairIndexBaseURL`'s legacy branch (and `LEGACY_PAIR_INDEX_BASE_URL`) once that has happened.
+
 ### Step 4 — publish npm from CI (two-phase, PR-based), then verify registry-direct + a clean install
 
 The "Production Integrity" ruleset on `main` (2026-07-22) requires every change — the release

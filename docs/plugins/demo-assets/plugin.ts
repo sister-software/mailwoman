@@ -53,10 +53,11 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 		async loadContent() {
 			// Every asset the demo loads at runtime — model, tokenizer, fst, postcodes, the resolver DBs,
 			// releases.json — is served from the R2 bucket (see docs/src/shared/resources.tsx). The
-			// assets that must be same-origin are (1) the sql.js-httpvfs worker (browsers block cross-origin
-			// `new Worker()`) and (2) the placetype-pair indexes (#1278 — not on R2 yet; that's the
-			// release-train repoint), so we stage both into the Pages deploy at `/mailwoman/sqljs/` +
-			// `/mailwoman/pair-index/`. Nothing else lands in the Pages deploy.
+			// asset that MUST be same-origin is the sql.js-httpvfs worker (browsers block cross-origin
+			// `new Worker()`), staged at `/mailwoman/sqljs/`. The placetype-pair indexes (#1278) are staged
+			// beside it at `/mailwoman/pair-index/` as a DEV PREVIEW only — the demo has read them from the
+			// R2 bucket since #1342, at the versioned `mailwoman/pair-index/<generation>/` path since
+			// 2026-08-05. Nothing else lands in the Pages deploy.
 			mkdirSync(staticDir, { recursive: true })
 			const sqljsDir = resolve(staticDir, "sqljs")
 			mkdirSync(sqljsDir, { recursive: true })
