@@ -3787,3 +3787,68 @@ def sync_jp_full():
         "  centroid table present:",
         os.path.isfile(f"{VOL_MOUNT}/corpus/versioned/v8-jp-probe/jp-muni-centroids.json"),
     )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v420_batch():
+    """Run B (v4.2.0-base-anchor-v2): sync the training code + the v0.17.0-batch corpus overlay +
+    the anchor-lookup v2 artifact.
+
+    The overlay corpus is MANIFEST-driven: v0.17.0-batch keeps every v0.15.0-venue shard VERBATIM
+    (those parquets are already on this volume at their original paths) and adds exactly two —
+    ``part-sub-venue.parquet`` (120k rows, #1486) and ``part-gb.parquet`` (800k rows, the
+    v0.14.0-gb shard re-rooted). Only the manifest and the two new parquets transfer.
+
+    The anchor lookup v2 (2,286,339 keys / 2,214,803 letter-bearing, 145 MB JSON) is THE named
+    delta of the run — the launch checklist's smoke count runs against the volume copy this
+    function lands, not the lab copy.
+
+    Prerequisite: assets uploaded to R2 at ``corpus/v0.17.0-batch/`` + ``anchor/`` (CLI-write to
+    this volume is broken; container-side rclone only, see ``sync_v050``'s note). Clears stale pyc.
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v4.2.0 batch code + overlay corpus + anchor lookup v2 from R2 (container-side)...")
+    vol.reload()
+    R = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {R}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.17.0-batch/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/ {R}",
+        f"rclone copy :s3:{BUCKET}/anchor/pilot-anchor-lookup-v2-2026-08-05.json {VOL_MOUNT}/anchor/ {R}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:90]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+    if os.path.isdir(pyc):
+        shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv4.2.0 batch sync complete. Volume committed.")
+
+    src = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch"
+    print("  v4.2.0 config present:", os.path.isfile(f"{src}/configs/v4.2.0-base-anchor-v2.yaml"))
+    print("  v4.2.0-2k config present:", os.path.isfile(f"{src}/configs/v4.2.0-base-anchor-v2-2k.yaml"))
+    print("  overlay MANIFEST present:", os.path.isfile(f"{corpus}/MANIFEST.json"))
+    print("  part-sub-venue present:", os.path.isfile(f"{corpus}/train/part-sub-venue.parquet"))
+    print("  part-gb present:", os.path.isfile(f"{corpus}/train/part-gb.parquet"))
+    print("  anchor lookup v2 present:", os.path.isfile(f"{VOL_MOUNT}/anchor/pilot-anchor-lookup-v2-2026-08-05.json"))
+    # The base corpus this overlay rides — already volume-resident from the v4.0.x runs.
+    print(
+        "  base venue shard present:",
+        os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue/train/part-house-venue.parquet"
+        ),
+    )
