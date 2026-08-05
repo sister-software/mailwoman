@@ -18,10 +18,11 @@ import {
 	type Coordinates2D as Point2DCoordinates,
 	type Coordinates3D as Point3DCoordinates,
 	clampLatitude,
-	inferGeoJSONCoordOrder,
 	isCoordPairLiteral,
 	isGoogleMapsLatLngLiteral,
 	isInterpolatedCoordinates,
+	isValidLatitude,
+	isValidLongitude,
 	wrapLongitude,
 } from "../position.ts"
 
@@ -145,8 +146,21 @@ export class GeoPoint implements PointLiteral {
 		return [this.#longitude, this.#latitude]
 	}
 
+	/**
+	 * Assigns the pair as GeoJSON [longitude, latitude(, altitude)] — the axis order is the contract, never inferred from
+	 * the magnitudes — and REJECTS a coordinate that is not on the globe. See {@link GeoPoint.from} for why both halves of
+	 * that sentence are load-bearing.
+	 *
+	 * @throws {RangeError} When longitude is outside [-180, 180] or latitude is outside [-90, 90].
+	 */
 	public set coordinates(coords: Point2DCoordinates | Point3DCoordinates) {
 		const [longitude, latitude, altitude] = coords
+
+		if (!isValidLongitude(longitude) || !isValidLatitude(latitude)) {
+			throw new RangeError(
+				`GeoPoint expects GeoJSON [longitude, latitude] with longitude in [-180, 180] and latitude in [-90, 90]; got [${longitude}, ${latitude}]`
+			)
+		}
 
 		this.#longitude = longitude
 		this.#latitude = latitude
@@ -249,13 +263,7 @@ export class GeoPoint implements PointLiteral {
 	constructor(input: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox)
 	constructor(input?: GeoPointInput, bbox?: BBox2DLiteral | BBox3DLiteral | GeoBoundingBox) {
 		if (isCoordPairLiteral(input)) {
-			// A ternary does not carry the narrowing through, and inferGeoJSONCoordOrder needs the 2-tuple.
-			// oxlint-disable-next-line unicorn/prefer-ternary -- the if/else is what narrows `input`
-			if (input.length === 2) {
-				this.coordinates = inferGeoJSONCoordOrder(input)
-			} else {
-				this.coordinates = input
-			}
+			this.coordinates = input
 		} else if (isPointLiteral(input)) {
 			this.coordinates = [...input.coordinates]
 
@@ -265,13 +273,9 @@ export class GeoPoint implements PointLiteral {
 		} else if (isGoogleMapsLatLngLiteral(input)) {
 			this.coordinates = [input.lng, input.lat]
 		} else if (isGeolocationCoordinatesLike(input)) {
-			this.#longitude = input.longitude
-			this.#latitude = input.latitude
-			this.#altitude = input.altitude || 0
+			this.coordinates = [input.longitude, input.latitude, input.altitude || 0]
 		} else if (isInterpolatedCoordinates(input)) {
-			this.#longitude = input.x
-			this.#latitude = input.y
-			this.#altitude = 0
+			this.coordinates = [input.x, input.y]
 		} else {
 			this.coordinates = [0, 0]
 		}
@@ -282,7 +286,25 @@ export class GeoPoint implements PointLiteral {
 	}
 
 	/**
-	 * Attempts to create a new GeoPoint instance from the given input.
+	 * Attempts to create a new GeoPoint instance from the given input, returning `null` rather than throwing when the
+	 * input is not a coordinate this class will stand behind.
+	 *
+	 * Two rules, both of which this constructor got wrong until 2026-08-05 (the defect was recorded in `e9bfd139` and
+	 * routed around rather than fixed):
+	 *
+	 * 1. **A 2-tuple is GeoJSON [longitude, latitude]. The axis order is never inferred.** The old path ran the pair through
+	 *    `inferGeoJSONCoordOrder`, whose only signal is the [-90, 90] latitude range, so it transposed a pair exactly
+	 *    when |the second magnitude| > 90. A caller handing it `[latitude, longitude]` therefore got the pair repaired in
+	 *    Dallas and left corrupted in Berlin — behaviour selected by the data, from one code path. This change is a no-op
+	 *    for every WELL-FORMED input: a valid `[longitude, latitude]` pair can never have an out-of-range second element,
+	 *    so the heuristic never fired on one.
+	 * 2. **An out-of-range magnitude is rejected, not repaired.** `[999, 999]` used to produce a GeoPoint reporting latitude
+	 *    999. It now returns `null` here and throws a `RangeError` from the constructor. Note the deliberate asymmetry
+	 *    with the scalar `longitude` / `latitude` setters, which still wrap and clamp: mutating a point is a pan gesture,
+	 *    where 190° meaning -170° is right; PARSING one is a claim about the world, where an impossible magnitude means
+	 *    the input was malformed and any repair invents a location.
+	 *
+	 * A 0/0 result is treated as the "missing coordinate" sentinel (Null Island) and also returns `null`.
 	 */
 	static from(input: unknown): GeoPoint | null {
 		if (!input) return null

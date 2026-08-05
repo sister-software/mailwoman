@@ -20,6 +20,39 @@ const LATITUDE_MIN = -90
 const LATITUDE_MAX = 90
 
 /**
+ * Western limit of longitude in WGS84 degrees (the antimeridian, which is itself a valid longitude).
+ */
+const LONGITUDE_MIN = -180
+
+/**
+ * Eastern limit of longitude in WGS84 degrees.
+ */
+const LONGITUDE_MAX = 180
+
+/**
+ * Whether a number is a latitude a point can actually sit at: finite, and within [-90, 90] inclusive (the poles count).
+ * Distinct from {@link clampLatitude}, which folds an out-of-range value onto the nearest pole — clamping is right for a
+ * viewport edge and wrong for a coordinate, where an out-of-range value means the input was malformed and the repaired
+ * point is fiction.
+ *
+ * @category Position
+ */
+export function isValidLatitude(value: number): boolean {
+	return Number.isFinite(value) && value >= LATITUDE_MIN && value <= LATITUDE_MAX
+}
+
+/**
+ * Whether a number is a longitude a point can actually sit at: finite, and within [-180, 180] inclusive. Same
+ * distinction from {@link wrapLongitude} that {@link isValidLatitude} draws from `clampLatitude` — wrapping 190° to -170°
+ * is correct for a pan gesture and a silent relocation for a parsed coordinate.
+ *
+ * @category Position
+ */
+export function isValidLongitude(value: number): boolean {
+	return Number.isFinite(value) && value >= LONGITUDE_MIN && value <= LONGITUDE_MAX
+}
+
+/**
  * Arity of a `[lon, lat]` coordinate tuple.
  */
 const COORD_PAIR_LENGTH = 2
@@ -84,8 +117,18 @@ export function orderGeoJSONToCoordPair([longitude, latitude]: Coordinates2D): [
  * Given an input which appears to be reversed GeoJSON coordinates (i.e. [latitude, longitude]), returns the coordinates
  * in the correct order of [longitude, latitude].
  *
- * Note that this is a heuristic and is only accurate for North American coordinates.
+ * **This cannot do what its name promises, and nothing in this repo calls it.** The only signal it has is the [-90, 90]
+ * latitude range, so it transposes a pair only when the SECOND magnitude falls outside that range — i.e. only where
+ * |longitude| > 90. It is therefore inert across every longitude in [-90, 90]: all of Europe and Africa, western
+ * Russia, the Middle East, India, and the Atlantic. A caller who hands it `[latitude, longitude]` gets the pair
+ * repaired in Dallas and left corrupted in Berlin, from one code path, decided by the data. That is why `GeoPoint`
+ * stopped calling it on 2026-08-05 (recorded in `e9bfd139`; `registry/tools/geocoder-vs-provided-coords.ts` had already
+ * routed around it) and now reads a 2-tuple as GeoJSON [longitude, latitude], full stop.
  *
+ * Retained as an explicit, opt-in escape hatch for a caller who knows their source is lat-first AND North American. If
+ * you know the axis order, use {@link orderCoordPairToGeoJSON}; if you do not, no function can tell you.
+ *
+ * @deprecated Axis order is metadata, not something a magnitude can recover. Prefer `orderCoordPairToGeoJSON`.
  * @category GeoJSON
  * @category Position
  */
