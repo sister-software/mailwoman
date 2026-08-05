@@ -36,7 +36,7 @@ import {
 import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "@mailwoman/neural/onnx-runner"
 
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
-import { type AnchorLookup, parseAnchorLookup } from "./anchor-inference.ts"
+import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
 import { type CountryLexicon, parseCountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
@@ -145,6 +145,12 @@ export interface NeuralAddressClassifierConfig {
 	 * `./anchor-inference.js`.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
+	/**
+	 * Which substrings the anchor channel looks up (`AnchorSpanMode`, 2026-08-05). Defaults to `alnum-run`,
+	 * byte-identical to every parse before that date; `shaped` is PAIRED like `suppressGazetteerNearPostcode` and belongs
+	 * only to a model trained against a lookup with letter-bearing keys. Read from `requires.anchor.span_mode`.
+	 */
+	postcodeAnchorSpanMode?: AnchorSpanMode
 	/**
 	 * Optional gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). When set, `parse` builds per-token
 	 * candidate-tag-set clues (country/region/po_box/cedex/homograph) from the text + this lexicon and feeds them to the
@@ -562,6 +568,8 @@ export class NeuralAddressClassifier {
 		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
+		// The anchor span mode is card-declared too, never inferred: an undeclared card leaves it
+		// undefined and the channel keeps the alnum-run scan verbatim.
 		const suppressGazetteerNearPostcode = declared?.suppress_gazetteer_near_postcode ?? false
 		const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
@@ -573,7 +581,7 @@ export class NeuralAddressClassifier {
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
 			...(semiCRFGrammar ? { semiCRFGrammar } : {}),
-			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+			...(postcodeAnchorLookup ? { postcodeAnchorLookup, postcodeAnchorSpanMode: declared?.anchor?.span_mode } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 			...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
@@ -727,7 +735,6 @@ export class NeuralAddressClassifier {
 		}
 	}> {
 		const encoded = this.cfg.tokenizer.encode(text)
-		const ids = encoded.ids
 		// Reassigned after inference — the runner clamps to the model's fixed sequence length and
 		// `pieces` has to follow it. See the clamp below.
 		let pieces = encoded.pieces
@@ -744,6 +751,7 @@ export class NeuralAddressClassifier {
 
 		const soft = buildSoftFeatures(text, pieces, {
 			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
+			postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
@@ -752,7 +760,7 @@ export class NeuralAddressClassifier {
 		})
 
 		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
-			ids,
+			encoded.ids,
 			soft.anchor,
 			soft.gazetteer,
 			soft.country,

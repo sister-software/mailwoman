@@ -18,7 +18,7 @@
  *   reason).
  */
 
-import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.ts"
+import { type AnchorLookup, type AnchorSpanMode, buildAnchorFeatures } from "./anchor-inference.ts"
 import { buildCountryFeatures, type CountryLexicon } from "./country-inference.ts"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.ts"
 import type { TokenizedPiece } from "./tokenizer.ts"
@@ -72,6 +72,13 @@ export interface SoftFeatureSources {
 	 */
 	postcodeAnchorLookup?: AnchorLookup
 	/**
+	 * Which substrings the anchor channel looks up (2026-08-05 train-parity fix). Defaults to `alnum-run`, the shipped
+	 * behaviour. PAIRING IS ESSENTIAL, the same way `suppressGazetteerNearPostcode` is: `shaped` reproduces the train
+	 * painter's span rule, so it belongs only to a model trained against a lookup with letter-bearing keys. Declared by
+	 * the model card (`requires.anchor.span_mode`), never guessed.
+	 */
+	postcodeAnchorSpanMode?: AnchorSpanMode
+	/**
 	 * Gazetteer-anchor lexicon (#464). Omit to skip the gazetteer channel.
 	 */
 	gazetteerLexicon?: GazetteerLexicon
@@ -114,7 +121,9 @@ export function buildSoftFeatures(
 	sources: SoftFeatureSources
 ): SoftFeatures {
 	const anchor = sources.postcodeAnchorLookup
-		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup)
+		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {
+				spanMode: sources.postcodeAnchorSpanMode ?? "alnum-run",
+			})
 		: undefined
 
 	const gazetteer = sources.gazetteerLexicon

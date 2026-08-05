@@ -15,6 +15,7 @@ import {
 	LOCALE_ORDER,
 	anchorFeatureVector,
 	buildAnchorFeatures,
+	type AnchorEntry,
 	type AnchorLookup,
 } from "./anchor-inference.ts"
 import type { TokenizedPiece } from "./tokenizer.ts"
@@ -75,5 +76,183 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 	it("yields no anchor when the postcode isn't in the lookup", () => {
 		const { confidence } = buildAnchorFeatures("Nowhere 99999 City", PIECES, LOOKUP)
 		expect(confidence.every((c) => c === 0)).toBe(true)
+	})
+})
+
+/**
+ * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
+ *
+ * 1. The DEFAULT stays byte-identical to the pre-fix scan — graded against a verbatim copy of it, not against a hash, so
+ *    the oracle is readable;
+ * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
+ *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's FULL extent.
+ */
+describe("buildAnchorFeatures — span modes", () => {
+	/**
+	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim. The oracle for obligation 1.
+	 */
+	function legacyBuildAnchorFeatures(
+		text: string,
+		pieces: ReadonlyArray<TokenizedPiece>,
+		lookup: AnchorLookup
+	): { features: number[][]; confidence: number[] } {
+		const features: number[][] = pieces.map(() => new Array<number>(ANCHOR_FEATURE_DIM).fill(0))
+		const confidence: number[] = pieces.map(() => 0)
+		const tokenRe = /[A-Za-z0-9]+/g
+		let m: RegExpExecArray | null
+
+		while ((m = tokenRe.exec(text)) !== null) {
+			const entry = lookup.get(m[0].toUpperCase())
+
+			if (!entry) continue
+			const spanBegin = m.index
+			const spanEnd = m.index + m[0].length
+			const vec = anchorFeatureVector(entry.posterior, entry.lat, entry.lon)
+
+			for (let i = 0; i < pieces.length; i++) {
+				const p = pieces[i]!
+
+				for (let c = p.start; c < p.end; c++) {
+					if (c < text.length && !/\s/.test(text[c]!)) {
+						if (c >= spanBegin && c < spanEnd) {
+							features[i] = vec
+							confidence[i] = 1
+						}
+
+						break
+					}
+				}
+			}
+		}
+
+		return { features, confidence }
+	}
+
+	/**
+	 * Split `text` into non-whitespace runs, each halved, so every anchor span is covered by more than one piece — the
+	 * geometry that makes a wrong paint extent visible.
+	 */
+	function piecesFor(text: string): TokenizedPiece[] {
+		const out: TokenizedPiece[] = []
+
+		for (const m of text.matchAll(/\S+/g)) {
+			const start = m.index
+			const end = start + m[0].length
+			const mid = start + Math.max(1, Math.floor(m[0].length / 2))
+
+			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid } as unknown as TokenizedPiece)
+
+			if (mid < end) {
+				out.push({ piece: text.slice(mid, end), id: 0, start: mid, end } as unknown as TokenizedPiece)
+			}
+		}
+
+		return out
+	}
+
+	/**
+	 * A v2-shaped lookup: the five-digit pilot keys PLUS the letter-bearing ones only a widened build produces.
+	 */
+	const V2: AnchorLookup = new Map<string, AnchorEntry>([
+		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],
+		["SW1A2AA", { posterior: { GB: 1 }, lat: 51.50354, lon: -0.1277 }],
+		["SW1A", { posterior: { GB: 1 }, lat: 51.50452, lon: -0.13216 }],
+		["1012LG", { posterior: { NL: 1 }, lat: 52.37689, lon: 4.89772 }],
+	])
+
+	const CORPUS = [
+		"Strasse 12 10115 Berlin",
+		"Buckingham Palace, London SW1A 2AA",
+		"10 Downing Street, London, SW1A 2AA, United Kingdom",
+		"Prins Hendrikkade 1, 1012 LG Amsterdam",
+		"Prins Hendrikkade 1, 1012LG Amsterdam",
+		"Nowhere 99999 City",
+		"SW1A on its own",
+		"221B Baker Street, London NW1 6XE",
+	]
+
+	it("(a) the default is byte-identical to the pre-fix scan on every register", () => {
+		for (const text of CORPUS) {
+			for (const register of [text, text.toLowerCase(), text.toUpperCase()]) {
+				const pieces = piecesFor(register)
+
+				expect(buildAnchorFeatures(register, pieces, V2)).toEqual(legacyBuildAnchorFeatures(register, pieces, V2))
+
+				// and passing the mode explicitly is the same thing
+				expect(buildAnchorFeatures(register, pieces, V2, { spanMode: "alnum-run" })).toEqual(
+					legacyBuildAnchorFeatures(register, pieces, V2)
+				)
+			}
+		}
+	})
+
+	it("(a2) the default CANNOT key a space-containing postcode — the defect, pinned", () => {
+		const text = "Buckingham Palace, London SW1A 2AA"
+		const pieces = piecesFor(text)
+		const unitOnly: AnchorLookup = new Map([["SW1A2AA", { posterior: { GB: 1 }, lat: 51.50354, lon: -0.1277 }]])
+
+		expect(buildAnchorFeatures(text, pieces, unitOnly).confidence.every((c) => c === 0)).toBe(true)
+
+		expect(buildAnchorFeatures(text, pieces, unitOnly, { spanMode: "shaped" }).confidence.some((c) => c === 1)).toBe(
+			true
+		)
+	})
+
+	it("(b) shaped paints `SW1A 2AA` as ONE full-span key matching the train painter", () => {
+		const text = "Buckingham Palace, London SW1A 2AA"
+		const spanStart = text.indexOf("SW1A 2AA")
+		const spanEnd = spanStart + "SW1A 2AA".length
+		const pieces = piecesFor(text)
+		const { features, confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
+		const gb = anchorFeatureVector({ GB: 1 }, 51.50354, -0.1277)
+
+		// The unit key won, not the outward key — the outward centroid differs, so this distinguishes them.
+		pieces.forEach((p, i) => {
+			const inside = p.start >= spanStart && p.end <= spanEnd
+
+			expect(confidence[i]).toBe(inside ? 1 : 0)
+			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
+		})
+
+		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces, not 4.
+		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
+	})
+
+	it("(b2) shaped keys an NL postcode the same whether it is written glued or spaced", () => {
+		const nl = anchorFeatureVector({ NL: 1 }, 52.37689, 4.89772)
+
+		for (const text of ["Prins Hendrikkade 1, 1012 LG Amsterdam", "Prins Hendrikkade 1, 1012LG Amsterdam"]) {
+			const pieces = piecesFor(text)
+			const { features, confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
+
+			expect(confidence.some((c) => c === 1)).toBe(true)
+			expect(features[confidence.indexOf(1)]).toEqual(nl)
+		}
+	})
+
+	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
+		// SW1A 1AA is not in V2; its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
+		const text = "London SW1A 1AA"
+		const spanStart = text.indexOf("SW1A 1AA")
+		const pieces = piecesFor(text)
+		const { features, confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
+		const outward = anchorFeatureVector({ GB: 1 }, 51.50452, -0.13216)
+
+		pieces.forEach((p, i) => {
+			const inside = p.start >= spanStart
+
+			expect(confidence[i]).toBe(inside ? 1 : 0)
+
+			if (inside) {
+				expect(features[i]).toEqual(outward)
+			}
+		})
+	})
+
+	it("(d) a shaped span that misses the lookup paints nothing — exactly like the train painter", () => {
+		const text = "221B Baker Street, London NW1 6XE"
+		const pieces = piecesFor(text)
+
+		expect(buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" }).confidence.every((c) => c === 0)).toBe(true)
 	})
 })

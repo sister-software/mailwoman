@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
+import type { AnchorSpanMode } from "./anchor-inference.ts"
 import { PlacetypeCensusResolver } from "./placetype-census.ts"
 
 /**
@@ -586,9 +587,13 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
  */
 export interface RequiredChannels {
 	/**
-	 * Postcode-anchor channel (#239/#240).
+	 * Postcode-anchor channel (#239/#240). `span_mode` declares WHICH substrings the runtime should look up — omit (or
+	 * `alnum-run`) for every model trained before 2026-08-05, `shaped` for a model trained against a lookup with
+	 * letter-bearing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`). Declaring `shaped` on a model that never
+	 * saw those keys changes the encoder's input for nothing; declaring `alnum-run` on one that did leaves its GB/NL
+	 * postcodes unanchored.
 	 */
-	anchor?: { required: boolean }
+	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
 	/**
 	 * Gazetteer-anchor channel (#464).
 	 */
@@ -676,6 +681,17 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 					`expected { required: boolean }, got ${JSON.stringify(entry)}.`
 			)
 		}
+	}
+
+	// `requires.anchor.span_mode` is an enum, and a typo in it is silent OOD (the wrong spans get
+	// anchored, nothing errors) — so an unrecognized value is a loud artifact bug, like the shapes above.
+	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
+
+	if (anchorSpanMode !== undefined && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
+				`expected "alnum-run" or "shaped", got ${JSON.stringify(anchorSpanMode)}.`
+		)
 	}
 
 	if (obj.suppress_gazetteer_near_postcode !== undefined && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {

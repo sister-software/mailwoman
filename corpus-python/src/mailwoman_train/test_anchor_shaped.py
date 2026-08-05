@@ -81,6 +81,58 @@ def test_shaped_path_misses_non_lookup_shape():
     assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
 
 
+# ---- the GB key contract + the outward fallback (2026-08-05) ----
+
+RAW_GB = "Buckingham Palace, London SW1A 2AA"
+# Pieces that split the unit across the space, the geometry a wrong paint extent shows up in.
+PIECES_GB = [
+    _piece("Buckingham", 0, 10),
+    _piece("Palace", 11, 17),
+    _piece("London", 19, 25),
+    _piece("SW1A", 26, 30),
+    _piece("2AA", 31, 34),
+]
+
+
+def test_shaped_paints_a_gb_unit_from_the_space_stripped_key():
+    # THE KEY CONTRACT. The lookup is keyed `SW1A2AA` — space-stripped — and the shaped span is the
+    # FULL unit including the space. `neural/anchor-inference.ts`'s `spanMode: "shaped"` mirrors this;
+    # its default alnum-run scan cannot (it would probe `SW1A` and `2AA` separately).
+    lookup = {"SW1A2AA": ({"GB": 1.0}, 51.50354, -0.1277)}
+    feats, confs = realign_anchor_to_pieces_shaped(RAW_GB, PIECES_GB, lookup)
+    assert confs == [0.0, 0.0, 0.0, 1.0, 1.0]
+    gb = anchor_feature_vector({"GB": 1.0}, 51.50354, -0.1277)
+    assert feats[3] == gb and feats[4] == gb
+
+
+def test_shaped_falls_back_to_the_gb_outward_district():
+    # An unknown unit (retired code, or an NI `BT` code Code-Point Open has none of) paints the WHOLE
+    # unit span from its outward district — 215 of the 217 misses `synth-gb-v1` has in 200,000 rows.
+    lookup = {"SW1A": ({"GB": 1.0}, 51.50452, -0.13216)}
+    feats, confs = realign_anchor_to_pieces_shaped(RAW_GB, PIECES_GB, lookup)
+    assert confs == [0.0, 0.0, 0.0, 1.0, 1.0]
+    outward = anchor_feature_vector({"GB": 1.0}, 51.50452, -0.13216)
+    assert feats[3] == outward and feats[4] == outward
+
+
+def test_the_unit_key_wins_over_the_outward_key():
+    lookup = {
+        "SW1A2AA": ({"GB": 1.0}, 51.50354, -0.1277),
+        "SW1A": ({"GB": 1.0}, 51.50452, -0.13216),
+    }
+    feats, _ = realign_anchor_to_pieces_shaped(RAW_GB, PIECES_GB, lookup)
+    assert feats[3] == anchor_feature_vector({"GB": 1.0}, 51.50354, -0.1277)
+
+
+def test_the_outward_fallback_is_inert_for_a_five_digit_lookup():
+    # The fallback must not fire on a numeric code: `12345`[:-3] is `12`, which is not a key in any
+    # five-digit lookup — and the GB shape guard rejects it before the probe. Pinned so a future
+    # widening of the guard cannot silently start anchoring house numbers from two-digit prefixes.
+    feats, confs = realign_anchor_to_pieces_shaped(RAW_H, PIECES_H, {"12": ({"US": 1.0}, 42.81, -73.93)})
+    assert confs == [0.0, 0.0, 0.0]
+    assert all(f == [0.0] * ANCHOR_FEATURE_DIM for f in feats)
+
+
 def test_shaped_matches_gold_when_postcode_is_in_position():
     # Sanity: on a REAL postcode in postcode position, shaped and gold paint the SAME pieces (the only
     # difference between modes is WHERE detection comes from, never WHAT lands).
