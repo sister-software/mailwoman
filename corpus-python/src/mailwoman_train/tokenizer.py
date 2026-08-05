@@ -29,6 +29,7 @@ Why not just use a HuggingFace fast tokenizer? Two reasons:
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +41,12 @@ from .labels import IGNORE_INDEX, LABEL_TO_ID, LOCALE_TO_ID, NUM_LOCALES, collap
 # Anchor feature width: a uniform country posterior over the locale set + a 2-d normalized centroid.
 # Must equal the model's ``anchor_feature_dim`` default (NUM_LOCALES + 2) — single source of truth.
 ANCHOR_FEATURE_DIM = NUM_LOCALES + 2
+
+# A GB unit postcode in the space-stripped key form the anchor lookup is keyed by (``SW1A2AA``); the
+# inward half is always the trailing three characters, so the outward district is the rest. Mirrors
+# ``neural/anchor-inference.ts``'s ``GB_UNIT_KEY`` / ``GB_INWARD_LENGTH``.
+_GB_UNIT_KEY = re.compile(r"^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$")
+_GB_INWARD_LENGTH = 3
 
 
 @dataclass(frozen=True)
@@ -359,9 +366,20 @@ def _paint_anchor_chars(
 
     Shared by both anchor paths — one normalization (space-stripped, uppercased), one painting
     rule, so token-era and span-era rows cannot diverge here.
+
+    GB OUTWARD FALLBACK (2026-08-05). A unit postcode that misses retries its outward district
+    (``SW1A 2AA`` -> ``SW1A``) and paints the WHOLE unit span from it, mirroring
+    ``neural/anchor-inference.ts``'s ``spanMode: "shaped"`` exactly. It earns its keep on real
+    shards: against the v2 lookup, ``synth-gb-v1`` misses 217 spans in 200,000 rows (retired unit
+    codes — Code-Point Open is a 2026-05 snapshot, the tuples are older), and 215 of those 217 have
+    a live outward district. INERT for every lookup shipped before that date: they hold five-digit
+    keys only, and a five-digit key's outward slice is two digits, which is not a key in any of
+    them (and the shape guard rejects it first).
     """
     postcode = raw[begin:end].replace(" ", "").upper()
     hit = anchor_lookup.get(postcode)
+    if hit is None and _GB_UNIT_KEY.match(postcode):
+        hit = anchor_lookup.get(postcode[:-_GB_INWARD_LENGTH])
     if hit is None:
         return
     posterior, lat, lon = hit

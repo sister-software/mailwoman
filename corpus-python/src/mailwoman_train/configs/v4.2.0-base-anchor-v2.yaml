@@ -1,0 +1,267 @@
+# === v4.2.0-base-anchor-v2 — DRAFT, NOT LAUNCH-READY. The base rebuild that closes the GB anchor hole. ===
+#
+# NAMING: the next BASE in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs; v4.1.x were
+# GB-venue fine-tunes off v4.0.1). Nothing here is the npm major — that is a separate number.
+#
+# WHY THIS RUN EXISTS. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
+# anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
+# `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`). Every recipe in this directory — all of
+# them, one distinct value — pointed `anchor_lookup_path` at `/data/anchor/pilot-anchor-lookup.json`:
+# 67,708 keys, US/DE/FR only, ZERO of them letter-bearing. So slots 3–8 took no gradient in 60,000
+# steps. When `postcode-gb.bin` was shipped at inference it fed slot 4 a value the encoder had never
+# seen and cost 24 exact postcodes on the 120-row gb-golden board; #1467 shipped the interim
+# mitigation (en-gb ships no bin, the channel resolves OFF). This run is the cure.
+#
+# THE ONE NAMED DELTA vs v4.0.1-base-60k: `anchor_lookup_path`. Everything else below is
+# v4.0.1-base-60k VERBATIM unless a comment says otherwise, and the two comments that follow are
+# both no-op restatements of what v4.0.1 already carried, kept because a reader will look for them.
+#
+# MEASURED, on the artifact this config points at (`mailwoman gazetteer build anchor-lookup
+# --include DE,FR,US,GB,NL,ES,IT`), 2026-08-05:
+#
+#   keys 2,286,339 (was 67,708) · letter-bearing 2,214,803 (was 0)
+#   DE 29,694 · FR 27,119 · US 42,312 · GB 1,749,839 (1,746,976 units + 2,863 outward districts)
+#   NL 464,964 · ES 11,331 · IT 4,936 · 32,540 collisions · 0.2% without a centroid (was 6.8%)
+#
+#   painted rows, `corpus-python/scripts/count_painted_anchor_rows.py`, 50,000-row prefixes:
+#     synth-gb-v1        0 -> 42,634 of 42,634 shaped spans (0.0% -> 85.3% of rows)
+#     synth-es-pedania   32,638 -> 42,339  (ES codes DID paint before — under a DE/FR/US posterior;
+#                        the ES slot itself was never lit, which is worse than silence)
+#     synth-fr-lieudit   49,577 -> 49,577  (unchanged)
+#     house-venue-v2     49,666 -> 49,666  (unchanged)
+#
+#   loader cost: 1.32 GB resident / 1.37 GB peak at `load_anchor_lookup`, vs 0.05 GB for the pilot
+#   lookup. Budget it — it is paid once at loader init, on every worker.
+#
+# LAUNCH CHECKLIST (all four, in order — the first two are the ones that make this run mean anything):
+#   1. Upload the lookup to the volume:
+#        $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json
+#        -> /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+#   2. RUN THE SMOKE COUNT against the volume copy, for every country whose slot this run is meant
+#      to light. A zero is this defect repeating, and it is silent otherwise:
+#        python3 corpus-python/scripts/count_painted_anchor_rows.py \
+#          --lookup /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json \
+#          --shard <each shard in the feed>
+#   3. Confirm the startup census DRAWS the GB/NL/ES/IT sources (the v383 gap: a truncated census
+#      log hid a source drawing zero rows). A lookup key with no row to paint is still no gradient.
+#   4. modal run -d corpus-python/modal/train_remote.py --config v4.2.0-base-anchor-v2.yaml --resume none
+#
+# SHIP OBLIGATION — the inference half, which does NOT live in this file. The train painter keys a
+# postcode as `raw[begin:end].replace(" ", "").upper()` over a shape-detected span (`SW1A 2AA` ->
+# `SW1A2AA`). Inference's default scan keys `[A-Za-z0-9]+` runs and so can NEVER produce that key.
+# The model this run produces must therefore ship a card declaring:
+#
+#     "requires": { "anchor": { "required": true, "span_mode": "shaped" } }
+#
+# `span_mode` defaults to `alnum-run` (byte-identical to every parse before 2026-08-05), so omitting
+# it leaves this run's GB/NL postcodes unanchored at serve time — the mirror image of the bug that
+# started this. See `neural/anchor-inference.ts`'s `AnchorSpanMode`.
+#
+# PRE-REGISTERED GATES: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity), plus:
+#   - gb-golden: exact `postcode` >= 318/318 across three registers WITH the anchor channel FED
+#     (the #1467 mitigation reached 318/318 by switching the channel off; this run has to hold it
+#     with the channel on, which is the whole point).
+#   - No US/FR regression: the 100-row US + 46-row FR parity boards, three registers each.
+#   - Anchor-ablation delta: score the resulting model anchor-ON vs anchor-OFF on gb-golden. A
+#     delta of zero means slot 4 STILL took no gradient and the lookup swap did not land.
+#   STOP RULE: a gb-golden miss with the channel fed => diagnose before a second launch.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue # v4.0.1 VERBATIM. See PENDING DECISIONS.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights: # VERBATIM v4.0.1. Deliberately NOT re-weighted: one variable.
+    US: 1.0
+    FR: 1.0
+    DE: 1.0
+    ES: 1.0
+    IT: 1.0
+    NL: 1.0
+    PT: 1.0
+    BE: 1.0
+    PL: 1.0
+    AT: 1.0
+    CH: 1.0
+    CZ: 1.0
+    DK: 1.0
+    "NO": 1.0
+    SE: 1.0
+    FI: 1.0
+    IE: 1.0
+    GB: 1.0
+    SK: 1.0
+    SI: 1.0
+    HR: 1.0
+    HU: 1.0
+    AU: 1.0
+    CA: 1.0 # Overture — live locality.
+    MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
+  source_weights: # VERBATIM v4.0.1. `source_weights` DROPS unlisted sources — see PENDING DECISIONS.
+    synth-house-venue: 2.0
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-imls-pls: 2.0
+    usgov-nad: 1.0
+    state-ia-contractors: 2.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 12.0
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 12.0
+    synth-nl-postcode: 6.0
+    synth-fragment: 6.0
+    synth-fr-fragment: 12.0
+    synth-no-fragment: 12.0
+    # ---- PENDING DECISIONS — resolve BEFORE launch, then delete this block ----
+    # 1. GB rows. This feed is v4.0.1's, and `synth-gb` is NOT in it. Widening the lookup gives GB
+    #    keys; it does not give GB ROWS, and slot 4 learns from rows. Either overlay `synth-gb-v1`
+    #    (800k rows, 32.8% B-dependent_locality, HM Land Registry PPD under OGL v3.0) and list it
+    #    here, or establish from the startup census that the multi-country sources (`overture`,
+    #    `wof-admin`, `wof-postalcode`) already draw enough GB. Do NOT list it without measuring —
+    #    the v4.1.x arc found the shard's dep-loc mass skews the tag.
+    # synth-gb: 6.0
+    #
+    # 2. Sub-venue shard (#35) — ANOTHER AGENT IS BUILDING THIS. Placeholder key only; the weight
+    #    and the shard name are theirs to fill in, and the corpus overlay has to carry it first.
+    # synth-sub-venue: 0.0 # PLACEHOLDER — replace with the real source name + dose, or delete.
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  # THE ONE NAMED DELTA. 2,286,339 keys / 2,214,803 letter-bearing, vs the pilot's 67,708 / 0.
+  # Rebuild with: mailwoman gazetteer build anchor-lookup --include DE,FR,US,GB,NL,ES,IT --output <path>
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
+  # Already `shaped` in v4.0.1 — restated because it is load-bearing here. The shaped painter is what
+  # makes the widened lookup reachable: it detects postcode SHAPES over the raw text (so a GB unit
+  # arrives as one span with its space) where the gold path only ever painted labeled postcode spans.
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model: # VERBATIM v4.0.1.
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    # 1.0, NOT the 0.3 that ran from v0.5.1 through v0.8.0 under "penalize hallucination of rare
+    # tags". The R5 diagnosis (`docs/superpowers/plans/2026-08-01-r5-us-deploc-preregistration.md`)
+    # traced the shipped model's dead US dependent_locality to exactly that weight: US surfaces
+    # carry MORE raw dep-loc mass than the GB ones that work, so the tag was never dead — it was
+    # weighted down. Corrected in v4.0.1 and carried here; the SHIPPED lineage still predates the
+    # correction, so this run is the first base to retrain it in.
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group. VERBATIM v4.0.1.
+  output_dir: /data/output-v420-base-anchor-v2-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true # D4/#1354 — the B11 consolidation artifact, captured at the only cheap point.
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v4.2.0-base-anchor-v2-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.2
+  val_jsonl: ""

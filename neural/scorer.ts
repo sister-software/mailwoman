@@ -27,7 +27,7 @@ import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
+import { parseAnchorLookup, type AnchorLookup, type AnchorSpanMode } from "./anchor-inference.ts"
 import { NeuralAddressClassifier } from "./classifier.ts"
 import { parseCountryLexicon, type CountryLexicon } from "./country-inference.ts"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.ts"
@@ -135,6 +135,15 @@ function defaultLocalitySurfaceLexicon(locale: string | undefined): string | und
 	} catch {
 		return undefined
 	}
+}
+
+/**
+ * The anchor span mode the card declares (2026-08-05 train-parity fix). Card-declared ONLY — never inferred from the
+ * graph, because the ONNX inputs are identical either way. An undeclared card (every bundle shipped before that date)
+ * yields `undefined`, and the channel keeps the alnum-run scan, so those bundles score byte-identically.
+ */
+function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | undefined {
+	return declared.anchor?.span_mode
 }
 
 /**
@@ -561,11 +570,14 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const suppressGazetteerNearPostcode =
 		overrides.suppressGazetteerNearPostcode ?? declared.suppress_gazetteer_near_postcode ?? false
 
+	const postcodeAnchorSpanMode = declaredAnchorSpanMode(declared)
+
 	return new NeuralAddressClassifier({
 		tokenizer,
 		runner,
 		...(labels ? { labels } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+		...(postcodeAnchorSpanMode ? { postcodeAnchorSpanMode } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),
