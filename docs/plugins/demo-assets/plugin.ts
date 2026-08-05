@@ -127,8 +127,25 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 			return {
 				...cache,
 				plugins: [
+					// Every `node:` request is rewritten BEFORE resolution, so `resolve.fallback` never
+					// sees the scheme-prefixed form — routing must happen HERE. The empty shim works for
+					// namespace/default imports only: an ESM NAMED import against it is a hard compile
+					// error, and the source-aliased @mailwoman/* graph pulls path-ts (`{ posix }`) plus
+					// spliterator's file/worker side (`{ open }`, `{ Worker }`, …) into the client bundle
+					// as dead code (2026-08-05 build break). node-path-shim.js is functional posix;
+					// node-builtin-stubs.js exports the names and throws on call; everything else stays
+					// empty.
 					new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
-						resource.request = require.resolve(emptyShim)
+						const shimByBuiltin: Record<string, string> = {
+							"node:path": "./node-path-shim.js",
+							"node:fs": "./node-builtin-stubs.js",
+							"node:fs/promises": "./node-builtin-stubs.js",
+							"node:worker_threads": "./node-builtin-stubs.js",
+							"node:stream/web": "./node-builtin-stubs.js",
+						}
+
+						const shim = shimByBuiltin[resource.request]
+						resource.request = shim ? require.resolve(shim) : require.resolve(emptyShim)
 					}),
 				],
 				resolve: {
@@ -137,29 +154,36 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 						".js": [".ts", ".js"],
 					},
 					fallback: {
-						fs: false,
-						path: false,
+						// `false` yields an EMPTY module — fine for namespace/default imports, but every
+						// NAMED import against it is a hard compile error. The source-aliased @mailwoman/*
+						// graph pulls path-ts + spliterator's file/worker side into the client bundle
+						// (dead code there), so the builtins they name get shims/stubs with real named
+						// exports instead: node-path-shim.js is functional (posix semantics), and
+						// node-builtin-stubs.js throws-on-call (2026-08-05 build break).
+						fs: require.resolve("./node-builtin-stubs.js"),
+						path: require.resolve("./node-path-shim.js"),
 						module: false,
 						url: false,
 						crypto: false,
 						stream: false,
 						buffer: false,
-						worker_threads: false,
+						worker_threads: require.resolve("./node-builtin-stubs.js"),
 						util: false,
 						perf_hooks: false,
-						"node:fs": false,
-						"node:path": false,
+						"node:fs": require.resolve("./node-builtin-stubs.js"),
+						"node:fs/promises": require.resolve("./node-builtin-stubs.js"),
+						"node:path": require.resolve("./node-path-shim.js"),
+						"node:worker_threads": require.resolve("./node-builtin-stubs.js"),
+						"node:stream/web": require.resolve("./node-builtin-stubs.js"),
 						"node:module": false,
 						"node:url": false,
 						"node:crypto": false,
 						"node:stream": false,
 						"node:buffer": false,
-						"node:worker_threads": false,
 						"node:util": false,
 						"node:perf_hooks": false,
 						"node:os": false,
 						"node:child_process": false,
-						"node:fs/promises": false,
 					},
 				},
 				module: {
