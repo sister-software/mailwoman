@@ -513,6 +513,184 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 
 </details>
 
+### `operator:country-sweep-2026-08-05`
+
+114 rows · 92 country dirs
+
+> The country-coverage sweep. `cases/country-coverage-candidates.md` drafted 400 candidate inputs across
+> 220 ISO-3166 codes, sorted into three predicted failure-mode classes; this batch is the 114 of them that
+> FAILED the production pipeline. Every candidate was first canonicalized through the Google oracle
+> (`@mailwoman/geocode-oracle`, `components=country:<cc>`, `language=en`) — 400/400 resolved, no
+> `ZERO_RESULTS`, so **every address in the draft exists as written**; the seven Google marked
+> `partial_match` are parked below rather than promoted, per the draft's own rule. The remaining 279
+> candidates PASSED and are parked as holdout source material in
+> `cases/generalization/country-sweep-2026-08-05-passes.jsonl`, which the loader does not read (it walks
+> two-letter country dirs only).
+>
+> **What the sweep measured, by the draft's own class hypothesis:** structural-dialect rows failed hardest
+> (13/31 = 42%, plus 6 of the 7 suspects), bare-capital/namesake rows produced the most bugs in absolute
+> terms (71 of 114), and exonym/renamed/script rows failed least (30/137 = 22%). The draft predicted the
+> namesake class would be the largest unguarded surface; it was, but the per-row hit rate was highest on the
+> addressing structures nothing in the corpus had ever exercised.
+>
+> **29 of these rows share one measured root cause and should flip together.** Their notes carry the
+> sentence "ROOT CAUSE MEASURED". The resolver's default backend (`candidate.db`, symlinked to
+> `candidate-global.db` built 2026-08-05 18:15) and `admin-global-priority.db` (2026-08-04 17:59) disagree
+> about what a synthetic place id (`spr_id >= 9e12`) MEANS: 743,853 of 1,670,055 joined rows (44.5%) name a
+> different place in each, 212,993 of them `is_primary=1`. Reading the newer source
+> (`admin-global-priority-geonames.db`, built 2026-08-05 18:09, six minutes before the candidate build)
+> locates it in the alternate-names join — 522,184 of 2,110,096 `names` rows on synthetic ids carry a
+> `country` that disagrees with their own `spr` row's. `Gaborone` is in `names` twice, both times attached
+> to an Austrian hamlet, and there is no `spr` row named `Gaborone` at all. So `geocode "Gaborone"` returns
+> `wof:9000000121151` — Gaborone's id in the older source — carrying the name `Aichegg` and a coordinate in
+> Styria. Same shape for `Djibouti` → `Ober-Himmeri` (CH) and `Kinshasa` → `Alionys II` (LT, population
+> 16,000,000).
+>
+> **27 rows resolve to NOTHING** (`Marrakesh`, `Amman`, `Kigali`, `Phnom Penh`, `Mogadishu`, …) — the
+> honest failure, and the one that does not violate the meaning-of-zero rule.
+>
+> **Assertion policy.** Components first, then a coordinate at a bar sized to the tier Google returned and
+> rounded up: `APPROXIMATE` → 25 km (the bar `global-paris-bare` already uses for this class),
+> `GEOMETRIC_CENTER` → 10 km, `RANGE_INTERPOLATED` → 5 km, `ROOFTOP` → 2 km. `expectComponents.locality` is
+> asserted only where Google's canonical form is a string the INPUT already carries; where it is not
+> (`Cairo Governorate`, `Daerah Khusus Ibukota Jakarta`, `French Quarter`) the row keeps the coordinate
+> assertion and the note names Google's answer, because pinning it would target Google's rendering rather
+> than mailwoman's. `house_number`/`street`/`postcode` follow the same rule. No `expectTier` anywhere: the
+> resolver has not been measured on these rows, which is the draft's stated precondition for pinning one.
+>
+> **Instrument caveat.** The 16 rows under `DE`/`ES`/`GB`/`IN`/`IT`/`NZ` graded through their weights
+> overlay with the anchor channel OFF — those overlay packages carry no `postcode-<cc>.bin`, so
+> `loadFromWeights` warned and degraded. None of the 16 inputs carries a postcode, so the effect on this
+> batch is nil, but a later postcode-bearing row in those countries would need the artifact.
+
+| case                                  | cc  | kind                   | Google coordinate   | Google tier      | pipeline                      |
+| ------------------------------------- | --- | ---------------------- | ------------------- | ---------------- | ----------------------------- |
+| `ad-cs-andorra-la-vella`              | AD  | `city_country_same`    | 42.5063, 1.5218     | APPROXIMATE      | 236 km → Andorra la Vella     |
+| `ad-cs-les-escaldes`                  | AD  | `bare_city_global`     | 42.5101, 1.5388     | APPROXIMATE      | 2920 km → Taskisenperä        |
+| `af-cs-kabul`                         | AF  | `spelling_variant`     | 34.5553, 69.2075    | APPROXIMATE      | 1177 km → Kabul               |
+| `af-cs-kandahar`                      | AF  | `spelling_variant`     | 31.6205, 65.7158    | APPROXIMATE      | 4483 km → Finnby              |
+| `ag-cs-st-john-s`                     | AG  | `abbrev_trap`          | 17.1274, -61.8468   | APPROXIMATE      | 3486 km → St. John's          |
+| `ai-cs-the-valley`                    | AI  | `article_toponym`      | 18.2148, -63.0574   | APPROXIMATE      | 14852 km → Vallée des Colons  |
+| `al-cs-durres`                        | AL  | `spelling_variant`     | 41.3246, 19.4565    | APPROXIMATE      | 1035 km → Szyszczyce          |
+| `al-cs-tirana`                        | AL  | `spelling_variant`     | 41.3275, 19.8187    | APPROXIMATE      | 1142 km → Wielkie             |
+| `ao-cs-huambo`                        | AO  | `spelling_variant`     | -12.7740, 15.7469   | APPROXIMATE      | 243 km → Lobito               |
+| `as-cs-pago-pago`                     | AS  | `bare_city_global`     | -14.2732, -170.7030 | APPROXIMATE      | 15864 km → Radzanów           |
+| `aw-cs-oranjestad`                    | AW  | `bare_city_namesake`   | 12.5227, -70.0353   | APPROXIMATE      | 8602 km → Rzecko              |
+| `ba-cs-mostar`                        | BA  | `bare_city_global`     | 43.3438, 17.8078    | APPROXIMATE      | 1255 km → Krępa Kaszubska     |
+| `ba-cs-sarajevo`                      | BA  | `bare_city_global`     | 43.8563, 18.4131    | APPROXIMATE      | 692 km → Łańce                |
+| `bb-cs-bridgetown`                    | BB  | `bare_city_global`     | 13.0971, -59.6132   | APPROXIMATE      | 3376 km → Rahway              |
+| `be-cs-antwerpen`                     | BE  | `exonym_script`        | 51.2199, 4.4150     | APPROXIMATE      | unresolved                    |
+| `bf-cs-ouagadougou`                   | BF  | `bare_city_global`     | 12.3714, -1.5197    | APPROXIMATE      | 4530 km → Kateřinky           |
+| `bi-cs-bujumbura`                     | BI  | `admin_churn`          | -3.3614, 29.3599    | APPROXIMATE      | 619 km → Bujumbura            |
+| `bj-cs-cotonou`                       | BJ  | `bare_city_global`     | 6.3562, 2.4278      | APPROXIMATE      | 4720 km → Gnigl               |
+| `bj-cs-porto-novo`                    | BJ  | `bare_city_namesake`   | 6.4786, 2.6203      | APPROXIMATE      | 5520 km → Kragelund           |
+| `bm-cs-hamilton`                      | BM  | `bare_city_namesake`   | 32.2951, -64.7842   | APPROXIMATE      | 1796 km → Hamilton            |
+| `bn-cs-bandar-seri-begawan`           | BN  | `bare_city_global`     | 4.8923, 114.9419    | APPROXIMATE      | 10275 km → Drosen             |
+| `bn-cs-kuala-belait`                  | BN  | `bare_city_global`     | 4.5804, 114.2199    | APPROXIMATE      | 10690 km → Eggatsbergvorsäß   |
+| `bq-cs-kralendijk`                    | BQ  | `bare_city_global`     | 12.1498, -68.2763   | APPROXIMATE      | unresolved                    |
+| `br-cs-rua-augusta-1000-cerqueira`    | BR  | `br_rua_bairro`        | -23.5533, -46.6553  | ROOFTOP          | 2 km → São Paulo              |
+| `bs-cs-freeport`                      | BS  | `bare_city_namesake`   | 26.5333, -78.6429   | APPROXIMATE      | 1637 km → Freeport            |
+| `bs-cs-nassau`                        | BS  | `bare_city_namesake`   | 25.0443, -77.3504   | APPROXIMATE      | unresolved                    |
+| `bt-cs-paro`                          | BT  | `bare_city_global`     | 27.4283, 89.4170    | APPROXIMATE      | 264 km → Paro                 |
+| `bt-cs-thimphu`                       | BT  | `bare_city_same_admin` | 27.4716, 89.6386    | APPROXIMATE      | 6723 km → Berg an der Krems   |
+| `bw-cs-francistown`                   | BW  | `bare_city_global`     | -21.1661, 27.5144   | APPROXIMATE      | 7854 km → Aichberg            |
+| `bw-cs-gaborone`                      | BW  | `bare_city_global`     | -24.6580, 25.9077   | APPROXIMATE      | 8046 km → Aichegg             |
+| `by-cs-brest`                         | BY  | `bare_city_namesake`   | 52.0997, 23.7637    | APPROXIMATE      | 2038 km → Brest               |
+| `bz-cs-belize-city`                   | BZ  | `city_country_same`    | 17.5046, -88.1962   | APPROXIMATE      | 9487 km → Hochrindl-Tatermann |
+| `bz-cs-belmopan`                      | BZ  | `bare_city_global`     | 17.2523, -88.7641   | APPROXIMATE      | 9547 km → Hochrindl-Kegel     |
+| `cd-cs-kinshasa`                      | CD  | `bare_city_same_admin` | -4.3033, 15.3105    | APPROXIMATE      | 6660 km → Alionys II          |
+| `cd-cs-lubumbashi`                    | CD  | `bare_city_global`     | -11.6876, 27.5026   | APPROXIMATE      | 7431 km → Andrulėnai          |
+| `cf-cs-bangui`                        | CF  | `bare_city_global`     | 4.3622, 18.5828     | APPROXIMATE      | 4896 km → Žibritov            |
+| `cg-cs-brazzaville`                   | CG  | `bare_city_global`     | -0.2280, 15.8277    | APPROXIMATE      | 5100 km → Slavonske Bare      |
+| `cg-cs-pointe-noire`                  | CG  | `bare_city_global`     | -4.7692, 11.8664    | APPROXIMATE      | 5930 km → Nový Dvor           |
+| `ck-cs-avarua`                        | CK  | `bare_city_global`     | -21.2057, -159.7850 | APPROXIMATE      | unresolved                    |
+| `ck-cs-rarotonga`                     | CK  | `island_admin_same`    | -21.2292, -159.7763 | APPROXIMATE      | unresolved                    |
+| `cn-cs-nanjing-road-huangpu-shanghai` | CN  | `cn_road_district`     | 31.2357, 121.4797   | GEOMETRIC_CENTER | 272 km → Nanjing              |
+| `co-cs-bogota`                        | CO  | `spelling_variant`     | 4.7110, -74.0721    | APPROXIMATE      | unresolved                    |
+| `co-cs-medellin`                      | CO  | `spelling_variant`     | 6.2476, -75.5658    | APPROXIMATE      | unresolved                    |
+| `cr-cs-san-jose`                      | CR  | `bare_city_same_admin` | 9.9281, -84.0907    | APPROXIMATE      | 4850 km → San Jose            |
+| `cv-cs-mindelo`                       | CV  | `bare_city_global`     | 16.8840, -24.9874   | APPROXIMATE      | 5225 km → Købelev             |
+| `cv-cs-praia`                         | CV  | `bare_city_global`     | 14.9198, -23.5073   | APPROXIMATE      | 5408 km → Kragevig            |
+| `cw-cs-willemstad`                    | CW  | `bare_city_global`     | 12.1039, -68.9324   | APPROXIMATE      | 8232 km → Bale                |
+| `cy-cs-larnaca`                       | CY  | `spelling_variant`     | 34.9182, 33.6201    | APPROXIMATE      | 2923 km → Bjerning            |
+| `cy-cs-nicosia`                       | CY  | `exonym_script`        | 35.1856, 33.3823    | APPROXIMATE      | 1718 km → Nicosia             |
+| `de-cs-frankfurt`                     | DE  | `bare_city_namesake`   | 50.1109, 8.6821     | APPROXIMATE      | 1025 km → Frankfurt           |
+| `dj-cs-djibouti`                      | DJ  | `city_country_same`    | 11.8251, 42.5903    | APPROXIMATE      | 5049 km → Ober-Himmeri        |
+| `dm-cs-roseau`                        | DM  | `bare_city_namesake`   | 15.3092, -61.3794   | APPROXIMATE      | 4862 km → Roseau              |
+| `do-cs-santiago`                      | DO  | `bare_city_namesake`   | 19.4792, -70.6931   | APPROXIMATE      | 5884 km → Santiago            |
+| `eg-cs-1-tahrir-square-downtown`      | EG  | `eg_venue_square`      | 30.0439, 31.2366    | ROOFTOP          | 10404 km → Cairo              |
+| `er-cs-asmara`                        | ER  | `bare_city_global`     | 15.3317, 38.9300    | APPROXIMATE      | 5238 km → Myllykylä           |
+| `es-cs-donostia`                      | ES  | `exonym_script`        | 43.3182, -1.9817    | APPROXIMATE      | unresolved                    |
+| `fk-cs-stanley`                       | FK  | `bare_city_namesake`   | -51.6928, -57.8620  | APPROXIMATE      | 12932 km → Stanley            |
+| `fm-cs-pohnpei`                       | FM  | `island_state_same`    | 6.8519, 158.2147    | APPROXIMATE      | unresolved                    |
+| `gb-cs-londonderry`                   | GB  | `renamed_city`         | 54.9965, -7.3101    | APPROXIMATE      | 4689 km → Londonderry         |
+| `gd-cs-st-george-s`                   | GD  | `abbrev_trap`          | 12.0561, -61.7488   | APPROXIMATE      | 6825 km → St. Georges         |
+| `gm-cs-serekunda`                     | GM  | `bare_city_global`     | 13.4370, -16.6812   | APPROXIMATE      | unresolved                    |
+| `gt-cs-antigua-guatemala`             | GT  | `spelling_variant`     | 14.5573, -90.7332   | APPROXIMATE      | 7971 km → Antigua             |
+| `gw-cs-bissau`                        | GW  | `bare_city_same_admin` | 11.8037, -15.1804   | APPROXIMATE      | 46 km → Bissau                |
+| `hk-cs-new-territories-hong-kong`     | HK  | `hk_region`            | 22.3704, 114.1234   | APPROXIMATE      | 3440 km → New                 |
+| `id-cs-jl-jendral-sudirman-no`        | ID  | `id_jalan`             | -6.2194, 106.8145   | ROOFTOP          | 5 km → Jakarta                |
+| `il-cs-jerusalem`                     | IL  | `bare_city_namesake`   | 31.7769, 35.2224    | APPROXIMATE      | 6350 km → Jerusalem           |
+| `il-cs-tel-aviv-yafo`                 | IL  | `compound_city`        | 32.0853, 34.7818    | APPROXIMATE      | 2586 km → Tel                 |
+| `io-cs-diego-garcia`                  | IO  | `bare_city_global`     | -7.3195, 72.4229    | APPROXIMATE      | 17830 km → García             |
+| `it-cs-via-roma-torino`               | IT  | `street_name_homonym`  | 45.0671, 7.6821     | GEOMETRIC_CENTER | 200 km → Via Romana           |
+| `jo-cs-amman`                         | JO  | `bare_city_global`     | 31.9544, 35.9106    | APPROXIMATE      | unresolved                    |
+| `kh-cs-phnom-penh`                    | KH  | `bare_city_same_admin` | 11.5564, 104.9282   | APPROXIMATE      | unresolved                    |
+| `kw-cs-hawalli`                       | KW  | `bare_city_global`     | 29.3378, 48.0235    | APPROXIMATE      | 3361 km → Hawalli             |
+| `ky-cs-george-town`                   | KY  | `spelling_variant`     | 19.2966, -81.3819   | APPROXIMATE      | 17261 km → George Town        |
+| `ma-cs-marrakesh`                     | MA  | `spelling_variant`     | 31.6225, -7.9898    | APPROXIMATE      | unresolved                    |
+| `ml-cs-timbuktu`                      | ML  | `spelling_variant`     | 16.7702, -3.0083    | APPROXIMATE      | unresolved                    |
+| `mp-cs-susupe`                        | MP  | `bare_city_global`     | 15.1568, 145.7029   | APPROXIMATE      | 15293 km → Supe               |
+| `ms-cs-plymouth`                      | MS  | `abandoned_capital`    | 16.7065, -62.2157   | APPROXIMATE      | unresolved                    |
+| `mu-cs-port-louis`                    | MU  | `bare_city_global`     | -20.1609, 57.5012   | APPROXIMATE      | 9010 km → Port                |
+| `mw-cs-lilongwe`                      | MW  | `bare_city_same_admin` | -13.9865, 33.7681   | APPROXIMATE      | unresolved                    |
+| `my-cs-georgetown-penang`             | MY  | `covered_country_gap`  | 5.4141, 100.3285    | APPROXIMATE      | 17268 km → Georgetown         |
+| `my-cs-petaling-jaya`                 | MY  | `bare_city_global`     | 3.1292, 101.6165    | APPROXIMATE      | 932 km → Petaling             |
+| `na-cs-swakopmund`                    | NA  | `bare_city_global`     | -22.6749, 14.5258   | APPROXIMATE      | unresolved                    |
+| `ph-cs-barangay-san-antonio-makati`   | PH  | `ph_barangay`          | 14.5827, 121.0615   | APPROXIMATE      | 13532 km → San Antonio        |
+| `pk-cs-house-4-street-25`             | PK  | `pk_sector`            | 33.7220, 73.0457    | ROOFTOP          | 1739 km → Islamabad           |
+| `pl-cs-krakow`                        | PL  | `exonym_script`        | 50.0647, 19.9450    | APPROXIMATE      | unresolved                    |
+| `pl-cs-ul-marsza-kowska-4`            | PL  | `pl_ulica`             | 52.2145, 21.0215    | ROOFTOP          | 2 km → Warszawa               |
+| `pm-cs-saint-pierre`                  | PM  | `bare_city_namesake`   | 46.7818, -56.1737   | APPROXIMATE      | 13347 km → Saint-Pierre       |
+| `ru-cs-moscow`                        | RU  | `exonym_script`        | 55.7569, 37.6151    | APPROXIMATE      | 8375 km → Moscow              |
+| `rw-cs-kigali`                        | RW  | `bare_city_same_admin` | -1.9441, 30.0619    | APPROXIMATE      | unresolved                    |
+| `sa-cs-riyadh`                        | SA  | `bare_city_same_admin` | 24.7136, 46.6753    | APPROXIMATE      | 1787 km → Riyadh              |
+| `sb-cs-guadalcanal`                   | SB  | `island_province_same` | -9.5773, 160.1456   | APPROXIMATE      | 16547 km → Guadalcanal        |
+| `sc-cs-victoria`                      | SC  | `bare_city_namesake`   | -4.6232, 55.4550    | APPROXIMATE      | 7043 km → Victoria            |
+| `se-cs-gothenburg`                    | SE  | `exonym_script`        | 57.7089, 11.9746    | APPROXIMATE      | unresolved                    |
+| `sg-cs-blk-12-kallang-ave`            | SG  | `sg_block_postal`      | 1.3102, 103.8642    | ROOFTOP          | 7 km → Singapore              |
+| `sh-cs-jamestown`                     | SH  | `bare_city_namesake`   | -15.9268, -5.7171   | APPROXIMATE      | 9890 km → Jamestown           |
+| `sk-cs-bratislava`                    | SK  | `exonym_script`        | 48.1478, 17.1072    | APPROXIMATE      | unresolved                    |
+| `sm-cs-san-marino`                    | SM  | `city_country_same`    | 43.9352, 12.4468    | APPROXIMATE      | 9997 km → San Marino          |
+| `so-cs-hargeisa`                      | SO  | `bare_city_global`     | 9.5612, 44.0669     | APPROXIMATE      | unresolved                    |
+| `so-cs-mogadishu`                     | SO  | `spelling_variant`     | 2.0372, 45.3379     | APPROXIMATE      | unresolved                    |
+| `sr-cs-wanica`                        | SR  | `bare_city_global`     | 5.7324, -55.2701    | APPROXIMATE      | 9572 km → Wanica              |
+| `st-cs-santo-antonio`                 | ST  | `bare_city_global`     | 1.6368, 7.4179      | APPROXIMATE      | 4290 km → Santo António       |
+| `sv-cs-santa-ana`                     | SV  | `bare_city_namesake`   | 13.9778, -89.5639   | APPROXIMATE      | 3600 km → Santa Ana           |
+| `sx-cs-philipsburg`                   | SX  | `bare_city_namesake`   | 18.0296, -63.0471   | APPROXIMATE      | 2926 km → Philipsburg         |
+| `sx-cs-sint-maarten`                  | SX  | `split_island`         | 18.0425, -63.0548   | APPROXIMATE      | 6933 km → Sint Maarten        |
+| `tk-cs-fakaofo`                       | TK  | `atoll_admin_same`     | -9.3581, -171.1837  | APPROXIMATE      | unresolved                    |
+| `tm-cs-turkmenabat`                   | TM  | `spelling_variant`     | 38.9831, 63.5581    | APPROXIMATE      | unresolved                    |
+| `to-cs-nuku-alofa`                    | TO  | `apostrophe_trap`      | -21.1343, -175.2005 | APPROXIMATE      | 1413 km → Nukualofa Village   |
+| `tt-cs-port-of-spain`                 | TT  | `spelling_variant`     | 10.6540, -61.5097   | APPROXIMATE      | 6535 km → Spain               |
+| `tt-cs-san-fernando`                  | TT  | `bare_city_namesake`   | 10.2859, -61.4522   | APPROXIMATE      | 17190 km → San Fernando       |
+| `ua-cs-kharkiv`                       | UA  | `spelling_variant`     | 50.0020, 36.3074    | APPROXIMATE      | unresolved                    |
+| `ve-cs-maracaibo`                     | VE  | `bare_city_same_admin` | 10.6410, -71.6074   | APPROXIMATE      | unresolved                    |
+| `vn-cs-12-ly-thai-to`                 | VN  | `vn_street_ward`       | 21.0313, 105.8551   | ROOFTOP          | 7019 km → Кемь                |
+| `vu-cs-efate`                         | VU  | `island_province_same` | -17.6577, 168.4297  | APPROXIMATE      | 11533 km → Fate               |
+| `za-cs-14-long-st-green`              | ZA  | `za_suburb_postal`     | -33.9196, 18.4221   | ROOFTOP          | 12748 km → Green Point        |
+
+Parked as SUSPECT (Google `partial_match` — the address as drafted is not the address Google answered
+about, so it is not promotable without a rewrite):
+
+- `AE` `PO Box 12345, Dubai` — Google partial_match on "122 34D Street - Hor Al Anz - Deira - Dubai - United Arab Emirates"
+- `GB` `Derry` — Google partial_match on "Derry/Londonderry, Londonderry, UK"
+- `JP` `1-2-3 Ginza, Chuo-ku, Tokyo` — Google partial_match on "Miki.Building, 2-chōme-3 Ginza, Chuo City, Tokyo 104-0061, Japan"
+- `KH` `Sangkat Boeung Keng Kang, Khan Chamkarmon, Phnom Penh` — Google partial_match on "HW2G+CW6, St 322, Phnom Penh, Cambodia"
+- `KW` `House 12, Street 102, Block 5, Salmiya` — Google partial_match on "Block 5, Salmiya, Kuwait"
+- `LK` `No 12, Galle Road, Colombo 03` — Google partial_match on "Galle Rd, Colombo, Sri Lanka"
+- `TR` `Atatürk Caddesi No 12, Beşiktaş, İstanbul` — Google partial_match on "Sahrayı Cedit, Atatürk Cd. No:12, 34734 Kadıköy/İstanbul, Türkiye"
+
 ### The seed batch (no header comment)
 
 The 19 rows that opened the array — one per fixed bug, entered 2026-06-29 → 2026-07-02, each

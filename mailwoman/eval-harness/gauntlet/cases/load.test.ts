@@ -17,8 +17,8 @@
  *   `gauntlet-regression@192:d753b86005a7` is the same string on both sides. The id is NOT versioned by this
  *   change, deliberately — versioning it would have declared a corpus that did not change to be a new board.
  *
- *   Everything else here is the loader's error surface. A corpus spread across 29 files earns its keep only
- *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 192 rows is a scavenger hunt.
+ *   Everything else here is the loader's error surface. A corpus spread across 121 files earns its keep only
+ *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
  */
 
 import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
@@ -32,22 +32,29 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus as of the migration — 192 curated regressions.
+ * The corpus today — 306 curated regressions.
+ *
+ * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
+ * country-coverage sweep's measured FAILs; see `batch-notes.md`). Country dirs went 29 → 121 in the same batch.
  */
-const CORPUS_SIZE = 192
+const CORPUS_SIZE = 306
 
 /**
- * `regressionCorpusHash` of the corpus at the migration, measured against the pre-migration TS array.
+ * `regressionCorpusHash` of the corpus.
  *
  * Changing the corpus changes this. That is the point: an edit to a `.jsonl` row now needs a matching edit here, and
  * the diff says "the corpus changed" rather than "a 3,500-line file changed".
  */
-const CORPUS_HASH = "11e44083558583b3ed0b6c72561929f0baf7ad89aa7542bf3fe8be79e59ab9ed"
+const CORPUS_HASH = "58d44d98bdc67482b1afcda8b797ffec6d82f6f91b77991ffe5f92cda18cbbf2"
 
 /**
- * `ablationBoardID` of the corpus at the migration — identical before and after, which is the whole claim.
+ * `ablationBoardID` of the corpus.
+ *
+ * The id is content-addressed and not order-addressed, which is what carried it UNCHANGED across the 2026-08-05 array →
+ * JSONL migration. The country sweep is the opposite kind of change — it adds 114 rows — so this one moves, and it
+ * should: the ablation board is genuinely a different board.
  */
-const BOARD_ID = "gauntlet-regression@192:d753b86005a7"
+const BOARD_ID = "gauntlet-regression@306:ba944d75c9df"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
@@ -89,11 +96,11 @@ describe("the committed corpus", () => {
 		expect(order).toEqual(order.toSorted())
 	})
 
-	it("has the content the migration measured", async () => {
+	it("has the content the pins were measured against", async () => {
 		expect(regressionCorpusHash(await loadRegressionCases())).toBe(CORPUS_HASH)
 	})
 
-	it("derives the same ablation board id as the pre-migration array", async () => {
+	it("derives the pinned ablation board id", async () => {
 		expect(ablationBoardID(await loadRegressionCases())).toBe(BOARD_ID)
 	})
 
