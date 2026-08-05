@@ -26,13 +26,16 @@ afterEach(() => {
 	vi.unstubAllEnvs()
 })
 
-test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 shard paths under a data root (#920/#977)", () => {
+test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM shard paths under a data root (#920/#977)", () => {
 	expect(wofShardPaths("/data")).toEqual([
 		"/data/wof/admin-global-priority.db",
 		"/data/wof/postalcode-us.db",
 		"/data/wof/postalcode-geonames-tail.db",
 		"/data/wof/postalcode-intl.db",
 		"/data/wof/postalcode-nl-pc6.db",
+		// Build-local (ODbL): present only on the machine that built it, which is exactly why it can be
+		// listed unconditionally — every caller filters with `existsSync`, and that filter IS the tier.
+		"/data/wof/postalcode-ni-osm.db",
 	])
 })
 

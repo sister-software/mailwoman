@@ -66,8 +66,14 @@ export const DEFAULT_FOLD_COUNTRIES = [
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
- * GeoNames intl shard (PT/AU) + the OS Code-Point Open GB shard + the GeoNames-postal tail shard (nine countries) +
- * Overture postcode centroids (CA + the EU-coverage locales). Missing shards are skipped, not fatal.
+ * GeoNames intl shard (PT/AU) + the OS Code-Point Open GB shard + the OSM Northern Ireland shard + the GeoNames-postal
+ * tail shard (nine countries) + Overture postcode centroids (CA + the EU-coverage locales). Missing shards are skipped,
+ * not fatal.
+ *
+ * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
+ * never published, so on every machine but the one that built it the `existsSync` filter in
+ * {@link resolvePostcodeShards} removes it and the set degrades to the permissive shards alone. Nothing else enforces
+ * the tier, and nothing else needs to.
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
  * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
@@ -82,6 +88,18 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	// 2026-08-05 parity gate measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
 	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
 	"postalcode-gb-codepoint.db",
+	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
+	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 cut). A miss on a
+	// BT code means NOT ATTESTED IN OSM, not that the code does not exist; since #1480 an unknown postcode
+	// abstains, so the partial shard is strictly additive.
+	//
+	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
+	// published to npm, R2 or the demo. It is present only on a machine that built it, and the
+	// `existsSync` filter in `resolvePostcodeShards` IS that tier's mechanism: a deployment without the
+	// file simply has no NI coverage, exactly as before.
+	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
+	// Overpass response rather than re-querying a volunteer endpoint).
+	"postalcode-ni-osm.db",
 	// #920: the GeoNames-postal tail shard — NINE countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE
 	// (56,075 rows). GB rode in this shard 2026-07-03 → 2026-08-05 and moved to Code-Point Open above.
 	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE`.
