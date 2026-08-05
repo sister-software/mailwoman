@@ -32,6 +32,7 @@ import { resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { fstFreshnessWarning } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 
 /**
  * What one pair-index overlay has to say about itself. Everything else is shared.
@@ -159,6 +160,33 @@ export function pairIndexStaleReason(
  * import this constant rather than re-typing the number.
  */
 export const REQUIRED_PAIR_INDEX_SCHEMA = 3
+
+/**
+ * Warn when the per-locale FST a linker just symlinked was built from a DIFFERENT admin database than the one on disk
+ * now.
+ *
+ * WHY IT WARNS RATHER THAN REBUILDS, unlike its pair-index sibling above. A pair index is seconds of work and the
+ * linker owns its whole recipe. A locale FST is a multi-minute build whose output goes to a STAGING dir on purpose —
+ * the swap into `fst-per-locale/` is operator-gated after the battery, because an FST changes decoder behaviour and the
+ * D-rule does not let that land unmeasured. So the guard's job is to make the drift impossible to miss, and to name the
+ * command that starts fixing it. It is also why a stale FST is never fatal: the artifact is a decode-time bias list,
+ * and a dev tree must still run.
+ *
+ * The source-side half of the comparison lives here rather than in `fst-freshness.ts` for the same reason
+ * `pairIndexStaleReason` splits: only the caller knows which database it built against. All three FST-linking base
+ * packages build against the same one, so they share this rather than each pinning it.
+ */
+export function warnIfFSTStale(fstPath: string, locale: string): void {
+	const warning = fstFreshnessWarning({
+		fstPath,
+		sourceDBPath: String(dataRootPath("wof", "admin-global-priority.db")),
+		rebuildCommand: `node mailwoman/out/cli.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-gated)`,
+	})
+
+	if (warning) {
+		console.error(warning)
+	}
+}
 
 /**
  * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at

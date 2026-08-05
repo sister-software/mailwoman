@@ -35,7 +35,11 @@ import { resolve } from "node:path"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
-import { pairIndexStaleReason, peekPairIndexHeaderFields } from "../../scripts/weights-overlay-linker.ts"
+import {
+	pairIndexStaleReason,
+	peekPairIndexHeaderFields,
+	warnIfFSTStale,
+} from "../../scripts/weights-overlay-linker.ts"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
@@ -157,6 +161,8 @@ if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-fr-fr.bin ← ${FST_SRC}`)
+
+	warnIfFSTStale(FST_SRC, "fr-fr")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }

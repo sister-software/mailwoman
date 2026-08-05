@@ -78,7 +78,11 @@ import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
 
-import { pairIndexStaleReason, peekPairIndexHeaderFields } from "../../scripts/weights-overlay-linker.ts"
+import {
+	pairIndexStaleReason,
+	peekPairIndexHeaderFields,
+	warnIfFSTStale,
+} from "../../scripts/weights-overlay-linker.ts"
 
 /**
  * Hex characters in an md5 digest.
@@ -451,6 +455,8 @@ if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-gb.bin ← ${FST_SRC}`)
+
+	warnIfFSTStale(FST_SRC, "en-gb")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
