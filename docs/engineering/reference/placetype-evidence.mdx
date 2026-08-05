@@ -76,6 +76,26 @@ Within-node share turned out to carry no information at all (WOF rarely parents 
 locality, so covered nodes read ~100% dependent-locality across the board); presence and magnitude
 across the parent population are the statistics that do.
 
+**The observability rung (2026-08-05).** The census is now LOADED and PROBED at runtime, and still
+biases nothing. `resolvePlacetypeCensusPath` (`neural/weights.ts`) finds
+`placetype-census-<cc>.bin` at the build-local data root — deliberately not in the weights tarballs,
+which would cost 137–165 KB per locale for an artifact nothing reads back — and the placetype-pair
+prior probes it for the PARENT half of every (child, parent) candidate it tries, on the same fold.
+What comes out is a `placetypeCensus` record on the parse trace (`{parent, childTagsPresent, lift}`
+per known parent, plus the probed-parent count as the denominator), whose `applied` is hard-coded
+`false`. The decode is byte-identical with the census present or absent, asserted at both the prior
+and the full-decode level in `neural/placetype-census-observability.test.ts`. That test is the
+contract: a calibration δ has to be measured off these traces, not slipped in.
+
+Two things the first real traces showed. `shoreditch, london` (en-GB) reads `london` at lift 1.52×
+on `dependent_locality` — the evidence is there and it is the right sign. `astoria, queens, ny`
+(en-US) records **zero** observations over three probed parents: `queens` has no census node,
+because `PARENT_PLACETYPES` is `["locality", "localadmin"]` and Queens is a `borough`. The US pair
+index's characteristic edge — a dependent locality under a BOROUGH, the case PIX2 was built to
+express — is structurally outside the census's parent vocabulary today. A calibration rung that
+reads only GB traces will not see that. (Re-measured on the post-rebuild gazetteer, 2026-08-05: GB
+5,577 nodes / 136,675 bytes / 33,936 links; US 7,532 nodes / 164,764 bytes / 123,909 links.)
+
 Why the census does not simply become more pair entries: a pair entry _asserts_ a surface is a
 dependent locality, so each batch needs a venue-confound board before it ships. A census node
 asserts nothing about any surface — it can only tilt a reading the model already entertains under a

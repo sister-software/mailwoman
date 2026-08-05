@@ -17,6 +17,7 @@
 import type { SystemCode } from "@mailwoman/codex"
 import type { DecoderToken } from "@mailwoman/core/decoder"
 
+import type { PlacetypeCensusObservation } from "./placetype-pair-prior.ts"
 import type { SoftFeatureChannel } from "./soft-features.ts"
 
 /**
@@ -24,6 +25,12 @@ import type { SoftFeatureChannel } from "./soft-features.ts"
  * "every kind" — the decode path's push sites and the empty-input return both produce records in exactly this order,
  * and the trace test asserts against it, so adding a prior without its participation record is a test failure, not a
  * silent omission.
+ *
+ * `"placetypeCensus"` is the one member that is NOT an emission prior. It is the PCN1 census observability rung: it
+ * rides the placetype-pair prior's parent-candidate probes, records what the census knows about each parent, and
+ * composes nothing — its `applied` is `false` by construction (see {@link TracePrior.applied}). It sits directly after
+ * `"placetypePair"` because that is where in the decode path it is produced, and the ordering here is production order,
+ * not a claim about composition.
  */
 export const TRACE_PRIOR_KINDS = [
 	"queryShape",
@@ -32,6 +39,7 @@ export const TRACE_PRIOR_KINDS = [
 	"trailingLocality",
 	"spanProposer",
 	"placetypePair",
+	"placetypeCensus",
 	"conventionsMask",
 ] as const
 
@@ -45,6 +53,11 @@ export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
  */
 export interface TracePrior {
 	kind: TracePriorKind
+	/**
+	 * Whether this prior moved anything. ALWAYS `false` on `"placetypeCensus"`, which writes no emissions at all — a
+	 * `true` there would mean somebody wired a census bias into the decoder, which the 2026-08-04 assessment gates behind
+	 * a calibration δ the artifact deliberately doesn't carry.
+	 */
 	applied: boolean
 	/**
 	 * `placetypePair` only, and only when `applied` is true: which candidate-construction path of the probe chain
@@ -53,6 +66,19 @@ export interface TracePrior {
 	 * every other kind and whenever the prior carried no bias, so pre-existing traces are unchanged byte-for-byte.
 	 */
 	probePath?: "segment" | "anchored" | "window"
+	/**
+	 * `placetypeCensus` only: what the PCN1 census knew about each parent surface the pair prior's probe chain looked up
+	 * on this input. Absent when no census artifact was loaded — the feature is then entirely inert and the record is
+	 * just `{kind, applied: false}`.
+	 */
+	census?: PlacetypeCensusObservation[]
+	/**
+	 * `placetypeCensus` only: how many DISTINCT parent surfaces were probed against the census, hit or miss — the
+	 * denominator for {@link census}. `0` with a census loaded means the probe chain never reached a parent candidate
+	 * (e.g. a single-token input); a positive count with an empty {@link census} means the census genuinely knew none of
+	 * them, which is coverage, not a claim that those parents have no children.
+	 */
+	censusProbedParents?: number
 }
 
 /**

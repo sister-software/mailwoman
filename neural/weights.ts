@@ -28,6 +28,9 @@ import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { dataRootPath } from "@mailwoman/core/utils"
+
+import { PlacetypeCensusResolver } from "./placetype-census.ts"
 
 /**
  * A weights package's own directory, located with Node's native ESM resolver.
@@ -444,6 +447,75 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
 	const candidate = resolve(packageDir, `pair-index-${country}.bin`)
 
 	return existsSync(candidate) ? candidate : undefined
+}
+
+/**
+ * Locate the PCN1 placetype census for `country` — `placetype-census-<cc>.bin`, the artifact `mailwoman gazetteer
+ * census` builds (`neural/placetype-census.ts` owns both ends of the format).
+ *
+ * WHY THIS ONE DOES NOT TAKE A `packageDir`, unlike every other resolver in this file. The census is a BUILD-LOCAL
+ * artifact: it lives under `$MAILWOMAN_DATA_ROOT/wof/`, exactly where `fst-street-morphology.bin` and the pair-index
+ * probe outputs live, and it ships in NO weights tarball. That is a deliberate deferral, not an oversight. The
+ * 2026-08-04 wiring assessment ruled that the census gets no decode wiring until a calibration rung measures a δ (the
+ * header's `delta` field is optional and every shipped artifact omits it), and until something at runtime READS it,
+ * adding 137–165 KB per locale to a published package buys nothing. When a calibration rung earns that cost, this
+ * function grows a package-sibling probe ahead of the data-root one — the same shape as
+ * {@link resolveAnchorLookupSibling}'s binary-then-JSON ladder.
+ *
+ * What the artifact is FOR, today: OBSERVABILITY. `PlacetypeCensusResolver` answers "does this parent have children of
+ * this KIND at all, and how much more often than the country at large" (presence + lift; within-parent share is ~100%
+ * everywhere, so a share-proportional consumer would read a constant). The pair prior probes it alongside each parent
+ * candidate and records what it found on the parse trace (`TracePrior` of kind `placetypeCensus`) — nothing else. The
+ * calibration rung's job is to read those traces and decide whether a δ is worth shipping.
+ *
+ * What the NEXT rung needs, so nobody mistakes this for a finished mechanism: the census is SPAN-BLIND (the D-C4
+ * ceiling). A node asserts something about a PARENT SURFACE, never about where a child span starts or ends, so census
+ * evidence alone cannot tell "East Acton" the place from "East Acton" opening a venue name — it fails the same
+ * venue-confound board that pinned window mode at a 52.1% false-positive rate and forced the pair prior's segment
+ * default. Composition with span evidence (the parent-span probe chain this rides, plus whatever span-boundary signal
+ * the calibration rung finds) is the open design question, not a δ sweep.
+ *
+ * `undefined` when the file is absent — the caller then wires no census and the feature is entirely inert, with no
+ * warning: an absent build-local artifact is the NORMAL state for every consumer who never ran the build command.
+ */
+export function resolvePlacetypeCensusPath(country: string): string | undefined {
+	if (!country) return undefined
+
+	const candidate = String(dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`))
+
+	return existsSync(candidate) ? candidate : undefined
+}
+
+/**
+ * Read the census for `country` into a {@link PlacetypeCensusResolver}, or `undefined` when there is nothing to read
+ * (see {@link resolvePlacetypeCensusPath} for what this artifact is, why it is build-local, and what the next rung
+ * needs). `explicitPath` overrides the data-root lookup — a harness that built a census to a scratch directory.
+ *
+ * Degrade rules, deliberately asymmetric: an ABSENT artifact is silent, because not having built one is the normal
+ * state for everyone who never ran `mailwoman gazetteer census`, and a warning there would fire for every user of the
+ * library. A present-but-unreadable file, or one whose header names a different country than the locale being parsed,
+ * is LOUD — those are build mistakes, and the country one in particular would otherwise have a census describing the
+ * wrong country's hierarchy quietly riding the trace a calibration rung reads.
+ */
+export function loadPlacetypeCensus(country: string, explicitPath?: string): PlacetypeCensusResolver | undefined {
+	const path = explicitPath ?? resolvePlacetypeCensusPath(country)
+
+	if (!path) return undefined
+
+	try {
+		const census = new PlacetypeCensusResolver(new Uint8Array(readFileSync(path)))
+
+		if (census.country === country) return census
+
+		console.warn(
+			`[mailwoman/neural] placetype-census country "${census.country}" (${path}) does not match the resolved ` +
+				`locale's country "${country}" — skipping the census observability probe.`
+		)
+	} catch (error) {
+		console.error(`[mailwoman/neural] failed to parse ${path}: ${(error as Error).message}`)
+	}
+
+	return undefined
 }
 
 /**

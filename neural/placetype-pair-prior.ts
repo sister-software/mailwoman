@@ -284,6 +284,17 @@
  *   so a chain `A, B, C` where both (A,B) and (B,C) fire writes a CHILD bias and a PARENT bias onto B, toward different
  *   tags. They compose by `Math.max` per label like any other overlapping write; the decoder arbitrates.
  *
+ *   **PCN1 census observability (2026-08-05, the observability rung).** `opts.census` rides this module's probe chain
+ *   WITHOUT touching a single emission. Every time a candidate is probed as the PARENT half of a (child, parent) pair —
+ *   {@link probeWindowPair}, the one site all three paths funnel through — the parent's folded surface is ALSO probed
+ *   against the PCN1 placetype census (`placetype-census.ts`), and a hit is recorded on the trace out-record as a
+ *   {@link PlacetypeCensusObservation}. Nothing reads it back: no delta, no matrix write, no transition adjustment. The
+ *   census header deliberately carries no `delta` (see `PlacetypeCensusHeader.delta`), and the 2026-08-04 wiring
+ *   assessment ruled that no decode wiring ships before a calibration rung measures one; this rung exists so that
+ *   calibration has real traces to read. Zero-cost when off: `opts.census` (or the trace out-record) absent means the
+ *   recorder is never constructed and the probe never runs, so the decode is byte-identical either way — asserted in
+ *   `placetype-census-observability.test.ts`.
+ *
  *   Missing index (`opts` undefined, or `opts.index` absent) → zero matrix, composes harmlessly with
  *   `addEmissionMatrix`. Same for a present-but-empty/never-matching index (no country data loaded for
  *   this locale) — the probe loop simply never finds a tag.
@@ -299,6 +310,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 
 import { groupPiecesIntoWords, type WordGroup } from "./fst-prior.ts"
 import type { PairEdge, PairIndexLike } from "./pair-index-resolver.ts"
+import type { PlacetypeCensusLike } from "./placetype-census.ts"
 import { collectMatches } from "./postcode-repair.ts"
 import type { TokenLike } from "./query-shape-prior.ts"
 
@@ -401,8 +413,41 @@ export type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
  * EFFECT, not configuration, matching the classifier's applied-flag pattern — and names the candidate-construction path
  * that produced it (under `"auto"`, which leg of the chain engaged).
  */
+export interface PlacetypeCensusObservation {
+	/**
+	 * The FOLDED parent surface that hit the census — the same key form the pair probe used (the space-join, or the bare
+	 * concatenation when that is the form the census knows). Folded once by `groupPiecesIntoWords`/`normalizeFSTToken`
+	 * and shared by both artifacts, which is what `PlacetypeCensusHeader.foldVersion` exists to guarantee.
+	 */
+	parent: string
+	/**
+	 * Which child KINDS this parent has at all, in the artifact's own descending-count order. Presence is the census's
+	 * actual claim; the counts behind it are deliberately not copied here (a share is ~100% for the dominant class
+	 * everywhere, so the number a consumer would read is a constant — `lift` is the part that varies).
+	 */
+	childTagsPresent: ComponentTag[]
+	/**
+	 * Per-tag lift — the parent's share of that tag divided by the country base rate (`PlacetypeCensusResolver.lift`).
+	 * Keyed by tag rather than parallel-arrayed with `childTagsPresent` on purpose: one fewer alignment invariant, the
+	 * same reasoning `NeuralParseTrace` gives for hanging vocab ids off `pieces[]`.
+	 */
+	lift: Partial<Record<ComponentTag, number>>
+}
+
 export interface PlacetypePairProbeTrace {
 	firedPath?: "segment" | "anchored" | "window"
+	/**
+	 * PCN1 census observations, one per DISTINCT parent surface this input's probe chain looked up and the census KNEW
+	 * (see {@link PlacetypeCensusObservation}). Absent unless `opts.census` was supplied.
+	 */
+	censusObservations?: PlacetypeCensusObservation[]
+	/**
+	 * How many distinct parent surfaces were probed against the census, hit or miss — the DENOMINATOR for
+	 * {@link censusObservations}. Without it an empty observation list is ambiguous between "the census was never
+	 * consulted" and "it was consulted and knew nothing", which is exactly the meaning-of-zero mistake a magnitude cannot
+	 * report on its own. Absent unless `opts.census` was supplied.
+	 */
+	censusProbedParents?: number
 	/**
 	 * Every CHILD tag a pair hit asserted on this input, in fire order, duplicates included (#46). Recorded on the hit —
 	 * not on the emission write — so a hit whose tag this checkpoint's label set lacks still shows up here.
@@ -447,6 +492,15 @@ export interface PlacetypePairPriorOpts {
 	 * the classifier's trace path; mutated in place, never read by this module.
 	 */
 	probeTrace?: PlacetypePairProbeTrace
+	/**
+	 * OBSERVABILITY ONLY — the PCN1 placetype census to probe alongside each parent candidate (see the module docstring's
+	 * "PCN1 census observability" section). Writes nothing to the emission matrix or the transition adjustments; its sole
+	 * effect is filling {@link PlacetypePairProbeTrace.censusObservations}, so it does nothing at all without
+	 * `probeTrace`. There is no `censusDelta` sibling to `parentDelta` here, and adding one is not a small change: the
+	 * 2026-08-04 wiring assessment ruled that a decode-time census bias needs a calibration δ first, and this rung is the
+	 * evidence that calibration will read.
+	 */
+	census?: PlacetypeCensusLike
 	/**
 	 * WHOLE-EDGE bias magnitude for the PARENT window (issue #46 — see the module docstring's "Whole-edge parent bias"
 	 * section). OVERRIDES the loaded index's own `parentDelta` header field; omit it to use the artifact's calibrated
@@ -779,12 +833,89 @@ function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {
 }
 
 /**
+ * The census side-probe hook (observability rung): called with the PARENT candidate of every (child, parent) pair the
+ * chain probes, before the pair index itself is consulted. `undefined` — the production path — means no census was
+ * supplied or nobody is tracing, and not one census lookup happens.
+ */
+type CensusParentRecorder = (parent: CandidateWindow) => void
+
+/**
+ * Build the census side-probe recorder, or `undefined` when the feature is entirely inert (no census artifact loaded,
+ * or no trace out-record to write into — this rung produces trace entries and nothing else, so a census without a trace
+ * would be pure cost).
+ *
+ * Deduplicates by the parent candidate's key PAIR, so a surface probed under several children is looked up once and
+ * appears once. `censusProbedParents` counts the distinct surfaces LOOKED UP; `censusObservations` gets an entry only
+ * for the ones the census knew. The gap between the two numbers is the census's coverage on this input, and reporting
+ * it is the whole reason the counter exists: a missing node means the gazetteer counted no children there, which is
+ * usually coverage rather than a claim (`PlacetypeCensusResolver.probe`'s meaning-of-zero note).
+ *
+ * The dual-key try order mirrors {@link probeWindowPair} exactly — space-join first, bare concatenation second — so the
+ * surface recorded here is the same one the pair probe would have keyed on.
+ */
+function makeCensusParentRecorder(
+	census: PlacetypeCensusLike | undefined,
+	trace: PlacetypePairProbeTrace | undefined
+): CensusParentRecorder | undefined {
+	if (!census || !trace) return undefined
+
+	const observations: PlacetypeCensusObservation[] = (trace.censusObservations ??= [])
+	const seen = new Set<string>()
+
+	trace.censusProbedParents ??= 0
+
+	return (parent) => {
+		const keys = parent.key === parent.concatKey ? [parent.key] : [parent.key, parent.concatKey]
+		const dedupeKey = keys.join(" ")
+
+		if (seen.has(dedupeKey)) return
+
+		seen.add(dedupeKey)
+		trace.censusProbedParents = (trace.censusProbedParents ?? 0) + 1
+
+		for (const key of keys) {
+			const node = census.probe(key)
+
+			if (!node) continue
+
+			// The reader materializes `counts` in the artifact's own descending-count order, so this key order is the
+			// artifact's — a reader that wants only the dominant class can take the first entry, as PCN1's layout intends.
+			const childTagsPresent = (Object.entries(node.counts) as Array<[ComponentTag, number | undefined]>)
+				.filter((entry): entry is [ComponentTag, number] => typeof entry[1] === "number" && entry[1] > 0)
+				.map(([tag]) => tag)
+
+			const lift: Partial<Record<ComponentTag, number>> = {}
+
+			for (const tag of childTagsPresent) {
+				lift[tag] = census.lift(key, tag)
+			}
+
+			observations.push({ parent: key, childTagsPresent, lift })
+
+			return
+		}
+	}
+}
+
+/**
  * Probe `index` for the `(x, y)` pair under every combination of their space-joined/concatenated key forms — see the
  * module docstring's "dual-key probe" section. Tries space/space, space/concat, concat/space, concat/concat in that
  * order and returns the first hit; a window's two forms collapse to one string when it's a single word, so this is a
  * single probe (not four) for the common case.
+ *
+ * `recordCensusParent` (observability rung) is called with `y` — the PARENT half of the pair — before the index is
+ * consulted. This is the single site every probe path funnels through, which is why the census hook lives here rather
+ * than at the three call sites: segment, anchored and window modes get identical census coverage by construction, the
+ * same argument `applyWindowBias`'s docstring makes for the transition adjustment.
  */
-function probeWindowPair(index: PairIndexLike, x: CandidateWindow, y: CandidateWindow): PairEdge | undefined {
+function probeWindowPair(
+	index: PairIndexLike,
+	x: CandidateWindow,
+	y: CandidateWindow,
+	recordCensusParent?: CensusParentRecorder
+): PairEdge | undefined {
+	recordCensusParent?.(y)
+
 	const xKeys = x.key === x.concatKey ? [x.key] : [x.key, x.concatKey]
 	const yKeys = y.key === y.concatKey ? [y.key] : [y.key, y.concatKey]
 
@@ -875,7 +1006,8 @@ function resolveAnchorParentEnd(
 function probeAnchoredAdjacentPair(
 	index: PairIndexLike,
 	nonEmptyGroups: readonly WordGroup[],
-	parentEnd: number
+	parentEnd: number,
+	recordCensusParent?: CensusParentRecorder
 ): { child: CandidateWindow; parent: CandidateWindow; edge: PairEdge } | undefined {
 	// parentStart must leave at least one word-group to its left for a child, so parentLen caps at parentEnd.
 	const maxParentLen = Math.min(WINDOW_MAX_WORDS, parentEnd)
@@ -891,7 +1023,7 @@ function probeAnchoredAdjacentPair(
 
 			if (isMarkerSuppressed(nonEmptyGroups, child)) break
 
-			const edge = probeWindowPair(index, child, parent)
+			const edge = probeWindowPair(index, child, parent, recordCensusParent)
 
 			if (edge) return { child, parent, edge }
 		}
@@ -1068,6 +1200,10 @@ export function buildPlacetypePairPriors(
 	// FALLBACK for a hand-built double, not an override.)
 	const parentDelta = opts.parentDelta ?? index.parentDelta
 
+	// Observability rung (PCN1): `undefined` on the production path, and then not one census lookup runs. It is built
+	// here, above every early return that still probes, so the three probe paths share one recorder and one dedupe set.
+	const recordCensusParent = makeCensusParentRecorder(opts.census, opts.probeTrace)
+
 	const labelToCol = new Map<string, number>()
 
 	for (let k = 0; k < labels.length; k++) {
@@ -1111,7 +1247,7 @@ export function buildPlacetypePairPriors(
 		// A parent anchored at position 0 leaves no word-group to its left to serve as a child — inert.
 		if (parentEnd < 1) return { matrix, transitionAdjustments }
 
-		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd)
+		const hit = probeAnchoredAdjacentPair(index, nonEmptyGroups, parentEnd, recordCensusParent)
 
 		if (hit) {
 			recordFiredChildTag(opts.probeTrace, hit.edge.tag)
@@ -1173,7 +1309,7 @@ export function buildPlacetypePairPriors(
 
 			if (isIdentityRepeat && sharesFoldForm(x, y)) continue
 
-			const edge = probeWindowPair(index, x, y)
+			const edge = probeWindowPair(index, x, y, recordCensusParent)
 
 			if (edge) {
 				matchedEdge = edge

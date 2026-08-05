@@ -43,6 +43,7 @@ import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScale
 import { type GazetteerLexicon, parseGazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import { PairIndexResolver, peekPairIndexHeader } from "./pair-index-resolver.ts"
+import type { PlacetypeCensusLike } from "./placetype-census.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
@@ -220,6 +221,17 @@ export interface NeuralAddressClassifierConfig {
 	placetypePair?: PlacetypePairPriorOpts
 
 	/**
+	 * Default PCN1 placetype census — OBSERVABILITY ONLY. Set by `loadFromWeights` when the build-local artifact exists
+	 * for the resolved locale's country (`loadPlacetypeCensus`, which documents why it is build-local and not a weights
+	 * sibling). It rides the placetype-pair prior's parent-candidate probes and its ONLY effect is a `placetypeCensus`
+	 * record on `traceParse`'s prior list: no emission bias, no transition adjustment, no decode change, present or
+	 * absent. Consequently it does nothing when the pair prior itself is off (no index → no parent candidates to probe
+	 * alongside) and nothing on a plain `parse()` (no trace to write into). Per-parse `opts.placetypeCensus` overrides;
+	 * `false` disables an auto-wired default for one call.
+	 */
+	placetypeCensus?: PlacetypeCensusLike
+
+	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
 	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
 	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence gates
@@ -315,6 +327,13 @@ export class NeuralAddressClassifier {
 			postcodeAnchorLookup?: AnchorLookup
 			executionProviders?: string[]
 			intraOpNumThreads?: number
+			/**
+			 * Explicit `placetype-census-<cc>.bin` path, overriding the build-local data-root lookup (`loadPlacetypeCensus`).
+			 * For a harness that built a census to a scratch directory — the data root is read-only on the lab host, so
+			 * "build it and point at it" is the only way to exercise a FRESH artifact. A wrong-country file is still refused
+			 * by the loader's header gate.
+			 */
+			placetypeCensusPath?: string
 		} = {}
 	): Promise<NeuralAddressClassifier> {
 		// The sanctioned crossing into the three Node-only modules. `webpackIgnore` leaves the import
@@ -323,12 +342,15 @@ export class NeuralAddressClassifier {
 		// fail to parse. A STATIC import of any of the three would be followed, which the lint rule guards.
 
 		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
-		const [{ $public }, { resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels }, fs] =
-			await Promise.all([
-				import(/* webpackIgnore: true */ "@mailwoman/core/env"),
-				import(/* webpackIgnore: true */ "./weights.ts"),
-				import(/* webpackIgnore: true */ "node:fs"),
-			])
+		const [
+			{ $public },
+			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels, loadPlacetypeCensus },
+			fs,
+		] = await Promise.all([
+			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
+			import(/* webpackIgnore: true */ "./weights.ts"),
+			import(/* webpackIgnore: true */ "node:fs"),
+		])
 
 		/* oxlint-enable typescript/no-restricted-imports */
 		const resolved: ResolvedWeights = resolveWeights(opts)
@@ -529,6 +551,14 @@ export class NeuralAddressClassifier {
 			}
 		}
 
+		// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL, not a weights-package sibling — the
+		// loader and the reasons live together in `loadPlacetypeCensus`. Absent artifact → `undefined` → the feature is
+		// entirely inert, silently, because not having built it is the normal state for every consumer.
+		const placetypeCensus = loadPlacetypeCensus(
+			(opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? "",
+			opts.placetypeCensusPath
+		)
+
 		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
@@ -549,6 +579,7 @@ export class NeuralAddressClassifier {
 			...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
+			...(placetypeCensus ? { placetypeCensus } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
 			...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
@@ -904,10 +935,22 @@ export class NeuralAddressClassifier {
 		// Trace-only out-record: which probe-chain path fired (segment vs anchored vs window) — see
 		// PlacetypePairProbeTrace. Only allocated when tracing, like the tracePriors list itself.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
+		// PCN1 census observability rung: passed to the prior so its parent-candidate probes ALSO probe the census,
+		// recording what it knows onto `pairProbeTrace`. Injected only when tracing — the prior writes census
+		// observations nowhere else, so on a plain `parse()` there is nothing for it to fill and no lookup to pay for.
+		// It never reaches a logit; the `placetypeCensus` record below is its entire output.
+		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
+
+		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
 
 		const placetypePairResult = placetypePairOpt
 			? buildPlacetypePairPriors(
-					{ ...placetypePairOpt, inputText: text, probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace },
+					{
+						...placetypePairOpt,
+						inputText: text,
+						probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace,
+						...(censusForProbe ? { census: censusForProbe } : {}),
+					},
 					pieces,
 					this.labels
 				)
@@ -939,6 +982,22 @@ export class NeuralAddressClassifier {
 			// `probePath` rides only when a bias actually landed — an applied:false record stays shape-identical to
 			// every trace produced before the probe chain existed.
 			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
+		})
+
+		// PCN1 census observability (2026-08-05). `applied` is HARD-CODED false, not computed: this rung composes no
+		// matrix to test for a nonzero cell, and it must stay that way until a calibration rung measures a δ (the
+		// artifact header deliberately ships none — see `PlacetypeCensusHeader.delta`). The observation list and its
+		// probe-count denominator ride only when a census was actually wired, so a build without the artifact produces
+		// `{kind, applied: false}` and every other field of the trace is unchanged.
+		tracePriors?.push({
+			kind: "placetypeCensus",
+			applied: false,
+			...(pairProbeTrace?.censusProbedParents === undefined
+				? {}
+				: {
+						census: pairProbeTrace.censusObservations ?? [],
+						censusProbedParents: pairProbeTrace.censusProbedParents,
+					}),
 		})
 
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
@@ -1361,6 +1420,17 @@ export interface ParseOpts {
 	 * test double that omits `delta`.
 	 */
 	placetypePair?: PlacetypePairPriorOpts | false
+
+	/**
+	 * Per-call override for the config-level `placetypeCensus` default (see
+	 * {@link NeuralAddressClassifierConfig.placetypeCensus}) — same typed-disable shape as {@link placetypePair}.
+	 *
+	 * OBSERVABILITY ONLY: whichever way this resolves, the decode is byte-identical. It selects whether `traceParse`'s
+	 * `placetypeCensus` prior record carries census observations, nothing more, which is exactly what makes `false`
+	 * useful — it is how a test parses the same input twice, once with the census wired and once without, and asserts the
+	 * emissions/path/tokens didn't move (`placetype-census-observability.test.ts`).
+	 */
+	placetypeCensus?: PlacetypeCensusLike | false
 }
 
 /**
