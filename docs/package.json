@@ -82,7 +82,7 @@
 		"commander": "^14.0.1",
 		"ink": "^7.1.1",
 		"pastel": "^4.0.1",
-		"spliterator": "^5.0.0",
+		"spliterator": "^6.0.0",
 		"sql.js-httpvfs": "^0.8.12",
 		"storybook": "^10.5.5",
 		"typescript": "^6.0.3",

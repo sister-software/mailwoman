@@ -71,7 +71,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",
-		"spliterator": "^5.0.0"
+		"spliterator": "^6.0.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

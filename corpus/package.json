@@ -75,7 +75,7 @@
 		"fastest-levenshtein": "^1.0.16",
 		"lru-cache": "^11.5.2",
 		"path-ts": "^2.1.0",
-		"spliterator": "^5.0.0"
+		"spliterator": "^6.0.0"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.1.2"

@@ -8,7 +8,7 @@
  *   already lives in one pinned Overture parquet, so this fans the per-state `mailwoman situs
  *   address-points` command out across every covered state.
  *
- *   PARALLELISM: states build concurrently via spliterator's `asyncParallelIterator` (the house
+ *   PARALLELISM: states build concurrently via spliterator's `parallelMap` (the house
  *   bounded-concurrency primitive — same one `build-unified-wof` uses to fan out file reads behind
  *   a single writer). Each state is an isolated child process (its own DuckDB + SQLite heap), so N
  *   states run at once with no shared-memory risk. To avoid oversubscribing cores, each child's
@@ -177,7 +177,7 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 		// spliterator is a heavy bounded-concurrency primitive — imported lazily so merely loading the
 		// command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
-		const { asyncParallelIterator } = await import("spliterator")
+		const { parallelMap } = await import("spliterator")
 
 		// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
@@ -264,10 +264,10 @@ const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 
 		const attributionPath = path.join(outDir, "ATTRIBUTION.json")
 
-		// asyncParallelIterator yields results AS THEY COMPLETE (out of order), capped at `concurrency`
-		// in flight. Each result carries its own state, so out-of-order is fine for the state-keyed
+		// parallelMap yields results AS THEY COMPLETE (out of order), capped at `concurrency` in
+		// flight. Each result carries its own state, so out-of-order is fine for the state-keyed
 		// manifest.
-		for await (const r of asyncParallelIterator(states, concurrency, buildOneState)) {
+		for await (const r of parallelMap(states, buildOneState, { concurrency })) {
 			if (r.skipped) {
 				console.error(`[skip] ${r.state} — complete (use --force to rebuild)`)
 

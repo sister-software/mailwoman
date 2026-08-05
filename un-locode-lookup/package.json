@@ -44,6 +44,6 @@
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"spliterator": "^5.0.0"
+		"spliterator": "^6.0.0"
 	}
 }

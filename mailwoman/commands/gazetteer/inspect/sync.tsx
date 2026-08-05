@@ -17,7 +17,7 @@ import {
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 import { useMemo, useState } from "react"
-import { asyncParallelIterator } from "spliterator"
+import { parallelMap } from "spliterator"
 import zod from "zod"
 import { $ } from "zx"
 
@@ -79,15 +79,14 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 
 		const abortController = new AbortController()
 
-		const batchIterator = asyncParallelIterator(
+		const batchIterator = parallelMap(
 			sources,
-			BATCH_SIZE,
 			async (entry) => {
 				await synchronizeRepo(entry, localRepoDirectory)
 
 				setSyncCount((count) => count + 1)
 			},
-			abortController.signal
+			{ concurrency: BATCH_SIZE, signal: abortController.signal }
 		)
 
 		await Array.fromAsync(batchIterator)

@@ -16,7 +16,7 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
 import FastGlob from "fast-glob"
-import { asyncParallelIterator } from "spliterator"
+import { parallelMap } from "spliterator"
 
 /**
  * Arity of a 2D bounding box: `[west, south, east, north]`.
@@ -241,7 +241,7 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 		}
 	}
 
-	const readResults = asyncParallelIterator(filePaths, concurrency, (filePath) => readFile(filePath, "utf8"))
+	const readResults = parallelMap(filePaths, (filePath) => readFile(filePath, "utf8"), { concurrency })
 
 	for await (const text of readResults) {
 		const feature = parseFeature(text, placetypes)
