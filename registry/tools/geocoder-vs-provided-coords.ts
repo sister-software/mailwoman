@@ -66,12 +66,14 @@ export interface GeocoderVsProvidedCoordsOptions {
  *
  * Deliberately strict, and deliberately not `GeoPoint.from()`. The provided coordinate is this eval's ground truth, so
  * a row we cannot read exactly has to be _dropped_ (counted in `noCoord`) rather than repaired into something plausible
- * — a silently repaired coordinate lands in the delta distribution as geocoder error. `GeoPoint.from()` repairs in
- * three ways that matter here: it runs `inferGeoJSONCoordOrder`, which swaps the pair whenever both magnitudes fall in
- * [-90, 90] (`31.5,-89.5` comes back as lat -89.5, lon 31.5); it accepts out-of-range values instead of rejecting them
- * (`200,-97.74` becomes a point); and it maps 0,0 to null, moving Null Island from a measured outlier into the skipped
- * bucket. The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to
- * stay rejected or measured as-is, never rewritten. Strictness is the measurement, not an unfinished migration.
+ * — a silently repaired coordinate lands in the delta distribution as geocoder error. Two of the three divergences that
+ * originally justified this parser were defects in `GeoPoint` and were fixed on 2026-08-05: it no longer guesses axis
+ * order from the magnitudes, and an out-of-range value is now rejected instead of accepted (`200,-97.74` used to become
+ * a point). What remains is not a defect and not negotiable. This source writes `latitude,longitude`; `GeoPoint` reads
+ * GeoJSON `[longitude, latitude]`, so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there — and
+ * `GeoPoint.from` maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
+ * The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to stay
+ * rejected or measured as-is, never rewritten. Strictness is the measurement, not an unfinished migration.
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null

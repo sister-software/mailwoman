@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Abbreviation expansion — a small bounded dictionary per locale. Initial dict covers en-US street
- *   suffixes + directional prefixes. fr-FR + others added as needed.
+ *   Abbreviation expansion — a small bounded dictionary per locale: en-US street suffixes +
+ *   directional prefixes, fr-FR and es-* street types, plus a locale-UNKNOWN set for the geocode path,
+ *   which has to expand before the parse that would establish the locale. Others added as needed.
  *
  *   This is the INVERSE of the corpus synthesis pass (which produces `Ave` from `Avenue` for
  *   augmentation). Both sides should eventually share dictionaries; for v1 this dict is duplicated
@@ -53,13 +54,34 @@ const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Sq", to: "Square" },
 ]
 
+const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
+	// Spanish writes Avenida short as `Av.`, `Avda.` or `Avd.`. English never abbreviates it `Av` (it
+	// uses `Ave`), so there is no en collision — but FRENCH does, and there it means Avenue. That
+	// collision is why this table has to exist rather than the entry being folded into a shared set:
+	// the same three letters resolve to different words, and only the locale can decide which.
+	{ from: "Av", to: "Avenida" },
+	{ from: "Avda", to: "Avenida" },
+	{ from: "Avd", to: "Avenida" },
+]
+
 /**
  * #1002: the locale-UNKNOWN expansion set — the entries safe to apply when the input's locale hasn't been established
  * yet (the geocode path expands BEFORE the parse, which is what determines the locale). Safe = multi-char,
  * collision-free across the locale dictionaries, and never a plausible standalone token in the other locale (FR
- * `Bd`/`Bvd`/`Imp` have no EN reading; `Av` reads Avenue in both). Deliberately EXCLUDED: the FR single letters (`R` →
- * Rue would fire on Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is
- * trained-robust on those, and `St`/`Dr` are ambiguous with Saint/Doctor).
+ * `Bd`/`Bvd`/`Imp` have no EN reading). Deliberately EXCLUDED: the FR single letters (`R` → Rue would fire on
+ * Washington DC's literal "R St") and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is trained-robust on those, and
+ * `St`/`Dr` are ambiguous with Saint/Doctor).
+ *
+ * `Av` VIOLATES that criterion and is here anyway — a tracked defect, not an oversight. It was admitted on the claim
+ * that it "reads Avenue in both", which is true of en/fr and false of es/pt, where it is Avenida. So Spanish input
+ * through the geocode path acquires an ENGLISH street type: the 2026-08-05 gauntlet batch caught "Av. Los Meros" →
+ * "Avenue Los Meros" and "Av. Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows
+ * (`pr-op3-place-at-the-sea-ponce`, `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
+ * Dropping the entry is NOT a table edit: `fr-op3-halles-market-bonneuil` is a passing row that asserts street "Avenue
+ * de la Convention" and an `address_point` tier, so it pins the current behaviour and a removal has to be measured on a
+ * resolver-gauntlet run. The real repair is upstream — the geocode path hardcodes `locale: "und"` because Stage 1
+ * precedes the parse, and `@mailwoman/locale-gate` cannot presently detect Spanish (it scores script class + known
+ * postcode formats, and a 5-digit ES/MX code is indistinguishable from a US ZIP).
  */
 const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Bd", to: "Boulevard" },
@@ -78,6 +100,11 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 	if (lc === "und") return LOCALE_UNKNOWN_DICT
 
 	if (lc.startsWith("fr")) return FR_FR_DICT
+
+	// Every `es-*` region: es-ES, es-MX, es-AR, … all abbreviate Avenida the same way. Before this
+	// existed they fell through to en-US, whose table has no `Av` entry, so `Av.` simply survived — the
+	// visible symptom was "nothing happens", which is why the collision only surfaced on the `und` path.
+	if (lc.startsWith("es")) return ES_ES_DICT
 
 	return EN_US_DICT
 }
