@@ -1,71 +1,31 @@
-# === v4.2.0-base-anchor-v2 — DRAFT, NOT LAUNCH-READY. The base rebuild that closes the GB anchor hole. ===
+# === v4.2.0-base-anchor-v2-2k — the cheap recipe-validation probe for v4.2.0-base-anchor-v2.yaml. ===
 #
-# NAMING: the next BASE in the v4 line (v4.0.0/v4.0.1 were the from-scratch base runs; v4.1.x were
-# GB-venue fine-tunes off v4.0.1). Nothing here is the npm major — that is a separate number.
+# Diagnostic-before-fix: 2,000 steps to prove the recipe RUNS before committing 60,000. Not a gate —
+# nothing here is pre-registered. It answers four mechanical questions the full run should not be
+# the first place to discover:
 #
-# WHY THIS RUN EXISTS. `docs/records/evals/2026-08-05-en-gb-anchor-off.md`. The shared encoder's
-# anchor input reserves one slot per country (`neural/anchor-inference.ts`'s
-# `LOCALE_ORDER = [US, FR, DE, CA, GB, JP, ES, IT, NL]`). Every recipe in this directory — all of
-# them, one distinct value — pointed `anchor_lookup_path` at `/data/anchor/pilot-anchor-lookup.json`:
-# 67,708 keys, US/DE/FR only, ZERO of them letter-bearing. So slots 3–8 took no gradient in 60,000
-# steps. When `postcode-gb.bin` was shipped at inference it fed slot 4 a value the encoder had never
-# seen and cost 24 exact postcodes on the 120-row gb-golden board; #1467 shipped the interim
-# mitigation (en-gb ships no bin, the channel resolves OFF). This run is the cure.
+#   1. Does `load_anchor_lookup` survive the v2 artifact at scale? 1.32 GB resident / 1.37 GB peak
+#      measured locally — the loader pays it once per worker at init. An OOM or a silent fallback
+#      to the pilot lookup shows up in the first minute.
+#   2. Does the startup census DRAW the GB/NL/ES/IT sources, and do GB anchor spans PAINT at
+#      runtime? (The v383 gap: a truncated census log hid a source drawing zero rows; the #1467
+#      root cause was a slot that never saw gradient. Zero painted GB rows here = the defect
+#      repeating, silently.)
+#   3. Does `synth-gb` at dose 6.0 under the corrected 1.0 dependent_locality class weight skew the
+#      dep-loc emission? Read per-tag F1 — dep-loc firing on US/FR rows is the v4.1.x failure mode
+#      this probe exists to catch BEFORE the spend.
+#   4. Does `synth-sub-venue` at 12.0 move `unit` without bleeding into `venue`? Same per-tag read.
 #
-# THE ONE NAMED DELTA vs v4.0.1-base-60k: `anchor_lookup_path`. Everything else below is
-# v4.0.1-base-60k VERBATIM unless a comment says otherwise, and the two comments that follow are
-# both no-op restatements of what v4.0.1 already carried, kept because a reader will look for them.
+# DELIBERATE DEVIATIONS from v4.2.0-base-anchor-v2.yaml (curves are NOT directly comparable):
+#   * `warmup_steps: 200` instead of 1000 — half-warmup probes read as stalls.
+#   * cosine fully anneals inside the probe; the full run is 3.3% through its cosine at step 2,000.
+#   * `eval_every_steps: 250` — the point is the SHAPE of the curve, not the endpoint.
+#   * `save_every_steps: 1000` — saves TWICE, insurance against a save-path crash surfacing at
+#     step 5,000 of the real run.
+# Everything else is byte-identical to v4.2.0-base-anchor-v2.yaml. If you change that file, change
+# this one.
 #
-# MEASURED, on the artifact this config points at (`mailwoman gazetteer build anchor-lookup
-# --include DE,FR,US,GB,NL,ES,IT`), 2026-08-05:
-#
-#   keys 2,286,339 (was 67,708) · letter-bearing 2,214,803 (was 0)
-#   DE 29,694 · FR 27,119 · US 42,312 · GB 1,749,839 (1,746,976 units + 2,863 outward districts)
-#   NL 464,964 · ES 11,331 · IT 4,936 · 32,540 collisions · 0.2% without a centroid (was 6.8%)
-#
-#   painted rows, `corpus-python/scripts/count_painted_anchor_rows.py`, 50,000-row prefixes:
-#     synth-gb-v1        0 -> 42,634 of 42,634 shaped spans (0.0% -> 85.3% of rows)
-#     synth-es-pedania   32,638 -> 42,339  (ES codes DID paint before — under a DE/FR/US posterior;
-#                        the ES slot itself was never lit, which is worse than silence)
-#     synth-fr-lieudit   49,577 -> 49,577  (unchanged)
-#     house-venue-v2     49,666 -> 49,666  (unchanged)
-#
-#   loader cost: 1.32 GB resident / 1.37 GB peak at `load_anchor_lookup`, vs 0.05 GB for the pilot
-#   lookup. Budget it — it is paid once at loader init, on every worker.
-#
-# LAUNCH CHECKLIST (all four, in order — the first two are the ones that make this run mean anything):
-#   1. Upload the lookup to the volume:
-#        $MAILWOMAN_DATA_ROOT/anchor/staging-2026-08-05/pilot-anchor-lookup-v2-2026-08-05.json
-#        -> /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
-#   2. RUN THE SMOKE COUNT against the volume copy, for every country whose slot this run is meant
-#      to light. A zero is this defect repeating, and it is silent otherwise:
-#        python3 corpus-python/scripts/count_painted_anchor_rows.py \
-#          --lookup /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json \
-#          --shard <each shard in the feed>
-#   3. Confirm the startup census DRAWS the GB/NL/ES/IT sources (the v383 gap: a truncated census
-#      log hid a source drawing zero rows). A lookup key with no row to paint is still no gradient.
-#   4. modal run -d corpus-python/modal/train_remote.py --config v4.2.0-base-anchor-v2.yaml --resume none
-#
-# SHIP OBLIGATION — the inference half, which does NOT live in this file. The train painter keys a
-# postcode as `raw[begin:end].replace(" ", "").upper()` over a shape-detected span (`SW1A 2AA` ->
-# `SW1A2AA`). Inference's default scan keys `[A-Za-z0-9]+` runs and so can NEVER produce that key.
-# The model this run produces must therefore ship a card declaring:
-#
-#     "requires": { "anchor": { "required": true, "span_mode": "shaped" } }
-#
-# `span_mode` defaults to `alnum-run` (byte-identical to every parse before 2026-08-05), so omitting
-# it leaves this run's GB/NL postcodes unanchored at serve time — the mirror image of the bug that
-# started this. See `neural/anchor-inference.ts`'s `AnchorSpanMode`.
-#
-# PRE-REGISTERED GATES: the v4.0.0 sheet VERBATIM (G1-G8 + Fisher sanity), plus:
-#   - gb-golden: exact `postcode` >= 318/318 across three registers WITH the anchor channel FED
-#     (the #1467 mitigation reached 318/318 by switching the channel off; this run has to hold it
-#     with the channel on, which is the whole point).
-#   - No US/FR regression: the 100-row US + 46-row FR parity boards, three registers each.
-#   - Anchor-ablation delta: score the resulting model anchor-ON vs anchor-OFF on gb-golden. A
-#     delta of zero means slot 4 STILL took no gradient and the lookup swap did not land.
-#   STOP RULE: a gb-golden miss with the channel fed => diagnose before a second launch.
-
+# Launch: modal run -d corpus-python/modal/train_remote.py --config v4.2.0-base-anchor-v2-2k.yaml --resume none
 data:
   # v0.17.0-batch = v0.15.0-venue + TWO overlay shards (manifest chain assembled 2026-08-05):
   #   part-sub-venue.parquet  120,000 rows  source=synth-sub-venue  (#1486 — designator x per-region identifier)
@@ -239,19 +199,19 @@ model: # VERBATIM v4.0.1.
   phrase_feature_dim: 10
 
 train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group. VERBATIM v4.0.1.
-  output_dir: /data/output-v420-base-anchor-v2-s42/checkpoints
+  output_dir: /data/output-v420-base-anchor-v2-2k-s42/checkpoints
   seed: 42
   batch_size: 128
   eval_batch_size: 128
   grad_accum_steps: 1
   learning_rate: 5.0e-4
   weight_decay: 0.01
-  warmup_steps: 1000
+  warmup_steps: 200
   grad_clip_norm: 1.0
-  max_steps: 60000
-  eval_every_steps: 2000
-  save_every_steps: 5000
-  log_every_steps: 100
+  max_steps: 2000
+  eval_every_steps: 250
+  save_every_steps: 1000
+  log_every_steps: 50
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/../train_log.csv"
@@ -259,10 +219,10 @@ train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group. V
   gazetteer_curriculum: true
   evidence_curriculum: true
   evidence_noise_prob: 0.15
-  fisher_capture: true # D4/#1354 — the B11 consolidation artifact, captured at the only cheap point.
+  fisher_capture: false # probe — the Fisher artifact belongs to the full run only.
   fisher_capture_last_n_steps: 2000
   trackio_project: mailwoman
-  trackio_run_name: v4.2.0-base-anchor-v2-s42
+  trackio_run_name: v4.2.0-base-anchor-v2-2k-s42
 
 eval:
   golden_dir: /data/eval/golden/v0.1.2
