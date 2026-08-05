@@ -71,7 +71,7 @@ function stagedDocsMarkdown(): string[] {
 function violations(file: string): string[] {
 	const hits: string[] = []
 	let fenced = false
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Diagnostics report 1-based line numbers, which needs the indexed array.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- A synchronous pre-commit check over staged MDX; the async spliterator would make this function and its caller async for files of a few hundred lines.
 	const lines = readFileSync(file, "utf8").split("\n")
 
 	for (const [i, line] of lines.entries()) {

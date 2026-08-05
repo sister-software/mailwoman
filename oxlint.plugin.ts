@@ -98,7 +98,9 @@ const preferSpliteratorRule: Rule = {
 					node,
 					message:
 						`split(${entry.rendered}) materializes every segment before the first is read — prefer ` +
-						`spliterator's ${entry.hints.map((h) => `\`${h}\``).join(", ")}. Each spliterator has synchronous and asynchronous helpers. Prefer the async variant when possible.\nIf the input is small and bounded (and will not grow in the future), keep split behind a scoped disable stating why.`,
+						`spliterator's ${entry.hints.map((h) => `\`${h}\``).join(", ")}. Each has a synchronous \`from\` and an asynchronous \`fromAsync\`; prefer \`fromAsync\`, which returns a chainable \`AsyncSequence\`.\n` +
+						`Needing every line resident is not on its own a reason to split: \`.filter(…).toArray()\` filters while streaming, so only what survives is materialized, and \`.map((line, index) => …)\` supplies line numbers without an intermediate array.\n` +
+						`If the input is small and bounded (and will not grow in the future), keep split behind a scoped disable stating why.`,
 				})
 			},
 		}

@@ -378,9 +378,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			)
 		}
 
-		// Re-indenting a string this function just built.
-		// Re-indenting a string serialized on the line above, not reading anything.
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above, not reading anything.
 		const block = JSON.stringify(capabilities, null, "\t")
 			.split("\n")
 			.map((line) => "\t" + line)
