@@ -2302,11 +2302,16 @@ export const REGRESSION_CASES: SeedCase[] = [
 	//     confound the mechanism could break (ZIP 75001 really IS Addison TX; Paris TX; Berlin NH carrying a
 	//     5-digit code the DE shape also accepts; Athens GA). They must hold with the lever pinned either way, and
 	//     they are the "zero newly-failing cases" bar with teeth.
-	//   · three RESCUE rows at status=improvement_target — a French, a British and a German address under
-	//     `defaultCountry: US`, the demo/CLI reality (locale en-US → US on every query). They FAIL today, which is
-	//     the point: they are the defect. Under `--postcode-country-coherence` they pass, and the runner's anti-rot
-	//     loop says so ("now PASSES — promote to status=pass"), which is what a default-on flip should look like
-	//     from inside the gate.
+	//   · three RESCUE rows — a French, a British and a German address under `defaultCountry: US`, the demo/CLI
+	//     reality (locale en-US → US on every query). They were the defect: all three failed at the pre-promotion
+	//     default, and under the lever the FR and DE rows passed, which the runner's anti-rot loop reported as
+	//     "now PASSES — promote to status=pass".
+	//
+	// PROMOTION 2026-08-05: with `postcodeCountryCoherence` default-ON, `fr-rivoli-us-scoped` and
+	// `de-linden-us-scoped` are GATED (`status: pass`) — leaving a rescued row at `improvement_target` after the
+	// default changes turns a gated guarantee into a tracked note. `gb-downing-us-scoped` stays an
+	// improvement_target: its blocker is a GB postcode parse under the en-GB overlay, not the resolver (see its
+	// own note), so #42 cannot reach it at any default.
 	//
 	// Every coordinate below was measured through the compiled CLI at 2026-08-05 against the 2026-08-04 gazetteer,
 	// not copied from the design record.
@@ -2384,7 +2389,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		source: "bug:#42",
 		addressKind: "fr_street_postcode",
 		country: "FR",
-		status: "improvement_target",
+		status: "pass",
 		defaultCountry: "US",
 		expectComponents: { locality: "Paris" },
 		expectLat: 48.855602,
@@ -2393,7 +2398,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectTier: "address_point",
 		addedAt: "2026-08-05",
 		bugRef: "#42",
-		note: "The case the whole mechanism was built for. Under the en-US locale this lands on 32.960,-96.838 — Addison, Texas — because the hard US country filter starves every admin lookup and postcode-consistency then drags the locality onto the ZIP point. With --postcode-country-coherence it is the BAN rooftop to the metre.",
+		note: "The case the whole mechanism was built for. Before the 2026-08-05 promotion this landed on 32.960,-96.838 — Addison, Texas — because the hard US country filter starves every admin lookup and postcode-consistency then drags the locality onto the ZIP point. With postcode-country coherence it is the BAN rooftop to the metre. GATED since the flip; --postcode-country-coherence-off restores the failure and is the way to confirm this row is measuring the lever.",
 	},
 	{
 		id: "gb-downing-us-scoped",
@@ -2418,7 +2423,7 @@ export const REGRESSION_CASES: SeedCase[] = [
 		source: "bug:#42",
 		addressKind: "de_street",
 		country: "DE",
-		status: "improvement_target",
+		status: "pass",
 		defaultCountry: "US",
 		expectComponents: { locality: "Berlin" },
 		expectLat: 52.5159555,
@@ -2427,6 +2432,6 @@ export const REGRESSION_CASES: SeedCase[] = [
 		expectTier: "address_point",
 		addedAt: "2026-08-05",
 		bugRef: "#42",
-		note: "Berlin, Connecticut under a US default (41.611,-72.776 — 6,242 km off). Pairs with us-berlin-nh-03570: same city name, same 5-digit shape, opposite correct answers, which is the argument that the mechanism reads geometry rather than names. The expected coordinate is the OSM rooftop the gate's own shard wiring reaches once the country is corrected — the CLI's default wiring stops at the DE locality centroid, so measure this row through the gate, not through `mailwoman geocode`.",
+		note: "Berlin, Connecticut under a US default (41.611,-72.776 — 6,242 km off) before the 2026-08-05 promotion. Pairs with us-berlin-nh-03570: same city name, same 5-digit shape, opposite correct answers, which is the argument that the mechanism reads geometry rather than names. The expected coordinate is the OSM rooftop the gate's own shard wiring reaches once the country is corrected — the CLI's default wiring stops at the DE locality centroid, so measure this row through the gate, not through `mailwoman geocode`. GATED since the flip.",
 	},
 ]

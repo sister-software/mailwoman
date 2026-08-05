@@ -229,7 +229,10 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	if (options.levers?.postcodeCountryCoherence) {
+	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned OFF. Keying this on the ON
+	// PIN was right while the library default was OFF and wrong the moment it flipped (2026-08-05): the standard
+	// unpinned run is now the ON configuration, and it is the run whose firing count a reader needs.
+	if (options.levers?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 
 		for (const o of overrides) {

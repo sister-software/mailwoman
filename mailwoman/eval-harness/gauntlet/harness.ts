@@ -66,7 +66,8 @@ export interface GauntletDepsOptions {
 export interface GauntletResolverLevers {
 	/**
 	 * #42 postcode-country coherence — a (postcode, locality) pair coherent in exactly one country overrides a wrong
-	 * `defaultCountry`. Library default OFF; this pin is the D-rule evidence path to default-on.
+	 * `defaultCountry`. Library default ON since the 2026-08-05 promotion (this pin was the D-rule evidence path that got
+	 * it there); the `false` pin now grades the pre-promotion configuration.
 	 */
 	postcodeCountryCoherence?: boolean
 }

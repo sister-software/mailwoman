@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-05 · **Issue:** #42 · **Follows:**
 [`2026-08-04-postcode-country-coherence.md`](./2026-08-04-postcode-country-coherence.md) · **Status:** evidence
-complete; the flip is the operator's call.
+complete; the flip is the operator's call. **→ FLIPPED 2026-08-05, see §7.**
 
 The landing record shipped `postcodeCountryCoherence` opt-in and named two gaps that stood between it and default-on:
 
@@ -364,3 +364,133 @@ node mailwoman/dev-tools/postcode-coherence-coverage.run.ts candidate
 The gauntlet runs behind this record used a private data-root overlay (every entry of `$MAILWOMAN_DATA_ROOT` symlinked
 except `gauntlet/`, which was a real directory) so the shared `regression.db` was never written. Anyone reproducing
 this in the primary checkout rebuilds the artifact in place instead.
+
+---
+
+## 7. The flip — appended 2026-08-05, operator-ruled
+
+`postcodeCountryCoherence` is **default-ON**. Sections 1–6 above are the evidence as it stood before the decision
+and are unedited; this section is what shipped and what it measured.
+
+### 7.1 What changed
+
+| surface                                                              | before                                                               | after                                                                               |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `ResolveOpts.postcodeCountryCoherence` (`core/resolver/types.ts`)    | default OFF                                                          | default ON — `resolve.ts` gates on `!== false`                                      |
+| `GeocodeDeps.postcodeCountryCoherence` (`mailwoman/geocode-core.ts`) | forwarded only when truthy                                           | propagated as `deps.postcodeCountryCoherence !== false`, the `adminCoherence` idiom |
+| `mailwoman parse` / `mailwoman geocode`                              | `--postcode-country-coherence`                                       | `--no-postcode-country-coherence` (schema default `true`)                           |
+| `mailwoman eval gauntlet` / `eval oa-resolver`                       | one ON pin                                                           | tri-state: `--postcode-country-coherence` / `--postcode-country-coherence-off`      |
+| gauntlet regression corpus                                           | `fr-rivoli-us-scoped`, `de-linden-us-scoped` at `improvement_target` | both `status: pass` (gated)                                                         |
+
+The eval pins went tri-state for the reason §1.1 gave in the other direction: once the library default is ON, the ON
+pin only restates production, and the pin that can carry evidence is the OFF one. `-off` rather than `--no-…` because
+commander reads a literal `--no-x` as the negation of `--x` on the same attribute, which collapses the tri-state —
+the same constraint that named `eval oa-resolver`'s `adminCoherenceOff`.
+
+The regression-layer firing report was keyed on the ON pin. That was right while the default was OFF and wrong the
+moment it flipped: the standard unpinned run is now the ON configuration, and it is the run whose firing count a
+reader needs. It now prints unless the lever is pinned OFF.
+
+### 7.2 Ride-along condition 1 — the corpus rebuild
+
+```
+[gauntlet] built /mnt/playpen/mailwoman-data/gauntlet/regression.db — 137 cases
+```
+
+Up from the 116 the shared artifact held (§4's silent seed drift). The seven #42 cases are now in the built artifact.
+
+### 7.3 The receipts, at the new default
+
+`mailwoman eval gauntlet`, no flags — which is now production config:
+
+```
+=== Gauntlet · regression (67/70 gated cases pass, 66 tracked) ===
+  ✗ si-sentinel-apace "Apače 108, 2324 Apače": coord 1040.49km off (tol 25000m); locality "null" ≠ "Apače"
+  ✗ de-r9-nippes-koeln "Neusser Str. 12, Nippes, 50733 Köln": street "Neusser Str" ≠ "Neusser Str."
+  ✗ us-subvenue-googleplex-building "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043": street "Amphitheatre Parkway" ≠ "Amphitheatre"
+
+postcode-country coherence fired on 2/137 cases:
+  · fr-rivoli-us-scoped "12 Rue de Rivoli, 75001 Paris" → country scoped to FR (case default US)
+  · de-linden-us-scoped "Unter den Linden 77, 10117 Berlin" → country scoped to DE (case default US)
+
+verdict: FAIL
+
+=== Gauntlet · metamorphic ===
+  INV  (label-preserving, ≤1m):  63/63 held, 0 known-xfail
+  DIR  (drop-postcode, ≤5km):    3/3 held
+  BAND (corrupting, ≤5km):       18/21 held, 3 known-xfail
+
+verdict: PASS (with 3 tracked xfails)
+
+════════════════ GAUNTLET ════════════════
+  resolver levers: (none pinned — production defaults)
+  ✗ FAIL  regression
+  ✓ PASS  metamorphic
+
+VERDICT: FAIL — do not ship
+```
+
+`mailwoman eval gauntlet --postcode-country-coherence-off` — the pre-promotion configuration, the same corpus and
+the same model (`model.onnx` md5 `c968c24a`):
+
+```
+=== Gauntlet · regression (65/70 gated cases pass, 66 tracked) ===
+  ✗ si-sentinel-apace "Apače 108, 2324 Apače": coord 1040.49km off (tol 25000m); locality "null" ≠ "Apače"
+  ✗ de-r9-nippes-koeln "Neusser Str. 12, Nippes, 50733 Köln": street "Neusser Str" ≠ "Neusser Str."
+  ✗ us-subvenue-googleplex-building "Building 43, Googleplex, 1600 Amphitheatre Parkway, Mountain View, CA 94043": street "Amphitheatre Parkway" ≠ "Amphitheatre"
+  ✗ fr-rivoli-us-scoped "12 Rue de Rivoli, 75001 Paris": coord 7922.55km off (tol 100m); tier admin ≠ address_point
+  ✗ de-linden-us-scoped "Unter den Linden 77, 10117 Berlin": coord 6240.20km off (tol 100m); tier admin ≠ address_point
+
+verdict: FAIL
+```
+
+`diff` on the two stdout logs is nine lines: the banner (×3), the two rescued rows leaving the failure list, and the
+four-line firing report. The metamorphic layer is byte-identical — it passes no `defaultCountry`, so the pass is
+inert there by construction.
+
+**The verdict is FAIL on both legs, on the same three cases, for reasons unrelated to this lever** — §1.4 named all
+three, and the promotion moves none of them. Read the gated count, not the verdict word: 67/70 at the new default
+against 65/70 at the old, with the identical failure set. **Newly-failing gated cases: zero.**
+
+`us-subvenue-northwestern-pavilion` also reports "now PASSES — promote to status=pass" in both legs. It is a #1471
+sub-venue row, unrelated to #42, and left for that arc's owner.
+
+### 7.4 The mailfail probe set
+
+The 105 hostile/degenerate rows (`mailwoman/eval-harness/fixtures/mailfail.jsonl`), geocoded under
+`defaultCountry: "US"` — the CLI/demo reality, and the only configuration where #42 is reachable at all:
+
+```
+=== mailfail probe set · 105 rows · defaultCountry=US ===
+crashes, default-ON leg:  0
+crashes, pinned-OFF leg:  0
+rows differing between the two legs: 0 / 105
+rows where the coherence pass overrode the country (default-ON leg): 0
+```
+
+Garbage does not produce a coherent (postcode, locality) pair, so the pass abstains on all 105 and the two legs are
+identical row for row. That is the expected shape, and it is worth having measured rather than assumed: the pass
+runs BEFORE the walk on every query that carries a default country and a postcode, so "it costs two lookups and
+changes nothing on malformed input" was a claim, not a fact, until this ran.
+
+### 7.5 Tests changed, and why
+
+- `resolver/postcode-country-coherence.test.ts` — every "flag off" leg now sets `postcodeCountryCoherence: false`
+  explicitly. Two legs had expressed "off" by OMITTING the option, which after the flip means ON; the bug-reproduction
+  row ("resolves to Paris TEXAS") and the domestic-control byte-identity row would both have silently stopped testing
+  what their names say. A new row asserts the default itself: unset → the override fires.
+- `mailwoman/eval-harness/gauntlet/lever-pin.test.ts` — two rows added for the OFF pin's path through
+  `runResolverLevers` and through the full end-to-end hop chain. `resolverLeverDeps` already carried an explicit OFF
+  (it was written tri-state from the start); the CLI-options hop was the one that had only ever been exercised ON.
+- `mailwoman/eval-harness/gauntlet/cases/regression.ts` — the two rescue rows promoted to `status: pass`, and the
+  block comment rewritten to say which row stayed an `improvement_target` and why.
+
+No other test pinned this default. Full repo suite and the resolver suite both clean at the new default.
+
+### 7.6 What is still not fixed
+
+Unchanged from §5, restated so the flip is not read as more than it is: `gb-downing-us-scoped` still fails (the GB
+postcode parse under the en-GB overlay, not the resolver); JP and NZ have a codex slice with no postcode data; CA and
+AU need the candidate table; the coarse placer still cannot override `defaultCountry`; and the built regression corpus
+still drifts from its seed with no warning. These are recorded as D6 in the
+[runtime-flag register](../../engineering/reference/runtime-flags.mdx).

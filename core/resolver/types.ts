@@ -608,8 +608,16 @@ export interface ResolveOpts {
 	 * countries and two-or-more abstain. It fires only when a `defaultCountry` is in force AND the tree carries both a
 	 * postcode and a locality AND the default cannot make them consistent.
 	 *
-	 * **Default OFF** (D-rule: opt-in until the resolver gauntlet clears it on the tier-1 locales). Costs 2 lookups on
-	 * the byte-stable path, at most 8 when it fires.
+	 * **Default ON** (operator-promoted 2026-08-05 after the D-rule evidence in
+	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`: the standard gauntlet run pinned both
+	 * ways produced ZERO newly-failing gated cases — 65/68 either way, the same three unrelated failures — and 56,000
+	 * pair evaluations across BOTH backends (28,000 FTS + 28,000 candidate; OpenAddresses US/FR + OSM GB, domestic and
+	 * mis-scoped legs) returned zero false positives. The rescue leg fixes ~9 in 10 mis-scoped defaults. Set `false` to
+	 * opt out (byte-stable then). Costs 2 lookups on the byte-stable path, at most 8 when it fires.
+	 *
+	 * Reach is bounded by codex's `candidateSystemsForPostcode` and the attached gazetteer: measured 2026-08-05 it can
+	 * speak for US/DE/FR/GB on the production FTS shard set and additionally CA/AU on the candidate table; JP and NZ have
+	 * a codex slice with no postcode rows behind it, so the pass abstains there at the cost of its two lookups.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**

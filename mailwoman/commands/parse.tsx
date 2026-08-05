@@ -82,12 +82,13 @@ const ParseConfigSchema = zod.object({
 	postcodeCountryCoherence: zod
 		.boolean()
 		.optional()
-		.default(false)
+		.default(true)
 		.describe(
-			"#42, OPT-IN: let a (postcode, locality) pair that is geographically consistent in exactly ONE country " +
-				"override a wrong --default-country. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise resolves to " +
-				"Paris, Texas. Abstains when the default country is already consistent, when no country is, or when " +
-				"more than one is. Requires --resolve."
+			"#42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a " +
+				"wrong --default-country. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise resolves to Paris, Texas. " +
+				"Abstains when the default country is already consistent, when no country is, or when more than one is. " +
+				"ON by default (promoted 2026-08-05); pass --no-postcode-country-coherence to restore the un-overridden " +
+				"country scope. Requires --resolve."
 		),
 	neural: zod
 		.boolean()
@@ -386,9 +387,10 @@ async function resolveWithCandidates(
 		opts.candidatesPerLookup = options.candidates + 1
 	}
 
-	// #42: opt-in, so only the explicit --postcode-country-coherence pin needs threading.
-	if (options.postcodeCountryCoherence) {
-		opts.postcodeCountryCoherence = true
+	// #42: the library default is ON since 2026-08-05; only the explicit --no-postcode-country-coherence
+	// pin needs threading.
+	if (options.postcodeCountryCoherence === false) {
+		opts.postcodeCountryCoherence = false
 	}
 
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
@@ -545,9 +547,10 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
 	}
 
-	// #42: opt-in postcode-country coherence — only meaningful alongside --resolve's default country.
-	if (options.resolve && options.postcodeCountryCoherence) {
-		resolveOpts.postcodeCountryCoherence = true
+	// #42 postcode-country coherence — only meaningful alongside --resolve's default country. Default-ON,
+	// so only the explicit --no-postcode-country-coherence opt-out needs threading.
+	if (options.resolve && options.postcodeCountryCoherence === false) {
+		resolveOpts.postcodeCountryCoherence = false
 	}
 
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place

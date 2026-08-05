@@ -54,6 +54,12 @@ describe("runResolverLevers — CLI options → lever set", () => {
 		expect(runResolverLevers({ postcodeCountryCoherence: true })).toEqual({ postcodeCountryCoherence: true })
 	})
 
+	// The pin that carries evidence since the 2026-08-05 default-on flip: the ON pin now restates production,
+	// so a run that means to grade the pre-promotion configuration has to be able to say OFF and be believed.
+	it("carries an OFF pin", () => {
+		expect(runResolverLevers({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
+	})
+
 	it("returns undefined when the flag was never set", () => {
 		expect(runResolverLevers({})).toBeUndefined()
 		expect(runResolverLevers({ candidate: "./out/model.onnx" })).toBeUndefined()
@@ -124,6 +130,12 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 		const deps = resolverLeverDeps(layerDepsOptions(runLayerOptions({ postcodeCountryCoherence: true })).levers)
 
 		expect(deps).toEqual({ postcodeCountryCoherence: true })
+	})
+
+	it("survives every hop for the OFF pin too", () => {
+		const deps = resolverLeverDeps(layerDepsOptions(runLayerOptions({ postcodeCountryCoherence: false })).levers)
+
+		expect(deps).toEqual({ postcodeCountryCoherence: false })
 	})
 
 	it("stays empty across the same hops when the flag is absent", () => {
