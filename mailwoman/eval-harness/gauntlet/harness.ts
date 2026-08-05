@@ -339,6 +339,13 @@ export interface GauntletResult {
 	 * leaving an unchanged verdict to mean either "harmless" or "never ran".
 	 */
 	postcode_country_scope: string | null
+	/**
+	 * The RESOLVED admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy}. Not asserted by any
+	 * case: it carries the gazetteer `placeID`s, which is what the ablation layer's graceful-degradation ladder is
+	 * synthesized FROM (the undeleted case's resolved place → its WOF ancestry). Only entries the resolver actually
+	 * decorated appear here, so an empty array means the run resolved nothing admin-grade — absence, not a flat world.
+	 */
+	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -358,5 +365,11 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
+		hierarchy: g.hierarchy.map((h) => ({
+			tag: h.tag,
+			name: h.name,
+			...(h.placeID ? { placeID: h.placeID } : {}),
+			...(h.lat != null ? { lat: h.lat, lon: h.lon! } : {}),
+		})),
 	}
 }

@@ -42,6 +42,13 @@ export interface SeedCase {
 	addedAt: string
 	bugRef?: string
 	note?: string
+	/**
+	 * ABLATION ONLY: hand-pin the graceful-degradation rung this row's deletions should reach, per deleted component — `{
+	 * country: "region" }`, `{ region: "abstain" }`. Values are `abstain`, `base`, or a WOF placetype. Absent = the
+	 * ablation layer's DERIVED ladder decides, which is the default and should stay the common case. See `schema.ts`'s
+	 * `ablation_expect` for the two classes (territories, dual-role places) this exists for.
+	 */
+	ablationExpect?: Record<string, string>
 }
 
 /**

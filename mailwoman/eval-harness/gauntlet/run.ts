@@ -19,8 +19,11 @@
  *   That last one is not a gate. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
  *   measures what the deletion costs, per (component, locale) — the operator's "where does the pipeline falter when a
  *   part of the address is missing?" It is reachable only via `--layer` and is deliberately absent from the combined
- *   verdict below: it has no stored expected values to regress against, and a measurement that could fail a ship would
- *   invite tuning the corpus instead of the parser.
+ *   verdict below: its expectations are DERIVED from the gazetteer at run time rather than stored, and a measurement
+ *   that could fail a ship would invite tuning the corpus instead of the parser.
+ *
+ *   Derived, not absent: a variant is graded against the row's degradation ladder (`ablation-expectation.ts`), so
+ *   "correctly coarsened" and "abstained under untenable ambiguity" are PASSES and only the real defects are red.
  *
  *   The last of those is the resolver-lever pin (#42, added 2026-08-05). The gate could swap the MODEL under test but
  *   not the resolver configuration, so a resolver lever proposed for default-on had no way through the D-rule's
