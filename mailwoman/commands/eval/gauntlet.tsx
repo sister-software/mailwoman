@@ -8,6 +8,10 @@
  *   shipped default (regression + metamorphic); `--candidate` adds the held-out candidate-vs-prod
  *   z-test; `--layer` runs a single layer with the old standalone semantics (its own verdict + exit
  *   code). A non-zero exit blocks the ship (RELEASING.md).
+ *
+ *   `--layer ablation` is the exception: it is a MEASUREMENT, not a gate. It deletes each asserted
+ *   component from each corpus row and reports what the deletion cost per (component, locale) — the
+ *   load-bearing map. It never joins the combined verdict and cannot block a ship.
  */
 
 import { Text } from "ink"
@@ -30,10 +34,16 @@ const OptionsSchema = zod.object({
 			"Package-shaped candidate weights dir (<root>/node_modules/@mailwoman/neural-weights-en-us) — #718-safe, mirrors eval parity --weights-cache; preferred for splice/multisplice candidates"
 		),
 	layer: zod
-		.enum(["regression", "metamorphic", "holdout"])
+		.enum(["regression", "metamorphic", "holdout", "ablation"])
 		.optional()
-		.describe("Run ONE layer instead of the combined gate"),
+		.describe("Run ONE layer instead of the combined gate (`ablation` = the load-bearing map, never a gate)"),
 	n: zod.number().default(300).describe("held-out: fresh-draw sample size"),
+	out: zod.string().optional().describe("ablation: artifact dir (default /tmp/ablation-<YYYYMMDD-HHmm>)"),
+	components: zod
+		.string()
+		.optional()
+		.describe("ablation: comma-separated components to delete (default: every ablatable tag)"),
+	limit: zod.number().optional().describe("ablation: cap the number of CASES — a smoke run"),
 	postcodeCountryCoherence: zod
 		.boolean()
 		.default(false)
@@ -52,7 +62,7 @@ export { OptionsSchema as options }
 const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	// `postcodeCountryCoherenceOff` is a CLI-only spelling of the OFF half of one tri-state; it is destructured
 	// out so it never reaches `runGauntlet` as a field of its own.
-	const { postcodeCountryCoherenceOff, ...rest } = options
+	const { postcodeCountryCoherenceOff, components, ...rest } = options
 
 	const state = useCommandTask(
 		async () =>
@@ -60,6 +70,17 @@ const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 				await runGauntlet({
 					...rest,
 					weightsCacheRoot: options.weightsCache,
+					// ablation only. An absent flag must stay absent (→ every ablatable tag), so an empty string
+					// never becomes an empty filter — which would silently measure nothing and print a map of one
+					// header row.
+					...(components
+						? {
+								components: components
+									.split(",")
+									.map((c) => c.trim())
+									.filter(Boolean),
+							}
+						: {}),
 					// An UNSET flag must stay unset, not become an explicit pin either way. Pastel gives the schema's
 					// `false` default for BOTH halves, and forwarding one verbatim would pin the lever forever — which is
 					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard gate. Neither
