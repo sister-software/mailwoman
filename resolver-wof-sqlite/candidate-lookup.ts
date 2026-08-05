@@ -297,7 +297,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// #920 name law, candidate-key edition: postcode rows are keyed by their whitespace-stripped
 		// form at build (the GeoNames fold normalizes '624 66' → '62466'), so a postcode-typed query
 		// strips internal whitespace before keying. Postcode-only — locality names keep their spaces.
-		if ([query.placetype].flat().includes("postalcode")) {
+		const wantsPostcode = [query.placetype].flat().includes("postalcode")
+
+		if (wantsPostcode) {
 			text = text.replaceAll(/\s+/g, "")
 		}
 
@@ -427,7 +429,18 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// — fuzzing it scrapes an unrelated same-filter place ("Vienna, Austria" misrouted to IT would
 			// pull a tiny Italian name_key near Siena) and masks the cascade's country-agnostic retry that
 			// correctly lands population-first Vienna AT. The exact/strip probes already covered the real name.
-			if (!rows.length && this.#ftsProbe && this.#nameKeyExistsProbe && !this.#nameKeyExistsProbe.get(nameKey)) {
+			//
+			// NEVER for postcodes: fuzzy is a typo corrector for place NAMES, and a "corrected" postcode is a
+			// DIFFERENT postcode. The 2026-08-05 Code-Point swap exposed the trap at scale: Northern Ireland's
+			// `BT3 9QQ` (absent — no permissive NI source) trigram-matched Sheffield's `S3 9QQ` (Jaccard 0.4
+			// on {39q, 9qq}) and resolved 200+ km wrong with full confidence. An unknown postcode must abstain.
+			if (
+				!rows.length &&
+				!wantsPostcode &&
+				this.#ftsProbe &&
+				this.#nameKeyExistsProbe &&
+				!this.#nameKeyExistsProbe.get(nameKey)
+			) {
 				const match = ftsTrigramQuery(nameKey)
 
 				if (match) {

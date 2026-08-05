@@ -66,23 +66,25 @@ export const DEFAULT_FOLD_COUNTRIES = [
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
- * GeoNames intl shard (PT/AU) + the GeoNames-postal tail shard (ten countries, GB included) + Overture postcode
- * centroids (CA + the EU-coverage locales). Missing shards are skipped, not fatal.
+ * GeoNames intl shard (PT/AU) + the OS Code-Point Open GB shard + the GeoNames-postal tail shard (nine countries) +
+ * Overture postcode centroids (CA + the EU-coverage locales). Missing shards are skipped, not fatal.
  *
- * What is left out, corrected 2026-08-05: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB) and
- * **`postalcode-jp.db`** (142,604 rows, 37 MB). This comment previously read "GB (2.6 M) and JP are left out for size",
- * which a reader takes as _no GB postcode coverage_. GB coverage is present — 1,839,678 GeoNames `GB_full` postcodes
- * arrive in `postalcode-geonames-tail.db` below, a 946 MB shard, i.e. LARGER than the GB shard the size rationale
- * excludes. The excluded thing is the WOF-sourced GB shard, not GB.
+ * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
+ * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
  */
 export const DEFAULT_POSTCODE_SHARDS = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
-	// #920: the GeoNames-postal tail shard — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/GB
-	// (1,895,753 rows; GB is 1,839,678 of them). Nine were the namesake-tail set the deployed candidate
-	// build predated; GB was appended from the `GB_full` dump. existsSync-filtered like the rest.
-	// Rebuild: `mailwoman gazetteer build postcode-geonames`.
+	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05): 1,746,976 unit
+	// postcodes, England+Scotland+Wales — NO Northern Ireland (excluded from every permissive UK
+	// grant; see the codepoint builder's NI note). Replaces the GeoNames GB rows, which the
+	// 2026-08-05 parity gate measured as the SAME survey (max coordinate delta 6.6 m over 1.75M
+	// joined rows) under a muddled licence. Rebuild: `mailwoman gazetteer build postcode-codepoint`.
+	"postalcode-gb-codepoint.db",
+	// #920: the GeoNames-postal tail shard — NINE countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE
+	// (56,075 rows). GB rode in this shard 2026-07-03 → 2026-08-05 and moved to Code-Point Open above.
+	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE`.
 	"postalcode-geonames-tail.db",
 	"postcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(

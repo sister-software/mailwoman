@@ -317,6 +317,23 @@ describe("WOFCandidateTableLookup", () => {
 		}
 	})
 
+	test("the fuzzy fallback NEVER fires for postcodes — an unknown code abstains, it does not become a different code", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// "B0601" shares the trigrams {060, 601} with the fixture's real 60601 — exactly the shape
+			// that let Northern Ireland's BT3 9QQ trigram-match Sheffield's S3 9QQ after the Code-Point
+			// swap (2026-08-05). A "corrected" postcode is a DIFFERENT postcode; the only right answer
+			// for an unknown one is no answer.
+			expect(await lk.findPlace({ text: "B0601", placetype: "postalcode" })).toHaveLength(0)
+			// The same input WITHOUT the postcode placetype may fuzz (it is a name then) — the guard is
+			// placetype-scoped, not a global fuzzy kill.
+			expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
+		} finally {
+			lk.close()
+		}
+	})
+
 	test("parentID scopes the probe to the in-region place (Springfield → IL under Illinois, not the larger MO)", async () => {
 		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
