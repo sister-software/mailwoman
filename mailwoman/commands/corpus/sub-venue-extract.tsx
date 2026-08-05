@@ -22,7 +22,6 @@
  *   340 MB extract, 371 s for Japan's 2.5 GB.
  */
 
-import { writeSubVenueJSONL } from "@mailwoman/osm/sdk"
 import { Text } from "ink"
 import zod from "zod"
 
@@ -37,9 +36,19 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const CorpusSubVenueExtract: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		writeSubVenueJSONL({ pbfPath: options.pbf, outPath: options.out, country: options.country })
-	)
+	const state = useCommandTask(async () => {
+		// @mailwoman/osm is a devDependency ONLY — it is unpublished (ODbL counsel sign-off pending,
+		// see osm/README.md), so a static import here breaks every clean install of the published
+		// CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
+		const { writeSubVenueJSONL } = await import("@mailwoman/osm/sdk").catch(() => {
+			throw new Error(
+				"corpus sub-venue-extract requires @mailwoman/osm, which is not yet published — " +
+					"run this command from the mailwoman monorepo (osm/README.md has the publish status)."
+			)
+		})
+
+		return writeSubVenueJSONL({ pbfPath: options.pbf, outPath: options.out, country: options.country })
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
