@@ -300,6 +300,13 @@ postcode-free arm re-emitted A postcode     16 / 139
 
 Per locale, which is the ablation map's first row:
 
+> **Correction 2026-08-05 (ablation run, PR #1500):** the GB row below was measured WITHOUT the GB
+> weight artifacts — the S-2 worktree carried no `pair-index-gb` and no `fst-en-gb`, so GB graded
+> through the bare base package. The other locales reproduce byte-for-byte under the full
+> environment; GB corrects to **26/47 (55.3%) within 5 km, 17/47 (36.2%) over 100 km, p50 1.97 km**.
+> Finding 1's "roughly four times" becomes **roughly 2.5×** — direction unchanged, magnitude
+> corrected. The table is left as measured; the ablation map's GB cells are the current numbers.
+
 | locale | n   | within 5 km | over 100 km |
 | ------ | --- | ----------- | ----------- |
 | GB     | 47  | 23 (48.9%)  | 20 (42.6%)  |
@@ -698,7 +705,7 @@ The operator filed the deletion-ablation runner the same day, and the two are du
 WHICH completion is worth making, per locale.** Where deleting a component barely moves the
 resolution, completing it is low-value advice; where deletion craters it, completion is the top
 nudge. S-2 is the map's first row, measured for `postcode` across 18 locales, and it already
-separates GB (42.6% of rows over 100 km without it) from US (9.1%).
+separates GB (36.2% of rows over 100 km without it — corrected, see the S-2 note) from US (9.1%).
 
 The interface, which is the part this document owes that runner:
 
