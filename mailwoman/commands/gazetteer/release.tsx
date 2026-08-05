@@ -38,8 +38,9 @@ const OptionsSchema = zod.object({
 	countries: zod
 		.string()
 		.optional()
-		.describe(`Fold countries (comma-separated). Default: ${DEFAULT_FOLD_COUNTRIES.join(",")}`),
-	fold: zod.boolean().default(true).describe("Run the GeoNames fold (default on)"),
+		.describe(`Fold countries (comma-separated). Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`),
+	// #1514: OFF by default — see the note on the same flag in `build/candidate.tsx`.
+	fold: zod.boolean().default(false).describe("Re-run the GeoNames fold (default off — `build admin` already folds)"),
 	promote: zod.boolean().default(true).describe("Promote the convention path after building (default on)"),
 	publish: zod.boolean().default(true).describe("Publish to R2 + bump the demo after promoting (default on)"),
 	gazetteerVersion: zod.string().optional().describe("Gazetteer version. Default today's date + 'a'"),

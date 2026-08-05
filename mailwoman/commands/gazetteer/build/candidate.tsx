@@ -32,14 +32,19 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe("Admin (unified-WOF) source DB. Default <data-root>/wof/admin-global-priority.db"),
 	out: zod.string().optional().describe("Candidate-DB output path. Default <data-root>/wof/candidate-global.db"),
+	// #1514: OFF by default. `gazetteer build admin` folds all 161 GeoNames countries into the admin
+	// artifact itself (#1027), so a second fold here re-derives what is already there — and until the
+	// same issue it did so with a 14-country default, rewriting the front of the fold's id range and
+	// leaving 522,184 name rows bound to places in other countries. Pass --fold only for an admin DB
+	// built without one; foldGeonamesIntoAdmin now refuses a fold that would shrink existing coverage.
 	fold: zod
 		.boolean()
-		.default(true)
-		.describe("Run the durable GeoNames-alias upstream fold before building (default on)"),
+		.default(false)
+		.describe("Re-run the GeoNames-alias fold before building (default off — `build admin` already folds)"),
 	countries: zod
 		.string()
 		.optional()
-		.describe(`Comma-separated ISO codes for the fold. Default: ${DEFAULT_FOLD_COUNTRIES.join(",")}`),
+		.describe(`Comma-separated ISO codes for the fold. Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`),
 	foldOut: zod.string().optional().describe("Folded admin-DB path. Default <admin>-geonames.db"),
 })
 

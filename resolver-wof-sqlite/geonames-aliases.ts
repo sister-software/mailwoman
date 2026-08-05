@@ -31,11 +31,54 @@ import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
+import { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
+
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
  * Overture, GeoNames) never collide in a combined DB.
  */
 export const GEONAMES_ID_BASE = 9_000_000_000_000
+
+/**
+ * The four tables the alias fold writes into the range it owns. The purge and the ingest must agree on this list — a
+ * table written but not purged is exactly the #1514 defect.
+ */
+const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as const
+
+/**
+ * Clear everything the alias fold owns — `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)` across {@link
+ * FOLD_OWNED_TABLES}
+ * — so a fold's output is a function of its country list and dumps ALONE, never of what the DB happened to hold first.
+ * Returns the rows removed per table.
+ *
+ * This exists because the synthetic id is a POSITION (`GEONAMES_ID_BASE + n`, counted across the country list in
+ * order), not a derivation from the geonameid: change the list, its order, or a dump's contents and every subsequent id
+ * shifts. Without the purge, a second fold overwrote the `spr` PREFIX it reached (`INSERT OR REPLACE`) while its
+ * `names`/`ancestors` rows merely appended (bare `INSERT`) and `place_population` skipped unpopulated places entirely —
+ * so the previous run's names, ancestry and populations stayed bound to ids now describing other places.
+ *
+ * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country fold baked into
+ * `admin-global-priority.db` put 522,184 of 2,110,096 name rows in the range (24.7 %) on a place from a different
+ * country. Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names; Kinshasa's 16,000,000
+ * population landed on a Lithuanian hamlet.
+ *
+ * The upper bound is NOT the end of the id space. Each later shard owns a range above this one — GeoNames-postal @
+ * 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE}
+ * would delete them.
+ */
+export function purgeGeonamesAliasRange(db: DatabaseSync): Record<string, number> {
+	const removed: Record<string, number> = {}
+
+	for (const table of FOLD_OWNED_TABLES) {
+		const result = db
+			.prepare(`DELETE FROM ${table} WHERE id >= ? AND id < ?`)
+			.run(GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)
+
+		removed[table] = Number(result.changes)
+	}
+
+	return removed
+}
 
 /**
  * Per-country progress for the ingest — one event per country dump processed (or skipped).
@@ -215,6 +258,10 @@ export async function ingestGeonamesAliases(
 	let total = 0
 	db.exec("BEGIN")
 
+	// #1514: clear the range before writing it. Inside the transaction, so a fold that throws leaves the
+	// DB as it found it rather than half-purged. See purgeGeonamesAliasRange for why the ids demand this.
+	purgeGeonamesAliasRange(db)
+
 	for (const cc of countries) {
 		const file = join(geonamesDir, `${cc}.txt`)
 
@@ -324,9 +371,14 @@ export async function ingestGeonamesAliases(
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 
-			if (addAdmin) {
-				ancestorInsert.run(nid, nid, "locality")
+			// The SELF row is unconditional (#1514). `populateAncestors` writes one for every spr row it
+			// sees, so a full build's freeze phase produces it either way — but the freeze does not run on
+			// the fold-on-copy path, and since the purge now clears this range the fold has to emit
+			// everything the closure would. Measured on the 161-country fold: 212,993 self rows, exactly the
+			// non-gap countries' localities, which is what the base artifact carried and a fold-on-copy lost.
+			ancestorInsert.run(nid, nid, "locality")
 
+			if (addAdmin) {
 				if (regionID >= 0) {
 					ancestorInsert.run(nid, regionID, "region")
 				}
