@@ -179,9 +179,19 @@ export const CODEPOINT_COVERAGE_NOTE =
  * LPS/ONSPD centroids into OSM, so this cannot be laundered. (c) SHIP NO NI POSTCODE CENTROIDS. Fall back to the
  * OGL-clean OSNI Streetnames gazetteer (every NI street with Irish Grid coordinates) for street-level NI resolution.
  *
- * (c) is the low-risk default and is what the shard does today. Scale of what is being given up: ONSPD Feb 2025 counts
- * 50,032 LIVE NI postcodes (62,980 including terminated). The incumbent GeoNames snapshot's 48,990 BT rows sit between
- * the May 2020 and May 2021 live figures, i.e. a live-only extract roughly five years stale and ~2 % short of current.
+ * **(b) LANDED 2026-08-05, at the build-local tier** — `../ni-osm-shard.ts`, `mailwoman gazetteer build
+ * postcode-ni-osm`. The share-alike problem is solved by not publishing: the shard is built on the operator's own
+ * machine and reaches the resolver only through `DEFAULT_POSTCODE_SHARDS`'s `existsSync` filter, so no npm consumer
+ * ever receives an ODbL byte. Measured coverage is 4,757 of the 50,032 live NI postcodes (9.5 %), across 250 of 886
+ * sectors and 80 of 80 districts, from 12,327 OSM address elements. Partial, and additive rather than risky: since
+ * #1480 an unknown postcode ABSTAINS, so a `BT` code the shard lacks behaves exactly as it did when there was no shard
+ * at all.
+ *
+ * THIS shard — Code-Point Open, the published one — still does (c), and must: its `BT` hole is a licensing fact and
+ * filling it from an ODbL source would be exactly the contamination the tier split exists to prevent. Scale of what (c)
+ * gives up: ONSPD Feb 2025 counts 50,032 LIVE NI postcodes (62,980 including terminated). The incumbent GeoNames
+ * snapshot's 48,990 BT rows sit between the May 2020 and May 2021 live figures, i.e. a live-only extract roughly five
+ * years stale and ~2 % short of current.
  */
 export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"Northern Ireland (BT) postcode centroids CANNOT be filled from a free source. ONSPD/NSPL carry BT coordinates " +
@@ -194,7 +204,11 @@ export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"VAT full NI coverage; >£3,000 orders need a formal >=12-month licence) — the only route to complete NI centroids in " +
 	"a permissively-licensed package; (b) ship NI as ODbL from OpenStreetMap addr:postcode — partial coverage plus " +
 	"share-alike contamination; (c) ship no NI centroids and use the OGL-clean OSNI Streetnames gazetteer for " +
-	"street-level NI resolution. (c) is what this shard does. Scale: ONSPD Feb 2025 counts 50,032 live NI postcodes."
+	"street-level NI resolution. (c) is what THIS shard does and must keep doing — its BT hole is a licensing fact, and " +
+	"filling it from an ODbL source would contaminate a published artifact. (b) landed separately on 2026-08-05 as the " +
+	"BUILD-LOCAL shard postalcode-ni-osm.db (`mailwoman gazetteer build postcode-ni-osm`), which is never published and " +
+	"covers 4,757 of the 50,032 live NI postcodes (9.5 %), 250/886 sectors, 80/80 districts. Scale: ONSPD Feb 2025 " +
+	"counts 50,032 live NI postcodes."
 
 /**
  * Build the OS Downloads API client.
