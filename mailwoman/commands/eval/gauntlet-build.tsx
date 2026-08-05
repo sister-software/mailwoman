@@ -7,7 +7,7 @@
  *
  *   - `fdic-holdout` — the US verified-coord held-out pool (FDIC BankFind → fdic-us.csv, the fast
  *       fresh-draw source for `eval gauntlet --layer holdout --source us`).
- *   - `regression-db` — the curated regression corpus (`cases/regression.ts` →
+ *   - `regression-db` — the curated regression corpus (`cases/<cc>/*.jsonl` →
  *       `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`, build-on-copy).
  */
 

@@ -7,9 +7,10 @@
  *   committed seed (`cases/<cc>/*.jsonl`). Build-on-copy: write a temp DB, then swap it into place.
  *
  *   Row order in the DB is the loader's order (country dir, then case id) — not the pre-2026-08-05
- *   chronological array order. Nothing grades on it: the regression runner reads every row, and the ablation
- *   board id hashes a sorted fingerprint. The one consumer that SEES it is `ablation --limit N`, which slices
- *   the first N rows and so now samples alphabetically by country rather than by entry date.
+ *   chronological array order. Checked, not assumed: the regression runner reads every row; the ablation
+ *   layer's `SELECT` carries `.orderBy("id")`, so `--limit N` samples the same N rows either way; and
+ *   `ablationBoardID` hashes a SORTED fingerprint. What changes is the order the regression runner PRINTS its
+ *   per-case lines in, which is why the migration's graded receipt sorted before diffing.
  *
  *   Run: mailwoman eval gauntlet-build regression-db
  */

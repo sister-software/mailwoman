@@ -6,10 +6,10 @@
  *   The corpus loader's gate, and the receipt for the 2026-08-05 TS-array → per-country-JSONL migration.
  *
  *   THE MIGRATION PROOF, in two legs. While both representations existed, this suite deep-equalled the
- *   loaded corpus against `REGRESSION_CASES` row for row (commit 1). That commit measured
- *   {@linkcode CORPUS_HASH} and {@linkcode BOARD_ID}; the commit that deleted the array (commit 2) kept the
- *   pins and dropped the array leg, so the content claim survives the source it was checked against. Both
- *   commits are on the branch — the deep-equal is in the history, not in prose.
+ *   loaded corpus against `REGRESSION_CASES` row for row — see the commit that added `cases/<cc>/*.jsonl`,
+ *   where that test is green against both. That commit measured {@linkcode CORPUS_HASH} and
+ *   {@linkcode BOARD_ID}; the commit that deleted the array kept the pins and dropped the array leg, so the
+ *   content claim outlives the source it was checked against. The deep-equal is in the history, not in prose.
  *
  *   The board id is the load-bearing one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
  *   content-addressed and NOT order-addressed: reorganizing 192 rows into 29 files is invisible to it, and
@@ -29,8 +29,6 @@ import { describe, expect, it } from "vitest"
 
 import { ablationBoardID } from "../ablation.ts"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./load.ts"
-// TRANSITION-ONLY import — goes with the array. See the file header.
-import { REGRESSION_CASES } from "./regression.ts"
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
@@ -109,21 +107,6 @@ describe("the committed corpus", () => {
 		for (const c of await loadRegressionCases()) {
 			expect(Object.keys(c)).toEqual(Object.keys(canonicalizeSeedCase(c)))
 		}
-	})
-})
-
-// TRANSITION LEG — deleted in the commit that deletes the array. See the file header.
-describe("byte-faithful against the pre-migration TS array", () => {
-	it("loads the same cases, row for row", async () => {
-		const loaded = await loadRegressionCases()
-		const original = REGRESSION_CASES.map(canonicalizeSeedCase).toSorted((a, b) => (a.id < b.id ? -1 : 1))
-
-		expect(loaded.toSorted((a, b) => (a.id < b.id ? -1 : 1))).toEqual(original)
-	})
-
-	it("agrees on the corpus hash and the board id", () => {
-		expect(regressionCorpusHash(REGRESSION_CASES)).toBe(CORPUS_HASH)
-		expect(ablationBoardID(REGRESSION_CASES)).toBe(BOARD_ID)
 	})
 })
 
