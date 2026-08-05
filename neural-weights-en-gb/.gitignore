@@ -5,8 +5,13 @@
 /tokenizer.model
 
 # Soft-feed artifacts materialized at publish time by scripts/copy-weights.ts (#718 D1):
-# the compact PCB1 postcode-anchor binary + the gazetteer-anchor lexicon. Built from the
-# WOF postcode shard + data/gazetteer/, not committed (mirrors model.onnx/tokenizer.model).
+# the gazetteer-anchor lexicon, built from data/gazetteer/ and not committed (mirrors
+# model.onnx/tokenizer.model).
+#
+# postcode-*.bin stays ignored even though en-gb no longer ships one (2026-08-05: the encoder's
+# GB anchor slot is untrained — see model-card.json's gb_artifacts.no_postcode_bin). Nothing in
+# the repo builds it here any more, but a hand-built probe copy is exactly the file that must
+# never reach a commit or a tarball; link-dev-weights.ts deletes any it finds.
 /postcode-*.bin
 /anchor-lexicon-v1.json
 

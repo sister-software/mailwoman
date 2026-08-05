@@ -16,9 +16,9 @@
 		"localitySurfaceLexicon": "gazetteer/locality-surface-lexicon-v6.json",
 		"countryLexicon": "data/gazetteer/country-surface-lexicon-v1.json",
 		"postcodeDBByCountry": {
+			"$comment_gb": "`gb` was REMOVED 2026-08-05 (#1467), and its absence is load-bearing, not an oversight: the encoder's GB anchor slot (slot 4 of LOCALE_ORDER, neural/anchor-inference.ts) received zero training gradient — every recipe's anchor_lookup_path is pilot-anchor-lookup.json, whose 67,708 keys carry no letters and cover US/DE/FR only. postcode-gb.bin is the only artifact that puts a non-zero value in that slot, so shipping it fed an untrained input direction on every GB parse (it fires on all 106 postcode-carrying gb-golden rows). Measured anchor-OFF strictly better: exact postcode 294/318 → 318/318 across three registers, dependent_locality 207/207 unchanged. Re-adding this key materializes the binary into neural-weights-en-gb at publish time and silently restores the regression — do it only alongside the retrain that feeds slot 4. The WOF shard (wof/postalcode-gb.db) is untouched and still builds via `mailwoman gazetteer postcode-binary`.",
 			"us": "postalcode-us.db",
-			"fr": "postalcode-intl.db",
-			"gb": "postalcode-gb.db"
+			"fr": "postalcode-intl.db"
 		},
 		"pairIndexByCountry": {
 			"$comment": "The placetype-pair-prior arc's PIX1 retrieval index (placetype-pair-prior arc, Task 3/8) \u2014 mirrors postcodeDBByCountry's shape exactly, but the source is a CSV of (child, parent) tuples rather than a WOF DB, and `--delta` is a REQUIRED calibrated value (no default \u2014 see `mailwoman gazetteer pair-index --help`). `source` is relative to the data root (NOT its `wof/`, unlike postcodeDBByCountry). COUNTRY-SPECIFIC BY DESIGN, same as the runtime resolver (neural/weights.ts's resolvePairIndexSibling): a locale with no entry here simply ships no pair-index sibling and the prior stays inert for it.",
