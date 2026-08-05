@@ -223,6 +223,16 @@ venue-confound floor.
 > bases reproduced 50/69 exactly under the old cache, proving it was measurement context, not code
 > drift. Pin the harness to the production default (`postcode-<cc>.bin` present, anchor + gazetteer
 > channels on) before you read any calibration number.
+>
+> **Correction, 2026-08-05 (#1467): for GB the production default has since moved, and it moved to
+> the configuration this callout was warning against.** `@mailwoman/neural-weights-en-gb` no longer
+> ships `postcode-gb.bin` — the encoder's GB anchor slot was never trained, so feeding it cost 24
+> exact-postcode rows on the `gb-golden` board (294/318 → 318/318 with the anchor inert). The
+> comma-free `dependent_locality` recall this note cites does drop with it, by one row per register
+> (201/207 → 198/207), which is the accepted trade. The rule the callout states is unchanged and
+> still the point: measure in the SHIPPED configuration, whatever it currently is. Read the
+> overlay's `model-card.json` (`gb_artifacts.no_postcode_bin`) rather than assuming a locale's
+> channels from its siblings'.
 
 **The transition-β decision.** The emission δ can win the per-token argmax at the child-start piece
 while the global Viterbi still routes the path through a fused street/locality run — the token votes

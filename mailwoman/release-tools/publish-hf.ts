@@ -25,7 +25,7 @@
  *   --model-card /path/to/model-card.json\
  *   --fst /path/to/fst-en-US.bin\
  *   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json\
- *   --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-en-gb/postcode-gb.bin\
+ *   --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin\
  *   --pair-indexes neural-weights-en-gb/pair-index-gb.bin\
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\

@@ -12,17 +12,20 @@
  *       CI in stripped-down environments still passes.
  *   - The en-gb case exercises the #1177 base-overlay dedup: en-gb ships no model.onnx/tokenizer.model
  *       of its own (declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`), so resolution
- *       must fall through to the en-us package dir (`source` suffixed `+base`) while still resolving
- *       en-gb's OWN `postcode-gb.bin` locally. As of 6.7.0 en-gb ALSO ships its own `model-card.json`
+ *       must fall through to the en-us package dir (`source` suffixed `+base`) while its OWN
+ *       `pair-index-gb.bin` resolves locally. As of 6.7.0 en-gb ALSO ships its own `model-card.json`
  *       (#1249's overlay-local path), so the card-less fallback for `modelCardPath` is dormant for en-gb
  *       (model/tokenizer still fall through to base; only the card resolves locally, per
- *       `resolveFromPackageDir`'s precedence).
- *   - The en-nz case is the same base-overlay dedup in its second (and simpler) form: NO local
- *       postcode binary exists at all (no WOF NZ postcode shard — see the overlay's model-card
- *       `no_postcode_bin` follow-up), so `anchorLookupPath` must be undefined while the overlay's
- *       OWN `pair-index-nz.bin` + model-card resolve locally and model/tokenizer fall through to
- *       base. One test, wiring-only — the country-gate/prior machinery is generic and already
- *       exhaustively covered by the en-gb block below.
+ *       `resolveFromPackageDir`'s precedence). Since 2026-08-05 (#1467) en-gb ALSO asserts NO anchor
+ *       lookup, and both halves of that — the resolver's answer and the `files` manifest — are pinned:
+ *       the encoder's GB anchor slot is untrained, so re-adding `postcode-gb.bin` without a retrain is
+ *       a silent regression, and these are the two assertions that make it loud.
+ *   - The en-nz case is the same base-overlay dedup, and since the en-gb mitigation the two locales
+ *       carry the SAME postcode-less posture for two DIFFERENT reasons — worth keeping straight. en-nz
+ *       ships no `postcode-nz.bin` because no WOF NZ postcode shard exists to build one from (a data
+ *       gap, see that overlay's `no_postcode_bin` follow-up); en-gb ships none because the shard exists
+ *       and feeding it makes GB parses worse (a training gap). Same `anchorLookupPath === undefined`
+ *       assertion, opposite repair.
  *   - The placetype-pair-prior block is the arc's end-to-end smoke: en-gb resolves
  *       `pairIndexPath`, `loadFromWeights` constructs a country-gated `PairIndexResolver` default, and a
  *       real GB dependent_locality address parses with the tag applied. A companion case proves the
@@ -59,6 +62,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test, vi } from "vitest"
 
@@ -103,15 +107,15 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 	}
 }
 
-// The en-gb auto-resolve test's link-dev-weights.ts additionally shells out to the compiled CLI to
-// build postcode-gb.bin from the GB WOF postcode shard (see the script's header) — both must be on
-// disk for that step to run, or the test would either fail on a missing binary or silently exercise
-// an anchor-OFF path it's meant to assert against. Detected the same way `haveModel` is: existsSync
-// through the repo's data-root helpers, never a hardcoded path.
+// Every locale's link-dev-weights.ts shells out to the compiled CLI for its derived artifacts, so the
+// CLI must be built. Detected the same way `haveModel` is: existsSync through the repo's data-root
+// helpers, never a hardcoded path.
+//
+// There is deliberately NO `haveGBWofDB` guard any more (2026-08-05): en-gb stopped building
+// postcode-gb.bin, so the GB WOF postcode shard is no longer a precondition for any test here — and
+// a guard that names a file nothing reads skips tests for a reason that no longer exists.
 const CLI_PATH = repoRootPath("mailwoman", "out", "cli.js")
-const GB_WOF_DB_PATH = dataRootPath("wof", "postalcode-gb.db")
 const haveCLI = existsSync(CLI_PATH)
-const haveGBWofDB = existsSync(String(GB_WOF_DB_PATH))
 
 // The en-gb smoke's link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
 // pair-index-gb.bin from the PPD tuples CSV (see that script's header) — needs the source CSV on disk
@@ -247,13 +251,23 @@ describe("resolveWeights — package auto-resolve", () => {
 	)
 
 	// #1177 base-overlay dedup, en-gb form: model/tokenizer resolve from the en-us base
-	// (mailwoman.baseWeights), while the GB-specific postcode anchor resolves locally.
+	// (mailwoman.baseWeights) while the overlay's own card + pair index resolve locally.
 	//
-	// Requires the compiled CLI + the GB WOF postcode shard on top of `haveModel` — link-dev-weights.ts
-	// shells out to `mailwoman gazetteer postcode-binary` to build postcode-gb.bin (see the script's
-	// header), and that step needs both.
-	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB)(
-		"en-gb resolves model/tokenizer/model-card from the en-us base + postcode-gb.bin locally, and parses",
+	// The anchor assertion is INVERTED as of 2026-08-05 (#1467) and that inversion is the point of the
+	// test. This case used to assert `anchorLookupPath` pointed at a local `postcode-gb.bin`. It now
+	// asserts the opposite, because the encoder's GB anchor slot (slot 4 of LOCALE_ORDER) never received
+	// training gradient — every recipe fed the same US/DE/FR-only pilot lookup — so shipping GB anchors
+	// pushed every GB parse along an untrained input direction. Measured: exact postcode 294/318 with the
+	// binary present vs 318/318 with it absent, on the gb-golden board across three registers.
+	//
+	// So this assertion is a TRIPWIRE, not a description: the failure it exists to catch is someone
+	// re-adding postcode-gb.bin — to `files`, to release.config.json's postcodeDBByCountry, to the
+	// publish workflow's fetch list, or by hand into the package dir — WITHOUT the retrain that feeds
+	// slot 4. That change produces no error and no warning on its own; it just quietly makes GB worse.
+	// If you are here because this test failed, read
+	// `neural-weights-en-gb/model-card.json`'s `gb_artifacts.no_postcode_bin` before touching it.
+	test.skipIf(!haveModel || !haveCLI)(
+		"en-gb resolves model/tokenizer from the en-us base with its own model-card, and has NO anchor lookup (the GB anchor slot is untrained), and parses",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
@@ -261,12 +275,12 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.source).toBe("package:@mailwoman/neural-weights-en-gb+base")
 			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
 			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
-			expect(r.anchorLookupPath?.binary).toBe(true)
-			expect(r.anchorLookupPath?.path).toMatch(/neural-weights-en-gb\/postcode-gb\.bin$/)
+			expect(r.anchorLookupPath).toBeUndefined()
 			// Overlay-local card (6.7.0): en-gb ships its own model-card.json (a verbatim copy of the
-			// base's labels/requires — see that file's header comment), so `resolveFromPackageDir`
-			// resolves it LOCALLY instead of falling through to the en-us base card. The label vocab is
-			// byte-identical either way (STAGE3+, 33 labels), so `assertEmissionWidth` never trips.
+			// base's labels/requires apart from the deliberate conventions + anchor deviations — see that
+			// file's header comment), so `resolveFromPackageDir` resolves it LOCALLY instead of falling
+			// through to the en-us base card. The label vocab is byte-identical either way (STAGE3+, 33
+			// labels), so `assertEmissionWidth` never trips.
 			expect(r.modelCardPath).toMatch(/neural-weights-en-gb\/model-card\.json$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
@@ -275,6 +289,22 @@ describe("resolveWeights — package auto-resolve", () => {
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
+
+	// The packaging half of the same tripwire. The assertion above reads the RESOLVER's answer, which is
+	// derived from the package DIRECTORY; this one reads the package MANIFEST. They can disagree — a
+	// tarball ships what `files` names, a dev worktree resolves what is on disk — and each failure mode
+	// has its own repair, so neither assertion substitutes for the other.
+	test("neural-weights-en-gb's files array does not name a postcode binary", () => {
+		const manifest = parseJSONStrict<{ files: string[] }>(
+			readFileSync(repoRootPath("neural-weights-en-gb", "package.json"), "utf8")
+		)
+
+		expect(manifest.files).not.toContain("postcode-gb.bin")
+		expect(manifest.files.filter((entry) => entry.startsWith("postcode-"))).toEqual([])
+		// The pair-prior capability is untouched by the anchor mitigation — pinned so a future
+		// "clean up the GB overlay" pass cannot take both out in one sweep.
+		expect(manifest.files).toContain("pair-index-gb.bin")
+	})
 
 	// Base-overlay dedup, en-nz form: model/tokenizer/lexicon-less resolution details are all shared
 	// with the en-gb case above — what's NEW here is the postcode-less posture. en-nz ships NO
@@ -328,7 +358,7 @@ describe("resolveWeights — package auto-resolve", () => {
 // Only the LAST test in this block asserts an argmax flip, and it uses `GB_WIDE_MARGIN_ADDRESS` (margin
 // ~3.5), not the knife-edge `GB_DEPENDENT_LOCALITY_ADDRESS` (margin ~0.211).
 describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smoke)", () => {
-	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: pairIndexPath resolves and the country-gated default fires (WIRING — margin-independent)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -353,7 +383,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: the placetype-pair bias at the child token equals the artifact's calibrated delta (margin-independent)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -393,7 +423,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// `placetype-pair-prior.ts`'s module docstring ("Disable semantics") for the three-case contract this
 	// pins the middle case of: a config default IS auto-wired here (en-gb), so `false` is doing real work,
 	// not just matching an already-inert default.
-	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: explicit `placetypePair: false` disables the auto-wired config default for one call (trace applied:false)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -422,7 +452,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: a wide-margin real pair flips the decode — Holland Fen decodes as dependent_locality (the arc's ONE flip assertion)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
@@ -472,7 +502,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// NO row regresses with the artifact on. The beta-less leg pins the pre-beta behavior on the same
 	// bytes: the emission-only prior fires yet the child span still emits nothing — proving the
 	// artifact's transitionBeta (not some other change) is what recovers the row.
-	test.skipIf(!haveModel || !haveCLI || !haveGBWofDB || !havePPDSource)(
+	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
 		"en-gb: the transitionBeta=5 artifact flips a comma-free fused-path row; a beta-less view of the same index does not (TRANSITION-BETA)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
