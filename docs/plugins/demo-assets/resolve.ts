@@ -261,6 +261,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 			if (!target.endsWith(".ts")) {
 				console.warn(`[demo-assets] ${spec} resolved to compiled output (${target}) — dev exports drift?`)
 			}
+
 			aliases[sub ? spec : "@mailwoman/codex$"] = target
 		} catch {
 			console.warn(`[demo-assets] ${spec} not resolvable — alias skipped`)
