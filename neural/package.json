@@ -46,6 +46,11 @@
 			"default": "./out/pair-index-resolver.js",
 			"types": "./out/pair-index-resolver.d.ts"
 		},
+		"./postcode-prefix-index": {
+			"node": "./postcode-prefix-index.ts",
+			"default": "./out/postcode-prefix-index.js",
+			"types": "./out/postcode-prefix-index.d.ts"
+		},
 		"./placetype-census": {
 			"node": "./placetype-census.ts",
 			"default": "./out/placetype-census.js",
