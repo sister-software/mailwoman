@@ -53,6 +53,7 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 		dependent_locality: null,
 		unit: null,
 		postcode_country_scope: null,
+		hierarchy: [],
 		...over,
 	}
 }
