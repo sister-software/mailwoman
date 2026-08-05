@@ -36,6 +36,7 @@
 		"codex",
 		"corpus",
 		"formatter",
+		"geocode-oracle",
 		"record",
 		"match",
 		"registry",
