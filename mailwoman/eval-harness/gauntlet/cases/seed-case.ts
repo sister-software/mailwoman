@@ -6,10 +6,11 @@
  *   The per-case contract for the curated regression corpus — the TS interface, the zod schema the JSONL
  *   rows are validated against on load, and the compile-time bridge that keeps the two from drifting.
  *
- *   `SeedCase` is the SOURCE OF TRUTH; {@linkcode SeedCaseSchema} is its runtime shadow. `SchemaMatchesType`
- *   asserts the two are mutually assignable, so adding a field to one without the other is a `tsc` error,
- *   not a row that silently fails validation at 3 a.m. That is the Database-interface/`createTable` idiom
- *   from AGENTS.md applied to a file format instead of a table.
+ *   `SeedCase` is the SOURCE OF TRUTH; {@linkcode SeedCaseSchema} is its runtime shadow. The three `satisfies`
+ *   bridges at the bottom fail `tsc` if a field reaches one and not the other, or never reaches
+ *   {@linkcode SEED_CASE_KEY_ORDER}. That is the Database-interface/`createTable` idiom from AGENTS.md applied
+ *   to a file format instead of a table — and, as `SameShape`'s docstring records, the obvious one-line version
+ *   of it does not work.
  *
  *   The schema is STRICT: an unknown key in a JSONL row is an error, not ignored. A typo'd `expectLon` that
  *   parsed as "coordinate not asserted" is exactly the input-tail defect this file exists to make loud.
@@ -117,16 +118,41 @@ export const SeedCaseSchema = zod.strictObject({
 })
 
 /**
- * Mutual assignability, evaluated by `tsc`. Resolves to `true` only when the zod schema and {@linkcode SeedCase}
- * describe the same shape; any drift collapses it to `never`, and the `satisfies` below then has nothing to satisfy.
+ * Both directions of `extends`, as a `true`/`never` flag.
  */
 type MutuallyAssignable<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never
+
+/**
+ * `true` only when A and B have the SAME KEYS and the same value types.
+ *
+ * Assignability alone is not enough, and the difference is exactly the drift a corpus schema suffers: an OPTIONAL field
+ * added to one side and not the other keeps both sides mutually assignable (a value missing an optional key is still
+ * assignable), so a pure `MutuallyAssignable` bridge compiles clean through the very change it exists to catch.
+ * Measured 2026-08-05 by adding `driftProbe?: string` to {@linkcode SeedCase} — `tsc -b` passed. The key-set legs below
+ * are what fails it. Every field on this type is optional but one, so this is not a hypothetical.
+ */
+type SameShape<A, B> = [keyof A] extends [keyof B]
+	? [keyof B] extends [keyof A]
+		? MutuallyAssignable<A, B>
+		: never
+	: never
 
 /**
  * The compile-time bridge. If you add a field to {@linkcode SeedCase} and not to {@linkcode SeedCaseSchema} (or the other
  * way round), this line is where `tsc` stops you — `true satisfies never` does not compile.
  */
-export const SCHEMA_MATCHES_TYPE = true satisfies MutuallyAssignable<zod.infer<typeof SeedCaseSchema>, SeedCase>
+export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
+
+/**
+ * The third leg: {@linkcode SEED_CASE_KEY_ORDER} must list EVERY key, not merely valid ones.
+ *
+ * Its `satisfies readonly (keyof SeedCase)[]` checks membership only, so a new field that never reaches the array would
+ * be silently dropped from every emitted row and from the content hash. This fails instead.
+ */
+export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
+	(typeof SEED_CASE_KEY_ORDER)[number],
+	keyof SeedCase
+>
 
 /**
  * Re-key a case into {@linkcode SEED_CASE_KEY_ORDER}, dropping absent optionals.
