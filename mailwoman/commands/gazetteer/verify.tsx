@@ -8,6 +8,14 @@
  *   FTS/bbox coverage, degenerate-extent spot-check (#1015), and the reverse EU panel. Exits non-zero
  *   on any failure — do not swap an artifact that fails here. `build admin` runs this automatically;
  *   the standalone command is for gating an existing DB (e.g. before promoting a staging artifact).
+ *
+ *   It also prints a DERIVED-ARTIFACT FRESHNESS section (2026-08-05): which FST binaries were built
+ *   from this exact database and which were built from some earlier generation of it. That section
+ *   never touches the exit code. The admin DB is a sealed artifact a rebuild REPLACES, so every FST
+ *   derived from it goes stale silently and on its own schedule — the 2026-08-04 swap left
+ *   `fst-global-priority.bin` at a 2026-05-28 build and nothing anywhere noticed. A stale FST is a
+ *   decode-time bias list that is merely OLD, not a reason to refuse a database that is fine, and dev
+ *   trees must keep running; so it warns, names the rebuild command, and gets out of the way.
  */
 
 import { join } from "node:path"
@@ -25,6 +33,10 @@ const OptionsSchema = zod.object({
 		.boolean()
 		.default(true)
 		.describe("Run the reverse EU panel (end-to-end leg). --no-reverse-panel to skip"),
+	fstFreshness: zod
+		.boolean()
+		.default(true)
+		.describe("Report FST artifacts built from an older generation of this DB. --no-fst-freshness to skip"),
 })
 
 export { OptionsSchema as options }
@@ -46,6 +58,32 @@ const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) =>
 				const reverse = await verifyReversePanel(dbPath)
 				checks.push(...reverse.checks)
 				ok = ok && reverse.ok
+			}
+
+			if (options.fstFreshness) {
+				// Lazy: the FST module pulls the resolver + the libpostal dictionaries, and a verify run
+				// that skips this section should not pay for either.
+				const { checkAdminDerivedFSTFreshness } = await import("../../gazetteer-pipeline/fst.ts")
+				const rows = checkAdminDerivedFSTFreshness(dbPath)
+				const stale = rows.filter((row) => row.staleReason)
+				const missing = rows.filter((row) => !row.present)
+
+				console.error(`\nDerived FST artifacts vs ${dbPath} (advisory — does not affect the verdict):`)
+
+				for (const row of rows) {
+					if (!row.present) {
+						console.error(`  – ${row.artifact}: absent`)
+					} else if (row.staleReason) {
+						console.error(`  ✗ ${row.artifact}: ${row.staleReason}`)
+						console.error(`      rebuild: ${row.rebuildCommand}`)
+					} else {
+						console.error(`  ✓ ${row.artifact}: built ${row.builtAt} from this database`)
+					}
+				}
+
+				console.error(
+					`  ${stale.length} stale, ${missing.length} absent, ${rows.length - stale.length - missing.length} current`
+				)
 			}
 
 			return { ok, checks }

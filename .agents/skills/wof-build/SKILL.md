@@ -30,26 +30,34 @@ node mailwoman/out/cli.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
 Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
 
 ```bash
-node mailwoman/out/cli.js gazetteer importance --db /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db
+node mailwoman/out/cli.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
 ```
 
-### 3. Build FST gazetteer binary (~3s)
+**This step must precede step 3, and as of 2026-08-05 it has never run against the live admin DB.**
+`admin-global-priority.db` carries `place_population` and no `place_importance`, so the FST builder
+takes its documented fallback and every shipped FST's `importance` is population-scaled. Verified by
+rebuilding: the 2026-08-05 artifacts' importance values are bit-identical to the 2026-07-26 ones, and
+`place_population` row counts (743,268 → 1,519,518) match the provenance field both builds recorded
+as `importanceMatches`. See #1142.
+
+### 3. Build the per-locale FST gazetteers (~4 min, mostly the shared ambiguity scan)
+
+Use the CLI, not a hand-rolled `node -e`. It applies the degenerate-surface curation, runs the
+surface-ambiguity scan once across all locales, and stamps the source DB's md5 into each artifact's
+provenance trailer (see step 5).
 
 ```bash
-node -e "
-import { buildFstFromWof } from '@mailwoman/resolver-wof-sqlite/fst-builder'
-import { serializeFst } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
-import { writeFileSync } from 'node:fs'
-const { matcher, result } = buildFstFromWof({
-  dbPath: '/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db',
-  countries: ['US'],
-  onProgress: (phase, msg) => console.error(phase + ': ' + msg),
-})
-const buf = serializeFst(matcher)
-writeFileSync('docs/static/mailwoman/fst-en-US.bin', buf)
-console.log('FST: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB, ' + result.stateCount + ' states, ' + result.placeCount + ' places')
-"
+node mailwoman/out/cli.js gazetteer build fst \
+  --output $MAILWOMAN_DATA_ROOT/wof/fst-staging-$(date -u +%F)
 ```
+
+Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and
+the swap into `fst-per-locale/` is operator-gated: an FST changes decoder behaviour, so it moves
+after the battery, not as a side effect of a build.
+
+**`fst-global-priority.bin` and the CJK three (`fst-{ja-jp,zh-cn,ko-kr}.bin`) have no builder.** They
+predate `FST_LOCALES` (#1318) and nothing in the tree can regenerate them; the freshness check in
+step 5 reports them as stale with `NO BUILDER` rather than pretending a command exists.
 
 ### 4. Build slim WOF DB for browser (~20s)
 
@@ -63,29 +71,59 @@ node resolver-wof-sqlite/out/build-slim-cli.js \
 
 ### 5. Verify
 
+The FST freshness section of `gazetteer verify` answers "which artifacts were built from THIS
+database" — the question nothing could answer before 2026-08-05, which is how the 2026-08-04 admin
+swap left every FST pointing at a gazetteer that no longer existed:
+
 ```bash
-# FST query test
+node mailwoman/out/cli.js gazetteer verify --no-reverse-panel
+```
+
+It compares each artifact's stamped `sourceDBMD5` against the DB on disk. The section is ADVISORY —
+it never changes the exit code, because a stale FST says nothing about whether the database is sound,
+and a dev tree with an old bias list must still run. The same check runs from the weights linkers
+(`neural-weights-{en-us,en-gb,fr-fr}/scripts/link-dev-weights.ts`), so `yarn test` surfaces the drift
+too.
+
+```bash
+# Query smoke on a staged artifact
 node -e "
 import { readFileSync } from 'node:fs'
-import { deserializeFst } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
-const buf = readFileSync('docs/static/mailwoman/fst-en-US.bin')
-const matcher = deserializeFst(buf)
+import { deserializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
+import { peekFSTStampFields } from '@mailwoman/resolver-wof-sqlite/fst-freshness'
+const path = process.env.FST
+console.log('stamp:', JSON.stringify(peekFSTStampFields(path)?.provenance))
+const matcher = deserializeFST(readFileSync(path))
 console.log('States:', matcher.stateCount, 'Places:', matcher.placeCount)
 const r = matcher.query('new york')
 console.log('New York:', r.accepting.length, 'interpretations')
 for (const p of r.accepting.slice(0, 3)) console.log(' ', p.placetype, p.name, 'imp:', p.importance.toFixed(3))
 "
-
-# Report sizes
-ls -lh docs/static/mailwoman/
 ```
+
+**Watch `importanceMatches` in the stamp.** The builder falls back to `place_population` when the DB
+has no `place_importance` table, and no admin DB has ever carried one (#1142) — so the FST's
+`importance` field is population-scaled, not Wikipedia importance, and the provenance field counts
+population rows rather than importance matches. Step 2 exists to fix that; until it runs against the
+live DB, that is what the number means.
 
 ## Expected output
 
-| Artifact      | Size   | Contents                               |
-| ------------- | ------ | -------------------------------------- |
-| fst-en-US.bin | ~9 MB  | 60K states, 94K+ places                |
-| wof-hot.db    | ~35 MB | Top-1000 US localities + all postcodes |
+Measured against `admin-global-priority.db` md5 `1e963a54` (2026-08-04), build 2026-08-05:
+
+| Artifact      | Size    | States  | Places  | Insertions | Excluded |
+| ------------- | ------- | ------- | ------- | ---------- | -------- |
+| fst-en-us.bin | 21.8 MB | 160,246 | 236,257 | 274,245    | 3,383    |
+| fst-fr-fr.bin | 9.4 MB  | 63,664  | 101,601 | 105,711    | 270      |
+| fst-en-gb.bin | 3.9 MB  | 32,604  | 41,821  | 43,913     | 174      |
+| fst-de-de.bin | 8.1 MB  | 66,048  | 84,701  | 85,534     | 333      |
+| wof-hot.db    | ~35 MB  | —       | —       | —          | —        |
+
+A rebuild that reproduces those five numbers per locale is a no-op except for parent chains and the
+stamp — the counts held exactly across the 2026-08-04 admin swap, because `macrohood`/`microhood` are
+not in the builder's `DEFAULT_PLACETYPES`. The ingest still reaches the artifact, but only as ancestry:
+2,602 US / 67 GB / 19 FR neighbourhood chains grew from one hop to the full walk once their macrohood
+parents existed to walk through.
 
 ## When to run
 
@@ -93,3 +131,5 @@ ls -lh docs/static/mailwoman/
 - After refreshing wikimedia-importance scores
 - Before a model release (ensures demo assets are current)
 - After changing the FST builder or serialization format
+- **After any `admin-global-priority.db` swap** — that is what invalidates every FST, and step 5's
+  freshness check is what tells you it happened

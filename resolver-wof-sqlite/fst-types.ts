@@ -66,6 +66,23 @@ export interface FSTProvenance {
 	nameInsertions: number
 	importanceMatches: number
 	sourceDB?: string
+	/**
+	 * MD5 of the source database's bytes at build time — the artifact's link to the gazetteer it is a projection of.
+	 *
+	 * `sourceDB` records the PATH, which is exactly the field that cannot change when the bytes behind it do: the admin
+	 * DB is a sealed readonly artifact that a rebuild REPLACES in place, so every FST built before the 2026-08-04 swap
+	 * still names the current file and none of them was built from it. Compared by `fst-freshness.ts`.
+	 *
+	 * `undefined` = built before the stamp existed (every artifact predating 2026-08-05). NEVER conflate that with "built
+	 * from a database whose md5 is unknown" — the freshness check reports the two in different words.
+	 */
+	sourceDBMD5?: string
+	/**
+	 * Byte size of the source database at build time. Not redundant with {@link FSTProvenance.sourceDBMD5}: it survives a
+	 * truncated source and it is what makes a staleness warning legible — "5,273,722,880 → 5,372,076,032" names the
+	 * rebuild, a hex delta does not.
+	 */
+	sourceDBBytes?: number
 	modelCardVersion?: string
 	/**
 	 * Degenerate-surface curation policy applied at build time (absent = uncurated build).
@@ -79,6 +96,12 @@ export interface FSTProvenance {
 
 export interface BuildFSTOpts {
 	dbPath: string
+	/**
+	 * Pre-computed identity of `dbPath` to stamp into provenance. Omit and the builder reads it via
+	 * `readWOFSourceIdentity` (sidecar-cached). Supply it when the digest is already in hand, or when the caller is
+	 * building from something whose identity it defines itself.
+	 */
+	sourceIdentity?: { md5: string; bytes: number }
 	countries?: string[]
 	placetypes?: PlacetypeID[]
 	languages?: string[]

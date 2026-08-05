@@ -34,6 +34,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
+import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { TextSpliterator } from "spliterator"
@@ -88,6 +89,85 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["en-gb", ["GB"]],
 	["de-de", ["DE"]],
 ])
+
+/**
+ * Every FST artifact that is a projection of the WOF admin DB, relative to the wof data-root dir.
+ *
+ * `fst-street-morphology.bin` is deliberately ABSENT: it is built from the in-repo libpostal dictionaries, so the admin
+ * DB's md5 says nothing about whether it is current and stamping it against one would be a lie the guard then enforces.
+ * The CJK three and `fst-global-priority.bin` ARE here despite having no entry in {@link FST_LOCALES} — they were built
+ * by the pre-#1318 flow and nothing can rebuild them today, which is a fact the check should surface rather than hide.
+ */
+export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
+	"fst-per-locale/fst-en-us.bin",
+	"fst-per-locale/fst-fr-fr.bin",
+	"fst-per-locale/fst-en-gb.bin",
+	"fst-per-locale/fst-de-de.bin",
+	"fst-per-locale/fst-ja-jp.bin",
+	"fst-per-locale/fst-zh-cn.bin",
+	"fst-per-locale/fst-ko-kr.bin",
+	"fst-global-priority.bin",
+]
+
+/**
+ * One artifact's verdict against the admin DB it should have been built from.
+ */
+export interface FSTFreshnessRow {
+	artifact: string
+	present: boolean
+	/**
+	 * `undefined` = current. Otherwise the prose from `fstStaleReason`.
+	 */
+	staleReason?: string
+	builtAt?: string
+	rebuildCommand: string
+}
+
+/**
+ * Check every admin-derived FST against `dbPath`, for the `gazetteer verify` freshness section.
+ *
+ * WHY IT REPORTS RATHER THAN FAILS. `gazetteer verify` gates a DATABASE, and a stale FST says nothing about whether
+ * that database is sound — the arrow runs the other way. The artifacts also cannot be rebuilt as a side effect of a
+ * verify: a locale FST build is minutes, its output is staged, and the swap is operator-gated because an FST changes
+ * decoder behaviour. So the section exists to make the drift visible at the moment the operator is already looking at
+ * the gazetteer, with the command that starts fixing it. The caller decides what to do with the exit code; today it
+ * does nothing, and that is deliberate.
+ *
+ * The exclusion-policy expectation applies ONLY to locales the current builder can produce. Naming a policy for
+ * `fst-ja-jp.bin` would report the true-but-useless "(none) → v1.1" on an artifact no command can rebuild, burying the
+ * reason that matters.
+ */
+export function checkAdminDerivedFSTFreshness(dbPath: string): FSTFreshnessRow[] {
+	const source = readWOFSourceIdentity(dbPath)
+	const wofRoot = String(dataRootPath("wof"))
+
+	return ADMIN_DERIVED_FST_ARTIFACTS.map((relative): FSTFreshnessRow => {
+		const path = join(wofRoot, relative)
+		const locale = /fst-per-locale\/fst-(?<locale>[a-z]{2}-[a-z]{2})\.bin$/.exec(relative)?.groups?.locale
+		const buildable = locale !== undefined && FST_LOCALES.has(locale)
+
+		const rebuildCommand = buildable
+			? `mailwoman gazetteer build fst --locales ${locale}`
+			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
+
+		if (!existsSync(path)) return { artifact: relative, present: false, rebuildCommand }
+
+		const fields = peekFSTStampFields(path)
+
+		const staleReason = fstStaleReason(fields, {
+			source,
+			...(buildable ? { exclusionPolicy: EXCLUSION_POLICY_ID } : {}),
+		})
+
+		return {
+			artifact: relative,
+			present: true,
+			...(staleReason === undefined ? {} : { staleReason }),
+			...(fields?.provenance?.builtAt ? { builtAt: fields.provenance.builtAt } : {}),
+			rebuildCommand,
+		}
+	})
+}
 
 /**
  * One dictionary line = canonical|variant|variant… — every pipe-separated form is a surface.

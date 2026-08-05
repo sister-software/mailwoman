@@ -61,6 +61,13 @@ const MAGIC = Buffer.from("FST\0", "ascii")
 const VERSION = 4
 
 /**
+ * The format version this tree WRITES, published so a freshness guard can call an older artifact format-stale without
+ * re-typing the number. Mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1: one constant, so a version bump cannot be
+ * noticed by some checkers and not others. See `fst-freshness.ts`.
+ */
+export const FST_FORMAT_VERSION = VERSION
+
+/**
  * Fixed header size in bytes: magic, version, and the section offsets that follow it.
  */
 const HEADER_SIZE = 32

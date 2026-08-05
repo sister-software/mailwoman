@@ -13,6 +13,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { readWOFSourceIdentity } from "./fst-freshness.ts"
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
 import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
@@ -344,6 +345,15 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
 
+	// The build stamp (2026-08-05). `sourceDB` alone was never enough to tell a reader whether this
+	// artifact matches the database at that path — the admin DB is sealed and REPLACED by a rebuild, so
+	// the path is constant across every generation of it. Hashing costs 7.3 s for the 5.27 GB admin DB
+	// and is free whenever the `.md5` sidecar is current, which the admin build already writes.
+	// `sourceIdentity` lets a caller that already knows the digest (or is building from something that
+	// is not a file at all) supply it instead.
+	progress("stamp", `Reading source identity for ${opts.dbPath}`)
+	const source = opts.sourceIdentity ?? readWOFSourceIdentity(opts.dbPath)
+
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries,
@@ -353,6 +363,8 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		nameInsertions: insertCount,
 		importanceMatches: importanceMap.size,
 		sourceDB: opts.dbPath,
+		sourceDBMD5: source.md5,
+		sourceDBBytes: source.bytes,
 		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined
 			? { exclusionPolicy: opts.exclusionPolicy ?? "unspecified", excludedInsertions: excludedCount }
 			: {}),

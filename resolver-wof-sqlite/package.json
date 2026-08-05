@@ -61,6 +61,11 @@
 			"default": "./out/fst-matcher.js",
 			"types": "./out/fst-matcher.d.ts"
 		},
+		"./fst-freshness": {
+			"node": "./fst-freshness.ts",
+			"default": "./out/fst-freshness.js",
+			"types": "./out/fst-freshness.d.ts"
+		},
 		"./fst-serialize": {
 			"node": "./fst-serialize.ts",
 			"default": "./out/fst-serialize.js",
