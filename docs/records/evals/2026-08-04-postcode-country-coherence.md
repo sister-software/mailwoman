@@ -4,6 +4,12 @@
 opt-in, default OFF. Default-on is a D-rule call the operator makes; §5 says what evidence is still
 missing.
 
+> **Added 2026-08-05 — the flag flipped.** The evidence §5 asked for was gathered in
+> [`2026-08-05-postcode-coherence-default-on-evidence.md`](./2026-08-05-postcode-coherence-default-on-evidence.md)
+> and the operator promoted `postcodeCountryCoherence` to **default-ON**. Everything below is the
+> record as it stood at the opt-in landing and is left unedited; where it says "opt-in" or "default
+> OFF", read "was opt-in until 2026-08-05". The opt-out is `false` / `--no-postcode-country-coherence`.
+
 Follow-up to [`2026-08-03-postcode-locality-scoping.md`](./2026-08-03-postcode-locality-scoping.md),
 which diagnosed why `12 Rue de Rivoli, 75001 Paris` resolves to Texas and named two blockers. This
 record lands the mechanism and measures it.

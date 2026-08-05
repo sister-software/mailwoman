@@ -18,7 +18,11 @@
  *   1. A COHERENT default country always wins (no override, no metadata, byte-stable walk).
  *   2. Zero coherent countries abstains; TWO OR MORE coherent countries abstains.
  *   3. The pass is inert without a postcode, without a locality, without a default country, and
- *      whenever the flag is off — which is the default.
+ *      whenever the flag is explicitly `false`.
+ *
+ *   The flag is DEFAULT-ON as of the 2026-08-05 promotion, so every "off" leg below sets `false`
+ *   explicitly. Omitting the option no longer means off, and a leg that relied on omission would
+ *   quietly stop testing what its name says.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -492,9 +496,16 @@ describe("firstLocalityValue", () => {
 })
 
 describe("resolveTree + postcode-country coherence", () => {
-	it("resolves '12 Rue de Rivoli, 75001 Paris' to Paris TEXAS with the flag off (the reported bug)", async () => {
+	it("resolves '12 Rue de Rivoli, 75001 Paris' to Paris TEXAS with the flag OFF (the reported bug)", async () => {
 		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
-		const out = await resolver.resolveTree(addressTree("75001", "Paris"), { defaultCountry: "US" })
+
+		// The explicit `false` is the whole point of this row now: since the 2026-08-05 promotion an UNSET flag
+		// means ON, so an options object that just omits it no longer reproduces the bug.
+		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
+			defaultCountry: "US",
+			postcodeCountryCoherence: false,
+		})
+
 		const locality = nodeByTag(out, "locality")
 
 		expect(locality?.metadata?.["resolver_country"]).toBe("US")
@@ -514,6 +525,23 @@ describe("resolveTree + postcode-country coherence", () => {
 		})
 
 		const locality = nodeByTag(out, "locality")
+		expect(locality?.metadata?.["resolver_country"]).toBe("FR")
+		expect(locality?.lat).toBeCloseTo(PARIS_FR.lat, 3)
+		expect(locality?.lon).toBeCloseTo(PARIS_FR.lon, 3)
+		expect(locality?.metadata?.["postcode_city_mismatch"]).toBeUndefined()
+
+		// The postcode node re-scopes too — this is what stops the Addison fallback.
+		const postcode = nodeByTag(out, "postcode")
+		expect(postcode?.metadata?.["resolver_country"]).toBe("FR")
+		expect(postcode?.lat).toBeCloseTo(PC_75001_FR.lat, 3)
+	})
+
+	it("runs by default when the flag is UNSET (operator-promoted to default-ON 2026-08-05)", async () => {
+		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const out = await resolver.resolveTree(addressTree("75001", "Paris"), { defaultCountry: "US" })
+		const locality = nodeByTag(out, "locality")
+
+		expect(locality?.metadata?.["postcode_country_scope"]).toBe("FR")
 		expect(locality?.metadata?.["resolver_country"]).toBe("FR")
 		expect(locality?.lat).toBeCloseTo(PARIS_FR.lat, 3)
 		expect(locality?.lon).toBeCloseTo(PARIS_FR.lon, 3)
@@ -561,6 +589,7 @@ describe("resolveTree + postcode-country coherence", () => {
 
 		const off = await createWOFResolver(makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
 			defaultCountry: "US",
+			postcodeCountryCoherence: false,
 		})
 
 		const on = await createWOFResolver(makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {

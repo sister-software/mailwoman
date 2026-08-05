@@ -56,6 +56,15 @@ export interface SubVenuePromotion {
 	locale: string
 	decision: "promote" | "reject"
 	/**
+	 * Set when the board's verdict is valid ONLY under a syntactic shape — the machine-readable half of a shape-separable
+	 * confound. `identifier-required` means the phrase is promoted solely in `<phrase> <identifier>` position (Halle 8);
+	 * bare occurrences stay unpromoted. A consumer that reads promotions MUST honour this field: the de-DE `halle` board
+	 * (2026-08-05 five-whys review) is the founding case — its 168-hit confound includes the CITY Halle (Saale), and the
+	 * 32/32-real enumeration that justified promotion was an enumeration of the identifier-bearing shape, not of the
+	 * phrase. Absent = the promotion holds in any shape.
+	 */
+	shape?: "identifier-required"
+	/**
 	 * Occurrences judged genuine venue-interior structure in that locale's census.
 	 */
 	real: number
@@ -167,6 +176,7 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		phrase: "halle",
 		locale: "de-DE",
 		decision: "promote",
+		shape: "identifier-required",
 		real: 32,
 		confound: 168,
 		confoundNote:

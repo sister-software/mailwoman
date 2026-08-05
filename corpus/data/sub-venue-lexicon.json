@@ -18139,6 +18139,7 @@
 			"phrase": "halle",
 			"locale": "de-DE",
 			"decision": "promote",
+			"shape": "identifier-required",
 			"real": 32,
 			"confound": 168,
 			"confoundNote": "The confound is 97 hits of the CITY Halle — Halle (Saale), population 240,000, plus Halle (Westf) — and 68 village and event halls (PHOENIX Halle, Urexweiler Halle), which are whole venues. That is a worse confound than wave 1 assumed when it called `Halle 2` the German counter-example to en-GB: the word is also a locality. It is promoted anyway because the confound is SEPARABLE BY SHAPE, and that was checked rather than assumed — dumping all 32 <halle> <identifier> hits returns numbered factory, trade-fair and airport halls (VW Halle 42, Audi GVZ Halle G, Messe West Halle 8, Flughafen Halle 7, Speyer Halle 101) and not one instance of the city. Never modifier-eligible and never proposed bare.",

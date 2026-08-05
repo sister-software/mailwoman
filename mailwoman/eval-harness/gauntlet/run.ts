@@ -74,9 +74,9 @@ export interface GauntletRunOptions {
 	 */
 	n?: number
 	/**
-	 * RESOLVER-side lever pin (#42): force `postcodeCountryCoherence` ON for every layer. The library default is OFF, so
-	 * an unpinned run grades the shipped configuration — run the gate BOTH ways and diff the verdicts, which is what the
-	 * D-rule asks of a would-be default-on mechanism.
+	 * RESOLVER-side lever pin (#42): force `postcodeCountryCoherence` ON or OFF for every layer. `undefined` grades the
+	 * shipped configuration, which since the 2026-08-05 promotion is ON — so the pin that carries evidence now is the OFF
+	 * one. Run the gate BOTH ways and diff the verdicts, which is what the D-rule asks of a default-on mechanism.
 	 */
 	postcodeCountryCoherence?: boolean
 }

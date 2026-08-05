@@ -306,7 +306,9 @@ export interface GeocodeDeps {
 	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
 	 * geographically consistent in exactly ONE country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
 	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal shards attached in Addison. **Default
-	 * OFF** (D-rule: opt-in until the resolver gauntlet clears the tier-1 locales).
+	 * ON** (operator-promoted 2026-08-05 — gauntlet zero newly-failing gated cases pinned either way, 56,000 pair
+	 * evaluations across both backends at zero false positives; see
+	 * `docs/records/evals/2026-08-05-postcode-coherence-default-on-evidence.md`). Pass `false` to opt out.
 	 *
 	 * On this path it also re-selects the rooftop tier. Shard selection happens BEFORE the resolve and keys off
 	 * `defaultCountry ?? placedCountry`, so a US-scoped call would pick no national/OSM shard and leave the corrected FR
@@ -814,11 +816,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	// #42 postcode-country coherence (opt-in). The resolver owns the verdict — it is the only place that can test the
-	// (postcode, locality) pair against the gazetteer — so it is switched on here and its answer read back off the tree.
-	if (deps.postcodeCountryCoherence) {
-		opts.postcodeCountryCoherence = true
-	}
+	// #42 postcode-country coherence. Default-ON at the core resolver since 2026-08-05; propagated explicitly here for
+	// the same reason `adminCoherence` is — so `deps.postcodeCountryCoherence: false` stays an effective opt-out rather
+	// than an unset field that re-defaults ON downstream. The resolver owns the verdict (it is the only place that can
+	// test the (postcode, locality) pair against the gazetteer); its answer is read back off the tree below.
+	opts.postcodeCountryCoherence = deps.postcodeCountryCoherence !== false
 
 	let resolved = await deps.resolver.resolveTree(tree, opts)
 

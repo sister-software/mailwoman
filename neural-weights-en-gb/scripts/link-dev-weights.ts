@@ -8,21 +8,30 @@
  *   See @mailwoman/neural-weights-en-us/scripts/link-dev-weights.ts for the rationale.
  *
  *   A single multilingual model serves both en-us and en-gb (byte-identical artifact;
- *   en-gb just carries its own postcode-anchor calibration). Re-symlinks the SAME files
+ *   en-gb carries its own retrieval data on top). Re-symlinks the SAME files
  *   as en-us until per-locale training lands. Keep these defaults in lockstep with en-us's
  *   DEFAULT_* on every ship. The md5 guard reads en-us's model-card `files_md5` — one truth
  *   for the one artifact (en-gb's own card carries no files_md5 block).
  *
  *   ALSO links the soft-feed siblings a fresh worktree is otherwise missing (the
- *   fresh-worktree anchor-OFF gap: `link-dev-weights.ts` historically symlinked only
- *   model+tokenizer, leaving `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` /
- *   `postcode-gb.bin` absent — the CLI then parses anchor-OFF/gazetteer-OFF with only a
- *   stderr warning). The two lexicons are checked-in repo files (`data/gazetteer/…`), so
- *   they're symlinked straight from there. `postcode-gb.bin` has no committed source — it's
- *   a derived artifact built from the WOF GB postcode shard — so this script BUILDS it in
- *   place via the compiled `gazetteer postcode-binary` CLI (same command
- *   `scripts/copy-weights.ts` runs at publish time), mirroring how `postcode-fr.bin`
- *   already lives as a real (non-symlinked) file in `neural-weights-fr-fr/`.
+ *   fresh-worktree gazetteer-OFF gap: `link-dev-weights.ts` historically symlinked only
+ *   model+tokenizer, leaving `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json`
+ *   absent — the CLI then parses gazetteer-OFF with only a stderr warning). Both lexicons are
+ *   checked-in repo files (`data/gazetteer/…`), so they're symlinked straight from there.
+ *
+ *   DELIBERATELY NOT LINKED: `postcode-gb.bin`. This script used to build it in place via the
+ *   compiled `gazetteer postcode-binary` CLI. It no longer does, and the package no longer ships
+ *   it, because the encoder's GB anchor slot was never trained — every training recipe's
+ *   `anchor_lookup_path` is `pilot-anchor-lookup.json`, whose 67,708 keys carry zero letters and
+ *   cover US/DE/FR only, so slot 4 of `LOCALE_ORDER` (`neural/anchor-inference.ts`) took no
+ *   gradient. `postcode-gb.bin` is the ONLY artifact that puts a non-zero value in that slot, and
+ *   it fires on 106/120 gb-golden rows (every row carrying a postcode), feeding an untrained input
+ *   direction on essentially every GB parse. Measured on the shipped board: exact postcode 294/318
+ *   with the anchor on vs 318/318 with it inert, dependent_locality 207/207 either way. en-nz is
+ *   the precedent — it ships no postcode binary and runs anchor-OFF by the same tolerant-loader
+ *   contract. The shard and the CLI both still work; rebuild the binary by hand when the retrain
+ *   lands. See `neural-weights-en-gb/model-card.json`'s `gb_artifacts.no_postcode_bin` and
+ *   `docs/records/evals/2026-08-05-en-gb-anchor-off.md`.
  *
  *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc) the same way: no
  *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
@@ -45,9 +54,8 @@
  *   regardless — the prior composes with whatever model eventually ships. Path forward: v3.12
  *   (`docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md`, operator-gated redesign).
  *
- *   FRESHNESS GUARD on the skip-if-exists path: a bare `existsSync` skip is
- *   right for `postcode-gb.bin` (rebuilds in seconds from a small WOF shard) but wrong on its own
- *   here — an existing `pair-index-gb.bin` could be stale against either (a) a bumped `--delta`
+ *   FRESHNESS GUARD on the skip-if-exists path: a bare `existsSync` skip would be wrong here —
+ *   an existing `pair-index-gb.bin` could be stale against either (a) a bumped `--delta`
  *   literal below (the #397-guard-style md5-lockstep discipline the model/tokenizer check above
  *   already uses, applied to this artifact) or (b) a changed PPD source CSV on disk. Mirrors that
  *   SAME md5-lockstep pattern: peek the existing binary's header (magic + header block ONLY, via
@@ -240,43 +248,23 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 }
 
 /**
- * `postcode-gb.bin` has no committed source (it's derived from the WOF GB postcode shard), so build it in place with
- * the compiled `gazetteer postcode-binary` CLI — the same command `scripts/copy-weights.ts` runs per-locale at publish
- * time. Requires `yarn compile` to have run first (mailwoman/out/cli.js must exist); skips with a warning (not a hard
- * failure) so a worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
- */
-const GB_WOF_DB = dataRootPath("wof", "postalcode-gb.db")
-/**
- * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
+ * Compiled CLI used to run the build step below. Requires `yarn compile` to have run.
  */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
+
 /**
- * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
+ * A `postcode-gb.bin` left behind by a checkout that PREDATES the 2026-08-05 anchor-off mitigation is worse than one
+ * that was never built: `resolveAnchorLookupSibling` finds it package-dir-relative and silently turns the untrained GB
+ * anchor slot back on for every local parse, eval and gate run in this worktree — with no warning, because a present
+ * artifact is exactly what the loader expects. Remove it, loudly. (The artifact is derived: the WOF GB shard and
+ * `gazetteer postcode-binary` both still work, so the retrain rebuilds it in seconds.)
  */
-const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
+const STALE_POSTCODE_BIN = resolve(PKG_DIR, "postcode-gb.bin")
 
-if (!existsSync(CLI)) {
-	console.error(
-		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build postcode-gb.bin.`
-	)
-} else if (!existsSync(GB_WOF_DB)) {
-	console.error(
-		`WARNING: missing ${GB_WOF_DB} — postcode-gb.bin not built; the anchor channel will resolve OFF for GB.`
-	)
-} else {
-	const result = spawnSync(
-		process.execPath,
-		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `GB:${GB_WOF_DB}`],
-		{ stdio: "inherit" }
-	)
+if (existsSync(STALE_POSTCODE_BIN)) {
+	unlinkSync(STALE_POSTCODE_BIN)
 
-	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
-		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
-
-		process.exit(1)
-	}
-
-	console.log(`built ${POSTCODE_BIN_DEST}`)
+	console.log(`removed stale ${STALE_POSTCODE_BIN} — en-gb ships anchor-OFF (see the header comment)`)
 }
 
 /**
@@ -285,12 +273,12 @@ if (!existsSync(CLI)) {
  * lockstep with the value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header
  * comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed, not the
  * checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a worktree without the
- * PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard, rebuilds in seconds),
- * the PPD tuples CSV is ~25.6M rows — a cold build takes several minutes (measured 2026-07-22: ~4-5 min).
- * `weights.test.ts` invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING
- * UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact is verifiably
- * FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a bumped delta or a changed PPD
- * snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
+ * PPD source CSV can still link everything else. The PPD tuples CSV is ~25.6M rows — a cold build takes several minutes
+ * (measured 2026-07-22: ~4-5 min), which is why the freshness guard below exists at all. `weights.test.ts` invokes this
+ * script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING UNCONDITIONALLY here would make
+ * every test run pay that cost. Skip ONLY when the existing artifact is verifiably FRESH (see the FRESHNESS GUARD
+ * module-doc paragraph above) — a stale skip would let a bumped delta or a changed PPD snapshot silently ship a
+ * byte-identical-looking but out-of-date artifact into every test run.
  */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 /**
