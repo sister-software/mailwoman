@@ -14,6 +14,13 @@
  *   Promote gate (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
  *   One layer only:                mailwoman eval gauntlet --layer regression|metamorphic|holdout …
  *   A RESOLVER lever, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
+ *   The load-bearing MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
+ *
+ *   That last one is not a gate. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
+ *   measures what the deletion costs, per (component, locale) — the operator's "where does the pipeline falter when a
+ *   part of the address is missing?" It is reachable only via `--layer` and is deliberately absent from the combined
+ *   verdict below: it has no stored expected values to regress against, and a measurement that could fail a ship would
+ *   invite tuning the corpus instead of the parser.
  *
  *   The last of those is the resolver-lever pin (#42, added 2026-08-05). The gate could swap the MODEL under test but
  *   not the resolver configuration, so a resolver lever proposed for default-on had no way through the D-rule's
@@ -28,15 +35,19 @@
  *   Wire into the release flow as a `before:release` gate (RELEASING.md): a non-zero exit blocks the ship.
  */
 
+import { type AblationLayerOptions, runAblationLayer } from "./ablation.ts"
 import { describeResolverLevers, type GauntletResolverLevers } from "./harness.ts"
 import { runHoldoutLayer } from "./holdout.ts"
 import { runMetamorphicLayer } from "./metamorphic.ts"
 import { type GauntletLayerOptions, runRegressionLayer } from "./regression.ts"
 
 /**
- * The three Gauntlet layers.
+ * The Gauntlet layers. The first three are GATES and make up the combined verdict; `ablation` is a MEASUREMENT layer —
+ * reachable only via `--layer ablation`, deliberately absent from the combined gate below, and incapable of blocking a
+ * ship. It produces the load-bearing map (what deleting each component costs, per locale), which is a question about
+ * the corpus and the resolver rather than a pass/fail about a candidate.
  */
-export type GauntletLayer = "regression" | "metamorphic" | "holdout"
+export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation"
 
 /**
  * Options for {@linkcode runGauntlet}.
@@ -79,6 +90,31 @@ export interface GauntletRunOptions {
 	 * one. Run the gate BOTH ways and diff the verdicts, which is what the D-rule asks of a default-on mechanism.
 	 */
 	postcodeCountryCoherence?: boolean
+	/**
+	 * Ablation: where the map artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>`.
+	 */
+	out?: string
+	/**
+	 * Ablation: restrict which components get deleted (default: all of `ABLATABLE_COMPONENTS`).
+	 */
+	components?: readonly string[]
+	/**
+	 * Ablation: cap the number of CASES (not variants) — a smoke run.
+	 */
+	limit?: number
+}
+
+/**
+ * The ablation layer's options: the shared model/lever ladder plus its own three. Exported and pure for the same reason
+ * as {@linkcode runResolverLevers} — a dropped `--components` filter would silently run the whole corpus.
+ */
+export function runAblationOptions(options: GauntletRunOptions): AblationLayerOptions {
+	return {
+		...runLayerOptions(options),
+		...(options.out ? { outDir: options.out } : {}),
+		...(options.components?.length ? { components: options.components } : {}),
+		...(options.limit ? { limit: options.limit } : {}),
+	}
 }
 
 /**
@@ -132,6 +168,10 @@ async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Prom
 					...(layerOptions.levers ? { levers: layerOptions.levers } : {}),
 				})
 			).exitCode
+		case "ablation":
+			// Exit 0 unless the instrument produced NO cell. The map grades the corpus + resolver, not a candidate,
+			// so it can never block a ship — see the `GauntletLayer` docstring.
+			return (await runAblationLayer(runAblationOptions(options))).pass ? 0 : 1
 	}
 }
 

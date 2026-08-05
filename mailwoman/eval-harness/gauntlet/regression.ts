@@ -89,8 +89,12 @@ const DEFAULT_TOL_M = 5000
 
 /**
  * Map an expect_components key to the assembled-result field it asserts.
+ *
+ * Exported for the ablation layer, which scores a DELETION against the same slot this gate grades — a second copy of
+ * the mapping would let the two disagree about which field `venue` lives in, and the ablation runner would then report
+ * "the slot stayed empty" for a slot it was reading off the wrong field.
  */
-function componentOf(r: GauntletResult, key: string): string | null {
+export function componentOf(r: GauntletResult, key: string): string | null {
 	switch (key) {
 		case "country":
 			return r.country
