@@ -77,6 +77,16 @@ export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 }
 
 /**
+ * The two postcode areas whose assignment in {@link GB_POSTCODE_AREA_COUNTRY} is a MAJORITY call rather than a fact —
+ * TD (Galashiels) straddles the Scotland/England border and SY (Shrewsbury) straddles the Wales/England border, and
+ * both carry real postcodes on the other side of the line. The header above documents them in prose; this is the same
+ * knowledge in a form a build can read, so an artifact that ASSERTS ancestry per postcode district can withhold the
+ * constituent country here instead of asserting a coin-flip. Consumers that only want the coarse majority answer keep
+ * using {@link countryOfPostcodeArea} and ignore this.
+ */
+export const GB_BORDER_STRADDLING_AREAS: ReadonlySet<string> = new Set(["TD", "SY"])
+
+/**
  * True when `area` looks like a valid postcode-area string: one or two ASCII letters.
  */
 function isAreaShape(area: unknown): area is string {
