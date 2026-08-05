@@ -116,6 +116,16 @@ export interface OAResolverEvalOptions {
 	 */
 	anchorRerank?: boolean
 	/**
+	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the ASSEMBLED arms (#1497).
+	 *
+	 * Only the assembled arms can use it — the FST is a decode-time prior applied by `createRuntimePipeline`, and the
+	 * bare `neural` arm calls `classifier.parse` directly. Omit for the byte-stable no-FST default.
+	 *
+	 * This is the tree's only FST-sensitive eval. `eval gauntlet` grades through `parseForGeocode`, which takes no FST at
+	 * all, so an FST change is invisible to it — see the note on `assembledPipeline` below.
+	 */
+	adminFST?: string
+	/**
 	 * #478 leg 2: add the assembled (pipeline) arms.
 	 */
 	assembled?: boolean
@@ -772,10 +782,15 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		tokenizerPath: options.tokenizer || "",
 		modelCardPath: options.modelCard || "",
 		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
+		...(options.adminFST ? { fstPath: options.adminFST } : {}),
 		strict: true,
 		tier: "server",
 		...(ablateToAnchor || anchorOff ? { overrides } : {}),
 	})
+
+	if (options.adminFST) {
+		console.error(`[scorer] FST gazetteer pinned: ${options.adminFST} (assembled arms only)`)
+	}
 
 	console.error(
 		ablateToAnchor
@@ -1086,6 +1101,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		? createRuntimePipeline({
 				classifier: {
 					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
+					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` OFF THE CLASSIFIER, so this
+					// shim — which exists only to force `postcodeRepair: true` — silently dropped the
+					// gazetteer prior for every assembled run before #1497. A bare `{ parse }` literal has no
+					// `fstPath` key, `"fstPath" in classifier` is false, and the pipeline degrades to the
+					// no-FST default without a word. Forward it.
+					...(neural.fstPath ? { fstPath: neural.fstPath } : {}),
 				} as never,
 				resolver: resolver as never,
 				placeCountry: evalPlacer ?? false,

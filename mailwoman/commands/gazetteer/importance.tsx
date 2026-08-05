@@ -13,6 +13,15 @@
  *   the WOF DB must already carry `concordances` (and, for the fallback, `place_population`) — run
  *   `mailwoman gazetteer build admin` first. Step progress streams to stderr; the final tally lands on
  *   stdout.
+ *
+ *   THE JOIN IS NOT A FUNCTION (#1497). 7,061 Wikidata ids name more than one current WOF place, and
+ *   before 2026-08-05 all of them received the same score — `Q18125` (Manchester, England) put 0.7397
+ *   on a 53-person Minnesota village. `gazetteer-pipeline/importance-fanout.ts` decides which
+ *   candidate a fanned-out id actually means (coincident → keep all, since 71.4% of the fan-out is
+ *   one place modelled at several placetypes; else decisive population → keep the winner; else drop
+ *   the id). Its module header carries the survey and the worked cases; read it before changing the
+ *   rule. Dropped places are not left blank — they fall through to the population fallback below,
+ *   which is what they had before Wikipedia importance existed.
  */
 
 import { createReadStream, existsSync, writeFileSync } from "node:fs"
@@ -28,6 +37,12 @@ import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
 import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
+import {
+	emptyFanoutStats,
+	type FanoutCandidate,
+	recordFanout,
+	resolveConcordanceFanout,
+} from "../../gazetteer-pipeline/importance-fanout.ts"
 
 /**
  * Permanent redirect.
@@ -105,21 +120,60 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 		console.error("Loading Wikidata concordances from WOF...")
 
 		let concordances: Map<string, number[]>
+		const fanout = emptyFanoutStats()
 
 		try {
-			const stmt = db.prepare("SELECT id, other_id FROM concordances WHERE other_source = 'wd:id'")
-			const rows = stmt.all() as unknown as Array<{ id: number; other_id: string }>
-			concordances = new Map<string, number[]>()
+			// Joins `spr` for the geometry + population the fan-out guard needs, and restricts to
+			// `is_current = 1` — a deprecated place is not in any consumer's read path, and leaving it
+			// in would let a dead row win a fan-out group. DISTINCT because `concordances` carries
+			// duplicate (id, other_id) rows (Q18125 appears twice for the same place).
+			const stmt = db.prepare(
+				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
+				        s.latitude AS lat, s.longitude AS lon, COALESCE(p.population, 0) AS population
+				 FROM concordances c
+				 JOIN spr s ON s.id = c.id
+				 LEFT JOIN place_population p ON p.id = s.id
+				 WHERE c.other_source = 'wd:id' AND s.is_current = 1`
+			)
+
+			const rows = stmt.all() as unknown as Array<FanoutCandidate & { other_id: string }>
+			const grouped = new Map<string, FanoutCandidate[]>()
 
 			for (const row of rows) {
-				const existing = concordances.get(row.other_id) ?? []
-				existing.push(row.id)
-				concordances.set(row.other_id, existing)
+				const existing = grouped.get(row.other_id)
+
+				if (existing) {
+					existing.push(row)
+				} else {
+					grouped.set(row.other_id, [row])
+				}
 			}
 
-			console.error(`  ${concordances.size} unique Wikidata IDs from ${rows.length} concordance rows`)
-		} catch {
-			throw commandError("No concordances table found. Run `mailwoman gazetteer build admin` first.")
+			concordances = new Map<string, number[]>()
+
+			for (const [wikidataID, candidates] of grouped) {
+				const resolution = resolveConcordanceFanout(candidates)
+				recordFanout(fanout, candidates, resolution)
+
+				if (resolution.keep.length) {
+					concordances.set(wikidataID, resolution.keep)
+				}
+			}
+
+			console.error(`  ${grouped.size} unique Wikidata IDs from ${rows.length} concordance rows`)
+
+			console.error(
+				`  fan-out: ${fanout.fannedGroups} ids name >1 place — ` +
+					`${fanout.coincidentGroups} coincident (kept whole), ` +
+					`${fanout.populationGroups} resolved by population, ` +
+					`${fanout.unresolvableGroups} dropped; ${fanout.droppedPlaces} places lose a mis-joined score`
+			)
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("no such table")) {
+				throw commandError("No concordances table found. Run `mailwoman gazetteer build admin` first.")
+			}
+
+			throw error
 		}
 
 		// Step 2: Get or download the Wikipedia importance TSV
@@ -231,9 +285,10 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			for (const row of popRows) {
 				if (row.population > 0) {
 					const pseudoImportance = Math.min(1, Math.log2(1 + row.population / 1000) / 14)
-					fallbackInsert.run(row.id, pseudoImportance)
-
-					fallbackCount++
+					// `changes` is 0 when OR IGNORE skipped a place that already has a Wikipedia score.
+					// Counting the ATTEMPT instead over-reported the 2026-08-05 build by 110,637 —
+					// `Total in place_importance: 1656663` against a table holding 1,546,026.
+					fallbackCount += fallbackInsert.run(row.id, pseudoImportance).changes > 0 ? 1 : 0
 				}
 			}
 
@@ -241,6 +296,11 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 		} catch {
 			console.error("  No place_population table — skipping fallback")
 		}
+
+		// The total is READ BACK, never derived by adding the two counters. The counters describe what
+		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
+		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
+		const total = (db.prepare("SELECT count(*) AS c FROM place_importance").get() as unknown as { c: number }).c
 
 		await kdb.destroy() // closes the underlying `db` handle
 
@@ -250,7 +310,8 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			`place_importance: ${dbPath}  (${elapsed}s)`,
 			`Wikipedia importance: ${importanceCount} places`,
 			`Population fallback:  ${fallbackCount} places`,
-			`Total in place_importance: ${importanceCount + fallbackCount} places`,
+			`Total in place_importance: ${total} places`,
+			`Fan-out guard: ${fanout.droppedPlaces} places dropped from ${fanout.unresolvableGroups + fanout.populationGroups} ambiguous Wikidata ids (#1497)`,
 		]
 	})
 

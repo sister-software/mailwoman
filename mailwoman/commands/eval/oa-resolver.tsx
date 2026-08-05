@@ -69,6 +69,14 @@ const OptionsSchema = zod.object({
 	postalCityAliasDb: zod.string().optional().describe("#475 opt-in postal-city alias scorer (FTS path)"),
 	// assembled arms
 	assembled: zod.boolean().default(false).describe("#478 leg 2: add the assembled (pipeline) arms"),
+	// Pastel derives the prop from the kebab flag, so `--admin-fst` binds `adminFst` — a lowercase
+	// acronym is REQUIRED here and the house `adminFST` spelling silently never binds (the flag parses,
+	// the value lands nowhere, the eval runs without an FST and reports a plausible number).
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- Pastel flag derivation owns this casing.
+	adminFst: zod
+		.string()
+		.optional()
+		.describe("#1497: pin the per-locale FST gazetteer for the assembled arms (omit = no FST, the shipped default)"),
 	placeCountry: zod.boolean().default(false).describe("#743: production-representative coarse placer"),
 	placeCountryHard: zod.boolean().default(false).describe("#194/#743: hard country filter (safelist-gated)"),
 	placeCountryHardAll: zod.boolean().default(false).describe("Ungated hard-filter measurement (full safelist)"),
@@ -83,13 +91,16 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalOAResolver: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const { adminCoherenceOff, postcodeCountryCoherenceOff, ...rest } = options
+	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
 
 	const state = useCommandTask(() =>
 		oaResolverEval({
 			...rest,
 			noAdminCoherence: adminCoherenceOff,
 			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
+			// Pastel's kebab derivation forces the lowercase-acronym prop above; the harness option keeps
+			// the house spelling, so the rename happens here rather than in the eval's own contract.
+			...(adminFst ? { adminFST: adminFst } : {}),
 		})
 	)
 
