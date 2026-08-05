@@ -15,7 +15,7 @@ This page is the flag contract for the `mailwoman` command-line interface. Each 
 the command's own schema, and each description is that flag's help text verbatim, so this page and
 `mailwoman <command> --help` cannot disagree.
 
-The CLI carries 128 commands. This page documents the 20 that a consumer of the published
+The CLI carries 129 commands. This page documents the 20 that a consumer of the published
 package runs. The rest build the datasets and train the models inside a checkout of the repository,
 and they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).
 
@@ -432,7 +432,7 @@ tutorials under [See also](#see-also) run the ones a self-hosting reader needs.
 
 | Group                 | Commands | Purpose                                                                       |
 | --------------------- | -------- | ----------------------------------------------------------------------------- |
-| `mailwoman corpus`    | 17       | Builds and audits the BIO-labeled training corpus.                            |
+| `mailwoman corpus`    | 18       | Builds and audits the BIO-labeled training corpus.                            |
 | `mailwoman coverage`  | 1        | Builds the demo map's address-coverage overlay tiles.                         |
 | `mailwoman dev`       | 10       | Repository maintenance: source generation, fixture capture, lint passes.      |
 | `mailwoman eval`      | 17       | Runs the evaluation gates that decide whether a model ships.                  |
@@ -453,7 +453,7 @@ flag changes, and nothing catches it. The generator reads the same Pastel and Co
 builds the binary, so a flag string here is the flag string `--help` prints. A test asserts the
 committed page against a fresh render, which turns a stale page into a failing build.
 
-The scope split is deliberate. Publishing all 128 commands would bury the 20 that run against
+The scope split is deliberate. Publishing all 129 commands would bury the 20 that run against
 an installed package under training and dataset tooling that requires the repository, its data root,
 and hours of wall clock. The generator refuses to run if it meets a command group it has never been
 told about, so the boundary is a decision someone makes rather than an omission.
