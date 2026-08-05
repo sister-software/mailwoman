@@ -62,6 +62,60 @@ export function normalizePostcodeName(raw: string): string {
 	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "")
 }
 
+/**
+ * A `[latitude, longitude]` member point of a postcode group.
+ */
+export type PostcodePoint = readonly [number, number]
+
+/**
+ * The #920 MEDOID law: pick the member point nearest the group's mean, never the mean itself.
+ *
+ * A postcode whose evidence is several scattered points has no single "true" centre, and the tempting answer — average
+ * them — puts the code somewhere no address is. The night-31 experiment measured that as a p50 tax severe enough to
+ * fail SK/SI/HR at 1.10–1.94 km CI: the mean displaced coordinates that were already correct. The medoid stays on a
+ * real observation, so a single-member group is exactly its own point and a multi-member group is one of its members.
+ *
+ * Distance is squared-Euclidean in DEGREES, not haversine. At the scale a postcode spans, the ranking the two produce
+ * is the same, and this one carries no trig into a per-group inner loop. Ties go to the earliest member, which makes
+ * the result a pure function of the input order — the property a rebuilt shard's ids depend on.
+ *
+ * Exported (rather than inlined at each ingest) because it is the second half of the #920 pair: every postcode source
+ * that groups member points — GeoNames postal, OSM `addr:postcode` — owes the same law, and a second hand-rolled copy
+ * is where they drift.
+ */
+export function medoidPoint(points: readonly PostcodePoint[]): PostcodePoint {
+	const first = points[0]
+
+	if (!first) throw new Error("medoidPoint: no member points")
+
+	if (points.length === 1) return first
+
+	let sumLat = 0
+	let sumLon = 0
+
+	for (const p of points) {
+		sumLat += p[0]
+		sumLon += p[1]
+	}
+
+	const meanLat = sumLat / points.length
+	const meanLon = sumLon / points.length
+
+	let best = first
+	let bestD = Infinity
+
+	for (const p of points) {
+		const d = (p[0] - meanLat) ** 2 + (p[1] - meanLon) ** 2
+
+		if (d < bestD) {
+			bestD = d
+			best = p
+		}
+	}
+
+	return best
+}
+
 export interface GeonamesPostalIngestResult {
 	/**
 	 * Distinct postcodes inserted across all countries.
@@ -138,20 +192,7 @@ export async function ingestGeonamesPostal(
 
 		for (const [name, m] of members) {
 			// Medoid: the member point nearest the mean — stays on a real settlement (the p50-tax law).
-			const meanLat = m.pts.reduce((s, p) => s + p[0], 0) / m.pts.length
-			const meanLon = m.pts.reduce((s, p) => s + p[1], 0) / m.pts.length
-			let best = m.pts[0]!
-			let bestD = Infinity
-
-			for (const p of m.pts) {
-				const d = (p[0] - meanLat) ** 2 + (p[1] - meanLon) ** 2
-
-				if (d < bestD) {
-					bestD = d
-					best = p
-				}
-			}
-
+			const best = medoidPoint(m.pts)
 			const id = nextID++
 			sprInsert.run(id, name, cc, best[0], best[1], best[0], best[1], best[0], best[1])
 			namesInsert.run(id, name, cc)
