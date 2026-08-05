@@ -56,6 +56,30 @@ if [ -n "$STAGED" ]; then
 	fi
 fi
 
+# CLI-reference freshness (2026-08-05): the docs CI gate asserts docs/articles/developers/reference/
+# cli.mdx byte-for-byte against the command schemas, and it fired four times in one day because the
+# regeneration step lives a 20-minute CI round-trip away. Staged-scoped: only runs when this commit
+# touches the command surface. The generator reads the COMPILED tree (mailwoman/out/commands — the
+# commands are TSX, which node cannot type-strip), so a stale out/ would silently regenerate WRONG
+# bytes; the mtime guard turns that into an instruction instead.
+if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^mailwoman/(commands|cli-kit)/'; then
+	if [ -f mailwoman/out/cli.js ]; then
+		NEWEST_SRC=$(find mailwoman/commands mailwoman/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer mailwoman/out/cli.js -print -quit 2>/dev/null)
+		if [ -n "$NEWEST_SRC" ]; then
+			echo "pre-commit: $NEWEST_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
+			exit 1
+		fi
+		node docs/scripts/generate-cli-reference.ts
+		if ! git diff --quiet -- docs/articles/developers/reference/cli.mdx; then
+			echo "pre-commit: the CLI reference moved — it has been regenerated in your worktree; stage it and retry:" >&2
+			echo "  git add docs/articles/developers/reference/cli.mdx" >&2
+			exit 1
+		fi
+	else
+		echo "pre-commit: mailwoman/out/cli.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still gates)" >&2
+	fi
+fi
+
 # Raw-angle MDX lint — already staged-scoped by default (see the script header). A bare `<55` in
 # docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
 # The lint moved into the CLI (Pastel Phase 2): the tool lives at mailwoman/dev-tools/lint-mdx-angles.ts
