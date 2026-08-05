@@ -40,6 +40,7 @@
 		"out/**/*.json",
 		"eval-harness/gates/*.json",
 		"eval-harness/baselines.json",
+		"eval-harness/gauntlet/cases/*/*.jsonl",
 		"skills",
 		"*.ts",
 		"*.tsx",

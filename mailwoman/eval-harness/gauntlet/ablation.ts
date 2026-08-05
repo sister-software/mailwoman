@@ -94,7 +94,7 @@ import {
 	DEFAULT_ABLATION_TOLERANCE_KM,
 	type SlotOutcome,
 } from "./ablation-types.ts"
-import { REGRESSION_CASES } from "./cases/regression.ts"
+import { loadRegressionCases } from "./cases/load.ts"
 import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
 import { componentOf, type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
 import type { GauntletDatabase, ResolutionTier } from "./schema.ts"
@@ -445,12 +445,12 @@ interface CaseRow {
  * belt-and-braces: `ablation_expect` landed with the expectation model (2026-08-05) and the shared
  * `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db` predates it, so a layer that only read the column would silently ignore
  * every pin until someone rebuilt a database this layer has no business rebuilding. The seed is the authoring surface
- * either way (`cases/regression.ts`), so the two agree by construction once the rebuild happens.
+ * either way (`cases/<cc>/*.jsonl`), so the two agree by construction once the rebuild happens.
  */
-export function ablationOverrides(db: DatabaseSync): {
+export async function ablationOverrides(db: DatabaseSync): Promise<{
 	byCaseID: Map<string, Record<string, string>>
 	source: "column" | "seed"
-} {
+}> {
 	const hasColumn = (db.prepare(`PRAGMA table_info(gauntlet_case)`).all() as Array<{ name: string }>).some(
 		(c) => c.name === "ablation_expect"
 	)
@@ -473,7 +473,7 @@ export function ablationOverrides(db: DatabaseSync): {
 		return { byCaseID, source: "column" }
 	}
 
-	for (const seed of REGRESSION_CASES) {
+	for (const seed of await loadRegressionCases()) {
 		if (seed.ablationExpect) {
 			byCaseID.set(seed.id, seed.ablationExpect)
 		}
@@ -529,7 +529,7 @@ export async function runAblationLayer(
 		.execute()) as CaseRow[]
 
 	// Read the pins off the SAME handle before it closes — see `ablationOverrides` for why the column may not be there.
-	const overrides = ablationOverrides(raw)
+	const overrides = await ablationOverrides(raw)
 
 	await kdb.destroy()
 
