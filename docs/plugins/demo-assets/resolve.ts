@@ -401,10 +401,14 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 
 /**
  * Stage the placetype-pair indexes (placetype-pair-prior arc, #1278) SAME-ORIGIN into `destDir`
- * (`static/mailwoman/pair-index/`). The `pair-index-<cc>.bin` files are NOT on the R2 bucket yet — that repoint is the
- * release-train's job — so for dev/staged verification the demo fetches them from the site's own origin, alongside the
- * sql.js worker assets. Sources are `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin`, materialized locally by each
- * package's `scripts/link-dev-weights.ts` (built from the register source CSV; not committed, like model.onnx).
+ * (`static/mailwoman/pair-index/`). Sources are `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin`, materialized
+ * locally by each package's `scripts/link-dev-weights.ts` (built from the register source CSV; not committed, like
+ * model.onnx).
+ *
+ * DEV-PREVIEW ONLY since #1342 (2026-07-29): the demo reads the R2 bucket (`mailwoman/pair-index/<generation>/`,
+ * versioned 2026-08-05 — see `resources.tsx`'s `PAIR_INDEX_VERSION`), so nothing fetches this same-origin copy at
+ * runtime. It stays because it is the only way to see a locally-rebuilt index served by the site, and it costs ~1.5 MB
+ * in the deploy.
  *
  * TOLERANT by design: a missing binary (a fresh worktree that never ran link-dev-weights, or a CI build with no dev
  * weights) is skipped with a warn — the demo loader fetches these with the same 404-tolerance, so an unstaged binary

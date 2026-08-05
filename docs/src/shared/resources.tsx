@@ -419,24 +419,95 @@ export function neuralClassifierLoadURLs(
 }
 
 /**
- * Placetype-pair indexes staged SAME-ORIGIN by the demo-assets plugin (placetype-pair-prior arc, #1278). Unlike every
- * other classifier asset (model / tokenizer / postcode binaries), these are NOT on the R2 bucket yet — that repoint is
- * the release-train's job. For dev/staged verification the plugin copies
- * `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin` into `static/mailwoman/pair-index/`, served under the site base
- * alongside the sql.js worker assets. The loader fetches these TOLERANTLY (a 404 when a binary wasn't staged — e.g. a
- * CI build with no dev weights — is skipped, never fatal), so wiring them here is byte-stable when they're absent.
+ * Countries whose placetype-pair index the demo loads (placetype-pair-prior arc, #1278). The loader fetches each
+ * TOLERANTLY (a 404 is skipped, never fatal), so this list is byte-stable for a country whose binary isn't published.
  */
-export const STAGED_PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
+export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
 
 /**
- * Build the same-origin URLs for the staged placetype-pair indexes (see {@link STAGED_PAIR_INDEX_COUNTRIES}).
+ * Generation stamp for the published pair-index binaries — the `<version>` segment in
+ * `mailwoman/pair-index/<version>/pair-index-<cc>.bin`.
  *
- * @param pairIndexBaseURL Same-origin base for the staged binaries (e.g. `/mailwoman/pair-index`).
+ * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
+ * rebuilt index needs a FRESH URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
+ * {@link NATIONAL_STREET_SHARD_VERSION} already follow. Bump this the same commit the binaries are re-cut and
+ * re-uploaded; the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
+ *
+ * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
+ * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the SITE, not fetched per model release, and it THROWS
+ * on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request is a
+ * property of the deployed site, not of the release the visitor selected — pinning it per release entry would let a
+ * schema-3 reader ask for a schema-1 generation.
+ *
+ * 2026-08-05: the PIX schema-3 (typed parent record) re-cut. It was overwritten IN PLACE at the un-versioned path, and
+ * the CDN kept serving the schema-1 bytes under the immutable header until a manual purge — the wound this scheme
+ * closes.
  */
-export function pairIndexStagedURLs(pairIndexBaseURL: string): string[] {
-	const base = pairIndexBaseURL.replace(/\/$/, "")
+export const PAIR_INDEX_VERSION = "2026-08-05"
 
-	return STAGED_PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
+/**
+ * Base URL for one published generation of the pair-index binaries.
+ */
+export function pairIndexBaseURL(version: string): string {
+	return `${ASSET_BASE_URL}pair-index/${version}`
+}
+
+/**
+ * The FROZEN un-versioned base every published index lived under before 2026-08-05. Nothing new is uploaded here — see
+ * {@link resolvePairIndexBaseURL} for the transition read path.
+ *
+ * @deprecated Remove with the fallback in {@link resolvePairIndexBaseURL} once a release has published under
+ *   {@link PAIR_INDEX_VERSION} (target: the first release train after 2026-08-05).
+ */
+export const LEGACY_PAIR_INDEX_BASE_URL = `${ASSET_BASE_URL}pair-index`
+
+/**
+ * Build the per-country binary URLs under a pair-index base (see {@link PAIR_INDEX_COUNTRIES}).
+ *
+ * @param baseURL Base for the binaries, versioned or legacy — a trailing slash is tolerated.
+ */
+export function pairIndexURLs(baseURL: string): string[] {
+	const base = baseURL.replace(/\/$/, "")
+
+	return PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
+}
+
+/**
+ * Pick the pair-index base this page should read: the versioned one when that generation is published, else the frozen
+ * legacy path.
+ *
+ * TRANSITION SHIM (2026-08-05). The bucket holds only the un-versioned objects until the next release train stages
+ * `pair-index/<version>/`, so a HEAD probe of the first country's binary decides. Cheap (one request, no body), and
+ * failure in either direction is non-fatal: a network/CORS error is treated as "not published" and falls through to the
+ * path that works today.
+ *
+ * @deprecated The legacy branch (and this probe with it) comes out once a release has published under
+ *   {@link PAIR_INDEX_VERSION} — at that point the caller can use `pairIndexBaseURL(PAIR_INDEX_VERSION)` directly.
+ *   Target: the first release train after 2026-08-05.
+ */
+export async function resolvePairIndexBaseURL(
+	version: string = PAIR_INDEX_VERSION,
+	opts: { fetchImpl?: typeof fetch; warn?: (message: string) => void } = {}
+): Promise<string> {
+	const fetchImpl = opts.fetchImpl ?? globalThis.fetch
+	const warn = opts.warn ?? console.warn
+	const versioned = pairIndexBaseURL(version)
+	const probeURL = pairIndexURLs(versioned)[0]
+
+	try {
+		const res = await fetchImpl(probeURL, { method: "HEAD" })
+
+		if (res.ok) return versioned
+	} catch {
+		// Network/CORS failure — indistinguishable from "not published", and handled the same way.
+	}
+
+	warn(
+		`[demo] pair-index generation ${version} not published (${probeURL}) — reading the frozen un-versioned path. ` +
+			`Stage pair-index/${version}/ on the next release train (RELEASING.md, "Pair-index binaries are versioned").`
+	)
+
+	return LEGACY_PAIR_INDEX_BASE_URL
 }
 
 export async function loadFSTGazetteer(
