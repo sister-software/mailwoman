@@ -35,6 +35,25 @@
  *   `node neural-weights-<locale>/scripts/link-dev-weights.ts` for every overlay first, or the map measures the
  *   instrument.
  *
+ *   ## The grading is NORMATIVE since 2026-08-05 — see `ablation-expectation.ts`
+ *
+ *   The first version graded every deletion variant against the UNDELETED case's single anchor and single tolerance,
+ *   which reports "confidently wrong" and "correctly degraded to the next-best answer" as the same red cell. It now
+ *   grades against a GRACEFUL-DEGRADATION LADDER synthesized per row from the gazetteer — the row's own asserted
+ *   coordinate, then the admin chain CONTAINING it, each rung with a centroid and a radius — and the expected rung is
+ *   computed from the components the deletion LEFT BEHIND, never from the variant's own output, which would be
+ *   circular.
+ *
+ *   Three outcomes are PASSES: the answer held at the base rung, it coarsened to a rung the surviving evidence still
+ *   justifies, or it ABSTAINED where the surviving evidence justifies nothing (bare `Springfield`: 144 distinct places,
+ *   no population winner). Substitution stays a hard fail at every rung — a coordinate cannot redeem a slot refilled by
+ *   the wrong token.
+ *
+ *   The pre-2026-08-05 fields (`brokenCount`, `unresolvedCount`, `displacementKm*`) are UNCHANGED and still computed
+ *   against the anchor: the two gradings sit side by side in every artifact, which is what makes the regrade
+ *   comparable. `unresolvedCount` is not split in place; `correctlyAbstainedCount` and `lostCount` are the split, added
+ *   alongside it (meaning-of-zero: an abstention asks the operator for nothing, a loss asks for a recall fix).
+ *
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
@@ -44,41 +63,55 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath, formatPercent, percentile, sha256Hex } from "@mailwoman/core/utils"
+import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
+import {
+	ABLATION_ABSENT,
+	type AblationGrade,
+	type AblationLadder,
+	achievedRung,
+	buildCaseLadder,
+	describeLadder,
+	emptyGrades,
+	expectFor,
+	gradeAgainstLadder,
+	ladderComponentDisagreement,
+	PASSING_GRADES,
+	UNCONSTRAINED_RUNG,
+} from "./ablation-expectation.ts"
+import { AblationGazetteer } from "./ablation-gazetteer.ts"
+// The renderer and the data shapes moved out when the expectation model pushed this file past the 750-line cap. Both
+// are re-exported below, from their historical home, so every importer and every test keeps its path.
+import { renderAblationMarkdown } from "./ablation-report.ts"
+import {
+	ABLATABLE_COMPONENTS,
+	type AblatableComponent,
+	type AblationCell,
+	type AblationRowOutcome,
+	type AblationSkip,
+	type AblationVariant,
+	DEFAULT_ABLATION_TOLERANCE_KM,
+	type SlotOutcome,
+} from "./ablation-types.ts"
+import { REGRESSION_CASES } from "./cases/regression.ts"
 import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
 import { componentOf, type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
 import type { GauntletDatabase, ResolutionTier } from "./schema.ts"
 
-/**
- * The component classes this runner deletes — every tag the curated corpus actually asserts, and every one
- * {@linkcode componentOf} can read back off the assembled result (the slot a substitution would land in). A tag with no
- * result field could be deleted but not scored for substitution, which is half a measurement; adding one means adding
- * the field to `GauntletResult` first.
- */
-export const ABLATABLE_COMPONENTS = [
-	"postcode",
-	"house_number",
-	"street",
-	"locality",
-	"dependent_locality",
-	"region",
-	"country",
-	"unit",
-	"venue",
-] as const satisfies readonly ComponentTag[]
+export { ABLATION_ABSENT } from "./ablation-expectation.ts"
+export { formatAblationCell, formatAblationLadderCell, renderAblationMarkdown } from "./ablation-report.ts"
 
-export type AblatableComponent = (typeof ABLATABLE_COMPONENTS)[number]
-
-/**
- * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m`. Rows that DO assert one are graded
- * against theirs — a row pinned to an 80 m rooftop and a row pinned to a 500 km "in NY not France" guard are not asking
- * the same question, and one band for both would answer neither. The per-row value used is recorded on every row of the
- * JSON artifact.
- */
-export const DEFAULT_ABLATION_TOLERANCE_KM = 5
+export {
+	ABLATABLE_COMPONENTS,
+	DEFAULT_ABLATION_TOLERANCE_KM,
+	type AblatableComponent,
+	type AblationCell,
+	type AblationRowOutcome,
+	type AblationSkip,
+	type AblationVariant,
+	type SlotOutcome,
+} from "./ablation-types.ts"
 
 /**
  * How many substitutions the console summary lists before it truncates. Purely a terminal-legibility cap — the full
@@ -86,136 +119,6 @@ export const DEFAULT_ABLATION_TOLERANCE_KM = 5
  * (16 substitutions on the postcode column alone), so a run whose substitution rate is normal prints in full.
  */
 const SUBSTITUTION_PRINT_LIMIT = 60
-
-/**
- * One cell of the deletion-ablation map: what deleting `component` costs in `locale`, on a named board. The suggestion
- * layer reads this as a per-(component, locale) prior on nudge value; §C.5 of its design doc specifies the first eleven
- * fields and this runner owes them exactly. The last three are additive and marked as such — each exists because a
- * specced field is not interpretable without it.
- */
-export interface AblationCell {
-	component: AblatableComponent
-	/**
-	 * ISO-3166 alpha-2, matching the board's own `country` column — STATED by the corpus row, never inferred from the
-	 * input. (The design doc allows BCP-47 "matching whatever the board keys by"; this board keys by country.)
-	 */
-	locale: string
-	/**
-	 * Board rows that CARRY this component in this locale — the denominator behind every rate below. A cell with
-	 * `support: 0` means NOT MEASURED HERE, and a consumer must represent that as absence rather than as a zero score
-	 * (the meaning-of-zero rule). This runner never EMITS a zero-support cell: a (component, locale) pair with no rows is
-	 * absent from the array, and {@linkcode formatAblationCell} renders a missing lookup and a zero-support one
-	 * identically.
-	 */
-	support: number
-	/**
-	 * Rows whose assembled coordinate moved further than the row's tolerance once the component was deleted. A row whose
-	 * ablated arm produced NO coordinate counts as broken too — losing the answer is not a small displacement.
-	 */
-	brokenCount: number
-	displacementKmP50: number
-	displacementKmP90: number
-	/**
-	 * Rows whose `resolution_tier` coarsened (address_point → interpolated → street → admin).
-	 */
-	tierDropCount: number
-	/**
-	 * Rows that produced no coordinate at all without the component.
-	 */
-	unresolvedCount: number
-	/**
-	 * Rows where the deleted component's SLOT was refilled by a DIFFERENT span — S-2's finding 3 (a house number emitted
-	 * as the postcode). Distinct from `brokenCount`: a refill can leave the coordinate intact and still make a completion
-	 * nudge unsafe, because the slot the nudge wanted to fill reads as already filled.
-	 */
-	substitutedCount: number
-	/**
-	 * The fallback band ({@linkcode DEFAULT_ABLATION_TOLERANCE_KM}); a row asserting its own `expect_tolerance_m` was
-	 * graded against that instead. Per-row values are in the artifact's `rows`.
-	 */
-	toleranceKm: number
-	/**
-	 * Which board this was measured on, and when. A cell without both is not a measurement.
-	 */
-	boardID: string
-	measuredAt: string
-	/**
-	 * ADDITIVE (not in §C.5): rows where the ablated arm re-emitted the SAME value the deletion removed — the resolver
-	 * recovered it from the gazetteer. Without this, `substitutedCount` would have to mean "refilled by anything" and a
-	 * recovery would read as a hazard. 0 of 139 on S-2's postcode column, which is itself the finding.
-	 */
-	recoveredCount: number
-	/**
-	 * ADDITIVE: rows excluded from the displacement percentiles because the row's OWN anchor never resolved. Not a
-	 * failure of the deletion — there was nothing to measure against. Named so `gradedCount < support` is attributable.
-	 */
-	anchorUnresolvedCount: number
-	/**
-	 * ADDITIVE: rows where BOTH arms resolved — the denominator of `displacementKmP50` / `P90`.
-	 */
-	gradedCount: number
-}
-
-/**
- * One row × one deleted component: the per-case record behind a cell. Written to the artifact so any cell number can be
- * traced back to the inputs that produced it.
- */
-export interface AblationRowOutcome {
-	caseID: string
-	component: AblatableComponent
-	locale: string
-	status: string
-	/**
-	 * The exact substring removed, as it appeared in the input (not as asserted — the search is case-insensitive).
-	 */
-	deleted: string
-	anchorInput: string
-	ablatedInput: string
-	anchorLat: number | null
-	anchorLon: number | null
-	anchorTier: ResolutionTier
-	ablatedLat: number | null
-	ablatedLon: number | null
-	ablatedTier: ResolutionTier
-	displacementKm: number | null
-	toleranceKm: number
-	/**
-	 * `null` when the anchor never resolved — "not gradable", which is not the same as "held".
-	 */
-	broken: boolean | null
-	tierDrop: boolean
-	unresolved: boolean
-	slot: SlotOutcome
-	/**
-	 * What the ablated arm put in the deleted component's slot (`null` = left empty).
-	 */
-	emitted: string | null
-}
-
-/**
- * What happened to the deleted component's slot in the ablated arm.
- */
-export type SlotOutcome = "absent" | "recovered" | "substituted"
-
-/**
- * A component the row asserts but this runner refused to delete, and why. Reported per reason so a thin cell is
- * attributable to the corpus rather than to the pipeline — "we could not measure it" and "it did not matter" must never
- * look the same.
- */
-export interface AblationSkip {
-	component: AblatableComponent
-	value: string
-	reason: string
-}
-
-/**
- * A deletion variant: the ablated input plus the exact span removed.
- */
-export interface AblationVariant {
-	component: AblatableComponent
-	deleted: string
-	input: string
-}
 
 const WORD_CHAR = /[\p{L}\p{N}]/u
 
@@ -458,6 +361,14 @@ export function aggregateCells(
 	for (const bucket of groups.values()) {
 		const first = bucket[0]!
 		const graded = bucket.filter((r) => r.displacementKm != null).map((r) => r.displacementKm!)
+		const grades = emptyGrades()
+
+		for (const row of bucket) {
+			grades[row.grade]++
+		}
+
+		const ladderGraded = bucket.filter((r) => r.grade !== "ungraded")
+		const fell = ladderGraded.filter((r) => r.degradedRungs != null).map((r) => r.degradedRungs!)
 
 		cells.push({
 			component: first.component,
@@ -478,151 +389,18 @@ export function aggregateCells(
 			recoveredCount: bucket.filter((r) => r.slot === "recovered").length,
 			anchorUnresolvedCount: bucket.filter((r) => r.broken === null).length,
 			gradedCount: graded.length,
+			ladderGradedCount: ladderGraded.length,
+			grades,
+			trueFailCount: ladderGraded.filter((r) => !PASSING_GRADES.has(r.grade)).length,
+			correctlyDegradedCount: grades.degraded,
+			correctlyAbstainedCount: grades.correctlyAbstained,
+			degradedRungsP50: percentile(fell, 50),
+			degradedRungsMax: fell.length ? Math.max(...fell) : null,
+			unconstrainedCount: bucket.filter((r) => r.expectedRung === UNCONSTRAINED_RUNG).length,
 		})
 	}
 
 	return cells.toSorted((a, b) => a.component.localeCompare(b.component) || a.locale.localeCompare(b.locale))
-}
-
-/**
- * The absence marker. One symbol, used for BOTH "no cell" and "support 0" — a consumer that can tell those apart can
- * still do so in the JSON, and a reader of the table must not be able to mistake either for a score.
- */
-export const ABLATION_ABSENT = "·"
-
-/**
- * Render one cell for the matrix: `broken/support` plus the p90 displacement. A missing cell or a zero-support one
- * renders as {@linkcode ABLATION_ABSENT} — never `0`, never `0.0%`. This is the meaning-of-zero rule at the only place
- * a human reads the map, and it is the reason the renderer takes `AblationCell | undefined` rather than a number.
- */
-export function formatAblationCell(cell: AblationCell | undefined): string {
-	if (!cell || cell.support === 0) return ABLATION_ABSENT
-
-	return `${cell.brokenCount}/${cell.support}`
-}
-
-function cellKey(component: string, locale: string): string {
-	return `${component}|${locale}`
-}
-
-/**
- * Render the map: a global per-component summary, then the component × locale matrix over the locales carrying at least
- * `minLocaleRows` rows, then the tail locales in long form. The matrix is bounded on purpose — 29 countries × 9
- * components is a table nobody reads, and folding the tail is only acceptable because it is PRINTED, not dropped.
- */
-export function renderAblationMarkdown(
-	cells: readonly AblationCell[],
-	/**
-	 * The per-row outcomes behind `cells`. Needed because percentiles do NOT aggregate: a global p90 has to be taken over
-	 * the pooled displacements, not over the per-cell p90s. Pass `[]` to render the matrix alone.
-	 */
-	rows: readonly AblationRowOutcome[],
-	meta: {
-		boardID: string
-		measuredAt: string
-		caseCount: number
-		variantCount: number
-		skips: readonly { component: string; reason: string }[]
-		levers: string
-		minLocaleRows?: number
-	}
-): string {
-	const minLocaleRows = meta.minLocaleRows ?? 3
-	const byKey = new Map(cells.map((c) => [cellKey(c.component, c.locale), c]))
-	const components = ABLATABLE_COMPONENTS.filter((tag) => cells.some((c) => c.component === tag))
-
-	const localeSupport = new Map<string, number>()
-
-	for (const c of cells) {
-		localeSupport.set(c.locale, (localeSupport.get(c.locale) ?? 0) + c.support)
-	}
-
-	const locales = [...localeSupport.entries()].toSorted((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-	const wide = locales.filter(([, n]) => n >= minLocaleRows).map(([l]) => l)
-	const tail = locales.filter(([, n]) => n < minLocaleRows).map(([l]) => l)
-
-	const lines: string[] = [
-		`# Gauntlet ablation map — the load-bearing components`,
-		"",
-		`- board: \`${meta.boardID}\``,
-		`- measured: ${meta.measuredAt}`,
-		`- ${meta.caseCount} cases → ${meta.variantCount} deletion variants (+ ${meta.caseCount} anchors)`,
-		`- ${meta.levers}`,
-		`- \`${ABLATION_ABSENT}\` means NOT MEASURED (no row in this corpus carries that component in that locale). It is never a score of zero.`,
-		"",
-		`## Per component (all locales)`,
-		"",
-		`| component | support | broken | broken % | p50 km | p90 km | tier drop | unresolved | substituted |`,
-		`| --- | --: | --: | --: | --: | --: | --: | --: | --: |`,
-	]
-
-	for (const tag of components) {
-		const own = cells.filter((c) => c.component === tag)
-		const support = own.reduce((n, c) => n + c.support, 0)
-		const broken = own.reduce((n, c) => n + c.brokenCount, 0)
-		const tierDrop = own.reduce((n, c) => n + c.tierDropCount, 0)
-		const unresolved = own.reduce((n, c) => n + c.unresolvedCount, 0)
-		const substituted = own.reduce((n, c) => n + c.substitutedCount, 0)
-		const pooled = rows.filter((r) => r.component === tag && r.displacementKm != null).map((r) => r.displacementKm!)
-		const p50 = percentile(pooled, 50)
-		const p90 = percentile(pooled, 90)
-
-		lines.push(
-			`| ${tag} | ${support} | ${broken} | ${formatPercent(broken, support)} | ` +
-				`${p50 == null ? ABLATION_ABSENT : p50.toFixed(2)} | ${p90 == null ? ABLATION_ABSENT : p90.toFixed(2)} | ` +
-				`${tierDrop} | ${unresolved} | ${substituted} |`
-		)
-	}
-
-	lines.push("")
-	lines.push(`## component × locale — broken / support`)
-	lines.push("")
-
-	// A zero-column matrix would render as a table with an empty header, which reads as a rendering bug rather
-	// than as "no locale cleared the threshold". Say the latter.
-	if (!wide.length) {
-		lines.push(`No locale carries ${minLocaleRows} or more measured rows — every locale is in the tail below.`)
-	} else {
-		lines.push(`| component | ${wide.join(" | ")} |`)
-		lines.push(`| --- | ${wide.map(() => "--:").join(" | ")} |`)
-
-		for (const tag of components) {
-			lines.push(`| ${tag} | ${wide.map((l) => formatAblationCell(byKey.get(cellKey(tag, l)))).join(" | ")} |`)
-		}
-	}
-
-	if (tail.length) {
-		lines.push("")
-		lines.push(`### Locales below ${minLocaleRows} rows (printed, not dropped)`)
-		lines.push("")
-
-		for (const locale of tail) {
-			const own = cells.filter((c) => c.locale === locale)
-
-			lines.push(`- **${locale}** — ${own.map((c) => `${c.component} ${c.brokenCount}/${c.support}`).join(", ")}`)
-		}
-	}
-
-	if (meta.skips.length) {
-		const byReason = new Map<string, number>()
-
-		for (const s of meta.skips) {
-			// Reasons carry the offending value inline; bucket by the leading clause so the report counts CLASSES.
-			const cls = s.reason.split(":")[0]!.split(" inside")[0]!
-
-			byReason.set(cls, (byReason.get(cls) ?? 0) + 1)
-		}
-
-		lines.push("")
-		lines.push(`### Asserted components NOT deleted (why a cell is thin)`)
-		lines.push("")
-
-		for (const [reason, n] of [...byReason].toSorted((a, b) => b[1] - a[1])) {
-			lines.push(`- ${reason}: ${n}`)
-		}
-	}
-
-	return lines.join("\n") + "\n"
 }
 
 /**
@@ -653,6 +431,55 @@ interface CaseRow {
 	default_country: string | null
 	expect_components: string | null
 	expect_tolerance_m: number | null
+	/**
+	 * The row's asserted coordinate — rung 0 of its degradation ladder when it has one (see {@linkcode buildCaseLadder}).
+	 */
+	expect_lat: number | null
+	expect_lon: number | null
+}
+
+/**
+ * The per-case `ablation_expect` pins, keyed by case id.
+ *
+ * Read from the built DB when the column is there, and from the COMMITTED SEED otherwise. The dual path is not
+ * belt-and-braces: `ablation_expect` landed with the expectation model (2026-08-05) and the shared
+ * `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db` predates it, so a layer that only read the column would silently ignore
+ * every pin until someone rebuilt a database this layer has no business rebuilding. The seed is the authoring surface
+ * either way (`cases/regression.ts`), so the two agree by construction once the rebuild happens.
+ */
+export function ablationOverrides(db: DatabaseSync): {
+	byCaseID: Map<string, Record<string, string>>
+	source: "column" | "seed"
+} {
+	const hasColumn = (db.prepare(`PRAGMA table_info(gauntlet_case)`).all() as Array<{ name: string }>).some(
+		(c) => c.name === "ablation_expect"
+	)
+
+	const byCaseID = new Map<string, Record<string, string>>()
+
+	if (hasColumn) {
+		const rows = db
+			.prepare(`SELECT id, ablation_expect FROM gauntlet_case WHERE ablation_expect IS NOT NULL`)
+			.all() as Array<{ id: string; ablation_expect: string }>
+
+		for (const row of rows) {
+			const parsed = tryParsingJSON<Record<string, string>>(row.ablation_expect)
+
+			if (parsed) {
+				byCaseID.set(row.id, parsed)
+			}
+		}
+
+		return { byCaseID, source: "column" }
+	}
+
+	for (const seed of REGRESSION_CASES) {
+		if (seed.ablationExpect) {
+			byCaseID.set(seed.id, seed.ablationExpect)
+		}
+	}
+
+	return { byCaseID, source: "seed" }
 }
 
 /**
@@ -687,9 +514,22 @@ export async function runAblationLayer(
 
 	const allCases = (await kdb
 		.selectFrom("gauntlet_case")
-		.select(["id", "input", "country", "status", "default_country", "expect_components", "expect_tolerance_m"])
+		.select([
+			"id",
+			"input",
+			"country",
+			"status",
+			"default_country",
+			"expect_components",
+			"expect_tolerance_m",
+			"expect_lat",
+			"expect_lon",
+		])
 		.orderBy("id")
 		.execute()) as CaseRow[]
+
+	// Read the pins off the SAME handle before it closes — see `ablationOverrides` for why the column may not be there.
+	const overrides = ablationOverrides(raw)
 
 	await kdb.destroy()
 
@@ -713,9 +553,19 @@ export async function runAblationLayer(
 	}
 
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
+	const gazetteer = await AblationGazetteer.create()
+
+	// LOUD, because a ladder-less run and a run where nothing degraded produce the same all-`held` shape until you
+	// read `ladderGradedCount`. The map still measures the anchor-graded columns without it.
+	console.error(
+		gazetteer.available
+			? `[ablation] expectation model: ladders from admin-global-priority.db + candidate.db (overrides from the ${overrides.source}, ${overrides.byCaseID.size} pinned)`
+			: `[ablation] ⚠ NO EXPECTATION MODEL — ${gazetteer.unavailableReason}. Every variant grades \`ungraded\`; only the anchor-graded columns mean anything.`
+	)
 
 	const rows: AblationRowOutcome[] = []
 	const skips: Array<AblationSkip & { caseID: string }> = []
+	const ladderProblems: Array<{ caseID: string; reason: string }> = []
 	let anchorsRun = 0
 
 	try {
@@ -745,9 +595,66 @@ export async function runAblationLayer(
 
 			const toleranceKm = (c.expect_tolerance_m ?? DEFAULT_ABLATION_TOLERANCE_KM * 1000) / 1000
 
+			const drawn = gazetteer.available
+				? buildCaseLadder(anchor, toleranceKm, gazetteer, { lat: c.expect_lat, lon: c.expect_lon }, c.country)
+				: { ladder: null, reason: gazetteer.unavailableReason ?? "no gazetteer" }
+
+			// A ladder has to be about THIS address. The check only ever fires on a row that asserts no coordinate (its
+			// rung 0 is the pipeline's own undeleted answer); when that answer is somewhere else, the ladder is drawn
+			// around the wrong town and every deletion on it grades against a place the row never claimed.
+			const disagreement = drawn.ladder ? ladderComponentDisagreement(components, drawn.ladder, gazetteer) : null
+
+			const built = disagreement ? { ladder: null, reason: disagreement } : drawn
+
+			// Where the UNDELETED case already stands on its own ladder — the floor every variant is judged from
+			// (`gradeAgainstLadder`). `null` (anchor off its own ladder, or unresolved) makes the whole case ungradable,
+			// which is reported rather than counted as anything.
+			const anchorRungDepth =
+				built.ladder && anchor.lat != null && anchor.lon != null
+					? (achievedRung(anchor.lat, anchor.lon, built.ladder)?.depth ?? null)
+					: null
+
+			if (built.ladder && anchorRungDepth == null) {
+				ladderProblems.push({
+					caseID: c.id,
+					reason: "the UNDELETED answer is off its own ladder — nothing about a deletion can be read from this row",
+				})
+			}
+
+			if (built.ladder == null) {
+				ladderProblems.push({ caseID: c.id, reason: built.reason })
+			}
+
+			const casePins = overrides.byCaseID.get(c.id)
+
 			for (const v of variants) {
 				const ablated = await runOne(v.input, deps, geoOpts)
 				const scored = scoreAblation(anchor, ablated, v.deleted, v.component, toleranceKm)
+
+				const expectation = expectFor({
+					ladder: built.ladder,
+					components,
+					deleted: v.component,
+					pin: casePins?.[v.component],
+					gz: gazetteer,
+					ablatedInput: v.input,
+				})
+
+				const graded = built.ladder
+					? gradeAgainstLadder({
+							expected: expectation.expected!,
+							ladder: built.ladder,
+							lat: ablated.lat,
+							lon: ablated.lon,
+							slot: scored.slot,
+							anchorRungDepth,
+						})
+					: { grade: "ungraded" as const, achievedRungDepth: null, degradedRungs: null }
+
+				const achievedRungName =
+					built.ladder && graded.achievedRungDepth != null
+						? (built.ladder.rungs[graded.achievedRungDepth]?.kind ?? null)
+						: null
 
 				rows.push({
 					caseID: c.id,
@@ -765,6 +672,18 @@ export async function runAblationLayer(
 					ablatedTier: ablated.tier,
 					toleranceKm,
 					...scored,
+					expectedRung: expectation.rungName,
+					expectedRungDepth: expectation.depth,
+					expectedWhy: expectation.why,
+					expectedSource: expectation.source,
+					ladderAnchor: ("anchorSource" in built ? built.anchorSource : null) as AblationRowOutcome["ladderAnchor"],
+					anchorRungDepth,
+					achievedRung: achievedRungName,
+					achievedRungDepth: graded.achievedRungDepth,
+					degradedRungs: graded.degradedRungs,
+					grade: graded.grade,
+					ladder: built.ladder ? describeLadder(built.ladder) : [],
+					ladderGaps: built.ladder ? built.ladder.gaps.map((g) => `${g.placetype} ${g.name}: ${g.reason}`) : [],
 				})
 
 				// Two different nulls, and the progress line must not conflate them: `no-anchor` is the ROW failing to
@@ -776,11 +695,15 @@ export async function runAblationLayer(
 							? "no-anchor"
 							: "unresolved"
 
-				console.error(`${c.id}\t${v.component}\t${moved}\t${anchor.tier}→${ablated.tier}\t${scored.slot}`)
+				console.error(
+					`${c.id}\t${v.component}\t${moved}\t${anchor.tier}→${ablated.tier}\t${scored.slot}\t` +
+						`want ${expectation.rungName} got ${achievedRungName ?? "-"}\t${graded.grade}`
+				)
 			}
 		}
 	} finally {
 		deps.close()
+		gazetteer.close()
 	}
 
 	const cells = aggregateCells(rows, { boardID, measuredAt })
@@ -795,6 +718,15 @@ export async function runAblationLayer(
 		variantCount: rows.length,
 		toleranceKmDefault: DEFAULT_ABLATION_TOLERANCE_KM,
 		levers: leverLine,
+		expectationModel: {
+			available: gazetteer.available,
+			unavailableReason: gazetteer.unavailableReason,
+			overrideSource: overrides.source,
+			overrideCount: overrides.byCaseID.size,
+			// Cases whose ladder could NOT be built, and why. The complement of `ladderGradedCount` at the row level,
+			// kept per case so a thin expectation column is attributable to the gazetteer rather than to the parser.
+			ladderProblems,
+		},
 		cells,
 		rows,
 		skips,
@@ -869,6 +801,49 @@ function printSummary(
 				`${String(own.filter((r) => r.slot === "substituted").length).padStart(7)}`
 		)
 	}
+
+	const ladderGraded = rows.filter((r) => r.grade !== "ungraded")
+
+	console.log(`\nper component, the EXPECTATION model (held+degraded+abstained are PASSES):`)
+	console.log(
+		`  ${"component".padEnd(20)}${"graded".padStart(8)}${"FAIL".padStart(7)}${"held".padStart(7)}${"degr".padStart(7)}` +
+			`${"abst".padStart(7)}${"lost".padStart(7)}${"overc".padStart(7)}${"homon".padStart(7)}${"coars".padStart(7)}${"wrong".padStart(7)}${"subst".padStart(7)}${"unconstr".padStart(10)}`
+	)
+
+	for (const tag of ABLATABLE_COMPONENTS) {
+		const own = ladderGraded.filter((r) => r.component === tag)
+
+		if (!own.length) continue
+
+		const n = (grade: AblationGrade): string => String(own.filter((r) => r.grade === grade).length).padStart(7)
+
+		console.log(
+			`  ${tag.padEnd(20)}${String(own.length).padStart(8)}${String(own.filter((r) => !PASSING_GRADES.has(r.grade)).length).padStart(7)}` +
+				`${n("held")}${n("degraded")}${n("correctlyAbstained")}${n("lost")}${n("overconfident")}${n("homonymTakeover")}${n("coarser")}${n("wrong")}${n("substituted")}` +
+				`${String(own.filter((r) => r.expectedRung === UNCONSTRAINED_RUNG).length).padStart(10)}`
+		)
+	}
+
+	// The headline the operator asked for, in one line each: the old verdict, the new one, and the size of the
+	// difference between them. Printed even at zero, because "0 rows were misgraded" is a measurement here — but
+	// only when the ladder actually graded something, which the `ungraded` count states outright.
+	const ungraded = rows.length - ladderGraded.length
+	const trueFail = ladderGraded.filter((r) => !PASSING_GRADES.has(r.grade))
+
+	console.log(
+		`\n  anchor grading (pre-2026-08-05):  ${rows.filter((r) => r.broken === true).length}/${rows.length} broken`
+	)
+	console.log(
+		`  ladder grading:                  ${trueFail.length}/${ladderGraded.length} true fail  ` +
+			`(${ladderGraded.filter((r) => r.grade === "degraded").length} correctly degraded, ` +
+			`${ladderGraded.filter((r) => r.grade === "correctlyAbstained").length} correctly abstained, ` +
+			`${ladderGraded.filter((r) => r.grade === "held").length} held)`
+	)
+	console.log(
+		ungraded
+			? `  ungraded:                        ${ungraded} variant(s) had no ladder — NOT a pass (see \`expectationModel.ladderProblems\`)`
+			: `  ungraded:                        0 — every variant had a ladder`
+	)
 
 	const substituted = rows.filter((r) => r.slot === "substituted")
 

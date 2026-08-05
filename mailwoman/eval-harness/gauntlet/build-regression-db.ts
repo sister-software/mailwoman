@@ -57,7 +57,8 @@ export async function buildRegressionDB(): Promise<void> {
 			c.defaultCountry ?? null,
 			c.addedAt,
 			c.bugRef ?? null,
-			c.note ?? null
+			c.note ?? null,
+			c.ablationExpect ? JSON.stringify(c.ablationExpect) : null
 		)
 	}
 

@@ -300,6 +300,20 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 		unresolved: false,
 		slot: "absent",
 		emitted: null,
+		// The expectation-model fields (2026-08-05). A fixture that omitted them would let `aggregateCells` count an
+		// `undefined` grade, which is how a histogram silently grows a tenth bucket nobody reads.
+		expectedRung: "base",
+		expectedRungDepth: 0,
+		expectedWhy: "fixture",
+		expectedSource: "derived",
+		ladderAnchor: "corpus-expected",
+		anchorRungDepth: 0,
+		achievedRung: "base",
+		achievedRungDepth: 0,
+		degradedRungs: 0,
+		grade: "held",
+		ladder: [],
+		ladderGaps: [],
 		...over,
 	}
 }

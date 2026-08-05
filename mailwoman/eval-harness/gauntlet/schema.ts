@@ -100,6 +100,17 @@ export interface GauntletCaseTable {
 	 * Human note — what failure this case pins.
 	 */
 	note: string | null
+	/**
+	 * ABLATION ONLY, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's DERIVED
+	 * graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`). `rung` is `abstain`,
+	 * `base`, or a WOF placetype naming the rung the deletion should degrade to.
+	 *
+	 * Absent (the normal case) = the derived ladder decides. It exists for the two classes no threshold fixes:
+	 * TERRITORIES, whose ancestry is politically rather than geographically shaped, and DUAL-ROLE places (#402), where
+	 * one name is both a locality and its own county and the ladder double-counts a rung. A corpus that needed many of
+	 * these would be telling you the derivation is wrong, not that the rows are special.
+	 */
+	ablation_expect: string | null
 }
 
 /**
@@ -130,6 +141,9 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"added_at",
 	"bug_ref",
 	"note",
+	// Appended 2026-08-05 (the ablation expectation model). APPEND-ONLY: this list is the positional INSERT order, so a
+	// new column goes on the END or every existing row shifts.
+	"ablation_expect",
 ] as const
 
 /**
@@ -155,6 +169,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("added_at", "text", (c) => c.notNull())
 		.addColumn("bug_ref", "text")
 		.addColumn("note", "text")
+		.addColumn("ablation_expect", "text")
 		.execute()
 
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"
