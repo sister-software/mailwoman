@@ -45,7 +45,7 @@ const CORPUS_SIZE = 306
  * Changing the corpus changes this. That is the point: an edit to a `.jsonl` row now needs a matching edit here, and
  * the diff says "the corpus changed" rather than "a 3,500-line file changed".
  */
-const CORPUS_HASH = "58d44d98bdc67482b1afcda8b797ffec6d82f6f91b77991ffe5f92cda18cbbf2"
+const CORPUS_HASH = "ab541bbaff34a2fdc20a5a003b594f4fbc80b6d3fe6ba1b4dd0b10df3893c8b1"
 
 /**
  * `ablationBoardID` of the corpus.
