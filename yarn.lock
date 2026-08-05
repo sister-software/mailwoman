@@ -4734,6 +4734,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/geocode-oracle@workspace:geocode-oracle":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/geocode-oracle@workspace:geocode-oracle"
+  dependencies:
+    "@mailwoman/address-id": "workspace:*"
+    "@mailwoman/codex": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/formatter": "workspace:*"
+    "@mailwoman/record": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/tiger": "workspace:*"
+    "@types/node": "npm:>=26.1.2"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/kind-classifier@workspace:*, @mailwoman/kind-classifier@workspace:kind-classifier":
   version: 0.0.0-use.local
   resolution: "@mailwoman/kind-classifier@workspace:kind-classifier"

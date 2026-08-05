@@ -181,4 +181,10 @@ export const PrivateEnvSchema = z.object({
 
 	// SEC EDGAR fair-access User-Agent (`filer/sdk/sec-client.ts`) — "Company Name AdminContact@domain.com".
 	SEC_EDGAR_USER_AGENT: z.string().optional(),
+
+	// Google Maps Platform key for the reference-geocoder ORACLE (`geocode-oracle/sdk/google-client.ts`).
+	// Verification tooling only — nothing on the parse path reads this, and `@mailwoman/geocode-oracle` is
+	// a private workspace precisely so it cannot become a runtime dependency of a published package.
+	// BILLED PER REQUEST: the client caches for 30 days and paces at 60/minute by default for that reason.
+	GOOGLE_MAPS_API_KEY: z.string().optional(),
 })
