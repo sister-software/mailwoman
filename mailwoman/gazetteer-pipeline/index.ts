@@ -42,27 +42,20 @@ import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
 import { emitCoverageManifest } from "./coverage-manifest.ts"
+import { DEFAULT_GEONAMES_COUNTRIES, geonamesAdminGapCountries } from "./defaults.ts"
 
 /**
- * The bilingual / alt-name EU set the GeoNames fold lifts (FI hard-resolve 69.5 → 85.8 %). GeoNames `<CC>.txt` dumps
- * from download.geonames.org/export/dump must be present under the geonames dir.
+ * The country set a standalone fold re-derives — the SAME recipe `buildAdmin` bakes into the admin artifact
+ * ({@link DEFAULT_GEONAMES_COUNTRIES}), because the fold rewrites its whole id range and any narrower list drops the
+ * difference (#1514).
+ *
+ * It used to be the 14-country bilingual EU set this fold was born for (#743/#193 — FI hard-resolve 69.5 → 85.8 %),
+ * from when the fold was a separate step run against an UNFOLDED admin. #1027 moved the fold inside `buildAdmin` and
+ * widened it to 161 countries; the 14-country default outlived that and became the payload of the 2026-08-05 incident,
+ * re-folding 212,993 places over the front of a 774,338-place range and leaving the rest of the world's names attached
+ * to Austrian, Swiss and Lithuanian villages.
  */
-export const DEFAULT_FOLD_COUNTRIES = [
-	"FI",
-	"PL",
-	"NO",
-	"CZ",
-	"AT",
-	"LT",
-	"LV",
-	"SI",
-	"SK",
-	"HR",
-	"DK",
-	"BE",
-	"CH",
-	"LU",
-]
+export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
@@ -179,20 +172,43 @@ export interface FoldOptions {
 	 * language / privateuse / `official`. Countries without a file fold untagged, exactly as before.
 	 */
 	alternateDir?: string
+	/**
+	 * #1514 escape hatch: proceed even when `adminIn` already carries alias rows for countries this run does NOT list.
+	 * The fold owns its whole id range and rewrites it wholesale, so those countries are DROPPED. Only pass this when
+	 * shrinking the fold is the point.
+	 */
+	allowCoverageLoss?: boolean
 	onCountry?: (event: GeonamesIngestProgress) => void
 	onPhase?: (phase: string, detail?: string) => void
 }
+
+/**
+ * How many of the dropped country codes the coverage-loss error names before eliding. The realistic miss is the whole
+ * fold minus a handful (161 → 14 in the #1514 incident), so the list is there to make the SHAPE of the mistake obvious,
+ * not to enumerate it — a dozen codes plus the count does that on one terminal line.
+ */
+const DROPPED_COUNTRIES_SHOWN = 12
 
 export interface FoldResult {
 	ingested: number
 	placeSearchRows: number
 	bboxRows: number
+	/**
+	 * Countries whose alias rows `adminIn` already carried — the fold re-derives every one of them.
+	 */
+	refoldedCountries: string[]
 }
 
 /**
  * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places + Latin alt-names into its canonical
  * `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox` so the candidate build carries them.
  * Build-on-copy — `adminIn` is never touched.
+ *
+ * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it WHOLESALE — the synthetic id is a position in the
+ * run, so a partial rewrite binds one run's names to another run's places. Folding a country set narrower than what
+ * `adminIn` already carries therefore DROPS the difference, and since `buildAdmin` bakes the full
+ * `DEFAULT_GEONAMES_COUNTRIES` fold into every admin artifact it builds, that is the normal case here rather than an
+ * exotic one. The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
 	if (opts.adminIn === opts.adminOut) {
@@ -201,7 +217,39 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	if (!existsSync(opts.adminIn)) throw new Error(`admin DB not found: ${opts.adminIn}`)
 
-	const { ingestGeonamesAliases, buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
+	const { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE, ingestGeonamesAliases, buildPlaceSearchFTS } =
+		await import("@mailwoman/resolver-wof-sqlite")
+
+	const countries = [...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)]
+
+	// Pre-flight on the SOURCE, before the copy: what does it already carry in the fold's range?
+	opts.onPhase?.("preflight", "reading the source's existing alias-fold coverage")
+	const source = new DatabaseSync(opts.adminIn, { readOnly: true })
+
+	const refoldedCountries = (
+		source
+			.prepare(`SELECT DISTINCT country FROM spr WHERE id >= ? AND id < ? ORDER BY country`)
+			.all(GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE) as Array<{ country: string }>
+	)
+
+		.map((r) => r.country)
+
+	source.close()
+
+	const requested = new Set(countries)
+	const dropped = refoldedCountries.filter((cc) => !requested.has(cc))
+
+	if (dropped.length && !opts.allowCoverageLoss) {
+		throw new Error(
+			`fold would DROP the GeoNames alias coverage ${opts.adminIn} already carries for ${dropped.length} ` +
+				`countries (${dropped.slice(0, DROPPED_COUNTRIES_SHOWN).join(", ")}` +
+				`${dropped.length > DROPPED_COUNTRIES_SHOWN ? ", …" : ""}). The fold rewrites ` +
+				`its whole id range, so anything not in this run's country list disappears. ` +
+				`\`mailwoman gazetteer build admin\` already folds ${refoldedCountries.length} countries into the admin ` +
+				`artifact — build the candidate from it directly (--no-fold), pass --countries covering them, or set ` +
+				`allowCoverageLoss when shrinking the fold is the point.`
+		)
+	}
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
 	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileSync
@@ -214,23 +262,23 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	const db = new DatabaseSync(opts.adminOut)
 
-	const ingested = await ingestGeonamesAliases(
-		db,
-		[...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)],
-		opts.geonamesDir ?? geonamesDir(),
-		opts.onCountry,
-		{
-			adminForCountries: opts.adminForCountries,
-			alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
-		}
-	)
+	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that
+	// does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same
+	// gap set `buildAdmin` uses, scoped to this run — the caller opts OUT by passing an explicit set.
+	const adminForCountries =
+		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
+
+	const ingested = await ingestGeonamesAliases(db, countries, opts.geonamesDir ?? geonamesDir(), opts.onCountry, {
+		adminForCountries,
+		alternateDir: opts.alternateDir ?? geonamesAlternateDir(),
+	})
 
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
 	db.exec("ANALYZE")
 	db.close()
 
-	return { ingested, placeSearchRows: res.indexedRows, bboxRows: res.bboxIndexedRows }
+	return { ingested, placeSearchRows: res.indexedRows, bboxRows: res.bboxIndexedRows, refoldedCountries }
 }
 
 export interface BuildOptions {

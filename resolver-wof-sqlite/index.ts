@@ -36,7 +36,13 @@ export {
 export type { CountryBBoxTable, CountryCoverageTable, GazetteerCoverageDatabase } from "./coverage-manifest-schema.ts"
 export { SQLiteStreetNameLookup, type SQLiteStreetNameLookupOpts } from "./street-name-lookup.ts"
 
-export { GEONAMES_ID_BASE, ingestGeonamesAliases, type GeonamesIngestProgress } from "./geonames-aliases.ts"
+export {
+	GEONAMES_ID_BASE,
+	type GeonamesIngestProgress,
+	ingestGeonamesAliases,
+	purgeGeonamesAliasRange,
+} from "./geonames-aliases.ts"
+export { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
 
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.ts"
 export type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.ts"
