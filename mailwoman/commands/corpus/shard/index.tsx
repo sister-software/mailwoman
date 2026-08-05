@@ -64,6 +64,14 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe("fr-fragment: REQUIRED — reserved street-surface list to exclude (the fragment board's eval set)"),
 	multilocaleCount: zod.string().optional().describe("street-affix: multilocale row count"),
+	lexicon: zod.string().optional().describe("sub-venue: lexicon JSON (default: the committed corpus/data one)"),
+	extractsDir: zod.string().optional().describe("sub-venue: OSM sub-venue extract JSONL directory"),
+	poiDb: zod.string().optional().describe("sub-venue: poi.db path (en-US / fr-FR venue + confound pools)"),
+	subVenueTuples: zod.string().optional().describe("sub-venue: GB/US/FR address-context tuples JSONL"),
+	negativeFraction: zod
+		.string()
+		.optional()
+		.describe("sub-venue: share of rows that are confound negatives (default 0.3)"),
 })
 
 export { ArgumentsSchema as args, OptionsSchema as options }
@@ -119,6 +127,11 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 			banDir: options.banDir,
 			excludeSurfaces: options.excludeSurfaces,
 			multilocaleCount: num(options.multilocaleCount),
+			lexicon: options.lexicon,
+			extractsDir: options.extractsDir,
+			poiDb: options.poiDb,
+			subVenueTuples: options.subVenueTuples,
+			negativeFraction: num(options.negativeFraction),
 		}
 
 		console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
@@ -138,7 +151,7 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 
 		return [
 			`recipe: ${name}`,
-			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""} → ${options.output}`,
+			`${stats.emitted.toLocaleString()} rows emitted, ${stats.skipped.toLocaleString()} skipped${stats.read != null ? `, ${stats.read.toLocaleString()} read` : ""}${stats.contaminated ? `, ${stats.contaminated.toLocaleString()} board-reserved` : ""} → ${options.output}`,
 		]
 	})
 
