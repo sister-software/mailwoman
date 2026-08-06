@@ -50,7 +50,7 @@ const CORPUS_SIZE = 306
  * are untouched. As of the same day this value also lives in every built `regression.db` (the `gauntlet_meta` stamp),
  * and a runner refuses to grade when the two disagree.
  */
-const CORPUS_HASH = "08bd5d091326da9dfbcc6600e3bddffac7c878ce819831565eb0f7f383075c98"
+const CORPUS_HASH = "3445d44f09ca637b91a1443b01f89cfe1fbaaeb0099661682bb05da82751eb0e"
 
 /**
  * `ablationBoardID` of the corpus.
