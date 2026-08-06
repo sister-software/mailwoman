@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-en-us",
-	"version": "8.7.0",
+	"version": "9.0.0",
 	"description": "Mailwoman neural-classifier weights for locale 'en-us'. Data-only package — loaded by @mailwoman/neural at runtime.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -19,7 +19,7 @@
 		"fst-en-us.bin",
 		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
-		"locality-surface-lexicon-v6.json",
+		"locality-surface-lexicon-v7.json",
 		"street-type-lexicon-v3.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",

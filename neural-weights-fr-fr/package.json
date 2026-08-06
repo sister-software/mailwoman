@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-fr-fr",
-	"version": "8.7.0",
+	"version": "9.0.0",
 	"description": "Mailwoman neural-classifier weights for locale 'fr-fr'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the fr-specific data siblings. Loaded by @mailwoman/neural at runtime.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -15,7 +15,7 @@
 		"fst-fr-fr.bin",
 		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
-		"locality-surface-lexicon-v6.json",
+		"locality-surface-lexicon-v7.json",
 		"street-type-lexicon-v3.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",

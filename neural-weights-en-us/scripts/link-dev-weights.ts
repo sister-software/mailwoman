@@ -236,7 +236,7 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 // locality channel resolving OFF (degrade-absent for a card that doesn't require it; fail-closed once
 // the bundle card ships, which is the intended loud signal).
 const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-lexicon-v3.json")
-const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v6.json")
+const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")
 
 if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 	linkForce(SRC_STREET_TYPE_LEXICON, resolve(PKG_DIR, "street-type-lexicon-v3.json"))
@@ -247,9 +247,9 @@ if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 }
 
 if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
-	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v6.json"))
+	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v7.json"))
 
-	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v6.json`)
+	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v7.json`)
 } else {
 	console.error(
 		`WARNING: missing ${SRC_LOCALITY_SURFACE_LEXICON} — locality_surface channel will resolve OFF in this worktree.`

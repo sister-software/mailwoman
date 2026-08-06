@@ -87,12 +87,15 @@ describe("readDeclaredArtifactFile", () => {
 		expect(readDeclaredArtifactFile(packageDir({ files: ["postcode-us.bin"] }))).toBeUndefined()
 	})
 
-	it("reads the SHIPPED cards: en-us declares its binary, en-gb declares none", () => {
+	it("reads the SHIPPED cards: en-us/fr-fr/en-gb declare their binaries, en-nz declares none", () => {
 		// The two postures this reader must keep apart, against the real cards rather than fixtures — a card
-		// edit that dropped either one would leave every fixture test above green.
+		// edit that dropped either one would leave every fixture test above green. en-gb moved to the
+		// declaring column 2026-08-06 (9.0.0, ROAD_TO_V9 A4): the v4.2.0 base trained the GB anchor slot,
+		// so postcode-gb.bin returned — the #1467-era "declares none" posture now lives only on en-nz
+		// (no NZ postcode shard exists).
 		expect(readDeclaredArtifactFile(repoRootPath("neural-weights-en-us"))).toMatchObject({ file: "postcode-us.bin" })
 		expect(readDeclaredArtifactFile(repoRootPath("neural-weights-fr-fr"))).toMatchObject({ file: "postcode-fr.bin" })
-		expect(readDeclaredArtifactFile(repoRootPath("neural-weights-en-gb"))).toBeUndefined()
+		expect(readDeclaredArtifactFile(repoRootPath("neural-weights-en-gb"))).toMatchObject({ file: "postcode-gb.bin" })
 		expect(readDeclaredArtifactFile(repoRootPath("neural-weights-en-nz"))).toBeUndefined()
 	})
 })
