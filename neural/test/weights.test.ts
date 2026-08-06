@@ -264,10 +264,12 @@ describe("resolveWeights — package auto-resolve", () => {
 	// re-adding postcode-gb.bin — to `files`, to release.config.json's postcodeDBByCountry, to the
 	// publish workflow's fetch list, or by hand into the package dir — WITHOUT the retrain that feeds
 	// slot 4. That change produces no error and no warning on its own; it just quietly makes GB worse.
-	// If you are here because this test failed, read
-	// `neural-weights-en-gb/model-card.json`'s `gb_artifacts.no_postcode_bin` before touching it.
+	// 9.0.0 (ROAD_TO_V9 A4): the GB anchor slot is TRAINED (v4.2.0 base, Fisher receipts in the
+	// en-gb card) and postcode-gb.bin is back — the card declares span_mode "shaped" and the dev
+	// linker builds the bin off that card gate. The #1467 "has NO anchor lookup" posture this test
+	// pinned from 2026-08-05 lives on in the card's gb_artifacts history.
 	test.skipIf(!haveModel || !haveCLI)(
-		"en-gb resolves model/tokenizer from the en-us base with its own model-card, and has NO anchor lookup (the GB anchor slot is untrained), and parses",
+		"en-gb resolves model/tokenizer from the en-us base with its own model-card, resolves the RETURNED postcode-gb.bin, and parses",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
@@ -275,7 +277,8 @@ describe("resolveWeights — package auto-resolve", () => {
 			expect(r.source).toBe("package:@mailwoman/neural-weights-en-gb+base")
 			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
 			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
-			expect(r.anchorLookupPath).toBeUndefined()
+			expect(r.anchorLookupPath?.binary).toBe(true)
+			expect(r.anchorLookupPath?.path).toMatch(/neural-weights-en-gb\/postcode-gb\.bin$/)
 			// Overlay-local card (6.7.0): en-gb ships its own model-card.json (a verbatim copy of the
 			// base's labels/requires apart from the deliberate conventions + anchor deviations — see that
 			// file's header comment), so `resolveFromPackageDir` resolves it LOCALLY instead of falling
