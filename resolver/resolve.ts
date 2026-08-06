@@ -511,6 +511,7 @@ function revertResolverDecoration(node: AddressNode): void {
 		"classifier_source",
 		"classifier_source_id",
 		"resolver_score",
+		"resolver_prominence",
 		"resolver_name",
 		"resolver_country",
 		"resolution_quality",
@@ -1154,6 +1155,15 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// lets consumers display the canonical name and lets the end-to-end eval check the resolver chose
 	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
+
+	// The winner's PROMINENCE, when the backend computed one. `alternatives` below are full `ResolvedPlace`s and
+	// already carry theirs; without this stamp the WINNER's is the one value in the ranked list that gets dropped,
+	// which makes a top-1-vs-top-2 margin uncomputable from the tree — and that margin is what
+	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win. Additive metadata
+	// only; nothing in the resolve reads it back.
+	if (resolved.prominence !== undefined) {
+		node.metadata["resolver_prominence"] = resolved.prominence
+	}
 
 	// The resolved place's ISO-3166 alpha-2 country (from the gazetteer/candidate row), when known. #1014: lets a
 	// forward consumer fill country/countrycode without an ancestry walk — the candidate backend carries this even

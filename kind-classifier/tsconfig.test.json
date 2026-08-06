@@ -3,5 +3,5 @@
 	"extends": ["./tsconfig.json", "../tsconfig.test-base.json"],
 	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
 	"exclude": ["./out/**/*"],
-	"references": [{ "path": "./tsconfig.json" }]
+	"references": [{ "path": "./tsconfig.json" }, { "path": "../query-shape" }]
 }

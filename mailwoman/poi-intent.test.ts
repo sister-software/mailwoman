@@ -23,6 +23,7 @@ const anchorResult = (raw: string): PipelineResult => ({
 	tree: { raw, roots: [] },
 	timing: {},
 	faults: [],
+	intentMarkers: [],
 	path: "full",
 })
 
@@ -148,7 +149,12 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		expect(result.path).toBe("poi")
 		expect(result.poiIntent?.type).toBe("intent")
-		expect(result.kind.kind).toBe("poi_query")
+		// ROAD_TO_V9 §4.4 renamed this population: a bare category with no anchor is `poi_category`, and `poi_query`
+		// stays underneath it as the alternative. The two assertions above are the ones this test was written for and
+		// they are unchanged — the branch, and the intent it produced. The marker is what the split bought.
+		expect(result.kind.kind).toBe("poi_category")
+		expect(result.kind.alternatives.map((a) => a.kind)).toContain("poi_query")
+		expect(result.intentMarkers.map((m) => m.code)).toEqual(["poi_category"])
 	})
 
 	it("OFF: poiQueryKind: false disables the poi path entirely", async () => {

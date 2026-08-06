@@ -153,3 +153,53 @@ export function createScorePOIQuery(
 		return 0.9 * matched.match.confidence
 	}
 }
+
+/**
+ * Confidence band for a bare category. One notch above `poi_query`'s whole-input band (0.92) so the anchorless subset
+ * takes the top slot from it, and only from it — every anchored POI query keeps scoring `poi_query` exactly as before.
+ * The coordinator's POI branch accepts both kinds, so the routing is identical either way; the split exists so the
+ * marker can say "you named a category and no place", which is a different thing to tell a caller.
+ */
+const POI_CATEGORY_CONFIDENCE = 0.93
+
+/**
+ * `poi_category` scorer (ROAD_TO_V9 §4.4) — a bare taxonomy category with nowhere to search: "tacos", "grocery store",
+ * "drinking fountain".
+ *
+ * Fires ONLY on a whole-input lexicon hit (`remainder === ""`) whose subject is a CATEGORY. A brand (`kind: "brand"`)
+ * is excluded: a bare "Starbucks" is a name lookup, not a category, and the taxonomy id a category marker promises to
+ * carry does not exist for it — `POIPhraseMatch.categoryID` holds the brand's display name in that case, which would
+ * make the marker's `categoryID` evidence a lie.
+ */
+export function createScorePOICategory(
+	lookup: POIPhraseLookup,
+	locale?: string
+): (input: NormalizedInputLite, shape: QueryShapeLike) => number {
+	return (input, _shape) => {
+		const matched = matchPOISubject(input.normalized, locale ?? input.appliedLocale, lookup)
+
+		if (!matched || matched.remainder !== "") return 0
+
+		if ((matched.match.kind ?? "category") !== "category") return 0
+
+		return POI_CATEGORY_CONFIDENCE * matched.match.confidence
+	}
+}
+
+/**
+ * The whole-input category hit behind a `poi_category` verdict, for the marker's evidence. `null` when the input is not
+ * a bare category — same gates as {@link createScorePOICategory}, so the two cannot disagree.
+ */
+export function matchPOICategory(
+	text: string,
+	locale: string | undefined,
+	lookup: POIPhraseLookup
+): POIPhraseMatch | null {
+	const matched = matchPOISubject(text, locale, lookup)
+
+	if (!matched || matched.remainder !== "") return null
+
+	if ((matched.match.kind ?? "category") !== "category") return null
+
+	return matched.match
+}

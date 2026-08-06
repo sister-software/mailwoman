@@ -7,7 +7,8 @@
 /**
  * Re-exports of the canonical types from `@mailwoman/core/pipeline`.
  */
-export type { LocaleHint, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
+export type { LocaleHint, QueryIntentMarker, QueryKind, QueryKindResult } from "@mailwoman/core/pipeline"
+export { QueryIntentCode } from "@mailwoman/core/pipeline"
 
 /**
  * Minimal `NormalizedInput` shape consumed by `classifyKind`. Compatible with `@mailwoman/normalize`'s output.

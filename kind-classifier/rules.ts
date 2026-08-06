@@ -31,8 +31,12 @@ const MIN_POSTCODE_COVERAGE = 0.7
 
 /**
  * Longest input still plausible as a bare locality name, including a trailing region code.
+ *
+ * Exported so `intent-rules.ts`'s `bare_toponym` can share the exact same ceiling. Sharing it is what makes
+ * "bare_toponym is a strict refinement of locality_only" a structural property rather than two numbers that happen to
+ * agree today.
  */
-const MAX_LOCALITY_ONLY_LENGTH = 30
+export const MAX_LOCALITY_ONLY_LENGTH = 30
 
 /**
  * Word count of a short capitalized phrase — the shape of a venue name like `Empire State Building`. Wider than this
@@ -124,9 +128,10 @@ export function scoreLandmark(input: NormalizedInputLite, _shape: QueryShapeLike
 }
 
 /**
- * Street-suffix tokens that indicate an address, not a venue name.
+ * Street-suffix tokens that indicate an address, not a venue name. Shared with `intent-rules.ts` — the intent kinds
+ * disqualify on the same vocabulary, and a second copy would drift.
  */
-const STREET_SUFFIXES = new Set([
+export const STREET_SUFFIXES: ReadonlySet<string> = new Set([
 	"st",
 	"street",
 	"ave",

@@ -48,6 +48,7 @@ function fakePipeline(overrides: Partial<PipelineResult> = {}): RuntimePipeline 
 			tree,
 			timing: {},
 			faults: [],
+			intentMarkers: [],
 			path: "full",
 			...overrides,
 		}

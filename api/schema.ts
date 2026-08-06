@@ -117,6 +117,40 @@ const GeocodeCandidateSchema = z
 	.openapi("GeocodeCandidate")
 
 /**
+ * One `GeocodeOutcome.intent_markers` entry — an advisory the ROAD_TO_V9 §4 intent vocabulary raised about the QUERY.
+ * Mirrors `QueryIntentMarker` (`core/pipeline/types.ts`).
+ *
+ * `evidence` is deliberately open (`z.record`): each `code` carries its own measurement — a dominance margin, a pair of
+ * interpretations, a taxonomy id — and flattening those into one closed shape would either lose the numbers or invent
+ * fields that do not apply. `code` is the discriminator a client branches on.
+ */
+const QueryIntentMarkerSchema = z
+	.object({
+		// Spelled out rather than `z.string()` so `mailwoman/test/api-schema-drift.test.ts`'s schema-too-wide direction
+		// keeps biting: a new `QueryKind` that never reaches this list is a documented contract that has quietly stopped
+		// describing the real one.
+		kind: z.enum([
+			"postcode_only",
+			"locality_only",
+			"structured_address",
+			"intersection",
+			"po_box",
+			"landmark",
+			"poi_query",
+			"vague",
+			"bare_toponym",
+			"route_pair",
+			"near_me",
+			"poi_category",
+		]),
+		code: z.enum(["declared_ambiguity", "declared_fork", "focus_point_required", "poi_category"]),
+		mechanism: z.string(),
+		message: z.string(),
+		evidence: z.record(z.string(), z.unknown()).optional(),
+	})
+	.openapi("QueryIntentMarker")
+
+/**
  * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
  * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
  * than being stripped or rejected. DOC-ACCURACY ONLY: the route passes `engine.geocode()`'s outcome through verbatim
@@ -151,6 +185,9 @@ export const GeocodeOutcomeSchema = z
 		// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
 		// evidence bought the change instead of reading it as a bug.
 		postcode_country_scope: z.string().nullable(),
+		// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
+		// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
+		intent_markers: z.array(QueryIntentMarkerSchema),
 	})
 	.loose()
 	.openapi("GeocodeOutcome")

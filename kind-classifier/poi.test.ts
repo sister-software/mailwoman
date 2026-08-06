@@ -196,10 +196,16 @@ describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 describe("createKindClassifier with a poi lexicon", () => {
 	const classify = createKindClassifier({ poiLexicon: LOOKUP })
 
-	it("emits poi_query for a bare category phrase", async () => {
+	// ROAD_TO_V9 §4.4 split this row's population off `poi_query`: a bare category is `poi_category` now, and
+	// `poi_query` stays underneath it as the alternative. Both kinds take the coordinator's POI branch, so the routing
+	// this test was protecting is unchanged — `core/pipeline/poi-branch.test.ts` is where that is asserted.
+	it("emits poi_category for a bare category phrase, with poi_query underneath", async () => {
 		const result = await classify(input("hospital"), shape(), LOCALE)
-		expect(result.kind).toBe("poi_query")
+		expect(result.kind).toBe("poi_category")
 		expect(result.confidence).toBeGreaterThanOrEqual(0.9)
+		expect(result.alternatives.map((a) => a.kind)).toContain("poi_query")
+		expect(result.intentMarkers?.map((m) => m.code)).toEqual(["poi_category"])
+		expect(result.intentMarkers?.[0]?.evidence?.["categoryID"]).toBe("hospital")
 	})
 
 	it("emits poi_query for subject + anchor", async () => {

@@ -151,11 +151,113 @@ export type QueryKind =
 	| "landmark"
 	| "poi_query"
 	| "vague"
+	/**
+	 * ROAD_TO_V9 §4 — the query-INTENT vocabulary. Four kinds that describe what the user is ASKING FOR rather than what
+	 * their string is shaped like. They are ordinary members of this union (intent is vocabulary of the existing Stage
+	 * 2.5, never a new stage), and each one, when it fires, attaches a {@link QueryIntentMarker} to the result.
+	 *
+	 * Two of the four are deliberately RANKED BELOW their structural incumbent and therefore surface in
+	 * {@link QueryKindResult.alternatives} rather than as the top kind — see the individual docstrings in
+	 * `@mailwoman/kind-classifier`'s `intent-rules.ts`. That is the D-rule discharge: the top kind is the only thing the
+	 * coordinator routes on (`deriveInputMode`, `canShortCircuit`, the POI branch), so leaving it untouched is what makes
+	 * the addition provably answer-neutral on the populations those incumbents already own.
+	 */
+	/**
+	 * A single coherent place-name carrying no address grammar — no house number, no postcode, no street-type word. A
+	 * strict REFINEMENT of `locality_only` (which also admits an admin tail: `Paris, FR`), scored just below it so the
+	 * top kind never moves. Feeds the declared-ambiguity path: a bare toponym whose resolved candidates are not DECISIVE
+	 * gets a `declared_ambiguity` marker at geocode time.
+	 */
+	| "bare_toponym"
+	/**
+	 * Two coherent toponyms with no address grammar between them — `Paris London`. Classification plus a DECLARED FORK,
+	 * never a router (ROAD_TO_V9 §4.3): structure alone cannot separate a route pair from a comma-free locality+region
+	 * fragment (`Moscow Idaho`), so both interpretations are named in the marker and neither wins.
+	 */
+	| "route_pair"
+	/**
+	 * Preposition/deictic locator with no anchor — `gas station near me`, `restaurants nearby`. The query names a
+	 * category and a relation to the ASKER, and the asker's position is not in the string. Classification only in v9: the
+	 * marker states that a focus point is required and absent.
+	 */
+	| "near_me"
+	/**
+	 * A bare POI category with nowhere to search — `tacos`, `grocery store`. The anchorless subset of `poi_query`,
+	 * carrying the resolved `@mailwoman/poi-taxonomy` category id on its marker. Routes exactly as `poi_query` does (the
+	 * coordinator's POI branch accepts both); resolution against `poi.db` is out of scope.
+	 */
+	| "poi_category"
+
+/**
+ * The advisory codes an intent kind can raise. Named per the suggestion-layer plan's rules
+ * (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` § Naming): never `*Coherence` (that vocabulary belongs to
+ * the passes that decide what the answer IS), and never `correction`/`validation`. This surface only ever REPORTS.
+ */
+export const QueryIntentCode = {
+	/**
+	 * The query named a place, and the gazetteer's answer for that name is not decisive. Raised at RESOLVE time (the
+	 * margin is a property of the candidate list, not of the string), so the classifier never emits it.
+	 */
+	DeclaredAmbiguity: "declared_ambiguity",
+	/**
+	 * The query admits two whole readings and the pipeline is not choosing between them. `evidence.interpretations` names
+	 * both.
+	 */
+	DeclaredFork: "declared_fork",
+	/**
+	 * The query is relative to the asker and no focus point was supplied. `evidence.parameter` names the seam that would
+	 * carry one.
+	 */
+	FocusPointRequired: "focus_point_required",
+	/**
+	 * The query resolved to a POI taxonomy category. `evidence.categoryID` carries it.
+	 */
+	POICategory: "poi_category",
+} as const
+
+export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentCode]
+
+/**
+ * One advisory the intent vocabulary raised about a query.
+ *
+ * Shaped after {@link PipelineFault} on purpose, and for the same reason: the caller needs to tell "the pipeline
+ * considered this and had something to say" apart from "the pipeline said nothing". A marker NEVER changes which answer
+ * wins — it is additive, attributed, and always accompanied by the ordinary result. `mechanism` follows the
+ * `family:rule` convention `PhraseProposal.source` established (`core/pipeline/span-proposer.ts`), so every marker
+ * names the rule that produced it rather than asserting itself.
+ */
+export interface QueryIntentMarker {
+	/**
+	 * The intent kind that raised this marker. Present in {@link QueryKindResult} as either the top `kind` or an entry in
+	 * `alternatives` — a marker whose kind appears in neither is a bug in the producer.
+	 */
+	kind: QueryKind
+	code: QueryIntentCode
+	/**
+	 * `family:rule` — `kind:bare_toponym`, `kind:route_pair`, `resolver:dominance_margin`. Never `"unknown"`.
+	 */
+	mechanism: string
+	/**
+	 * Human-readable, for a surface that shows it. Not machine-stable; branch on `code`.
+	 */
+	message: string
+	/**
+	 * The measurement behind the marker, so it is auditable rather than assertive. Absent when the rule that fired had
+	 * nothing to measure (meaning-of-zero: absent, never an empty object).
+	 */
+	evidence?: Record<string, unknown>
+}
 
 export interface QueryKindResult {
 	kind: QueryKind
 	confidence: number
 	alternatives: ReadonlyArray<{ kind: QueryKind; confidence: number }>
+	/**
+	 * Advisories raised by the intent vocabulary (ROAD_TO_V9 §4). Optional on this interface — a pre-intent classifier
+	 * (including `runtime-pipeline.ts`'s built-in default) simply doesn't set it — but `PipelineResult.intentMarkers` is
+	 * always an array, so a consumer reading the RESULT never has to distinguish "absent" from "empty".
+	 */
+	intentMarkers?: ReadonlyArray<QueryIntentMarker>
 }
 
 /**
@@ -174,6 +276,10 @@ export type InputMode = "fragmented" | "formatted"
  * (`structured_address`/`po_box`/`intersection`) are the formatted register; single-thing lookups (postcode, locality,
  * landmark, POI, vague) are fragments. NEVER keyed on case — lowercase is the primary user register (operator
  * doctrine).
+ *
+ * The four ROAD_TO_V9 §4 intent kinds are all fragments and all reach the register through the `default` arm, which is
+ * why adding them changed no case in this switch: a bare toponym, a route pair, a `near me` and a bare POI category are
+ * each a person typing one thing into a search box, never a form submitting a postal record.
  */
 export function deriveInputMode(kind: QueryKind): InputMode {
 	switch (kind) {
@@ -499,6 +605,16 @@ export interface PipelineResult {
 	 * Non-empty means the tree you are holding was produced with at least one stage down; see {@link PipelineFault}.
 	 */
 	faults: PipelineFault[]
+	/**
+	 * Query-intent advisories (ROAD_TO_V9 §4), lifted from the kind classifier's verdict. **Always present** — an empty
+	 * array is the coordinator stating that the intent vocabulary examined this query and had nothing to say, which is a
+	 * different claim from a missing field (the {@link faults} discipline, same reasoning).
+	 *
+	 * Nothing here changed which answer won. The markers are advisory by construction: the two intent kinds that could
+	 * have displaced a structural incumbent are scored below it, and the two that do win the top slot (`near_me`,
+	 * `poi_category`) route exactly as their incumbents did.
+	 */
+	intentMarkers: QueryIntentMarker[]
 	/**
 	 * Which path the coordinator took. `"fast-path"` skipped stages 3-5; `"poi"` took the intent branch.
 	 */
