@@ -16,7 +16,12 @@ const OptionsSchema = zod.object({
 	base: zod.string().describe("Base corpus manifest path"),
 	newDir: zod.string().describe("New overlay corpus dir"),
 	modalRoot: zod.string().describe("Modal volume root the manifest paths are relative to"),
-	version: zod.string().describe("New corpus version"),
+	// NOT `version`: Pastel registers `-v, --version` on the ROOT program, and commander resolves it
+	// before the subcommand's own options, so `--version 9.9.9` printed the CLI version (8.7.0) and
+	// exited 0 without ever running the tool (#1491). Pastel decamelizes the key, so this derives
+	// `--corpus-version`. `mailwoman/test/command-option-collisions.test.ts` keeps the whole command
+	// tree off the reserved names.
+	corpusVersion: zod.string().describe("New corpus version"),
 	shardParquet: zod.string().describe("The ONE shard parquet to add"),
 	source: zod.string().describe("Shard source label"),
 	note: zod.string().describe("Manifest note"),
@@ -32,7 +37,7 @@ const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 			base: options.base,
 			newDir: options.newDir,
 			modalRoot: options.modalRoot,
-			version: options.version,
+			version: options.corpusVersion,
 			shardParquet: options.shardParquet,
 			source: options.source,
 			note: options.note,
