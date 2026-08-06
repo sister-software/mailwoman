@@ -23,7 +23,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -36,7 +36,7 @@ import type {
  * looks when nothing points somewhere else.
  */
 export function conventionCandidateDBPath(): string {
-	return join(mailwomanDataRoot(), "wof", "candidate.db")
+	return dataRootPath("wof", "candidate.db")
 }
 
 /**

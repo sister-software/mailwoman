@@ -16,7 +16,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/neural/weights"
+import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const LOCALE = "pt-BR"
@@ -24,6 +24,13 @@ const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
 
 let cacheRoot: string
 
+/**
+ * THIS FILE SPELLS THE LAYOUT OUT BY HAND ON PURPOSE (2026-08-06 triage). Everywhere else in the tree that literal
+ * moved to {@linkcode weightsCachePackageDir}, because a layout re-typed in eight places is a layout that can drift.
+ * Here it is the ORACLE: this is the file that pins what `resolveWeights`' cache rung finds, and a fixture built with
+ * the implementation's own helper cannot fail when the implementation is wrong. The helper is tied back to the
+ * independent spelling by the last test in this file instead.
+ */
 function layoutCachedPackage(files: string[]): string {
 	const packageDir = join(cacheRoot, "node_modules", PACKAGE_NAME)
 
@@ -96,5 +103,14 @@ describe("resolveWeights cache fallback", () => {
 		expect(weightsCacheDir()).toMatch(/\.cache[/\\]mailwoman[/\\]weights$/)
 		expect(weightsPackageName("en-US")).toBe("@mailwoman/neural-weights-en-us")
 		expect(weightsPackageName()).toBe("@mailwoman/neural-weights-en-us")
+	})
+
+	// The tie between the exported layout helper and the layout this file pins independently. Every other call site in
+	// the tree now builds the directory with `weightsCachePackageDir`; if it and the hand-spelled path ever disagree,
+	// they disagree HERE and not in a gate run that silently graded the wrong bundle.
+	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
+		expect(weightsCachePackageDir(cacheRoot, LOCALE)).toBe(join(cacheRoot, "node_modules", PACKAGE_NAME))
+		// Locale casing is normalized the same way the package name is.
+		expect(weightsCachePackageDir(cacheRoot)).toBe(join(cacheRoot, "node_modules", "@mailwoman/neural-weights-en-us"))
 	})
 })

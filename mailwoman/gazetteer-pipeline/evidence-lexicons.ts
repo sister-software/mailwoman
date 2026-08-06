@@ -343,7 +343,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const output = opts.output ?? join(String(dataRootPath("gazetteer")), "locality-surface-lexicon-v6.json")
+	const output = opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json")
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("loading curation + ambiguity + person-name inputs…")

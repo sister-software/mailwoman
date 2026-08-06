@@ -12,6 +12,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildWeightsInstallArgs, probeWeights } from "./weights-guard.tsx"
@@ -24,7 +25,6 @@ import { buildWeightsInstallArgs, probeWeights } from "./weights-guard.tsx"
 // `pt-BR` is the current choice because Brazil has no carrier package. If one ever ships, this breaks
 // the same way, and the fix is the same: move to a locale that is still unclaimed.
 const LOCALE = "pt-BR"
-const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
 
 let cacheRoot: string
 
@@ -61,11 +61,11 @@ describe("probeWeights", () => {
 
 		expect(probe.ok).toBe(false)
 		expect(probe.detail).toMatch(/Could not resolve/)
-		expect(probe.detail).toContain(join(cacheRoot, "node_modules", PACKAGE_NAME))
+		expect(probe.detail).toContain(weightsCachePackageDir(cacheRoot, LOCALE))
 	})
 
 	test("ok=true against a binary-carrying cache install", () => {
-		const packageDir = join(cacheRoot, "node_modules", PACKAGE_NAME)
+		const packageDir = weightsCachePackageDir(cacheRoot, LOCALE)
 
 		mkdirSync(packageDir, { recursive: true })
 		writeFileSync(join(packageDir, "model.onnx"), "stub")
@@ -75,7 +75,7 @@ describe("probeWeights", () => {
 	})
 
 	test("ok=false against a metadata-only cache install (the code-only-release tarball)", () => {
-		const packageDir = join(cacheRoot, "node_modules", PACKAGE_NAME)
+		const packageDir = weightsCachePackageDir(cacheRoot, LOCALE)
 
 		mkdirSync(packageDir, { recursive: true })
 		writeFileSync(join(packageDir, "model-card.json"), "{}")

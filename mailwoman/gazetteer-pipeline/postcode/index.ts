@@ -17,7 +17,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { sealDatabase } from "@mailwoman/core/utils"
 
-import { mailwomanDataRoot } from "../../resolver-backend.ts"
+import { dataRootPath } from "../../resolver-backend.ts"
 import { ingestWOF } from "../admin/ingest-wof.ts"
 import { buildFTS } from "../fts.ts"
 import { type CentroidFillResult, fillPostcodeCentroids } from "./centroid-fills.ts"
@@ -71,7 +71,7 @@ export interface BuildPostcodeShardResult {
 export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promise<BuildPostcodeShardResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()
-	const wofDir = join(mailwomanDataRoot(), "wof")
+	const wofDir = dataRootPath("wof")
 	const reposDir = opts.reposDir ?? join(wofDir, "repos")
 	const repoDir = join(reposDir, `whosonfirst-data-postalcode-${cc}`)
 	const out = opts.out ?? join(wofDir, `postalcode-${cc}.REBUILD.db`)
@@ -119,7 +119,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	let geonamesUSFilled = 0
 
 	if (cc === "us") {
-		const zctaPath = opts.zctaPath ?? join(mailwomanDataRoot(), "census", "2024_Gaz_zcta_national.txt")
+		const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")
 
 		if (existsSync(zctaPath)) {
 			phase("fill-zcta", zctaPath)
@@ -128,7 +128,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 			phase("fill-zcta", `SKIPPED (${zctaPath} not present)`)
 		}
 
-		const usPostal = join(opts.geonamesPostalDir ?? join(mailwomanDataRoot(), "geonames-postal"), "US.txt")
+		const usPostal = join(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
 
 		if (existsSync(usPostal)) {
 			phase("fill-geonames-us", usPostal)
@@ -138,7 +138,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 
 	// The general ladder (GeoNames postal → parent-borrow → ancestor fallback).
 	const fills = await fillPostcodeCentroids(db, {
-		geonamesDir: opts.geonamesPostalDir ?? join(mailwomanDataRoot(), "geonames-postal"),
+		geonamesDir: opts.geonamesPostalDir ?? dataRootPath("geonames-postal"),
 		adminPath: opts.adminPath ?? join(wofDir, "admin-global-priority.db"),
 		reposDir,
 		onPhase: phase,

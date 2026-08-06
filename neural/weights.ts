@@ -69,6 +69,31 @@ export function weightsPackageName(locale?: string): string {
 	return `@mailwoman/neural-weights-${(locale ?? "en-us").toLowerCase()}`
 }
 
+/**
+ * The package directory a weights CACHE root holds for a locale — `<cacheRoot>/node_modules/@mailwoman/neural-weights-
+ * <locale>`.
+ *
+ * THE ONE PLACE THAT LAYOUT IS SPELLED OUT (2026-08-06 triage). Hand-assembling a `node_modules/...` path is normally
+ * the smell that says a package should have been located with `import.meta.resolve` or an exports subpath; this is the
+ * one site in the tree where it is the correct answer, and it earns that by being the inverse of a resolution rather
+ * than a substitute for one. The directory does not exist yet at the moment the layout is needed — `mailwoman parse
+ * --download-weights` runs `npm install --prefix <cacheRoot>`, and an eval harness lays a CANDIDATE bundle out with
+ * `scripts/stage-weights-cache.ts` — so there is nothing for a resolver to resolve. `import.meta.resolve` would also
+ * answer from THIS module's graph (the monorepo), which is precisely the bundle the candidate is being graded against.
+ *
+ * Ten call sites across seven files had re-typed the literal (the promotion gate, the gauntlet harness,
+ * `stage-weights-cache.ts`, and four test files); they now call this, so the day npm's prefix layout or the package
+ * scope changes, one line moves. The one file that still spells it out is `neural/test/weights-cache.test.ts`, on
+ * purpose — it is the ORACLE for this layout, and a fixture built with this helper could not fail when this helper is
+ * wrong.
+ *
+ * Not `existsSync`-checked: callers want the path they are about to WRITE as often as one they mean to read.
+ * {@linkcode resolveWeights} probes it for the two binaries before trusting it.
+ */
+export function weightsCachePackageDir(cacheRoot: string, locale?: string): string {
+	return resolve(cacheRoot, "node_modules", weightsPackageName(locale))
+}
+
 export interface ResolveWeightsOpts {
 	/**
 	 * BCP-47-ish locale tag, e.g. "en-us" or "fr-fr". Used to pick the weights package.
@@ -237,7 +262,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const locale = (opts.locale ?? "en-us").toLowerCase()
 	const packageName = weightsPackageName(locale)
 
-	const cacheDir = resolve(opts.cacheRoot ?? weightsCacheDir(), "node_modules", packageName)
+	const cacheDir = weightsCachePackageDir(opts.cacheRoot ?? weightsCacheDir(), locale)
 
 	const cacheHasBinaries = () =>
 		existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))

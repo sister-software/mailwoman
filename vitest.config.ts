@@ -16,6 +16,7 @@
 /// <reference types="vitest/config" />
 
 import { resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
 import { defineConfig } from "vite"
 
@@ -81,9 +82,19 @@ export default defineConfig({
 			// condition with a Node-ready build (fs-based wasm loading), so tests resolve to it.
 			// Production imports keep `onnxruntime-web/webgpu` — this alias lives only in the vitest
 			// module graph, where WebGPU is unavailable anyway.
+			//
+			// ASK THE PACKAGE, don't hand-assemble the dist path (2026-08-06 triage). This read
+			// `resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs")` — a literal that
+			// says the same thing the comment above says, except it says it in a form the package
+			// cannot correct. `import.meta.resolve("onnxruntime-web")` applies the `node` condition of
+			// the exports map the comment is describing, so an ORT upgrade that renames or relocates
+			// the Node bundle keeps resolving; the literal would have silently missed. Verified
+			// 2026-08-06 against onnxruntime-web 1.x: it resolves to `dist/ort.node.min.mjs`, the same
+			// file the literal named. `exports` has no `./dist/*` subpath, so the ROOT specifier is
+			// the only one that reaches it.
 			{
 				find: /^onnxruntime-web\/webgpu$/,
-				replacement: resolve(here, "node_modules/onnxruntime-web/dist/ort.node.min.mjs"),
+				replacement: fileURLToPath(import.meta.resolve("onnxruntime-web")),
 			},
 		],
 	},

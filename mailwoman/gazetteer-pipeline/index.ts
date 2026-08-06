@@ -39,6 +39,7 @@ import { sealDatabase } from "@mailwoman/core/utils"
 // when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
 import { emitCoverageManifest } from "./coverage-manifest.ts"
@@ -114,23 +115,29 @@ export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 
 /**
  * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink live.
+ *
+ * This helper and its two siblings below compose with path-ts's `resolvePath`, not `node:path`'s `join` — the same
+ * builder `wofShardPaths` (`core/utils/data-root.ts`) uses for the identical shape, a caller-supplied root plus a fixed
+ * subdirectory. It also makes the return ABSOLUTE, which the docstrings above have always claimed: the default root is
+ * absolute, so `join` only differed for a caller that passed a relative `--data-root`, and for that caller it silently
+ * produced a cwd-relative path the sealed-artifact swap would then resolve somewhere else.
  */
 export function wofDir(dataRoot: string = mailwomanDataRoot()): string {
-	return join(dataRoot, "wof")
+	return resolvePath(dataRoot, "wof")
 }
 
 /**
  * `<data-root>/geonames`, the per-country GeoNames dump dir.
  */
 export function geonamesDir(dataRoot: string = mailwomanDataRoot()): string {
-	return join(dataRoot, "geonames")
+	return resolvePath(dataRoot, "geonames")
 }
 
 /**
  * `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir (#936 language tags).
  */
 export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): string {
-	return join(dataRoot, "geonames-alternate")
+	return resolvePath(dataRoot, "geonames-alternate")
 }
 
 /**
@@ -140,7 +147,7 @@ export function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): string[] {
-	return shards.map((s) => join(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
 }
 
 export interface FoldOptions {
