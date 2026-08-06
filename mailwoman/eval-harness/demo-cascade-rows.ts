@@ -82,12 +82,12 @@ class SmokeRowError extends Error {
  * offending line) on ANY malformed row. Returns at least one row — an empty file is an error, not a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The row NUMBER is the point of this
-	// parser: every error names the 1-based line a human would count to in the file. TextSpliterator
-	// drops empty segments, so a file with a blank line renumbers every row after it — measured, by
-	// the "numbers rows by FILE line" case in demo-cascade-rows.test.ts, which caught exactly that
-	// when this was briefly a spliterator. split() keeps blank lines, and the input is one bounded
-	// committed fixture.
+	// The row NUMBER is the point of this parser: every error names the 1-based line a human would
+	// count to in the file. TextSpliterator drops empty segments, so a fixture with a blank line
+	// renumbers every row after it — measured, by the "numbers rows by FILE line" case in
+	// demo-cascade-rows.test.ts, which caught exactly that when this was briefly a spliterator.
+	// split() keeps blank lines, and the input is one bounded committed fixture.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- row numbering needs blank lines kept
 	const lines = text.split("\n")
 	const rows: SmokeRow[] = []
 
