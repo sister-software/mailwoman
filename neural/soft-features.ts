@@ -18,7 +18,12 @@
  *   reason).
  */
 
-import { type AnchorLookup, type AnchorSpanMode, buildAnchorFeatures } from "./anchor-inference.ts"
+import {
+	type AnchorLookup,
+	type AnchorSpanMode,
+	buildAnchorFeatures,
+	warnShapedKeyerObligationOnce,
+} from "./anchor-inference.ts"
 import { buildCountryFeatures, type CountryLexicon } from "./country-inference.ts"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.ts"
 import type { TokenizedPiece } from "./tokenizer.ts"
@@ -120,6 +125,13 @@ export function buildSoftFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	sources: SoftFeatureSources
 ): SoftFeatures {
+	// SHIP OBLIGATION (A2 of ROAD_TO_V9 §1). This is the one place in the codebase where the loaded
+	// lookup and the card-declared span mode are BOTH in hand, so it is where the mispairing can be
+	// seen — and it covers every construction path (Node loader, browser loader, a harness building a
+	// classifier by hand), not just the one loader a check in `loadFromWeights` would have caught.
+	// Latched to once per process, so the per-parse cost is a boolean read.
+	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup, sources.postcodeAnchorSpanMode, undefined)
+
 	const anchor = sources.postcodeAnchorLookup
 		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {
 				spanMode: sources.postcodeAnchorSpanMode ?? "alnum-run",
