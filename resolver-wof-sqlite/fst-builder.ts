@@ -12,6 +12,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { readWOFSourceIdentity } from "./fst-freshness.ts"
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
 import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
@@ -28,6 +29,11 @@ const DEFAULT_PLACETYPES: PlacetypeID[] = [
 
 const DEFAULT_COUNTRIES = ["US"]
 const DEFAULT_LANGUAGES = ["eng", ""]
+/**
+ * Ids per `IN (…)` batch. SQLITE_MAX_VARIABLE_NUMBER defaults to 32,766; 500 matches the name-load batch a few phases
+ * down, so both read paths bind the same shape.
+ */
+const ANCESTOR_CHUNK = 500
 
 interface SprRow {
 	id: number
@@ -88,19 +94,40 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	// Also load parent rows that might be outside our placetype filter (e.g., country for region).
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
 
-	// Fallback: use ancestors table when parent_id is a sentinel (-1, -4, etc.).
-	let ancestorStmt: ReturnType<typeof db.prepare> | null = null
+	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table. Read in chunked `IN (…)`
+	// batches ONCE — the point-query version fired per orphan row, and on a global build the orphans
+	// run to six figures. Ordering is county → region → country, preserved by the same CASE the
+	// per-row query used, with `id` leading so one pass groups the rows.
+	const ancestorsByID = new Map<number, number[]>()
 
 	try {
-		ancestorStmt = db.prepare(
-			`SELECT DISTINCT ancestor_id FROM ancestors
-			 WHERE id = ? AND ancestor_placetype IN ('country', 'region', 'county')
-			 ORDER BY CASE ancestor_placetype
-			   WHEN 'county' THEN 1
-			   WHEN 'region' THEN 2
-			   WHEN 'country' THEN 3
-			 END`
-		)
+		const orphanIDs = sprRows.filter((row) => row.parent_id <= 0).map((row) => row.id)
+
+		for (let i = 0; i < orphanIDs.length; i += ANCESTOR_CHUNK) {
+			const chunk = orphanIDs.slice(i, i + ANCESTOR_CHUNK)
+
+			const rows = db
+				.prepare(
+					`SELECT DISTINCT id, ancestor_id FROM ancestors
+					 WHERE id IN (${chunk.map(() => "?").join(",")}) AND ancestor_placetype IN ('country', 'region', 'county')
+					 ORDER BY id, CASE ancestor_placetype
+					   WHEN 'county' THEN 1
+					   WHEN 'region' THEN 2
+					   WHEN 'country' THEN 3
+					 END`
+				)
+				.all(...chunk) as unknown as Array<{ id: number; ancestor_id: number }>
+
+			for (const row of rows) {
+				let chain = ancestorsByID.get(row.id)
+
+				if (!chain) {
+					ancestorsByID.set(row.id, (chain = []))
+				}
+
+				chain.push(row.ancestor_id)
+			}
+		}
 	} catch {
 		progress("ancestors", "No ancestors table — sentinel parent_ids will produce empty chains")
 	}
@@ -111,10 +138,8 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		if (!row) return []
 
 		// If parent_id is a sentinel (≤ 0), use ancestors table.
-		if (row.parent_id <= 0 && ancestorStmt) {
-			const ancestors = ancestorStmt.all(id) as unknown as Array<{ ancestor_id: number }>
-
-			return ancestors.map((a) => a.ancestor_id).filter((aid) => aid !== id)
+		if (row.parent_id <= 0) {
+			return (ancestorsByID.get(id) ?? []).filter((ancestorID) => ancestorID !== id)
 		}
 
 		// Normal case: walk parent_id chain.
@@ -319,6 +344,15 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
 
+	// The build stamp (2026-08-05). `sourceDB` alone was never enough to tell a reader whether this
+	// artifact matches the database at that path — the admin DB is sealed and REPLACED by a rebuild, so
+	// the path is constant across every generation of it. Hashing costs 7.3 s for the 5.27 GB admin DB
+	// and is free whenever the `.md5` sidecar is current, which the admin build already writes.
+	// `sourceIdentity` lets a caller that already knows the digest (or is building from something that
+	// is not a file at all) supply it instead.
+	progress("stamp", `Reading source identity for ${opts.dbPath}`)
+	const source = opts.sourceIdentity ?? readWOFSourceIdentity(opts.dbPath)
+
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
 		countries,
@@ -328,6 +362,8 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		nameInsertions: insertCount,
 		importanceMatches: importanceMap.size,
 		sourceDB: opts.dbPath,
+		sourceDBMD5: source.md5,
+		sourceDBBytes: source.bytes,
 		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined
 			? { exclusionPolicy: opts.exclusionPolicy ?? "unspecified", excludedInsertions: excludedCount }
 			: {}),

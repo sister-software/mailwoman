@@ -16,6 +16,7 @@ import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
@@ -28,7 +29,7 @@ const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 
 /**
- * Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout.
+ * Strip ANSI escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
  */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu
@@ -102,12 +103,12 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				maxBuffer: 4 * 1024 * 1024,
 			})
 
-			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
+			const json = parseJSONStrict<{
 				lat: number
 				lon: number
 				containment: string
 				hierarchy: Array<{ id: number; name: string; placetype: string; country: string }>
-			}
+			}>(stripAnsiSpinner(result.stdout))
 
 			expect(json.lat).toBe(40.7128)
 			expect(json.lon).toBe(-74.006)
@@ -126,7 +127,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				{ env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }), maxBuffer: 4 * 1024 * 1024 }
 			)
 
-			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: Array<{ name: string }> }
+			const json = parseJSONStrict<{ hierarchy: Array<{ name: string }> }>(stripAnsiSpinner(result.stdout))
 			const names = json.hierarchy.map((p) => p.name)
 			expect(names).toContain("United States")
 		}, 60_000)
@@ -149,7 +150,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				maxBuffer: 4 * 1024 * 1024,
 			})
 
-			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as { hierarchy: unknown[] }
+			const json = parseJSONStrict<{ hierarchy: unknown[] }>(stripAnsiSpinner(result.stdout))
 			expect(json.hierarchy).toEqual([])
 		}, 60_000)
 
@@ -160,10 +161,10 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 				maxBuffer: 4 * 1024 * 1024,
 			})
 
-			const json = JSON.parse(stripAnsiSpinner(result.stdout)) as {
+			const json = parseJSONStrict<{
 				containment: string
 				hierarchy: Array<{ name: string }>
-			}
+			}>(stripAnsiSpinner(result.stdout))
 
 			expect(json.containment).toBe("approximate")
 			expect(json.hierarchy.map((p) => p.name)).toContain("United States")

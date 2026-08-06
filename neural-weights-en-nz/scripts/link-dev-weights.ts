@@ -35,12 +35,12 @@
  *   binary's header (magic + header block ONLY, via a local reimplementation of
  *   `peekPairIndexHeader` — NOT imported from `@mailwoman/neural`, so this data-only package
  *   doesn't gain a dependency on the ONNX-runtime-carrying workspace for one header read) and
- *   compare `header.delta` against this script's `PAIR_INDEX_DELTA`, and `header.sourceMD5s[0]`
- *   against a freshly computed md5 of the CURRENT source CSV (sidecar-cached — the CSV is 2.12M
- *   rows, worth not re-hashing on every `yarn test`). Either mismatch forces a loud rebuild
- *   instead of a silent skip. The NZ CSV is ~12× smaller than GB's PPD source (2.1M vs 25.6M
- *   rows), so even a cold rebuild is well under a minute — the guard exists for correctness, not
- *   build-time savings.
+ *   compare `header.delta` against this script's `PAIR_INDEX_DELTA`, and EVERY md5 in
+ *   `header.sourceMD5s` against a freshly computed md5 of the corresponding source (sidecar-cached
+ *   — the CSV is 2.12M rows, worth not re-hashing on every `yarn test`). Any mismatch forces a loud
+ *   rebuild instead of a silent skip. The NZ CSV is ~12× smaller than GB's PPD source (2.1M vs
+ *   25.6M rows), so even a cold rebuild is well under a minute — the guard exists for correctness,
+ *   not build-time savings.
  */
 
 import { spawnSync } from "node:child_process"
@@ -56,7 +56,10 @@ import {
 } from "node:fs"
 import { resolve } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
+
+import { pairIndexStaleReason, peekPairIndexHeaderFields } from "../../scripts/weights-overlay-linker.ts"
 
 /**
  * Hex characters in an md5 digest.
@@ -139,34 +142,6 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-/**
- * Minimal PIX1 header-only reader: magic + header block, same validation as `PairIndexResolver`'s constructor and
- * `peekPairIndexHeader` (`neural/pair-index-resolver.ts`) — bad-magic throw, future-schema throw — but reimplemented
- * locally rather than imported, so this data-only weights package doesn't gain a dependency on `@mailwoman/neural`
- * (which pulls in onnxruntime-node) just to read four header fields. Kept intentionally tiny; if the PIX1 format ever
- * changes, `pair-index-resolver.ts`'s own header parse is the source of truth this must stay in sync with.
- */
-function peekPairIndexDeltaAndSourceMD5(path: string): { delta: number; sourceMD5: string | undefined } {
-	const bytes = readFileSync(path)
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	const MAGIC = 0x31_58_49_50
-
-	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
-
-	if (view.getUint32(0, true) !== MAGIC) {
-		throw new Error(`pair index: bad magic reading ${path}`)
-	}
-
-	const headerLen = view.getUint32(4, true)
-
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
-		delta: number
-		sourceMD5s?: string[]
-	}
-
-	return { delta: header.delta, sourceMD5: header.sourceMD5s?.[0] }
-}
-
 removeIfPresent(resolve(PKG_DIR, "model.onnx"))
 removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
 
@@ -216,17 +191,31 @@ const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-nz.bin")
  * forces a loud rebuild rather than silently shipping a stale index.
  */
 const PAIR_INDEX_DELTA = 10
+/**
+ * The NZ artifact's WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04) at the verdict's recommended δ=5.
+ * NZ's own shipped board moved 230/246 → 246/246 whole-edge with the parent bias on, identical at δ 4/6/8/20 — see
+ * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Note this locale still ships WITHOUT a `transitionBeta`
+ * (unmeasured there); the two levers are calibrated independently and NZ earning one says nothing about the other.
+ */
+const PAIR_INDEX_PARENT_DELTA = 5
 
 let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const { delta: existingDelta, sourceMD5: existingSourceMD5 } = peekPairIndexDeltaAndSourceMD5(PAIR_INDEX_BIN_DEST)
+		const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const existingSourceMD5s = header.sourceMD5s
 
-		if (existingDelta !== PAIR_INDEX_DELTA) {
-			console.log(
-				`STALE pair-index-nz.bin: header delta ${existingDelta} !== this script's PAIR_INDEX_DELTA ${PAIR_INDEX_DELTA} — rebuilding.`
-			)
+		// Format + every calibrated magnitude, through the shared check — see `scripts/weights-overlay-linker.ts`.
+		// This script previously compared `delta` alone, which is how it stayed blind to a `transitionBeta` it does
+		// not set and would have stayed blind to a schema bump.
+		const staleReason = pairIndexStaleReason(header, {
+			delta: PAIR_INDEX_DELTA,
+			parentDelta: PAIR_INDEX_PARENT_DELTA,
+		})
+
+		if (staleReason) {
+			console.log(`STALE pair-index-nz.bin: ${staleReason} — rebuilding.`)
 		} else if (!existsSync(String(NZ_SOURCE_CSV))) {
 			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
 			// delta match (the "missing source, can't build" branch below would fire anyway if this were
@@ -237,15 +226,30 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
+			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
+			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it
+			// was built from has moved. The NZ build passes exactly one source (`--source <csv>`; no
+			// `--borough-db`, no `--pairs-jsonl`), so `gazetteer pair-index` records exactly one md5 and this
+			// single comparison IS the whole set — a header recording any other count cannot have come from
+			// this build, which is itself staleness.
 			const currentSourceMD5 = await md5FileWithSidecar(String(NZ_SOURCE_CSV))
+			const [existingSourceMD5] = existingSourceMD5s
 
-			if (existingSourceMD5 && currentSourceMD5 === existingSourceMD5) {
+			if (existingSourceMD5s.length !== 1) {
+				console.log(
+					`STALE pair-index-nz.bin: header records ${existingSourceMD5s.length} source md5s ` +
+						`[${existingSourceMD5s.join(", ") || "(none recorded)"}], but this build reads exactly one source ` +
+						`(${NZ_SOURCE_CSV}) — rebuilding.`
+				)
+			} else if (existingSourceMD5 === currentSourceMD5) {
 				pairIndexIsFresh = true
 
-				console.log(`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + source md5 match)`)
+				console.log(
+					`skipped pair-index-nz.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (header magnitudes + source md5 match)`
+				)
 			} else {
 				console.log(
-					`STALE pair-index-nz.bin: header source md5 ${existingSourceMD5 ?? "(none recorded)"} != current ` +
+					`STALE pair-index-nz.bin: header source md5 ${existingSourceMD5} != current ` +
 						`${NZ_SOURCE_CSV} md5 ${currentSourceMD5} — rebuilding.`
 				)
 			}
@@ -280,6 +284,8 @@ if (pairIndexIsFresh) {
 			String(NZ_SOURCE_CSV),
 			"--delta",
 			String(PAIR_INDEX_DELTA),
+			"--parent-delta",
+			String(PAIR_INDEX_PARENT_DELTA),
 		],
 		{ stdio: "inherit" }
 	)

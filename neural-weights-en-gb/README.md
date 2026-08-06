@@ -18,36 +18,43 @@ tags:
 
 The trained-model bundle (`@mailwoman/neural-weights-en-gb`) for
 [Mailwoman](https://mailwoman.sister.software), a postal-address parser. This
-package is **data only** — a `model-card.json`, the GB postcode-anchor binary,
-the placetype-pair retrieval index, and the shared gazetteer lexicons. It has
-no JavaScript logic of its own; it is loaded at inference time by
-`@mailwoman/neural`.
+package is **data only** — a `model-card.json`, the placetype-pair retrieval
+index, and the shared gazetteer lexicons. It has no JavaScript logic of its
+own; it is loaded at inference time by `@mailwoman/neural`.
 
 > **This locale is served by the shared multi-locale model.** The en-gb bundle
 > ships no `model.onnx`/`tokenizer.model` of its own — it declares
 > `@mailwoman/neural-weights-en-us` as its `mailwoman.baseWeights` and resolves
 > the base package's model + tokenizer at runtime (byte-identical artifact; one
 > encoder serves both locales). What this package ships is the **GB-specific
-> soft-feed data**: the outward-code postcode-anchor binary (`postcode-gb.bin`)
-> built from the WOF GB postcode shard, the placetype-pair retrieval index
-> (`pair-index-gb.bin`, built from the HM Land Registry PPD tuples — see
-> _Evaluation_ below), plus the shared gazetteer/country lexicons.
+> soft-feed data**: the placetype-pair retrieval index (`pair-index-gb.bin`,
+> built from the HM Land Registry PPD tuples — see _Evaluation_ below), plus
+> the shared gazetteer/country lexicons.
+
+> **The postcode-anchor channel runs OFF for en-gb** (2026-08-05). This bundle
+> used to ship an outward-code `postcode-gb.bin`; it no longer does. The shared
+> encoder's anchor input reserves one slot per country, and the GB slot was
+> never trained — every training recipe fed the same US/DE/FR-only lookup — so
+> supplying GB anchors pushed every GB parse along an input direction the model
+> has no learned response to. Measured on the `gb-golden` board across three
+> registers, exact postcode goes **294/318 → 318/318** with the anchor inert,
+> and `dependent_locality` is unchanged at 207/207. `@mailwoman/neural-weights-en-nz`
+> has the same posture. The placetype-pair prior is untouched.
 
 ## What this is
 
 Mailwoman is a **calibrated, retrieval-augmented sequence labeler over a
 microlanguage** — coupled to a gazetteer that resolves its output to
 coordinates. This bundle is the GB-facing half of the retrieval side: the
-en-us encoder's soft anchor + gazetteer channels, fed with UK-specific data so
-the model never has to memorize GB postcodes or place names — that knowledge
+en-us encoder's soft gazetteer + placetype-pair channels, fed with UK-specific
+data so the model never has to memorize GB place names — that knowledge
 arrives at inference as a retrieval, not a weight.
 
 - **Base model:** none of its own — see `@mailwoman/neural-weights-en-us`.
-- **Postcode anchor:** GB is aggregated to the **outward code** (`SW1A`, not
-  the full unit `SW1A 1AA`) — 2.7M unit postcodes is both too large for the
-  browser budget and finer-grained than an anchor needs. A full unit code that
-  misses the exact lookup falls back to its outward code automatically (see
-  `@mailwoman/neural`'s `extractPostcodeAnchors`).
+- **Postcode anchor:** not shipped, deliberately — see the note above and
+  `model-card.json`'s `gb_artifacts.no_postcode_bin`. The neural parser and
+  the gazetteer resolver still handle full unit-postcode text; what is absent
+  is the soft anchor feature, not postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Fishburn" is a real
   child of "Stockton-on-Tees") — a soft decode-time bias, hard-gated to GB
@@ -63,14 +70,21 @@ standalone geocoder.
 
 ## Ship-config requirement (read before using)
 
-The Mailwoman model expects the soft anchor + gazetteer channels fed at
-inference. Running it with those channels off is out-of-distribution and
-silently collapses the admin tags (country/region/locality/postcode) — an
-anchor-off metric on an anchor-trained model is systematically misleading.
-Construct the scorer through `@mailwoman/neural`'s `createScorer` (the
-canonical `ProductionScorer`), which reads the bundle's `requires`/channel
-contract and **fails closed** if a declared channel isn't fed. Do not hand-wire
-the raw ONNX session with the anchor input zero-filled.
+The Mailwoman model expects its soft channels fed at inference. Running them
+off is out-of-distribution and silently collapses the admin tags
+(country/region/locality/postcode). Construct the scorer through
+`@mailwoman/neural`'s `createScorer` (the canonical `ProductionScorer`), which
+reads the bundle's `requires`/channel contract and **fails closed** if a
+declared channel isn't fed. Do not hand-wire the raw ONNX session with an
+input zero-filled.
+
+The postcode anchor is the one channel where GB deviates, and it is worth
+being precise about why the general rule doesn't apply. That rule holds when
+the channel was trained: zeroing a trained input is out-of-distribution. The
+GB anchor slot was never trained, so there is no distribution to leave —
+zeroing it is what the encoder saw for every GB example it has ever been shown,
+and supplying a value is the out-of-distribution case. That is why the numbers
+run the other way here, and why the fix is a retrain rather than more data.
 
 ## Evaluation
 
@@ -106,12 +120,11 @@ output is byte-stable when calibration is omitted.
 
 ## Limitations
 
-- **Expects its channels.** See _Ship-config requirement_ — anchor-off is OOD.
+- **Expects its channels.** See _Ship-config requirement_. The one deliberate
+  exception is the postcode anchor: it runs off for en-gb because the GB slot
+  was never trained, and the loader says so once per load.
 - **Base encoder not yet promoted** — see _Evaluation_; the numbers here are
   real but not yet the production default.
-- **GB postcode anchor is outward-only** — expect district-level (not
-  unit-level) centroid precision from the anchor channel itself; the neural
-  parser + gazetteer resolver still handle full unit-postcode text.
 - **Placetype-pair prior is comma-segment-scoped** — it matches whole
   comma-delimited input segments only (the "segment" probe mode, default
   since d2a1242f), so comma-stripped GB input gets no boost from this channel

@@ -1,0 +1,34 @@
+## Mailwoman house style: canonical term spellings.
+##
+## Vale substitution rule (error). `ignorecase: true` matches any casing of
+## the left-hand pattern, but Vale only flags a hit when the matched text
+## differs from the right-hand replacement — an already-correct "ZIP Code"
+## or "geocode" does not self-flag. "postal code" -> "postcode" is the
+## en-GB house term; it does not touch "ZIP Code" (a distinct US term, kept
+## correct by the accept-list in styles/config/vocabularies/Mailwoman/accept.txt).
+##
+## The bottom four entries come from the docs-reorg field survey (see
+## docs/engineering/writing-system.md §Canonical terms): a credential is an
+## "API key" everywhere, "data layer" is two words everywhere, and the only
+## two direction terms are "forward geocoding" and "reverse geocoding".
+##
+## `text search` carries a leading `(?:^|[^-\w])` guard because a bare
+## `\btext search\b` also matches inside "full-text search" — the FTS5 index
+## this repo actually ships — and Go's RE2 has no lookbehind to exclude it
+## with. Measured: the guard fires on " text search" and stays silent on
+## "full-text search". The cost is that the reported match carries its
+## leading character, so the message reads `' text search'` with a space.
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: error
+ignorecase: true
+swap:
+  zip code|zipcode: ZIP Code
+  whos on first|who's on first: Who's On First
+  geo-code: geocode
+  lat/long|lat-long: latitude/longitude
+  postal code: postcode
+  access token|access-token: API key
+  datalayer|data-layer: data layer
+  '(?:^|[^-\w])text search': forward geocoding
+  coordinate lookup: reverse geocoding

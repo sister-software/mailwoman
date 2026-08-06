@@ -1,37 +1,21 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { WOF_POSTALCODE_ADAPTER_ID, createWOFPostalcodeAdapter, postcodeVariantsFor } from "./adapter.ts"
 
+const scratch = useScratchDir("wof-postalcode-json")
+
+const loadRows = () => readCanonicalRows(scratch.path, WOF_POSTALCODE_ADAPTER_ID)
+
 const fixtureRoot = repoRootPath("corpus", "fixtures", "wof-postalcode-json")
-
-let scratch: string
-
-beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-wof-postalcode-json-"))
-})
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
-
-async function loadRows(): Promise<CanonicalRow[]> {
-	const jsonl = await readFile(join(scratch, WOF_POSTALCODE_ADAPTER_ID, "canonical.jsonl"), "utf8")
-
-	return jsonl
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as CanonicalRow)
-}
 
 describe("postcodeVariantsFor (pure)", () => {
 	const rec = (over: Partial<{ id: number; name: string; placetype: string; country: string }>) => ({
@@ -87,7 +71,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -110,7 +94,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -130,7 +114,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -145,7 +129,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -157,7 +141,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "FR" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -173,16 +157,16 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		const a = await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, WOF_POSTALCODE_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, WOF_POSTALCODE_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 

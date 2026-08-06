@@ -41,9 +41,11 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Options for {@linkcode generateCapabilityManifest}.
@@ -154,15 +156,14 @@ interface Row {
 	components: Record<string, string>
 }
 
-function loadRows(files: string[]): Row[] {
+async function loadRows(files: string[]): Promise<Row[]> {
 	const rows: Row[] = []
 
 	for (const f of files) {
 		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
 
-		for (const line of readFileSync(f, "utf8").split("\n")) {
-			if (!line.trim()) continue
-			rows.push(JSON.parse(line) as Row)
+		for await (const row of JSONSpliterator.fromAsync<Row>(f)) {
+			rows.push(row)
 		}
 	}
 
@@ -249,7 +250,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 		capabilities[tier] = {}
 
 		for (const spec of LOCALES) {
-			const rows = loadRows(spec.files)
+			const rows = await loadRows(spec.files)
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
@@ -366,7 +367,9 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 
 		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
-		if (JSON.parse(original).capabilities !== undefined) {
+		// Strict, not tolerant: a corrupt model card must abort the splice rather than read as
+		// "no capabilities block" and append a second one.
+		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities !== undefined) {
 			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
 			throw new Error(
 				`${paths.modelCard} already has a \`capabilities\` block — \`git checkout\` it first, then re-run --write ` +
@@ -374,6 +377,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			)
 		}
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above, not reading anything.
 		const block = JSON.stringify(capabilities, null, "\t")
 			.split("\n")
 			.map((line) => "\t" + line)

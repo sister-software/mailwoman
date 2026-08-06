@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
+import { parseJSONStrict } from "../objects.ts"
 import type { BIOLabel } from "../types/component.ts"
 import { buildAddressTree } from "./build-tree.ts"
 import { createCalibrator, type CalibrationTable } from "./calibration.ts"
@@ -103,7 +104,7 @@ describe("shipped isotonic table sanity", () => {
 		let table: CalibrationTable
 
 		try {
-			table = JSON.parse(readFileSync(path, "utf8"))
+			table = parseJSONStrict<CalibrationTable>(readFileSync(path, "utf8"))
 		} catch {
 			return // table not present in this checkout (e.g. shallow) — skip rather than fail
 		}

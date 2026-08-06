@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Tests for `edgar-filings.ts` (3b Task 6) — CIK resolution + 10-K discovery.
+ * @file Tests for `edgar-filings.ts` — CIK resolution + 10-K discovery.
  *
  *   No live network anywhere here: `fetchCompanyTickers`/`fetchTenKFilings` are exercised against a
  *   hand-rolled stub satisfying {@link SECGetClient} (one method, `get<T>`), never a real `createSECClient()`

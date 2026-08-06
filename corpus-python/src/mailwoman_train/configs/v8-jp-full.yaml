@@ -1,0 +1,134 @@
+# === v8-jp-full — CJK Phase 3/4: the full JP char model on the 2M-row stage3-jp shard. ===
+#
+# The recipe the Leg-1 PASS unlocked. Leg 1 (v8-jp-probe, 200k rows, STAGE3 33-label head) scored
+# coordinate-acceptability 0.9925 against the pre-registered >= 0.70 gate (verdict on #1176,
+# 2026-07-29; scorer pre-registered at 34c7b6c2). This config keeps the probe's proven geometry and
+# changes exactly three things: the corpus (200k -> 2M), the label head (33 -> 47, `stage3-jp`), and
+# the char vocab (1,918 -> 2,237 sealed from the train split).
+#
+# Corpus: `$MAILWOMAN_DATA_ROOT/corpus/versioned/v8-jp-full-2026-08-04` (#1458), built by
+# `mailwoman_train.build_jp_shard` from Overture-JP 2026-06-17.0 + KEN_ALL — 2,000,000 train /
+# 20,000 val / 20,000 board, 47 prefectures, per-prefecture cap 42,978, board municipalities held
+# out on the probe's bucket rule. BIO char coverage 1.0000 on every split.
+#
+# --- FROM SCRATCH. There is no `init_from`, and that is a decision, not an omission. -------------
+#
+# Three independent reasons the probe checkpoint cannot warm-start this run:
+#   1. `classifier.weight` is (33, 384) there and (47, 384) here. `train.py`'s init_from path calls
+#      `load_state_dict(..., strict=False)`, which tolerates missing/unexpected KEYS but still
+#      raises on a SIZE mismatch — the load would crash, not partially apply.
+#   2. `char_embedding` is (1918+, 64) there and (2237+, 64) here — the same size wall, and the row
+#      ORDER differs too (both vocabs are codepoint-sorted over different character sets), so even
+#      a padded copy would map the wrong embedding to the wrong character.
+#   3. The 33 rows the probe DID train carry the wrong semantics for this corpus. The probe mapped
+#      prefecture -> `region`, municipality -> `locality`, and the whole oaza-chome surface ->
+#      `street`. Under `stage3-jp` those ids keep their stage3 meanings and get ZERO support, while
+#      the signal moves to `prefecture` / `municipality` / `district`. A warm start would hand the
+#      model 33 confidently-wrong rows to unlearn.
+# The night-shift rule points the same way: never `init_from` to continue a run whose capability you
+# are still measuring.
+#
+# --- The head param group (`train.classifier_learning_rate`) ------------------------------------
+#
+# The v8 plans all carry the #727 head-expansion rule: "a freshly-added head/label group needs its
+# own param-group LR — the existing warm layers and the cold new label rows must not share a
+# learning rate. Bake this into the JP training config."
+#
+# READ THIS BEFORE TUNING IT, because the rule's premise is only half-present here:
+#
+#   * The MECHANISM is real and shipped. `train.build_optimizer` carves every parameter whose name
+#     starts with `classifier.` into its own AdamW param group at this LR; `LambdaLR` scales each
+#     group's own `initial_lr`, so warmup/cosine composes for free and the resume path re-stamps it
+#     (`_restamp_resume_lrs`). Set it and the run prints `[classifier_learning_rate] N params @ LR`.
+#   * The GRANULARITY is the whole head, not the 14 fresh rows. `classifier` is ONE `nn.Linear`
+#     (47, 384); a PyTorch param group owns whole tensors, so rows 33..46 cannot be separated from
+#     rows 0..32. A gradient hook cannot substitute: Adam's update is scale-invariant in the
+#     gradient (m-hat / sqrt(v-hat)), so scaling 14 rows' gradients does NOT create a per-row LR.
+#     Splitting the 14 out would mean a second `nn.Linear` and a concat in `forward` — a model-shape
+#     change, not a config change, and it is not what the shipped mechanism does.
+#   * The PREMISE ("existing warm layers") does not hold on a from-scratch run. #727's precedent
+#     numbers (inherited 1e-5 stalled at 0.004, own 1e-3 converged) come from a fresh head on a
+#     PRETRAINED encoder. Here the encoder is cold too, so this is not a rescue — it is an ordinary
+#     head/body LR-ratio lever with an unmeasured effect on this corpus.
+#
+# So: 1.0e-3 is a 2x ratio over the 5.0e-4 base, NOT #727's 100x. It is set deliberately modest
+# because it is unvalidated here, and `v8-jp-full-2k.yaml` exists to read it before the full run.
+# If the 2k probe shows no separation, the defensible simplification is to DELETE this key (None =>
+# one param group => byte-identical to the probe recipe that already scored 0.9925).
+#
+# --- Channels: deliberately absent ---------------------------------------------------------------
+#
+# `data_loader.iter_encoded` RAISES if any channel path (anchor / gazetteer / country / street-type /
+# locality-surface) is set alongside `char_mode` — the channels project per SP-piece and their
+# per-unit re-alignment is Phase 4 by the encoder design. The loader enforces the ordering; this
+# config respects it. Do not "finish the job" by adding `anchor_lookup_path` here.
+#
+# --- Watch items (things this config chose, that the 2k probe should read) -----------------------
+#
+#   * `label_smoothing: 0.1` over 47 labels of which 28 have ZERO support in this corpus (the 28 are
+#     honest zeros: the Latin stage3 tags JP does not use, plus `building_name`, which Overture-JP
+#     has no column for). Smoothing spreads target mass across all 47, so it puts a small standing
+#     positive gradient on rows that should stay firmly negative. The probe carried the same setting
+#     over 33 labels with fewer dead rows. If the dead rows start firing, this is the first suspect.
+#   * `max_steps: 24000` = 3.07 epochs (2,000,000 rows / batch 256 = 7,812.5 steps per epoch). The
+#     probe did 8,000 steps over 200k = 10.24 epochs and converged (loss 3.37 -> 0.66, val macro-F1
+#     0.9997), so this is ~3x the probe's token exposure at a third of its epoch count.
+#   * `coarse_filter: false` is REQUIRED, not stylistic. The filter keeps rows carrying country plus
+#     one of (region, locality, postcode); JP rows carry `prefecture`/`municipality` under
+#     `stage3-jp` and would be dropped wholesale.
+#
+# Launch (the operator runs this — it is recorded here, not executed by tooling):
+#   modal run -d corpus-python/modal/train_remote.py --config v8-jp-full.yaml --resume auto
+# Prerequisite: the shard must be on the Modal volume — see `sync_jp_full` in train_remote.py.
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-jp-full-2026-08-04
+  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
+  # tokenizer so config auditing stays uniform. Same as the probe.
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+  # See the watch-items note above: this filter would drop every row in this corpus.
+  coarse_filter: false
+  # The shard's val split is exactly 20,000 rows — take all of it (the probe took 4,096 of 4,000).
+  val_rows: 20000
+  # The JP 47-label head. Supported ONLY on the char path; the SP path raises (#1349's lesson).
+  label_set: stage3-jp
+  # --- The char path (D1/D3/D6): one unit per character, window = char +/- 3 neighbors. ---
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-jp-full-2026-08-04/char-vocab-jp-full.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  # The probe's geometry, unchanged. Scaling the encoder is a separate lever with its own read;
+  # this run changes the corpus and the head, so the encoder stays fixed to keep that attribution
+  # clean. 384/4 at 7.5M params cleared the gate with room.
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-jp-full-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  # The head param group. See the long note above for what this does and does NOT do.
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 1000
+  max_steps: 24000
+  eval_every_steps: 2000
+  save_every_steps: 4000
+  log_every_steps: 100
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

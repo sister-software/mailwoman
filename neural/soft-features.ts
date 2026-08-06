@@ -17,7 +17,12 @@
  *   reason).
  */
 
-import { buildAnchorFeatures, type AnchorLookup } from "./anchor-inference.ts"
+import {
+	type AnchorLookup,
+	type AnchorSpanMode,
+	buildAnchorFeatures,
+	warnShapedKeyerObligationOnce,
+} from "./anchor-inference.ts"
 import { buildCountryFeatures, type CountryLexicon } from "./country-inference.ts"
 import { buildGazetteerFeatures, suppressGazetteerNearPostcode, type GazetteerLexicon } from "./gazetteer-inference.ts"
 import type { TokenizedPiece } from "./tokenizer.ts"
@@ -71,6 +76,13 @@ export interface SoftFeatureSources {
 	 */
 	postcodeAnchorLookup?: AnchorLookup
 	/**
+	 * Which substrings the anchor channel looks up (2026-08-05 train-parity fix). Defaults to `alnum-run`, the shipped
+	 * behaviour. PAIRING IS ESSENTIAL, the same way `suppressGazetteerNearPostcode` is: `shaped` reproduces the train
+	 * painter's span rule, so it belongs only to a model trained against a lookup with letter-bearing keys. Declared by
+	 * the model card (`requires.anchor.span_mode`), never guessed.
+	 */
+	postcodeAnchorSpanMode?: AnchorSpanMode
+	/**
 	 * Gazetteer-anchor lexicon (#464). Omit to skip the gazetteer channel.
 	 */
 	gazetteerLexicon?: GazetteerLexicon
@@ -112,8 +124,17 @@ export function buildSoftFeatures(
 	pieces: ReadonlyArray<TokenizedPiece>,
 	sources: SoftFeatureSources
 ): SoftFeatures {
+	// SHIP OBLIGATION (A2 of ROAD_TO_V9 §1). This is the one place in the codebase where the loaded
+	// lookup and the card-declared span mode are BOTH in hand, so it is where the mispairing can be
+	// seen — and it covers every construction path (Node loader, browser loader, a harness building a
+	// classifier by hand), not just the one loader a check in `loadFromWeights` would have caught.
+	// Latched to once per process, so the per-parse cost is a boolean read.
+	warnShapedKeyerObligationOnce(sources.postcodeAnchorLookup, sources.postcodeAnchorSpanMode, undefined)
+
 	const anchor = sources.postcodeAnchorLookup
-		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup)
+		? buildAnchorFeatures(text, pieces, sources.postcodeAnchorLookup, {
+				spanMode: sources.postcodeAnchorSpanMode ?? "alnum-run",
+			})
 		: undefined
 
 	const gazetteer = sources.gazetteerLexicon

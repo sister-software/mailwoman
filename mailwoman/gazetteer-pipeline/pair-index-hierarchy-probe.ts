@@ -24,7 +24,7 @@
  *
  *   Format: PIX1 verbatim (`serializePairIndex` / `PairIndexResolver` — zero changes to `neural/`).
  *   The header rides the absence-tolerant JSON extension precedent set by `transitionBeta`
- *   (`schemaVersion` stays 1): extra keys `edge`, `source`, and `probeArtifact` describe the
+ *   (schema-owned fields are stamped by the serializer): extra keys `edge`, `source`, and `probeArtifact` describe the
  *   hierarchy edge in ComponentTag space, the WOF extraction provenance, and the uncalibrated-probe
  *   status. Old readers parse the header and never consult the extra keys.
  *
@@ -62,7 +62,7 @@ import {
 	PairIndexResolver,
 	serializePairIndex,
 	type PairIndexEntry,
-	type PairIndexHeader,
+	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair-index-resolver"
 
 /**
@@ -98,7 +98,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ch
 /**
  * The PIX1 header this probe writes: the shipped shape plus the absence-tolerant hierarchy extension keys.
  */
-export interface HierarchyPairIndexHeader extends PairIndexHeader {
+export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 	/**
 	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit; parent is context).
 	 */
@@ -220,7 +220,11 @@ async function main(): Promise<void> {
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
 		// Phase 3: fold + dedupe into PIX1 entries. Tag = the CHILD's ComponentTag — what a decode hit
-		// resolves the child span to (mirrors the GB register build, where every entry is the child tag).
+		// resolves the child span to. `parentTag` (PIX2 / schema 3) = the PARENT's, which this builder knows
+		// from its own edge declaration rather than from the row: `edge.parent` below is `region`, and BOTH
+		// WOF parent placetypes this spec selects (`region`, FR's `macroregion`) project onto that one
+		// ComponentTag — a département and a région are alike region-tagged surfaces in a French address,
+		// which is exactly why the spec pairs them.
 		const seen = new Map<string, PairIndexEntry>()
 		let surfacePairs = 0
 		let emptyChildFolds = 0
@@ -249,7 +253,7 @@ async function main(): Promise<void> {
 					const key = `${child.length}:${child}:${parent}`
 
 					if (!seen.has(key)) {
-						seen.set(key, { child, parent, tag: "locality" })
+						seen.set(key, { child, parent, tag: "locality", parentTag: "region" })
 					}
 				}
 			}
@@ -262,7 +266,6 @@ async function main(): Promise<void> {
 			// Uncalibrated PROBE — zero on purpose: even an accidentally-wired probe artifact biases
 			// nothing. The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
-			schemaVersion: 1,
 			foldVersion: 1,
 			sourceMD5s: [sourceMD5],
 			buildDate: new Date().toISOString(),
@@ -305,10 +308,12 @@ async function main(): Promise<void> {
 		console.log(`  header: delta=0 (probe), edge=locality→region, parents=[${spec.parentWOFPlacetypes.join(", ")}]`)
 
 		for (const [child, parent] of probePairs) {
-			const tag = resolver.probe(normalizeFSTToken(child), normalizeFSTToken(parent))
+			const edge = resolver.probe(normalizeFSTToken(child), normalizeFSTToken(parent))
 
 			console.log(
-				tag ? `  PROBE OK: ("${child}", "${parent}") → ${tag}` : `  PROBE MISS: ("${child}", "${parent}") → (no entry)`
+				edge
+					? `  PROBE OK: ("${child}", "${parent}") → ${edge.tag} under ${edge.parentTag}`
+					: `  PROBE MISS: ("${child}", "${parent}") → (no entry)`
 			)
 		}
 	}

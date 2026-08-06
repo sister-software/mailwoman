@@ -23,6 +23,7 @@
 import { createWriteStream } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -167,13 +168,9 @@ export async function raceDots(
 		skipped = 0
 
 	for (const row of rows) {
-		let geom: { type: string; coordinates: unknown }
+		const geom = tryParsingJSON<{ type: string; coordinates: unknown }>(row.geometry)
 
-		try {
-			geom = JSON.parse(row.geometry)
-		} catch {
-			continue
-		}
+		if (!geom) continue
 
 		const polys: PolygonCoords[] =
 			geom.type === "Polygon" ? [geom.coordinates as PolygonCoords] : (geom.coordinates as PolygonCoords[])

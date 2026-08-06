@@ -92,7 +92,7 @@ questions, different tables.
 
 - [`@mailwoman/core`](../core) — `ComponentTag` schema, pipeline infrastructure
 - [`@mailwoman/address-id`](../address-id) — uses codex for stable address primary keys
-- [Address system conventions](https://mailwoman.sister.software/articles/plan/reference/SCHEMA/)
+- [Address system conventions](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx)
 
 ## License
 

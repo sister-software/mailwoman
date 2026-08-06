@@ -30,6 +30,7 @@ import { join } from "node:path"
 import { promisify } from "node:util"
 
 import { sha256File } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
@@ -78,7 +79,7 @@ async function discoverLatestZip(): Promise<string | undefined> {
 async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
-	for (const line of listing.stdout.split("\n")) {
+	for (const line of TextSpliterator.from(listing.stdout)) {
 		const match = /npidata_pfile\S+\.csv/i.exec(line)
 
 		if (match?.[0]) return match[0]

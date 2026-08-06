@@ -6,7 +6,7 @@
 decode-time evidence layer became the project's capability engine. This doc organizes the open
 backlog into a major-release shape; it is a map, not a commitment — items move by pre-registered
 gate results, not by enthusiasm. Supersedes nothing; subordinate to
-[`docs/articles/plan/SCOPE.mdx`](docs/articles/plan/SCOPE.mdx) (the standing scope declaration).
+[`docs/engineering/SCOPE.mdx`](docs/engineering/SCOPE.mdx) (the standing scope declaration).
 
 ## §1 What a major means here
 

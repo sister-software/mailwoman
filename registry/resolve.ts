@@ -40,7 +40,7 @@ import {
 	withTermFrequency,
 } from "@mailwoman/match"
 
-import { createGbtScorer } from "./learned-scorer.ts"
+import { createGBTScorer } from "./learned-scorer.ts"
 import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "./models/dedup-gbt-en-us.ts"
 import type { ResolvedEntity, SourceRecord } from "./types.ts"
 
@@ -411,7 +411,7 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 		usingBundledModel = gbt === DEDUP_GBT_MODEL
 
-		scorer = createGbtScorer({
+		scorer = createGBTScorer({
 			model: gbt,
 			comparisons: buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons,
 			addressFrequency: addressFrequency ?? buildTermFrequencyTable([], { normalize: addressFrequencyKey }),

@@ -14,6 +14,8 @@ import { spawnSync } from "node:child_process"
 import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
 import { transformExportsForPublish } from "./publish-exports.ts"
 
 /**
@@ -25,7 +27,7 @@ import { transformExportsForPublish } from "./publish-exports.ts"
  * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
 export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
-	const pkg = JSON.parse(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
+	const pkg = parseJSONStrict<{ files?: unknown[] }>(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
@@ -54,7 +56,7 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 	dereferenceWorkspaceSymlinks(workspaceDir)
 
 	try {
-		const manifest = JSON.parse(originalManifest)
+		const manifest = parseJSONStrict<{ exports?: unknown; publishConfig?: Record<string, unknown> }>(originalManifest)
 
 		if (manifest.exports) {
 			manifest.publishConfig = {

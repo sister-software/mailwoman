@@ -6,6 +6,31 @@
  *   sub-entrypoints, copies + validates model artifacts, and builds the FST gazetteer binary.
  *
  *   Runs in Node.js only (Docusaurus config / plugin context). Never bundled into the client.
+ *
+ *   WHY `createRequire` AND NOT `import.meta.resolve` (2026-08-05 triage). Two reasons, and the
+ *   second is the one that would bite.
+ *
+ *   What the callers want back is a package DIRECTORY, which `import.meta.resolve` does not return.
+ *   It answers "which ONE file does this specifier import" — precisely the answer these aliases
+ *   exist to OVERRIDE. They point webpack at source `.ts` rather than the `out/` JS the exports
+ *   map's `default` condition selects, and at `core/resolver/types` rather than the
+ *   `@mailwoman/resolver` barrel that re-exports it, so resolving them WITH the resolver is
+ *   circular. {@link resolveWorkspaceDir} therefore asks the cheapest question with a stable answer
+ *   — where does this package live — and `resolveWorkspaceFile` / `resolveWorkspaceDirEntry` pick
+ *   the entry from there.
+ *
+ *   And this file does not run under plain Node; it runs under Docusaurus's config loader, where
+ *   `import.meta.resolve` is not something to assume. `docs` declares no `"type": "module"`, and
+ *   the sibling `plugin.ts` calls a BARE `require.resolve` (no `createRequire`) inside its
+ *   `NormalModuleReplacementPlugin` hook — which only works if the loader hands these modules a CJS
+ *   `require`, and CJS has no `import.meta` at all. `createRequire(import.meta.url)` survives that
+ *   because transpilers rewrite `import.meta.url`; `import.meta.resolve` has no such rewrite.
+ *   (Contrast `docs/scripts/generate-cli-reference.ts`, which the `prebuild` runs as `node <file>`
+ *   — real ESM, and it uses `import.meta.resolve`.)
+ *
+ *   So the one sub-site here that IS a plain resolution — the `@mailwoman/codex` loop below, which
+ *   deliberately asks the resolver instead of hand-deriving paths — stays on `require.resolve` too.
+ *   Only a docs BUILD can verify a change to that, never a unit test.
  */
 
 import { spawnSync } from "node:child_process"
@@ -14,7 +39,10 @@ import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+
+import type { ReleaseInfo } from "#shared/demo-helpers"
 
 //#region Workspace resolution helpers
 
@@ -73,8 +101,8 @@ export function resolveWorkspaceDirEntry(workspaceDir: string, sub: string): str
 //#region Webpack alias builder
 
 /**
- * Build the full workspace alias map for webpack. Centralises the alias logic that was previously inlined in
- * docusaurus.config.ts.
+ * Build the full workspace alias map for webpack — the single home for the demo's alias logic, spread into the
+ * Docusaurus webpack config by `plugin.ts`.
  */
 export function buildWorkspaceAliases(): Record<string, string> {
 	const aliases: Record<string, string> = {}
@@ -83,7 +111,6 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	// `.tsx` explorers transpile inline (like every other workspace source import); the `./styles.css`
 	// subpath is left to package-exports resolution (the `$` keeps this alias from swallowing it).
 	for (const pkg of [
-		"@mailwoman/neural-web",
 		"@mailwoman/resolver-wof-wasm",
 		"@mailwoman/core",
 		"@mailwoman/query-shape",
@@ -138,11 +165,15 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		}
 	}
 
-	// @mailwoman/neural/browser — browser entry that excludes onnxruntime-node.
+	// @mailwoman/neural/web-loader — the demo's only entry into the neural package, and the root of the
+	// browser runtime's whole graph (it reaches the runner and the classifier by relative path). Package
+	// `exports` routes it correctly for a production build; the alias points at SOURCE so `yarn start`
+	// transpiles it inline and hot-reloads, instead of serving whatever `neural/out/` was last compiled
+	// (the same staleness trap the core sub-entrypoint aliases document below).
 	const neuralDir = resolveWorkspaceDir("@mailwoman/neural")
 
 	if (neuralDir) {
-		aliases["@mailwoman/neural/browser"] = resolveWorkspaceFile(neuralDir, "browser")
+		aliases["@mailwoman/neural/web-loader"] = resolveWorkspaceFile(neuralDir, "web-loader")
 	}
 
 	// @mailwoman/core sub-entrypoints (transitive deps from neural / resolver).
@@ -161,10 +192,10 @@ export function buildWorkspaceAliases(): Record<string, string> {
 			// `pipeline` + `errors` MUST be here: the demo imports `runPipeline` from
 			// `@mailwoman/core/pipeline` directly. Without a source alias, webpack resolves the package
 			// `exports` to the COMPILED `core/out/pipeline/index.js` — which `yarn start` never rebuilds
-			// (only CI's `ci:docs` runs `yarn compile` first). A `core/out` left over from before the
-			// #566 reconcile retirement then serves the old joint-reconcile-default pipeline, which mangles
-			// the parse (house number bundled into the street) so the street/situs tier can't fire and the
-			// geocode falls back to the admin centroid. Aliasing to source keeps dev on current code +
+			// (only CI's `ci:docs` runs `yarn compile` first). A stale `core/out` therefore serves whatever
+			// pipeline was last compiled: one predating the #566 reconcile retirement mangles the parse
+			// (house number bundled into the street) so the street/situs tier can't fire and the geocode
+			// falls back to the admin centroid. Aliasing to source keeps dev on current code +
 			// hot-reloads core edits, exactly like the bare `@mailwoman/core$` alias already does.
 			"pipeline",
 			"errors",
@@ -179,7 +210,8 @@ export function buildWorkspaceAliases(): Record<string, string> {
 		// the async resolver chunk: `httpvfs-resolver.ts` saw `expandPlacetypeFilter` as `undefined` at
 		// runtime ("expandPlacetypeFilter is not a function"). The ONLY runtime value the bundled graph
 		// imports from this barrel is `expandPlacetypeFilter` (the resolver-wof-* lookups + this demo);
-		// `createWOFResolver` is never bundled. This alias is webpack-only — `tsc` still resolves the
+		// `createWOFResolver` reaches the graph through the `/resolve` subpath alias below, never through
+		// this barrel — keep it that way. This alias is webpack-only — `tsc` still resolves the
 		// package barrel, so type-only imports (`CoincidentLocality`, `Ancestor`) keep working.
 		// EXACT match (`$`): the bare `@mailwoman/resolver` import resolves to core's types module, but a
 		// SUBPATH like `@mailwoman/resolver/span-rescore` must NOT — it has to reach the real package
@@ -202,11 +234,37 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	if (resolverDir) {
 		aliases["@mailwoman/resolver/span-rescore"] = resolveWorkspaceFile(resolverDir, "span-rescore")
 		// `@mailwoman/resolver/resolve` — createWOFResolver/resolveTree for the demo's #861 shared
-		// cascade. The bare-barrel alias above (deliberately) reaches only core's types module — its
-		// "createWOFResolver is never bundled" premise went stale the day #861 landed, and the miss
-		// was invisible for days behind the manifest wire-key bug (the cascade never executed).
+		// cascade. The bare-barrel alias above deliberately reaches only core's types module, which
+		// carries neither, so the cascade has to come in by subpath. A missing alias here fails
+		// SILENTLY: the cascade simply never executes, with no resolution error to notice it by.
 		// Same subpath pattern as span-rescore; package exports carry "./resolve" for node/tsc.
 		aliases["@mailwoman/resolver/resolve"] = resolveWorkspaceFile(resolverDir, "resolve")
+	}
+
+	// @mailwoman/codex — the per-locale pattern modules the bundled neural/core graph imports
+	// (`placetype-pair-prior` pulls `es`/`it`; the rest arrive through the same class). Webpack's own
+	// exports resolution lands on compiled `out/` (the `default` condition), which `yarn start` never
+	// rebuilds — and a tree whose `codex/out` predates a newly added subpath fails the whole build
+	// ("no valid target file was found"). Instead of hand-deriving source paths, ask Node's resolver
+	// (`require.resolve`, the CJS twin of `import.meta.resolve`): the dev exports map's `node`
+	// condition points every entry at its `.ts` source, so the alias lands on source with zero
+	// knowledge of the package layout. Enumerated rather than globbed so a new locale module is
+	// added here deliberately, like every other curated subpath in this file. EXACT match (`$`) on
+	// the bare barrel, same rationale as `@mailwoman/resolver$` above.
+	for (const sub of [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"]) {
+		const spec = sub ? `@mailwoman/codex/${sub}` : "@mailwoman/codex"
+
+		try {
+			const target = requireFromPlugin.resolve(spec)
+
+			if (!target.endsWith(".ts")) {
+				console.warn(`[demo-assets] ${spec} resolved to compiled output (${target}) — dev exports drift?`)
+			}
+
+			aliases[sub ? spec : "@mailwoman/codex$"] = target
+		} catch {
+			console.warn(`[demo-assets] ${spec} not resolvable — alias skipped`)
+		}
 	}
 
 	return aliases
@@ -219,7 +277,7 @@ export function buildWorkspaceAliases(): Record<string, string> {
 /**
  * Read the model-card.json from the weights package to get version metadata.
  */
-export function readModelCard(): { version: string; modelSize: number; tokenizerVocab: number; step: string } | null {
+export function readModelCard(): ReleaseInfo | null {
 	const weightsDir = resolveWorkspaceDir("@mailwoman/neural-weights-en-us")
 
 	if (!weightsDir) return null
@@ -227,11 +285,8 @@ export function readModelCard(): { version: string; modelSize: number; tokenizer
 
 	if (!existsSync(cardPath)) return null
 
-	try {
-		return JSON.parse(readFileSync(cardPath, "utf8"))
-	} catch {
-		return null
-	}
+	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
+	return tryParsingJSON<ReleaseInfo, null>(readFileSync(cardPath, "utf8"), null)
 }
 
 /**
@@ -329,7 +384,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 		// file (fresh mtime) even when the bytes are identical, the watcher sees a "change" and reloads,
 		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
 		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
-		// so it was never affected.)
+		// so the loop is a dev-server-only hazard.)
 		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
 		copyFileSync(src, dest)
 
@@ -345,10 +400,14 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 
 /**
  * Stage the placetype-pair indexes (placetype-pair-prior arc, #1278) SAME-ORIGIN into `destDir`
- * (`static/mailwoman/pair-index/`). The `pair-index-<cc>.bin` files are NOT on the R2 bucket yet — that repoint is the
- * release-train's job — so for dev/staged verification the demo fetches them from the site's own origin, alongside the
- * sql.js worker assets. Sources are `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin`, materialized locally by each
- * package's `scripts/link-dev-weights.ts` (built from the register source CSV; not committed, like model.onnx).
+ * (`static/mailwoman/pair-index/`). Sources are `neural-weights-en-{gb,nz}/pair-index-{gb,nz}.bin`, materialized
+ * locally by each package's `scripts/link-dev-weights.ts` (built from the register source CSV; not committed, like
+ * model.onnx).
+ *
+ * DEV-PREVIEW ONLY since #1342 (2026-07-29): the demo reads the R2 bucket (`mailwoman/pair-index/<generation>/`,
+ * versioned 2026-08-05 — see `resources.tsx`'s `PAIR_INDEX_VERSION`), so nothing fetches this same-origin copy at
+ * runtime. It stays because it is the only way to see a locally-rebuilt index served by the site, and it costs ~1.5 MB
+ * in the deploy.
  *
  * TOLERANT by design: a missing binary (a fresh worktree that never ran link-dev-weights, or a CI build with no dev
  * weights) is skipped with a warn — the demo loader fetches these with the same 404-tolerance, so an unstaged binary

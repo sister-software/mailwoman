@@ -1,65 +1,53 @@
 # @mailwoman/neural-web
 
-Browser-side mailwoman neural runtime — drop-in for [`@mailwoman/neural`](https://www.npmjs.com/package/@mailwoman/neural) when targeting a static-asset deploy. Pairs the existing SentencePiece tokenizer + BIO decoder with an [`onnxruntime-web`](https://www.npmjs.com/package/onnxruntime-web) inference path (WebGPU primary, WASM SIMD fallback).
+**Deprecated.** The browser runtime moved into [`@mailwoman/neural`](https://www.npmjs.com/package/@mailwoman/neural). This package is a re-export shim so existing imports keep working; it will be removed a major later.
 
-Path B of the demo plan — see [sister-software/mailwoman#98](https://github.com/sister-software/mailwoman/issues/98).
+## Migrating
 
-## Status
+Install `@mailwoman/neural` and `onnxruntime-web`, then change the specifier:
 
-**v0.1.0 — scaffold + end-to-end smoke test.** `WebOnnxRunner` implements the `NeuralRunner` interface and is composable into `NeuralAddressClassifier` exactly like `OnnxRunner` from `@mailwoman/neural`. Test suite runs the real `@mailwoman/neural-weights-en-us` model through the WASM execution provider in Node — WebGPU is the production-time fast path but isn't testable in Node.
+```diff
+-import { loadNeuralClassifierFromURLs } from "@mailwoman/neural-web"
++import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web-loader"
+```
 
-## Quick start
+`WebONNXRunner` and its options live at `@mailwoman/neural/web-onnx-runner`; the tokenizer, classifier and soft-feature channels at `@mailwoman/neural/browser`. Every export keeps its identity, so a mixed-specifier tree behaves the same during the move.
+
+Nothing else changes:
 
 ```ts
-import { loadNeuralClassifierFromUrls } from "@mailwoman/neural-web"
+import { loadNeuralClassifierFromURLs } from "@mailwoman/neural/web-loader"
 
-const classifier = await loadNeuralClassifierFromUrls({
-	modelUrl: "/static/mailwoman/model.onnx",
-	tokenizerUrl: "/static/mailwoman/tokenizer.model",
+const { classifier } = await loadNeuralClassifierFromURLs({
+	modelURL: "/static/mailwoman/model.onnx",
+	tokenizerURL: "/static/mailwoman/tokenizer.model",
 	runner: {
-		// Optional. If your bundler doesn't put ort .wasm files in the default location,
-		// point this at where you serve them.
+		// Optional. Point this at wherever you serve onnxruntime-web's .wasm assets if your
+		// bundler doesn't put them in the default location.
 		wasmPathsRoot: "/static/ort/",
 	},
 })
 
 const tree = await classifier.parse("123 Main St, Springfield, IL 62704")
-console.log(tree.roots)
 ```
 
-For lower-level control, use `WebOnnxRunner` directly:
+## Install the runtime yourself
 
-```ts
-import { WebOnnxRunner, MailwomanTokenizer, NeuralAddressClassifier } from "@mailwoman/neural-web"
+`onnxruntime-web` is an **optional peer dependency** of `@mailwoman/neural`, not a transitive one. It no longer arrives on its own — install it alongside:
 
-const runner = await WebOnnxRunner.fromUrl("/static/mailwoman/model.onnx", { useWebGpu: true })
-const tokenizer = await MailwomanTokenizer.loadFromBase64(/* base64 of tokenizer.model */)
-const classifier = new NeuralAddressClassifier({ tokenizer, runner })
+```bash
+npm install @mailwoman/neural onnxruntime-web
 ```
 
-## Execution provider strategy
+That is the point of the move rather than an inconvenience of it. A Node service installs `onnxruntime-node`, a browser app installs `onnxruntime-web`, and neither pays for the other. Whichever you bundle, you chose it.
 
-`WebOnnxRunner` attempts WebGPU first (10× faster than WASM on supported devices — Chromium 113+, Safari Tech Preview, hardware-dependent). If the WebGPU probe fails (no adapter, browser doesn't expose it, etc.), it transparently falls back to the WASM execution provider. Set `useWebGpu: false` to skip the probe entirely — useful in test environments where the failure path adds latency.
+## Why the packages merged
 
-## Bundling
+`@mailwoman/neural` used to depend on `onnxruntime-node`, which ships native binaries a browser bundler cannot parse — so the browser runtime lived over here, and the boundary between the two was held by hand: a re-export list, a lint rule, a `webpackIgnore` comment. Each held until someone added an import.
 
-This package ships compiled TypeScript only. The `onnxruntime-web` runtime ships its own `.wasm` assets — your bundler needs to serve them. The package's defaults point at a CDN; production deploys typically self-host:
+The boundary is a resolution contract now. `@mailwoman/neural/onnx-runner` carries a `browser` export condition, so a bundler resolves the Node runner to a counterpart instead of following it, and both runtimes can live in one package.
 
-```ts
-import { loadNeuralClassifierFromUrls } from "@mailwoman/neural-web"
-
-// Copy node_modules/onnxruntime-web/dist/*.wasm into your /public dir during build,
-// then point the runner at them:
-const classifier = await loadNeuralClassifierFromUrls({
-	modelUrl: "/static/mailwoman/model.onnx",
-	tokenizerUrl: "/static/mailwoman/tokenizer.model",
-	runner: { wasmPathsRoot: "/ort-wasm/" },
-})
-```
-
-## Why not extend `@mailwoman/neural` directly?
-
-`@mailwoman/neural` depends on `onnxruntime-node`, which ships native binaries and breaks in a browser bundle. The classifier surface itself is runtime-agnostic — it only needs a `NeuralRunner` (a structural interface with `infer(ids): Promise<InferResult>`). Splitting the runner lets both implementations co-exist without forcing browser bundlers to dead-code-eliminate native code.
+`WebONNXRunner` still implements the same structural `NeuralRunner` interface as the Node runner — that part was never the problem.
 
 ## License
 

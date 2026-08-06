@@ -5,12 +5,18 @@
  *   `runDoctor` orchestration tests — driven entirely through injected {@link DoctorDeps} seams, so no
  *   filesystem, weights package, or ONNX binding is touched. Verifies the fact-gathering (weights,
  *   gazetteer discovery order, POI manifest, runtime) and the exit-code discipline end-to-end.
+ *
+ *   The last describe is the deliberate exception: `defaultDoctorDeps`'s engines floor is the one seam
+ *   that resolves a real file, so nothing above it can catch a broken resolution.
  */
 
+import { readFileSync } from "node:fs"
+
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import { CheckStatus, type DoctorCheck } from "./checks.ts"
-import { runDoctor, type DoctorDeps } from "./runner.ts"
+import { defaultDoctorDeps, runDoctor, type DoctorDeps } from "./runner.ts"
 
 /**
  * A fully-healthy set of seams; individual tests override just the fields they exercise.
@@ -32,14 +38,14 @@ function healthyDeps(): DoctorDeps {
 		wofShardPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
 		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
-		loadOnnx: async () => {},
+		loadONNX: async () => {},
 		nodeVersion: "24.18.0",
 		enginesFloor: ">=24.18.0",
 		overlayLocales: ["fr-fr"],
 	}
 }
 
-const byId = (checks: DoctorCheck[], id: string): DoctorCheck => {
+const byID = (checks: DoctorCheck[], id: string): DoctorCheck => {
 	const c = checks.find((x) => x.id === id)
 
 	if (!c) throw new Error(`no check ${id}`)
@@ -80,39 +86,40 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		expect(report.exitCode).toBe(1)
-		expect(byId(report.checks, "weights").status).toBe(CheckStatus.Missing)
+		expect(byID(report.checks, "weights").status).toBe(CheckStatus.Missing)
 		// A core failure must not suppress the optional-layer diagnostics.
-		expect(byId(report.checks, "gazetteer").status).toBe(CheckStatus.OK)
+		expect(byID(report.checks, "gazetteer").status).toBe(CheckStatus.OK)
 	})
 
 	it("ONNX binding unavailable → core degraded, exit 1", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			loadOnnx: async () => {
+			loadONNX: async () => {
 				throw new Error("Cannot find module 'onnxruntime-node'")
 			},
 		})
 
 		expect(report.exitCode).toBe(1)
-		expect(byId(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
+		expect(byID(report.checks, "onnxruntime").status).toBe(CheckStatus.Degraded)
 	})
 
-	it("gazetteer discovery falls back to a WOF shard when no env candidate.db", async () => {
+	it("gazetteer discovery falls back to a WOF shard only when NO candidate.db is reachable", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
 			envCandidatePath: () => undefined,
+			conventionCandidatePath: () => undefined,
 			existsSync: (p) => p === "/data/wof/admin.db",
 		})
 
-		const gaz = byId(report.checks, "gazetteer")
+		const gaz = byID(report.checks, "gazetteer")
 		expect(gaz.status).toBe(CheckStatus.OK)
 		expect(gaz.detail).toContain("WOF admin shard")
 	})
 
-	it("THE TRAP: candidate.db on disk at the convention path + env unset + no WOF shards → degraded, exit still 0", async () => {
+	it("candidate.db at the convention path with no env set → ok (the trap this used to report is closed)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, but the file sits at the convention path.
+			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, the file sits at the convention path.
 			envCandidatePath: () => undefined,
 			existsSync: () => false,
 			conventionCandidatePath: () => "/data/wof/candidate.db",
@@ -121,11 +128,10 @@ describe("runDoctor (injected seams)", () => {
 			},
 		})
 
-		const gaz = byId(report.checks, "gazetteer")
-		expect(gaz.status).toBe(CheckStatus.Degraded)
-		expect(gaz.detail).toContain("$MAILWOMAN_CANDIDATE_DB unset")
-		expect(gaz.fix).toBe("export MAILWOMAN_CANDIDATE_DB=/data/wof/candidate.db")
-		// A convention-only candidate is not a core failure — parse still runs.
+		const gaz = byID(report.checks, "gazetteer")
+		expect(gaz.status).toBe(CheckStatus.OK)
+		expect(gaz.detail).toContain("/data/wof/candidate.db")
+		expect(gaz.fix).toBeUndefined()
 		expect(report.exitCode).toBe(0)
 	})
 
@@ -141,8 +147,8 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		expect(report.exitCode).toBe(0)
-		expect(byId(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
-		expect(byId(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
+		expect(byID(report.checks, "gazetteer").status).toBe(CheckStatus.Missing)
+		expect(byID(report.checks, "poi-layer").status).toBe(CheckStatus.Missing)
 	})
 
 	it("poi.db present but manifest unreadable → degraded (not a hard error)", async () => {
@@ -154,6 +160,21 @@ describe("runDoctor (injected seams)", () => {
 		})
 
 		expect(report.exitCode).toBe(0)
-		expect(byId(report.checks, "poi-layer").status).toBe(CheckStatus.Degraded)
+		expect(byID(report.checks, "poi-layer").status).toBe(CheckStatus.Degraded)
+	})
+})
+
+// The one seam that is NOT injected in the suite above: `defaultDoctorDeps` reads `engines.node` from mailwoman's own
+// manifest, located by self-reference (`import.meta.resolve("mailwoman/package.json")`). It touches the filesystem by
+// construction — that is the thing under test — and it degrades to ">=0" on any failure, so a broken resolution would
+// otherwise show up only as a doctor report that silently stops enforcing the Node floor.
+describe("defaultDoctorDeps — engines floor via package self-reference", () => {
+	it("reads the real engines.node, not the >=0 fallback", () => {
+		const manifest = parseJSONStrict<{ engines?: { node?: string } }>(
+			readFileSync(new URL("../package.json", import.meta.url), "utf8")
+		)
+
+		expect(manifest.engines?.node).toBeTruthy()
+		expect(defaultDoctorDeps().enginesFloor).toBe(manifest.engines!.node)
 	})
 })

@@ -22,6 +22,9 @@ import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
 
 /**
@@ -55,32 +58,8 @@ const geomCache = new Map<number, Geometry>()
 
 function geomForID(wofID: number): Geometry {
 	if (geomCache.has(wofID)) return geomCache.get(wofID)!
-	const s = String(Math.trunc(wofID))
-	// WOF path: split the id into 3-char chunks (last chunk is the remainder).
-	const chunks: string[] = []
-	let i = 0
 
-	while (i < s.length) {
-		chunks.push(s.slice(i, i + 3))
-		i += 3
-	}
-
-	const rel = chunks.join("/") + `/${s}.geojson`
-	let geom: Geometry = null
-
-	for (const root of ADMIN_ROOTS) {
-		const fp = join(root, rel)
-
-		if (existsSync(fp)) {
-			try {
-				geom = (JSON.parse(readFileSync(fp, "utf8")).geometry as Geometry) ?? null
-			} catch {
-				geom = null
-			}
-
-			break
-		}
-	}
+	const geom = (readWOFFeature(Math.trunc(wofID), ADMIN_ROOTS)?.geometry as Geometry) ?? null
 
 	geomCache.set(wofID, geom)
 
@@ -208,7 +187,7 @@ function main(): number {
 		return 2
 	}
 
-	const rows: ResolvedRow[] = JSON.parse(readFileSync(src, "utf8"))
+	const rows = parseJSONStrict<ResolvedRow[]>(readFileSync(src, "utf8"))
 	const overall: Counter = {}
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []
@@ -283,6 +262,4 @@ function main(): number {
 	return 0
 }
 
-if (import.meta.main) {
-	process.exit(main())
-}
+runIfScript(import.meta, main)

@@ -42,6 +42,16 @@ const OptionsSchema = zod.object({
 	// tri-state — the OFF pin would read as "unset". Renamed here; the eval-harness module (and the
 	// scripts/eval shim the probes spawn) keep the original two-key contract.
 	adminCoherenceOff: zod.boolean().default(false).describe("#895 tri-state pin: force adminCoherence OFF"),
+	postcodeCountryCoherence: zod
+		.boolean()
+		.default(false)
+		.describe("#42 tri-state pin: force postcodeCountryCoherence ON (library default is ON since 2026-08-05)"),
+	// Same commander constraint as `adminCoherenceOff` above — a literal `--no-x` flag would negate `--x` on the
+	// same attribute and collapse the tri-state.
+	postcodeCountryCoherenceOff: zod
+		.boolean()
+		.default(false)
+		.describe("#42 tri-state pin: force postcodeCountryCoherence OFF (the pre-promotion configuration)"),
 	hierarchyCompletion: zod.boolean().default(false).describe("#405: recover the dual-role-place locality"),
 
 	// coordinate tiers
@@ -58,13 +68,21 @@ const OptionsSchema = zod.object({
 	postalCityAliasDb: zod.string().optional().describe("#475 opt-in postal-city alias scorer (FTS path)"),
 	// assembled arms
 	assembled: zod.boolean().default(false).describe("#478 leg 2: add the assembled (pipeline) arms"),
+	// Pastel derives the prop from the kebab flag, so `--admin-fst` binds `adminFst` — a lowercase
+	// acronym is REQUIRED here and the house `adminFST` spelling silently never binds (the flag parses,
+	// the value lands nowhere, the eval runs without an FST and reports a plausible number).
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- Pastel flag derivation owns this casing.
+	adminFst: zod
+		.string()
+		.optional()
+		.describe("#1497: pin the per-locale FST gazetteer for the assembled arms (omit = no FST, the shipped default)"),
 	placeCountry: zod.boolean().default(false).describe("#743: production-representative coarse placer"),
 	placeCountryHard: zod.boolean().default(false).describe("#194/#743: hard country filter (safelist-gated)"),
 	placeCountryHardAll: zod.boolean().default(false).describe("Ungated hard-filter measurement (full safelist)"),
 	// dumps
 	outMd: zod.string().optional().describe("Also write the markdown report here"),
-	outJson: zod.string().optional().describe("Write the aggregate JSON dump here"),
-	errorsJson: zod.string().optional().describe("Write the per-row failure dump here"),
+	outJSON: zod.string().optional().describe("Write the aggregate JSON dump here"),
+	errorsJSON: zod.string().optional().describe("Write the per-row failure dump here"),
 	outResolved: zod.string().optional().describe("Per-row resolved-locality dump (PIP-containment metric)"),
 	outRows: zod.string().optional().describe("Per-row neural-vs-v0 outcome dump (every row)"),
 })
@@ -72,8 +90,18 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalOAResolver: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const { adminCoherenceOff, ...rest } = options
-	const state = useCommandTask(() => oaResolverEval({ ...rest, noAdminCoherence: adminCoherenceOff }))
+	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
+
+	const state = useCommandTask(() =>
+		oaResolverEval({
+			...rest,
+			noAdminCoherence: adminCoherenceOff,
+			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
+			// Pastel's kebab derivation forces the lowercase-acronym prop above; the harness option keeps
+			// the house spelling, so the rename happens here rather than in the eval's own contract.
+			...(adminFst ? { adminFST: adminFst } : {}),
+		})
+	)
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

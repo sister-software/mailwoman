@@ -1,0 +1,48 @@
+---
+title: Resolve a messy customer file
+description: Parse, geocode and match in one pipeline — blocking on the coordinate links the spellings that string comparison never joins.
+role: landing
+audience: teams
+---
+
+# Resolve a messy customer file
+
+The same company appears three times in the export: `Harbor & Vine Catering`, `Harbor and Vine
+Catering LLC`, `HARBOR & VINE CATERING`, each row writing the street a different way. String
+comparison never joins them, and the standard repair is an abbreviation table that grows every time a
+new spelling arrives. Meanwhile the customer count in every report is wrong by however far the
+duplicates run.
+
+## What changes
+
+One pipeline runs all three steps. Rows are parsed into components, each address is geocoded to a
+coordinate, and the matcher blocks on that coordinate before it scores anything. That ordering is
+what links `11 W 53rd St` to `11 West 53rd Street` with no rule written for the abbreviation: two
+rows that resolve to the same point get compared, whatever they call the street.
+
+On the twenty-row example file, the three rows above land on one coordinate and the name normalizer
+has already collapsed their three spellings to one canonical string. With the link threshold read off
+the measured pair weights, twenty rows resolve to thirteen entities — the count of distinct
+organizations in the file.
+
+## What you still carry
+
+The defaults are conservative, and on a file that size the result is that nothing links at all: the
+same twenty rows come back as twenty entities at the shipped threshold. That is the safer direction,
+because a missed link leaves two entities where one belonged while a false link fuses two real
+organizations and is harder to catch downstream. It does mean measuring before you trust the output.
+
+[Match messy records to one entity each](../developers/how-to/match-messy-records.mdx) is that
+measurement: score two pairs whose answer you already know, read the gap, and set the threshold
+inside it. The same page names the second limit in the same breath — single-file
+`mailwoman registry run` cannot reach that setting, so a small file goes through the library instead.
+
+[Geocode a CSV of customer addresses](../developers/tutorials/geocode-a-csv.mdx) is the ingest and
+geocode half of the pipeline. Each page publishes the CSV it runs against, so every count above is
+one you can reproduce on your own machine.
+
+## Next
+
+- [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx) — the install and the
+  gazetteer the pipeline resolves against.
+- [Pricing](../pricing.mdx) — one figure per legal entity, whatever the file size.

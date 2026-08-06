@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The placetype-pair prior's two REGISTERED decode-order test classes (Task 4 brief): (1) a window
+ *   The placetype-pair prior's two REGISTERED decode-order test classes: (1) a window
  *   the prior biases stays a united BIO span through the `enforceWordConsistency` heal, and (2) a word
  *   the encoder is confident about (a large contrary logit) is NOT overridden by the prior — the
  *   encoder's veto stays intact at a realistic magnitude. Both exercise `#decode` end-to-end via
  *   `traceParse` + a canned `NeuralRunner` — the same harness `trace-parse.test.ts` uses.
  *
  *   Both fixtures below are the comma-free two-word "Shoreditch London" shape, which is decode-order
- *   plumbing, not a probe-mode test — `probeMode: "window"` is passed explicitly (Task 6 defaulted the
- *   prior to `"segment"` mode, under which this comma-free input would collapse to one inert segment and
- *   never reach the decode-order behavior these tests actually check).
+ *   plumbing, not a probe-mode test — `probeMode: "window"` is passed explicitly because the prior's
+ *   default `"segment"` mode collapses this comma-free input to one inert segment, which would never
+ *   reach the decode-order behavior these tests actually check.
  */
 
 import { repoRootPath } from "@mailwoman/core/utils"
@@ -54,7 +54,9 @@ function fixedPairIndex(child: string, parent: string, tag: string, delta = 6, t
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
-		probe: (c, p) => (c === child && p === parent ? (tag as never) : undefined),
+		// No `parentDelta`: these are decode-ORDER tests for the child-side bias, and adding a parent write
+		// would move spans they assert on for reasons unrelated to what they measure.
+		probe: (c, p) => (c === child && p === parent ? ({ tag, parentTag: "locality" } as never) : undefined),
 	}
 }
 

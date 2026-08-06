@@ -25,6 +25,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -45,9 +46,9 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/resolver": "resolver",
 	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
 	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module
-	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0 (2026-07-18
-	// — found while adding @mailwoman/mcp to this closure; ERR_PACKAGE_PATH_NOT_EXPORTED on './poi-lookup',
-	// reproduced with mcp absent too, so this gap predates Task 6 and was simply uncaught until now).
+	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0
+	// (2026-07-18), which exports no './poi-lookup' at all — resolving there is an
+	// ERR_PACKAGE_PATH_NOT_EXPORTED the instant the CLI loads its command modules.
 	"@mailwoman/resolver-wof-sqlite": "resolver-wof-sqlite",
 	"@mailwoman/ban": "ban",
 	"@mailwoman/codex": "codex",
@@ -198,15 +199,12 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 
 			if (!line) continue
 
-			try {
-				const msg = JSON.parse(line) as { id?: number; result?: { tools?: unknown[] }; error?: unknown }
+			// Non-JSON stdout noise (shouldn't happen on a clean stdio transport) parses to null and is skipped.
+			const msg = tryParsingJSON<{ id?: number; result?: { tools?: unknown[] }; error?: unknown }>(line)
 
-				if (typeof msg.id === "number") {
-					responses.set(msg.id, { id: msg.id, result: msg.result, error: msg.error })
-					waiters.get(msg.id)?.(msg)
-				}
-			} catch {
-				// Non-JSON stdout noise (shouldn't happen on a clean stdio transport) — ignore.
+			if (msg && typeof msg.id === "number") {
+				responses.set(msg.id, { id: msg.id, result: msg.result, error: msg.error })
+				waiters.get(msg.id)?.(msg)
 			}
 		}
 	})
@@ -339,10 +337,9 @@ function assertClosureComplete() {
 	const missing = new Map<string, string[]>()
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
-		const manifest = JSON.parse(readFileSync(resolve(repoRoot, dir, "package.json"), "utf8")) as Record<
-			string,
-			Record<string, string>
-		>
+		const manifest = parseJSONStrict<Record<string, Record<string, string>>>(
+			readFileSync(resolve(repoRoot, dir, "package.json"), "utf8")
+		)
 
 		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
 			for (const [dep, spec] of Object.entries(manifest[depType] ?? {})) {

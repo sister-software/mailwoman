@@ -8,6 +8,9 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+import { CSVSpliterator } from "spliterator"
+
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 
@@ -45,46 +48,53 @@ export interface ShardTuple {
 export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@mailwoman/core/utils"
 
 /**
- * Split one CSV line into fields, honouring double-quoted fields and doubled-quote escapes (`""`).
- *
- * Six recipes each carried a byte-identical copy of this before the 2026-08-02 dedupe (two spellings that differed only
- * by a non-null assertion). It stays hand-rolled rather than delegating to `csv-parse`: the recipes read one line at a
- * time out of an already-streaming reader, and the dependency's per-line entry point costs more than the twenty lines
- * it would replace.
+ * One CSV record, keyed by its lower-cased header name, every value trimmed. A column the header does not declare reads
+ * as `undefined`; a column the header declares but this record does not reach reads as `""`.
  */
-export function splitCSV(line: string): string[] {
-	const out: string[] = []
-	let cur = ""
-	let inQ = false
+export type CSVRecord = Record<string, string | undefined>
 
-	for (let i = 0; i < line.length; i++) {
-		const c = line[i]!
+/**
+ * Read an in-memory CSV (an `unzip -p` buffer, say) as header-keyed records.
+ *
+ * Quote handling spans the ROW split, not only the column split: a newline inside a quoted field belongs to a single
+ * record, so the record boundaries can only be found by a scanner that already knows where the quotes are. Find the
+ * lines first and unquote afterwards and such a record splits in two — the first half short by however many columns
+ * followed the newline, which is how a `street` value comes to be read as `city`.
+ *
+ * Header names are lower-cased on the way in. `normalizeKeys` will not do it: it leaves an ALL CAPS header alone, and
+ * OpenAddresses ships `LON,LAT,NUMBER,STREET` while other extracts ship the same names lower-case. A recipe names its
+ * columns in lower case either way.
+ *
+ * Line breaks inside a value become single spaces. A quote-aware parse is the first thing here able to return a value
+ * CONTAINING one — `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"` — and every consumer synthesizes
+ * one-line address text from these cells with no guard, because until that parse landed no value could carry one.
+ * Collapsing keeps the record (the address is fine; the source's line break is not part of it) without emitting a
+ * training row with a newline inside it.
+ *
+ * Only `\r` and `\n`, deliberately — NOT `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
+ * (OA's IA extract writes `NORTH`, three spaces, `MAIN STREET`), because those could always appear and every shard
+ * built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at all.
+ * `scaffold.test.ts` pins both halves.
+ */
+export function* readCSVRecords(source: Uint8Array): Generator<CSVRecord> {
+	let header: string[] | null = null
 
-		if (inQ) {
-			if (c === '"') {
-				if (line[i + 1] === '"') {
-					cur += '"'
+	// `header: false` keeps the first record in the stream so this reader owns the lower-casing.
+	for (const cells of CSVSpliterator.from(source, { header: false, enableQuoteHandling: true })) {
+		if (!header) {
+			header = cells.map((name) => name.trim().toLowerCase())
 
-					i++
-				} else {
-					inQ = false
-				}
-			} else {
-				cur += c
-			}
-		} else if (c === '"') {
-			inQ = true
-		} else if (c === ",") {
-			out.push(cur)
-			cur = ""
-		} else {
-			cur += c
+			continue
 		}
+
+		const record: CSVRecord = {}
+
+		for (let i = 0; i < header.length; i++) {
+			record[header[i]!] = (cells[i] ?? "").replaceAll(/[\r\n]+/g, " ").trim()
+		}
+
+		yield record
 	}
-
-	out.push(cur)
-
-	return out
 }
 
 /**
@@ -92,7 +102,7 @@ export function splitCSV(line: string): string[] {
  */
 export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 	// TextSpliterator (not JSONSpliterator) so a malformed line is SKIPPED, not thrown — the
-	// per-line try/catch below is the tolerance this reader has always had.
+	// per-line tryParsingJSON below is the tolerance this reader has always had.
 	const { TextSpliterator } = await import("spliterator")
 
 	for await (const line of TextSpliterator.fromAsync(input)) {
@@ -100,10 +110,10 @@ export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
 
 		if (!trimmed) continue
 
-		try {
-			yield JSON.parse(trimmed) as ShardTuple
-		} catch {
-			// skip malformed line
+		const tuple = tryParsingJSON<ShardTuple>(trimmed)
+
+		if (tuple !== null) {
+			yield tuple
 		}
 	}
 }
@@ -197,6 +207,30 @@ export interface ShardRecipeOpts {
 	 * `no-fragment` knob 3: minimum digit count for a number to count as "long" and be boosted. Default 3.
 	 */
 	longNumberMinDigits?: number
+	/**
+	 * `sub-venue`: the sub-venue lexicon JSON. Default = the committed `corpus/data/sub-venue-lexicon.json`, resolved
+	 * through the package manifest so it works from the source tree and from `out/`.
+	 */
+	lexicon?: string
+	/**
+	 * `sub-venue`: directory of `sub-venue-extract` JSONLs, one per region. Default
+	 * `$MAILWOMAN_DATA_ROOT/sub-venue/extracts`.
+	 */
+	extractsDir?: string
+	/**
+	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound pools (the two of poi.db's
+	 * four countries this shard has legs for). Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
+	 */
+	poiDb?: string
+	/**
+	 * `sub-venue`: GB/US/FR address-context tuples JSONL. Default the house-venue v3 tuples
+	 * (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`); DE and ES read OpenAddresses directly.
+	 */
+	subVenueTuples?: string
+	/**
+	 * `sub-venue`: share of emitted rows that are confound NEGATIVES. Default 0.3.
+	 */
+	negativeFraction?: number
 }
 
 /**

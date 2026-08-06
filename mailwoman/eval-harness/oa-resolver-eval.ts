@@ -51,7 +51,7 @@
  *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { lookupGermanState } from "@mailwoman/codex/de"
@@ -65,6 +65,7 @@ import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
+import { JSONSpliterator } from "spliterator"
 
 import type { ShardProvider } from "../geocode-core.ts"
 import { renderOaResolverReport } from "./oa-resolver-report.ts"
@@ -114,6 +115,16 @@ export interface OAResolverEvalOptions {
 	 */
 	anchorRerank?: boolean
 	/**
+	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the ASSEMBLED arms (#1497).
+	 *
+	 * Only the assembled arms can use it — the FST is a decode-time prior applied by `createRuntimePipeline`, and the
+	 * bare `neural` arm calls `classifier.parse` directly. Omit for the byte-stable no-FST default.
+	 *
+	 * This is the tree's only FST-sensitive eval. `eval gauntlet` grades through `parseForGeocode`, which takes no FST at
+	 * all, so an FST change is invisible to it — see the note on `assembledPipeline` below.
+	 */
+	adminFST?: string
+	/**
 	 * #478 leg 2: add the assembled (pipeline) arms.
 	 */
 	assembled?: boolean
@@ -136,7 +147,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Write per-row failure dump here.
 	 */
-	errorsJson?: string
+	errorsJSON?: string
 	/**
 	 * Eval JSONL. Default `data/eval/external/openaddresses-us-sample.jsonl`.
 	 */
@@ -170,13 +181,24 @@ export interface OAResolverEvalOptions {
 	 */
 	noAdminCoherence?: boolean
 	/**
+	 * #42 tri-state pin: force postcodeCountryCoherence OFF — the pre-2026-08-05 configuration. This is the leg that
+	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry` is byte-flat on a US panel,
+	 * which is the one number the default-on promotion needed and could not get from a confound board.
+	 */
+	noPostcodeCountryCoherence?: boolean
+	/**
 	 * #690/#895 tri-state pin: force normalizeCase ON.
 	 */
 	normalizeCase?: boolean
 	/**
+	 * #42 tri-state pin: force postcodeCountryCoherence ON. The library default has been ON since 2026-08-05, so this pin
+	 * is now a no-op restatement; it stays because a gate leg that says what it graded is the point of a tri-state.
+	 */
+	postcodeCountryCoherence?: boolean
+	/**
 	 * Write the aggregate JSON dump here.
 	 */
-	outJson?: string
+	outJSON?: string
 	/**
 	 * Also write the markdown report here (self-reporting safeguard).
 	 */
@@ -729,11 +751,10 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		.split(",")
 		.map((s) => s.trim())
 
-	const rows: OaRow[] = readFileSync(evalPath, "utf8")
-		.split("\n")
-		.filter((l) => l.trim())
-		.map((l) => JSON.parse(l))
-		.slice(0, limit === Infinity ? undefined : limit)
+	const rows: OaRow[] = (await Array.fromAsync(JSONSpliterator.fromAsync<OaRow>(evalPath))).slice(
+		0,
+		limit === Infinity ? undefined : limit
+	)
 
 	// Full SHIP-CONFIG via the canonical ProductionScorer (#722): createScorer reads the model-card's
 	// `requires` block and feeds EVERY declared channel — anchor + gazetteer + conventions(=auto) +
@@ -760,10 +781,15 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		tokenizerPath: options.tokenizer || "",
 		modelCardPath: options.modelCard || "",
 		...(modelAnchorPath ? { anchorLookupPath: modelAnchorPath } : {}),
+		...(options.adminFST ? { fstPath: options.adminFST } : {}),
 		strict: true,
 		tier: "server",
 		...(ablateToAnchor || anchorOff ? { overrides } : {}),
 	})
+
+	if (options.adminFST) {
+		console.error(`[scorer] FST gazetteer pinned: ${options.adminFST} (assembled arms only)`)
+	}
 
 	console.error(
 		ablateToAnchor
@@ -838,10 +864,20 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
 
+	// #42: default-ON in the resolver since 2026-08-05, so the pin is a full tri-state like adminCoherence's —
+	// `--postcode-country-coherence` ON, `--postcode-country-coherence-off` OFF, neither = the library default.
+	const postcodeCountryCoherence =
+		(options.postcodeCountryCoherence ?? false)
+			? true
+			: (options.noPostcodeCountryCoherence ?? false)
+				? false
+				: undefined
+
 	const resolveOpts = {
 		...(dc && dc.toLowerCase() !== "none" ? { defaultCountry: dc } : {}),
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
+		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
 	}
 
 	const {
@@ -1064,6 +1100,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		? createRuntimePipeline({
 				classifier: {
 					parse: (text: string, o?: object) => neural.parse(text, { ...o, postcodeRepair: true }),
+					// `autoLoadWeightsFST` (runtime-pipeline.ts) reads `fstPath` OFF THE CLASSIFIER, so this
+					// shim — which exists only to force `postcodeRepair: true` — silently dropped the
+					// gazetteer prior for every assembled run before #1497. A bare `{ parse }` literal has no
+					// `fstPath` key, `"fstPath" in classifier` is false, and the pipeline degrades to the
+					// no-FST default without a word. Forward it.
+					...(neural.fstPath ? { fstPath: neural.fstPath } : {}),
 				} as never,
 				resolver: resolver as never,
 				placeCountry: evalPlacer ?? false,
@@ -1096,7 +1138,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	// Per-row failure dump (--errors-json): one record per row where neural OR v0 missed locality,
 	// carrying each parser's resolved admin names so failures can be bucketed offline (resolve-wrong
 	// vs unresolved vs neural-only vs v0-only). Aggregates are unaffected.
-	const collectErrors = !!(options.errorsJson || "")
+	const collectErrors = !!(options.errorsJSON || "")
 	const errorRows: Record<string, unknown>[] = []
 
 	// `--out-resolved <path>`: per-row dump for the PIP-containment metric (scripts/eval/pip-containment.py).
@@ -1320,9 +1362,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	}
 
 	if (collectErrors) {
-		writeFileSync(options.errorsJson || "", JSON.stringify(errorRows, null, 2))
+		writeFileSync(options.errorsJSON || "", JSON.stringify(errorRows, null, 2))
 
-		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJson || ""}`)
+		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJSON || ""}`)
 	}
 
 	if (collectRows) {
@@ -1370,7 +1412,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		console.error(`wrote markdown → ${options.outMd || ""}`)
 	}
 
-	if (options.outJson || "") {
+	if (options.outJSON || "") {
 		const dump = (g: { overall: Agg; byState: Map<string, Agg> }) => ({
 			overall: { ...g.overall, errs: undefined, errN: g.overall.errs.length },
 			coord: {
@@ -1381,9 +1423,9 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			byState: Object.fromEntries([...g.byState].map(([k, v]) => [k, { ...v, errs: undefined }])),
 		})
 
-		writeFileSync(options.outJson || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
+		writeFileSync(options.outJSON || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
 
-		console.error(`wrote json → ${options.outJson || ""}`)
+		console.error(`wrote json → ${options.outJSON || ""}`)
 	}
 
 	postcodeLookup?.close()

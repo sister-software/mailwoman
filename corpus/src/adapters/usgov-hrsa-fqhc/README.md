@@ -23,7 +23,7 @@ gazetteer rows it earns its adversarial-source label on two fronts:
 
 A CSV file the operator pre-downloads from `data.hrsa.gov` (Health
 Center Service Delivery Site Locations dataset). The adapter consumes
-the file directly via `csv-parse` in streaming mode; no SQLite step
+the file directly via `CSVSpliterator` in streaming mode; no SQLite step
 needed (the national export is ~10K rows).
 
 ### Expected columns

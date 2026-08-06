@@ -45,7 +45,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs, type SourceSpec } from "./shared.ts"
+import { buildSpecs, norm, type SourceSpec } from "./shared.ts"
 
 /**
  * Options for {@linkcode coverageReconciliation}.
@@ -76,8 +76,6 @@ export interface CoverageReconciliationOptions {
 	 */
 	outGeojson?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Which kind of source a record's provenance label denotes.

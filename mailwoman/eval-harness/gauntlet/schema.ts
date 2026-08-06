@@ -64,10 +64,16 @@ export interface GauntletCaseTable {
 	expect_components: string | null
 	/**
 	 * Expected resolved place id (null = place not asserted).
+	 *
+	 * Graded against `hierarchy[0].placeID` — see `check-case.ts`. Stored from the corpus's first migration and read by
+	 * NOTHING until 2026-08-06 (#1507), which is worth knowing about any expectation column: it can sit in the schema,
+	 * the builder and the DDL, look asserted, and assert nothing.
 	 */
 	expect_place_id: string | null
 	/**
-	 * Expected resolved place canonical name (null = not asserted).
+	 * Expected resolved place canonical name (null = not asserted), case-insensitive against `hierarchy[0].name`.
+	 *
+	 * NOT `GauntletResult.locality`, which echoes the parsed query span — see `check-case.ts`'s `resolvedPlace`.
 	 */
 	expect_place_name: string | null
 	/**
@@ -99,6 +105,46 @@ export interface GauntletCaseTable {
 	 * Human note — what failure this case pins.
 	 */
 	note: string | null
+	/**
+	 * ABLATION ONLY, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's DERIVED
+	 * graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`). `rung` is `abstain`,
+	 * `base`, or a WOF placetype naming the rung the deletion should degrade to.
+	 *
+	 * Absent (the normal case) = the derived ladder decides. It exists for the two classes no threshold fixes:
+	 * TERRITORIES, whose ancestry is politically rather than geographically shaped, and DUAL-ROLE places (#402), where
+	 * one name is both a locality and its own county and the ladder double-counts a rung. A corpus that needed many of
+	 * these would be telling you the derivation is wrong, not that the rows are special.
+	 */
+	ablation_expect: string | null
+}
+
+/**
+ * The build stamp — ONE row, describing the committed corpus the DB was built from.
+ *
+ * Exists because `regression.db` is a derived artifact with no link back to its source: on 2026-08-06 `eval
+ * gauntlet-build regression-db` rebuilt it from a STALE COMPILED TREE (an `out/` loader still holding the deleted
+ * pre-JSONL case array), printed "built", and every gate afterwards graded a corpus nobody had. Nothing in the DB could
+ * contradict it. The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
+ */
+export interface GauntletMetaTable {
+	/**
+	 * Always {@linkcode GAUNTLET_META_ROW_ID}. A one-row table pinned by its primary key, so a second write replaces the
+	 * stamp rather than appending a second, equally-authoritative one.
+	 */
+	id: string
+	/**
+	 * `regressionCorpusHash` of the rows this DB was built from (`cases/load.ts`) — order-independent, content-addressed.
+	 */
+	corpus_hash: string
+	/**
+	 * How many rows were written. Redundant with the hash for detection, load-bearing for the DIAGNOSIS: "0 cases" reads
+	 * as an empty loader, "306 vs 192" as a corpus that moved under the artifact.
+	 */
+	case_count: number
+	/**
+	 * ISO timestamp of the build, for the operator reading a mismatch ("built before or after my edit?").
+	 */
+	built_at: string
 }
 
 /**
@@ -106,7 +152,18 @@ export interface GauntletCaseTable {
  */
 export interface GauntletDatabase {
 	gauntlet_case: GauntletCaseTable
+	gauntlet_meta: GauntletMetaTable
 }
+
+/**
+ * The one legal value of {@linkcode GauntletMetaTable.id}.
+ */
+export const GAUNTLET_META_ROW_ID = "corpus"
+
+/**
+ * Name of the stamp table, for the `sqlite_master` presence probe a pre-stamp DB needs.
+ */
+export const GAUNTLET_META_TABLE = "gauntlet_meta"
 
 /**
  * Column order for the positional INSERT — derived once so the builder + writer can't drift.
@@ -129,6 +186,9 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"added_at",
 	"bug_ref",
 	"note",
+	// Appended 2026-08-05 (the ablation expectation model). APPEND-ONLY: this list is the positional INSERT order, so a
+	// new column goes on the END or every existing row shifts.
+	"ablation_expect",
 ] as const
 
 /**
@@ -154,8 +214,22 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("added_at", "text", (c) => c.notNull())
 		.addColumn("bug_ref", "text")
 		.addColumn("note", "text")
+		.addColumn("ablation_expect", "text")
 		.execute()
 
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"
 	await db.schema.createIndex("idx_gauntlet_kind").on("gauntlet_case").columns(["country", "address_kind"]).execute()
+}
+
+/**
+ * Create the one-row {@linkcode GauntletMetaTable} build stamp.
+ */
+export async function createGauntletMetaTable(db: Kysely<GauntletDatabase>): Promise<void> {
+	await db.schema
+		.createTable(GAUNTLET_META_TABLE)
+		.addColumn("id", "text", (c) => c.primaryKey())
+		.addColumn("corpus_hash", "text", (c) => c.notNull())
+		.addColumn("case_count", "integer", (c) => c.notNull())
+		.addColumn("built_at", "text", (c) => c.notNull())
+		.execute()
 }

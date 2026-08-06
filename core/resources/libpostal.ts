@@ -9,10 +9,9 @@ import type { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
 import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import type { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
-import { TextSpliterator } from "spliterator"
+import { AsyncSequence, TextSpliterator } from "spliterator"
 
 import { resourceDictionaryPathBuilder } from "../utils/repo.ts"
-import { takeAsync } from "./collections.ts"
 import { LocaleIndex } from "./LocaleIndex.ts"
 
 const batchSize = availableParallelism()
@@ -101,7 +100,10 @@ export async function prepareLocaleIndex(
 
 	// Default resolves lazily (#481 — the former TLA value).
 	const codes = languageCodes ?? (await getAvailableLanguages())
-	const fileEntries = takeAsync(findFilesMatchingLocale(filename, libPostalDataDirectory, codes), batchSize)
+
+	const fileEntries = AsyncSequence.from(findFilesMatchingLocale(filename, libPostalDataDirectory, codes)).chunks(
+		batchSize
+	)
 
 	for await (const batch of fileEntries) {
 		await Promise.all(
@@ -119,10 +121,9 @@ export async function prepareLocaleIndex(
 		)
 	}
 
-	const internalFileEntries = takeAsync(
-		findFilesMatchingLocale(filename, libPostalInternalDataDirectory, codes),
-		batchSize
-	)
+	const internalFileEntries = AsyncSequence.from(
+		findFilesMatchingLocale(filename, libPostalInternalDataDirectory, codes)
+	).chunks(batchSize)
 
 	for await (const batch of internalFileEntries) {
 		await Promise.all(

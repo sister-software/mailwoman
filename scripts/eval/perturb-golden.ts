@@ -23,6 +23,8 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { parseArgs } from "node:util"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
 	options: { golden: { type: "string" }, out: { type: "string" }, "per-file": { type: "string" } },
@@ -62,6 +64,9 @@ function main(): void {
 	let base = 0
 
 	for (const file of readdirSync(GOLDEN).filter((f) => f.endsWith(".jsonl"))) {
+		// The stride below needs the row COUNT before it can pick a row, then indexes them, so the whole
+		// set has to be resident either way — streaming would only move the materialization.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above
 		const lines = readFileSync(join(GOLDEN, file), "utf8")
 			.split("\n")
 			.filter((l) => l.trim())
@@ -70,15 +75,9 @@ function main(): void {
 		const step = Math.max(1, Math.floor(lines.length / PER_FILE))
 
 		for (let i = 0; i < lines.length && out.length / PERTURBATIONS.length < base + PER_FILE; i += step) {
-			let row: GoldenRow
+			const row = tryParsingJSON<GoldenRow>(lines[i]!)
 
-			try {
-				row = JSON.parse(lines[i]!)
-			} catch {
-				continue
-			}
-
-			if (!row.raw || !row.components) continue
+			if (!row?.raw || !row.components) continue
 			// Expected = the golden components, wrapped as {tag: [value]} (harness format).
 			const expected: Record<string, string[]> = {}
 

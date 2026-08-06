@@ -29,6 +29,7 @@ import { basename, join } from "node:path"
 import { promisify } from "node:util"
 
 import { sha256File } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
@@ -63,8 +64,7 @@ interface SourceManifest {
 async function listZipEntries(zipPath: string): Promise<string[]> {
 	const listing = await execFileAsync("unzip", ["-l", zipPath])
 
-	return listing.stdout
-		.split("\n")
+	return [...TextSpliterator.from(listing.stdout)]
 		.map((line) => line.trim().split(/\s+/).pop() ?? "")
 		.filter((name) => name.length > 0)
 }

@@ -32,6 +32,7 @@ import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
+import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 async function main() {
@@ -122,7 +123,7 @@ async function main() {
 
 		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
 
-		console.log(r.stdout.split("\n").slice(-40).join("\n"))
+		console.log([...TextSpliterator.from(r.stdout)].slice(-40).join("\n"))
 	}
 
 	await runArena("libpostal", join(outDir, "libpostal"))

@@ -1,0 +1,21 @@
+customer_id,company,street,city,state,postal_code
+C-2001,Harbor & Vine Catering,1275 Pennsylvania Ave NW,Washington,DC,20004
+C-2002,Harbor and Vine Catering LLC,1275 Pennsylvania Avenue NW,Washington,DC,20004
+C-2003,HARBOR & VINE CATERING,1275 Pennsylvania Ave. N.W.,Washington,DC,20004
+C-2004,Beacon Ridge Analytics,800 F St NW,Washington,DC,20004
+C-2005,Beacon Ridge Analytics Inc,800 F Street Northwest,Washington,DC,20004
+C-2006,Ashgrove Textiles,11 W 53rd St,New York,NY,10019
+C-2007,"Ashgrove Textiles, Co.",11 West 53rd Street,New York,NY,10019
+C-2008,Ashgrove Textile,11 W 53 St,New York,NY,10019
+C-2009,Northgate Freight,233 S Wacker Dr,Chicago,IL,60606
+C-2010,Northgate Freight Systems,233 South Wacker Drive,Chicago,IL,60606
+C-2011,Marlowe Instruments,151 3rd St,San Francisco,CA,94103
+C-2012,Marlowe Instruments LLC,151 Third Street,San Francisco,CA,94103
+C-2013,Tidewater Print Shop,1000 Jefferson Dr SW,Washington,DC,20560
+C-2014,Pemberton Signal Works,620 H St NE,Washington,DC,20002
+C-2015,Halyard Supply Co,89 E 42nd St,New York,NY,10017
+C-2016,Sable Creek Design,1071 5th Ave,New York,NY,10128
+C-2017,Cedarline Robotics,111 S Michigan Ave,Chicago,IL,60603
+C-2018,Foghorn Coffee Roasters,900 North Point St,San Francisco,CA,94109
+C-2019,Wrenfield Ceramics,465 Huntington Ave,Boston,MA,02115
+C-2020,Kestrel Microsystems,77 Massachusetts Ave,Cambridge,MA,02139

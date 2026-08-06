@@ -1,0 +1,20 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		// ---
+		{ "path": "../address-id" },
+		{ "path": "../codex" },
+		{ "path": "../core" },
+		{ "path": "../formatter" },
+		{ "path": "../record" },
+		{ "path": "../spatial" },
+		{ "path": "../tiger" }
+	]
+}

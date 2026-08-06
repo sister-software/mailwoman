@@ -3,8 +3,8 @@
 
 /**
  *   Integration test for `npx mailwoman corpus list` + `corpus run`. Spawns the compiled CLI binary
- *   and verifies exit codes + output shape. The registry is empty during Phase 1 task 2; only
- *   behavior we can assert today is the empty-registry messaging.
+ *   and verifies exit codes + output shape. While the shard registry ships empty, the only behavior
+ *   there is to assert is the empty-registry messaging.
  */
 
 import { execFile } from "node:child_process"
@@ -12,10 +12,34 @@ import { promisify } from "node:util"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 import { ZodError } from "zod"
 
 import { options as runOptions } from "../commands/corpus/run.tsx"
+import { withCLISpawnLockAsync } from "../test-kit/cli-spawn-lock.ts"
+
+/**
+ * Wall-clock budget for a CLI spawn — see the note in `mailwoman/commands/geocode.test.ts`. A single spawn costs ~5.6
+ * s, 2.7 s of it node boot alone.
+ */
+const CLI_SPAWN_TIMEOUT_MS = 45_000
+
+/**
+ * Vitest's own per-test budget. It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock — a
+ * per-test timeout below the child's timeout means vitest kills the test before the thing it is measuring can report,
+ * which reads as "timed out" with no indication of what actually took the time.
+ */
+const CLI_TEST_TIMEOUT_MS = 90_000
+
+/**
+ * Vitest's per-test budget for this whole file.
+ *
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
+ * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
+ * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
+ * report, surfacing as a bare timeout with no attribution.
+ */
+vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
@@ -43,30 +67,42 @@ describe("corpus run schema validation", () => {
 })
 
 describe("npx mailwoman corpus list", () => {
-	test("exits 0 and includes every registered adapter id", async () => {
-		// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040
-		// punycode noise from a transitive dep on Node 22) that would
-		// otherwise pollute stderr and break the `stderr === ""` assertion.
-		const { stdout, stderr } = await exec("node", [cliBin, "corpus", "list"], {
-			timeout: 10_000,
-			env: childEnv({ NODE_NO_WARNINGS: "1" }),
-		})
+	test(
+		"exits 0 and includes every registered adapter id",
+		async () => {
+			// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040
+			// punycode noise from a transitive dep on Node 22) that would
+			// otherwise pollute stderr and break the `stderr === ""` assertion.
+			const { stdout, stderr } = await withCLISpawnLockAsync(() =>
+				exec("node", [cliBin, "corpus", "list"], {
+					timeout: CLI_SPAWN_TIMEOUT_MS,
+					env: childEnv({ NODE_NO_WARNINGS: "1" }),
+				})
+			)
 
-		expect(stderr).toBe("")
-		expect(stdout).toMatch(/wof-admin/i)
-		expect(stdout).toMatch(/CC0/i)
-	}, 15_000)
+			expect(stderr).toBe("")
+			expect(stdout).toMatch(/wof-admin/i)
+			expect(stdout).toMatch(/CC0/i)
+		},
+		CLI_TEST_TIMEOUT_MS
+	)
 })
 
 describe("npx mailwoman corpus run <unknown> --input x --output y", () => {
-	test("exits non-zero and names the unknown adapter", async () => {
-		await expect(
-			exec("node", [cliBin, "corpus", "run", "nope-not-real", "--input", "/tmp/x", "--output", "/tmp/y"], {
-				timeout: 10_000,
+	test(
+		"exits non-zero and names the unknown adapter",
+		async () => {
+			await expect(
+				withCLISpawnLockAsync(() =>
+					exec("node", [cliBin, "corpus", "run", "nope-not-real", "--input", "/tmp/x", "--output", "/tmp/y"], {
+						timeout: CLI_SPAWN_TIMEOUT_MS,
+					})
+				)
+			).rejects.toMatchObject({
+				code: 1,
+				stdout: expect.stringMatching(/unknown adapter id .*nope-not-real/),
 			})
-		).rejects.toMatchObject({
-			code: 1,
-			stdout: expect.stringMatching(/unknown adapter id .*nope-not-real/),
-		})
-	}, 15_000)
+		},
+		CLI_TEST_TIMEOUT_MS
+	)
 })

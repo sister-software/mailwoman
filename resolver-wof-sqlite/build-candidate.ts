@@ -59,6 +59,9 @@ export interface BuildCandidateOptions {
 	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
 	 * in as `postalcode` candidate rows so `findPlace(postalcode)` resolves a ZIP directly (the demo's primary postcode
 	 * path; the postcode-*.bin anchor stays the fallback). Matches the slim wof-hot.db, which took one such postcode DB.
+	 *
+	 * Each shard's `names` table is folded in too (#1495) — that's where the GeoNames delivery-city names live
+	 * ("Brooklyn" for 11201), and they were previously reachable only through FTS.
 	 */
 	postcodes?: string[]
 	/**
@@ -74,6 +77,12 @@ export interface BuildCandidateResult {
 	aliases: number
 	abbrevs: number
 	postcodes: number
+	/**
+	 * Delivery-city (and other `names`-table) aliases folded onto postcode rows — #1495. Zero here means the shards
+	 * carried no alias names, NOT that the pass was skipped: a shard with no `names` table reports that separately
+	 * through `onProgress`.
+	 */
+	postcodeAliases: number
 }
 
 interface PlaceAttrs {
@@ -139,12 +148,33 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- region_id per place (its region-tier ancestor) for same-name disambiguation ---
 	progress("region", "loading region ancestry")
 	const regionOf = new Map<number, number>()
+	let multiRegion = 0
 
-	for (const r of src.prepare("SELECT id, ancestor_id FROM ancestors WHERE ancestor_placetype='region'").iterate()) {
+	// A place can carry more than one region-tier ancestor — 59 do on the 2026-08-03 artifact (42
+	// localities, mostly Chinese places on an ambiguous boundary). One `region_id` column holds one of
+	// them, and which one it ought to be is a real question this is not the place to answer.
+	//
+	// MIN is arbitrary but STABLE: an unordered pick lets the stamp for those places differ between two
+	// builds of the same source. The count is logged because the number is expected to grow, and should
+	// be visible rather than inferred.
+	for (const r of src
+		.prepare(
+			"SELECT id, MIN(ancestor_id) AS ancestor_id, COUNT(DISTINCT ancestor_id) AS n" +
+				" FROM ancestors WHERE ancestor_placetype='region' GROUP BY id"
+		)
+		.iterate()) {
 		regionOf.set(Number(r.id), Number(r.ancestor_id))
+
+		if (Number(r.n) > 1) {
+			multiRegion++
+		}
 	}
 
-	progress("region", `${regionOf.size.toLocaleString()} places carry a region`)
+	progress(
+		"region",
+		`${regionOf.size.toLocaleString()} places carry a region` +
+			(multiRegion ? ` (${multiRegion.toLocaleString()} carry more than one; stamped with the lowest id)` : "")
+	)
 
 	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
 	// node:sqlite insert) rather than a per-row query builder. Placeholders come from CANDIDATE_COLUMNS so
@@ -269,13 +299,25 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	out.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
-	// --- pass 4: postcodes (separate shards: spr placetype='postalcode' with real coords) ---
-	let nPostcode = 0
-
-	for (const pcDB of opts.postcodes ?? []) {
+	/**
+	 * Pass 4 — fold ONE postcode shard (`spr` rows with `placetype='postalcode'`) in, then pass 4b: the delivery-city
+	 * aliases hanging off the same shard's `names` table.
+	 *
+	 * Extracted rather than inlined because the shard loop is self-contained — it shares only the staging statement and
+	 * the code dictionaries with the passes above, and nothing after it reads anything it produces except the two
+	 * counters it returns.
+	 */
+	const foldPostcodeShard = (pcDB: string): { primaries: number; aliases: number } => {
 		progress("postcodes", `reading ${pcDB}`)
+
 		const pc = new DatabaseSync(pcDB, { readOnly: true })
 		const pcPtid = ptID("postalcode")
+		// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
+		// below has nothing to join against unless this primary loop records what it staged.
+		const pcAttrs = new Map<number, PlaceAttrs>()
+		let primaries = 0
+		let aliases = 0
+
 		out.exec("BEGIN")
 
 		for (const r of pc
@@ -289,38 +331,96 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			const key = normalizeLocalityForKey(name)
 
 			if (!key) continue
+
 			const lat = r.latitude as number
 			const lon = r.longitude as number
 
 			// region_id 0 (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
 			// (no population). bbox = the postcode's own min/max (falls back to the centroid point).
-			insStage.run(
-				key,
-				ccID(r.country as string | null),
-				0,
-				pcPtid,
-				0,
-				Number(r.id),
+			const a: PlaceAttrs = {
+				cid: ccID(r.country as string | null),
+				rid: 0,
+				ptid: pcPtid,
 				name,
 				lat,
 				lon,
-				(r.mnlat as number) || lat,
-				(r.mnlon as number) || lon,
-				(r.mxlat as number) || lat,
-				(r.mxlon as number) || lon,
-				0,
-				1
-			)
+				mnLat: (r.mnlat as number) || lat,
+				mnLon: (r.mnlon as number) || lon,
+				mxLat: (r.mxlat as number) || lat,
+				mxLon: (r.mxlon as number) || lon,
+				pop: 0,
+				neg: 0,
+				pkey: key,
+			}
 
-			nPostcode++
+			pcAttrs.set(Number(r.id), a)
+			stageRow(key, a, Number(r.id), 1)
+
+			primaries++
 		}
 
 		out.exec("COMMIT")
+
+		// --- pass 4b: postcode ALIAS names (#1495) ---
+		//
+		// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
+		// the shard's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
+		// downstream of `names` picked them up EXCEPT this build: `fts.ts` unions `spr.name` with every
+		// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
+		// while the candidate backend — whose every row IS an exact-tier row — had no key for it at
+		// all. Pass 2 does the equivalent fold for admin places, but reads the ADMIN `place_search`,
+		// and `attrs` holds admin ids only, so a postcode shard could never reach it.
+		//
+		// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
+		// alias, not a canonical postcode name), the row stays denormalized onto the POSTCODE's own
+		// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
+		// with place 11201, it does not rename the place to its delivery city.
+		const hasNames = pc.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='names'").get() !== undefined
+
+		if (hasNames) {
+			out.exec("BEGIN")
+
+			for (const r of pc.prepare("SELECT id, name FROM names").iterate()) {
+				const a = pcAttrs.get(Number(r.id))
+
+				if (!a) continue
+
+				const k = normalizeLocalityForKey(String(r.name ?? ""))
+
+				// The postcode's own key is already staged as the primary; `INSERT OR IGNORE` at
+				// materialization dedupes repeats, so this only skips the obvious self-alias.
+				if (!k || k === a.pkey) continue
+
+				stageRow(k, a, Number(r.id), 0)
+
+				aliases++
+			}
+
+			out.exec("COMMIT")
+		} else {
+			// Never a silent zero: real shards come from `createUnifiedSchema`, which always creates
+			// `names`. A shard without it has no alias surface to lose, but say so rather than reporting
+			// "0 aliases" from a table that was never read.
+			progress("postcode-aliases", `${pcDB} has no \`names\` table — no delivery-city aliases to fold`)
+		}
+
 		pc.close()
+
+		return { primaries, aliases }
+	}
+
+	let nPostcode = 0
+	let nPostcodeAlias = 0
+
+	for (const pcDB of opts.postcodes ?? []) {
+		const folded = foldPostcodeShard(pcDB)
+
+		nPostcode += folded.primaries
+		nPostcodeAlias += folded.aliases
 	}
 
 	if (nPostcode > 0) {
-		progress("postcodes", `${nPostcode.toLocaleString()} postcodes`)
+		progress("postcodes", `${nPostcode.toLocaleString()} postcodes; ${nPostcodeAlias.toLocaleString()} aliases`)
 	}
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
@@ -369,5 +469,13 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	await kdb.destroy()
 
 	// closes the underlying `out` connection
-	return { rows, places: attrs.size, primaries: nPrim, aliases: nAlias, abbrevs: nAbbr, postcodes: nPostcode }
+	return {
+		rows,
+		places: attrs.size,
+		primaries: nPrim,
+		aliases: nAlias,
+		abbrevs: nAbbr,
+		postcodes: nPostcode,
+		postcodeAliases: nPostcodeAlias,
+	}
 }

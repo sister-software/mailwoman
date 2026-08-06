@@ -1,6 +1,21 @@
 import { z } from "zod"
 
 /**
+ * Wrap a coerced schema so a BLANK value means the same as an absent one.
+ *
+ * A shell `export FOO=`, an unset Docker/CI `${VAR}` interpolation and a compose file with a missing key all arrive as
+ * an empty string rather than as nothing. `z.coerce.number()` turns that into `0`, which any `.positive()` or `.min()`
+ * then rejects — so the process dies at import instead of falling back to its default, and the message points at a
+ * variable the operator believes they never set.
+ *
+ * The `.optional()`/`.default()` must be applied to `inner` BEFORE it reaches here: the outer value is present, so an
+ * outer `.optional()` never fires — `inner` is what receives the `undefined` this produces.
+ */
+function blankAsAbsent<T extends z.ZodType>(inner: T) {
+	return z.preprocess((v) => (v === "" ? undefined : v), inner)
+}
+
+/**
  * Non-secret operational config, exposed via `$public`. Add a key here to make it visible to the runtime; anything not
  * listed is stripped from `process.env` on parse.
  */
@@ -18,6 +33,11 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_FST_BIN: z.string().optional(),
 	MAILWOMAN_MODEL_CARD: z.string().optional(),
 	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional(),
+
+	// ONNX intra-op thread cap. Deployment-shaped rather than code-shaped: the right value depends on how many
+	// mailwoman processes share the host, which the library cannot know. See DEFAULT_INTRA_OP_THREADS.
+	//
+	MAILWOMAN_INTRA_OP_THREADS: blankAsAbsent(z.coerce.number().int().positive().optional()),
 	WOF_DATA_DIR: z.string().optional(),
 
 	// Geocode server batch row cap (`POST /v1/batch`).
@@ -27,8 +47,8 @@ export const PublicEnvSchema = z.object({
 	// releasing to the libuv pool, and `node:sqlite` reads are synchronous. Measured 1.00x flat from
 	// 1→16 workers on both parse and full geocode. Don't reintroduce it without re-measuring; worker
 	// threads (see `mailwoman/geocode-stream.ts`) are the only lever that moves this in Node.
-	// Receipts: `docs/articles/plan/reference/performance.mdx`.
-	MAILWOMAN_BATCH_MAX: z.coerce.number().int().positive().default(1000),
+	// Receipts: `docs/engineering/reference/performance.mdx`.
+	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)),
 
 	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).
 	MAILWOMAN_DATA_ROOT: z.string().optional(),
@@ -97,6 +117,27 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_DIAG_INTERP: z.string().optional(),
 	MAILWOMAN_DUMP_MISS_TAG: z.string().optional(),
 	MAILWOMAN_WORD_CONSISTENCY: z.string().optional(),
+	/**
+	 * PIX1 whole-edge parent bias (#46) — the δ applied to the PARENT window of a placetype-pair hit, over the child
+	 * tag's allowed parents in `containmentFor(system)`. UNSET (the default) = child-only, byte-identical to every
+	 * pre-#46 build.
+	 *
+	 * A bar-gated toggle, not a shipped knob: the mechanism stays off until the four bars in
+	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear, and this is how the ON leg of B-1's
+	 * ON-vs-OFF comparison is driven through `mailwoman eval gauntlet` without a code edit between the two runs.
+	 */
+	MAILWOMAN_PAIR_PARENT_DELTA: blankAsAbsent(z.coerce.number().optional()),
+	/**
+	 * Gates the with-data half of `mailwoman/test/dropin-cold-start.test.ts` — a real `mailwoman data pull candidate`
+	 * (~1.65 GB) plus booting all three drop-in servers against it. Unset in CI; the always-on half (missing-data +
+	 * libpostal's zero-data boot) downloads nothing and needs no guard.
+	 */
+	MAILWOMAN_COLD_START_FULL: z.string().optional(),
+	/**
+	 * Reuse an already-populated data root for the gated cold-start suite above instead of pulling candidate.db fresh
+	 * into a throwaway temp dir — avoids a redundant ~1.65 GB re-download across repeated local runs.
+	 */
+	MAILWOMAN_COLD_START_DATA_ROOT: z.string().optional(),
 	MW_DUMP_REGRESSIONS: z.string().optional(),
 	PROBE_N: z.string().optional(),
 	DEBUG: z.string().optional(),
@@ -140,4 +181,10 @@ export const PrivateEnvSchema = z.object({
 
 	// SEC EDGAR fair-access User-Agent (`filer/sdk/sec-client.ts`) — "Company Name AdminContact@domain.com".
 	SEC_EDGAR_USER_AGENT: z.string().optional(),
+
+	// Google Maps Platform key for the reference-geocoder ORACLE (`geocode-oracle/sdk/google-client.ts`).
+	// Verification tooling only — nothing on the parse path reads this, and `@mailwoman/geocode-oracle` is
+	// a private workspace precisely so it cannot become a runtime dependency of a published package.
+	// BILLED PER REQUEST: the client caches for 30 days and paces at 60/minute by default for that reason.
+	GOOGLE_MAPS_API_KEY: z.string().optional(),
 })

@@ -9,10 +9,20 @@
  *   by `./index.ts`, so keeping them together closed an import cycle.
  */
 
+import { isValidCell } from "h3-js"
 import type { Tagged } from "type-fest"
 
 /**
+ * The finest resolution H3 defines. Resolutions run `[0, H3_MAX_RESOLUTION]`.
+ */
+export const H3_MAX_RESOLUTION = 15
+
+/**
  * A H3 cell index, full 64 bits.
+ *
+ * Written as 15 hex characters because the top nibble of a cell index is always zero: bit 63 is reserved, and the 4-bit
+ * mode field that follows is `1` for a cell, which lands entirely inside the second nibble. That is why every cell
+ * index printed here begins with `8`.
  *
  * @type {string}
  * @title H3 Cell Index
@@ -20,70 +30,99 @@ import type { Tagged } from "type-fest"
  */
 export type H3Cell = Tagged<string, "H3Cell">
 
+/**
+ * Is `value` a real H3 cell index?
+ *
+ * Delegates to h3-js rather than testing the surface shape. The shape is necessary but nowhere near sufficient —
+ * `000000000000000`, `fffffffffffffff` and `123456789abcdef` are all fifteen lowercase hex characters and none of them
+ * is a cell. A guard that returns `value is H3Cell` on those hands the caller a branded type it has not earned, and the
+ * error surfaces later inside h3-js with no reference to where the bad value entered.
+ */
 export function isH3Cell(value: string): value is H3Cell {
-	return /^[0-9a-f]{15}$/.test(value)
+	return isValidCell(value)
 }
 
 /**
- * A H3 cell index, shortened to 48 bits.
+ * A H3 cell index with its mode and resolution nibbles removed — the low 52 bits, fixed width.
  *
  * @type {string}
  * @title H3 Cell Index (Short)
- * @pattern ^[0-9a-f]{12}$
+ * @pattern ^[0-9a-f]{13}$
  */
 export type H3CellShort = Tagged<string, "H3CellShort">
 
 /**
- * Given a full H3 cell index, shorten it to 48 bits.
+ * Number of hex characters in the short form. 52 bits: a 7-bit base cell followed by fifteen 3-bit digits.
+ */
+const SHORT_CELL_HEX_LENGTH = 13
+
+/**
+ * Mask selecting the low 52 bits of a cell index — everything but the mode and resolution nibbles.
+ */
+const SHORT_CELL_MASK = 0xf_ff_ff_ff_ff_ff_ffn
+
+/**
+ * Strip the mode and resolution nibbles off a full H3 cell index, keeping the base cell and the whole digit path.
+ *
+ * The digits past the cell's own resolution are all `7` in a valid index, so nothing is discarded and nothing is
+ * inferred: the short form carries the cell losslessly for every resolution, and {@link expandH3Cell} reverses it
+ * exactly once you tell it which resolution the cell was captured at.
+ *
+ * Zero-padded to a fixed 13 characters, so the hex form orders and compares the same way the integer
+ * {@link shortCellToInt} packs does. Base cells 0-7 leave the leading nibble zero, and an unpadded string would both
+ * mis-sort and mis-expand.
  */
 export function shortenH3Cell(cell: H3Cell): H3CellShort {
-	// ...and convert it to a 48-bit cell address.
 	const cellBigInt = BigInt(`0x${cell}`)
-	// 8 f 2 aa 84 5a 18 ac 6b
-	//     aa 84 5a 18 ac 6b
+	const h3CellShortBigInt = cellBigInt & SHORT_CELL_MASK
 
-	// Extract the cell address without the resolution
-	const h3CellShortBigInt = cellBigInt & 0xf_ff_ff_ff_ff_ff_ffn
-
-	const h3CellShortHex = h3CellShortBigInt.toString(16)
-
-	return h3CellShortHex as H3CellShort
+	return h3CellShortBigInt.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort
 }
 
-//2 aa 84 5a 18 ac 6b
-
-// 8 f2 aa 84 5a 18 ac 6b
 /**
- * Given a short cell address, expand it to a full H3 cell index.
+ * Rebuild a full H3 cell index from a short cell captured at `resolution`.
  *
- * @warning BROKEN for any `resolution` other than the default `15` — tracked as issue #1373. The left-shift
- *   reconstruction here only round-trips a short cell that was SHORTENED at resolution 15 (the address-id spine); fed a
- *   short cell captured at some other resolution R, it silently produces a full index `cellToParent`/H3 rejects
- *   (`Cell arguments had incompatible resolutions`) rather than throwing here. A caller needing to reconstruct a full
- *   cell from a short cell captured at a KNOWN resolution R other than 15 must NOT pass `resolution: R` to this
- *   function — see `bdc/sdk/filing-landscape.ts`'s `res9ShortCellToRes6Parent` for the correct straight-concatenation
- *   formula (`"8" + R.toString(16) + shortHex.padStart(13, "0")`) and its docstring for the full explanation. Do not
- *   "fix" this function to take an arbitrary resolution without reading that docstring first — it's out of scope for
- *   casual changes.
+ * The short form drops only the mode and resolution nibbles, so reconstruction is a straight concatenation: `"8"` (cell
+ * mode) + the resolution nibble + the 52 bits verbatim. The result is the identical index `latLngToCell` would have
+ * produced at that resolution.
+ *
+ * `resolution` is a required piece of external knowledge — a short cell does not name its own resolution, so the caller
+ * has to supply the one the cell was shortened at. Supplying the wrong one is caught rather than tolerated: a mismatch
+ * leaves digits past the stated resolution set to something other than `7`, which H3 rejects, and this throws instead
+ * of returning an index that downstream `cellToParent` calls would refuse with `Cell arguments had incompatible
+ * resolutions`.
+ *
+ * @throws {RangeError} If `resolution` is not an integer in `[0, 15]`, or `h3CellShort` is wider than 13 hex
+ *   characters.
+ * @throws {Error} If the short cell and resolution do not together name a valid H3 cell.
  */
-export function expandH3Cell(h3CellShort: H3CellShort, resolution = 15): H3Cell {
-	// Convert the short cell address back to BigInt
-	const h3CellShortBigInt = BigInt(`0x${h3CellShort}`)
+export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOLUTION): H3Cell {
+	if (!Number.isInteger(resolution) || resolution < 0 || resolution > H3_MAX_RESOLUTION) {
+		throw new RangeError(`H3 resolution must be an integer in [0, ${H3_MAX_RESOLUTION}], received ${resolution}.`)
+	}
 
-	const resolutionHex = resolution.toString(16)
-	// Reassemble the H3 cell index portion...
-	const cellBigInt = h3CellShortBigInt << BigInt(8 * (15 - resolution))
-	// Back to a string...
-	const partialCell = cellBigInt.toString(16)
-	// Finally, we add the resolution back to the cell index.
-	const cell = `8${resolutionHex}${partialCell}`
+	if (h3CellShort.length > SHORT_CELL_HEX_LENGTH) {
+		throw new RangeError(
+			`Short H3 cell "${h3CellShort}" is ${h3CellShort.length} hex characters, wider than the ${SHORT_CELL_HEX_LENGTH} a short cell holds.`
+		)
+	}
 
-	return cell as H3Cell
+	// Accept an unpadded short cell too — an integer round-tripped through `toString(16)` loses its leading zeros.
+	const shortHex = h3CellShort.padStart(SHORT_CELL_HEX_LENGTH, "0")
+	const cell = `8${resolution.toString(16)}${shortHex}` as H3Cell
+
+	if (!isValidCell(cell)) {
+		throw new Error(
+			`Short H3 cell "${h3CellShort}" does not name a valid cell at resolution ${resolution} — it was captured at a different resolution.`
+		)
+	}
+
+	return cell
 }
 
 /**
- * Pack an H3 cell into the 48-bit short-cell integer used as a clustered B-tree key across layer databases (poi.db,
- * bdc.db, address-id).
+ * Pack an H3 cell into the short-cell integer used as a clustered B-tree key across layer databases (poi.db, bdc.db,
+ * address-id). 52 bits, so it stays inside `Number.MAX_SAFE_INTEGER` and SQLite's signed 64-bit integer column alike.
  */
 export function shortCellToInt(cell: H3Cell): number {
 	return Number(BigInt(`0x${shortenH3Cell(cell)}`))

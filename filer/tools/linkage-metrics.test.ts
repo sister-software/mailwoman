@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for {@linkcode scorePairwiseGrouping}/{@linkcode groupPredicateFromMap} (3b Task 4, decision 4)
+ *   Tests for {@linkcode scorePairwiseGrouping}/{@linkcode groupPredicateFromMap} (decision 4)
  *   — pure unit tests, no database, since the metrics module's whole point is being usable independently
  *   of `filer.db`.
  */

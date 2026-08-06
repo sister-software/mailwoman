@@ -13,6 +13,9 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
+import { parseJSONStrict } from "../../objects.ts"
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
@@ -79,23 +82,30 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = JSON.parse(readFileSync(path.join(modelDir, "meta.json"), "utf8")) as CoarsePlacerMeta
-	const weights = new Float32Array(readFileSync(path.join(modelDir, "weights.bin")).buffer)
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
+	const weightBytes = readFileSync(path.join(modelDir, "weights.bin"))
+
+	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
+	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
+	const weights = new Float32Array(
+		weightBytes.buffer,
+		weightBytes.byteOffset,
+		weightBytes.byteLength / Float32Array.BYTES_PER_ELEMENT
+	)
+
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
 	// --- In-distribution test: accuracy + per-class + ECE ---
-	const test: TestRow[] = readFileSync(path.join(dataDir, "test.jsonl"), "utf8")
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as TestRow)
-
+	let testN = 0
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
 	const confusion: Record<string, Record<string, number>> = {} // true → {pred → n}
 	const buckets = Array.from({ length: 10 }, () => ({ n: 0, ok: 0 }))
 
-	// ECE deciles
-	for (const r of test) {
+	// ECE deciles. The split streams: every figure below is an accumulator, so the rows never all need to be resident.
+	for await (const r of JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl"))) {
+		testN++
+
 		const p = placer.predict(r.raw)
 
 		const pred = p.country ?? "(abstain)"
@@ -118,8 +128,8 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		}
 	}
 
-	console.log(`coarse-placer eval — test n=${test.length}`)
-	console.log(`  overall accuracy: ${((100 * correct) / test.length).toFixed(2)}%  (abstain threshold ${abstain})`)
+	console.log(`coarse-placer eval — test n=${testN}`)
+	console.log(`  overall accuracy: ${((100 * correct) / testN).toFixed(2)}%  (abstain threshold ${abstain})`)
 	console.log(`  per-class recall:`)
 
 	for (const c of meta.classes) {
@@ -131,7 +141,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	}
 
 	let ece = 0
-	const N = test.length
+	const N = testN
 
 	for (let i = 0; i < 10; i++) {
 		const bk = buckets[i]!
@@ -164,24 +174,22 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const msPath = repoRootPath("data", "eval", "multi-script", "v0.5.0-a0.jsonl")
 
 	try {
-		const ms: MultiScriptRow[] = readFileSync(msPath, "utf8")
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as MultiScriptRow)
-
 		const TRAINED_SCRIPTS = new Set(["latin", "cjk"]) // the only scripts among the 11 trained countries
 		// With the OTHER class, an off-map input is HANDLED if it routes to OTHER or abstains — either way
 		// it's not a confident mis-placement onto a wrong country.
 		const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
 
-		let offN = 0,
+		let msN = 0,
+			offN = 0,
 			offOk = 0,
 			missN = 0,
 			missOk = 0
 
 		const offMiss: string[] = []
 
-		for (const r of ms) {
+		for await (const r of JSONSpliterator.fromAsync<MultiScriptRow>(msPath)) {
+			msN++
+
 			const p = placer.predict(r.raw)
 			const offMap = !TRAINED_SCRIPTS.has(r.script)
 
@@ -204,7 +212,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 			}
 		}
 
-		console.log(`\nmulti-script off-map handling (n=${ms.length}):`)
+		console.log(`\nmulti-script off-map handling (n=${msN}):`)
 		console.log(
 			`  OFF-map scripts (Cyrillic/Arabic/Thai/…) routed to OTHER-or-abstain: ${offOk}/${offN} (${((100 * offOk) / Math.max(1, offN)).toFixed(0)}%) ← want HIGH`
 		)
@@ -220,5 +228,5 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		console.log(`\n(multi-script set not found at ${msPath}: ${(error as Error).message})`)
 	}
 
-	return { n: test.length, accuracy: (100 * correct) / test.length, ece }
+	return { n: testN, accuracy: (100 * correct) / testN, ece }
 }

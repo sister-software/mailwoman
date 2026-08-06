@@ -35,13 +35,13 @@ import {
 	createMatchFeaturizer,
 	defaultBlockingKeys,
 	ingestRows,
+	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
 } from "@mailwoman/registry"
-import { TextSpliterator } from "spliterator"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { uniqueQuantiles } from "./shared.ts"
+import { addr, norm, uniqueQuantiles } from "./shared.ts"
 
 /**
  * Share of entities assigned to fit; the rest are held out.
@@ -82,11 +82,6 @@ export interface TrainOrgCrossSourceGBTOptions {
 	date?: string
 }
 
-const norm = (s: string | undefined) => (s ?? "").trim()
-
-const addr = (line: string, city: string, st: string, zip: string) =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
-
 interface MessyRow {
 	/**
 	 * The CCN — the cross-system facility key; rides `record.id` as the held-out label.
@@ -96,74 +91,6 @@ interface MessyRow {
 	org: string
 	address: string
 	source: string
-}
-
-/**
- * Stream a comma CSV with quoted fields (the OP profile format) as header-keyed rows.
- */
-async function* streamCSV(path: string): AsyncGenerator<Record<string, string>> {
-	// spliterator owns the line layer (crlf is load-bearing here: the CMS POS file IS CRLF, and the
-	// last column ZIP_CD + the header keys would otherwise carry a stray \r); the manual quote/pending
-	// re-join + tokenizer below stays deliberately — spliterator ≥ 3.2.0 CAN do quote handling
-	// end-to-end, but this parse feeds model training, so its byte-for-byte behavior is pinned until a
-	// re-validation run signs off a swap. Default skipEmpty drops truly-empty lines, so a trailing
-	// newline can't inject a spurious empty row.
-	let header: string[] | null = null
-	let pending = ""
-
-	for await (const rawLine of TextSpliterator.fromAsync(path, { crlf: true })) {
-		// Re-join physical lines until quotes balance (quoted fields may contain newlines).
-		pending = pending ? `${pending}\n${rawLine}` : rawLine
-		const quotes = (pending.match(/"/g) ?? []).length
-
-		if (quotes % 2 === 1) continue
-		const line = pending
-		pending = ""
-		const cells: string[] = []
-		let cur = ""
-		let inQ = false
-
-		for (let i = 0; i < line.length; i++) {
-			const ch = line[i]!
-
-			if (inQ) {
-				if (ch === '"') {
-					if (line[i + 1] === '"') {
-						cur += '"'
-
-						i++
-					} else {
-						inQ = false
-					}
-				} else {
-					cur += ch
-				}
-			} else if (ch === '"') {
-				inQ = true
-			} else if (ch === ",") {
-				cells.push(cur)
-				cur = ""
-			} else {
-				cur += ch
-			}
-		}
-
-		cells.push(cur)
-
-		if (!header) {
-			header = cells
-
-			continue
-		}
-
-		const row: Record<string, string> = {}
-
-		for (let i = 0; i < header.length; i++) {
-			row[header[i]!] = cells[i] ?? ""
-		}
-
-		yield row
-	}
 }
 
 /**
@@ -188,7 +115,7 @@ export async function trainOrgCrossSourceGBT(
 	report?.("[A] streaming Care Compare…")
 	const ccByID = new Map<string, MessyRow>()
 
-	for await (const r of streamCSV(CARE_COMPARE)) {
+	for await (const r of streamRows(CARE_COMPARE)) {
 		if (ccByID.size >= CAP) break
 		const ccn = norm(r["Facility ID"])
 		const name = norm(r["Facility Name"])
@@ -207,7 +134,7 @@ export async function trainOrgCrossSourceGBT(
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 
-	for await (const r of streamCSV(POS)) {
+	for await (const r of streamRows(POS)) {
 		const address = addr(r["ST_ADR"]!, r["CITY_NAME"]!, r["STATE_CD"]!, r["ZIP_CD"]!)
 
 		if (address) {

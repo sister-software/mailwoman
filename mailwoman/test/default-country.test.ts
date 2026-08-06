@@ -24,9 +24,29 @@ import { promisify } from "node:util"
 import { $public } from "@mailwoman/core/env"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.tsx"
+import { withCLISpawnLockAsync } from "../test-kit/cli-spawn-lock.ts"
+
+/**
+ * Wall-clock budgets for the CLI spawns in this suite. Every test here runs at least one full `parse --resolve`, which
+ * loads the weights AND opens the global WOF database — several seconds before any assertion, and vitest's global
+ * `testTimeout` is nowhere near it. The per-test budget must exceed the spawn budget it wraps, plus time queued on the
+ * shared spawn lock.
+ */
+const CLI_SPAWN_TIMEOUT_MS = 60_000
+const CLI_TEST_TIMEOUT_MS = 120_000
+
+/**
+ * Vitest's per-test budget for this whole file.
+ *
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
+ * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
+ * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
+ * report, surfacing as a bare timeout with no attribution.
+ */
+vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
@@ -64,6 +84,38 @@ describe("resolverDefaultCountry", () => {
 	})
 })
 
+describe("--country-scope separates country policy from the resolver backend", () => {
+	// The hazard this pins: under 'auto', backend and country scope are ONE switch, so an A/B that
+	// changes the backend has silently changed the filter too and is comparing four conditions, not
+	// two. 'locale' and 'none' are what a measurement pins to hold one variable still.
+	test("'auto' is what the backend argument reaches — the historical coupling", () => {
+		expect(resolverDefaultCountry({ locale: "en-US" }, false)).toBe("US")
+		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBeUndefined()
+	})
+
+	test("'locale' scopes on either backend", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, false)).toBe("US")
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "locale" }, true)).toBe("US")
+	})
+
+	test("'none' scopes on neither backend", () => {
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, false)).toBeUndefined()
+		expect(resolverDefaultCountry({ locale: "en-US", countryScope: "none" }, true)).toBeUndefined()
+	})
+
+	test("an explicit --default-country outranks every scope", () => {
+		expect(resolverDefaultCountry({ defaultCountry: "FR", locale: "en-US", countryScope: "none" }, true)).toBe("FR")
+
+		expect(
+			resolverDefaultCountry({ defaultCountry: "none", locale: "en-US", countryScope: "locale" }, false)
+		).toBeUndefined()
+	})
+
+	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {
+		expect(parseOptions.parse({}).countryScope).toBe("auto")
+	})
+})
+
 describe("--default-country schema validation", () => {
 	test("accepts an explicit ISO country", () => {
 		expect(parseOptions.parse({ defaultCountry: "US" }).defaultCountry).toBe("US")
@@ -80,13 +132,16 @@ const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
 
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const run = (address: string, extra: string[] = []) =>
-		exec(
-			"node",
-			[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, address],
-			{
-				env: childEnv({ NODE_NO_WARNINGS: "1" }),
-				maxBuffer: 4 * 1024 * 1024,
-			}
+		withCLISpawnLockAsync(() =>
+			exec(
+				"node",
+				[cliBin, "parse", "--neural", "--resolve", "--resolve-db", GLOBAL_WOF, "--format", "xml", ...extra, address],
+				{
+					env: childEnv({ NODE_NO_WARNINGS: "1" }),
+					maxBuffer: 4 * 1024 * 1024,
+					timeout: CLI_SPAWN_TIMEOUT_MS,
+				}
+			)
 		)
 
 	// The resolver prints lat/lon on the line after the opening tag; `[^>]*` spans that newline.
@@ -96,37 +151,43 @@ describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () =>
 		return m ? Number(m[1]) : null
 	}
 
-	test("default (US inferred from en-US) resolves New York to the US city, not a foreign homonym", async () => {
-		const { stdout } = await run("350 5th Ave, New York, NY 10118")
-		// Locality "New York" resolves to a NYC-range coordinate (lat 40–41).
-		const m = /locality[^>]*lat="(4[01]\.\d+)" lon="(-7[34]\.\d+)"/.exec(stdout)
-		expect(m, `expected a NYC-range locality coordinate, got:\n${stdout}`).not.toBeNull()
-	})
+	test(
+		"default (US inferred from en-US) resolves New York to the US city, not a foreign homonym",
+		async () => {
+			const { stdout } = await run("350 5th Ave, New York, NY 10118")
+			// Locality "New York" resolves to a NYC-range coordinate (lat 40–41).
+			const m = /locality[^>]*lat="(4[01]\.\d+)" lon="(-7[34]\.\d+)"/.exec(stdout)
+			expect(m, `expected a NYC-range locality coordinate, got:\n${stdout}`).not.toBeNull()
+		},
+		CLI_TEST_TIMEOUT_MS
+	)
 
-	test("--default-country scoping is a real mechanism: US vs FR flips the resolved namesake", async () => {
-		// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). The en-US
-		// default scopes "Paris" to Paris, TEXAS (~33.7°N); an explicit `--default-country FR` scopes it to
-		// Paris, FRANCE (~48.9°N). Same input, different country scope, demonstrably different place.
-		// HISTORY: this probe used `--default-country none` and asserted the unscoped ranking picks the
-		// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead). That premise
-		// broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes (#905, pre-existing
-		// on main, invisible in CI because this suite needs the lab DB). Probing an EXPLICIT scope flip tests
-		// the same mechanism without depending on global-ranking policy. adminCoherence is pinned off so the
-		// probe observes scoping alone (default-ON since #895 — asserted separately below).
-		const usLat = localityLat((await run("Paris, TX")).stdout)
-		const frLat = localityLat((await run("Paris, TX", ["--default-country", "FR", "--no-admin-coherence"])).stdout)
+	test(
+		"--default-country scoping is a real mechanism: US vs FR flips the resolved namesake",
+		async () => {
+			// `Paris, TX`, no postcode (a postcode would re-pin the country via the #369 anchor). The en-US
+			// default scopes "Paris" to Paris, TEXAS (~33.7°N); an explicit `--default-country FR` scopes it to
+			// Paris, FRANCE (~48.9°N). Same input, different country scope, demonstrably different place.
+			// HISTORY: this probe used `--default-country none` and asserted the unscoped ranking picks the
+			// more-populous foreign twin (itself replacing the NY→Scotland probe #595 found dead). That premise
+			// broke on current gazetteer artifacts — unscoped ranking now keeps US namesakes (#905, pre-existing
+			// on main, invisible in CI because this suite needs the lab DB). Probing an EXPLICIT scope flip tests
+			// the same mechanism without depending on global-ranking policy. adminCoherence is pinned off so the
+			// probe observes scoping alone (default-ON since #895 — asserted separately below).
+			const usLat = localityLat((await run("Paris, TX")).stdout)
+			const frLat = localityLat((await run("Paris, TX", ["--default-country", "FR", "--no-admin-coherence"])).stdout)
 
-		expect(usLat, "expected a Paris locality under the en-US default").not.toBeNull()
-		expect(frLat, "expected a Paris locality under --default-country FR").not.toBeNull()
-		// Default → Paris, Texas (≈ 33.7°N); FR scope → Paris, France (≈ 48.9°N).
-		expect(usLat!).toBeGreaterThan(32)
-		expect(usLat!).toBeLessThan(36)
-		expect(frLat!).toBeGreaterThan(45)
-		// The point of the test: the scope changed the resolved place.
-		expect(usLat).not.toBe(frLat)
-		// Two FULL CLI geocodes back-to-back (weights load ×2 + resolver DBs) — ~8s healthy, and the
-		// global 15s budget grazes on a loaded runner (CI flake 2026-07-28). Own budget, not a global bump.
-	}, 60_000)
+			expect(usLat, "expected a Paris locality under the en-US default").not.toBeNull()
+			expect(frLat, "expected a Paris locality under --default-country FR").not.toBeNull()
+			// Default → Paris, Texas (≈ 33.7°N); FR scope → Paris, France (≈ 48.9°N).
+			expect(usLat!).toBeGreaterThan(32)
+			expect(usLat!).toBeLessThan(36)
+			expect(frLat!).toBeGreaterThan(45)
+			// The point of the test: the scope changed the resolved place.
+			expect(usLat).not.toBe(frLat)
+		},
+		CLI_TEST_TIMEOUT_MS
+	)
 
 	test("adminCoherence (default-ON, #895) binds a namesake to its region token even with no country scope", async () => {
 		// The #833 class: with coherence ON (the default), "Paris, TX" under `--default-country none`

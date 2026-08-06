@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit tests for the placetype-pair-prior arc's row→pair fold/dedupe/skip logic (Task 3):
+ *   Unit tests for the placetype-pair-prior arc's row→pair fold/dedupe/skip logic:
  *   {@link PairIndexBuilder} + {@link nearestRankPercentile}. Fixture rows mirror the real PPD tuple
  *   shape (`corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate) without touching the CSV
  *   read path — CSVSpliterator itself is exercised elsewhere (`locale.test.ts`).
@@ -16,18 +16,35 @@ describe("PairIndexBuilder", () => {
 	it("folds CITY/DISTRICT through normalizeFSTToken and tags dependent_locality", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("Fishburn", "Stockton-on-Tees")
+		b.addRow("Fishburn", "Stockton-on-Tees", "locality")
 		const { entries } = b.finish()
 
-		expect(entries).toEqual([{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality" }])
+		expect(entries).toEqual([
+			{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality", parentTag: "locality" },
+		])
+	})
+
+	it("records the caller's parent tag per row, not one derived from the child tag (PIX2)", () => {
+		const b = new PairIndexBuilder()
+
+		// The US WOF source's two parent shapes on the same child tag: a locality parent and a BOROUGH
+		// parent. `WESTERN_PARENT_OF.dependent_locality` is `["locality"]`, so a derivation could only ever
+		// produce the first — the second is the edge PIX2 exists to be able to state.
+		b.addRow("Astoria", "New York", "locality")
+		b.addRow("Park Slope", "Brooklyn", "dependent_locality")
+
+		expect(b.finish().entries.map((e) => [e.child, e.parentTag])).toEqual([
+			["astoria", "locality"],
+			["park slope", "dependent_locality"],
+		])
 	})
 
 	it("dedupes repeated (child, parent) pairs across rows", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("Shoreditch", "London")
-		b.addRow("Shoreditch", "London")
-		b.addRow("Shoreditch", "London")
+		b.addRow("Shoreditch", "London", "locality")
+		b.addRow("Shoreditch", "London", "locality")
+		b.addRow("Shoreditch", "London", "locality")
 		const { entries, rowsKept } = b.finish()
 
 		expect(entries).toHaveLength(1)
@@ -37,8 +54,8 @@ describe("PairIndexBuilder", () => {
 	it("keeps distinct pairs sharing a child with different parents", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("Newport", "Barnstaple")
-		b.addRow("Newport", "Isle of Wight")
+		b.addRow("Newport", "Barnstaple", "locality")
+		b.addRow("Newport", "Isle of Wight", "locality")
 		const { entries } = b.finish()
 
 		expect(entries).toHaveLength(2)
@@ -48,32 +65,32 @@ describe("PairIndexBuilder", () => {
 	it("skips rows with an empty CITY and counts them separately from kept rows", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("", "London")
-		b.addRow("   ", "Enfield")
-		b.addRow("Camden", "London")
+		b.addRow("", "London", "locality")
+		b.addRow("   ", "Enfield", "locality")
+		b.addRow("Camden", "London", "locality")
 		const { entries, rowsKept, rowsSkipped } = b.finish()
 
 		expect(rowsSkipped).toBe(2)
 		expect(rowsKept).toBe(1)
-		expect(entries).toEqual([{ child: "camden", parent: "london", tag: "dependent_locality" }])
+		expect(entries).toEqual([{ child: "camden", parent: "london", tag: "dependent_locality", parentTag: "locality" }])
 	})
 
 	it("folds an empty DISTRICT to an empty parent string rather than dropping the row", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("Somewhere", "")
+		b.addRow("Somewhere", "", "locality")
 		const { entries } = b.finish()
 
-		expect(entries).toEqual([{ child: "somewhere", parent: "", tag: "dependent_locality" }])
+		expect(entries).toEqual([{ child: "somewhere", parent: "", tag: "dependent_locality", parentTag: "locality" }])
 	})
 
 	it("computes the raw (pre-fold) CITY word-length distribution over kept rows only", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("Shoreditch", "London") // 1 word
-		b.addRow("Stockton on the Forest", "York") // 4 words
-		b.addRow("Great Warley", "Brentwood") // 2 words
-		b.addRow("", "Skipped") // not counted (empty CITY)
+		b.addRow("Shoreditch", "London", "locality") // 1 word
+		b.addRow("Stockton on the Forest", "York", "locality") // 4 words
+		b.addRow("Great Warley", "Brentwood", "locality") // 2 words
+		b.addRow("", "Skipped", "locality") // not counted (empty CITY)
 		const { distribution } = b.finish()
 
 		expect(distribution.totalRows).toBe(3)
@@ -89,7 +106,7 @@ describe("PairIndexBuilder", () => {
 	it("returns a zeroed distribution when every row is skipped", () => {
 		const b = new PairIndexBuilder()
 
-		b.addRow("", "London")
+		b.addRow("", "London", "locality")
 		const { distribution } = b.finish()
 
 		expect(distribution).toEqual({ totalRows: 0, p50: 0, p90: 0, p99: 0, max: 0, counts: [] })
@@ -119,6 +136,7 @@ describe("applyPairIndexHoldout", () => {
 		child: `child-${String(i).padStart(4, "0")}`,
 		parent: "parent",
 		tag: "dependent_locality" as const,
+		parentTag: "locality" as const,
 	}))
 
 	it("fraction 0 withholds nothing and returns every entry", () => {
@@ -184,11 +202,11 @@ describe("applyPairIndexHoldout", () => {
 describe("borough pairs (hierarchy R2)", () => {
 	it("distinctCount exposes builder growth for secondary-source accounting", () => {
 		const b = new PairIndexBuilder()
-		b.addRow("Fishburn", "Stockton-on-Tees")
+		b.addRow("Fishburn", "Stockton-on-Tees", "locality")
 
 		const before = b.distinctCount
-		b.addRow("Westminster", "London")
-		b.addRow("Westminster", "London")
+		b.addRow("Westminster", "London", "locality")
+		b.addRow("Westminster", "London", "locality")
 
 		expect(b.distinctCount - before).toBe(1)
 	})

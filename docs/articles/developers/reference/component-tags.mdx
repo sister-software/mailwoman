@@ -1,0 +1,138 @@
+---
+title: Component tags
+description: The 25 address component tags a parse can carry, what each one means, and which of them the shipped model emits.
+role: reference
+source-of-truth: core/types/component.ts, docs/engineering/reference/SCHEMA.mdx, neural-weights-en-us/model-card.json
+---
+
+# Component tags
+
+## Scope
+
+A parse labels spans of the input with component tags. This page lists all 25 tags in the union, gives
+each one a meaning and an example, and states which of them the shipped model can emit.
+
+The tag union is defined in `core/types/component.ts` and its design record — why each tag exists and
+why the boundaries fall where they do — lives in
+[`SCHEMA.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx).
+This page derives from both. Where a tag is added or renamed, that happens there first.
+
+Tags appear in three places a consumer touches: as `tag` on each node of an `AddressTree`, as the keys
+of the flat object `decodeAsJSON` and `/v1/parse` produce, and as the `label` values a libpostal-shaped
+response carries.
+
+## Universal
+
+Every locale uses these six.
+
+| Tag                  | Meaning                                           | Example            |
+| -------------------- | ------------------------------------------------- | ------------------ |
+| `country`            | Sovereign state, by name or code                  | `France`           |
+| `region`             | First-level administrative division               | `NY`               |
+| `locality`           | City, town, or commune                            | `Portland`         |
+| `dependent_locality` | Sub-locality: neighborhood, arrondissement, ward  | `Brooklyn`         |
+| `postcode`           | Postal identifier                                 | `NW1 6XE`          |
+| `subregion`          | County-level division between region and locality | `Multnomah County` |
+
+## Street level
+
+| Tag                      | Meaning                                          | Example     |
+| ------------------------ | ------------------------------------------------ | ----------- |
+| `house_number`           | Building number on a street                      | `221B`      |
+| `street`                 | The street name proper, without prefix or suffix | `Baker`     |
+| `street_prefix`          | Directional or descriptive prefix                | `SE`        |
+| `street_prefix_particle` | Grammatical particle inside a street name        | `de la`     |
+| `street_suffix`          | Street-type suffix                               | `Street`    |
+| `intersection_a`         | The first street of an intersection query        | `5th Ave`   |
+| `intersection_b`         | The second street of an intersection query       | `42nd St`   |
+| `unit`                   | Apartment, suite, or floor                       | `Suite 200` |
+
+`street` carries the bare base span. A renderer that wants the full street name joins
+`street_prefix`, `street`, and `street_suffix`. `geocodeAddress` does that join for you and returns
+the assembled name in its `street` field.
+
+## Venue level
+
+| Tag         | Meaning                                    | Example        |
+| ----------- | ------------------------------------------ | -------------- |
+| `venue`     | A named place: business, landmark, or park | `Eiffel Tower` |
+| `attention` | An attention or care-of line               | `c/o Jane Doe` |
+| `po_box`    | A post office box                          | `PO Box 1234`  |
+
+## Locale-specific
+
+`cedex` is French. The seven tags below it are Japanese and belong to a separate model head — see
+[What the shipped model emits](#what-the-shipped-model-emits).
+
+| Tag               | Locale | Meaning                                   | Example          |
+| ----------------- | ------ | ----------------------------------------- | ---------------- |
+| `cedex`           | FR     | A special postal routing designation      | `CEDEX 08`       |
+| `prefecture`      | JP     | First-level administrative division       | `東京都`         |
+| `municipality`    | JP     | City or ward                              | `千代田区`       |
+| `district`        | JP     | District                                  | `丸の内`         |
+| `block`           | JP     | Chōme                                     | `1丁目`          |
+| `sub_block`       | JP     | Banchi                                    | `1番地`          |
+| `building_number` | JP     | Gō                                        | `1号`            |
+| `building_name`   | JP     | A named building, in Latin script or kana | `Tokyo Building` |
+
+The Japanese tags label the long form written with kanji designators. A compact Japanese number such
+as `2-3-16` stays one `house_number` span.
+
+## BIO labels
+
+The model is a sequence labeler, so each tag becomes two per-token labels: `B-<tag>` for the first
+token of a span and `I-<tag>` for each continuation. One further label, `O`, marks a token outside
+every component.
+
+The union of 25 tags therefore spans 51 possible labels. That is the schema's capacity, not any one
+model's output alphabet.
+
+## What the shipped model emits
+
+A model's head is fixed at training time and carries the label set that training used. The count is
+in the model card as `architecture.num_labels`.
+
+| Model                                  | Labels | Tags | What it can emit                                                                           |
+| -------------------------------------- | ------ | ---- | ------------------------------------------------------------------------------------------ |
+| The union in `core/types/component.ts` | 51     | 25   | Everything on this page. The schema's capacity                                             |
+| The shipped Latin model                | 33     | 16   | The universal six, street level minus `street_prefix_particle`, `venue`, `po_box`, `cedex` |
+| The Japanese character model           | 47     | 23   | The Latin set plus the seven Japanese tags. Not shipped                                    |
+
+Nine tags are in the schema and outside the shipped Latin head: `street_prefix_particle`, `attention`,
+and the seven Japanese tags. A parse from the shipped model never returns them. Reading them from a
+response means you are running a different head, not that the input lacked them.
+
+`@mailwoman/neural-weights-en-us` is the base model, and the `fr-fr`, `en-gb`, `en-nz`, `de-de`,
+`es-es`, `it-it` and `en-in` packages overlay it with locale data rather than replacing the encoder.
+All of them therefore share the same 33-label head.
+
+## Errors
+
+A tag is a closed set, so the failure modes are about absence rather than about invalid values.
+
+| Condition                                       | What it means                                                          | Next step                                                                                         |
+| ----------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| A tag you expected is missing from the response | The model did not find that component, or its head cannot emit the tag | Check the tag against the shipped-model row above                                                 |
+| `street` looks truncated                        | `street` is the bare base span by design                               | Join `street_prefix`, `street` and `street_suffix`, or read `geocodeAddress`'s assembled `street` |
+| A Japanese tag never appears                    | The shipped Latin model has no Japanese labels                         | Japanese addresses resolve by postcode; there is no parser claim today                            |
+| Two components share one span                   | This cannot happen. Spans are disjoint                                 | If you observe it, report it with the input string                                                |
+
+## Rationale
+
+`street_prefix` and `street_prefix_particle` are separate tags because English `SE` and French `de la`
+are grammatically different things, and a synthesis pipeline that treats them alike produces worse
+training data. `cedex` is separate from `postcode` because a CEDEX designation is a routing
+instruction rather than a postcode, and folding it into `postcode` corrupts French postcode
+statistics.
+
+The schema is deliberately wider than any shipped head. A tag enters the union when the design work
+for it is settled, which is earlier than when a model trains on it — that ordering is what lets a
+corpus be labeled before the head that consumes it exists.
+
+## See also
+
+- [Library API](./library-api.mdx) — where tags appear in `AddressTree` and `decodeAsJSON`.
+- [HTTP APIs](./http-apis.mdx) — where tags appear in a `/v1/parse` response.
+- [Locales and tiers](./locales-and-tiers.mdx) — which locales carry a measured claim.
+- [Understand a parse](../tutorials/understand-a-parse.mdx) — tags on a real input, walked through.
+- [`SCHEMA.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx) — the design record and the change rule.

@@ -23,22 +23,17 @@ if [ -n "$STAGED" ]; then
 	# path-independent — verified: explicit paths keep every rule active.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	if [ -n "$CODE" ]; then
-		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint
+		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix
 	fi
 
-	# oxfmt errors when NO path in the list is a target (e.g. a commit staging only .yml/.sh), so
-	# scope it to the types it formats (probed on oxfmt 0.56; drift here is caught by CI's full
-	# `yarn lint` anyway).
+	# oxfmt auto-formats (no --check flag). Errors when NO path in the list is a target (e.g. a
+	# commit staging only .yml/.sh), so scope it to the types it formats.
 	FMT=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx|json|jsonc|md|mdx|toml|css|html)$' || true)
 	if [ -n "$FMT" ]; then
-		# oxfmt exits nonzero when EVERY listed path is excluded by its ignore rules (e.g. a commit
-		# staging only generated JSON under docs/static/sbom/ — bit the 8.2.0 SBOM commit). That case
-		# is a no-op, not a failure; real format issues still fail via the output check.
-		FMT_OUT=$(printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --check 2>&1) || {
+		printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --write 2>&1 || {
 			if printf '%s' "$FMT_OUT" | grep -q "may have been excluded by ignore rules"; then
-				echo "pre-commit: all staged format targets are oxfmt-excluded — skipping format check"
+				echo "pre-commit: all staged format targets are oxfmt-excluded — skipping format"
 			else
-				printf '%s\n' "$FMT_OUT"
 				exit 1
 			fi
 		}
@@ -48,11 +43,44 @@ if [ -n "$STAGED" ]; then
 	# ANYTHING under corpus-python/ is staged (pyproject/modal edits must keep agreeing).
 	PY=$(printf '%s\n' "$STAGED" | grep -E '^corpus-python/.*\.py$' || true)
 	if [ -n "$PY" ]; then
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 check
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 format --check
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 check --fix
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 format
 	fi
 	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
 		python3 corpus-python/scripts/verify_toolchain.py
+	fi
+
+	# Re-stage fixed files so they're included in the commit
+	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
+fi
+
+# CLI-reference freshness (2026-08-05): the docs CI gate asserts docs/articles/developers/reference/
+# cli.mdx byte-for-byte against the command schemas, and it fired four times in one day because the
+# regeneration step lives a 20-minute CI round-trip away. Staged-scoped: only runs when this commit
+# touches the command surface. The generator reads the COMPILED tree (mailwoman/out/commands — the
+# commands are TSX, which node cannot type-strip), so a stale out/ would silently regenerate WRONG
+# bytes; the mtime guard turns that into an instruction instead.
+if git diff --cached --name-only --diff-filter=ACMRD | grep -qE '^mailwoman/(commands|cli-kit)/'; then
+	if [ -f mailwoman/out/cli.js ]; then
+		# Freshness reference: the tsbuildinfo, not cli.js — an incremental `tsc -b` that finds
+		# cli.js byte-identical does not rewrite it, so an mtime check against cli.js blocks
+		# forever after an unrelated source edit (bit the ablation-harness worktree 2026-08-05).
+		# tsc always touches the buildinfo when it runs; fall back to cli.js on trees without one.
+		REF=mailwoman/out/tsconfig.tsbuildinfo
+		[ -f "$REF" ] || REF=mailwoman/out/cli.js
+		NEWEST_SRC=$(find mailwoman/commands mailwoman/cli-kit \( -name '*.tsx' -o -name '*.ts' \) -newer "$REF" -print -quit 2>/dev/null)
+		if [ -n "$NEWEST_SRC" ]; then
+			echo "pre-commit: $NEWEST_SRC is newer than the compiled CLI — run 'yarn compile' so the CLI reference regenerates from what you actually changed" >&2
+			exit 1
+		fi
+		node docs/scripts/generate-cli-reference.ts
+		if ! git diff --quiet -- docs/articles/developers/reference/cli.mdx; then
+			echo "pre-commit: the CLI reference moved — it has been regenerated in your worktree; stage it and retry:" >&2
+			echo "  git add docs/articles/developers/reference/cli.mdx" >&2
+			exit 1
+		fi
+	else
+		echo "pre-commit: mailwoman/out/cli.js not compiled — skipping CLI-reference freshness (CI's byte-for-byte test still gates)" >&2
 	fi
 fi
 

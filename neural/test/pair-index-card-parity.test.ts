@@ -4,15 +4,10 @@
 /**
  *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it.
  *
- *   WHY THIS EXISTS (2026-08-02). The en-gb card's pair-index block went stale at R2 and stayed
- *   stale through R3, R4b and R7 — three increments that each changed the artifact — still
- *   reporting the original PPD-only 19,209 pairs while the shipped binary had grown to 20,126. It
- *   was caught by hand during the Hugging Face staging, not by any gate, and only because the
- *   staging happened to compare them. Nothing in CI read both numbers.
- *
- *   The card is what a consumer, the release preflight and a future maintainer all read to learn
- *   what the artifact IS, so a card that disagrees with its binary is worse than no card: it is
- *   confidently wrong. This test makes the artifact itself the arbiter.
+ *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
+ *   what an artifact IS. Nothing else compares the two, and a card can drift across several
+ *   increments without any gate noticing — leaving it not merely absent but confidently wrong. The
+ *   artifact is the arbiter here; the card is graded against it.
  *
  *   WHAT IT CHECKS, AND WHAT IT DELIBERATELY DOES NOT. Pair COUNT and the calibrated `delta` /
  *   `transitionBeta` are compared, because those are properties of the CONTENT and a rebuild from
@@ -28,6 +23,7 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
@@ -54,6 +50,7 @@ interface PairIndexFacts {
 	pairs: number
 	delta: number
 	transitionBeta: number | undefined
+	parentDelta: number | undefined
 	bytes: number
 }
 
@@ -70,15 +67,18 @@ function readPairIndexFacts(path: string): PairIndexFacts {
 	expect(view.getUint32(0, true), `${path} is not a PIX1 artifact`).toBe(MAGIC)
 
 	const headerLen = view.getUint32(4, true)
-	const header = JSON.parse(bytes.subarray(8, 8 + headerLen).toString("utf8")) as {
+
+	const header = parseJSONStrict<{
 		delta: number
 		transitionBeta?: number
-	}
+		parentDelta?: number
+	}>(bytes.subarray(8, 8 + headerLen).toString("utf8"))
 
 	return {
 		pairs: view.getUint32(8 + headerLen, true),
 		delta: header.delta,
 		transitionBeta: header.transitionBeta,
+		parentDelta: header.parentDelta,
 		bytes: bytes.length,
 	}
 }
@@ -89,7 +89,7 @@ describe("pair-index ↔ model-card parity", () => {
 		const cardPath = String(repoRootPath(pkg, "model-card.json"))
 
 		test.skipIf(!existsSync(binPath))(`${pkg}: the card describes the artifact on disk`, () => {
-			const card = JSON.parse(readFileSync(cardPath, "utf8")) as Record<string, unknown>
+			const card = parseJSONStrict<Record<string, unknown>>(readFileSync(cardPath, "utf8"))
 			const [outerKey, innerKey] = cardKeys
 			const outer = card[outerKey] as Record<string, unknown> | undefined
 			const block = outer?.[innerKey] as Record<string, unknown> | undefined
@@ -119,6 +119,26 @@ describe("pair-index ↔ model-card parity", () => {
 					`${cardDelta}${String(block!.transition_beta ?? "")}`,
 					`${pkg}: artifact carries transitionBeta=${facts.transitionBeta} but the card does not record it`
 				).toContain(String(facts.transitionBeta))
+			}
+
+			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and OFF (no
+			// header key) for the ones that don't. Both directions are graded: a card that omits a shipped
+			// parentDelta misdescribes the behaviour, and a card that CLAIMS one the artifact lacks is worse —
+			// it reads as though the D-rule's per-locale gate had been cleared when it hasn't. The assertion
+			// spells out `parentDelta=<n>` rather than the bare number because δ and β are both 5 today, so a
+			// substring match on "5" would pass on a card that never mentioned the parent at all.
+			const parentClaim = `parentDelta=${facts.parentDelta}`
+
+			if (facts.parentDelta === undefined) {
+				expect(
+					cardDelta,
+					`${pkg}: card claims a parentDelta but the artifact carries none — the parent bias is OFF for this locale`
+				).not.toContain("parentDelta=")
+			} else {
+				expect(
+					cardDelta,
+					`${pkg}: artifact carries ${parentClaim} but the card's delta_calibration does not record it`
+				).toContain(parentClaim)
 			}
 		})
 	}

@@ -21,12 +21,35 @@
  *   naming all the paths it tried.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { createRequire } from "node:module"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
-const req = createRequire(import.meta.url)
+import { tryParsingJSON } from "@mailwoman/core/objects"
+import { dataRootPath } from "@mailwoman/core/utils"
+
+import type { AnchorSpanMode } from "./anchor-inference.ts"
+import { PlacetypeCensusResolver } from "./placetype-census.ts"
+
+/**
+ * A weights package's own directory, located with Node's native ESM resolver.
+ *
+ * WHY THE `package.json` SUBPATH AND NOT `findPackageJSON`. `node:module`'s `findPackageJSON` reads like the obvious
+ * tool for "give me a package's root", and it is the one that keeps working if a weights package ever grows an
+ * `exports` map that omits `./package.json` (none has one today — they are data-only packages with no `exports` at all,
+ * which is why the subpath resolves). But measured in this yarn workspace it returns the node_modules SYMLINK path
+ * (`node_modules/@mailwoman/neural-weights-en-us`) where `import.meta.resolve` — like the `require.resolve` this
+ * replaced — realpaths through to the workspace directory (`neural-weights-en-us`). That string is not internal: it
+ * lands in {@link ResolvedWeights.modelPath}, in the "missing model files" error, and (via the caller) in `mailwoman
+ * doctor` output. So the subpath form is the one that is byte-identical to the previous behavior.
+ *
+ * Throws `ERR_MODULE_NOT_FOUND` when the package is not installed (the CJS twin threw `MODULE_NOT_FOUND`; no caller
+ * branches on the code — both sites catch broadly and fall through).
+ */
+function resolvePackageDirectory(packageName: string): string {
+	return dirname(fileURLToPath(import.meta.resolve(`${packageName}/package.json`)))
+}
 
 /**
  * The user-level npm-prefix cache the CLI weights guard installs into (`mailwoman parse --download-weights`, plan 3).
@@ -66,6 +89,15 @@ export interface ResolveWeightsOpts {
 	 */
 	modelCardPath?: string
 	/**
+	 * The BASE package's `model-card.json`, when this package declares `mailwoman.baseWeights` and the base is
+	 * resolvable.
+	 *
+	 * An overlay card describes the OVERLAY (its version, its own artifacts) while the vocabulary belongs to the shared
+	 * base model — so fields that describe the MODEL must fall back here rather than being copied per overlay, which is
+	 * the duplication that goes stale on the first retrain.
+	 */
+	baseModelCardPath?: string
+	/**
 	 * Serving tier (#718 D1). `"server"` (default) = anchor + gazetteer channels; `"pocket"` = anchor-only (skip the
 	 * gazetteer lexicon even when shipped). Selects which soft-feature sibling artifacts {@link resolveWeights} surfaces —
 	 * the loader feeds only the resolved channels.
@@ -89,6 +121,15 @@ export interface ResolvedWeights {
 	 */
 	modelCardPath?: string
 	/**
+	 * The BASE package's `model-card.json`, when this package declares `mailwoman.baseWeights` and the base is
+	 * resolvable.
+	 *
+	 * An overlay card describes the OVERLAY (its version, its own artifacts) while the vocabulary belongs to the shared
+	 * base model — so fields that describe the MODEL must fall back here rather than being copied per overlay, which is
+	 * the duplication that goes stale on the first retrain.
+	 */
+	baseModelCardPath?: string
+	/**
 	 * Path to `crf-transitions.json` alongside the resolved model. `undefined` when the file doesn't exist (pre-v0.6.0
 	 * bundles or CE-only training).
 	 */
@@ -98,7 +139,7 @@ export interface ResolvedWeights {
 	 * span head's k-best decode consumes. `undefined` on a pre-v3 bundle (no span head). Read by `loadFromWeights` to
 	 * expose {@link NeuralAddressClassifier.spanGrammar} for the phase-4c name-evidence rerank.
 	 */
-	semiCrfTransitionsPath?: string
+	semiCRFTransitionsPath?: string
 	/**
 	 * Path to the postcode→anchor source shipped beside the resolved model (#718 D1) — the soft-feed `loadFromWeights`
 	 * reads to feed the anchor channel without a callsite change. Prefer the compact PCB1 binary (`postcode-<cc>.bin`,
@@ -120,12 +161,14 @@ export interface ResolvedWeights {
 	 */
 	countryLexiconPath?: string
 	/**
-	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2) — `street-type-lexicon-v3.json`. Server tier only;
-	 * ships at the promote whose model requires the bundle channels.
+	 * Street-type evidence lexicon sibling (Option-A bundle, Phase 2). The GENERATION comes from the card's
+	 * `requires.street_type.lexicon` (#1510); a card that names none falls back to `street-type-lexicon-v3.json` with a
+	 * warning. Server tier only; ships at the promote whose model requires the bundle channels.
 	 */
 	streetTypeLexiconPath?: string
 	/**
-	 * Locality-surface evidence lexicon sibling (Option-A bundle) — `locality-surface-lexicon-v6.json`.
+	 * Locality-surface evidence lexicon sibling (Option-A bundle). Card-declared generation, same contract as
+	 * {@link ResolvedWeights.streetTypeLexiconPath}; legacy fallback `locality-surface-lexicon-v6.json`.
 	 */
 	localitySurfaceLexiconPath?: string
 	/**
@@ -147,17 +190,28 @@ export interface ResolvedWeights {
 	 */
 	streetMorphologyPath?: string
 	/**
-	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3) shipped
-	 * beside the resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
+	 * Path to the placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc) shipped beside the
+	 * resolved model. `undefined` when the package doesn't ship one. COUNTRY-SPECIFIC BY DESIGN — see
 	 * {@link resolvePairIndexSibling}: unlike the model/tokenizer/model-card, this artifact never falls back to a
 	 * `baseWeights` package (a shared base ships no locale-specific pairs to offer; en-us has none, en-gb ships its own
 	 * locally). Read by `loadFromWeights` to construct a `PairIndexResolver` for the `placetypePair` prior default.
 	 */
 	pairIndexPath?: string
 	/**
-	 * "explicit" if both paths came from opts; "package:<name>" if resolved via require.resolve.
+	 * "explicit" if both paths came from opts; "package:<name>" if located via {@link resolvePackageDirectory}.
 	 */
 	source: string
+	/**
+	 * The weights PACKAGE directory this resolution came from — `undefined` only for the fully-explicit
+	 * (`modelPath`+`tokenizerPath`) path, which has no package.
+	 *
+	 * Every other field is a resolved artifact path, which cannot answer "what was this package supposed to ship?" — an
+	 * absent artifact simply leaves its field `undefined`, and absence is exactly the question the anchor-presence guards
+	 * ask ({@link readDeclaredArtifactFile}, `harness.ts`'s grading-environment assertion). Note it is NOT
+	 * `dirname(modelPath)`: under `mailwoman.baseWeights` an overlay's model resolves from the BASE package while its
+	 * data siblings and its own card stay local.
+	 */
+	packageDir?: string
 }
 
 export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
@@ -197,9 +251,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 
 	// 1. Installed package (workspace or node_modules).
 	try {
-		const pkgJsonPath = req.resolve(`${packageName}/package.json`)
-
-		return resolveFromPackageDir(dirname(pkgJsonPath), locale, opts, `package:${packageName}`, tried)
+		return resolveFromPackageDir(resolvePackageDirectory(packageName), locale, opts, `package:${packageName}`, tried)
 	} catch (error) {
 		// A resolvable package with missing model files stays LOUD (the metadata-only dev-checkout
 		// trap) — only a failed module resolution falls through to the cache probe.
@@ -288,11 +340,19 @@ function resolveFromPackageDir(
 		source = `${source}+base`
 	}
 
+	// Surfaced separately from `modelCardPath`: an overlay card that EXISTS can still omit model-level fields, and
+	// presence is not the same question as completeness. The label vocabulary is the case that bites — a card without
+	// `labels` silently yields STAGE2_BIO_LABELS (21) against a 33-logit base model, and the first parse throws.
+	const resolvedBaseModelCardPath =
+		baseModelCardCandidate && existsSync(baseModelCardCandidate) && baseModelCardCandidate !== modelCardPath
+			? baseModelCardCandidate
+			: undefined
+
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
 	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
 
 	const semiCrfCandidate = resolve(packageDir, "semi-crf-transitions.json")
-	const semiCrfTransitionsPath = existsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
+	const semiCRFTransitionsPath = existsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
 
 	// Soft-feature sibling artifacts (#718 D1): the anchor + gazetteer sources the package ships so
 	// `loadFromWeights` can feed the channels the model was trained against — without a callsite
@@ -313,18 +373,15 @@ function resolveFromPackageDir(
 		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
 
 	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
-	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them).
-	const streetTypeCandidate = resolve(packageDir, "street-type-lexicon-v3.json")
-
+	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them) —
+	// except that WHICH generation to resolve now comes from the CARD, not a hard-coded filename (#1510).
 	const streetTypeLexiconPath =
-		opts.tier === "pocket" ? undefined : existsSync(streetTypeCandidate) ? streetTypeCandidate : undefined
-
-	const localitySurfaceCandidate = resolve(packageDir, "locality-surface-lexicon-v6.json")
+		opts.tier === "pocket" ? undefined : resolveEvidenceLexicon("street_type", packageDir, modelCardPath)
 
 	const localitySurfaceLexiconPath =
-		opts.tier === "pocket" ? undefined : existsSync(localitySurfaceCandidate) ? localitySurfaceCandidate : undefined
+		opts.tier === "pocket" ? undefined : resolveEvidenceLexicon("locality_surface", packageDir, modelCardPath)
 
-	// Placetype-pair index sibling (placetype-pair-prior arc Task 5) — resolved LOCALLY from packageDir
+	// Placetype-pair index sibling (placetype-pair-prior arc) — resolved LOCALLY from packageDir
 	// only, never from baseDir like the model/tokenizer/model-card above. See resolvePairIndexSibling.
 	const pairIndexPath = resolvePairIndexSibling(packageDir, country)
 
@@ -350,8 +407,10 @@ function resolveFromPackageDir(
 		modelPath,
 		tokenizerPath,
 		modelCardPath,
+		packageDir,
+		...(resolvedBaseModelCardPath ? { baseModelCardPath: resolvedBaseModelCardPath } : {}),
 		crfTransitionsPath,
-		...(semiCrfTransitionsPath ? { semiCrfTransitionsPath } : {}),
+		...(semiCRFTransitionsPath ? { semiCRFTransitionsPath } : {}),
 		...(anchorLookupPath ? { anchorLookupPath } : {}),
 		...(gazetteerLexiconPath ? { gazetteerLexiconPath } : {}),
 		...(countryLexiconPath ? { countryLexiconPath } : {}),
@@ -388,7 +447,125 @@ function resolveAnchorLookupSibling(
 }
 
 /**
- * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc Task 3).
+ * The evidence-bundle lexicon families, and the LEGACY filename each resolved by before the card named its own (#1510).
+ *
+ * WHY THIS EXISTS. `resolveWeights` used to probe two literal filenames — `street-type-lexicon-v3.json` and
+ * `locality-surface-lexicon-v6.json` — while both the shipped v4.0.1 recipe and the v4.2.0 candidate TRAIN against
+ * locality-surface **v7** (`/data/gazetteer/locality-surface-lexicon-v7.json`). Serving therefore fed the channel a
+ * DIFFERENT lexicon generation than training painted, and nothing said so: the v6 file exists, the channel loads, the
+ * parse works. The Run B gate had to stage v7's CONTENT under the v6 FILENAME to score the candidate faithfully — a
+ * workaround that only exists because the filename, not the card, was the contract.
+ *
+ * The contract is now the card: `requires.<channel>.lexicon` NAMES the artifact the model trained against, and
+ * {@linkcode resolveEvidenceLexicon} resolves that. The legacy filenames stay as the back-compat answer for a card that
+ * declares no version — every bundle published before 2026-08-06 — and taking that path warns once.
+ */
+export const EVIDENCE_LEXICON_FAMILIES = {
+	street_type: { prefix: "street-type-lexicon-v", legacy: "street-type-lexicon-v3.json" },
+	locality_surface: { prefix: "locality-surface-lexicon-v", legacy: "locality-surface-lexicon-v6.json" },
+} as const
+
+export type EvidenceLexiconChannel = keyof typeof EVIDENCE_LEXICON_FAMILIES
+
+/**
+ * A train/serve lexicon MISMATCH (#1510): the card names one generation of an evidence lexicon and the weights package
+ * ships a different one. Thrown at LOAD time, from {@linkcode resolveWeights}, naming BOTH versions — the whole point is
+ * that this can never again be a silent downgrade.
+ */
+export class LexiconVersionMismatchError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = "LexiconVersionMismatchError"
+	}
+}
+
+/**
+ * Warn-once bookkeeping for the undeclared-lexicon back-compat path. Keyed by `channel:card` so a process that loads
+ * two different bundles hears about both, while repeated loads of the SAME bundle warn once.
+ */
+const warnedUndeclaredLexicon = new Set<string>()
+
+/**
+ * Every generation of `family` a directory ships, e.g. `["locality-surface-lexicon-v6.json"]`. Used only to build the
+ * mismatch message — naming what IS there is what makes the error actionable.
+ */
+function shippedLexiconGenerations(dir: string, prefix: string): string[] {
+	try {
+		return readdirSync(dir)
+			.filter((name) => name.startsWith(prefix) && name.endsWith(".json"))
+			.toSorted()
+	} catch {
+		return []
+	}
+}
+
+/**
+ * Resolve one evidence-bundle lexicon for a weights package, from the CARD's declaration rather than a hard-coded
+ * filename (#1510). The ladder, and why each rung is shaped the way it is:
+ *
+ * 1. The card NAMES a generation and the package ships that exact file → resolve it. The train/serve congruent case.
+ * 2. The card NAMES a generation, the package ships NONE of that family → `undefined`. Absence is absence: a pre-bundle
+ *    package simply doesn't carry the channel, and `createScorer` already fails closed if the card also declares it
+ *    REQUIRED. (`neural-weights-base-latn` is the live example — it symlinks en-us's card and ships no lexicons.)
+ * 3. The card NAMES a generation, the package ships a DIFFERENT one → THROW. This is the #1510 defect exactly, and it is
+ *    the only rung where guessing would be a silent downgrade rather than a plain absence.
+ * 4. The card names NOTHING → the legacy filename, with a one-time warning. Every bundle published before 2026-08-06.
+ *
+ * PACKAGE-DIR ONLY — deliberately NOT the `baseWeights` fallback the model card and `fst-street-morphology.bin` take,
+ * even though the lexicons are locale-general and the dedup would "work". Adding it was tried and reverted while
+ * closing #1511: a data-only overlay that ships no lexicon of its own would start resolving the BASE package's, which
+ * silently turns both evidence channels ON for every overlay in the repo (de-de, es-es, it-it, en-in, en-nz, fr-fr) in
+ * one commit, on locales no board has graded. An overlay that wants the bundle links its own copy and says so in its
+ * `files` array; that is one locale's measured decision, not seven unmeasured ones.
+ */
+function resolveEvidenceLexicon(
+	channel: EvidenceLexiconChannel,
+	packageDir: string,
+	modelCardPath: string | undefined
+): string | undefined {
+	const { prefix, legacy } = EVIDENCE_LEXICON_FAMILIES[channel]
+	const declared = readRequiredChannels(modelCardPath)?.[channel]?.lexicon
+
+	if (!declared) {
+		const candidate = resolve(packageDir, legacy)
+		const found = existsSync(candidate) ? candidate : undefined
+
+		const warnKey = `${channel}:${modelCardPath ?? "(no card)"}`
+
+		if (found && !warnedUndeclaredLexicon.has(warnKey)) {
+			warnedUndeclaredLexicon.add(warnKey)
+
+			console.error(
+				`[resolveWeights] the model-card${modelCardPath ? ` at ${modelCardPath}` : ""} does not name its ` +
+					`\`requires.${channel}.lexicon\`, so the ${channel} channel falls back to the legacy filename ` +
+					`${legacy}. That is a GUESS about which lexicon generation the model trained against — add the ` +
+					`field to the card (#1510).`
+			)
+		}
+
+		return found
+	}
+
+	const declaredPath = resolve(packageDir, declared)
+
+	if (existsSync(declaredPath)) return declaredPath
+	const shipped = shippedLexiconGenerations(packageDir, prefix)
+
+	// Nothing of this family anywhere → plain absence, not a mismatch (rung 2).
+	if (!shipped.length) return undefined
+
+	throw new LexiconVersionMismatchError(
+		`[resolveWeights] ${channel} lexicon MISMATCH between the model-card and the weights package. The card ` +
+			`at ${modelCardPath} declares \`requires.${channel}.lexicon\` = ${JSON.stringify(declared)} — the ` +
+			`generation the model TRAINED against — but the package at ${packageDir} ships ` +
+			`${shipped.map((name) => JSON.stringify(name)).join(", ")}. Serving a different lexicon generation than ` +
+			`training painted is a silent train/serve incongruence (#1510), so this refuses rather than downgrading. ` +
+			`Stage ${JSON.stringify(declared)} into the package, or correct the card to name what it actually ships.`
+	)
+}
+
+/**
+ * Locate the package's placetype-pair index (`pair-index-<cc>.bin`, PIX1 format, placetype-pair-prior arc).
  * COUNTRY-SPECIFIC BY DESIGN: this artifact is resolved from `packageDir` ONLY, unlike the model/tokenizer/model-card
  * siblings above, which fall back to a `baseWeights` package — a shared base has no locale-specific place-pair data to
  * offer, so a base package without its own `pair-index-<cc>.bin` simply has none (no fallback attempted). `undefined`
@@ -402,6 +579,75 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
 }
 
 /**
+ * Locate the PCN1 placetype census for `country` — `placetype-census-<cc>.bin`, the artifact `mailwoman gazetteer
+ * census` builds (`neural/placetype-census.ts` owns both ends of the format).
+ *
+ * WHY THIS ONE DOES NOT TAKE A `packageDir`, unlike every other resolver in this file. The census is a BUILD-LOCAL
+ * artifact: it lives under `$MAILWOMAN_DATA_ROOT/wof/`, exactly where `fst-street-morphology.bin` and the pair-index
+ * probe outputs live, and it ships in NO weights tarball. That is a deliberate deferral, not an oversight. The
+ * 2026-08-04 wiring assessment ruled that the census gets no decode wiring until a calibration rung measures a δ (the
+ * header's `delta` field is optional and every shipped artifact omits it), and until something at runtime READS it,
+ * adding 137–165 KB per locale to a published package buys nothing. When a calibration rung earns that cost, this
+ * function grows a package-sibling probe ahead of the data-root one — the same shape as
+ * {@link resolveAnchorLookupSibling}'s binary-then-JSON ladder.
+ *
+ * What the artifact is FOR, today: OBSERVABILITY. `PlacetypeCensusResolver` answers "does this parent have children of
+ * this KIND at all, and how much more often than the country at large" (presence + lift; within-parent share is ~100%
+ * everywhere, so a share-proportional consumer would read a constant). The pair prior probes it alongside each parent
+ * candidate and records what it found on the parse trace (`TracePrior` of kind `placetypeCensus`) — nothing else. The
+ * calibration rung's job is to read those traces and decide whether a δ is worth shipping.
+ *
+ * What the NEXT rung needs, so nobody mistakes this for a finished mechanism: the census is SPAN-BLIND (the D-C4
+ * ceiling). A node asserts something about a PARENT SURFACE, never about where a child span starts or ends, so census
+ * evidence alone cannot tell "East Acton" the place from "East Acton" opening a venue name — it fails the same
+ * venue-confound board that pinned window mode at a 52.1% false-positive rate and forced the pair prior's segment
+ * default. Composition with span evidence (the parent-span probe chain this rides, plus whatever span-boundary signal
+ * the calibration rung finds) is the open design question, not a δ sweep.
+ *
+ * `undefined` when the file is absent — the caller then wires no census and the feature is entirely inert, with no
+ * warning: an absent build-local artifact is the NORMAL state for every consumer who never ran the build command.
+ */
+export function resolvePlacetypeCensusPath(country: string): string | undefined {
+	if (!country) return undefined
+
+	const candidate = String(dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`))
+
+	return existsSync(candidate) ? candidate : undefined
+}
+
+/**
+ * Read the census for `country` into a {@link PlacetypeCensusResolver}, or `undefined` when there is nothing to read
+ * (see {@link resolvePlacetypeCensusPath} for what this artifact is, why it is build-local, and what the next rung
+ * needs). `explicitPath` overrides the data-root lookup — a harness that built a census to a scratch directory.
+ *
+ * Degrade rules, deliberately asymmetric: an ABSENT artifact is silent, because not having built one is the normal
+ * state for everyone who never ran `mailwoman gazetteer census`, and a warning there would fire for every user of the
+ * library. A present-but-unreadable file, or one whose header names a different country than the locale being parsed,
+ * is LOUD — those are build mistakes, and the country one in particular would otherwise have a census describing the
+ * wrong country's hierarchy quietly riding the trace a calibration rung reads.
+ */
+export function loadPlacetypeCensus(country: string, explicitPath?: string): PlacetypeCensusResolver | undefined {
+	const path = explicitPath ?? resolvePlacetypeCensusPath(country)
+
+	if (!path) return undefined
+
+	try {
+		const census = new PlacetypeCensusResolver(new Uint8Array(readFileSync(path)))
+
+		if (census.country === country) return census
+
+		console.warn(
+			`[mailwoman/neural] placetype-census country "${census.country}" (${path}) does not match the resolved ` +
+				`locale's country "${country}" — skipping the census observability probe.`
+		)
+	} catch (error) {
+		console.error(`[mailwoman/neural] failed to parse ${path}: ${(error as Error).message}`)
+	}
+
+	return undefined
+}
+
+/**
  * #1177 base-overlay dedup: resolve the base weights package a locale package overlays. A data-only weights package
  * (fr-fr/en-gb/en-nz, and future CA/MX overlays) can declare `"mailwoman": { "baseWeights":
  * "@mailwoman/neural-weights-en-us" }` in its package.json to SHARE the base `model.onnx` + `tokenizer.model` rather
@@ -411,15 +657,15 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
  */
 function resolveBaseWeightsDir(packageDir: string): string | undefined {
 	try {
-		const pkg = JSON.parse(readFileSync(resolve(packageDir, "package.json"), "utf8")) as {
-			mailwoman?: { baseWeights?: string }
-		}
+		const pkg = tryParsingJSON<{ mailwoman?: { baseWeights?: string } }>(
+			readFileSync(resolve(packageDir, "package.json"), "utf8")
+		)
 
-		const base = pkg.mailwoman?.baseWeights
+		const base = pkg?.mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return undefined
 
-		return dirname(req.resolve(`${base}/package.json`))
+		return resolvePackageDirectory(base)
 	} catch {
 		return undefined
 	}
@@ -445,13 +691,7 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const labels = (parsed as { labels?: unknown }).labels
@@ -475,9 +715,13 @@ export function readLabelsFromModelCard(modelCardPath: string | undefined): read
  */
 export interface RequiredChannels {
 	/**
-	 * Postcode-anchor channel (#239/#240).
+	 * Postcode-anchor channel (#239/#240). `span_mode` declares WHICH substrings the runtime should look up — omit (or
+	 * `alnum-run`) for every model trained before 2026-08-05, `shaped` for a model trained against a lookup with
+	 * letter-bearing keys (see `neural/anchor-inference.ts`'s `AnchorSpanMode`). Declaring `shaped` on a model that never
+	 * saw those keys changes the encoder's input for nothing; declaring `alnum-run` on one that did leaves its GB/NL
+	 * postcodes unanchored.
 	 */
-	anchor?: { required: boolean }
+	anchor?: { required: boolean; span_mode?: AnchorSpanMode }
 	/**
 	 * Gazetteer-anchor channel (#464).
 	 */
@@ -499,13 +743,157 @@ export interface RequiredChannels {
 	 */
 	suppress_gazetteer_near_postcode?: boolean
 	/**
-	 * Street-type evidence channel (Option-A bundle, Phase 3).
+	 * Street-type evidence channel (Option-A bundle, Phase 3). `lexicon` NAMES the artifact generation the model trained
+	 * against — see {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
-	street_type?: { required: boolean }
+	street_type?: { required: boolean; lexicon?: string }
 	/**
-	 * Locality-surface evidence channel (Option-A bundle, Phase 3).
+	 * Locality-surface evidence channel (Option-A bundle, Phase 3). `lexicon` NAMES the artifact generation the model
+	 * trained against — see {@linkcode EVIDENCE_LEXICON_FAMILIES}.
 	 */
-	locality_surface?: { required: boolean }
+	locality_surface?: { required: boolean; lexicon?: string }
+}
+
+/**
+ * The `files` keys under which a weights card names its postcode→anchor artifact: the compact PCB1 binary first
+ * (`postcode-<cc>.bin`), then the legacy JSON lookup.
+ */
+export const ANCHOR_ARTIFACT_CARD_KEYS = ["postcode_anchor", "anchor_lookup"] as const
+
+/**
+ * An artifact a package's own model-card DECLARES it ships, and whether it is actually there.
+ */
+export interface DeclaredArtifact {
+	/**
+	 * The `files` key that named it (`postcode_anchor`).
+	 */
+	key: string
+	/**
+	 * The declared filename, verbatim from the card (`postcode-us.bin`).
+	 */
+	file: string
+	/**
+	 * `packageDir`-relative resolution of {@link DeclaredArtifact.file}.
+	 */
+	path: string
+	present: boolean
+}
+
+/**
+ * What a weights package's OWN `model-card.json` declares it ships under `files`, for one family of keys.
+ *
+ * The card's `files` block is the package's manifest of intent, and it is the only per-package statement of what SHOULD
+ * be on disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay
+ * that inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares
+ * `requires.anchor.required: true` (a true statement about the encoder) while deliberately shipping no
+ * `postcode-gb.bin` under the #1476 mitigation, so a guard keyed on `requires` alone calls a supported configuration
+ * broken, and — because the old warning fired once per PROCESS and named no package — the operator reads that as the
+ * PRIMARY locale's bin being missing.
+ *
+ * Reads the package's own card only, never the `baseWeights` fallback: an overlay that ships no card of its own is
+ * making no claim about its files, and inheriting the base's manifest would attribute `postcode-us.bin` to it.
+ *
+ * @returns `undefined` when the package has no card, the card has no `files` block, or none of `keys` appears there —
+ *   all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
+ */
+export function readDeclaredArtifactFile(
+	packageDir: string | undefined,
+	keys: readonly string[] = ANCHOR_ARTIFACT_CARD_KEYS
+): DeclaredArtifact | undefined {
+	if (!packageDir) return undefined
+
+	const cardPath = resolve(packageDir, "model-card.json")
+
+	if (!existsSync(cardPath)) return undefined
+
+	let parsed: unknown
+
+	try {
+		parsed = tryParsingJSON(readFileSync(cardPath, "utf8"))
+	} catch {
+		return undefined
+	}
+
+	const files = (parsed as { files?: unknown } | null)?.files
+
+	if (typeof files !== "object" || files === null || Array.isArray(files)) return undefined
+
+	for (const key of keys) {
+		const file = (files as Record<string, unknown>)[key]
+
+		// The cards keep `$comment_*` siblings in `files` to record a DELIBERATE absence (en-gb's
+		// `$comment_postcode_anchor`), so only a plain filename counts as a declaration.
+		if (typeof file !== "string" || !file || file.startsWith("$")) continue
+
+		const path = resolve(packageDir, file)
+
+		return { key, file, path, present: existsSync(path) }
+	}
+
+	return undefined
+}
+
+/**
+ * A soft-feed channel `loadFromWeights` can find declared-but-unfed.
+ */
+export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface"
+
+/**
+ * Process-wide dedupe keyed by `<channel>:<package>` — see {@linkcode unfedChannelWarner}.
+ */
+const warnedUnfedChannels = new Set<string>()
+
+/**
+ * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror of neural-web's
+ * `warnOnUnfedTrainedChannels`. A card that declares a channel REQUIRED, paired with a package that didn't ship (or
+ * could not parse) its data, runs that channel OFF. Structural fallback (the parse still works), loud console (a
+ * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this exists to surface).
+ *
+ * BOUND TO A PACKAGE, and deduped per (channel, package) — it was once per channel per PROCESS until #1516. One process
+ * routinely loads several packages (the gauntlet grades six locale overlays), so channel-only dedupe meant the first
+ * degraded package spoke and every later one was suppressed, while the line named no package at all. Both halves
+ * produced the same wrong reading: an operator whose `postcode-us.bin` was present and feeding, watching a different
+ * overlay degrade, was told "no postcode-<cc>.bin found in the weights package".
+ *
+ * @param weightsPackage How to identify the package in the message — locale plus resolved directory.
+ */
+export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChannel, detail: string) => void {
+	return (channel, detail) => {
+		const key = `${channel}:${weightsPackage}`
+
+		if (warnedUnfedChannels.has(key)) return
+		warnedUnfedChannels.add(key)
+
+		console.error(
+			`[mailwoman/neural] loadFromWeights ${weightsPackage}: the model-card declares the ${channel} channel ` +
+				`REQUIRED but ${detail} — running ${channel}-OFF for THIS package, parses degraded (train/inference ` +
+				`mismatch). Ship the ${channel} artifact in that weights package (postcode-<cc>.bin / ` +
+				`anchor-lexicon-v1.json), or pass an explicit lookup.`
+		)
+	}
+}
+
+/**
+ * Why an unfed anchor channel is worth a warning for THIS package, or `undefined` when it is not.
+ *
+ * The condition the #1516 fix turns on, in one place because it is the whole substance of the fix. The old test was
+ * `requires.anchor.required && nothing loaded`, and `requires` describes the trained ENCODER — shared by every overlay
+ * that inherits the base model. So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the #1476
+ * mitigation, warned on every load; the line named no package and fired once per PROCESS, so an operator whose
+ * `postcode-us.bin` was present and feeding read it as the primary locale's binary having gone missing.
+ *
+ * Declared-and-missing is a broken package and stays loud. Declared-nothing is a supported posture and is silent —
+ * `buildGauntletDeps` asserts the presence a GRADING run needs, which is the only place that knows whether this
+ * particular run needs GB anchors.
+ */
+export function unfedAnchorDetail(packageDir: string | undefined): string | undefined {
+	const declared = readDeclaredArtifactFile(packageDir)
+
+	if (!declared) return undefined
+
+	return declared.present
+		? `its declared files.${declared.key} (${declared.file}) parsed EMPTY`
+		: `its card declares files.${declared.key} = ${declared.file}, which is NOT in the package`
 }
 
 /**
@@ -525,13 +913,7 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const requires = (parsed as { requires?: unknown }).requires
@@ -571,6 +953,31 @@ export function readRequiredChannels(modelCardPath: string | undefined): Require
 					`expected { required: boolean }, got ${JSON.stringify(entry)}.`
 			)
 		}
+	}
+
+	// `requires.<evidence channel>.lexicon` NAMES the trained artifact generation (#1510). A non-string
+	// there would resolve to nothing and silently fall back to the legacy filename — the exact downgrade
+	// the field exists to prevent — so it is a loud artifact bug like the shapes above.
+	for (const channel of ["street_type", "locality_surface"] as const) {
+		const lexicon = (obj[channel] as { lexicon?: unknown } | undefined)?.lexicon
+
+		if (lexicon !== undefined && typeof lexicon !== "string") {
+			throw new Error(
+				`model-card.json at ${modelCardPath} has a malformed \`requires.${channel}.lexicon\` — ` +
+					`expected a filename string, got ${JSON.stringify(lexicon)}.`
+			)
+		}
+	}
+
+	// `requires.anchor.span_mode` is an enum, and a typo in it is silent OOD (the wrong spans get
+	// anchored, nothing errors) — so an unrecognized value is a loud artifact bug, like the shapes above.
+	const anchorSpanMode = (obj.anchor as { span_mode?: unknown } | undefined)?.span_mode
+
+	if (anchorSpanMode !== undefined && anchorSpanMode !== "alnum-run" && anchorSpanMode !== "shaped") {
+		throw new Error(
+			`model-card.json at ${modelCardPath} has a malformed \`requires.anchor.span_mode\` — ` +
+				`expected "alnum-run" or "shaped", got ${JSON.stringify(anchorSpanMode)}.`
+		)
 	}
 
 	if (obj.suppress_gazetteer_near_postcode !== undefined && typeof obj.suppress_gazetteer_near_postcode !== "boolean") {
@@ -648,13 +1055,7 @@ export function readCapabilityManifest(modelCardPath: string | undefined): Capab
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const capabilities = (parsed as { capabilities?: unknown }).capabilities
@@ -695,7 +1096,7 @@ export function lookupTagCapability(
 	return cap as TagCapability
 }
 
-export interface CrfTransitions {
+export interface CRFTransitions {
 	transitions: number[][]
 	startTransitions: number[]
 	endTransitions: number[]
@@ -705,7 +1106,7 @@ export interface CrfTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export function readCrfTransitions(crfPath: string | undefined): CrfTransitions | undefined {
+export function readCRFTransitions(crfPath: string | undefined): CRFTransitions | undefined {
 	if (!crfPath || !existsSync(crfPath)) return undefined
 	let raw: string
 
@@ -715,13 +1116,7 @@ export function readCrfTransitions(crfPath: string | undefined): CrfTransitions 
 		return undefined
 	}
 
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(raw)
-	} catch {
-		return undefined
-	}
+	const parsed = tryParsingJSON(raw)
 
 	if (typeof parsed !== "object" || parsed === null) return undefined
 	const obj = parsed as Record<string, unknown>

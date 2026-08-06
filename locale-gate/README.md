@@ -35,7 +35,7 @@ scoreFallback(shape: QueryShapeLike): LocaleCandidate[]
 query-shape → locale-gate → kind-classifier → phrase-grouper → classifier → ...
 ```
 
-Stage 2 in the [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/).
+Stage 2 in the [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx).
 
 ## Design
 
@@ -53,7 +53,7 @@ Stage 2 in the [Staged Pipeline Contract](https://mailwoman.sister.software/arti
 - [`@mailwoman/query-shape`](../query-shape) — feeds `QueryShape` into this stage
 - [`@mailwoman/kind-classifier`](../kind-classifier) — Stage 2.5, also consumes `QueryShape`
 - [`@mailwoman/core`](../core) — `LocaleTag` type and pipeline infrastructure
-- [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/)
+- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License
 

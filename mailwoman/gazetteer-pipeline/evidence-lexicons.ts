@@ -58,6 +58,7 @@ import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import { TextSpliterator } from "spliterator"
 
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
 
@@ -136,7 +137,7 @@ function scanDirectionalSurfaces(fold: (surface: string) => string[]): Set<strin
 
 		if (!existsSync(path)) continue
 
-		for (const line of readFileSync(path, "utf8").split("\n")) {
+		for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
 			for (const surface of line.split("|")) {
 				const tokens = fold(surface)
 
@@ -265,7 +266,7 @@ function scanPersonNameSurfaces(): Set<string> {
 	for (const f of files) {
 		if (!existsSync(f)) continue
 
-		for (const line of readFileSync(f, "utf8").split("\n")) {
+		for (const line of TextSpliterator.from(readFileSync(f, "utf8"))) {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)
 

@@ -14,6 +14,7 @@ import { existsSync } from "node:fs"
 import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
@@ -44,13 +45,16 @@ describe("--resolve schema validation", () => {
 })
 
 describe("npx mailwoman parse --resolve error paths", () => {
-	test("--resolve without a WOF DB path exits non-zero with a clear message", async () => {
+	test("--resolve with no gazetteer at all exits non-zero with a clear message", async () => {
 		// As of the pipeline-default flip, --resolve works without --neural — the runtime pipeline
-		// handles classification + resolution end-to-end. The remaining error path is "no WOF SQLite
-		// distribution available".
+		// handles classification + resolution end-to-end. The remaining error path is "no gazetteer
+		// available", which means BOTH backends unreachable: no WOF shard AND no candidate.db.
+		// `MAILWOMAN_CANDIDATE_DB=none` is what pins the second one off — leaving it unset lets the
+		// convention path answer, and on any machine that has run `data pull candidate` the command
+		// then succeeds and this test's premise is gone.
 		await expect(
 			exec("node", [cliBin, "parse", "--resolve", "123 Main St"], {
-				env: childEnv({ MAILWOMAN_WOF_DB: "" }),
+				env: childEnv({ MAILWOMAN_WOF_DB: "", MAILWOMAN_CANDIDATE_DB: "none" }),
 			})
 		).rejects.toMatchObject({
 			stdout: expect.stringMatching(/needs a WOF SQLite path/),
@@ -128,7 +132,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 		// JSON with --candidates dumps the full AddressTree, not the libpostal-flat projection.
 		// The tree carries `roots` with nodes that have `alternatives` (possibly on nested children
 		// in containment-nesting trees like region → locality).
-		const tree = JSON.parse(stripAnsiSpinner(result.stdout))
+		const tree = parseJSONStrict<Record<string, unknown>>(stripAnsiSpinner(result.stdout))
 		expect(tree).toHaveProperty("raw")
 		expect(tree).toHaveProperty("roots")
 
@@ -153,7 +157,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
-		const out = JSON.parse(stripAnsiSpinner(result.stdout))
+		const out = parseJSONStrict(stripAnsiSpinner(result.stdout))
 		// Libpostal-compat is flat: no `raw` / `roots` top-level keys.
 		expect(out).not.toHaveProperty("raw")
 		expect(out).not.toHaveProperty("roots")
@@ -161,7 +165,7 @@ describeIfWOF(`npx mailwoman parse --neural --resolve against ${wofPath}`, () =>
 })
 
 /**
- * Strip ANSI escape sequences + ink spinner frames so JSON.parse can consume CLI stdout.
+ * Strip ANSI escape sequences + ink spinner frames so the JSON parser can consume CLI stdout.
  */
 function stripAnsiSpinner(stdout: string): string {
 	const ansi = /\[[0-9;]*[a-zA-Z]/gu

@@ -240,7 +240,8 @@
 		"2026-07-07: gazetteer build admin — 1,806,696 WOF + 1,871,483 overture@2026-06-17.0 + 772,507 geonames; verify PASS; sealed; md5 f639aa52; /mnt/playpen/mailwoman-data/wof/admin-global-priority.PRC.db",
 		"2026-07-07: SWAPPED the cured build live (fixes #1026) — admin-global-priority.PRC.db → admin-global-priority.db; prior live kept as .pre-1026-bak. Post-swap `gazetteer verify` PASS 21/21. Country nodes 97→237, regions +1691 (GeoNames gap-set admin fold, PR #1028).",
 		"2026-07-07: candidate rebuilt from the CURED admin via `gazetteer build candidate --no-fold` (the 161-country fold is inside buildAdmin now) → candidate-global-1026.db (12,160,584 rows, +1.96M vs 920; 244 countries; sealed). candidate.db symlink repointed; photon restarted; live smoke green (Tbilisi/Berlin/Springfield forward, Brussels reverse). R2/demo publish deferred to the next `gazetteer release`.",
-		"2026-08-02: gazetteer build admin — 2,920,222 WOF + 1,587,672 overture@2026-06-17.0 + 772,507 geonames; verify PASS; sealed; md5 515beab2; /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db"
+		"2026-08-02: gazetteer build admin — 2,920,222 WOF + 1,587,672 overture@2026-06-17.0 + 772,507 geonames; verify PASS; sealed; md5 515beab2; /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db",
+		"2026-08-04: gazetteer build admin — 2,923,923 WOF + 1,587,672 overture@2026-06-17.0 + 772,507 geonames; verify PASS; sealed; md5 1e963a54; /mnt/playpen/mailwoman-data/wof/admin-global-priority.REBUILD.db"
 	],
 	"postcode_locality_cjk": {
 		"_comment": "CJK postcode→locality via authoritative NAME-MATCH (not PIP — WOF CJK has no municipality polygons). Same postcode_locality table, consumed by the same postcode_area_resolution strategy. See resolver-wof-sqlite/POSTCODE-LOCALITY.md (CJK section) + docs/articles/evals/2026-06-05-cjk-arena.md.",

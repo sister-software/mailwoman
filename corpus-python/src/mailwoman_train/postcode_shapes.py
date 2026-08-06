@@ -9,8 +9,14 @@ is the train-side mirror of the inference shape detector, so ``anchor_paint_mode
 anchor at TRAIN on the SAME spans inference does → train/inference congruent by construction.
 
 CANONICAL SOURCE: ``neural/postcode-repair.ts`` (``POSTCODE_PATTERNS`` + ``collectMatches``). Keep the
-two in lockstep; ``test_postcode_shapes.py`` pins the pattern set + the longest-match-wins behavior
-against the cases that file documents. Do NOT diverge the regexes without changing both.
+two in lockstep. Do NOT diverge the regexes without changing both.
+
+"Keep the two in lockstep" was the whole enforcement until 2026-08-05, and it did not hold: the IE
+Eircode row landed on the TS side on 2026-07-06 and never reached here, so this table ran one row
+short for a month and ``anchor_paint_mode="shaped"`` painted nine of the ten shapes inference paints.
+``tests/mailwoman_train/test_postcode_shapes.py`` — which this docstring named for a month before the
+file existed — now READS the TS source and demands an exact match on label, kind, regex body and
+order. A row added on either side and not the other is a red test, not a silent incongruence.
 """
 
 from __future__ import annotations
@@ -25,6 +31,10 @@ POSTCODE_PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
     # --- Alphanumeric ---
     ("GB", "alnum", re.compile(r"\b[A-Z]{1,2}\d[A-Z\d]?\s+\d[A-Z]{2}\b")),  # SW1A 1AA, EH8 9YL
     ("CA", "alnum", re.compile(r"\b[A-Z]\d[A-Z]\s?\d[A-Z]\d\b")),  # M5V 2T6 (space optional)
+    # IE Eircode: routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part. Space
+    # REQUIRED. No GB collision: a letter+2-digit GB outward always has a 3-char inward (B12 8QX),
+    # never 4.
+    ("IE", "alnum", re.compile(r"\b(?:[A-Z]\d{2}|D6W)\s+[A-Z\d]{4}\b")),  # D02 AF30, T12 X70A, F91 Y5CY
     ("DE", "alnum", re.compile(r"\bD-\d{5}\b")),  # D-68161
     ("NL", "alnum", re.compile(r"\b\d{4}\s?[A-Z]{2}\b")),  # 1234 AB / 1234AB
     # --- Numeric ---

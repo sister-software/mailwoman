@@ -26,7 +26,8 @@ import {
 	loadFSTGazetteer,
 	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
-	pairIndexStagedURLs,
+	pairIndexURLs,
+	resolvePairIndexBaseURL,
 } from "./resources.tsx"
 
 /**
@@ -95,30 +96,37 @@ export async function loadDemoAssets(
 	// public bucket beside every other model asset, so a CI docs build with no dev weights no longer
 	// 404s them (the standing GB/NZ pair-index gap since v8.0.0). The same-origin plugin staging
 	// remains a dev-preview fallback in the plugin, but the demo now reads the bucket.
-	const pairIndexBaseURL = "https://public.sister.software/mailwoman/pair-index"
+	//
+	// VERSIONED since 2026-08-05: the objects ship `immutable` Cache-Control, so an in-place re-cut
+	// (the PIX schema-3 move) left the CDN serving schema-1 bytes a reader that throws on them could
+	// not use. `resolvePairIndexBaseURL` prefers `pair-index/<generation>/` and falls back to the
+	// frozen un-versioned path until the next release train stages it — see its docstring for the
+	// removal condition.
+	const pairIndexBase = await resolvePairIndexBaseURL()
 
-	// Dynamic import @mailwoman/neural-web — the webpack alias resolves this to the browser-safe entry. The runtime
-	// API is wider than its TS types (the bundle ships `postcodeAnchorLookup` the declaration omits), so we reach the
-	// runtime shape through `unknown`.
-	const neuralWeb = await import("@mailwoman/neural-web")
+	// Dynamic so the ~MB of runtime lands in its own chunk rather than the page's entry. The loader's
+	// runtime API is wider than its TS types (it returns `postcodeAnchorLookup`, which the declaration
+	// omits), so we reach the runtime shape through `unknown`.
+	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
-	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } =
-		(await neuralWeb.loadNeuralClassifierFromURLs({
+	const { classifier, diagnostics, postcodeAnchorLookup, selectPairIndexForText } = (await loadNeuralClassifierFromURLs(
+		{
 			...neuralClassifierLoadURLs(DEFAULT_LOCALE, release.version, {
 				hasAnchor: release.hasAnchor,
 				forceWASM: ctx.forceWASM,
 			}),
 			// Placetype-pair prior (#1278): the GB/NZ dependent_locality retrieval channel, served from R2
-			// (the release-train repoint, 2026-07-29). Load ALL of them; the loader keeps each live and
-			// `selectPairIndexForText` picks per parse via locale-gate. Fetched tolerantly — a 404 is
-			// skipped, so this is byte-stable if the bucket path ever regresses.
-			pairIndexURLs: pairIndexStagedURLs(pairIndexBaseURL),
-		})) as unknown as {
-			classifier: MailwomanClassifierLike
-			diagnostics?: { backend: string; modelBytes: number } | null
-			postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
-			selectPairIndexForText?: SelectPairIndex | null
+			// (the release-train repoint, 2026-07-29; versioned generation since 2026-08-05). Load ALL of
+			// them; the loader keeps each live and `selectPairIndexForText` picks per parse via locale-gate.
+			// Fetched tolerantly — a 404 is skipped, so this is byte-stable if the bucket path regresses.
+			pairIndexURLs: pairIndexURLs(pairIndexBase),
 		}
+	)) as unknown as {
+		classifier: MailwomanClassifierLike
+		diagnostics?: { backend: string; modelBytes: number } | null
+		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null
+		selectPairIndexForText?: SelectPairIndex | null
+	}
 
 	ctx.setBackend(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"

@@ -15,8 +15,8 @@
 
 import { parseArgs } from "node:util"
 
-import { buildNutsDB } from "./build.ts"
-import { NutsLookup } from "./index.ts"
+import { buildNUTSDB } from "./build.ts"
+import { NUTSLookup } from "./index.ts"
 
 const { values, positionals } = parseArgs({
 	options: {
@@ -34,7 +34,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const { regions } = buildNutsDB(values.geojson, values.out)
+	const { regions } = buildNUTSDB(values.geojson, values.out)
 
 	console.error(`built ${values.out} (${regions} regions)`)
 } else {
@@ -47,7 +47,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const lookup = new NutsLookup({ databasePath: values.db })
+	const lookup = new NUTSLookup({ databasePath: values.db })
 
 	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	console.log(JSON.stringify({ nuts: lookup.find(lat, lon) }))

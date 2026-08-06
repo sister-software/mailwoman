@@ -12,6 +12,7 @@ import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
+import { argument } from "pastel"
 import type React from "react"
 import zod from "zod"
 
@@ -27,7 +28,10 @@ const BYTES_PER_KIB = 1024
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
-const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address"))
+const ArgumentsSchema = zod
+	.array(zod.string())
+	.describe(argument({ name: "address", description: "A formatted postal address" }))
+
 export { ArgumentsSchema as args, ParseConfigSchema as options }
 
 const ParseConfigSchema = zod.object({
@@ -54,6 +58,16 @@ const ParseConfigSchema = zod.object({
 				"Requires --resolve. Defaults from --locale's region subtag (en-US → US); pass 'none' to disable " +
 				"the filter and let ranking alone decide."
 		),
+	countryScope: zod
+		.enum(["auto", "locale", "none"])
+		.optional()
+		.default("auto")
+		.describe(
+			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
+				"'auto' (default) only on the FTS backend — the candidate backend ranks country-agnostically, " +
+				"so 'auto' leaves it unscoped. Pin 'locale' or 'none' to hold country policy fixed while " +
+				"changing backends. An explicit --default-country outranks all three."
+		),
 	adminCoherence: zod
 		.boolean()
 		.optional()
@@ -62,16 +76,22 @@ const ParseConfigSchema = zod.object({
 			"Joint admin-consistency re-pick during --resolve (#263/#822: 'Portland, ME' binds to Maine, not Messina). " +
 				"ON by default (#895); pass --no-admin-coherence to restore the greedy population-first ranking."
 		),
+	postcodeCountryCoherence: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"#42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a " +
+				"wrong --default-country. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise resolves to Paris, Texas. " +
+				"Abstains when the default country is already consistent, when no country is, or when more than one is. " +
+				"ON by default (promoted 2026-08-05); pass --no-postcode-country-coherence to restore the un-overridden " +
+				"country scope. Requires --resolve."
+		),
 	neural: zod
 		.boolean()
 		.optional()
 		.default(false)
 		.describe("[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline)."),
-	noNeural: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("In pipeline mode, skip the neural classifier (run normalize + queryShape + kind + resolver only)."),
 	poi: zod
 		.boolean()
 		.optional()
@@ -181,13 +201,12 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 
 const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	// The weights guard wraps the DEFAULT pipeline path only — explicit --model/--tokenizer paths and
-	// the legacy/benchmark/noNeural paths keep their existing loading semantics untouched (plan 3;
+	// the legacy/benchmark/degraded paths keep their existing loading semantics untouched (plan 3;
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
 	const guardEligible =
 		options.benchmark === undefined &&
 		!(options.policy && options.policy.length) &&
 		!options.neural &&
-		!options.noNeural &&
 		!options.model &&
 		!options.tokenizer
 
@@ -274,25 +293,42 @@ export function localeToCountry(locale: string | undefined): string | undefined 
 }
 
 /**
- * The resolver's `defaultCountry` for this invocation: the explicit `--default-country` if set (with `none` meaning "no
- * filter"), otherwise inferred from `--locale`. Without it, a bare region abbreviation (`NY`) resolves to whatever the
- * gazetteer ranks highest globally — often a foreign homonym (a Scottish locality) rather than the US state. The FTS
- * backend therefore needs the locale default to match the demo.
+ * Whether the locale-inferred country scopes the resolver. `auto` defers to the backend; `locale` and `none` state the
+ * policy outright.
+ */
+export type CountryScope = "auto" | "locale" | "none"
+
+/**
+ * The resolver's `defaultCountry` for this invocation. An explicit `--default-country` outranks everything (`none`
+ * meaning "no filter"); otherwise `--country-scope` decides whether `--locale`'s region subtag becomes the scope.
  *
- * `candidateActive` flips that off: the candidate-table backend resolves population-first AND country-agnostic (the
- * demo's GLOBAL behavior — bare "Moscow" → the Russian city), so when it's the backend AND the user gave no explicit
- * country we impose NO default. An explicit `--default-country` (or `none`) still wins. This is what makes the
- * candidate-backed CLI match the demo out of the box.
+ * Without a scope, a bare region abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often
+ * a foreign homonym rather than the US state — so the FTS backend needs the locale default to match the demo. The
+ * candidate-table backend does not: it ranks population-first and country-agnostically, which is the demo's GLOBAL
+ * behavior (bare "Moscow" → the Russian city), and imposing a country on top of it would contradict the ranking it was
+ * built for. `auto` encodes exactly that, and is the default.
+ *
+ * `auto` also makes backend and country policy ONE switch, which is a hazard when measuring either: flipping the
+ * backend silently flips the country filter too, so a comparison between backends is really a comparison between four
+ * conditions. `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a
+ * backend difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
  */
 export function resolverDefaultCountry(
-	options: { defaultCountry?: string; locale?: string },
+	options: { defaultCountry?: string; locale?: string; countryScope?: CountryScope },
 	candidateActive = false
 ): string | undefined {
 	if (options.defaultCountry === "none") return undefined
 
 	if (options.defaultCountry) return options.defaultCountry
 
-	return candidateActive ? undefined : localeToCountry(options.locale)
+	switch (options.countryScope ?? "auto") {
+		case "none":
+			return undefined
+		case "locale":
+			return localeToCountry(options.locale)
+		default:
+			return candidateActive ? undefined : localeToCountry(options.locale)
+	}
 }
 
 function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
@@ -337,10 +373,21 @@ async function resolveWithCandidates(
 	tree: AddressTree,
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<AddressTree> {
-	const opts: { candidatesPerLookup?: number; defaultCountry?: string; adminCoherence?: boolean } = {}
+	const opts: {
+		candidatesPerLookup?: number
+		defaultCountry?: string
+		adminCoherence?: boolean
+		postcodeCountryCoherence?: boolean
+	} = {}
 
 	if (options.candidates !== undefined) {
 		opts.candidatesPerLookup = options.candidates + 1
+	}
+
+	// #42: the library default is ON since 2026-08-05; only the explicit --no-postcode-country-coherence
+	// pin needs threading.
+	if (options.postcodeCountryCoherence === false) {
+		opts.postcodeCountryCoherence = false
 	}
 
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
@@ -409,16 +456,31 @@ function serializeTree(
 
 /**
  * The generic degraded-mode banner (stderr — stdout stays machine-parseable). Emitted when the guard hands back a
- * `declined` outcome (interactive "n" / `--degraded` / a failed download) or the explicit `--no-neural` skip — paths
- * that never attempt an encoder load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire. The
- * attempted-and-failed case is announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT
- * emitted there (it would double up).
+ * `declined` outcome (interactive "n" / `--degraded` / a failed download) — the paths that never attempt an encoder
+ * load, so `tryLoadNeural`'s precise absent-vs-load-error warning didn't fire. The attempted-and-failed case is
+ * announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT emitted there (it would double
+ * up).
  */
 function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void {
 	console.error(
 		"⚠ degraded parse: the neural encoder is not loaded — output carries structural-pipeline results only.\n" +
 			`  Upgrade: npm install ${weightsPackageName(options.locale)}   or   mailwoman parse --download-weights <address>`
 	)
+}
+
+/**
+ * #40 — announce every stage the coordinator degraded past. `runPipeline` catches a classifier / grouper / resolver
+ * throw and keeps going (`PipelineResult.faults`), which used to mean a crashed model produced a tidy-looking parse
+ * with nothing on stdout OR stderr to say so. Same `⚠` register as the encoder-load warnings above; stderr only, so
+ * stdout stays the machine-readable parse.
+ */
+function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name: string; message: string }> }): void {
+	for (const fault of result.faults) {
+		console.error(
+			`⚠ degraded parse: the ${fault.stage} stage threw and the pipeline continued without it — ` +
+				`${fault.name}: ${fault.message}`
+		)
+	}
 }
 
 /**
@@ -431,6 +493,7 @@ function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void 
 async function runStructuralPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
+	emitFaultWarnings(result)
 
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -438,8 +501,8 @@ async function runStructuralPipeline(input: string, options: zod.infer<typeof Pa
 }
 
 /**
- * Structural parse fronted by the generic degraded banner — the guard's `declined` / `--no-neural` entry point (the
- * caller here did NOT attempt an encoder load, so it owns the notice).
+ * Structural parse fronted by the generic degraded banner — the guard's `declined` entry point (the caller here did NOT
+ * attempt an encoder load, so it owns the notice).
  */
 async function runDegraded(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	emitDegradedBanner(options)
@@ -455,26 +518,36 @@ async function runDegraded(input: string, options: zod.infer<typeof ParseConfigS
 async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
 	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning when the load
 	// fails, so an attempted-but-failed encoder load is NEVER silent — including on the --resolve/--debug
-	// paths, which don't route through the degraded banner below (#1108). The explicit --no-neural skip
-	// attempts no load (and gets no such warning); the degraded banner covers it instead.
-	const attemptedNeural = !options.noNeural
-	const classifier = attemptedNeural ? await tryLoadNeural(options) : undefined
+	// paths, which don't route through the degraded banner below (#1108). Every route into this function
+	// attempts the load: the deliberate skip is `--degraded`, which the guard answers with `declined`
+	// before we get here (see ParseTask).
+	const classifier = await tryLoadNeural(options)
 
 	// When the encoder isn't loaded and there's no resolver/debug work to do, the full pipeline can only
 	// emit QueryShape fast-path structure. Route to the structural path so the CLI still produces useful
 	// output for the fast-path kinds (postcode_only, locality_only). `--debug` stays on the pipeline so
 	// the operator gets the requested PipelineResult JSON shape.
 	if (!classifier && !options.resolve && !options.debug) {
-		// tryLoadNeural already warned when the load was attempted; only the explicit --no-neural skip
-		// still needs the generic degraded banner (it never called tryLoadNeural).
-		return attemptedNeural ? runStructuralPipeline(input, options) : runDegraded(input, options)
+		// `tryLoadNeural` already emitted the precise warning, so the generic banner would double up.
+		return runStructuralPipeline(input, options)
 	}
 
 	const wantAlternatives = options.candidates !== undefined
-	const resolveOpts: { candidatesPerLookup?: number; defaultCountry?: string } = {}
+
+	const resolveOpts: {
+		candidatesPerLookup?: number
+		defaultCountry?: string
+		postcodeCountryCoherence?: boolean
+	} = {}
 
 	if (wantAlternatives) {
 		resolveOpts.candidatesPerLookup = (options.candidates ?? 5) + 1
+	}
+
+	// #42 postcode-country coherence — only meaningful alongside --resolve's default country. Default-ON,
+	// so only the explicit --no-postcode-country-coherence opt-out needs threading.
+	if (options.resolve && options.postcodeCountryCoherence === false) {
+		resolveOpts.postcodeCountryCoherence = false
 	}
 
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
@@ -488,11 +561,18 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		}
 	}
 
-	const pipelineOpts: { locale?: string; resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string } } = {
+	const pipelineOpts: {
+		locale?: string
+		resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string; postcodeCountryCoherence?: boolean }
+	} = {
 		locale: options.locale,
 	}
 
-	if (resolveOpts.candidatesPerLookup !== undefined || resolveOpts.defaultCountry !== undefined) {
+	if (
+		resolveOpts.candidatesPerLookup !== undefined ||
+		resolveOpts.defaultCountry !== undefined ||
+		resolveOpts.postcodeCountryCoherence !== undefined
+	) {
 		pipelineOpts.resolveOpts = resolveOpts
 	}
 
@@ -505,6 +585,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
 			const result = await pipeline(input, pipelineOpts)
+			emitFaultWarnings(result)
 
 			return options.debug
 				? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -515,6 +596,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	const fst = await tryBuildFST(options)
 	const pipeline = createRuntimePipeline({ classifier, fst, streetEvidence, poiQueryKind: options.poi })
 	const result = await pipeline(input, pipelineOpts)
+	emitFaultWarnings(result)
 
 	return options.debug
 		? JSON.stringify(serializeResult(result, options.format), null, 2)
@@ -561,7 +643,9 @@ async function runBenchmark(
 	options: zod.infer<typeof ParseConfigSchema>,
 	iterations: number
 ): Promise<string> {
-	const classifier = options.noNeural ? undefined : await tryLoadNeural(options)
+	// `--degraded` is the encoder-less benchmark: the weights guard never runs on this path (it is
+	// gated on `benchmark === undefined`), so the flag has to be read here or it silently does nothing.
+	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
 
 	const runOne = async (
 		pipeline: ReturnType<typeof createRuntimePipeline>
@@ -732,6 +816,13 @@ function serializeResult(
 		...(result.poiIntent ? { poiIntent: result.poiIntent } : {}),
 		path: result.path,
 		timing: result.timing,
+		// #40: only when non-empty — the key's presence IS the signal, and its absence keeps the clean-run shape
+		// byte-identical for anything diffing `--debug` output. `cause` is dropped: an Error serializes to `{}`.
+		...(result.faults.length
+			? {
+					faults: result.faults.map(({ stage, name, message }) => ({ stage, name, message })),
+				}
+			: {}),
 		tree: format === "xml" ? decodeAsXML(result.tree) : result.tree,
 	}
 }

@@ -5,8 +5,26 @@ import type { Config } from "@docusaurus/types"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
-// Upstream remark auto-linker wrapped with the proper-noun guard (see plugins/glossary/remark.ts).
+// Upstream remark auto-linker wrapped with the proper-noun and homonym guards (see plugins/glossary/remark.ts).
 import glossaryRemarkPlugin from "./plugins/glossary/remark.ts"
+
+/**
+ * Surfaces the glossary auto-linker must never link, whatever term claims them. Two false-positive classes earn a word
+ * a place here, both measured across the built site:
+ *
+ * 1. A common English word that is also a glossary ALIAS. `state` is an alias of `region`, so every ordinary use — "the
+ *    state of the pipeline", "stateless", "US state law" — tooltipped the address component. It fired on 38 pages, and
+ *    almost none of them meant the component.
+ * 2. A common English word that is also a glossary TERM in a narrower sense. `tier` is defined as the model's label tier,
+ *    but the site's own vocabulary uses the word for geocode-cascade tiers, locale tiers and pricing tiers. It fired on
+ *    39 pages including pricing.mdx, where the definition on offer is the wrong one every time.
+ *
+ * Suppression is by SURFACE, not by term: `region` still links, and so does a multi-word phrase that merely contains a
+ * suppressed word, like the FST alias `finite-state transducer` (contains "state", still links in full). Multi-word
+ * terms like `input register` are untouched — they carry their sense in the phrase, which is exactly what keeps them
+ * out of this list.
+ */
+const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
@@ -110,6 +128,8 @@ const config: Config = {
 				routePath: "/glossary",
 				expandAcronymsOnFirstUse: true,
 				autoLinkTerms: true,
+				// Same list the remark linker gets, so backlinks and tooltips agree.
+				noAutoLink: GLOSSARY_NO_AUTO_LINK,
 			} satisfies GlossaryPluginOptions,
 		],
 	],
@@ -133,16 +153,6 @@ const config: Config = {
 					tags: "../tags.yml",
 					onInlineTags: "throw",
 					editUrl: "https://github.com/sister-software/mailwoman/tree/main/docs/",
-					// Internal-only content — kept in the repo for the record but NOT rendered on the public
-					// site (globs are relative to `path: "articles"`). `reviews/` is AI-consult transcripts +
-					// the public-readiness review; the `*postmortem*` / session-report files are candid
-					// night-shift narratives with spend + autonomous-operation notes — neither is for a public
-					// audience. The technical eval reports stay published (concept pages cite them as
-					// evidence). Where a kept page linked to one of these, the link was reduced to plain text
-					// (onBrokenLinks is "throw"). To re-publish a doc, remove its pattern here.
-					// The `**` matches the topic subdirs (evals/{night-shifts,retrospectives}/…) the reports
-					// were foldered into — a postmortem stays unpublished wherever it lands in the tree.
-					exclude: ["reviews/**", "evals/**/*postmortem*", "evals/**/*night-shift-session-report*"],
 					remarkPlugins: [
 						[
 							glossaryRemarkPlugin,
@@ -150,6 +160,7 @@ const config: Config = {
 								glossaryPath: "glossary/glossary.json",
 								routePath: "/glossary",
 								siteDir: __dirname,
+								noAutoLink: GLOSSARY_NO_AUTO_LINK,
 							},
 						],
 					],
@@ -239,43 +250,65 @@ const config: Config = {
 				// /img for use on lighter surfaces.
 				src: "img/mailwoman-seal-magenta.svg",
 			},
+			// The doors, in reading order. `docSidebar` items point at sidebar ids declared in
+			// sidebars.ts.
+			//
+			// Resources sits after Docs: it is the evidence door (published benchmarks with their
+			// scripts, plus the capability-shape comparisons), and it is read by someone who has
+			// already met the thing being measured. Its sidebar absorbed the standalone "Field
+			// notes" navbar entry — long-form research writing belongs behind the same door as the
+			// measurements, and the navbar was heading for a seventh left-hand item. The footer's
+			// Field notes link is unchanged.
+			//
+			// Product leads Docs: a visitor who has not decided yet outnumbers the one who has,
+			// and every Product page ends in a handoff into the `developers` door. Solutions
+			// sits between them because it is the same undecided visitor arriving by their
+			// problem rather than by the feature list, and each of its pages ends in the
+			// ten-minute trial inside `developers`.
 			items: [
 				{
-					to: "/demo",
-					label: "Demo",
-					position: "left",
-				},
-				{
-					to: "/training",
-					label: "Training",
-					position: "left",
-				},
-				{
-					// Lands on the "Start here" section; the docs sub-header switches sections from there.
 					type: "docSidebar",
-					sidebarId: "startHere",
+					sidebarId: "product",
 					position: "left",
-					label: "Docs",
+					label: "Product",
 				},
 				{
-					to: "/research",
-					label: "Field notes",
+					type: "docSidebar",
+					sidebarId: "solutions",
 					position: "left",
+					label: "Solutions",
 				},
 				{
-					to: "/glossary",
-					label: "Glossary",
+					type: "docSidebar",
+					sidebarId: "developers",
 					position: "left",
+					label: "Developers",
 				},
 				{
-					to: "/docs/licensing/pricing/",
+					type: "docSidebar",
+					sidebarId: "resources",
+					position: "left",
+					label: "Resources",
+				},
+				{
+					type: "docSidebar",
+					sidebarId: "about",
+					position: "left",
+					label: "About",
+				},
+				{
+					// Direct doc link rather than a sidebar: pricing lives in the `about` sidebar for
+					// nav-tree membership, but a reader looking for the price wants one click.
+					to: "/docs/pricing",
 					label: "Pricing",
 					position: "left",
 				},
 				{
-					to: "/docs/licensing/",
-					label: "Licensing",
-					position: "left",
+					// The call to action, styled as a button rather than a nav label.
+					to: "/demo",
+					label: "Try the demo",
+					position: "right",
+					className: "navbar__cta",
 				},
 				{
 					href: "https://github.com/sister-software/mailwoman",
@@ -292,20 +325,16 @@ const config: Config = {
 					items: [
 						{ label: "Demo", to: "/demo" },
 						{ label: "Field notes", to: "/research" },
-					],
-				},
-				{
-					title: "Docs",
-					items: [
-						{ label: "Roadmap", to: "/docs/plan/SCOPE" },
-						{ label: "Eval reports", to: "/docs/evals/" },
-						{ label: "Retrospectives", to: "/docs/retrospectives" },
+						// /training is a published page with no other route into it since the navbar
+						// was cut back to the doors. This is the smallest fix for that, not a
+						// considered placement — revisit when the Resources door lands.
+						{ label: "Training", to: "/training" },
 					],
 				},
 				{
 					title: "More",
 					items: [
-						{ label: "Pricing", to: "/docs/licensing/pricing/" },
+						{ label: "Pricing", to: "/docs/pricing" },
 						{ label: "GitHub", href: "https://github.com/sister-software/mailwoman" },
 						{ label: "npm", href: "https://www.npmjs.com/package/mailwoman" },
 					],

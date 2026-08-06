@@ -8,7 +8,7 @@ import {
 	isAlpha2LanguageCode,
 	isAlpha3bLanguageCode,
 } from "@mailwoman/core/resources/languages"
-import type { Feature, Geometry } from "geojson"
+import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
 
 import type { WhosOnFirstPlacetype } from "./definition.ts"
 
@@ -23,6 +23,12 @@ export interface WOFBaseProperties {
 	"wof:supersedes"?: number[]
 	"wof:country"?: string
 	"wof:concordances"?: Record<string, string | number>
+	/**
+	 * Every ancestor chain the place belongs to, coarsest key first — `[{ country_id, region_id, locality_id }, …]`. More
+	 * than one entry means the place has multiple parents, which is what `wof:parent_id` records as the `-4` sentinel;
+	 * the keys present vary by branch, so a missing rung is absent rather than null.
+	 */
+	"wof:hierarchy"?: Array<Record<string, number>>
 	"wof:population"?: number
 	"wof:lastmodified"?: number
 	"geom:latitude"?: number
@@ -52,7 +58,10 @@ export type WOFLanguageProperties = Partial<Record<LanguageSpecificKey, string |
 
 export type WOFProperties = WOFBaseProperties & WOFLanguageProperties
 
-export type WOFFeature = Feature<Geometry, WOFProperties>
+/**
+ * A single record from the Who's On First GeoJSON distribution.
+ */
+export type WOFFeature = GeoFeature<GeometryLiteral, WOFProperties>
 
 type LocalizedPlacetypePropMap = Map<WOFNameKind, string>
 
@@ -97,6 +106,7 @@ export function pluckPlacetypeSpec({
 	"wof:supersedes": supersedes,
 	"wof:country": country,
 	"wof:concordances": concordances,
+	"wof:hierarchy": _hierarchy,
 	"wof:population": wofPopulation,
 	"wof:lastmodified": lastmodified,
 	"geom:latitude": latitude,

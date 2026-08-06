@@ -26,6 +26,7 @@ import { haversineKm } from "@mailwoman/match"
 import { streamRows } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import { norm } from "./shared.ts"
 
 /**
  * Largest absolute latitude in WGS-84 degrees.
@@ -59,10 +60,19 @@ export interface GeocoderVsProvidedCoordsOptions {
 	outMd?: string
 }
 
-const norm = (s: string | undefined) => (s ?? "").trim()
-
 /**
  * Parse a `lat,lon` string into a coordinate, or null if malformed / out of range.
+ *
+ * Deliberately strict, and deliberately not `GeoPoint.from()`. The provided coordinate is this eval's ground truth, so
+ * a row we cannot read exactly has to be _dropped_ (counted in `noCoord`) rather than repaired into something plausible
+ * — a silently repaired coordinate lands in the delta distribution as geocoder error. Two of the three divergences that
+ * originally justified this parser were defects in `GeoPoint` and were fixed on 2026-08-05: it no longer guesses axis
+ * order from the magnitudes, and an out-of-range value is now rejected instead of accepted (`200,-97.74` used to become
+ * a point). What remains is not a defect and not negotiable. This source writes `latitude,longitude`; `GeoPoint` reads
+ * GeoJSON `[longitude, latitude]`, so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there — and
+ * `GeoPoint.from` maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
+ * The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to stay
+ * rejected or measured as-is, never rewritten. Strictness is the measurement, not an unfinished migration.
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null

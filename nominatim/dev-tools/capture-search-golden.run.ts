@@ -10,7 +10,9 @@
  */
 
 import { spawn } from "node:child_process"
-import { readFileSync, writeFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
+
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 const PORT = 8199
 const BASE = `http://127.0.0.1:${PORT}`
@@ -23,10 +25,7 @@ interface ParityRow {
 	expected: Array<Record<string, unknown> | string>
 }
 
-const parity = readFileSync(PARITY_PATH, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((line) => JSON.parse(line) as ParityRow)
+const parity = await Array.fromAsync(JSONSpliterator.fromAsync<ParityRow>(PARITY_PATH))
 
 // The streetParts leg only fires when a house number is in play — feed it the cases that have one.
 const withHouseNumber = parity
@@ -35,8 +34,7 @@ const withHouseNumber = parity
 	)
 	.map((row) => row.input)
 
-const syntheticInputs = readFileSync(SYNTHETIC_PATH, "utf8")
-	.split("\n")
+const syntheticInputs = (await Array.fromAsync(TextSpliterator.fromAsync(SYNTHETIC_PATH)))
 	.map((line) => line.trim())
 	.filter(Boolean)
 

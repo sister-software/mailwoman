@@ -24,7 +24,7 @@
  *   --model-card /path/to/model-card.json\
  *   --fst /path/to/fst-en-US.bin\
  *   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json\
- *   --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-en-gb/postcode-gb.bin\
+ *   --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin\
  *   --pair-indexes neural-weights-en-gb/pair-index-gb.bin\
  *   --label "v0.5.4 — multi-script tokenizer"\
  *   --description "Multi-script tokenizer..."\
@@ -34,7 +34,7 @@
 import { spawnSync } from "node:child_process"
 import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { resolve } from "node:path"
+import { basename, resolve } from "node:path"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
@@ -275,7 +275,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// fetches them when the release's `hasAnchor` flag is set.
 	const postcodeBins = stageBinaryList(args.postcodes, "postcode binary")
 
-	// Optional placetype-pair-index binaries (placetype-pair-prior arc, Task 8): comma-separated
+	// Optional placetype-pair-index binaries (placetype-pair-prior arc): comma-separated
 	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
 	// postcodeBins exactly, but this artifact never falls back to a base package (see
 	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.
@@ -373,7 +373,10 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	if (localitySurfaceLexicon) {
-		const dst = `${BUCKET_PATH}/${remoteBase}/locality-surface-lexicon-v6.json`
+		// Staged by SOURCE basename (was a hardcoded v6 name until 9.0.0): publish.yml's preflight
+		// HEAD-checks the exact generation the release ships (v7 as of the v4.2.0 base), so the
+		// remote name must follow the artifact, not a frozen string.
+		const dst = `${BUCKET_PATH}/${remoteBase}/${basename(localitySurfaceLexicon)}`
 
 		console.error(`  → ${dst}`)
 

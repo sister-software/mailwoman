@@ -7,10 +7,12 @@ import { parseArgs } from "node:util"
 // (the "trailing token = country" failure), and how often gold country is missed.
 // Usage: node scripts/eval/score-country-homograph.ts --model <onnx> [--file <jsonl>]
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -60,7 +62,7 @@ const WEIGHTS_CACHE = values["weights-cache"] || ""
 const neural = WEIGHTS_CACHE
 	? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 	: await (async () => {
-			const card = JSON.parse(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+			const card = parseJSONStrict<{ labels: string[] }>(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
 
 			const [tokenizer, runner] = await Promise.all([
 				MailwomanTokenizer.loadFromFile(TOK),
@@ -71,8 +73,10 @@ const neural = WEIGHTS_CACHE
 				tokenizer,
 				runner,
 				labels: card.labels,
-				postcodeAnchorLookup: parseAnchorLookup(JSON.parse(readFileSync(LK, "utf8"))),
-				...(existsSync(GAZ) ? { gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))) } : {}),
+				postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(LK, "utf8"))),
+				...(existsSync(GAZ)
+					? { gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(GAZ, "utf8"))) }
+					: {}),
 				suppressGazetteerNearPostcode: values["suppress-gaz-near-postcode"] ?? false,
 				// #511 Tier A: --conventions auto|<system> enables the address-system conventions mask.
 				...(values["conventions"] || "" ? { addressSystemConventions: (values["conventions"] || "") as "auto" } : {}),
@@ -80,10 +84,7 @@ const neural = WEIGHTS_CACHE
 			})
 		})()
 
-const rows = readFileSync(file, "utf8")
-	.split("\n")
-	.filter(Boolean)
-	.map((l) => JSON.parse(l))
+const rows = await Array.fromAsync(JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(file))
 
 const norm = (s?: string) => (s ?? "").trim().toLowerCase()
 const stat: Record<string, { tp: number; fp: number; fn: number }> = {}

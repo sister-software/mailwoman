@@ -1,0 +1,99 @@
+---
+title: Postcodes and ZIP Codes
+description: What a postcode encodes — a path through a sorting network, not an outline on the ground — and why the polygon you drew from one is somebody's approximation.
+role: explanation
+---
+
+# Postcodes and ZIP Codes
+
+## The question
+
+The postcode looks like the friendliest part of an address. It is short, it is machine-readable, it
+has a fixed shape, and every form on the internet asks for it. So why is geocoding by postcode the
+step that produces the coordinates you have to apologize for?
+
+## The analog
+
+A postcode is a sorting instruction. It names a path through a postal network: which regional
+facility, which delivery office, which walk. It is written for the sorting machine and the carrier,
+and it encodes what they need in the order they need it.
+
+The US structure runs from east to west. The first digit is "a general geographic area of the
+nation, '0' in the east, moving to '9' in the west"; the next two are regional areas; the final two
+are specific post offices ([USPS](https://facts.usps.com/decoding-the-zip-code/)). That is where the
+five digits stop — at a post office, not at a building. The `+4` extension then names something
+smaller, and the Postal Service's own list of what it can name is the useful part: "a side of a
+street between intersections, both sides of a street between intersections, a building, a floor or
+group of floors in a building, a firm within a building, a span of boxes on a rural route, or a group
+of Post Office boxes to which a single USPS employee makes delivery"
+([Domestic Mail Manual 602](https://pe.usps.com/text/dmm300/602.htm)). Two further digits, added in
+1991, take it to the individual delivery point.
+
+Every one of those is a delivery structure. None is a shape.
+
+## The same idea, five ways
+
+Other postal services solve the same problem with different alphabets and different grain.
+
+The UK splits the code into an outward half and an inward half, and the hierarchy is countable: 124
+postcode areas, 3,118 districts, 12,463 sectors, and roughly 1.79 million live unit postcodes. A
+small-user unit postcode covers about fifteen addresses and never more than a hundred
+([ONS](https://www.ons.gov.uk/methodology/geography/ukgeographies/postalgeography)). At that grain a
+UK postcode is close to a point, which is why `SW1A 1AA` behaves in a geocoder like an address and
+`90210` does not.
+
+Ireland went further. An Eircode is seven characters: a three-character routing key naming the post
+town, then a four-character unique identifier that "is unique to an address and its geographic
+location" ([Eircode](https://www.eircode.ie/what-is-eircode)). One code, one delivery point, no
+interpolation required — and no code at all before the system launched in 2015.
+
+Canada alternates letters and digits (`K1A 0B1`): a forward sortation area, then a local delivery
+unit. The Netherlands writes four digits and two letters. France writes five digits whose first two
+are the département, which is why `06130` and `6130` are different places and a system that stores
+postcodes as integers loses the difference.
+
+## Why the polygon is somebody's approximation
+
+The habit of drawing a postcode as a shape comes from a real file, and the file says what it is. The
+US Census Bureau's ZIP Code Tabulation Areas exist because "ZIP Codes are stored as one component of
+discrete addresses tied to delivery points, including specific housing unit locations. The result is
+a point-based dataset unsuitable for mapping …"
+([Census](https://www.census.gov/programs-surveys/geography/guidance/geo-areas/zctas.html)). The
+Bureau generalized census blocks into areas so that ZIP-keyed statistics could be mapped at all. The
+areas are the Bureau's construction, not a Postal Service boundary, and the same page states plainly
+that the Postal Service "assigns ZIP Code ranges to regional post offices, which in turn assign ZIP
+Codes to delivery routes."
+
+The UK admits the same thing from the other direction: "postcode boundaries mostly do not align with
+other geographic boundaries," and they move as addresses are built and mail volumes change
+([ONS](https://www.ons.gov.uk/methodology/geography/ukgeographies/postalgeography)).
+
+So the errors are structural rather than incidental. A rural code covers a route, and its centroid
+sits wherever the route's addresses happen to average out. A box-only code centers on the post
+office, not on the homes of the people who rent the boxes. A code that spans a town line belongs to
+two municipalities and neither of their outlines.
+
+## What this costs a parser
+
+Two consequences, and they pull in opposite directions.
+
+The first is that a postcode is strong evidence about a region and weak evidence about a point.
+Treated as a constraint on where to look, it earns its place; treated as an answer, it produces
+coordinates whose error is invisible in the output.
+
+The second is that a postcode shape is not country-unique. Five digits is the US pattern and the
+French pattern and part of the German one, so a bare `75001` is a question rather than a fact.
+Mailwoman's kind classifier will tell you it received a postcode and nothing else, and
+[Handle PO boxes and other edge kinds](../../how-to/handle-po-boxes-and-edge-kinds.mdx) carries the
+measured table of where five bare postcodes resolved with no country scope — four US codes,
+none of which came back in the US. That page also shows the fix, which is to scope the query, and the
+residual, which is that scoping turns some wrong answers into no answer.
+
+## Related
+
+- [What an address is](./what-is-an-address.mdx) — the delivery point the code routes to.
+- [How mail gets delivered](./how-mail-gets-delivered.mdx) — the machines the code was designed for.
+- [Falsehoods about addresses](./falsehoods-about-addresses.mdx) — the postcode section, in one line
+  each.
+- [Handle PO boxes and other edge kinds](../../how-to/handle-po-boxes-and-edge-kinds.mdx) — what a
+  bare postcode does in the pipeline today.

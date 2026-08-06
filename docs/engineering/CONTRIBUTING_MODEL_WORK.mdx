@@ -1,0 +1,300 @@
+---
+sidebar_position: 2
+title: Contributing model work — the runbook
+description: Which evals gate a change, the lever-shape taxonomy, and how to ship a shard without breaking four locales.
+---
+
+# Contributing model work — the runbook
+
+You want to improve a tag, add a locale, or change anything that touches the model. This page is
+the procedure. The concepts behind it live elsewhere
+([What Mailwoman is](../concepts/what-mailwoman-is.mdx),
+[Eval discipline](../concepts/eval-discipline.mdx),
+[Negative space](../concepts/negative-space-coverage.mdx)); this is the part you follow with your
+hands.
+
+## The iron rules
+
+1. **Real-OOD eval before training.** Build (or find) the held-out real-world eval for your tag
+   _first_, and pre-register the gate — target numbers, no-regression bounds — in the training
+   config as a comment before step 1 runs. If you can't define the gate, you aren't ready to train.
+2. **Never compare F1 across tokenizer versions.** Same tokenizer or the comparison is void
+   (`per-locale-f1.ts --tokenizer` enforces this; the model card records the version).
+3. **Compare fp32-to-fp32.** Int8 is a release artifact, not an experiment lens.
+4. **One variable per run.** Prove a lever solo, then consolidate. Stacking shards in one 20k run
+   dilutes every tag (measured, twice — see the cumulative-dilution note in the
+   [parity scorecard](../evals/competitive-parity/parity-scorecard-2026-06-09.md)).
+5. **Recompile before eval.** Eval harnesses load compiled `core/out` — a stale build makes your
+   core change a silent no-op.
+6. **The D-rule (adopted 2026-07-26, ROAD_TO_MAILWOMAN_V8_1_0 §2/§5): no default-on mechanism ships
+   with a known regression vs the shipped model on any tier-1 locale — full stop.** This applies to
+   decode-time mechanisms (priors, gates, FSTs) exactly as it does to model promotions. A bar
+   revision can defer a _target_, never license a default-on _regression_: the compliant routes are
+   fix it, gate it per-locale so the regressing locale is unaffected, or ship it opt-in. (The rule
+   was adopted because #1318 shipped default-on carrying −6.8pp FR admin-street-homonym behind a
+   bar revision — grandfathered as a named violation with a standing remediation obligation, not a
+   precedent.)
+
+## Which tool for which tag (the lever-shape taxonomy)
+
+- **Open-vocab / distributional tags** (street, affixes, unit, locality): the model must learn the
+  boundary from context → **format-diverse synth shard + retrain** is the tool.
+- **Closed-vocab tags** (country, po_box, cedex): a finite surface set in a predictable slot →
+  **gazetteer/codex lexicon as a soft anchor feature** — the matcher informs the model, it never
+  overrides it. We measured the override version and reversed it; read
+  [Closed-vocab fields: model-first](./reference/closed-vocab-fields-model-first.mdx) before
+  proposing a deterministic tagger.
+- **A dead/starved closed-vocab place-hierarchy tag** (`dependent_locality` — a child place under a
+  parent, that the shipped model won't emit): resurrect it at DECODE time with a
+  **retrieval-augmented pair-index overlay** on the untouched base model — no retrain. This is a
+  repeatable per-country recipe now: follow
+  [Onboarding a country's evidence layer](./reference/country-evidence-layer-runbook.mdx) (the GB +
+  NZ arcs distilled). Note the closed-vs-open-vocab wall stated there — it works for place names and
+  FAILS for venue/street spans (#1287/#1288 falsified with receipts); don't re-run those.
+- **Format quirks both systems miss** (rare edge shapes): consider a [query-shape route](./reference/QUERY_SHAPE.mdx) before a
+  shard — some formats are structurally different enough that routing beats tagging.
+- **Cross-locale grammar leakage** (a convention from one address system firing in another —
+  USPS suffix logic on French streets): **a conventions row + the decode-time mask**, not a
+  shard. `codex/address-system-conventions.ts` keyed by the model's own locale head; zero GPU,
+  applies without retrain. Shipped v4.3.0 (#478 slice 1).
+
+**The base-consistency check (the #511 lesson — run it BEFORE weighting any shard):** a coverage
+shard cannot outvote a contradicting base corpus. The affix shard spent four releases fighting
+~467M base rows that labeled the same surfaces the other way (≥1,000:1 effective gradient mass);
+every weight/architecture lever failed because the equilibrium was the mixing ratio. Audit what
+the base corpus says about your tag's surfaces first (`scripts/eval/audit-affix-misses.ts` is the
+template — per-row miss classification + absorption check). If the base contradicts the shard,
+the lever is a relabel pass (make the mix agree), not a bigger weight. Corollary, measured on
+v4.3.0: relabeling one boundary loosens its neighbors — pre-register watches on the adjacent
+classes (#513).
+
+## The standard gate set
+
+:::danger[Grade against `v6.0.0-shipped-baseline`, not `v5.3.0-family`]
+**The current spec is
+[`v6.0.0-shipped-baseline.json`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/eval-harness/gates/v6.0.0-shipped-baseline.json)**
+— `mailwoman eval gate --weights-cache <dir> --gate v6.0.0-shipped-baseline`.
+
+`v5.3.0-family` is **retired for v6.x candidates**. It was calibrated against the v2.2.0-era model
+and never re-cut when the lineage moved, so by 2026-07-16 it had drifted into uselessness in both
+directions: 16 of 17 floors were slack by +1.8 to +50pp (a candidate could lose 27.9pp of
+`us.street_suffix` and PASS), while its one tight floor — `fr.postcode 99.2` — **failed the shipped
+model**. Confirmed by running the full battery on v264 itself: verdict FAIL, on that floor, alone.
+
+The v6 spec is cut from the shipped model's own readings:
+`floor = v264's reading − max(1.0pp, 2 × the metric's 95% binomial half-width)`. It **tightens 15 of
+18 floors**. Both v264 and v310 PASS it. Rationale, the per-metric margin, and the two loosened
+floors (`fr.postcode` — a real, unexplained drift; `us.country_homograph_f1` — noise) are argued in
+the spec's own `$` keys.
+
+**When the lineage moves again, cut a new spec the same way** — and note what it costs you: a spec
+cut from current readings has **no memory** and can only ratchet down. Every floor that moves gets a
+`$revision` note saying why, or the re-cut is just silent drift with better manners.
+
+**Never re-cut a campaign TARGET from a current reading.** This spec re-cuts _regression bars_
+("don't get worse than shipped"). The v7 street 0.90 goal lives in the parity floors; cutting it
+from today's 0.6067 would delete the objective. `fr.bare_street_intact` (75.0, #949) is likewise
+kept verbatim — it already carries a designed margin.
+:::
+
+Run for _every_ candidate, regardless of what you changed (this is what
+[`promotion-gate.ts`, #479](https://github.com/sister-software/mailwoman/issues/479) automates):
+
+| Check               | Command                                                                            | Bar                                     |
+| ------------------- | ---------------------------------------------------------------------------------- | --------------------------------------- |
+| Per-locale floors   | `scripts/eval/per-locale-f1.ts` (US/FR, `--tokenizer`) + `per-locale-f1-floors.py` | within 1pp, fp32-to-fp32                |
+| German native order | `scripts/eval/de-order-eval.ts`                                                    | NO-REGRESSION                           |
+| Unit retention      | unit-real designators eval                                                         | ≥ 88                                    |
+| Affix split         | `scripts/eval/score-affix.ts` (NOT `per-locale-f1` — its fold can't see the split) | hold gated numbers                      |
+| Demo smoke          | `eval-model` skill / `mailwoman eval preset-compare`                               | presets stable                          |
+| Honest geography    | `scripts/eval/honest-eval.ts`                                                      | region-match + coord p50/p90 + PIP hold |
+| Input robustness    | `mailwoman eval gauntlet --layer metamorphic` (INV/DIR)                            | no new drift; xfails tracked            |
+
+The input-robustness gate is the metamorphic layer of the Gauntlet — label-preserving
+perturbations that must not move the assembled coordinate. See
+[Input robustness](../concepts/input-robustness.mdx) for the absorption layers behind it and the
+coverage matrix.
+
+The ship-config channels are part of the contract: a gaz-trained model is graded with
+`--gazetteer-lexicon` + `--suppress-gaz-near-postcode`, and (v4.3.0+) `--conventions auto` —
+the gate spec declares them (`requires_gazetteer_lexicon`, `requires_conventions`) so the runner
+threads them everywhere. A scorer invoked without the declared channels grades a crippled model
+and produces numbers that look real (the zero-fill trap; it has bitten the country leg and the
+first affix audit).
+
+Plus your tag's pre-registered real-OOD gate. Pass → append the run to
+`evals/scores-by-version.json` via `mailwoman eval ledger-append` (the promotion gate prints the
+pre-filled command on every PASS — fill in the npm semver at promote time) and write the dated
+report in `docs/articles/evals/`.
+
+### The full re-score cadence (standing rule, operator-approved 2026-07-02)
+
+A promote's gate only checks the floors the spec names; label metrics can erode indefinitely in
+small, individually-justified "coordinate-invisible" steps with nothing forcing a periodic look.
+So, as a **gate, not a virtue**:
+
+- **Every 5 promotes, or any promote that lowers a gate floor, triggers a full per-tag re-score**
+  of the shipped line — the whole `promotion-gate.ts` battery against the current gate spec,
+  published as a dated `docs/articles/evals/parity-scorecard-YYYY-MM-DD.md`.
+- The scorecard quotes the config-canonical bars above its tables, keeps failing rows, and marks
+  any relaxed threshold (the no-silent-gate-drift rules).
+- Grade the artifact by **explicit md5-pinned path** — for the shipped line, verify against the
+  published npm tarball's `model.onnx`, never the dev symlink (#259).
+
+Calibration for why: v4.4.0 → v4.15.0 was 11 promotes without one; the 2026-07-02 re-anchor
+([#885](https://github.com/sister-software/mailwoman/issues/885)) paid that debt and found the
+drift bounded — but also found two unsigned drifts (`fr.cedex_real` −6.7, libpostal clean arena
+−6) that per-promote gates structurally cannot catch.
+
+### Floor policy — floors ratchet at re-scores, never drift on promotes ([#899](https://github.com/sister-software/mailwoman/issues/899))
+
+The complement to the cadence rule, decided _before_ a promote needed it rather than under
+promotion pressure:
+
+1. **Between re-scores, floors are immutable contracts.** Measured == floor is a PASS — a
+   knife-edge is legal, not a defect. A promote that dips below a floor FAILS; shipping it anyway
+   is a gate _revision_ under the existing no-silent-drift rules (written reason, attribution,
+   operator sign-off) **plus a note in that version's ledger row**, so margin erosion is visible
+   in the same record as the score.
+2. **At each cadence re-score, every floor is re-ratified, ratchet-up only.** A tag whose measured
+   value has cleared its floor by ≥ 2pp on the last two consecutive scorecards gets its floor
+   raised to (lower of the two readings − 1pp) — gains get locked in instead of becoming slack
+   for future erosion. Floors are never lowered at a re-score; lowering is only ever a per-promote
+   revision under rule 1. Any floor sitting at **zero margin** gets an explicit disposition in the
+   scorecard: _knife-edge accepted_ (with the reason) or _revision proposed_ — never silence.
+3. **Why not a standing tolerance:** pre-widening floors by a fixed tolerance licenses exactly the
+   slow-erosion pattern the [#885](https://github.com/sister-software/mailwoman/issues/885)
+   re-anchor exists to prevent. The buffer against measurement noise is the revision protocol's
+   human in the loop, not a constant.
+
+**Standing disposition (2026-07-02):** the two zero-margin postcode floors — `us.postcode` 95.0
+and `fr.postcode` 99.3 — are **knife-edge accepted**. Both were set to measured values at the
+operator-approved v4.15.0 revision (the #723 anchor-pollution trade), and both held byte-exact
+across the v5.1.0 tokenizer swap; the anchor-fed postcode channel is structurally stable, so the
+zero margin is by construction, not fragility. Any dip triggers rule 1, and the
+[#901](https://github.com/sister-software/mailwoman/issues/901) campaign gate must name both
+postcode slices explicitly.
+
+### Answer-key versions are not comparable across conventions (v0.1.2 → v0.1.3, 2026-08-06)
+
+The floor policy above governs floors on a FIXED instrument. A golden version bump that changes the
+LABELING CONVENTION is not that: it produces numbers that look like the old ones, are printed in the
+same cell, and mean something else. Carrying a floor across such a bump is the one way to get a
+verdict that is confidently wrong in both directions.
+
+The worked example is `us.street`. Golden through **v0.1.2** wrote a US street as one folded span
+(`"Main St"`), while the corpus splits it (`street: "Main"`, `street_suffix: "St"` — see
+[SCHEMA](./reference/SCHEMA.mdx#the-us-street-split-is-canonical--street_suffix-is-its-own-span)),
+and `per-locale-f1.ts` glued the model's spans back together so the two could be compared. The
+v9.0.0 candidate read `us.street` **87.4** against v7.0.0-base's **87.8** floor and FAILED the gate.
+It was not a street regression: it was the answer key and the corpus disagreeing, with the scorer
+papering over the gap. Golden **v0.1.3** moves the key onto the corpus convention
+(`mailwoman corpus golden-relabel`), the key DECLARES the convention in its `MANIFEST.json`, and the
+scorer reads the declaration per row. Re-read on the corrected key, the same two artifacts score
+**71.7** (shipped 7.0.0) and **75.2** (candidate) — the candidate LEADS by 3.5pp. The absolute
+number fell ~19pp because the metric got strictly harder, and the sign of the delta flipped.
+
+So, when a golden version changes a convention:
+
+1. **The gate spec names its answer key.** `golden_dir` is a spec field, exactly like the
+   conventions mask — two specs pointing at different golden versions are not comparable, and a
+   default buried in a scorer makes that invisible.
+2. **Cut a new spec; never edit floors in place.** `v9.0.0-base.json` is the precedent.
+3. **Re-anchor the affected floors on a fresh reading of the SHIPPED baseline**, on the new key,
+   through the ship config. Floors on instruments the bump did NOT touch still ratchet
+   (`max(old, re-cut)`); floors whose instrument changed are re-anchored outright and say so in
+   `$derivation`. In v9.0.0-base that exemption is exactly two: `us.street` and `us.micro`.
+4. **The answer key carries its own convention.** A version that declares it cannot be graded under
+   the wrong one by accident — which is the whole failure this rule exists to prevent, and a flag
+   somebody has to remember to pass would not have prevented it.
+5. **The relabel ships a review deck.** Every changed row with before/after labels, plus the rows
+   the tool declined to touch, plus a flagged subset for the operator to adjudicate. A mechanical
+   relabel of an answer key is a claim about ground truth; it gets reviewed like one.
+
+### Splice safety gate — codepoint overlap is pre-registered, not post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
+
+Any tokenizer vocab splice must run the overlap gate **before grading begins**
+(`tokenizer_splice.py build-tokenizer --trained-samples <locale=sample,…>`): it computes the
+non-ASCII codepoints shared between the NEW pieces and every trained locale's character
+inventory, writes the per-locale report artifact next to the spliced tokenizer, and fails loud
+on any overlapping locale that was not explicitly accepted. Accepting a locale
+(`--accept-overlap fr,de`) is a commitment, not a waiver: a per-locale non-inferiority leg for
+each accepted locale must be pre-registered in the gate spec before the first measurement — the
+FR n=3000 coordinate leg from v5.1.0 is the template.
+
+Why this is a gate: the v5.1.0 splice shipped on "byte-identical by construction," which turned
+out ASCII-only — FR/DE/ES shared é/ü/ö with the spliced pieces and 52/15,000 EU rows
+re-tokenized, measured only after the fact. Net-positive that time; the gate removes the luck.
+
+## Adding a shard
+
+1. Generator lives in `corpus/` (`synthesize-*.ts`) or `scripts/build-*-shard.mjs`; every row
+   carries `synth: {method, base_source_id}` ancestry.
+2. Audit format diversity against the real eval's observed forms _before_ generating — thin
+   diversity teaches lexical pattern-matching, not the boundary.
+3. Overlay manifests declare lineage against a base corpus version
+   (`scripts/assemble-*-overlay-manifest.py` is the pattern); never hand-edit a manifest.
+4. Train via `modal run -d scripts/modal/train_remote.py --config <yaml> --resume auto`
+   (~1h A100). Config lives in `corpus-python/src/mailwoman_train/configs/` — copy the latest,
+   change one variable, write the gate comment.
+
+## Reading the scorecard
+
+Two lenses that disagree on purpose: **arena head-to-head** is whole-parse-strict (the strict
+"usable parse" lens; understates per-tag wins) and **per-tag F1** is what the campaign moves.
+Golden-dev per-tag numbers lie for tags the golden set barely contains (unit reads 6.3 there and
+92.3 on real-OOD) — for campaign tags, the real-OOD column is the truth.
+
+## From-scratch vs fine-tune dynamics (the v4.0.0-base receipts, 2026-07-30)
+
+The first from-scratch retrain since the v264 era produced receipts every future training
+session should read before choosing between a fine-tune and a base run. The mechanism, in one
+paragraph: **the learning rate is the plasticity dial, and a fine-tune deliberately turns it
+down.** A base run (5e-4 peak, tens of thousands of high-LR steps under a cosine anneal) can move
+any weight anywhere — rare classes get visited often enough and pushed hard enough to be carved
+into the weights. A fine-tune (1e-5, ~8k steps) can only drift a short distance from its starting
+point; that is the point (it must not destroy the base), but it has two structural consequences
+that are the SAME phenomenon mirrored:
+
+- **Rare-class forgetting** — the base knew fr.cedex; every fine-tune's gradient mass pulled
+  toward its own objective and the tiny cedex islands eroded (~10/430 CA rows; measured across
+  every bundle-era fine-tune, replay-boost plateau ~83.4). The v4.0.0 base re-learned it natively:
+  **90.5 vs the waived 82.2 floor** — above even the unwaived 85.6 shipped reading.
+- **Rare-class UNDER-learning** — date-name street forms sat in the feed through every increment
+  and no 8k window at 1e-5 could carve them (0.133 on v385 AND shipped). The base run, same feed:
+  0.762 asis / 0.958 lower+heal. Nothing changed but the training dynamics.
+
+Three more receipts from the same run:
+
+1. **Inheritance masks provenance — a from-scratch run X-rays the feed.** The shipped lineage was
+   four fine-tune generations deep; capabilities trained into ANCESTOR bases on feeds that no
+   longer exist ride along invisibly. The v4.0.0 run exposed one: FR venue-led competence
+   ("MR & MRS CRAB, 20 Rue de la Huchette…") existed only by inheritance — the CURRENT feed's
+   `source_weights` never admitted a venue shard (`synth-house-venue` is not in the map, and an
+   unlisted source is DROPPED), so the from-scratch model never saw the class and regressed on it.
+   Audit rule: **before any base run, diff the feed's `source_weights` against the capability
+   surface you expect** — what is not in the map is not in the model.
+2. **The over-trust decay was a fine-tune artifact.** Every bundle-era fine-tune peaked ~4-6k and
+   decayed by 8k (constant LR). The base run's G1 grid is FLAT from 40k→60k under the cosine
+   anneal — the decay never appears. Grading every save remains cheap insurance, but the
+   pathology belonged to the recipe class, not the bundle.
+3. **Floor-support calibration.** The v6.0.0 spec's margin rule falls back to 2.0pp "where a
+   scorer's support is not exposed" — us.street_prefix's floor (96.0) was cut with that fallback
+   on a metric whose true support is n=25 (2σ ≈ ±12pp). A 3-row recall dip then reads as a floor
+   MISS. When a floor trips, check the margin's provenance against the metric's actual support
+   before spending a contingency run.
+
+**"Can't we just start and stop training at will?"** Resume-of-the-same-run: yes — optimizer +
+scheduler + step restore exactly (the v4.0.0 run was resumed across a Modal timeout at 59,900 and
+completed identically-in-kind). What does NOT exist is "just continue" past the end of a cosine
+schedule: the anneal ends at LR 0 by design, so extending a finished run means choosing a NEW
+schedule — which is a new training process with new dynamics, not a continuation. And a fine-tune
+is not a resume at all: it is a new process initialized from old weights, with the plasticity dial
+turned down ~50x. The three regimes — resume, extend, fine-tune — are distinct objects; naming
+which one you mean is half the recipe.
+
+## When your lever doesn't gate
+
+Tune-and-retry once, then stop and write the postmortem instead of a third run — the v0.6.x cycle
+is the cautionary retrospective. A negative result recorded in the ledger is a contribution; a
+recipe-tweak treadmill is not.

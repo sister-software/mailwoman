@@ -22,6 +22,8 @@
  *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
+
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher } from "./fst-matcher.ts"
 import type { FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
@@ -56,6 +58,13 @@ const MAGIC = Buffer.from("FST\0", "ascii")
  * Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed.
  */
 const VERSION = 4
+
+/**
+ * The format version this tree WRITES, published so a freshness guard can call an older artifact format-stale without
+ * re-typing the number. Mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1: one constant, so a version bump cannot be
+ * noticed by some checkers and not others. See `fst-freshness.ts`.
+ */
+export const FST_FORMAT_VERSION = VERSION
 
 /**
  * Fixed header size in bytes: magic, version, and the section offsets that follow it.
@@ -377,7 +386,7 @@ export function readFSTProvenance(buf: Buffer): FSTProvenance | undefined {
 		const jsonLen = buf.readUInt32LE(provenanceOffset)
 		const jsonStr = buf.toString("utf8", provenanceOffset + 4, provenanceOffset + 4 + jsonLen)
 
-		return JSON.parse(jsonStr) as FSTProvenance
+		return tryParsingJSON<FSTProvenance>(jsonStr) ?? undefined
 	} catch {
 		return undefined
 	}

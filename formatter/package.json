@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/formatter",
-	"version": "8.6.0",
+	"version": "9.0.0",
 	"description": "The inverse of the parser: render Mailwoman `ComponentTag` components into an idiomatic, locale-aware address string — plus a canonical, normalized match key for record linkage. Consolidates the former core/formatter stub and corpus synthesis formatter behind one API.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -46,7 +46,8 @@
 	},
 	"dependencies": {
 		"@fragaria/address-formatter": "^7.0.0",
-		"@mailwoman/core": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"spliterator": "^6.0.1"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.1.2"

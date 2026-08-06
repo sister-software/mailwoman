@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { SetStateAction } from "react"
 import { createContext, useCallback, useContext, useMemo } from "react"
 import type { ViewState } from "react-map-gl"
@@ -64,12 +65,10 @@ function validateSerializedState(input: unknown): asserts input is PlaypenWebvie
  * Should be called once on startup.
  */
 export function pluckSerializedState(): PlaypenWebviewState {
-	let serializedState: unknown
+	const serializedState: unknown = tryParsingJSON(localStorage.getItem("webview-state"))
 
-	try {
-		serializedState = JSON.parse(localStorage.getItem("webview-state") || "null")
-	} catch (error) {
-		console.warn("Failed to parse serialized state", error)
+	if (serializedState === null) {
+		console.warn("Failed to parse serialized state")
 
 		return DEFAULT_SERIALIZED_STATE
 	}

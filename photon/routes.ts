@@ -83,7 +83,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 <li><a class="q" href="/api?q=1600+pennsylvania+ave&amp;limit=1">/api?q=1600+pennsylvania+ave&amp;limit=1</a></li>
 <li><a class="q" href="/reverse?lat=52.52&amp;lon=13.405">/reverse?lat=52.52&amp;lon=13.405</a></li>
 </ul>
-<footer><a href="https://mailwoman.sister.software/docs/concepts/switching-from-photon">Switching from Photon</a> &middot; <a href="https://mailwoman.sister.software/demo">Live demo</a></footer>
+<footer><a href="https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is">What Mailwoman is</a> &middot; <a href="https://mailwoman.sister.software/demo">Live demo</a></footer>
 </body>
 </html>
 `
@@ -158,8 +158,8 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 		const collection = await engine.search(params)
 
 		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD. The
-		// declared 200 schema documents only the FeatureCollection shape (matching the legacy yaml — see the
-		// Task 4 adjudication); the jsonld branch's differing runtime shape is a local cast at the boundary,
+		// declared 200 schema documents only the FeatureCollection shape (matching the legacy yaml); the
+		// jsonld branch's differing runtime shape is a local cast at the boundary,
 		// never a wire-behavior change (api-kit's `openapi.ts` sets the precedent for this idiom).
 		if (asString(q["format"]) === "jsonld") {
 			return c.json(photonToSchemaOrg(collection) as never, 200)

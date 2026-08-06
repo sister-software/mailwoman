@@ -43,7 +43,7 @@ test("discoverAdminDataRoots: missing root yields empty list, never throws", () 
 	expect(discoverAdminDataRoots(join(root, "does-not-exist"))).toEqual([])
 })
 
-test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", () => {
+test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {
 	const db = new DatabaseSync(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
@@ -73,7 +73,7 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 		})
 	)
 
-	const result = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 	// region + country + county = 3 distinct ancestors across branches (self/locality excluded).
 	expect(result.placesFixed).toBe(1)
 	expect(result.rowsAdded).toBe(3)
@@ -86,9 +86,146 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	expect(ancestorIds).toEqual([85_633_793, 85_688_543, 102_081_863].toSorted((a, b) => a - b))
 
 	// Re-run: idempotent — already-present rows are not duplicated.
-	const again = backfillAncestorsFromHierarchy(db, [dataRoot])
+	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
 	expect(again.rowsAdded).toBe(0)
 	expect(again.placesFixed).toBe(0)
+
+	db.close()
+})
+
+test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its parent's dead end (#1445)", async () => {
+	const db = new DatabaseSync(":memory:")
+	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
+	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
+
+	// New York City: the multi-parent locality, ALREADY repaired by an earlier pass — it has a full
+	// ancestor set, so it is not a candidate this time.
+	const nycID = 85_977_539
+	const brooklynID = 421_205_765
+	const nyStateID = 85_688_543
+	const kingsCountyID = 102_082_361
+	const usID = 85_633_793
+
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(nycID)
+
+	for (const [aid, pt] of [
+		[nycID, "locality"],
+		[usID, "country"],
+		[nyStateID, "region"],
+		[kingsCountyID, "county"],
+	] as Array<[number, string]>) {
+		db.prepare("INSERT INTO ancestors VALUES (?, ?, ?, 0)").run(nycID, aid, pt)
+	}
+
+	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC and
+	// stopped — NYC's own parent_id is the -4 sentinel. TWO ancestor rows, which the previous
+	// "<= 1 ancestor row" candidate test excluded, leaving the borough with no region ancestor.
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'borough')").run(brooklynID)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'borough', 0)").run(brooklynID, brooklynID)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(brooklynID, nycID)
+
+	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
+	mkdirSync(join(dataRoot, "421", "205", "765"), { recursive: true })
+
+	// Brooklyn's real source hierarchy — the whole chain is present even though parent_id is not -4.
+	writeFileSync(
+		join(dataRoot, "421", "205", "765", `${brooklynID}.geojson`),
+		JSON.stringify({
+			properties: {
+				"wof:parent_id": nycID,
+				"wof:hierarchy": [
+					{
+						borough_id: brooklynID,
+						continent_id: 102_191_575,
+						country_id: usID,
+						county_id: kingsCountyID,
+						locality_id: nycID,
+						region_id: nyStateID,
+					},
+				],
+			},
+		})
+	)
+
+	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
+
+	// continent + country + county + region = 4 new rows. Self is excluded, and the locality row
+	// (NYC) is already present, so neither is re-inserted.
+	expect(result.placesFixed).toBe(1)
+	expect(result.rowsAdded).toBe(4)
+
+	const byPlacetype = db
+		.prepare("SELECT ancestor_placetype AS pt, ancestor_id AS aid FROM ancestors WHERE id = ? ORDER BY pt")
+		.all(brooklynID) as Array<{ pt: string; aid: number }>
+
+	// The region ancestor is the whole point: without it the resolver's region-descendant filter
+	// cannot reach the borough, and "Brooklyn, NY" resolves to a Jefferson County hamlet instead.
+	expect(byPlacetype.find((row) => row.pt === "region")?.aid).toBe(nyStateID)
+	expect(byPlacetype.find((row) => row.pt === "county")?.aid).toBe(kingsCountyID)
+	expect(byPlacetype.find((row) => row.pt === "country")?.aid).toBe(usID)
+	expect(byPlacetype.filter((row) => row.aid === nycID)).toHaveLength(1)
+
+	// NYC itself was never a candidate — it already had a country ancestor.
+	expect(db.prepare("SELECT COUNT(*) AS n FROM ancestors WHERE id = ?").get(nycID)).toEqual({ n: 4 })
+
+	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
+	expect(again.rowsAdded).toBe(0)
+
+	db.close()
+})
+
+test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bound-variable cap", async () => {
+	const db = new DatabaseSync(":memory:")
+	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
+	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
+	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze runs its index phase
+	// before this backfill; without it the correlated NOT EXISTS is quadratic over 33k rows.
+	db.exec("CREATE INDEX ancestors_by_id ON ancestors(id)")
+
+	// node:sqlite caps a statement at 32,766 bound variables; the 2026-08-04 wide-coverage admin build
+	// carried 67,521 country-less candidates. 33,000 self-only places reproduce the overflow.
+	const insertSpr = db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')")
+	const insertAnc = db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)")
+	db.exec("BEGIN")
+
+	for (let id = 1; id <= 33_000; id++) {
+		insertSpr.run(id)
+		insertAnc.run(id, id)
+	}
+
+	db.exec("COMMIT")
+
+	// Empty roots: every geojson probe misses without touching the filesystem 33,000 times.
+	const result = await backfillAncestorsFromHierarchy(db, [])
+
+	// No geojson exists for any of them — every candidate is skipped, none fixed. The assertion that
+	// matters is that the pass completes at all instead of throwing "too many SQL variables".
+	expect(result.placesFixed).toBe(0)
+	expect(result.rowsAdded).toBe(0)
+	expect(result.noGeojson).toBe(33_000)
+
+	db.close()
+})
+
+test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", async () => {
+	const db = new DatabaseSync(":memory:")
+	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
+	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
+
+	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region. The
+	// artifact matching that is correct, not truncated — and because it HAS a country ancestor it is
+	// not a candidate at all, so no geojson probe happens for it.
+	const id = 101_734_391
+	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(id, id)
+	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'country', 0)").run(id, 85_633_793)
+
+	const dataRoot = join(root, "whosonfirst-data", "whosonfirst-data-admin-us", "data")
+	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
+
+	expect(result.placesFixed).toBe(0)
+	expect(result.rowsAdded).toBe(0)
+	expect(result.noGeojson).toBe(0)
 
 	db.close()
 })

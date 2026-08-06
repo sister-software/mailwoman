@@ -39,6 +39,7 @@ declare module "process" {
 
 				readonly CF_AUTH_TOKEN?: string
 				readonly GEOCODE_EARTH_API_KEY?: string
+				readonly GOOGLE_MAPS_API_KEY?: string
 			}
 		}
 	}

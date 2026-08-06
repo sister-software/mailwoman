@@ -22,7 +22,7 @@
  *        mappings — flagging matches.
  *   5. **Basic sanity.** Truncated rows (tokens.length !== labels.length), all-O rows >90% of shard.
  *
- *   Output: markdown report on stdout, optional JSON sidecar via `outJson`. The command exits 0 if
+ *   Output: markdown report on stdout, optional JSON sidecar via `outJSON`. The command exits 0 if
  *   no errors, 1 if any errors (warnings don't gate). Per the design, the MANIFEST entry for a
  *   flagged shard should require `lint_acknowledged: true` before training consumes it.
  *
@@ -34,9 +34,12 @@
  *   [--out-json /tmp/lint-report.json]
  */
 
-import { execSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
+
+import { parseJSONStrict } from "@mailwoman/core/objects"
+
+import { ParquetReader } from "../parquet-wrapper/index.ts"
 
 /**
  * Occurrences of a forbidden label before it is reported — one or two are noise, five is a pattern.
@@ -99,7 +102,7 @@ export interface LintCorpusShardOptions {
 	/**
 	 * Write a JSON sidecar of the flags + summary here.
 	 */
-	outJson?: string
+	outJSON?: string
 }
 
 interface CorpusStats {
@@ -122,31 +125,24 @@ interface LintRulesFile {
 	rules: LintRule[]
 }
 
-interface ShardRow {
+// The reader's `ParquetRecordLike` constraint is `Record<string, unknown>`, and TypeScript gives a type
+// alias an implicit index signature where an interface has none.
+// oxlint-disable-next-line typescript/consistent-type-definitions -- see above
+type ShardRow = {
 	tokens: string[]
 	labels: string[]
 }
 
-function readShard(shardPath: string): ShardRow[] {
-	const py = `
-import pyarrow.parquet as pq
-import json, sys
-t = pq.read_table(${JSON.stringify(shardPath)}, columns=['tokens', 'labels'])
-tokens_col = t['tokens'].to_pylist()
-labels_col = t['labels'].to_pylist()
-for i in range(len(tokens_col)):
-    sys.stdout.write(json.dumps({"tokens": tokens_col[i], "labels": labels_col[i]}) + "\\n")
-`
+/**
+ * Stream a shard's `tokens`/`labels` columns.
+ *
+ * Projected rather than read whole: parquet is columnar, so the twelve unused columns are never touched. The rows feed
+ * straight into {@link statsFromShard} and are never all resident.
+ */
+async function* streamShard(shardPath: string): AsyncIterable<ShardRow> {
+	await using reader = await ParquetReader.openFile<ShardRow>(shardPath)
 
-	const buf = execSync(`python3`, { input: py, maxBuffer: 1024 * 1024 * 1024 })
-	const rows: ShardRow[] = []
-
-	for (const line of buf.toString("utf8").split("\n")) {
-		if (!line) continue
-		rows.push(JSON.parse(line))
-	}
-
-	return rows
+	yield* reader.project("tokens", "labels")
 }
 
 interface ShardStats {
@@ -157,16 +153,18 @@ interface ShardStats {
 	allORows: number
 }
 
-function statsFromShard(rows: ShardRow[]): ShardStats {
+async function statsFromShard(rows: AsyncIterable<ShardRow>): Promise<ShardStats> {
 	const out: ShardStats = {
-		rowCount: rows.length,
+		rowCount: 0,
 		tokens: new Map(),
 		bigrams: new Map(),
 		truncatedRows: 0,
 		allORows: 0,
 	}
 
-	for (const row of rows) {
+	for await (const row of rows) {
+		out.rowCount++
+
 		if (row.tokens.length !== row.labels.length) {
 			out.truncatedRows++
 
@@ -473,27 +471,26 @@ function renderReport(
 /**
  * Lint a shard against corpus stats + the anti-pattern rules; print the markdown report to stdout.
  */
-export function lintCorpusShard(
+export async function lintCorpusShard(
 	options: LintCorpusShardOptions,
 	report?: (line: string) => void
-): LintCorpusShardSummary {
+): Promise<LintCorpusShardSummary> {
 	const rulesPath = options.rulesPath ?? defaultRulesPath()
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
-	const corpus: CorpusStats = JSON.parse(readFileSync(options.statsPath, "utf8"))
+	const corpus = parseJSONStrict<CorpusStats>(readFileSync(options.statsPath, "utf8"))
 
 	report?.(
 		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
 	)
 
 	report?.(`Reading shard from ${options.shardPath}...`)
-	const rows = readShard(options.shardPath)
-	report?.(`  ${rows.length} rows`)
 
-	report?.(`Computing shard stats...`)
-	const shard = statsFromShard(rows)
+	const shard = await statsFromShard(streamShard(options.shardPath))
+
+	report?.(`  ${shard.rowCount} rows`)
 
 	report?.(`Loading rules from ${rulesPath}...`)
-	const rulesFile: LintRulesFile = JSON.parse(readFileSync(rulesPath, "utf8"))
+	const rulesFile = parseJSONStrict<LintRulesFile>(readFileSync(rulesPath, "utf8"))
 
 	report?.(`Running checks...`)
 
@@ -513,9 +510,9 @@ export function lintCorpusShard(
 		writeFileSync(options.outMd, rendered)
 	}
 
-	if (options.outJson) {
+	if (options.outJSON) {
 		writeFileSync(
-			options.outJson,
+			options.outJSON,
 			JSON.stringify(
 				{
 					shard: options.shardPath,

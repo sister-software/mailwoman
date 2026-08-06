@@ -61,7 +61,7 @@
 		"I-intersection_b"
 	],
 	"inference": {
-		"admin_fst": "recommended (fst-en-us.bin or fst-global-priority.bin)",
+		"admin_fst": "recommended (the per-locale fst-<locale>.bin, e.g. fst-en-us.bin)",
 		"street_morphology_fst": "recommended (fst-street-morphology.bin; ~1707 libpostal affix canonicals)",
 		"viterbi_decode": true,
 		"query_shape_prior": true

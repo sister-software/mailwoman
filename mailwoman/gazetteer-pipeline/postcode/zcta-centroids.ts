@@ -30,6 +30,8 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { TSVSpliterator } from "spliterator"
+
 /**
  * Columns a US Census gazetteer row carries; short rows are truncated and skipped.
  */
@@ -59,8 +61,8 @@ export interface ZCTACentroid {
 export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
 	const out = new Map<string, ZCTACentroid>()
 
-	for (const line of text.split("\n")) {
-		const fields = line.split("\t").map((f) => f.trim())
+	for (const row of TSVSpliterator.from(text, { header: false })) {
+		const fields = row.map((f) => f.trim())
 		const geoid = fields[0]
 
 		if (!geoid || !/^\d{5}$/.test(geoid) || fields.length < GAZETTEER_ROW_COLUMNS) continue
@@ -135,9 +137,7 @@ export function fillPlaceholderCentroids(
 export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
-	for (const line of text.split("\n")) {
-		if (!line.trim()) continue
-		const f = line.split("\t")
+	for (const f of TSVSpliterator.from(text, { header: false })) {
 		const pc = f[1]?.trim()
 		const lat = Number(f[9])
 		const lon = Number(f[10])

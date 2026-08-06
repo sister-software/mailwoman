@@ -18,7 +18,10 @@
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runIfScript } from "@mailwoman/core/scripting"
 import { pyFixed } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
 
@@ -32,7 +35,7 @@ function pct(x: number, n: number): string {
 	return n ? `${pyFixed((100 * x) / n, 0)}%` : "—"
 }
 
-function main(): void {
+async function main(): Promise<void> {
 	const [outDir, postalSrc] = [positionals[0]!, positionals[1]!]
 	const arenas = ["libpostal", "perturb", "postal"]
 
@@ -45,7 +48,9 @@ function main(): void {
 		let res: Result[]
 
 		try {
-			res = JSON.parse(readFileSync(`${outDir}/${a}.results.json`, "utf8"))
+			// Strict: the catch below re-throws anything that is not a missing file, so a corrupt
+			// sidecar must surface rather than read as an empty arena.
+			res = parseJSONStrict<Result[]>(readFileSync(`${outDir}/${a}.results.json`, "utf8"))
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				console.log(`| ${a} | (no results) |`)
@@ -68,9 +73,7 @@ function main(): void {
 	if ("postal" in loaded) {
 		const ec: Record<string, string> = {}
 
-		for (const line of readFileSync(postalSrc, "utf8").split("\n")) {
-			if (!line) continue
-			const row = JSON.parse(line)
+		for await (const row of JSONSpliterator.fromAsync<{ input: string; edge_class?: string }>(postalSrc)) {
 			ec[row.input] = row.edge_class ?? "?"
 		}
 
@@ -95,6 +98,4 @@ function main(): void {
 	}
 }
 
-if (import.meta.main) {
-	main()
-}
+runIfScript(import.meta, main)

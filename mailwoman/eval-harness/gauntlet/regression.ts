@@ -4,9 +4,12 @@
 /**
  *   Gauntlet regression runner — the gated, curated layer (the executable bug log). Loads `regression.db`,
  *   runs every `status=pass` case through the FULL pipeline, and asserts the ASSEMBLED output: coordinate
- *   within tolerance, resolution tier, and admin components (country/region/locality, case-insensitive). A
+ *   within tolerance, resolution tier, resolved place identity, and admin components (case-insensitive). A
  *   fixed bug must STAY fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
  *   capture is the Pelias trap); the metamorphic + held-out layers carry breadth.
+ *
+ *   The grading itself lives in `check-case.ts` (pure, unit-tested); the freshness refusal that runs before
+ *   any of it lives in `corpus-stamp.ts`.
  *
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
@@ -15,9 +18,10 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
 
-import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
+import { checkCase } from "./check-case.ts"
+import { assertCorpusStampFresh } from "./corpus-stamp.ts"
+import { buildGauntletDeps, type GauntletDepsOptions, type GauntletResolverLevers, runOne } from "./harness.ts"
 import type { GauntletDatabase } from "./schema.ts"
 
 /**
@@ -46,36 +50,35 @@ export interface GauntletLayerOptions {
 	 * like `eval parity --weights-cache`. Takes precedence over `model`/`tokenizer`/`card`.
 	 */
 	weightsCacheRoot?: string
+	/**
+	 * RESOLVER-side lever pins (#42's `postcodeCountryCoherence` today) — the resolver counterpart to the model swaps
+	 * above, so a resolver lever can be graded by the standard gate instead of by a bespoke probe. Omitted → production
+	 * defaults.
+	 */
+	levers?: GauntletResolverLevers
 }
 
-const DEFAULT_TOL_M = 5000
-
 /**
- * Map an expect_components key to the assembled-result field it asserts.
+ * The {@linkcode buildGauntletDeps} argument a layer's options describe — the model-selection ladder (weights-cache →
+ * model[+tokenizer/card] → shipped default) with the resolver lever pins carried alongside. Shared by every layer so a
+ * new pin cannot reach one layer and silently miss another: the metamorphic layer had an independently-maintained copy
+ * of the ladder, which is exactly the shape that drifts.
  */
-function componentOf(r: GauntletResult, key: string): string | null {
-	switch (key) {
-		case "country":
-			return r.country
-		case "region":
-			return r.region
-		case "locality":
-			return r.locality
-		case "house_number":
-			return r.house_number
-		case "street":
-			return r.street
-		case "postcode":
-			return r.postcode
-		case "venue":
-			return r.venue
-		case "dependent_locality":
-			return r.dependent_locality
-		default:
-			// LOUD: a silent null here made venue/dependent_locality expectations grade against
-			// nothing for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
-			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)
+export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOptions {
+	const levers = options.levers ? { levers: options.levers } : {}
+
+	if (options.weightsCacheRoot) return { weightsCacheRoot: options.weightsCacheRoot, ...levers }
+
+	if (options.model) {
+		return {
+			modelPath: options.model,
+			...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
+			...(options.card ? { modelCardPath: options.card } : {}),
+			...levers,
+		}
 	}
+
+	return levers
 }
 
 /**
@@ -84,71 +87,21 @@ function componentOf(r: GauntletResult, key: string): string | null {
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A gate
+	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
+	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
 	await kdb.destroy()
 
-	/**
-	 * Assert the assembled result against a case's expectations; returns a list of mismatches (empty = passes).
-	 */
-	function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
-		const issues: string[] = []
-
-		if (c.expect_lat != null && c.expect_lon != null) {
-			const tolKm = (c.expect_tolerance_m ?? DEFAULT_TOL_M) / 1000
-			const km = r.lat != null && r.lon != null ? haversineKm(r.lat, r.lon, c.expect_lat, c.expect_lon) : Infinity
-
-			if (km > tolKm) {
-				issues.push(
-					`coord ${km === Infinity ? "unresolved" : `${km.toFixed(2)}km off`} (tol ${c.expect_tolerance_m ?? DEFAULT_TOL_M}m)`
-				)
-			}
-		}
-
-		if (c.expect_tier != null && r.tier !== c.expect_tier) {
-			issues.push(`tier ${r.tier} ≠ ${c.expect_tier}`)
-		}
-
-		if (c.expect_components != null) {
-			// From our own builder's JSON.stringify, so malformed = a corrupt DB row — surface it as a
-			// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole gate.
-			let exp: Record<string, string>
-
-			try {
-				exp = JSON.parse(c.expect_components) as Record<string, string>
-			} catch {
-				issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
-
-				return issues
-			}
-
-			for (const [k, v] of Object.entries(exp)) {
-				const got = componentOf(r, k)
-
-				if ((got ?? "").toLowerCase() !== v.toLowerCase()) {
-					issues.push(`${k} "${got}" ≠ "${v}"`)
-				}
-			}
-		}
-
-		return issues
-	}
-
-	const deps = await buildGauntletDeps(
-		options.weightsCacheRoot
-			? { weightsCacheRoot: options.weightsCacheRoot }
-			: options.model
-				? {
-						modelPath: options.model,
-						...(options.tokenizer ? { tokenizerPath: options.tokenizer } : {}),
-						...(options.card ? { modelCardPath: options.card } : {}),
-					}
-				: {}
-	)
+	const deps = await buildGauntletDeps(layerDepsOptions(options))
 
 	const fails: string[] = [] // status=pass that failed → BLOCK
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
 	let gated = 0
+	// #42 firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran on some row;
+	// otherwise it means "never reached", and the two are indistinguishable without this count.
+	const overrides: string[] = []
 
 	for (const c of cases) {
 		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
@@ -156,7 +109,16 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),
 			...(c.country ? { caseCountry: c.country } : {}),
 		}
-		const issues = checkCase(c, await runOne(c.input, deps, geoOpts))
+
+		const result = await runOne(c.input, deps, geoOpts)
+
+		if (result.postcode_country_scope) {
+			overrides.push(
+				`  · ${c.id} "${c.input}" → country scoped to ${result.postcode_country_scope} (case default ${c.default_country ?? "none"})`
+			)
+		}
+
+		const issues = checkCase(c, result)
 		const ref = c.bug_ref ? ` ${c.bug_ref}` : ""
 
 		if (c.status === "pass") {
@@ -187,6 +149,17 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 		for (const t of tracked) {
 			console.log(t)
+		}
+	}
+
+	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned OFF. Keying this on the ON
+	// PIN was right while the library default was OFF and wrong the moment it flipped (2026-08-05): the standard
+	// unpinned run is now the ON configuration, and it is the run whose firing count a reader needs.
+	if (options.levers?.postcodeCountryCoherence !== false) {
+		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
+
+		for (const o of overrides) {
+			console.log(o)
 		}
 	}
 

@@ -3,14 +3,13 @@
 A **Photon-compatible autocomplete geocoding API** over the [Mailwoman](https://mailwoman.sister.software) engine — search-as-you-type, returning GeoJSON `FeatureCollection`s. Where [`@mailwoman/nominatim`](../nominatim) is structured lookup, this is the type-ahead front door. No Elasticsearch.
 
 ```bash
-# One-time data fetch (worldwide candidate gazetteer, ~1.4 GB):
-mkdir -p "${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}/wof"
-curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \
-  -o "${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}/wof/candidate.db"
+# One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):
+MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" npx mailwoman data pull candidate
 
 MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" \
   npx @mailwoman/photon serve --port 2322
-# or point at your own data: --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB
+# The pulled candidate.db is auto-detected at $MAILWOMAN_DATA_ROOT/wof/candidate.db — no export needed.
+# Or point at your own data: --candidate-db <path> / $MAILWOMAN_CANDIDATE_DB
 ```
 
 Prefer to try before self-hosting? A hosted trial endpoint runs at

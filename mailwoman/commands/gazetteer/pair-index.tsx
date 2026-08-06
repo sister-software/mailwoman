@@ -3,7 +3,7 @@
 
 /**
  *   `mailwoman gazetteer pair-index` — build the PIX1 placetype-pair index (placetype-pair-prior
- *   arc, Task 3) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
+ *   arc) from the HM Land Registry PPD tuples CSV (`corpus/src/tools/fetch/ppd.ts`'s
  *   `gb-tuples.csv`; columns `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). Streams the CSV
  *   (CSVSpliterator, the `corpus/src/shard-recipes/locale.ts` `readTuples` idiom), folds
  *   child=CITY/parent=DISTRICT through `normalizeFSTToken` and tags every pair `dependent_locality`
@@ -12,7 +12,14 @@
  *
  *   `--delta` is REQUIRED with no default: it's the soft-prior bias magnitude a probe hit will
  *   contribute at decode time, and the calibration task (not this one) owns the real value — a
- *   silent default here would let an uncalibrated number ship unnoticed.
+ *   silent default here would let an uncalibrated number ship unnoticed. `--parent-delta` follows the
+ *   same discipline one step weaker: OPTIONAL, no default, and omitting it writes NO header key, so
+ *   an artifact whose locale nobody has boarded the parent side of ships with the parent bias OFF
+ *   rather than with an inherited magnitude (the D-rule's per-locale gate, expressed in the build).
+ *
+ *   PARENT TAGS (PIX2 / schema 3). Every entry records the parent's own `ComponentTag`, and each
+ *   source states it from its own semantics — see {@link SOURCE_PARENT_TAGS} for the table and the
+ *   evidence line behind each row. Nothing here defaults one.
  *
  *   Self-verifying (the sealed-artifact spirit — see AGENTS.md's database section, which this
  *   mirrors for a flat binary): after writing, the command re-reads the bytes through a fresh
@@ -20,20 +27,21 @@
  *   MISS` lines rather than trusting the write silently succeeded.
  *
  *   Also prints the raw (pre-fold) CITY word-length distribution (p50/p90/p99/max + a per-length
- *   count table) — this sizes the word-span window the decode-side prior (Task 4) walks.
+ *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
 import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 // @mailwoman/neural's fst-prior and pair-index-resolver subpaths are self-contained (fst-prior only
 // type-imports from a sibling module; pair-index-resolver only imports core/types) — safe value
 // imports at module level, no heavy ONNX runtime pulled in (mirrors postcode-binary.tsx's comment).
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import { PairIndexResolver, serializePairIndex, type PairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
+import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
@@ -42,16 +50,14 @@ import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
 import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
- * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. Re-anchored
- * (final-review fix) from the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) down
- * to 19,209. This is not a bug fix — a real Task-3 cross-check rebuild fired the gate at exactly this delta and it was
- * adjudicated as the production fold correctly MERGING punctuation-variant duplicates the raw census counted separately
- * (e.g. "St Helens" vs "St. Helens" fold to the SAME `(child, parent)` key). The collision receipt: 221 merge groups —
- * 220 groups where 2 raw census lines collapse to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where
- * 3 raw lines collapse to 1 entry (1 × 2 collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 =
- * 19,209. See `.superpowers/sdd/progress.md`'s Task 3 entry for the adjudication record. A mismatch AGAINST 19,209 on a
- * real rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate
- * before trusting the artifact.
+ * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
+ * the rung-3 census's raw 19,431 lines (`scratchpad/gb-probe-grade/census-gb-pairs.jsonl`) because the production fold
+ * MERGES punctuation-variant duplicates the raw census counts separately (e.g. "St Helens" vs "St. Helens" fold to the
+ * SAME `(child, parent)` key). The collision receipt: 221 merge groups — 220 groups where 2 raw census lines collapse
+ * to 1 production entry (220 × 1 collapsed line = 220) plus 1 group where 3 raw lines collapse to 1 entry (1 × 2
+ * collapsed lines = 2) — 220 + 2 = 222 raw lines absorbed; 19,431 − 222 = 19,209. A mismatch AGAINST 19,209 on a real
+ * rebuild means this build's fold diverged from the adjudicated baseline, not that 19,209 is wrong; investigate before
+ * trusting the artifact.
  */
 const EXPECTED_GB_PAIR_COUNT = 19_209
 
@@ -126,6 +132,27 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ci
 }
 
 /**
+ * The parent-slot `ComponentTag` each source column carries (PIX2 / schema 3). PIX2 records the parent's tag per entry
+ * rather than deriving it from the child's, so every source has to name the slot it read. The evidence for each:
+ *
+ * - `registerDistrict` — the `--source` CSV's `DISTRICT` column. On GB's PPD tuples that is the POST TOWN
+ *   (`corpus/src/shard-recipes/locale.ts`'s `districtAsLocality` gate reads it as the locality line); on the NZ
+ *   LINZ/OpenAddresses countrywide export it is the town/city above the suburb in `CITY`. Both are the locality slot.
+ * - `secondaryPairsJSONL` — the `--pairs-jsonl` files. All three shipped ones pair a neighbourhood-class child with a
+ *   town: `london-pairs-v2.jsonl` (966 London wards ∪ neighbourhoods under "London", R3/R4b), `ni-pairs-v1.jsonl` (87
+ *   Belfast-area, R7), `gb-regions-v1.jsonl` (10,708 Scotland/Wales/England villages under their post town or civil
+ *   parish, R8 — with the parish's administrative suffix STRIPPED precisely so the parent reads as the town an address
+ *   writes). A line may override with its own `parentTag` when a future source is not that shape.
+ *
+ * The two remaining sources state their own and are not in this table: `--borough-db` reads the WOF parent ROW's
+ * placetype per pair (`borough-pairs.ts`), and `--ban-dir` is always the commune (`lieudit-pairs.ts`).
+ */
+const SOURCE_PARENT_TAGS = {
+	registerDistrict: "locality",
+	secondaryPairsJSONL: "locality",
+} as const satisfies Record<string, ComponentTag>
+
+/**
  * Split a comma-separated path list, tolerating whitespace and an absent value. Each secondary source stays its OWN
  * file rather than being pre-merged into a blob, so every one keeps a distinct provenance md5 in the header — which is
  * what lets a freshness guard notice that exactly one of them changed.
@@ -152,9 +179,19 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"OPTIONAL — the decoder transition-entry bonus a probe hit contributes (+β into B-<tag> at the child's " +
-				"first piece; TRANSITION-BETA build, task-8 probe). Written into the PIX1 header ONLY when passed — " +
+				"first piece; TRANSITION-BETA build). Written into the PIX1 header ONLY when passed — " +
 				"omitting it builds a beta-less artifact (no transition term at decode, the pre-beta behavior). " +
 				"Per-country calibration like --delta: GB ships 5; NZ ships without it."
+		),
+	parentDelta: zod
+		.number()
+		.optional()
+		.describe(
+			"OPTIONAL, no default — the WHOLE-EDGE bias magnitude a probe hit contributes to the PARENT window " +
+				"(+parentDelta on the record's own parentTag; #46). Written into the PIX1 header ONLY when passed — " +
+				"omitting it builds an artifact whose parent bias is OFF, which is the correct posture for any locale " +
+				"whose parent side no board has graded (the D-rule per-locale gate). us/gb/nz/fr ship 5 " +
+				"(docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md); de/in/es/it ship without it."
 		),
 	holdoutFraction: zod
 		.number()
@@ -162,7 +199,7 @@ const OptionsSchema = zod.object({
 		.max(1)
 		.default(0)
 		.describe(
-			"DEV-ONLY falsifier flag (placetype-pair-prior arc, Task 6) — withhold this fraction of deduplicated pairs " +
+			"DEV-ONLY falsifier flag (placetype-pair-prior arc) — withhold this fraction of deduplicated pairs " +
 				"from the build (seeded, deterministic; see --holdout-seed), for measuring decode-layer degradation " +
 				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
 				"nonzero value for a shipped artifact build."
@@ -194,6 +231,7 @@ export { OptionsSchema as options }
 const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const country = options.country.toLowerCase()
+
 		// The PPD tuples CSV is a GB national register — there is no equivalent for the US instance (USPS routes
 		// city/state/ZIP, so no postal source carries dependent localities). A country whose pairs come entirely from
 		// the WOF/secondary sources below runs with NO CSV rather than being handed an empty one.
@@ -237,7 +275,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 					continue
 				}
 
-				builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "")
+				builder.addRow(cells[cityIx] ?? "", cells[districtIx] ?? "", SOURCE_PARENT_TAGS.registerDistrict)
 			}
 		}
 
@@ -248,8 +286,10 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		if (options.boroughDb) {
 			const before = builder.distinctCount
 
+			// `pair.parentTag` is the WOF parent ROW's placetype projection, not a per-source constant — a
+			// locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
 			for (const pair of extractBoroughPairs(options.boroughDb, country.toUpperCase())) {
-				builder.addRow(pair.child, pair.parent)
+				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
 			boroughsAdded = builder.distinctCount - before
@@ -264,7 +304,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			const { pairs, rowsWithLieuDit, filesRead } = await extractLieuDitPairs(options.banDir)
 
 			for (const pair of pairs) {
-				builder.addRow(pair.child, pair.parent)
+				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
 			boroughsAdded += builder.distinctCount - before
@@ -281,12 +321,18 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			for (const path of splitPathList(options.pairsJsonl)) {
 				const before = builder.distinctCount
 
-				for (const line of readFileSync(path, "utf8").split("\n")) {
-					if (!line.trim()) continue
-
-					const pair = JSON.parse(line) as { child: string; parent: string }
-
-					builder.addRow(pair.child, pair.parent)
+				// Streamed — a `--pairs-jsonl` path is whatever the operator points at, and the ONSPD
+				// ward export already runs to hundreds of thousands of rows.
+				// A line MAY carry its own `parentTag`; all three shipped files are (neighbourhood, post town)
+				// sets, so absent means `SOURCE_PARENT_TAGS.secondaryPairsJSONL` — see that table's evidence
+				// line. The per-line key exists so a future source of a different shape declares itself rather
+				// than inheriting a reading that was only ever true of these three.
+				for await (const pair of JSONSpliterator.fromAsync<{
+					child: string
+					parent: string
+					parentTag?: ComponentTag
+				}>(path)) {
+					builder.addRow(pair.child, pair.parent, pair.parentTag ?? SOURCE_PARENT_TAGS.secondaryPairsJSONL)
 				}
 
 				boroughsAdded += builder.distinctCount - before
@@ -300,7 +346,7 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const built = builder.finish()
 		const { rowsKept, rowsSkipped, distribution } = built
 
-		// Task 6 falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
+		// Falsifier-board dev flag: withhold a deterministic fraction of pairs from the build so a
 		// downstream eval can measure decode-layer degradation on pairs the index never saw. A no-op
 		// (`entries === built.entries` by value) when --holdout-fraction is the 0 default.
 		const { kept: entries, heldOut } = applyPairIndexHoldout(
@@ -317,16 +363,18 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
 		]
 
-		// `transitionBeta` is spread conditionally so an omitted flag writes NO header key at all (a
-		// beta-less binary, byte-shape-identical to every pre-TRANSITION-BETA artifact) — not a null/0.
-		const pairIndexHeader: PairIndexHeader = {
+		// `transitionBeta` and `parentDelta` are spread conditionally so an omitted flag writes NO header key at
+		// all — not a null/0. For both, ABSENT means the mechanism is off, which is a different statement from
+		// "off because the magnitude happens to be zero", and the reader treats them that way.
+		// schemaVersion + tagTable are stamped by serializePairIndex — format-owned, not builder claims.
+		const pairIndexHeader: PairIndexHeaderInput = {
 			country,
 			delta: options.delta,
-			schemaVersion: 1,
 			foldVersion: 1,
 			sourceMD5s,
 			buildDate: new Date().toISOString(),
 			...(options.transitionBeta !== undefined ? { transitionBeta: options.transitionBeta } : {}),
+			...(options.parentDelta !== undefined ? { parentDelta: options.parentDelta } : {}),
 		}
 
 		const bytes = serializePairIndex(pairIndexHeader, entries)
@@ -349,10 +397,12 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		const probeLines = countryProbePairs.map(([city, district]) => {
 			const child = normalizeFSTToken(city)
 			const parent = normalizeFSTToken(district)
-			const tag = resolver.probe(child, parent)
+			const edge = resolver.probe(child, parent)
 
-			return tag
-				? `PROBE OK: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → ${tag}`
+			// Print BOTH ends: a readback that shows only the child tag cannot catch a builder that wrote the
+			// wrong parent tag, which is the failure mode PIX2 newly makes possible.
+			return edge
+				? `PROBE OK: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → ${edge.tag} under ${edge.parentTag}`
 				: `PROBE MISS: fold("${city}")/fold("${district}") → "${child}"/"${parent}" → (no entry)`
 		})
 
@@ -397,7 +447,8 @@ const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options })
 		return [
 			`pair-index-${country}.bin → ${outPath} (${bytes.length.toLocaleString()} bytes)`,
 			`header: delta=${options.delta}` +
-				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)"),
+				(options.transitionBeta !== undefined ? ` transitionBeta=${options.transitionBeta}` : " (no transitionBeta)") +
+				(options.parentDelta !== undefined ? ` parentDelta=${options.parentDelta}` : " (no parentDelta)"),
 			`rows kept ${rowsKept.toLocaleString()} / skipped ${rowsSkipped.toLocaleString()} (empty CITY)`,
 			`distinct pairs: ${entries.length.toLocaleString()}`,
 			...(holdoutLine ? [holdoutLine] : []),

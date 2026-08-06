@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/ban",
-	"version": "8.6.0",
+	"version": "9.0.0",
 	"description": "Base Adresse Nationale (France) rooftop address-point ingestion — builds the national FR precision shard on the situs address-point schema.",
 	"keywords": [
 		"address-point",
@@ -67,9 +67,11 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"kysely": "^0.29.4",
-		"spliterator": "^4.0.0"
+		"path-ts": "^2.1.0",
+		"spliterator": "^6.0.1"
 	},
 	"engines": {
 		"node": ">=24.18.0"

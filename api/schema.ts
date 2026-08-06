@@ -5,9 +5,9 @@
  *   Zod wire schemas for the native `/v1` surface. Unlike the drop-ins (photon, nominatim,
  *   libpostal), nothing here is a vendor contract — this surface is ours to design, so request
  *   bodies are REQUIRED and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
- *   on the app (wired in Task 3) maps validation failures through the shared `APIErrorSchema`
- *   envelope (`apiError(c, 400, "invalid request body", <zod summary>)`) — the documented pattern
- *   boundary from phase 2: where no legacy contract exists, the validator MAY speak, but only in
+ *   on the app maps validation failures through the shared `APIErrorSchema` envelope
+ *   (`apiError(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
+ *   surface holds to: where no legacy contract exists, the validator MAY speak, but only in
  *   our envelope.
  *
  *   `APIErrorSchema` itself is owned by `@mailwoman/api-kit` (plumbing shared by every native
@@ -30,11 +30,26 @@ export { APIErrorSchema } from "@mailwoman/api-kit"
 export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
 
 /**
+ * Longest accepted `address`, in characters.
+ *
+ * Sized against what the model can actually read, not against a guess at abuse. The classifier's window is 128
+ * SentencePiece pieces — roughly 330 characters of address text — and everything past it is truncated before inference,
+ * so input beyond this bound cannot influence a result. The margin over that window leaves room for scripts that
+ * tokenize denser than Latin, and for the department-and-division prefixes web forms concatenate.
+ *
+ * The bound exists because preprocessing is linear but not free: a 1 MB body costs ~1.7 s across normalize, query-shape
+ * and the phrase grouper, and Node runs them on the one thread every other request is waiting on. A cap here is cheaper
+ * than fairness plumbing, and rejecting is more honest than accepting a body whose tail the parser will silently
+ * discard.
+ */
+export const MAX_ADDRESS_LENGTH = 1024
+
+/**
  * `POST /v1/parse` request body.
  */
 export const ParseRequestSchema = z
 	.object({
-		address: z.string(),
+		address: z.string().max(MAX_ADDRESS_LENGTH),
 		debug: z.boolean().optional(),
 		input_mode: InputModeSchema.optional(),
 	})
@@ -64,7 +79,7 @@ export const ParseOutcomeSchema = z
  */
 export const GeocodeRequestSchema = z
 	.object({
-		address: z.string(),
+		address: z.string().max(MAX_ADDRESS_LENGTH),
 		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("GeocodeRequest")
@@ -126,9 +141,15 @@ export const GeocodeOutcomeSchema = z
 		venue: z.string().nullable(),
 		// The parsed dependent-locality span (parse view; `hierarchy` is the resolved view).
 		dependent_locality: z.string().nullable(),
+		// The parsed unit / sub-venue span (parse view) — "Terminal 5", "Suite 300".
+		unit: z.string().nullable(),
 		countryCode: z.string().nullable(),
 		hierarchy: z.array(GeocodeHierarchyEntrySchema),
 		candidates: z.array(GeocodeCandidateSchema),
+		// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when it
+		// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
+		// evidence bought the change instead of reading it as a bug.
+		postcode_country_scope: z.string().nullable(),
 	})
 	.loose()
 	.openapi("GeocodeOutcome")
@@ -138,7 +159,9 @@ export const GeocodeOutcomeSchema = z
  */
 export const BatchRequestSchema = z
 	.object({
-		addresses: z.array(z.string()),
+		// Per-ROW, not just per-request: the row cap (`batchMax`, default 500) bounds how many addresses arrive,
+		// and this bounds how large each may be. Without both, one request is 500 unbounded bodies.
+		addresses: z.array(z.string().max(MAX_ADDRESS_LENGTH)),
 		/**
 		 * Register override for every row. DEFAULT `"formatted"` — batch rows are the record register by nature.
 		 */

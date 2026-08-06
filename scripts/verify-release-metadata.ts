@@ -57,8 +57,10 @@ import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs as parseNodeArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Cells a markdown table row needs before it carries a version/date/status triple.
@@ -117,7 +119,7 @@ interface SurfaceResult {
  * against the model it actually ships.
  */
 function readModelVersion(cardPath: string): string {
-	const card = JSON.parse(readFileSync(cardPath, "utf8")) as { version?: string }
+	const card = parseJSONStrict<{ version?: string }>(readFileSync(cardPath, "utf8"))
 
 	if (!card.version) throw new Error(`model card ${cardPath} has no "version" field`)
 
@@ -128,9 +130,9 @@ function readModelVersion(cardPath: string): string {
  * Check 1 — the eval ledger carries a run for this model version.
  */
 function checkLedger(version: string, ledgerPath: string): SurfaceResult {
-	const ledger = JSON.parse(readFileSync(ledgerPath, "utf8")) as {
+	const ledger = parseJSONStrict<{
 		runs?: Array<{ model_version?: string }>
-	}
+	}>(readFileSync(ledgerPath, "utf8"))
 
 	const runs = ledger.runs ?? []
 	const found = runs.some((run) => run.model_version === version)
@@ -164,7 +166,7 @@ function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
 
-	for (const line of markdown.split("\n")) {
+	for (const line of TextSpliterator.from(markdown)) {
 		const trimmed = line.trim()
 
 		if (!trimmed.startsWith("|")) continue
@@ -309,8 +311,8 @@ async function main() {
 	const options: VerifyOptions = {
 		cardPath: resolve(repoRoot, values.card ?? "neural-weights-en-us/model-card.json"),
 		ledgerPath: resolve(repoRoot, values.ledger ?? "evals/scores-by-version.json"),
-		releasesPath: resolve(repoRoot, values.releases ?? "docs/articles/releases.mdx"),
-		statusPath: resolve(repoRoot, values.status ?? "docs/articles/status.mdx"),
+		releasesPath: resolve(repoRoot, values.releases ?? "docs/records/site-2026-08/releases.mdx"),
+		statusPath: resolve(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),
 	}
 
 	const version = readModelVersion(options.cardPath)

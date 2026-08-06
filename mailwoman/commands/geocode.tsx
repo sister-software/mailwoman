@@ -36,6 +36,7 @@ import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
+import { argument } from "pastel"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
@@ -53,7 +54,10 @@ import { resolverDefaultCountry } from "./parse.tsx"
 
 //#region CLI contract — args + options
 
-const ArgumentsSchema = zod.array(zod.string().describe("A formatted postal address to geocode"))
+const ArgumentsSchema = zod
+	.array(zod.string())
+	.describe(argument({ name: "address", description: "A formatted postal address to geocode" }))
+
 export { ArgumentsSchema as args, OptionsSchema as options }
 
 const OptionsSchema = zod.object({
@@ -76,6 +80,15 @@ const OptionsSchema = zod.object({
 		.describe(
 			"ISO-3166 country to scope the WOF resolver. Defaults from --locale's region subtag (en-US → US). " +
 				"Pass 'none' to disable the country filter."
+		),
+	countryScope: zod
+		.enum(["auto", "locale", "none"])
+		.optional()
+		.default("auto")
+		.describe(
+			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
+				"'auto' (default) only on the FTS backend. Pin 'locale' or 'none' to hold country policy fixed " +
+				"while changing backends. An explicit --default-country outranks all three."
 		),
 	resolveDb: zod
 		.string()
@@ -131,6 +144,17 @@ const OptionsSchema = zod.object({
 				"the resolver's locality/region ranking toward the right country (never filters); most useful when no " +
 				"--default-country / locale pins it. ON by default after the M2 misroute gate (0 misroutes); pass " +
 				"--no-place-country to disable."
+		),
+	postcodeCountryCoherence: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"#42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a " +
+				"wrong --default-country / locale scope. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise geocodes " +
+				"to Addison, Texas (ZIP 75001). Abstains when the default country is already consistent, when no country " +
+				"is, or when more than one is. ON by default (promoted 2026-08-05); pass " +
+				"--no-postcode-country-coherence to restore the un-overridden country scope."
 		),
 	placeCountryThreshold: zod
 		.number()
@@ -293,6 +317,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
+			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
+			// threading (an unset dep already reads as ON downstream).
+			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).

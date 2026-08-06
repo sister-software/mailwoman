@@ -7,9 +7,9 @@
  *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs that
  *   self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
  *   carries the site name, the postal-formatted street address, and the locality/region/postcode
- *   quad. Phase 1.6 §1.2 (#22) selects this source for its adversarial-value-per-row: every
- *   facility name is a human-typed venue string and the addresses pass through enough hands to
- *   accumulate the abbreviation drift + suite designator chaos that pure gazetteer data does not.
+ *   quad. The source earns its place on adversarial-value-per-row (#22): every facility name is a
+ *   human-typed venue string and the addresses pass through enough hands to accumulate the
+ *   abbreviation drift + suite designator chaos that pure gazetteer data does not.
  *
  *   The adapter consumes a CSV file the operator pre-downloads. The HRSA data is published as a
  *   single national CSV (~10K rows), small enough that the operator can re-fetch on every corpus
@@ -28,9 +28,7 @@
  *   terms.
  */
 
-import { createReadStream } from "node:fs"
-
-import { parse as csvParse } from "csv-parse"
+import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "../../adapter.ts"
 import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
@@ -69,10 +67,10 @@ interface HrsaSiteRow {
  * Split a "123 Main St Suite 4" surface form into `(house_number, street)`. The regex tolerates one trailing letter on
  * the number (`"123A Main St"`) and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
  *
- * Suite / Apt / Unit designators stay on `street` for Phase 1 — Mailwoman's `unit` component exists but the
- * address-formatter does not have a clean slot for it, and HRSA addresses do not separate the suite into its own
- * column. Leaving the surface form intact in `street` preserves the adversarial training signal (the model learns that
- * a trailing "Suite 4" is part of the road line in this distribution).
+ * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists but the address-formatter does
+ * not have a clean slot for it, and HRSA addresses do not separate the suite into its own column. Leaving the surface
+ * form intact in `street` preserves the adversarial training signal (the model learns that a trailing "Suite 4" is part
+ * of the road line in this distribution).
  */
 
 /**
@@ -109,78 +107,69 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 				throw new Error(`usgov-hrsa-fqhc adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const stream = createReadStream(opts.inputPath, { encoding: "utf8" })
-
-			const parser = stream.pipe(
-				csvParse({
-					columns: true,
-					skip_empty_lines: true,
-					relax_quotes: true,
-					relax_column_count: true,
-				})
-			)
+			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
+				mode: "object",
+				normalizeKeys: false,
+				enableQuoteHandling: true,
+			})
 
 			let emitted = 0
 
-			try {
-				for await (const record of parser as AsyncIterable<HrsaSiteRow>) {
-					if (opts.signal?.aborted) break
+			for await (const record of rows as AsyncIterable<HrsaSiteRow>) {
+				if (opts.signal?.aborted) break
 
-					if (opts.limit !== undefined && emitted >= opts.limit) break
+				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-					const venue = (record["Site Name"] ?? "").trim()
-					const split = splitStreetLine(record["Site Address"] ?? "")
-					const city = (record["Site City"] ?? "").trim()
-					const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
-					const postcode = (record["Site Postal Code"] ?? "").trim()
+				const venue = (record["Site Name"] ?? "").trim()
+				const split = splitStreetLine(record["Site Address"] ?? "")
+				const city = (record["Site City"] ?? "").trim()
+				const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
+				const postcode = (record["Site Postal Code"] ?? "").trim()
 
-					if (!venue || !split || !city || !postcode) continue
-					const state = lookupStateAbbreviation(stateAbbr)
+				if (!venue || !split || !city || !postcode) continue
+				const state = lookupStateAbbreviation(stateAbbr)
 
-					if (!state) continue
+				if (!state) continue
 
-					// Insertion order matters here. `venue` first so alignment claims its span
-					// (which may contain a token like "Buffalo") before `locality` runs its
-					// search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
-					// otherwise mis-labels the venue's "Buffalo" as locality.
-					const components: CanonicalRow["components"] = {
-						venue,
-						...(split.house_number ? { house_number: split.house_number } : {}),
-						street: split.street,
-						locality: city,
-						region: state.abbreviation,
-						postcode,
-					}
-
-					const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
-
-					if (!raw) continue
-
-					const aligned = reconcileComponents(components, raw)
-
-					if (!Object.keys(aligned).length) continue
-
-					const siteID = (record["Site ID"] ?? "").trim()
-
-					const sourceID = siteID
-						? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
-						: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
-
-					yield {
-						raw,
-						components: aligned,
-						country: "US",
-						locale: "en-US",
-						source: USGOV_HRSA_FQHC_ADAPTER_ID,
-						source_id: sourceID,
-						corpus_version: "",
-						license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
-					}
-
-					emitted++
+				// Insertion order matters here. `venue` first so alignment claims its span
+				// (which may contain a token like "Buffalo") before `locality` runs its
+				// search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
+				// otherwise mis-labels the venue's "Buffalo" as locality.
+				const components: CanonicalRow["components"] = {
+					venue,
+					...(split.house_number ? { house_number: split.house_number } : {}),
+					street: split.street,
+					locality: city,
+					region: state.abbreviation,
+					postcode,
 				}
-			} finally {
-				stream.destroy()
+
+				const raw = composeRaw(venue, split.house_number, split.street, city, state.abbreviation, postcode)
+
+				if (!raw) continue
+
+				const aligned = reconcileComponents(components, raw)
+
+				if (!Object.keys(aligned).length) continue
+
+				const siteID = (record["Site ID"] ?? "").trim()
+
+				const sourceID = siteID
+					? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`
+					: stableSourceID(USGOV_HRSA_FQHC_ADAPTER_ID, aligned)
+
+				yield {
+					raw,
+					components: aligned,
+					country: "US",
+					locale: "en-US",
+					source: USGOV_HRSA_FQHC_ADAPTER_ID,
+					source_id: sourceID,
+					corpus_version: "",
+					license: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
+				}
+
+				emitted++
 			}
 		},
 	}

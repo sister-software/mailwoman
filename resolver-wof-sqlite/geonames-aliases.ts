@@ -23,17 +23,61 @@
  *   (TSV).
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { join } from "path-ts"
+import { TSVSpliterator } from "spliterator"
+
+import { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
 
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
  * Overture, GeoNames) never collide in a combined DB.
  */
 export const GEONAMES_ID_BASE = 9_000_000_000_000
+
+/**
+ * The four tables the alias fold writes into the range it owns. The purge and the ingest must agree on this list — a
+ * table written but not purged is exactly the #1514 defect.
+ */
+const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as const
+
+/**
+ * Clear everything the alias fold owns — `[GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)` across {@link
+ * FOLD_OWNED_TABLES}
+ * — so a fold's output is a function of its country list and dumps ALONE, never of what the DB happened to hold first.
+ * Returns the rows removed per table.
+ *
+ * This exists because the synthetic id is a POSITION (`GEONAMES_ID_BASE + n`, counted across the country list in
+ * order), not a derivation from the geonameid: change the list, its order, or a dump's contents and every subsequent id
+ * shifts. Without the purge, a second fold overwrote the `spr` PREFIX it reached (`INSERT OR REPLACE`) while its
+ * `names`/`ancestors` rows merely appended (bare `INSERT`) and `place_population` skipped unpopulated places entirely —
+ * so the previous run's names, ancestry and populations stayed bound to ids now describing other places.
+ *
+ * Measured on the live 2026-08-05 artifact: a 14-country re-fold over the 161-country fold baked into
+ * `admin-global-priority.db` put 522,184 of 2,110,096 name rows in the range (24.7 %) on a place from a different
+ * country. Gaborone/BW at id 9000000121151 became Aichegg/AT and kept all 26 of its names; Kinshasa's 16,000,000
+ * population landed on a Lithuanian hamlet.
+ *
+ * The upper bound is NOT the end of the id space. Each later shard owns a range above this one — GeoNames-postal @
+ * 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE}
+ * would delete them.
+ */
+export function purgeGeonamesAliasRange(db: DatabaseSync): Record<string, number> {
+	const removed: Record<string, number> = {}
+
+	for (const table of FOLD_OWNED_TABLES) {
+		const result = db
+			.prepare(`DELETE FROM ${table} WHERE id >= ? AND id < ?`)
+			.run(GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE)
+
+		removed[table] = Number(result.changes)
+	}
+
+	return removed
+}
 
 /**
  * Per-country progress for the ingest — one event per country dump processed (or skipped).
@@ -64,19 +108,13 @@ interface V2Alias {
 
 /**
  * Parse a country's alternateNamesV2 file into `geonameid -> spelling -> attribution`, restricted to the populated
- * places (`P`) present in `lines`.
+ * places (`P`) in `wanted`.
  */
-function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map<number, Map<string, V2Alias>> {
-	const wanted = new Set<number>()
-
-	for (const line of lines) {
-		const f = line.split("\t")
-
-		if (f[6] === "P") {
-			wanted.add(Number(f[0]))
-		}
-	}
-
+async function parseAlternateNamesV2(
+	v2File: string,
+	cc: string,
+	wanted: ReadonlySet<number>
+): Promise<Map<number, Map<string, V2Alias>>> {
 	const v2 = new Map<number, Map<string, V2Alias>>()
 
 	// V2 columns (0-indexed): 1 geonameid, 2 isolanguage, 3 name, 4 isPreferredName, 5 isShortName,
@@ -88,13 +126,13 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
 	// colonial-era name sails through on the language-tagged row (the #936 review's Malabo finding).
 	// Do NOT gate on isPreferredName instead — it's sparse annotation, not a signal (Turku's sv "Åbo"
 	// is unflagged; FI has 1,746 flags across the whole dump).
-	const v2Lines = readFileSync(v2File, "utf8").split("\n")
+	//
+	// Both passes STREAM the file rather than sharing one materialized array: NO's V2 dump is 33 MB,
+	// and a second read off the page cache costs less than holding half a million line strings.
+	// `header: false` — the dump is headerless.
 	const historicNames = new Set<string>()
 
-	for (const line of v2Lines) {
-		if (!line) continue
-		const f = line.split("\t")
-
+	for await (const f of TSVSpliterator.fromAsync(v2File, { header: false })) {
 		if (f[6] === "1" || f[7] === "1" || (f[9] ?? "").trim() !== "") {
 			const alt = (f[3] ?? "").trim()
 
@@ -104,9 +142,7 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
 		}
 	}
 
-	for (const line of v2Lines) {
-		if (!line) continue
-		const f = line.split("\t")
+	for await (const f of TSVSpliterator.fromAsync(v2File, { header: false })) {
 		const gid = Number(f[1])
 
 		if (!wanted.has(gid)) continue
@@ -152,7 +188,7 @@ function parseAlternateNamesV2(v2File: string, cc: string, lines: string[]): Map
  * caller MUST rebuild `place_search` afterward (`buildPlaceSearchFTS(db, { drop: true })`) for the new names to reach
  * the candidate build's alias pass.
  */
-export function ingestGeonamesAliases(
+export async function ingestGeonamesAliases(
 	db: DatabaseSync,
 	countries: string[],
 	geonamesDir: string,
@@ -176,7 +212,7 @@ export function ingestGeonamesAliases(
 		 */
 		alternateDir?: string
 	}
-): number {
+): Promise<number> {
 	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",
 	// airport codes), 2–60 chars, at least one letter (drops bare postcodes/numbers).
 	const LATIN_NAME = /^[\p{Script=Latin}\p{M}\s\-'.]{2,60}$/u
@@ -221,6 +257,10 @@ export function ingestGeonamesAliases(
 	let total = 0
 	db.exec("BEGIN")
 
+	// #1514: clear the range before writing it. Inside the transaction, so a fold that throws leaves the
+	// DB as it found it rather than half-purged. See purgeGeonamesAliasRange for why the ids demand this.
+	purgeGeonamesAliasRange(db)
+
 	for (const cc of countries) {
 		const file = join(geonamesDir, `${cc}.txt`)
 
@@ -233,15 +273,43 @@ export function ingestGeonamesAliases(
 		let nc = 0
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
+		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
+		const readV2 = Boolean(v2File && existsSync(v2File))
+
+		// Survey pass. The dump is STREAMED — NO's is 71 MB and only the caller knows which country
+		// comes next — so what a later pass needs has to be collected here rather than re-scanned off a
+		// materialized array. Two things qualify, and both are small: the P-class geonameid set the V2
+		// decoration is restricted to, and the handful of A-class rows the admin pre-pass writes (one
+		// PCL* + the ADM1s). Everything else is re-read in the emit pass below. Neither is wanted
+		// without V2 tags or admin, and then the pass is skipped rather than read for nothing.
+		//
 		// GeoNames dump columns (0-indexed): 0 geonameid, 1 name, 2 asciiname, 3 alternatenames, 4 lat, 5 lon,
 		// 6 feature_class, 7 feature_code, 10 admin1 code, 14 pop.
-		const lines = readFileSync(file, "utf8").split("\n")
+		//
+		// `header: false` — the dump is headerless, so row 1 is a place, not column names.
+		const wanted = new Set<number>()
+		const adminRows: string[][] = []
+
+		if (readV2 || addAdmin) {
+			for await (const f of TSVSpliterator.fromAsync(file, { header: false })) {
+				if (f[6] === "P") {
+					if (readV2) {
+						wanted.add(Number(f[0]))
+					}
+
+					continue
+				}
+
+				if (addAdmin && f[6] === "A" && (f[7]?.startsWith("PCL") || (f[7] === "ADM1" && f[10]))) {
+					adminRows.push(f)
+				}
+			}
+		}
 
 		// #936: V2 tags for this country's P-class rows — geonameid → exact alias spelling → tag. The V2
 		// dump repeats one spelling under several languages ("Åbo" sv/da/no); the merged tag is official /
 		// preferred if ANY qualifying row is.
-		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
-		const v2 = v2File && existsSync(v2File) ? parseAlternateNamesV2(v2File, cc, lines) : undefined
+		const v2 = readV2 ? await parseAlternateNamesV2(v2File!, cc, wanted) : undefined
 
 		// #267 admin pre-pass (gap countries): fold the country (PCLI) + regions (ADM1), self+ancestry them, and
 		// build the admin1→region map the localities link through. Point bbox (GeoNames gives a centroid only).
@@ -249,10 +317,7 @@ export function ingestGeonamesAliases(
 		const adminMap = new Map<string, number>()
 
 		if (addAdmin) {
-			for (const line of lines) {
-				const f = line.split("\t")
-
-				if (f[6] !== "A") continue
+			for (const f of adminRows) {
 				const aname = clean(f[2] ?? "") ?? clean(f[1] ?? "")
 
 				if (!aname) continue
@@ -286,10 +351,8 @@ export function ingestGeonamesAliases(
 			}
 		}
 
-		for (const line of lines) {
-			if (!line) continue
-			const f = line.split("\t")
-
+		// Emit pass — a second stream over the same file, off the page cache the survey pass just warmed.
+		for await (const f of TSVSpliterator.fromAsync(file, { header: false })) {
 			if (f[6] !== "P") continue // populated places only
 			const lat = Number(f[4])
 			const lon = Number(f[5])
@@ -307,9 +370,14 @@ export function ingestGeonamesAliases(
 			sprInsert.run(nid, parentID, name, "locality", cc, lat, lon, lat, lon, lat, lon, 1, 0, 0, 0, 0, 0)
 			namesInsert.run(nid, name, "locality", cc, "", "", 0, 0)
 
-			if (addAdmin) {
-				ancestorInsert.run(nid, nid, "locality")
+			// The SELF row is unconditional (#1514). `populateAncestors` writes one for every spr row it
+			// sees, so a full build's freeze phase produces it either way — but the freeze does not run on
+			// the fold-on-copy path, and since the purge now clears this range the fold has to emit
+			// everything the closure would. Measured on the 161-country fold: 212,993 self rows, exactly the
+			// non-gap countries' localities, which is what the base artifact carried and a fold-on-copy lost.
+			ancestorInsert.run(nid, nid, "locality")
 
+			if (addAdmin) {
 				if (regionID >= 0) {
 					ancestorInsert.run(nid, regionID, "region")
 				}

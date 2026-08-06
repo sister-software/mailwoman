@@ -24,8 +24,10 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { TextSpliterator } from "spliterator"
 
 import { compareComponents, VERDICT_SEVERITY, type Verdict } from "./compare.ts"
 import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
@@ -58,11 +60,14 @@ export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
 
 	const rows: InvarianceRow[] = []
 
-	for (const line of readFileSync(path, "utf8").split("\n")) {
+	// The suite is JSONL with a `//` comment header, so the rows are parsed here rather than by
+	// `JSONSpliterator`, which would throw on the first comment.
+	for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
 		const trimmed = line.trim()
 
 		if (!trimmed || trimmed.startsWith("//")) continue
-		rows.push(JSON.parse(trimmed) as InvarianceRow)
+
+		rows.push(parseJSONStrict<InvarianceRow>(trimmed))
 	}
 
 	return rows
@@ -133,10 +138,10 @@ export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 //#region the run
 
 export interface PairOutcome {
-	rowId: string
+	rowID: string
 	raw: string
 	country: string
-	transformId: string
+	transformID: string
 	transformed: string
 	verdict: Verdict
 	diff: string[]
@@ -152,7 +157,7 @@ export interface PairOutcome {
 
 export interface InvarianceReport {
 	outcomes: PairOutcome[]
-	skipped: Array<{ rowId: string; transformId: string; reason: string }>
+	skipped: Array<{ rowID: string; transformID: string; reason: string }>
 	counts: { invariant: number; degraded: number; lost: number }
 	/**
 	 * Counts restricted to NEW violations (baseline mode) — identical to `counts` when there's no baseline.
@@ -195,11 +200,11 @@ function canonicalizeMap(components: Record<string, string>): Record<string, str
  * violation; every other transform compares verbatim.
  */
 function compareForTransform(
-	transformId: string,
+	transformID: string,
 	original: Record<string, string>,
 	transformed: Record<string, string>
 ): ReturnType<typeof compareComponents> {
-	if (transformId === "abbreviation-swap") {
+	if (transformID === "abbreviation-swap") {
 		return compareComponents(canonicalizeMap(original), canonicalizeMap(transformed))
 	}
 
@@ -213,7 +218,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 	const maxDegraded = options.maxDegraded ?? 0
 	const report = options.report ?? console.error
 	const outcomes: PairOutcome[] = []
-	const skipped: Array<{ rowId: string; transformId: string; reason: string }> = []
+	const skipped: Array<{ rowID: string; transformID: string; reason: string }> = []
 
 	// Cache each row's original parse once (idempotence deliberately bypasses this cache — see runPair).
 	const originalCache = new Map<string, Record<string, string>>()
@@ -247,37 +252,37 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		// instead of re-parsing the same baseline string per transform.
 		await originalFor(row)
 
-		for (const transformId of row.transforms) {
-			const transform = getTransform(transformId) // throws loudly on an unknown id — fixture typo guard.
-			const transformedText: string | null = transformId === "idempotence" ? row.raw : transform.apply(row.raw)
+		for (const transformID of row.transforms) {
+			const transform = getTransform(transformID) // throws loudly on an unknown id — fixture typo guard.
+			const transformedText: string | null = transformID === "idempotence" ? row.raw : transform.apply(row.raw)
 
 			if (transformedText == null) {
-				skipped.push({ rowId: row.id, transformId, reason: "transform not applicable to this raw" })
+				skipped.push({ rowID: row.id, transformID, reason: "transform not applicable to this raw" })
 
 				continue
 			}
 
 			let candidateOutcome: ReturnType<typeof compareComponents> & { transformed: string }
 
-			if (transformId === "idempotence") {
+			if (transformID === "idempotence") {
 				const a = await originalFor(row)
 				const b = await options.parse(row.raw) // a SECOND, independent call — the point of idempotence.
-				candidateOutcome = { transformed: row.raw, ...compareForTransform(transformId, a, b) }
+				candidateOutcome = { transformed: row.raw, ...compareForTransform(transformID, a, b) }
 			} else {
 				const original = await originalFor(row)
 				const perturbed = await options.parse(transformedText)
 
 				candidateOutcome = {
 					transformed: transformedText,
-					...compareForTransform(transformId, original, perturbed),
+					...compareForTransform(transformID, original, perturbed),
 				}
 			}
 
 			const outcome: PairOutcome = {
-				rowId: row.id,
+				rowID: row.id,
 				raw: row.raw,
 				country: row.country,
-				transformId,
+				transformID,
 				transformed: candidateOutcome.transformed,
 				verdict: candidateOutcome.verdict,
 				diff: candidateOutcome.diff,
@@ -285,28 +290,28 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 
 			if (options.baselineParse) {
 				const baselineResult =
-					transformId === "idempotence"
+					transformID === "idempotence"
 						? await (async () => {
 								const a = await baselineOriginalFor(row)
 								const b = await options.baselineParse!(row.raw)
 
-								return compareForTransform(transformId, a, b)
+								return compareForTransform(transformID, a, b)
 							})()
 						: await (async () => {
 								const original = await baselineOriginalFor(row)
 								const perturbed = await options.baselineParse!(transformedText!)
 
-								return compareForTransform(transformId, original, perturbed)
+								return compareForTransform(transformID, original, perturbed)
 							})()
 
 				outcome.baselineVerdict = baselineResult.verdict
 
 				// Severity-aware, NOT severity-blind: a violation is pre-existing only if the candidate's verdict
 				// is not WORSE than the baseline's on this SAME (row, transform) pair — INVARIANT < DEGRADED <
-				// LOST. Two non-INVARIANT verdicts on both sides used to be enough to call it pre-existing, which
-				// let a candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on
-				// the same pair (the reviewer's repro: baseline drops a non-critical `unit` on comma-drop,
-				// candidate drops the CRITICAL `house_number` on the identical pair — that must gate, not hide).
+				// LOST. Treating two non-INVARIANT verdicts as pre-existing regardless of severity would let a
+				// candidate LOST slide through as "non-blocking" whenever the baseline merely DEGRADED on the
+				// same pair: baseline drops a non-critical `unit` on comma-drop, candidate drops the CRITICAL
+				// `house_number` on the identical pair — that must gate, not hide.
 				// v1 is verdict-severity matching only, not content-diff matching: it doesn't check whether the
 				// candidate's LOST is the SAME underlying break as the baseline's LOST (e.g. same tag, same kind
 				// of corruption) — only that it's no worse in kind. A future tightening could require the diffs
@@ -359,17 +364,16 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		for (const v of violations) {
 			const tag = v.verdict === "LOST" ? "✗ LOST" : "~ DEGRADED"
 
-			// Final-review fix: this used to hardcode "baseline held INVARIANT" for every NEW violation, but
-			// "not pre-existing" (worse severity than the baseline) does not imply the baseline was INVARIANT —
-			// the baseline could itself have been DEGRADED while the candidate is the strictly-worse LOST.
-			// Print the baseline's ACTUAL recorded verdict instead of asserting one.
+			// Print the baseline's ACTUAL recorded verdict rather than asserting one: "not pre-existing" (worse
+			// severity than the baseline) does NOT imply the baseline held INVARIANT — it could itself have been
+			// DEGRADED while the candidate is the strictly-worse LOST.
 			const provenance = options.baselineParse
 				? v.preExisting
 					? " [pre-existing: baseline also violates — non-blocking]"
 					: ` [NEW — baseline verdict was ${v.baselineVerdict}]`
 				: ""
 
-			report(`  ${tag} [${v.transformId}] ${v.rowId} "${v.raw}" → "${v.transformed}"${provenance}`)
+			report(`  ${tag} [${v.transformID}] ${v.rowID} "${v.raw}" → "${v.transformed}"${provenance}`)
 
 			for (const d of v.diff) {
 				report(`      ${d}`)
@@ -381,7 +385,7 @@ export async function runInvarianceSuite(options: RunInvarianceOptions): Promise
 		report(`\nskipped (transform declared but not applicable — check the fixture):`)
 
 		for (const s of skipped) {
-			report(`  ${s.rowId} / ${s.transformId}: ${s.reason}`)
+			report(`  ${s.rowID} / ${s.transformID}: ${s.reason}`)
 		}
 	}
 

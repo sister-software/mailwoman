@@ -23,21 +23,32 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
-import { proposeSpans, type ProposedSpan, type SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import {
+	proposeSpans,
+	type ProposedSpan,
+	type SpanProposerLexicon,
+	WORD_CONSISTENCY_SHIP_DEFAULT,
+} from "@mailwoman/core/pipeline"
+// SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
+// `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
+import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "@mailwoman/neural/onnx-runner"
 
 import { detectAddressSystem, LOCALE_COUNTRIES } from "./address-system.ts"
-import type { AnchorLookup } from "./anchor-inference.ts"
+import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
-import type { CountryLexicon } from "./country-inference.ts"
+import { type CountryLexicon, parseCountryLexicon } from "./country-inference.ts"
 import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
-import type { GazetteerLexicon } from "./gazetteer-inference.ts"
+import { type GazetteerLexicon, parseGazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
-import type { InferResult } from "./onnx-runner.ts"
+import { PairIndexResolver, peekPairIndexHeader } from "./pair-index-resolver.ts"
+import type { PlacetypeCensusLike } from "./placetype-census.ts"
 import {
 	buildPlacetypePairPriors,
 	type PlacetypePairPriorOpts,
 	type PlacetypePairProbeTrace,
 } from "./placetype-pair-prior.ts"
+import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
 import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
@@ -110,7 +121,7 @@ export interface NeuralAddressClassifierConfig {
 	 * k-best decode. `loadFromWeights` populates it when the bundle ships the sidecar; exposed via {@link spanGrammar} so
 	 * the phase-4c name-evidence rerank can consume it without re-reading the file. Absent on a pre-v3 bundle.
 	 */
-	semiCrfGrammar?: SemiCRFTransitions
+	semiCRFGrammar?: SemiCRFTransitions
 	/**
 	 * Path to the per-locale FST gazetteer binary shipped in the resolved weights package (`fst-<locale>.bin`), surfaced
 	 * verbatim from {@link resolveWeights} — PATH ONLY (neural has no resolver-wof-sqlite dependency; the caller's layer
@@ -133,6 +144,12 @@ export interface NeuralAddressClassifierConfig {
 	 * `./anchor-inference.js`.
 	 */
 	postcodeAnchorLookup?: AnchorLookup
+	/**
+	 * Which substrings the anchor channel looks up (`AnchorSpanMode`, 2026-08-05). Defaults to `alnum-run`,
+	 * byte-identical to every parse before that date; `shaped` is PAIRED like `suppressGazetteerNearPostcode` and belongs
+	 * only to a model trained against a lookup with letter-bearing keys. Read from `requires.anchor.span_mode`.
+	 */
+	postcodeAnchorSpanMode?: AnchorSpanMode
 	/**
 	 * Optional gazetteer-anchor lexicon (#464, knowledge-ladder rung 3.2). When set, `parse` builds per-token
 	 * candidate-tag-set clues (country/region/po_box/cedex/homograph) from the text + this lexicon and feeds them to the
@@ -198,21 +215,32 @@ export interface NeuralAddressClassifierConfig {
 	spanProposer?: SpanProposerConfig | false
 
 	/**
-	 * Default placetype-pair index (placetype-pair-prior arc, Task 5 — see `ParseOpts.placetypePair` for the full
-	 * matching contract, including the Task 6 probe-mode default). Set by `loadFromWeights` when the resolved weights
-	 * package ships a country-matching `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse
-	 * `opts.placetypePair` overrides this default; omitting both is the byte-stable no-prior default (undefined → zero
-	 * matrix). `#decode` always injects the current parse's `inputText` into whichever object wins (config default or
-	 * per-parse override) — see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field
-	 * nor a per-parse override needs to carry its own text.
+	 * Default placetype-pair index (placetype-pair-prior arc — see `ParseOpts.placetypePair` for the full matching
+	 * contract, including the probe-mode default). Set by `loadFromWeights` when the resolved weights package ships a
+	 * country-matching `pair-index-<cc>.bin` (the hard country gate — see that method). Per-parse `opts.placetypePair`
+	 * overrides this default; omitting both is the byte-stable no-prior default (undefined → zero matrix). `#decode`
+	 * always injects the current parse's `inputText` into whichever object wins (config default or per-parse override) —
+	 * see `placetype-pair-prior.ts`'s `PlacetypePairPriorOpts.inputText` — so neither this field nor a per-parse override
+	 * needs to carry its own text.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
+
+	/**
+	 * Default PCN1 placetype census — OBSERVABILITY ONLY. Set by `loadFromWeights` when the build-local artifact exists
+	 * for the resolved locale's country (`loadPlacetypeCensus`, which documents why it is build-local and not a weights
+	 * sibling). It rides the placetype-pair prior's parent-candidate probes and its ONLY effect is a `placetypeCensus`
+	 * record on `traceParse`'s prior list: no emission bias, no transition adjustment, no decode change, present or
+	 * absent. Consequently it does nothing when the pair prior itself is off (no index → no parent candidates to probe
+	 * alongside) and nothing on a plain `parse()` (no trace to write into). Per-parse `opts.placetypeCensus` overrides;
+	 * `false` disables an auto-wired default for one call.
+	 */
+	placetypeCensus?: PlacetypeCensusLike
 
 	/**
 	 * Per-word BIO consistency repair (#727 + the admin-token fragmentation class). Default off → byte-identical. When
 	 * enabled, every `▁`-delimited word's pieces are forced to ONE tag by a confidence-weighted vote over the post-prior
 	 * emissions (see word-consistency.ts). Pass a `WordConsistencyOpts` object to enable WITH the #727 confidence gates
-	 * (floor / byte-fallback skip / slash grouping); `true` = the original ungated vote. Per-parse
+	 * (floor / byte-fallback skip / slash grouping); `true` = the ungated vote. Per-parse
 	 * `ParseOptions.enforceWordConsistency` overrides this default.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts
@@ -256,7 +284,7 @@ export class NeuralAddressClassifier {
 	 * Consumed by the #727 phase-4c k-best name-evidence rerank; `undefined` on a pre-v3 (span-less) bundle.
 	 */
 	get spanGrammar(): SemiCRFTransitions | undefined {
-		return this.cfg.semiCrfGrammar
+		return this.cfg.semiCRFGrammar
 	}
 
 	/**
@@ -300,47 +328,67 @@ export class NeuralAddressClassifier {
 	 * instead.
 	 */
 	static async loadFromWeights(
-		opts: ResolveWeightsOpts & { postcodeAnchorLookup?: AnchorLookup; executionProviders?: string[] } = {}
+		opts: ResolveWeightsOpts & {
+			postcodeAnchorLookup?: AnchorLookup
+			executionProviders?: string[]
+			intraOpNumThreads?: number
+			/**
+			 * Explicit `placetype-census-<cc>.bin` path, overriding the build-local data-root lookup (`loadPlacetypeCensus`).
+			 * For a harness that built a census to a scratch directory — the data root is read-only on the lab host, so
+			 * "build it and point at it" is the only way to exercise a FRESH artifact. A wrong-country file is still refused
+			 * by the loader's header gate.
+			 */
+			placetypeCensusPath?: string
+		} = {}
 	): Promise<NeuralAddressClassifier> {
-		// /* webpackIgnore: true */ tells webpack to leave the dynamic import statement intact —
-		// it becomes a runtime native ESM import that resolves in Node (which has onnxruntime-node
-		// + node:fs) and throws cleanly in a browser if called. Without the directive, webpack
-		// pulls onnx-runner / weights into the browser chunk graph + then chokes on the Node-only
-		// builtins they reference.
+		// The sanctioned crossing into the three Node-only modules. `webpackIgnore` leaves the import
+		// statement intact, so it becomes a runtime native ESM import: resolvable in Node, and never
+		// followed into the browser chunk graph, where `node:fs` and `onnxruntime-node`'s binaries would
+		// fail to parse. A STATIC import of any of the three would be followed, which the lint rule guards.
+
+		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 		const [
-			{ ONNXRunner },
-			{ resolveWeights, readLabelsFromModelCard, readCrfTransitions, readRequiredChannels },
-			{ parseAnchorLookup },
-			{ parseGazetteerLexicon },
-			{ parseCountryLexicon },
-			{ PostcodeBinaryResolver },
-			{ PairIndexResolver, peekPairIndexHeader },
+			{ $public },
+			{
+				resolveWeights,
+				readLabelsFromModelCard,
+				readCRFTransitions,
+				readRequiredChannels,
+				unfedAnchorDetail,
+				unfedChannelWarner,
+				loadPlacetypeCensus,
+			},
 			fs,
 		] = await Promise.all([
-			import(/* webpackIgnore: true */ "./onnx-runner.ts"),
+			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 			import(/* webpackIgnore: true */ "./weights.ts"),
-			import(/* webpackIgnore: true */ "./anchor-inference.ts"),
-			import(/* webpackIgnore: true */ "./gazetteer-inference.ts"),
-			import(/* webpackIgnore: true */ "./country-inference.ts"),
-			import(/* webpackIgnore: true */ "./postcode-binary-resolver.ts"),
-			import(/* webpackIgnore: true */ "./pair-index-resolver.ts"),
 			import(/* webpackIgnore: true */ "node:fs"),
 		])
 
+		/* oxlint-enable typescript/no-restricted-imports */
 		const resolved: ResolvedWeights = resolveWeights(opts)
-		const labels = readLabelsFromModelCard(resolved.modelCardPath)
-		const crf = readCrfTransitions(resolved.crfTransitionsPath)
+
+		// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
+		// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
+		// and omitting `labels` there is correct; copying them in would be a second copy to go stale on the
+		// next retrain. Falling back is what keeps the two facts in one place.
+		const labels =
+			readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
+
+		const crf = readCRFTransitions(resolved.crfTransitionsPath)
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
 		// undefined).
-		let semiCrfGrammar: SemiCRFTransitions | undefined
+		let semiCRFGrammar: SemiCRFTransitions | undefined
 
-		if (resolved.semiCrfTransitionsPath) {
+		if (resolved.semiCRFTransitionsPath) {
 			try {
-				semiCrfGrammar = parseSemiCRFTransitions(JSON.parse(fs.readFileSync(resolved.semiCrfTransitionsPath, "utf8")))
+				semiCRFGrammar = parseSemiCRFTransitions(
+					parseJSONStrict(fs.readFileSync(resolved.semiCRFTransitionsPath, "utf8"))
+				)
 			} catch (error) {
 				console.error(
-					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCrfTransitionsPath} — ` +
+					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCRFTransitionsPath} — ` +
 						`the #727 phase-4c k-best rerank is unavailable (spanGrammar undefined): ${(error as Error).message}`
 				)
 			}
@@ -348,7 +396,18 @@ export class NeuralAddressClassifier {
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(resolved.tokenizerPath),
-			ONNXRunner.create(resolved.modelPath, { executionProviders: opts.executionProviders }),
+			ONNXRunner.create(resolved.modelPath, {
+				executionProviders: opts.executionProviders,
+				// Cap the intra-op pool. Left unset, ORT sizes it to the core count, so N concurrent processes
+				// each claim the whole machine — the multiplier behind the CLI spawn-test timeouts. Measured
+				// 2026-08-03 over 120 parses: 1 thread costs 18.3 ms/parse against 9.3 for all-cores (a 97%
+				// regression — the parallelism IS doing work), 2 costs 12.5, and 4 is 9.2 — flat against the
+				// default while claiming a quarter of the threads. So the cap is free at 4 and expensive at 1;
+				// do not "simplify" it downward without re-running that curve.
+				// Explicit opt > deployment env > compromise default. The env layer exists because the right
+				// value is a property of how many processes share the host, which this library cannot see.
+				intraOpNumThreads: opts.intraOpNumThreads ?? $public.MAILWOMAN_INTRA_OP_THREADS ?? DEFAULT_INTRA_OP_THREADS,
+			}),
 		])
 
 		// --- Soft-feed (#718 D1): feed the channels the SHIPPED model was trained against ----------
@@ -364,30 +423,40 @@ export class NeuralAddressClassifier {
 
 		let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
+		// Bound to THIS package, because the channel name alone is not enough: one process routinely loads several
+		// (the gauntlet grades six locale overlays), and a warning naming none of them is read as being about
+		// whichever package the reader has in mind — see `unfedChannelWarner`.
+		const warnUnfedChannel = unfedChannelWarner(`${opts.locale ?? "en-us"} (${resolved.packageDir ?? resolved.source})`)
+
 		if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 			try {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
 					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
-					: parseAnchorLookup(JSON.parse(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
+					: parseAnchorLookup(parseJSONStrict(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
 			} catch (error) {
 				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(error as Error).message}`)
 			}
 		}
 
-		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
-			warnUnfedChannel(
-				"anchor",
-				resolved.anchorLookupPath
-					? `parsed lookup at ${resolved.anchorLookupPath.path} is empty`
-					: `no postcode-<cc>.bin / anchor-lookup.json found in the weights package`
-			)
+		// #1516: what this warning may speak about is what THIS package's OWN card declares it ships — not what the
+		// shared encoder `requires`, which every overlay inherits. `unfedAnchorDetail` owns that decision (and
+		// returns undefined for the packages that ship no binary on purpose, e.g. en-gb under #1476).
+		const anchorDetail =
+			declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)
+				? unfedAnchorDetail(resolved.packageDir)
+				: undefined
+
+		if (anchorDetail) {
+			warnUnfedChannel("anchor", anchorDetail)
 		}
 
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (resolved.gazetteerLexiconPath) {
 			try {
-				gazetteerLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8")))
+				gazetteerLexicon = parseGazetteerLexicon(
+					parseJSONStrict(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8"))
+				)
 			} catch (error) {
 				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(error as Error).message}`)
 			}
@@ -409,7 +478,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.countryLexiconPath) {
 			try {
-				countryLexicon = parseCountryLexicon(JSON.parse(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
+				countryLexicon = parseCountryLexicon(parseJSONStrict(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
 			} catch (error) {
 				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(error as Error).message}`)
 			}
@@ -430,7 +499,9 @@ export class NeuralAddressClassifier {
 
 		if (resolved.streetTypeLexiconPath) {
 			try {
-				streetTypeLexicon = parseGazetteerLexicon(JSON.parse(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8")))
+				streetTypeLexicon = parseGazetteerLexicon(
+					parseJSONStrict(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8"))
+				)
 			} catch (error) {
 				warnUnfedChannel(
 					"street_type",
@@ -444,7 +515,7 @@ export class NeuralAddressClassifier {
 		if (resolved.localitySurfaceLexiconPath) {
 			try {
 				localitySurfaceLexicon = parseGazetteerLexicon(
-					JSON.parse(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
+					parseJSONStrict(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
 				)
 			} catch (error) {
 				warnUnfedChannel(
@@ -454,16 +525,16 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		// Placetype-pair index sibling (placetype-pair-prior arc, Task 5): construct a PairIndexResolver
+		// Placetype-pair index sibling (placetype-pair-prior arc): construct a PairIndexResolver
 		// when the package shipped one for this country. HARD COUNTRY GATE — an index built for one
 		// country must never bias a parse resolved for a different locale (a mismatch is a packaging bug,
 		// not something to apply anyway): the index header's `country` must equal the resolved locale's
 		// country subtag, or the default is skipped with a single warning naming both. Unlike the
 		// anchor/gazetteer/country soft-feed channels above, there is no "declared required" fail-closed
-		// case here — the prior is opt-in plumbing (Task 7 owns the ship decision), so a missing/mismatched
-		// index degrades silently to the pre-Task-5 byte-stable default, loud only via the gate warning.
+		// case here — the prior is opt-in plumbing, so a missing/mismatched index degrades silently to the
+		// byte-stable no-prior default, loud only via the gate warning.
 		//
-		// Review follow-up (header peek before construction): the country check reads ONLY the magic +
+		// Header peek before construction: the country check reads ONLY the magic +
 		// header block via `peekPairIndexHeader` — no entry parsing, no Map build — so a mismatched index
 		// never pays the full-parse cost just to be discarded. The `PairIndexResolver` constructor (which
 		// DOES walk every entry) only runs once the gate has already confirmed the country match.
@@ -476,7 +547,17 @@ export class NeuralAddressClassifier {
 				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
 				if (peekedHeader.country === localeCountry) {
-					placetypePair = { index: new PairIndexResolver(pairIndexBytes) }
+					// `parentDelta` (#46, the whole-edge parent bias) rides the ARTIFACT, exactly as `delta` and
+					// `transitionBeta` do — the prior reads `PairIndexResolver.parentDelta` off the header, so a
+					// calibrated locale (us/gb/nz/fr at 5) is default-on and an unmeasured one (de/in/es/it, no header
+					// field) stays off, with no code here knowing which is which. The env is an OVERRIDE for eval
+					// sweeps only and wins when set; see `MAILWOMAN_PAIR_PARENT_DELTA` in `core/env/schema.ts`.
+					placetypePair = {
+						index: new PairIndexResolver(pairIndexBytes),
+						...($public.MAILWOMAN_PAIR_PARENT_DELTA === undefined
+							? {}
+							: { parentDelta: $public.MAILWOMAN_PAIR_PARENT_DELTA }),
+					}
 				} else {
 					console.warn(
 						`[mailwoman/neural] loadFromWeights: pair-index country "${peekedHeader.country}" ` +
@@ -491,9 +572,19 @@ export class NeuralAddressClassifier {
 			}
 		}
 
+		// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL, not a weights-package sibling — the
+		// loader and the reasons live together in `loadPlacetypeCensus`. Absent artifact → `undefined` → the feature is
+		// entirely inert, silently, because not having built it is the normal state for every consumer.
+		const placetypeCensus = loadPlacetypeCensus(
+			(opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? "",
+			opts.placetypeCensusPath
+		)
+
 		// Near-postcode gazetteer choreography + conventions mode: drive them off the card's declared
 		// SHIP-CONFIG (mirrors createScorer / the browser loader defaults), inert when the source
 		// channel is absent. Byte-stable for a non-anchor card (no `requires` → all undefined/false).
+		// The anchor span mode is card-declared too, never inferred: an undeclared card leaves it
+		// undefined and the channel keeps the alnum-run scan verbatim.
 		const suppressGazetteerNearPostcode = declared?.suppress_gazetteer_near_postcode ?? false
 		const addressSystemConventions = declared?.conventions?.required ? (declared.conventions.mode ?? "auto") : undefined
 
@@ -504,13 +595,14 @@ export class NeuralAddressClassifier {
 			transitions: crf?.transitions,
 			startTransitions: crf?.startTransitions,
 			endTransitions: crf?.endTransitions,
-			...(semiCrfGrammar ? { semiCrfGrammar } : {}),
-			...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
+			...(semiCRFGrammar ? { semiCRFGrammar } : {}),
+			...(postcodeAnchorLookup ? { postcodeAnchorLookup, postcodeAnchorSpanMode: declared?.anchor?.span_mode } : {}),
 			...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 			...(streetTypeLexicon ? { streetTypeLexicon } : {}),
 			...(localitySurfaceLexicon ? { localitySurfaceLexicon } : {}),
 			...(countryLexicon ? { countryLexicon } : {}),
 			...(placetypePair ? { placetypePair } : {}),
+			...(placetypeCensus ? { placetypeCensus } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
 			...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
@@ -543,10 +635,9 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * Like `parse`, but also returns the raw per-token logits and piece offsets needed for per-span logit aggregation
-	 * (Option C joint-reconcile integration). Shares the ENTIRE decode path with `parse` (one `#decode`, #481) —
-	 * including the repair passes, which previously ran only in `parse`: reconcile must consume the same tokens the
-	 * argmax path serves users, and the repair opts were silently ignored here before. `logits` stay RAW (pre-prior,
-	 * pre-repair) — they are the model's emissions, not the decode's opinions.
+	 * (Option C joint-reconcile integration). Shares the ENTIRE decode path with `parse` (one `#decode`, #481) — repair
+	 * passes included, because reconcile must consume the same tokens the argmax path serves users, under the same repair
+	 * opts. `logits` stay RAW (pre-prior, pre-repair) — they are the model's emissions, not the decode's opinions.
 	 */
 	async parseWithLogits(text: string, opts?: ParseOpts): Promise<ParseWithLogitsResult> {
 		if (!text.length) {
@@ -627,11 +718,11 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * THE decode path (#481): tokenize → anchor/gazetteer features → infer → priors → CRF/argmax → tokens → repairs. Both
-	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces in the
-	 * previous duplicated copies.
+	 * `parse` and `parseWithLogits` consume this — never fork it; the 2026-06 audit found three drift surfaces across
+	 * duplicated copies of this path.
 	 */
-	// Deliberately ONE function: the 2026-06 audit found three drifted copies of the previously-split
-	// version, which is why every caller now funnels through here.
+	// Deliberately ONE function, long on purpose — every caller funnels through here so there is nowhere
+	// for a second copy to drift.
 	// oxlint-disable-next-line complexity -- 104, and splitting it is what drifted last time
 	async #decode(
 		text: string,
@@ -659,7 +750,6 @@ export class NeuralAddressClassifier {
 		}
 	}> {
 		const encoded = this.cfg.tokenizer.encode(text)
-		const ids = encoded.ids
 		// Reassigned after inference — the runner clamps to the model's fixed sequence length and
 		// `pieces` has to follow it. See the clamp below.
 		let pieces = encoded.pieces
@@ -676,6 +766,7 @@ export class NeuralAddressClassifier {
 
 		const soft = buildSoftFeatures(text, pieces, {
 			postcodeAnchorLookup: this.cfg.postcodeAnchorLookup,
+			postcodeAnchorSpanMode: this.cfg.postcodeAnchorSpanMode,
 			gazetteerLexicon: this.cfg.gazetteerLexicon,
 			countryLexicon: this.cfg.countryLexicon,
 			suppressGazetteerNearPostcode: this.cfg.suppressGazetteerNearPostcode,
@@ -684,7 +775,7 @@ export class NeuralAddressClassifier {
 		})
 
 		const { logits, localeLogits, spanScores } = await this.cfg.runner.infer(
-			ids,
+			encoded.ids,
 			soft.anchor,
 			soft.gazetteer,
 			soft.country,
@@ -695,23 +786,18 @@ export class NeuralAddressClassifier {
 
 		this.assertEmissionWidth(logits)
 
-		// The runner CLAMPS its input to the model's fixed sequence length (`ONNXRunner.infer`:
-		// `Math.min(tokenIds.length, this.fixedSeqLen)`, 128 by default) and slices `logits` back to what
-		// it actually ran. Nothing used to clamp `pieces` to match, so every downstream consumer that
-		// walks pieces and indexes emissions in lockstep — the token build below reading `logits[i]`,
-		// `enforceWordConsistency` reading `emissions[pi]` — ran off the end the moment an input tokenized
-		// past the limit, and threw.
+		// INVARIANT for everything below: one row of emissions per piece. `ONNXRunner.infer` truncates its
+		// input to `fixedSeqLen` and slices `logits` to what it ran, so an untruncated `pieces` breaks that
+		// pairing and every lockstep consumer indexes off the end — the token build reading `logits[i]`,
+		// `enforceWordConsistency` reading `emissions[pi]`.
 		//
-		// That is a CRASH ON VALID INPUT, not on garbage. 128 pieces is roughly 330 characters of ordinary
-		// address text, which a form-concatenated delivery address with a department line clears easily;
-		// measured 2026-08-02, 330 chars parsed and 394 threw. It reached every consumer of the geocode
-		// path, including the Nominatim/Photon/libpostal drop-ins, where it surfaced as an HTTP 500 on a
-		// well-formed query. Found by the mailfail sweep, which was looking for emoji.
+		// The limit is reachable by ordinary input: 128 pieces is roughly 330 characters, which a
+		// form-concatenated delivery address clears. Dropping the tail is the runner's existing choice made
+		// visible; the alternative is throwing on a valid address. Note the tail is LOST, not deferred —
+		// components past the window never reach the model at all.
 		//
-		// Truncating here makes the pipeline agree with what the model SAW. The tail is dropped rather
-		// than mis-parsed — the degradation the runner had already chosen unilaterally — and a caller who
-		// handed over a real address gets its first 128 pieces instead of an exception. `logits.length` is
-		// the authority rather than a literal 128, so this stays correct for any `fixedSeqLen`.
+		// `logits.length`, not a literal 128, so this holds for any `fixedSeqLen` — including models whose
+		// window differs, and non-Latin scripts that reach it at far shorter character counts.
 		if (pieces.length > logits.length) {
 			pieces = pieces.slice(0, logits.length)
 		}
@@ -862,9 +948,9 @@ export class NeuralAddressClassifier {
 
 		// (defaultProposer lives below decode helpers — one lazy build per classifier instance.)
 
-		// Placetype-pair prior (placetype-pair-prior arc, Tasks 4-5): retrieval-augmented complement to the
+		// Placetype-pair prior (placetype-pair-prior arc): retrieval-augmented complement to the
 		// encoder — see placetype-pair-prior.ts for the full windowing/matching contract. Config-level
-		// default set by loadFromWeights (Task 5's country-gated construction); per-call opts override it,
+		// default set by loadFromWeights (its country-gated construction); per-call opts override it,
 		// same "opts ?? cfg default" shape as bridgePunctuationGaps/enforceWordConsistency below. Default
 		// OFF (neither set → byte-stable). Composed BEFORE the conventions mask so an ungrammatical tag it
 		// might bias toward still gets masked out.
@@ -872,10 +958,22 @@ export class NeuralAddressClassifier {
 		// Trace-only out-record: which probe-chain path fired (segment vs anchored vs window) — see
 		// PlacetypePairProbeTrace. Only allocated when tracing, like the tracePriors list itself.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
+		// PCN1 census observability rung: passed to the prior so its parent-candidate probes ALSO probe the census,
+		// recording what it knows onto `pairProbeTrace`. Injected only when tracing — the prior writes census
+		// observations nowhere else, so on a plain `parse()` there is nothing for it to fill and no lookup to pay for.
+		// It never reaches a logit; the `placetypeCensus` record below is its entire output.
+		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
+
+		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
 
 		const placetypePairResult = placetypePairOpt
 			? buildPlacetypePairPriors(
-					{ ...placetypePairOpt, inputText: text, probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace },
+					{
+						...placetypePairOpt,
+						inputText: text,
+						probeTrace: pairProbeTrace ?? placetypePairOpt.probeTrace,
+						...(censusForProbe ? { census: censusForProbe } : {}),
+					},
 					pieces,
 					this.labels
 				)
@@ -907,6 +1005,22 @@ export class NeuralAddressClassifier {
 			// `probePath` rides only when a bias actually landed — an applied:false record stays shape-identical to
 			// every trace produced before the probe chain existed.
 			...(placetypePairApplied && pairProbeTrace?.firedPath ? { probePath: pairProbeTrace.firedPath } : {}),
+		})
+
+		// PCN1 census observability (2026-08-05). `applied` is HARD-CODED false, not computed: this rung composes no
+		// matrix to test for a nonzero cell, and it must stay that way until a calibration rung measures a δ (the
+		// artifact header deliberately ships none — see `PlacetypeCensusHeader.delta`). The observation list and its
+		// probe-count denominator ride only when a census was actually wired, so a build without the artifact produces
+		// `{kind, applied: false}` and every other field of the trace is unchanged.
+		tracePriors?.push({
+			kind: "placetypeCensus",
+			applied: false,
+			...(pairProbeTrace?.censusProbedParents === undefined
+				? {}
+				: {
+						census: pairProbeTrace.censusObservations ?? [],
+						censusProbedParents: pairProbeTrace.censusProbedParents,
+					}),
 		})
 
 		// Conventions emission mask: tags that are ungrammatical in the detected system are removed
@@ -962,7 +1076,15 @@ export class NeuralAddressClassifier {
 		// word whose pieces already agree is untouched. See word-consistency.ts.
 		let healedConfidence: Map<number, number> | null = null
 
-		const wordConsistency = opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? false
+		// The default is the SHIPPED configuration, deliberately — `geocode-core.ts` resolves to this same
+		// constant, so a bare classifier and the production pipeline decode identically. Anything that
+		// defaults differently here is a decode no user is on, and probes written against the classifier
+		// will report defects the shipped path cannot reach.
+		//
+		// The repair upholds an invariant no valid parse can violate: the pieces of one word carry one tag.
+		// `false` opts out for callers who want the raw emissions.
+		const wordConsistency =
+			opts?.enforceWordConsistency ?? this.cfg.enforceWordConsistency ?? WORD_CONSISTENCY_SHIP_DEFAULT
 
 		if (wordConsistency) {
 			const beforeLabels = traceRepairs ? labelIndices.map((i) => (this.labels[i] ?? "O") as string) : []
@@ -1273,19 +1395,18 @@ export interface ParseOpts {
 	 * Per-call override for the config-level `placetypePair` default (see
 	 * {@link NeuralAddressClassifierConfig.placetypePair}). Explicit `false` disables an AUTO-WIRED config default for
 	 * this one call — the same typed-disable shape as {@link spanProposer} above (`SpanProposerConfig | false` at the
-	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. Final-review
-	 * fix: before this, `ParseOpts.placetypePair` only accepted an object, so there was no way to force the prior OFF for
-	 * one call short of substituting a never-matching `PairIndexLike` stub (`neural/test/weights.test.ts`'s
-	 * `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but not a real "disable" signal, and not type-checkable as
-	 * one. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false` correctly with no further
-	 * change: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit `false` here wins over any
-	 * config default without needing a special case.
+	 * config level; `false` per-call), applied here to the object-valued config instead of a boolean flag. The typed
+	 * `false` is the ONLY real disable signal: an object-only field leaves a caller substituting a never-matching
+	 * `PairIndexLike` stub (`neural/test/weights.test.ts`'s `NO_MATCH_PAIR_INDEX` idiom) — functionally equivalent but
+	 * not type-checkable as intent. `opts?.placetypePair ?? this.cfg.placetypePair` (see `#decode`) resolves `false`
+	 * correctly with no special case: `??` only falls through on `null`/`undefined`, never on `false`, so an explicit
+	 * `false` here wins over any config default.
 	 *
-	 * Placetype-pair emission bias (placetype-pair-prior arc, Tasks 4-6). When provided, candidates are probed against a
-	 * PIX1 pair index of (child, parent) place-name pairs harvested from a real address register (the Task-3 GB shard:
-	 * PPD `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets
-	 * an additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality`
-	 * when "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
+	 * Placetype-pair emission bias (placetype-pair-prior arc). When provided, candidates are probed against a PIX1 pair
+	 * index of (child, parent) place-name pairs harvested from a real address register (the GB shard: PPD
+	 * `CITY`/`DISTRICT`). A candidate that resolves against some OTHER, disjoint candidate anywhere in the input gets an
+	 * additive bias toward the pair's resolved `ComponentTag` — e.g. "Shoreditch" biased toward `dependent_locality` when
+	 * "London" also appears in the input, because the index has recorded ("shoreditch", "london") →
 	 * `dependent_locality`.
 	 *
 	 * **`probeMode` — the `"auto"` probe chain (default) vs the explicit `"segment"`/`"anchored"`/`"window"` overrides.**
@@ -1293,62 +1414,46 @@ export interface ParseOpts {
 	 * adjacent-pair design) runs the segment path when the input has ≥2 comma-delimited segments — byte-identical to
 	 * explicit `"segment"` there, by construction — and the anchored-adjacent path on comma-free input (where segment
 	 * mode is deterministically inert; any anchored bias is strictly additive against that zero baseline). `"segment"`
-	 * (the v1 default set by Task 6) restricts candidates to WHOLE comma-delimited segments; the original `"window"` mode
-	 * (contiguous 1..3-word sliding sub-segments — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the
-	 * measured distribution that set that ceiling) is preserved but now opt-in. The flip happened because window mode,
-	 * measured against a 6,500-row venue-confound falsifier board (real UK business names that embed a real place name —
-	 * "Bitterne Charcoal Grill" embeds "Bitterne") at the real artifact's δ=6.0, produced a **52.123% false-positive
-	 * rate** (2026-07-22, `.superpowers/sdd/task-6-report.md`) against a pre-registered FP=0 bar: a sub-segment window
-	 * has no venue-boundary awareness and fires just as readily inside a longer venue/business phrase as it does on a
-	 * bare place name. Segment mode structurally can't make that mistake — "Bitterne Charcoal Grill" has no internal
-	 * comma, so its only candidate key is the 3-word fold, which never equals a 1-word census entry. See
-	 * `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract, both modes'
-	 * honestly-reported trade-offs, and the re-enablement bar for window mode as a default. The runtime-flag register row
-	 * documenting BOTH probe modes for the pipeline lands in Task 7, not here — this field (and its default) is the
-	 * plumbing/measurement, not the ship decision.
+	 * (the v1 default) restricts candidates to WHOLE comma-delimited segments; `"window"` mode (contiguous 1..3-word
+	 * sliding sub-segments — see `placetype-pair-prior.ts`'s `WINDOW_MAX_WORDS` docstring for the measured distribution
+	 * that set that ceiling) is opt-in only. Window mode is not a default because, measured against a 6,500-row
+	 * venue-confound falsifier board (real UK business names that embed a real place name — "Bitterne Charcoal Grill"
+	 * embeds "Bitterne") at the real artifact's δ=6.0, it produced a **52.123% false-positive rate** (2026-07-22) against
+	 * a pre-registered FP=0 bar: a sub-segment window has no venue-boundary awareness and fires just as readily inside a
+	 * longer venue/business phrase as it does on a bare place name. Segment mode structurally can't make that mistake —
+	 * "Bitterne Charcoal Grill" has no internal comma, so its only candidate key is the 3-word fold, which never equals a
+	 * 1-word census entry. See `placetype-pair-prior.ts`'s module docstring ("Probe mode" section) for the full contract,
+	 * both modes' measured trade-offs, and the re-enablement bar for window mode as a default.
 	 *
 	 * Country-agnostic at the API surface: this module does no country gating itself — the caller is responsible for
 	 * passing the index built for the input's locale (a GB-built index probed against a US address will simply never
 	 * match, composing harmlessly).
 	 *
-	 * Default resolution: **an omitted field is NOT unconditionally byte-identical to every parse before this task.**
-	 * `#decode` resolves this as `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a
-	 * config-level default (the country-gated construction for en-gb-shaped caches, Task 5), an omitted per-call field
-	 * falls through to THAT default and the prior fires. Byte-identical-to-pre-task behavior only holds when NEITHER this
-	 * field NOR the config default is set (e.g. `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin`
-	 * sibling to auto-wire). Pass explicit `false` to force the prior off for one call regardless of an auto-wired config
-	 * default (see this field's own doc comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22)
-	 * measured 100% recall / 0.0% false-positive rate at δ=6.0 on the curated probe set that motivated this prior.
-	 * **Superseded by Task 7's δ calibration** (2026-07-22, `.superpowers/sdd/task-7-report.md`): the real
-	 * `pair-index-gb.bin` artifact now ships δ=5.0 (a held-out register-row + venue-confound sweep, feed-8k's calibrated
-	 * optimum and Task 7's recommended ship checkpoint; feed-2k calibrates to 4.5 but fails the FR-fragment bare-locality
-	 * bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike` test double
-	 * that omits `delta`.
+	 * Default resolution: **an omitted field does NOT unconditionally mean "no prior".** `#decode` resolves this as
+	 * `opts?.placetypePair ?? this.cfg.placetypePair` — when `loadFromWeights` auto-wired a config-level default (the
+	 * country-gated construction for en-gb-shaped caches), an omitted per-call field falls through to THAT default and
+	 * the prior fires. The no-prior path holds only when NEITHER this field NOR the config default is set (e.g.
+	 * `loadFromWeights({ locale: "en-us" })`, which ships no `pair-index-*.bin` sibling to auto-wire). Pass explicit
+	 * `false` to force the prior off for one call regardless of an auto-wired config default (see this field's own doc
+	 * comment above for the typed-disable contract). Evidence: rung-3 gate (2026-07-22) measured 100% recall / 0.0%
+	 * false-positive rate at δ=6.0 on the curated probe set that motivated this prior. **Superseded by the shipped δ
+	 * calibration** (2026-07-22): the real `pair-index-gb.bin` artifact ships δ=5.0 (a held-out register-row +
+	 * venue-confound sweep, feed-8k's calibrated optimum; feed-2k calibrates to 4.5 but fails the FR-fragment
+	 * bare-locality bar) in its header, so `biasScale` below exists only as a fallback for a hand-built `PairIndexLike`
+	 * test double that omits `delta`.
 	 */
 	placetypePair?: PlacetypePairPriorOpts | false
-}
 
-/**
- * Loud-degrade warning for the `loadFromWeights` soft-feed (#718 D1) — the Node mirror of neural-web's
- * `warnOnUnfedTrainedChannels`. Fired ONCE per channel per process: a model-card that declares a channel REQUIRED,
- * paired with a package that didn't ship (or could not parse) its data, runs that channel OFF. Structural fallback (the
- * parse still works), loud console (a silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this fix
- * exists to surface).
- */
-const warnedUnfedChannels = new Set<string>()
-
-function warnUnfedChannel(
-	channel: "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface",
-	detail: string
-): void {
-	if (warnedUnfedChannels.has(channel)) return
-	warnedUnfedChannels.add(channel)
-
-	console.error(
-		`[mailwoman/neural] loadFromWeights: model-card declares the ${channel} channel REQUIRED but ${detail} — ` +
-			`running ${channel}-OFF, parses degraded (train/inference mismatch). Ship the ${channel} artifact in the ` +
-			`weights package (postcode-<cc>.bin / anchor-lexicon-v1.json), or pass an explicit lookup.`
-	)
+	/**
+	 * Per-call override for the config-level `placetypeCensus` default (see
+	 * {@link NeuralAddressClassifierConfig.placetypeCensus}) — same typed-disable shape as {@link placetypePair}.
+	 *
+	 * OBSERVABILITY ONLY: whichever way this resolves, the decode is byte-identical. It selects whether `traceParse`'s
+	 * `placetypeCensus` prior record carries census observations, nothing more, which is exactly what makes `false`
+	 * useful — it is how a test parses the same input twice, once with the census wired and once without, and asserts the
+	 * emissions/path/tokens didn't move (`placetype-census-observability.test.ts`).
+	 */
+	placetypeCensus?: PlacetypeCensusLike | false
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {

@@ -7,9 +7,9 @@
 # The data volume is OPTIONAL for `mailwoman` and `libpostal` (both answer parse-level requests with
 # no data). `nominatim` and `photon` need a gazetteer to boot.
 #
-# Read-only-data note: point MAILWOMAN_CANDIDATE_DB at the candidate gazetteer file. The candidate
-# backend opens SQLite read-only, so it works on a `:ro` mount; the FTS admin backend opens
-# read-write and does NOT. See docker/README.md.
+# Read-only-data note: point MAILWOMAN_CANDIDATE_DB at the candidate gazetteer file. Both backends
+# open SQLite read-only, so `:ro` is correct for either; only an explicit FTS index build opens
+# writable, and that is never a serve path. See docker/README.md.
 
 services:
   # Native /v1 API — parse, geocode, batch, format, health, metrics. The default.

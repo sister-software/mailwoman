@@ -39,6 +39,7 @@ import * as path from "node:path"
 import { parseArgs } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
@@ -130,7 +131,7 @@ try {
 }
 
 // ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
-const card = JSON.parse(readFileSync(CARD, "utf8"))
+const card = parseJSONStrict<{ labels?: readonly string[] }>(readFileSync(CARD, "utf8"))
 
 // Postcode anchor channel from the staged binaries — the same artifacts the demo fetches. Merge
 // mirrors neural-web's mergeAnchorLookups: union posteriors, mean non-zero centroids.
@@ -186,7 +187,7 @@ const classifier = new NeuralAddressClassifier({
 	runner,
 	labels: card.labels,
 	...(anchorLookup ? { postcodeAnchorLookup: anchorLookup } : {}),
-	gazetteerLexicon: parseGazetteerLexicon(JSON.parse(readFileSync(GAZ, "utf8"))),
+	gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(GAZ, "utf8"))),
 	suppressGazetteerNearPostcode: true,
 	addressSystemConventions: "auto",
 	bridgePunctuationGaps: true,

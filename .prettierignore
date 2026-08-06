@@ -4,6 +4,15 @@
 **/LICENSE
 **/LICENSE.md
 
+## Benchmark artifacts written by docs/static/benchmarks/*.mjs
+## Both files are script output — `--resample` rewrites the sample, every run rewrites the results —
+## and `JSON.stringify` cannot reproduce the formatter's array-wrapping decisions. Formatting them
+## means a reader who re-runs a published panel fails `yarn lint:oxfmt` on the artifact the panel
+## exists to produce. Measured 2026-08-04: be-results.json was the file that tripped it.
+## be-panel.json is hand-written input and stays formatted.
+docs/static/benchmarks/fr-ban-sample.json
+docs/static/benchmarks/*-results.json
+
 ## Build asset directories
 /build
 docs/build
@@ -53,6 +62,11 @@ review.jsonl
 ## Scoped to the two generator-owned dirs — hand-written *.snap.json/*.trace.json elsewhere stay format-checked.
 neural/test/fixtures/*.snap.json
 docs/src/components/ModelVisualizer/fixtures/*.trace.json
+
+## Generated golden-relabel review decks (`mailwoman corpus golden-relabel`) — one table row per
+## changed answer-key row, emitted beside the version it documents. The tool's output is the source
+## of truth; a formatter pass would be undone by the next regeneration.
+data/eval/golden/*/REVIEW-DECK.md
 
 ## Generated SBOM artifacts (scripts/generate-sbom.ts) — SPDX 2.3 + CycloneDX 1.5 output regenerated
 ## per release; the generator's serialization is the source of truth, not oxfmt's.

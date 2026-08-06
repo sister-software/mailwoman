@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared validation guards for filer.db writers (3b Task 1 — pulled out of `build-filer.ts`). Before
+ *   Shared validation guards for filer.db writers (pulled out of `build-filer.ts`). Before
  *   this move, `cluster-filers.ts` reached into `build-filer.ts` for {@linkcode assertISODate} (the
  *   builder's own module docstring called this out as a rule with "one implementation, no drift between
  *   the two files") — a writer importing another writer's whole module just to borrow a guard is a

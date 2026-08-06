@@ -15,6 +15,7 @@ import { join } from "node:path"
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
+import { parseJSONStrict } from "../objects.ts"
 import { APIClient } from "./APIClient.ts"
 import { buildDiskStorage } from "./disk-storage.ts"
 import { isTransientResourceError } from "./responses.ts"
@@ -200,11 +201,11 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 })
 
 describe("buildDiskStorage: atomic write with a per-write-unique temp name", () => {
-	// I1 (review round 2, CRITICAL, carried over from the bespoke SEC cache): a DETERMINISTIC temp
-	// filename (`${finalPath}.building`) meant two writers racing on the same key both targeted the same
-	// temp file. The first `rename()` moved it away and the second got a raw ENOENT for a response that
-	// had already succeeded (reproduced 6/6); with large bodies the interleaved writes also produced a
-	// corrupt-but-parseable entry in 2/10 rounds. 10 rounds at 200KB, two independent storage instances.
+	// The per-write-unique temp name is load-bearing, and a deterministic one is the tempting mistake.
+	// With a fixed `${finalPath}.building`, two writers racing on the same key target the same temp file:
+	// the first `rename()` moves it away and the second gets a raw ENOENT for a response that had already
+	// succeeded (reproduces 6/6), and with large bodies the interleaved writes can also leave a
+	// corrupt-but-parseable entry (2/10). 10 rounds at 200KB, two independent storage instances.
 	it("never throws and never corrupts when two independent writers race on the same key", async () => {
 		const ROUNDS = 10
 		const BODY_BYTES = 200_000
@@ -226,7 +227,7 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 			// behind alongside the final one — the old bug's ENOENT path did exactly that).
 			expect(added).toHaveLength(1)
 
-			const entry = JSON.parse(readFileSync(join(directory, added[0]!), "utf8")) as CachedStorageValue
+			const entry = parseJSONStrict<CachedStorageValue>(readFileSync(join(directory, added[0]!), "utf8"))
 
 			expect(entry.data.data).toEqual(body)
 		}

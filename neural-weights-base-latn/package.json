@@ -25,10 +25,14 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!scripts/**"
 	],
 	"type": "module",
 	"publishConfig": {
 		"access": "public"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
 	}
 }

@@ -3,7 +3,7 @@
 
 /**
  * @file An on-disk `axios-cache-interceptor` storage adapter, so a client gets a durable HTTP cache by
- *   CONFIGURATION rather than by hand-rolling one (3b task 5).
+ *   CONFIGURATION rather than by hand-rolling one.
  *
  *   NODE ONLY, and deliberately NOT re-exported from `./index.ts`: `core/api` reaches a browser bundle
  *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`),
@@ -30,6 +30,7 @@ import { join } from "node:path"
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
 
 import { ConsoleLogger, type IRuntimeLogger } from "../logging/index.ts"
+import { tryParsingJSON } from "../objects.ts"
 import { sha256Hex } from "../utils/hash.ts"
 
 /**
@@ -157,9 +158,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				return undefined
 			}
 
-			try {
-				return JSON.parse(raw) as StorageValue
-			} catch {
+			const parsed = tryParsingJSON<StorageValue>(raw)
+
+			if (parsed === null) {
 				// A truncated or hand-edited entry is a miss, not a crash — re-fetching is always safe.
 				logger.warn(`Discarding an unreadable cache entry for ${key}.`)
 
@@ -167,6 +168,8 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 				return undefined
 			}
+
+			return parsed
 		},
 
 		set: async (key, value) => {

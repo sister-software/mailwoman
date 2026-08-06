@@ -7,46 +7,58 @@
  *   See @mailwoman/neural-weights-en-us/scripts/link-dev-weights.ts for the rationale.
  *
  *   A single multilingual model serves both en-us and en-gb (byte-identical artifact;
- *   en-gb just carries its own postcode-anchor calibration). Re-symlinks the SAME files
+ *   en-gb carries its own retrieval data on top). Re-symlinks the SAME files
  *   as en-us until per-locale training lands. Keep these defaults in lockstep with en-us's
  *   DEFAULT_* on every ship. The md5 guard reads en-us's model-card `files_md5` — one truth
  *   for the one artifact (en-gb's own card carries no files_md5 block).
  *
  *   ALSO links the soft-feed siblings a fresh worktree is otherwise missing (the
- *   fresh-worktree anchor-OFF gap: `link-dev-weights.ts` historically symlinked only
- *   model+tokenizer, leaving `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` /
- *   `postcode-gb.bin` absent — the CLI then parses anchor-OFF/gazetteer-OFF with only a
- *   stderr warning). The two lexicons are checked-in repo files (`data/gazetteer/…`), so
- *   they're symlinked straight from there. `postcode-gb.bin` has no committed source — it's
- *   a derived artifact built from the WOF GB postcode shard — so this script BUILDS it in
- *   place via the compiled `gazetteer postcode-binary` CLI (same command
- *   `scripts/copy-weights.ts` runs at publish time), mirroring how `postcode-fr.bin`
- *   already lives as a real (non-symlinked) file in `neural-weights-fr-fr/`.
+ *   fresh-worktree gazetteer-OFF gap: `link-dev-weights.ts` historically symlinked only
+ *   model+tokenizer, leaving `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json`
+ *   absent — the CLI then parses gazetteer-OFF with only a stderr warning). Both lexicons are
+ *   checked-in repo files (`data/gazetteer/…`), so they're symlinked straight from there.
  *
- *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) the same way: no
+ *   ALSO links the OPTION-A EVIDENCE LEXICONS (#1511), which this overlay went without for its whole
+ *   life. The card claims its `requires` block is a verbatim copy of the base's, and the base model is
+ *   trained WITH `street_type` + `locality_surface` — but the copy silently dropped both channels, so
+ *   a GB parse ran them off on a model that expects them. The generation linked for each comes from
+ *   the CARD (`requires.<channel>.lexicon`), not a literal in this file, so bumping the card moves the
+ *   artifact with it. `street-type-lexicon-v*.json` is committed under `data/gazetteer/`;
+ *   `locality-surface-lexicon-v*.json` is 7-13 MB and lives in the data root under `gazetteer/`.
+ *
+ *   `postcode-gb.bin` is CARD-GATED, and that gate is the interesting decision in this file — the
+ *   full reasoning sits at the build step below. Short version: the binary helps only a model whose
+ *   encoder actually trained on letter-bearing GB anchor keys, and the card says whether this is one
+ *   (`requires.anchor.span_mode === "shaped"`). Declared → build it from the licence-clean Code-Point
+ *   Open shard. Not declared → remove any stale copy, because a leftover from an older checkout is
+ *   found package-dir-relative and silently restores a measured 24-postcode regression with no
+ *   warning. Receipts: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (anchor-OFF mitigation,
+ *   #1467) and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it
+ *   back), plus this package's `model-card.json` → `gb_artifacts.no_postcode_bin`.
+ *
+ *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc) the same way: no
  *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
- *   the compiled `gazetteer pair-index` CLI. `--delta 5.0` is the Task-7-CALIBRATED value
- *   (2026-07-22, `.superpowers/sdd/task-7-report.md`) baked into the real
- *   `neural-weights-en-gb/pair-index-gb.bin` artifact's header — superseding Task 3's
- *   rung-3 probe-set placeholder (6.0). Calibration method: a δ ∈ {3,4,4.5,5,6,7} sweep against
+ *   the compiled `gazetteer pair-index` CLI. The δ it builds with is {@link PAIR_INDEX_DELTA} — the
+ *   single source of truth, matched against the existing binary's header by the freshness guard
+ *   below; the shipped bundle re-tuned it to 10 (#1269). The original calibration (2026-07-22, δ =
+ *   5.0) swept δ ∈ {3,4,4.5,5,6,7} against
  *   ~2k held-out PPD-tail register rows (dependent_locality tag-correct recall) and the 6,500-row
  *   FSA venue-confound board (FP), for BOTH ship-candidate checkpoints (feed-2k, feed-8k) — the
- *   two calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). This shared artifact bakes
- *   feed-8k's value (5.0): the operator ratified feed-8k as the ship checkpoint (2026-07-23) over
+ *   two calibrate to DIFFERENT optima (feed-2k → 4.5, feed-8k → 5.0). The artifact is
+ *   feed-8k-calibrated: the operator ratified feed-8k as the ship checkpoint (2026-07-23) over
  *   feed-2k (which fails the FR-fragment `bare-locality` hallucination bar outright, 0.665 vs
  *   ≥0.90 — the same early-training-collapse shape as the sibling en-gb-locale-arc's probe-2
- *   checkpoint). That checkpoint choice is FINAL, not open — the feed-2k branch this comment used
- *   to describe is moot. **What actually blocks promotion is the Gauntlet**, not the checkpoint
+ *   checkpoint). That checkpoint choice is FINAL, not open.
+ *   **What actually blocks promotion is the Gauntlet**, not the checkpoint
  *   pick: feed-8k FAILS the metamorphic layer (loses the "1600 Pennsylvania Ave NW" comma-drop
  *   rooftop resolution; v385 holds it), and a same-day repair attempt
  *   (`v3.11.1-deploc-consolidate`) came back NOT CLEAN — STOP RULE EXECUTED, the v3.11.x lineage
- *   is CLOSED for shipping. This artifact (δ=5.0, feed-8k-calibrated) stays correct and ready
+ *   is CLOSED for shipping. This artifact (feed-8k-calibrated) stays correct and ready
  *   regardless — the prior composes with whatever model eventually ships. Path forward: v3.12
  *   (`docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md`, operator-gated redesign).
  *
- *   FRESHNESS GUARD on the skip-if-exists path (review follow-up): a bare `existsSync` skip is
- *   right for `postcode-gb.bin` (rebuilds in seconds from a small WOF shard) but wrong on its own
- *   here — an existing `pair-index-gb.bin` could be stale against either (a) a bumped `--delta`
+ *   FRESHNESS GUARD on the skip-if-exists path: a bare `existsSync` skip would be wrong here —
+ *   an existing `pair-index-gb.bin` could be stale against either (a) a bumped `--delta`
  *   literal below (the #397-guard-style md5-lockstep discipline the model/tokenizer check above
  *   already uses, applied to this artifact) or (b) a changed PPD source CSV on disk. Mirrors that
  *   SAME md5-lockstep pattern: peek the existing binary's header (magic + header block ONLY, via
@@ -66,7 +78,14 @@ import { existsSync, readFileSync, statSync, renameSync, symlinkSync, unlinkSync
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
+
+import {
+	pairIndexStaleReason,
+	peekPairIndexHeaderFields,
+	warnIfFSTStale,
+} from "../../scripts/weights-overlay-linker.ts"
 
 /**
  * Hex characters in an md5 digest.
@@ -160,39 +179,6 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-/**
- * Minimal PIX1 header-only reader: magic + header block, same validation as `PairIndexResolver`'s constructor and
- * `peekPairIndexHeader` (`neural/pair-index-resolver.ts`) — bad-magic throw, future-schema throw — but reimplemented
- * locally rather than imported, so this data-only weights package doesn't gain a dependency on `@mailwoman/neural`
- * (which pulls in onnxruntime-node) just to read four header fields. Kept intentionally tiny; if the PIX1 format ever
- * changes, `pair-index-resolver.ts`'s own header parse is the source of truth this must stay in sync with.
- */
-function peekPairIndexHeaderFields(path: string): {
-	delta: number
-	transitionBeta: number | undefined
-	sourceMD5s: string[]
-} {
-	const bytes = readFileSync(path)
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	const MAGIC = 0x31_58_49_50
-
-	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const
-
-	if (view.getUint32(0, true) !== MAGIC) {
-		throw new Error(`pair index: bad magic reading ${path}`)
-	}
-
-	const headerLen = view.getUint32(4, true)
-
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
-		delta: number
-		transitionBeta?: number
-		sourceMD5s?: string[]
-	}
-
-	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5s: header.sourceMD5s ?? [] }
-}
-
 linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
 linkForce(SRC_TOKENIZER, resolve(PKG_DIR, "tokenizer.model"))
 
@@ -202,9 +188,9 @@ console.log(`linked ${PKG_DIR}/{model.onnx,tokenizer.model}`)
 // linked default bytes against en-us's model-card `files_md5` (skipped under an
 // explicit MAILWOMAN_DEV_* override — deliberate experimentation).
 if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
-	const enUSCard = JSON.parse(
+	const enUSCard = parseJSONStrict<{ files_md5?: Record<string, string> }>(
 		readFileSync(resolve(PKG_DIR, "..", "neural-weights-en-us", "model-card.json"), "utf8")
-	) as { files_md5?: Record<string, string> }
+	)
 
 	const checks: Array<[string, string, string | undefined]> = [
 		["model", resolve(PKG_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
@@ -268,58 +254,135 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
+// --- evidence-bundle lexicons (#1511) ---------------------------------------------------
+//
+// This overlay's card claims to be a verbatim copy of the base declaration, and the base model is
+// TRAINED with the Option-A evidence bundle — but the card omitted `street_type`/`locality_surface`
+// and this script linked neither, so every GB parse ran both channels OFF on a model that expects
+// them. The card now declares both, and the generation each names is what gets linked: the filenames
+// come from the CARD, not from a literal here, so a card bump moves the artifact with it (#1510).
+//
+// Sources differ, and the asymmetry is not an oversight. `street-type-lexicon-v*.json` is small and
+// COMMITTED (`data/gazetteer/`); `locality-surface-lexicon-v*.json` is 7-13 MB and never in git, so it
+// lives in the data root under `gazetteer/`. Both mirror what `release.config.json`'s
+// `softFeed.streetTypeLexicon` / `softFeed.localitySurfaceLexicon` name for the publish path.
+
 /**
- * `postcode-gb.bin` has no committed source (it's derived from the WOF GB postcode shard), so build it in place with
- * the compiled `gazetteer postcode-binary` CLI — the same command `scripts/copy-weights.ts` runs per-locale at publish
- * time. Requires `yarn compile` to have run first (mailwoman/out/cli.js must exist); skips with a warning (not a hard
- * failure) so a worktree without the GB WOF shard can still link the model/tokenizer/lexicons.
+ * The generation of each evidence lexicon this overlay's card declares, and where that file is found. A card that names
+ * nothing links nothing — silence beats guessing a generation the model may not have trained against.
  */
-const GB_WOF_DB = dataRootPath("wof", "postalcode-gb.db")
+const EVIDENCE_LEXICONS: Array<{ channel: "street_type" | "locality_surface"; source: (name: string) => string }> = [
+	{ channel: "street_type", source: (name) => repoRootPath("data", "gazetteer", name) },
+	{ channel: "locality_surface", source: (name) => String(dataRootPath("gazetteer", name)) },
+]
+
+const CARD = parseJSONStrict(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
+	requires?: Record<string, { lexicon?: string; span_mode?: string } | undefined>
+}
+
+for (const { channel, source } of EVIDENCE_LEXICONS) {
+	const declared = CARD.requires?.[channel]?.lexicon
+
+	if (!declared) {
+		console.error(`WARNING: model-card declares no requires.${channel}.lexicon — the ${channel} channel stays OFF.`)
+
+		continue
+	}
+
+	const src = source(declared)
+
+	if (existsSync(src)) {
+		linkForce(src, resolve(PKG_DIR, declared))
+
+		console.log(`linked ${PKG_DIR}/${declared}`)
+	} else {
+		console.error(`WARNING: missing ${src} — the ${channel} channel will resolve OFF in this worktree.`)
+	}
+}
+
 /**
  * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
  */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
+
+// --- postcode-gb.bin: CARD-GATED, not unconditional -------------------------------------
+//
+// The GB anchor binary is the one artifact whose correctness depends on WHICH MODEL is loaded, so it
+// is built only when the card says the model can use it.
+//
+// The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
+// because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
+// taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
+// zero letter-bearing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
+// postcodes on the 120-row gb-golden board (294/318 anchor-ON vs 318/318 anchor-OFF). Then a bare
+// `existsSync` skip turned out to be worse than never building: a bin left by an older checkout is
+// found package-dir-relative and silently re-enables the regression with no warning, because a present
+// artifact is exactly what the loader expects.
+//
+// The gate that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
+// only by a model trained against a lookup with letter-bearing keys (`pilot-anchor-lookup-v2` and
+// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
+// anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
+// card the loader reads decides.
+//
+// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-OFF mitigation)
+// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it back).
+
 /**
- * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
+ * Where the GB anchor binary lives when the card earns it.
  */
 const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
 
-if (!existsSync(CLI)) {
-	console.error(
-		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build postcode-gb.bin.`
+/**
+ * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
+ * The retired GeoNames-lineage `postalcode-gb.db` is NOT it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
+ * — the shaped keyer's outward fallback is what carries those rows.
+ */
+const GB_POSTCODE_SHARD = "postalcode-gb-codepoint.db"
+
+/**
+ * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) — the GB half of the training lookup
+ * `pilot-anchor-lookup-v2` verbatim. `gazetteer postcode-binary` enforces its own floor and exits nonzero below it, so
+ * this number is documentation rather than a second gate.
+ */
+const GB_POSTCODE_BIN_KEYS = 1_749_839
+
+if (CARD.requires?.anchor?.span_mode === "shaped") {
+	console.log(
+		`model-card declares requires.anchor.span_mode "shaped" — building postcode-gb.bin ` +
+			`(${GB_POSTCODE_BIN_KEYS.toLocaleString()} keys expected from ${GB_POSTCODE_SHARD})`
 	)
-} else if (!existsSync(GB_WOF_DB)) {
-	console.error(
-		`WARNING: missing ${GB_WOF_DB} — postcode-gb.bin not built; the anchor channel will resolve OFF for GB.`
-	)
-} else {
-	const result = spawnSync(
+
+	const built = spawnSync(
 		process.execPath,
-		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `GB:${GB_WOF_DB}`],
+		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `GB:${GB_POSTCODE_SHARD}`],
 		{ stdio: "inherit" }
 	)
 
-	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
-		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
-
-		process.exit(1)
+	if (built.status !== 0) {
+		console.error(`WARNING: gazetteer postcode-binary failed — the GB anchor channel will resolve OFF here.`)
 	}
+} else if (existsSync(POSTCODE_BIN_DEST)) {
+	unlinkSync(POSTCODE_BIN_DEST)
 
-	console.log(`built ${POSTCODE_BIN_DEST}`)
+	console.log(
+		`removed stale ${POSTCODE_BIN_DEST} — this card does not declare span_mode "shaped", so the bin's ` +
+			`unit keys are unreachable and feeding slot 4 is a measured regression (see the block comment)`
+	)
 }
 
 /**
- * `pair-index-gb.bin` (placetype-pair-prior arc, Task 5) has no committed source either (it's derived from the HM Land
- * Registry PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA`
- * mirrors the Task-7-CALIBRATED value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this
- * file's header comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule
- * executed, not the checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a
- * worktree without the PPD source CSV can still link everything else. UNLIKE postcode-gb.bin above (small WOF shard,
- * rebuilds in seconds), the PPD tuples CSV is ~25.6M rows — a cold build takes several minutes (measured 2026-07-22:
- * ~4-5 min). `weights.test.ts` invokes this script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so
- * REBUILDING UNCONDITIONALLY here would make every test run pay that cost. Skip ONLY when the existing artifact is
- * verifiably FRESH (see the FRESHNESS GUARD module-doc paragraph above) — a stale skip would let a bumped delta or a
- * changed PPD snapshot silently ship a byte-identical-looking but out-of-date artifact into every test run.
+ * `pair-index-gb.bin` (placetype-pair-prior arc) has no committed source either (it's derived from the HM Land Registry
+ * PPD tuples CSV) — build it the same way, via the compiled `gazetteer pair-index` CLI. `PAIR_INDEX_DELTA` is held in
+ * lockstep with the value baked into the real `neural-weights-en-gb/pair-index-gb.bin` header — see this file's header
+ * comment for the calibration method and the current ship-blocker status (Gauntlet FAIL + stop rule executed, not the
+ * checkpoint choice, which is settled at feed-8k). Skips with a warning (not a hard failure) so a worktree without the
+ * PPD source CSV can still link everything else. The PPD tuples CSV is ~25.6M rows — a cold build takes several minutes
+ * (measured 2026-07-22: ~4-5 min), which is why the freshness guard below exists at all. `weights.test.ts` invokes this
+ * script on every `yarn test`/`yarn vitest` run (the #397-guard pattern), so REBUILDING UNCONDITIONALLY here would make
+ * every test run pay that cost. Skip ONLY when the existing artifact is verifiably FRESH (see the FRESHNESS GUARD
+ * module-doc paragraph above) — a stale skip would let a bumped delta or a changed PPD snapshot silently ship a
+ * byte-identical-looking but out-of-date artifact into every test run.
  */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 /**
@@ -333,11 +396,18 @@ const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
 const PAIR_INDEX_DELTA = 10
 /**
  * The GB artifact's decoder transition-entry bonus (TRANSITION-BETA build, 2026-07-24 — operator-approved β=5 from the
- * task-8 transition-level probe: 13/17 comma-free misses recovered, zero measured collateral). Held in lockstep with
- * the shipped header exactly like {@link PAIR_INDEX_DELTA}: a mismatch against the existing binary's header forces a
- * loud rebuild. NZ deliberately ships WITHOUT a beta (unmeasured there) — its link script has no counterpart const.
+ * transition-level probe: 13/17 comma-free misses recovered, zero measured collateral). Held in lockstep with the
+ * shipped header exactly like {@link PAIR_INDEX_DELTA}: a mismatch against the existing binary's header forces a loud
+ * rebuild. NZ deliberately ships WITHOUT a beta (unmeasured there) — its link script has no counterpart const.
  */
 const PAIR_INDEX_TRANSITION_BETA = 5
+/**
+ * The GB artifact's WHOLE-EDGE parent-bias magnitude (#46, default-on 2026-08-04). δ=5 is the verdict's recommendation:
+ * the smallest magnitude that saturates bar B-2, with 0.00% parent-side false positives on B-3 and GB's own shipped
+ * board moving 66/69 → 69/69 whole-edge. See `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`. Held in
+ * lockstep with the shipped header like the two magnitudes above.
+ */
+const PAIR_INDEX_PARENT_DELTA = 5
 
 /**
  * Secondary pair sources (campaign R2/R3/R4b). Named here rather than inline at the call site because the freshness
@@ -361,35 +431,34 @@ let pairIndexIsFresh = false
 
 if (existsSync(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const {
-			delta: existingDelta,
-			transitionBeta: existingTransitionBeta,
-			sourceMD5s: existingSourceMD5s,
-		} = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const existingSourceMD5s = header.sourceMD5s
 
-		if (existingDelta !== PAIR_INDEX_DELTA) {
-			console.log(
-				`STALE pair-index-gb.bin: header delta ${existingDelta} !== this script's PAIR_INDEX_DELTA ${PAIR_INDEX_DELTA} — rebuilding.`
-			)
-		} else if (existingTransitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
-			console.log(
-				`STALE pair-index-gb.bin: header transitionBeta ${existingTransitionBeta ?? "(absent)"} !== this script's ` +
-					`PAIR_INDEX_TRANSITION_BETA ${PAIR_INDEX_TRANSITION_BETA} — rebuilding.`
-			)
+		// Format + every calibrated magnitude, through the shared check (`scripts/weights-overlay-linker.ts`) so a
+		// new header field cannot be compared by some linkers and not others — which is how three of the four base
+		// linkers ended up unable to notice a schema bump.
+		const staleReason = pairIndexStaleReason(header, {
+			delta: PAIR_INDEX_DELTA,
+			transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+			parentDelta: PAIR_INDEX_PARENT_DELTA,
+		})
+
+		if (staleReason) {
+			console.log(`STALE pair-index-gb.bin: ${staleReason} — rebuilding.`)
 		} else if (!existsSync(String(PPD_SOURCE_CSV))) {
-			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
-			// delta match (the "missing source, can't build" branch below would fire anyway if this were
-			// stale and needed a rebuild).
+			// Magnitudes match but the source CSV isn't on disk to re-hash — can't do better than trust that
+			// match (the "missing source, can't build" branch below would fire anyway if this were stale and
+			// needed a rebuild).
 			pairIndexIsFresh = true
 
 			console.log(
-				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has a matching delta + transitionBeta (source CSV absent, md5 freshness unverifiable)`
+				`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} has matching header magnitudes (source CSV absent, md5 freshness unverifiable)`
 			)
 		} else {
-			// Compare EVERY source, not just the CSV. The guard used to check `sourceMD5s[0]` alone, which made it blind
-			// to the borough DB and the checked-in London pairs — so after campaign R3/R4b added those sources, a stale
-			// artifact built from an older pair set kept reporting itself fresh and every local run (and the CI cache)
-			// silently graded against it. That is how the TRANSITION-BETA pin row drifted unnoticed. The build writes
+			// Compare EVERY source, not just the CSV. Checking `sourceMD5s[0]` alone leaves the guard blind
+			// to the borough DB and the checked-in London pairs (the sources campaign R3/R4b added), so a stale
+			// artifact built from an older pair set keeps reporting itself fresh and every local run (and the CI cache)
+			// silently grades against it — that is how the TRANSITION-BETA pin row drifted unnoticed. The build writes
 			// one md5 per source in order (CSV, borough DB, pairs JSONL), so a length mismatch is itself staleness:
 			// an artifact predating a source cannot have recorded its md5.
 			const currentSourceMD5s = [
@@ -399,6 +468,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				await md5FileWithSidecar(String(NI_PAIRS_JSONL)),
 				await md5FileWithSidecar(String(GB_REGIONS_JSONL)),
 			]
+
 			const matches =
 				existingSourceMD5s.length === currentSourceMD5s.length &&
 				currentSourceMD5s.every((md5, i) => md5 === existingSourceMD5s[i])
@@ -407,7 +477,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 				pairIndexIsFresh = true
 
 				console.log(
-					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (delta + transitionBeta + all ${currentSourceMD5s.length} source md5s match)`
+					`skipped pair-index-gb.bin build — ${PAIR_INDEX_BIN_DEST} is fresh (header magnitudes + all ${currentSourceMD5s.length} source md5s match)`
 				)
 			} else {
 				console.log(
@@ -448,6 +518,8 @@ if (pairIndexIsFresh) {
 			String(PAIR_INDEX_DELTA),
 			"--transition-beta",
 			String(PAIR_INDEX_TRANSITION_BETA),
+			"--parent-delta",
+			String(PAIR_INDEX_PARENT_DELTA),
 			// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in ONSPD London ward pairs
 			// join the build — without these flags a dev rebuild would silently DROP them.
 			"--borough-db",
@@ -483,6 +555,8 @@ if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-gb.bin ← ${FST_SRC}`)
+
+	warnIfFSTStale(FST_SRC, "en-gb")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }

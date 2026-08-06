@@ -4,7 +4,7 @@
 import { type GBT, gbtScore, type TermFrequencyTable, trainGBT } from "@mailwoman/match"
 import { describe, expect, it } from "vitest"
 
-import { createGbtScorer, createMatchFeaturizer } from "./learned-scorer.ts"
+import { createGBTScorer, createMatchFeaturizer } from "./learned-scorer.ts"
 import { buildDefaultModel } from "./resolve.ts"
 import type { SourceRecord } from "./types.ts"
 
@@ -97,7 +97,7 @@ describe("createMatchFeaturizer", () => {
 	})
 })
 
-describe("createGbtScorer", () => {
+describe("createGBTScorer", () => {
 	it("applies the trained model to the pair's features (= gbtScore ∘ featurize)", () => {
 		const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 		const a = rec("1", "ann", "lee", "10 oak st", "10 OAK ST")
@@ -113,7 +113,7 @@ describe("createGbtScorer", () => {
 			minLeaf: 1,
 		})
 
-		const scorer = createGbtScorer({ comparisons, addressFrequency, model })
+		const scorer = createGBTScorer({ comparisons, addressFrequency, model })
 		// The scorer must equal gbtScore over the identical featurization.
 		expect(scorer(a, b)).toBeCloseTo(gbtScore(model, featurize(a, b)), 10)
 	})

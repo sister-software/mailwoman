@@ -7,7 +7,7 @@
  *   `/api/batch`, `/api/resolve-tree`, `/api/reload` handlers, `AddressRouter`'s retired `/parse`
  *   handler, and `HealthRouter`'s `/health` data block — onto the engine-agnostic `@mailwoman/api`
  *   contract's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
- *   `mailwoman/server/` is deleted (Task 2) — this file is its sole successor, a fresh port rather
+ *   `mailwoman/server/` is deleted — this file is its sole successor, a fresh port rather
  *   than a thin wrapper.
  *
  *   `createServeEngine` builds the shared stack ONCE, at boot, instead of express's lazy
@@ -25,14 +25,14 @@
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { createRequire } from "node:module"
-import { join } from "node:path"
+import { fileURLToPath } from "node:url"
 
 import type { BatchRow, GeocodeOutcome, HealthData, MailwomanAPIEngine, ResolveTreeOutcome } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -47,7 +47,13 @@ import {
 	ShardProvider,
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
+import {
+	buildNoGazetteerMessage,
+	createResolverBackend,
+	mailwomanDataRoot,
+	resolveCandidateDBPath,
+	wofShardPaths,
+} from "./resolver-backend.ts"
 
 /**
  * Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
@@ -81,30 +87,13 @@ function wofPaths(): string[] {
 
 /**
  * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`) — a stranger's
- * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it — adapted to this
- * package's own override (`MAILWOMAN_WOF_DB`, a comma-separated FTS shard list) alongside the shared
- * candidate-gazetteer fast path (`MAILWOMAN_CANDIDATE_DB`).
+ * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
  */
 function buildPreflightMessage(): string {
-	const conventionCandidate = join(DATA_ROOT, "wof", "candidate.db")
-
-	return [
-		"✗ no gazetteer data found — `mailwoman serve` needs a WOF SQLite distribution to geocode/resolve.",
-		"",
-		"  Fastest path (worldwide resolution, ~1.4 GB, byte-range friendly):",
-		`    mkdir -p ${join(DATA_ROOT, "wof")}`,
-		`    curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \\`,
-		`      -o ${conventionCandidate}`,
-		"",
-		"  Then point `$MAILWOMAN_CANDIDATE_DB` at that file and re-run `serve`:",
-		`    export MAILWOMAN_CANDIDATE_DB=${conventionCandidate}`,
-		"",
-		"  Or point at your own gazetteer:",
-		"    $MAILWOMAN_WOF_DB=<path1,path2,...>    (admin WOF SQLite shard(s) — the FTS backend)",
-		"    $MAILWOMAN_CANDIDATE_DB=<path>         (candidate-table gazetteer — population-first, demo-parity)",
-		"",
-		"  Docs: https://mailwoman.sister.software/docs",
-	].join("\n")
+	return buildNoGazetteerMessage({
+		dataRoot: DATA_ROOT,
+		docsPath: "/docs/developers/get-started/ten-minute-trial",
+	})
 }
 
 /**
@@ -119,7 +108,13 @@ function readModelCard(): Record<string, unknown> | null {
 	}
 
 	try {
-		candidates.push(createRequire(import.meta.url).resolve("@mailwoman/neural-weights-en-us/model-card.json"))
+		// Native ESM resolution of the weights package's card. `@mailwoman/neural-weights-*` packages carry no `exports`
+		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
+		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
+		// `require.resolve` this replaced returned. It does NOT throw for a missing FILE inside a resolvable package,
+		// only for an unresolvable package; the `existsSync` below already gates every candidate, so that is a no-op
+		// here.
+		candidates.push(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json")))
 	} catch {
 		/* package not resolvable from here — fall through */
 	}
@@ -128,9 +123,13 @@ function readModelCard(): Record<string, unknown> | null {
 
 	for (const p of candidates) {
 		try {
-			if (existsSync(p)) return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>
+			if (existsSync(p)) {
+				const card = tryParsingJSON<Record<string, unknown>>(readFileSync(p, "utf8"))
+
+				if (card) return card
+			}
 		} catch {
-			/* unreadable / malformed — try the next candidate */
+			/* unreadable — try the next candidate */
 		}
 	}
 
@@ -324,7 +323,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// `onnxruntime-node`'s `session.run()` blocks the JS thread rather than releasing to the libuv pool,
 	// and `node:sqlite` reads are synchronous. The pool bought nothing but the appearance of tuning, so
 	// it's a plain loop now. To actually parallelize, cross a thread boundary — see
-	// `mailwoman/geocode-stream.ts`. Receipts: `docs/articles/plan/reference/performance.mdx`.
+	// `mailwoman/geocode-stream.ts`. Receipts: `docs/engineering/reference/performance.mdx`.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
 		// Decision A endpoint default: batch rows are the record register.
 		const inputMode = opts?.inputMode ?? "formatted"

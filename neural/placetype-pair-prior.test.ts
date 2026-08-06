@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Unit tests for the placetype-pair emission bias (placetype-pair-prior arc, Tasks 4 + 6): the
+ *   Unit tests for the placetype-pair emission bias (placetype-pair-prior arc): the
  *   space-joined window-key fold, the two-sided disjoint-window match, marker suppression, and the
  *   `delta ?? biasScale` bias-magnitude resolution. The query-shape-prior.test.ts / street-morphology
  *   mock-index idiom — a hand-built `PairIndexLike` double, no real binary artifact needed.
  *
- *   `probeMode` DEFAULTED to `"segment"` in Task 6 (the venue-confound falsifier verdict — see
+ *   `probeMode`'s v1 default is `"segment"` (the venue-confound falsifier verdict — see
  *   `placetype-pair-prior.ts`'s module docstring). Every test above this file's "segment mode" section
  *   passes `probeMode: "window"` explicitly — they exercise the sub-segment sliding-window behavior on
- *   comma-free `makePieces` input, which is now opt-in, not the default. The "segment mode" section below
+ *   comma-free `makePieces` input, which is opt-in, never a default. The "segment mode" section below
  *   tests that path directly, using `makePiecesWithCommas` (a comma-preserving sibling of
  *   `makePieces`) so segment boundaries actually exist to probe.
  *
@@ -35,7 +35,7 @@ import {
 	PairIndexResolver,
 	serializePairIndex,
 	type PairIndexEntry,
-	type PairIndexHeader,
+	type PairIndexHeaderInput,
 	type PairIndexLike,
 } from "./pair-index-resolver.ts"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "./placetype-pair-prior.ts"
@@ -98,14 +98,19 @@ function makePiecesWithCommas(text: string): Array<{ piece: string; start: numbe
 }
 
 /**
- * A `PairIndexLike` double backed by a plain `(child, parent) -> tag` map, with recorded probe calls so tests can
+ * A `PairIndexLike` double backed by a plain `(child, parent) -> edge` map, with recorded probe calls so tests can
  * assert on the exact keys probed (the space-join proof needs this).
+ *
+ * An entry value is `"<childTag>"` or `"<childTag>>​<parentTag>"`. The short form means a `locality` parent — the shape
+ * every shipped register artifact carries, and the only default in play here: the SUT itself derives nothing (PIX2),
+ * this is a fixture shorthand.
  */
 function mockPairIndex(
 	entries: Record<string, string>,
 	delta?: number,
 	transitionBeta?: number,
-	country?: string
+	country?: string,
+	parentDelta?: number
 ): PairIndexLike & { calls: Array<[string, string]> } {
 	const calls: Array<[string, string]> = []
 
@@ -113,11 +118,18 @@ function mockPairIndex(
 		delta,
 		transitionBeta,
 		country,
+		parentDelta,
 		calls,
 		probe(child: string, parent: string) {
 			calls.push([child, parent])
 
-			return entries[`${child}|${parent}`] as never
+			const spec = entries[`${child}|${parent}`]
+
+			if (spec === undefined) return undefined
+
+			const [tag, parentTag = "locality"] = spec.split(">")
+
+			return { tag, parentTag } as never
 		},
 	}
 }
@@ -340,7 +352,7 @@ describe("buildPlacetypePairPriors — disjointness", () => {
 	})
 })
 
-describe("buildPlacetypePairPriors — dual-key tie-break (fix round 2, re-review adjudication-3 minor)", () => {
+describe("buildPlacetypePairPriors — dual-key tie-break", () => {
 	it("prefers the space-joined form when it and the concatenated form would resolve to DIFFERENT tags", () => {
 		// A real index can't disagree with itself about the same real-world pair, but `probeWindowPair`'s
 		// search order is what actually GUARANTEES the stated preference rather than leaving it to chance:
@@ -359,12 +371,11 @@ describe("buildPlacetypePairPriors — dual-key tie-break (fix round 2, re-revie
 	})
 })
 
-describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix round 2, real PIX1 round trip)", () => {
-	// Item 3 of the fix-round-2 brief: a REAL PairIndexBuilder-shaped entry, through a REAL tokenizer, through
-	// the REAL PIX1 serialize/deserialize round trip — not a hand-built `PairIndexLike` double. This is the
-	// case that was structurally impossible to express with `makePieces` (one synthetic ▁-per-word piece each
-	// — it can't reproduce a genuine bare-▁-orphan split) and that fix round 1's mock-only coverage therefore
-	// never exercised.
+describe("buildPlacetypePairPriors — end-to-end cross-form regression (real PIX1 round trip)", () => {
+	// A REAL PairIndexBuilder-shaped entry, through a REAL tokenizer, through the REAL PIX1
+	// serialize/deserialize round trip — not a hand-built `PairIndexLike` double. Mock-only coverage cannot
+	// reach this case at all: `makePieces` emits one synthetic ▁-per-word piece, so it can never reproduce a
+	// genuine bare-▁-orphan split.
 	//
 	// The entry below is not re-derived by calling `PairIndexBuilder` here: that class lives in the `mailwoman`
 	// workspace (CLI/gazetteer tooling), which depends on `@mailwoman/neural` — not the reverse — and
@@ -378,13 +389,12 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 	// this test locks in that the DECODE side (tokenizer → groupPiecesIntoWords → dual-key window probe →
 	// real PIX1 resolver) resolves it correctly once it exists.
 	const REAL_BUILDER_ENTRIES: PairIndexEntry[] = [
-		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality" },
+		{ child: "fishburn", parent: "stocktonontees", tag: "dependent_locality", parentTag: "locality" },
 	]
 
-	const REAL_HEADER: PairIndexHeader = {
+	const REAL_HEADER: PairIndexHeaderInput = {
 		country: "gb",
 		delta: 6,
-		schemaVersion: 1,
 		foldVersion: 1,
 		sourceMD5s: [],
 		buildDate: "2026-07-22",
@@ -396,8 +406,8 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 
 		const tokenizer = await MailwomanTokenizer.loadFromFile(FIXTURE_TOKENIZER_PATH)
 		// Real split: ["▁F","ish","burn","▁Stock","ton","▁","on","▁Te","es"] — the bare "▁" before "on" is
-		// exactly the pattern fix round 2 recovers; pre-fix, "on" would vanish and the 3-word parent window
-		// "stockton on tees" would never even be built, let alone probed.
+		// exactly the orphan pattern `groupPiecesIntoWords` has to recover. Drop "on" and the 3-word parent
+		// window "stockton on tees" is never even built, let alone probed.
 		const { pieces } = tokenizer.encode("Fishburn Stockton on Tees")
 		const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
@@ -412,7 +422,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 
 			const tokenizer = await MailwomanTokenizer.loadFromFile(PRODUCTION_TOKENIZER_PATH)
 			// Real split: ["▁Fish","burn","▁Stockton","▁","on","▁","Tees"] — same bare-▁-orphan shape, on the
-			// tokenizer the re-review actually found this bug against.
+			// PRODUCTION tokenizer rather than the fixture one.
 			const { pieces } = tokenizer.encode("Fishburn Stockton on Tees")
 			const { matrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
@@ -421,7 +431,7 @@ describe("buildPlacetypePairPriors — end-to-end cross-form regression (fix rou
 	)
 })
 
-describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now the ≥2-segment leg of the auto chain)", () => {
+describe("buildPlacetypePairPriors — segment mode (the v1 default, now the ≥2-segment leg of the auto chain)", () => {
 	it('a venue-EMBEDDED name does NOT fire — "Queens Park Academy" (one segment, no internal comma) never reduces to the census child "queens park"', () => {
 		// The actual Task-6 venue-confound board FP verbatim (window mode): "Queens Park Academy, Queens Park
 		// Academy Chestnut Avenue, Chester, MK40 4HA" wrongly emitted dependent_locality=["Queens Park"] because
@@ -446,7 +456,7 @@ describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now
 	})
 
 	it("a segment-EXACT name DOES fire — a bare census child occupying its own comma-delimited field", () => {
-		// The honestly-reported residual FP class from the task-6 report: this is ALSO the shape of a genuine
+		// The segment default's residual FP class: this is ALSO the shape of a genuine
 		// false positive when a non-venue field (e.g. a street name) happens to equal a bare census child
 		// verbatim ("Moelfre B & B, Moelfre, Abergele, SY20 8LF" — the street field is literally "Moelfre"). The
 		// mechanism is purely textual/segmental, not semantic, so the same shape that defeats the venue-confound
@@ -495,7 +505,7 @@ describe("buildPlacetypePairPriors — segment mode (Task 6; the v1 default, now
 
 		expect(autoMatrix[0]![labelCol("B-dependent_locality")]).toBe(6)
 
-		// Explicit opt-in: the original sub-window behavior is unchanged and still resolves the same pair.
+		// Explicit opt-in: the sub-window path resolves the same pair.
 		const { matrix: windowMatrix } = buildPlacetypePairPriors({ index, probeMode: "window" }, pieces, LABELS)
 
 		expect(windowMatrix[0]![labelCol("B-dependent_locality")]).toBe(6)
@@ -585,8 +595,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
-		// The child flips via the "Porirua" segment (its OWN comma-field) — the postcode segment "5026" is ignored,
-		// exactly as before this fix.
+		// The child flips via the "Porirua" segment (its OWN comma-field) — the postcode segment "5026" is ignored.
 		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6)
 		expect(index.calls).toContainEqual(["plimmerton", "porirua"])
 		expect(index.calls.some(([child]) => child === "5026")).toBe(true)
@@ -610,7 +619,7 @@ describe("buildPlacetypePairPriors — segment-parent same-field postcode strip 
 	})
 })
 
-describe("buildPlacetypePairPriors — marker suppression must not cross segment boundaries (final-review fix)", () => {
+describe("buildPlacetypePairPriors — marker suppression must not cross segment boundaries", () => {
 	it('reviewer repro: "Fishburn, 5 Fishburn Road" biases Fishburn — successor "5" is in the NEXT segment, so it must never suppress', () => {
 		// Segment 0 is "Fishburn" alone; segment 1 is the whole 3-word "5 Fishburn Road" (no internal comma). Before
 		// the fix, `isMarkerSuppressed` read `nonEmptyGroups[x.endPos + 1]` unconditionally — for segment 0's
@@ -628,8 +637,8 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 	})
 
 	it('control: WINDOW mode marker suppression is unaffected by comma placement — "Fishburn Road, Leeds" still suppresses "Fishburn" (successor "Road" IS in the same clause)', () => {
-		// Window mode never consulted segment boundaries before this fix and must not start now — "Fishburn"
-		// immediately followed by "Road" (the structural marker) is still suppressed regardless of the later comma.
+		// Window mode never consults segment boundaries and must not start — "Fishburn" immediately followed by
+		// "Road" (the structural marker) is suppressed regardless of the later comma.
 		const index = mockPairIndex({ "fishburn|leeds": "dependent_locality" }, 6)
 		const text = "Fishburn Road, Leeds"
 		const pieces = makePiecesWithCommas(text)
@@ -659,7 +668,7 @@ describe("buildPlacetypePairPriors — marker suppression must not cross segment
 	})
 })
 
-describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fixture tokenizer)", () => {
+describe("buildPlacetypePairPriors — paired punctuation (real fixture tokenizer)", () => {
 	// Segment mode's own doc comment claims a quoted venue is "one segment... which never equals the census's...
 	// entry" for the VENUE-CONFOUND class specifically. These cases check the OTHER direction: when the quoted text
 	// itself IS the real place name (occupying its own comma-delimited field, same shape as any other segment-exact
@@ -693,7 +702,7 @@ describe("buildPlacetypePairPriors — paired punctuation (Task 9 audit, real fi
 	})
 
 	it("a curly-quoted segment ('\"The Grange\", Fishburn' with curly quotes) probes the SAME clean fold as straight quotes", async () => {
-		// Regression guard for the byte-fallback groupPiecesIntoWords fix (Task 9): before that fix, this exact
+		// Regression guard for the byte-fallback groupPiecesIntoWords fix: before that fix, this exact
 		// case's probe key was "0xe20x800x9cthe"/"grange0xe20x800x9d" — garbage that could never match a real
 		// index entry, a silent false negative.
 		const index = mockPairIndex({ "the grange|fishburn": "dependent_locality" }, 6)
@@ -900,7 +909,7 @@ describe("buildPlacetypePairPriors — anchored adjacent-pair mode (v1.1 probe c
 
 describe("buildPlacetypePairPriors — identical adjacent segments (NZ repeated-name convention, registry-evidence semantics)", () => {
 	// NZ conventionally repeats the name when suburb == post town ("Mangawhai, Mangawhai" — 63/246 rows of
-	// the NZ golden board, 25.6%; task-8 report § "NZ arc"), and the LINZ-built pair index records the
+	// the NZ golden board, 25.6%), and the LINZ-built pair index records the
 	// identity pair ("mangawhai","mangawhai"). The (x, x) entry is itself the evidence of the convention:
 	// the FIRST occurrence is the dependent locality, the second is the post town. See the module
 	// docstring's "Identity pairs" section for the full rule.
@@ -955,8 +964,8 @@ describe("buildPlacetypePairPriors — identical adjacent segments (NZ repeated-
 		const pieces = makePiecesWithCommas(text)
 		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
 
-		// BOTH identical segments bias, exactly as before this fix: neither has an identical immediately-preceding
-		// neighbor ("Something" sits between them), so neither is a repeat.
+		// BOTH identical segments bias: neither has an identical immediately-preceding neighbor ("Something" sits
+		// between them), so neither is a repeat.
 		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(6)
 		expect(matrix[4]![labelCol("B-dependent_locality")]).toBe(6)
 		// The middle segment never resolves — untouched.
@@ -1194,5 +1203,164 @@ describe("buildPlacetypePairPriors — transition adjustments (TRANSITION-BETA b
 		)
 
 		expect(transitionAdjustments).toEqual([{ pieceIndex: 0, toLabel: "B-dependent_locality", bonus: 5 }])
+	})
+})
+
+describe("buildPlacetypePairPriors — whole-edge parent bias (#46)", () => {
+	it("omitting parentDelta is byte-identical to the pre-#46 build — only the child span carries a bias", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		// "New York" is pieces 2..3 (piece 1 is the comma). Nothing is written there.
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[3]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it("a dependent_locality child biases the parent toward locality ALONE — the Brooklyn case", () => {
+		// The record says the parent is a `locality`, so the parent window gets exactly one label lifted and
+		// `region` — the read the trailing "NY" pulls it to, by 4.21 nats on the shipped weights — gets nothing.
+		// This is the whole point of the fix: the edge the index asserts is (child, parent), and biasing only the
+		// child produced a tree with a dependent_locality and NO locality at all.
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[2]![labelCol("B-locality")]).toBe(8)
+		expect(matrix[3]![labelCol("I-locality")]).toBe(8)
+		expect(matrix[2]![labelCol("B-region")]).toBe(0)
+		expect(matrix[3]![labelCol("I-region")]).toBe(0)
+	})
+
+	it("biases EXACTLY the record's parentTag — not the containment set the child tag would allow (PIX2)", () => {
+		// `WESTERN_PARENT_OF.locality` is `["subregion", "region", "country"]`. The pre-PIX2 derivation lifted all
+		// three by the same δ, which left whichever the model already preferred on top and therefore moved nothing.
+		// The record names ONE parent tag and only that label moves.
+		const index = mockPairIndex({ "springfield|illinois": "locality>region" }, 10)
+		const text = "Springfield, Illinois"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-locality")]).toBe(10)
+		expect(matrix[2]![labelCol("B-region")]).toBe(8)
+		expect(matrix[2]![labelCol("B-subregion")]).toBe(0)
+		expect(matrix[2]![labelCol("B-country")]).toBe(0)
+		expect(matrix[2]![labelCol("B-street")]).toBe(0)
+	})
+
+	it("carries a parent tag containment forbids — a dependent_locality under a BOROUGH", () => {
+		// The US WOF source's borough-parent edge ("Park Slope" under "Brooklyn"). `WESTERN_PARENT_OF` gives
+		// `dependent_locality` exactly one allowed parent, `locality`, so the derived mechanism could only ever
+		// have biased the wrong label here.
+		const index = mockPairIndex({ "park slope|brooklyn": "dependent_locality>dependent_locality" }, 10)
+		const text = "Park Slope, Brooklyn"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(8)
+		expect(matrix[3]![labelCol("B-locality")]).toBe(0)
+	})
+
+	it("reads parentDelta off the index HEADER when opts omits it — the default-on wire-up", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us", 5)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[2]![labelCol("B-locality")]).toBe(5)
+	})
+
+	it("an explicit opts.parentDelta OVERRIDES the header — the MAILWOMAN_PAIR_PARENT_DELTA sweep lever", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us", 5)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 20 }, pieces, LABELS)
+
+		expect(matrix[2]![labelCol("B-locality")]).toBe(20)
+	})
+
+	it("a header WITHOUT parentDelta writes no parent bias at all — the unmeasured-locale posture", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality>locality" }, 10, undefined, "us")
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it("the parent bias is emission-only — it never emits a transition adjustment", () => {
+		// `transitionBeta` is the CHILD's calibrated path-fusion lever (β=5, measured on the child span's entry
+		// transition). The parent bias has no such calibration and must not inherit one.
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10, 5)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+
+		const { transitionAdjustments } = buildPlacetypePairPriors(
+			{ index, inputText: text, parentDelta: 8 },
+			pieces,
+			LABELS
+		)
+
+		expect(transitionAdjustments).toEqual([{ pieceIndex: 0, toLabel: "B-dependent_locality", bonus: 5 }])
+	})
+
+	it("the anchored (comma-free) leg biases its parent too", () => {
+		const index = mockPairIndex({ "shoreditch|london": "dependent_locality" }, 10)
+		const text = "12 Redchurch Street Shoreditch London"
+		const pieces = makePieces(text)
+
+		const { matrix } = buildPlacetypePairPriors(
+			{ index, inputText: text, probeMode: "anchored", parentDelta: 8 },
+			pieces,
+			LABELS
+		)
+
+		expect(matrix[3]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[4]![labelCol("B-locality")]).toBe(8)
+	})
+
+	it("the parent bias covers the KEY's span, not the whole segment — a same-field postcode is excluded", () => {
+		// The FR shape: the parent field is "12210 Montpeyroux" and #1308 strips the LEADING postcode from the probe
+		// key. Biasing the whole segment toward `locality` emits `locality = "12210 Montpeyroux"`, postcode included.
+		// Measured on `fr-lieudit-golden.jsonl`: whole-edge 96.3% → 0.0% at parentDelta ≥ 6, child still right on
+		// 77/80. Only the postcode-free pieces may carry the parent bias.
+		const index = mockPairIndex({ "pinsonnac|montpeyroux": "dependent_locality" }, 10, undefined, "fr")
+		const text = "Pinsonnac, 12210 Montpeyroux"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		// Piece 1 is the comma, piece 2 is "12210", piece 3 is "Montpeyroux".
+		expect(matrix[2]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[3]![labelCol("B-locality")]).toBe(8)
+	})
+
+	it("the GB trailing-postcode shape is excluded from the parent bias for the same reason", () => {
+		const index = mockPairIndex({ "henbury|macclesfield": "dependent_locality" }, 10, undefined, "gb")
+		const text = "Henbury, Macclesfield SK11 9PD"
+		const pieces = makePiecesWithCommas(text)
+		const { matrix } = buildPlacetypePairPriors({ index, inputText: text, parentDelta: 8 }, pieces, LABELS)
+
+		expect(matrix[0]![labelCol("B-dependent_locality")]).toBe(10)
+		expect(matrix[2]![labelCol("B-locality")]).toBe(8)
+		// "SK11" and "9PD" are pieces 3 and 4 — the stripped trailing run.
+		expect(matrix[3]!.every((v) => v === 0)).toBe(true)
+		expect(matrix[4]!.every((v) => v === 0)).toBe(true)
+	})
+
+	it("probeTrace records every fired child tag — the sort key for bar B-1's population split", () => {
+		const index = mockPairIndex({ "brooklyn|new york": "dependent_locality" }, 10)
+		const text = "Brooklyn, New York, NY"
+		const pieces = makePiecesWithCommas(text)
+		const probeTrace: PlacetypePairProbeTrace = {}
+
+		buildPlacetypePairPriors({ index, inputText: text, probeTrace }, pieces, LABELS)
+
+		expect(probeTrace.firedChildTags).toEqual(["dependent_locality"])
 	})
 })

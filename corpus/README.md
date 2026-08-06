@@ -72,7 +72,7 @@ node scripts/corpus-stats.mjs
 - [`@mailwoman/neural-weights-en-us`](../neural-weights-en-us) — the trained model itself
 - [Corpus Construction concepts](https://mailwoman.sister.software/articles/concepts/corpus-construction/)
 - [Training Pipeline concepts](https://mailwoman.sister.software/articles/concepts/training-pipeline/)
-- [CONTRIBUTING_MODEL_WORK](https://mailwoman.sister.software/articles/plan/CONTRIBUTING_MODEL_WORK/)
+- [CONTRIBUTING_MODEL_WORK](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
 
 ## License
 

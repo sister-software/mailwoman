@@ -1,0 +1,251 @@
+---
+title: Validate an address before you use it
+description: Check that an address is complete, well-formed and confidently read — and know why that is not the same as checking that mail will arrive.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Validate an address before you use it
+
+**Outcome.** You have a function that rejects incomplete, malformed and weakly-read addresses, and you
+know which failures it cannot catch.
+
+Validation here means three checks, run in this order: every component you require is present, each one
+was read confidently rather than guessed, and each one has a shape the postal system allows. Mailwoman
+does not check deliverability. There is no carrier database behind these checks and no mail is ever
+sent — see [What this does not tell you](#what-this-does-not-tell-you) before you wire it to a checkout
+form.
+
+## Prerequisites
+
+- The library install from
+  [Install and first parse](../get-started/install-and-first-parse.mdx), plus `@mailwoman/codex` for
+  the postal reference tables.
+- No gazetteer database. Every check on this page is parse plus reference tables, so nothing here needs
+  a data root. The last section adds a geocode, and that one does.
+
+## 1. Flatten the parse into components
+
+`classifier.parse()` returns a tree, because a locality contains a street and a street contains a house
+number. Validation cares about presence and confidence rather than nesting, so flatten it first:
+
+```js
+function flatten(nodes, into = new Map()) {
+	for (const node of nodes) {
+		into.set(node.tag, { value: node.value, confidence: node.confidence })
+		flatten(node.children, into)
+	}
+	return into
+}
+```
+
+Each node carries a `confidence` in `[0, 1]`, aggregated across the span's tokens. There is no
+whole-parse confidence field — the tree exposes per-component scores and nothing above them, so a
+row-level verdict is something you compute, and the weakest component is the one to compute it from.
+
+## 2. Decide what "complete" means for your use
+
+Completeness is a property of what you are going to do with the address, not of the address. A shipping
+label needs a house number; a sales-territory rollup does not. Write the list down rather than
+inferring it:
+
+```js
+/** Components a US mailing address needs before you send anything to it. */
+const REQUIRED = ["house_number", "street", "locality", "region", "postcode"]
+```
+
+The component names come from the schema — [`SCHEMA.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx)
+is the full `ComponentTag` list, and [Understand a parse](../tutorials/understand-a-parse.mdx) walks
+through what each one holds.
+
+## 3. Add the postal shape checks
+
+`@mailwoman/codex` ships the postal reference tables as pure functions with no runtime dependency. Three
+of them cover most of what a US address can get wrong:
+
+| Check                        | Function                       | Subpath               |
+| ---------------------------- | ------------------------------ | --------------------- |
+| Region is a real state code  | `isUSStateAbbreviation(value)` | `@mailwoman/codex/us` |
+| Postcode has ZIP Code shape  | `isZipCode(value)`             | `@mailwoman/codex/us` |
+| Street ends in a USPS suffix | `matchTrailingSuffix(name)`    | `@mailwoman/codex/us` |
+
+Each of these asks whether a value _could_ exist. None of them asks whether it _does_. `isZipCode`
+is the regular expression `^\d{5}(?:[-\s]\d{4})?$`, so `00000` passes and `2000` does not; codex ships
+no per-ZIP registry, by design — it is a zero-dependency reference package, and existence lives in the
+gazetteer.
+
+Other locales ship the same pair under their own subpath, named after the local term for the thing
+rather than after a generic one: `isUkPostcode`/`normalizeUkPostcode` under `@mailwoman/codex/gb`,
+`isCodePostal`/`normalizeCodePostal` under `/fr`, `isPostleitzahl`/`normalizePLZ` under `/de`. Check the
+subpath's exports rather than guessing the name.
+`candidateSystemsForPostcode(value)` from the package root runs a string against every shape at once and
+returns the address systems that accept it, which is how you check a postcode when you do not yet know
+the country.
+
+## 4. Put it together
+
+```js
+import { isStreetDirectionalToken, isUSStateAbbreviation, isZipCode, matchTrailingSuffix } from "@mailwoman/codex/us"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
+
+const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+
+/** Components a US mailing address needs before you send anything to it. */
+const REQUIRED = ["house_number", "street", "locality", "region", "postcode"]
+
+/** The floor a component's confidence has to clear before it counts as read rather than guessed. */
+const MIN_CONFIDENCE = 0.8
+
+function flatten(nodes, into = new Map()) {
+	for (const node of nodes) {
+		into.set(node.tag, { value: node.value, confidence: node.confidence })
+		flatten(node.children, into)
+	}
+	return into
+}
+
+/**
+ * The USPS suffix of a street name, looking past a post-directional: `Pennsylvania Ave NW` ends in `NW`, so a bare
+ * trailing-token match misses the `Ave` that is the suffix.
+ */
+function trailingSuffixOf(streetName) {
+	const tokens = streetName.split(/\s+/)
+	while (tokens.length > 1 && isStreetDirectionalToken(tokens.at(-1))) tokens.pop()
+	return matchTrailingSuffix(tokens.join(" "))
+}
+
+export async function validateAddress(raw) {
+	const components = flatten((await classifier.parse(raw)).roots)
+	const problems = []
+
+	for (const tag of REQUIRED) {
+		if (!components.has(tag)) problems.push(`missing ${tag}`)
+	}
+
+	for (const [tag, c] of components) {
+		if (c.confidence < MIN_CONFIDENCE) problems.push(`low confidence on ${tag} (${c.confidence.toFixed(3)})`)
+	}
+
+	// Shape checks from the postal reference tables. Each one asks "could this exist", never "does this exist".
+	const region = components.get("region")
+	if (region && !isUSStateAbbreviation(region.value)) problems.push(`${region.value} is not a US state abbreviation`)
+
+	const postcode = components.get("postcode")
+	if (postcode && !isZipCode(postcode.value)) problems.push(`${postcode.value} is not ZIP Code shaped`)
+
+	const street = components.get("street")
+	if (street && !components.has("street_suffix") && !trailingSuffixOf(street.value)) {
+		problems.push(`${street.value} carries no recognized USPS street suffix`)
+	}
+
+	return { raw, ok: problems.length === 0, problems, components: Object.fromEntries(components) }
+}
+```
+
+The directional strip in `trailingSuffixOf` is the detail that catches people. `Pennsylvania Ave NW`
+ends in `NW`, so asking for a trailing suffix directly returns nothing and a correct address is
+rejected. Post-directionals come after the suffix; strip them, then look.
+
+## Verify
+
+```bash
+node validate.mjs \
+  "1275 Pennsylvania Ave NW, Washington, DC 20004" \
+  "42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000" \
+  "800 F St NW, Washington, DC 2000" \
+  "Suite 400" \
+  "1275 Pennsylvania Avenue Northwest, Washington"
+```
+
+```
+ok    1275 Pennsylvania Ave NW, Washington, DC 20004
+FAIL  42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000
+        low confidence on region (0.462)
+        ZZ is not a US state abbreviation
+FAIL  800 F St NW, Washington, DC 2000
+        2000 is not ZIP Code shaped
+FAIL  Suite 400
+        missing house_number
+        missing street
+        missing locality
+        missing region
+        missing postcode
+        low confidence on unit (0.038)
+FAIL  1275 Pennsylvania Avenue Northwest, Washington
+        missing house_number
+        missing locality
+        low confidence on region (0.507)
+        low confidence on postcode (0.724)
+        Washington is not a US state abbreviation
+        1275 is not ZIP Code shaped
+```
+
+Read the last one closely, because it is the interesting failure. `1275 Pennsylvania Avenue Northwest,
+Washington` has no state and no ZIP Code, so the parse assigned `Washington` to `region` at 0.507 and
+`1275` to `postcode` at 0.724. Both assignments are wrong and both scored low. The confidence check and
+the shape check caught the same defect independently, which is what you want from two checks.
+
+## What this does not tell you
+
+Two addresses that pass every check above:
+
+```
+ok    99999 Pennsylvania Ave NW, Washington, DC 20004
+ok    1275 Pennsylvania Ave NW, Chicago, IL 60606
+```
+
+There is no 99999 Pennsylvania Avenue, and 1275 Pennsylvania Avenue is in Washington rather than
+Chicago. Both are complete, confidently read and correctly shaped. Neither exists.
+
+That gap is structural. Presence, confidence and shape are all properties of the string. Existence is a
+property of the world, and answering it requires a record to match against — which is what geocoding
+does. `resolution_tier` on a geocode result names the finest record that matched:
+
+```bash
+for a in "1275 Pennsylvania Ave NW, Washington, DC 20004" "99999 Pennsylvania Ave NW, Washington, DC 20004"; do
+  npx mailwoman geocode "$a" | jq -c '{resolution_tier, uncertainty_m, lat, lon}'
+done
+```
+
+```
+{"resolution_tier":"address_point","uncertainty_m":1,"lat":38.89566505262116,"lon":-77.02925468482408}
+{"resolution_tier":"admin","uncertainty_m":null,"lat":38.904831,"lon":-77.016216}
+```
+
+That run had `candidate.db` plus the DC address-point shard on disk (the setup
+[Improve geocode precision](../tutorials/improve-geocode-precision.mdx) builds). Without the shard both
+rows answer `admin`, and the check below cannot distinguish them — precision data is what makes this
+test meaningful, not the parse.
+
+`address_point` means a rooftop record for that house number matched. `admin` means nothing finer than
+the city did, and the coordinate you got back is the city centroid. Adding
+`result.resolution_tier === "address_point"` to your check turns "well-formed" into "we hold a record
+for it", and that is as close to existence as this system goes.
+
+Even then it is not deliverability. A rooftop record says a structure was surveyed at that address; it
+does not say mail is accepted there, that the unit number is right, or that the occupant is who you
+think. Nothing in Mailwoman contacts a carrier. If your requirement is "will this parcel arrive", the
+answer comes from a postal-carrier address-verification service, not from here.
+
+## Limits
+
+- **Shape checks are per-country and you must pick the country.** `isZipCode` will reject a valid GB
+  postcode. Route to the right codex subpath from the parsed country, or use
+  `candidateSystemsForPostcode` when the country is unknown.
+- **Codex holds no existence tables.** No ZIP-to-state cross-check, no street registry. The
+  `ZipCodePrefixAbbreviationMap` it does ship is a first-digit-to-state-band prior — a hint, not a
+  lookup.
+- **A raw confidence near 0.9 is not 90% correct.** The scores on this page are uncalibrated, and their
+  spread on clean input is narrow. See
+  [Tune confidence thresholds](./tune-confidence-thresholds.mdx) before you pick `MIN_CONFIDENCE` for
+  production; 0.8 here is a demonstration floor, not a recommendation.
+- **`street_suffix` is sometimes its own component and sometimes part of `street`.** The check above
+  handles both, and any check you write on street shape has to.
+
+## Related
+
+- [Handle messy input](./handle-messy-input.mdx) — normalizing before validating, and what the parser
+  tolerates without help.
+- [Tune confidence thresholds](./tune-confidence-thresholds.mdx) — where `MIN_CONFIDENCE` should sit,
+  and the trade each value buys.
+- [Understand a parse](../tutorials/understand-a-parse.mdx) — what the component tags mean.

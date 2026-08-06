@@ -9,6 +9,7 @@
 
 import type { Kysely } from "kysely"
 
+import { parseJSONStrict } from "../objects.ts"
 import { LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
 
 /**
@@ -118,7 +119,7 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
 		buildCmd: row.build_cmd,
 		buildSHA: row.build_sha,
 		freshnessPolicy: row.freshness_policy as LayerFreshnessPolicy,
-		spineKeys: JSON.parse(row.spine_keys) as SpineKeys,
+		spineKeys: parseJSONStrict<SpineKeys>(row.spine_keys),
 		createdAt: row.created_at,
 	}
 

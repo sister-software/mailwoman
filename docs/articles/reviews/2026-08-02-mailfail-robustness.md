@@ -11,7 +11,7 @@ four paths, with the fixture committed at
 
 Three findings need action, and one of them is not a garbage-input problem at all.
 
-The stack is genuinely well-behaved on the input classes you would expect to break it. Empty
+The stack is well-behaved on the input classes you would expect to break it. Empty
 strings, whitespace, punctuation runs, emoji, ZWJ sequences, box drawing, unpaired surrogates,
 embedded NUL, BOM, zalgo, RTL overrides, CJK and Devanagari all pass through without a throw and
 mostly without emitting anything. That is a real clean bill of health and it is stated plainly
@@ -39,16 +39,16 @@ Four paths, because they behave differently and carry different risk:
 | **resolve**  | `createRuntimePipeline({ classifier, resolver })` over `admin-global-priority.db` (5.2 GB, FTS backend).                                                                                          | `mailwoman parse --resolve`                                 |
 
 The raw classifier defaults `enforceWordConsistency` to OFF; every measurement here passes
-`WORD_CONSISTENCY_SHIP_DEFAULT` so it reflects what a consumer actually runs.
+`WORD_CONSISTENCY_SHIP_DEFAULT` so it reflects what a consumer runs.
 
-**Harness scepticism.** The first resolve run reported zero garbage-to-coordinates, which would
+**Measurement scepticism.** The first resolve run reported zero garbage-to-coordinates, which would
 have been a headline "clean" result. It was wrong: the walker looked for `node.resolved.latitude`,
-and resolved coordinates actually land on `node.lat` / `node.lon`. A positive control — a real
+and resolved coordinates land on `node.lat` / `node.lon`. A positive control — a real
 address that must resolve — caught it. The control is now the first row of every resolve run, and
 the 35 hits below are from the run where it passed. Two of those hits were re-confirmed through
-the shipped CLI (`mailwoman parse --resolve`) rather than the harness.
+the shipped CLI (`mailwoman parse --resolve`) rather than the eval script.
 
-A second harness bug is worth recording because it produced a number that briefly went into this
+A second eval-script bug is worth recording because it produced a number that briefly went into this
 report. The 1 MB run was watched with a shell loop whose own command line contained the string
 `mailfail-e2e`, so `pgrep -f mailfail-e2e` matched **the watcher, not the job** — and
 `ps -o etimes` was reporting the watcher's age as if it were the measurement. That is how ">5.5
@@ -136,7 +136,7 @@ throw sites and stops `query-shape-prior.ts` / `span-proposal-prior.ts` allocati
 `pieces.length × labels.length` matrices whose tail rows `addEmissionMatrix` discards anyway. It
 also makes the truncation _visible_ — today a 400-character address is silently parsed from its
 first ~320 characters with no signal to the caller, which is its own reportable defect. Tightening
-`MAX_QUERY_LEN` to ~300 would reduce the blast radius on two of the four servers but is a
+`MAX_QUERY_LEN` to ~300 would bound the worst case on two of the four servers but is a
 mitigation, not the fix.
 
 ---
@@ -182,7 +182,7 @@ count alone: 3.8 ms → 103.4 ms across a 16× size increase.
 
 **Suggested fix.** Both arrays are position-sorted, so a two-pointer merge makes this O(S + T) with
 no behaviour change. Filtering tokens by `REGION_ABBREV_RE` and class _before_ the segment loop is
-a cheaper partial mitigation but stays quadratic when the abbreviation genuinely repeats.
+a cheaper partial mitigation but stays quadratic when the abbreviation repeats.
 
 ---
 
@@ -228,7 +228,7 @@ advance `i` past the consumed run, or memoize the run-end per start index.
 
 ## Exposure map
 
-Where the two quadratics and the 128-piece throw can actually be reached:
+Where the two quadratics and the 128-piece throw can be reached:
 
 | Surface                                     | Length guard                                                                                                                   | Exposed to                                                          |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
@@ -276,7 +276,7 @@ which recomputes `this.end` from the truncated body — so the span's offsets no
 input it came from.
 
 **Suggested fix.** Fixing Finding 1 removes the throw, which removes most of this. Independently,
-`safeClassify` swallowing every error with a bare `catch {}` means a genuine model fault is
+`safeClassify` swallowing every error with a bare `catch {}` means a model fault is
 indistinguishable from a clean no-match. Surfacing it on `PipelineResult` (a `classifierError`
 field, or a `path` marker) would cost nothing and make this class self-reporting.
 
@@ -308,7 +308,7 @@ those tokens can be tagged `locality` and resolved.
 | `-0`                                              | negative zero           | `Purwa 0`, India — 25.5927, 82.6826              |
 | zalgo text                                        | combining marks         | four localities across India and the Philippines |
 
-Two of these were re-confirmed through the shipped CLI rather than the harness. `+1 (555)
+Two of these were re-confirmed through the shipped CLI rather than the eval script. `+1 (555)
 867-5309` under `--resolve` (which applies `defaultCountry=US` from `--locale en-US`) lands on a
 Nebraska place named `1` at 41.4345, −96.0268 instead of Guatemala — different point, same defect.
 
@@ -331,13 +331,13 @@ A phone number is read as a locality at **0.964**. On the resolver side, the cor
 geocoder should find it. The defect is that nothing downstream can tell the two cases apart. A
 plausible mitigation is a population/importance floor for single-token localities with no
 corroborating component (no house number, no postcode, no region), which would drop the whole
-table above while leaving `Springfield` — a bare city name a user might genuinely type — intact.
+table above while leaving `Springfield` — a bare city name a user might type — intact.
 That trades recall for precision and should be measured against the fragment boards before anyone
 ships it.
 
 ---
 
-## What was robust
+## What held up
 
 Stated plainly, because these are real results and not padding. Across all four paths, none of the
 following threw, hung, or emitted anything:
@@ -359,9 +359,9 @@ following threw, hung, or emitted anything:
   Tel Aviv correctly.
 - **Structured data.** JSON, XML, HTML, YAML, CSV, base64, URLs, Windows paths, email addresses,
   UUIDs, 200-deep bracket nesting — no throw. Several resolve (Finding 5), none crash.
-- **Numeric nonsense.** ISO dates, datetimes, lat/long pairs, DMS coordinates, IPv4, UUIDs,
+- **Numeric nonsense.** ISO dates, datetimes, latitude/longitude pairs, DMS coordinates, IPv4, UUIDs,
   SSN-shaped digits, scientific notation, credit-card-shaped digits — none resolve. The bare
-  lat/long pair `40.748817, -73.985428` correctly yields no coordinate.
+  latitude/longitude pair `40.748817, -73.985428` correctly yields no coordinate.
 
 One untidy case worth a line: `[31m` (control characters plus an ANSI
 colour escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should

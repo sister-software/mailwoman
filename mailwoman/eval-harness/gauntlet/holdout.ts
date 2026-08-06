@@ -12,12 +12,12 @@
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-import { mailwomanDataRoot } from "../../resolver-backend.ts"
-import { buildGauntletDeps, type GauntletDeps } from "./harness.ts"
+import { buildGauntletDeps, type GauntletDeps, type GauntletResolverLevers } from "./harness.ts"
 
 /**
  * Two-sided 95% critical value of the standard normal. The gate blocks only on a SIGNIFICANT regression, so a candidate
@@ -57,6 +57,12 @@ export interface HoldoutLayerOptions {
 	 * clean.
 	 */
 	weightsCacheRoot?: string
+	/**
+	 * RESOLVER-side lever pins, applied to BOTH arms. A resolver lever is a property of the configuration, not of the
+	 * model under test, so pinning it on one side would confound the z-test with the very thing the layer holds
+	 * constant.
+	 */
+	levers?: GauntletResolverLevers
 }
 
 /**
@@ -89,7 +95,7 @@ interface SourceDef {
 function holdoutSources(): Record<string, SourceDef> {
 	return {
 		fr: {
-			file: `${mailwomanDataRoot()}/corpus/staging/ban-france.csv`,
+			file: String(dataRootPath("corpus", "staging", "ban-france.csv")),
 			label: "FR/BAN",
 			// BAN columns: numero(2) nom_voie(4) nom_commune(7) lon(12) lat(13)
 			parse(c) {
@@ -106,7 +112,7 @@ function holdoutSources(): Record<string, SourceDef> {
 			},
 		},
 		us: {
-			file: `${mailwomanDataRoot()}/corpus/staging/fdic-us.csv`,
+			file: String(dataRootPath("corpus", "staging", "fdic-us.csv")),
 			label: "US/FDIC",
 			// fdic-us.csv columns: address(0) city(1) state(2) zip(3) lat(4) lon(5)
 			parse(c) {
@@ -230,11 +236,17 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	// through the SHIPPED (model, tokenizer, card) trio via createScorer — otherwise the two sides have different
 	// anchor/gazetteer wiring and the z-test is confounded. resolveWeights gives the shipped trio for production.
 	const shipped = CAND_TOKENIZER || CAND_CACHE ? resolveWeights({ locale: "en-us" }) : null
+	const levers = options.levers ? { levers: options.levers } : {}
 
 	const prodDeps = await buildGauntletDeps(
 		shipped
-			? { modelPath: shipped.modelPath, tokenizerPath: shipped.tokenizerPath, modelCardPath: shipped.modelCardPath }
-			: {}
+			? {
+					modelPath: shipped.modelPath,
+					tokenizerPath: shipped.tokenizerPath,
+					modelCardPath: shipped.modelCardPath,
+					...levers,
+				}
+			: { ...levers }
 	)
 
 	const prod = await score(prodDeps, sample)
@@ -242,10 +254,10 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 	const candDeps = await buildGauntletDeps(
 		CAND_CACHE
-			? { weightsCacheRoot: CAND_CACHE }
+			? { weightsCacheRoot: CAND_CACHE, ...levers }
 			: CAND_TOKENIZER
-				? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined }
-				: { modelPath: CANDIDATE }
+				? { modelPath: CANDIDATE, tokenizerPath: CAND_TOKENIZER, modelCardPath: CAND_CARD || undefined, ...levers }
+				: { modelPath: CANDIDATE, ...levers }
 	)
 
 	const cand = await score(candDeps, sample)

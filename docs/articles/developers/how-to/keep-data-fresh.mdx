@@ -1,0 +1,235 @@
+---
+title: Keep your data current
+description: Check which artifact vintage you are running, refresh one that has moved, and pin a version so a running server switches over without a restart.
+role: guide
+verified-with: mailwoman 8.7.0
+---
+
+# Keep your data current
+
+**Outcome.** You can tell which vintage of each data artifact is on disk, refresh one that has changed,
+and switch a long-running process to a new version without restarting it.
+
+One thing to know before the steps: `mailwoman data pull` checks whether a file is _there_, not whether
+it is _current_. `mailwoman data status` is the freshness check. Running `data pull` on a stale file
+reports it as already present and downloads nothing.
+
+## Prerequisites
+
+- A data root, and `$MAILWOMAN_DATA_ROOT` pointing at it. Every transcript below uses
+  `/tmp/mw-fresh-demo`.
+- At least one bundle already pulled. [Your first ten minutes](../get-started/ten-minute-trial.mdx)
+  pulls `candidate`; [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) pulls the
+  per-state shards.
+- `mailwoman` 8.7.0 or later. `data pull` and `data status` do not exist before it.
+
+## 1. Read what you have
+
+```bash
+mailwoman data status candidate
+```
+
+```
+✓ candidate: wof/candidate.db: present (1652.9 MB) at /tmp/mw-fresh-demo/wof/candidate.db
+PASS (1/1 checks)
+```
+
+With no bundle named, `data status` reports on all four (`candidate`, `poi`, `fr`, `us`) and prints one
+line per artifact — 106 lines, because the `us` bundle is 103 files. Name the bundle you care about.
+
+The check is a byte-count comparison against the size recorded for the published artifact, so it catches
+a truncated or half-copied file:
+
+```bash
+mailwoman data status candidate
+```
+
+```
+✗ candidate: wof/candidate.db: stale — 900.0 MB on disk vs 1652.9 MB (recorded) at
+/tmp/mw-fresh-demo/wof/candidate.db
+FAIL (0/1 checks)
+```
+
+The exit code is 0 only when every artifact is present and matches. That makes it usable as a deploy
+gate.
+
+## 2. Refresh what has moved
+
+A stale artifact is the case `data pull` will not fix on its own:
+
+```bash
+mailwoman data pull candidate --dry-run
+```
+
+```
+✓ candidate: gazetteer/2026-07-07a/candidate.db: already present (/tmp/mw-fresh-demo/wof/candidate.db) —
+skipped
+PASS (1/1 checks)
+```
+
+That transcript was produced against the 900 MB truncated file from step 1. The skip is a filesystem
+`existsSync`, nothing more. `--force` is what makes the download happen:
+
+```bash
+mailwoman data pull candidate --dry-run --force
+```
+
+```
+✓ candidate: gazetteer/2026-07-07a/candidate.db: [dry-run] 1652.9 MB
+https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db →
+/tmp/mw-fresh-demo/wof/candidate.db
+```
+
+Drop `--dry-run` to run it. The download streams to `<data-root>/tmp/`, is verified against the
+`Content-Length` the server sent, is sealed, and only then moves into place — so a failure partway
+through leaves the old file untouched rather than a corrupt new one. `--dry-run` makes no network call
+at all: the plan comes from the registry and a filesystem stat.
+
+For the `us` bundle, `--only` scopes the refresh to one state rather than all 103 files:
+
+```bash
+mailwoman data pull us --only dc --force
+```
+
+## 3. Ask the bucket instead of the registry
+
+The size `data status` compares against is the one recorded when the bundle was surveyed. `--check-remote`
+replaces it with a live `HEAD` request per artifact:
+
+```bash
+mailwoman data status candidate --check-remote
+```
+
+```
+[DEBUG] (mailwoman data status): HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+[DEBUG] (mailwoman data status): 200 (uncached) HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+✓ candidate: wof/candidate.db: present (1652.9 MB) at /tmp/mw-fresh-demo/wof/candidate.db
+PASS (1/1 checks)
+```
+
+The visible difference is one word in the stale line — `(live)` where the offline run says `(recorded)`.
+Only artifacts already on disk are probed, so the flag stays cheap even against the `us` bundle: a
+missing file is reported from the registry without a request.
+
+Two limits on what this proves. No bundle publishes an md5 sidecar today, so the comparison is byte
+count and nothing stronger; a rebuild that landed at the same size would pass. And the remote path is
+dated and immutable (`gazetteer/2026-07-07a/candidate.db`), so a live `HEAD` confirms your copy of _that_
+artifact, not that a newer artifact exists. A new build is a new path, which arrives in a new release of
+the `mailwoman` package.
+
+## 4. There is no refresh cadence
+
+**No cadence is committed.** The gazetteer and layer artifacts are rebuilt when coverage changes or an
+ingest bug is fixed, not on a schedule, and no schedule is promised. This is the same statement the
+[pricing page](../../pricing.mdx) makes, and it is the one to plan against: do not build a pipeline that
+assumes a weekly or monthly artifact.
+
+What you get instead is that every artifact is sealed and dated. The vintage travels in the remote path,
+so `mailwoman data pull candidate --dry-run` always tells you which build your install is pinned to
+without downloading anything.
+
+## 5. Pin a version, and switch without a restart
+
+The per-state shards support a second addressing scheme. Instead of one file per state, publish
+`<family>/<family>-us-<slug>-<version>.db` alongside the old one and put a `releases.json` at the data
+root naming the current version per family:
+
+```json
+{ "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
+```
+
+`ShardProvider` reads that manifest when it is constructed:
+
+```js
+import { AddressPointSqliteLookup, StreetInterpolator } from "@mailwoman/resolver-wof-sqlite"
+import { ShardProvider } from "mailwoman/geocode-core"
+
+const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, "/tmp/mw-releases-demo")
+
+console.log("versions:", JSON.stringify(shards.versions()))
+console.log("dc address points open:", Boolean(shards.for("dc").addressPoints))
+```
+
+With no manifest, it runs in legacy mode against the unversioned filenames:
+
+```
+versions: null
+dc address points open: true
+```
+
+With a manifest naming a version whose file exists, it opens that file:
+
+```
+versions: {"address-points":"2026-05-20.0"}
+dc address points open: true
+```
+
+**A pinned version whose file is absent falls back to the unversioned name and says nothing.** That is
+the trap worth knowing. Above, a run against a data root holding both `address-points-us-dc.db` and
+`address-points-us-dc-2026-05-20.0.db`, pinned to a third version that was never published:
+
+```
+versions: {"address-points":"2026-06-01.0"}
+dc address points open: true
+```
+
+The shard opened. It is the legacy file, not the pinned one. Remove the legacy file and the same pin
+resolves to nothing at all:
+
+```
+versions: {"address-points":"2026-06-01.0"}
+dc address points open: false
+```
+
+So a typo in `releases.json` degrades to the old data rather than to an error. Assert on `versions()`
+after deploy rather than assuming the pin took.
+
+The reason to run the manifest at all is `reload()`. Write the new shard files alongside the old, then
+write `releases.json` — one atomic file write — then call `shards.reload()`. Any shard whose resolved
+path changed is reopened; any shard whose path is unchanged keeps its open handle. Retired handles close
+on the _next_ reload, which gives in-flight reads a generation of grace.
+
+```js
+// A long-running server, on a signal or a poll.
+process.on("SIGHUP", () => {
+	console.log("switched to", JSON.stringify(shards.reload()))
+})
+```
+
+## Verify
+
+A deploy check that fails when any artifact you depend on has drifted:
+
+```bash
+mailwoman data status candidate --check-remote && echo "data OK"
+```
+
+```
+✓ candidate: wof/candidate.db: present (1652.9 MB) at /tmp/mw-fresh-demo/wof/candidate.db
+PASS (1/1 checks)
+data OK
+```
+
+## Limits
+
+- **`data status` compares against the published artifact, not against validity.** A shard you built
+  yourself from [the US dataset tutorial](../tutorials/build-the-us-dataset.mdx) fails the check by
+  construction, because its byte count is not the published one. That page explains the case.
+- **The four bundles are the whole published set.** There is no timezone, NUTS or UN/LOCODE artifact in
+  the bucket; those packages build their data locally. `mailwoman data pull` with any other name exits 1
+  and lists the four.
+- **`releases.json` addresses the per-state families only.** The versioned scheme covers
+  `address-points` and `interpolation`. `candidate.db`, `poi.db` and the French shard are addressed by
+  their dated remote path instead, so refreshing one of those means upgrading `mailwoman` to a release
+  that registers a newer path, then pulling again.
+- **`--check-remote` needs network egress to `public.sister.software`.** In an air-gapped deploy the
+  offline comparison is what you have, and it still catches truncation.
+
+## Related
+
+- [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) — which bundle buys which
+  resolution tier.
+- [Build the US address dataset from public sources](../tutorials/build-the-us-dataset.mdx) — what to do
+  instead when you build shards rather than pull them.
+- [Deploy on a serverless runtime](./deploy-serverless.mdx) — how the same artifacts behave on a
+  read-only, short-lived filesystem.

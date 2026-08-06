@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   CLI integration test for `mailwoman openapi` (Phase 5 Task 2). Runs the compiled CLI
+ *   CLI integration test for `mailwoman openapi`. Runs the compiled CLI
  *   (`out/cli.js` — the standing "use the compiled CLI" rule) against a stub `createMailwomanAPI({})`
  *   engine: no model, no gazetteer, no data-root env required. The per-package `/openapi.json` tests
  *   (`api/index.test.ts`) already pin the document's content in depth; this test only pins the CLI
@@ -13,6 +13,7 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
@@ -31,7 +32,7 @@ describe("mailwoman openapi", () => {
 		expect(stdout.startsWith('{"openapi":"3.1.0"')).toBe(true)
 		expect(stderr).toBe("")
 
-		const doc = JSON.parse(stdout) as { openapi: string; paths: Record<string, unknown> }
+		const doc = parseJSONStrict<{ openapi: string; paths: Record<string, unknown> }>(stdout)
 		expect(doc.openapi).toBe("3.1.0")
 
 		expect(Object.keys(doc.paths)).toEqual(
@@ -45,7 +46,7 @@ describe("mailwoman openapi", () => {
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
-		const doc = JSON.parse(stdout) as { openapi: string }
+		const doc = parseJSONStrict<{ openapi: string }>(stdout)
 		expect(doc.openapi).toBe("3.0.3")
 	}, 30_000)
 })

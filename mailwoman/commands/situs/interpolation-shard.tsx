@@ -28,6 +28,7 @@ import { basename, dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
@@ -111,7 +112,7 @@ const OptionsSchema = zod.object({
 	edgesDir: zod
 		.string()
 		.optional()
-		.default("/tmp/tiger-edges")
+		.default(dataRootPath("census", "tiger2023-edges"))
 		.describe("Directory holding the per-county TIGER EDGES shapefiles (tl_*_<statefips>???_edges.shp)"),
 	release: zod.string().optional().default("TIGER2023").describe("TIGER release tag, recorded as per-row provenance"),
 	out: zod.string().optional().describe("Output DB path. Default <data-root>/interpolation/interpolation-us-<st>.db"),
@@ -251,7 +252,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 				const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
 
 				if (!streetNorm) continue
-				const geom = JSON.parse(String(r.geojson)) as { type: string; coordinates: number[][] }
+				const geom = parseJSONStrict<{ type: string; coordinates: number[][] }>(String(r.geojson))
 
 				if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 

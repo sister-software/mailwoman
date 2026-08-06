@@ -114,7 +114,7 @@ WOF-alone placeability, from a sample survey (orphan = no `wof:parent_id`; regio
 | ES     |         0% |     64% |             36% |                 ~36% | **95%**                            |
 | IT     |         0% |     73% |             27% | ~27% (+ wrong links) | **90%** (links fixed)              |
 
-WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countries: ES/IT are orphan-heavy and IT carries wrong links. GeoNames postal closes those gaps cleanly and keeps the WOF id as the key, so eval integrity holds. NL stays on WOF (its PC6 is finer than GeoNames' PC4). The wider supplement landscape is catalogued in `docs/articles/plan/reference/address-data-sources.md` ("Gazetteer / resolver coordinate sources").
+WOF is a strong _admin_ gazetteer but a weak _postcode_ one outside a few countries: ES/IT are orphan-heavy and IT carries wrong links. GeoNames postal closes those gaps cleanly and keeps the WOF id as the key, so eval integrity holds. NL stays on WOF (its PC6 is finer than GeoNames' PC4). The wider supplement landscape is catalogued in `docs/engineering/reference/address-data-sources.md` ("Gazetteer / resolver coordinate sources").
 
 ### Per-country status
 

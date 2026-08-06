@@ -14,13 +14,13 @@
  *
  *   A slope chart over four rulers (NPI → site → org-name → org-name-coord) for the shipped GBT
  *   scorer and the FS baseline. Numbers are the committed measurement in
- *   `docs/articles/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
+ *   `docs/records/evals/matcher-dedup/2026-06-16-dedup-dual-level-benchmark.md` (1000 TX NPIs → 2757 records).
  *
  *   Emits a self-contained SVG (the docs' committed-chart-asset convention — see
- *   `docs/articles/evals/charts/*.svg`), no browser required.
+ *   `docs/records/evals/charts/*.svg`), no browser required.
  *
  *   Run: `mailwoman registry viz yardstick-figure
- *   [--out-svg docs/articles/evals/charts/dedup-yardstick.svg]`
+ *   [--out-svg docs/records/evals/charts/dedup-yardstick.svg]`
  */
 
 import { writeFileSync } from "node:fs"
@@ -30,9 +30,9 @@ import { writeFileSync } from "node:fs"
  */
 export interface YardstickFigureOptions {
 	/**
-	 * Output SVG path. Default `docs/articles/evals/charts/dedup-yardstick.svg` (relative to cwd).
+	 * Output SVG path. Default `docs/records/evals/charts/dedup-yardstick.svg` (relative to cwd).
 	 */
-	outSvg?: string
+	outSVG?: string
 }
 
 // ── The committed measurement (2026-06-16-dedup-dual-level-benchmark.md). ────────────────────────
@@ -100,8 +100,8 @@ const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").re
 export function yardstickFigure(
 	options: YardstickFigureOptions = {},
 	report?: (line: string) => void
-): { outSvg: string } {
-	const OUT = options.outSvg || "docs/articles/evals/charts/dedup-yardstick.svg"
+): { outSVG: string } {
+	const OUT = options.outSVG || "docs/records/evals/charts/dedup-yardstick.svg"
 
 	const parts: string[] = []
 	const push = (s: string) => parts.push(s)
@@ -150,6 +150,7 @@ export function yardstickFigure(
 			`<text x="${x.toFixed(1)}" y="${plotB + 36}" text-anchor="middle" font-size="10" fill="#6b7280">${g.classes} classes</text>`
 		)
 
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- `g.note` is a literal label from the MODELS table, not a file.
 		g.note.split("\n").forEach((line, k) => {
 			push(
 				`<text x="${x.toFixed(1)}" y="${plotB + 50 + k * 12}" text-anchor="middle" font-size="9" fill="#9ca3af">${esc(line)}</text>`
@@ -227,5 +228,5 @@ export function yardstickFigure(
 
 	report?.(`  over-merge: ${OVERMERGE.GBT!.join(" → ")}`)
 
-	return { outSvg: OUT }
+	return { outSVG: OUT }
 }

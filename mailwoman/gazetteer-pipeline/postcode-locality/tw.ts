@@ -53,9 +53,11 @@ import { readFileSync, renameSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { haversineKm } from "@mailwoman/spatial"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * Shortest romanised stem still specific enough to match a Taiwanese place name.
@@ -113,10 +115,6 @@ export function normEn(s: string): string {
 			.replaceAll(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
 			.replaceAll(/[\s'’-]/g, "")
 	)
-}
-
-function toRad(deg: number): number {
-	return (deg * Math.PI) / 180
 }
 
 /**
@@ -201,23 +199,23 @@ export interface DivisionPolygon {
 /**
  * Load the district polygons fetched from the Overture divisions theme (subtype=locality slice).
  */
-export function loadDistrictPolygons(path: string): DivisionPolygon[] {
+export async function loadDistrictPolygons(path: string): Promise<DivisionPolygon[]> {
 	const out: DivisionPolygon[] = []
 
-	for (const line of readFileSync(path, "utf8").split("\n")) {
-		if (!line.trim()) continue
+	interface DivisionRow {
+		subtype: string
+		name: string
+		name_en?: string | null
+		wikidata?: string | null
+		geometry: string | GeojsonGeometry
+	}
 
-		const row = JSON.parse(line) as {
-			subtype: string
-			name: string
-			name_en?: string | null
-			wikidata?: string | null
-			geometry: string | GeojsonGeometry
-		}
-
+	for await (const row of JSONSpliterator.fromAsync<DivisionRow>(path)) {
 		if (row.subtype !== "locality") continue
+
 		// DuckDB's JSON writer emits ST_AsGeoJSON output as a nested JSON object; tolerate a string too.
-		const geometry = (typeof row.geometry === "string" ? JSON.parse(row.geometry) : row.geometry) as GeojsonGeometry
+		const geometry = typeof row.geometry === "string" ? parseJSONStrict<GeojsonGeometry>(row.geometry) : row.geometry
+
 		let minLon = Infinity
 		let minLat = Infinity
 		let maxLon = -Infinity
@@ -269,7 +267,7 @@ export function loadDistrictPolygons(path: string): DivisionPolygon[] {
 }
 
 export interface PostcodeLocalityTWOptions {
-	postalXml: string
+	postalXML: string
 	divisions: string
 	adminDb: string
 	output: string
@@ -437,15 +435,15 @@ function loadAdminIndexes(args: { adminDb: string }) {
 }
 
 export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
-	const districts = loadPostalDistricts(args.postalXml)
+	const districts = loadPostalDistricts(args.postalXML)
 
 	if (!districts.length) {
-		console.error(`no postal districts parsed from ${args.postalXml}`)
+		console.error(`no postal districts parsed from ${args.postalXML}`)
 
 		process.exit(1)
 	}
 
-	const polygons = loadDistrictPolygons(args.divisions)
+	const polygons = await loadDistrictPolygons(args.divisions)
 	const polygonsByName = new Map<string, DivisionPolygon[]>()
 
 	for (const p of polygons) {

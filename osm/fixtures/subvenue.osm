@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="hand">
+  <node id="1" lat="51.4700" lon="-0.4543">
+    <tag k="aeroway" v="terminal"/>
+    <tag k="name" v="Terminal 5"/>
+    <tag k="name:ja" v="ターミナル5"/>
+    <tag k="ref" v="5"/>
+  </node>
+  <node id="2" lat="51.4701" lon="-0.4544">
+    <tag k="aeroway" v="gate"/>
+    <tag k="ref" v="A12"/>
+  </node>
+  <node id="3" lat="40.6413" lon="-73.7781">
+    <tag k="public_transport" v="platform"/>
+    <tag k="railway" v="platform"/>
+    <tag k="name" v="Platform 3"/>
+  </node>
+  <node id="4" lat="19.4361" lon="-99.0719">
+    <tag k="aeroway" v="terminal"/>
+    <tag k="name" v="Terminal Sur"/>
+    <tag k="name:es" v="Terminal Sur"/>
+    <tag k="name:en" v="South Terminal"/>
+  </node>
+  <node id="9" lat="1.0" lon="1.0">
+    <tag k="highway" v="bus_stop"/>
+    <tag k="name" v="Not A Terminal"/>
+  </node>
+  <node id="10" lat="51.4710" lon="-0.4550"/>
+  <node id="11" lat="51.4710" lon="-0.4540"/>
+  <node id="12" lat="51.4715" lon="-0.4540"/>
+  <node id="13" lat="51.4715" lon="-0.4550"/>
+  <way id="20">
+    <nd ref="10"/><nd ref="11"/><nd ref="12"/><nd ref="13"/><nd ref="10"/>
+    <tag k="aeroway" v="terminal"/>
+    <tag k="name" v="North Terminal"/>
+    <tag k="name:de" v="Nordterminal"/>
+    <tag k="building" v="yes"/>
+  </way>
+</osm>

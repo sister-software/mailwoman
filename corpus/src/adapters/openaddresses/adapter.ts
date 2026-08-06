@@ -35,6 +35,7 @@
  *   for non-US locales where district names DO appear on the envelope.
  */
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "../../adapter.ts"
@@ -95,13 +96,7 @@ function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
 
 	if (!trimmed || trimmed.startsWith("#")) return null
-	let parsed: unknown
-
-	try {
-		parsed = JSON.parse(trimmed)
-	} catch {
-		return null
-	}
+	const parsed = tryParsingJSON(trimmed)
 
 	if (!parsed || typeof parsed !== "object") return null
 	const obj = parsed as { type?: string; properties?: unknown }

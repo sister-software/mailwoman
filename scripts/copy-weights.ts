@@ -8,11 +8,12 @@
  *   git (gitignored model.onnx + tokenizer.model); this script materializes the binaries at release
  *   time.
  *
- *   The source model + tokenizer paths come from `release.config.json` (`weights.dataRoot` +
- *   `weights.model` / `weights.tokenizer`) so the version-bearing filenames live in one place
- *   rather than hardcoded here. Override at release time via env vars:
+ *   The source model + tokenizer FILENAMES come from `release.config.json` (`weights.model` /
+ *   `weights.tokenizer`) so the version-bearing names live in one place rather than hardcoded here.
+ *   They resolve against `mailwomanDataRoot()`, which is the one home for the root itself. Override
+ *   at release time via env vars:
  *
- *   - MAILWOMAN_DATA_ROOT: override `weights.dataRoot` (the machine's data dir)
+ *   - MAILWOMAN_DATA_ROOT: the machine's data dir
  *   - MAILWOMAN_PUBLISH_MODEL: absolute path to the int8 quantized model.onnx (wins outright)
  *   - MAILWOMAN_PUBLISH_TOKENIZER: absolute path to the matching tokenizer.model (wins outright)
  *
@@ -24,7 +25,7 @@
  *       (`softFeed.postcodeDBByCountry[<cc>]`) via `mailwoman gazetteer postcode-binary`.
  *   - `anchor-lexicon-v1.json` — the codex-generated gazetteer-anchor lexicon
  *       (`softFeed.gazetteerLexicon`).
- *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index (Task 8), built from a
+ *   - `pair-index-<cc>.bin` — the placetype-pair-prior arc's PIX1 retrieval index, built from a
  *       PPD-style (child, parent) tuples CSV (`softFeed.pairIndexByCountry[<cc>].source` + `.delta`) via
  *       `mailwoman gazetteer pair-index`. COUNTRY-SPECIFIC BY DESIGN — a workspace whose country has no
  *       `pairIndexByCountry` entry ships no sibling and is silently skipped (see materializePairIndex).
@@ -39,8 +40,9 @@ import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 
 import { derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
 
@@ -100,8 +102,52 @@ function stashDerived(dir: string, filename: string): void {
 	}
 }
 
-const config = JSON.parse(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
-const dataRoot = $public.MAILWOMAN_DATA_ROOT ?? config.weights.dataRoot
+/**
+ * Per-country pair-index build inputs. Every field the `gazetteer pair-index` command accepts is represented — see the
+ * docstring on {@link PAIR_INDEX_BY_COUNTRY} for why a silently-dropped flag is a shipping defect.
+ */
+interface PairIndexBuildInputs {
+	source?: string
+	delta: number
+	transitionBeta?: number
+	/**
+	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
+	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
+	 * per-locale gate rather than an oversight.
+	 */
+	parentDelta?: number
+	boroughDb?: string
+	pairsJsonl?: string
+	banDir?: string
+}
+
+/**
+ * The soft-feed slice of `release.config.json`, typed to exactly the fields this script consumes. The pre-2026-08-04
+ * `Record<string, unknown>` only compiled because `JSON.parse` returned `any`; `parseJSONStrict` surfaces every use
+ * site, so the honest options are a typed slice here or casts scattered at each read — this is the single place. Fields
+ * a locale hasn't earned stay absent; keys this script doesn't read pass through the index signature.
+ */
+interface SoftFeedConfig {
+	gazetteerLexicon?: string
+	countryLexicon?: string
+	streetTypeLexicon?: string
+	localitySurfaceLexicon?: string
+	pairIndexByCountry?: Record<string, PairIndexBuildInputs>
+	postcodeDBByCountry?: Record<string, string>
+	[key: string]: unknown
+}
+
+/**
+ * The slice of `release.config.json` this script reads.
+ */
+interface ReleaseConfig {
+	locales: string[]
+	weights: { model: string; tokenizer: string }
+	softFeed?: SoftFeedConfig
+}
+
+const config = parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+const dataRoot = String(mailwomanDataRoot())
 /**
  * Model binary to copy into each weights workspace before packing.
  */
@@ -145,10 +191,7 @@ const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
  * `source` is OPTIONAL: it is the GB postal register (PPD), and countries whose pairs come entirely from the WOF admin
  * DB (US) have no equivalent — the command itself refuses a build with no source of any kind.
  */
-const PAIR_INDEX_BY_COUNTRY: Record<
-	string,
-	{ source?: string; delta: number; transitionBeta?: number; boroughDb?: string; pairsJsonl?: string; banDir?: string }
-> = SOFT_FEED.pairIndexByCountry ?? {}
+const PAIR_INDEX_BY_COUNTRY: Record<string, PairIndexBuildInputs> = SOFT_FEED.pairIndexByCountry ?? {}
 
 /**
  * Weights workspaces to materialize, derived from the release config's locale list.
@@ -293,7 +336,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	// (the card carries requires.street_type/locality_surface; withholding a sibling would fail closed).
 	for (const [source, basename, label] of [
 		[SOURCE_STREET_TYPE, "street-type-lexicon-v3.json", "softFeed.streetTypeLexicon"],
-		[SOURCE_LOCALITY_SURFACE, "locality-surface-lexicon-v6.json", "softFeed.localitySurfaceLexicon"],
+		[SOURCE_LOCALITY_SURFACE, "locality-surface-lexicon-v7.json", "softFeed.localitySurfaceLexicon"],
 	] as const) {
 		if (!source) continue
 
@@ -373,6 +416,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
 	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
+
 	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
 		? entry.pairsJsonl
@@ -380,6 +424,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 				.map((path) => resolveFrom(repoRoot, path.trim()))
 				.join(",")
 		: undefined
+
 	const banDir = entry.banDir ? resolveFrom(dataRoot, entry.banDir) : undefined
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {
@@ -424,6 +469,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 			String(entry.delta),
 			...(source ? ["--source", source] : []),
 			...(entry.transitionBeta !== undefined ? ["--transition-beta", String(entry.transitionBeta)] : []),
+			...(entry.parentDelta !== undefined ? ["--parent-delta", String(entry.parentDelta)] : []),
 			...(boroughDb ? ["--borough-db", boroughDb] : []),
 			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
 			...(banDir ? ["--ban-dir", banDir] : []),

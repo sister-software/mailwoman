@@ -23,3 +23,8 @@
 {"raw": "Concourse Village West, Bronx, NY 10451", "class": "designator-as-street", "must_not": "unit"}
 {"raw": "1 Building Society Place, Leeds, LS1 4AR", "class": "designator-as-street", "must_not": "unit", "xfail": "PRE-EXISTING, unrelated to the venue-structure scale: this row produces ZERO span proposals (no short identifier follows 'Building'), and parses identically at venueStructureBiasScale 5 and 6. The model tags 'Building' as unit inside a street name — 'building' is a Pub 28 designator (BLDG), so the surface is genuinely ambiguous and the model resolves it wrongly here. With the word-consistency heal OFF it degrades further to the sub-token fragment unit='Buil' (pieces B/uil/ding labelled unit/unit/street). A retrain with more 'Building <Word>' STREET examples is the lever; no decode-side mechanism owns it."}
 {"raw": "Enclosure Road, Southampton, SO14 0AA", "class": "designator-as-street", "must_not": "unit"}
+{"raw": "12 East Gate, Warwick, CV34 4RB", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "5 West Gate, Mansfield, NG18 1RX", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "West Street, Farnham, GU9 7DR", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "North Road, Brighton, BN1 1YR", "class": "modifier-designator-street", "must_not": "unit"}
+{"raw": "West Wickham, Kent, BR4 0LT", "class": "modifier-designator-street", "must_not": "unit"}

@@ -35,6 +35,9 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { JSONSpliterator } from "spliterator"
+
+import { parseJSONStrict } from "../../objects.ts"
 import { dataRootPath } from "../../utils/data-root.ts"
 import { repoRootPath } from "../../utils/repo.ts"
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -191,8 +194,17 @@ export async function evalOpenSet(
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 	const fitPerClass = options.fitPerClass ?? 2000
 
-	const meta = JSON.parse(readFileSync(path.join(modelDir, "meta.json"), "utf8")) as CoarsePlacerMeta
-	const W = new Float32Array(readFileSync(path.join(modelDir, "weights.bin")).buffer)
+	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
+	const weightBytes = readFileSync(path.join(modelDir, "weights.bin"))
+
+	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
+	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
+	const W = new Float32Array(
+		weightBytes.buffer,
+		weightBytes.byteOffset,
+		weightBytes.byteLength / Float32Array.BYTES_PER_ELEMENT
+	)
+
 	const bias = Float32Array.from(meta.bias)
 	const C = meta.classes.length
 	const D = meta.featureDim
@@ -228,17 +240,14 @@ export async function evalOpenSet(
 	 */
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
-	function load(file: string): DataRow[] {
-		return readFileSync(path.join(dataDir, file), "utf8")
-			.trim()
-			.split("\n")
-			.map((l) => JSON.parse(l) as DataRow)
+	function load(file: string): Promise<DataRow[]> {
+		return Array.fromAsync(JSONSpliterator.fromAsync<DataRow>(path.join(dataDir, file)))
 	}
 
 	// Fit the Mahalanobis params on IN-MAP TRAIN logits (no test leak): per-class
 	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
 	report?.("fitting Mahalanobis on in-map train logits…")
-	const trainRows = load("train.jsonl")
+	const trainRows = await load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
 
 	for (const r of trainRows) {
@@ -386,8 +395,8 @@ export async function evalOpenSet(
 		}
 	}
 
-	const inmapTest = load("test.jsonl").filter((r) => r.country !== "OTHER") // the 11 countries only
-	const heldout = load("test-latin-offmap.jsonl").filter((r) => r.group === "heldout")
+	const inmapTest = (await load("test.jsonl")).filter((r) => r.country !== "OTHER") // the 11 countries only
+	const heldout = (await load("test-latin-offmap.jsonl")).filter((r) => r.group === "heldout")
 
 	const inmapScored = inmapTest.map((r) => scoreRow(r.raw, r.country))
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))

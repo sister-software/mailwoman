@@ -30,9 +30,11 @@ import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
 import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
@@ -63,7 +65,10 @@ const HTTP_SERVER_ERROR_MIN = 500
 const MAX_LISTED_FAILURES = 20
 
 const OptionsSchema = zod.object({
-	edgesDir: zod.string().default("/tmp/tiger-edges").describe("Download destination for TIGER ZIP + SHP files"),
+	edgesDir: zod
+		.string()
+		.default(dataRootPath("census", "tiger2023-edges"))
+		.describe("Download destination for TIGER ZIP + SHP files"),
 	outDir: zod.string().optional().describe("Directory for per-state shard DBs. Default <data-root>/interpolation"),
 	release: zod.string().default("TIGER2023").describe("TIGER vintage tag written into each shard row"),
 	states: zod
@@ -181,7 +186,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
 
 	const csv = await fetchText(url)
-	const lines = csv.split("\n")
+	const lines = [...TextSpliterator.from(csv)]
 	const header = lines[0]!.split(",")
 	const idx = (col: string) => header.indexOf(col)
 	const iSumlev = idx("SUMLEV")
@@ -219,7 +224,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (existsSync(RANKED_FILE)) {
-		return JSON.parse(readFileSync(RANKED_FILE, "utf8"))
+		return parseJSONStrict<CountyRecord[]>(readFileSync(RANKED_FILE, "utf8"))
 	}
 
 	const records = await fetchAndBuildRanking()
@@ -484,15 +489,14 @@ function buildStateShard(
 	const countyMatch = combined.match(/(\d+) county shapefiles/)
 	const counties = countyMatch ? Number(countyMatch[1]) : 0
 
-	// Echo the child's output with a state prefix.
-	for (const line of stdout.trim().split("\n")) {
+	for (const line of TextSpliterator.from(stdout.trim())) {
 		if (line) {
 			console.error(`  [${stateAbbr}] ${line}`)
 		}
 	}
 
 	if (stderr.trim()) {
-		for (const line of stderr.trim().split("\n")) {
+		for (const line of TextSpliterator.from(stderr.trim())) {
 			if (line) {
 				console.error(`  [${stateAbbr}:stderr] ${line}`)
 			}

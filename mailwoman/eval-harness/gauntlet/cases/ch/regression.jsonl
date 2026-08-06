@@ -1,0 +1,1 @@
+{"id":"intl-zurich-switzerland","input":"Zurich, Switzerland","source":"bug:#822","addressKind":"intl_city_country","country":"CH","status":"pass","expectComponents":{"locality":"Zurich"},"expectLat":47.3667,"expectLon":8.55,"expectToleranceM":25000,"addedAt":"2026-06-30","bugRef":"#822","note":"Was Zurich KS. Guards the exonym fold (Zurich → Zürich) under the country filter."}

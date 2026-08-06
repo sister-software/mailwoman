@@ -17,6 +17,7 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
@@ -27,7 +28,10 @@ const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
  * The published workspace set — the single source of truth release-it iterates.
  */
 function releaseWorkspaces(): string[] {
-	const releaseIt = JSON.parse(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+	const releaseIt = parseJSONStrict<{
+		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
+	}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+
 	const ws = releaseIt?.plugins?.["@release-it-plugins/workspaces"]?.workspaces
 
 	if (!Array.isArray(ws) || !ws.length) {
@@ -41,9 +45,9 @@ describe("#757 release provenance: every published workspace declares its reposi
 	const workspaces = releaseWorkspaces()
 
 	it.each(workspaces)("%s/package.json has the canonical repository block", (ws) => {
-		const pkg = JSON.parse(readFileSync(resolve(repoRoot, ws, "package.json"), "utf8")) as {
+		const pkg = parseJSONStrict<{
 			repository?: { type?: string; url?: string; directory?: string }
-		}
+		}>(readFileSync(resolve(repoRoot, ws, "package.json"), "utf8"))
 
 		const repo = pkg.repository
 		// A missing/empty repository.url is exactly what npm provenance rejects with E422.

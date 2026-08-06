@@ -34,10 +34,14 @@ export default defineConfig({
 			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "core/objects.ts") },
 			// `fs` is the node build (core/fs/node.ts), not a directory index — must beat the generic rule.
 			{ find: /^@mailwoman\/core\/fs$/, replacement: resolve(here, "core/fs/node.ts") },
+			// `crypto` is the same shape: the subpath's node condition points at `core/crypto/node.ts`, so the
+			// generic `core/$1/index.ts` rule below resolves it to a file that does not exist.
+			{ find: /^@mailwoman\/core\/crypto$/, replacement: resolve(here, "core/crypto/node.ts") },
 			// `api/disk-storage` is a bare file kept OUT of the `api` barrel (it imports node:fs, and the
 			// barrel reaches a browser bundle), so it needs its own entry ahead of the generic dir rule.
 			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolve(here, "core/api/disk-storage.ts") },
 			{ find: /^@mailwoman\/core\/api\/test-clocks$/, replacement: resolve(here, "core/api/test-clocks.ts") },
+			{ find: /^@mailwoman\/core\/api\/test-transport$/, replacement: resolve(here, "core/api/test-transport.ts") },
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
 			// Sibling workspaces.
@@ -95,7 +99,7 @@ export default defineConfig({
 		// so a module already cached by an earlier file in the same fork is returned as-is — mocks
 		// declared against it silently never apply. Any file that mocks a shared module MUST call
 		// `vi.resetModules()` before importing the module under test (reference:
-		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural-web/loader.tolerance.test.ts).
+		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,
 		exclude: [

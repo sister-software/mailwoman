@@ -9,7 +9,7 @@ quality French source available.
 Download the per-département CSV files or the national dump from:
 <https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/>
 
-Files are semicolon-separated. The adapter streams via `csv-parse`, so
+Files are semicolon-separated. The adapter streams via `CSVSpliterator`, so
 the national 25M-row dump never sits in memory.
 
 Point `--input` at the `.csv` file directly. Decompress first if you

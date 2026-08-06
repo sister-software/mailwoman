@@ -1,0 +1,81 @@
+# === v8-jp-full-2k — the cheap recipe-validation probe for v8-jp-full.yaml. ======================
+#
+# Diagnostic-before-fix: 2,000 steps (~8 GPU-minutes at the probe's measured ~4 steps/s) to prove the
+# recipe RUNS and the heads MOVE before committing 24,000. This is not a gate — nothing here is
+# pre-registered, and it cannot PASS or FAIL the JP arc. It answers four mechanical questions the
+# full run should not be the first place to discover:
+#
+#   1. Does the 47-label `stage3-jp` head load, train, and checkpoint on the char path at all?
+#      (The Leg-1 launch crashed at its first step-2000 save on `tokenizer.vocab_size` — the
+#      tokenizer-less char path. Saving is the thing that broke last time, so `save_every_steps` is
+#      set to 1000 here: this probe saves TWICE, deliberately.)
+#   2. Does the head param group actually split? The launch log must print
+#      `[classifier_learning_rate] 18,095 params @ 0.001` (47 * 384 weights + 47 biases). Absent
+#      line = the carve-out silently did not happen.
+#   3. Do the 19 supported labels separate from the 28 zero-support ones, or does label smoothing
+#      over a mostly-dead 47-way head make the dead rows fire? Read per-label F1 in the eval dump.
+#   4. Does the board scorer run end to end against a `stage3-jp` checkpoint — including the
+#      per-register split? The blended number at 2k is NOT the gate; the native register clearing
+#      the pack is the signal that the encoder is learning the surface the source actually contains.
+#
+# DELIBERATE DEVIATIONS from v8-jp-full.yaml (so nobody reads the curves as directly comparable):
+#   * `warmup_steps: 200` instead of 1000 — 1000 of 2000 steps would be half warmup and read as a
+#     stall. Consequence: this probe's early loss curve is NOT the full run's first 2,000 steps.
+#   * cosine over `max_steps: 2000` fully anneals the LR inside the probe. The full run is only 8%
+#     through its cosine at step 2,000, so the probe's final loss is optimistic relative to it.
+#   * `eval_every_steps: 250` — eight eval points instead of one, because the point is the SHAPE of
+#     the curve, not the endpoint.
+# Everything else is byte-identical to v8-jp-full.yaml. If you change that file, change this one.
+#
+# The optional second leg (only if question 2's lever is in doubt): copy this file with
+# `classifier_learning_rate` REMOVED and diff the two runs' per-label F1 on the 12 supported JP fine
+# rows. That is the only A/B that can justify keeping a lever whose #727 premise (a warm encoder)
+# does not hold on a from-scratch run.
+#
+# Launch (the operator runs this):
+#   modal run -d corpus-python/modal/train_remote.py --config v8-jp-full-2k.yaml --resume none
+
+data:
+  corpus_dir: /data/corpus/versioned/v8-jp-full-2026-08-04
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 96
+  country_weights:
+    JP: 1.0
+  coarse_filter: false
+  # 4,096 instead of the full 20,000: eight eval points at 2k steps, and the probe reads the SHAPE.
+  val_rows: 4096
+  label_set: stage3-jp
+  char_mode: char
+  char_vocab_path: /data/corpus/versioned/v8-jp-full-2026-08-04/char-vocab-jp-full.json
+  char_ctx: 3
+  max_unit_width: 7
+  max_units: 96
+
+model:
+  hidden_size: 384
+  num_hidden_layers: 4
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 96
+  use_crf: false
+  label_smoothing: 0.1
+  use_char_embed: true
+  char_embed_dim: 64
+
+train:
+  output_dir: /data/output-v8-jp-full-2k-s42
+  seed: 42
+  batch_size: 256
+  eval_batch_size: 512
+  learning_rate: 5.0e-4
+  classifier_learning_rate: 1.0e-3
+  warmup_steps: 200
+  max_steps: 2000
+  eval_every_steps: 250
+  # Saves at step 1000 AND step 2000 — the char-path save crash is the specific thing this probe
+  # is buying insurance against.
+  save_every_steps: 1000
+  log_every_steps: 50
+  precision: bf16
+  lr_schedule: cosine
+  grad_clip_norm: 1.0

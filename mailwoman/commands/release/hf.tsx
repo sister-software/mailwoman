@@ -39,7 +39,7 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe(
-			"Comma-separated placetype-pair-index soft-feed binaries (pair-index-gb.bin,…; placetype-pair-prior arc, Task 8)"
+			"Comma-separated placetype-pair-index soft-feed binaries (pair-index-gb.bin,…; placetype-pair-prior arc)"
 		),
 	fsts: zod
 		.string()

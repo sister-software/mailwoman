@@ -1,0 +1,134 @@
+---
+title: Calibration and confidence
+description: What the number on a span reports, why its scale is off, and what an isotonic correction table does about it.
+role: explanation
+---
+
+# Calibration and confidence
+
+## The question
+
+Every span in a parse carries a confidence. A locality at 0.92, a region at 0.88. The number looks
+like a probability — it sits between 0 and 1, and the numbers across the competing labels at one
+position sum to 1 — so the natural reading is "right about 92% of the time".
+
+That reading is wrong, and the direction it is wrong in is not the one people expect. This page is
+about what the number reports, why its scale is off, and what a correction table does to fix it.
+
+## The analog
+
+Every rule-based parser you have written emitted confidences, and nobody was fooled by them. You
+assigned `0.95` to the five-digit postcode pattern and `0.6` to the "capitalized word after a comma
+is probably a locality" heuristic, and those numbers did one job: they sorted candidates. Nobody
+claimed the 0.6 rule was right on three of five inputs. It was a priority, written by hand, tuned
+until the ordering came out right.
+
+A neural classifier's score is doing the same job. The final layer produces a number per label, and
+those numbers are pushed through a function that squashes them into a 0-to-1 range summing to 1
+across the labels at that position. It is a ranking device. The squashing function is what makes it
+look like a frequency, and it is the only reason anyone reads it as one.
+
+The difference from the hand-written case is that the resemblance is close enough to be dangerous.
+Your `0.6` never tempted anyone to route on it. A `0.92` does.
+
+## What the number reports
+
+Two facts about the score are worth stating before anything else, because they narrow what a
+threshold on it can mean.
+
+**It is per component, not per address.** There is no whole-parse confidence field. A six-component
+address gives you six numbers, and reducing them to one is your decision — the usual rule being to
+take the weakest, since one badly read component spoils the row.
+
+**It is the model's own opinion of the chosen label, computed before the gazetteer prior was added.**
+So when the place index corrects a reading, the number attached to the corrected span is the number
+the model gave that reading on its own, which is low precisely because the model preferred something
+else. [The gazetteer prior](./the-gazetteer-prior.mdx) has the measured case: a bare `Hollywood`
+scores 0.691 as a street without the index and 0.264 as a locality with it, and the locality is
+right. Any threshold you set will route a share of prior-corrected — that is, prior-improved — spans
+to review.
+
+## The scale problem
+
+Set those aside and there is a third problem, which is the one calibration addresses.
+
+Think about a weather forecaster. A good one who says "70% chance of rain" is right on about seven of
+every ten days they say it, and that is the entire contract — the number means what it says. A
+forecaster who is right nineteen times out of twenty on their "70%" days is not being careful; they
+are being useless in a different direction, because you cannot act on a number that understates
+itself either.
+
+Measured on held-out data, the shipped model averages 0.913 confidence against 0.980 accuracy. It is
+systematically under-confident: it is right more of the time than it claims to be. The gap has a name,
+expected calibration error, which buckets predictions by their stated confidence and measures how far
+each bucket's average claim sits from its actual hit rate. On that measure the raw scores come in at
+0.0698.
+
+Under-confidence sounds harmless and is not. A threshold at 0.9 on raw scores cuts through the middle
+of a band where every parse is correct — on twenty clean addresses the raw scores spanned 0.828 to
+0.938, and all twenty were right. You would review most of a clean file.
+
+## The correction table
+
+The fix does not touch the model. It is the move you make with a kitchen thermometer that reads ten
+degrees low: you do not re-machine the probe, you tape a card to the handle saying what each reading
+means.
+
+The card is built by running the shipped model over data where the answer is already known, sorting
+the predictions by their stated confidence into twenty buckets, and recording what fraction of each
+bucket turned out right. That gives a translation from stated confidence to observed accuracy. The
+fit is **isotonic**, which is the one constraint that matters: the translation can never run
+backwards, so a raw 0.9 always maps to at least as much corrected confidence as a raw 0.8. Ordering
+is preserved; only the scale changes.
+
+Applied to the same held-out data, expected calibration error goes from 0.0698 to 0.0017. The
+corrected number means roughly what it says. Those two figures are the held-out open-data slice;
+[Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx) quotes 0.0677 to 0.0028
+for the combined split that also includes in-domain rows. The open-data pair is the one to trust,
+because the in-domain half runs optimistic and averaging the two hides that.
+
+## It is off by default
+
+The table ships inside the weights package as a small JSON file, and nothing applies it for you. The
+default parse output is the raw score, byte for byte identical to what it would be if calibration did
+not exist, because silently rewriting a number that consumers may have pinned thresholds against is
+not a change a library gets to make without saying so. A caller who wants corrected numbers builds
+a calibrator from the table and passes it in per call.
+
+The practical door is [Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx),
+which has the wiring, the shipped accept-versus-precision curve at each threshold, and the arithmetic
+for turning a per-span threshold into a per-row routing rule. That page is where to go the moment you
+want to act on the number rather than understand it.
+
+## What it costs
+
+**A calibration table is fit against one model, and models ship faster than fits.** The table in the
+package was fit on an earlier model than the one beside it, which makes the curve a starting point
+rather than a measurement of what you are running. Re-fitting is repository-side work, not something
+a consumer can do from the installed package.
+
+**Calibration is per locale.** A table fit on United States data does not transfer to French data,
+and a per-locale table ships alongside the combined one for that reason. The combined number is an
+average over slices whose behavior differs, and an average is exactly the shape that hides the
+difference.
+
+**No threshold removes review.** Even where the accepted spans are right 99.1% of the time, that
+residual is real, and it is a rate rather than a set — you cannot inspect your way out of it. Budget
+for it instead of tuning to remove it.
+
+**Confidence is about the reading, not about the place.** A high corrected score says the model read
+the string the way the corpus would have labeled it. It says nothing about whether the address
+exists, whether mail arrives there, or whether the coordinate is any good.
+[What the model cannot do](./what-the-model-cannot-do.mdx) draws that boundary, and
+[Validate an address before you use it](../../how-to/validate-addresses.mdx) is the check that
+answers the other question.
+
+## Related
+
+- [Tune confidence thresholds](../../how-to/tune-confidence-thresholds.mdx) — the shipped curve, the
+  wiring, and per-row routing.
+- [The gazetteer prior](./the-gazetteer-prior.mdx) — why a corrected span can carry a lower number.
+- [How close is close enough?](../geocoding/how-close-is-close-enough.mdx) — the same discipline,
+  applied to coordinates.
+- [Validate an address before you use it](../../how-to/validate-addresses.mdx) — existence checks,
+  which confidence does not perform.

@@ -1,0 +1,139 @@
+---
+title: Decoding and the best path
+description: How per-piece scores become one reading — the legality table, best-path search, and why the transition scores here are constraints rather than learned weights.
+role: explanation
+---
+
+# Decoding and the best path
+
+## The question
+
+At the end of scoring, every piece of the input carries a number for each of the 33 available labels.
+Taking each piece's highest-scoring label is the obvious next move, and it is wrong — it produces
+sequences that are not readings of anything, like a "continues the locality" label with no locality
+open in front of it. The standard symptom is `Saint Petersburg, FL` coming back with a locality of
+`Petersburg`.
+
+So who assembles the pieces, and on what basis?
+
+## The analog
+
+In a rule-based parser this is the reconciliation pass, and everyone who has written one has written
+it the same way: run the classifiers, look at the mess, and clean it up with tie-breaks. Prefer the
+longer span. If two rules claim the same token, prefer the more specific one. Drop a continuation
+that has no beginning. If a state abbreviation and a street suffix both fire on `IN`, prefer the one
+that keeps the rest of the parse coherent.
+
+Those heuristics are doing something real, and they share a flaw: each one repairs a decision after
+it was made, in isolation, and the repairs interact. Drop the orphaned continuation and you have
+silently shortened a town name. Prefer the longer span and you have swallowed the house number.
+
+The alternative is to stop repairing readings and start scoring them. Instead of picking each
+piece's best label and fixing the result, ask which complete reading of the whole line scores highest
+— where a reading that is not structurally possible scores nothing at all, so it is never in
+contention and never needs repairing.
+
+That is the difference between a route planner that picks the best next turn at every intersection
+and one that scores whole routes. The turn-by-turn planner takes a fast road that dead-ends. The
+route planner never proposes the dead end, because a route through it is not a route.
+
+## Legality first
+
+Before any search runs, the parser builds a table from the label list, once, that says which label
+may follow which. The rule is short enough to state in full:
+
+- Anything may be followed by `O`.
+- Anything may be followed by a `B-` label, of any type. A new span can always start.
+- `I-<type>` may follow only `B-<type>` or `I-<type>`. A continuation must continue something of the
+  same kind.
+- A sequence may not open on an `I-` label. There is nothing before the first piece to continue.
+
+Everything the table permits scores zero, and everything it forbids scores as impossible. Notice what
+the table does not contain: it holds no view about which permitted transition is likely. `B-region`
+followed by `B-postcode` and `B-region` followed by `B-locality` are both legal, and the table ranks
+them identically, even though real addresses use the first far more.
+
+That is deliberate, and it is the answer to a question the label space raises. `I-locality` without a
+`B-locality` is not an unlikely reading, it is not a reading. Encoding it as a hard constraint means
+the orphan cannot appear in any candidate, so nothing downstream has to be defensive about it.
+
+## Best path
+
+With the table in hand, the decoder scores a whole reading as the sum of its per-piece scores plus
+its transition scores, and searches for the highest-scoring legal reading of the entire line. The
+search is the Viterbi algorithm, which is what makes this affordable: rather than enumerating every
+combination, it sweeps left to right keeping, for each label at each position, the best way to reach
+it, and then walks the backpointers home. Cost is proportional to the number of pieces times the
+square of the label count, which for 24 pieces and 33 labels is small enough to disappear next to the
+model itself.
+
+Walk the failure it rules out. Suppose the model is unsure about `Saint` in `Saint Petersburg` —
+scoring `O` a shade above `B-locality` — and confident about `Petersburg` as `I-locality`. Per-piece
+argmax takes both winners and emits `O`, `I-locality`, which the span walk reads as a one-word town.
+The best-path search never considers that pair, because the transition is impossible. Its best legal
+option pays the small cost on `Saint` to take `B-locality` and keeps the large gain on `Petersburg`.
+The model was not more sure; the reading was better.
+
+Here is the part worth knowing about the shipped model, because it changes what the guarantee is
+for. The classifier accepts a diagnostic per-piece decode alongside the default best-path one, so
+the two can be compared directly. Run 56 varied inputs through both — lowercase, comma-free,
+venue-led, fragments, non-Latin script, deliberately broken rows — and they produce byte-identical
+output on every one. On this model, over that set, the constraint rescues nothing you can observe.
+
+That is not an argument for removing it. A model well-fit enough to rarely emit an impossible
+sequence is not a model that cannot, and the failure is silent when it happens: an orphan
+continuation does not raise, it shortens a town name. The table costs one table build at startup and
+a comparison per transition, and in exchange the tree that reaches your code is well-formed on input
+nobody has tried yet. Guarantees are worth most exactly where measurement has nothing to report.
+
+## Why the transition scores are constraints, not weights
+
+A **conditional random field** is a sequence model whose decode step scores complete label sequences
+using both per-item scores and learned pairwise scores between adjacent labels — the pairwise part
+being where "region is followed by postcode more than by locality" would live, as a real number
+learned from data.
+
+Mailwoman decodes with Viterbi over a transition table, so the shape is a conditional random field's.
+The transition table is not. It is built from the label list at startup, holds only legality, and is
+never updated by training. Nothing in the shipped weights packages supplies a learned transition
+matrix; the decoder has a slot for one and every published bundle leaves it empty. Training scores
+each piece's label on its own — cross-entropy per position, with no sequence-level term — which is
+what the model card records as training without a conditional random field and decoding with one.
+
+One qualification, so the claim is not read wider than it is. A prior can contribute a bonus at a
+specific transition at a specific position — evidence about one candidate span, supplied by a
+gazetteer lookup and scoped to where it matched. What does not exist is a general preference between
+two labels, learned from data and applied everywhere the pair occurs. That is the thing a learned
+transition matrix would be, and it is the thing that does not ship.
+
+The one-sentence history: a trainable transition matrix was built and trained jointly with the
+per-piece loss, the two losses fought rather than cooperating, and after repeated attempts the
+sequence-level term was set to zero and has stayed there. What survives is the part that was earning
+its keep — the legality table — without the part that was not.
+
+## What it costs
+
+**The decoder has no view on what is common.** It rules out the impossible and is indifferent among
+the possible, so a rare-but-legal ordering is never penalized and a frequent one is never rewarded.
+All of that work sits in the model, whose scores are computed with the whole line visible rather than
+piece by piece. The 56-input comparison above is what makes that arrangement look survivable: the
+per-piece winners already formed a legal sequence on every one of those inputs, which is not what you
+would see if the scores were being produced without reference to their neighbors.
+
+**It cannot fix a confidently wrong label.** Best-path search redistributes among readings the scores
+make close. When the model is sure and wrong, every legal reading agrees with it, and the decoder
+returns the wrong answer in structurally valid form. Valid is not the same as correct — the tree that
+comes out is always well-formed, and being well-formed is not evidence about the content.
+
+**The guarantee stops at the decoder.** Span construction downstream is lenient by design: hand it an
+invalid sequence and it will treat a hanging continuation as the start of a new span rather than
+raising. That tolerance exists so a caller who runs the diagnostic per-piece decode still gets output,
+and it means the structural guarantee is a property of the default decode path, not of the tree
+builder.
+
+## Related
+
+- [Tokens and labels](./tokens-and-labels.mdx) — the label space this table is built from.
+- [The gazetteer prior](./the-gazetteer-prior.mdx) — where the scores the decoder reads come from.
+- [How a model reads an address](./how-a-model-reads-an-address.mdx) — the stage in context.
+- [Component tags](../../reference/component-tags.mdx) — the tags, and how each becomes two labels.

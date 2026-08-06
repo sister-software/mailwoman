@@ -40,11 +40,23 @@
 
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { existsSync, readFileSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, readFileSync, renameSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
+
+import {
+	pairIndexStaleReason,
+	peekPairIndexHeaderFields,
+	warnIfFSTStale,
+} from "../../scripts/weights-overlay-linker.ts"
+
+/**
+ * Hex characters in an md5 digest.
+ */
+const MD5_HEX_LENGTH = 32
 
 /**
  * --- current default -------------- 6.7.0-bundle ships the v3.23.0-bundle-guard step-4000 int8 (the Option-A evidence
@@ -67,9 +79,9 @@ const PKG_DIR = repoRootPath("neural-weights-en-us")
  * The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4 re-verifies against the
  * published tarball — so dev symlinks, the card, and npm agree.
  */
-const CARD = JSON.parse(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
+const CARD = parseJSONStrict<{
 	files_md5?: Record<string, string>
-}
+}>(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8"))
 
 /**
  * Expected model digest from the model card, checked so a stale or truncated link is caught here rather than at
@@ -223,7 +235,7 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 // locality channel resolving OFF (degrade-absent for a card that doesn't require it; fail-closed once
 // the bundle card ships, which is the intended loud signal).
 const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-lexicon-v3.json")
-const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v6.json")
+const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")
 
 if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 	linkForce(SRC_STREET_TYPE_LEXICON, resolve(PKG_DIR, "street-type-lexicon-v3.json"))
@@ -234,9 +246,9 @@ if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 }
 
 if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
-	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v6.json"))
+	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v7.json"))
 
-	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v6.json`)
+	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v7.json`)
 } else {
 	console.error(
 		`WARNING: missing ${SRC_LOCALITY_SURFACE_LEXICON} — locality_surface channel will resolve OFF in this worktree.`
@@ -298,6 +310,8 @@ if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-us.bin ← ${FST_SRC}`)
+
+	warnIfFSTStale(FST_SRC, "en-us")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
@@ -333,48 +347,66 @@ if (existsSync(MORPHOLOGY_SRC)) {
  * city/state/ZIP), so every pair comes from `--borough-db`. The command refuses a build with no source of any kind, so
  * dropping the flag fails loud rather than writing an empty index.
  *
- * Freshness guard, ported from en-gb: the test suite shells this script out on every run, so an unconditional rebuild
- * would cost minutes per `yarn test`. Peek the header instead and rebuild only when the calibrated delta, the
- * transition beta, or the source DB's md5 has moved. An ABSENT `transitionBeta` reads `undefined` and forces the
- * rebuild that stamps it in.
+ * Freshness guard: the test suite shells this script out on every run, so an unconditional rebuild would cost minutes
+ * per `yarn test`. Peek the header instead and rebuild only when the FORMAT (`schemaVersion`), a calibrated magnitude,
+ * or the source DB's md5 has moved. The format+magnitude half of that comparison lives in
+ * `scripts/weights-overlay-linker.ts`'s `pairIndexStaleReason` — shared with the other three base linkers and every
+ * overlay, because when each script carried its own copy three of the four could not notice a schema bump. The md5 half
+ * stays here: only this script knows which sources it passes. An ABSENT optional magnitude reads `undefined` and forces
+ * the rebuild that stamps it in.
  */
 const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-us.bin")
 /**
- * Calibrated soft-prior magnitude — the SAME pair the R5 bars were measured with (gauntlet unchanged, 0/60
- * venue-confound false positives, 60/60 tag-correct). Changing either number invalidates those receipts.
+ * Calibrated soft-prior magnitudes — the SAME set the R5 bars were measured with (gauntlet unchanged, 0/60
+ * venue-confound false positives, 60/60 tag-correct). Changing any of these numbers invalidates those receipts.
+ *
+ * `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US at the verdict's recommended δ=5 —
+ * the smallest magnitude that saturates bar B-2's brooklyn-class sub-board (18.3% → 98.3% whole-edge), flat from there
+ * to 20, with 0.00% parent-side false positives on B-3. See
+ * `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
  */
 const PAIR_INDEX_DELTA = 10
 const PAIR_INDEX_TRANSITION_BETA = 5
+const PAIR_INDEX_PARENT_DELTA = 5
 const PAIR_INDEX_SOURCE_DB = dataRootPath("wof", "admin-global-priority.db")
 
 /**
- * Minimal PIX1 header reader — magic + header block only. Reimplemented rather than imported so this data-only package
- * gains no dependency on `@mailwoman/neural` (which pulls onnxruntime-node) to read three fields. If PIX1 ever changes,
- * `neural/pair-index-resolver.ts`'s own parse is the source of truth this must follow.
+ * Read or compute the md5 of a file, using a sidecar `.md5` cache so a multi-gigabyte source isn't re-hashed on every
+ * `yarn test` (the borough DB is ~5 GB). The sidecar is written in standard md5sum format: `<hash> <filename>`. It is
+ * trusted only while its mtime is at least the source's; an older sidecar is recomputed and rewritten. Mirrors the
+ * en-gb/en-nz link scripts rather than importing theirs — each weights package's script stands alone.
  */
-function peekPairIndexHeaderFields(path: string): {
-	delta: number
-	transitionBeta: number | undefined
-	sourceMD5: string | undefined
-} {
-	const bytes = readFileSync(path)
-	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-	// "PIX1" little-endian — mirrors pair-index-resolver.ts's MAGIC const.
-	const MAGIC = 0x31_58_49_50
+async function md5FileWithSidecar(path: string): Promise<string> {
+	const sidecarPath = `${path}.md5`
+	const sourceStats = statSync(path)
 
-	if (view.getUint32(0, true) !== MAGIC) {
-		throw new Error(`pair index: bad magic reading ${path}`)
+	if (existsSync(sidecarPath)) {
+		try {
+			const sidecarStats = statSync(sidecarPath)
+
+			if (sidecarStats.mtime >= sourceStats.mtime) {
+				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
+				const [hash] = sidecarContent.split(/\s+/)
+
+				if (hash && hash.length === MD5_HEX_LENGTH) {
+					console.log(`md5(${path}): read from sidecar`)
+
+					return hash
+				}
+			}
+		} catch {
+			// A missing or malformed sidecar is not an error — recompute below.
+		}
 	}
 
-	const headerLen = view.getUint32(4, true)
+	const hash = await md5File(path)
+	const filename = path.split(/[/\\]/).pop() || path
 
-	const header = JSON.parse(Buffer.from(bytes.subarray(8, 8 + headerLen)).toString("utf8")) as {
-		delta: number
-		transitionBeta?: number
-		sourceMD5s?: string[]
-	}
+	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
 
-	return { delta: header.delta, transitionBeta: header.transitionBeta, sourceMD5: header.sourceMD5s?.[0] }
+	console.log(`md5(${path}): computed and cached in sidecar`)
+
+	return hash
 }
 
 if (!existsSync(CLI)) {
@@ -391,18 +423,40 @@ if (!existsSync(CLI)) {
 	if (existsSync(PAIR_INDEX_BIN_DEST)) {
 		try {
 			const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
+			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it was
+			// built from has moved. The US build passes exactly one source (`--borough-db`; there is no register CSV
+			// and no `--pairs-jsonl`), so `gazetteer pair-index` records exactly one md5 and the comparison below IS
+			// the whole set — a header recording any other count cannot have come from this build, which is itself
+			// staleness. The hash is sidecar-cached, so re-reading it on every `yarn test` costs a stat.
+			const currentSourceMD5 = await md5FileWithSidecar(String(PAIR_INDEX_SOURCE_DB))
+			const [existingSourceMD5] = header.sourceMD5s
 
-			if (header.delta !== PAIR_INDEX_DELTA) {
-				console.log(`rebuilding pair-index-us.bin — delta ${header.delta} → ${PAIR_INDEX_DELTA}`)
-			} else if (header.transitionBeta !== PAIR_INDEX_TRANSITION_BETA) {
+			const staleReason = pairIndexStaleReason(header, {
+				delta: PAIR_INDEX_DELTA,
+				transitionBeta: PAIR_INDEX_TRANSITION_BETA,
+				parentDelta: PAIR_INDEX_PARENT_DELTA,
+			})
+
+			if (staleReason) {
+				console.log(`rebuilding pair-index-us.bin — ${staleReason}`)
+			} else if (header.sourceMD5s.length !== 1) {
 				console.log(
-					`rebuilding pair-index-us.bin — transitionBeta ${header.transitionBeta} → ${PAIR_INDEX_TRANSITION_BETA}`
+					`rebuilding pair-index-us.bin — header records ${header.sourceMD5s.length} source md5s ` +
+						`[${header.sourceMD5s.join(", ") || "(none recorded)"}], but this build reads exactly one source ` +
+						`(${PAIR_INDEX_SOURCE_DB})`
+				)
+			} else if (existingSourceMD5 !== currentSourceMD5) {
+				console.log(
+					`rebuilding pair-index-us.bin — ${PAIR_INDEX_SOURCE_DB} md5 ${existingSourceMD5} → ${currentSourceMD5}`
 				)
 			} else {
 				needsRebuild = false
 			}
 		} catch (error) {
-			console.log(`rebuilding pair-index-us.bin — header unreadable (${(error as Error).message})`)
+			// Covers both an unreadable header and a source md5 that could not be computed: either way the
+			// artifact cannot be shown fresh, and an unverifiable index is treated as stale.
+			console.log(`rebuilding pair-index-us.bin — freshness unverifiable (${(error as Error).message})`)
 		}
 	}
 
@@ -423,6 +477,8 @@ if (!existsSync(CLI)) {
 				String(PAIR_INDEX_DELTA),
 				"--transition-beta",
 				String(PAIR_INDEX_TRANSITION_BETA),
+				"--parent-delta",
+				String(PAIR_INDEX_PARENT_DELTA),
 				"--borough-db",
 				String(PAIR_INDEX_SOURCE_DB),
 			],

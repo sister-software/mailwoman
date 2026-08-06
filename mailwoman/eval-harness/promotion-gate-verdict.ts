@@ -15,6 +15,9 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { TextSpliterator } from "spliterator"
+
 /**
  * Options for {@linkcode assemblePromotionVerdict}.
  */
@@ -57,7 +60,7 @@ function scorerF1(md: string, tag: string): number | undefined {
  * addition).
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
-	const lines = md.split("\n")
+	const lines = [...TextSpliterator.from(md)]
 
 	const cells = (line: string): string[] =>
 		line
@@ -130,11 +133,11 @@ export function assemblePromotionVerdict(
 	options: PromotionVerdictOptions,
 	report: (line: string) => void = console.log
 ): { failed: boolean; verdict: PromotionVerdict } {
-	const gate = JSON.parse(readFileSync(options.gate, "utf8")) as {
+	const gate = parseJSONStrict<{
 		label: string
 		floors: Record<string, number>
 		int8_vs_fp32_max_delta_pp?: number
-	}
+	}>(readFileSync(options.gate, "utf8"))
 
 	const dir = options.outDir
 	const read = (f: string) => readFileSync(path.join(dir, f), "utf8")
@@ -150,7 +153,7 @@ export function assemblePromotionVerdict(
 	function sidecar(f: string): ScorerSidecar | undefined {
 		const raw = maybeRead(f)
 
-		return raw === undefined ? undefined : JSON.parse(raw)
+		return raw === undefined ? undefined : parseJSONStrict<ScorerSidecar>(raw)
 	}
 
 	function tagF1(side: ScorerSidecar | undefined, md: string, tag: string): number | undefined {

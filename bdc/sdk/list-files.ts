@@ -7,7 +7,7 @@
  *   Implemented from the earlier draft's `sync/fcc/bdc/list-files.ts` (the author's own earlier draft, no provenance headers):
  *   the `URLRoutePattern`-compiled route → a plain template literal (this port has no routing
  *   dependency), the `$BCDClient`-bound `retrieveAvailabilityFiles()` → a plain function taking a
- *   {@linkcode BDCClient}. Raw entries are parsed via Task 4's `parseRawBDCFile` and returned sorted
+ *   {@linkcode BDCClient}. Raw entries are parsed via `parseRawBDCFile` and returned sorted
  *   ascending by revision (`compareRevisionAsc`) rather than in API order.
  */
 

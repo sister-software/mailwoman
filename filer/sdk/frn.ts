@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file FCC Registration Number (FRN) branded type (3a Task 2, decision 3).
+ * @file FCC Registration Number (FRN) branded type (3a decision 3).
  *
  *   Implemented from the earlier draft's `fcc/entity/frn.ts` (the author's own earlier draft, no provenance headers), retyped
  *   per decision 3: the earlier draft modeled `FRN` as `Tagged<number, "FRN">`, which silently drops leading

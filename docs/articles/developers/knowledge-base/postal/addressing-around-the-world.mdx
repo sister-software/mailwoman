@@ -1,0 +1,95 @@
+---
+title: Addressing around the world
+description: Number-first, street-first, block-based, landmark-based — the shapes an address takes across postal systems, and why no universal grammar covers them.
+role: explanation
+---
+
+# Addressing around the world
+
+## The question
+
+Write a parser against US addresses and it will do well on US addresses. Point it at a German one and
+the house number has moved to the end of the street line; point it at a Japanese one and there is no
+street at all. Is there a universal address grammar underneath, with local spellings on top? Or is the
+US shape one option among several, with no privileged status?
+
+## The analog
+
+Every postal system is answering the same question — how do you narrow the world to one delivery
+point? — and each one picked a different thing to divide by.
+
+Divide by street and you get the shape most English-language software assumes: a street identifies a
+line, a number identifies a position along it. Divide by block and the street becomes irrelevant: an
+area contains numbered blocks, a block contains numbered buildings, and the road between them is
+unnamed. Divide by landmark and the address becomes a route description that only works if you
+already know the neighborhood.
+
+None of these is a corruption of the others. They are three answers to the same problem, adopted by
+systems that grew at different times under different constraints.
+
+## The tour
+
+**Number then street.** `350 5th Ave` — the US, the UK, Canada, Australia. The type word (`Ave`,
+`Street`, `Road`) sits at the end, which is where suffix-matching parsers learned to look for it.
+
+**Street then number.** `Hauptstraße 5` in Germany, `Kornetintie 6` in Finland. Same components, order
+reversed. And the type word does not have to be a suffix at all: French, Spanish and Italian put it in
+front (`rue de Rivoli`, `Calle Mayor`, `Via Roma`), while German fuses it onto the name
+(`Hauptstraße`). A rule that strips a trailing type word finds nothing to strip in three of these and
+mutilates the fourth.
+
+**Coarse to fine.** Written in Japanese, an address starts with the prefecture and works inward,
+which is the reverse of the English-language convention of starting with the unit and working outward
+([Japan Post](https://www.post.japanpost.jp/int/use/writing/normal_en.html)).
+
+**Blocks instead of streets.** Japanese addresses identify a district, then a chōme, then a block,
+then a building within that block — `1-1-1` is three levels of nesting, and none of the three is a
+house number in the Western sense. There is no street name because the street is not the unit of
+division. Mannheim runs a grid of lettered and numbered blocks on the same principle, and writes
+`R 5, 6-13` where a German address elsewhere would carry a street.
+
+**No postcode.** Hong Kong's domestic mail carries none. Ireland had none until Eircode launched in 2015. Where a postcode does exist, its grain varies by two orders of magnitude: an Eircode identifies
+one delivery point, a French five-digit code covers a commune. The Universal Postal Union publishes a
+per-country description of these systems, which is the reference to reach for before assuming a shape
+([UPU addressing solutions](https://www.upu.int/en/postal-solutions/programmes-services/addressing-solutions)).
+
+**Landmarks and directions.** In parts of Central America an address is a route: a known building,
+then a distance and a direction. It resolves for a local carrier and for nobody else. Michael Tandy's
+[catalogue of address falsehoods](https://www.mjt.me.uk/posts/falsehoods-programmers-believe-about-addresses/)
+collects the examples that make this concrete, and they are the ones that break form validators first.
+
+**Collection instead of delivery.** In places where door-to-door delivery is thin, the box at the post
+office is the address rather than a fallback from one, which makes
+[PO boxes and other non-street addresses](./po-boxes-and-alternatives.mdx) a primary case rather than
+an edge case.
+
+## The takeaway
+
+There is no universal address grammar, so a parser cannot hold one. What exists instead is a set of
+per-country conventions, each with its own component order, its own type-word position, its own
+postcode shape, and its own set of components that do not appear anywhere else.
+
+A model can learn those conventions from data, one locale at a time, which turns "does this parser
+work?" into a question that only has per-locale answers. Which locales carry a measured claim, what
+that claim covers, and where the gaps are is on
+[Locales and tiers](../../reference/locales-and-tiers.mdx).
+
+## What it costs
+
+Per-locale learning is per-locale work. A convention that no training data covers is a convention the
+model has not seen, and its output on that input is a structural guess from position and punctuation
+rather than a read. That produces plausible components rather than visibly broken ones, which is the
+harder failure to notice.
+
+The second cost is data, not modelling. Parsing a Japanese address and finding coordinates for it are
+separate capabilities, and open gazetteer coverage is uneven in a way that does not track the parser's
+coverage at all. [What ships today](../../status.mdx) keeps the two lists apart on purpose.
+
+## Related
+
+- [What an address is](./what-is-an-address.mdx) — why the instruction is written in the recipient
+  service's terms.
+- [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — the routing code, system by system.
+- [Falsehoods about addresses](./falsehoods-about-addresses.mdx) — the assumptions these conventions
+  break, one line each.
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) — what a locale claim means here.

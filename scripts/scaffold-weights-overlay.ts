@@ -36,6 +36,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 const { values } = parseArgs({
@@ -70,7 +71,9 @@ if (existsSync(pkgDir)) {
  * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
  * exists to catch.
  */
-const rootVersion = JSON.parse(readFileSync(String(repoRootPath("package.json")), "utf8")).version as string
+const rootVersion = parseJSONStrict<{ version: string }>(
+	readFileSync(String(repoRootPath("package.json")), "utf8")
+).version
 
 mkdirSync(resolve(pkgDir, "scripts"), { recursive: true })
 
@@ -90,7 +93,19 @@ writeFileSync(
 				url: "https://github.com/sister-software/mailwoman.git",
 				directory: `neural-weights-${slug}`,
 			},
-			files: ["model-card.json", artifact, "README.md", "*.ts", "**/*.ts", "!*.test.ts", "!**/*.test.ts"],
+			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
+			// relative path, which does not resolve once unpacked — and a data-only overlay has no use
+			// for a dev script anyway.
+			files: [
+				"model-card.json",
+				artifact,
+				"README.md",
+				"*.ts",
+				"**/*.ts",
+				"!*.test.ts",
+				"!**/*.test.ts",
+				"!scripts/**",
+			],
 			dependencies: { "@mailwoman/neural-weights-en-us": "workspace:*" },
 			mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
 		},
@@ -103,14 +118,55 @@ writeFileSync(
 	resolve(pkgDir, ".gitignore"),
 	`# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF\n# bucket at publish time. Never committed.\n/${artifact.replace(/-[a-z]{2}\.bin$/, "-*.bin")}\n`
 )
+
 writeFileSync(
 	resolve(pkgDir, ".npmignore"),
 	readFileSync(String(repoRootPath("neural-weights-en-nz", ".npmignore")), "utf8")
 )
+
+// The dev linker, emitted rather than copied. This step used to be a printed instruction reading
+// "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
+// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
+// leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
+writeFileSync(
+	resolve(pkgDir, "scripts", "link-dev-weights.ts"),
+	`/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Dev-weights linker for \`${packageName}\`.
+ *
+ *   The build itself lives in \`scripts/weights-overlay-linker.ts\` — this overlay declares
+ *   \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
+ *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
+ *
+ *   TODO(${slug}): say what makes this locale's index load-bearing, and what it is INERT without. If
+ *   the locale writes its postcode BEFORE the locality, it needs entries in
+ *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
+ *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode
+ *   last, say so, because the ABSENCE from that set is then deliberate. Write this for ${slug}, not
+ *   for whichever locale you read first.
+ */
+
+import { buildPairIndexOverlay } from "../../scripts/weights-overlay-linker.ts"
+
+buildPairIndexOverlay({
+	packageDir: "neural-weights-${slug}",
+	country: "${country}",
+	// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
+	// a measurement of this one.
+	delta: 10,
+	transitionBeta: 5,
+})
+`
+)
+
 writeFileSync(
 	resolve(pkgDir, "README.md"),
 	`# ${packageName}\n\n${localeTag} weights overlay for [mailwoman](https://mailwoman.sister.software).\n\n**Data-only.** Declares \`mailwoman.baseWeights\` and shares the base model and tokenizer with\n\`@mailwoman/neural-weights-en-us\`; what it adds is \`${artifact}\`.\n\n\`\`\`sh\nnpm install ${packageName}\n\`\`\`\n`
 )
+
 writeFileSync(
 	resolve(pkgDir, "model-card.json"),
 	`${JSON.stringify(
@@ -119,7 +175,11 @@ writeFileSync(
 			version: "7.0.0",
 			locale: localeTag,
 			license: "AGPL-3.0",
-			$comment: "Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights.",
+			$comment:
+				"Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights. " +
+				"Deliberately carries NO `labels`: the vocabulary belongs to the shared MODEL, so it is inherited " +
+				"from the base card at resolve time. Copying it here creates a second copy to go stale on the next " +
+				"retrain, and an overlay whose labels disagree with its model throws on the first parse.",
 			files: { model_card: "model-card.json" },
 		},
 		null,
@@ -146,7 +206,7 @@ const registered: string[] = []
 
 // 1. Root workspaces.
 const rootPath = String(repoRootPath("package.json"))
-const rootPkg = JSON.parse(readFileSync(rootPath, "utf8")) as { workspaces: string[] }
+const rootPkg = parseJSONStrict<{ workspaces: string[] }>(readFileSync(rootPath, "utf8"))
 
 if (!rootPkg.workspaces.includes(`neural-weights-${slug}`)) {
 	rootPkg.workspaces.splice(rootPkg.workspaces.indexOf("neural-weights-en-nz") + 1, 0, `neural-weights-${slug}`)
@@ -180,6 +240,7 @@ if (!smokeText.includes(packageName)) {
 			`\t"@mailwoman/neural-weights-en-nz": "neural-weights-en-nz",\n\t"${packageName}": "neural-weights-${slug}",`
 		)
 	)
+
 	registered.push("smoke pack set")
 }
 
@@ -192,5 +253,8 @@ console.log("STILL MANUAL — these name artifacts explicitly, so they stay a hu
 console.log(`  1. neural/test/pair-index-card-parity.test.ts — add a PACKAGES row once the card has its block`)
 console.log(`  2. .github/workflows/publish.yml — add ${artifact} to the preflight list, the $CURL fetch,`)
 console.log(`     the non-empty guard and the --pair-indexes remediation string`)
-console.log(`  3. scripts/link-dev-weights.ts — the overlay ships none; copy the closest sibling's build block`)
-console.log(`  4. OPERATOR: first-publish ${packageName} (OIDC cannot CREATE a package)`)
+console.log(`  3. OPERATOR: first-publish ${packageName} (OIDC cannot CREATE a package)`)
+console.log("")
+console.log(`WRITTEN BUT NOT FINISHED — scripts/link-dev-weights.ts has two TODO(${slug}) markers:`)
+console.log(`  - the docstring's "what this index is inert without", written for ${slug} specifically`)
+console.log(`  - delta / transitionBeta, which are every other overlay's magnitudes until measured`)

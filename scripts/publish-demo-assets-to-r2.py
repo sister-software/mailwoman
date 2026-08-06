@@ -31,8 +31,16 @@ Usage:
   <staged-dir> mirrors the R2 layout under the prefix, e.g.
     <src>/en-us/v4.0.0/{model.onnx,tokenizer.model,model-card.json,fst-en-US.bin,postcode-*.bin,wof-hot.db,wof-polygons.db}
     <src>/en-us/releases.json
+    <src>/pair-index/2026-08-05/pair-index-{gb,nz}.bin
   (The sql.js-httpvfs worker is staged into the Pages deploy by the demo-assets
    plugin, NOT here — it must be same-origin.)
+
+THIS SCRIPT IS THE ONLY PRODUCER of the demo's R2 objects, including the
+placetype-pair indexes. Nothing assembles the pair-index staging dir for you:
+`mailwoman release hf --pair-indexes` uploads them to HUGGING FACE (flat under
+the version dir), and the docs demo-assets plugin copies them into the PAGES
+deploy for dev preview. The bucket copies the demo actually reads have always
+been hand-staged into a `--src` tree and pushed through here.
 """
 
 import argparse
@@ -57,6 +65,21 @@ CACHE_CONTROL = "public, max-age=604800, immutable"
 MUTABLE_CACHE_CONTROL = "public, max-age=60, must-revalidate"
 # Basenames served with MUTABLE_CACHE_CONTROL instead of the immutable default.
 MUTABLE_FILES = {"releases.json"}
+# Top-level dirs whose objects MUST sit under a generation segment
+# (`<dir>/<generation>/<file>`), never directly at the dir root.
+#
+# `pair-index` earned this the hard way: the binaries were uploaded flat at
+# `mailwoman/pair-index/pair-index-<cc>.bin` and then OVERWRITTEN IN PLACE for the
+# PIX schema-3 re-cut (2026-08-04). CACHE_CONTROL says immutable, so Cloudflare
+# kept serving the schema-1 bytes — which the site's reader rejects outright
+# (`schemaVersion 1 predates the typed parent record`) — until a manual purge.
+# The demo reads `pair-index/<generation>/` (docs/src/shared/resources.tsx →
+# PAIR_INDEX_VERSION); bump that constant in the same commit you stage a new one.
+#
+# The other model-independent artifacts (gazetteer/, poi/, street/) already carry
+# a dated segment by convention and are not listed — add one here only after it
+# has a version constant on the demo side to match.
+VERSIONED_DIRS = {"pair-index"}
 # Content-Type by extension. The DBs/model/binaries MUST be octet-stream so Cloudflare
 # doesn't gzip them (gzipped ranges break sql.js-httpvfs).
 CONTENT_TYPE = {
@@ -89,6 +112,27 @@ def main() -> None:
     if not src.is_dir():
         sys.exit(f"--src is not a directory: {src}")
 
+    files = sorted(p for p in src.rglob("*") if p.is_file())
+    if not files:
+        sys.exit(f"no files under {src}")
+
+    # Layout guard BEFORE the credential read, so a mis-staged tree fails the same
+    # way with or without the .env sourced (and under --dry-run).
+    unversioned = [
+        r
+        for r in (p.relative_to(src).as_posix() for p in files)
+        if r.split("/")[0] in VERSIONED_DIRS and r.count("/") < 2
+    ]
+    if unversioned:
+        sys.exit(
+            "refusing to publish un-versioned objects under an immutable Cache-Control:\n  "
+            + "\n  ".join(unversioned)
+            + "\n\nThese dirs need a generation segment — `<dir>/<generation>/<file>`, e.g.\n"
+            "  pair-index/2026-08-05/pair-index-gb.bin\n"
+            "Overwriting a flat key leaves the CDN serving the old bytes for a week.\n"
+            "Bump PAIR_INDEX_VERSION in docs/src/shared/resources.tsx to match."
+        )
+
     s3 = boto3.client(
         "s3",
         endpoint_url=env("RCLONE_S3_PUBLIC_ENDPOINT"),
@@ -97,10 +141,6 @@ def main() -> None:
         region_name=os.environ.get("RCLONE_S3_PUBLIC_REGION", "auto"),
         config=Config(signature_version="s3v4"),
     )
-
-    files = sorted(p for p in src.rglob("*") if p.is_file())
-    if not files:
-        sys.exit(f"no files under {src}")
 
     total = 0
     for p in files:

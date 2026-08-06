@@ -61,7 +61,7 @@ locale-gate → kind-classifier → phrase-grouper → classifier → ...
 - [`@mailwoman/query-shape`](../query-shape) — feeds structural data into this stage
 - [`@mailwoman/locale-gate`](../locale-gate) — feeds locale context
 - [`@mailwoman/phrase-grouper`](../phrase-grouper) — Stage 2.7, next in the pipeline
-- [Staged Pipeline Contract](https://mailwoman.sister.software/articles/plan/reference/STAGES/)
+- [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
 
 ## License
 

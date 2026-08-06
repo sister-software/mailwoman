@@ -1,43 +1,27 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
+import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
-import type { CanonicalRow } from "../../types.ts"
 import { OVERTURE_ADAPTER_ID, OVERTURE_DEFAULT_LICENSE, createOvertureAdapter } from "./adapter.ts"
 
-let scratch: string
+const scratch = useScratchDir("ov")
 
-beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-ov-"))
-})
-
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
-})
+const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
 
 /**
  * Write a per-country Overture corpus JSONL fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
-	const p = join(scratch, "overture-es.corpus.jsonl")
+	const p = join(scratch.path, "overture-es.corpus.jsonl")
 	await writeFile(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")
 
 	return p
-}
-
-async function loadRows(): Promise<CanonicalRow[]> {
-	const jsonl = await readFile(join(scratch, OVERTURE_ADAPTER_ID, "canonical.jsonl"), "utf8")
-
-	return jsonl
-		.trim()
-		.split("\n")
-		.map((l) => JSON.parse(l) as CanonicalRow)
 }
 
 const ES = [
@@ -53,7 +37,7 @@ describe("overture adapter", () => {
 		const manifest = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -71,7 +55,7 @@ describe("overture adapter", () => {
 		await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -97,7 +81,7 @@ describe("overture adapter", () => {
 		await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -112,7 +96,7 @@ describe("overture adapter", () => {
 		await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -127,7 +111,7 @@ describe("overture adapter", () => {
 			runAdapter({
 				adapter: createOvertureAdapter(),
 				adapterOptions: { inputPath: input },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/--country is required/)
@@ -139,7 +123,7 @@ describe("overture adapter", () => {
 		const manifest = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES", limit: 2 },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -147,7 +131,7 @@ describe("overture adapter", () => {
 	})
 
 	it("skips blanks, comments, garbage, and street-less rows", async () => {
-		const p = join(scratch, "messy.jsonl")
+		const p = join(scratch.path, "messy.jsonl")
 
 		await writeFile(
 			p,
@@ -165,7 +149,7 @@ describe("overture adapter", () => {
 		const manifest = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: p, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -179,16 +163,16 @@ describe("overture adapter", () => {
 		const a = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch, OVERTURE_ADAPTER_ID), { recursive: true, force: true })
+		await rm(join(scratch.path, OVERTURE_ADAPTER_ID), { recursive: true, force: true })
 
 		const b = await runAdapter({
 			adapter: createOvertureAdapter(),
 			adapterOptions: { inputPath: input, country: "ES" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 

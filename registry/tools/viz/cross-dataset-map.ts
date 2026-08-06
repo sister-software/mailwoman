@@ -29,6 +29,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
@@ -49,7 +50,7 @@ export interface CrossDatasetMapOptions {
 	/**
 	 * Output HTML path. Default `/tmp/cross-dataset-map.html`.
 	 */
-	outHtml?: string
+	outHTML?: string
 	/**
 	 * Keep only entities whose sources span >1 agency (the two FCC datasets count as one).
 	 */
@@ -89,15 +90,15 @@ const sourcesOf = (f: { properties: Record<string, unknown> | null }) =>
 export function crossDatasetMap(
 	options: CrossDatasetMapOptions = {},
 	report?: (line: string) => void
-): { outHtml: string; kept: number; total: number; triple: number } {
+): { outHTML: string; kept: number; total: number; triple: number } {
 	const IN = options.in || dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson")
-	const OUT = options.outHtml || "/tmp/cross-dataset-map.html"
+	const OUT = options.outHTML || "/tmp/cross-dataset-map.html"
 	const CROSS_AGENCY_ONLY = options.crossAgencyOnly ?? false
 
-	const parsed = JSON.parse(readFileSync(IN, "utf8")) as {
+	const parsed = parseJSONStrict<{
 		type: "FeatureCollection"
 		features: Array<{ properties: Record<string, unknown> | null }>
-	}
+	}>(readFileSync(IN, "utf8"))
 
 	const total = parsed.features.length
 
@@ -144,5 +145,5 @@ export function crossDatasetMap(
 
 	report?.(`  spanning all three agencies: ${triple}`)
 
-	return { outHtml: OUT, kept, total, triple }
+	return { outHTML: OUT, kept, total, triple }
 }

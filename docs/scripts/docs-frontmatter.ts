@@ -72,12 +72,23 @@ function unquote(value: string): string {
 export function parseFrontmatter(source: string): { fields: Map<string, string>; declaredKeys: Set<string> } {
 	const fields = new Map<string, string>()
 	const declaredKeys = new Set<string>()
-	const lines = source.split("\n")
 
-	if (lines[0]?.trim() !== "---") return { fields, declaredKeys }
+	let opened = false
 
-	for (let i = 1; i < lines.length; i++) {
-		const line = lines[i]!
+	// This module runs in the PRE-INSTALL "Docs structure checks" CI gate (docs-build.yml), whose
+	// contract is node built-ins only — no install has happened when it executes. A spliterator
+	// import here is ERR_MODULE_NOT_FOUND on every CI run (2026-08-04). Frontmatter blocks are a
+	// handful of short lines; the whole-buffer split costs nothing at this scale.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator
+	for (const line of source.split("\n")) {
+		if (!opened) {
+			// A file without the opening fence has no frontmatter at all.
+			if (line.trim() !== "---") break
+
+			opened = true
+
+			continue
+		}
 
 		if (line.trim() === "---") break
 

@@ -193,3 +193,9 @@ nightshift
 # carry a hash that disagrees with the file next to it, which is precisely the staleness the guard
 # exists to catch.
 *.jsonl.md5
+
+# Throwaway benchmark/verification scripts an agent or operator drops beside the code it is
+# measuring. Named so they cannot be mistaken for a keeper, and ignored so a wide `git add` cannot
+# sweep one into a commit.
+*-tmp.ts
+*-tmp.tsx

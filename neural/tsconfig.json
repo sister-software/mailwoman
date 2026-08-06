@@ -8,5 +8,10 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../core" }, { "path": "../codex" }]
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../codex" },
+		{ "path": "../locale-gate" },
+		{ "path": "../query-shape" }
+	]
 }

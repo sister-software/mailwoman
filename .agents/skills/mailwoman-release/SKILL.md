@@ -103,7 +103,7 @@ node mailwoman/out/cli.js release hf v<target> \
   --tokenizer neural-weights-en-us/tokenizer.model \
   --model-card neural-weights-en-us/model-card.json \
   --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin \
-  --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin \
+  --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin \
   --pair-indexes neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin \
   --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json \
   --country-lexicon data/gazetteer/country-surface-lexicon-v1.json \

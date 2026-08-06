@@ -32,7 +32,7 @@ import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
-	createGbtScorer,
+	createGBTScorer,
 	DEDUP_GBT_META,
 	DEDUP_GBT_MODEL,
 	ingestRows,
@@ -45,7 +45,7 @@ import {
 } from "@mailwoman/registry"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs, type SourceSpec } from "./shared.ts"
+import { buildSpecs, norm, type SourceSpec } from "./shared.ts"
 
 /**
  * Independent sources that must agree before a cluster counts as cross-source corroborated.
@@ -82,8 +82,6 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	outMd?: string
 }
-
-const norm = (s: string | undefined) => (s ?? "").trim()
 
 /**
  * Distinct provenance labels an entity's records span.
@@ -264,7 +262,7 @@ export async function crossSourceThresholdSweep(
 	}
 
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
-	const gbtScorer = createGbtScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
+	const gbtScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	// --- Arm 1: the FS baseline (the recall-correct baseline cross-source flows currently pin). ---
 	report?.("[D] resolving — FS baseline baseline…")
@@ -318,7 +316,7 @@ export async function crossSourceThresholdSweep(
 			throw new Error(`--candidate module exports neither CROSS_SOURCE_GBT_MODEL nor ORG_CROSS_SOURCE_GBT_MODEL`)
 
 		const t0 = (mod.CROSS_SOURCE_GBT_META ?? mod.ORG_CROSS_SOURCE_GBT_META)?.recommendedThreshold ?? 0
-		const candScorer = createGbtScorer({ model: candModel, comparisons, addressFrequency })
+		const candScorer = createGBTScorer({ model: candModel, comparisons, addressFrequency })
 		report?.(`[E] resolving — cross-source GBT candidate @ ${t0.toFixed(3)} (±)…`)
 
 		for (const t of [t0 - 1, t0, t0 + 1]) {

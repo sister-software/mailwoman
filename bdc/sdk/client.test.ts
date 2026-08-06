@@ -12,9 +12,13 @@
  *   fake `Date` specifically, because `axios-cache-interceptor` stamps `createdAt` off `Date.now()`
  *   rather than off this client's injectable clock.
  *
- *   The stub errors are built structurally (`isAxiosError: true` plus `config`/`response`/`code`) rather
- *   than with `new AxiosError(...)`: `bdc` depends on neither `axios` nor `axios-cache-interceptor`,
- *   reaching both only through `@mailwoman/core`, and a test file is not a reason to breach that.
+ *   The stub adapter and its Axios-shaped error builder live in `@mailwoman/core/api/test-transport`,
+ *   beside the test clocks — this file had grown a near-identical copy of
+ *   `filer/sdk/sec-client.test.ts`'s, which is what happens when a second client is migrated from the
+ *   first's tests. Both are built structurally (`isAxiosError: true` plus `config`/`response`/`code`)
+ *   rather than with `new AxiosError(...)`: `bdc` depends on neither `axios` nor
+ *   `axios-cache-interceptor`, reaching both only through `@mailwoman/core`, and a test file is not a
+ *   reason to breach that.
  */
 
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
@@ -22,8 +26,8 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { crc32 } from "node:zlib"
 
-import type { APIClientConfig } from "@mailwoman/core/api"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
+import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceError`). The value
 // arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
@@ -84,130 +88,18 @@ const API_KEY = "s3cr3t"
  */
 const DEFAULT_INTERVAL_MS = 6000
 
-const HTTP_OK = 200
-const HTTP_MULTIPLE_CHOICES = 300
-const HTTP_SERVER_ERROR_MIN = 500
+/**
+ * BDC answers with a `{ data: … }` envelope, and the client REFUSES to cache a 200 whose body is not one — so the
+ * stub's default body has to be a valid envelope or every cache assertion below would be testing the self-heal path
+ * instead.
+ */
+const BDC_EMPTY_ENVELOPE = { data: [] }
 
 /**
- * The interesting subset of an Axios request config, as a stub adapter sees it.
+ * The stub transport with BDC's envelope pre-bound, so no call site repeats it.
  */
-interface StubRequestConfig {
-	url?: string
-	headers?: Record<string, unknown>
-	timeout?: number
-	responseType?: string
-	cache?: unknown
-}
-
-/**
- * One scripted adapter outcome.
- */
-interface StubOutcome {
-	status?: number
-	statusText?: string
-	/**
-	 * The RAW body, as the transport would hand it to Axios's `transformResponse`. A string here is what an upstream
-	 * serving HTML under a 200 actually looks like; a `Buffer` is what Axios's Node adapter produces for `responseType:
-	 * "arraybuffer"`.
-	 */
-	body?: unknown
-	headers?: Record<string, string>
-	/**
-	 * A transport-level failure — no HTTP response ever arrives. `code` picks the class: `ERR_NETWORK` for a dropped
-	 * socket, `ECONNABORTED` for this attempt's own timeout firing.
-	 */
-	throws?: { message: string; code: string }
-}
-
-/**
- * The Axios overrides `createBDCClient` accepts, reached through `APIClientConfig` rather than by importing `axios`.
- */
-type AxiosOverrides = NonNullable<APIClientConfig["axios"]>
-
-interface StubTransport {
-	/**
-	 * Spread into `createBDCClient()` as its `axios` override.
-	 */
-	axios: AxiosOverrides
-	calls: string[]
-	configs: StubRequestConfig[]
-	dispatchTimes: number[]
-}
-
-/**
- * Build an Axios-shaped rejection without importing `axios`. `isAxiosError(payload)` is `isObject(payload) &&
- * payload.isAxiosError === true`, and everything downstream reads `config`, `code`, and `response`.
- */
-function axiosLikeError(message: string, code: string, config: StubRequestConfig, response?: unknown): Error {
-	const error = new Error(message) as Error & Record<string, unknown>
-
-	error.isAxiosError = true
-	error.code = code
-	error.config = config
-
-	if (response) {
-		error.response = response
-	}
-
-	return error
-}
-
-/**
- * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted) and records every dispatch.
- * It reproduces what Axios's real adapters do on a failing status — reject with an Axios-shaped error carrying the
- * response — because `validateStatus` is applied by the adapter, not by the interceptor chain.
- */
-function stubTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubTransport {
-	const calls: string[] = []
-	const configs: StubRequestConfig[] = []
-	const dispatchTimes: number[] = []
-	let index = 0
-
-	const adapter = async (config: StubRequestConfig): Promise<unknown> => {
-		calls.push(String(config.url))
-		configs.push(config)
-
-		if (clock) {
-			dispatchTimes.push(clock.now())
-		}
-
-		const outcome = outcomes[Math.min(index, outcomes.length - 1)]!
-
-		index++
-
-		if (outcome.throws) {
-			throw axiosLikeError(outcome.throws.message, outcome.throws.code, config)
-		}
-
-		const status = outcome.status ?? HTTP_OK
-
-		const response = {
-			// Axios's `transformResponse` runs on the RAW body, so hand it exactly what the wire would: a
-			// string passes through untouched (that is how an HTML error page under a 200 actually arrives),
-			// bytes pass through untouched, and anything else is serialized the way a JSON endpoint would.
-			data:
-				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)
-					? outcome.body
-					: JSON.stringify(outcome.body ?? { data: [] }),
-			status,
-			statusText: outcome.statusText ?? "OK",
-			headers: outcome.headers ?? {},
-			config,
-		}
-
-		if (status >= HTTP_OK && status < HTTP_MULTIPLE_CHOICES) return response
-
-		throw axiosLikeError(
-			`Request failed with status code ${status}`,
-			status >= HTTP_SERVER_ERROR_MIN ? "ERR_BAD_RESPONSE" : "ERR_BAD_REQUEST",
-			config,
-			response
-		)
-	}
-
-	// Structurally an Axios adapter. The precise `AxiosAdapter` signature isn't nameable here without
-	// importing `axios`, which this workspace deliberately does not depend on.
-	return { axios: { adapter } as AxiosOverrides, calls, configs, dispatchTimes }
+function bdcTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubTransport {
+	return stubTransport(outcomes, { clock, defaultBody: BDC_EMPTY_ENVELOPE })
 }
 
 let cacheDir: string
@@ -260,13 +152,13 @@ describe("createBDCClient: credential fail-fast", () => {
 	})
 
 	it("does not throw when both halves are passed explicitly", () => {
-		expect(() => clientFor(stubTransport([{}]))).not.toThrow()
+		expect(() => clientFor(bdcTransport([{}]))).not.toThrow()
 	})
 })
 
 describe("createBDCClient: header-pair auth and URL building", () => {
 	it("sends the username/hash_value header pair and the base-relative URL on every request", async () => {
-		const transport = stubTransport([{ body: { data: [] } }, { body: Buffer.from("zip") }])
+		const transport = bdcTransport([{ body: { data: [] } }, { body: Buffer.from("zip") }])
 		const client = clientFor(transport)
 
 		await client.get("/map/listAsOfDates")
@@ -283,7 +175,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	})
 
 	it("serializes params and omits undefined ones rather than sending the literal string", async () => {
-		const transport = stubTransport([{ body: { data: [] } }])
+		const transport = bdcTransport([{ body: { data: [] } }])
 
 		await clientFor(transport).get("/map/downloads/listAvailabilityData/2024-12-31", {
 			category: "State",
@@ -300,7 +192,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 		// `new URL(path, BDC_API_BASE_URL)` would resolve an absolute-looking path to another origin and
 		// carry the `username`/`hash_value` pair there. Concatenation cannot: the host is already fixed by
 		// the time the path is appended.
-		const transport = stubTransport([{ body: { data: [] } }, { body: { data: [] } }])
+		const transport = bdcTransport([{ body: { data: [] } }, { body: { data: [] } }])
 		const client = clientFor(transport)
 
 		await client.get("https://credential-thief.example/collect")
@@ -314,7 +206,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 	it("returns the response body UN-unwrapped, envelope intact", async () => {
 		// Every BDC endpoint nests its payload under `data`, and both callers pluck `.data` themselves. A
 		// client that unwrapped would silently break every call site's response type.
-		const transport = stubTransport([{ body: { data: [{ as_of_date: "2024-12-31" }] } }])
+		const transport = bdcTransport([{ body: { data: [{ as_of_date: "2024-12-31" }] } }])
 
 		const body = await clientFor(transport).get<{ data: unknown[] }>("/map/listAsOfDates")
 
@@ -325,7 +217,7 @@ describe("createBDCClient: header-pair auth and URL building", () => {
 describe("createBDCClient: the 10 requests/minute throttle", () => {
 	it("defaults to the FCC's published ten per minute, i.e. six seconds a call", async () => {
 		const clock = createFakeClock()
-		const transport = stubTransport([{ body: { data: [] } }])
+		const transport = bdcTransport([{ body: { data: [] } }])
 		const client = clientFor(transport, { clock })
 
 		await client.get("/map/rate/0")
@@ -339,7 +231,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 
 	it("is configurable, not a hard-coded law", async () => {
 		const clock = createFakeClock()
-		const transport = stubTransport([{ body: { data: [] } }])
+		const transport = bdcTransport([{ body: { data: [] } }])
 		const client = clientFor(transport, { clock, requestsPerMinute: 30 })
 
 		await client.get("/map/tuned/0")
@@ -357,7 +249,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 		const FAN_OUT = 12
 
 		const clock = new VirtualClock()
-		const transport = stubTransport([{ body: { data: [] } }], clock)
+		const transport = bdcTransport([{ body: { data: [] } }], clock)
 		const client = clientFor(transport, { clock })
 
 		await clock.runUntilSettled(Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`/map/fanout/${i}`))))
@@ -375,7 +267,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 
 	it("throttles the BINARY path too — caching is off there, the rate budget is not", async () => {
 		const clock = createFakeClock()
-		const transport = stubTransport([{ body: Buffer.from("zip-bytes") }])
+		const transport = bdcTransport([{ body: Buffer.from("zip-bytes") }])
 		const client = clientFor(transport, { clock })
 
 		await client.getArrayBuffer("/map/downloads/downloadFile/availability/1")
@@ -388,7 +280,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 		const REPEATS = 4
 
 		const clock = createFakeClock()
-		const transport = stubTransport([{ body: { data: [1] } }])
+		const transport = bdcTransport([{ body: { data: [1] } }])
 		const client = clientFor(transport, { clock })
 
 		for (let i = 0; i < REPEATS; i++) {
@@ -403,7 +295,7 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 describe("createBDCClient: the throttle meter", () => {
 	it("reports elapsed time and how much of it went to waiting", async () => {
 		const clock = createFakeClock()
-		const transport = stubTransport([{ body: { data: [] } }], clock)
+		const transport = bdcTransport([{ body: { data: [] } }], clock)
 		const client = clientFor(transport, { clock })
 
 		expect(client.throttleStats()).toMatchObject({ waitingMs: 0, waits: 0 })
@@ -433,7 +325,7 @@ describe("createBDCClient: the throttle meter", () => {
 		const FAN_OUT = 8
 
 		const clock = new VirtualClock()
-		const transport = stubTransport([{ body: { data: [] } }], clock)
+		const transport = bdcTransport([{ body: { data: [] } }], clock)
 		const client = clientFor(transport, { clock })
 
 		await clock.runUntilSettled(Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`/map/union/${i}`))))
@@ -451,7 +343,7 @@ describe("createBDCClient: the throttle meter", () => {
 		const BUDGET = 2
 
 		const clock = new VirtualClock()
-		const transport = stubTransport([{ body: { data: [] } }], clock)
+		const transport = bdcTransport([{ body: { data: [] } }], clock)
 		const client = clientFor(transport, { clock, requestsPerMinute: BUDGET })
 
 		await clock.runUntilSettled(Promise.all(Array.from({ length: 4 }, (_, i) => client.get(`/map/budget/${i}`))))
@@ -473,7 +365,7 @@ describe("createBDCClient: the throttle meter", () => {
 		const FAN_OUT = BDC_DEFAULT_REQUESTS_PER_MINUTE * WINDOWS + 1
 
 		const clock = new VirtualClock()
-		const transport = stubTransport([{ body: { data: [] } }], clock)
+		const transport = bdcTransport([{ body: { data: [] } }], clock)
 		const client = clientFor(transport, { clock })
 
 		await clock.runUntilSettled(Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`/map/steady/${i}`))))
@@ -501,7 +393,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 	const path = "/map/listAsOfDates"
 
 	it("serves a repeat call from cache without re-dispatching", async () => {
-		const transport = stubTransport([{ body: { data: [1] } }])
+		const transport = bdcTransport([{ body: { data: [1] } }])
 		const client = clientFor(transport)
 
 		expect(await client.get(path)).toEqual({ data: [1] })
@@ -510,9 +402,9 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("persists to disk, so a SEPARATE client instance over the same cacheDir hits it too", async () => {
-		await clientFor(stubTransport([{ body: { data: [1] } }])).get(path)
+		await clientFor(bdcTransport([{ body: { data: [1] } }])).get(path)
 
-		const second = stubTransport([{ body: { data: ["SHOULD-NOT-BE-FETCHED"] } }])
+		const second = bdcTransport([{ body: { data: ["SHOULD-NOT-BE-FETCHED"] } }])
 
 		expect(await clientFor(second).get(path)).toEqual({ data: [1] })
 		expect(second.calls).toHaveLength(0)
@@ -524,7 +416,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
-		const transport = stubTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
+		const transport = bdcTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
 		const client = clientFor(transport, { cacheTTLMs: 1000 })
 
 		expect(await client.get(path)).toEqual({ data: [1] })
@@ -539,7 +431,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		vi.useFakeTimers({ toFake: ["Date"] })
 		vi.setSystemTime(new Date("2026-01-01T00:00:00Z"))
 
-		const transport = stubTransport([
+		const transport = bdcTransport([
 			{ body: { data: [1] }, headers: { "cache-control": "max-age=1" } },
 			{ body: { data: [2] }, headers: { "cache-control": "max-age=1" } },
 		])
@@ -556,7 +448,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("treats URLs differing only by query string as DISTINCT entries", async () => {
-		const transport = stubTransport([{ body: { data: ["ca"] } }, { body: { data: ["ny"] } }])
+		const transport = bdcTransport([{ body: { data: ["ca"] } }, { body: { data: ["ny"] } }])
 		const client = clientFor(transport)
 
 		expect(await client.get("/map/downloads/listAvailabilityData/2024-12-31", { state: "06" })).toEqual({
@@ -571,7 +463,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("never writes an entry for a failed response", async () => {
-		const failing = stubTransport([{ status: 500, statusText: "Internal Server Error" }])
+		const failing = bdcTransport([{ status: 500, statusText: "Internal Server Error" }])
 
 		await expect(clientFor(failing, { maxAttempts: 1 }).get("/map/error")).rejects.toBeInstanceOf(ResourceError)
 		expect(readdirSync(cacheDir)).toHaveLength(0)
@@ -580,19 +472,19 @@ describe("createBDCClient: the on-disk response cache", () => {
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
 		// Validate BEFORE writing: an upstream serving an error page under a 200 would otherwise be handed
 		// to the next run, whose caller destructures `.data` into `undefined`.
-		const bad = stubTransport([{ body: { error: "nope" } }])
+		const bad = bdcTransport([{ body: { error: "nope" } }])
 
 		expect(await clientFor(bad).get("/map/not-an-envelope")).toEqual({ error: "nope" })
 		expect(readdirSync(cacheDir)).toHaveLength(0)
 
-		const fixed = stubTransport([{ body: { data: [1] } }])
+		const fixed = bdcTransport([{ body: { data: [1] } }])
 
 		expect(await clientFor(fixed).get("/map/not-an-envelope")).toEqual({ data: [1] })
 		expect(fixed.calls).toHaveLength(1)
 	})
 
 	it("bypasses BOTH the read and the write when a caller passes skipCache", async () => {
-		const transport = stubTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
+		const transport = bdcTransport([{ body: { data: [1] } }, { body: { data: [2] } }])
 		const client = clientFor(transport)
 
 		expect(await client.get(path, undefined, { skipCache: true })).toEqual({ data: [1] })
@@ -603,7 +495,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
-		const transport = stubTransport([{ body: { data: [1] } }])
+		const transport = bdcTransport([{ body: { data: [1] } }])
 		const client = clientFor(transport)
 
 		const results = await Promise.all([client.get(path), client.get(path), client.get(path)])
@@ -617,7 +509,7 @@ describe("createBDCClient: the binary download path", () => {
 	const path = "/map/downloads/downloadFile/availability/42"
 
 	it("requests arraybuffer bytes with caching switched OFF for this request", async () => {
-		const transport = stubTransport([{ body: Buffer.from("PK-zip-bytes") }])
+		const transport = bdcTransport([{ body: Buffer.from("PK-zip-bytes") }])
 
 		await clientFor(transport).getArrayBuffer(path)
 
@@ -636,7 +528,7 @@ describe("createBDCClient: the binary download path", () => {
 		// a silent run is the proof that the interceptor never saw this response.
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
 
-		const transport = stubTransport([{ body: Buffer.from("first") }, { body: Buffer.from("second") }])
+		const transport = bdcTransport([{ body: Buffer.from("first") }, { body: Buffer.from("second") }])
 		const client = clientFor(transport)
 
 		expect(Buffer.from(await client.getArrayBuffer(path)).toString()).toBe("first")
@@ -651,7 +543,7 @@ describe("createBDCClient: the binary download path", () => {
 
 	it("returns the exact bytes as an ArrayBuffer from the Buffer body Axios's Node adapter produces", async () => {
 		const bytes = Buffer.from([0x50, 0x4b, 0x03, 0x04, 0x00, 0xff])
-		const transport = stubTransport([{ body: bytes }])
+		const transport = bdcTransport([{ body: bytes }])
 
 		const result = await clientFor(transport).getArrayBuffer(path)
 
@@ -668,7 +560,7 @@ describe("createBDCClient: the binary download path", () => {
 		const pool = Buffer.alloc(64, 0xaa)
 		const view = pool.subarray(8, 12)
 
-		const transport = stubTransport([{ body: view }])
+		const transport = bdcTransport([{ body: view }])
 		const result = await clientFor(transport).getArrayBuffer(path)
 
 		expect(result.byteLength).toBe(4)
@@ -676,7 +568,7 @@ describe("createBDCClient: the binary download path", () => {
 	})
 
 	it("gives the download its own, far longer inactivity timeout than a JSON call", async () => {
-		const transport = stubTransport([{ body: { data: [] } }, { body: Buffer.from("zip") }])
+		const transport = bdcTransport([{ body: { data: [] } }, { body: Buffer.from("zip") }])
 		const client = clientFor(transport, { requestTimeoutMs: 1234, downloadTimeoutMs: 98_765 })
 
 		await client.get("/map/listAsOfDates")
@@ -690,7 +582,7 @@ describe("createBDCClient: the binary download path", () => {
 describe("downloadBDCFile: end to end over the migrated client", () => {
 	it("downloads the zip, extracts its single CSV entry, and writes it to the destination", async () => {
 		const csv = "location_id,provider_id\n1,42\n"
-		const transport = stubTransport([{ body: storedZip("bdc_06_Cable_D24_31dec2024.csv", csv) }])
+		const transport = bdcTransport([{ body: storedZip("bdc_06_Cable_D24_31dec2024.csv", csv) }])
 		const client = clientFor(transport)
 
 		const file = { fileID: 42, fileName: "bdc_06_Cable_D24_31dec2024" } as BDCFile
@@ -704,7 +596,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 	})
 
 	it("returns the cached CSV path without issuing any request when the file already exists", async () => {
-		const transport = stubTransport([{ body: storedZip("x.csv", "a,b\n") }])
+		const transport = bdcTransport([{ body: storedZip("x.csv", "a,b\n") }])
 		const client = clientFor(transport)
 
 		const file = { fileID: 7, fileName: "already-here" } as BDCFile
@@ -722,7 +614,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 // `isTransientResourceError()` alone — never from message text.
 describe("createBDCClient: the caller's failure taxonomy, decided without reading any message", () => {
 	async function failureFor(outcomes: StubOutcome[], maxAttempts = 2): Promise<unknown> {
-		const client = clientFor(stubTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })
+		const client = clientFor(bdcTransport(outcomes), { maxAttempts, baseRetryDelayMs: 1 })
 
 		return client.get("/map/taxonomy-probe").catch((error: unknown) => error)
 	}
@@ -745,7 +637,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	})
 
 	it("does not retry a rejected credential", async () => {
-		const transport = stubTransport([{ status: 401, statusText: "Unauthorized" }])
+		const transport = bdcTransport([{ status: 401, statusText: "Unauthorized" }])
 
 		await expect(clientFor(transport, { maxAttempts: 5 }).get("/map/probe")).rejects.toBeInstanceOf(ResourceError)
 		expect(transport.calls).toHaveLength(1)
@@ -797,7 +689,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	it("recovers from a transient 429, and the retry attempt still takes a throttle grant", async () => {
 		const clock = createFakeClock()
 
-		const transport = stubTransport([{ status: 429, statusText: "Too Many Requests" }, { body: { data: [1] } }], clock)
+		const transport = bdcTransport([{ status: 429, statusText: "Too Many Requests" }, { body: { data: [1] } }], clock)
 
 		// A backoff far SHORTER than the throttle interval, so only the throttle can produce the observed
 		// spacing — a test with a long backoff would pass with the throttle deleted.
@@ -811,7 +703,7 @@ describe("createBDCClient: the caller's failure taxonomy, decided without readin
 	})
 
 	it("gives up after maxAttempts on a persistent 503 — bounded, not until it works", async () => {
-		const transport = stubTransport([{ status: 503, statusText: "Service Unavailable" }])
+		const transport = bdcTransport([{ status: 503, statusText: "Service Unavailable" }])
 
 		const caught = await clientFor(transport, { maxAttempts: 2, baseRetryDelayMs: 1 })
 			.get("/map/down")
@@ -829,7 +721,7 @@ describe("the SDK callers, over the migrated client", () => {
 			{ data_type: BDCFilingDataType.Availability, as_of_date: "2024-12-31" },
 		]
 
-		const transport = stubTransport([{ body: { data: raw } }])
+		const transport = bdcTransport([{ body: { data: raw } }])
 		const client = clientFor(transport)
 
 		const entries = await retrieveFilingDates(client, { filingType: BDCFilingDataType.Availability })
@@ -844,7 +736,7 @@ describe("the SDK callers, over the migrated client", () => {
 			{ data_type: BDCFilingDataType.Challenge, as_of_date: "2024-11-30" },
 		]
 
-		const transport = stubTransport([{ body: { data: raw } }])
+		const transport = bdcTransport([{ body: { data: raw } }])
 		const client = clientFor(transport)
 
 		expect(await retrieveFilingDates(client, { filingType: BDCFilingDataType.Availability })).toHaveLength(1)
@@ -854,7 +746,7 @@ describe("the SDK callers, over the migrated client", () => {
 	})
 
 	it("retrieveFilingDates: skipCache re-asks the API", async () => {
-		const transport = stubTransport([{ body: { data: [] } }])
+		const transport = bdcTransport([{ body: { data: [] } }])
 		const client = clientFor(transport)
 
 		await retrieveFilingDates(client, { filingType: BDCFilingDataType.Availability })
@@ -895,7 +787,7 @@ describe("the SDK callers, over the migrated client", () => {
 			},
 		]
 
-		const transport = stubTransport([{ body: { data: rawFiles } }])
+		const transport = bdcTransport([{ body: { data: rawFiles } }])
 		const client = clientFor(transport)
 
 		const files = await retrieveAvailabilityFiles(client, {

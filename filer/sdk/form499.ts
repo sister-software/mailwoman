@@ -3,7 +3,7 @@
 
 /**
  * @file FCC Form 499 filer TSV — column vocabulary, row shape, classification mapping, and a
- *   streaming parser (3a Task 2, decisions 3 & 8).
+ *   streaming parser (3a decisions 3 & 8).
  *
  *   Implemented from the earlier draft's `sync/fcc/universal-service.ts` (the author's own earlier draft, no provenance
  *   headers) — ONLY the 17-column vocabulary (:27-44) and the `principalCommType` → classification
@@ -177,6 +177,7 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
  * truncated short rows instead.
  */
 function splitForm499Line(line: string, tsvPath: string, lineNumber: number): Record<Form499Column, string> {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- `line` is a single already-delimited row; the caller streams the file.
 	const fields = line.split("\t")
 
 	if (fields.length !== FORM_499_COLUMNS.length) {

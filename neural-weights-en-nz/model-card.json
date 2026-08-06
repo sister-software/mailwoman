@@ -18,9 +18,10 @@
 			"format": "PIX1 placetype-pair index — a retrieval-augmented (child, parent) dependent_locality prior, e.g. (\"Plimmerton\", \"Porirua\")",
 			"source": "LINZ-derived OpenAddresses NZ countrywide CSV (the census the synth-nz-v2 shard was built from), $MAILWOMAN_DATA_ROOT/openaddresses/extracted/nz/countrywide.csv, source md5 fa79e586de96fe54c17b6763a9ea97c6, 2,123,054 rows kept / 137 skipped (empty CITY)",
 			"pairs": 3134,
-			"bytes": 55471,
-			"md5": "673c27895ef9960b9b1bed148d2fc38c",
-			"delta_calibration": "δ=10 (NZ δ-sweep on the SHIPPED v385, task-8 report 2026-07-24 § 'NZ arc'). Saturates at δ=10 — identical emit/correct to δ=12/15, the same flat-plateau shape as GB's own sweep; golden-FP 0/54 at every δ tested. The sweep table lives in eval.delta_sweep_v385 below.",
+			"bytes": 58960,
+			"md5": "(staged at release time — a PIX1 header embeds buildDate, so a rebuild from identical sources produces different bytes)",
+			"$comment_pix2": "PIX2 (schema 3, 2026-08-04): every record now carries the PARENT's ComponentTag alongside the child's — +1 byte per pair, pair COUNT unchanged. Schema 1 and 2 binaries are refused; the artifact must be rebuilt.",
+			"delta_calibration": "parentDelta=5 (whole-edge parent bias, #46 — the record's own parentTag gets +5 over the parent window). δ=5 is the smallest magnitude that saturates bar B-2's brooklyn-class sub-board and is flat through 20, at 0.00% parent-side FP on B-3: docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md. NZ's own shipped board moved 230/246 → 246/246 whole-edge with it on, identical at δ 4/6/8/20. Note this artifact still ships WITHOUT a transitionBeta: the two levers are calibrated independently and NZ earning one says nothing about the other. δ=10 (NZ δ-sweep on the SHIPPED v385, task-8 report 2026-07-24 § 'NZ arc'). Saturates at δ=10 — identical emit/correct to δ=12/15, the same flat-plateau shape as GB's own sweep; golden-FP 0/54 at every δ tested. The sweep table lives in eval.delta_sweep_v385 below.",
 			"repeated_name_convention": "NZ's register genuinely repeats names across the suburb/town tiers: 255/1178 names (21.6%) form identity pairs (child == parent, e.g. Mangawhai / Mangawhai) — the target population of @mailwoman/neural 7.8.0's identical-adjacent-segment (x,x) rule, which splits two identical adjacent segments into dependent_locality + locality instead of fusing them into one span. GB has 0/19,431 identity pairs, so the rule is structurally unreachable there (verified, not assumed — see eval.gb_reproduction).",
 			"country_gate": "hard-gated — the prior only fires when the resolved locale's country matches the index header's country (nz). Never crosses into en-us/en-gb parses (see neural/test/weights.test.ts).",
 			"not_committed": "derived artifact, .gitignore'd (same posture as en-gb's pair-index-gb.bin) — rebuilt via `mailwoman gazetteer pair-index --out neural-weights-en-nz --country nz --source <linz-countrywide-csv> --delta 10`",
@@ -199,7 +200,7 @@
 	},
 	"format": {
 		"$comment": "Model/tokenizer format is the base's — see neural-weights-en-us/model-card.json. This overlay's own artifact:",
-		"pair_index_nz_bin": "PIX1 binary, 55,471 bytes, 3,134 pairs, δ=10"
+		"pair_index_nz_bin": "PIX1 binary (schema 3), 58,960 bytes, 3,134 pairs, δ=10, parentDelta=5"
 	},
 	"files": {
 		"model_card": "model-card.json",

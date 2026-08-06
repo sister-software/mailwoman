@@ -52,7 +52,7 @@ footer { margin-top: 2rem; font-size: .9rem; opacity: .8 }
 <li><a class="q" href="/parse?query=berlin+germany">/parse?query=berlin+germany</a></li>
 <li><a class="q" href="/expand?address=1600+pennsylvania+ave+nw">/expand?address=1600+pennsylvania+ave+nw</a></li>
 </ul>
-<footer><a href="https://mailwoman.sister.software/docs/concepts/switching-from-libpostal">Switching from libpostal</a> &middot; <a href="https://mailwoman.sister.software/demo">Live demo</a></footer>
+<footer><a href="https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is">What Mailwoman is</a> &middot; <a href="https://mailwoman.sister.software/demo">Live demo</a></footer>
 </body>
 </html>
 `
@@ -181,6 +181,7 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
 
 		try {
 			const raw = c.req.raw.body ? await c.req.raw.text() : ""
+			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/libpostal` reaches @mailwoman/core for TYPES only; a runtime import would be a new dependency.
 			const parsed = raw ? (JSON.parse(raw) as unknown) : {}
 
 			if (typeof parsed === "object" && parsed !== null) {
