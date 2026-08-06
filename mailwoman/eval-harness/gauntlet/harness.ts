@@ -15,6 +15,7 @@ import { resolve } from "node:path"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
+import { readDeclaredArtifactFile, resolveWeights } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { type GeocodeResult, geocodeAddress, ShardProvider } from "../../geocode-core.ts"
@@ -154,6 +155,58 @@ function assertShippedModelMatchesCard(materializedMd5: string): void {
 }
 
 /**
+ * Assert that every locale this run can route to actually HAS the anchor binary its own weights card declares.
+ *
+ * The instrument-integrity claim (#1516): a grading environment states its artifact expectations up front, because the
+ * failure it is guarding against has no signal of its own. A missing `postcode-us.bin` does not error — the anchor
+ * channel resolves OFF, the run scores 3-4 baseline cases lower, and the operator reads a model regression. The
+ * classifier's own warning cannot cover this: at load time nothing knows whether THIS run needs GB anchors.
+ *
+ * EXPECTATIONS COME FROM EACH PACKAGE'S OWN CARD (`files.postcode_anchor`), never from a list kept here. en-gb
+ * deliberately ships no binary under the #1476 mitigation until the A4 assembly lands, and en-nz has no WOF NZ postcode
+ * shard to build one from; a hardcoded list would call both of those supported states broken, and would need editing
+ * every time a locale's posture changed — which is the same drift the card exists to prevent.
+ *
+ * A package that does not RESOLVE at all is not this guard's business: that is `classifierFor`'s loud base-only
+ * fallback, a different failure with a different repair (install the overlay, vs. materialize its artifact).
+ *
+ * Exported for `anchor-presence.test.ts`, which poses both postures against fixture packages — the real ones cannot
+ * express "declared and missing" without mutating the workspace.
+ */
+export function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: string): void {
+	const missing: string[] = []
+
+	for (const locale of locales) {
+		let packageDir: string | undefined
+
+		try {
+			packageDir = resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) }).packageDir
+		} catch {
+			continue
+		}
+
+		const declared = readDeclaredArtifactFile(packageDir)
+
+		if (!declared || declared.present) continue
+
+		missing.push(
+			`  ✗ ${locale}: ${declared.file} — declared by ${packageDir}/model-card.json (files.${declared.key}), not on disk\n` +
+				`      link it: node ${packageDir}/scripts/link-dev-weights.ts`
+		)
+	}
+
+	if (!missing.length) return
+
+	throw new Error(
+		`[gauntlet] refusing to grade: a weights package is missing the anchor artifact its own card declares.\n` +
+			`${missing.join("\n")}\n` +
+			`  The anchor channel would resolve OFF for those locales and the run would score LOW with no error ` +
+			`(#1516). Materialize the artifacts above, or grade a candidate with --weights-cache pointing at a ` +
+			`complete bundle.`
+	)
+}
+
+/**
  * Build the geocode deps. `modelPath` swaps ONLY the ONNX (same tokenizer/card/anchor/gazetteer soft-feed), so the
  * held-out gate can grade a candidate against production fairly; omit it for the shipped default.
  *
@@ -225,6 +278,14 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		IN: "en-IN",
 		ES: "es-ES",
 		IT: "it-IT",
+	}
+
+	// #1516 second half: a grading environment must STATE its artifact expectations, not discover them in a
+	// degraded number. A missing `postcode-us.bin` costs 3-4 baseline cases and produces no failure of its own —
+	// the run simply scores lower, and the operator reads a model regression. Checked for the base locale plus
+	// every overlay the corpus can route to (the map above), because the anchor artifact is per-package.
+	if (!opts.modelPath && !opts.tokenizerPath) {
+		assertDeclaredAnchorBins(["en-US", ...Object.values(OVERLAY_LOCALE_BY_COUNTRY)], opts.weightsCacheRoot)
 	}
 
 	const overlayClassifiers = new Map<string, typeof classifier>()

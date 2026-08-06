@@ -44,8 +44,13 @@ const CORPUS_SIZE = 306
  *
  * Changing the corpus changes this. That is the point: an edit to a `.jsonl` row now needs a matching edit here, and
  * the diff says "the corpus changed" rather than "a 3,500-line file changed".
+ *
+ * Moved 2026-08-06 (#1507) — `ab541bba…` → this — when seven country-sweep family-A rows gained `expectPlaceName`. Row
+ * COUNT is unchanged, which is why the board id below did not move: those rows already existed and their `id`+`input`
+ * are untouched. As of the same day this value also lives in every built `regression.db` (the `gauntlet_meta` stamp),
+ * and a runner refuses to grade when the two disagree.
  */
-const CORPUS_HASH = "e2d1db9bbd4df8aaba0f8089a9901a403d95ef4966a92d4a1393bca912947a5d"
+const CORPUS_HASH = "08bd5d091326da9dfbcc6600e3bddffac7c878ce819831565eb0f7f383075c98"
 
 /**
  * `ablationBoardID` of the corpus.

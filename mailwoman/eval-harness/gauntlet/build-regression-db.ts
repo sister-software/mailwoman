@@ -22,15 +22,32 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 
-import { loadRegressionCases } from "./cases/load.ts"
-import { createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
+import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "./cases/load.ts"
+import { assertCorpusIsNonEmpty, writeCorpusStamp } from "./corpus-stamp.ts"
+import { createGauntletMetaTable, createGauntletTable, GAUNTLET_CASE_COLUMNS, type GauntletDatabase } from "./schema.ts"
+
+/**
+ * Where to read the corpus from and where to write the DB. Both default to the real ones; a test overrides them to
+ * build a fixture-scale artifact without going near `$MAILWOMAN_DATA_ROOT`.
+ */
+export interface BuildRegressionDBOptions {
+	casesDir?: string
+	output?: string
+}
 
 /**
  * Build the curated regression DB from the committed seed and swap it into place.
+ *
+ * @throws When the loader resolves zero cases — see {@linkcode assertCorpusIsNonEmpty}. A build that prints "built"
+ *   over an empty corpus is the 2026-08-06 failure, and it exits 0 today unless something refuses.
  */
-export async function buildRegressionDB(): Promise<void> {
-	const cases = await loadRegressionCases()
-	const output = dataRootPath("gauntlet", "regression.db")
+export async function buildRegressionDB(options: BuildRegressionDBOptions = {}): Promise<void> {
+	const casesDir = options.casesDir ?? CASES_DIR
+	const cases = await loadRegressionCases(casesDir)
+
+	assertCorpusIsNonEmpty(cases, casesDir)
+
+	const output = options.output ?? dataRootPath("gauntlet", "regression.db")
 	const tmp = `${output}.tmp-${process.pid}`
 
 	mkdirSync(dirname(output), { recursive: true })
@@ -42,6 +59,7 @@ export async function buildRegressionDB(): Promise<void> {
 	const db = new DatabaseSync(tmp)
 	const kdb = new DatabaseClient<GauntletDatabase>({ database: db })
 	await createGauntletTable(kdb)
+	await createGauntletMetaTable(kdb)
 
 	const insert = db.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
 
@@ -69,11 +87,15 @@ export async function buildRegressionDB(): Promise<void> {
 		)
 	}
 
+	// The stamp goes in LAST and inside the same handle: an artifact that reached the swap without one would be
+	// exactly the unattributable DB this guard exists to abolish.
+	await writeCorpusStamp(kdb, cases)
+
 	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, output)
 
-	console.log(`[gauntlet] built ${output} — ${cases.length} cases`)
+	console.log(`[gauntlet] built ${output} — ${cases.length} cases (corpus ${regressionCorpusHash(cases).slice(0, 12)})`)
 
 	const kinds = new Map<string, number>()
 

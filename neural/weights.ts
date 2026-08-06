@@ -200,6 +200,17 @@ export interface ResolvedWeights {
 	 * "explicit" if both paths came from opts; "package:<name>" if located via {@link resolvePackageDirectory}.
 	 */
 	source: string
+	/**
+	 * The weights PACKAGE directory this resolution came from — `undefined` only for the fully-explicit
+	 * (`modelPath`+`tokenizerPath`) path, which has no package.
+	 *
+	 * Every other field is a resolved artifact path, which cannot answer "what was this package supposed to ship?" — an
+	 * absent artifact simply leaves its field `undefined`, and absence is exactly the question the anchor-presence guards
+	 * ask ({@link readDeclaredArtifactFile}, `harness.ts`'s grading-environment assertion). Note it is NOT
+	 * `dirname(modelPath)`: under `mailwoman.baseWeights` an overlay's model resolves from the BASE package while its
+	 * data siblings and its own card stay local.
+	 */
+	packageDir?: string
 }
 
 export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
@@ -398,6 +409,7 @@ function resolveFromPackageDir(
 		modelPath,
 		tokenizerPath,
 		modelCardPath,
+		packageDir,
 		...(resolvedBaseModelCardPath ? { baseModelCardPath: resolvedBaseModelCardPath } : {}),
 		crfTransitionsPath,
 		...(semiCRFTransitionsPath ? { semiCRFTransitionsPath } : {}),
@@ -622,6 +634,148 @@ export interface RequiredChannels {
 	 * Locality-surface evidence channel (Option-A bundle, Phase 3).
 	 */
 	locality_surface?: { required: boolean }
+}
+
+/**
+ * The `files` keys under which a weights card names its postcode→anchor artifact: the compact PCB1 binary first
+ * (`postcode-<cc>.bin`), then the legacy JSON lookup.
+ */
+export const ANCHOR_ARTIFACT_CARD_KEYS = ["postcode_anchor", "anchor_lookup"] as const
+
+/**
+ * An artifact a package's own model-card DECLARES it ships, and whether it is actually there.
+ */
+export interface DeclaredArtifact {
+	/**
+	 * The `files` key that named it (`postcode_anchor`).
+	 */
+	key: string
+	/**
+	 * The declared filename, verbatim from the card (`postcode-us.bin`).
+	 */
+	file: string
+	/**
+	 * `packageDir`-relative resolution of {@link DeclaredArtifact.file}.
+	 */
+	path: string
+	present: boolean
+}
+
+/**
+ * What a weights package's OWN `model-card.json` declares it ships under `files`, for one family of keys.
+ *
+ * The card's `files` block is the package's manifest of intent, and it is the only per-package statement of what SHOULD
+ * be on disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay
+ * that inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares
+ * `requires.anchor.required: true` (a true statement about the encoder) while deliberately shipping no
+ * `postcode-gb.bin` under the #1476 mitigation, so a guard keyed on `requires` alone calls a supported configuration
+ * broken, and — because the old warning fired once per PROCESS and named no package — the operator reads that as the
+ * PRIMARY locale's bin being missing.
+ *
+ * Reads the package's own card only, never the `baseWeights` fallback: an overlay that ships no card of its own is
+ * making no claim about its files, and inheriting the base's manifest would attribute `postcode-us.bin` to it.
+ *
+ * @returns `undefined` when the package has no card, the card has no `files` block, or none of `keys` appears there —
+ *   all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
+ */
+export function readDeclaredArtifactFile(
+	packageDir: string | undefined,
+	keys: readonly string[] = ANCHOR_ARTIFACT_CARD_KEYS
+): DeclaredArtifact | undefined {
+	if (!packageDir) return undefined
+
+	const cardPath = resolve(packageDir, "model-card.json")
+
+	if (!existsSync(cardPath)) return undefined
+
+	let parsed: unknown
+
+	try {
+		parsed = tryParsingJSON(readFileSync(cardPath, "utf8"))
+	} catch {
+		return undefined
+	}
+
+	const files = (parsed as { files?: unknown } | null)?.files
+
+	if (typeof files !== "object" || files === null || Array.isArray(files)) return undefined
+
+	for (const key of keys) {
+		const file = (files as Record<string, unknown>)[key]
+
+		// The cards keep `$comment_*` siblings in `files` to record a DELIBERATE absence (en-gb's
+		// `$comment_postcode_anchor`), so only a plain filename counts as a declaration.
+		if (typeof file !== "string" || !file || file.startsWith("$")) continue
+
+		const path = resolve(packageDir, file)
+
+		return { key, file, path, present: existsSync(path) }
+	}
+
+	return undefined
+}
+
+/**
+ * A soft-feed channel `loadFromWeights` can find declared-but-unfed.
+ */
+export type UnfedChannel = "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface"
+
+/**
+ * Process-wide dedupe keyed by `<channel>:<package>` — see {@linkcode unfedChannelWarner}.
+ */
+const warnedUnfedChannels = new Set<string>()
+
+/**
+ * Build the loud-degrade warner for one weights package (#718 D1) — the Node mirror of neural-web's
+ * `warnOnUnfedTrainedChannels`. A card that declares a channel REQUIRED, paired with a package that didn't ship (or
+ * could not parse) its data, runs that channel OFF. Structural fallback (the parse still works), loud console (a
+ * silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this exists to surface).
+ *
+ * BOUND TO A PACKAGE, and deduped per (channel, package) — it was once per channel per PROCESS until #1516. One process
+ * routinely loads several packages (the gauntlet grades six locale overlays), so channel-only dedupe meant the first
+ * degraded package spoke and every later one was suppressed, while the line named no package at all. Both halves
+ * produced the same wrong reading: an operator whose `postcode-us.bin` was present and feeding, watching a different
+ * overlay degrade, was told "no postcode-<cc>.bin found in the weights package".
+ *
+ * @param weightsPackage How to identify the package in the message — locale plus resolved directory.
+ */
+export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChannel, detail: string) => void {
+	return (channel, detail) => {
+		const key = `${channel}:${weightsPackage}`
+
+		if (warnedUnfedChannels.has(key)) return
+		warnedUnfedChannels.add(key)
+
+		console.error(
+			`[mailwoman/neural] loadFromWeights ${weightsPackage}: the model-card declares the ${channel} channel ` +
+				`REQUIRED but ${detail} — running ${channel}-OFF for THIS package, parses degraded (train/inference ` +
+				`mismatch). Ship the ${channel} artifact in that weights package (postcode-<cc>.bin / ` +
+				`anchor-lexicon-v1.json), or pass an explicit lookup.`
+		)
+	}
+}
+
+/**
+ * Why an unfed anchor channel is worth a warning for THIS package, or `undefined` when it is not.
+ *
+ * The condition the #1516 fix turns on, in one place because it is the whole substance of the fix. The old test was
+ * `requires.anchor.required && nothing loaded`, and `requires` describes the trained ENCODER — shared by every overlay
+ * that inherits the base model. So the en-gb overlay, which ships no `postcode-gb.bin` on purpose under the #1476
+ * mitigation, warned on every load; the line named no package and fired once per PROCESS, so an operator whose
+ * `postcode-us.bin` was present and feeding read it as the primary locale's binary having gone missing.
+ *
+ * Declared-and-missing is a broken package and stays loud. Declared-nothing is a supported posture and is silent —
+ * `buildGauntletDeps` asserts the presence a GRADING run needs, which is the only place that knows whether this
+ * particular run needs GB anchors.
+ */
+export function unfedAnchorDetail(packageDir: string | undefined): string | undefined {
+	const declared = readDeclaredArtifactFile(packageDir)
+
+	if (!declared) return undefined
+
+	return declared.present
+		? `its declared files.${declared.key} (${declared.file}) parsed EMPTY`
+		: `its card declares files.${declared.key} = ${declared.file}, which is NOT in the package`
 }
 
 /**

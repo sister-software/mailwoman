@@ -5,9 +5,12 @@
  *
  *   Gauntlet regression runner — the gated, curated layer (the executable bug log). Loads `regression.db`,
  *   runs every `status=pass` case through the FULL pipeline, and asserts the ASSEMBLED output: coordinate
- *   within tolerance, resolution tier, and admin components (country/region/locality, case-insensitive). A
+ *   within tolerance, resolution tier, resolved place identity, and admin components (case-insensitive). A
  *   fixed bug must STAY fixed — any drift fails the run. This corpus is DELIBERATELY SMALL (curated-set
  *   capture is the Pelias trap); the metamorphic + held-out layers carry breadth.
+ *
+ *   The grading itself lives in `check-case.ts` (pure, unit-tested); the freshness refusal that runs before
+ *   any of it lives in `corpus-stamp.ts`.
  *
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
@@ -15,17 +18,11 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
 
-import {
-	buildGauntletDeps,
-	type GauntletDepsOptions,
-	type GauntletResolverLevers,
-	type GauntletResult,
-	runOne,
-} from "./harness.ts"
+import { checkCase } from "./check-case.ts"
+import { assertCorpusStampFresh } from "./corpus-stamp.ts"
+import { buildGauntletDeps, type GauntletDepsOptions, type GauntletResolverLevers, runOne } from "./harness.ts"
 import type { GauntletDatabase } from "./schema.ts"
 
 /**
@@ -85,94 +82,17 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
 	return levers
 }
 
-const DEFAULT_TOL_M = 5000
-
-/**
- * Map an expect_components key to the assembled-result field it asserts.
- *
- * Exported for the ablation layer, which scores a DELETION against the same slot this gate grades — a second copy of
- * the mapping would let the two disagree about which field `venue` lives in, and the ablation runner would then report
- * "the slot stayed empty" for a slot it was reading off the wrong field.
- */
-export function componentOf(r: GauntletResult, key: string): string | null {
-	switch (key) {
-		case "country":
-			return r.country
-		case "region":
-			return r.region
-		case "locality":
-			return r.locality
-		case "house_number":
-			return r.house_number
-		case "street":
-			return r.street
-		case "postcode":
-			return r.postcode
-		case "venue":
-			return r.venue
-		case "dependent_locality":
-			return r.dependent_locality
-		case "unit":
-			return r.unit
-		default:
-			// LOUD: a silent null here made venue/dependent_locality expectations grade against
-			// nothing for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
-			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)
-	}
-}
-
 /**
  * Run the curated regression layer. Returns `pass` (every `status=pass` case still passes).
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A gate
+	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
+	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
 	await kdb.destroy()
-
-	/**
-	 * Assert the assembled result against a case's expectations; returns a list of mismatches (empty = passes).
-	 */
-	function checkCase(c: (typeof cases)[number], r: GauntletResult): string[] {
-		const issues: string[] = []
-
-		if (c.expect_lat != null && c.expect_lon != null) {
-			const tolKm = (c.expect_tolerance_m ?? DEFAULT_TOL_M) / 1000
-			const km = r.lat != null && r.lon != null ? haversineKm(r.lat, r.lon, c.expect_lat, c.expect_lon) : Infinity
-
-			if (km > tolKm) {
-				issues.push(
-					`coord ${km === Infinity ? "unresolved" : `${km.toFixed(2)}km off`} (tol ${c.expect_tolerance_m ?? DEFAULT_TOL_M}m)`
-				)
-			}
-		}
-
-		if (c.expect_tier != null && r.tier !== c.expect_tier) {
-			issues.push(`tier ${r.tier} ≠ ${c.expect_tier}`)
-		}
-
-		if (c.expect_components != null) {
-			// From our own builder's JSON.stringify, so malformed = a corrupt DB row — surface it as a
-			// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole gate.
-			const exp = tryParsingJSON<Record<string, string>>(c.expect_components)
-
-			if (!exp) {
-				issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
-
-				return issues
-			}
-
-			for (const [k, v] of Object.entries(exp)) {
-				const got = componentOf(r, k)
-
-				if ((got ?? "").toLowerCase() !== v.toLowerCase()) {
-					issues.push(`${k} "${got}" ≠ "${v}"`)
-				}
-			}
-		}
-
-		return issues
-	}
 
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
 

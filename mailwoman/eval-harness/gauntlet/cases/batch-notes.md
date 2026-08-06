@@ -562,6 +562,30 @@ Heathrow Airport` collapses to locality="Terminal" + house_number=5 with the air
 > overlay with the anchor channel OFF — those overlay packages carry no `postcode-<cc>.bin`, so
 > `loadFromWeights` warned and degraded. None of the 16 inputs carries a postcode, so the effect on this
 > batch is nil, but a later postcode-bearing row in those countries would need the artifact.
+>
+> **2026-08-06 follow-up (#1507 / #1516).** Two corrections to the paragraph above and one addition to the
+> batch itself.
+>
+> The WARNING was wrong, not the grading. Those overlays ship no binary on purpose (en-gb under the #1476
+> mitigation; en-nz has no WOF NZ postcode shard to build one from), and the warning fired on
+> `requires.anchor.required` — a statement about the shared ENCODER that every overlay inherits — once per
+> PROCESS, naming no package. So one overlay's deliberate absence printed a line that reads as the PRIMARY
+> locale's `postcode-us.bin` having gone missing while it was present and feeding on every US row. The
+> condition now reads each package's OWN card (`files.postcode_anchor`), and `buildGauntletDeps` asserts up
+> front that every locale the corpus routes to has the binary its card declares. The 2026-08-06 re-run of
+> this batch prints zero anchor warnings across all six overlays; the grading is unchanged.
+>
+> Seven of the 29 family-A rows now carry `expectPlaceName` — `bw-cs-gaborone`, `cd-cs-kinshasa`,
+> `dj-cs-djibouti`, `ba-cs-sarajevo`, `bf-cs-ouagadougou`, `er-cs-asmara`, `cg-cs-brazzaville`. The corpus
+> had stored `expectPlaceID`/`expectPlaceName` since the migration and `checkCase` read neither (#1507);
+> wiring them in gives this batch the assertion its own root cause demanded. The class was "right locality
+> string, wrong place": `expectComponents.locality` graded GREEN on every one of these rows while the
+> resolver returned an Austrian hamlet, and only a coordinate 8,045 km away said so — an impostor inside the
+> 25 km bar would have passed silently. The rows grade off `hierarchy[0].name` (the gazetteer's canonical
+> `resolver_name`), never `GauntletResult.locality`, which echoes the parsed query span and therefore agrees
+> with the input no matter what resolved. Five now pass outright; `dj-cs-djibouti` (65.9 km) and
+> `cg-cs-brazzaville` (453.1 km) fail on coordinate alone with the place identity green, which is exactly the
+> separation the assertion exists to draw.
 
 | case                                  | cc  | kind                   | Google coordinate   | Google tier      | pipeline                      |
 | ------------------------------------- | --- | ---------------------- | ------------------- | ---------------- | ----------------------------- |
