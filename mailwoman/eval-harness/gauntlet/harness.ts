@@ -15,7 +15,7 @@ import { resolve } from "node:path"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
-import { readDeclaredArtifactFile, resolveWeights } from "@mailwoman/neural/weights"
+import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { type GeocodeResult, geocodeAddress, ShardProvider } from "../../geocode-core.ts"
@@ -226,7 +226,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// #718-safe path, identical to `eval parity --weights-cache`. A bare `modelPath` swap feeds NO soft channels (the
 	// zero-fill trap) AND keeps the shipped tokenizer, so a multisplice candidate would score byte-identical to prod.
 	const cacheModel = opts.weightsCacheRoot
-		? resolve(opts.weightsCacheRoot, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")
+		? resolve(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
 		: undefined
 
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default

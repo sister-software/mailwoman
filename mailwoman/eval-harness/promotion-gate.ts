@@ -69,6 +69,7 @@ import { fileURLToPath } from "node:url"
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 
 import { deOrderEval } from "./de-order-eval.ts"
 import { demoCascadeSmoke } from "./demo-cascade-smoke.ts"
@@ -447,10 +448,22 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// gazetteer + COUNTRY — the only in-distribution grade for a country-channel model); the
 	// country-orthogonal downstream legs (preset / cascade / arena / fr-recall / mask) stay on the
 	// explicit --model path against these EFF_TOK/EFF_CARD siblings.
+	//
+	// The cache layout comes from `weightsCachePackageDir` — the resolver's OWN function, not a
+	// re-typed `node_modules/@mailwoman/neural-weights-en-us` literal (2026-08-06 triage). The three
+	// artifacts are then named as siblings of that directory, which is what `resolveFromPackageDir`
+	// does one layer down.
+	//
+	// NOT `resolveWeights({cacheRoot: WC})`, deliberately: its cache rung is a FALLBACK. A staged
+	// bundle missing its binaries falls through to rung 1 (the installed/workspace package), which in
+	// this repo always resolves — so a mis-staged candidate would be graded as the SHIPPED model,
+	// silently, and the verdict would carry production's numbers under the candidate's label. Naming
+	// the directory keeps the failure an ENOENT in the provenance guard's md5 read, three lines down.
 	const WC = options.weightsCache ?? ""
-	const WC_MODEL = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model.onnx") : ""
-	const EFF_TOK = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/tokenizer.model") : TOK
-	const EFF_CARD = WC ? resolve(WC, "node_modules/@mailwoman/neural-weights-en-us/model-card.json") : CARD
+	const WC_PACKAGE = WC ? weightsCachePackageDir(WC, "en-us") : ""
+	const WC_MODEL = WC ? resolve(WC_PACKAGE, "model.onnx") : ""
+	const EFF_TOK = WC ? resolve(WC_PACKAGE, "tokenizer.model") : TOK
+	const EFF_CARD = WC ? resolve(WC_PACKAGE, "model-card.json") : CARD
 
 	if (!GATE || (!MODEL && !WC)) {
 		console.error("✗ --gate and one of --model / --weights-cache required")

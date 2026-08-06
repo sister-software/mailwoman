@@ -68,6 +68,7 @@ import { describe, expect, test, vi } from "vitest"
 
 import { NeuralAddressClassifier, resolveWeights } from "../index.ts"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "../pair-index-resolver.ts"
+import { weightsCachePackageDir } from "../weights.ts"
 
 const TOKENIZER_PATH = repoRootPath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
@@ -592,7 +593,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 
 			const packageDir = repoRootPath("neural-weights-en-us")
 			const cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-pair-gate-"))
-			const fakePackageDir = join(cacheRoot, "node_modules", "@mailwoman", "neural-weights-en-us")
+			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			mkdirSync(fakePackageDir, { recursive: true })
 
 			for (const entry of readdirSync(packageDir)) {

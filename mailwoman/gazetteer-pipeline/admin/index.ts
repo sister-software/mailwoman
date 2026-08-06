@@ -21,7 +21,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
-import { mailwomanDataRoot } from "../../resolver-backend.ts"
+import { dataRootPath } from "../../resolver-backend.ts"
 import {
 	DEFAULT_ADMIN_STAGING_SUFFIX,
 	DEFAULT_GEONAMES_COUNTRIES,
@@ -81,7 +81,7 @@ export interface BuildAdminResult {
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
-	const wofDir = join(mailwomanDataRoot(), "wof")
+	const wofDir = dataRootPath("wof")
 	const dataDir = opts.dataDir ?? join(wofDir, "repos")
 	const out = opts.out ?? join(wofDir, `admin-global-priority${DEFAULT_ADMIN_STAGING_SUFFIX}`)
 	const overtureCountries = opts.overtureCountries ?? DEFAULT_OVERTURE_COUNTRIES

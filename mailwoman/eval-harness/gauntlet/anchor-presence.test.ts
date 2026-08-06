@@ -19,6 +19,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { describe, expect, it } from "vitest"
 
 import { assertDeclaredAnchorBins } from "./harness.ts"
@@ -29,7 +30,7 @@ import { assertDeclaredAnchorBins } from "./harness.ts"
  */
 function fixtureWeights(locale: string, card: Record<string, unknown>, siblings: string[] = []): string {
 	const root = mkdtempSync(join(tmpdir(), "gauntlet-weights-"))
-	const dir = join(root, "node_modules", "@mailwoman", `neural-weights-${locale}`)
+	const dir = weightsCachePackageDir(root, locale)
 
 	mkdirSync(dir, { recursive: true })
 	writeFileSync(join(dir, "model.onnx"), "", "utf8")
@@ -87,7 +88,7 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("stays silent for a package with no card at all", () => {
 		const root = mkdtempSync(join(tmpdir(), "gauntlet-weights-"))
-		const dir = join(root, "node_modules", "@mailwoman", "neural-weights-zz-zz")
+		const dir = weightsCachePackageDir(root, "zz-zz")
 
 		mkdirSync(dir, { recursive: true })
 		writeFileSync(join(dir, "model.onnx"), "", "utf8")

@@ -15,7 +15,6 @@
  */
 
 import { existsSync } from "node:fs"
-import { join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
@@ -35,7 +34,7 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
 import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
-import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
+import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {
 	createNominatimApp,
@@ -145,19 +144,19 @@ async function serve(): Promise<void> {
 	const annotationCountryFallback = candidateDb ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
-	const tzDBPath = join(mailwomanDataRoot(), "timezone", "timezone.db")
+	const tzDBPath = dataRootPath("timezone", "timezone.db")
 
 	if (existsSync(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
 	}
 
-	const ulDBPath = join(mailwomanDataRoot(), "un-locode", "un-locode.db")
+	const ulDBPath = dataRootPath("un-locode", "un-locode.db")
 
 	if (existsSync(ulDBPath)) {
 		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
 	}
 
-	const nutsDBPath = join(mailwomanDataRoot(), "nuts", "nuts.db")
+	const nutsDBPath = dataRootPath("nuts", "nuts.db")
 
 	if (existsSync(nutsDBPath)) {
 		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: nutsDBPath })))

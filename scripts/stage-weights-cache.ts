@@ -31,6 +31,8 @@ import { existsSync, mkdirSync, rmSync, statSync, symlinkSync, readdirSync } fro
 import { basename, isAbsolute, join, resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+
 const { values } = parseArgs({
 	options: {
 		out: { type: "string" },
@@ -53,7 +55,10 @@ const { values } = parseArgs({
 })
 
 if (!values.out) throw new Error("--out <dir> is required")
-const packageDir = join(resolve(values.out), "node_modules", "@mailwoman", `neural-weights-${values.locale}`)
+// The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal
+// (2026-08-06 triage) — this script's whole contract is "lay out the directory `resolveWeights`'
+// cache rung finds", so the two must not be able to drift.
+const packageDir = weightsCachePackageDir(resolve(values.out), values.locale)
 
 if (values.clean && existsSync(resolve(values.out))) {
 	rmSync(resolve(values.out), { recursive: true, force: true })
