@@ -20,7 +20,7 @@
  *       That is one component, one tolerance, seven rows, and a REGEX — which on the 4-digit systems deletes
  *       house numbers. Here the deletion is LITERAL (the asserted span, boundary-checked), every component
  *       the row asserts is deleted in turn, and the tolerance is the row's own.
- *   - `regression.ts`'s `componentOf` maps an `expect_components` key to the assembled-result field. Reused
+ *   - `check-case.ts`'s `componentOf` maps an `expect_components` key to the assembled-result field. Reused
  *       verbatim (exported for this), so the slot a deletion is scored against is the same slot the gate grades.
  *   - S-2 (`scripts/diagnostic/suggestion/s2-postcode-free.ts`, the suggestion arc's postcode column) is this
  *       runner's postcode column, and its finding 3 is why `substitutedCount` exists: 16 of 139 postcode
@@ -95,8 +95,10 @@ import {
 	type SlotOutcome,
 } from "./ablation-types.ts"
 import { loadRegressionCases } from "./cases/load.ts"
+import { componentOf } from "./check-case.ts"
+import { assertCorpusStampFresh } from "./corpus-stamp.ts"
 import { buildGauntletDeps, type GauntletResult, runOne } from "./harness.ts"
-import { componentOf, type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
+import { type GauntletLayerOptions, layerDepsOptions } from "./regression.ts"
 import type { GauntletDatabase, ResolutionTier } from "./schema.ts"
 
 export { ABLATION_ABSENT } from "./ablation-expectation.ts"
@@ -511,6 +513,9 @@ export async function runAblationLayer(
 ): Promise<{ pass: boolean; outDir: string; cells: AblationCell[] }> {
 	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	// Same refusal as the regression layer: this artifact's board id claims to identify a corpus, so a stale DB
+	// would publish an ablation board under a fingerprint the corpus no longer has (corpus-stamp.ts).
+	await assertCorpusStampFresh(kdb)
 
 	const allCases = (await kdb
 		.selectFrom("gauntlet_case")

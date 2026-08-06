@@ -142,7 +142,9 @@
 		"calibration_per_locale": "calibration-per-locale.json",
 		"street_type_lexicon": "street-type-lexicon-v3.json",
 		"locality_surface_lexicon": "locality-surface-lexicon-v6.json",
-		"pair_index": "pair-index-us.bin"
+		"pair_index": "pair-index-us.bin",
+		"$comment_postcode_anchor": "Added 2026-08-06 (#1516). The package has always shipped this binary (release.config.json softFeed.postcodeDBByCountry.us; link-dev-weights builds it locally) — it was simply never DECLARED here, and this block is now read: `readDeclaredArtifactFile` uses it to decide whether an unfed anchor channel is a broken package (declared, missing) or a supported posture (never declared, e.g. en-gb under #1476). Undeclared meant a missing postcode-us.bin degraded in silence, which is worth 3-4 baseline gauntlet cases.",
+		"postcode_anchor": "postcode-us.bin"
 	},
 	"calibration": {
 		"method": "isotonic-regression (PAVA) over per-span softmax confidence; OPT-IN via core/decoder createCalibrator",

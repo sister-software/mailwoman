@@ -350,7 +350,15 @@ export class NeuralAddressClassifier {
 		/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 		const [
 			{ $public },
-			{ resolveWeights, readLabelsFromModelCard, readCRFTransitions, readRequiredChannels, loadPlacetypeCensus },
+			{
+				resolveWeights,
+				readLabelsFromModelCard,
+				readCRFTransitions,
+				readRequiredChannels,
+				unfedAnchorDetail,
+				unfedChannelWarner,
+				loadPlacetypeCensus,
+			},
 			fs,
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
@@ -416,6 +424,11 @@ export class NeuralAddressClassifier {
 
 		let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
+		// Bound to THIS package, because the channel name alone is not enough: one process routinely loads several
+		// (the gauntlet grades six locale overlays), and a warning naming none of them is read as being about
+		// whichever package the reader has in mind — see `unfedChannelWarner`.
+		const warnUnfedChannel = unfedChannelWarner(`${opts.locale ?? "en-us"} (${resolved.packageDir ?? resolved.source})`)
+
 		if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 			try {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
@@ -426,13 +439,16 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		if (declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)) {
-			warnUnfedChannel(
-				"anchor",
-				resolved.anchorLookupPath
-					? `parsed lookup at ${resolved.anchorLookupPath.path} is empty`
-					: `no postcode-<cc>.bin / anchor-lookup.json found in the weights package`
-			)
+		// #1516: what this warning may speak about is what THIS package's OWN card declares it ships — not what the
+		// shared encoder `requires`, which every overlay inherits. `unfedAnchorDetail` owns that decision (and
+		// returns undefined for the packages that ship no binary on purpose, e.g. en-gb under #1476).
+		const anchorDetail =
+			declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)
+				? unfedAnchorDetail(resolved.packageDir)
+				: undefined
+
+		if (anchorDetail) {
+			warnUnfedChannel("anchor", anchorDetail)
 		}
 
 		let gazetteerLexicon: GazetteerLexicon | undefined
@@ -1439,29 +1455,6 @@ export interface ParseOpts {
 	 * emissions/path/tokens didn't move (`placetype-census-observability.test.ts`).
 	 */
 	placetypeCensus?: PlacetypeCensusLike | false
-}
-
-/**
- * Loud-degrade warning for the `loadFromWeights` soft-feed (#718 D1) — the Node mirror of neural-web's
- * `warnOnUnfedTrainedChannels`. Fired ONCE per channel per process: a model-card that declares a channel REQUIRED,
- * paired with a package that didn't ship (or could not parse) its data, runs that channel OFF. Structural fallback (the
- * parse still works), loud console (a silently anchor-OFF anchor-trained model is the #566/#685 OOD crater this fix
- * exists to surface).
- */
-const warnedUnfedChannels = new Set<string>()
-
-function warnUnfedChannel(
-	channel: "anchor" | "gazetteer" | "country" | "street_type" | "locality_surface",
-	detail: string
-): void {
-	if (warnedUnfedChannels.has(channel)) return
-	warnedUnfedChannels.add(channel)
-
-	console.error(
-		`[mailwoman/neural] loadFromWeights: model-card declares the ${channel} channel REQUIRED but ${detail} — ` +
-			`running ${channel}-OFF, parses degraded (train/inference mismatch). Ship the ${channel} artifact in the ` +
-			`weights package (postcode-<cc>.bin / anchor-lexicon-v1.json), or pass an explicit lookup.`
-	)
 }
 
 function argmaxSoftmax(row: number[]): { idx: number; conf: number } {
