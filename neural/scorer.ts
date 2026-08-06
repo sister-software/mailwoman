@@ -199,7 +199,9 @@ function assertShapedKeyerObligation(
 ): void {
 	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)
 
-	if (violation) fail(strict, violation)
+	if (violation) {
+		fail(strict, violation)
+	}
 }
 
 /**

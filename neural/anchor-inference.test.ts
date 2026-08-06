@@ -287,7 +287,9 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 
 			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid } as unknown as TokenizedPiece)
 
-			if (mid < end) out.push({ piece: text.slice(mid, end), id: 0, start: mid, end } as unknown as TokenizedPiece)
+			if (mid < end) {
+				out.push({ piece: text.slice(mid, end), id: 0, start: mid, end } as unknown as TokenizedPiece)
+			}
 		}
 
 		return out

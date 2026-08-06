@@ -39,6 +39,7 @@ import { deriveGeocodeRegister } from "mailwoman/geocode-core"
 import { JSONSpliterator } from "spliterator"
 
 const REGISTERS = ["asis", "lower", "upper"] as const
+
 type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArgs({
@@ -119,7 +120,9 @@ for (const shape of SHAPES) {
 
 			// The register is the whole point — grade only where the channels are actually live.
 			if (deriveGeocodeRegister(text) !== "fragmented") {
-				if (reg === "asis") board.skipped++
+				if (reg === "asis") {
+					board.skipped++
+				}
 
 				continue
 			}
@@ -142,7 +145,9 @@ for (const shape of SHAPES) {
 			const got = shape.emit.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 			const gold = shape.tag === "street" ? row.components.street! : row.components[shape.tag]!
 
-			if (fold(got) === fold(gold)) board.hit[reg]++
+			if (fold(got) === fold(gold)) {
+				board.hit[reg]++
+			}
 		}
 	}
 }

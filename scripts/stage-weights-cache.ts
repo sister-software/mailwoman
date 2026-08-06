@@ -55,7 +55,10 @@ const { values } = parseArgs({
 if (!values.out) throw new Error("--out <dir> is required")
 const packageDir = join(resolve(values.out), "node_modules", "@mailwoman", `neural-weights-${values.locale}`)
 
-if (values.clean && existsSync(resolve(values.out))) rmSync(resolve(values.out), { recursive: true, force: true })
+if (values.clean && existsSync(resolve(values.out))) {
+	rmSync(resolve(values.out), { recursive: true, force: true })
+}
+
 mkdirSync(packageDir, { recursive: true })
 
 const omit = new Set(values.omit)
@@ -73,7 +76,9 @@ if (values.from) {
 
 		// Files only: `scripts/` and any other directory in a workspace package is not part of the
 		// artifact set a loader reads, and symlinking a directory into the layout invites a stale walk.
-		if (statSync(source).isFile()) staged.set(entry, source)
+		if (statSync(source).isFile()) {
+			staged.set(entry, source)
+		}
 	}
 }
 
@@ -107,4 +112,6 @@ for (const entry of [...staged.keys()].toSorted().filter((key) => !omit.has(key)
 	console.log(`  ${entry}`)
 }
 
-if (omit.size) console.log(`  OMITTED: ${[...omit].join(", ")}`)
+if (omit.size) {
+	console.log(`  OMITTED: ${[...omit].join(", ")}`)
+}

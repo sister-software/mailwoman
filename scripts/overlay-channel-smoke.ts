@@ -87,5 +87,6 @@ for (const name of ["anchor", "gazetteer", "country", "streetType", "localitySur
 	}
 
 	const fed = channel.features.filter((row) => row.some((v) => v !== 0)).length
+
 	console.log(`${name.padEnd(18)} yes       ${fed}/${pieces.length}${fed === 0 ? "   <-- RESOLVED BUT SILENT" : ""}`)
 }

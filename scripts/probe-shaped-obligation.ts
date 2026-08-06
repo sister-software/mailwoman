@@ -84,6 +84,9 @@ try {
 }
 
 const obligationWarning = errors.find((line) => line.includes("GB unit keys"))
+
 console.log(`\nruntime parse     ${obligationWarning ? "WARNED" : "silent (no obligation violation)"}`)
 
-if (obligationWarning) console.log(`                  ${obligationWarning}`)
+if (obligationWarning) {
+	console.log(`                  ${obligationWarning}`)
+}
