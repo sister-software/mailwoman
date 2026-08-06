@@ -294,13 +294,25 @@ describe("resolveWeights — package auto-resolve", () => {
 	// derived from the package DIRECTORY; this one reads the package MANIFEST. They can disagree — a
 	// tarball ships what `files` names, a dev worktree resolves what is on disk — and each failure mode
 	// has its own repair, so neither assertion substitutes for the other.
-	test("neural-weights-en-gb's files array does not name a postcode binary", () => {
+	// Restated 2026-08-06 (ROAD_TO_V9 §1 A4) as a COUPLING rather than a bare absence. #1467's rule was
+	// "en-gb ships no postcode binary", which was right for a model whose GB anchor slot took no
+	// gradient — but it is a rule with an expiry date, and a flat `not.toContain` gives the promotion
+	// no way to satisfy it except by deletion. The durable invariant underneath is the pairing: the
+	// binary's unit keys are only REACHABLE when the card declares `span_mode: "shaped"`, so the two
+	// must move together. Ship the bin under a non-shaped card and every GB parse feeds an untrained
+	// input direction (the measured 24-postcode regression); declare shaped without the bin and the
+	// channel is simply off. Each half is checkable, and neither alone is the contract.
+	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", () => {
 		const manifest = parseJSONStrict<{ files: string[] }>(
 			readFileSync(repoRootPath("neural-weights-en-gb", "package.json"), "utf8")
 		)
 
-		expect(manifest.files).not.toContain("postcode-gb.bin")
-		expect(manifest.files.filter((entry) => entry.startsWith("postcode-"))).toEqual([])
+		const card = parseJSONStrict<{ requires?: { anchor?: { span_mode?: string } } }>(
+			readFileSync(repoRootPath("neural-weights-en-gb", "model-card.json"), "utf8")
+		)
+
+		const shaped = card.requires?.anchor?.span_mode === "shaped"
+		expect(manifest.files.filter((entry) => entry.startsWith("postcode-"))).toEqual(shaped ? ["postcode-gb.bin"] : [])
 		// The pair-prior capability is untouched by the anchor mitigation — pinned so a future
 		// "clean up the GB overlay" pass cannot take both out in one sweep.
 		expect(manifest.files).toContain("pair-index-gb.bin")

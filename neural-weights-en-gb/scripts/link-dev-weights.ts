@@ -19,19 +19,23 @@
  *   absent — the CLI then parses gazetteer-OFF with only a stderr warning). Both lexicons are
  *   checked-in repo files (`data/gazetteer/…`), so they're symlinked straight from there.
  *
- *   DELIBERATELY NOT LINKED: `postcode-gb.bin`. This script used to build it in place via the
- *   compiled `gazetteer postcode-binary` CLI. It no longer does, and the package no longer ships
- *   it, because the encoder's GB anchor slot was never trained — every training recipe's
- *   `anchor_lookup_path` is `pilot-anchor-lookup.json`, whose 67,708 keys carry zero letters and
- *   cover US/DE/FR only, so slot 4 of `LOCALE_ORDER` (`neural/anchor-inference.ts`) took no
- *   gradient. `postcode-gb.bin` is the ONLY artifact that puts a non-zero value in that slot, and
- *   it fires on 106/120 gb-golden rows (every row carrying a postcode), feeding an untrained input
- *   direction on essentially every GB parse. Measured on the shipped board: exact postcode 294/318
- *   with the anchor on vs 318/318 with it inert, dependent_locality 207/207 either way. en-nz is
- *   the precedent — it ships no postcode binary and runs anchor-OFF by the same tolerant-loader
- *   contract. The shard and the CLI both still work; rebuild the binary by hand when the retrain
- *   lands. See `neural-weights-en-gb/model-card.json`'s `gb_artifacts.no_postcode_bin` and
- *   `docs/records/evals/2026-08-05-en-gb-anchor-off.md`.
+ *   ALSO links the OPTION-A EVIDENCE LEXICONS (#1511), which this overlay went without for its whole
+ *   life. The card claims its `requires` block is a verbatim copy of the base's, and the base model is
+ *   trained WITH `street_type` + `locality_surface` — but the copy silently dropped both channels, so
+ *   a GB parse ran them off on a model that expects them. The generation linked for each comes from
+ *   the CARD (`requires.<channel>.lexicon`), not a literal in this file, so bumping the card moves the
+ *   artifact with it. `street-type-lexicon-v*.json` is committed under `data/gazetteer/`;
+ *   `locality-surface-lexicon-v*.json` is 7-13 MB and lives in the data root under `gazetteer/`.
+ *
+ *   `postcode-gb.bin` is CARD-GATED, and that gate is the interesting decision in this file — the
+ *   full reasoning sits at the build step below. Short version: the binary helps only a model whose
+ *   encoder actually trained on letter-bearing GB anchor keys, and the card says whether this is one
+ *   (`requires.anchor.span_mode === "shaped"`). Declared → build it from the licence-clean Code-Point
+ *   Open shard. Not declared → remove any stale copy, because a leftover from an older checkout is
+ *   found package-dir-relative and silently restores a measured 24-postcode regression with no
+ *   warning. Receipts: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (anchor-OFF mitigation,
+ *   #1467) and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it
+ *   back), plus this package's `model-card.json` → `gb_artifacts.no_postcode_bin`.
  *
  *   ALSO builds `pair-index-gb.bin` (placetype-pair-prior arc) the same way: no
  *   committed source (derived from the HM Land Registry PPD tuples CSV), built in place via
@@ -251,24 +255,121 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
 
+// --- evidence-bundle lexicons (#1511) ---------------------------------------------------
+//
+// This overlay's card claims to be a verbatim copy of the base declaration, and the base model is
+// TRAINED with the Option-A evidence bundle — but the card omitted `street_type`/`locality_surface`
+// and this script linked neither, so every GB parse ran both channels OFF on a model that expects
+// them. The card now declares both, and the generation each names is what gets linked: the filenames
+// come from the CARD, not from a literal here, so a card bump moves the artifact with it (#1510).
+//
+// Sources differ, and the asymmetry is not an oversight. `street-type-lexicon-v*.json` is small and
+// COMMITTED (`data/gazetteer/`); `locality-surface-lexicon-v*.json` is 7-13 MB and never in git, so it
+// lives in the data root under `gazetteer/`. Both mirror what `release.config.json`'s
+// `softFeed.streetTypeLexicon` / `softFeed.localitySurfaceLexicon` name for the publish path.
+
 /**
- * Compiled CLI used to run the build step below. Requires `yarn compile` to have run.
+ * The generation of each evidence lexicon this overlay's card declares, and where that file is found. A card that names
+ * nothing links nothing — silence beats guessing a generation the model may not have trained against.
+ */
+const EVIDENCE_LEXICONS: Array<{ channel: "street_type" | "locality_surface"; source: (name: string) => string }> = [
+	{ channel: "street_type", source: (name) => repoRootPath("data", "gazetteer", name) },
+	{ channel: "locality_surface", source: (name) => String(dataRootPath("gazetteer", name)) },
+]
+
+const CARD = parseJSONStrict(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8")) as {
+	requires?: Record<string, { lexicon?: string; span_mode?: string } | undefined>
+}
+
+for (const { channel, source } of EVIDENCE_LEXICONS) {
+	const declared = CARD.requires?.[channel]?.lexicon
+
+	if (!declared) {
+		console.error(`WARNING: model-card declares no requires.${channel}.lexicon — the ${channel} channel stays OFF.`)
+
+		continue
+	}
+
+	const src = source(declared)
+
+	if (existsSync(src)) {
+		linkForce(src, resolve(PKG_DIR, declared))
+
+		console.log(`linked ${PKG_DIR}/${declared}`)
+	} else {
+		console.error(`WARNING: missing ${src} — the ${channel} channel will resolve OFF in this worktree.`)
+	}
+}
+
+/**
+ * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
  */
 const CLI = repoRootPath("mailwoman", "out", "cli.js")
 
+// --- postcode-gb.bin: CARD-GATED, not unconditional -------------------------------------
+//
+// The GB anchor binary is the one artifact whose correctness depends on WHICH MODEL is loaded, so it
+// is built only when the card says the model can use it.
+//
+// The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
+// because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
+// taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
+// zero letter-bearing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
+// postcodes on the 120-row gb-golden board (294/318 anchor-ON vs 318/318 anchor-OFF). Then a bare
+// `existsSync` skip turned out to be worse than never building: a bin left by an older checkout is
+// found package-dir-relative and silently re-enables the regression with no warning, because a present
+// artifact is exactly what the loader expects.
+//
+// The gate that resolves both states is the CARD's `requires.anchor.span_mode`. `shaped` is declared
+// only by a model trained against a lookup with letter-bearing keys (`pilot-anchor-lookup-v2` and
+// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it;
+// anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
+// card the loader reads decides.
+//
+// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-OFF mitigation)
+// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that earns it back).
+
 /**
- * A `postcode-gb.bin` left behind by a checkout that PREDATES the 2026-08-05 anchor-off mitigation is worse than one
- * that was never built: `resolveAnchorLookupSibling` finds it package-dir-relative and silently turns the untrained GB
- * anchor slot back on for every local parse, eval and gate run in this worktree — with no warning, because a present
- * artifact is exactly what the loader expects. Remove it, loudly. (The artifact is derived: the WOF GB shard and
- * `gazetteer postcode-binary` both still work, so the retrain rebuilds it in seconds.)
+ * Where the GB anchor binary lives when the card earns it.
  */
-const STALE_POSTCODE_BIN = resolve(PKG_DIR, "postcode-gb.bin")
+const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
 
-if (existsSync(STALE_POSTCODE_BIN)) {
-	unlinkSync(STALE_POSTCODE_BIN)
+/**
+ * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
+ * The retired GeoNames-lineage `postalcode-gb.db` is NOT it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
+ * — the shaped keyer's outward fallback is what carries those rows.
+ */
+const GB_POSTCODE_SHARD = "postalcode-gb-codepoint.db"
 
-	console.log(`removed stale ${STALE_POSTCODE_BIN} — en-gb ships anchor-OFF (see the header comment)`)
+/**
+ * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) — the GB half of the training lookup
+ * `pilot-anchor-lookup-v2` verbatim. `gazetteer postcode-binary` enforces its own floor and exits nonzero below it, so
+ * this number is documentation rather than a second gate.
+ */
+const GB_POSTCODE_BIN_KEYS = 1_749_839
+
+if (CARD.requires?.anchor?.span_mode === "shaped") {
+	console.log(
+		`model-card declares requires.anchor.span_mode "shaped" — building postcode-gb.bin ` +
+			`(${GB_POSTCODE_BIN_KEYS.toLocaleString()} keys expected from ${GB_POSTCODE_SHARD})`
+	)
+
+	const built = spawnSync(
+		process.execPath,
+		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `GB:${GB_POSTCODE_SHARD}`],
+		{ stdio: "inherit" }
+	)
+
+	if (built.status !== 0) {
+		console.error(`WARNING: gazetteer postcode-binary failed — the GB anchor channel will resolve OFF here.`)
+	}
+} else if (existsSync(POSTCODE_BIN_DEST)) {
+	unlinkSync(POSTCODE_BIN_DEST)
+
+	console.log(
+		`removed stale ${POSTCODE_BIN_DEST} — this card does not declare span_mode "shaped", so the bin's ` +
+			`unit keys are unreachable and feeding slot 4 is a measured regression (see the block comment)`
+	)
 }
 
 /**

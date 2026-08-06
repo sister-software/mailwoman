@@ -181,6 +181,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	return { out, postcodesIngested: ingest.placesIngested, zctaFilled, geonamesUSFilled, fills, sealed: true }
 }
 
+export * from "./binary.ts"
 export * from "./centroid-fills.ts"
 export * from "./geonames-tail.ts"
 export * from "./zcta-centroids.ts"

@@ -56,6 +56,13 @@ const { values } = parseArgs({
 		 * diffing this is how you tell "the channel changed nothing" from "the board cannot see it".
 		 */
 		"dump-spans": { type: "string" },
+		/**
+		 * Pin `normalizeCase: false` (#690/#829 OFF) — the register in which the shaped anchor keyer was measured DEAD:
+		 * 0/120 gb-golden rows yield a shaped span on raw lowercase (#1512). With normalization ON (the default) the
+		 * lowercase leg is rescued before the keyer ever sees it, so this flag is the only way to grade the KEYER's
+		 * register-sensitivity rather than `normalizeInputCase`'s.
+		 */
+		"raw-case": { type: "boolean", default: false },
 	},
 })
 
@@ -80,7 +87,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
 })
 
-const pipeline = createRuntimePipeline({ classifier })
+const pipeline = createRuntimePipeline({ classifier, ...(values["raw-case"] ? { normalizeCase: false } : {}) })
 
 interface Miss {
 	register: Register
@@ -192,7 +199,7 @@ if (board === "gb") {
 		}
 	}
 
-	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} ===`)
+	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} · normalizeCase ${!values["raw-case"]} ===`)
 	console.log("board                                   hit/total   per register")
 	reportBoard("exact postcode", postcode)
 	reportBoard("exact dependent_locality", depLoc)

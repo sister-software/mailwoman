@@ -15,6 +15,8 @@ import {
 	LOCALE_ORDER,
 	anchorFeatureVector,
 	buildAnchorFeatures,
+	countShapedOnlyKeys,
+	shapedKeyerObligationViolation,
 	type AnchorEntry,
 	type AnchorLookup,
 } from "./anchor-inference.ts"
@@ -254,5 +256,122 @@ describe("buildAnchorFeatures — span modes", () => {
 		const pieces = piecesFor(text)
 
 		expect(buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" }).confidence.every((c) => c === 0)).toBe(true)
+	})
+})
+
+/**
+ * #1512 — the shaped keyer and the lowercase register.
+ *
+ * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds nothing in raw lowercase and the
+ * shaped keyer fired 0/120 on the gb-golden board when case normalization was off. The default parse path never saw it
+ * because `normalizeInputCase` restores GB postcode casing first (every GB letter run is ≤2 characters, which
+ * `restoreLowerInput` uppercases) — but lowercase is the user register, and a `normalizeCase: false` parse lost the
+ * entire GB/NL anchor channel in silence.
+ */
+describe("buildAnchorFeatures — shaped mode case-folds before shape detection (#1512)", () => {
+	const V2: AnchorLookup = new Map<string, AnchorEntry>([
+		["SW1A2AA", { posterior: { GB: 1 }, lat: 51.50354, lon: -0.1277 }],
+		["1012LG", { posterior: { NL: 1 }, lat: 52.37689, lon: 4.89772 }],
+	])
+
+	/**
+	 * One piece per whitespace-delimited word, split in half — enough structure for the char→piece projection.
+	 */
+	function piecesFor(text: string): TokenizedPiece[] {
+		const out: TokenizedPiece[] = []
+
+		for (const m of text.matchAll(/\S+/g)) {
+			const start = m.index!
+			const end = start + m[0].length
+			const mid = start + Math.max(1, Math.floor(m[0].length / 2))
+
+			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid } as unknown as TokenizedPiece)
+
+			if (mid < end) out.push({ piece: text.slice(mid, end), id: 0, start: mid, end } as unknown as TokenizedPiece)
+		}
+
+		return out
+	}
+
+	it("paints the SAME pieces in every register, with no case normalization upstream", () => {
+		const asWritten = "Buckingham Palace, London SW1A 2AA"
+
+		const reference = buildAnchorFeatures(asWritten, piecesFor(asWritten), V2, { spanMode: "shaped" })
+		expect(reference.confidence.filter((c) => c === 1)).toHaveLength(4)
+
+		for (const text of [asWritten.toLowerCase(), asWritten.toUpperCase()]) {
+			const { features, confidence } = buildAnchorFeatures(text, piecesFor(text), V2, { spanMode: "shaped" })
+
+			// Byte-identical to the as-written leg: same pieces painted, same vector.
+			expect(confidence).toEqual(reference.confidence)
+			expect(features).toEqual(reference.features)
+		}
+	})
+
+	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
+		// `"ß".toUpperCase()` is "SS" — a naive uppercase here would slide every later offset by one and
+		// paint the wrong pieces. ASCII-only folding cannot.
+		const text = "straße 1, amsterdam 1012 lg"
+		const pieces = piecesFor(text)
+		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
+		const painted = pieces.filter((_, i) => confidence[i] === 1)
+
+		expect(painted.length).toBeGreaterThan(0)
+
+		for (const piece of painted) {
+			expect(text.slice(piece.start, piece.end)).toMatch(/^[\d a-z]+$/)
+		}
+
+		// The pieces are word-split, so the span's interior space belongs to no piece.
+		expect(painted.map((p) => text.slice(p.start, p.end)).join("")).toBe("1012lg")
+	})
+
+	it("the DEFAULT alnum-run mode is untouched — the fold lives only in the shaped branch", () => {
+		const text = "buckingham palace, london sw1a 2aa"
+		const pieces = piecesFor(text)
+
+		expect(buildAnchorFeatures(text, pieces, V2).confidence.every((c) => c === 0)).toBe(true)
+	})
+})
+
+/**
+ * A2 of ROAD_TO_V9 §1 — the SHIP OBLIGATION check. A lookup carrying keys only the shaped keyer can reach, next to a
+ * card that does not declare `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it
+ * exists for.
+ */
+describe("shapedKeyerObligationViolation", () => {
+	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([
+		["10115", { posterior: { DE: 1 }, lat: 52.5323, lon: 13.3846 }],
+		["SW1A2AA", { posterior: { GB: 1 }, lat: 51.50354, lon: -0.1277 }],
+	])
+
+	const withoutUnits: AnchorLookup = new Map<string, AnchorEntry>([
+		["10115", { posterior: { DE: 1 }, lat: 52.5323, lon: 13.3846 }],
+		["SW1A", { posterior: { GB: 1 }, lat: 51.50452, lon: -0.13216 }],
+		["1012LG", { posterior: { NL: 1 }, lat: 52.37689, lon: 4.89772 }],
+	])
+
+	it("counts GB unit keys, and nothing else", () => {
+		expect(countShapedOnlyKeys(withUnits)).toBe(1)
+		// Outward districts, NL PC6 and every numeric system are reachable by the alnum-run scan.
+		expect(countShapedOnlyKeys(withoutUnits)).toBe(0)
+	})
+
+	it("flags an undeclared card against a unit-key lookup, naming the remedy", () => {
+		const violation = shapedKeyerObligationViolation(withUnits, undefined, "postcode-gb.bin")
+
+		expect(violation).toContain("span_mode")
+		expect(violation).toContain("shaped")
+		expect(violation).toContain("postcode-gb.bin")
+	})
+
+	it("flags an explicit `alnum-run` declaration too — omission and denial are the same defect", () => {
+		expect(shapedKeyerObligationViolation(withUnits, "alnum-run", "postcode-gb.bin")).not.toBeNull()
+	})
+
+	it("passes a coherent pairing, and any pairing without unit keys", () => {
+		expect(shapedKeyerObligationViolation(withUnits, "shaped", "postcode-gb.bin")).toBeNull()
+		expect(shapedKeyerObligationViolation(withoutUnits, undefined, "postcode-gb.bin")).toBeNull()
+		expect(shapedKeyerObligationViolation(undefined, undefined, undefined)).toBeNull()
 	})
 })

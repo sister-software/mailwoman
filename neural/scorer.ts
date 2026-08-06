@@ -27,7 +27,12 @@ import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { parseAnchorLookup, type AnchorLookup, type AnchorSpanMode } from "./anchor-inference.ts"
+import {
+	parseAnchorLookup,
+	shapedKeyerObligationViolation,
+	type AnchorLookup,
+	type AnchorSpanMode,
+} from "./anchor-inference.ts"
 import { NeuralAddressClassifier } from "./classifier.ts"
 import { parseCountryLexicon, type CountryLexicon } from "./country-inference.ts"
 import { parseGazetteerLexicon, type GazetteerLexicon } from "./gazetteer-inference.ts"
@@ -68,19 +73,37 @@ export const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
 export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v1.json"
 
 /**
- * Resolve the anchor lookup source the scorer feeds when the caller passes no `anchorLookupPath` (#718 D1): prefer the
- * operator's local pilot JSON (the eval's historical default — unchanged when present), else fall back to the soft-feed
- * sibling the weights package SHIPS (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the SAME
- * artifact. Returns `undefined` when neither exists (the scorer then fails closed on a declared-required anchor, as
- * before).
+ * Resolve the anchor lookup source the scorer feeds (#718 D1). A caller-pinned path wins; otherwise prefer the
+ * operator's local pilot JSON (the eval's historical default — unchanged when present), else the soft-feed sibling the
+ * weights package SHIPS (`postcode-<cc>.bin` / `anchor-lookup.json`), so eval + serving read the SAME artifact. Returns
+ * `undefined` when neither exists (the scorer then fails closed on a declared-required anchor, as before).
+ *
+ * The one exception is a `shaped` card, which inverts the default order — see the comment on that branch.
  */
-function defaultAnchorSource(locale: string | undefined): { path: string; binary: boolean } | undefined {
-	if (existsSync(DEFAULT_ANCHOR_LOOKUP)) return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
+function resolveAnchorSource(
+	pinned: string | undefined,
+	locale: string | undefined,
+	spanMode: AnchorSpanMode | undefined
+): { path: string; binary: boolean } | undefined {
+	// A caller-pinned path wins, and its FORMAT is read off the extension: a `.bin` is PCB1, anything
+	// else is the JSON pilot dump. The option used to be documented "always JSON" and pointing it at a
+	// candidate's own `postcode-<cc>.bin` threw a parse error — which left no way to grade a candidate
+	// against the anchor artifact it actually ships.
+	if (pinned) return { path: pinned, binary: pinned.endsWith(".bin") }
+
+	// A `shaped` card INVERTS the preference below, and this is not a style choice. `pilot-anchor-lookup.json`
+	// holds 67,708 keys, ZERO of them letter-bearing (US/DE/FR five-digit only) — measured, and the whole
+	// reason the anchor-v2 retrain exists. A model that declares `shaped` was trained against a lookup
+	// with letter-bearing keys, so preferring the pilot file for it grades the candidate against a lookup
+	// that CANNOT carry the spans it learned. Silent, and the failure looks like "the retrain did nothing".
+	if (spanMode !== "shaped" && existsSync(DEFAULT_ANCHOR_LOOKUP)) {
+		return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
+	}
 
 	try {
-		return resolveWeights({ locale }).anchorLookupPath
+		return resolveWeights({ locale }).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	} catch {
-		return undefined
+		return existsSync(DEFAULT_ANCHOR_LOOKUP) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
 	}
 }
 
@@ -116,9 +139,16 @@ function defaultCountryLexicon(locale: string | undefined): string | undefined {
 /**
  * Resolve the evidence-bundle lexicon paths (Option-A Phase 3): street-type prefers the committed repo artifact; the
  * locality-surface lexicon (13 MB, never in git) resolves from the weights package only.
+ *
+ * The repo preference is CARD-SCOPED (#1510). `data/gazetteer/` carries every generation of the street-type lexicon
+ * side by side (v1, v2, v3 today), so a bare "prefer the repo copy" rule pins whichever filename this function was
+ * written against and silently outranks the card — the same train/serve downgrade `resolveWeights` just stopped doing.
+ * So when the card names a generation, the repo candidate is THAT filename; only an undeclared card falls back to the
+ * historical literal.
  */
-function defaultStreetTypeLexicon(locale: string | undefined): string | undefined {
-	const repoDefault = "data/gazetteer/street-type-lexicon-v3.json"
+function defaultStreetTypeLexicon(locale: string | undefined, modelCardPath: string): string | undefined {
+	const declared = readRequiredChannels(modelCardPath)?.street_type?.lexicon
+	const repoDefault = `data/gazetteer/${declared ?? "street-type-lexicon-v3.json"}`
 
 	if (existsSync(repoDefault)) return repoDefault
 
@@ -155,6 +185,21 @@ function defaultLocalitySurfaceLexicon(locale: string | undefined): string | und
  */
 function declaredAnchorSpanMode(declared: RequiredChannels): AnchorSpanMode | undefined {
 	return declared.anchor?.span_mode
+}
+
+/**
+ * {@linkcode shapedKeyerObligationViolation}, wired to {@linkcode fail}. A one-call wrapper so `createScorer` gains no
+ * branch — it sits one step under the complexity ceiling (see {@linkcode fstPathEntry}).
+ */
+function assertShapedKeyerObligation(
+	lookup: AnchorLookup | undefined,
+	spanMode: AnchorSpanMode | undefined,
+	anchorSourcePath: string | undefined,
+	strict: boolean
+): void {
+	const violation = shapedKeyerObligationViolation(lookup, spanMode, anchorSourcePath)
+
+	if (violation) fail(strict, violation)
 }
 
 /**
@@ -235,8 +280,12 @@ export interface CreateScorerOpts {
 	 */
 	fstPath?: string
 	/**
-	 * Postcode→anchor lookup path. Default {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the soft-feed sibling
-	 * shipped in the `@mailwoman/neural-weights-<locale>` package (#718 D1).
+	 * Postcode→anchor lookup path — a JSON pilot lookup, or a PCB1 `.bin` (recognized by extension, so a candidate's own
+	 * `postcode-<cc>.bin` can be pinned; before that it was JSON-only and pointing at a binary threw a parse error).
+	 *
+	 * Default: {@link DEFAULT_ANCHOR_LOOKUP} when it exists, else the soft-feed sibling shipped in the
+	 * `@mailwoman/neural-weights-<locale>` package (#718 D1) — EXCEPT for a card declaring `span_mode: "shaped"`, which
+	 * inverts the order. See {@link resolveAnchorSource}.
 	 */
 	anchorLookupPath?: string
 	/**
@@ -410,9 +459,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// --- Anchor channel ---------------------------------------------------------------------------
 	// Caller-pinned path wins (explicit `--anchor-lookup`, always JSON); else fall back to the
 	// operator pilot JSON or, failing that, the weights-package soft-feed sibling (PCB1 or JSON, #718).
-	const anchorSource: { path: string; binary: boolean } | undefined = opts.anchorLookupPath
-		? { path: opts.anchorLookupPath, binary: false }
-		: defaultAnchorSource(opts.locale)
+	const declaredSpanMode = declaredAnchorSpanMode(declared)
+
+	const anchorSource = resolveAnchorSource(opts.anchorLookupPath, opts.locale, declaredSpanMode)
 
 	const anchorRequired = declared.anchor?.required ?? false
 	let postcodeAnchorLookup: AnchorLookup | undefined
@@ -501,7 +550,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// --- Evidence-bundle channels (Option-A Phase 3) ------------------------------------------------
 	// Same load + fail-closed + declared-ablation pattern as the gazetteer; both lexicons share its
 	// JSON schema and parser. A bundle-trained card declares `street_type` + `locality_surface`.
-	const streetTypeLexiconPath = opts.streetTypeLexiconPath ?? defaultStreetTypeLexicon(opts.locale)
+	const streetTypeLexiconPath = opts.streetTypeLexiconPath ?? defaultStreetTypeLexicon(opts.locale, opts.modelCardPath)
 	const streetTypeRequired = declared.street_type?.required ?? false
 	let streetTypeLexicon: GazetteerLexicon | undefined
 
@@ -595,7 +644,10 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const suppressGazetteerNearPostcode =
 		overrides.suppressGazetteerNearPostcode ?? declared.suppress_gazetteer_near_postcode ?? false
 
-	const postcodeAnchorSpanMode = declaredAnchorSpanMode(declared)
+	// The SHIP OBLIGATION fail-closed (A2): a lookup whose keys only the shaped keyer can reach, paired
+	// with a card that does not declare it, is a silently-dead channel. Runs AFTER the lookup is loaded
+	// because the artifact is the observable half — the mode alone is not checkable against the graph.
+	assertShapedKeyerObligation(postcodeAnchorLookup, declaredSpanMode, anchorSource?.path, strict)
 
 	return new NeuralAddressClassifier({
 		tokenizer,
@@ -603,7 +655,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		...fstPathEntry(opts.fstPath),
 		...(labels ? { labels } : {}),
 		...(postcodeAnchorLookup ? { postcodeAnchorLookup } : {}),
-		...(postcodeAnchorSpanMode ? { postcodeAnchorSpanMode } : {}),
+		...(declaredSpanMode ? { postcodeAnchorSpanMode: declaredSpanMode } : {}),
 		...(gazetteerLexicon ? { gazetteerLexicon } : {}),
 		...(countryLexicon ? { countryLexicon } : {}),
 		...(streetTypeLexicon ? { streetTypeLexicon } : {}),

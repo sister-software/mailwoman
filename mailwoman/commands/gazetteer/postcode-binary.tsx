@@ -12,15 +12,26 @@
  *   The shard `name` is already the normalized postcode key (DE/FR `68161`/`75008`, NL space-less
  *   `1012LM`, US `94105`), which is exactly what the anchor queries, so it serializes verbatim.
  *
- *   **GB is special.** `postalcode-gb.db` holds 2.7M _unit_ postcodes (`SO4 3RX`) — a 35 MB binary,
- *   far past the browser budget and finer than an anchor needs. So GB is aggregated to the
- *   **outward code** (`SO4`, the district — ~3k of them), centroid-averaged over its placed units.
- *   The extractor falls back to the outward code for a GB-shaped unit that misses the full lookup
- *   (see `extractPostcodeAnchors`). Other countries serialize verbatim.
+ *   **GB is special**, and it is where this command shipped two defects (#1509 — the derivation and
+ *   the refusal both live in `gazetteer-pipeline/postcode/binary.ts`, with the reproduction). The
+ *   outward district is now derived by SHAPE (the inward code is the trailing three characters of the
+ *   space-stripped form), so the same rule reads the spaced GeoNames-lineage shard and the
+ *   space-stripped Code-Point Open one. `--gb-granularity` picks the key set:
  *
- *   Defaults to US + NL/FR/DE/ES/IT (postalcode-intl.db) + GB (postalcode-gb.db, outward-aggregated).
- *   Each `.bin` is written DIRECTLY to `--out` (the original `scripts/build-postcode-binary.ts`
- *   behavior). Per-locale progress streams to stderr; the roll-up lands on stdout.
+ *   - `unit` (DEFAULT) — every unit PLUS its outward district: 1,749,839 keys / 20.0 MB from
+ *       `postalcode-gb-codepoint.db`. This is the TRAIN-FAITHFUL set. A model trained against
+ *       `pilot-anchor-lookup-v2` was painted from UNIT centroids, so serving it anything coarser feeds
+ *       the anchor channel a different distribution than training saw.
+ *   - `outward` — districts only: 2,863 keys / 0.03 MB. The only GB set that fits a browser bundle, and
+ *       the command's original behaviour.
+ *
+ *   Every locale's key count is checked against a documented floor before anything is written; a build
+ *   below it exits NONZERO with a named reason rather than shipping a valid, empty binary.
+ *
+ *   Defaults to US + NL/FR/DE/ES/IT (postalcode-intl.db) + GB (postalcode-gb-codepoint.db, the
+ *   licence-clean OGL v3.0 source). Each `.bin` is written DIRECTLY to `--out` (the original
+ *   `scripts/build-postcode-binary.ts` behavior). Per-locale progress streams to stderr; the roll-up
+ *   lands on stdout.
  */
 
 import { existsSync, writeFileSync } from "node:fs"
@@ -30,16 +41,29 @@ import { DatabaseSync } from "node:sqlite"
 import { dataRootPath } from "@mailwoman/core/utils"
 // @mailwoman/neural is a direct dep and this subpath is a self-contained serializer (type-only
 // imports), so the value import is safe at module level — no heavy ONNX runtime is pulled in.
-import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
+import { serializePostcodeBinary } from "@mailwoman/neural/postcode-binary-resolver"
 import { Box, Text } from "ink"
 import zod from "zod"
 
 import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
+import {
+	buildPostcodeBinaryEntries,
+	type GBGranularity,
+	keyFloorViolation,
+	type PostcodeShardRow,
+} from "../../gazetteer-pipeline/postcode/binary.ts"
 
 interface LocaleSource {
 	country: string
 	db: string
 }
+
+/**
+ * Size past which a `.bin` written into the browser asset dir is worth a word. Not a limit and not enforced — the
+ * command's default `--out` is `docs/static/mailwoman`, and a GB unit build lands 20 MB there, so the number exists to
+ * make the reader notice rather than to decide for them.
+ */
+const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
 const OptionsSchema = zod.object({
 	out: zod
@@ -51,61 +75,19 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(
 			"`<CC>:<db>` source override, repeatable (db relative to <data-root>/wof or absolute). " +
-				"Default: US + NL/FR/DE/ES/IT (postalcode-intl.db) + GB (postalcode-gb.db, outward-aggregated)."
+				"Default: US + NL/FR/DE/ES/IT (postalcode-intl.db) + GB (postalcode-gb-codepoint.db)."
+		),
+	// Pastel binds the kebab flag to this lowercase-acronym prop by derivation — see AGENTS.md.
+	gbGranularity: zod
+		.enum(["unit", "outward"])
+		.default("unit")
+		.describe(
+			"GB key set: `unit` (units + outward districts, 1,749,839 keys / 20.0 MB — train-faithful, " +
+				"the anchor-v2 default) or `outward` (districts only, 2,863 keys / 0.03 MB — browser budget)."
 		),
 })
 
 export { OptionsSchema as options }
-
-/**
- * GB outward code: the part before the space when the inward half is `\d[A-Z]{2}` (`SO4 3RX` → `SO4`).
- */
-function gbOutward(name: string): string | null {
-	const sp = name.indexOf(" ")
-
-	if (sp < 1) return null
-	const inward = name.slice(sp + 1)
-
-	return /^\d[A-Z]{2}$/.test(inward) ? name.slice(0, sp) : null
-}
-
-/**
- * Aggregate GB unit postcodes to outward codes, averaging the placed-unit centroids. Drops units that don't parse as a
- * GB unit postcode (kept verbatim is wrong at this granularity). Returns one entry per outward code.
- */
-function aggregateGbOutward(
-	rows: Array<{ name: string; country: string; lat: number; lon: number }>
-): PostcodeBinaryEntry[] {
-	const acc = new Map<string, { latSum: number; lonSum: number; placed: number }>()
-
-	for (const r of rows) {
-		const out = gbOutward(String(r.name).toUpperCase())
-
-		if (!out) continue
-		const a = acc.get(out) ?? { latSum: 0, lonSum: 0, placed: 0 }
-
-		if (r.lat !== 0 || r.lon !== 0) {
-			a.latSum += Number(r.lat)
-			a.lonSum += Number(r.lon)
-			a.placed += 1
-		}
-
-		acc.set(out, a)
-	}
-
-	const entries: PostcodeBinaryEntry[] = []
-
-	for (const [out, a] of acc) {
-		entries.push({
-			postcode: out,
-			country: "GB",
-			lat: a.placed > 0 ? a.latSum / a.placed : 0,
-			lon: a.placed > 0 ? a.lonSum / a.placed : 0,
-		})
-	}
-
-	return entries
-}
 
 const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -130,10 +112,11 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 				{ country: "DE", db: join(wof, "postalcode-intl.db") },
 				{ country: "ES", db: join(wof, "postalcode-intl.db") },
 				{ country: "IT", db: join(wof, "postalcode-intl.db") },
-				{ country: "GB", db: join(wof, "postalcode-gb.db") }
+				{ country: "GB", db: join(wof, "postalcode-gb-codepoint.db") }
 			)
 		}
 
+		const granularity: GBGranularity = options.gbGranularity
 		let written = 0
 
 		for (const { country, db } of locales) {
@@ -147,22 +130,27 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 
 			const rows = conn
 				.prepare(
-					`SELECT name, country, latitude AS lat, longitude AS lon FROM spr
+					`SELECT name, latitude AS lat, longitude AS lon FROM spr
 					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`
 				)
-				.all(country) as Array<{ name: string; country: string; lat: number; lon: number }>
+				.all(country) as unknown as PostcodeShardRow[]
 
 			conn.close()
 
-			const entries: PostcodeBinaryEntry[] =
-				country === "GB"
-					? aggregateGbOutward(rows)
-					: rows.map((r) => ({
-							postcode: String(r.name),
-							country: String(r.country),
-							lat: Number(r.lat),
-							lon: Number(r.lon),
-						}))
+			const { entries, skipped, outwardKeys } = buildPostcodeBinaryEntries(country, rows, {
+				gbGranularity: granularity,
+			})
+
+			// REFUSE BEFORE WRITING (#1509). A magnitude never carries its own absence: a zero-key binary
+			// is structurally valid, so the only place the failure can surface is here.
+			const violation = keyFloorViolation(country, entries.length, granularity)
+
+			if (violation) {
+				throw new Error(
+					`${violation} Read ${rows.length.toLocaleString()} rows from ${db}` +
+						(skipped ? `, dropped ${skipped.toLocaleString()} as non-${country}-shaped.` : ".")
+				)
+			}
 
 			const bytes = serializePostcodeBinary(entries)
 			const outPath = join(outDir, `postcode-${country.toLowerCase()}.bin`)
@@ -172,8 +160,23 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 			const placed = entries.filter((e) => e.lat !== 0 || e.lon !== 0).length
 
 			console.error(
-				`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
+				`${country}: ${entries.length.toLocaleString()} codes (${placed.toLocaleString()} placed` +
+					(outwardKeys ? `, ${outwardKeys.toLocaleString()} outward districts` : "") +
+					(skipped ? `, ${skipped.toLocaleString()} rows skipped as non-unit-shaped` : "") +
+					`) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
 			)
+
+			// The GB default is `unit` because that is what the anchor-v2 model was TRAINED against, and a
+			// serving bundle shipping anything coarser feeds the channel a different distribution than
+			// training painted. But this command's default `--out` is the BROWSER asset dir, where 20 MB is
+			// not a postcode binary, it is the whole page budget. The size is printed either way; this names
+			// the lever rather than deciding for the operator.
+			if (country.toUpperCase() === "GB" && granularity === "unit" && bytes.length > BROWSER_BUDGET_BYTES) {
+				console.error(
+					`  NOTE: that is the TRAIN-FAITHFUL unit key set, sized for a serving weights package. ` +
+						`For a browser bundle pass --gb-granularity outward (2,863 keys, 0.02 MB).`
+				)
+			}
 		}
 
 		return [`postcode binaries → ${outDir}`, `wrote ${written} of ${locales.length} locale binary(ies)`]
