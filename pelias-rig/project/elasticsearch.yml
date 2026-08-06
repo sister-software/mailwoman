@@ -1,0 +1,7 @@
+# Verbatim from pelias/docker's per-country template. Shard/replica counts are NOT set here —
+# they belong to the index, and pelias.json's `elasticsearch.settings.index` block is what the
+# schema one-shot reads when it creates it (1 shard, 0 replicas, §1).
+network.host: 0.0.0.0
+bootstrap.memory_lock: true
+indices.breaker.fielddata.limit: 85%
+indices.fielddata.cache.size: 75%

@@ -1,0 +1,199 @@
+{
+	"panel": "panel-v1.jsonl",
+	"sha256": "fe6d873cab4603bfa6814215a40429351a29b843bd4e9fdd056eea475482ba23",
+	"rows": 420,
+	"seed": 20260807,
+	"builtBy": "pelias-rig/panel/build-panel.ts",
+	"perLocale": {
+		"en-us": {
+			"rooftop": 45,
+			"venue": 4,
+			"cityOnly": 11,
+			"total": 60
+		},
+		"fr-fr": {
+			"rooftop": 48,
+			"venue": 2,
+			"cityOnly": 10,
+			"total": 60
+		},
+		"de-de": {
+			"rooftop": 49,
+			"venue": 0,
+			"cityOnly": 11,
+			"total": 60
+		},
+		"en-gb": {
+			"rooftop": 45,
+			"venue": 4,
+			"cityOnly": 11,
+			"total": 60
+		},
+		"en-au": {
+			"rooftop": 56,
+			"venue": 0,
+			"cityOnly": 4,
+			"total": 60
+		},
+		"en-nz": {
+			"rooftop": 57,
+			"venue": 0,
+			"cityOnly": 3,
+			"total": 60
+		},
+		"eu-mixed": {
+			"rooftop": 45,
+			"venue": 0,
+			"cityOnly": 15,
+			"total": 60
+		}
+	},
+	"usStates": [
+		{
+			"abbreviation": "CA",
+			"fips": "06",
+			"name": "California"
+		},
+		{
+			"abbreviation": "DC",
+			"fips": "11",
+			"name": "District of Columbia"
+		},
+		{
+			"abbreviation": "FL",
+			"fips": "12",
+			"name": "Florida"
+		},
+		{
+			"abbreviation": "GA",
+			"fips": "13",
+			"name": "Georgia"
+		},
+		{
+			"abbreviation": "IL",
+			"fips": "17",
+			"name": "Illinois"
+		},
+		{
+			"abbreviation": "IA",
+			"fips": "19",
+			"name": "Iowa"
+		},
+		{
+			"abbreviation": "MI",
+			"fips": "26",
+			"name": "Michigan"
+		},
+		{
+			"abbreviation": "MT",
+			"fips": "30",
+			"name": "Montana"
+		},
+		{
+			"abbreviation": "ND",
+			"fips": "38",
+			"name": "North Dakota"
+		},
+		{
+			"abbreviation": "OH",
+			"fips": "39",
+			"name": "Ohio"
+		},
+		{
+			"abbreviation": "PA",
+			"fips": "42",
+			"name": "Pennsylvania"
+		},
+		{
+			"abbreviation": "SD",
+			"fips": "46",
+			"name": "South Dakota"
+		},
+		{
+			"abbreviation": "TN",
+			"fips": "47",
+			"name": "Tennessee"
+		},
+		{
+			"abbreviation": "TX",
+			"fips": "48",
+			"name": "Texas"
+		},
+		{
+			"abbreviation": "VT",
+			"fips": "50",
+			"name": "Vermont"
+		},
+		{
+			"abbreviation": "VA",
+			"fips": "51",
+			"name": "Virginia"
+		},
+		{
+			"abbreviation": "WI",
+			"fips": "55",
+			"name": "Wisconsin"
+		}
+	],
+	"usStatesRequiringLocalSources": [
+		{
+			"abbreviation": "CA",
+			"fips": "06",
+			"name": "California"
+		},
+		{
+			"abbreviation": "DC",
+			"fips": "11",
+			"name": "District of Columbia"
+		},
+		{
+			"abbreviation": "IL",
+			"fips": "17",
+			"name": "Illinois"
+		},
+		{
+			"abbreviation": "IA",
+			"fips": "19",
+			"name": "Iowa"
+		},
+		{
+			"abbreviation": "MI",
+			"fips": "26",
+			"name": "Michigan"
+		},
+		{
+			"abbreviation": "MT",
+			"fips": "30",
+			"name": "Montana"
+		},
+		{
+			"abbreviation": "SD",
+			"fips": "46",
+			"name": "South Dakota"
+		},
+		{
+			"abbreviation": "TN",
+			"fips": "47",
+			"name": "Tennessee"
+		},
+		{
+			"abbreviation": "VT",
+			"fips": "50",
+			"name": "Vermont"
+		}
+	],
+	"usStatesFromRowField": [
+		"CA",
+		"DC",
+		"IA",
+		"IL",
+		"MT",
+		"SD",
+		"VT"
+	],
+	"truthTypes": {
+		"rooftop": 345,
+		"venue": 10,
+		"city-only": 65
+	}
+}

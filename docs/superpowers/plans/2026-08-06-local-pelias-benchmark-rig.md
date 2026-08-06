@@ -76,6 +76,41 @@ before any import runs:
   small importer (NZ OSM) under `docker stats`; check the compose file's DEFAULT ES heap first and
   fail fast if it exceeds 8 GB.
 
+### Graded outcomes (2026-08-07)
+
+- **(a) interpolation-never-TIGER — FALSE, with a catch that keeps the scope decision alive.**
+  `pelias/interpolation` ships a TIGER conflation step (`./interpolate tiger address.db street.db`,
+  driven by `script/conflate_tiger.sh`), so TIGER address ranges DO feed interpolation. But they feed
+  the ADDRESS side only: `street.db` is built by `script/import.sh` from the polylines file, and the
+  conflation needs it to attach ranges to. **TIGER cannot replace polylines; it enriches them.** So a
+  US arm with interpolation still needs a US polylines cut — which is affordable, see (b).
+  Two side-findings that change the runbook: `conflate_tiger.sh` globs `$TIGERPATH/downloads/**/*.zip`
+  and pipes each through `ogr2ogr`, so our OWN TIGER 2024 county zips can be mounted straight in;
+  and interpolation's own downloader (`script/js/update_tiger.js`) is pinned to **TIGER2021** via a
+  `data.geocode.earth` mirror, so we do not use it. Vintage note for §1's data table: what we held on
+  disk was TIGER 2024 ADDRFEAT for **one county** (DC 11001) plus TIGER 2020 for CA — the rest is
+  being fetched per panel state.
+- **(b) polylines-planet-only — FALSE. Per-country cuts work, and the 1 GB guard is soft.**
+  `pelias/polylines`' `docker_extract.sh` runs `pbf streets` (missinglink/pbf) per PBF and warns off
+  files over 1 GB — and its guard is broken anyway (`exit 1` inside a `find | while read` subshell
+  exits the subshell, not the script, so it warns and proceeds). Driving `pbf streets` directly, one
+  country at a time: **nz 8.0 MB/25 s, cz 7.5 MB/34 s, dk 13.1 MB/35 s, be 13.4 MB/46 s, ch
+  14.7 MB/46 s, at 16.3 MB/56 s, au 44.8 MB/113 s, nl 19.5 MB/71 s — the netherlands PBF is 1.40 GB
+  and cut cleanly**, at ~450 MB RSS. GB (2.16 GB) and DE (4.81 GB) were still running at time of
+  writing; their outcome is recorded in `$MAILWOMAN_DATA_ROOT/pelias-rig/logs/polyline-status.txt`.
+  One departure from the stock script: it concatenates every PBF into a single `extract.0sv`, and
+  `docker_build.sh` then uses **only the alphabetically first `.pbf` and first `.0sv` it finds** —
+  single-country by construction. A multi-country interpolation build has to drive `script/build.sh`
+  itself.
+- **(c) fits-in-16 GB — precondition CLEARED, full probe pending imports.** The fail-fast check
+  passes: `pelias/elasticsearch:7.17.27` bakes `ES_JAVA_OPTS=-Xms512m -Xmx512m`, well under the 8 GB
+  abort line, so the compose override to 4 GB raises the heap rather than fighting a large default.
+  The under-load measurement waits for the first importer run.
+- **Unplanned, and it reshapes the runbook: THERE IS NO DOCKER ON THIS HOST.** Only podman 4.9.3
+  rootless plus `podman-compose`. Every service that writes to a bind mount needs
+  `userns_mode: keep-id` — measured, not guessed: the first polyline cut died instantly with
+  `/out/nz.0sv: Permission denied` and succeeded unchanged once keep-id was added.
+
 ## §3 — Per-country acceptance probes (before any benchmark row)
 
 1. A known OA/TIGER rooftop address → `layer: address`, under 50 m.
@@ -116,17 +151,61 @@ scoping removed and fences what the local numbers can claim.
 
 ## §5 — Pre-registration checklist (all written before the first import)
 
-- [ ] pelias/docker commit + image digests
+- [x] pelias/docker commit + image digests — commit `3dfa07d580416edd7a27c2d4ff5976c8c1cc6ebc`;
+      all ten image digests recorded in `pelias-rig/project/image-digests.txt` and pasted into the
+      compose file, which references digests only (no `:master` anywhere)
 - [ ] Data manifest: SHA-256 for every OA CSV, WOF sqlite, TIGER shapefile, OSM PBF, polylines file
-- [ ] `pelias.json` hash + compose overrides (`ES_JAVA_OPTS`, memory caps)
-- [ ] Panel file hash; per-row `truth_type` + `local_coverage_hint` assigned
+- [ ] `pelias.json` hash + compose overrides — compose overrides done (`ES_JAVA_OPTS=-Xms4g -Xmx4g`,
+      1 GB caps on api/placeholder, 2 GB on libpostal, importers uncapped); `pelias.json` is
+      GENERATED from disk by `pelias-rig/project/build-config.ts` and hashes once the fetches land
+- [x] Panel file hash; per-row `truth_type` + `local_coverage_hint` assigned — `panel-v1.jsonl`,
+      420 rows, seed 20260807, hash + strata in `pelias-rig/panel/panel-v1.manifest.json`
 - [ ] Scoring definition (§4 verbatim), scorer command + hash, determinism check
 - [ ] Distance formula + thresholds; no-result + tie-break definitions; equivalence margin
 - [ ] Bootstrap seed + resamples
-- [ ] §2 falsifier outcomes, graded
+- [x] §2 falsifier outcomes, graded — see the graded block in §2
 - [ ] §3 probe results per country
 - [ ] Google-oracle logic; stop rule for failed country imports
 - [ ] Hosted-arm response headers / version capture plan
+
+### Panel v1, as built (2026-08-07)
+
+420 rows, 60 per locale, `sha256` in the manifest. Strata are UNEVEN and reported that way:
+
+| locale     | rooftop | venue | city-only |
+| ---------- | ------: | ----: | --------: |
+| `en-us`    |      45 |     4 |        11 |
+| `fr-fr`    |      48 |     2 |        10 |
+| `de-de`    |      49 |     0 |        11 |
+| `en-gb`    |      45 |     4 |        11 |
+| `en-au`    |      56 |     0 |         4 |
+| `en-nz`    |      57 |     0 |         3 |
+| `eu-mixed` |      45 |     0 |        15 |
+
+Recorded shortfalls, none padded: the venue stratum exists only where a board carried venue rows
+(10 rows total, US/FR/GB) — the repo holds no venue-rooftop truth anywhere, and `poi-board.jsonl`'s
+`anchorGold` points are city anchors for "near X" queries, not venue coordinates. AU and NZ have
+almost no admin-level board rows (4 and 3), so their 60 is made up of rooftop. NZ had **zero**
+coordinate-bearing address rows in the repo and `build-oa-coord-golden.ts` cannot make one — it
+requires a POSTCODE and the OA NZ dump ships that column empty (measured: it wrote 0 rows) — so NZ
+and AU rooftop truth is drawn straight from the OA countrywide dumps, reservoir-sampled and rendered
+in national order.
+
+**The panel's input strings are RENDERED from truth components, not copied from the goldens.** The
+`oa-*-coord-*.jsonl` rows cycle three orders on purpose to stress the parser, including forms nobody
+types (`"Ansan, 32270, Route de Crastes 350"`), and mailwoman was trained on those orders while
+Pelias was not — feeding them to all three arms would be an uncontrolled advantage to our own arm.
+One natural postal order per country, identical for every arm, keeps §4's same-string rule intact
+without importing that bias.
+
+**US scope: 9 states, not 17.** Every US panel row lands somewhere (17 states across all 60 rows),
+but a `city-only` row is answered from the WOF admin hierarchy, which the whosonfirst importer loads
+country-wide from one `countryCode` download — no state PBF, no TIGER county, no OA state directory.
+Only the point-bearing rows (`rooftop` + `venue`) need per-state sources:
+**CA, DC, IA, IL, MI, MT, SD, TN, VT**. Seven of those come from the rooftop draw; MI and TN enter
+solely through venue rows, which is the concrete reason the venue stratum had to be classified before
+the fetch list was computed rather than after. Both lists are in the panel manifest, so the scoping
+is auditable rather than asserted.
 
 ## §6 — Consult calibration record
 

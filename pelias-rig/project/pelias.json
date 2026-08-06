@@ -1,0 +1,197 @@
+{
+  "logger": {
+    "level": "info",
+    "timestamp": false
+  },
+  "esclient": {
+    "apiVersion": "7.5",
+    "hosts": [
+      {
+        "host": "elasticsearch"
+      }
+    ]
+  },
+  "elasticsearch": {
+    "settings": {
+      "index": {
+        "refresh_interval": "10s",
+        "number_of_replicas": "0",
+        "number_of_shards": "1"
+      }
+    }
+  },
+  "api": {
+    "services": {
+      "libpostal": {
+        "url": "http://libpostal:4400"
+      },
+      "placeholder": {
+        "url": "http://placeholder:4100"
+      },
+      "interpolation": {
+        "url": "http://interpolation:4300"
+      }
+    }
+  },
+  "imports": {
+    "whosonfirst": {
+      "datapath": "/data/whosonfirst",
+      "countryCode": [
+        "US",
+        "FR",
+        "DE",
+        "GB",
+        "AU",
+        "NZ",
+        "AT",
+        "CH",
+        "CZ",
+        "DK",
+        "BE",
+        "NL"
+      ],
+      "importPostalcodes": false
+    },
+    "openstreetmap": {
+      "leveldbpath": "/tmp",
+      "datapath": "/data/osm",
+      "import": [
+        {
+          "filename": "australia-latest.osm.pbf"
+        },
+        {
+          "filename": "austria-latest.osm.pbf"
+        },
+        {
+          "filename": "belgium-latest.osm.pbf"
+        },
+        {
+          "filename": "california-latest.osm.pbf"
+        },
+        {
+          "filename": "czech-republic-latest.osm.pbf"
+        },
+        {
+          "filename": "denmark-latest.osm.pbf"
+        },
+        {
+          "filename": "district-of-columbia-latest.osm.pbf"
+        },
+        {
+          "filename": "germany-latest.osm.pbf"
+        },
+        {
+          "filename": "great-britain-latest.osm.pbf"
+        },
+        {
+          "filename": "illinois-latest.osm.pbf"
+        },
+        {
+          "filename": "iowa-latest.osm.pbf"
+        },
+        {
+          "filename": "montana-latest.osm.pbf"
+        },
+        {
+          "filename": "netherlands-latest.osm.pbf"
+        },
+        {
+          "filename": "new-zealand-latest.osm.pbf"
+        },
+        {
+          "filename": "south-dakota-latest.osm.pbf"
+        },
+        {
+          "filename": "switzerland-latest.osm.pbf"
+        },
+        {
+          "filename": "vermont-latest.osm.pbf"
+        }
+      ]
+    },
+    "openaddresses": {
+      "datapath": "/data/openaddresses",
+      "files": [
+        "fr/countrywide.csv",
+        "de/berlin.csv",
+        "de/he/city_of_frankfurtammain.csv",
+        "de/hh/statewide.csv",
+        "de/ni/bentheim.csv",
+        "de/nw/city_of_cologne.csv",
+        "de/nw/city_of_wesel.csv",
+        "de/nw/city_of_wuppertal.csv",
+        "de/nw/kreis_viersen.csv",
+        "de/nw/statewide.csv",
+        "de/sn/statewide.csv",
+        "de/th/statewide.csv",
+        "at/31254.csv",
+        "at/31255.csv",
+        "at/31256.csv",
+        "at/city_of_vienna.csv",
+        "at/tirol.csv",
+        "be/bru/bosa-region-brussels-fr.csv",
+        "be/bru/bosa-region-brussels-nl.csv",
+        "be/vlg/bosa-region-flanders-fr.csv",
+        "be/vlg/bosa-region-flanders-nl.csv",
+        "be/wal/bosa-region-wallonia-de.csv",
+        "be/wal/bosa-region-wallonia-fr.csv",
+        "ch/countrywide.csv",
+        "cz/countrywide.csv",
+        "dk/countrywide.csv",
+        "nl/countrywide.csv",
+        "au/countrywide.csv",
+        "nz/countrywide.csv"
+      ]
+    },
+    "polyline": {
+      "datapath": "/data/polylines",
+      "files": [
+        "at.0sv",
+        "au.0sv",
+        "be.0sv",
+        "ch.0sv",
+        "cz.0sv",
+        "dk.0sv",
+        "gb.0sv",
+        "nl.0sv",
+        "nz.0sv"
+      ]
+    },
+    "interpolation": {
+      "download": {
+        "tiger": {
+          "datapath": "/data/tiger",
+          "states": [
+            {
+              "state_code": "06"
+            },
+            {
+              "state_code": "11"
+            },
+            {
+              "state_code": "17"
+            },
+            {
+              "state_code": "19"
+            },
+            {
+              "state_code": "26"
+            },
+            {
+              "state_code": "30"
+            },
+            {
+              "state_code": "46"
+            },
+            {
+              "state_code": "47"
+            },
+            {
+              "state_code": "50"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

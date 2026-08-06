@@ -71,7 +71,7 @@ Mailwoman is a postal-address parser shipped as the unscoped entry package `mail
 
 Source files live at each workspace's root, with exactly two exceptions: **`corpus/` and `docs/` nest under `src/`** (which is why the root vitest config maps `@mailwoman/corpus/*` to `corpus/src/*`).
 
-Beyond the 53 workspaces the repo root holds workspace config, `scripts/`, and six directories that are **not** workspaces — do not go looking for them in the table:
+Beyond the 53 workspaces the repo root holds workspace config, `scripts/`, and seven directories that are **not** workspaces — do not go looking for them in the table:
 
 - `apps/web-demo/` — a standalone Python + single-page-HTML parser demo (`server.py`, no `package.json`), served behind the playpen nginx
 - `corpus-python/` — the Python training code, including the Modal launcher
@@ -79,6 +79,7 @@ Beyond the 53 workspaces the repo root holds workspace config, `scripts/`, and s
 - `data/` — checked-in reference inputs (e.g. `data/gazetteer/anchor-lexicon-v1.json`, the copy the eval gate runs against)
 - `evals/` — the per-model score ledger (`evals/scores-by-version.json`)
 - `docker/` — the private `mailwoman-docker` dependency manifest for the ghcr image. It HAS a `package.json`, which makes it look like a workspace; it is not in the `workspaces` array, and it installs the PUBLISHED `@mailwoman/*` packages rather than the local ones
+- `pelias-rig/` — the version-controlled half of the local Pelias benchmark rig: the hash-pinned 420-row panel, its deterministic builder, and the digest-pinned compose project. Everything the rig actually RUNS on (PBFs, polyline cuts, the ES index, the upstream clones, the fetch drivers) lives outside the repo at `$MAILWOMAN_DATA_ROOT/pelias-rig/`. See `pelias-rig/README.md`
 
 ## Where to read next
 
