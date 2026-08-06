@@ -196,10 +196,11 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 			placetype: "street_affix",
 			name: canonical,
 			parentChain: [],
-			// Fixed importance: street affixes are structurally unambiguous (Avenue is almost never
-			// anything but street-typing). The morphology prior caps bias separately; this value
-			// just feeds the cap formula `importance * cap`.
-			importance: 1,
+			// Fixed referential score: street affixes are structurally unambiguous (Avenue is almost
+			// never anything but street-typing). The morphology prior caps bias separately; this value
+			// just feeds the cap formula `referential * cap`. No encyclopedic field — a street affix is
+			// not a place and has no article; absence here is the correct statement.
+			referential: 1,
 			lat: 0,
 			lon: 0,
 		}

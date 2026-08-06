@@ -27,7 +27,7 @@ function buildSyntheticFST(): FSTMatcher {
 					placetype: "locality",
 					name: "New York City",
 					parentChain: [85_688_543, 85_633_793],
-					importance: 0.95,
+					referential: 0.95,
 					lat: 40.7128,
 					lon: -74.006,
 				},
@@ -36,7 +36,7 @@ function buildSyntheticFST(): FSTMatcher {
 					placetype: "region",
 					name: "New York",
 					parentChain: [85_633_793],
-					importance: 0.85,
+					referential: 0.85,
 					lat: 42.1657,
 					lon: -74.9481,
 				},
@@ -50,7 +50,7 @@ function buildSyntheticFST(): FSTMatcher {
 					placetype: "locality",
 					name: "Portland",
 					parentChain: [85_688_513, 85_633_793],
-					importance: 0.72,
+					referential: 0.72,
 					lat: 45.5152,
 					lon: -122.6784,
 				},
@@ -94,7 +94,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 		expect(restNyc.wofID).toBe(origNyc.wofID)
 		expect(restNyc.placetype).toBe(origNyc.placetype)
 		expect(restNyc.name).toBe(origNyc.name)
-		expect(restNyc.importance).toBeCloseTo(origNyc.importance, 5)
+		expect(restNyc.referential).toBeCloseTo(origNyc.referential, 5)
 		expect(restNyc.parentChain).toEqual(origNyc.parentChain)
 		expect(restNyc.lat).toBeCloseTo(origNyc.lat, 3)
 		expect(restNyc.lon).toBeCloseTo(origNyc.lon, 3)
@@ -222,7 +222,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 						placetype: "locality",
 						name: "Pierre",
 						parentChain: [],
-						importance: 0.4,
+						referential: 0.4,
 						lat: 44.36,
 						lon: -100.35,
 						crossCountryBranches: 7,
@@ -268,7 +268,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 			placetype: "locality",
 			name: "Pierre Part",
 			parentChain: [],
-			importance: 0.1,
+			referential: 0.1,
 			lat: 29.96,
 			lon: -91.2,
 		})

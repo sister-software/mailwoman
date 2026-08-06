@@ -25,7 +25,7 @@ function mockAffixFST(affixSurfaces: string[]): FSTMatcherLike {
 	for (const surface of affixSurfaces) {
 		states.set(surface, {
 			id: nextID++,
-			entries: [{ wofID: 1_900_000_000 + nextID, placetype: "street_affix", importance: 1 }],
+			entries: [{ wofID: 1_900_000_000 + nextID, placetype: "street_affix", referential: 1 }],
 		})
 	}
 

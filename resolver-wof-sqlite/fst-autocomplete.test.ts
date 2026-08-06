@@ -57,7 +57,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 		const localities = result.suggestions.filter((s) => s.placetype === "locality")
 
 		if (localities.length >= 2) {
-			expect(localities[0]!.importance).toBeGreaterThanOrEqual(localities[1]!.importance)
+			expect(localities[0]!.referential).toBeGreaterThanOrEqual(localities[1]!.referential)
 		}
 	})
 
@@ -86,11 +86,11 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 //        --san--> [francisco -> San Francisco]
 //        --chicago--> Chicago
 describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
-	const place = (wofID: number, name: string, placetype: PlacetypeID, importance: number): PlaceEntry => ({
+	const place = (wofID: number, name: string, placetype: PlacetypeID, referential: number): PlaceEntry => ({
 		wofID,
 		name,
 		placetype,
-		importance,
+		referential,
 		parentChain: [],
 		lat: 0,
 		lon: 0,

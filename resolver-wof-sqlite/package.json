@@ -86,6 +86,11 @@
 			"default": "./out/fst-deserialize-web.js",
 			"types": "./out/fst-deserialize-web.d.ts"
 		},
+		"./place-importance-schema": {
+			"node": "./place-importance-schema.ts",
+			"default": "./out/place-importance-schema.js",
+			"types": "./out/place-importance-schema.d.ts"
+		},
 		"./unified-schema": {
 			"node": "./unified-schema.ts",
 			"default": "./out/unified-schema.js",

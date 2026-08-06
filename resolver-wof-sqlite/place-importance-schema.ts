@@ -1,0 +1,339 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1) — typed schema, table builder, and the two derivations, in
+ *   one module so the read contract and the DDL cannot drift.
+ *
+ *   THE POLICY THIS ENCODES, ratified 2026-08-06: **the importance of a knowledge-base article is not
+ *   the probability that this is the place the user means.** The geocoder ranks by REFERENTIAL
+ *   likelihood; encyclopedic importance is carried as data and is never the ranking key. So the one
+ *   `place_importance.importance` column — which was a Wikipedia score where the concordance join
+ *   landed and a population-derived pseudo-score everywhere else — becomes two named columns that can
+ *   never be confused for one another:
+ *
+ *   - {@link PlaceImportanceTable.referential} — population-anchored, ALWAYS derivable, the ranking
+ *     backbone. {@link referentialFromPopulation} is the normalization the FST builder's population
+ *     fallback has always used; naming it here is the whole change.
+ *   - {@link PlaceImportanceTable.encyclopedic} — the fan-out-guarded Wikipedia join
+ *     (`importance-fanout.ts`, #1497). NULLABLE, and null means ABSENT, never "an importance of
+ *     zero": ~1.5 M of the 1.54 M rows in the 2026-08-05 build have no Wikipedia article at all, and
+ *     a consumer that reads a 0 there would be reading a fact nobody recorded.
+ *
+ *   WHY SAINT-DENIS IS THE TEST. The Seine-Saint-Denis suburb (pop 96,128) carries encyclopedic
+ *   0.1173; the Aude hamlet (pop 418) carries 0.5683 — the encyclopedic signal ranks the hamlet 4.8x
+ *   ABOVE the place every user means. Referentially the suburb wins by 230x on population. One score
+ *   cannot serve both readers, which is why there are two.
+ *
+ *   THE LEGACY COLUMN STAYS, AND IS DERIVED. `importance` remains as `COALESCE(encyclopedic,
+ *   referential)` — byte-for-byte today's semantics — so every reader built against the old table
+ *   keeps working while the split rolls out. It is the CONFLATION, and nothing new should read it.
+ */
+
+import type { DatabaseSync } from "node:sqlite"
+
+import { referentialFromPopulation } from "@mailwoman/core/resolver"
+import type { Kysely } from "kysely"
+
+//#region Schema
+
+/**
+ * One row of `place_importance`. Keyed by WOF place id.
+ */
+export interface PlaceImportanceTable {
+	id: number
+	/**
+	 * Population-anchored referential likelihood in [0, 1] — see {@link referentialFromPopulation}. NOT NULL because it is
+	 * always derivable: a place with no population row scores 0, which here genuinely means "no population evidence", the
+	 * same state the ranking has always treated as "no boost, never a penalty".
+	 */
+	referential: number
+	/**
+	 * Fan-out-guarded Wikipedia importance in [0, 1], or NULL when this place has no surviving concordance. NULL is
+	 * ABSENCE — never coalesce it to 0 in a consumer, and never rank on it at all.
+	 */
+	encyclopedic: number | null
+	/**
+	 * DEPRECATED — the pre-split conflation, written as `COALESCE(encyclopedic, referential)` so pre-split readers keep
+	 * working unchanged. New code reads {@link PlaceImportanceTable.referential} (to rank) or
+	 * {@link PlaceImportanceTable.encyclopedic} (to display).
+	 */
+	importance: number
+}
+
+/**
+ * The `place_importance` slice of a WOF admin database, for `new DatabaseClient<PlaceImportanceDatabase>(...)`.
+ */
+export interface PlaceImportanceDatabase {
+	place_importance: PlaceImportanceTable
+}
+
+/**
+ * The columns in declaration order. The builder's INSERT derives its column list from this, so a field added to
+ * {@link PlaceImportanceTable} without a matching DDL column is a compile error at the insert site.
+ */
+export const PLACE_IMPORTANCE_COLUMNS = [
+	"id",
+	"referential",
+	"encyclopedic",
+	"importance",
+] as const satisfies readonly (keyof PlaceImportanceTable)[]
+
+/**
+ * Create `place_importance` at the split schema. Drops any existing table first — this is a rebuild-in-place step of
+ * `mailwoman gazetteer importance`, never a migration.
+ */
+export async function createPlaceImportanceTable(db: Kysely<PlaceImportanceDatabase>): Promise<void> {
+	await db.schema.dropTable("place_importance").ifExists().execute()
+
+	await db.schema
+		.createTable("place_importance")
+		.addColumn("id", "integer", (c) => c.primaryKey())
+		.addColumn("referential", "real", (c) => c.notNull())
+		.addColumn("encyclopedic", "real")
+		.addColumn("importance", "real", (c) => c.notNull())
+		.execute()
+}
+
+//#endregion
+
+//#region The referential derivation
+
+/**
+ * Re-exported from `@mailwoman/core/resolver`, which is where the derivation lives so that `@mailwoman/resolver`
+ * (backend-agnostic — it cannot import this package) reads the same number. Re-exported HERE so the schema module stays
+ * the one-stop read for the table: the column and the function that fills it are one hop apart.
+ */
+export {
+	compareReferential,
+	REFERENTIAL_LOG2_SCALE,
+	REFERENTIAL_POPULATION_DIVISOR,
+	REFERENTIAL_SATURATION_POPULATION,
+	referentialFromPopulation,
+} from "@mailwoman/core/resolver"
+
+//#endregion
+
+//#region Reading a database that may or may not carry the split
+
+/**
+ * Where a reader's two scores came from. Recorded into the FST stamp so an artifact says, in its own provenance,
+ * whether its encyclopedic channel is real, reconstructed, or absent.
+ */
+export const IMPORTANCE_SPLIT_SOURCES = {
+	/**
+	 * `place_importance` carries `referential` + `encyclopedic` — the post-split build.
+	 */
+	splitColumns: "split-columns",
+	/**
+	 * `place_importance` carries only the conflated `importance`; the split was RECONSTRUCTED against `place_population`
+	 * (see {@link splitLegacyImportance}).
+	 */
+	legacyReconstructed: "legacy-reconstructed",
+	/**
+	 * No `place_importance` at all — referential from `place_population`, encyclopedic absent for every place.
+	 */
+	populationOnly: "population-only",
+	/**
+	 * Neither table. Every score is 0, and 0 here means the database carries no salience evidence whatsoever.
+	 */
+	none: "none",
+} as const
+
+export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof typeof IMPORTANCE_SPLIT_SOURCES]
+
+/**
+ * The `SELECT` term and `LEFT JOIN` a name lookup needs in order to CARRY `encyclopedic` onto its results, probed
+ * against `schemaName`'s `place_importance`.
+ *
+ * THE PROBE IS A COLUMN, NOT A TABLE, and that is the whole reason this lives here rather than beside a caller's other
+ * table probes. The pre-split table exists and holds a single conflated `importance` column whose value is a Wikipedia
+ * score on some rows and a population proxy on others, with nothing in the row to say which — reading that as
+ * encyclopedic would surface the exact confusion ROAD_TO_V9 §2 exists to end.
+ *
+ * There is deliberately no ORDER BY counterpart, and there should never be one: §2's policy is that this score is
+ * carried and never ranked on. Without the column the select degrades to a literal `NULL` and the join is the empty
+ * string, so a pre-split shard's query plan is byte-identical to what it was before the split. No shipped gazetteer
+ * carries the column yet, so today that degraded form is the only one anything builds.
+ *
+ * Call it ONCE per shard and cache the result — it runs a `PRAGMA`, and the callers are per-keystroke hot.
+ */
+export function encyclopedicClauses(db: DatabaseSync, schemaName: string): { select: string; join: string } {
+	let present: boolean
+
+	try {
+		const rows = db.prepare(`PRAGMA ${schemaName}.table_info(place_importance)`).all() as unknown as Array<{
+			name: string
+		}>
+
+		present = rows.some((r) => r.name === "encyclopedic")
+	} catch {
+		present = false
+	}
+
+	if (!present) return { select: "NULL AS encyclopedic", join: "" }
+
+	return {
+		select: "place_importance.encyclopedic AS encyclopedic",
+		join: `LEFT JOIN ${schemaName}.place_importance ON place_importance.id = spr.id`,
+	}
+}
+
+/**
+ * Split one row of a LEGACY (pre-split) `place_importance` table back into its two components.
+ *
+ * WHY THIS IS RECOVERABLE AT ALL. The legacy builder ran in two passes: Wikipedia scores first, then `INSERT OR IGNORE`
+ * of `min(1, log2(1+pop/1000)/14)` for every place with a population that Wikipedia had missed. So a legacy value is a
+ * fallback row IFF it equals {@link referentialFromPopulation} of that place's population to the bit — the two passes
+ * wrote different arithmetic, and an IEEE-754 double from Nominatim's four-decimal TSV coinciding exactly with the log2
+ * curve is a measure-zero event.
+ *
+ * MEASURED, not reasoned (2026-08-06, `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`): 1,543,753 rows
+ * split 1,377,115 fallback / 166,638 encyclopedic, and the arithmetic closes on itself — 1,377,115 + 142,403
+ * (encyclopedic rows that ALSO have a population) = 1,519,518, which is exactly the count of `place_population` rows
+ * with `population > 0`, i.e. every row the fallback pass could have written. The remaining 24,235 encyclopedic rows
+ * have no population row at all. No row was misattributed in either direction, so the collision this rule could in
+ * principle suffer did not occur once across 1.5 M rows.
+ *
+ * Referential is NOT read out of the legacy column under any branch — it is always re-derived from population, because
+ * a legacy Wikipedia row overwrote whatever population would have said.
+ */
+export function splitLegacyImportance(
+	legacy: number | undefined,
+	population: number | null | undefined
+): { referential: number; encyclopedic?: number } {
+	const referential = referentialFromPopulation(population)
+
+	if (legacy === undefined) return { referential }
+
+	// Bit-equality, not a tolerance: a tolerance would swallow genuine low-importance Wikipedia rows
+	// that happen to land near a small place's population score.
+	if (legacy === referential) return { referential }
+
+	return { referential, encyclopedic: legacy }
+}
+
+/**
+ * The two score maps a builder needs, plus the provenance of how they were obtained.
+ */
+export interface ImportanceSplit {
+	/**
+	 * WOF id → referential likelihood. Sparse: absent means 0 (no population evidence).
+	 */
+	referential: Map<number, number>
+	/**
+	 * WOF id → encyclopedic importance. Sparse, and ABSENCE IS ABSENCE — never fill a 0 in.
+	 */
+	encyclopedic: Map<number, number>
+	source: ImportanceSplitSource
+	/**
+	 * Rows the legacy reconstruction attributed to the population fallback (only meaningful under
+	 * {@link IMPORTANCE_SPLIT_SOURCES.legacyReconstructed}).
+	 */
+	legacyFallbackRows: number
+}
+
+/**
+ * Does `table` exist in `db`, and if so which of `columns` does it have?
+ */
+function tableColumns(db: DatabaseSync, table: string): Set<string> {
+	try {
+		const rows = db.prepare(`PRAGMA table_info(${table})`).all() as unknown as Array<{ name: string }>
+
+		return new Set(rows.map((r) => r.name))
+	} catch {
+		return new Set()
+	}
+}
+
+/**
+ * Load both scores from a WOF admin database, whatever schema generation it is at.
+ *
+ * Handles all four states in {@link IMPORTANCE_SPLIT_SOURCES} so callers never branch on schema themselves — the FST
+ * builder in particular must read the shipped population-only databases, the read-only 2026-08-05 staging database
+ * (legacy conflated column), and post-split builds with one code path.
+ */
+export function loadImportanceSplit(db: DatabaseSync): ImportanceSplit {
+	const referential = new Map<number, number>()
+	const encyclopedic = new Map<number, number>()
+	const population = new Map<number, number>()
+
+	const populationColumns = tableColumns(db, "place_population")
+
+	if (populationColumns.has("population")) {
+		const rows = db.prepare("SELECT id, population FROM place_population").all() as unknown as Array<{
+			id: number
+			population: number
+		}>
+
+		for (const row of rows) {
+			population.set(row.id, row.population)
+			const score = referentialFromPopulation(row.population)
+
+			if (score > 0) {
+				referential.set(row.id, score)
+			}
+		}
+	}
+
+	const importanceColumns = tableColumns(db, "place_importance")
+
+	if (importanceColumns.has("referential")) {
+		// Post-split build: the columns ARE the contract. Referential is read verbatim rather than
+		// re-derived, so a build that scored referential differently stays visible instead of being
+		// silently overwritten by this reader's own formula.
+		const rows = db.prepare("SELECT id, referential, encyclopedic FROM place_importance").all() as unknown as Array<{
+			id: number
+			referential: number
+			encyclopedic: number | null
+		}>
+
+		for (const row of rows) {
+			if (row.referential > 0) {
+				referential.set(row.id, row.referential)
+			}
+
+			if (row.encyclopedic !== null) {
+				encyclopedic.set(row.id, row.encyclopedic)
+			}
+		}
+
+		return { referential, encyclopedic, source: IMPORTANCE_SPLIT_SOURCES.splitColumns, legacyFallbackRows: 0 }
+	}
+
+	if (importanceColumns.has("importance")) {
+		const rows = db.prepare("SELECT id, importance FROM place_importance").all() as unknown as Array<{
+			id: number
+			importance: number
+		}>
+
+		let legacyFallbackRows = 0
+
+		for (const row of rows) {
+			const split = splitLegacyImportance(row.importance, population.get(row.id))
+
+			if (split.encyclopedic === undefined) {
+				legacyFallbackRows++
+			} else {
+				encyclopedic.set(row.id, split.encyclopedic)
+			}
+		}
+
+		return {
+			referential,
+			encyclopedic,
+			source: IMPORTANCE_SPLIT_SOURCES.legacyReconstructed,
+			legacyFallbackRows,
+		}
+	}
+
+	return {
+		referential,
+		encyclopedic,
+		source: referential.size ? IMPORTANCE_SPLIT_SOURCES.populationOnly : IMPORTANCE_SPLIT_SOURCES.none,
+		legacyFallbackRows: 0,
+	}
+}
+
+//#endregion

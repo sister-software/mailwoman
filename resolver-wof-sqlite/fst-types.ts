@@ -13,7 +13,25 @@ export interface PlaceEntry {
 	placetype: PlacetypeID
 	name: string
 	parentChain: number[]
-	importance: number
+	/**
+	 * REFERENTIAL likelihood in [0, 1] — population-anchored (`referentialFromPopulation`), and the ONLY score the
+	 * decoder bias is allowed to read (ROAD_TO_V9 §2, ratified 2026-08-06).
+	 *
+	 * This field was called `importance` through format v4, where it carried whichever score the source database happened
+	 * to hold: the population proxy on a database with no `place_importance` table (which is every shipped
+	 * `fst-per-locale` binary), the Wikipedia score where the concordance join landed otherwise. The rename is the point
+	 * — a v4 artifact's value is a CONFLATION that cannot be told apart after the fact, which is why `fst-freshness.ts`
+	 * reports anything below {@link FST_FORMAT_VERSION} as format-stale rather than reading it as referential.
+	 */
+	referential: number
+	/**
+	 * Encyclopedic (Wikipedia) importance in [0, 1], fan-out-guarded per #1497. Carried for consumers that want to
+	 * DISPLAY salience; never read by the decoder or by any ranking.
+	 *
+	 * `undefined` = this place has no encyclopedic signal, or the artifact predates format 5. NEVER conflate either with
+	 * 0 — the meaning-of-zero rule; roughly 89% of the 2026-08-05 gazetteer's rows have no Wikipedia article at all.
+	 */
+	encyclopedic?: number
 	lat: number
 	lon: number
 	/**
@@ -64,7 +82,23 @@ export interface FSTProvenance {
 	placeCount: number
 	edgeCount: number
 	nameInsertions: number
+	/**
+	 * How many places carried a non-zero REFERENTIAL score at build time. Named `importanceMatches` for stamp
+	 * compatibility with every artifact written before the two-score split — renaming the JSON key would make every
+	 * existing stamp unreadable, and the number means the same thing it always did on a population-built artifact.
+	 */
 	importanceMatches: number
+	/**
+	 * How many places carried an ENCYCLOPEDIC score at build time. `undefined` on a pre-split build — which is not the
+	 * same as 0 (a v5 build against a population-only database), so the freshness report says the two in different
+	 * words.
+	 */
+	encyclopedicMatches?: number
+	/**
+	 * How the builder obtained its two scores — an {@link ImportanceSplitSource}. Recorded so an artifact states, in its
+	 * own provenance, whether its encyclopedic channel is real, reconstructed from a legacy conflated column, or absent.
+	 */
+	importanceSource?: string
 	sourceDB?: string
 	/**
 	 * MD5 of the source database's bytes at build time — the artifact's link to the gazetteer it is a projection of.

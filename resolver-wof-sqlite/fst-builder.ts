@@ -17,6 +17,7 @@ import { readWOFSourceIdentity } from "./fst-freshness.ts"
 import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
 import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
+import { loadImportanceSplit } from "./place-importance-schema.ts"
 
 const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",
@@ -50,11 +51,6 @@ interface NameRow {
 	name: string
 	language: string
 	privateuse: string
-}
-
-interface PopulationRow {
-	id: number
-	population: number
 }
 
 export function buildFSTFromWOF(opts: BuildFSTOpts): {
@@ -171,35 +167,22 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		return chain
 	}
 
-	// Phase 3: Load importance data (Wikipedia-based, falls back to population-scaled).
-	// See docs/articles/concepts/importance-vs-population.md for the two-signal contract.
-	progress("importance", "Loading importance data")
-	const importanceMap = new Map<number, number>()
+	// Phase 3: Load BOTH scores (ROAD_TO_V9 §2 R1, the two-score split).
+	//
+	// Referential is ALWAYS population-anchored and never read out of a legacy `place_importance`
+	// column, because a legacy row that got a Wikipedia score overwrote whatever population would have
+	// said and the two are indistinguishable afterwards. Encyclopedic rides along for consumers and is
+	// never handed to the decoder. `loadImportanceSplit` handles all four schema generations; the
+	// source it reports is stamped into provenance so an artifact says which one it read.
+	progress("importance", "Loading referential + encyclopedic scores")
+	const split = loadImportanceSplit(db)
 
-	try {
-		const impStmt = db.prepare("SELECT id, importance FROM place_importance")
-		const impRows = impStmt.all() as unknown as Array<{ id: number; importance: number }>
-
-		for (const row of impRows) {
-			importanceMap.set(row.id, row.importance)
-		}
-
-		progress("importance", `Loaded ${importanceMap.size} importance scores`)
-	} catch {
-		progress("importance", "No place_importance table — falling back to population")
-
-		try {
-			const popStmt = db.prepare("SELECT id, population FROM place_population")
-			const popRows = popStmt.all() as unknown as PopulationRow[]
-
-			for (const row of popRows) {
-				const normalized = row.population > 0 ? Math.min(1, Math.log2(1 + row.population / 1000) / 14) : 0
-				importanceMap.set(row.id, normalized)
-			}
-		} catch {
-			progress("importance", "No place_population either — using 0 for all")
-		}
-	}
+	progress(
+		"importance",
+		`${split.referential.size} referential, ${split.encyclopedic.size} encyclopedic (source: ${split.source}` +
+			(split.legacyFallbackRows ? `, ${split.legacyFallbackRows} legacy rows attributed to the population pass` : "") +
+			")"
+	)
 
 	// Phase 4: Load names for matching places.
 	progress("names", "Loading name variants")
@@ -304,12 +287,17 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	for (const row of sprRows) {
 		const parentChain = resolveParentChain(row.id)
 
+		const encyclopedic = split.encyclopedic.get(row.id)
+
 		const entry: PlaceEntry = {
 			wofID: row.id,
 			placetype: row.placetype as PlacetypeID,
 			name: row.name,
 			parentChain,
-			importance: importanceMap.get(row.id) ?? 0,
+			referential: split.referential.get(row.id) ?? 0,
+			// Spread rather than assigned: a place with no Wikipedia article must carry NO field, not a
+			// zero. The serializer's per-place presence bit reads `!== undefined`.
+			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,
 			lon: row.longitude,
 		}
@@ -361,7 +349,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		placeCount: sprRows.length,
 		edgeCount,
 		nameInsertions: insertCount,
-		importanceMatches: importanceMap.size,
+		importanceMatches: split.referential.size,
+		encyclopedicMatches: split.encyclopedic.size,
+		importanceSource: split.source,
 		sourceDB: opts.dbPath,
 		sourceDBMD5: source.md5,
 		sourceDBBytes: source.bytes,

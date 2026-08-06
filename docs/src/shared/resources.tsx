@@ -26,7 +26,20 @@ export interface FSTMatcherLike {
 		prev: { stateID: number; accepted: boolean; depth: number },
 		token: string
 	): { stateID: number; accepted: boolean; depth: number } | null
-	accepting(stateID: number): Array<{ wofID: number; placetype: string; importance: number }>
+	accepting(stateID: number): Array<{
+		wofID: number
+		placetype: string
+		/**
+		 * The REFERENTIAL likelihood (population-anchored) the decoder bias reads — see ROAD_TO_V9 §2. Was `importance`
+		 * through FST format v4, where the same float could be either score with nothing to say which.
+		 */
+		referential: number
+		/**
+		 * Encyclopedic (Wikipedia) importance, when the artifact is v5+ and this place has an article. Displayed, never
+		 * ranked on; `undefined` is absence, not 0.
+		 */
+		encyclopedic?: number
+	}>
 	readonly stateCount: number
 	readonly placeCount: number
 }

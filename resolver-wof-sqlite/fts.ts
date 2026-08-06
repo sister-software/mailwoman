@@ -124,6 +124,18 @@ export const PLACE_BBOX_TABLE = "place_bbox"
 export const PLACE_POPULATION_TABLE = "place_population"
 
 /**
+ * Name of the auxiliary table holding the two salience scores per place — `referential` (population-anchored, the
+ * ranking backbone) and `encyclopedic` (the Wikipedia join, NULL when there is no article). Built by `mailwoman
+ * gazetteer importance`; schema and derivations in `place-importance-schema.ts`.
+ *
+ * The lookup reads ONLY `encyclopedic` from it, and only to CARRY the value onto the result — referential is derived
+ * from the population already joined, and no ORDER BY anywhere touches this table (ROAD_TO_V9 §2). Sparse and
+ * schema-versioned: a pre-split gazetteer has this table with a single conflated `importance` column instead, which the
+ * lookup's column probe deliberately refuses to read.
+ */
+export const PLACE_IMPORTANCE_TABLE = "place_importance"
+
+/**
  * Counters for a single `buildPlaceSearchFTS` run. Exposed so callers (CLI, lazy-build) can render progress to the
  * user.
  */

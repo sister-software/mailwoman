@@ -70,7 +70,15 @@ export interface FSTMatchLike {
 export interface FSTPlaceEntryLike {
 	wofID: number
 	placetype: string
-	importance: number
+	/**
+	 * REFERENTIAL likelihood in [0, 1] — population-anchored. The ONLY score the decoder bias reads (ROAD_TO_V9 §2,
+	 * ratified 2026-08-06: "the importance of a knowledge-base article is not the probability that this is the place the
+	 * user means").
+	 *
+	 * The structural type deliberately does NOT name `encyclopedic`. The FST entries the matcher hands over carry it, and
+	 * a bias that could see it would eventually use it — so the seam is where the policy is enforced, not a comment.
+	 */
+	referential: number
 }
 
 export interface FSTMatcherLike {
@@ -492,7 +500,9 @@ function applyBias(
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 
 		if (!bioTag) continue
-		const impBias = entry.importance * biasScale * maxBias * posScale * contextScale
+		// The referential bias. Named `impBias` since #1142 and left alone: renaming it would churn every
+		// tuning comment that cites it, and the field it reads is now unambiguous.
+		const impBias = entry.referential * biasScale * maxBias * posScale * contextScale
 		const existing = seenTags.get(bioTag) ?? 0
 
 		if (impBias > existing) {

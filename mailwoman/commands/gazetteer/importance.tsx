@@ -3,11 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer importance` — build the `place_importance` table in a WOF SQLite database
- *   from Nominatim's Wikipedia importance data. Downloads `wikimedia-importance.csv.gz`, joins
- *   through the `concordances` table, and writes importance scores for each WOF place with a
- *   Wikidata mapping, then layers a population-derived fallback for places Wikipedia doesn't
- *   cover.
+ *   `mailwoman gazetteer importance` — build the `place_importance` table in a WOF SQLite database.
+ *   Downloads Nominatim's `wikimedia-importance.csv.gz`, joins it through the `concordances` table,
+ *   and writes TWO scores per place.
+ *
+ *   THE TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1, ratified 2026-08-06). This command used to write one
+ *   column, filled by Wikipedia where the join landed and by a population-derived pseudo-score
+ *   everywhere else — a conflation nothing downstream could take apart, which is how encyclopedic
+ *   importance became the de-facto ranking signal for a geocoder whose users are asking "which place
+ *   do I mean". It now writes `referential` (population-anchored, the ranking backbone) and
+ *   `encyclopedic` (the Wikipedia join, NULL when there is no article) in their own columns, plus
+ *   the legacy `importance` column as `COALESCE(encyclopedic, referential)` so pre-split readers are
+ *   byte-unaffected. Schema, DDL and the referential derivation live in
+ *   `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing either score.
  *
  *   The table is added to the `--db` IN PLACE (the original `scripts/build-importance.ts` behavior):
  *   the WOF DB must already carry `concordances` (and, for the fallback, `place_population`) — run
@@ -32,6 +40,11 @@ import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import {
+	createPlaceImportanceTable,
+	type PlaceImportanceDatabase,
+	referentialFromPopulation,
+} from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
 import { TextSpliterator } from "spliterator"
 import zod from "zod"
@@ -114,7 +127,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		const db = new DatabaseSync(dbPath, { open: true })
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
-		const kdb = new DatabaseClient({ database: db })
+		const kdb = new DatabaseClient<PlaceImportanceDatabase>({ database: db })
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
@@ -228,24 +241,22 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		console.error(`  Parsed ${totalRows.toLocaleString()} rows, ${importanceMap.size} matched Wikidata IDs`)
 
-		// Step 4: Build place_importance table
-		console.error("Building place_importance table...")
+		// Step 4: Build place_importance at the TWO-SCORE SPLIT schema (ROAD_TO_V9 §2 R1).
+		//
+		// Before the split this ran as two passes over one column: Wikipedia scores, then an
+		// `INSERT OR IGNORE` population fallback for whatever Wikipedia missed. That made the column
+		// a conflation nothing downstream could take apart — which is how encyclopedic importance
+		// became the de-facto ranking signal. Now each place gets ONE row carrying both scores in
+		// their own columns, and the legacy `importance` column is written as
+		// `COALESCE(encyclopedic, referential)` so pre-split readers see exactly what they saw before.
+		console.error("Building place_importance table (referential + encyclopedic)...")
 
-		await kdb.schema.dropTable("place_importance").ifExists().execute()
-
-		await kdb.schema
-			.createTable("place_importance")
-			.addColumn("id", "integer", (c) => c.primaryKey())
-			.addColumn("importance", "real", (c) => c.notNull())
-			.execute()
-
-		const insertStmt = db.prepare("INSERT INTO place_importance (id, importance) VALUES (?, ?)")
-		let importanceCount = 0
+		await createPlaceImportanceTable(kdb)
 
 		// A single WOF id can concord to MULTIPLE wikidata ids (the current global DB's concordances carry
 		// such multiplicities; a naive per-wikidata insert double-inserts the wof id and violates the `id`
 		// primary key). Collapse to the MAX importance per wof id first, then insert once each.
-		const wofImportance = new Map<number, number>()
+		const wofEncyclopedic = new Map<number, number>()
 
 		for (const [wikidataID, importance] of importanceMap) {
 			const wofIDs = concordances.get(wikidataID)
@@ -253,49 +264,63 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			if (!wofIDs) continue
 
 			for (const wofID of wofIDs) {
-				const existing = wofImportance.get(wofID) ?? 0
+				const existing = wofEncyclopedic.get(wofID) ?? 0
 
 				if (importance > existing) {
-					wofImportance.set(wofID, importance)
+					wofEncyclopedic.set(wofID, importance)
 				}
 			}
 		}
+
+		// Referential is population-anchored and independent of the Wikipedia join — every place with a
+		// population carries one whether or not it has an article.
+		const wofReferential = new Map<number, number>()
+
+		try {
+			const popRows = db.prepare("SELECT id, population FROM place_population").all() as unknown as Array<{
+				id: number
+				population: number
+			}>
+
+			for (const row of popRows) {
+				const score = referentialFromPopulation(row.population)
+
+				if (score > 0) {
+					wofReferential.set(row.id, score)
+				}
+			}
+		} catch {
+			console.error("  No place_population table — every referential score will be 0")
+		}
+
+		const insertStmt = db.prepare(
+			"INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)"
+		)
+
+		let encyclopedicCount = 0
+		let referentialOnlyCount = 0
+		// One row per place in the UNION of the two signals. A place absent from both is absent from
+		// the table entirely — the pre-split behavior, and the correct one: a row of zeros would assert
+		// that we measured no salience rather than that we measured nothing.
+		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
 
 		db.exec("BEGIN TRANSACTION")
 
-		for (const [wofID, importance] of wofImportance) {
-			insertStmt.run(wofID, importance)
+		for (const wofID of allIDs) {
+			const referential = wofReferential.get(wofID) ?? 0
+			const encyclopedic = wofEncyclopedic.get(wofID)
 
-			importanceCount++
+			if (encyclopedic === undefined) {
+				referentialOnlyCount++
+			} else {
+				encyclopedicCount++
+			}
+
+			// NULL, never 0, for a place with no article — the meaning-of-zero rule at the column level.
+			insertStmt.run(wofID, referential, encyclopedic ?? null, encyclopedic ?? referential)
 		}
 
 		db.exec("COMMIT")
-
-		// Step 5: Population fallback for places without Wikipedia data
-		console.error("Adding population fallback for unmatched places...")
-
-		let fallbackCount = 0
-
-		try {
-			const popStmt = db.prepare("SELECT id, population FROM place_population")
-			const fallbackInsert = db.prepare("INSERT OR IGNORE INTO place_importance (id, importance) VALUES (?, ?)")
-			const popRows = popStmt.all() as unknown as Array<{ id: number; population: number }>
-			db.exec("BEGIN TRANSACTION")
-
-			for (const row of popRows) {
-				if (row.population > 0) {
-					const pseudoImportance = Math.min(1, Math.log2(1 + row.population / 1000) / 14)
-					// `changes` is 0 when OR IGNORE skipped a place that already has a Wikipedia score.
-					// Counting the ATTEMPT instead over-reported the 2026-08-05 build by 110,637 —
-					// `Total in place_importance: 1656663` against a table holding 1,546,026.
-					fallbackCount += fallbackInsert.run(row.id, pseudoImportance).changes > 0 ? 1 : 0
-				}
-			}
-
-			db.exec("COMMIT")
-		} catch {
-			console.error("  No place_population table — skipping fallback")
-		}
 
 		// The total is READ BACK, never derived by adding the two counters. The counters describe what
 		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
@@ -308,8 +333,8 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 
 		return [
 			`place_importance: ${dbPath}  (${elapsed}s)`,
-			`Wikipedia importance: ${importanceCount} places`,
-			`Population fallback:  ${fallbackCount} places`,
+			`Encyclopedic (Wikipedia): ${encyclopedicCount} places`,
+			`Referential only (no article): ${referentialOnlyCount} places`,
 			`Total in place_importance: ${total} places`,
 			`Fan-out guard: ${fanout.droppedPlaces} places dropped from ${fanout.unresolvableGroups + fanout.populationGroups} ambiguous Wikidata ids (#1497)`,
 		]

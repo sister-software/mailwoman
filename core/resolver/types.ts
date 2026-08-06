@@ -66,6 +66,22 @@ export interface ResolvedPlace {
 	 */
 	prominence?: number
 	/**
+	 * REFERENTIAL likelihood in [0, 1] — population-anchored, the named form of the key namesake ranking has always used
+	 * (ROAD_TO_V9 §2, ratified 2026-08-06: "the importance of a knowledge-base article is not the probability that this
+	 * is the place the user means"). Absent when the backend has no population for the place.
+	 */
+	referential?: number
+	/**
+	 * ENCYCLOPEDIC (Wikipedia) importance in [0, 1] — CARRIED FOR CONSUMERS, NEVER RANKED ON.
+	 *
+	 * Annotation and API surfaces may expose it; no ranking site in `@mailwoman/resolver` or any backend reads it. The
+	 * canonical reason is Saint-Denis: the Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the Aude hamlet (pop
+	 * 418) scores 0.5683, so ranking on this inverts the answer every user means.
+	 *
+	 * Absent means "no article" OR "this gazetteer predates the two-score split" — both absence, neither 0.
+	 */
+	encyclopedic?: number
+	/**
 	 * Set by the backend when this candidate is an EXACT name/alias match for the query (vs a partial token match). The
 	 * postcode-anchor re-rank (#369) uses it as the PRIMARY key so a country posterior can pin the country WITHOUT
 	 * crossing the exact-match tier: "ME" under a confident US posterior stays Maine (US exact) rather than promoting the

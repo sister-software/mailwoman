@@ -71,41 +71,41 @@ function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 const gazetteer = () =>
 	mockFST(
 		new Map([
-			["paris", [{ wofID: 1, placetype: "locality", importance: 0.9 }]],
-			["london", [{ wofID: 2, placetype: "locality", importance: 0.9 }]],
-			["lafayette", [{ wofID: 3, placetype: "locality", importance: 0.4 }]],
-			["washington", [{ wofID: 4, placetype: "locality", importance: 0.8 }]],
+			["paris", [{ wofID: 1, placetype: "locality", referential: 0.9 }]],
+			["london", [{ wofID: 2, placetype: "locality", referential: 0.9 }]],
+			["lafayette", [{ wofID: 3, placetype: "locality", referential: 0.4 }]],
+			["washington", [{ wofID: 4, placetype: "locality", referential: 0.8 }]],
 			["new", []],
-			["new york", [{ wofID: 5, placetype: "locality", importance: 0.95 }]],
-			["75005", [{ wofID: 6, placetype: "postalcode", importance: 0.1 }]],
+			["new york", [{ wofID: 5, placetype: "locality", referential: 0.95 }]],
+			["75005", [{ wofID: 6, placetype: "postalcode", referential: 0.1 }]],
 			// R1 fixtures: a region-only 2-token match whose 1-token suffix is a locality.
 			["north", []],
-			["north dakota", [{ wofID: 7, placetype: "region", importance: 0.8 }]],
-			["dakota", [{ wofID: 8, placetype: "locality", importance: 0.3 }]],
+			["north dakota", [{ wofID: 7, placetype: "region", referential: 0.8 }]],
+			["dakota", [{ wofID: 8, placetype: "locality", referential: 0.3 }]],
 			// R1b fixture: region + zero-importance locality on the SAME span (the real FST's
 			// "north dakota" shape) — the positive-importance region must win.
 			[
 				"new england",
 				[
-					{ wofID: 12, placetype: "region", importance: 0.7 },
-					{ wofID: 13, placetype: "locality", importance: 0 },
+					{ wofID: 12, placetype: "region", referential: 0.7 },
+					{ wofID: 13, placetype: "locality", referential: 0 },
 				],
 			],
 			// R1b fixture: zero-importance-only locality, no region shadow — presence stays fireable.
-			["surlot", [{ wofID: 14, placetype: "locality", importance: 0 }]],
+			["surlot", [{ wofID: 14, placetype: "locality", referential: 0 }]],
 			// R2 fixtures: street names that are themselves place names (after affix+particle).
-			["montfaucon", [{ wofID: 9, placetype: "locality", importance: 0.2 }]],
-			["roquelaure", [{ wofID: 10, placetype: "locality", importance: 0.2 }]],
+			["montfaucon", [{ wofID: 9, placetype: "locality", referential: 0.2 }]],
+			["roquelaure", [{ wofID: 10, placetype: "locality", referential: 0.2 }]],
 		])
 	)
 
 const morphology = () =>
 	mockFST(
 		new Map([
-			["rue", [{ wofID: 900, placetype: "street_affix", importance: 0 }]],
-			["cours", [{ wofID: 901, placetype: "street_affix", importance: 0 }]],
-			["street", [{ wofID: 902, placetype: "street_affix", importance: 0 }]],
-			["ave", [{ wofID: 903, placetype: "street_affix", importance: 0 }]],
+			["rue", [{ wofID: 900, placetype: "street_affix", referential: 0 }]],
+			["cours", [{ wofID: 901, placetype: "street_affix", referential: 0 }]],
+			["street", [{ wofID: 902, placetype: "street_affix", referential: 0 }]],
+			["ave", [{ wofID: 903, placetype: "street_affix", referential: 0 }]],
 		])
 	)
 
