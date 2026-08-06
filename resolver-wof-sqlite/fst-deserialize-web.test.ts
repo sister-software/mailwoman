@@ -41,7 +41,7 @@ interface FixturePlace {
 	wofID: number
 	placetype: (typeof PLACETYPE_ORDER)[number]
 	name: string
-	importance: number // raw float32 (v2 semantics)
+	referential: number // raw float32 (v2 semantics)
 	lat: number
 	lon: number
 	parentChain?: number[]
@@ -189,11 +189,11 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			view.setUint16(pp + 6, 0, true) // pad
 			view.setUint32(pp + 8, intern(place.name), true)
 
-			// importance: float32 for v2; for v1 the field is interpreted as a raw population u32.
+			// referential: float32 for v2; for v1 the field is interpreted as a raw population u32.
 			if (version >= 2) {
-				view.setFloat32(pp + 12, place.importance, true)
+				view.setFloat32(pp + 12, place.referential, true)
 			} else {
-				view.setUint32(pp + 12, place.importance, true)
+				view.setUint32(pp + 12, place.referential, true)
 			}
 
 			view.setFloat32(pp + 16, place.lat, true)
@@ -225,7 +225,7 @@ const PARIS_FIXTURE: FixtureNode[] = [
 				wofID: 101_748_479,
 				placetype: "locality",
 				name: "Paris",
-				importance: 0.95,
+				referential: 0.95,
 				lat: 48.8566,
 				lon: 2.3522,
 				parentChain: [85_633_147, 85_632_343],
@@ -266,7 +266,7 @@ describe("deserializeFSTWeb", () => {
 		expect(place.wofID).toBe(101_748_479)
 		expect(place.placetype).toBe("locality")
 		expect(place.name).toBe("Paris")
-		expect(place.importance).toBeCloseTo(0.95, 5)
+		expect(place.referential).toBeCloseTo(0.95, 5)
 		expect(place.lat).toBeCloseTo(48.8566, 3)
 		expect(place.lon).toBeCloseTo(2.3522, 3)
 	})
@@ -281,7 +281,7 @@ describe("deserializeFSTWeb", () => {
 	test("placetypeIdx decodes via PLACETYPE_ORDER (region, not locality)", () => {
 		const nodes: FixtureNode[] = [
 			{ edges: [["x", 1]], places: [] },
-			{ edges: [], places: [{ wofID: 1, placetype: "region", name: "X", importance: 0.1, lat: 0, lon: 0 }] },
+			{ edges: [], places: [{ wofID: 1, placetype: "region", name: "X", referential: 0.1, lat: 0, lon: 0 }] },
 		]
 
 		const place = deserializeFSTWeb(buildFSTBuffer(nodes)).accepting(1)[0]!
@@ -308,13 +308,13 @@ test("deserializeFSTWeb: v1 derives importance from a population u32 via the log
 	// min(1, log2(1 + pop/1000) / 14). For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
 	const nodes: FixtureNode[] = [
 		{ edges: [["t", 1]], places: [] },
-		{ edges: [], places: [{ wofID: 1, placetype: "locality", name: "T", importance: 1000, lat: 0, lon: 0 }] },
+		{ edges: [], places: [{ wofID: 1, placetype: "locality", name: "T", referential: 1000, lat: 0, lon: 0 }] },
 	]
 
 	const matcher = deserializeFSTWeb(buildFSTBuffer(nodes, { version: 1 }))
 	const place = matcher.accepting(1)[0]!
 
-	expect(place.importance).toBeCloseTo(1 / 14, 4)
+	expect(place.referential).toBeCloseTo(1 / 14, 4)
 })
 
 //#endregion
@@ -337,11 +337,13 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 0 unsupported/i)
 })
 
-test("deserializeFSTWeb: a version above MAX_VERSION (now 4) is rejected", () => {
-	// MAX_VERSION tracks the serializer's VERSION (4): v3/v4 parse, v5+ is rejected.
+test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
+	// MAX_VERSION tracks the serializer's VERSION (5, the two-score split): v3/v4/v5 parse, v6+ is
+	// rejected. This assertion is why the gate stops drifting — it fails the moment the serializer
+	// bumps and the reader's gate does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
-	new DataView(bytes.buffer).setUint16(4, 5, true)
-	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 5 unsupported/i)
+	new DataView(bytes.buffer).setUint16(4, 6, true)
+	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)
 })
 
 //#endregion
@@ -406,7 +408,7 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 					placetype: "locality" as const,
 					name: "Pierre",
 					parentChain: [],
-					importance: 0.4,
+					referential: 0.4,
 					lat: 44.36,
 					lon: -100.35,
 					crossCountryBranches: 7,

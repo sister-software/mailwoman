@@ -39,17 +39,44 @@ const VERSION_WITH_METADATA = 3
 
 const HEADER_SIZE = 32
 const EDGE_ENTRY_SIZE = 8
-const PLACE_ENTRY_SIZE = 56
+
+/**
+ * Format version that split the single `importance` float into `referential` + `encyclopedic` (ROAD_TO_V9 §2 R1),
+ * growing the place entry from 56 to 60 bytes. Mirrors `fst-serialize.ts`'s constant of the same name.
+ */
+const VERSION_TWO_SCORE_SPLIT = 5
+
+/**
+ * Place-entry size in bytes at or above {@link VERSION_TWO_SCORE_SPLIT}.
+ */
+const SPLIT_PLACE_ENTRY_SIZE = 60
+
+/**
+ * Place-entry size in bytes below {@link VERSION_TWO_SCORE_SPLIT}.
+ */
+const LEGACY_PLACE_ENTRY_SIZE = 56
+
+/**
+ * Byte offset of the encyclopedic float inside a v5 place entry — immediately after the 8-slot parent chain.
+ */
+const ENCYCLOPEDIC_OFFSET = 56
+
+/**
+ * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score. Per-place because absence is the
+ * common case; see `fst-serialize.ts`.
+ */
+const PLACE_FLAG_HAS_ENCYCLOPEDIC = 1
 /**
  * "FST\0".
  */
 const MAGIC_BYTES = [0x46, 0x53, 0x54, 0x00]
 /**
- * Must track the serializer's VERSION (fst-serialize.ts, currently 4). The v3 provenance + v4 16-byte-state/u32-count
+ * Must track the serializer's VERSION (fst-serialize.ts, currently 5). The v3 provenance + v4 16-byte-state/u32-count
  * layout logic below already matches the Node deserializer; only this gate was left stale at 2, so the browser FST
- * loader rejected every real (v4) artifact.
+ * loader rejected every real (v4) artifact. It was left stale again at 4 by the v5 two-score split until this line
+ * moved with it — the gate is a SEPARATE number from the layout branches, which is exactly why it keeps drifting.
  */
-const MAX_VERSION = 4
+const MAX_VERSION = 5
 
 const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",
@@ -88,6 +115,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 	}
 
 	const isV2 = version >= 2
+	const isSplit = version >= VERSION_TWO_SCORE_SPLIT
 	// flags bit0 (survey #4, mirrors fst-serialize.ts): place rows carry surface-ambiguity data.
 	const hasAmbiguity = (view.getUint16(6, true) & 1) === 1
 
@@ -120,6 +148,8 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	// --- State table ---
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
+	// v5 grew the place entry by the encyclopedic float; v4-and-below files are read at the old stride.
+	const placeEntrySize = isSplit ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
@@ -149,7 +179,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 		const places: PlaceEntry[] = new Array(placeCountForState)
 
 		for (let pi = 0; pi < placeCountForState; pi++) {
-			const pp = placeTableStart + (placeStart + pi) * PLACE_ENTRY_SIZE
+			const pp = placeTableStart + (placeStart + pi) * placeEntrySize
 			const chainLen = view.getUint8(pp + 5)
 			const parentChain: number[] = []
 
@@ -157,19 +187,25 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 				parentChain.push(view.getUint32(pp + 24 + ci * 4, true))
 			}
 
-			const rawImportance = isV2
+			// v1 stored a raw population u32 here; v2-v4 the conflated `importance` float; v5 the
+			// referential score. See the Node deserializer for why a v1 value is genuinely referential.
+			const referential = isV2
 				? view.getFloat32(pp + 12, true)
 				: Math.min(1, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)
+
+			const hasEncyclopedic =
+				isSplit && (view.getUint8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
 
 			places[pi] = {
 				wofID: view.getUint32(pp, true),
 				placetype: PLACETYPE_ORDER[view.getUint8(pp + 4)] ?? "locality",
 				name: strings[view.getUint32(pp + 8, true)]!,
-				importance: rawImportance,
+				referential,
 				lat: view.getFloat32(pp + 16, true),
 				lon: view.getFloat32(pp + 20, true),
 				parentChain,
 				...(hasAmbiguity ? { crossCountryBranches: view.getUint8(pp + 6) } : {}),
+				...(hasEncyclopedic ? { encyclopedic: view.getFloat32(pp + ENCYCLOPEDIC_OFFSET, true) } : {}),
 			}
 		}
 

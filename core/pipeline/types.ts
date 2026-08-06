@@ -414,7 +414,7 @@ export interface FSTMatcherLike {
 		prev: { stateID: number; depth: number },
 		token: string
 	): { stateID: number; accepted: boolean; depth: number } | null
-	accepting(stateID: number): Array<{ wofID: number; placetype: string; importance: number }>
+	accepting(stateID: number): Array<{ wofID: number; placetype: string; referential: number }>
 }
 
 export interface ClassifierOpts {

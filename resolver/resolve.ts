@@ -18,10 +18,12 @@ import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@ma
 import {
 	type AddressPointLookup,
 	type CoincidentLocality,
+	compareReferential,
 	DEFAULT_PLACETYPE_MAP,
 	type InterpolationLookup,
 	isPlacetypeFallback,
 	type PlacetypeMap,
+	referentialFromPopulation,
 	type ResolvedPlace,
 	type ResolveOpts,
 	type Resolver,
@@ -100,17 +102,27 @@ interface ResolutionState {
 }
 
 /**
- * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). Population is the
- * PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin centroid than a tiny
- * same-name hamlet (the Niigata case from #403). Nearest centroid breaks a population tie; a genuine tie (same
- * population AND distance) ABSTAINS rather than guess.
+ * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). REFERENTIAL
+ * likelihood is the PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin
+ * centroid than a tiny same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential tie; a
+ * genuine tie (same population AND distance) ABSTAINS rather than guess.
+ *
+ * ROAD_TO_V9 §2: `compareReferential` is referential DESC with raw population as its own tiebreak, which is the SAME
+ * ORDER as the plain `b.population - a.population` it replaced — referential is strictly increasing in population below
+ * saturation and constant above it. The abstention check below still reads raw population, deliberately: two megacities
+ * that saturate to the same referential score are not tied, and abstaining there would be a new behavior.
  */
 function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
 	if (!candidates.length) return null
 
 	if (candidates.length === 1) return candidates[0]!
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
-	const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
+
+	const ranked = [...candidates]
+		.map((c) => ({ c, referential: referentialFromPopulation(c.population), population: c.population }))
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+		.sort((a, b) => compareReferential(a, b) || a.c.distanceKm - b.c.distanceKm)
+		.map((x) => x.c)
+
 	const [first, second] = ranked
 
 	if (first!.population === second!.population && first!.distanceKm === second!.distanceKm) return null
@@ -1170,6 +1182,18 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// though it has no `ancestors()` table.
 	if (resolved.country) {
 		node.metadata["resolver_country"] = resolved.country
+	}
+
+	// The two-score split's consumer carry (ROAD_TO_V9 §2). Written ONLY when the backend actually has
+	// a value: an absent encyclopedic score means "no Wikipedia article" or "pre-split gazetteer", and
+	// a `resolver_encyclopedic: 0` on the node would assert a measurement nobody made. Nothing in the
+	// resolve path reads either key back — they exist for annotation / API surfaces downstream.
+	if (resolved.referential !== undefined) {
+		node.metadata["resolver_referential"] = resolved.referential
+	}
+
+	if (resolved.encyclopedic !== undefined) {
+		node.metadata["resolver_encyclopedic"] = resolved.encyclopedic
 	}
 
 	// The postcode/locality conflict flag (the falsehood differentiator): the postcode pointed to a

@@ -5,7 +5,7 @@
  *
  *   FSTWalker — interactive FST gazetteer trie walker that shows how tokens match WOF places. Walks
  *   the FST token-by-token for a given input, displaying matched places with
- *   id/name/placetype/importance at each accepting state, plus valid continuations. Handles FST not
+ *   id/name/placetype/referential-likelihood at each accepting state, plus valid continuations. Handles FST not
  *   loaded with a graceful fallback. BrowserOnly-safe.
  *
  *   Usage in MDX:
@@ -66,7 +66,12 @@ interface WalkStep {
 interface PlaceEntryLike {
 	wofID: number
 	placetype: string
-	importance: number
+	/**
+	 * The REFERENTIAL likelihood (population-anchored) — what the decoder biases on, and what this walker shows. See
+	 * ROAD_TO_V9 §2: encyclopedic importance is not the ranking key, so it is not what a bias explorer should display as
+	 * "how strong is this hit".
+	 */
+	referential: number
 	name?: string
 }
 
@@ -115,16 +120,17 @@ function fmtWOFID(id: number): string {
 }
 
 /**
- * Format importance as a 1-3 digit percentage.
+ * Format a referential likelihood as a 1-3 digit percentage.
  */
-function fmtImportance(imp: number): string {
-	return `${(imp * 100).toFixed(0)}%`
+function fmtReferential(score: number): string {
+	return `${(score * 100).toFixed(0)}%`
 }
 
 /**
- * Importance tier for color coding.
+ * Referential tier for color coding. The CSS class names keep the `importance_*` spelling — they are stylesheet keys,
+ * not a claim about which score is being shown.
  */
-function importanceTier(imp: number): "high" | "mid" | "low" {
+function referentialTier(imp: number): "high" | "mid" | "low" {
 	if (imp >= HIGH_IMPORTANCE_MIN) return "high"
 
 	if (imp >= MID_IMPORTANCE_MIN) return "mid"
@@ -137,7 +143,7 @@ function importanceTier(imp: number): "high" | "mid" | "low" {
 //#region Sub-components
 
 const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
-	const tier = importanceTier(place.importance)
+	const tier = referentialTier(place.referential)
 
 	return (
 		<div className={`${styles.placeRow} ${styles[`importance_${tier}`]}`}>
@@ -147,7 +153,7 @@ const PlaceRow: React.FC<{ place: PlaceEntryLike }> = ({ place }) => {
 			<span className={styles.placeType}>{place.placetype}</span>
 			<span className={styles.placeImp}>
 				<span className={`${styles.impDot} ${styles[`impDot_${tier}`]}`} />
-				{fmtImportance(place.importance)}
+				{fmtReferential(place.referential)}
 			</span>
 			<code className={styles.placeID}>{fmtWOFID(place.wofID)}</code>
 		</div>

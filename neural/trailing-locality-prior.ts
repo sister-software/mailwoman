@@ -239,9 +239,9 @@ export function buildTrailingLocalityPriors(
 
 		if (!entries) continue // no admin match at this length — try shorter
 
-		const localityPositive = entries.some((e) => e.placetype === "locality" && e.importance > 0)
+		const localityPositive = entries.some((e) => e.placetype === "locality" && e.referential > 0)
 		const localityAny = entries.some((e) => e.placetype === "locality")
-		const regionPositive = entries.some((e) => e.placetype === "region" && e.importance > 0)
+		const regionPositive = entries.some((e) => e.placetype === "region" && e.referential > 0)
 
 		if (localityPositive || (localityAny && !regionPositive)) {
 			span = { startWord, endWord: words.length - 1 }

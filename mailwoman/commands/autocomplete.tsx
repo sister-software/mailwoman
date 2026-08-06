@@ -63,7 +63,15 @@ export interface AutocompleteEntry {
 	name: string
 	placetype: string
 	wofID: number
-	importance: number
+	/**
+	 * The referential likelihood suggestions are ranked by (ROAD_TO_V9 §2).
+	 */
+	referential: number
+	/**
+	 * Encyclopedic importance when the artifact carries one — displayed, never ranked on. `undefined` = no article, or a
+	 * pre-v5 binary.
+	 */
+	encyclopedic?: number
 	completionTokens: string[]
 }
 
@@ -115,7 +123,8 @@ export async function runAutocomplete(
 		name: s.name,
 		placetype: s.placetype,
 		wofID: s.wofID,
-		importance: s.importance,
+		referential: s.referential,
+		...(s.encyclopedic === undefined ? {} : { encyclopedic: s.encyclopedic }),
 		completionTokens: s.completionTokens,
 	}))
 }
@@ -126,9 +135,11 @@ function formatSuggestions(entries: AutocompleteEntry[]): string {
 	return entries
 		.map((e, i) => {
 			const completion = e.completionTokens.length ? ` [+${e.completionTokens.join(" ")}]` : ""
-			const imp = e.importance.toFixed(4)
+			const ref = e.referential.toFixed(4)
+			// Absent encyclopedic prints nothing at all — "enc:0.0000" would assert an article that is not there.
+			const enc = e.encyclopedic === undefined ? "" : `, enc:${e.encyclopedic.toFixed(4)}`
 
-			return `${String(i + 1).padStart(2)}. ${e.name}${completion}  (${e.placetype}, wof:${e.wofID}, imp:${imp})`
+			return `${String(i + 1).padStart(2)}. ${e.name}${completion}  (${e.placetype}, wof:${e.wofID}, ref:${ref}${enc})`
 		})
 		.join("\n")
 }

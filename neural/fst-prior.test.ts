@@ -109,7 +109,7 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("biases matched locality tokens proportional to importance", () => {
-		const fst = mockFST(new Map([["portland", [{ wofID: 1, placetype: "locality", importance: 0.72 }]]]))
+		const fst = mockFST(new Map([["portland", [{ wofID: 1, placetype: "locality", referential: 0.72 }]]]))
 		const pieces = makePieces("Portland")
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.72 * 3, 2)
@@ -123,8 +123,8 @@ describe("buildFSTEmissionPriors", () => {
 				[
 					"new york",
 					[
-						{ wofID: 2, placetype: "locality", importance: 0.95 },
-						{ wofID: 3, placetype: "region", importance: 0.85 },
+						{ wofID: 2, placetype: "locality", referential: 0.95 },
+						{ wofID: 3, placetype: "region", referential: 0.85 },
 					],
 				],
 			])
@@ -140,14 +140,14 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("low importance produces proportionally lower bias", () => {
-		const fst = mockFST(new Map([["hamlet", [{ wofID: 4, placetype: "locality", importance: 0.05 }]]]))
+		const fst = mockFST(new Map([["hamlet", [{ wofID: 4, placetype: "locality", referential: 0.05 }]]]))
 		const pieces = makePieces("Hamlet")
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 		expect(matrix[0]![labelCol("B-locality")]).toBeCloseTo(0.15, 2)
 	})
 
 	it("does not bias unmapped placetypes (county)", () => {
-		const fst = mockFST(new Map([["cook", [{ wofID: 5, placetype: "county", importance: 0.88 }]]]))
+		const fst = mockFST(new Map([["cook", [{ wofID: 5, placetype: "county", referential: 0.88 }]]]))
 		const pieces = makePieces("Cook")
 		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
 
@@ -157,7 +157,7 @@ describe("buildFSTEmissionPriors", () => {
 	})
 
 	it("handles subword pieces correctly", () => {
-		const fst = mockFST(new Map([["springfield", [{ wofID: 6, placetype: "locality", importance: 0.45 }]]]))
+		const fst = mockFST(new Map([["springfield", [{ wofID: 6, placetype: "locality", referential: 0.45 }]]]))
 
 		const pieces = [
 			{ piece: "▁Spring", start: 0, end: 6 },
@@ -176,7 +176,7 @@ describe("buildFSTEmissionPriors", () => {
 		// splits that matter ("Stockton-on-Tees" etc.) don't need it. So the comma below joins the
 		// "Washington" group and carries its bias rather than getting an all-zero placeholder row of its own.
 		// Nothing is lost by the coarser rule: "▁DC" opens its own group regardless.
-		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", importance: 0.85 }]]]))
+		const fst = mockFST(new Map([["washington", [{ wofID: 7, placetype: "locality", referential: 0.85 }]]]))
 
 		const pieces = [
 			{ piece: "▁Washington", start: 0, end: 10 },
@@ -197,7 +197,7 @@ describe("buildFSTEmissionPriors", () => {
 		// A lone place-name token ("Sweeney") is weak street-head evidence. The default `suppression` mode
 		// scales the street/house-number suppression by match length (1-token ×0.25) so the model's own
 		// "Ranch Road → street" reading can win, while the POSITIVE locality bias is left at full strength.
-		const fst = mockFST(new Map([["sweeney", [{ wofID: 9, placetype: "locality", importance: 0.5 }]]]))
+		const fst = mockFST(new Map([["sweeney", [{ wofID: 9, placetype: "locality", referential: 0.5 }]]]))
 		const pieces = makePieces("Sweeney")
 		const supp = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS) // default: suppression
 		// positive locality bias unscaled (importance * maxBias)
@@ -218,18 +218,18 @@ describe("buildFSTEmissionPriors — street-context gate (#1142, syntactic conte
 	const gazetteer = () =>
 		mockFST(
 			new Map([
-				["washington", [{ wofID: 10, placetype: "locality", importance: 0.8 }]],
+				["washington", [{ wofID: 10, placetype: "locality", referential: 0.8 }]],
 				["new", []],
-				["new york", [{ wofID: 11, placetype: "locality", importance: 0.95 }]],
+				["new york", [{ wofID: 11, placetype: "locality", referential: 0.95 }]],
 			])
 		)
 
 	const morphology = () =>
 		mockFST(
 			new Map([
-				["blvd", [{ wofID: 900, placetype: "street_affix", importance: 0 }]],
-				["rue", [{ wofID: 901, placetype: "street_affix", importance: 0 }]],
-				["ave", [{ wofID: 902, placetype: "street_affix", importance: 0 }]],
+				["blvd", [{ wofID: 900, placetype: "street_affix", referential: 0 }]],
+				["rue", [{ wofID: 901, placetype: "street_affix", referential: 0 }]],
+				["ave", [{ wofID: 902, placetype: "street_affix", referential: 0 }]],
 			])
 		)
 

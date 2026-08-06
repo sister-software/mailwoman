@@ -18,9 +18,19 @@
  *
  *   EDGE TABLE [edgeCount × 8 bytes] stringIdx u32 index into string table targetState u32
  *
- *   PLACE TABLE [placeCount × 56 bytes] wofID u32 placetypeIdx u8 index into PLACETYPE_ORDER chainLen
- *   u8 0..8 _pad u16 nameIdx u32 index into string table importance f32 Wikipedia importance [0,1]
- *   (V2); was population u32 (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0)
+ *   PLACE TABLE [placeCount × 60 bytes at V5, 56 below] wofID u32 placetypeIdx u8 index into
+ *   PLACETYPE_ORDER chainLen u8 0..8 crossCountryBranches u8 (header flags bit0 gates the read)
+ *   placeFlags u8 (V5; bit0 = encyclopedic present) nameIdx u32 index into string table referential f32
+ *   population-anchored likelihood [0,1] — was the conflated `importance` (V2–V4), was population u32
+ *   (V1) lat f32 lon f32 chain [u32; 8] parent chain (unused slots = 0) encyclopedic f32 (V5 only;
+ *   read only when placeFlags bit0 is set)
+ *
+ *   THE V5 BUMP IS THE TWO-SCORE SPLIT (ROAD_TO_V9 §2 R1). Through V4 one float carried whichever score
+ *   the source database held, and nothing in the bytes said which — so a reader could not tell a
+ *   population proxy from a Wikipedia score. V5 names the ranking score `referential` and gives the
+ *   encyclopedic signal its own slot plus a PER-PLACE presence bit, because most places have no
+ *   Wikipedia article and a 0 there would be a fact nobody recorded. `fst-freshness.ts` reports every
+ *   V4-and-below artifact as format-stale for exactly this reason: its single float is unattributable.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
@@ -51,6 +61,34 @@ const NARROW_STATE_ENTRY_SIZE = 12
 const VERSION_WITH_METADATA = 3
 
 /**
+ * Format version that split the single `importance` float into `referential` + `encyclopedic`, growing the place entry
+ * from 56 to 60 bytes and claiming the previously-reserved `pp+7` byte as {@link PLACE_FLAG_HAS_ENCYCLOPEDIC}.
+ */
+const VERSION_TWO_SCORE_SPLIT = 5
+
+/**
+ * Place-entry size in bytes at or above {@link VERSION_TWO_SCORE_SPLIT}.
+ */
+const SPLIT_PLACE_ENTRY_SIZE = 60
+
+/**
+ * Place-entry size in bytes below {@link VERSION_TWO_SCORE_SPLIT}.
+ */
+const LEGACY_PLACE_ENTRY_SIZE = 56
+
+/**
+ * Byte offset of the encyclopedic float inside a v5 place entry — immediately after the 8-slot parent chain.
+ */
+const ENCYCLOPEDIC_OFFSET = 56
+
+/**
+ * `placeFlags` bit 0 (byte `pp+7`, v5+): this place carries an encyclopedic score. Per-PLACE rather than per-file
+ * because absence is the common case — roughly 89% of the 2026-08-05 gazetteer has no Wikipedia article — and a
+ * file-level flag would force every one of those rows to claim a 0 it never had.
+ */
+const PLACE_FLAG_HAS_ENCYCLOPEDIC = 1
+
+/**
  * File magic. A reader rejects anything not starting with these four bytes before parsing further.
  */
 const MAGIC = Buffer.from("FST\0", "ascii")
@@ -58,7 +96,7 @@ const MAGIC = Buffer.from("FST\0", "ascii")
 /**
  * Format version this serializer emits. See {@link VERSION_WIDE_STATE_COUNTERS} for what each bump changed.
  */
-const VERSION = 4
+const VERSION = 5
 
 /**
  * The format version this tree WRITES, published so a freshness guard can call an older artifact format-stale without
@@ -83,9 +121,9 @@ const STATE_ENTRY_SIZE = 16
 const EDGE_ENTRY_SIZE = 8
 
 /**
- * Place-table entry: the place id, its placetype, coordinates, and importance.
+ * Place-table entry at the version this tree WRITES: the place id, its placetype, coordinates, and both scores.
  */
-const PLACE_ENTRY_SIZE = 56
+const PLACE_ENTRY_SIZE = SPLIT_PLACE_ENTRY_SIZE
 
 /**
  * Longest ancestry chain stored per place. Deeper hierarchies are truncated at the leaf end, since the specific end of
@@ -246,17 +284,22 @@ export function serializeFST(matcher: FSTMatcher, provenance?: FSTProvenance): B
 			buf.writeUInt32LE(place.wofID, pp)
 			buf.writeUInt8(placetypeToIdx.get(place.placetype) ?? 0, pp + 4)
 			buf.writeUInt8(chainLen, pp + 5)
-			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 gates the read), byte 1 reserved.
+			// Former _pad: byte 0 = crossCountryBranches (header flags bit0 gates the read), byte 1 = v5 placeFlags.
 			buf.writeUInt8(hasAmbiguity ? Math.min(place.crossCountryBranches ?? 0, 255) : 0, pp + 6)
-			buf.writeUInt8(0, pp + 7)
+			// An absent encyclopedic score writes flag 0 AND a 0.0 float. The float is unread in that
+			// state, so absence can never surface as a score — the meaning-of-zero rule, in bytes.
+			const hasEncyclopedic = place.encyclopedic !== undefined
+			buf.writeUInt8(hasEncyclopedic ? PLACE_FLAG_HAS_ENCYCLOPEDIC : 0, pp + 7)
 			buf.writeUInt32LE(intern(place.name), pp + 8)
-			buf.writeFloatLE(place.importance, pp + 12)
+			buf.writeFloatLE(place.referential, pp + 12)
 			buf.writeFloatLE(place.lat, pp + 16)
 			buf.writeFloatLE(place.lon, pp + 20)
 
 			for (let ci = 0; ci < MAX_CHAIN_LEN; ci++) {
 				buf.writeUInt32LE(ci < chainLen ? validChain[ci]! : 0, pp + 24 + ci * 4)
 			}
+
+			buf.writeFloatLE(hasEncyclopedic ? place.encyclopedic! : 0, pp + ENCYCLOPEDIC_OFFSET)
 
 			placeIdx++
 		}
@@ -280,6 +323,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	if (version < 1 || version > VERSION) throw new Error(`FST version ${version} unsupported (expected 1..${VERSION})`)
 	const isV2 = version >= 2
+	const isSplit = version >= VERSION_TWO_SCORE_SPLIT
 	// flags bit0 (survey #4): place rows carry surface-ambiguity data in the former _pad byte.
 	const hasAmbiguity = (buf.readUInt16LE(6) & 1) === 1
 
@@ -312,6 +356,8 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 
 	// --- State table ---
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
+	// v5 grew the place entry by the encyclopedic float; v4-and-below files are read at the old stride.
+	const placeEntrySize = version >= VERSION_TWO_SCORE_SPLIT ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
 	const stateTableStart = pos
 	const edgeTableStart = stateTableStart + stateCount * stateEntrySize
 	const placeTableStart = edgeTableStart + edgeCount * EDGE_ENTRY_SIZE
@@ -341,7 +387,7 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 		const places: PlaceEntry[] = new Array(placeCountForState)
 
 		for (let pi = 0; pi < placeCountForState; pi++) {
-			const pp = placeTableStart + (placeStart + pi) * PLACE_ENTRY_SIZE
+			const pp = placeTableStart + (placeStart + pi) * placeEntrySize
 			const chainLen = buf.readUInt8(pp + 5)
 			const parentChain: number[] = []
 
@@ -349,20 +395,30 @@ export function deserializeFST(buf: Buffer): FSTMatcher {
 				parentChain.push(buf.readUInt32LE(pp + 24 + ci * 4))
 			}
 
-			const rawImportance = isV2
+			// v1 stored a raw population u32 here; v2–v4 the conflated `importance` float; v5 the
+			// referential score. A v1 file's population is mapped through the SAME curve
+			// `referentialFromPopulation` uses, so its value is genuinely referential — the only
+			// generation of this format for which that can be said without reading the source database.
+			const referential = isV2
 				? buf.readFloatLE(pp + 12)
 				: Math.min(1, Math.log2(1 + buf.readUInt32LE(pp + 12) / 1000) / 14)
+
+			// Per-place presence bit (v5+). A v4-and-below file has no encyclopedic channel at all, so
+			// the field stays undefined rather than reading the reserved byte as a flag.
+			const hasEncyclopedic =
+				isSplit && (buf.readUInt8(pp + 7) & PLACE_FLAG_HAS_ENCYCLOPEDIC) === PLACE_FLAG_HAS_ENCYCLOPEDIC
 
 			places[pi] = {
 				wofID: buf.readUInt32LE(pp),
 				placetype: PLACETYPE_ORDER[buf.readUInt8(pp + 4)] ?? "locality",
 				name: strings[buf.readUInt32LE(pp + 8)]!,
-				importance: rawImportance,
+				referential,
 				lat: buf.readFloatLE(pp + 16),
 				lon: buf.readFloatLE(pp + 20),
 				parentChain,
 				// Header flags bit0 gates the read (survey #4): pre-ambiguity artifacts expose undefined.
 				...(hasAmbiguity ? { crossCountryBranches: buf.readUInt8(pp + 6) } : {}),
+				...(hasEncyclopedic ? { encyclopedic: buf.readFloatLE(pp + ENCYCLOPEDIC_OFFSET) } : {}),
 			}
 		}
 

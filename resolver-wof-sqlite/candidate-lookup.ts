@@ -32,6 +32,7 @@ import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./can
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
 import { haversineKm } from "./geo.ts"
 import { trigramJaccard } from "./lookup.ts"
+import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
 import { hasTable } from "./sqlite-utils.ts"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
@@ -66,6 +67,7 @@ type CandidateRow = Pick<
 	| "max_lon"
 	| "neg_rank"
 	| "is_primary"
+	| "population"
 >
 
 /**
@@ -392,8 +394,11 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// intended primary even when a cluster of more-populous foreign aliases sits ahead of it. `is_primary`
 			// + `country_id` feed that re-rank. A single-country probe (a country filter, or all rows same
 			// country) re-ranks to the identical population order, so the common path is untouched.
+			// `population` rides along for the REFERENTIAL score on the result (ROAD_TO_V9 §2) — one more
+			// column off a clustered row the probe already reads, and it is NOT what the probe orders by:
+			// `neg_rank` remains the sort key, so this changes no ordering, only what the result reports.
 			const sql =
-				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary " +
+				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population " +
 				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
 
 			const fetched = this.#db.prepare(sql).all(...params, Math.max(limit, RERANK_FETCH)) as unknown as CandidateRow[]
@@ -504,6 +509,13 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				// alias that lost the bounded contest to a same-key primary (`demoted`): it drops to the partial tier so
 				// the walk's country posterior can't cross back over the primary (see `RankedRow.demoted`).
 				exactMatch: !row.demoted,
+				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence this
+				// backend has always ordered by — `neg_rank` IS `-log10(population + 1)`, so the score and
+				// the sort key are two readings of the same number. `encyclopedic` is absent by
+				// construction: `candidate.db` carries no `place_importance`, and absent is absent.
+				...(row.population === null || row.population <= 0
+					? {}
+					: { population: row.population, referential: referentialFromPopulation(row.population) }),
 				...(hasBbox
 					? {
 							bbox: {

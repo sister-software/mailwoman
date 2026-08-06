@@ -28,7 +28,7 @@ interface FixturePlace {
 	wofID: number
 	placetype: PlacetypeID
 	name: string
-	importance: number
+	referential: number
 	parentChain: number[]
 }
 
@@ -80,32 +80,32 @@ const FIXTURE_PLACES: FixturePlace[] = [
 		wofID: 85_977_539,
 		placetype: "locality",
 		name: "New York City",
-		importance: 0.9,
+		referential: 0.9,
 		parentChain: [85_688_543, 85_633_793],
 	},
-	{ wofID: 85_688_543, placetype: "region", name: "New York", importance: 0.75, parentChain: [85_633_793] },
+	{ wofID: 85_688_543, placetype: "region", name: "New York", referential: 0.75, parentChain: [85_633_793] },
 	{
 		wofID: 85_935_903,
 		placetype: "locality",
 		name: "New Orleans",
-		importance: 0.6,
+		referential: 0.6,
 		parentChain: [85_688_481, 85_633_793],
 	},
 	{
 		wofID: 85_922_583,
 		placetype: "locality",
 		name: "San Francisco",
-		importance: 0.85,
+		referential: 0.85,
 		parentChain: [102_087_579, 85_633_793],
 	},
 	{
 		wofID: 85_919_487,
 		placetype: "locality",
 		name: "San Jose",
-		importance: 0.5,
+		referential: 0.5,
 		parentChain: [102_087_579, 85_633_793],
 	},
-	{ wofID: 85_633_793, placetype: "country", name: "United States", importance: 0.99, parentChain: [] },
+	{ wofID: 85_633_793, placetype: "country", name: "United States", referential: 0.99, parentChain: [] },
 ]
 
 let fixtureMatcher: FSTMatcher
@@ -173,18 +173,18 @@ describe("autocomplete — in-memory fixture", () => {
 		expect(result.suggestions.length).toBeGreaterThan(0)
 
 		if (result.suggestions.length >= 2) {
-			expect(result.suggestions[0]!.importance).toBeGreaterThanOrEqual(result.suggestions[1]!.importance)
+			expect(result.suggestions[0]!.referential).toBeGreaterThanOrEqual(result.suggestions[1]!.referential)
 		}
 	})
 
-	it("prefix 'San' yields San Francisco as the top result (highest importance)", () => {
+	it("prefix 'San' yields San Francisco as the top result (highest referential)", () => {
 		// The FST is token-based: "San Fr" would require a token edge for "fr" which doesn't exist.
 		// The correct prefix is the full first token "San" — the BFS expansion then finds "Francisco"
 		// and "Jose" as the one-token continuations, ranked by importance.
 		const result = autocomplete(fixtureMatcher, "San", { maxSuggestions: 5 })
 		expect(result.suggestions.length).toBeGreaterThan(0)
 		expect(result.suggestions[0]!.name).toBe("San Francisco")
-		expect(result.suggestions[0]!.importance).toBeGreaterThan(result.suggestions[1]!.importance)
+		expect(result.suggestions[0]!.referential).toBeGreaterThan(result.suggestions[1]!.referential)
 	})
 
 	it("prefix query is case-insensitive — matches the build-time normalizer", () => {
@@ -236,7 +236,7 @@ describe("runAutocomplete — disk round-trip", () => {
 		const us = entries.find((e) => e.wofID === 85_633_793)
 		expect(us).toBeDefined()
 		// Float32 round-trip may introduce tiny epsilon; check within tolerance.
-		expect(us!.importance).toBeCloseTo(0.99, 1)
+		expect(us!.referential).toBeCloseTo(0.99, 1)
 	})
 })
 

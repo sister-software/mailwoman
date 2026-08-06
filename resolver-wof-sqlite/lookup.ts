@@ -39,6 +39,7 @@ import {
 } from "./fts.ts"
 import { bboxAround, haversineKm } from "./geo.ts"
 import { cfNormalize, softNameScore, trigramJaccard } from "./name-score.ts"
+import { compareReferential, encyclopedicClauses, referentialFromPopulation } from "./place-importance-schema.ts"
 import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
 import { DEFAULT_WEIGHTS, type RankingWeights } from "./ranking-weights.ts"
 import type { WOFDatabase } from "./schema.ts"
@@ -137,6 +138,11 @@ interface RawSearchRow {
 	min_longitude: number | null
 	max_longitude: number | null
 	population: number | null // from the place_population aux table; null when missing
+	/**
+	 * From `place_importance.encyclopedic` when the shard's table carries the two-score split columns. NULL means the
+	 * place has no Wikipedia article, or the shard predates the split — absence either way, and never 0 (ROAD_TO_V9 §2).
+	 */
+	encyclopedic: number | null
 }
 
 /**
@@ -179,6 +185,12 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 * population boost is 0 for every row — preserves compatibility with DBs built before this feature shipped.
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
+	/**
+	 * Per-shard SELECT term + LEFT JOIN for the two-score split's `encyclopedic` carry (ROAD_TO_V9 §2 R1), probed and
+	 * built once at construction. Degrades to `NULL AS encyclopedic` with no join on a pre-split shard — every shipped
+	 * shard today. See {@link encyclopedicClauses} for why the probe is a column and not a table.
+	 */
+	readonly #encyclopedicClauses: Map<string, { select: string; join: string }>
 	/**
 	 * Per-shard probe for the `postcode_locality` table (the coordinate-first candidate table, built by
 	 * scripts/build-postcode-locality.ts). Cached at construction; null'd out when absent so the coord-first path
@@ -273,10 +285,12 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// sqlite_master. Cached at construction so findPlace doesn't query sqlite_master per call.
 		this.#hasBboxIndex = new Map()
 		this.#hasPopulationIndex = new Map()
+		this.#encyclopedicClauses = new Map()
 
 		for (const s of this.#shards) {
 			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
+			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.#db, s.schemaName))
 		}
 
 		// #920 country-aware shard routing: probe each NON-MAIN shard's country set once at
@@ -666,6 +680,11 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			? `LEFT JOIN ${sch}.${PLACE_POPULATION_TABLE} ON ${PLACE_POPULATION_TABLE}.id = spr.id`
 			: ""
 
+		// The encyclopedic score is CARRIED, never ranked on (ROAD_TO_V9 §2, ratified 2026-08-06) — it
+		// appears in the SELECT and in no ORDER BY, here or in the companion fetch below. Gated on the
+		// split column, so a pre-split shard emits a literal NULL and builds no join at all.
+		const { select: encyclopedicSelect, join: encyclopedicJoin } = this.#encyclopedicClauses.get(sch)!
+
 		// Push the population boost into the ORDER BY when the index is available, so famous places
 		// (whose long alt-name lists hurt BM25) actually make it into the over-fetch window. The TS
 		// post-scoring will still compute the same boost for the final score; this just ensures the
@@ -697,10 +716,12 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				spr.latitude AS lat,
 				spr.longitude AS lon,
 				spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
-				${populationSelect}
+				${populationSelect},
+				${encyclopedicSelect}
 			FROM ${sch}.place_search
 			${joinClause}
 			${populationJoin}
+			${encyclopedicJoin}
 			WHERE ${where.join(" AND ")}
 			ORDER BY ${orderByExpr} ASC
 			LIMIT ?
@@ -732,10 +753,12 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 					spr.latitude AS lat,
 					spr.longitude AS lon,
 					spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
-					${populationSelect}
+					${populationSelect},
+					${encyclopedicSelect}
 				FROM ${sch}.place_search
 				${joinClause}
 				${populationJoin}
+				${encyclopedicJoin}
 				WHERE ${where.join(" AND ")}
 				ORDER BY COALESCE(${PLACE_POPULATION_TABLE}.population, 0) DESC
 				LIMIT ?
@@ -848,6 +871,14 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 			if (row.population !== null && row.population > 0) {
 				candidate.population = row.population
+				// The named ranking key (ROAD_TO_V9 §2). DERIVED, not stored — a pure function of the
+				// population already on this row, so it cannot drift from what the ordering uses.
+				candidate.referential = referentialFromPopulation(row.population)
+			}
+
+			// Carried for consumers (annotations / API surfaces). No ranking site reads it.
+			if (row.encyclopedic !== null) {
+				candidate.encyclopedic = row.encyclopedic
 			}
 
 			// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
@@ -936,8 +967,16 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 				// With proximity hints (near/bias), prominence (population + nearness, same units)
 				// replaces raw population as the within-tier key — the 48026 rule: the map view or
-				// the user's location breaks a cross-country postcode tie. Without hints, population
-				// ordering is byte-identical to before.
+				// the user's location breaks a cross-country postcode tie. Without hints, REFERENTIAL
+				// ordering decides.
+				//
+				// ROAD_TO_V9 §2: this is the site that "orders namesakes", so it is the site that has to
+				// say what it orders by. `compareReferential` is referential DESC with raw population as
+				// the tiebreak, which is provably the SAME ORDER as the `(b.population ?? 0) - (a.population ?? 0)`
+				// it replaces — referential is strictly increasing in population below saturation and
+				// constant above it, and the tiebreak restores the order in the saturated tail. Measured
+				// zero-delta, not assumed: see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
+				// Encyclopedic importance is not, and must not become, an input here.
 				const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 				candidates.sort((a, b) => {
@@ -949,7 +988,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 					if (ax >= 1) {
 						if (hasHints) return (b.prominence ?? 0) - (a.prominence ?? 0) || b.score - a.score
 
-						return (b.population ?? 0) - (a.population ?? 0) || b.score - a.score
+						return compareReferential(a, b) || b.score - a.score
 					}
 
 					return b.score - a.score

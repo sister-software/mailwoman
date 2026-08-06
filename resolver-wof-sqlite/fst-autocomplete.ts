@@ -31,7 +31,17 @@ export interface AutocompleteResult {
 export interface AutocompleteSuggestion {
 	name: string
 	placetype: string
-	importance: number
+	/**
+	 * The REFERENTIAL likelihood the suggestion is ranked by (ROAD_TO_V9 §2). Autocomplete answers "which place does the
+	 * user mean", so it ranks referentially like everything else; encyclopedic importance rides along on
+	 * {@link AutocompleteSuggestion.encyclopedic} for display and never enters the order.
+	 */
+	referential: number
+	/**
+	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place. `undefined` = no article, or
+	 * a pre-v5 binary — never 0.
+	 */
+	encyclopedic?: number
 	wofID: number
 	parentChain: number[]
 	matchDepth: number
@@ -42,7 +52,7 @@ export interface AutocompleteOpts {
 	maxSuggestions?: number
 	maxExpansionDepth?: number
 	/**
-	 * Collapse same-name suggestions to the single highest-importance one. Off by default (the CLI surfaces distinct
+	 * Collapse same-name suggestions to the single highest-referential one. Off by default (the CLI surfaces distinct
 	 * same-name places — New York the city vs the county); a typeahead wants it ON so the dropdown isn't four "New
 	 * London"s. (#587)
 	 */
@@ -61,16 +71,16 @@ interface BfsItem {
 const PER_BRANCH = 4
 
 /**
- * The top-`k` entries by importance (descending). Avoids sorting/allocating when `entries` is small.
+ * The top-`k` entries by REFERENTIAL likelihood (descending). Avoids sorting/allocating when `entries` is small.
  */
-function topByImportance(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
+function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
 
-	return [...entries].toSorted((a, b) => b.importance - a.importance).slice(0, k)
+	return [...entries].toSorted((a, b) => b.referential - a.referential).slice(0, k)
 }
 
 /**
- * Autocomplete from the current prefix. Returns suggestions ranked importance-descending.
+ * Autocomplete from the current prefix. Returns suggestions ranked referential-descending.
  */
 export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const maxSuggestions = opts.maxSuggestions ?? 10
@@ -114,7 +124,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 			if (!cont.token.startsWith(partial)) continue
 
 			// This edge completes the typed partial token — its target is a real match at depth+1.
-			for (const entry of topByImportance(fst.accepting(cont.targetState), PER_BRANCH)) {
+			for (const entry of topByReferential(fst.accepting(cont.targetState), PER_BRANCH)) {
 				addSuggestion(seen, entry, complete.length + 1, [cont.token])
 			}
 
@@ -132,7 +142,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 
 		if (item.depth > maxExpansionDepth) continue
 
-		for (const entry of topByImportance(fst.accepting(item.stateID), PER_BRANCH)) {
+		for (const entry of topByReferential(fst.accepting(item.stateID), PER_BRANCH)) {
 			addSuggestion(seen, entry, depth + item.depth, item.tokens)
 		}
 
@@ -143,7 +153,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		}
 	}
 
-	let suggestions = [...seen.values()].toSorted((a, b) => b.importance - a.importance)
+	let suggestions = [...seen.values()].toSorted((a, b) => b.referential - a.referential)
 
 	if (opts.dedupeByName) {
 		suggestions = dedupeByName(suggestions)
@@ -165,7 +175,8 @@ function addSuggestion(
 	seen.set(entry.wofID, {
 		name: entry.name,
 		placetype: entry.placetype,
-		importance: entry.importance,
+		referential: entry.referential,
+		...(entry.encyclopedic === undefined ? {} : { encyclopedic: entry.encyclopedic }),
 		wofID: entry.wofID,
 		parentChain: entry.parentChain,
 		matchDepth,
@@ -174,7 +185,7 @@ function addSuggestion(
 }
 
 /**
- * Keep one suggestion per name — the highest-importance. Input is already importance-sorted, so the first occurrence
+ * Keep one suggestion per name — the highest-referential. Input is already referential-sorted, so the first occurrence
  * per name wins; order is preserved.
  */
 function dedupeByName(suggestions: AutocompleteSuggestion[]): AutocompleteSuggestion[] {
