@@ -32,6 +32,7 @@ import {
 	type ClassifierOpts,
 	hardCountryFor,
 	isBareLocalityTree,
+	type QueryIntentMarker,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
@@ -48,6 +49,7 @@ import type {
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
+import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
 
 /**
@@ -142,6 +144,18 @@ export interface GeocodeResult {
 	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
 	 */
 	postcode_country_scope: string | null
+	/**
+	 * Query-intent advisories (ROAD_TO_V9 §4) — what the intent vocabulary had to say about the QUESTION, alongside the
+	 * answer. **Always present**; an empty array is this path stating that the vocabulary looked and found nothing, which
+	 * is a different claim from a missing field (the {@link `PipelineResult.faults`} discipline).
+	 *
+	 * Nothing here changed the answer. Three of the four markers are raised by the kind classifier from the string alone;
+	 * the fourth (`declared_ambiguity`) is raised after the resolve by reading the ranked candidate list's dominance
+	 * margin and comparing it to the measured 0.5-log10 decisive cut — a read, never a re-rank. This is the same
+	 * narrow-channel posture {@link postcode_country_scope} set: an advisory RECEIPT inside a resolution contract, not a
+	 * second opinion about the result.
+	 */
+	intent_markers: QueryIntentMarker[]
 }
 
 /**
@@ -852,7 +866,29 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	return extractGeocodeResult(input, resolved)
+	const result = extractGeocodeResult(input, resolved)
+
+	// ROAD_TO_V9 §4. One `classifyKindSync` over the text the parse actually saw — the same call `parseForGeocode`
+	// makes for the register, ~1.1 us/query measured (`kind-classifier/intent-rules.scaling.test.ts`). It runs here
+	// rather than being threaded out of the parse because a caller-supplied `parsedTree` skips `parseForGeocode`
+	// entirely, and an advisory that silently disappeared on the batch path would be worse than no advisory.
+	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, computeQueryShape(parseInput))
+	const markers = [...(verdict.intentMarkers ?? [])]
+
+	const ambiguity = declaredAmbiguityMarker({
+		kinds: [verdict.kind, ...verdict.alternatives.map((a) => a.kind)],
+		tree: resolved,
+		lat: result.lat,
+		lon: result.lon,
+	})
+
+	if (ambiguity) {
+		markers.push(ambiguity)
+	}
+
+	result.intent_markers = markers
+
+	return result
 }
 
 /**
@@ -1130,5 +1166,8 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		hierarchy,
 		candidates,
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
+		// `extractGeocodeResult` is a pure tree->result projection and has no access to the kind verdict, so it states
+		// the empty case. `geocodeAddressOnce` is the caller that classifies and fills this in.
+		intent_markers: [],
 	}
 }

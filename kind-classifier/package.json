@@ -36,5 +36,8 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@mailwoman/query-shape": "workspace:*"
 	}
 }

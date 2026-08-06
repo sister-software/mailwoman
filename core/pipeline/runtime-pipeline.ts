@@ -32,6 +32,7 @@ import type {
 	PipelineOpts,
 	PipelineResult,
 	PlacetypePairPassthrough,
+	QueryIntentMarker,
 	QueryKindResult,
 	QueryShapeLite,
 	RuntimePipelineStages,
@@ -386,12 +387,26 @@ export async function runPipeline(
 	const kind = await classifyKind(normalized, queryShape, locale)
 	timing["kind-classifier"] = performance.now() - tKind
 
+	// ROAD_TO_V9 §4. The classifier OWNS marker derivation (it is the stage that knows which intent rule fired); the
+	// coordinator only lifts the optional field into an always-present array, so an empty array is this coordinator
+	// stating that the vocabulary looked. A classifier with no intent vocabulary — including `defaultClassifyKind`
+	// above — leaves the field unset and every result carries `[]`, which is the byte-stable pre-§4 behaviour.
+	//
+	// `declared_ambiguity` is deliberately ABSENT from this list: its trigger is the resolved candidate list's
+	// dominance margin, and the measured 0.5-log10 cut behind it lives in `mailwoman`'s eval harness, which core
+	// cannot import (the dependency runs the other way). `mailwoman/query-intent.ts` adds it on the geocode path.
+	const intentMarkers: QueryIntentMarker[] = kind.intentMarkers ? [...kind.intentMarkers] : []
+
 	// POI branch (spec §3.1). Only reachable when a poi-aware kind classifier was wired (the
 	// default classifier never emits `poi_query`), and only acts when the stage is present —
 	// both absent by default, so the flag-off pipeline is byte-identical by construction. A
 	// `null` outcome falls through to the full pipeline: a poi_query kind with no extractable
 	// subject is a mis-detection, and the address path is the safe interpretation.
-	if (kind.kind === "poi_query" && stages.poiIntent) {
+	// `poi_category` (ROAD_TO_V9 §4.4) is the ANCHORLESS subset of `poi_query` — same subject, no place to search
+	// near. It routes here identically on purpose: the branch condition is the only place the two would have diverged,
+	// and a bare "tacos" reaching the poi-intent stage under a different kind name would have been a routing change
+	// dressed up as a vocabulary addition.
+	if ((kind.kind === "poi_query" || kind.kind === "poi_category") && stages.poiIntent) {
 		throwIfAborted(opts)
 		const tPoi = performance.now()
 		const poiOutcome = await stages.poiIntent(normalized, locale, effectiveOpts)
@@ -412,6 +427,7 @@ export async function runPipeline(
 				poiIntent: poiOutcome,
 				timing,
 				faults,
+				intentMarkers,
 				path: "poi",
 			}
 		}
@@ -441,6 +457,7 @@ export async function runPipeline(
 			tree,
 			timing,
 			faults,
+			intentMarkers,
 			path: "fast-path",
 		}
 	}
@@ -601,6 +618,7 @@ export async function runPipeline(
 		tree,
 		timing,
 		faults,
+		intentMarkers,
 		path: "full",
 	}
 }

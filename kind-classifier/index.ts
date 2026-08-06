@@ -15,7 +15,10 @@
 
 export { classifyKind, classifyKindSync, createKindClassifier } from "./classify.ts"
 export type { KindClassifierOpts } from "./classify.ts"
-export { matchPOISubject } from "./poi.ts"
+export { deriveIntentMarkers } from "./intent-markers.ts"
+export type { IntentMarkerContext } from "./intent-markers.ts"
+export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "./intent-rules.ts"
+export { matchPOICategory, matchPOISubject } from "./poi.ts"
 export type { POIPhraseMatch, POIPhraseLookup, POISubjectMatch } from "./poi.ts"
 
 export {
@@ -26,6 +29,16 @@ export {
 	scorePostcodeOnly,
 	scoreStructuredAddress,
 	scoreVague,
+	scoreVenueLandmark,
 } from "./rules.ts"
 
-export type { LocaleHint, NormalizedInputLite, QueryKind, QueryKindResult, QueryShapeLike } from "./types.ts"
+export { QueryIntentCode } from "./types.ts"
+
+export type {
+	LocaleHint,
+	NormalizedInputLite,
+	QueryIntentMarker,
+	QueryKind,
+	QueryKindResult,
+	QueryShapeLike,
+} from "./types.ts"
