@@ -76,6 +76,32 @@ before any import runs:
   small importer (NZ OSM) under `docker stats`; check the compose file's DEFAULT ES heap first and
   fail fast if it exceeds 8 GB.
 
+## §2b — Falsifier outcomes (graded 2026-08-06/07, before any import)
+
+- **(a) FALSIFIED, favorably**: `pelias/interpolation` conflates TIGER (`cmd/tiger.js`,
+  `bin/download-tiger`) and OA (`script/conflate_oa.sh`) directly into its build — the street base
+  comes from polylines, then OA/OSM/TIGER house numbers conflate on. The US keeps interpolation
+  without a US OSM Elasticsearch import.
+- **(b) FALSIFIED, favorably**: per-country polyline extraction from any PBF is documented
+  (`docker_extract.sh`, osmium-based) plus pre-cut regional extracts exist. Planet file not needed.
+- **(c) HOLDS with override**: `pelias/docker`'s large projects default `ES_JAVA_OPTS=-Xmx8g`; our
+  project pins 4g. Runtime smoke deferred to staging as planned.
+- **(d) NEW, from check-in 1 (pro)**: `pelias/api` gates interpolation on
+  `hasResultsAtLayers('street')` (`routes/v1.js:182-187`) — OA/TIGER emit address-layer docs only,
+  so a US build without street docs would never trigger interpolation. ABSORBED: the `polylines`
+  IMPORTER writes exactly those street-layer ES docs; one per-state polyline cut feeds both the ES
+  street layer and the interpolation graph.
+- **(e) WOF importer scoping (check-in 2 probe)**: `imports.whosonfirst.countryCode` accepts an
+  ISO-code array — the importer's own download is country-scoped; no planet-pull risk, no manual
+  placement needed (supersedes the manual-placement caution).
+
+**Staging state (2026-08-07):** all 10 country PBFs down (12.2 GB, resumable, marker present);
+OA fr+de extracted from europe.zip (GB needs no OA — rides OSM); US scoping ruled
+panel-states-only (the panel is the preregistered population — a sampling frame, not post-hoc
+cleansing; state list derives from TRUTH COORDINATES, never query strings, verified before
+scoring; US index annotated "US subset: N states"). Remaining fetches: panel-state OA-us +
+TIGER ADDRFEAT counties + per-state PBFs for polyline cuts — all gated on panel reconstruction.
+
 ## §3 — Per-country acceptance probes (before any benchmark row)
 
 1. A known OA/TIGER rooftop address → `layer: address`, under 50 m.
