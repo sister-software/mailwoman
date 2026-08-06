@@ -175,6 +175,42 @@ zero margin is by construction, not fragility. Any dip triggers rule 1, and the
 [#901](https://github.com/sister-software/mailwoman/issues/901) campaign gate must name both
 postcode slices explicitly.
 
+### Answer-key versions are not comparable across conventions (v0.1.2 → v0.1.3, 2026-08-06)
+
+The floor policy above governs floors on a FIXED instrument. A golden version bump that changes the
+LABELING CONVENTION is not that: it produces numbers that look like the old ones, are printed in the
+same cell, and mean something else. Carrying a floor across such a bump is the one way to get a
+verdict that is confidently wrong in both directions.
+
+The worked example is `us.street`. Golden through **v0.1.2** wrote a US street as one folded span
+(`"Main St"`), while the corpus splits it (`street: "Main"`, `street_suffix: "St"` — see
+[SCHEMA](./reference/SCHEMA.mdx#the-us-street-split-is-canonical--street_suffix-is-its-own-span)),
+and `per-locale-f1.ts` glued the model's spans back together so the two could be compared. The
+v9.0.0 candidate read `us.street` **87.4** against v7.0.0-base's **87.8** floor and FAILED the gate.
+It was not a street regression: it was the answer key and the corpus disagreeing, with the scorer
+papering over the gap. Golden **v0.1.3** moves the key onto the corpus convention
+(`mailwoman corpus golden-relabel`), the key DECLARES the convention in its `MANIFEST.json`, and the
+scorer reads the declaration per row. Re-read on the corrected key, the same two artifacts score
+**71.7** (shipped 7.0.0) and **75.2** (candidate) — the candidate LEADS by 3.5pp. The absolute
+number fell ~19pp because the metric got strictly harder, and the sign of the delta flipped.
+
+So, when a golden version changes a convention:
+
+1. **The gate spec names its answer key.** `golden_dir` is a spec field, exactly like the
+   conventions mask — two specs pointing at different golden versions are not comparable, and a
+   default buried in a scorer makes that invisible.
+2. **Cut a new spec; never edit floors in place.** `v9.0.0-base.json` is the precedent.
+3. **Re-anchor the affected floors on a fresh reading of the SHIPPED baseline**, on the new key,
+   through the ship config. Floors on instruments the bump did NOT touch still ratchet
+   (`max(old, re-cut)`); floors whose instrument changed are re-anchored outright and say so in
+   `$derivation`. In v9.0.0-base that exemption is exactly two: `us.street` and `us.micro`.
+4. **The answer key carries its own convention.** A version that declares it cannot be graded under
+   the wrong one by accident — which is the whole failure this rule exists to prevent, and a flag
+   somebody has to remember to pass would not have prevented it.
+5. **The relabel ships a review deck.** Every changed row with before/after labels, plus the rows
+   the tool declined to touch, plus a flagged subset for the operator to adjudicate. A mechanical
+   relabel of an answer key is a claim about ground truth; it gets reviewed like one.
+
 ### Splice safety gate — codepoint overlap is pre-registered, not post-measured ([#900](https://github.com/sister-software/mailwoman/issues/900))
 
 Any tokenizer vocab splice must run the overlap gate **before grading begins**

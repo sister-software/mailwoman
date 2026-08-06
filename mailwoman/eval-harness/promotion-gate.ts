@@ -66,6 +66,15 @@ interface GateSpec {
 	requires_gazetteer_lexicon?: boolean
 	requires_conventions?: string
 	requires_bridge?: boolean
+	/**
+	 * The ANSWER KEY the per-locale battery grades against, e.g. `data/eval/golden/v0.1.3/dev`. Spec-declared for the
+	 * same reason the conventions mask is: two gate specs that name different golden versions are not comparable, and a
+	 * default buried in a scorer makes that invisible. Omitted = per-locale-f1's own default (v0.1.2/dev).
+	 *
+	 * Answer-key versions are never comparable ACROSS conventions — v0.1.2 folds US street spans, v0.1.3 splits them — so
+	 * a spec that moves this field must re-anchor its floors on a fresh reading, never carry the old numbers over.
+	 */
+	golden_dir?: string
 	floors?: Record<string, unknown>
 }
 
@@ -347,6 +356,14 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		BRIDGE_MODE = "1"
 	}
 
+	// The answer key is part of the ship config, exactly like the gaz flags and the conventions mask.
+	// Recorded in the provenance line so a verdict says WHICH key produced it.
+	const GOLDEN_ARGS = gate.golden_dir ? ["--golden-dir", gate.golden_dir] : []
+
+	if (gate.golden_dir) {
+		console.log(`golden dir: ${gate.golden_dir} (spec-declared)`)
+	}
+
 	const shipModel = WC ? WC_MODEL : INT8 || MODEL
 
 	const runBattery = async (m: string, tag: string): Promise<void> => {
@@ -362,7 +379,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		const probeFlags = WC ? ["--weights-cache", WC] : ["--model", m]
 
 		const perLocale =
-			await $`node scripts/eval/per-locale-f1.ts ${plFlags} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
+			await $`node scripts/eval/per-locale-f1.ts ${plFlags} ${GOLDEN_ARGS} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
 
 		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, perLocale.stdout)
 

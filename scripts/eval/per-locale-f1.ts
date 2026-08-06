@@ -22,6 +22,15 @@
  *   `intersection_a`/`_b` → `street`) into the golden component vocab, then compare case-folded
  *   strings per tag.
  *
+ *   THE FOLD IS NOT UNCONDITIONAL. It exists because the golden answer key through v0.1.2 wrote a US
+ *   street as one span while the corpus (and the model) split it, and gluing was the cheap way to
+ *   compare them. Golden v0.1.3 moved the answer key onto the corpus convention and DECLARES that in
+ *   its `MANIFEST.json` (`convention.street_convention`), so the fold is now read per row from the
+ *   answer key itself: split-convention countries are scored UNFOLDED, everyone else keeps the glue.
+ *   An answer key that carries its own convention cannot be graded under the wrong one by accident —
+ *   which is what happened on the v9.0.0 gate, where the convention gap read as an 0.4pp `us.street`
+ *   regression.
+ *
  *   The anchor + gazetteer feed channels are fed by DEFAULT (the standard paths, same as
  *   `score-country-homograph.ts` / `oa-resolver-eval`). The current 33-label STAGE3 models were
  *   trained with these channels live, so omitting them scores the model out-of-distribution and
@@ -201,16 +210,27 @@ interface GoldenRow {
 
 /**
  * Fold neural Stage-3 tags into the golden component vocab (street parts + intersections → street).
+ *
+ * `foldStreetParts: false` is the v0.1.3 convention (#gate-relabel, 2026-08-06): that answer key labels US streets
+ * SPLIT — `street_prefix` / `street` / `street_suffix` are three spans — so gluing the prediction back together before
+ * comparing measures the harness, not the model. The v9.0.0 promotion gate read exactly that as an 0.4pp `us.street`
+ * regression. Which mode applies is decided PER ROW from the golden dir's own MANIFEST (see
+ * {@linkcode readStreetConvention}), never from a flag someone has to remember: an answer key that declares its
+ * convention cannot be graded under the wrong one by accident.
  */
-function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<string, string> {
+function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStreetParts = true): Record<string, string> {
 	const out: Record<string, string> = {}
 	const streetParts: string[] = []
 
 	for (const tag of ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const) {
 		const v = flat[tag]
 
-		if (v) {
+		if (!v) continue
+
+		if (foldStreetParts) {
 			streetParts.push(v)
+		} else {
+			out[tag] = v
 		}
 	}
 
@@ -229,7 +249,19 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 	}
 
 	if (xs.length) {
-		out.street = [out.street, ...xs].filter(Boolean).join(" ")
+		// Unfolded mode passes them through as their own tags — which is what the golden labels them as
+		// (`intersection_a` / `intersection_b`), so the fold was mis-scoring those rows in both directions.
+		if (foldStreetParts) {
+			out.street = [out.street, ...xs].filter(Boolean).join(" ")
+		} else {
+			if (flat.intersection_a) {
+				out.intersection_a = flat.intersection_a
+			}
+
+			if (flat.intersection_b) {
+				out.intersection_b = flat.intersection_b
+			}
+		}
 	}
 
 	for (const [tag, value] of Object.entries(flat) as Array<[ComponentTag, string]>) {
@@ -249,6 +281,30 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>): Record<s
 	}
 
 	return out
+}
+
+/**
+ * Country → `"split"` | `"folded"`, read from the golden version's own `MANIFEST.json` (`convention.street_convention`;
+ * the `*` key is the default). Looked up in the golden dir and then its parent, because the battery points at a SPLIT
+ * subdir (`…/v0.1.3/dev`) while the manifest sits at the version root.
+ *
+ * A version with no such block — every golden through v0.1.2 — reads as all-folded, so this is a no-op on the old
+ * answer keys and nothing about replaying an old out-dir changes.
+ */
+function readStreetConvention(goldenDir: string): Record<string, string> {
+	for (const candidate of [resolve(goldenDir, "MANIFEST.json"), resolve(goldenDir, "..", "MANIFEST.json")]) {
+		if (!existsSync(candidate)) continue
+
+		const manifest = parseJSONStrict<{ convention?: { street_convention?: Record<string, string> } }>(
+			readFileSync(candidate, "utf8")
+		)
+
+		const convention = manifest.convention?.street_convention
+
+		if (convention) return convention
+	}
+
+	return {}
 }
 
 const norm = (v: string | undefined): string => (v ?? "").trim().toLowerCase()
@@ -370,6 +426,22 @@ async function main(): Promise<void> {
 	console.error("Files:", args.files.join(", "))
 	console.error("Model:", args.modelPath ?? "(default weights)")
 
+	const streetConvention = readStreetConvention(args.goldenDir)
+
+	const splitCountries = Object.entries(streetConvention)
+		.filter(([, mode]) => mode === "split")
+		.map(([country]) => country.toUpperCase())
+
+	console.error(
+		`Street convention: ${splitCountries.length ? `SPLIT for ${splitCountries.join(", ")} (unfolded scoring)` : "folded (no answer-key declaration)"}`
+	)
+
+	const foldStreetFor = (country: string | undefined): boolean => {
+		const mode = streetConvention[(country ?? "").toUpperCase()] ?? streetConvention["*"] ?? "folded"
+
+		return mode !== "split"
+	}
+
 	let neural: NeuralAddressClassifier
 
 	// PACKAGE-SHAPED (#718-safe): `--weights-cache <root>` loads model + tokenizer + card + ALL soft
@@ -487,7 +559,7 @@ async function main(): Promise<void> {
 				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
 
-			const pred = foldToComponents(decodeAsJSON(tree))
+			const pred = foldToComponents(decodeAsJSON(tree), foldStreetFor(row.country))
 			preds.push(pred)
 
 			if (dumpTag) {
