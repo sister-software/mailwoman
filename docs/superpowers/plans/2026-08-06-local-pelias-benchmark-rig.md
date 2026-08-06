@@ -94,10 +94,12 @@ before any import runs:
   `pelias/polylines`' `docker_extract.sh` runs `pbf streets` (missinglink/pbf) per PBF and warns off
   files over 1 GB — and its guard is broken anyway (`exit 1` inside a `find | while read` subshell
   exits the subshell, not the script, so it warns and proceeds). Driving `pbf streets` directly, one
-  country at a time: **nz 8.0 MB/25 s, cz 7.5 MB/34 s, dk 13.1 MB/35 s, be 13.4 MB/46 s, ch
-  14.7 MB/46 s, at 16.3 MB/56 s, au 44.8 MB/113 s, nl 19.5 MB/71 s — the netherlands PBF is 1.40 GB
-  and cut cleanly**, at ~450 MB RSS. GB (2.16 GB) and DE (4.81 GB) were still running at time of
-  writing; their outcome is recorded in `$MAILWOMAN_DATA_ROOT/pelias-rig/logs/polyline-status.txt`.
+  country at a time, **all ten countries cut cleanly**: nz 8.0 MB/25 s, cz 7.5 MB/34 s, dk
+  13.1 MB/35 s, be 13.4 MB/46 s, ch 14.7 MB/46 s, at 16.3 MB/56 s, nl 19.5 MB/71 s, au 44.8 MB/113 s,
+  **gb 66.4 MB/188 s from a 2.16 GB PBF, de 104.8 MB/732 s from a 4.81 GB PBF at ~7 GB peak RSS**.
+  So the 1 GB line is not where the tool breaks — it did not break at 4.8× that on a 29 GB host, and
+  the memory ceiling the warning gestures at was never reached. The full ladder is in
+  `$MAILWOMAN_DATA_ROOT/pelias-rig/logs/polyline-status.txt`.
   One departure from the stock script: it concatenates every PBF into a single `extract.0sv`, and
   `docker_build.sh` then uses **only the alphabetically first `.pbf` and first `.0sv` it finds** —
   single-country by construction. A multi-country interpolation build has to drive `script/build.sh`
