@@ -120,6 +120,27 @@ describe("splitLegacyImportance", () => {
 		expect(splitLegacyImportance(legacy, population)).toEqual({ referential: legacy })
 	})
 
+	it("attributes a value one ULP off the curve to the fallback — the cross-runtime log2 case", () => {
+		// MEASURED (2026-08-06): CPython's math.log2 and V8's Math.log2 disagree by one ULP on 33,542 of
+		// the 1.5 M rows in the 2026-08-05 build. wof 85803233, population 21,299: stored
+		// 0.31992193633838988953, CPython 0.31992193633838994504. A bit-equality rule would have called
+		// all 33,542 of them Wikipedia scores in any runtime but the one that wrote them.
+		const population = 21_299
+		const oneULPOff = referentialFromPopulation(population) + 5.55e-17
+
+		expect(oneULPOff).not.toBe(referentialFromPopulation(population))
+		expect(splitLegacyImportance(oneULPOff, population).encyclopedic).toBeUndefined()
+	})
+
+	it("still separates a real Wikipedia score that is merely SMALL", () => {
+		// The tolerance must not become a bucket. A genuine low score sits many orders of magnitude
+		// outside 8 ULP of the population curve.
+		const population = 21_299
+		const nearby = referentialFromPopulation(population) + 1e-6
+
+		expect(splitLegacyImportance(nearby, population).encyclopedic).toBe(nearby)
+	})
+
 	it("attributes anything else to Wikipedia and keeps referential population-derived", () => {
 		const split = splitLegacyImportance(0.5683, 418)
 

@@ -18,6 +18,13 @@
  *   - `imp` — `wof/fst-staging-2026-08-05-importance-fanoutfix/` — built from
  *       `admin-global-priority-importance.db`, `importanceMatches` 1,543,753, which is EXACTLY that DB's
  *       `place_importance` row count. So this arm carries the real Wikipedia-joined score.
+ *   - `ref` — `wof/fst-staging-2026-08-06-two-score-split/` — the SAME source database as `imp`, rebuilt
+ *       at FST format v5 under the ratified §2 policy: the bias reads the REFERENTIAL score
+ *       (population-anchored) and the encyclopedic score rides along in its own slot, unread by the
+ *       decoder. `imp` vs `ref` is therefore the policy ablation with the source database held fixed —
+ *       the single-variable comparison that says what ranking referentially costs or buys. `pop` vs `ref`
+ *       is NOT single-variable: their source databases differ (2026-08-04 admin vs the 2026-08-05
+ *       importance build), so a delta there mixes the policy with a gazetteer generation.
  *
  *   The two binaries are otherwise identical builds — same `stateCount` (160,246), `placeCount`
  *   (236,257), `nameInsertions` (274,245), same exclusion policy. The trie is the same trie; only the
@@ -71,6 +78,7 @@ const ARM_DIRS: Record<string, string | null> = {
 	none: null,
 	pop: String(dataRootPath("wof", "fst-per-locale")),
 	imp: String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix")),
+	ref: String(dataRootPath("wof", "fst-staging-2026-08-06-two-score-split")),
 }
 
 const arms = values.arms!.split(",").map((a) => a.trim())

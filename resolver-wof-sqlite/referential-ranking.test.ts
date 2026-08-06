@@ -186,6 +186,32 @@ describe("Saint-Denis — ranking is referential", () => {
 		}
 	})
 
+	it("a FOURTH bearer the policy text does not name — Réunion — wins on the same rule, and that is correct", async () => {
+		// FOUND WHILE MEASURING (2026-08-06), and recorded rather than smoothed over. §2 names two
+		// bearers, but the live gazetteer's referentially dominant "Saint-Denis" is neither: it is the
+		// capital of Réunion (wof 9000000590797, pop 154,765 — a French overseas department, so
+		// `country = FR` too). Ranked referentially, an unscoped bare "Saint-Denis" answers Réunion.
+		//
+		// That is the policy behaving exactly as specified, not failing. What it exposes is an
+		// assumption in the ROAD_TO_V9 §3 board row `fr-wpc-saint-denis-suburb`, which pins the
+		// Seine-Saint-Denis suburb as truth: that row encodes "Metropolitan France", which is a
+		// different claim from "referentially dominant". The row fails identically under all four FST
+		// arms including no-FST, so it is a board-authoring question for §3, not a regression here —
+		// but a test that quietly omitted Réunion would be asserting a world that does not exist.
+		const withReunion: FixturePlace[] = [
+			...SAINT_DENIS,
+			{ id: 9_000_000_590_797, name: "Saint-Denis", country: "FR", lat: -20.8823, lon: 55.4504, population: 154_765 },
+		]
+
+		lookup = open(withReunion, true)
+		const results = await lookup.findPlace({ text: "Saint-Denis" })
+
+		expect(results[0]!.id).toBe(9_000_000_590_797)
+		// And the suburb still beats the hamlet — the pair §2 actually names is unaffected.
+		const ids = results.map((r) => r.id)
+		expect(ids.indexOf(101_751_155)).toBeLessThan(ids.indexOf(101_896_431))
+	})
+
 	it("orders all three bearers referentially, top to bottom", async () => {
 		lookup = open(SAINT_DENIS, true)
 		const results = await lookup.findPlace({ text: "Saint-Denis" })

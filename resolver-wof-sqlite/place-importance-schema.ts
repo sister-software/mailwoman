@@ -181,20 +181,36 @@ export function encyclopedicClauses(db: DatabaseSync, schemaName: string): { sel
 }
 
 /**
+ * The tolerance {@link splitLegacyImportance} treats as "this value reproduces the population curve". Eight ULP —
+ * comfortably wider than the one-ULP `log2` spread measured between CPython and V8 (see that function's docstring), and
+ * ~1e-15 absolute against scores Nominatim publishes to four decimals.
+ */
+export const LEGACY_FALLBACK_EPSILON = 8 * Number.EPSILON
+
+/**
  * Split one row of a LEGACY (pre-split) `place_importance` table back into its two components.
  *
  * WHY THIS IS RECOVERABLE AT ALL. The legacy builder ran in two passes: Wikipedia scores first, then `INSERT OR IGNORE`
  * of `min(1, log2(1+pop/1000)/14)` for every place with a population that Wikipedia had missed. So a legacy value is a
- * fallback row IFF it equals {@link referentialFromPopulation} of that place's population to the bit — the two passes
- * wrote different arithmetic, and an IEEE-754 double from Nominatim's four-decimal TSV coinciding exactly with the log2
- * curve is a measure-zero event.
+ * fallback row IFF it reproduces {@link referentialFromPopulation} of that place's population — the two passes wrote
+ * different arithmetic, and a score from Nominatim's four-decimal TSV landing on the log2 curve is a measure-zero
+ * event.
+ *
+ * THE COMPARISON IS ULP-TOLERANT, AND THAT IS NOT DEFENSIVE PADDING. The first version compared for exact bit equality,
+ * which is correct — in the runtime that wrote the values. Cross-checking the same rule in CPython returned 166,638
+ * encyclopedic rows against Node's 133,096: `math.log2` and V8's `Math.log2` disagree by one ULP on 33,542 of the 1.5 M
+ * inputs (worked example: wof 85803233, population 21,299 — stored 0.31992193633838988953, CPython
+ * 0.31992193633838994504, delta 5.55e-17). Bit equality would therefore INVENT 33,542 encyclopedic scores for anyone
+ * who ported this rule to another runtime, and invented data is the failure mode this whole module exists to end. The
+ * tolerance is a few ULP of the score's own magnitude; a genuine Wikipedia value that close to the population curve is
+ * not distinguishable from it by any consequence.
  *
  * MEASURED, not reasoned (2026-08-06, `wof/fst-staging-2026-08-05/admin-global-priority-importance.db`): 1,543,753 rows
- * split 1,377,115 fallback / 166,638 encyclopedic, and the arithmetic closes on itself — 1,377,115 + 142,403
+ * split **1,410,657 fallback / 133,096 encyclopedic**, and the arithmetic closes on itself — 1,410,657 + 108,861
  * (encyclopedic rows that ALSO have a population) = 1,519,518, which is exactly the count of `place_population` rows
  * with `population > 0`, i.e. every row the fallback pass could have written. The remaining 24,235 encyclopedic rows
- * have no population row at all. No row was misattributed in either direction, so the collision this rule could in
- * principle suffer did not occur once across 1.5 M rows.
+ * have no population row at all. Under the exact-equality rule, Node found ZERO mismatches within one ULP, so the
+ * tolerance changes no classification on this database — it only makes the answer runtime-independent.
  *
  * Referential is NOT read out of the legacy column under any branch — it is always re-derived from population, because
  * a legacy Wikipedia row overwrote whatever population would have said.
@@ -207,9 +223,7 @@ export function splitLegacyImportance(
 
 	if (legacy === undefined) return { referential }
 
-	// Bit-equality, not a tolerance: a tolerance would swallow genuine low-importance Wikipedia rows
-	// that happen to land near a small place's population score.
-	if (legacy === referential) return { referential }
+	if (Math.abs(legacy - referential) <= LEGACY_FALLBACK_EPSILON * Math.max(referential, 1)) return { referential }
 
 	return { referential, encyclopedic: legacy }
 }
