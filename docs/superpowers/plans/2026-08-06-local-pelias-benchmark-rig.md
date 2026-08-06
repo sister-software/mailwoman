@@ -166,3 +166,23 @@ Session `019fd8b2-63e4-71f6-931b-0f197276cdf8`, three turns, flash tier.
 - factual claims → falsifiers (§2), graded before trust: interpolation-never-TIGER;
   polylines-planet-only; fits-in-16GB. Outcomes to be recorded here.
 - quantitative predictions: none offered beyond the memory envelope (covered by §2c).
+
+## §7 — Scope addition (2026-08-07, operator): local Nominatim + Photon arms
+
+Same panel, same host, same PBFs (one download feeds all three systems).
+
+- **Nominatim**: `mediagis/nominatim-docker`, release-tag pinned. ONE Postgres; panel PBFs combined
+  with `osmium cat` (no contiguity requirement — add adjacent US states if truth points hug
+  borders). Flatnode file on NVMe; `shared_buffers` 2–4 GB, `maintenance_work_mem` 1–2 GB. Wall
+  time dominated by Nominatim indexing, not PBF load. The exact `osmium cat` command + import
+  parameters join the §5 pin list.
+- **Photon**: builds its Lucene index FROM the Nominatim Postgres (export → standalone serve);
+  `komoot/photon` pinned; JVM capped 6–8 GB, run alone with Postgres buffers lowered. No cheap
+  path avoids the Nominatim dependency; `photon.komoot.io` is an unpinned reference only, never a
+  scored arm.
+- **Ordering, serialized**: Pelias imports → Nominatim import → Photon export. No overlap at 16 GB.
+- **Arms**: five scored — mailwoman 9.0.0, local Pelias, local Nominatim, local Photon, hosted
+  geocode.earth (primary hosted). Public nominatim.openstreetmap.org at 1 rps = sanity check only.
+- **New pre-registration columns** (scope-cost alone cannot separate scoped data from version
+  drift): `system_scope` (planet vs country-subset), `source_vintage`, `interpolation_enabled`
+  (Pelias arms), `result_type` (address/street/locality/POI), `response_version` (hosted captures).
