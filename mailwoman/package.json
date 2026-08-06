@@ -152,6 +152,7 @@
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@types/yauzl-promise": "^4.0.1"
 	},
 	"peerDependencies": {

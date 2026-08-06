@@ -54,8 +54,9 @@ One JSON object per line (blank lines and `#`/`//` comment lines are skipped):
     demo's anchor-centroid fallback (`postcode-us.bin`) must fire instead.
 - `note` / `source` (optional strings): provenance + intent.
 
-Schema validation lives in `scripts/eval/demo-cascade-rows.ts` (unit-tested in
-`demo-cascade-rows.test.ts`); a malformed row fails LOUD naming the row number.
+Schema validation lives in `mailwoman/eval-harness/demo-cascade-rows.ts`
+(unit-tested in `mailwoman/eval-harness/demo-cascade-rows.test.ts`); a malformed
+row fails LOUD naming the row number.
 
 ## Provenance of the initial 21 rows (2026-06-11)
 

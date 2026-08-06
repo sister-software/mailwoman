@@ -28,12 +28,26 @@
  *   - Collects headline numbers into <out-dir>/verdict.json with per-floor PASS/FAIL.
  *   - Exit 0 = every floor met AND the mask-regression lock held; exit 1 = any miss.
  *
- *   The gate SPAWNS the standing probe scorers (`scripts/eval/per-locale-f1.ts`, `score-affix.ts`,
- *   `score-country-homograph.ts`, `de-order-eval.ts`, `external-arenas.ts`,
- *   `demo-cascade-smoke.ts`, `scripts/diagnostic/fr-parse-recall.ts`) exactly as before — those
- *   stay in the scripts drawer pending the probe triage — while the migrated legs (preset-compare,
- *   mask-regression, the verdict assembler) run in-process from this module dir, capturing the
- *   same lines into the same artifact files.
+ *   EVERY leg RUNS IN-PROCESS. The gate spawned eight children (`per-locale-f1`, `score-affix` ×6,
+ *   `score-country-homograph`, `de-order-eval`, `external-arenas`, `demo-cascade-smoke`,
+ *   `fr-parse-recall`), re-serializing typed options into argv and scraping stdout back out of a
+ *   pipe. They are now direct calls into sibling modules with typed options and a line sink,
+ *   following `presetCompare` / `maskRegressionGate` / `assemblePromotionVerdict`. The artifact
+ *   files are unchanged — same names, same bytes — because the sinks reproduce each child's stdout
+ *   line-for-line, and the verdict assembler still reads exactly what it read before.
+ *
+ *   Error semantics are preserved leg-for-leg, because they are not uniform and the differences are
+ *   deliberate. `nothrow` became try/catch-and-continue; a bare `$` (which threw on non-zero) became
+ *   a call whose throw propagates; a leg whose non-zero exit ABORTED the gate (arena, fr-recall)
+ *   still returns 1; the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
+ *   concatenate them in that order. `promotion-gate-sinks.test.ts` pins the table.
+ *
+ *   ONE deliberate difference, and it touches no artifact: a leg whose stderr the gate captured and
+ *   then THREW AWAY (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
+ *   reaches the gate's own stderr, because those modules default `reportError` to `console.error`
+ *   and this file only overrides the sinks it actually files. `$.verbose = false` used to swallow
+ *   them, which is why a 20-minute per-locale leg looked like a hang. Every `.md` is byte-identical
+ *   either way — the gate never wrote those bytes anywhere.
  *
  *   Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
  *
@@ -47,19 +61,38 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, dirname, resolve } from "node:path"
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
+import { readFile } from "node:fs/promises"
+import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { childEnv } from "@mailwoman/core/scripting/utils"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { $ } from "zx"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
 
+import { deOrderEval } from "./de-order-eval.ts"
+import { demoCascadeSmoke } from "./demo-cascade-smoke.ts"
+import { externalArenas } from "./external-arenas.ts"
+import { frParseRecall } from "./fr-parse-recall.ts"
 import { maskRegressionGate } from "./mask-regression.ts"
+import { perLocaleF1 } from "./per-locale-f1.ts"
 import { presetCompare } from "./preset-compare.ts"
 import { assemblePromotionVerdict } from "./promotion-gate-verdict.ts"
+import { scoreAffix, type ScoreAffixOptions } from "./score-affix.ts"
+import { scoreCountryHomograph } from "./score-country-homograph.ts"
+
+/**
+ * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
+ * `.md` the gate writes goes through this, so the artifacts match the pre-migration bytes.
+ *
+ * This is the whole migration's load-bearing assumption in one line. `console.log(x)` writes `x` then a newline, and zx
+ * handed the concatenation of those writes back as `.stdout`; a sink that records one entry per `console.log` call
+ * therefore reproduces the same bytes — INCLUDING a multi-line argument (one call, embedded newlines, one trailing
+ * newline) and a bare `console.log()` (the empty string, one newline). Exported for `promotion-gate-sinks.test.ts`.
+ */
+export function renderLines(lines: readonly string[]): string {
+	return lines.map((line) => `${line}\n`).join("")
+}
 
 interface GateSpec {
 	label: string
@@ -198,10 +231,36 @@ async function runLoreGuards(env: {
 	}
 
 	// --- lore guard: recompile-before-eval --------------------------------------
+	// Was `find core -maxdepth 2 -name '*.ts' -newer core/out -print -quit`. Same shape in-process: the
+	// same two directory levels, the same `.ts` filter, the same reference mtime (`core/out` itself),
+	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `core/` is large.
 	if (existsSync("core/out")) {
-		const found = await $({ nothrow: true })`find core -maxdepth 2 -name ${"*.ts"} -newer core/out -print -quit`
+		const reference = statSync("core/out").mtimeMs
 
-		if (found.stdout.trim()) {
+		const staleSource = ((): string | undefined => {
+			for (const depth1 of readdirSync("core", { withFileTypes: true })) {
+				const path1 = join("core", depth1.name)
+
+				if (depth1.isFile()) {
+					if (depth1.name.endsWith(".ts") && statSync(path1).mtimeMs > reference) return path1
+
+					continue
+				}
+
+				if (!depth1.isDirectory()) continue
+
+				for (const depth2 of readdirSync(path1, { withFileTypes: true })) {
+					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
+					const path2 = join(path1, depth2.name)
+
+					if (statSync(path2).mtimeMs > reference) return path2
+				}
+			}
+
+			return undefined
+		})()
+
+		if (staleSource) {
 			console.error("⚠ core/ sources newer than core/out — run 'yarn compile' or the harness grades stale code")
 		}
 	}
@@ -212,18 +271,39 @@ async function runLoreGuards(env: {
 	// scored 97.5 under every config. Record md5 + the dynamic-quant fingerprint (count of
 	// DynamicQuantizeLinear nodes; 0 = fp32, >0 = int8) of every graded artifact, and hard-assert the
 	// obvious mislabels: --model must be fp32, --int8 must actually be quantized and differ from --model.
-	// grep -c prints 0 + exits 1 on no-match; nothrow keeps the single "0".
+	//
+	// Was `grep -c -a DynamicQuantizeLinear <path>`. grep -c counts MATCHING LINES, not occurrences, and
+	// an ONNX file has no meaningful lines — so the number was only ever read as zero-vs-nonzero, and the
+	// scan below reproduces that reading (it counts newline-delimited chunks carrying the needle, over the
+	// raw bytes, exactly as `grep -a` treated the binary as text). Kept as a STRING because it is
+	// interpolated verbatim into provenance.txt and compared against the literal "0".
 	const dql = async (p: string): Promise<string> => {
-		const r = await $({ nothrow: true })`grep -c -a DynamicQuantizeLinear ${p}`
+		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
+		const buffer = await readFile(p)
 
-		return r.stdout.trim()
+		const NEWLINE = 0x0a
+
+		let count = 0
+		let searchFrom = 0
+
+		for (;;) {
+			const hit = buffer.indexOf(needle, searchFrom)
+
+			if (hit === -1) break
+
+			// One count per matching LINE: charge this line, then resume past its newline so a second
+			// occurrence on the same line cannot be counted twice.
+			count++
+			const lineEnd = buffer.indexOf(NEWLINE, hit)
+
+			if (lineEnd === -1) break
+			searchFrom = lineEnd + 1
+		}
+
+		return String(count)
 	}
 
-	const md5 = async (p: string): Promise<string> => {
-		const r = await $`md5sum ${p}`
-
-		return r.stdout.trim().split(/\s+/)[0] ?? ""
-	}
+	const md5 = async (p: string): Promise<string> => md5File(p)
 
 	// --weights-cache: one artifact (the shipped package int8) — log its provenance, skip the
 	// fp32/int8 dual-artifact assertions (they exist for the --model fp32 + --int8 sibling flow).
@@ -284,13 +364,75 @@ async function runLoreGuards(env: {
 }
 
 /**
+ * Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery lacks (the 2026-06-11
+ * lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on the ship artifact against the slim hot DB
+ * the demo serves. Env-gated like the other artifact-dependent legs: skips LOUD when the DB is absent so CI stays green
+ * without it — but a gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
+ *
+ * Its own function because it is self-contained and `runPromotionGate` is at the statement ceiling; nothing about the
+ * leg's behavior changed in the lift.
+ */
+async function runDemoCascadeLeg(env: {
+	outDir: string
+	shipModel: string
+	tokenizer: string
+	card: string
+	gazetteerLexicon: string
+}): Promise<void> {
+	const { outDir, shipModel, tokenizer, card, gazetteerLexicon } = env
+	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
+
+	if (!existsSync(HOT_DB)) {
+		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`
+		writeFileSync(`${outDir}/cascade-smoke.md`, msg + "\n")
+
+		console.error(msg)
+
+		return
+	}
+
+	// nothrow parity: a refusal (missing artifacts / malformed rows) comes back as a non-zero exitCode,
+	// and an unexpected throw is caught and treated the same way. Only the OUT sink reaches the .md —
+	// the child's stderr went nowhere, so a preflight refusal still leaves an empty cascade-smoke.md
+	// and only the gate's own line below explains it.
+	const cascadeLines: string[] = []
+	let cascadeExit: number
+
+	try {
+		const cascade = await demoCascadeSmoke(
+			{
+				db: HOT_DB,
+				stageDir: dirname(HOT_DB),
+				model: shipModel,
+				tokenizer,
+				card,
+				gazetteerLexicon,
+				json: `${outDir}/cascade-smoke.json`,
+			},
+			(line) => cascadeLines.push(line)
+		)
+
+		cascadeExit = cascade.exitCode
+	} catch (error) {
+		console.error(error instanceof Error ? (error.stack ?? error.message) : String(error))
+
+		cascadeExit = 1
+	}
+
+	writeFileSync(`${outDir}/cascade-smoke.md`, renderLines(cascadeLines))
+
+	if (cascadeExit !== 0) {
+		console.error(
+			`✗ demo-cascade smoke errored (see ${outDir}/cascade-smoke.md) — no sidecar; a floored gate spec will FAIL`
+		)
+	}
+}
+
+/**
  * Run the full promotion-gate battery. Returns the process exit code: 0 = every floor met AND the mask-regression lock
  * held, 1 = any miss, 2 = usage / lore-guard refusal.
  */
 export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
-	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash redirects did.
-	$.verbose = false
-
 	const MODEL = options.model ?? ""
 	const INT8 = options.int8 ?? ""
 	const GATE = options.gate ? resolveGateSpecPath(options.gate) : ""
@@ -333,10 +475,17 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	if (guardExit !== null) return guardExit
 
-	const GAZ_ARGS: string[] = []
+	// The spec-declared channel config every scorer shares. Was an argv fragment (`GAZ_ARGS`) spliced
+	// into eight command lines; it is now one typed object spread into eight calls, which is the same
+	// contract with the stringly-typed step removed.
+	const channelOptions: Pick<
+		ScoreAffixOptions,
+		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
+	> = {}
 
 	if (gate.requires_gazetteer_lexicon === true) {
-		GAZ_ARGS.push("--gazetteer-lexicon", GAZ, "--suppress-gaz-near-postcode")
+		channelOptions.gazetteerLexicon = GAZ
+		channelOptions.suppressGazNearPostcode = true
 	}
 
 	// Conventions channel (#511 Tier A): when the gate spec declares requires_conventions, every scorer
@@ -345,21 +494,19 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const CONV_MODE = gate.requires_conventions ?? ""
 
 	if (CONV_MODE) {
-		GAZ_ARGS.push("--conventions", CONV_MODE)
+		channelOptions.conventions = CONV_MODE
 	}
 
 	// Span-bridge channel (v4.4.0 corrective): spec-declared like the conventions mask.
 	let BRIDGE_MODE = ""
 
 	if (gate.requires_bridge === true) {
-		GAZ_ARGS.push("--bridge-gaps")
+		channelOptions.bridgeGaps = true
 		BRIDGE_MODE = "1"
 	}
 
 	// The answer key is part of the ship config, exactly like the gaz flags and the conventions mask.
 	// Recorded in the provenance line so a verdict says WHICH key produced it.
-	const GOLDEN_ARGS = gate.golden_dir ? ["--golden-dir", gate.golden_dir] : []
-
 	if (gate.golden_dir) {
 		console.log(`golden dir: ${gate.golden_dir} (spec-declared)`)
 	}
@@ -369,64 +516,111 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const runBattery = async (m: string, tag: string): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// Package-shaped (#718): the metric probes (which support --weights-cache) load ALL channels —
+		// Package-shaped (#718): the metric probes (which support weightsCache) load ALL channels —
 		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
 		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = WC_MODEL when WC.
-		const plFlags = WC
-			? ["--weights-cache", WC]
-			: ["--model", m, "--tokenizer", TOK, "--model-card", CARD, "--model-anchor-lookup", String(LK)]
+		const plOptions = WC
+			? { weightsCache: WC }
+			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: String(LK) }
 
-		const probeFlags = WC ? ["--weights-cache", WC] : ["--model", m]
+		const probeOptions = WC ? { weightsCache: WC } : { model: m }
 
-		const perLocale =
-			await $`node scripts/eval/per-locale-f1.ts ${plFlags} ${GOLDEN_ARGS} ${GAZ_ARGS} --out-json ${`${OUT_DIR}/${tag}-per-locale.json`}`
+		// Each leg below captured a child's stdout into one `.md`. In-process the sink collects the same
+		// lines and `renderLines` re-adds the newline console.log would have. A bare `$` THREW on a
+		// non-zero exit, aborting the gate — these calls throw the same way, so the abort behavior for
+		// the metric probes is unchanged.
+		const perLocaleLines: string[] = []
 
-		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, perLocale.stdout)
+		await perLocaleF1(
+			{
+				...plOptions,
+				// Spec-declared, and spelled out rather than spread: per-locale-f1 names the lexicon field
+				// `gazetteerLexiconPath` where the affix probes call it `gazetteerLexicon`, and a spread would
+				// have carried the wrong key silently past TypeScript into a channel that stayed unfed.
+				...(gate.golden_dir ? { goldenDir: gate.golden_dir } : {}),
+				...(channelOptions.gazetteerLexicon ? { gazetteerLexiconPath: channelOptions.gazetteerLexicon } : {}),
+				...(channelOptions.suppressGazNearPostcode ? { suppressGazNearPostcode: true } : {}),
+				...(channelOptions.conventions ? { conventions: channelOptions.conventions } : {}),
+				...(channelOptions.bridgeGaps ? { bridgeGaps: true } : {}),
+				outJSON: `${OUT_DIR}/${tag}-per-locale.json`,
+			},
+			(line) => perLocaleLines.push(line)
+		)
 
-		const affix =
-			await $`node scripts/eval/score-affix.ts ${probeFlags} ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-affix.json`}`
+		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, renderLines(perLocaleLines))
 
-		writeFileSync(`${OUT_DIR}/${tag}-affix.md`, affix.stdout)
+		// One helper for the SIX score-affix legs — the gate's most repeated spawn, and the migration's
+		// clearest win: `file`/`json` are the only things that varied.
+		const runAffix = async (mdName: string, extra: ScoreAffixOptions): Promise<void> => {
+			const lines: string[] = []
 
-		const unit =
-			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/unit-real-designators.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-unit.json`}`
+			await scoreAffix({ ...probeOptions, ...channelOptions, ...extra }, (line) => lines.push(line))
 
-		writeFileSync(`${OUT_DIR}/${tag}-unit.md`, unit.stdout)
+			writeFileSync(`${OUT_DIR}/${mdName}`, renderLines(lines))
+		}
 
-		const country =
-			await $`node scripts/eval/score-country-homograph.ts ${probeFlags} ${GAZ_ARGS} --suppress-gaz-near-postcode --json ${`${OUT_DIR}/${tag}-country.json`}`
+		await runAffix(`${tag}-affix.md`, { json: `${OUT_DIR}/${tag}-affix.json` })
 
-		writeFileSync(`${OUT_DIR}/${tag}-country.md`, country.stdout)
+		await runAffix(`${tag}-unit.md`, {
+			file: "data/eval/external/unit-real-designators.jsonl",
+			json: `${OUT_DIR}/${tag}-unit.json`,
+		})
+
+		const countryLines: string[] = []
+
+		await scoreCountryHomograph(
+			{
+				...probeOptions,
+				...channelOptions,
+				// The country probe ALWAYS suppresses gaz clues near a postcode, whether or not the spec
+				// asked for the gaz channel — this flag was hard-coded on its command line.
+				suppressGazNearPostcode: true,
+				json: `${OUT_DIR}/${tag}-country.json`,
+			},
+			(line) => countryLines.push(line)
+		)
+
+		writeFileSync(`${OUT_DIR}/${tag}-country.md`, renderLines(countryLines))
 
 		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
-		const pobox =
-			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/po-box-cedex-val.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-pobox.json`}`
+		await runAffix(`${tag}-pobox.md`, {
+			file: "data/eval/external/po-box-cedex-val.jsonl",
+			json: `${OUT_DIR}/${tag}-pobox.json`,
+		})
 
-		writeFileSync(`${OUT_DIR}/${tag}-pobox.md`, pobox.stdout)
+		await runAffix(`${tag}-intersection.md`, {
+			file: "data/eval/external/intersection-real.jsonl",
+			json: `${OUT_DIR}/${tag}-intersection.json`,
+		})
 
-		const intersection =
-			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-real.jsonl ${GAZ_ARGS} --json ${`${OUT_DIR}/${tag}-intersection.json`}`
+		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488).
+		// No sidecar: these two never passed --json.
+		await runAffix(`${tag}-watch-intersection-vt.md`, { file: "data/eval/external/intersection-golden-vt.jsonl" })
+		await runAffix(`${tag}-watch-glue.md`, { file: "data/eval/external/glue-rows-perturb.jsonl" })
 
-		writeFileSync(`${OUT_DIR}/${tag}-intersection.md`, intersection.stdout)
+		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — the
+		// try/catch is the in-process `nothrow:`, and the two sinks concatenated below are the
+		// `${stdout}${stderr}` the gate wrote before.
+		const deorderOut: string[] = []
+		const deorderErr: string[] = []
 
-		// Watch lenses (v4.4.0+, recorded not floored — one release of history before promotion, #488):
-		const watchVt =
-			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/intersection-golden-vt.jsonl ${GAZ_ARGS}`
+		try {
+			await deOrderEval(
+				{
+					model: m,
+					card: EFF_CARD,
+					tokenizer: EFF_TOK,
+					anchorLookup: String(LK),
+					out: `${OUT_DIR}/${tag}-deorder`,
+				},
+				(line) => deorderOut.push(line),
+				(line) => deorderErr.push(line)
+			)
+		} catch (error) {
+			deorderErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
+		}
 
-		writeFileSync(`${OUT_DIR}/${tag}-watch-intersection-vt.md`, watchVt.stdout)
-
-		const watchGlue =
-			await $`node scripts/eval/score-affix.ts ${probeFlags} --file data/eval/external/glue-rows-perturb.jsonl ${GAZ_ARGS}`
-
-		writeFileSync(`${OUT_DIR}/${tag}-watch-glue.md`, watchGlue.stdout)
-
-		// de-order-eval tolerates its own non-zero regression exit (it wrote a valid report) — nothrow,
-		// combine stdout+stderr like the bash `> … 2>&1 || true`.
-		const deorder = await $({
-			nothrow: true,
-		})`node scripts/eval/de-order-eval.ts --model ${m} --card ${EFF_CARD} --tokenizer ${EFF_TOK} --anchor-lookup ${LK} --out ${`${OUT_DIR}/${tag}-deorder`}`
-
-		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${deorder.stdout}${deorder.stderr}`)
+		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${renderLines(deorderOut)}${renderLines(deorderErr)}`)
 	}
 
 	// --weights-cache grades the single shipped package (int8) in the primary slot; the verdict reads
@@ -460,27 +654,13 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	// the ship artifact against the slim hot DB the demo serves. Env-gated like the other
 	// artifact-dependent legs: skips LOUD when the DB is absent so CI stays green without it — but a
 	// gate spec that floors `cascade.demo_smoke` will then FAIL on the missing sidecar (by design).
-	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
-	const HOT_STAGE = dirname(HOT_DB)
-
-	if (existsSync(HOT_DB)) {
-		const cascade = await $({
-			nothrow: true,
-		})`node scripts/eval/demo-cascade-smoke.ts --db ${HOT_DB} --stage-dir ${HOT_STAGE} --model ${shipModel} --tokenizer ${EFF_TOK} --card ${EFF_CARD} --gazetteer-lexicon ${GAZ} --json ${`${OUT_DIR}/cascade-smoke.json`}`
-
-		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, cascade.stdout)
-
-		if (cascade.exitCode !== 0) {
-			console.error(
-				`✗ demo-cascade smoke errored (see ${OUT_DIR}/cascade-smoke.md) — no sidecar; a floored gate spec will FAIL`
-			)
-		}
-	} else {
-		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`
-		writeFileSync(`${OUT_DIR}/cascade-smoke.md`, msg + "\n")
-
-		console.error(msg)
-	}
+	await runDemoCascadeLeg({
+		outDir: OUT_DIR,
+		shipModel,
+		tokenizer: EFF_TOK,
+		card: EFF_CARD,
+		gazetteerLexicon: GAZ,
+	})
 
 	// Arena leg (v4.4.0+: arena.perturb is a floor when the spec declares it) — heavy, ship artifact only.
 	if ("arena.perturb" in (gate.floors ?? {})) {
@@ -489,32 +669,37 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		// went to core/out/data/... while the data lives at core/data/.... A local core/out/data symlink
 		// bridged the gap. #481 fixed the detection — the compiled tree now reads core/data directly — so
 		// no bridge is needed here anymore.)
-		// Flags replace the bash-era env threading (external-arenas converted to parseArgs).
-		const arenaArgs = [
-			"--model",
-			shipModel,
-			"--tokenizer",
-			EFF_TOK,
-			"--model-card",
-			EFF_CARD,
-			"--gazetteer-lexicon",
-			GAZ,
-			"--anchor-lookup",
-			String(LK),
-			"--out-dir",
-			`${OUT_DIR}/arenas`,
-			...(CONV_MODE ? ["--conventions", CONV_MODE] : []),
-			...(BRIDGE_MODE ? ["--bridge-gaps"] : []),
-		]
+		// Typed options replace the argv the bash-era env threading had already become.
+		const arenaOut: string[] = []
+		const arenaErr: string[] = []
+		let arenaFailed = false
 
-		const arena = await $({
-			nothrow: true,
-		})`node scripts/eval/external-arenas.ts ${arenaArgs}`
+		try {
+			await externalArenas(
+				{
+					model: shipModel,
+					tokenizer: EFF_TOK,
+					modelCard: EFF_CARD,
+					gazetteerLexicon: GAZ,
+					anchorLookup: String(LK),
+					outDir: `${OUT_DIR}/arenas`,
+					...(CONV_MODE ? { conventions: CONV_MODE } : {}),
+					...(BRIDGE_MODE ? { bridgeGaps: true } : {}),
+				},
+				(line) => arenaOut.push(line),
+				(line) => arenaErr.push(line)
+			)
+		} catch (error) {
+			// The child's non-zero exit is a throw in-process. It still lands in arenas.md — the old
+			// capture merged stderr in, and a zx ProcessOutput carried the failing child's output there.
+			arenaErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
+			arenaFailed = true
+		}
 
-		writeFileSync(`${OUT_DIR}/arenas.md`, `${arena.stdout}${arena.stderr}`)
+		writeFileSync(`${OUT_DIR}/arenas.md`, `${renderLines(arenaOut)}${renderLines(arenaErr)}`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
-		if (arena.exitCode !== 0) {
+		if (arenaFailed) {
 			return 1
 		}
 	}
@@ -526,14 +711,35 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const bareStreetFloor = (gate.floors ?? {})["fr.bare_street_intact"]
 
 	if (bareStreetFloor !== undefined) {
-		const bare = await $({
-			nothrow: true,
-			env: childEnv(),
-		})`node scripts/diagnostic/fr-parse-recall.ts --model ${shipModel} --tokenizer ${EFF_TOK} --model-card ${EFF_CARD} --floor ${String(bareStreetFloor)} --json ${`${OUT_DIR}/fr-bare-street.json`}`
+		// The `env: childEnv()` this spawn carried is gone with the child — an in-process call already
+		// runs under the gate's own environment, which is what childEnv() was reconstructing.
+		const bareOut: string[] = []
+		const bareErr: string[] = []
+		let barePassed: boolean
 
-		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${bare.stdout}${bare.stderr}`)
+		try {
+			const bare = await frParseRecall(
+				{
+					model: shipModel,
+					tokenizer: EFF_TOK,
+					modelCard: EFF_CARD,
+					floor: String(bareStreetFloor),
+					json: `${OUT_DIR}/fr-bare-street.json`,
+				},
+				(line) => bareOut.push(line),
+				(line) => bareErr.push(line)
+			)
 
-		if (bare.exitCode !== 0) {
+			barePassed = bare.pass
+		} catch (error) {
+			// nothrow parity: a crash was a non-zero exit, which failed the floor.
+			bareErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
+			barePassed = false
+		}
+
+		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${renderLines(bareOut)}${renderLines(bareErr)}`)
+
+		if (!barePassed) {
 			console.error(`✗ fr.bare_street_intact FAIL (floor ${bareStreetFloor}%) — see ${OUT_DIR}/fr-bare-street.md`)
 
 			return 1
