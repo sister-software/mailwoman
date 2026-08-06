@@ -36,6 +36,13 @@ This document defines the canonical `ComponentTag` union. It is the single sourc
 
 #### The US street split is canonical — `street_suffix` is its own span
 
+> **The terminal-suffix rule (operator-ratified 2026-08-06).** Apply only the terminal street suffix.
+> Earlier suffix-like tokens remain part of the street name unless they are the final suffix element.
+> Preserve post-directionals separately. So `Finel Hollow Road` → street `Finel Hollow` + suffix `Road`,
+> while `Sutton Hollow` → street `Sutton` + suffix `Hollow` (terminal there) — the arrival of a later
+> suffix reverts the earlier ambiguous token to the name. Suffix spans never extend beyond one word;
+> a model emitting `Hollow Road` as a suffix is making a suffix-BOUNDARY error, not a recognition error.
+
 For a **US** address the street type is a SEPARATE span. `6220 SE Salmon St` is four components,
 not two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
 `street_suffix: "St"`. `street` never carries the type.

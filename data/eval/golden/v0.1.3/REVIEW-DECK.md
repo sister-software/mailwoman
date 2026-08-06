@@ -1,5 +1,15 @@
 # Golden street-suffix relabel review deck — v0.1.2 → v0.1.3
 
+> **RULED 2026-08-06 (operator): KEEP every applied split.** The rule, verbatim: "Apply only the TERMINAL
+> street suffix. Earlier suffix-like tokens remain part of the street name unless they are the final suffix
+> element. Preserve post-directionals separately." Consequences: `Finel Hollow Road` -> street `Finel Hollow` +
+> suffix `Road`; `Sutton Hollow` -> street `Sutton` + suffix `Hollow` (Hollow is terminal there); `Stevens Hill W`
+> -> street `Stevens` + suffix `Hill` + post-directional `W`. The arrival of a later suffix reverts the earlier
+> ambiguous token to the name. Semantically odd remainders (`High Manor`, `East`) stand: the parse reflects
+> authoritative segmentation (Pub-28/TIGER), not human intuition, and the formatter is lossless. The model's
+> 125-row over-greed is therefore a SUFFIX-BOUNDARY error (recognition is fine; the span extends too far) —
+> tracked with its training lever in the next-run notes.
+
 Rows are deduped to the top-level files (`dev/` and `test/` carry the same rows).
 A flag is a REVIEW TRIGGER, not an adjudication: the split below is already applied.
 
