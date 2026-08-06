@@ -153,6 +153,7 @@ describe("command option names never collide with the root program's flags", () 
 				.replace(/\.tsx$/, "")
 				.split(sep)
 				.join(" ")
+
 			const text = await readFile(file, "utf8")
 			const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)
 			const binding = findOptionsBinding(source)
@@ -164,6 +165,7 @@ describe("command option names never collide with the root program's flags", () 
 
 			if (!literal) {
 				unparsed.push(`${commandPath}: exports \`${binding}\` as options, but its zod.object literal was not found`)
+
 				continue
 			}
 

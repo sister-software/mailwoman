@@ -51,6 +51,7 @@ const { values } = parseArgs({
 if (!values.bin) throw new Error("--bin <postcode-gb.bin> is required")
 
 const lookup = new PostcodeBinaryResolver(new Uint8Array(readFileSync(values.bin))).toAnchorLookup()
+
 console.log(`anchorLookupPath ${values.bin}`)
 console.log(`anchor lookup keys: ${lookup.size.toLocaleString()}`)
 
@@ -94,6 +95,7 @@ for (const register of ["asis", "lower", "upper"] as const) {
 
 			if (lookup.get(key)) {
 				hit = true
+
 				viaUnit++
 
 				break
@@ -101,6 +103,7 @@ for (const register of ["asis", "lower", "upper"] as const) {
 
 			if (GB_UNIT_KEY.test(key) && lookup.get(key.slice(0, -GB_INWARD_LENGTH))) {
 				hit = true
+
 				viaOutward++
 
 				break
@@ -120,5 +123,7 @@ for (const register of ["asis", "lower", "upper"] as const) {
 			`no shaped span ${noSpan} · span-but-no-key ${spanMiss}`
 	)
 
-	if (missed.length) console.log(`       span-but-no-key: ${JSON.stringify(missed.slice(0, 6))}`)
+	if (missed.length) {
+		console.log(`       span-but-no-key: ${JSON.stringify(missed.slice(0, 6))}`)
+	}
 }

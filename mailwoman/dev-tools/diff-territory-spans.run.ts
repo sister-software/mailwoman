@@ -25,6 +25,7 @@ import { createRuntimePipeline } from "mailwoman"
 import { TextSpliterator } from "spliterator"
 
 const REGISTERS = ["asis", "lower", "upper", "comma-drop"] as const
+
 type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArgs({

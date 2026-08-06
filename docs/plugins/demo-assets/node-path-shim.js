@@ -56,9 +56,13 @@ export function normalize(p) {
 	const normalized = normalizeParts(p.split("/"), !absolute).join("/")
 	let result = normalized
 
-	if (!result && !absolute) result = "."
+	if (!result && !absolute) {
+		result = "."
+	}
 
-	if (result && trailingSlash) result += "/"
+	if (result && trailingSlash) {
+		result += "/"
+	}
 
 	return absolute ? `/${result}` : result
 }

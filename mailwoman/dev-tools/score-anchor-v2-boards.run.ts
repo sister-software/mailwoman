@@ -42,6 +42,7 @@ import { createRuntimePipeline } from "mailwoman"
 import { JSONSpliterator } from "spliterator"
 
 const REGISTERS = ["asis", "lower", "upper"] as const
+
 type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArgs({
@@ -164,6 +165,7 @@ if (board === "gb") {
 				const gold = row.components[tag]
 
 				if (!gold) continue
+
 				b.perRegister[reg].total++
 				const got = (byTag.get(tag) ?? []).join(" ")
 
@@ -181,6 +183,7 @@ if (board === "gb") {
 			const stripped = text.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
 			const strippedTags = await tagsFor(stripped)
 			spans.push(serializeTags(`${reg}-commafree\t${row.raw}`, strippedTags))
+
 			depLocCommaFree.perRegister[reg].total++
 			const got = (strippedTags.get("dependent_locality") ?? []).join(" ")
 
@@ -194,6 +197,7 @@ if (board === "gb") {
 
 	console.log(`\n=== gb-golden · ${values.label} · locale ${locale} ===`)
 	console.log("board                                   hit/total   per register")
+
 	reportBoard("exact postcode", postcode)
 	reportBoard("exact dependent_locality", depLoc)
 	reportBoard("dependent_locality comma-STRIPPED", depLocCommaFree)
@@ -219,6 +223,7 @@ if (board === "gb") {
 
 			for (const [tag, gold] of Object.entries(row.expect ?? {})) {
 				if (!gold.length) continue
+
 				// The gold `street` is the whole street NAME; the model emits it as a family
 				// (prefix/name/particle/suffix). `parity-corpus.ts`'s floor compares the assembled family, so a
 				// bare tag-vs-tag read of `street` scores a correct parse as a miss. Assemble the same family.
@@ -229,6 +234,7 @@ if (board === "gb") {
 
 				const b = boards.get(tag) ?? emptyBoard()
 				boards.set(tag, b)
+
 				b.perRegister[reg].total++
 				const got = emitted.join(" ")
 
@@ -274,5 +280,6 @@ if (values["dump-spans"]) {
 
 if (values["dump-misses"]) {
 	writeFileSync(values["dump-misses"], misses.map((m) => JSON.stringify(m)).join("\n") + "\n")
+
 	console.log(`misses → ${values["dump-misses"]} (${misses.length})`)
 }

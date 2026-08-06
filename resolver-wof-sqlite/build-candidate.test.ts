@@ -327,6 +327,7 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc, false)
 
 		const phases: string[] = []
+
 		const result = await buildCandidateTable({
 			input,
 			output,

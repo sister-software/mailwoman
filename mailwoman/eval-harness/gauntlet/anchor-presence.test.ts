@@ -58,6 +58,7 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("names the repair — the package's own link-dev-weights script", () => {
 		const root = fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
+
 		const error = (() => {
 			try {
 				assertDeclaredAnchorBins(["zz-zz"], root)

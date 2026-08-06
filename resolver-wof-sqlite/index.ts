@@ -42,6 +42,7 @@ export {
 	ingestGeonamesAliases,
 	purgeGeonamesAliasRange,
 } from "./geonames-aliases.ts"
+
 export { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
 
 export { ADDRESS_POINT_COLUMNS, createAddressPointIndexes, createAddressPointTable } from "./address-point-schema.ts"
