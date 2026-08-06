@@ -35,7 +35,7 @@
 import { spawnSync } from "node:child_process"
 import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { resolve } from "node:path"
+import { basename, resolve } from "node:path"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
@@ -374,7 +374,10 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	if (localitySurfaceLexicon) {
-		const dst = `${BUCKET_PATH}/${remoteBase}/locality-surface-lexicon-v6.json`
+		// Staged by SOURCE basename (was a hardcoded v6 name until 9.0.0): publish.yml's preflight
+		// HEAD-checks the exact generation the release ships (v7 as of the v4.2.0 base), so the
+		// remote name must follow the artifact, not a frozen string.
+		const dst = `${BUCKET_PATH}/${remoteBase}/${basename(localitySurfaceLexicon)}`
 
 		console.error(`  → ${dst}`)
 
