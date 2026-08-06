@@ -23,22 +23,17 @@ if [ -n "$STAGED" ]; then
 	# path-independent — verified: explicit paths keep every rule active.
 	CODE=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx)$' || true)
 	if [ -n "$CODE" ]; then
-		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint
+		printf '%s\n' "$CODE" | tr '\n' '\0' | xargs -0 yarn oxlint --fix
 	fi
 
-	# oxfmt errors when NO path in the list is a target (e.g. a commit staging only .yml/.sh), so
-	# scope it to the types it formats (probed on oxfmt 0.56; drift here is caught by CI's full
-	# `yarn lint` anyway).
+	# oxfmt auto-formats (no --check flag). Errors when NO path in the list is a target (e.g. a
+	# commit staging only .yml/.sh), so scope it to the types it formats.
 	FMT=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx|json|jsonc|md|mdx|toml|css|html)$' || true)
 	if [ -n "$FMT" ]; then
-		# oxfmt exits nonzero when EVERY listed path is excluded by its ignore rules (e.g. a commit
-		# staging only generated JSON under docs/static/sbom/ — bit the 8.2.0 SBOM commit). That case
-		# is a no-op, not a failure; real format issues still fail via the output check.
-		FMT_OUT=$(printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --check 2>&1) || {
+		printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --write 2>&1 || {
 			if printf '%s' "$FMT_OUT" | grep -q "may have been excluded by ignore rules"; then
-				echo "pre-commit: all staged format targets are oxfmt-excluded — skipping format check"
+				echo "pre-commit: all staged format targets are oxfmt-excluded — skipping format"
 			else
-				printf '%s\n' "$FMT_OUT"
 				exit 1
 			fi
 		}
@@ -48,12 +43,15 @@ if [ -n "$STAGED" ]; then
 	# ANYTHING under corpus-python/ is staged (pyproject/modal edits must keep agreeing).
 	PY=$(printf '%s\n' "$STAGED" | grep -E '^corpus-python/.*\.py$' || true)
 	if [ -n "$PY" ]; then
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 check
-		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 format --check
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 check --fix
+		printf '%s\n' "$PY" | tr '\n' '\0' | xargs -0 uvx ruff@0.15.20 format
 	fi
 	if printf '%s\n' "$STAGED" | grep -q '^corpus-python/'; then
 		python3 corpus-python/scripts/verify_toolchain.py
 	fi
+
+	# Re-stage fixed files so they're included in the commit
+	printf '%s\n' "$STAGED" | tr '\n' '\0' | xargs -0 git add
 fi
 
 # CLI-reference freshness (2026-08-05): the docs CI gate asserts docs/articles/developers/reference/
