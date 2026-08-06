@@ -1,0 +1,207 @@
+{
+	"version": "v0.1.3",
+	"parent": "v0.1.2",
+	"generated_at": "2026-08-06T03:41:53.124Z",
+	"tool": "corpus/src/tools/golden-relabel-street.ts (mailwoman corpus golden-relabel)",
+	"commit": "2799eeb31701c695f3bd7b3c49e4e357dc7d302c",
+	"convention": {
+		"street_convention": {
+			"US": "split",
+			"*": "folded"
+		},
+		"declared": "US street spans are labeled SPLIT: a leading directional is its own `street_prefix` span, the Pub-28 street type (plus a post-directional, when one trails it) is its own `street_suffix` span, and `street` carries only the name. Non-US rows keep the folded convention of the parent version. A scorer that folds `street_prefix`/`street`/`street_suffix` back together before comparing is NOT grading this answer key.",
+		"instrument": "@mailwoman/codex/us — matchTrailingSuffix (USPS Pub-28 Appendix C) for the type, isStreetDirectionalToken for the directionals",
+		"left_folded": "single-token streets, streets that are entirely one suffix word, bare post-directional tails, and any street whose trailing word is not in the Pub-28 table",
+		"prefix_split": true
+	},
+	"counts": {
+		"changed": 3906,
+		"flagged": 140,
+		"prefix_split": 566,
+		"per_file": {
+			"adversarial.jsonl": {
+				"split-suffix": 42,
+				"split-suffix-postdirectional": 4,
+				"split-prefix-only": 0,
+				"already-split": 0,
+				"single-token": 2,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 0,
+				"no-suffix-match": 0,
+				"no-street": 4,
+				"not-us": 2,
+				"untrimmed-street": 0
+			},
+			"dev/adversarial.jsonl": {
+				"split-suffix": 37,
+				"split-suffix-postdirectional": 4,
+				"split-prefix-only": 0,
+				"already-split": 0,
+				"single-token": 2,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 0,
+				"no-suffix-match": 0,
+				"no-street": 4,
+				"not-us": 2,
+				"untrimmed-street": 0
+			},
+			"dev/fr.jsonl": {
+				"split-suffix": 0,
+				"split-suffix-postdirectional": 0,
+				"split-prefix-only": 0,
+				"already-split": 0,
+				"single-token": 0,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 0,
+				"no-suffix-match": 0,
+				"no-street": 0,
+				"not-us": 1546,
+				"untrimmed-street": 0
+			},
+			"dev/us.jsonl": {
+				"split-suffix": 1366,
+				"split-suffix-postdirectional": 314,
+				"split-prefix-only": 39,
+				"already-split": 2,
+				"single-token": 13,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 13,
+				"no-suffix-match": 248,
+				"no-street": 665,
+				"not-us": 0,
+				"untrimmed-street": 0
+			},
+			"fr.jsonl": {
+				"split-suffix": 0,
+				"split-suffix-postdirectional": 0,
+				"split-prefix-only": 0,
+				"already-split": 0,
+				"single-token": 0,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 0,
+				"no-suffix-match": 0,
+				"no-street": 0,
+				"not-us": 1551,
+				"untrimmed-street": 0
+			},
+			"test/adversarial.jsonl": {
+				"split-suffix": 5,
+				"split-suffix-postdirectional": 0,
+				"split-prefix-only": 0,
+				"already-split": 0,
+				"single-token": 0,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 0,
+				"no-suffix-match": 0,
+				"no-street": 0,
+				"not-us": 0,
+				"untrimmed-street": 0
+			},
+			"test/fr.jsonl": {
+				"split-suffix": 0,
+				"split-suffix-postdirectional": 0,
+				"split-prefix-only": 0,
+				"already-split": 0,
+				"single-token": 0,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 0,
+				"no-suffix-match": 0,
+				"no-street": 0,
+				"not-us": 155,
+				"untrimmed-street": 0
+			},
+			"test/us.jsonl": {
+				"split-suffix": 151,
+				"split-suffix-postdirectional": 29,
+				"split-prefix-only": 8,
+				"already-split": 0,
+				"single-token": 1,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 3,
+				"no-suffix-match": 29,
+				"no-street": 75,
+				"not-us": 0,
+				"untrimmed-street": 0
+			},
+			"us.jsonl": {
+				"split-suffix": 1517,
+				"split-suffix-postdirectional": 343,
+				"split-prefix-only": 47,
+				"already-split": 2,
+				"single-token": 14,
+				"suffix-only-street": 0,
+				"postdirectional-tail-only": 16,
+				"no-suffix-match": 277,
+				"no-street": 740,
+				"not-us": 0,
+				"untrimmed-street": 0
+			}
+		}
+	},
+	"files": {
+		"adversarial.jsonl": {
+			"entries": 54,
+			"sha256": "e2ee4e3fbd03530293cb798b5aa90c2049d9261607be94d220cb7206c52ac19b",
+			"changed": 46,
+			"flagged": 0,
+			"prefix_split": 10
+		},
+		"dev/adversarial.jsonl": {
+			"entries": 49,
+			"sha256": "8d8c1f2e2a58a38dd6ea62a899597e8f4ddea04abb095be707cb197fe68ddbf4",
+			"changed": 41,
+			"flagged": 0,
+			"prefix_split": 8
+		},
+		"dev/fr.jsonl": {
+			"entries": 1546,
+			"sha256": "0872112be826485f4af1b095d00561573be8e0fdc660853e7178a0476d6258d3",
+			"changed": 0,
+			"flagged": 0,
+			"prefix_split": 0
+		},
+		"dev/us.jsonl": {
+			"entries": 2660,
+			"sha256": "55acf92f955954fa43f3fa4e06f8be527d10287a276954860b7009f60dbb3c76",
+			"changed": 1719,
+			"flagged": 64,
+			"prefix_split": 246
+		},
+		"fr.jsonl": {
+			"entries": 1551,
+			"sha256": "29d72dcd34ea2a576459b78be57ba3c0febd353d4b88bf801772ccdb415f46f6",
+			"changed": 0,
+			"flagged": 0,
+			"prefix_split": 0
+		},
+		"test/adversarial.jsonl": {
+			"entries": 5,
+			"sha256": "b3ab4498f98691734873a50194ce1e1bc347769bbfe57a62cd3b5663b3cd2618",
+			"changed": 5,
+			"flagged": 0,
+			"prefix_split": 2
+		},
+		"test/fr.jsonl": {
+			"entries": 155,
+			"sha256": "b02addc783e83d7a243b8e68598c50e4f97098db39ab69e6129379083460ea96",
+			"changed": 0,
+			"flagged": 0,
+			"prefix_split": 0
+		},
+		"test/us.jsonl": {
+			"entries": 296,
+			"sha256": "11e17e37e64160716bb0000b450037036b06b2db16d09cd970758db8e70be038",
+			"changed": 188,
+			"flagged": 6,
+			"prefix_split": 27
+		},
+		"us.jsonl": {
+			"entries": 2956,
+			"sha256": "662247dd9b7e964abc5fe133e86f15b91e5d8f24a873add64b7a9d5aaab92f3f",
+			"changed": 1907,
+			"flagged": 70,
+			"prefix_split": 273
+		}
+	},
+	"review_deck": "REVIEW-DECK.jsonl"
+}

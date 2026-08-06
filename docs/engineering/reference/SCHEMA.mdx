@@ -26,13 +26,54 @@ This document defines the canonical `ComponentTag` union. It is the single sourc
 | Tag                      | Description                                    | Example                            |
 | ------------------------ | ---------------------------------------------- | ---------------------------------- |
 | `house_number`           | Building number on a street                    | `6220`, `12bis`                    |
-| `street`                 | Street name proper                             | `Salmon St`, `République`          |
+| `street`                 | Street name proper, WITHOUT its type           | `Salmon`, `République`             |
 | `street_prefix`          | Directional or descriptive prefix (Anglophone) | `SE`, `North`                      |
 | `street_prefix_particle` | Non-English grammatical particle (FR)          | `de la`, `du`, `des`               |
 | `street_suffix`          | Street type suffix (Anglophone)                | `Street`, `Boulevard`, `Ave`       |
 | `intersection_a`         | First street of an intersection query          | `5th Ave` (in "5th Ave & 42nd St") |
 | `intersection_b`         | Second street of an intersection query         | `42nd St` (in "5th Ave & 42nd St") |
 | `unit`                   | Apartment, suite, floor                        | `Apt 4B`, `Suite 200`, `5e étage`  |
+
+#### The US street split is canonical — `street_suffix` is its own span
+
+For a **US** address the street type is a SEPARATE span. `6220 SE Salmon St` is four components,
+not two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
+`street_suffix: "St"`. `street` never carries the type.
+
+The instrument is the USPS Publication 28 Appendix C table in
+[`codex/us/street-suffix.ts`](../../../codex/us/street-suffix.ts) — `matchTrailingSuffix` is the one
+implementation, and nothing re-types the table. That table is why the split is canonical rather than
+cosmetic: canonicalization (`Aven` / `Avenu` / `Avnue` all mean `AVENUE`), abbreviation preference
+(`AVE` is what the post office prints), and the formatter's need to re-render one from the other all
+key on the suffix as a span. Folded into `street`, none of it is reachable.
+
+Two conventions fall out of it, both established by measurement rather than taste:
+
+- A trailing **post-directional joins the suffix**: `Pennsylvania Avenue NW` is
+  `street: "Pennsylvania"`, `street_suffix: "Avenue NW"`. There is no post-directional tag, and this
+  is what the corpus adapter emits (`corpus/src/adapters/tiger/street-decompose.ts`).
+- A **bare** post-directional with no type before it is NOT a suffix: `Seymour East` stays folded.
+  A directional is not a Pub-28 suffix, and the rows in that class are unit-contaminated
+  (`1ST AVE SW BOX E`, where the trailing `E` is a box letter).
+
+**FR is a different question, deliberately unanswered here.** French street typology leads
+(`Rue de la Paix`) and has its own vocabulary; the FR golden labels only 7 of 665 street rows with a
+`street_prefix`. Nothing above should be read as having settled it.
+
+This convention is one contract with three readers, and they are only useful in agreement:
+
+1. **The corpus** splits — TIGER's adapter and the `street-affix` shard recipe both do.
+2. **The golden answer key** splits, from **v0.1.3** onward (`data/eval/golden/v0.1.3`, relabelled
+   from v0.1.2 by `mailwoman corpus golden-relabel`). The version's `MANIFEST.json` DECLARES it in
+   `convention.street_convention`.
+3. **The scorer** reads that declaration. `scripts/eval/per-locale-f1.ts` folds
+   `street_prefix`/`street`/`street_suffix` back into one string only for rows whose country is not
+   declared split — so a split-convention key is graded on the spans, never on the glue.
+
+Golden v0.1.2 and earlier FOLDED, and per-locale-f1 glued the model's spans together to match. That
+gap cost a real verdict: the v9.0.0 candidate read `us.street` 87.4 against a 87.8 floor and failed
+the gate on a convention disagreement, not a model regression. On v0.1.3 the same two models read
+71.7 (shipped 7.0.0) and 75.2 (candidate) — the sign of the delta flips.
 
 ### Venue-level (Phase 3)
 

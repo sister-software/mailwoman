@@ -63,6 +63,11 @@ review.jsonl
 neural/test/fixtures/*.snap.json
 docs/src/components/ModelVisualizer/fixtures/*.trace.json
 
+## Generated golden-relabel review decks (`mailwoman corpus golden-relabel`) — one table row per
+## changed answer-key row, emitted beside the version it documents. The tool's output is the source
+## of truth; a formatter pass would be undone by the next regeneration.
+data/eval/golden/*/REVIEW-DECK.md
+
 ## Generated SBOM artifacts (scripts/generate-sbom.ts) — SPDX 2.3 + CycloneDX 1.5 output regenerated
 ## per release; the generator's serialization is the source of truth, not oxfmt's.
 docs/static/sbom/*.json
