@@ -1323,13 +1323,13 @@
 			"run_id": "v420-base-anchor-v2-s42-20260806",
 			"model_version": "9.0.0",
 			"model_path": "@mailwoman/neural-weights-en-us@9.0.0",
-			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+			"corpus_version": "v0.17.0-batch (v0.15.0-venue + synth-sub-venue 120k @12.0 + synth-gb 800k @6.0 — the manifest-chain overlay, #1490)",
 			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
 			"eval_set_version": "promotion-gate battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
 			"eval_set_sha256": "per-file, see data/eval/external",
 			"trained_at": "2026-08-05",
 			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
-			"training_steps": 8000,
+			"training_steps": 60000,
 			"training_wall_clock_seconds": 0,
 			"metrics": {
 				"us": {
