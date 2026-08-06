@@ -50,7 +50,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
-		"hono": "^4.12.32",
+		"hono": "^4.12.34",
 		"mailwoman": "workspace:*",
 		"spliterator": "^6.0.1",
 		"zod": "^4.4.3"
