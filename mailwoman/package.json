@@ -130,6 +130,7 @@
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
 		"chalk": "^5.6.2",

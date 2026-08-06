@@ -737,7 +737,11 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
    is one linear measurement script: parse the flags, run every arm over every row, aggregate. Getting it
    under the ceilings means restructuring it into a multi-module harness — worth doing, but not behind an
    eval gate this machine can't run ($MAILWOMAN_DATA_ROOT is absent). */
-export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promise<void> {
+export async function oaResolverEval(
+	options: OAResolverEvalOptions = {},
+	report: (line: string) => void = console.log,
+	reportError: (line: string) => void = console.error
+): Promise<void> {
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
 
@@ -789,17 +793,17 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	})
 
 	if (options.adminFST) {
-		console.error(`[scorer] FST gazetteer pinned: ${options.adminFST} (assembled arms only)`)
+		reportError(`[scorer] FST gazetteer pinned: ${options.adminFST} (assembled arms only)`)
 	}
 
-	console.error(
+	reportError(
 		ablateToAnchor
 			? "[scorer] ABLATED to anchor-only (gazetteer + conventions OFF) — #722 before/after baseline"
 			: "[scorer] full ship-config via createScorer (anchor + gazetteer + conventions=auto + suppress)"
 	)
 
 	if (anchorOff) {
-		console.error("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
+		reportError("[scorer] anchor channel ABLATED (--anchor-off → overrides.anchor=false, #887 declared ablation)")
 	}
 
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
@@ -826,11 +830,11 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 			})
 
 	if (candidateDb) {
-		console.error(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+		reportError(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
 	}
 
 	if (postalCityAliases) {
-		console.error(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
+		reportError(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	}
 
 	const resolver = createWOFResolver(backend as never)
@@ -1064,7 +1068,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	const evalPlacer = runAssembled && usePlaceCountry ? await loadDefaultPlaceCountry() : null
 
 	if (usePlaceCountry && !evalPlacer) {
-		console.warn("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
+		reportError("--place-country requested but the bundled coarse-placer failed to load; running placeCountry OFF.")
 	}
 
 	const assembledAgg = { overall: newAgg(), byState: new Map<string, Agg>() }
@@ -1161,7 +1165,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		i++
 
 		if (i % 500 === 0) {
-			console.error(`  ${i}/${rows.length}`)
+			reportError(`  ${i}/${rows.length}`)
 		}
 
 		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
@@ -1365,23 +1369,23 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 	if (collectErrors) {
 		writeFileSync(options.errorsJSON || "", JSON.stringify(errorRows, null, 2))
 
-		console.error(`wrote ${errorRows.length} failure rows → ${options.errorsJSON || ""}`)
+		reportError(`wrote ${errorRows.length} failure rows → ${options.errorsJSON || ""}`)
 	}
 
 	if (collectRows) {
 		writeFileSync(options.outRows || "", JSON.stringify(outRows))
 
-		console.error(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
+		reportError(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
 	}
 
 	if (collectResolvedDump) {
 		writeFileSync(options.outResolved || "", JSON.stringify(resolvedRows))
 
-		console.error(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
+		reportError(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
 
 	// self-emitted; eval figures are NEVER hand-typed into docs)
-	const report = renderOaResolverReport({
+	const markdown = renderOaResolverReport({
 		agg,
 		assembledAgg,
 		neuralAnchorAgg,
@@ -1405,12 +1409,12 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 		options,
 	})
 
-	console.log(report)
+	report(markdown)
 
 	if (options.outMd || "") {
-		writeFileSync(options.outMd || "", report + "\n")
+		writeFileSync(options.outMd || "", markdown + "\n")
 
-		console.error(`wrote markdown → ${options.outMd || ""}`)
+		reportError(`wrote markdown → ${options.outMd || ""}`)
 	}
 
 	if (options.outJSON || "") {
@@ -1426,7 +1430,7 @@ export async function oaResolverEval(options: OAResolverEvalOptions = {}): Promi
 
 		writeFileSync(options.outJSON || "", JSON.stringify({ neural: dump(agg.neural) }, null, 2))
 
-		console.error(`wrote json → ${options.outJSON || ""}`)
+		reportError(`wrote json → ${options.outJSON || ""}`)
 	}
 
 	postcodeLookup?.close()

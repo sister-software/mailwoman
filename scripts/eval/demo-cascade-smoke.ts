@@ -3,316 +3,59 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Demo-cascade smoke eval (#524) — the whole-stack lens the per-layer gate battery lacks.
+ *   NOTE(de-shell): forwarding shim. The demo-cascade smoke eval (#524) now lives at
+ *   `mailwoman/eval-harness/demo-cascade-smoke.ts` and the promotion gate calls it IN-PROCESS. This
+ *   shim keeps standalone invocation working unchanged. Output is byte-identical because the module
+ *   owns every printed line.
  *
- *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the FULL stack exactly the
- *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
- *   lexicon + postcode anchor + conventions mask + span bridge + FST) → `runPipeline` + grouper
- *   audit → the demo's `runCascade` (#861: the SHARED `resolveTree` — greedy walk + admin/
- *   explicit-country coherence + span-rescore — over the lookup, with the demo's pin extraction)
- *   against the slim `wof-hot.db` the demo serves. Each row asserts the RESOLVED WOF PLACE ID of
- *   the top hit — not parse components. See the row README
- *   (`data/eval/external/demo-cascade-smoke.README.md`) for the convention.
- *
- *   Why: on 2026-06-11 three production bugs (#520/#521/#522) shipped through green gates because
- *   every gate lens is per-layer. Two of the three would have been caught by exactly this pass.
- *
- *   Usage (after `yarn compile`):
- *
- *   ```
- *   node scripts/eval/demo-cascade-smoke.ts \
- *   [--stage-dir /tmp/v440-stage/en-us/v4.4.0] [--db <wof-hot.db>] [--model <onnx>] \
- *   [--tokenizer <tokenizer.model>] [--card <model-card.json>] [--fst <fst.bin>] \
- *   [--gazetteer-lexicon <lexicon.json>] [--file <rows.jsonl>] [--json <sidecar.json>] \
- *   [--explain]
- * ```
- *
- *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live
- *   demo serves); `MAILWOMAN_WOF_HOT_DB` overrides the DB path (same env the #522 integration tests
- *   use). Exit 0 = the run completed (row failures are reported in the table + sidecar; the
- *   promotion-gate verdict enforces any floor). Exit 2 = missing artifacts / malformed rows.
- *
- *   Measurement only: this script changes no pipeline or resolver behavior.
+ *   Exit-code parity: 0 = the run completed (row failures are in the table + sidecar), 2 = missing
+ *   artifacts / malformed rows. Do not add logic here.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
 import { parseArgs } from "node:util"
 
-import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { runPipeline } from "@mailwoman/core/pipeline"
-import type { AnchorLookup } from "@mailwoman/neural"
-import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
-import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { groupPhrases } from "@mailwoman/phrase-grouper"
-import { computeQueryShape } from "@mailwoman/query-shape"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { runIfScript } from "@mailwoman/core/scripting"
 
-// The demo's own composition helpers — imported (read-only) from the demo source so the smoke eval
-// measures the REAL cascade, not a re-implementation that can drift from it.
-import { flattenTree, runCascade } from "../../docs/src/shared/demo-helpers.ts"
-import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
+import { demoCascadeSmoke } from "../../mailwoman/eval-harness/demo-cascade-smoke.ts"
 
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
-	options: {
-		card: { type: "string" },
-		db: { type: "string" },
-		file: { type: "string" },
-		fst: { type: "string" },
-		"gazetteer-lexicon": { type: "string" },
-		json: { type: "string" },
-		model: { type: "string" },
-		"stage-dir": { type: "string" },
-		tokenizer: { type: "string" },
-		explain: { type: "boolean" },
-	},
-	strict: false,
-	allowPositionals: true,
-})
-
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const values = rawValues as {
-	card?: string
-	db?: string
-	file?: string
-	fst?: string
-	"gazetteer-lexicon"?: string
-	json?: string
-	model?: string
-	"stage-dir"?: string
-	tokenizer?: string
-	explain?: boolean
-}
-
-const STAGE = (values["stage-dir"] || "/tmp/v440-stage/en-us/v4.4.0")!
-const DB = (values["db"] || ($public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db")))!
-const MODEL = (values["model"] || path.join(STAGE, "model.onnx"))!
-const TOK = (values["tokenizer"] || path.join(STAGE, "tokenizer.model"))!
-const CARD = (values["card"] || path.join(STAGE, "model-card.json"))!
-const FST = (values["fst"] || path.join(STAGE, "fst-en-US.bin"))!
-const GAZ = (values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json")!
-const FILE = (values["file"] || "data/eval/external/demo-cascade-smoke.jsonl")!
-const JSON_OUT = values["json"] || ""
-const EXPLAIN = values["explain"] ?? false
-
-// ── Preflight: every artifact loud-missing, never a vague ENOENT mid-run ────────────────────────
-const missing = Object.entries({
-	db: DB,
-	model: MODEL,
-	tokenizer: TOK,
-	"model-card": CARD,
-	fst: FST,
-	gazetteer: GAZ,
-	rows: FILE,
-})
-	.filter(([, p]) => !existsSync(p))
-	.map(([k, p]) => `  ${k}: ${p}`)
-
-if (missing.length) {
-	console.error(
-		`✗ demo-cascade smoke: missing artifacts —\n${missing.join("\n")}\n` +
-			"  Stage a demo release (yarn start/build in docs/ — the demo-assets plugin stages the artifacts) or point --stage-dir / MAILWOMAN_WOF_HOT_DB at one."
-	)
-
-	process.exit(2)
-}
-
-let rows: SmokeRow[]
-
-try {
-	rows = parseSmokeRows(readFileSync(FILE, "utf8"), FILE)
-} catch (error) {
-	console.error(`✗ ${(error as Error).message}`)
-
-	process.exit(2)
-}
-
-// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
-const card = parseJSONStrict<{ labels?: readonly string[] }>(readFileSync(CARD, "utf8"))
-
-// Postcode anchor channel from the staged binaries — the same artifacts the demo fetches. Merge
-// mirrors neural-web's mergeAnchorLookups: union posteriors, mean non-zero centroids.
-function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
-	if (lookups.length === 1) return lookups[0]!
-	const merged: AnchorLookup = new Map()
-
-	for (const lookup of lookups) {
-		for (const [postcode, entry] of lookup) {
-			const existing = merged.get(postcode)
-
-			if (!existing) {
-				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
-
-				continue
-			}
-
-			for (const country of Object.keys(entry.posterior)) {
-				existing.posterior[country] = 1
-			}
-
-			if (entry.lat !== 0 || entry.lon !== 0) {
-				if (existing.lat === 0 && existing.lon === 0) {
-					existing.lat = entry.lat
-					existing.lon = entry.lon
-				} else {
-					existing.lat = (existing.lat + entry.lat) / 2
-					existing.lon = (existing.lon + entry.lon) / 2
-				}
-			}
-		}
-	}
-
-	return merged
-}
-
-const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
-	.map((f) => path.join(STAGE, f))
-	.filter((p) => existsSync(p))
-
-if (!postcodeBinaries.length) {
-	console.warn(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
-}
-
-const anchorLookup = postcodeBinaries.length
-	? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
-	: undefined
-
-const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
-
-const classifier = new NeuralAddressClassifier({
-	tokenizer,
-	runner,
-	labels: card.labels,
-	...(anchorLookup ? { postcodeAnchorLookup: anchorLookup } : {}),
-	gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(GAZ, "utf8"))),
-	suppressGazetteerNearPostcode: true,
-	addressSystemConventions: "auto",
-	bridgePunctuationGaps: true,
-})
-
-const fst = deserializeFST(readFileSync(FST))
-const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
-
-// ── Run ──────────────────────────────────────────────────────────────────────────────────────────
-interface RowResult {
-	input: string
-	expected: SmokeRow["expect"]
-	actual: { id: number; name: string; placetype: string; anchorCentroid?: boolean } | null
-	pass: boolean
-	note?: string
-}
-
-const results: RowResult[] = []
-
-for (const row of rows) {
-	const { tree } = await runPipeline(row.input, {
-		computeQueryShape,
-		groupPhrases,
-		classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
-		fst: fst as Parameters<typeof runPipeline>[1]["fst"],
+async function main(): Promise<void> {
+	// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+	const { values: rawValues } = parseArgs({
+		options: {
+			card: { type: "string" },
+			db: { type: "string" },
+			file: { type: "string" },
+			fst: { type: "string" },
+			"gazetteer-lexicon": { type: "string" },
+			json: { type: "string" },
+			model: { type: "string" },
+			"stage-dir": { type: "string" },
+			tokenizer: { type: "string" },
+			explain: { type: "boolean" },
+		},
+		strict: false,
+		allowPositionals: true,
 	})
 
-	// Node selection copied VERBATIM from the demo page (docs/src/pages/demo/index.tsx) — same
-	// locality/city filter, same highest-confidence region pick, same postcode find.
-	const nodes = flattenTree(tree)
-	const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+	// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
+	const values = rawValues as Record<string, string | boolean | undefined>
 
-	const stateNode = nodes
-		.filter((n) => n.tag === "region" || n.tag === "state")
-		.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+	const result = await demoCascadeSmoke({
+		card: values["card"] as string | undefined,
+		db: values["db"] as string | undefined,
+		file: values["file"] as string | undefined,
+		fst: values["fst"] as string | undefined,
+		gazetteerLexicon: values["gazetteer-lexicon"] as string | undefined,
+		json: values["json"] as string | undefined,
+		model: values["model"] as string | undefined,
+		stageDir: values["stage-dir"] as string | undefined,
+		tokenizer: values["tokenizer"] as string | undefined,
+		explain: values["explain"] as boolean | undefined,
+	})
 
-	const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
-
-	// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
-	// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
-	// extraction above stays for the --explain output + the anchor-centroid fallback below.
-	const hits = await runCascade(
-		lookup as unknown as Parameters<typeof runCascade>[0],
-		tree as { roots: unknown[] },
-		row.input
-	)
-
-	// The demo's anchor-centroid fallback for postcode-only dead ends (WOF placeholder zeros / the
-	// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.
-	let anchorCentroid = false
-
-	if (!hits.length && postcodeNode?.value && anchorLookup) {
-		const anchorHit = anchorLookup.get(String(postcodeNode.value).toUpperCase())
-
-		if (anchorHit && (anchorHit.lat !== 0 || anchorHit.lon !== 0)) {
-			anchorCentroid = true
-		}
-	}
-
-	const top = hits[0]
-
-	const actual = top
-		? { id: top.id, name: top.name, placetype: String(top.placetype) }
-		: anchorCentroid
-			? { id: 0, name: `${postcodeNode?.value} (anchor centroid)`, placetype: "postcode", anchorCentroid: true }
-			: null
-
-	const pass = row.expect.anchor_centroid === true ? anchorCentroid : top?.id === row.expect.id
-	results.push({ input: row.input, expected: row.expect, actual, pass, ...(row.note ? { note: row.note } : {}) })
-
-	if (EXPLAIN) {
-		console.error(`\n-- ${JSON.stringify(row.input)}`)
-		console.error(
-			`   parse: postcode=${JSON.stringify(postcodeNode?.value)} localities=${JSON.stringify(localityNodes.map((n) => n.value))} region=${JSON.stringify(stateNode?.value)}`
-		)
-
-		for (const h of hits.slice(0, 3)) {
-			console.error(`   hit: id=${h.id} ${h.name} (${h.placetype}) score=${h.score?.toFixed?.(2)}`)
-		}
+	if (result.exitCode !== 0) {
+		process.exitCode = result.exitCode
 	}
 }
 
-lookup.close()
-
-// ── Report ───────────────────────────────────────────────────────────────────────────────────────
-const passCount = results.filter((r) => r.pass).length
-const passRate = Number(((100 * passCount) / results.length).toFixed(1))
-
-console.log(`# Demo-cascade smoke (#524) — whole-stack parse→reconcile→resolve`)
-console.log(`model: ${MODEL}`)
-console.log(`db: ${DB}`)
-console.log("")
-console.log("| # | input | expected | actual | result |")
-console.log("| - | ----- | -------- | ------ | ------ |")
-
-results.forEach((r, i) => {
-	const exp = r.expected.anchor_centroid
-		? "anchor centroid"
-		: `${r.expected.id} (${r.expected.name ?? "?"}${r.expected.placetype ? `, ${r.expected.placetype}` : ""})`
-
-	const act = r.actual
-		? r.actual.anchorCentroid
-			? "anchor centroid"
-			: `${r.actual.id} (${r.actual.name}, ${r.actual.placetype})`
-		: "NO HIT"
-
-	console.log(`| ${i + 1} | ${r.input} | ${exp} | ${act} | ${r.pass ? "PASS" : "FAIL"} |`)
-})
-
-console.log("")
-console.log(`**${passCount}/${results.length} pass (${passRate}%)**`)
-
-if (JSON_OUT) {
-	const sidecar = {
-		label: "demo-cascade-smoke",
-		issue: 524,
-		generated: new Date().toISOString(),
-		db: DB,
-		model: MODEL,
-		rows: results,
-		summary: { total: results.length, pass: passCount, fail: results.length - passCount, pass_rate_pct: passRate },
-	}
-
-	writeFileSync(JSON_OUT, JSON.stringify(sidecar, null, "\t"))
-
-	console.log(`\nsidecar: ${JSON_OUT}`)
-}
+runIfScript(import.meta, main)
