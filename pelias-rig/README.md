@@ -54,8 +54,10 @@ Imports have NOT run yet. The order below is the plan's §1 runbook with what th
 
 1. `$MAILWOMAN_DATA_ROOT/pelias-rig/pull-images.sh` — pull + record digests. Already done; re-run
    only to re-pin.
-2. `$MAILWOMAN_DATA_ROOT/pelias-rig/cut-polylines.sh` — one `.0sv` per PBF, smallest first,
-   resumable via `markers/POLYLINE-<cc>-DONE`. **US state PBFs still need their own pass.**
+2. `$MAILWOMAN_DATA_ROOT/pelias-rig/cut-polylines.sh` — one `.0sv` per country PBF, smallest first,
+   resumable via `markers/POLYLINE-<cc>-DONE`. Its sibling `cut-polylines-remaining.sh` enumerates
+   `data/osm` instead of carrying a fixed list, so re-running it picks up any PBF that arrived
+   later (the US state downloads); already-cut files are skipped.
 3. `$MAILWOMAN_DATA_ROOT/pelias-rig/fetch-us.sh CA DC IA IL MI MT SD TN VT` — the panel-state
    fetches (Geofabrik PBFs, TIGER 2024 ADDRFEAT via `mailwoman tiger fetch`, the four OA US
    collections). The state list comes from `usStatesRequiringLocalSources` in the panel manifest,
