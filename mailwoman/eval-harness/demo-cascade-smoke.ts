@@ -62,7 +62,6 @@ import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
 
@@ -215,6 +214,12 @@ export async function demoCascadeSmoke(
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
+	// LAZY, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`, and the CLI's
+	// module walk (`mailwoman --help`) loads this file in every clean install — a top-level import
+	// here failed the ci:smoke clean-install leg the day it was added (2026-08-06). The cascade leg
+	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
+	// runs; in a clean install without the package the leg fails HERE, loudly, naming the import.
+	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || "/tmp/v440-stage/en-us/v4.4.0"
 	const DB = options.db || ($public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))
 	const MODEL = options.model || path.join(STAGE, "model.onnx")

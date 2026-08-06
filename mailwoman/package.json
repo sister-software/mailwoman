@@ -130,7 +130,6 @@
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
-		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
 		"chalk": "^5.6.2",
@@ -153,6 +152,7 @@
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
+		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@types/yauzl-promise": "^4.0.1"
 	},
 	"peerDependencies": {
