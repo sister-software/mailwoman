@@ -65,10 +65,16 @@ export interface GauntletCaseTable {
 	expect_components: string | null
 	/**
 	 * Expected resolved place id (null = place not asserted).
+	 *
+	 * Graded against `hierarchy[0].placeID` — see `check-case.ts`. Stored from the corpus's first migration and read by
+	 * NOTHING until 2026-08-06 (#1507), which is worth knowing about any expectation column: it can sit in the schema,
+	 * the builder and the DDL, look asserted, and assert nothing.
 	 */
 	expect_place_id: string | null
 	/**
-	 * Expected resolved place canonical name (null = not asserted).
+	 * Expected resolved place canonical name (null = not asserted), case-insensitive against `hierarchy[0].name`.
+	 *
+	 * NOT `GauntletResult.locality`, which echoes the parsed query span — see `check-case.ts`'s `resolvedPlace`.
 	 */
 	expect_place_name: string | null
 	/**
@@ -114,11 +120,51 @@ export interface GauntletCaseTable {
 }
 
 /**
+ * The build stamp — ONE row, describing the committed corpus the DB was built from.
+ *
+ * Exists because `regression.db` is a derived artifact with no link back to its source: on 2026-08-06 `eval
+ * gauntlet-build regression-db` rebuilt it from a STALE COMPILED TREE (an `out/` loader still holding the deleted
+ * pre-JSONL case array), printed "built", and every gate afterwards graded a corpus nobody had. Nothing in the DB could
+ * contradict it. The stamp is that contradiction — the same posture as #1488's FST freshness stamps.
+ */
+export interface GauntletMetaTable {
+	/**
+	 * Always {@linkcode GAUNTLET_META_ROW_ID}. A one-row table pinned by its primary key, so a second write replaces the
+	 * stamp rather than appending a second, equally-authoritative one.
+	 */
+	id: string
+	/**
+	 * `regressionCorpusHash` of the rows this DB was built from (`cases/load.ts`) — order-independent, content-addressed.
+	 */
+	corpus_hash: string
+	/**
+	 * How many rows were written. Redundant with the hash for detection, load-bearing for the DIAGNOSIS: "0 cases" reads
+	 * as an empty loader, "306 vs 192" as a corpus that moved under the artifact.
+	 */
+	case_count: number
+	/**
+	 * ISO timestamp of the build, for the operator reading a mismatch ("built before or after my edit?").
+	 */
+	built_at: string
+}
+
+/**
  * The Gauntlet DB schema for `new DatabaseClient<GauntletDatabase>(...)`.
  */
 export interface GauntletDatabase {
 	gauntlet_case: GauntletCaseTable
+	gauntlet_meta: GauntletMetaTable
 }
+
+/**
+ * The one legal value of {@linkcode GauntletMetaTable.id}.
+ */
+export const GAUNTLET_META_ROW_ID = "corpus"
+
+/**
+ * Name of the stamp table, for the `sqlite_master` presence probe a pre-stamp DB needs.
+ */
+export const GAUNTLET_META_TABLE = "gauntlet_meta"
 
 /**
  * Column order for the positional INSERT — derived once so the builder + writer can't drift.
@@ -174,4 +220,17 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"
 	await db.schema.createIndex("idx_gauntlet_kind").on("gauntlet_case").columns(["country", "address_kind"]).execute()
+}
+
+/**
+ * Create the one-row {@linkcode GauntletMetaTable} build stamp.
+ */
+export async function createGauntletMetaTable(db: Kysely<GauntletDatabase>): Promise<void> {
+	await db.schema
+		.createTable(GAUNTLET_META_TABLE)
+		.addColumn("id", "text", (c) => c.primaryKey())
+		.addColumn("corpus_hash", "text", (c) => c.notNull())
+		.addColumn("case_count", "integer", (c) => c.notNull())
+		.addColumn("built_at", "text", (c) => c.notNull())
+		.execute()
 }

@@ -252,7 +252,9 @@
 		"model": "model.onnx",
 		"tokenizer": "tokenizer.model",
 		"model_card": "model-card.json",
-		"pair_index": "pair-index-fr.bin"
+		"pair_index": "pair-index-fr.bin",
+		"$comment_postcode_anchor": "Added 2026-08-06 (#1516), same reason as the en-us card: the overlay has always shipped this binary (release.config.json softFeed.postcodeDBByCountry.fr, built from the WOF intl postcode shard) and never declared it. `readDeclaredArtifactFile` reads this key to tell a broken package (declared, missing) from a package that deliberately ships none.",
+		"postcode_anchor": "postcode-fr.bin"
 	},
 	"base_relpath": "/data/models/checkpoints/v0_4_0-stableLR-source-only/step-002200",
 	"fr_artifacts": {

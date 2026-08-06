@@ -387,6 +387,32 @@ arc, Task 8) is COUNTRY-SPECIFIC BY DESIGN — omit it entirely for a release wh
 `en-gb` (`pair-index-gb.bin`) and `en-nz` (`pair-index-nz.bin`) do, driven by `release.config.json`'s
 `softFeed.pairIndexByCountry`. (`en-nz` ships NO postcode binary — no WOF NZ postcode shard exists yet; see
 `neural-weights-en-nz/model-card.json`'s `no_postcode_bin` follow-up.)
+
+#### FST artifacts with no builder — what NOT to re-publish (#1493)
+
+Four FST binaries in `$MAILWOMAN_DATA_ROOT/wof/` predate the `FST_LOCALES` registry (#1318) and
+**nothing in the tree can rebuild them.** `mailwoman gazetteer build fst` throws on any locale absent
+from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output template
+(`fst-<locale>.bin`) cannot even express the global one. `mailwoman gazetteer verify` reports them as
+`NO BUILDER — … has no FST_LOCALES entry`; that row is the intended signal, not a defect to silence.
+
+- **`fst-global-priority.bin` — RETIRED as of 2026-08-06. Do not stage it, and do not re-publish it.**
+  Nothing in the tree loads it: the only in-tree reference is the freshness inventory
+  (`ADMIN_DERIVED_FST_ARTIFACTS`), which `openSync`s the 32-byte header and never reads the body. Every
+  real FST load resolves `fst-${locale}.bin` from a weights package (`neural/weights.ts:382`), so the
+  global artifact has had no consumer since #1318. Its last mention in a shipped card
+  (`scripts/v062-model-card-template.json`'s `inference.admin_fst`) was removed in the same change.
+  **Release-time action, for the operator, once:** delete the file from the HF
+  `sister-software/mailwoman` bucket. Left undone this is harmless — a 317 MB orphan carrying a
+  2026-05-28 build stamp — so it is a cleanup, never a release blocker.
+- **`fst-{ja-jp,zh-cn,ko-kr}.bin` — FROZEN, stay published.** Same no-builder status, but they are the
+  only CJK gazetteer artifacts that exist and `hf-publish/mailwoman-wof-gazetteer/README.md` documents
+  them (ja-JP 13.0 MB, ko-KR 7.1 MB, zh-CN 92.5 MB). They are **frozen at their 2026-05-28 build** and
+  are to be regenerated only when the JP serving arc lands (`ROAD_TO_V9.md` §8 — the 0.9928 char model
+  has no serving path yet). Until then: leave them where they are, do not re-stage them, and do not
+  cite them as current. Regenerating means giving them `FST_LOCALES` entries with country scopes first,
+  which makes the existing `gazetteer build fst` command sufficient.
+
 **A release is done only when BOTH
 backends agree** — CI's weight fetch reads HF; the demo reads R2:
 

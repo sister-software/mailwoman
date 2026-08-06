@@ -13,8 +13,9 @@
  *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the SAME
  *        function the query side uses; a diacritic name keys to its folded form by construction.
  *   3. **page_size = 8192** — set right before VACUUM (node:sqlite creates the file at 4096).
- *   4. **The four passes** — primaries, alias bags, region abbreviations, and postcode shards (with the
- *        `latitude!=0 AND longitude!=0` placeholder-coord filter).
+ *   4. **The passes** — primaries, alias bags, region abbreviations, postcode shards (with the
+ *        `latitude!=0 AND longitude!=0` placeholder-coord filter), and each shard's `names`-table
+ *        delivery-city aliases (#1495).
  */
 
 import { mkdtemp, rm } from "node:fs/promises"
@@ -85,9 +86,13 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * A postcode shard: `spr` with placetype='postalcode'. One real-coord ZIP + one placeholder 0,0.
+ * A postcode shard: `spr` with placetype='postalcode', plus the `names` table `createUnifiedSchema` gives every real
+ * shard — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord ZIP
+ * + one placeholder 0,0.
+ *
+ * @param withNames Build the shard WITHOUT a `names` table, to cover the tolerate-and-say-so path.
  */
-function buildFixturePostcodes(path: string): void {
+function buildFixturePostcodes(path: string, withNames = true): void {
 	const db = new DatabaseSync(path)
 
 	db.exec(`
@@ -101,7 +106,27 @@ function buildFixturePostcodes(path: string): void {
 		INSERT INTO spr VALUES (60601, '60601', 'postalcode', 'US', 41.885, -87.62, 41.88, -87.63, 41.89, -87.61, -1, 0);
 		-- placeholder 0,0 coords → dropped by the latitude!=0 AND longitude!=0 filter (the White House 20500 case)
 		INSERT INTO spr VALUES (20500, '20500', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, -1, 0);
+		-- 11201 is the canonical delivery-city case: USPS calls it Brooklyn, WOF files it under locality New York
+		INSERT INTO spr VALUES (11201, '11201', 'postalcode', 'US', 40.694, -73.99, 40.68, -74.01, 40.70, -73.97, -1, 0);
 	`)
+
+	if (withNames) {
+		db.exec(`
+			CREATE TABLE names (
+				id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+				country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+				privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+				lastmodified INTEGER NOT NULL DEFAULT 0
+			);
+			-- what geonamesNameFill() writes: official = 0, because a delivery city is what the postal
+			-- system calls the place, not an official name OF it
+			INSERT INTO names VALUES (11201, 'Brooklyn', 'postalcode', 'US', '', '', 0, 0);
+			-- the shard's own display form for the same id — must not become a second alias row
+			INSERT INTO names VALUES (11201, '11201', 'postalcode', 'US', '', '', 0, 0);
+			-- an alias on a row the coord filter dropped: no primary was staged, so it has nothing to hang on
+			INSERT INTO names VALUES (20500, 'The White House', 'postalcode', 'US', '', '', 0, 0);
+		`)
+	}
 
 	db.close()
 }
@@ -238,8 +263,8 @@ describe("buildCandidateTable", () => {
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// Only the real-coord 60601 survives; the 0,0 placeholder 20500 is filtered.
-		expect(result.postcodes).toBe(1)
+		// The real-coord 60601 + 11201 survive; the 0,0 placeholder 20500 is filtered.
+		expect(result.postcodes).toBe(2)
 
 		const db = new DatabaseSync(output, { readOnly: true })
 
@@ -251,6 +276,68 @@ describe("buildCandidateTable", () => {
 		} finally {
 			db.close()
 		}
+	})
+
+	test("folds postcode delivery-city aliases into the exact tier (#1495)", async () => {
+		const input = join(scratch, "admin.db")
+		const pc = join(scratch, "postcodes.db")
+		const output = join(scratch, "candidate.db")
+		buildFixtureAdmin(input)
+		buildFixturePostcodes(pc)
+
+		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
+		// Only "Brooklyn". The shard's own '11201' names row keys to the primary and is skipped, and
+		// 'The White House' hangs off 20500, which the coord filter never staged.
+		expect(result.postcodeAliases).toBe(1)
+
+		const db = new DatabaseSync(output, { readOnly: true })
+
+		try {
+			// Before the fix this probe returned nothing: the delivery-city names reached
+			// `place_search.alt_names` (FTS) but never the candidate table, where every row IS an
+			// exact-tier row.
+			const [brooklyn] = probe(db, normalizeLocalityForKey("Brooklyn"))
+			expect(brooklyn).toBeDefined()
+			expect(brooklyn!.placetype).toBe("postalcode")
+			// The alias row is denormalized onto the POSTCODE — display name, coords and bbox are 11201's.
+			expect(brooklyn!.name).toBe("11201")
+			expect(brooklyn!.country).toBe("US")
+			expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
+			expect(brooklyn!.min_lat).toBeCloseTo(40.68, 2)
+			// `is_primary = 0` — the rank/demotion contest must treat it as an alias, not a canonical
+			// postcode name.
+			expect(brooklyn!.is_primary).toBe(0)
+
+			// The primary row is untouched by the new pass.
+			const [zip] = probe(db, normalizeLocalityForKey("11201"))
+			expect(zip?.is_primary).toBe(1)
+			expect(zip?.name).toBe("11201")
+
+			expect(probe(db, normalizeLocalityForKey("The White House"))).toHaveLength(0)
+		} finally {
+			db.close()
+		}
+	})
+
+	test("a shard with no `names` table reports the absence instead of a silent zero", async () => {
+		const input = join(scratch, "admin.db")
+		const pc = join(scratch, "postcodes.db")
+		const output = join(scratch, "candidate.db")
+		buildFixtureAdmin(input)
+		buildFixturePostcodes(pc, false)
+
+		const phases: string[] = []
+		const result = await buildCandidateTable({
+			input,
+			output,
+			postcodes: [pc],
+			onProgress: (phase, message) => phases.push(`${phase}: ${message}`),
+		})
+
+		expect(result.postcodes).toBe(2)
+		expect(result.postcodeAliases).toBe(0)
+		// A magnitude never carries its own absence — 0 aliases from an unread table has to say so.
+		expect(phases.some((p) => p.startsWith("postcode-aliases:") && p.includes("no `names` table"))).toBe(true)
 	})
 
 	test("materializes the output at page_size 8192 (the httpvfs chunk alignment)", async () => {

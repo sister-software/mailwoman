@@ -101,7 +101,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ optio
 
 		return [
 			`gazetteer: ${out}`,
-			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode (from ${r.places.toLocaleString()} places)`,
+			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode + ${r.postcodeAliases.toLocaleString()} postcode-alias (from ${r.places.toLocaleString()} places)`,
 			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
 		]
 	})
