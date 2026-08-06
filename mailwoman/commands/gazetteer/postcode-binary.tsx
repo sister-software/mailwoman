@@ -58,6 +58,13 @@ interface LocaleSource {
 	db: string
 }
 
+/**
+ * Size past which a `.bin` written into the browser asset dir is worth a word. Not a limit and not enforced — the
+ * command's default `--out` is `docs/static/mailwoman`, and a GB unit build lands 20 MB there, so the number exists to
+ * make the reader notice rather than to decide for them.
+ */
+const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
+
 const OptionsSchema = zod.object({
 	out: zod
 		.string()
@@ -158,6 +165,18 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 					(skipped ? `, ${skipped.toLocaleString()} rows skipped as non-unit-shaped` : "") +
 					`) → ${outPath} (${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
 			)
+
+			// The GB default is `unit` because that is what the anchor-v2 model was TRAINED against, and a
+			// serving bundle shipping anything coarser feeds the channel a different distribution than
+			// training painted. But this command's default `--out` is the BROWSER asset dir, where 20 MB is
+			// not a postcode binary, it is the whole page budget. The size is printed either way; this names
+			// the lever rather than deciding for the operator.
+			if (country.toUpperCase() === "GB" && granularity === "unit" && bytes.length > BROWSER_BUDGET_BYTES) {
+				console.error(
+					`  NOTE: that is the TRAIN-FAITHFUL unit key set, sized for a serving weights package. ` +
+						`For a browser bundle pass --gb-granularity outward (2,863 keys, 0.02 MB).`
+				)
+			}
 		}
 
 		return [`postcode binaries → ${outDir}`, `wrote ${written} of ${locales.length} locale binary(ies)`]
