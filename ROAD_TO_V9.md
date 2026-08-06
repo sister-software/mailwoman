@@ -131,5 +131,9 @@ Named so their absence from the gate list reads as a decision, not an omission: 
 (the 0.9928 char model has no serving path yet — its own arc), the suggestion-layer implementation
 (bars preregistered in #1489; the ablation map and §3 board feed it), the FST importance **swap
 itself** (gated behind §2 + §3, no urgency — the population proxy loses us nothing today), the
-deletion-ablation extensions (#1503), and the postcode-structure arc's remaining slices (#1481 —
-continues on its own preregistered bars).
+deletion-ablation extensions (#1503), the postcode-structure arc's remaining slices (#1481 —
+continues on its own preregistered bars), and the **coverage-vs-settlement-prior metric** (the
+Geovation map-holes idea, 2026-08-05: join the fog-of-war overlay's observed density against a
+WorldPop/GRID3 habitability prior — predicted-minus-observed is the coverage gap as a real number.
+Post-v9 eval artifact; check WorldPop/GRID3 before building anything; absence-of-evidence register
+rules apply).
