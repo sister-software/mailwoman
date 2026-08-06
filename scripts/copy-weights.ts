@@ -337,7 +337,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	// (the card carries requires.street_type/locality_surface; withholding a sibling would fail closed).
 	for (const [source, basename, label] of [
 		[SOURCE_STREET_TYPE, "street-type-lexicon-v3.json", "softFeed.streetTypeLexicon"],
-		[SOURCE_LOCALITY_SURFACE, "locality-surface-lexicon-v6.json", "softFeed.localitySurfaceLexicon"],
+		[SOURCE_LOCALITY_SURFACE, "locality-surface-lexicon-v7.json", "softFeed.localitySurfaceLexicon"],
 	] as const) {
 		if (!source) continue
 
