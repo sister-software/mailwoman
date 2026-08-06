@@ -40,7 +40,14 @@
  *   deliberate. `nothrow` became try/catch-and-continue; a bare `$` (which threw on non-zero) became
  *   a call whose throw propagates; a leg whose non-zero exit ABORTED the gate (arena, fr-recall)
  *   still returns 1; the two legs that merged `${stdout}${stderr}` into one `.md` keep two sinks and
- *   concatenate them in that order. `promotion-gate.test.ts` pins the table.
+ *   concatenate them in that order. `promotion-gate-sinks.test.ts` pins the table.
+ *
+ *   ONE deliberate difference, and it touches no artifact: a leg whose stderr the gate captured and
+ *   then THREW AWAY (per-locale-f1's progress narration, the cascade leg's preflight complaints) now
+ *   reaches the gate's own stderr, because those modules default `reportError` to `console.error`
+ *   and this file only overrides the sinks it actually files. `$.verbose = false` used to swallow
+ *   them, which is why a 20-minute per-locale leg looked like a hang. Every `.md` is byte-identical
+ *   either way — the gate never wrote those bytes anywhere.
  *
  *   Lore encoded (the traps that bit before — see CONTRIBUTING_MODEL_WORK.mdx):
  *
@@ -77,8 +84,13 @@ import { scoreCountryHomograph } from "./score-country-homograph.ts"
 /**
  * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
  * `.md` the gate writes goes through this, so the artifacts match the pre-migration bytes.
+ *
+ * This is the whole migration's load-bearing assumption in one line. `console.log(x)` writes `x` then a newline, and zx
+ * handed the concatenation of those writes back as `.stdout`; a sink that records one entry per `console.log` call
+ * therefore reproduces the same bytes — INCLUDING a multi-line argument (one call, embedded newlines, one trailing
+ * newline) and a bare `console.log()` (the empty string, one newline). Exported for `promotion-gate-sinks.test.ts`.
  */
-function renderLines(lines: readonly string[]): string {
+export function renderLines(lines: readonly string[]): string {
 	return lines.map((line) => `${line}\n`).join("")
 }
 

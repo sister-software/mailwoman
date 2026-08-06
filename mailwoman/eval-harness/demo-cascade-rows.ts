@@ -21,7 +21,6 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { TextSpliterator } from "spliterator"
 
 export interface SmokeRowExpect {
 	/**
@@ -83,9 +82,13 @@ class SmokeRowError extends Error {
  * offending line) on ANY malformed row. Returns at least one row — an empty file is an error, not a vacuous pass.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
-	// The 1-based row number is part of every error message, so the index has to survive the walk —
-	// TextSpliterator's callback index gives it without materializing the file twice.
-	const lines = [...TextSpliterator.from(text)]
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The row NUMBER is the point of this
+	// parser: every error names the 1-based line a human would count to in the file. TextSpliterator
+	// drops empty segments, so a file with a blank line renumbers every row after it — measured, by
+	// the "numbers rows by FILE line" case in demo-cascade-rows.test.ts, which caught exactly that
+	// when this was briefly a spliterator. split() keeps blank lines, and the input is one bounded
+	// committed fixture.
+	const lines = text.split("\n")
 	const rows: SmokeRow[] = []
 
 	for (let i = 0; i < lines.length; i++) {
