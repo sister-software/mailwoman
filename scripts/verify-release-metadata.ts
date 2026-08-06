@@ -312,8 +312,8 @@ async function main() {
 	const options: VerifyOptions = {
 		cardPath: resolve(repoRoot, values.card ?? "neural-weights-en-us/model-card.json"),
 		ledgerPath: resolve(repoRoot, values.ledger ?? "evals/scores-by-version.json"),
-		releasesPath: resolve(repoRoot, values.releases ?? "docs/articles/releases.mdx"),
-		statusPath: resolve(repoRoot, values.status ?? "docs/articles/status.mdx"),
+		releasesPath: resolve(repoRoot, values.releases ?? "docs/records/site-2026-08/releases.mdx"),
+		statusPath: resolve(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),
 	}
 
 	const version = readModelVersion(options.cardPath)

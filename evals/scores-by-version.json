@@ -1318,6 +1318,47 @@
 				}
 			},
 			"notes": "model 7.0.0 from-scratch base (v4.0.1-base-60k step-60000); new v7.0.0-base gate spec (Wilson support-aware margins); locality lexicon v6 per the G8 revert; Fisher artifact fisher-diag-v1 beside the weights; one named watch: si-sentinel-ucakar (char-path lineage fix) [graded_artifact=weights-cache; gate=undefined; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/fbec2b20-ca6b-49a8-bc4c-e23903c72b93/scratchpad/gate-v700-final] npm release 8.3.0."
+		},
+		{
+			"run_id": "v420-base-anchor-v2-s42-20260806",
+			"model_version": "9.0.0",
+			"model_path": "@mailwoman/neural-weights-en-us@9.0.0",
+			"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+			"corpus_sha256": "see the shipped model-card corpus_version (practiced-shape pointer, not a digest)",
+			"eval_set_version": "promotion-gate battery (v9.0.0-base): golden v0.1.2 + real-OOD + arena perturb",
+			"eval_set_sha256": "per-file, see data/eval/external",
+			"trained_at": "2026-08-05",
+			"hardware": "NVIDIA A100-SXM4-40GB (Modal cloud)",
+			"training_steps": 8000,
+			"training_wall_clock_seconds": 0,
+			"metrics": {
+				"us": {
+					"postcode": 98.9,
+					"country_homograph": 87.5,
+					"micro": 87.5,
+					"locality": 86.1,
+					"region": 91.6,
+					"street": 75.2,
+					"street_prefix": 91.3,
+					"street_suffix": 96.6,
+					"unit": 93.9,
+					"po_box_real": 97,
+					"intersection_real": 100
+				},
+				"fr": {
+					"postcode": 99.7,
+					"house_number": 99.1,
+					"region": 81.2,
+					"cedex_real": 99.8
+				},
+				"de": {
+					"native_locality_anchor_on": 91.6
+				},
+				"arena": {
+					"perturb": 66
+				}
+			},
+			"notes": "model 9.0.0 anchor-cure base (v4.2.0-base-anchor-v2 step-60000, from scratch on v0.17.0-batch). Gate v9.0.0-base PASS on golden v0.1.3 (the split-canonical answer key — v0.1.2's us.street miss was the folded key crediting non-splitting; corrected instrument reads candidate 75.2 vs baseline 71.7). Anchor cure receipts: gb-golden 318/318 channel-FED, Fisher slot-4 11.28% w/ CA/JP zero controls, GB dep-loc 0->205/207 base package. Watch: us.unit_real 93.9 vs 97.0 (n=34); golden street_prefix 79.8 vs 86.7 (not floored). npm release 9.0.0. [graded_artifact=weights-cache; gate=v9.0.0-base; out-dir=/tmp/claude-1000/-home-lab-Projects-mailwoman/89eb8ad2-8fb4-4c96-b44b-867d2df4a0f1/scratchpad/gate-v900-verdict]"
 		}
 	]
 }

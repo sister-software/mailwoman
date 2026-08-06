@@ -10,11 +10,12 @@
 	},
 	"files": [
 		"model-card.json",
+		"postcode-gb.bin",
 		"pair-index-gb.bin",
 		"fst-en-gb.bin",
 		"fst-street-morphology.bin",
 		"anchor-lexicon-v1.json",
-		"locality-surface-lexicon-v6.json",
+		"locality-surface-lexicon-v7.json",
 		"street-type-lexicon-v3.json",
 		"country-surface-lexicon-v1.json",
 		"README.md",

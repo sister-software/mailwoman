@@ -255,10 +255,10 @@ jobs:
       # pair-index-us.bin,pair-index-gb.bin,pair-index-nz.bin` before dispatching a real run; the gazetteer
       # lexicon is a checked-in repo file). NOTE: en-nz ships NO postcode binary — no WOF NZ
       # postcode shard exists (see neural-weights-en-nz/model-card.json's no_postcode_bin
-      # follow-up). NOTE: en-gb ships no postcode binary either, as of 2026-08-05 — the encoder's
-      # GB anchor slot is untrained, so shipping one fed an untrained input direction on every GB
-      # parse (neural-weights-en-gb/model-card.json's gb_artifacts.no_postcode_bin). Do not add
-      # postcode-gb.bin back to the preflight/fetch lists below without the retrain.
+      # follow-up). NOTE: postcode-gb.bin RETURNED 2026-08-06 (9.0.0, ROAD_TO_V9 A4) — the
+      # v4.2.0 base trained the GB anchor slot, so the 2026-08-05 removal (#1467, untrained-slot
+      # mitigation) is over. The bin is Code-Point-derived and card-gated: en-gb's card declares
+      # span_mode "shaped" and its files[] names the bin (weights.test.ts pins the coupling).
       # Skipped on dry runs so a preview doesn't depend on HF staging.
       - name: Fetch weight binaries from Hugging Face
         if: ${{ !inputs.dry_run }}
@@ -273,7 +273,7 @@ jobs:
           # step will fetch and, if any is missing, print the exact remediation and stop immediately.
           echo "Preflight: verifying v${MODEL_VERSION} is staged on Hugging Face…"
           MISSING=0
-          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin pair-index-us.bin pair-index-fr.bin pair-index-de.bin pair-index-in.bin pair-index-es.bin pair-index-it.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin street-type-lexicon-v3.json locality-surface-lexicon-v6.json; do
+          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-us.bin pair-index-fr.bin pair-index-de.bin pair-index-in.bin pair-index-es.bin pair-index-it.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin street-type-lexicon-v3.json locality-surface-lexicon-v7.json; do
             if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
           done
           # Fisher consolidation artifact (#1354, model 7.0.0+): the bundle contract says the weights
@@ -286,7 +286,7 @@ jobs:
           fi
           if [ "$MISSING" = 1 ]; then
             echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
-            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin --pair-indexes neural-weights-en-us/pair-index-us.bin,neural-weights-fr-fr/pair-index-fr.bin,neural-weights-de-de/pair-index-de.bin,neural-weights-en-in/pair-index-in.bin,neural-weights-es-es/pair-index-es.bin,neural-weights-it-it/pair-index-it.bin,neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v6.json> --set-default   (RELEASING.md §3)"
+            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-us/pair-index-us.bin,neural-weights-fr-fr/pair-index-fr.bin,neural-weights-de-de/pair-index-de.bin,neural-weights-en-in/pair-index-in.bin,neural-weights-es-es/pair-index-es.bin,neural-weights-it-it/pair-index-it.bin,neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v7.json> --set-default   (RELEASING.md §3)"
             exit 1
           fi
           echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
@@ -298,13 +298,13 @@ jobs:
           # without them the published package warns + runs anchor-OFF (the #566/#685 OOD crater). The
           # per-country PCB1 postcode binaries are built from the WOF shard (not buildable on CI), so
           # they ride the bucket; all land under en-us/v<version>/ by basename via
-          # `mailwoman release hf <version> --postcodes postcode-us.bin,postcode-fr.bin`.
-          # en-gb is deliberately absent from this list (2026-08-05): its anchor slot is untrained,
-          # so the overlay ships anchor-OFF like en-nz. A `$CURL … -o neural-weights-en-gb/postcode-gb.bin`
-          # line here would put the binary back in the tarball's directory even though `files` no
-          # longer names it — and `resolveAnchorLookupSibling` reads the directory, not `files`.
+          # `mailwoman release hf <version> --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin`.
+          # postcode-gb.bin returned 2026-08-06 (9.0.0): the v4.2.0 base trained the GB slot, the
+          # en-gb card declares span_mode "shaped", and files[] names the bin again (the 2026-08-05
+          # anchor-OFF mitigation is recorded in that card's gb_artifacts history).
           $CURL "${BASE}/postcode-us.bin" -o neural-weights-en-us/postcode-us.bin
           $CURL "${BASE}/postcode-fr.bin" -o neural-weights-fr-fr/postcode-fr.bin
+          $CURL "${BASE}/postcode-gb.bin" -o neural-weights-en-gb/postcode-gb.bin
           # The placetype-pair-index binary (placetype-pair-prior arc, Task 8): built from the HM Land
           # Registry PPD tuples CSV (not buildable on CI, same story as the postcode binaries above),
           # so it rides the bucket too, via `mailwoman release hf <version> --pair-indexes
@@ -340,10 +340,10 @@ jobs:
           # base model carries the channels, and the card's requires would fail closed on a missing
           # sibling. Staged via `mailwoman release hf <version> --street-type-lexicon … --locality-surface-lexicon …`.
           $CURL "${BASE}/street-type-lexicon-v3.json" -o neural-weights-en-us/street-type-lexicon-v3.json
-          $CURL "${BASE}/locality-surface-lexicon-v6.json" -o neural-weights-en-us/locality-surface-lexicon-v6.json
+          $CURL "${BASE}/locality-surface-lexicon-v7.json" -o neural-weights-en-us/locality-surface-lexicon-v7.json
           for ws in neural-weights-fr-fr neural-weights-en-gb neural-weights-en-nz; do
             cp neural-weights-en-us/street-type-lexicon-v3.json "$ws/street-type-lexicon-v3.json"
-            cp neural-weights-en-us/locality-surface-lexicon-v6.json "$ws/locality-surface-lexicon-v6.json"
+            cp neural-weights-en-us/locality-surface-lexicon-v7.json "$ws/locality-surface-lexicon-v7.json"
           done
           # fr-fr, en-gb, and en-nz share the en-us model for now (locale-specific weights are future work).
           cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
