@@ -37,6 +37,7 @@
 import { createReadStream } from "node:fs"
 import { createInterface } from "node:readline"
 
+import type { Form499Lifecycle } from "./form499-notes.ts"
 import { toFRN, type FRN } from "./frn.ts"
 
 /**
@@ -122,6 +123,27 @@ export interface Form499Row {
 	dcAgentTelephone: string
 	dcAgentEmailAddress: string
 	dcAgentAddress: string
+	/**
+	 * The filer's lifecycle, parsed from the workbook's `note1`/`note2`/`note3` columns — a cessation date, a successor
+	 * filer, and the FCC's own reasons. See `form499-notes.ts`.
+	 *
+	 * **Optional because the SOURCE decides whether it exists, not the filer.** The 17-column TSV
+	 * ({@linkcode FORM_499_COLUMNS}) has no note columns at all, so {@linkcode parseForm499} can never populate this;
+	 * `parseForm499Workbook` always does. `undefined` therefore means "this source cannot say", which is NOT the same as
+	 * the `{notes: [], …}` an XLSX row with blank notes produces — that one means "the FCC said nothing about this
+	 * filer". A consumer treating the two alike would read every TSV-sourced filer as confirmed-active.
+	 */
+	lifecycle?: Form499Lifecycle
+	/**
+	 * Two-letter USPS codes for the states this filer registered operations in, from the workbook's 59 per-jurisdiction
+	 * TRUE/FALSE columns (Alabama…Wyoming, including territories and the Pacific atolls). Sorted, so two rows with the
+	 * same footprint compare equal.
+	 *
+	 * Optional for the same reason as {@link Form499Row.lifecycle}: absent from the TSV vocabulary entirely. An empty
+	 * ARRAY means the workbook marked no jurisdiction (656 filers in the 2025-12-07 vintage); `undefined` means the
+	 * source could not say.
+	 */
+	operatingStates?: string[]
 }
 
 /**
