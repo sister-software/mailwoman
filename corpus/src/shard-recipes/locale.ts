@@ -7,7 +7,7 @@
  *   OpenAddresses tuples for a `--country` (DE/FR/NL/IT/ES), renders each via
  *   {@link synthesizeLocaleRow} in BOTH orders (`--intl-fraction`, default 0.4 international / the
  *   rest country-native), aligns to BIO, and emits a labeled JSONL. Generate-mode: it STREAMS each
- *   source CSV (`unzip -p` for cached zips, plain `createReadStream` for extracted CSVs) and
+ *   source CSV (a streamed zip member for cached zips, plain `createReadStream` for extracted CSVs) and
  *   reservoir-samples to {@link RESERVOIR_CAP} (so FR/ES countrywide work in bounded memory), then
  *   draws `--count` rows from the pool with the passed `random`. Ported from
  *   scripts/build-locale-shard.mjs.
@@ -25,10 +25,10 @@
  *   country, so DE/FR emit streams are unchanged for a given seed.
  */
 
-import { spawn } from "node:child_process"
 import { createReadStream } from "node:fs"
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { CSVSpliterator } from "spliterator"
 
@@ -38,8 +38,8 @@ import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } 
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**
- * One per-country OA source part: either a cached `zip` + `csv` member (streamed via `unzip -p`) or an extracted plain
- * `path` (streamed via `createReadStream`). Both carry the standard OA header
+ * One per-country OA source part: either a cached `zip` + `csv` member (streamed out of the archive) or an extracted
+ * plain `path` (streamed via `createReadStream`). Both carry the standard OA header
  * (LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH). An optional `region` fallback covers countries
  * whose REGION column is empty (DE — the Bundesland is implied by the per-state file).
  */
@@ -223,7 +223,7 @@ interface ColumnIndex {
 
 /**
  * Stream real tuples out of an OA source part and reservoir-sample to {@link RESERVOIR_CAP}. Reads the CSV row-by-row —
- * `unzip -p | CSVSpliterator` for zip parts, `createReadStream | CSVSpliterator` for extracted parts (both bounded
+ * `readZipEntry | CSVSpliterator` for zip parts, `createReadStream | CSVSpliterator` for extracted parts (both bounded
  * memory) — and keeps a uniform random sample (Algorithm R) seeded by `rng`, separate from the emit loop's PRNG. NO
  * global dedup (a 25M-key Set would OOM; OA rows are near-unique). The city passes through {@link cleanCityNoise}; the
  * region falls back to `part.region` when the row's REGION cell is empty (DE).
@@ -231,21 +231,11 @@ interface ColumnIndex {
  * Exported for {@link locale.test.ts} — the CSV read path (quote handling, CRLF, region fallback) has no other test.
  */
 export async function readTuples(part: LocalePart, rng: () => number): Promise<LocaleBaseTuple[]> {
-	let input: NodeJS.ReadableStream
-
-	if (part.path) {
-		// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
-		// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
-		input = createReadStream(part.path)
-	} else {
-		const child = spawn("unzip", ["-p", part.zip!, part.csv!])
-
-		child.on("error", (err) => {
-			console.error(`  WARN: unzip failed for ${part.zip}: ${err.message}`)
-		})
-
-		input = child.stdout!
-	}
+	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
+	// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
+	const input: NodeJS.ReadableStream | AsyncIterable<Uint8Array> = part.path
+		? createReadStream(part.path)
+		: readZipEntry(part.zip!, part.csv!)
 
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
 	const reservoir: LocaleBaseTuple[] = []

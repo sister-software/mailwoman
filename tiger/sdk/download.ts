@@ -20,6 +20,8 @@ import { rename } from "node:fs/promises"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
+import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
+
 /**
  * Run a command and resolve its stdout, rejecting with the captured stderr on a non-zero exit.
  *
@@ -45,14 +47,14 @@ export function runCapture(cmd: string, args: string[]): Promise<string> {
  * Download `url` to `dest` unless a VALID copy is already there. Returns `true` when the cache was reused, `false` when
  * a download happened.
  *
- * "Valid" means `unzip -tq` passes — an existence check alone is not enough, because an interrupted download leaves a
- * plausible-looking file that fails only much later, inside ogr2ogr. Writes to a `.tmp` sibling and renames, so `dest`
- * is never a partial archive.
+ * "Valid" means every member's CRC-32 checks out — an existence check alone is not enough, because an interrupted
+ * download leaves a plausible-looking file that fails only much later, inside ogr2ogr. Writes to a `.tmp` sibling and
+ * renames, so `dest` is never a partial archive.
  */
 export async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
 	if (existsSync(dest)) {
 		try {
-			await runCapture("unzip", ["-tq", dest])
+			await verifyZipIntegrity(dest)
 
 			return true
 		} catch {

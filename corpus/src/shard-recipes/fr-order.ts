@@ -30,15 +30,13 @@
  *   inlined the variant logic and never called it).
  */
 
-import { spawnSync } from "node:child_process"
-
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
@@ -72,28 +70,15 @@ interface FrTuple {
 }
 
 /**
- * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale; cap with `head` so the whole file
- * never has to be held in memory. Only keeps rows with a house_number (the shard's core signal) and a postcode
- * (required for reversed-order rendering to be meaningful).
+ * Stream FR tuples out of the cached OA zip. The countrywide extract is GB-scale, so this reads only as far as `limit`
+ * distinct tuples — the `break` closes the reader and releases the archive. Only keeps rows with a house_number (the
+ * shard's core signal) and a postcode (required for reversed-order rendering to be meaningful).
  */
-function readTuples(limit: number): FrTuple[] {
-	const maxLines = Math.max(limit * 8, 40_000) + 1
-
-	const r = spawnSync("bash", ["-c", `unzip -p "${SOURCE.zip}" "${SOURCE.csv}" | head -n ${maxLines}`], {
-		maxBuffer: 1024 * 1024 * 1024,
-		encoding: "buffer",
-	})
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${SOURCE.zip} (status ${r.status})`)
-
-		return []
-	}
-
+async function readTuples(limit: number): Promise<FrTuple[]> {
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(SOURCE.zip, SOURCE.csv)) {
 		if (tuples.length >= limit) break
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
@@ -161,7 +146,7 @@ export const frOrderRecipe: ShardRecipe = {
 
 		// Over-read from the CSV so the dedup + filter pass can fill `count` rows.
 		const poolLimit = Math.max(count * 8, 40_000)
-		const pool = readTuples(poolLimit)
+		const pool = await readTuples(poolLimit)
 
 		console.error(`  ${SOURCE.csv}: ${pool.length} unique tuples (capped read)`)
 

@@ -21,8 +21,6 @@
  *   framework LCG) is consumed in the exact call order the legacy script used.
  */
 
-import { spawnSync } from "node:child_process"
-
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -30,7 +28,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
@@ -122,19 +120,11 @@ interface UnitTuple {
 /**
  * Stream real US tuples (number/street/city/postcode + the bare OA unit id) out of a cached OA zip.
  */
-function readTuples(source: UnitSource): UnitTuple[] {
-	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
-
-		return []
-	}
-
+async function readTuples(source: UnitSource): Promise<UnitTuple[]> {
 	const tuples: UnitTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 		const house_number = row.number ?? ""
@@ -263,7 +253,7 @@ export const unitRecipe: ShardRecipe = {
 		const pool: UnitTuple[] = []
 
 		for (const s of sources) {
-			const t = readTuples(s)
+			const t = await readTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 

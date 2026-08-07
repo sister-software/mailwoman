@@ -15,14 +15,12 @@
  *   docs/articles/evals/resolver-geo/2026-06-06-anchor-pilot.md (the order-artifact correction).
  */
 
-import { spawnSync } from "node:child_process"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.ts"
-import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).
@@ -44,21 +42,13 @@ const SOURCES: GermanSource[] = [
 ]
 
 /**
- * Stream real German tuples out of a cached OA zip (buffered `unzip -p`).
+ * Stream real German tuples out of a cached OA zip.
  */
-function readGermanTuples(source: GermanSource): LocaleBaseTuple[] {
-	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
-
-		return []
-	}
-
+async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]> {
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 
@@ -102,7 +92,7 @@ export const germanRecipe: ShardRecipe = {
 		const pool: LocaleBaseTuple[] = []
 
 		for (const s of SOURCES) {
-			const t = readGermanTuples(s)
+			const t = await readGermanTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 

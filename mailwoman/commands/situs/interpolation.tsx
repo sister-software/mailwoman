@@ -31,6 +31,7 @@ import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
 
+import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
@@ -333,19 +334,17 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 //#region ZIP extraction
 
 /**
- * Unpack a TIGER EDGES ZIP into --edges-dir using the system `unzip` command. Only extracts files whose names end with
- * `.shp`, `.dbf`, `.prj`, `.shx` — the shapefile components DuckDB needs. Silently overwrites existing files
- * (idempotent at the shapefile level).
+ * The shapefile components DuckDB needs out of a TIGER EDGES archive. The siblings are useless without each other, so a
+ * partial extract is a broken layer rather than a smaller one.
  */
-function extractEdgesZip(zipPath: string, destDir: string): void {
-	// unzip -o (overwrite) -j (junk paths) <zip> *.shp *.dbf *.prj *.shx -d <dest>
-	const result = spawnSync("unzip", ["-o", "-j", zipPath, "*.shp", "*.dbf", "*.prj", "*.shx", "-d", destDir], {
-		stdio: ["ignore", "pipe", "pipe"],
-	})
+const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
 
-	if (result.status !== 0) {
-		throw new Error(`unzip failed for ${zipPath}: ${result.stderr.toString().trim()}`)
-	}
+/**
+ * Unpack a TIGER EDGES ZIP into --edges-dir, flattened. Silently overwrites existing files (idempotent at the shapefile
+ * level).
+ */
+async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
+	await extractZipEntries(zipPath, destDir, { selector: SHAPEFILE_MEMBERS, flatten: true })
 }
 
 //#endregion
@@ -387,7 +386,7 @@ async function downloadParallel(
 			// Also skip if the ZIP is already present (interrupted run: unpack it)
 			if (existsSync(task.zipPath)) {
 				try {
-					extractEdgesZip(task.zipPath, edgesDir)
+					await extractEdgesZip(task.zipPath, edgesDir)
 
 					skipped++
 
@@ -401,7 +400,7 @@ async function downloadParallel(
 
 			try {
 				await downloadFile(task.zipURL, task.zipPath)
-				extractEdgesZip(task.zipPath, edgesDir)
+				await extractEdgesZip(task.zipPath, edgesDir)
 
 				downloaded++
 			} catch (error) {

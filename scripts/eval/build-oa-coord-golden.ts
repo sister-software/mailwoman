@@ -29,12 +29,11 @@
 // oxlint-disable max-depth
 
 import { createReadStream, globSync, mkdirSync, writeFileSync } from "node:fs"
-import { open, type FileHandle } from "node:fs/promises"
 import { dirname } from "node:path"
 import { parseArgs } from "node:util"
-import { createInflateRaw } from "node:zlib"
 
 import { titlecaseIfUpper } from "@mailwoman/core"
+import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { pyFloat, pyJSONDumps, SeededRandom } from "@mailwoman/core/utils"
 import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 
@@ -79,201 +78,11 @@ async function* withoutBOM(source: AsyncIterable<Uint8Array | string>): AsyncIte
 	}
 }
 
-//#region ZIP entry reader
-
-/*
- * Signatures, little-endian. `zlib` decompresses a DEFLATE stream but knows nothing of the ZIP container, so the
- * central directory has to be walked by hand to find where an entry's bytes start and how many there are.
- */
-const EOCD_SIGNATURE = 0x06_05_4b_50
-const ZIP64_LOCATOR_SIGNATURE = 0x07_06_4b_50
-const ZIP64_EOCD_SIGNATURE = 0x06_06_4b_50
-const CENTRAL_HEADER_SIGNATURE = 0x02_01_4b_50
-const LOCAL_HEADER_SIGNATURE = 0x04_03_4b_50
-
 /**
- * The value a 32-bit size or offset carries when the real one lives in the entry's ZIP64 extra field.
- */
-const ZIP64_SENTINEL_32 = 0xff_ff_ff_ff
-const ZIP64_SENTINEL_16 = 0xff_ff
-
-/**
- * ZIP64 extra-field header id.
- */
-const ZIP64_EXTRA_ID = 0x00_01
-
-/**
- * DEFLATE. The only other method these dumps use is 0, stored.
- */
-const METHOD_DEFLATE = 8
-
-/**
- * Bytes to sweep for the end-of-central-directory record: its fixed part plus the largest possible trailing comment.
- */
-const EOCD_SEARCH_WINDOW = 22 + 0xff_ff
-
-interface ZipEntry {
-	compressionMethod: number
-	compressedSize: number
-	localHeaderOffset: number
-}
-
-/**
- * Locate an entry by name in the central directory.
- *
- * Handles ZIP64 because the national dumps need it — a member above 4 GB (FR BAN) parks `0xFFFFFFFF` in the 32-bit size
- * and offset fields and puts the real 64-bit values in the entry's extra field.
- */
-async function findZipEntry(handle: FileHandle, fileSize: number, entryName: string): Promise<ZipEntry> {
-	const tailLength = Math.min(EOCD_SEARCH_WINDOW, fileSize)
-	const tail = Buffer.alloc(tailLength)
-
-	await handle.read(tail, 0, tailLength, fileSize - tailLength)
-
-	let eocd = -1
-
-	for (let i = tail.length - 22; i >= 0; i--) {
-		if (tail.readUInt32LE(i) === EOCD_SIGNATURE) {
-			eocd = i
-
-			break
-		}
-	}
-
-	if (eocd < 0) throw new Error(`not a zip archive (no end-of-central-directory record)`)
-
-	let centralOffset = tail.readUInt32LE(eocd + 16)
-	let centralSize = tail.readUInt32LE(eocd + 12)
-	const entryCount = tail.readUInt16LE(eocd + 10)
-
-	if (centralOffset === ZIP64_SENTINEL_32 || centralSize === ZIP64_SENTINEL_32 || entryCount === ZIP64_SENTINEL_16) {
-		let locatorAt = -1
-
-		for (let i = eocd - 20; i >= 0; i--) {
-			if (tail.readUInt32LE(i) === ZIP64_LOCATOR_SIGNATURE) {
-				locatorAt = i
-
-				break
-			}
-		}
-
-		if (locatorAt < 0) throw new Error("zip64 archive without an end-of-central-directory locator")
-
-		const zip64At = Number(tail.readBigUInt64LE(locatorAt + 8))
-		const zip64 = Buffer.alloc(56)
-
-		await handle.read(zip64, 0, 56, zip64At)
-
-		if (zip64.readUInt32LE(0) !== ZIP64_EOCD_SIGNATURE) throw new Error("zip64 end-of-central-directory not found")
-
-		centralSize = Number(zip64.readBigUInt64LE(40))
-		centralOffset = Number(zip64.readBigUInt64LE(48))
-	}
-
-	const central = Buffer.alloc(centralSize)
-
-	await handle.read(central, 0, centralSize, centralOffset)
-
-	for (let at = 0; at + 46 <= central.length && central.readUInt32LE(at) === CENTRAL_HEADER_SIGNATURE;) {
-		const nameLength = central.readUInt16LE(at + 28)
-		const extraLength = central.readUInt16LE(at + 30)
-		const commentLength = central.readUInt16LE(at + 32)
-		const name = central.toString("utf8", at + 46, at + 46 + nameLength)
-
-		if (name === entryName) {
-			const entry: ZipEntry = {
-				compressionMethod: central.readUInt16LE(at + 10),
-				compressedSize: central.readUInt32LE(at + 20),
-				localHeaderOffset: central.readUInt32LE(at + 42),
-			}
-
-			// The 64-bit values, when the 32-bit slots are sentinels. Order in the extra field is fixed —
-			// uncompressed, compressed, offset — but each is present only if ITS slot was a sentinel.
-			if (entry.compressedSize === ZIP64_SENTINEL_32 || entry.localHeaderOffset === ZIP64_SENTINEL_32) {
-				const extraStart = at + 46 + nameLength
-				const uncompressedIsSentinel = central.readUInt32LE(at + 24) === ZIP64_SENTINEL_32
-
-				for (let e = extraStart; e + 4 <= extraStart + extraLength;) {
-					const id = central.readUInt16LE(e)
-					const size = central.readUInt16LE(e + 2)
-
-					if (id === ZIP64_EXTRA_ID) {
-						let cursor = e + 4
-
-						if (uncompressedIsSentinel) {
-							cursor += 8
-						}
-
-						if (entry.compressedSize === ZIP64_SENTINEL_32) {
-							entry.compressedSize = Number(central.readBigUInt64LE(cursor))
-							cursor += 8
-						}
-
-						if (entry.localHeaderOffset === ZIP64_SENTINEL_32) {
-							entry.localHeaderOffset = Number(central.readBigUInt64LE(cursor))
-						}
-
-						break
-					}
-
-					e += 4 + size
-				}
-			}
-
-			return entry
-		}
-
-		at += 46 + nameLength + extraLength + commentLength
-	}
-
-	throw new Error(`entry ${entryName} not found in the archive`)
-}
-
-/**
- * Stream one entry's bytes, inflating when the entry is deflated.
- *
- * The local header repeats the name and extra-field lengths — and its extra field is frequently a different length from
- * the central directory's — so where the data starts can only be read from the local header itself.
- */
-async function* zipEntryBytes(zipPath: string, entryName: string): AsyncIterable<Uint8Array> {
-	const handle = await open(zipPath)
-
-	try {
-		const { size } = await handle.stat()
-		const entry = await findZipEntry(handle, size, entryName)
-		const local = Buffer.alloc(30)
-
-		await handle.read(local, 0, 30, entry.localHeaderOffset)
-
-		if (local.readUInt32LE(0) !== LOCAL_HEADER_SIGNATURE) throw new Error(`bad local header for ${entryName}`)
-
-		const dataStart = entry.localHeaderOffset + 30 + local.readUInt16LE(26) + local.readUInt16LE(28)
-
-		const compressed = handle.createReadStream({
-			start: dataStart,
-			end: dataStart + entry.compressedSize - 1,
-			autoClose: false,
-		})
-
-		if (entry.compressionMethod !== METHOD_DEFLATE) {
-			yield* compressed
-
-			return
-		}
-
-		yield* compressed.pipe(createInflateRaw())
-	} finally {
-		await handle.close()
-	}
-}
-
-//#endregion
-
-/**
- * Stream header-keyed records from one member of a possibly-ZIP64 archive.
+ * Stream header-keyed records from one member of an archive.
  */
 async function* csvRecordsFromZip(zipPath: string, entry: string): AsyncGenerator<CSVRecord> {
-	yield* CSVSpliterator.fromAsync<CSVRecord>(withoutBOM(zipEntryBytes(zipPath, entry)), CSV_OPTIONS)
+	yield* CSVSpliterator.fromAsync<CSVRecord>(withoutBOM(readZipEntry(zipPath, entry)), CSV_OPTIONS)
 }
 
 async function* csvRecordsFromFile(path: string): AsyncGenerator<CSVRecord> {

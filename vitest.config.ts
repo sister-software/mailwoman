@@ -5,77 +5,90 @@
  *
  *   Root vitest config — runs tests across every workspace from the repo root.
  *
- *   Historical premise: workspace `exports` pointed only at compiled `./out/.../index.js` paths, so
- *   these aliases redirected each `@mailwoman/*` import to source `.ts` for clean-checkout runs.
- *   Since the first-class-TS migration, every exports entry carries a `node` condition pointing at
- *   the source `.ts`, so most of this list is redundant with plain exports resolution and is a
- *   removal candidate. It stays for now because Vite's applied condition set differs from Node's.
- *   Order matters — more specific entries first.
+ *   Workspace aliases redirect each `@mailwoman/*` import to source `.ts`, which is needed because
+ *   Vite's applied condition set differs from Node's. They are GENERATED from each workspace's own
+ *   `exports` map rather than hand-listed — see {@link workspaceAliases} for why the hand-listed
+ *   version kept going wrong. The only hand-written entry left is the `onnxruntime-web` one below,
+ *   which is not a workspace.
  */
 
 /// <reference types="vitest/config" />
 
+import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import type { Alias } from "vite"
 import { defineConfig } from "vite"
 
 const here = import.meta.dirname
 
+const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+/**
+ * Derive the `@mailwoman/*` (and bare `mailwoman`) source aliases from each workspace's own `exports` map.
+ *
+ * Every exports entry carries a `node` condition pointing at the source `.ts` (the first-class-TS migration), which is
+ * precisely what the alias list used to restate by hand. Restating it meant the two could disagree, and they did: the
+ * generic `@mailwoman/core/(.+) -> core/$1/index.ts` rule assumed every subpath was a directory, so each bare-file
+ * subpath needed its own earlier entry (`objects`, `fs`, `crypto`, `api/disk-storage`, …) and a NEW one was a silent
+ * `Cannot find package` in unrelated suites until someone added it. The mirror-image gap on `@mailwoman/corpus/(.+) ->
+ * corpus/src/$1.ts` mis-resolved the exported `./tools` DIRECTORY subpath (#1523).
+ *
+ * Reading the map instead means a workspace that exports a subpath is importable in tests, one that does not is not,
+ * and the answer matches what a real consumer gets. Order: every exact subpath before every wildcard, longest first,
+ * since Vite takes the first `find` that matches.
+ */
+/**
+ * Read a workspace manifest.
+ *
+ * `parseJSONStrict` lives behind the very aliases {@link workspaceAliases} generates, so importing it here would make
+ * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does.
+ */
+function readManifest<T>(path: string): T {
+	// oxlint-disable-next-line no-restricted-properties -- see above.
+	return JSON.parse(readFileSync(path, "utf8")) as T
+}
+
+function workspaceAliases(): Alias[] {
+	const root = readManifest<{ workspaces: string[] }>(resolve(here, "package.json"))
+	const aliases: Array<Alias & { specificity: number; wildcard: boolean }> = []
+
+	for (const workspace of root.workspaces) {
+		const manifest = readManifest<{
+			name?: string
+			exports?: Record<string, string | Record<string, string>>
+		}>(resolve(here, workspace, "package.json"))
+
+		if (!manifest.name || !manifest.exports) continue
+
+		for (const [subpath, target] of Object.entries(manifest.exports)) {
+			// The `node` condition is the source `.ts`; `default` covers a plain-string entry like `./package.json`.
+			const file = typeof target === "string" ? target : (target.node ?? target.default)
+
+			if (!file) continue
+
+			const specifier = manifest.name + (subpath === "." ? "" : subpath.slice(1))
+			const wildcard = specifier.includes("*")
+
+			aliases.push({
+				find: new RegExp(`^${specifier.split("*").map(escapeRegExp).join("(.+)")}$`),
+				replacement: resolve(here, workspace, file).replace("*", "$1"),
+				specificity: specifier.length,
+				wildcard,
+			})
+		}
+	}
+
+	return aliases
+		.toSorted((a, b) => Number(a.wildcard) - Number(b.wildcard) || b.specificity - a.specificity)
+		.map(({ find, replacement }) => ({ find, replacement }))
+}
+
 export default defineConfig({
 	resolve: {
 		alias: [
-			// @mailwoman/core — `kysley/*` is a glob subpath that preserves the trailing filename,
-			// everything else resolves to a directory `index.ts`.
-			{ find: /^@mailwoman\/core\/kysley\/(.+)$/, replacement: resolve(here, "core/kysley/$1.ts") },
-			// coarse-placer (#244) is a single-file subpath (no index.ts), so the generic core/$1/index.ts
-			// rule below would mis-resolve it. Map it to the file directly.
-			{ find: "@mailwoman/core/coarse-placer", replacement: resolve(here, "core/coarse-placer/coarse-placer.ts") },
-			// `objects` is a bare file (core/objects.ts), so it must beat the generic dir rule below — a
-			// transitive import (e.g. @mailwoman/spatial → @mailwoman/core/objects) hits this from any test.
-			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "core/objects.ts") },
-			// `fs` is the node build (core/fs/node.ts), not a directory index — must beat the generic rule.
-			{ find: /^@mailwoman\/core\/fs$/, replacement: resolve(here, "core/fs/node.ts") },
-			// `crypto` is the same shape: the subpath's node condition points at `core/crypto/node.ts`, so the
-			// generic `core/$1/index.ts` rule below resolves it to a file that does not exist.
-			{ find: /^@mailwoman\/core\/crypto$/, replacement: resolve(here, "core/crypto/node.ts") },
-			// `api/disk-storage` is a bare file kept OUT of the `api` barrel (it imports node:fs, and the
-			// barrel reaches a browser bundle), so it needs its own entry ahead of the generic dir rule.
-			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolve(here, "core/api/disk-storage.ts") },
-			{ find: /^@mailwoman\/core\/api\/test-clocks$/, replacement: resolve(here, "core/api/test-clocks.ts") },
-			{ find: /^@mailwoman\/core\/api\/test-transport$/, replacement: resolve(here, "core/api/test-transport.ts") },
-			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "core/$1/index.ts") },
-			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "core/index.ts") },
-			// Sibling workspaces.
-			{ find: /^@mailwoman\/address-id$/, replacement: resolve(here, "address-id/index.ts") },
-			{ find: /^@mailwoman\/api-kit$/, replacement: resolve(here, "api-kit/index.ts") },
-			{ find: /^@mailwoman\/api$/, replacement: resolve(here, "api/index.ts") },
-			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "corpus/src/$1.ts") },
-			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "corpus/src/index.ts") },
-			{ find: /^@mailwoman\/formatter\/(.+)$/, replacement: resolve(here, "formatter/$1.ts") },
-			{ find: /^@mailwoman\/formatter$/, replacement: resolve(here, "formatter/index.ts") },
-			{ find: /^@mailwoman\/record\/(.+)$/, replacement: resolve(here, "record/$1.ts") },
-			{ find: /^@mailwoman\/record$/, replacement: resolve(here, "record/index.ts") },
-			{ find: /^@mailwoman\/match\/(.+)$/, replacement: resolve(here, "match/$1.ts") },
-			{ find: /^@mailwoman\/match$/, replacement: resolve(here, "match/index.ts") },
-			{ find: /^@mailwoman\/spatial\/sdk$/, replacement: resolve(here, "spatial/sdk/index.ts") },
-			{ find: /^@mailwoman\/spatial$/, replacement: resolve(here, "spatial/index.ts") },
-			{ find: /^@mailwoman\/registry\/(.+)$/, replacement: resolve(here, "registry/$1.ts") },
-			{ find: /^@mailwoman\/registry$/, replacement: resolve(here, "registry/index.ts") },
-			{ find: "@mailwoman/neural/tokenizer", replacement: resolve(here, "neural/tokenizer.ts") },
-			{ find: /^@mailwoman\/neural$/, replacement: resolve(here, "neural/index.ts") },
-			{ find: /^@mailwoman\/query-shape$/, replacement: resolve(here, "query-shape/index.ts") },
-			{ find: /^@mailwoman\/normalize$/, replacement: resolve(here, "normalize/index.ts") },
-			{ find: /^@mailwoman\/kind-classifier$/, replacement: resolve(here, "kind-classifier/index.ts") },
-			{ find: /^@mailwoman\/locale-gate$/, replacement: resolve(here, "locale-gate/index.ts") },
-			{ find: /^@mailwoman\/variant-aliases$/, replacement: resolve(here, "variant-aliases/index.ts") },
-			{ find: /^@mailwoman\/phrase-grouper$/, replacement: resolve(here, "phrase-grouper/index.ts") },
-			{ find: /^@mailwoman\/poi-taxonomy$/, replacement: resolve(here, "poi-taxonomy/index.ts") },
-			{ find: /^@mailwoman\/mcp$/, replacement: resolve(here, "mcp/index.ts") },
-			// `mailwoman` is the user-facing publishable workspace at /mailwoman.
-			{ find: "mailwoman/test-kit", replacement: resolve(here, "mailwoman/test-kit/index.ts") },
-			{ find: "mailwoman/cli-kit", replacement: resolve(here, "mailwoman/cli-kit/index.ts") },
-			{ find: /^mailwoman$/, replacement: resolve(here, "mailwoman/index.ts") },
+			...workspaceAliases(),
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
 			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a
 			// blob: URL (Node's ESM loader rejects that too). The root export carries a `node`
