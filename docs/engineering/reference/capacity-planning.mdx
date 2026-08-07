@@ -1,0 +1,113 @@
+---
+title: Capacity planning — disk and memory for a mailwoman installation
+role: reference
+audience: maintainer
+owner: operations
+tags:
+  - operations
+  - data
+---
+
+# Capacity planning
+
+The citable answer to two deployer questions: **"how much space will I need to run a
+whole-world mailwoman installation?"** and **"how much memory will that take?"** Every number
+here is either measured on our artifacts (dated, with the artifact named) or an extrapolation
+whose per-unit cost is measured. When an artifact changes materially, re-measure and update the
+table — an uncited number in this file is a defect.
+
+## Why the numbers come out small
+
+Rooftop fidelity is a data problem, not a model problem. The parser is a 38 MB int8 ONNX
+model shared world-wide (every locale overlay ships the same bytes); adding a country never
+grows it. Fidelity grows by adding **layers** — sealed, read-only, memory-mapped SQLite
+artifacts probed by parse-derived keys (see
+[the layer contract](./layer-contract.mdx)). Because retrieval is a keyed probe — house
+number + street within an already-resolved locality — rather than fuzzy full-text recall,
+there is no query-time index that must be resident in RAM. Disk holds the data; the page
+cache holds whatever the query traffic touches.
+
+## Measured unit costs (2026-08-07)
+
+| Artifact                                                        | Measured size | Unit cost                    |
+| --------------------------------------------------------------- | ------------- | ---------------------------- |
+| Parser model, int8 ONNX (model 9.0.0)                           | 38 MB         | one model, world-wide        |
+| Full en-us weights bundle (model + tokenizer + FST + lexicons)  | 72 MB         | overlays add ~2–20 MB each   |
+| US rooftop address points, all states (124.9M points)           | 29 GB         | **~230 B/point** incl. index |
+| WOF admin hierarchy, whole world (`admin-global-priority.db`)   | 5.0 GB        | —                            |
+| Candidate gazetteer, global                                     | 0.9–1.6 GB    | —                            |
+| GB postcodes, SQLite (`postalcode-gb-codepoint.db`, 1.75M keys) | 836 MB        | ~480 B/key                   |
+| GB postcodes, packed (`postcode-gb.bin`, same 1.75M keys)       | 21 MB         | **~12 B/key**                |
+| NL PC6 postcode DB                                              | 193 MB        | —                            |
+| International postcode DB                                       | 144 MB        | —                            |
+| poi.db (13.68M Overture rows)                                   | 3.7 GB        | ~270 B/row                   |
+
+The GB postcode pair is load-bearing evidence, not trivia: **the same dataset costs 40× less
+when packed for its one probe shape** than in general-purpose SQLite form. See the
+cost-reduction roadmap below.
+
+## Whole-world estimate
+
+The world's acquirable rooftop set (OpenAddresses global + OSM address nodes + national
+registers: BAN, GNAF, LINZ, …) is roughly 500–800M points. At the measured 230 B/point:
+
+| Component                             | Estimate       |
+| ------------------------------------- | -------------- |
+| Address-point spine (500–800M points) | 115–185 GB     |
+| Admin + candidate + polygons          | ~8 GB          |
+| Postcodes, all countries              | 4–6 GB         |
+| Global POI (~60M Overture places)     | 16–20 GB       |
+| **Total disk**                        | **150–220 GB** |
+
+**Memory: ~1–2 GB floor.** The fixed cost is the ORT session + tokenizer + FST + lexicons
+(~300–500 MB resident). Every layer is memory-mapped and probed by key, so the rest is page
+cache: more RAM buys latency, never correctness. There is no heap that must hold an index.
+
+For context — the incumbents this trades against (public deployment guidance for their own
+full-planet installs, approximate): a planet Pelias is on the order of 600 GB of
+Elasticsearch that wants to be hot across a cluster; a planet Nominatim is on the order of
+1 TB of Postgres plus an 80 GB flatnode file. They pay at query time in resident index; we
+pay at build time in sealed artifacts.
+
+## The per-locale template
+
+A locale is a fixed kit. Adding one never touches the model:
+
+| Kit piece           | What it is                                                | Typical size   |
+| ------------------- | --------------------------------------------------------- | -------------- |
+| Weights overlay     | data-only npm package (`@mailwoman/neural-weights-<loc>`) | 2–20 MB        |
+| Codex module        | postal reference + branded types (`@mailwoman/codex`)     | in-package, ~0 |
+| Postcode DB / bin   | centroid or full-fidelity lookup                          | 2 MB–836 MB    |
+| Address-point layer | rooftop register as a sealed layer                        | ~230 B/point   |
+| FST gazetteer       | per-locale name matcher                                   | 4–21 MB        |
+
+Worked examples: en-us (all pieces), fr-fr (overlay + BAN points), en-gb (overlay +
+Code-Point postcodes; rooftop layer is the open acquisition). Coverage status per country
+belongs to the coverage register, not this file.
+
+## Cost-reduction roadmap
+
+Three levers, held behind the five-arm benchmark's per-query-class latency and fidelity data
+— optimizing layout ahead of that measurement is the reasoned-to-instead-of-measured trap.
+
+1. **Packed address-point spine** ([#1547](https://github.com/sister-software/mailwoman/issues/1547)) —
+   parent-relative encoding: per-locality street dictionaries, delta-encoded number
+   sequences, coordinates as 16-bit offsets from the parent H3 res-9 cell. The 40× GB
+   postcode receipt above is the evidence base; landing estimate 40–60 B/point, taking the
+   world spine from ~150 GB to ~30–50 GB. Decode must stay fixed-stride trivial — the
+   resolver ladder is synchronous and per-keystroke.
+2. **Admin-keyed shard distribution** ([#1548](https://github.com/sister-software/mailwoman/issues/1548)) —
+   deployment scope becomes a fetch list of country shards, each carrying its own coverage
+   manifest (the meaning-of-zero rule). Differential updates: a register rev re-fetches one
+   shard. The candidate gazetteer stays global and monolithic — namesake resolution is
+   inherently global (#1546 is what candidate-set gaps do).
+3. **Targeted precompute** ([#1549](https://github.com/sister-software/mailwoman/issues/1549)) —
+   build-time artifacts that make hot, stable queries single lookups (H3-ring KNN lists,
+   interpolation-ready per-street tables). The candidate table and postcode bins already ARE
+   this pattern, and the 40× receipt shows probe-shaped precompute costs less than the
+   general form it replaces. Only stable + hot queries earn an artifact; precompute freezes a
+   query distribution.
+
+Levers 1 and 3 are not opposed: specializing to the probe shape is simultaneously the
+compression and the precompute. All three derive from the same build passes, so consistency
+rides the existing rebuild-not-patch discipline.
