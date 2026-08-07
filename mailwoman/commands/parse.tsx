@@ -90,6 +90,26 @@ const ParseConfigSchema = zod.object({
 				"ON by default (promoted 2026-08-05); pass --no-postcode-country-coherence to restore the un-overridden " +
 				"country scope. Requires --resolve."
 		),
+	postcodeShapeCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident " +
+				"sibling signal (country/region) is demoted: digit-only → house_number, letter-bearing → stamped " +
+				"'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. " +
+				"DEFAULT OFF (demotion is the failure mode with teeth); pass --postcode-shape-coherence to opt in. " +
+				"Requires --resolve."
+		),
+	postcodeContainmentCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: re-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the " +
+				"locality that CONTAINS the postcode wins the name-match tie. DEFAULT OFF; pass " +
+				"--postcode-containment-coherence to opt in. Requires --resolve."
+		),
 	neural: zod
 		.boolean()
 		.optional()
@@ -381,6 +401,8 @@ async function resolveWithCandidates(
 		defaultCountry?: string
 		adminCoherence?: boolean
 		postcodeCountryCoherence?: boolean
+		postcodeShapeCoherence?: boolean
+		postcodeContainmentCoherence?: boolean
 	} = {}
 
 	if (options.candidates !== undefined) {
@@ -391,6 +413,15 @@ async function resolveWithCandidates(
 	// pin needs threading.
 	if (options.postcodeCountryCoherence === false) {
 		opts.postcodeCountryCoherence = false
+	}
+
+	// #31 opt-in mechanisms: library defaults are OFF, so only the explicit opt-in needs threading.
+	if (options.postcodeShapeCoherence === true) {
+		opts.postcodeShapeCoherence = true
+	}
+
+	if (options.postcodeContainmentCoherence === true) {
+		opts.postcodeContainmentCoherence = true
 	}
 
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
@@ -541,6 +572,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		candidatesPerLookup?: number
 		defaultCountry?: string
 		postcodeCountryCoherence?: boolean
+		postcodeShapeCoherence?: boolean
+		postcodeContainmentCoherence?: boolean
 	} = {}
 
 	if (wantAlternatives) {
@@ -551,6 +584,15 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// so only the explicit --no-postcode-country-coherence opt-out needs threading.
 	if (options.resolve && options.postcodeCountryCoherence === false) {
 		resolveOpts.postcodeCountryCoherence = false
+	}
+
+	// #31 opt-in mechanisms — default-OFF, so only the explicit opt-in needs threading.
+	if (options.resolve && options.postcodeShapeCoherence === true) {
+		resolveOpts.postcodeShapeCoherence = true
+	}
+
+	if (options.resolve && options.postcodeContainmentCoherence === true) {
+		resolveOpts.postcodeContainmentCoherence = true
 	}
 
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
@@ -566,7 +608,13 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 
 	const pipelineOpts: {
 		locale?: string
-		resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string; postcodeCountryCoherence?: boolean }
+		resolveOpts?: {
+			candidatesPerLookup?: number
+			defaultCountry?: string
+			postcodeCountryCoherence?: boolean
+			postcodeShapeCoherence?: boolean
+			postcodeContainmentCoherence?: boolean
+		}
 	} = {
 		locale: options.locale,
 	}
@@ -574,7 +622,9 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	if (
 		resolveOpts.candidatesPerLookup !== undefined ||
 		resolveOpts.defaultCountry !== undefined ||
-		resolveOpts.postcodeCountryCoherence !== undefined
+		resolveOpts.postcodeCountryCoherence !== undefined ||
+		resolveOpts.postcodeShapeCoherence !== undefined ||
+		resolveOpts.postcodeContainmentCoherence !== undefined
 	) {
 		pipelineOpts.resolveOpts = resolveOpts
 	}

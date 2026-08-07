@@ -157,6 +157,25 @@ const OptionsSchema = zod.object({
 				"is, or when more than one is. ON by default (promoted 2026-08-05); pass " +
 				"--no-postcode-country-coherence to restore the un-overridden country scope."
 		),
+	postcodeShapeCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident " +
+				"sibling signal (country/region) is demoted: digit-only → house_number, letter-bearing → stamped " +
+				"'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. " +
+				"DEFAULT OFF (demotion is the failure mode with teeth); pass --postcode-shape-coherence to opt in."
+		),
+	postcodeContainmentCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: re-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the " +
+				"locality that CONTAINS the postcode wins the name-match tie. DEFAULT OFF; pass " +
+				"--postcode-containment-coherence to opt in."
+		),
 	placeCountryThreshold: zod
 		.number()
 		.optional()
@@ -321,6 +340,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
 			// threading (an unset dep already reads as ON downstream).
 			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
+			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
+			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
+			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).

@@ -41,6 +41,7 @@ import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import type {
 	AddressPointLookup,
 	InterpolationLookup,
+	PostcodePrefixIndexLike,
 	ResolveOpts,
 	Resolver,
 	StreetCentroidLookup,
@@ -331,6 +332,32 @@ export interface GeocodeDeps {
 	 * the second pass costs nothing unless an override actually fired.
 	 */
 	postcodeCountryCoherence?: boolean
+	/**
+	 * Postcode-shape coherence (#31, Mechanism 1, `ResolveOpts.postcodeShapeCoherence`) — shape as confidence and
+	 * EXCLUSION: a postcode span whose codex shape intersects NO confident sibling system is demoted (digit-only →
+	 * `house_number`; letter-bearing → stamped `postcode_shape_excluded`). **Default OFF** — demotion is the failure mode
+	 * with teeth; pass `true` to opt in (the pre-registered B1 gate set lives in
+	 * `resolver/postcode-shape-coherence.ts`).
+	 */
+	postcodeShapeCoherence?: boolean
+	/**
+	 * Postcode-containment coherence (#31, Mechanism 2, `ResolveOpts.postcodeContainmentCoherence`) — re-rank locality
+	 * candidates by proximity to the postcode's own centroid (25 km gate, the same value the country pass measures at).
+	 * **Default OFF**; pass `true` to opt in.
+	 */
+	postcodeContainmentCoherence?: boolean
+	/**
+	 * Postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` + `.postcodePrefixIndex`) — on a
+	 * `postalcode` miss, resolve the code's PREFIX from the injected PFX1 index (GB outward / US section) so an
+	 * ungazetted unit still contributes its district + centroid. **Default OFF** (the PCN1 posture — data + loader +
+	 * offline probe, no decode wiring); pass `true` plus the index to opt in.
+	 */
+	postcodePrefixPrior?: boolean
+	/**
+	 * The PFX1 postcode-prefix index to probe (structural — `PostcodePrefixIndexLike`, core/resolver/types.ts; the loader
+	 * is `@mailwoman/neural/postcode-prefix-index.ts`). Only consulted when `postcodePrefixPrior` is on.
+	 */
+	postcodePrefixIndex?: PostcodePrefixIndexLike
 }
 
 /**
@@ -835,6 +862,26 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// than an unset field that re-defaults ON downstream. The resolver owns the verdict (it is the only place that can
 	// test the (postcode, locality) pair against the gazetteer); its answer is read back off the tree below.
 	opts.postcodeCountryCoherence = deps.postcodeCountryCoherence !== false
+
+	// #31 postcode-structure arc — the three OPT-IN mechanisms. All default-OFF at the resolver, so this
+	// assembly only ever SETS a field when the dep explicitly requests it (`=== true`); an absent dep field
+	// stays absent and the resolver's byte-stable defaults hold. The prefix index is the exception that rides
+	// with its flag: it is a data artifact, only consulted when `postcodePrefixPrior` is on.
+	if (deps.postcodeShapeCoherence === true) {
+		opts.postcodeShapeCoherence = true
+	}
+
+	if (deps.postcodeContainmentCoherence === true) {
+		opts.postcodeContainmentCoherence = true
+	}
+
+	if (deps.postcodePrefixPrior === true) {
+		opts.postcodePrefixPrior = true
+	}
+
+	if (deps.postcodePrefixIndex) {
+		opts.postcodePrefixIndex = deps.postcodePrefixIndex
+	}
 
 	let resolved = await deps.resolver.resolveTree(tree, opts)
 

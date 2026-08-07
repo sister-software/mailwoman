@@ -219,6 +219,13 @@ export interface ResolverBackend {
 		 */
 		postcode?: string
 		/**
+		 * Postcode-containment coherence (#31, Mechanism 2) — when set, a coordinate-first backend may re-rank locality
+		 * candidates by distance to the sibling postcode's own centroid (bounded by a 25 km containment gate) instead of
+		 * answering blind population-first. Opt-in, strictly beneath the #741 exact `(name_key, postcode)` probe; backends
+		 * without postcode support ignore it.
+		 */
+		postcodeContainmentCoherence?: boolean
+		/**
 		 * Proximity-bias points — a SOFT prominence re-rank; backends without support ignore it.
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
@@ -388,6 +395,42 @@ export interface StreetCentroidHit {
  */
 export interface StreetCentroidLookup {
 	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null
+}
+
+/**
+ * One admin-ancestry entry a PFX1 node asserts (coarsest-first: country → constituent country → district).
+ */
+export interface PostcodePrefixAncestor {
+	placetype: string
+	wofID: number
+	name: string
+}
+
+/**
+ * A PFX1 postcode-prefix node — the partial-code prior's payload ({@link ResolveOpts.postcodePrefixPrior}, #31
+ * Mechanism 3). The coordinate is OPTIONAL and its absence is meaningful: an ancestry-only tier (NI's 80 BT districts)
+ * carries `ancestors` and no `lat`/`lon` — representable as absence, never as `0,0` (the meaning-of-zero rule).
+ * `radiusP95Km` is mandatory whenever a coordinate is present (M-3's receipt: a 1-digit US band and a GB outward code
+ * are both "a prefix with a centroid" and differ by 200×).
+ */
+export interface PostcodePrefixNode {
+	prefix: string
+	ancestors: readonly PostcodePrefixAncestor[]
+	lat?: number
+	lon?: number
+	radiusP95Km?: number
+	unitCount: number
+}
+
+/**
+ * The PFX1 index the resolver probes — minimal, structural (`probe` + optional `country`), so `@mailwoman/resolver`
+ * consumes an index built in `@mailwoman/neural` without depending on it (B3-5: the partial-code prior touches zero
+ * model inputs). `country` is the ISO-3166 alpha-2 the index was built for (upper-case); the resolver only probes an
+ * index whose country matches the query's country scope.
+ */
+export interface PostcodePrefixIndexLike {
+	probe(prefix: string): PostcodePrefixNode | null
+	readonly country?: string
 }
 
 export interface ResolveOpts {
@@ -642,6 +685,61 @@ export interface ResolveOpts {
 	 * returned identical verdicts at 15, 25 and 50, so the pass is not gate-tuned).
 	 */
 	postcodeCountryCoherenceGateKm?: number
+	/**
+	 * Postcode-shape coherence (#31, Mechanism 1, `resolver/postcode-shape-coherence.ts`) — shape as CONFIDENCE and
+	 * EXCLUSION, downstream of the siblings. The decoder sometimes tags a HOUSE NUMBER as `postcode` when its digits form
+	 * a foreign postcode shape ("1200" in a Longmont CO address is accepted only by the AU/NZ 4-digit shape while every
+	 * sibling placetype says US). This pre-walk pass intersects each postcode span's codex candidate systems with the
+	 * systems the tree's country / region / `country_hint` siblings assert: a non-empty intersection CONFIRMS the span
+	 * (additive `postcode_shape_systems` stamp, byte-identical resolution); an empty intersection with confident siblings
+	 * EXCLUDES it (a digit-only span is demoted to `house_number`, a letter-bearing one keeps its tag with a
+	 * `postcode_shape_excluded` stamp — either way the span's contribution to the resolve is stripped); no confident
+	 * siblings ABSTAIN. `defaultCountry` is never evidence (B1-3's confound: "Sydney NSW 2000, Australia" reached with a
+	 * US default must not have its 2000 excluded — that row is exactly what {@link postcodeCountryCoherence} rescues).
+	 * Confirmed spans narrow the country-scope pass's candidate list to the intersection (a pure subset, safe).
+	 *
+	 * **Default OFF** (D-rule: demotion is the failure mode with teeth — a default-on promotion needs the full B1 gate
+	 * set from `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`: B1-1 byte-stability, B1-2 exclusion board
+	 * ≥90% with the correct sibling tag surviving, B1-3 confound ≤2% false exclusions, kill on any δ).
+	 */
+	postcodeShapeCoherence?: boolean
+	/**
+	 * Postcode-containment coherence (#31, Mechanism 2) — the reverse arrow, generalized. When a locality-wanting query
+	 * carries a postcode and the #741 exact `(name_key, postcode)` probe misses, a coordinate-first backend resolves the
+	 * postcode's centroid once and re-ranks the name candidates by distance to it, bounded by a 25 km containment gate —
+	 * "Paris TX 75460" and "Paris 75001" differ by which candidate the postcode is near, and the population ranking
+	 * cannot see that. Strictly beneath the #741 short-circuit (B2-1: byte-identical wherever the fast path fires); no
+	 * in-gate candidate → unchanged (B2-2's postcode-removed arm). Rides `FindPlaceQuery.postcodeContainmentCoherence` to
+	 * the backend.
+	 *
+	 * **Default OFF.** The promotion decision must measure it JOINTLY with {@link postcodeConsistency} (B2-3: the arms
+	 * agree on ≥98%), because this rung partially subsumes #370 — the compliant outcome may be that mechanism 2 replaces
+	 * it rather than joining it. B2-4: one postcode lookup per locality miss, ≤15% p95 latency.
+	 */
+	postcodeContainmentCoherence?: boolean
+	/**
+	 * Postcode-prefix prior (#31, Mechanism 3) — the partial-code prior for postcodes the full-code gazetteer does not
+	 * carry (#1480's abstention, e.g. a BT unit with no permissive source behind it). When a `postalcode` lookup misses
+	 * AND a {@link postcodePrefixIndex} for the query's country is supplied, derive the code's prefix (GB: outward — the
+	 * compact form minus its trailing 3 unit chars; US: the first 3 digits) and probe the index. A hit resolves the node
+	 * from the prefix's centroid and/or ancestry: `metadata.postcode_prefix`, `postcode_prefix_ancestors` (+
+	 * `postcode_prefix_radius_p95_km` when the artifact measured one), and `coordinate_source: "postcode_prefix"` only
+	 * when the node actually carries a coordinate — an ancestry-only tier (NI's 80 BT districts) contributes its DISTRICT
+	 * and stays coordinate-free (the meaning-of-zero rule; inventing a BT centroid would reproduce the `BT3 9QQ` →
+	 * Sheffield defect #1480 just fixed).
+	 *
+	 * **Default OFF** (D-rule + the PCN1 posture: data + loader + offline probe, no decode wiring; the header ships
+	 * without `delta` until a calibration measures one). B3-5: the probe touches zero model inputs — the index is a
+	 * structural type (`PostcodePrefixIndexLike`), injected, never imported from `@mailwoman/neural`.
+	 */
+	postcodePrefixPrior?: boolean
+	/**
+	 * The PFX1 postcode-prefix index to probe when {@link postcodePrefixPrior} is on — injected by the pipeline (loaded
+	 * from `$MAILWOMAN_DATA_ROOT/postcode-prefix/postcode-prefix-<cc>.bin`), never constructed here. Structural
+	 * (`PostcodePrefixIndexLike`), so the resolver consumes an index built in `@mailwoman/neural` without depending on it
+	 * (B3-5).
+	 */
+	postcodePrefixIndex?: PostcodePrefixIndexLike
 	/**
 	 * Admin descendant-consistency (#263). When a region resolved but its child locality did NOT — the greedy region pick
 	 * (name + population) chose a foreign namesake whose descendants hold no such locality ("Portland, ME" → Messina IT;
