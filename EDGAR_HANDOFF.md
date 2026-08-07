@@ -85,7 +85,7 @@ a205812ca  feat(filer)!: supersession as a relationship, and a valid_to that som
 3ce281f77  feat(filer): assemble the EDGAR chain — names in, EdgarSubsidiaryRows out
 ```
 
-`filer/` is at **553 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean. Landed on main
+`filer/` is at **556 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean. Landed on main
 as a direct push; no PR was opened. `a205812ca` is a `feat!` — `FILER_SCHEMA_VERSION = 3` and a new
 `FilerRelationship` member ship on npm, so the next release carries a breaking schema change.
 
@@ -249,13 +249,13 @@ cik-lookup-data.txt  →  resolveCIKCandidates      (edgar-filings.ts, share-cla
 winner, and reports a genuine tie in full even at `limit: 1`. Do not "fix" that into a single pick — it
 is the guard against exactly the two false matches above.
 
-### 1. CLI — NEXT
+### ~~1. CLI~~ — DONE ()
 
 `mailwoman filer edgar-ingest`, alongside the existing `mailwoman/commands/filer/linkage-eval.tsx`.
 Tools live in `filer/tools/` as library modules with no argv and no `process.exit`; the command owns
 parsing and exit codes.
 
-### 2. First real run + writeup
+### ~~2. First real run + writeup~~ — DONE ()
 
 Land the eval under `docs/records/evals/`. **Note that path deploys publicly on merge** — the Docusaurus
 exclusion list covers only `reviews/**` and postmortems. Flag it for the operator rather than deciding.
