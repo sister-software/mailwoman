@@ -24,19 +24,15 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"
-import { join } from "node:path"
-import { promisify } from "node:util"
+import { basename, join } from "node:path"
 
+import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
-
-const execFileAsync = promisify(execFile)
 
 const INDEX_URL = "https://download.cms.gov/nppes/NPI_Files.html"
 const BASE_URL = "https://download.cms.gov/nppes"
@@ -75,18 +71,13 @@ async function discoverLatestZip(): Promise<string | undefined> {
 }
 
 /**
- * Extract the main registry CSV name (npidata_pfile_*.csv) from a ZIP's `unzip -l` listing.
+ * The main registry CSV (npidata_pfile_*.csv), which the archive also carries alongside a header file and a per-month
+ * change file.
  */
 async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
-	const listing = await execFileAsync("unzip", ["-l", zipPath])
+	const entries = await listZipEntries(zipPath)
 
-	for (const line of TextSpliterator.from(listing.stdout)) {
-		const match = /npidata_pfile\S+\.csv/i.exec(line)
-
-		if (match?.[0]) return match[0]
-	}
-
-	return undefined
+	return entries.find((entry) => /npidata_pfile\S+\.csv/i.test(entry.name))?.name
 }
 
 export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: string) => void): Promise<FetchSummary> {
@@ -149,9 +140,10 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	}
 
 	report?.(`  Extracting: ${csvName}`)
-	await execFileAsync("unzip", ["-o", "-j", zipDest, csvName, "-d", destDir])
 
-	const csvDest = join(destDir, csvName)
+	const csvDest = join(destDir, basename(csvName))
+
+	await extractZipEntry(zipDest, csvName, csvDest)
 	const csvSize = statSync(csvDest).size
 	const csvSha = await sha256File(csvDest)
 	report?.(`  CSV size: ${(csvSize / 1024 / 1024).toFixed(1)} MB`)

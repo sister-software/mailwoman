@@ -24,12 +24,13 @@ import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
+import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.ts"
-import { downloadIfNeeded, runCapture } from "./download.ts"
+import { downloadIfNeeded } from "./download.ts"
 import { initializeTIGERSchema, TIGER_PRAGMAS, type PLBlockTable, type TIGERDatabase } from "./schema.ts"
 
 const REDISTRICTING_BASE =
@@ -148,7 +149,7 @@ export async function* fetchRedistricting(
 	const cached = await downloadIfNeeded(url, zipPath)
 	yield { phase: "download", file: zipName, cached }
 
-	await runCapture("unzip", ["-o", "-q", zipPath, "-d", cacheDir])
+	await extractZipEntries(zipPath, cacheDir)
 	const geoPath = join(cacheDir, `${fileAbbr}geo${vintage}.pl`)
 	const seg1Path = join(cacheDir, `${fileAbbr}00001${vintage}.pl`)
 	yield { phase: "extract", file: `${fileAbbr}geo${vintage}.pl` }

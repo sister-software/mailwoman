@@ -32,12 +32,13 @@ import { DatabaseSync } from "node:sqlite"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
+import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { downloadIfNeeded, runCapture } from "./download.ts"
+import { downloadIfNeeded } from "./download.ts"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.ts"
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.ts"
 
@@ -270,7 +271,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			const cached = await downloadIfNeeded(url, zipPath)
 			yield { phase: "download", file: zipName, cached }
 
-			await runCapture("unzip", ["-o", "-q", zipPath, "-d", cacheDir])
+			await extractZipEntries(zipPath, cacheDir)
 			const layer = `tl_${vintage}_${unit}_${level}`
 			const shpPath = join(cacheDir, layer + ".shp")
 			yield { phase: "extract", file: layer + ".shp" }

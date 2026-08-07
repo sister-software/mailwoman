@@ -11,9 +11,45 @@ Two decisions in this document are operator-ratified as of 2026-08-06 and record
 not get re-litigated: **ranking is referential, not encyclopedic** (§2), and **v4.2.0 promotes with
 conditions** rather than waiting on a retrain (§1).
 
+## Status — 2026-08-07
+
+**v9.0.0 SHIPPED** (`e0c4a308e`, 2026-08-06), carrying the anchor-cure base. **Tiers A and B are
+essentially closed.** Every §1 promotion condition landed (A1 in #1521; A2–A6 in #1527; the four
+defects behind them — #1509/#1510/#1511/#1512 — closed). §2's two-score split landed (#1538). §3's
+board was built and met its bar (#1524). §4's intent vocabulary landed ahead of its C tier (#1536).
+§6's instrument work landed (#1525 for I2–I4, #1554 for I1). §7 landed as one bundle (#1522).
+
+**Read issue state with care in this repo.** Several issues listed in the sections below are still
+OPEN on GitHub while the work that answers them has merged — #1491, #1493, #1495, #1505 were all
+executed in #1522, and #1507 in #1525. The PR bodies reference the issues without closing them. Trust
+the merged PR, not the issue state; this document was itself briefly wrong on that basis.
+
+So this is now the **post-v9 ledger**. Sections are marked ✅ (landed), ◐ (partly landed), or ○ (open).
+
+What actually remains, in rough leverage order:
+
+1. **§2-R3 / #1497 — the FST swap decision, reframed by its own board.** #1524's finding is the
+   important one: `applyBias` collapses to max() per tag and only four placetypes reach BIO mapping,
+   so _which_ Saint-Denis outranks which is invisible to the decoder — it is a RESOLVER concern. The
+   decode-time importance swap is therefore marginal by construction, and the two-score split's real
+   home is candidate ranking. Also unresolved from that run: `parseForGeocode` constructs no FST at
+   all (`geocode-core.ts:552-586`), so the default oa-resolver run and every gauntlet mode are
+   FST-blind — and one row (`sweep-vn-cs-12-ly-thai-to`) flips between arms with byte-identical FST
+   subpaths, meaning an FST swap can move a parse through a channel that is not the bias magnitude.
+   That residual is unattributed.
+2. **§6-I5 / #1492** — promoted-artifact swaps still race CI on the shared data root. The only §6
+   item with no landed answer.
+3. **§5 coverage + territory repair (#1503, #1519)** — see the section for what each covers now.
+
 ---
 
-## §1 — Tier A: promote model v4.2.0 (the anchor-cure base)
+## §1 — ✅ CLOSED — Tier A: promote model v4.2.0 (the anchor-cure base)
+
+Promoted and shipped in v9.0.0. A2–A6 landed together in #1527 ("the card is the contract, and the
+channel survives lowercase"); the four defects they were written against — #1509, #1510, #1511,
+#1512 — are all closed. A1's diagnosis merged as #1515, and #1526 recorded the truncation pair's
+honest status (they track under #1519, they do not gate). The table below is kept as the record of
+what the promotion actually required.
 
 The evidence record is `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (#1508) and the
 regression diagnosis (#1515). Cure proven: gb-golden 318/318 with the anchor channel fed; Fisher
@@ -35,7 +71,13 @@ Recorded, **not** gating — the named lever for the next training run, whenever
 `synth-gb` dose 6.0 → 3.0 and `countryFraction > 0` on that shard (800k country-less rows taught a
 positional habit; see #1515). Do not retrain for this alone.
 
-## §2 — Tier A/B: ranking is referential — the two-score split
+## §2 — ◐ Tier A/B: ranking is referential — the two-score split
+
+R1 **landed** (#1538 — referential ranks, encyclopedic rides) and Saint-Denis is re-pinned (#1540).
+R3's precondition is **met, not pending**: the §3 board separates the arms (#1524). What that board
+found reframes R3 rather than unblocking it — the decode-time swap is marginal because within-name
+ranking never reaches the decoder — so the open question is now the resolver-side ranking, plus the
+two loose ends named in the status block. The ratified policy below stands unchanged.
 
 Ratified policy: **"importance of a knowledge-base article ≠ probability this is the place the user
 means." The geocoder ranks by referential likelihood.** Encyclopedic importance is carried as data,
@@ -55,7 +97,18 @@ never as the ranking key.
 - One hard rule survives from the ranking discussion, as abstention doctrine rather than scoring: a
   bare query never resolves to an obscure feature type without declared ambiguity (§4).
 
-## §3 — Tier A: the hard-slice board (the shared unblocking artifact)
+## §3 — ✅ BUILT: the hard-slice board (the shared unblocking artifact)
+
+Executed in #1524: 87 curated rows — bare namesakes (including the sweep's family C), comma-free
+fragments, homonym confounds, wiki-vs-population conflict pairs with Saint-Denis explicit, and
+country-distinctive structures. **Bar met**: the none/pop/importance arms score differently (1/3/4
+differing rows), deterministically across runs (0/261 cells) and independent of arm order. Board,
+loader, zod schema, nine tests, the three-arm runner and the bias probes are all committed.
+
+It also paid for itself in findings rather than just discrimination — Saint-Denis measured at 4.8×
+inverted (hamlet pop 418 at encyclopedic 0.5683 vs suburb pop 96,128 at 0.1173), direct receipts for
+§2's ratified policy; and the reason the OA board could never separate the arms turned out to be that
+`parseForGeocode` builds no FST at all. See the status block above for what that implies for §2-R3.
 
 One board, three consumers: the FST/importance gate (#1497), the intent work (§4), and the
 suggestion layer's bars (#1489). Contents: bare city names (namesake-prone: the sweep's 45
@@ -68,7 +121,11 @@ and it carries per-row declared tolerances with the meaning-of-zero discipline (
 is absence, not zero). The 306-case corpus + `cases/generalization/` passes are the raw material;
 the board is a curated slice, not another sweep.
 
-## §4 — Tier C: query intent, pre-decoder
+## §4 — ✅ LANDED (ahead of tier): query intent, pre-decoder
+
+Shipped as #1536 — four kinds, an advisory marker, and a top slot that never moves, implemented as
+kind-classifier vocabulary exactly as specified below rather than a new stage. The extension list
+below records what was built; `poi_category` remains gated on the poi.db ancestry/gers_id debt.
 
 Intent lives where it always has: **before the decoder**, as vocabulary of the existing
 kind-classifier — not a new stage. Extensions, in priority order:
@@ -88,17 +145,23 @@ margin is thin (the measured 0.5 log10 line from the ablation-ladder work), retu
 declared ambiguity — the suggestion layer's nudge shape — and never resolve a bare query to an
 obscure feature type silently.
 
-## §5 — Tier B/C: coverage floor from the sweep
+## §5 — ◐ Tier B/C: coverage floor from the sweep
 
 - **B:** the 45 namesake rows and 27 no-coordinate rows from #1513 stay tracked; the release notes
   state coverage honestly (the "what mailwoman does not cover" register).
-- **C:** territory repair — PR/VI containment holes (#1503), dual-role places (#402), and a PR
-  address shard (TIGER covers Puerto Rico; the corpus never ingested it). This is the data cure for
-  the §1-A1 rows.
-- **C:** the truncation family (#1519, 15 rows) — a span-boundary investigation with the sweep rows
-  as its board.
+- **C:** territory repair — PR/VI containment holes (#1503, open) and a PR address shard (TIGER
+  covers Puerto Rico; the corpus never ingested it). This is the data cure for the §1-A1 rows.
+  Dual-role places (#402) closed separately.
+- **C:** the truncation family (#1519, 15 rows) — **partly cured**: #1552 landed the trailing
+  abbreviation period fix (`Neusser Str.` no longer loses its period). The multi-word cases
+  (`Amphitheatre Parkway` → `Amphitheatre`, `Port of Spain` → `Spain`) are untouched and #1519 stays
+  open as their board.
 
-## §6 — Tier B: instrument integrity
+## §6 — ○ Tier B: instrument integrity
+
+**Every item here is still open** (#1516, #1507, #1492, plus I3 which has no issue yet). None of it
+blocked v9, and all of it is still a way the instruments can lie silently. I1 is the one with a
+known false verdict already on the record — it scored Run B's _gained_ GB capability as a loss.
 
 A release is gated by instruments; these are the known ways the instruments lie, and the floor is
 that none of them can lie silently at release time:
@@ -111,7 +174,14 @@ that none of them can lie silently at release time:
 | I4   | Missing `postcode-us.bin` silently costs 3–4 baseline gauntlet cases; the anchor-OFF log warning fires even when the bin is present | grading environments assert bin presence; the warning names its actual condition                             | #1516 (second half)                                  |
 | I5   | Promoted-artifact swaps race CI on the shared data root                                                                             | CI takes a private symlink-overlay data root                                                                 | #1492                                                |
 
-## §7 — Tier B: release mechanics
+## §7 — ✅ Tier B: release mechanics
+
+v9.0.0 cut successfully and the listed cleanups landed as one bundle in #1522: the
+`overlay-manifest --version` collision (#1491, renamed to `--corpus-version`, with an AST-based
+guard test proven non-vacuous by reintroducing the collision), the candidate delivery-city alias gap
+(#1495), FST retirement (#1493), and the workspace table (#1505). Those issue numbers are still open
+on GitHub — see the status block. `gazetteer publish` (#1494) remains C-tier and unbuilt. #1535 and
+#1534 landed alongside the release.
 
 - The release rebuilds the shipped pair indexes at PIX schema 3 via `copy-weights` (readers refuse
   v1/v2 — this is the planned atomic cutover, verify it in the release smoke).
@@ -137,3 +207,68 @@ Geovation map-holes idea, 2026-08-05: join the fog-of-war overlay's observed den
 WorldPop/GRID3 habitability prior — predicted-minus-observed is the coverage gap as a real number.
 Post-v9 eval artifact; check WorldPop/GRID3 before building anything; absence-of-evidence register
 rules apply).
+
+---
+
+## §9 — Handoff state, 2026-08-07
+
+### In flight, UNCOMMITTED on `fix/1519-trailing-dot`
+
+A house-tooling cleanup: **every `unzip` subprocess in corpus + scripts is gone**, replaced by
+streaming zip readers. Compiles clean, `yarn lint:oxlint` clean, 1199 tests pass across `corpus/` +
+`core/`.
+
+What moved:
+
+- **`core/fs/zip.ts`** gains `readZipEntry` / `listZipEntries` / `extractZipEntry` on `yauzl-promise`
+  (already a direct dependency of `bdc` and `mailwoman`, already used by `codepoint/extract.ts`).
+  The existing adm-zip `extractZip` / `extractSingleFileZip` stay — they are correct for a buffer a
+  client already downloaded (`bdc/sdk/download.ts`), and wrong for anything on disk, because adm-zip
+  is `fs.readFileSync(input)` (`adm-zip.js:72`) plus the decompressed member.
+- **Measured, on the real `europe.zip`:** ZIP64 EOCD present, 454 entries listed in 19 ms, largest
+  member `fr/countrywide.csv` 2.33 GiB unpacked streamed in 8.6 s at **peak RSS 103 MiB**. adm-zip
+  would need ~5 GB resident for the same read.
+- **`scripts/eval/build-oa-coord-golden.ts`** — 190 lines of hand-rolled central-directory walk
+  deleted. Output verified **byte-identical** (`f29ef5b037ac3bc976413187f97dc9ac`, 150 IT rows).
+- **`corpus/src/shard-recipes/scaffold.ts`** — `readCSVRecords` now takes a stream and returns
+  spliterator's `AsyncSequence` rather than wrapping it in an `async function*` (the wrapper is a
+  documented 2.3× regression and it hid `take`/`drop` from every caller). `readZippedCSVRecords`
+  composes it over a zip member and warns-and-yields-nothing for a source the checkout hasn't cached,
+  which is what the `unzip -p` subprocesses did by accident.
+- **Nine recipe call sites migrated** across german / unit / intersection / country-balanced /
+  street-affix / fr-order / po-box-cedex / locale, plus `nppes.ts` and `imls-pls.ts`.
+- **`country-balanced` output verified byte-identical** (`12331a769d1e12af8bdf30b8c2b04395`, 400
+  rows) — this is the only recipe whose sources this lab has cached, and it covers the riskiest
+  change (dropping the `head -n` line cap, which is now redundant because the `limit` break closes
+  the reader).
+
+### What a fresh agent must check before trusting the recipe migration
+
+1. **`readFrTuples` (po-box-cedex) and `readCaLocalities`** translate `awk` pre-filters into
+   spliterator ops. The FR one reproduces `awk 'NR==1 || NR%211==3'` — a PHYSICAL-line stride that
+   selects which rows land in the shard, so `skipEmpty: false` and quote handling OFF are both
+   load-bearing. **Neither is verified**: `fr__countrywide.zip` and the GeoNames CA dump are not
+   cached on this host. Fetch them (`results.openaddresses.io/latest/run/fr/countrywide.zip`,
+   anonymous) and diff a shard before/after.
+2. **`street-affix`, `german`, `unit`, `intersection`, `po-box-cedex` US** could not be run here
+   either — their `us__*` / `de__*` sources are absent. Those are pure buffered→streamed swaps with
+   no windowing, so identity follows from same-bytes-same-parser, but it is argued rather than
+   measured. The seven `us__*` sources total ~117 MB.
+
+### Remaining `unzip` population — NOT touched
+
+Four calls survive, all in TIGER/situs, and they are different operations rather than oversights:
+`mailwoman/commands/situs/interpolation.tsx:342` (glob multi-extract `*.shp *.dbf *.prj *.shx`),
+`tiger/sdk/redistricting.ts:151` and `tiger/sdk/fetch.ts:273` (whole-archive extract), and
+`tiger/sdk/download.ts:55` (`unzip -tq` — a CRC **integrity test**, not an extraction). The first
+three want an `extractZipEntries(archive, dest, filter?)` addition to `core/fs/zip.ts`; the fourth
+wants yauzl's `validateCrc32`.
+
+### The rest of the open list
+
+Beyond this file's sections, the standing items are the gazetteer rebuild (`admin-global-priority.db`
+→ `candidate.db`, which several merged changes sit inert behind), PIX1 whole-edge (preregistered at
+`docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md`, gated on that rebuild), the
+three named parse defects (Springfield IL / London ON / `brooklyn, new york, ny` — diagnosed as
+training-shaped, not decode-shaped), and postcode-country coherence by geometry, which may now
+overlap the PFX1 work that landed in #1551.

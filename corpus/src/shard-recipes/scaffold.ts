@@ -9,8 +9,13 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
+import { existsSync } from "node:fs"
+
+import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { CSVSpliterator } from "spliterator"
+import type { PathBuilderLike } from "path-ts"
+import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
+import { AsyncSequence, CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
@@ -55,17 +60,26 @@ export { makeLcg, mulberry32 as makeMulberry32, makeLcg as makeRandom } from "@m
 export type CSVRecord = Record<string, string | undefined>
 
 /**
- * Read an in-memory CSV (an `unzip -p` buffer, say) as header-keyed records.
- *
  * Quote handling spans the ROW split, not only the column split: a newline inside a quoted field belongs to a single
  * record, so the record boundaries can only be found by a scanner that already knows where the quotes are. Find the
  * lines first and unquote afterwards and such a record splits in two — the first half short by however many columns
  * followed the newline, which is how a `street` value comes to be read as `city`.
  *
+ * `header: false` keeps the first record in the stream, so this module owns the lower-casing rather than
+ * `normalizeKeys` — see {@link toHeader}.
+ */
+const CSV_INIT = { header: false, enableQuoteHandling: true } as const
+
+/**
  * Header names are lower-cased on the way in. `normalizeKeys` will not do it: it leaves an ALL CAPS header alone, and
  * OpenAddresses ships `LON,LAT,NUMBER,STREET` while other extracts ship the same names lower-case. A recipe names its
  * columns in lower case either way.
- *
+ */
+function toHeader(cells: readonly string[]): string[] {
+	return cells.map((name) => name.trim().toLowerCase())
+}
+
+/**
  * Line breaks inside a value become single spaces. A quote-aware parse is the first thing here able to return a value
  * CONTAINING one — `us/ia/statewide.csv` has 12, all unit designators like `"#2\n#2"` — and every consumer synthesizes
  * one-line address text from these cells with no guard, because until that parse landed no value could carry one.
@@ -75,27 +89,58 @@ export type CSVRecord = Record<string, string | undefined>
  * Only `\r` and `\n`, deliberately — NOT `\s`. Runs of spaces and tabs pass through exactly as the source wrote them
  * (OA's IA extract writes `NORTH`, three spaces, `MAIN STREET`), because those could always appear and every shard
  * built to date contains them. Widening this to `\s+` silently rewrites values on rows with no line break at all.
- * `scaffold.test.ts` pins both halves.
+ * `scaffold.test.ts` pins both halves, against both readers.
  */
-export function* readCSVRecords(source: Uint8Array): Generator<CSVRecord> {
+function toRecord(header: readonly string[], cells: readonly string[]): CSVRecord {
+	const record: CSVRecord = {}
+
+	for (let i = 0; i < header.length; i++) {
+		record[header[i]!] = (cells[i] ?? "").replaceAll(/[\r\n]+/g, " ").trim()
+	}
+
+	return record
+}
+
+/**
+ * Read a CSV as header-keyed records.
+ *
+ * Returns the spliterator's own {@linkcode AsyncSequence}, so a caller composes `take`/`drop`/`filter` onto it — those
+ * ops fuse into one pull loop, and a `take` that is satisfied closes the source's file handle on the way out. Wrapping
+ * this in an `async function*` costs an async frame per row and takes those ops away; don't.
+ *
+ * A source at or below the spliterator's 128 KiB bulk threshold is read whole and parsed by the synchronous engine, so
+ * this is also the right reader for small sources — there is no buffered variant to reach for.
+ */
+export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
 	let header: string[] | null = null
 
-	// `header: false` keeps the first record in the stream so this reader owns the lower-casing.
-	for (const cells of CSVSpliterator.from(source, { header: false, enableQuoteHandling: true })) {
-		if (!header) {
-			header = cells.map((name) => name.trim().toLowerCase())
+	return CSVSpliterator.fromAsync<string[]>(source, CSV_INIT)
+		.filter((cells) => {
+			if (header) return true
 
-			continue
-		}
+			header = toHeader(cells)
 
-		const record: CSVRecord = {}
+			return false
+		})
+		.map((cells) => toRecord(header!, cells))
+}
 
-		for (let i = 0; i < header.length; i++) {
-			record[header[i]!] = (cells[i] ?? "").replaceAll(/[\r\n]+/g, " ").trim()
-		}
+/**
+ * {@link readCSVRecords} over one member of a zip archive — what every recipe reading a cached OA source wants.
+ *
+ * A source a checkout has not cached yields nothing, after saying so. A lab holds the archives for the countries it has
+ * built, so a recipe naming ten sources routinely finds three, and the `unzip -p` subprocesses these replaced behaved
+ * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with NO tuples at all
+ * still throws; that is the case where the cache, not the recipe, is the problem.
+ */
+export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
+	if (!existsSync(String(archivePath))) {
+		console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
 
-		yield record
+		return AsyncSequence.from<CSVRecord>([])
 	}
+
+	return readCSVRecords(readZipEntry(archivePath, entryName))
 }
 
 /**

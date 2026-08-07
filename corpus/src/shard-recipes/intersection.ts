@@ -34,7 +34,6 @@
  *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
  */
 
-import { spawnSync } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 
 import type { DuckDBConnection } from "@duckdb/node-api"
@@ -45,7 +44,7 @@ import { JSONSpliterator } from "spliterator"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow, LabeledRow } from "../types.ts"
-import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 interface County {
 	fips: string
@@ -251,19 +250,11 @@ async function extractCrossings(
 /**
  * ZIP → majority city from the cached OA Cook-county CSV (real ZIP/city pairings).
  */
-function buildZipCityMap(): Map<string, string> {
-	const r = spawnSync("unzip", ["-p", OA_COOK.zip, OA_COOK.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${OA_COOK.zip} — city tails disabled`)
-
-		return new Map()
-	}
-
+async function buildZipCityMap(): Promise<Map<string, string>> {
 	const counts = new Map<string, Map<string, number>>()
 
 	// zip → Map(city → n)
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(OA_COOK.zip, OA_COOK.csv)) {
 		const city = row.city ?? ""
 		const zip = row.postcode ?? ""
 
@@ -518,7 +509,7 @@ export const intersectionRecipe: ShardRecipe = {
 			throw new Error(`No crossings found — are the TIGER EDGES shapefiles present in ${edgesDir}?`)
 		}
 
-		const zipCity = opts.golden ? new Map<string, string>() : buildZipCityMap()
+		const zipCity = opts.golden ? new Map<string, string>() : await buildZipCityMap()
 
 		if (!opts.golden) {
 			console.error(`  zip→city map: ${zipCity.size} ZIPs (OA Cook)`)

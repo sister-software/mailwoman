@@ -30,15 +30,16 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
-import { spawnSync } from "node:child_process"
+import { existsSync } from "node:fs"
 
 import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
+import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
+import { TextSpliterator, TSVSpliterator } from "spliterator"
 
 import { alignRow } from "../align.ts"
 import {
@@ -47,7 +48,14 @@ import {
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
 } from "../synthesize-po-box.ts"
-import { makeMulberry32, readCSVRecords, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
+import {
+	makeMulberry32,
+	readCSVRecords,
+	readZippedCSVRecords,
+	shardSourceID,
+	type CanonicalShardRow,
+	type ShardRecipe,
+} from "./scaffold.ts"
 
 // ── Base-skeleton sources ────────────────────────────────────────────────────────────────────────
 // Same OA cache as the unit/affix shards. US train = every NON-Vermont state; US eval = Vermont (the
@@ -233,19 +241,11 @@ const cleanLocality = (loc: string) =>
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-function readUsTuples(source: { zip: string; csv: string; region: string }): USTuple[] {
-	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
-
-		return []
-	}
-
+async function readUsTuples(source: { zip: string; csv: string; region: string }): Promise<USTuple[]> {
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		const locality = row.city ?? ""
 
 		if (!cleanLocality(locality)) continue
@@ -266,30 +266,46 @@ function readUsTuples(source: { zip: string; csv: string; region: string }): UST
 }
 
 /**
+ * The FR stride: keep line 3, then every 211th. Both numbers are the awk pre-filter's, kept exactly — they select which
+ * rows land in the shard, so changing either re-rolls the sample.
+ */
+const FR_STRIDE = 211
+const FR_STRIDE_OFFSET = 3
+
+/**
+ * GeoNames population floor for a Canadian locality to enter the pool.
+ */
+const CA_LOCALITY_MIN_POPULATION = 1000
+
+/**
  * Stride-sampled FR tuples (number/street/city/postcode). The countrywide CSV is 2.5 GB and insee-ordered; `awk NR%K`
  * strides the whole country instead of reading one département.
  *
- * The stride counts PHYSICAL lines, so a record carrying a newline inside a quoted field is two lines to awk and can be
- * cut in half by the stride. That is a sampling artefact of the awk pre-filter, not of the parse: whichever lines
- * survive are re-assembled into records by {@link readCSVRecords}, and a halved record fails the field checks below.
+ * The stride counts PHYSICAL lines, so a record carrying a newline inside a quoted field is two lines to the stride and
+ * can be cut in half by it. That is a sampling artefact of striding before the parse, not of the parse: whichever lines
+ * survive are re-assembled into records by the CSV reader, and a halved record fails the field checks below. Hence
+ * `skipEmpty: false` and no quote handling on the line split — a blank line still advances the count, exactly as it did
+ * when this was `awk NR`, and the rows the stride selects are the rows every existing FR shard was built from.
  */
-function readFrTuples(limit: number): FRTuple[] {
-	const r = spawnSync(
-		"bash",
-		["-c", `unzip -p "${FR_SOURCE.zip}" "${FR_SOURCE.csv}" | awk 'NR==1 || NR%211==3' | head -n ${limit + 1}`],
-		{ maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" }
-	)
-
-	if (r.status !== 0 && !r.stdout.length) {
-		console.error(`  WARN: unzip failed for ${FR_SOURCE.zip}`)
+async function readFrTuples(limit: number): Promise<FRTuple[]> {
+	if (!existsSync(FR_SOURCE.zip)) {
+		console.error(`  WARN: ${FR_SOURCE.zip} is not cached — skipping ${FR_SOURCE.csv}`)
 
 		return []
 	}
 
+	const encoder = new TextEncoder()
+
+	const strided = TextSpliterator.fromAsync(readZipEntry(FR_SOURCE.zip, FR_SOURCE.csv), { skipEmpty: false })
+		// `index` is 0-based where awk's NR is 1-based, hence the +1: keep the header, then every 211th line at offset 3.
+		.filter((_line, index) => index === 0 || (index + 1) % FR_STRIDE === FR_STRIDE_OFFSET)
+		.take(limit + 1)
+		.map((line) => encoder.encode(line + "\n"))
+
 	const tuples: FRTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readCSVRecords(strided)) {
 		const locality = row.city ?? "",
 			postcode = row.postcode ?? "",
 			street = row.street ?? "",
@@ -310,23 +326,29 @@ function readFrTuples(limit: number): FRTuple[] {
  * Canadian locality pools from the GeoNames dump (CC-BY 4.0): feature class P, admin1 10 (Québec) / 08 (Ontario),
  * population > 1000. GeoNames is the provenance-tracked source — no hand list.
  */
-function readCaLocalities(admin1: string): string[] {
-	const r = spawnSync(
-		"bash",
-		[
-			"-c",
-			`unzip -p "${GEONAMES_CA}" CA.txt | awk -F'\\t' '$7=="P" && $9=="CA" && $11=="${admin1}" && $15>1000 {print $2}'`,
-		],
-		{ maxBuffer: 1024 * 1024 * 256, encoding: "utf8" }
-	)
-
-	if (r.status !== 0) {
-		console.error(`  WARN: GeoNames read failed (admin1=${admin1}) — is ${GEONAMES_CA} present?`)
+async function readCaLocalities(admin1: string): Promise<string[]> {
+	if (!existsSync(GEONAMES_CA)) {
+		console.error(`  WARN: ${GEONAMES_CA} is not cached — skipping CA localities (admin1=${admin1})`)
 
 		return []
 	}
 
-	return [...new Set([...TextSpliterator.from(r.stdout)].filter(cleanLocality))]
+	const localities = new Set<string>()
+
+	// GeoNames main dump columns, 0-based: 1 name, 6 feature class, 8 country, 10 admin1, 14 population.
+	for await (const columns of TSVSpliterator.fromAsync(readZipEntry(GEONAMES_CA, "CA.txt"), { header: false })) {
+		if (columns[6] !== "P" || columns[8] !== "CA" || columns[10] !== admin1) continue
+
+		if (Number(columns[14]) <= CA_LOCALITY_MIN_POPULATION) continue
+
+		const name = columns[1] ?? ""
+
+		if (cleanLocality(name)) {
+			localities.add(name)
+		}
+	}
+
+	return [...localities]
 }
 
 /**
@@ -336,14 +358,12 @@ function readCaLocalities(admin1: string): string[] {
  * validated against the codex 4-digit shape — a dump row that fails the contract is skipped, not emitted as a junk
  * label.
  */
-function readPostalTuples(
+async function readPostalTuples(
 	source: { zip: string; txt: string },
 	opts: { withState: boolean }
-): Array<AUTuple | NZTuple> {
-	const r = spawnSync("unzip", ["-p", source.zip, source.txt], { maxBuffer: 1024 * 1024 * 64, encoding: "utf8" })
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
+): Promise<Array<AUTuple | NZTuple>> {
+	if (!existsSync(source.zip)) {
+		console.error(`  WARN: ${source.zip} is not cached — skipping ${source.txt}`)
 
 		return []
 	}
@@ -352,11 +372,8 @@ function readPostalTuples(
 	const seen = new Set<string>()
 	const validPostcode = opts.withState ? isAuPostcode : isNZPostcode
 
-	for (const line of TextSpliterator.from(r.stdout)) {
-		if (!line) continue
-
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One row already streamed off the line above.
-		const cols = line.split("\t")
+	// A GeoNames dump carries no header row, so every line is data.
+	for await (const cols of TSVSpliterator.fromAsync(readZipEntry(source.zip, source.txt), { header: false })) {
 		const postcode = (cols[1] ?? "").trim()
 		const locality = (cols[2] ?? "").trim()
 		const region = (cols[4] ?? "").trim()
@@ -744,7 +761,7 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		const usPool: USTuple[] = []
 
 		for (const s of opts.golden ? [US_EVAL_SOURCE] : US_TRAIN_SOURCES) {
-			const t = readUsTuples(s)
+			const t = await readUsTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} tuples`)
 
@@ -754,21 +771,21 @@ export const poBoxCedexRecipe: ShardRecipe = {
 		}
 
 		// FR + CA pools: stable locality-hash holdout (golden gets hash%10==0, train the rest).
-		const frAll = readFrTuples(80_000)
+		const frAll = await readFrTuples(80_000)
 		const frPool = frAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 
 		console.error(`  ${FR_SOURCE.csv}: ${frAll.length} tuples (${frPool.length} after holdout split)`)
 
-		const qcAll = readCaLocalities("10")
-		const onAll = readCaLocalities("08")
+		const qcAll = await readCaLocalities("10")
+		const onAll = await readCaLocalities("08")
 		const qcPool = qcAll.filter((l) => isHoldoutLocality(l) === opts.golden)
 		const onPool = onAll.filter((l) => isHoldoutLocality(l) === opts.golden)
 
 		console.error(`  GeoNames CA: QC ${qcAll.length}→${qcPool.length}, ON ${onAll.length}→${onPool.length}`)
 
 		// AU/NZ pools: same stable locality-hash holdout as FR/CA.
-		const auAll = readPostalTuples(GEONAMES_POSTAL_AU, { withState: true }) as AUTuple[]
-		const nzAll = readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false }) as NZTuple[]
+		const auAll = (await readPostalTuples(GEONAMES_POSTAL_AU, { withState: true })) as AUTuple[]
+		const nzAll = (await readPostalTuples(GEONAMES_POSTAL_NZ, { withState: false })) as NZTuple[]
 		const auPool = auAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 		const nzPool = nzAll.filter((t) => isHoldoutLocality(t.locality) === opts.golden)
 

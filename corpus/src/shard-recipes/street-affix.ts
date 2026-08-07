@@ -27,8 +27,6 @@
  *   FR/DE postcode (the v0.9.8 blemish).
  */
 
-import { spawnSync } from "node:child_process"
-
 import {
 	DirectionalAbbreviation,
 	lookupDirectional,
@@ -44,7 +42,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -163,19 +161,11 @@ type Prefix = Pick<NonNullable<ReturnType<typeof matchLeadingDirectional>>, "can
 /**
  * Stream real US tuples (number/street/city/postcode) out of a cached OA zip.
  */
-function readTuples(source: USSource): USTuple[] {
-	const r = spawnSync("unzip", ["-p", source.zip, source.csv], { maxBuffer: 1024 * 1024 * 1024, encoding: "buffer" })
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
-
-		return []
-	}
-
+async function readTuples(source: USSource): Promise<USTuple[]> {
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 		const house_number = row.number ?? ""
@@ -320,28 +310,15 @@ function renderRow(
 }
 
 /**
- * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale, so cap the bytes
- * with `head` (mirrors build-country-shard-balanced.mjs) rather than holding a whole extract in memory. Only keeps
- * tuples that carry a POSTCODE.
+ * Capped reader for the multi-locale BALANCE sources. The FR/IT/NL countrywide extracts are GB-scale, so this reads
+ * only as far as `limit` distinct tuples — the `break` closes the reader and releases the archive. Only keeps tuples
+ * that carry a POSTCODE.
  */
-function readBalanceTuples(source: BalanceSource, limit: number): BalanceTuple[] {
-	const maxLines = Math.max(limit * 8, 20_000) + 1
-
-	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
-		maxBuffer: 1024 * 1024 * 1024,
-		encoding: "buffer",
-	})
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
-
-		return []
-	}
-
+async function readBalanceTuples(source: BalanceSource, limit: number): Promise<BalanceTuple[]> {
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		if (tuples.length >= limit) break
 
 		const street = row.street ?? "",
@@ -412,7 +389,7 @@ export const streetAffixRecipe: ShardRecipe = {
 		const pool: USTuple[] = []
 
 		for (const s of sources) {
-			const t = readTuples(s)
+			const t = await readTuples(s)
 
 			console.error(`  ${s.csv}: ${t.length} unique tuples`)
 
@@ -513,7 +490,7 @@ export const streetAffixRecipe: ShardRecipe = {
 			const mlPool: BalanceTuple[] = []
 
 			for (const s of mlSources) {
-				const t = readBalanceTuples(s, perSource)
+				const t = await readBalanceTuples(s, perSource)
 
 				console.error(`  balance ${s.csv} (${s.iso2}): ${t.length} tuples`)
 

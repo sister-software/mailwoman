@@ -23,14 +23,12 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { execFile } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"
 import { basename, join } from "node:path"
-import { promisify } from "node:util"
 
+import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
@@ -40,8 +38,6 @@ import { downloadToFile, readManifest, writeManifest } from "./download.ts"
  * than data.
  */
 const BYTES_PER_KIB = 1024
-
-const execFileAsync = promisify(execFile)
 
 /**
  * The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05). If IMLS publishes a newer year, update this URL.
@@ -57,17 +53,6 @@ interface SourceManifest {
 	filename: string
 	sha256: string
 	bytes: number
-}
-
-/**
- * Return the filenames listed inside a ZIP (the trailing column of each `unzip -l` row).
- */
-async function listZipEntries(zipPath: string): Promise<string[]> {
-	const listing = await execFileAsync("unzip", ["-l", zipPath])
-
-	return [...TextSpliterator.from(listing.stdout)]
-		.map((line) => line.trim().split(/\s+/).pop() ?? "")
-		.filter((name) => name.length > 0)
 }
 
 export async function fetchIMLSPLS(
@@ -120,7 +105,7 @@ export async function fetchIMLSPLS(
 	// Outlet files match: pls_fy*outlet*.csv (case-insensitive)
 	// Administrative-entity files match: pls_fy*ae*.csv — we skip those.
 	report?.("  Inspecting ZIP contents ...")
-	const entries = await listZipEntries(zipDest)
+	const entries = (await listZipEntries(zipDest)).map((entry) => entry.name)
 
 	let csvName = entries.find((name) => /pls_fy.*outlet.*\.csv/i.test(name))
 
@@ -142,9 +127,10 @@ export async function fetchIMLSPLS(
 	}
 
 	report?.(`  Extracting outlet CSV: ${csvName}`)
-	await execFileAsync("unzip", ["-o", "-j", zipDest, csvName, "-d", destDir])
 
 	const csvDest = join(destDir, basename(csvName))
+
+	await extractZipEntry(zipDest, csvName, csvDest)
 	const csvSize = statSync(csvDest).size
 	const csvSha = await sha256File(csvDest)
 

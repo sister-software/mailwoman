@@ -24,8 +24,6 @@
  *   legacy script used.
  */
 
-import { spawnSync } from "node:child_process"
-
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -33,7 +31,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { stableSourceID } from "../adapter.ts"
 import { alignRow } from "../align.ts"
 import type { CanonicalRow } from "../types.ts"
-import { makeMulberry32, readCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every
 // ISO canonical name + every curated surface form (endonyms/abbrevs). Surface forms are over-weighted
@@ -154,26 +152,15 @@ interface CountryTuple {
 	order: string
 }
 
-function readTuples(source: CountrySource, limit: number): CountryTuple[] {
-	// countrywide extracts (FR/IT/NL) are GB-scale — cap the bytes with `head` (read ~8 lines per wanted
-	// tuple to survive dedup/skips) so the whole extract never has to be held in memory.
-	const maxLines = Math.max(limit * 8, 20_000) + 1
-
-	const r = spawnSync("bash", ["-c", `unzip -p "${source.zip}" "${source.csv}" | head -n ${maxLines}`], {
-		maxBuffer: 1024 * 1024 * 1024,
-		encoding: "buffer",
-	})
-
-	if (r.status !== 0) {
-		console.error(`  WARN: unzip failed for ${source.zip} (status ${r.status})`)
-
-		return []
-	}
-
+/**
+ * The countrywide extracts (FR/IT/NL) are GB-scale, so this reads only as far as `limit` distinct tuples: the `break`
+ * closes the reader, which releases the archive without inflating the rest of the member.
+ */
+async function readTuples(source: CountrySource, limit: number): Promise<CountryTuple[]> {
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
 
-	for (const row of readCSVRecords(r.stdout)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		if (tuples.length >= limit) break
 
 		const street = row.street ?? "",
@@ -449,7 +436,7 @@ export const countryBalancedRecipe: ShardRecipe = {
 		const pool: CountryTuple[] = []
 
 		for (const s of sources) {
-			const t = readTuples(s, perSource)
+			const t = await readTuples(s, perSource)
 
 			console.error(`  ${s.csv} (${s.iso2}): ${t.length} tuples`)
 
