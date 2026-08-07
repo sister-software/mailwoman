@@ -66,16 +66,10 @@
           "filename": "belgium-latest.osm.pbf"
         },
         {
-          "filename": "california-latest.osm.pbf"
-        },
-        {
           "filename": "czech-republic-latest.osm.pbf"
         },
         {
           "filename": "denmark-latest.osm.pbf"
-        },
-        {
-          "filename": "district-of-columbia-latest.osm.pbf"
         },
         {
           "filename": "germany-latest.osm.pbf"
@@ -84,34 +78,13 @@
           "filename": "great-britain-latest.osm.pbf"
         },
         {
-          "filename": "illinois-latest.osm.pbf"
-        },
-        {
-          "filename": "iowa-latest.osm.pbf"
-        },
-        {
-          "filename": "michigan-latest.osm.pbf"
-        },
-        {
-          "filename": "montana-latest.osm.pbf"
-        },
-        {
           "filename": "netherlands-latest.osm.pbf"
         },
         {
           "filename": "new-zealand-latest.osm.pbf"
         },
         {
-          "filename": "south-dakota-latest.osm.pbf"
-        },
-        {
           "filename": "switzerland-latest.osm.pbf"
-        },
-        {
-          "filename": "tennessee-latest.osm.pbf"
-        },
-        {
-          "filename": "vermont-latest.osm.pbf"
         }
       ]
     },

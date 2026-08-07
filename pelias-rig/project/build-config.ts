@@ -118,7 +118,28 @@ function listByExtension(directory: string, extension: string): string[] {
 		.toSorted()
 }
 
-const pbfFiles = listByExtension(join(RIG_DATA, "osm"), ".pbf")
+/**
+ * The PBFs the OPENSTREETMAP IMPORTER may load — the ten country extracts, never the nine US state ones.
+ *
+ * `data/osm` holds both, and they arrived for different reasons. The country PBFs are an Elasticsearch source: §1's
+ * attribution table has GB, DE and the whole EU panel riding on OSM address nodes. The US state PBFs were fetched ONLY
+ * so `pbf streets` could cut a US polyline file, because §2b established that US interpolation needs a US polylines cut
+ * and there is no US-wide one to hand. §1 says plainly that US OSM does not go into the index — the US row is annotated
+ * `TIGER+OA, no OSM` — so listing every `.pbf` in the directory would silently import the thing the scope declaration
+ * excludes, and it would show up as a US number nobody could attribute.
+ *
+ * The exclusion is by the panel manifest's state list rather than a hand-written array of slugs, so a state added to
+ * the panel is excluded automatically instead of leaking on the next fetch.
+ */
+const US_STATE_SLUGS = new Set(
+	(manifest.usStatesRequiringLocalSources ?? manifest.usStates ?? []).map((state) =>
+		state.name.toLowerCase().replaceAll(" ", "-")
+	)
+)
+
+const allPBFs = listByExtension(join(RIG_DATA, "osm"), ".pbf")
+const pbfFiles = allPBFs.filter((file) => !US_STATE_SLUGS.has(file.replace(/-latest\.osm\.pbf$/, "")))
+const excludedPBFs = allPBFs.filter((file) => US_STATE_SLUGS.has(file.replace(/-latest\.osm\.pbf$/, "")))
 
 /**
  * The polyline cuts, deduplicated by CONTENT.
@@ -234,7 +255,8 @@ process.stdout.write(
 	JSON.stringify(
 		{
 			wrote: outPath,
-			pbfs: pbfFiles.length,
+			pbfsImported: pbfFiles,
+			pbfsHeldOutOfElasticsearch: excludedPBFs,
 			polylines: polylineFiles,
 			openaddressesFiles: config.imports.openaddresses.files.length,
 			usStates: states.map((state) => state.abbreviation),
