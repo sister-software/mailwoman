@@ -199,12 +199,27 @@ async function collectForFiling(
 	client: SECIngestClient,
 	filing: TenKFiling
 ): Promise<{ rows: EdgarSubsidiaryRow[]; unparseable: number }> {
-	const documents = await fetchExhibit21Documents(client, filing)
+	// EDGAR occasionally 404s a filing document that objectively exists — a transient fetch failure, not a
+	// missing filing. Catching here rather than letting a single 404 kill the whole run.
+	let documents: { url: string }[]
+
+	try {
+		documents = await fetchExhibit21Documents(client, filing)
+	} catch {
+		return { rows: [], unparseable: 0 }
+	}
+
 	const rows: EdgarSubsidiaryRow[] = []
 	let unparseable = 0
 
 	for (const document of documents) {
-		const parsed = parseExhibit21(await client.getDocument(document.url))
+		let parsed
+
+		try {
+			parsed = parseExhibit21(await client.getDocument(document.url))
+		} catch {
+			continue
+		}
 
 		unparseable += parsed.unparseable
 
