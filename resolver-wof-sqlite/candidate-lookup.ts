@@ -78,6 +78,14 @@ const FUZZY_FETCH = 40
 const FUZZY_MIN = 0.34
 
 /**
+ * Postcode-containment re-rank gate radius (km) — the SAME value the resolver's country pass measures at
+ * (`POSTCODE_COUNTRY_COHERENCE_GATE_KM`, resolver/postcode-country-coherence.ts): a locality within this distance of
+ * the postcode's own centroid counts as "containing" it. One number, two passes — a divergence here would make the two
+ * mechanisms disagree about what is proximal.
+ */
+const POSTCODE_CONTAINMENT_GATE_KM = 25
+
+/**
  * Bounded PRIMARY-NAME preference across a CROSS-COUNTRY name collision (the `is_primary` ranking signal).
  *
  * The raw candidate order is population-first (`neg_rank ASC`) and treats an ALIAS row (a place's alt-name / exonym,
@@ -291,6 +299,38 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		return expandPlacetypeFilter(want as readonly string[]).includes("locality")
 	}
 
+	/**
+	 * The postcode-containment anchor: the postcode's own centroid row in the candidate table, keyed whitespace-stripped
+	 * (#920 — the same fold the build applies to postcode rows), country-scoped when the query is, first
+	 * coordinate-bearing row wins. null when the candidate table carries no such postcode — the re-rank then abstains,
+	 * because a recall gap is not evidence for the name match. Meaning-of-zero: a 0,0 row is the build's unlocated
+	 * sentinel, never a real centroid.
+	 */
+	#postcodeAnchor(postcode: string, country?: string): { lat: number; lon: number } | null {
+		const placetypeID = this.#placetypeToID.get("postalcode")
+
+		if (placetypeID === undefined) return null
+
+		const conds = ["name_key = ?", "placetype_id = ?"]
+		const params: Array<string | number> = [postcode.replaceAll(/\s+/g, ""), placetypeID]
+
+		if (country) {
+			const countryID = this.#countryToID.get(country.toUpperCase())
+
+			if (countryID === undefined) return null // a country the candidate table doesn't carry
+			conds.push("country_id = ?")
+			params.push(countryID)
+		}
+
+		const row = this.#db
+			.prepare(`SELECT latitude, longitude FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT 1`)
+			.get(...params) as { latitude: number; longitude: number } | undefined
+
+		if (!row || (Number(row.latitude) === 0 && Number(row.longitude) === 0)) return null
+
+		return { lat: Number(row.latitude), lon: Number(row.longitude) }
+	}
+
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
 		let text = (query.text ?? "").trim()
 
@@ -481,6 +521,44 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// resolves exactly as it does today. Only when a region scope was actually applied.
 		if (!rows.length && regionParentID !== undefined) {
 			rows = cascade(undefined)
+		}
+
+		// Postcode-containment coherence (#31, Mechanism 2): re-rank the rows by proximity to the postcode's
+		// own centroid, so the locality that CONTAINS the postcode wins the name-match tie (the "Paris" that
+		// holds 75001, not the one that holds a 75001-free namesake). The resolver sends this flag on locality
+		// lookups when `ResolveOpts.postcodeContainmentCoherence` is on. Strictly beneath the #741 postal-city
+		// short-circuit above — an exact (name, postcode) hit IS the answer and outranks any re-rank — and after
+		// the region-scope fallback, so it sees the final row set. Rows within the gate sort by distance first;
+		// the out-gate tail keeps its original population-first order. No in-gate row, or no postcode row in
+		// the candidate table → unchanged (byte-identical to the flag-off path).
+		if (
+			query.postcode &&
+			query.postcodeContainmentCoherence === true &&
+			this.#wantsLocality(query.placetype) &&
+			rows.length > 1
+		) {
+			const anchor = this.#postcodeAnchor(query.postcode, query.country)
+
+			if (anchor) {
+				const inGate: Array<{ row: RankedRow<CandidateRow>; distanceKm: number }> = []
+				const outGate: RankedRow<CandidateRow>[] = []
+
+				for (const row of rows) {
+					const distanceKm = haversineKm(anchor.lat, anchor.lon, Number(row.latitude), Number(row.longitude))
+
+					if (distanceKm <= POSTCODE_CONTAINMENT_GATE_KM) {
+						inGate.push({ row, distanceKm })
+					} else {
+						outGate.push(row)
+					}
+				}
+
+				if (inGate.length) {
+					// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+					inGate.sort((a, b) => a.distanceKm - b.distanceKm)
+					rows = [...inGate.map(({ row }) => row), ...outGate]
+				}
+			}
 		}
 
 		const candidates = rows.map((row): PlaceCandidate => {

@@ -133,6 +133,14 @@ export interface PostcodeCountryScopeOpts {
 	 * Consistency gate radius in km. Defaults to {@link POSTCODE_COUNTRY_COHERENCE_GATE_KM}.
 	 */
 	gateKm?: number
+	/**
+	 * Optional narrowing of the candidate-system set — the shape-coherence pass's intersection for a CONFIRMED postcode
+	 * span (see `resolver/postcode-shape-coherence.ts`, #31 Mechanism 1). When present it REPLACES
+	 * `candidateSystemsForPostcode`'s own list; it is a pure subset of that list (codex systems ∩ confident sibling
+	 * systems), so the pass can only check fewer countries, never new ones — safe by construction. Upper-case ISO-3166
+	 * alpha-2, e.g. `["US"]` for a 5-digit code whose siblings all say US.
+	 */
+	candidateSystems?: readonly string[]
 }
 
 /**
@@ -250,10 +258,13 @@ export async function findPostcodeCountryScope(
 	//    no override, and the common domestic path costs two lookups and changes nothing.
 	if (await coherenceIn(defaultCountry, postcode, locality, backend, gateKm)) return null
 
-	// 2. The default could not place this pair. Which other country the SHAPE allows can?
-	const candidates = candidateSystemsForPostcode(postcode)
-		.map((system) => system.toUpperCase())
-		.filter((country) => country !== defaultCountry)
+	// 2. The default could not place this pair. Which other country the SHAPE allows can? The
+	//    shape-coherence pass (#31 Mechanism 1) may have narrowed the shape's candidate list to the
+	//    intersection with the tree's confident sibling systems — a pure subset, so it can only make
+	//    this pass check fewer countries, never new ones.
+	const candidates = (
+		opts.candidateSystems ?? candidateSystemsForPostcode(postcode).map((system) => system.toUpperCase())
+	).filter((country) => country !== defaultCountry)
 
 	if (!candidates.length) return null
 

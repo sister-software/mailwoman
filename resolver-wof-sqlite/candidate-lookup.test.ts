@@ -20,10 +20,14 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { createWOFResolver } from "@mailwoman/resolver"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { buildCandidateTable } from "./build-candidate.ts"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "./candidate-lookup.ts"
+import { haversineKm } from "./geo.ts"
+import type { FindPlaceQuery } from "./types.ts"
 
 const ALIAS_SEP = "\u{E000}"
 
@@ -74,6 +78,14 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (602, 'Wyeburg', 'locality', 'GH', 5.55, -0.2, 5.5, -0.3, 5.6, -0.1, -1, 0);
 		INSERT INTO spr VALUES (603, 'Wyemetro', 'locality', 'US', 34.05, -118.24, 33.9, -118.5, 34.2, -118.0, -1, 0);
 
+		-- The postcode-containment board (#31, B2-2): three same-name US localities whose POPULATION
+		-- order disagrees with their distance from postcode 94101's centroid (37.75, -122.42).
+		-- big (1.0 M) sits ~550 km away, mid (100 k) ~4,000 km, small (10 k) ~2 km. Population-first
+		-- answers big; the containment rung must answer small.
+		INSERT INTO spr VALUES (720, 'Sansome', 'locality', 'US', 34.05, -118.24, 34.0, -118.4, 34.1, -118.1, -1, 0);
+		INSERT INTO spr VALUES (721, 'Sansome', 'locality', 'US', 38.90, -77.04, 38.8, -77.2, 39.0, -76.9, -1, 0);
+		INSERT INTO spr VALUES (722, 'Sansome', 'locality', 'US', 37.76, -122.44, 37.7, -122.5, 37.8, -122.4, -1, 0);
+
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
 		INSERT INTO place_population VALUES (200, 2700000);
@@ -84,6 +96,9 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (601, 4193073);
 		INSERT INTO place_population VALUES (602, 98000);
 		INSERT INTO place_population VALUES (603, 3800000);
+		INSERT INTO place_population VALUES (720, 1000000);
+		INSERT INTO place_population VALUES (721, 100000);
+		INSERT INTO place_population VALUES (722, 10000);
 
 		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
 		INSERT INTO ancestors VALUES (310, 400, 'region');
@@ -115,6 +130,8 @@ function buildFixturePostcodes(path: string): void {
 		);
 		INSERT INTO spr VALUES (60601, '60601', 'postalcode', 'US', 41.885, -87.62, 41.88, -87.63, 41.89, -87.61, -1, 0);
 		INSERT INTO spr VALUES (20500, '20500', 'postalcode', 'US', 0, 0, 0, 0, 0, 0, -1, 0);
+		-- The B2-2 containment anchor: the Sansome cluster's postcode.
+		INSERT INTO spr VALUES (94101, '94101', 'postalcode', 'US', 37.75, -122.42, 37.74, -122.43, 37.76, -122.41, -1, 0);
 	`)
 
 	db.close()
@@ -523,5 +540,207 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 		const ranked = rankByPrimaryPreference([pop(950_000, 0, US), pop(100_000, 1, US)], 5)
 		expect(ranked[0]!.is_primary).toBe(0)
 		expect(ranked[0]!.demoted).toBe(false)
+	})
+})
+
+describe("postcode-containment coherence (#31, Mechanism 2)", () => {
+	// The B2-2 board: three same-name US localities whose POPULATION order disagrees with their
+	// distance from postcode 94101's centroid (37.75, -122.42): big (720, 1.0 M, ~550 km away),
+	// mid (721, 100 k, ~4,000 km), small (722, 10 k, ~2 km). Population-first answers big; the
+	// containment rung must answer small.
+	const ANCHOR = { lat: 37.75, lon: -122.42 }
+	const SANSOME_BIG = 720
+	const SANSOME_MID = 721
+	const SANSOME_SMALL = 722
+
+	const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode => ({
+		start: 0,
+		end: over.value.length,
+		confidence: 0.95,
+		children: [],
+		...over,
+	})
+
+	const tree = (...roots: AddressNode[]): AddressTree => ({
+		raw: roots.map((r) => r.value).join(" "),
+		roots,
+	})
+
+	const sansomeQuery = (extra: Partial<FindPlaceQuery> = {}): FindPlaceQuery => ({
+		text: "Sansome",
+		placetype: "locality",
+		country: "US",
+		limit: 5,
+		...extra,
+	})
+
+	function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
+		const out: AddressNode[] = []
+		const stack = [...roots]
+
+		while (stack.length) {
+			const n = stack.pop()!
+
+			if (n.tag === tag) {
+				out.push(n)
+			}
+
+			stack.push(...n.children)
+		}
+
+		return out
+	}
+
+	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
+		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
+		// existence-gates its probe on the table, so this is the real fast-path configuration.
+		const db = new DatabaseSync(candidatePath)
+
+		db.exec(
+			"CREATE TABLE postal_city_candidate (name_key TEXT, postcode TEXT, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL)"
+		)
+
+		db.prepare("INSERT INTO postal_city_candidate VALUES (?, ?, ?, ?, ?, ?)").run(
+			"sansome",
+			"94101",
+			SANSOME_SMALL,
+			"Sansome",
+			37.76,
+			-122.44
+		)
+
+		db.close()
+
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const off = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
+			const on = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
+
+			// Byte-identical: the exact probe answers the single geographic locality; the re-rank rung
+			// sits strictly beneath it and never sees the three-row candidate set.
+			expect(on).toEqual(off)
+			expect(on).toHaveLength(1)
+			expect(on[0]!.id).toBe(SANSOME_SMALL)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("B2-2: in-gate rows sort by distance first, the out-gate tail keeps its population order", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
+
+			expect(hits.map((c) => c.id)).toEqual([SANSOME_SMALL, SANSOME_BIG, SANSOME_MID])
+			// The winner is the locality CONTAINING the postcode — within the bar's ≤5 km of its centroid.
+			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, hits[0]!.lat, hits[0]!.lon)).toBeLessThanOrEqual(5)
+			// The out-gate tail (big before mid) is the ORIGINAL population-first order, untouched.
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("B2-2: the postcode-removed arm is unchanged — and the gap the bar claims is real", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// No postcode → the rung cannot fire → population-first.
+			const bare = await lk.findPlace(sansomeQuery())
+			expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
+
+			// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the gate).
+			const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
+			expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
+
+			// The population-first winner is ~550 km from the postcode — removing the postcode moves the
+			// answer far outside the gate, so the mechanism is doing what the bar claims it does.
+			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("B2-2: an anchor miss abstains — a postcode the table doesn't carry leaves the order untouched", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace(sansomeQuery({ postcode: "99999", postcodeContainmentCoherence: true }))
+			expect(hits.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("B2-2: a single-row candidate set is a no-op — the rung only fires when there is a tie to break", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const [hit] = await lk.findPlace({
+				text: "Chicago",
+				placetype: "locality",
+				postcode: "94101",
+				postcodeContainmentCoherence: true,
+			})
+
+			expect(hit?.id).toBe(200)
+			expect(hit?.name).toBe("Chicago")
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("B2-2 resolver-level: postcode present → the ≤5 km locality; postcode removed → population-first far away", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const resolver = createWOFResolver(lk)
+
+		try {
+			const withPC = await resolver.resolveTree(
+				tree(node({ tag: "locality", value: "Sansome" }), node({ tag: "postcode", value: "94101" })),
+				{ postcodeContainmentCoherence: true }
+			)
+
+			const sansPostcode = await resolver.resolveTree(tree(node({ tag: "locality", value: "Sansome" })), {})
+
+			const near = tagged(withPC.roots, "locality")[0]!
+			const far = tagged(sansPostcode.roots, "locality")[0]!
+
+			expect(near.placeID).toBe("wof:722")
+			expect(far.placeID).toBe("wof:720")
+			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, near.lat!, near.lon!)).toBeLessThanOrEqual(5)
+			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, far.lat!, far.lon!)).toBeGreaterThan(25)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("B2-3: the double-repair arms agree — postcodeConsistency ON vs OFF pick the same locality", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		const resolver = createWOFResolver(lk)
+
+		try {
+			const mkTree = () => tree(node({ tag: "locality", value: "Sansome" }), node({ tag: "postcode", value: "94101" }))
+
+			const withConsistency = await resolver.resolveTree(mkTree(), { postcodeContainmentCoherence: true })
+
+			const withoutConsistency = await resolver.resolveTree(mkTree(), {
+				postcodeContainmentCoherence: true,
+				postcodeConsistency: false,
+			})
+
+			const a = tagged(withConsistency.roots, "locality")[0]!
+			const b = tagged(withoutConsistency.roots, "locality")[0]!
+
+			// The containment rung picks small; the consistency pass (default-ON) is already satisfied and
+			// must NOT re-pick with a different tie-break — both arms land on the same locality.
+			expect(a.placeID).toBe("wof:722")
+			expect(b.placeID).toBe(a.placeID)
+			expect(a.lat).toBeCloseTo(37.76, 2)
+		} finally {
+			lk.close()
+		}
 	})
 })
