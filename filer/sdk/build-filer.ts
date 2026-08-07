@@ -199,6 +199,7 @@ import {
 	type FilerDatabase,
 } from "../schema.ts"
 import { mintFamilyID } from "./family-id.ts"
+import type { Form499Lifecycle } from "./form499-notes.ts"
 import { classifyFiler, parseForm499, type Form499Row } from "./form499.ts"
 import { assertISODate } from "./guards.ts"
 import { parseProviderList, type ProviderListRow } from "./provider-list.ts"
@@ -340,6 +341,132 @@ export interface BuildFilerResult {
 	 * (+1).
 	 */
 	skipped: number
+	/**
+	 * `filer_edge` rows whose `valid_to` was closed from a Form 499 cessation note — see
+	 * {@linkcode closeableCessationDate} for which ones qualify.
+	 */
+	closedByCessation: number
+	/**
+	 * Cessation dates that could NOT close a window because doing so would produce an inverted or empty one, i.e.
+	 * `ceasedAt <= lastFiledAt` — 1,440 of the 3,261 ceased filers naming a holding or management company in the
+	 * 2025-12-07 vintage. The date is still recorded as a `ceased_at` attribute; only the temporal window abstains.
+	 *
+	 * NOT an error. See {@linkcode closeableCessationDate} for why these two dates disagree so often.
+	 */
+	cessationWindowAbstained: number
+	/**
+	 * `SupersededBy` edges written from `Replaced by filer <id>` notes.
+	 */
+	supersessions: number
+}
+
+/**
+ * The cessation date to close a relationship window at, or `null` when closing it would assert something incoherent.
+ *
+ * **Two clocks, and they disagree on 40% of ceased filers.** Form 499 is an ANNUAL filing, so a carrier that ceased
+ * operating on 2013-09-08 still files the form on 2014-04-01. `lastFiledAt` is an administrative date; `ceasedAt` is an
+ * operational one, and nothing makes the second later than the first. Measured on the 2025-12-07 vintage: of 9,706
+ * dated cessations, 5,714 postdate the last filing, **3,916 predate it**, and 76 fall on the same day.
+ *
+ * Writing `valid_to = ceasedAt` unconditionally against `valid_from = lastFiledAt` would produce an inverted or empty
+ * window on those 3,992 — and the half-open predicate `valid_from <= t < valid_to` matches NOTHING across one. Every
+ * affected filer would vanish from every `asOf` read, silently, with no error and no missing row to notice. That is
+ * strictly worse than leaving the window open, which is at least visibly incomplete.
+ *
+ * So: close the window only when the two dates order coherently, and count the abstentions
+ * ({@link BuildFilerResult.cessationWindowAbstained}). The date itself is never lost — it is staged as a `ceased_at`
+ * attribute on every ceased filer regardless.
+ */
+function closeableCessationDate(ceasedAt: string | undefined, validFrom: string): string | null {
+	if (!ceasedAt) return null
+
+	return ceasedAt > validFrom ? ceasedAt : null
+}
+
+/**
+ * {@linkcode processForm499Lifecycle}'s per-row context.
+ */
+interface Form499LifecycleContext {
+	lifecycle: Form499Lifecycle | undefined
+	form499NodeID: string
+	lastFiledAt: string
+}
+
+/**
+ * Running totals across every row's lifecycle writes, mutated in place by {@linkcode processForm499Lifecycle} and read
+ * once into {@link BuildFilerResult}. One accumulator object rather than three `let`s at the call site: this loop body
+ * sits against the linter's `max-statements` ceiling, which is also why the helper exists at all.
+ */
+interface Form499LifecycleTotals {
+	closed: number
+	abstained: number
+	supersessions: number
+}
+
+/**
+ * One 499 row's lifecycle writes: a `ceased_at` attribute, one `cessation_reason` attribute per recognized reason, and
+ * a `SupersededBy` edge when the FCC named a successor filer. Returns the `valid_to` the caller should stamp on that
+ * row's relationship edges — see {@linkcode closeableCessationDate} for when that is `null` and why.
+ *
+ * Module-level for the same reason {@linkcode processForm499FRNRelationships} is: inline, it pushes
+ * {@linkcode buildFilerDatabase} past the linter's `max-statements` ceiling.
+ *
+ * A row whose `lifecycle` is `undefined` (every row the 17-column TSV parser produces) writes nothing, touches no total
+ * and returns `null` — the TSV path is byte-identical to what it was before this existed.
+ */
+function processForm499Lifecycle(
+	insNode: StatementSync,
+	insEdge: StatementSync,
+	stageAttribute: (nodeID: string, key: string, value: string, source: string, sourceVintage: string) => void,
+	totals: Form499LifecycleTotals,
+	context: Form499LifecycleContext
+): string | null {
+	const { lifecycle, form499NodeID, lastFiledAt } = context
+	const ceasedAt = lifecycle?.ceasedAt
+	const relationshipValidTo = closeableCessationDate(ceasedAt, lastFiledAt)
+
+	if (ceasedAt) {
+		// Recorded unconditionally, including where the window abstains — the date is a fact the FCC stated,
+		// and losing it because the two clocks disagree would be the worse trade.
+		stageAttribute(form499NodeID, "ceased_at", ceasedAt, "form-499", lastFiledAt)
+
+		if (relationshipValidTo) {
+			totals.closed++
+		} else {
+			totals.abstained++
+		}
+	}
+
+	for (const reason of lifecycle?.reasons ?? []) {
+		stageAttribute(form499NodeID, "cessation_reason", reason, "form-499", lastFiledAt)
+	}
+
+	if (lifecycle?.replacedByForm499ID) {
+		// Directional in TIME as well as identity: this registration is the OLDER one, always. The successor's
+		// node is minted here rather than waited for — it is almost always its own row in the same file, but
+		// nothing guarantees this row is processed second, and `insNode` is INSERT OR IGNORE.
+		const successorNodeID = `${FilerIdentifierType.Form499ID}:${lifecycle.replacedByForm499ID}`
+		insNode.run(successorNodeID, FilerIdentifierType.Form499ID, lifecycle.replacedByForm499ID)
+
+		insEdge.run(
+			form499NodeID,
+			successorNodeID,
+			FilerEdgeAssertion.Authoritative,
+			FilerRelationship.SupersededBy,
+			"form-499",
+			lastFiledAt,
+			// The supersession takes effect when the filer ceased, when the FCC said so. Falling back to the
+			// filing date keeps `valid_from` mandatory (decision 7) without inventing a date.
+			ceasedAt ?? lastFiledAt,
+			null,
+			null,
+			null
+		)
+
+		totals.supersessions++
+	}
+
+	return relationshipValidTo
 }
 
 /**
@@ -580,6 +707,12 @@ interface Form499FRNContext {
 	form499NodeID: string
 	form499RowIndex: number
 	lastFiledAt: string
+	/**
+	 * `valid_to` for this row's RELATIONSHIP edges, or `null` — see {@linkcode closeableCessationDate}. Deliberately not
+	 * applied to the `FRN↔form499ID` identity edge below: that edge asserts the two identifiers denote the same filer,
+	 * which does not stop being true when the company does. Only assertions that can expire get closed.
+	 */
+	relationshipValidTo: string | null
 }
 
 /**
@@ -599,7 +732,7 @@ function processForm499FRNRelationships(
 	legalNameByFRN: Map<string, { name: string; filedAt: string }>,
 	context: Form499FRNContext
 ): number {
-	const { row, frn, form499NodeID, form499RowIndex, lastFiledAt } = context
+	const { row, frn, form499NodeID, form499RowIndex, lastFiledAt, relationshipValidTo } = context
 	const frnContext = `form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)})`
 	const frnNodeID = mintFRNNodeID(frn, frnContext)
 	insNode.run(frnNodeID, FilerIdentifierType.FRN, frn)
@@ -639,7 +772,7 @@ function processForm499FRNRelationships(
 			"form-499",
 			lastFiledAt,
 			lastFiledAt,
-			null,
+			relationshipValidTo,
 			null,
 			null
 		)
@@ -672,7 +805,7 @@ function processForm499FRNRelationships(
 			"form-499",
 			lastFiledAt,
 			lastFiledAt,
-			null,
+			relationshipValidTo,
 			null,
 			null
 		)
@@ -1040,6 +1173,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	const legalNameByFRN = new Map<string, { name: string; filedAt: string }>()
 
 	let form499RowIndex = 0
+	const lifecycleTotals: Form499LifecycleTotals = { closed: 0, abstained: 0, supersessions: 0 }
 
 	for await (const row of form499Source) {
 		form499RowIndex++
@@ -1085,6 +1219,14 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
 		stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
 
+		// The FCC's own lifecycle notes, when the source carried them (workbook only — the 17-column TSV has
+		// no note columns, so `lifecycle` is undefined there and this is a no-op).
+		const relationshipValidTo = processForm499Lifecycle(insNode, insEdge, stageAttribute, lifecycleTotals, {
+			lifecycle: row.lifecycle,
+			form499NodeID,
+			lastFiledAt,
+		})
+
 		if (row.frn) {
 			skipped += processForm499FRNRelationships(insNode, insEdge, insFamily, legalNameByFRN, {
 				row,
@@ -1092,6 +1234,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				form499NodeID,
 				form499RowIndex,
 				lastFiledAt,
+				relationshipValidTo,
 			})
 		} else {
 			// No FRN on this row at all — legitimate (decision 3: not yet registered in CORES), not malformed.
@@ -1281,5 +1424,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		attributes: attributeCount,
 		families: familyCount,
 		skipped,
+		closedByCessation: lifecycleTotals.closed,
+		cessationWindowAbstained: lifecycleTotals.abstained,
+		supersessions: lifecycleTotals.supersessions,
 	}
 }
