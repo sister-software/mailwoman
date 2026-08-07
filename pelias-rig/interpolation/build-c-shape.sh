@@ -13,13 +13,27 @@
 # one lands on the other. One stream, one id space, one `street.db`. (The address side is safe to loop
 # — see the note on the UNIQUE constraint below.)
 #
-# Pass order, and what each one is allowed to overwrite: `address.db`'s table carries
-# `UNIQUE(id, housenumber) ON CONFLICT IGNORE`, so for a given street+housenumber the FIRST writer
-# wins and every later pass is silently dropped. That makes pass ORDER a precedence decision, not a
-# scheduling detail. OpenAddresses runs first because its rows are surveyed points; TIGER runs second
-# because its rows are interpolated from address RANGES and should only fill what no point covers.
-# Vertices runs last for the same reason — it synthesises fractional housenumbers at street geometry
-# vertices, which is the weakest evidence of the three.
+# THE ADDRESS TABLE'S KEY IS NOT A BARE `id`, so there is nothing to namespace. It is
+# `rowid INTEGER PRIMARY KEY` — a surrogate — with `source` and `source_id` carrying provenance in
+# their own columns, so two sources cannot collide on a record identifier. Namespacing the inputs
+# would in fact be wrong: `id` is the STREET id, a reference into `street.db`, and rewriting it would
+# sever the join.
+#
+# What the table DOES carry is `UNIQUE(id, housenumber) ON CONFLICT IGNORE`: for a given
+# street+housenumber the FIRST writer wins and every later pass is dropped in silence. That makes pass
+# ORDER a precedence decision, not a scheduling detail. OpenAddresses runs first because its rows are
+# surveyed points; TIGER second because its rows are interpolated from address RANGES and should only
+# fill what no point covers; vertices last, because it synthesises fractional housenumbers at street
+# geometry vertices and that is the weakest evidence of the three.
+#
+# MEASURED on the DC slice (3,384 streets, one TIGER county, one OA file), building twice off the same
+# street.db: TIGER alone yields 44,504 address rows; TIGER after OpenAddresses yields 32,774. The
+# conflict drops 11,730 rows, 26.4% of TIGER's output, and every one of them is a street+housenumber
+# OpenAddresses already covered. Sampling five of the collisions, the OA point sits 17.5–53.2 m from
+# the TIGER interpolation it displaced (mean 31.1 m) — which is the whole argument for this order in
+# one number: reverse it and those 11,730 DC addresses answer from a range interpolation roughly 31 m
+# off instead of from the surveyed point, and §3's 50 m rooftop bar starts depending on which pass ran
+# first.
 #
 # Usage (inside the container):
 #   BUILDDIR=/data/interpolation build-c-shape.sh <step>...
