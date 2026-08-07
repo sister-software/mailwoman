@@ -97,6 +97,11 @@
 			"default": "./out/fs/node.js",
 			"types": "./out/fs/node.d.ts"
 		},
+		"./fs/zip": {
+			"node": "./fs/zip.ts",
+			"default": "./out/fs/zip.js",
+			"types": "./out/fs/zip.d.ts"
+		},
 		"./scripting": {
 			"node": "./scripting/index.ts",
 			"default": "./out/scripting/index.js",
@@ -197,6 +202,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
 		"axios": "^1.19.0",
 		"axios-cache-interceptor": "^1.12.1",
