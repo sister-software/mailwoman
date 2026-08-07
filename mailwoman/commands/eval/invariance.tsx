@@ -7,10 +7,14 @@
  *   metamorphic-invariance check (comma-drop / abbreviation-swap / case-fold / lowercase /
  *   whitespace-jitter / trailing-punct / idempotence) over `eval-harness/invariance/suite.jsonl`, meant
  *   to run in EVERY probe grade so distribution-shift collateral surfaces at 2k-probe cost instead of
- *   ship-prep cost. Compares decoded PARSE COMPONENTS only (no resolver) — cheap by construction. Exit
- *   nonzero on any LOST pair, or when the DEGRADED count exceeds `--max-degraded`. `--baseline` switches
- *   to regression mode: a violation the baseline ALSO exhibits on the same pair is reported but doesn't
- *   fail the gate — the shape probe grading uses to diff a candidate against v385.
+ *   ship-prep cost. Compares decoded PARSE COMPONENTS only (no resolver) — cheap by construction. Parses
+ *   run through the PRODUCTION runtime pipeline (`createRuntimePipeline`), per-row locale from each
+ *   fixture row's country, weights-package FST auto-loaded (#1516). Exit nonzero on any LOST pair, or
+ *   when the DEGRADED count exceeds `--max-degraded`. `--baseline` switches to regression mode: a
+ *   violation the baseline ALSO exhibits on the same pair is reported but doesn't fail the gate — the
+ *   shape probe grading uses to diff a candidate against v385. Two more regression-mode classes never
+ *   fail the gate: GAINED pairs (the candidate holds what the baseline violated) and gained-capability
+ *   residuals (a row whose critical components the baseline never parsed at all).
  */
 
 import { Text } from "ink"
