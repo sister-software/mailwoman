@@ -1,0 +1,618 @@
+{
+	"$comment": [
+		"Ground truth for filer/test-fixtures/edgar/*.htm — the subsidiary list each real EDGAR Exhibit 21",
+		"document actually states, and the list parseExhibit21 is required to reproduce exactly.",
+		"",
+		"Produced by an INDEPENDENT reference implementation (a DOM-based lxml script, not the TypeScript",
+		"parser) applying the rules in docs/superpowers/plans/2026-08-03-edgar-live-wiring.md, then read",
+		"line by line against the source documents. It is deliberately not derived from parseExhibit21 output:",
+		"a fixture expectation copied from the implementation under test certifies whatever that implementation",
+		"does, including its defects.",
+		"",
+		"alti-global-2025.htm expects ZERO. Its markup separates entries with nothing but a double space, so",
+		"no name/jurisdiction boundary can be established without guessing. Abstaining is the required answer,",
+		"not a gap to be closed."
+	],
+	"fixtures": {
+		"alti-global-2025.htm": {
+			"subsidiaries": []
+		},
+		"anterix-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "PDV Spectrum Holdings Company, LLC"
+				},
+				{
+					"name": "Kleine License Holdings, LLC"
+				}
+			]
+		},
+		"atn-international-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Alloy, Inc. (1)",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "ALSK Holdings, LLC. (2)",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Atlantic Tele-Network, LLC (3)",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "ATN Overseas Holdings, Ltd.",
+					"jurisdiction": "Bermuda"
+				},
+				{
+					"name": "ATN VI, Inc.(4)",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "One Communications (Guyana) Inc. (5)",
+					"jurisdiction": "Guyana"
+				},
+				{
+					"name": "One Communications, Ltd. (6)",
+					"jurisdiction": "Bermuda"
+				}
+			]
+		},
+		"att-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Illinois Bell Telephone Company, LLC",
+					"jurisdiction": "Illinois"
+				},
+				{
+					"name": "Indiana Bell Telephone Company, LLC",
+					"jurisdiction": "Indiana"
+				},
+				{
+					"name": "Michigan Bell Telephone Company, LLC",
+					"jurisdiction": "Michigan"
+				},
+				{
+					"name": "Nevada Bell Telephone Company, LLC",
+					"jurisdiction": "Nevada"
+				},
+				{
+					"name": "Pacific Bell Telephone Company",
+					"jurisdiction": "California"
+				},
+				{
+					"name": "AT&T Teleholdings, Inc.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Southwestern Bell Telephone Company, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "The Ohio Bell Telephone Company, LLC",
+					"jurisdiction": "Ohio"
+				},
+				{
+					"name": "Wisconsin Bell, LLC",
+					"jurisdiction": "Wisconsin"
+				},
+				{
+					"name": "AT&T Services, Inc.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "AT&T Enterprises, LLC.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Teleport Communications America, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "AT&T DW Holdings, Inc.",
+					"jurisdiction": "New York"
+				},
+				{
+					"name": "BellSouth Telecommunications, LLC",
+					"jurisdiction": "Georgia"
+				},
+				{
+					"name": "AT&T Mobility LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "AT&T Mobility II LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "New Cingular Wireless PCS, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Cricket Wireless LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "AT&T Comunicaciones Digitales, S. de R.L. de C.V.",
+					"jurisdiction": "Mexico City"
+				}
+			]
+		},
+		"bandwidth-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Bandwidth.com CLEC, LLC",
+					"jurisdiction": "Delaware, United States"
+				},
+				{
+					"name": "UK Bandwidth Limited",
+					"jurisdiction": "England and Wales"
+				},
+				{
+					"name": "DE Bandwidth GmbH",
+					"jurisdiction": "Germany"
+				},
+				{
+					"name": "Bandwidth Iberia S.L",
+					"jurisdiction": "Spain"
+				},
+				{
+					"name": "Bandwidth Communications Canada, Inc.",
+					"jurisdiction": "Canada"
+				},
+				{
+					"name": "Bandwidth Comunicação do Brasil Ltda.",
+					"jurisdiction": "Brazil"
+				},
+				{
+					"name": "Bandwidth Comunicaciones, S. de R.L. de C.V.",
+					"jurisdiction": "Mexico"
+				},
+				{
+					"name": "Voice Bidco Limited",
+					"jurisdiction": "England and Wales"
+				},
+				{
+					"name": "Voxbone S.A.",
+					"jurisdiction": "Belgium"
+				},
+				{
+					"name": "Voxbone El Salvador Sociedad Anonima De Capital Variable",
+					"jurisdiction": "El Salvador"
+				},
+				{
+					"name": "Voxbone Panama Inc.",
+					"jurisdiction": "Panama"
+				},
+				{
+					"name": "Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi",
+					"jurisdiction": "Turkey"
+				}
+			]
+		},
+		"cable-one-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Bluffton Telephone Company, LLC",
+					"jurisdiction": "South Carolina"
+				},
+				{
+					"name": "Cable One VoIP LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "CoBridge Broadband, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "CoBridge Communications LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "ComSouth Telecommunications, LLC",
+					"jurisdiction": "Georgia"
+				},
+				{
+					"name": "ComSouth Telenet LLC",
+					"jurisdiction": "Georgia"
+				},
+				{
+					"name": "Fidelity Cablevision, LLC",
+					"jurisdiction": "Missouri"
+				},
+				{
+					"name": "Fidelity Telephone LLC",
+					"jurisdiction": "Missouri"
+				},
+				{
+					"name": "Hargray Acquisition Holdings, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Hargray CATV Company, LLC",
+					"jurisdiction": "South Carolina"
+				},
+				{
+					"name": "Hargray Communications Group, Inc.",
+					"jurisdiction": "South Carolina"
+				},
+				{
+					"name": "Hargray Data Center Services LLC",
+					"jurisdiction": "Georgia"
+				},
+				{
+					"name": "Hargray, LLC",
+					"jurisdiction": "South Carolina"
+				},
+				{
+					"name": "Hargray of Alabama, LLC",
+					"jurisdiction": "Georgia"
+				},
+				{
+					"name": "Hargray Telephone Company, LLC",
+					"jurisdiction": "South Carolina"
+				},
+				{
+					"name": "Lighthouse Sub LLC",
+					"jurisdiction": "Delaware"
+				}
+			]
+		},
+		"echostar-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "DISH Network Corporation",
+					"jurisdiction": "Nevada"
+				},
+				{
+					"name": "DISH DBS Corporation",
+					"jurisdiction": "Colorado"
+				},
+				{
+					"name": "DISH Network L.L.C.",
+					"jurisdiction": "Colorado"
+				},
+				{
+					"name": "DISH Wireless Holding L.L.C.",
+					"jurisdiction": "Colorado"
+				},
+				{
+					"name": "DISH Wireless L.L.C.",
+					"jurisdiction": "Colorado"
+				},
+				{
+					"name": "Hughes Satellite Systems Corporation",
+					"jurisdiction": "Colorado"
+				},
+				{
+					"name": "Hughes Communications, Inc.",
+					"jurisdiction": "Delaware"
+				}
+			]
+		},
+		"idt-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "IDT Corporation de Argentina S.A.",
+					"jurisdiction": "Argentina"
+				},
+				{
+					"name": "IDT Telecom Canada Corp.",
+					"jurisdiction": "Canada"
+				},
+				{
+					"name": "Versature Communications Corp.*",
+					"jurisdiction": "Canada"
+				},
+				{
+					"name": "IDT Guatemala S.A.",
+					"jurisdiction": "Guatemala"
+				},
+				{
+					"name": "IDT Financial Services Limited",
+					"jurisdiction": "Gibraltar"
+				},
+				{
+					"name": "IDT Telecom Asia Pacific Limited",
+					"jurisdiction": "Hong Kong"
+				},
+				{
+					"name": "Elmion Netherlands B.V.",
+					"jurisdiction": "Netherlands"
+				},
+				{
+					"name": "IDT Dutch Holdings B.V.",
+					"jurisdiction": "Netherlands"
+				},
+				{
+					"name": "IDT Global Limited",
+					"jurisdiction": "United Kingdom"
+				},
+				{
+					"name": "IDT Retail Europe Limited",
+					"jurisdiction": "United Kingdom"
+				}
+			]
+		},
+		"liberty-broadband-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Communication Capital, LLC (fka Communication Capital Corp.)",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "Grizzly Merger Sub 1, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LBC Cheetah 1, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LBC Cheetah 5, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LBC Cheetah 6, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LMC Cheetah 1, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LMC Cheetah 4, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LV Bridge, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "LBC Jayhawk Investor, LLC",
+					"jurisdiction": "DE"
+				},
+				{
+					"name": "Ventures Holdco II, LLC",
+					"jurisdiction": "DE"
+				}
+			]
+		},
+		"ooma-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Talkatone, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Ooma International Operations, LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Ooma International Ltd.",
+					"jurisdiction": "United Kingdom"
+				},
+				{
+					"name": "Ooma Australia Pty Ltd.",
+					"jurisdiction": "Australia"
+				},
+				{
+					"name": "Voxter Communications, Inc.",
+					"jurisdiction": "British Columbia, Canada"
+				},
+				{
+					"name": "Broadsmart Global, Inc.",
+					"jurisdiction": "Florida"
+				},
+				{
+					"name": "Ooma Canada, Inc.",
+					"jurisdiction": "British Columbia, Canada"
+				},
+				{
+					"name": "Ooma Ireland Limited",
+					"jurisdiction": "Ireland"
+				},
+				{
+					"name": "Oomazing Telecom",
+					"jurisdiction": "South Africa"
+				},
+				{
+					"name": "Aruba Acquisition Subsidiary Inc.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Junction Networks Inc.",
+					"jurisdiction": "Pennsylvania"
+				},
+				{
+					"name": "2600hz, Inc.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Desktop Communications, LLC",
+					"jurisdiction": "Delaware"
+				}
+			]
+		},
+		"shentel-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Shenandoah Cable Television LLC"
+				},
+				{
+					"name": "Shentel Management Company"
+				},
+				{
+					"name": "Shenandoah Mobile LLC"
+				},
+				{
+					"name": "Shenandoah Personal Communications LLC"
+				},
+				{
+					"name": "Shenandoah Telephone Company"
+				},
+				{
+					"name": "Shentel Broadband Operations LLC"
+				},
+				{
+					"name": "Shentel Broadband Holding LLC"
+				},
+				{
+					"name": "Shentel Issuer LLC"
+				},
+				{
+					"name": "Shentel Asset Entity I LLC"
+				},
+				{
+					"name": "Shentel Asset Entity II LLC"
+				},
+				{
+					"name": "Horizon Acquisition Parent LLC"
+				},
+				{
+					"name": "Horizon Telcom Inc."
+				},
+				{
+					"name": "The Chillicothe Telephone Company"
+				},
+				{
+					"name": "Horizon Services, Inc."
+				},
+				{
+					"name": "Horizon Technology, Inc."
+				},
+				{
+					"name": "Urban Systems LLC"
+				},
+				{
+					"name": "Infinity Fiber LLC"
+				}
+			]
+		},
+		"verizon-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "Verizon Delaware LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Maryland LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon New England Inc.",
+					"jurisdiction": "New York"
+				},
+				{
+					"name": "Verizon New Jersey Inc.",
+					"jurisdiction": "New Jersey"
+				},
+				{
+					"name": "Verizon New York Inc.",
+					"jurisdiction": "New York"
+				},
+				{
+					"name": "Verizon Pennsylvania LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Virginia LLC",
+					"jurisdiction": "Virginia"
+				},
+				{
+					"name": "BAMS Communications LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Bell Atlantic Mobile Systems LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Cellco Partnership (d/b/a Verizon Wireless)",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "GTE Wireless LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "MCI Communications Services LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "MCI International LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Business Global LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Business Network Services LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon International Inc.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Online LLC",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Value, Inc",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Verizon Services Ireland Limited",
+					"jurisdiction": "Ireland"
+				},
+				{
+					"name": "Verizon Americas LLC",
+					"jurisdiction": "Delaware"
+				}
+			]
+		},
+		"widepoint-2025.htm": {
+			"subsidiaries": [
+				{
+					"name": "WidePoint Integrated Solutions Corp. (1)",
+					"jurisdiction": "Virginia"
+				},
+				{
+					"name": "WidePoint Cybersecurity Solutions Corporation (2)",
+					"jurisdiction": "Virginia"
+				},
+				{
+					"name": "WidePoint IL, Inc. (3)",
+					"jurisdiction": "Illinois"
+				},
+				{
+					"name": "WidePoint Global Solutions, Inc.",
+					"jurisdiction": "Delaware"
+				},
+				{
+					"name": "Soft-ex Communications Ltd. (subsidiary of WidePoint Global Solutions, Inc.)",
+					"jurisdiction": "Ireland"
+				},
+				{
+					"name": "Soft-ex BV (subsidiary of Soft-ex Communications Ltd.)",
+					"jurisdiction": "Netherlands"
+				},
+				{
+					"name": "Soft-ex UK Limited (subsidiary of Soft-ex Communications Ltd.)",
+					"jurisdiction": "England"
+				},
+				{
+					"name": "Widepoint Mobile Corporation (4)",
+					"jurisdiction": "Virginia"
+				},
+				{
+					"name": "WYY Florida Sub, Inc. (changed to IT Authorities, Inc.)",
+					"jurisdiction": "Florida"
+				}
+			]
+		}
+	}
+}

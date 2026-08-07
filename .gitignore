@@ -199,3 +199,6 @@ nightshift
 # sweep one into a commit.
 *-tmp.ts
 *-tmp.tsx
+
+## Subagent-driven-development scratch (ledgers, briefs, review packages) — per-plan, never committed
+.superpowers/
