@@ -1,9 +1,10 @@
 # EDGAR / FCC crosswalk ingest — handoff
 
-**Written** 2026-08-07 · **Branch** `feat/filer-edgar-ingest` · **Workspace** `@mailwoman/filer`
+**Written** 2026-08-07 · **Merged to main** · **Workspace** `@mailwoman/filer`
 
 For whoever picks this up next. Written for a reader with no prior context on this thread, so it
-states things a returning author would consider obvious.
+states things a returning author would consider obvious. **The seven commits are on `origin/main`;
+no PR was opened for this work.**
 
 ---
 
@@ -75,14 +76,18 @@ the check caught a real one (`recaseUniform` keyed on the wrong thing).
 ## What is landed on this branch
 
 ```
-9b8dc1bd4  feat(filer): FCC CORES registration lookup — a second name surface per FRN
-8e4f69e82  feat(filer): read the Form 499 workbook the FCC actually publishes
-f3d6adcde  feat(filer)!: supersession as a relationship, and a valid_to that something writes
-a4a67eb1e  feat(filer): write the lifecycle — cessation windows and supersession edges
-<this one>  feat(filer): the CIK corroboration gate
+6491437c5  feat(filer): FCC CORES registration lookup — a second name surface per FRN
+07183fc29  feat(filer): read the Form 499 workbook the FCC actually publishes
+a205812ca  feat(filer)!: supersession as a relationship, and a valid_to that something writes
+0ad8831ab  feat(filer): write the lifecycle — cessation windows and supersession edges
+71ba69bdb  feat(filer): the CIK corroboration gate — a second signal before a name match writes
+6848d97ee  docs(filer): EDGAR/FCC crosswalk handoff
+3ce281f77  feat(filer): assemble the EDGAR chain — names in, EdgarSubsidiaryRows out
 ```
 
-`filer/` is at **553 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean.
+`filer/` is at **553 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean. Landed on main
+as a direct push; no PR was opened. `a205812ca` is a `feat!` — `FILER_SCHEMA_VERSION = 3` and a new
+`FilerRelationship` member ship on npm, so the next release carries a breaking schema change.
 
 ### `filer/sdk/cores-client.ts`
 
