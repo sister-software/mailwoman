@@ -158,6 +158,15 @@ export type FilerEdgeAssertion = (typeof FilerEdgeAssertion)[keyof typeof FilerE
  * - `Subsidiary` — the inverse of `ParentCompany`, kept as its own value (never just "read backwards") so a row's
  *   `relationship` always describes the edge in the direction it was asserted, without requiring the reader to know
  *   which side is the source.
+ * - `SupersededBy` — the source registration was REPLACED by the target one. Identity continuity over time, and
+ *   deliberately NOT an ownership or control fact: it says this registration became that registration, and nothing
+ *   about who owns either. Written from Form 499's `Replaced by filer <id>` note (`form499-notes.ts`), which the FCC
+ *   states on 2,826 filers in the 2025-12-07 vintage, 2,820 of whose targets resolve to a filer in the same file.
+ *
+ *   Two consequences a reader has to hold. First, the edge is directional in TIME as well as in identity — the source is
+ *   the older registration, always, and the pair is never symmetric. Second, `linkage-eval.ts`'s
+ *   `OWNERSHIP_BY_RELATIONSHIP` pins this `false`; a supersession chain is not evidence of a corporate family, and an
+ *   eval that scored it as one would credit itself for recovering ownership it never saw. Operator ruling, 2026-08-07.
  */
 export const FilerRelationship = {
 	SameEntity: "same_entity",
@@ -165,6 +174,7 @@ export const FilerRelationship = {
 	ManagementCompany: "management_company",
 	ParentCompany: "parent_company",
 	Subsidiary: "subsidiary",
+	SupersededBy: "superseded_by",
 } as const
 
 export type FilerRelationship = (typeof FilerRelationship)[keyof typeof FilerRelationship]
@@ -322,6 +332,24 @@ export interface FilerFamilyTable {
  * surfaced straight from SQLite (a `schema_version: 1` artifact hit exactly that before this guard existed).
  */
 export const FILER_FAMILY_SCHEMA_VERSION = 2
+
+/**
+ * The CURRENT `schema_version` — version 3, which added {@link FilerRelationship.SupersededBy} and made
+ * `filer_edge.valid_to` a column something actually writes.
+ *
+ * **No table changed shape between 2 and 3, and the bump is still correct.** A version-2 artifact is structurally
+ * readable by a version-3 reader; what it cannot be trusted about is CONTENT. Every ceased filer in a version-2 build
+ * carries `valid_to: null`, because nothing set it — so an `asOf`-scoped read against a 2013 date returns carriers
+ * dissolved a decade earlier, silently and with no error to notice. That is a worse failure than a missing table: it
+ * answers.
+ *
+ * Readers should therefore compare against {@linkcode FILER_FAMILY_SCHEMA_VERSION} for "can I read this at all", and
+ * against this constant for "should I trust a temporal answer from it".
+ *
+ * `@mailwoman/filer` ships on npm, so this bump is a real versioned change with a consumer rebuild — the "nothing has
+ * shipped yet, columns are free" argument that governed Phase 3b is spent.
+ */
+export const FILER_SCHEMA_VERSION = 3
 
 /**
  * Filer.db's own single-row identity/provenance record (decision 2) — NOT the layer-contract `layer_manifest` from
