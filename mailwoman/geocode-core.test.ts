@@ -11,8 +11,9 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import type { Resolver } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -467,5 +468,85 @@ describe("the Decision-A retry rider (retryAlternateRegister)", () => {
 		})
 
 		expect(parses).toHaveLength(1)
+	})
+})
+
+describe("#1537: a famous namesake the model reads as a `street` keeps its candidate list", () => {
+	/**
+	 * The live shape the issue reports, reduced to a fixture. The model tags a bare `Springfield` / `Berlin` / `Moscow`
+	 * as a `street` (they read as street names), so the admin walk resolves nothing and the #370 span-rescore tier is the
+	 * ONLY thing that recovers the place. It used to decorate the injected node with an EMPTY alternatives list, so
+	 * `candidates` came back holding one entry and `declared_ambiguity` — whose whole trigger is a top-1-vs-top-2 margin
+	 * — could not fire for the very class it exists for.
+	 */
+	const SPRINGFIELDS: ResolvedPlace[] = [
+		{
+			id: 10,
+			name: "Springfield",
+			placetype: "locality",
+			country: "US",
+			lat: 37.194291,
+			lon: -93.291579,
+			score: 8,
+			prominence: 5.1,
+			exactMatch: true,
+		},
+		{
+			id: 11,
+			name: "Springfield",
+			placetype: "locality",
+			country: "US",
+			lat: 42.1015,
+			lon: -72.5898,
+			score: 7,
+			prominence: 5.05,
+			exactMatch: true,
+		},
+		{
+			id: 12,
+			name: "Springfield",
+			placetype: "locality",
+			country: "US",
+			lat: 39.7817,
+			lon: -89.6501,
+			score: 6,
+			prominence: 5.02,
+			exactMatch: true,
+		},
+	]
+
+	const deps = (): Pick<GeocodeDeps, "classifier" | "resolver" | "placeCountry"> => ({
+		// A `street` node below the span-blocking confidence threshold — exactly what the model emits here.
+		classifier: {
+			parse: async (text) => ({
+				raw: text,
+				roots: [node({ tag: "street", value: text, end: text.length, confidence: 0.4 })],
+			}),
+		},
+		resolver: createWOFResolver({
+			findPlace: async (query) =>
+				query.text.trim().toLowerCase() === "springfield" ? SPRINGFIELDS.map((p) => ({ ...p })) : [],
+		}),
+		// No placer: this test is about the resolver's candidate list, not the country prior — and loading the
+		// bundled placer model in a unit test would be a several-hundred-millisecond side quest.
+		placeCountry: false,
+	})
+
+	it("returns every namesake, not just the winner", async () => {
+		const result = await geocodeAddress("Springfield", deps())
+
+		// The winner is untouched — the same coordinate this query answered with before the fix.
+		expect(result.lat).toBe(37.194291)
+		expect(result.lon).toBe(-93.291579)
+		expect(result.candidates.map((c) => c.placeID)).toEqual(["wof:10", "wof:11", "wof:12"])
+	})
+
+	it("and the recovered margin lets `declared_ambiguity` fire", async () => {
+		const result = await geocodeAddress("Springfield", deps())
+		const marker = result.intent_markers.find((m) => m.code === "declared_ambiguity")
+
+		expect(marker).toBeDefined()
+		// 5.10 − 5.05, an order of magnitude under the 0.5 decisive cut.
+		expect(marker!.evidence?.["margin"]).toBeCloseTo(0.05, 4)
 	})
 })
