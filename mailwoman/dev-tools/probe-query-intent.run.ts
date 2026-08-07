@@ -65,12 +65,28 @@
  *   | Fulda       |                    1 → 3  | — (decisive)                |
  *   | Moscow      |                    1 → 2  | — (see below)               |
  *
- *   `Moscow` is the row that still reads wrong, and it is a DIFFERENT defect: it answers Moscow, Idaho.
- *   Span-rescore's exact-name filter normalizes to `[a-z0-9 ]`, so a gazetteer name in a non-Latin
- *   script folds to the empty string and can never match — Москва is not in that candidate list to be
- *   ranked. Athens survives the same trap only because it reaches the admin walk instead (`Αθήνα` wins
- *   there on prominence). Tracked separately; fixing it changes which answer WINS, which is a
- *   different-shaped change from #1537's additive one.
+ *   `Moscow` was the row that still read wrong, and it was a DIFFERENT defect: it answered Moscow,
+ *   Idaho. Span-rescore's exact-name filter re-compared the PRIMARY name folded to `[a-z0-9 ]`, so a
+ *   gazetteer name in a non-Latin script folds to the empty string and could never match — Москва was
+ *   not in that candidate list to be ranked, and Moscow, Idaho won by default among the Latin-named
+ *   bearers. Athens survived the same trap only because it reaches the admin walk instead (`Αθήνα`
+ *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped — the
+ *   backend's `exactMatch` IS the name-OR-alias surface equality (names table / alt_names bag), so a
+ *   query matches a place when ANY stored name equals it, Москва's "Moscow" alias included — and
+ *   population-first ranking then picks Москва RU. The postcode-consistency gate still applies to
+ *   every admitted candidate. Re-measured 2026-08-07, same backend:
+ *
+ *   | query       | answer before → after                     | candidates before → after | marker after |
+ *   | ----------- | ---------------------------------------- | ------------------------: | ------------ |
+ *   | Moscow      | Moscow, Idaho → Москва, RU               |                    2 → 4  | — (decisive) |
+ *
+ *   (Before: 46.730606, -116.998988 — after: 55.7505412, 37.6174782.) Every other board row is
+ *   byte-identical. Two characterized changes: Berlin's candidate list grew 4 → 5 (Berlín, SV — pop
+ *   11,313 — admitted via its "Berlin" alias; the winner is still Berlin, DE, and its margin stays
+ *   decisive), and Warsaw's winner moved ~200 m to the WOF "Warszawa" row (pop 1,863,845, admitted
+ *   via its "Warsaw" alias) from the GeoNames "Warsaw" row (pop 1,702,139) — same city, same country.
+ *   The gauntlet's `ru-cs-moscow` case (gold Москва, 25 km bar) flips from 8,374.9 km off to 0.7 km —
+ *   pass.
  */
 
 import { parseArgs } from "node:util"

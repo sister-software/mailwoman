@@ -301,7 +301,14 @@ export async function findRescoreCandidate(
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
 		const hits = await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
-		const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
+		// #1546: NO primary-name re-check here — the backend's `exactMatch` IS the name-OR-alias surface
+		// equality (the names table / alt_names bag), so a query matches a place when ANY stored name
+		// equals it. Re-comparing only the PRIMARY name folded to [a-z0-9 ] excluded exactly the
+		// non-Latin-primary class: Москва folds to "" and could never equal "moscow", so Moscow RU never
+		// entered the list and Moscow, Idaho won by default among the Latin-named bearers — population-
+		// first ranking starved, not violated. The alias surface is the recall; ranking then does its job.
+		// The postcode gate below still applies to every admitted candidate, Moscow RU included.
+		const exact = hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0))
 
 		const withinGate = (p: ResolvedPlace): boolean =>
 			!anchor || gateKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= gateKm
@@ -343,7 +350,10 @@ export async function findRescoreCandidate(
 
 			if (key.length < 2 || /^\d+$/.test(key)) continue
 			const hits = await backend.findPlace({ text: sp.text, placetype: "locality", limit: 5 })
-			const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
+			// #1546: same alias-surface admission as the scoped pass — `exactMatch` is name-OR-alias, so a
+			// non-Latin primary (Москва) admitted via its Latin alias stays eligible here too. The
+			// per-candidate postcode verification below remains the sole admission bar.
+			const exact = hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0))
 
 			for (const h of exact) {
 				if (!h.country || h.country === country) continue
