@@ -203,7 +203,12 @@ async function applySpanRescore(
 		children: [],
 	}
 
-	decorateNode(node, hit.place, [])
+	// #1537: the same-span namesake runner-ups, not an empty list. A name the model reads as a `street`
+	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the ONLY thing that
+	// resolves it — and decorating with `[]` meant the geocode path's `candidates` held one entry and the
+	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
+	// The winner is unchanged (see findRescoreCandidate); this is additive.
+	decorateNode(node, hit.place, hit.alternatives)
 	// `rescore_gated` carries the gate's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
 	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode gate fired

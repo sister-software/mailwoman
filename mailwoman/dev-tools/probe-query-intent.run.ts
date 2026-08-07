@@ -47,11 +47,30 @@
  *   coincident-collapse working — without it the `locality`/`localadmin` twin sits 0.3 km away with a
  *   0.01 margin and every major city on earth reads maximally ambiguous.
  *
- *   The gap this probe also exposes, and it is NOT a §4 defect: several famously-ambiguous names
- *   (`Springfield`, `Berlin`, `Manchester`, `Moscow`) come back from the GEOCODE path with a single
- *   candidate, where a direct `resolveTree` on the same bare-locality tree returns four. No
- *   alternatives means no margin to measure, so the marker cannot fire for them. Whatever prunes that
- *   list lives upstream of the intent vocabulary and is worth its own look.
+ *   The gap this probe exposed on its first run, and it was NOT a §4 defect: several famously-ambiguous
+ *   names (`Springfield`, `Berlin`, `Manchester`, `Moscow`, `Fulda`, `Hamilton`) came back from the
+ *   GEOCODE path with a SINGLE candidate. No alternatives means no margin to measure, so the marker
+ *   could not fire for exactly the class it exists for. **Closed by #1537**, and the cause was upstream
+ *   of the intent vocabulary as suspected: the model reads those names as a `street`, so the admin walk
+ *   resolves nothing and the #370 span-rescore tier is what recovers them — and it decorated the
+ *   injected node with an empty runner-up list, discarding the namesakes its own lookup had returned.
+ *   Re-measured 2026-08-07, same backend, every coordinate byte-identical:
+ *
+ *   | query       | candidates before → after | marker after                |
+ *   | ----------- | ------------------------: | --------------------------- |
+ *   | Springfield |                    1 → 3  | declared_ambiguity (0.048)  |
+ *   | Hamilton    |                    1 → 4  | declared_ambiguity (0.468)  |
+ *   | Berlin      |                    1 → 4  | — (decisive)                |
+ *   | Manchester  |                    1 → 4  | — (decisive)                |
+ *   | Fulda       |                    1 → 3  | — (decisive)                |
+ *   | Moscow      |                    1 → 2  | — (see below)               |
+ *
+ *   `Moscow` is the row that still reads wrong, and it is a DIFFERENT defect: it answers Moscow, Idaho.
+ *   Span-rescore's exact-name filter normalizes to `[a-z0-9 ]`, so a gazetteer name in a non-Latin
+ *   script folds to the empty string and can never match — Москва is not in that candidate list to be
+ *   ranked. Athens survives the same trap only because it reaches the admin walk instead (`Αθήνα` wins
+ *   there on prominence). Tracked separately; fixing it changes which answer WINS, which is a
+ *   different-shaped change from #1537's additive one.
  */
 
 import { parseArgs } from "node:util"
