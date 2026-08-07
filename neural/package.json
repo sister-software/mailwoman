@@ -112,7 +112,7 @@
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"spliterator": "^6.0.1"
+		"spliterator": "^6.1.0"
 	},
 	"devDependencies": {
 		"onnxruntime-node": "^1.26.0",

@@ -52,7 +52,7 @@
 		"@mailwoman/un-locode-lookup": "workspace:*",
 		"hono": "^4.12.34",
 		"mailwoman": "workspace:*",
-		"spliterator": "^6.0.1",
+		"spliterator": "^6.1.0",
 		"zod": "^4.4.3"
 	}
 }
