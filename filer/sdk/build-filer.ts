@@ -193,6 +193,7 @@ import {
 	createFilerFamilyTable,
 	createFilerManifestTable,
 	createFilerNodeTable,
+	FILER_SCHEMA_VERSION,
 	FilerEdgeAssertion,
 	FilerIdentifierType,
 	FilerRelationship,
@@ -1368,9 +1369,9 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			name: "filer",
 			// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
 			version: options.sourceVintage,
-			// 2 (decisions 1, 2): schema_version 1 had no NOT NULL relationship column on filer_edge and no
-			// filer_family table — both are shape changes to the artifact this version number describes.
-			schema_version: 2,
+			// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and
+			// valid_to semantics landed. Every reader that needs temporal awareness should gate on this.
+			schema_version: FILER_SCHEMA_VERSION,
 			source: sourcesUsed.join(","),
 			source_vintage: options.sourceVintage,
 			// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a — see the module docstring's
