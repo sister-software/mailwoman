@@ -176,6 +176,10 @@ const OWNERSHIP_BY_RELATIONSHIP = {
 	[FilerRelationship.HoldingCompany]: true,
 	[FilerRelationship.ParentCompany]: true,
 	[FilerRelationship.Subsidiary]: true,
+	// Identity continuity over time, not control. A supersession chain says one registration became
+	// another; scoring it as ownership would let a withheld-parent run credit itself for recovering a
+	// family fact it never saw. Operator ruling, 2026-08-07 — see FilerRelationship.SupersededBy.
+	[FilerRelationship.SupersededBy]: false,
 } as const satisfies Record<FilerRelationship, boolean>
 
 /**
@@ -392,6 +396,10 @@ const FORM_499_FIELD_NOTES: Record<keyof Form499Row, string> = {
 	dcAgentTelephone: "attribute only — never an edge input",
 	dcAgentEmailAddress: "attribute only — never an edge input",
 	dcAgentAddress: "attribute only — never an edge input",
+	lifecycle:
+		"workbook-only; the FCC's own cessation date and successor filer. Not an input to this eval — the corpus " +
+		"is synthetic and states no lifecycle — but it is what closes valid_to on a real build",
+	operatingStates: "workbook-only registered footprint; staged as an attribute, no edge reads it",
 }
 
 const PROVIDER_FIELD_NOTES: Record<keyof ProviderListRow, string> = {

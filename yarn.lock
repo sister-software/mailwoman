@@ -4722,7 +4722,10 @@ __metadata:
     "@mailwoman/record": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     kysely: "npm:^0.29.4"
+    read-excel-file: "npm:^9.3.5"
+    spliterator: "npm:^6.1.0"
     type-fest: "npm:^5.8.0"
+    write-excel-file: "npm:^4.1.1"
   languageName: unknown
   linkType: soft
 
@@ -13661,7 +13664,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.2":
+"fflate@npm:^0.8.2, fflate@npm:^0.8.3":
   version: 0.8.3
   resolution: "fflate@npm:0.8.3"
   checksum: 10/6ebf528dc9c56e78e715eac615b009b25dc33e15c1920b11ebba44e6d76181c647756a81a23e19247907496b93aa99928514c53090579a65109e026ac2824aa7
@@ -20693,6 +20696,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"read-excel-file@npm:^9.3.5":
+  version: 9.3.7
+  resolution: "read-excel-file@npm:9.3.7"
+  dependencies:
+    fflate: "npm:^0.8.3"
+    saxen: "npm:^11.1.0"
+    unzipper-esm: "npm:^0.13.3"
+    worker-f: "npm:^0.1.12"
+  checksum: 10/2fd9c20eefe702fffbfce52cc533f6a39935396a19fd488e222bc9aebd914ed3c296b2faaaf7f821f68011e65cd70635e73ad8f97dba49c2a478447a87004c05
+  languageName: node
+  linkType: hard
+
 "read-package-up@npm:^11.0.0":
   version: 11.0.0
   resolution: "read-package-up@npm:11.0.0"
@@ -21596,6 +21611,13 @@ __metadata:
   version: 1.6.0
   resolution: "sax@npm:1.6.0"
   checksum: 10/0909cedcd9f011ceeac80c0240a92d64ef712cf6c04e0f6ee236a8d812f86a59f61bee6bb5da28d75306db050b99e0593051ea77351795822253b984af6cf044
+  languageName: node
+  linkType: hard
+
+"saxen@npm:^11.1.0":
+  version: 11.1.1
+  resolution: "saxen@npm:11.1.1"
+  checksum: 10/94a1fadb7fff9cd6c66376f0838fa3d64535a525eef34c6d09a5b4f4bcb18c9feffd7285f3bff8374a9ca69200b6dc90b4752ca2ae6b771a71600c1872fa3e39
   languageName: node
   linkType: hard
 
@@ -23565,6 +23587,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"unzipper-esm@npm:^0.13.3":
+  version: 0.13.3
+  resolution: "unzipper-esm@npm:0.13.3"
+  dependencies:
+    graceful-fs: "npm:^4.2.2"
+    node-int64: "npm:^0.4.0"
+  checksum: 10/3790fba54f0c3126e8bbf48646cb87e5066d82d8a22681daca0aa108127315cc39dcf3194034443755d4d6783434c6365e3866df782d597884cc1ff99052b3b3
+  languageName: node
+  linkType: hard
+
 "unzipper@npm:^0.12.3":
   version: 0.12.5
   resolution: "unzipper@npm:0.12.5"
@@ -24361,6 +24393,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"worker-f@npm:^0.1.12":
+  version: 0.1.20
+  resolution: "worker-f@npm:0.1.20"
+  checksum: 10/87955570faf9e63649f9625117754d718de8714326a142d330a2388dd190d8841cbc21c846fa1e1fdae223cfe4a33a2832fdd4849ef12e60d45e8331d5eb4929
+  languageName: node
+  linkType: hard
+
 "wrap-ansi@npm:^10.0.0":
   version: 10.0.0
   resolution: "wrap-ansi@npm:10.0.0"
@@ -24398,6 +24437,15 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 10/159da4805f7e84a3d003d8841557196034155008f817172d4e986bd591f74aa82aa7db55929a54222309e01079a65a92a9e6414da5a6aa4b01ee44a511ac3ee5
+  languageName: node
+  linkType: hard
+
+"write-excel-file@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "write-excel-file@npm:4.1.1"
+  dependencies:
+    fflate: "npm:^0.8.2"
+  checksum: 10/6403979532e63679c37f9a964f6831c973a46ee9c7d8a69776dc4d9756a69e71c263c63168ff9d9f60c9eca552339dc773b810d5ca6f9d7ae415b72b1e536f35
   languageName: node
   linkType: hard
 

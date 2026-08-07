@@ -1,12 +1,17 @@
 // Phase 3b identity crosswalk SDK
 
 export * from "./build-filer.ts"
+export * from "./cik-corroboration.ts"
 export * from "./cluster-filers.ts"
+export * from "./cores-client.ts"
 export * from "./edgar-filings.ts"
+export * from "./edgar-ingest.ts"
 export * from "./exhibit21.ts"
 export * from "./family-id.ts"
 export * from "./family-rollup.ts"
 export * from "./filer-lookup.ts"
+export * from "./form499-notes.ts"
+export * from "./form499-workbook.ts"
 export * from "./form499.ts"
 export * from "./frn.ts"
 export * from "./guards.ts"
