@@ -88,6 +88,23 @@ export interface RescoreCandidate {
 	 * calibrated 0.83 must not be confused with a rescore plug-in estimate).
 	 */
 	gated: boolean
+	/**
+	 * The SAME-SPAN namesake runner-ups — the other exact-name matches this recovery's own lookup already returned, in
+	 * the backend's rank order, minus the winner and minus anything the postcode gate rejected. Empty when the span named
+	 * exactly one place.
+	 *
+	 * #1537: these were being discarded. A name the model reads as a `street` ("Springfield", "Berlin", "Manchester",
+	 * "Moscow", "Fulda") never reaches the admin walk, so the whole tree comes back unresolved and THIS tier is what
+	 * recovers it — and it decorated the injected node with no alternatives at all. The result was that the geocode
+	 * path's `candidates` array held one entry, and the top-1-vs-top-2 dominance margin that `declared_ambiguity` reads
+	 * was uncomputable, for exactly the famous-homonym class that marker exists for. Measured on the shipped candidate
+	 * backend, 2026-08-07: those five queries returned 1 candidate each while `Cambridge`/`Athens`/`Paris` — the same
+	 * class, but parsed as `locality` — returned 4-5.
+	 *
+	 * The winner is unchanged by their presence: the pick is still the first gate-passing exact match, and these are the
+	 * ones that came after it. This costs no extra query — they were in the same `findPlace` response.
+	 */
+	alternatives: ResolvedPlace[]
 }
 
 /**
@@ -286,12 +303,26 @@ export async function findRescoreCandidate(
 		const hits = await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
 		const exact = hits.filter((h) => h.exactMatch && norm(h.name) === key && (h.lat !== 0 || h.lon !== 0))
 
+		const withinGate = (p: ResolvedPlace): boolean =>
+			!anchor || gateKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= gateKm
+
 		for (const h of exact) {
-			if (anchor && gateKm > 0 && haversineKm(anchor.lat, anchor.lon, h.lat, h.lon) > gateKm) continue
+			if (!withinGate(h)) continue
 
 			// gated = the postcode anchor existed AND validated this match (within gateKm). When no anchor
 			// (no postcode→point coverage), the match is ungated — returned, but flagged lower-precision.
-			return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: anchor !== null }
+			//
+			// #1537: carry the rest of the SAME lookup's exact matches as the namesake runner-ups. Gate-filtered on the
+			// same rule as the winner — a candidate the postcode gate rejected is not a namesake worth offering, it is a
+			// place the evidence already excluded. Rank order is the backend's, preserved by `filter`.
+			return {
+				text: sp.text,
+				start: sp.start,
+				end: sp.end,
+				place: h,
+				gated: anchor !== null,
+				alternatives: exact.filter((a) => a !== h && withinGate(a)),
+			}
 		}
 	}
 
@@ -328,7 +359,12 @@ export async function findRescoreCandidate(
 				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
 
 				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= gateKm) {
-					return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: true }
+					// No alternatives from this pass, deliberately. Admission here is per-candidate postcode
+					// verification — one `findPlace` per runner-up — and the class it serves is the opposite of the
+					// namesake one: a postcode is present and has already picked the country, so there is nothing
+					// ambiguous left to declare. The bare-toponym queries #1537 is about never reach this branch (it
+					// requires a postcode).
+					return { text: sp.text, start: sp.start, end: sp.end, place: h, gated: true, alternatives: [] }
 				}
 			}
 		}

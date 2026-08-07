@@ -60,6 +60,67 @@ const PLACES: ResolvedPlace[] = [
 	},
 	// A postcode → point, near Tomaszów Mazowiecki (the gate anchor).
 	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
+	// #1537 namesake group: four same-named US localities, rank order as listed. The model reads a bare
+	// "Springfield" as a `street`, so the admin walk never touches it and span-rescore is the only tier
+	// that resolves it — which is why the runner-ups have to survive THIS path to reach a consumer.
+	{
+		id: 10,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 37.19,
+		lon: -93.29,
+		score: 8,
+		prominence: 5.23,
+		exactMatch: true,
+	},
+	{
+		id: 11,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 39.78,
+		lon: -89.64,
+		score: 7,
+		prominence: 5.19,
+		exactMatch: true,
+	},
+	{
+		id: 12,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 42.1,
+		lon: -72.59,
+		score: 6,
+		prominence: 5.05,
+		exactMatch: true,
+	},
+	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored gate alongside it.
+	{
+		id: 13,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 39.8,
+		lon: -89.7,
+		score: 4,
+		prominence: 4.1,
+		exactMatch: true,
+	},
+	// The gate anchor for the namesake group — resolves next to id 11 (IL).
+	{ id: 901, name: "62701", placetype: "postalcode", country: "US", lat: 39.79, lon: -89.65, score: 1 },
+	// A lone namesake: one place, one name. The "absent, not empty" case.
+	{
+		id: 20,
+		name: "Grudziądzek",
+		placetype: "locality",
+		country: "PL",
+		lat: 53.4,
+		lon: 18.7,
+		score: 9,
+		exactMatch: true,
+	},
 ]
 
 function makeBackend(): ResolverBackend {
@@ -130,6 +191,35 @@ describe("findRescoreCandidate", () => {
 		expect(hit).toBeNull()
 	})
 
+	it("#1537: carries the same-span namesake runner-ups, in rank order, without moving the winner", async () => {
+		const hit = await findRescoreCandidate("Springfield", [], makeBackend(), { country: "US", gateKm: 0 })
+
+		// The winner is what it always was — the first exact match in the backend's rank order.
+		expect(hit?.place.id).toBe(10)
+		expect(hit?.alternatives.map((a) => a.id)).toEqual([11, 12, 13])
+	})
+
+	it("#1537: the postcode gate filters the runner-ups on the same rule as the winner", async () => {
+		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the gate drops them
+		// from BOTH roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
+		// postcode already excluded is not a namesake worth offering.
+		const hit = await findRescoreCandidate("Springfield", [], makeBackend(), {
+			country: "US",
+			postcode: "62701",
+			gateKm: 50,
+		})
+
+		expect(hit?.place.id).toBe(11)
+		expect(hit?.gated).toBe(true)
+		expect(hit?.alternatives.map((a) => a.id)).toEqual([13])
+	})
+
+	it("#1537: a lone namesake yields an empty runner-up list", async () => {
+		const hit = await findRescoreCandidate("Grudziądzek", [], makeBackend(), { country: "PL", gateKm: 0 })
+		expect(hit?.place.id).toBe(20)
+		expect(hit?.alternatives).toEqual([])
+	})
+
 	it("skips a span overlapping a confident street/house_number/postcode constituent", async () => {
 		// "Grudziądz" sits where a confident postcode node is declared → not eligible as a locality span.
 		const raw = "Grudziądz 4"
@@ -194,6 +284,40 @@ describe("resolveTree + spanRescore", () => {
 
 		expect(out.roots.some((n) => n.placeID)).toBe(false)
 		expect(out.roots).toHaveLength(1)
+	})
+
+	it("#1537: the injected node carries the namesake runner-ups on `alternatives`", async () => {
+		const resolver = createWOFResolver(makeBackend())
+
+		// The live shape: the model tags a bare famous namesake as a `street`, so the admin walk resolves
+		// nothing and span-rescore is what recovers it. Before #1537 this node was decorated with an empty
+		// alternatives list, so the geocode path's candidate array held ONE entry and the dominance margin
+		// `declared_ambiguity` reads could not be computed at all.
+		const out = await resolver.resolveTree(
+			tree("Springfield", [node({ tag: "street", value: "Springfield", start: 0, end: 11, confidence: 0.4 })]),
+			{
+				defaultCountry: "US",
+			}
+		)
+
+		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
+		expect(injected?.placeID).toBe("wof:10")
+		// Unchanged winner: the coordinate this query answered with before the fix.
+		expect(injected?.lat).toBe(37.19)
+		expect((injected?.alternatives as ResolvedPlace[] | undefined)?.map((a) => a.id)).toEqual([11, 12, 13])
+	})
+
+	it("#1537: `alternatives` stays ABSENT (not empty) for a lone namesake — the walk path's contract", async () => {
+		const resolver = createWOFResolver(makeBackend())
+
+		const out = await resolver.resolveTree(
+			tree("Grudziądzek", [node({ tag: "street", value: "Grudziądzek", start: 0, end: 11, confidence: 0.4 })]),
+			{ defaultCountry: "PL" }
+		)
+
+		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
+		expect(injected?.placeID).toBe("wof:20")
+		expect(injected?.alternatives).toBeUndefined()
 	})
 
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {
