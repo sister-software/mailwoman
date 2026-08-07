@@ -28,6 +28,7 @@
  *   Usage: node pelias-rig/project/build-config.ts
  */
 
+import { createHash } from "node:crypto"
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { join, resolve } from "node:path"
 
@@ -119,11 +120,66 @@ function listByExtension(directory: string, extension: string): string[] {
 
 const pbfFiles = listByExtension(join(RIG_DATA, "osm"), ".pbf")
 
-// A zero-byte .0sv is a cut that failed partway; treat it as absent rather than importing nothing
-// under a name that claims coverage.
-const polylineFiles = listByExtension(join(RIG_DATA, "polylines"), ".0sv").filter(
-	(file) => statSync(join(RIG_DATA, "polylines", file)).size > 0
-)
+/**
+ * The polyline cuts, deduplicated by CONTENT.
+ *
+ * Two filters, each written against a failure that actually happened on 2026-08-07:
+ *
+ * - A zero-byte `.0sv` is a cut that failed partway (or is still being written); treat it as absent rather than importing
+ *   nothing under a name that claims coverage.
+ * - The ten country PBFs were cut TWICE under two naming schemes — `cut-polylines.sh` named its output by ISO-2 code
+ *   (`de.0sv`), the later `cut-polylines-remaining.sh` names it after the PBF basename (`germany.0sv`). Byte-identical,
+ *   and this list is what the polylines importer streams into Elasticsearch, so shipping both would have doubled every
+ *   street row for ten of the twelve countries and doubled `street.db` under interpolation. The duplicates were deleted
+ *   on disk (the slug name wins — it is the rule the US state cuts already follow), but a re-run of either cutter
+ *   recreates them, so the guard belongs HERE where the list is consumed, not only in the cutter.
+ *
+ * Dedupe is by size-then-hash: size buckets are cheap and a collision inside a bucket is rare enough that the sha256
+ * only runs on real candidates. Measured on the 19-file set: 1 hash pair, 0 ms of consequence.
+ */
+function polylineCuts(): string[] {
+	const directory = join(RIG_DATA, "polylines")
+	const nonEmpty = listByExtension(directory, ".0sv").filter((file) => statSync(join(directory, file)).size > 0)
+
+	const bySize = new Map<number, string[]>()
+
+	for (const file of nonEmpty) {
+		const size = statSync(join(directory, file)).size
+
+		bySize.set(size, [...(bySize.get(size) ?? []), file])
+	}
+
+	const seenDigests = new Set<string>()
+	const kept: string[] = []
+
+	for (const file of nonEmpty) {
+		const size = statSync(join(directory, file)).size
+
+		// Unique size means unique content — no need to read 100 MB to prove it.
+		if (bySize.get(size)!.length === 1) {
+			kept.push(file)
+
+			continue
+		}
+
+		const digest = createHash("sha256")
+			.update(readFileSync(join(directory, file)))
+			.digest("hex")
+
+		if (seenDigests.has(digest)) {
+			process.stderr.write(`duplicate polyline cut skipped: ${file} (sha256 ${digest.slice(0, 12)})\n`)
+
+			continue
+		}
+
+		seenDigests.add(digest)
+		kept.push(file)
+	}
+
+	return kept
+}
+
+const polylineFiles = polylineCuts()
 
 const config = {
 	logger: { level: "info", timestamp: false },
