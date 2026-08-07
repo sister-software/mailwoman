@@ -88,9 +88,35 @@ mailwoman filer edgar-ingest \
 auth). `SEC_EDGAR_USER_AGENT` must be set to a descriptive
 `"Company Name AdminContact@domain.com"` string.
 
-## What reaches `filer.db` and what does not
+## The filer.db artifact (built 2026-08-08)
 
-This run produces `EdgarSubsidiaryRow`s. Nothing writes them to `filer.db`
-yet — the next step is `buildFilerDatabase({ edgarRows: rows, form499Rows:
-workbookRows, ... })`, which is what produces the actual crosswalk artifact
-with subsidiary→FRN corroboration, family edges, and the temporal lifecycle.
+The EDGAR rows and the Form 499 workbook were fed to `buildFilerDatabase` together.
+The artifact is at `/mnt/playpen/mailwoman-data/filer/filer.db`.
+
+|                     |         |
+| ------------------- | ------: |
+| artifact size       | 36.8 MB |
+| build time          |  20.0 s |
+| `filer_node` rows   |  45,215 |
+| `filer_edge` rows   |  31,605 |
+| `filer_family` rows |   6,929 |
+| `filer_attribute`   | 207,500 |
+| schema version      |       3 |
+
+|                                   |     count |
+| --------------------------------- | --------: |
+| same-entity (FRN↔form499ID)       |    18,953 |
+| holding-company                   |     5,752 |
+| subsidiary (EDGAR Exhibit 21)     |     2,894 |
+| superseded-by (Replaced by filer) |     2,826 |
+| management-company                |       812 |
+| parent-company (family rollup)    |       368 |
+| **edges closed by cessation**     | **5,714** |
+| **inverted windows abstained**    | **3,992** |
+
+The cessation numbers are the first time `valid_to` has been set on anything. The
+3,992 abstentions are the 3,916 filers whose stated cessation date PREDATES their last
+filing (an annual form — a carrier that ceased September 2013 still files April 2014)
+plus 76 same-day filers. Closing those unconditionally would write inverted windows
+that match nothing under `valid_from <= t < valid_to`; open is visibly incomplete,
+inverted is invisible.
