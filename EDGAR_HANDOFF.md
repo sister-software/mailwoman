@@ -82,7 +82,7 @@ a4a67eb1e  feat(filer): write the lifecycle — cessation windows and supersessi
 <this one>  feat(filer): the CIK corroboration gate
 ```
 
-`filer/` is at **542 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean.
+`filer/` is at **553 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean.
 
 ### `filer/sdk/cores-client.ts`
 
@@ -227,7 +227,7 @@ Worth checking first: whether EDGAR's bulk `submissions.zip` gives SIC for every
 download, which would replace one request per candidate. See
 `https://www.sec.gov/search-filings/edgar-application-programming-interfaces`.
 
-### 1. The orchestrator — NEXT
+### ~~1. The orchestrator~~ — DONE (`filer/sdk/edgar-ingest.ts`)
 
 Produce `EdgarSubsidiaryRow`s (`filer/sdk/build-filer.ts:216`) and feed `buildFilerDatabase`'s existing
 `edgarRows` option. The chain pieces all exist and are tested:
@@ -237,20 +237,20 @@ cik-lookup-data.txt  →  resolveCIKCandidates      (edgar-filings.ts, share-cla
                      →  corroborateCIK            (cik-corroboration.ts, landed)
   fetchTenKFilings   →  findExhibit21Documents    (edgar-filings.ts, landed)
                      →  fetchExhibit21 / parseExhibit21  (exhibit21.ts, landed, measured on 21 real filings)
-                     →  EdgarSubsidiaryRow[]      (NOT BUILT — this is the next task)
+                     →  EdgarSubsidiaryRow[]      (edgar-ingest.ts, landed)
 ```
 
 `resolveCIKCandidates` deliberately returns **every** candidate above a threshold, never a single
 winner, and reports a genuine tie in full even at `limit: 1`. Do not "fix" that into a single pick — it
 is the guard against exactly the two false matches above.
 
-### 2. CLI
+### 1. CLI — NEXT
 
 `mailwoman filer edgar-ingest`, alongside the existing `mailwoman/commands/filer/linkage-eval.tsx`.
 Tools live in `filer/tools/` as library modules with no argv and no `process.exit`; the command owns
 parsing and exit codes.
 
-### 3. First real run + writeup
+### 2. First real run + writeup
 
 Land the eval under `docs/records/evals/`. **Note that path deploys publicly on merge** — the Docusaurus
 exclusion list covers only `reviews/**` and postmortems. Flag it for the operator rather than deciding.
