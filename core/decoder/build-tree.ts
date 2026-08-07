@@ -72,16 +72,35 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 // v0.4.0 entry). The model's tag attribution is correct, only the boundary is fuzzy. Trimming
 // produces a clean canonical value AND clean start/end offsets so downstream consumers slicing
 // raw[start:end] get the same string as node.value.
+//
+// EXCEPTION: a trailing period directly adjacent to a word character is an abbreviation marker
+// ("Str." / "St." / "Ave."). The model includes these in the span correctly; stripping them loses
+// the abbreviation suffix. We preserve the period when it is immediately preceded by \p{L}\p{N}
+// and NOT separated by whitespace — the slip pattern we guard against is ", 22220" / "Paris 75004,"
+// / wrapping quotes, where the punctuation is isolated from the word body. (#1519 trailing-dot half)
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
 	const isWordChar = (i: number): boolean => /[\p{L}\p{N}]/u.test(raw[i] ?? "")
 
+	// Leading trim: skip punctuation not part of an abbreviation prefix (e.g. leading "." before a
+	// word char is rare but symmetric — preserve it).
 	while (s < e && !isWordChar(s)) {
+		if (raw[s] === "." && s + 1 < e && isWordChar(s + 1)) {
+			// Abbreviation-dot prefix: ".com" style — preserve.
+			break
+		}
+
 		s++
 	}
 
+	// Trailing trim: skip punctuation, but preserve a trailing abbreviation period.
 	while (e > s && !isWordChar(e - 1)) {
+		if (raw[e - 1] === "." && e - 2 >= s && isWordChar(e - 2)) {
+			// Abbreviation-dot suffix: "Str." / "Ave." — adjacent to the last word char, preserve.
+			break
+		}
+
 		e--
 	}
 

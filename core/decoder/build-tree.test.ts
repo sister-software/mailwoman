@@ -178,6 +178,56 @@ describe("buildAddressTree — boundary trim", () => {
 		const tree = buildAddressTree(raw, tokens)
 		expect(tree.roots[0]!.value).toBe("Sainte-Livrade-sur-Lot")
 	})
+
+	test("preserves trailing abbreviation period (#1519 trailing-dot fix)", () => {
+		// "Neusser Str." — model correctly labels the dot as I-street.
+		// The period is an abbreviation marker, not a punctuation slip.
+		const raw = "Neusser Str. 12"
+
+		const tokens: DecoderToken[] = [
+			tok("Neusser", 0, 7, "B-street"),
+			tok("Str.", 8, 12, "I-street"),
+			tok("12", 13, 15, "B-house_number"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+
+		const street = findByTag(tree.roots, "street")!
+		expect(street.value).toBe("Neusser Str.")
+		expect(raw.slice(street.start, street.end)).toBe("Neusser Str.")
+	})
+
+	test("strips trailing comma but preserves abbreviation period", () => {
+		// "Neusser Str.," — the comma is punctuation slip, the dot is abbreviation.
+		const raw = "Neusser Str., 12"
+
+		const tokens: DecoderToken[] = [
+			tok("Neusser", 0, 7, "B-street"),
+			tok("Str.,", 8, 13, "I-street"),
+			tok("12", 14, 16, "B-house_number"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+		const street = findByTag(tree.roots, "street")!
+		expect(street.value).toBe("Neusser Str.")
+		expect(raw.slice(street.start, street.end)).toBe("Neusser Str.")
+	})
+
+	test("preserves abbreviation period on single-token street span", () => {
+		// "Av." as a standalone abbreviation — span is the whole token.
+		const raw = "Av. Paulista, 100"
+
+		const tokens: DecoderToken[] = [
+			tok("Av.", 0, 3, "B-street"),
+			tok("Paulista,", 4, 13, "I-street"),
+			tok("100", 14, 17, "B-house_number"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+
+		const street = findByTag(tree.roots, "street")!
+		expect(street.value).toBe("Av. Paulista")
+	})
 })
 
 // Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
