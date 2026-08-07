@@ -181,6 +181,12 @@ export const PrivateEnvSchema = z.object({
 
 	// SEC EDGAR fair-access User-Agent (`filer/sdk/sec-client.ts`) — "Company Name AdminContact@domain.com".
 	SEC_EDGAR_USER_AGENT: z.string().optional(),
+	/**
+	 * Descriptive User-Agent for the FCC CORES lookup (`filer/sdk/cores-client.ts`). Optional in a way
+	 * `SEC_EDGAR_USER_AGENT` is not: SEC 403s a request that fails to identify itself, FCC does not. Falls back to
+	 * `SEC_EDGAR_USER_AGENT` — the same contact address — when unset.
+	 */
+	FCC_CORES_USER_AGENT: z.string().optional(),
 
 	USAC_API_KEY_ID: z.string().optional(),
 	USAC_API_SECRET_KEY: z.string().optional(),

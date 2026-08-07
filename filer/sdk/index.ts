@@ -2,6 +2,7 @@
 
 export * from "./build-filer.ts"
 export * from "./cluster-filers.ts"
+export * from "./cores-client.ts"
 export * from "./edgar-filings.ts"
 export * from "./exhibit21.ts"
 export * from "./family-id.ts"

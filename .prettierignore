@@ -79,3 +79,7 @@ sentencepiece-wasm/sentencepiece.mjs
 ## reformatting would make that check impossible, and the parser under test reads their raw markup.
 filer/test-fixtures/edgar/*.htm
 filer/test-fixtures/edgar/*.html
+
+## Vendored FCC CORES registration pages (filer/test-fixtures/cores) — third-party documents kept
+## byte-for-byte so a reviewer can refetch and diff; the parser under test reads their raw markup.
+filer/test-fixtures/cores/*.html
