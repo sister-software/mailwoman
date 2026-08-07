@@ -43,7 +43,7 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
-		"hono": "^4.12.34",
+		"hono": "^4.13.0",
 		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"
 	}
