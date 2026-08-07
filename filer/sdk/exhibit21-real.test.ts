@@ -26,6 +26,7 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "./exhibit21.ts"
@@ -41,7 +42,9 @@ interface ExpectedFixtures {
 
 const FIXTURE_DIRECTORY = join(import.meta.dirname, "..", "test-fixtures", "edgar")
 
-const expected: ExpectedFixtures = JSON.parse(readFileSync(join(FIXTURE_DIRECTORY, "expected.json"), "utf8"))
+// parseJSONStrict, not tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
+// degrade to a fallback, since it IS the contract every assertion below is measured against.
+const expected = parseJSONStrict<ExpectedFixtures>(readFileSync(join(FIXTURE_DIRECTORY, "expected.json"), "utf8"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 

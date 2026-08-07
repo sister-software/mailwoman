@@ -214,6 +214,16 @@ function canonicalOf(name: string): string {
  * both `"American Broadband LLC"` and `"American Broadband, Inc."` (disjoint CIKs, identical canonical form) with
  * `limit: 1` still returns BOTH, each at score `1` — the exact 3a lesson this module exists to not repeat. `limit` only
  * ever trims the tail STRICTLY BELOW the top score.
+ *
+ * **Candidates are collapsed to one row per CIK before any of that runs, and the tie rule depends on it.**
+ * `company_tickers.json` carries one row per TICKER, so a registrant filed under several share classes appears several
+ * times under a single CIK — resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983` four
+ * times, each scoring 1.0, and the same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data
+ * Systems. Left uncollapsed those duplicates trip the tie rule, which then suppresses `limit` and hands a caller the
+ * same company back N times as though it were an unresolved ambiguity. The rule exists for a collision between
+ * DIFFERENT companies; one company's share classes are not one. Per CIK the highest-scoring row wins (first seen wins
+ * within an exact score tie, so the result is deterministic in ticker-file order), which is what keeps the reported
+ * `companyName`/`ticker` the ones that actually matched.
  */
 export function resolveCIKCandidates(
 	companyName: string,
@@ -224,15 +234,23 @@ export function resolveCIKCandidates(
 	const limit = options.limit ?? DEFAULT_CANDIDATE_LIMIT
 	const queryCanonical = canonicalOf(companyName)
 
-	const scored: CIKCandidate[] = []
+	// Keyed by CIK, not pushed to a list: this is the share-class collapse the docstring describes, and it has to
+	// happen BEFORE the sort so the tie rule below only ever sees distinct registrants.
+	const bestByCIK = new Map<CIK, CIKCandidate>()
 
 	for (const entry of tickers) {
 		const score = nameSimilarity(queryCanonical, canonicalOf(entry.title))
 
-		if (score >= minScore) {
-			scored.push({ cik: entry.cik, companyName: entry.title, ticker: entry.ticker, score })
-		}
+		if (score < minScore) continue
+
+		const incumbent = bestByCIK.get(entry.cik)
+
+		if (incumbent && incumbent.score >= score) continue
+
+		bestByCIK.set(entry.cik, { cik: entry.cik, companyName: entry.title, ticker: entry.ticker, score })
 	}
+
+	const scored = [...bestByCIK.values()]
 
 	scored.sort((a, b) => b.score - a.score)
 

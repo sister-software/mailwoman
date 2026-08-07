@@ -382,6 +382,8 @@ git commit -m "feat(filer): find a filing's Exhibit 21 from its SGML document ma
 
 ### Task 5: Collapse duplicate CIKs in candidate resolution
 
+**Status: COMPLETE.** Landed on this branch; the three tests below are in `edgar-filings.test.ts` and the collapse is mutation-verified in both directions — remove it and they fail, key it on the company NAME instead of the CIK and the 3a namesake tests fail.
+
 **Files:**
 
 - Modify: `filer/sdk/edgar-filings.ts`

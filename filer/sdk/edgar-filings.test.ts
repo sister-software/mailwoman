@@ -123,6 +123,51 @@ describe("resolveCIKCandidates — the no-name-only-match gate (load-bearing, 3a
 		}
 	})
 
+	it("reports ONE candidate for a registrant filed under several share classes", () => {
+		// `company_tickers.json` carries one row per TICKER, so a registrant with several share
+		// classes appears several times under one CIK. Measured 2026-08-03: "Liberty Broadband
+		// Corporation" came back as the same CIK four times, each scoring 1.0.
+		const shareClasses: CompanyTickerEntry[] = [
+			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
+			{ cik: toCIK("0001611983")!, ticker: "LBRDB", title: "Liberty Broadband Corp" },
+			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corp" },
+		]
+
+		const candidates = resolveCIKCandidates("Liberty Broadband Corporation", shareClasses)
+
+		expect(candidates).toHaveLength(1)
+		expect(candidates[0]?.cik).toBe("0001611983")
+	})
+
+	it("does not let share classes manufacture a tie that suppresses `limit`", () => {
+		// The phantom tie is the actual damage: three rows at the top score made the tie rule fire,
+		// so `limit` stopped trimming and a caller asking for one answer got the same CIK back three
+		// times alongside nothing else.
+		const tickers: CompanyTickerEntry[] = [
+			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
+			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corp" },
+			{ cik: toCIK("0006666666")!, ticker: "LBDX", title: "Liberty Broadband Holdings" },
+		]
+
+		const candidates = resolveCIKCandidates("Liberty Broadband Corp", tickers, { limit: 1 })
+
+		expect(candidates).toHaveLength(1)
+		expect(candidates[0]?.cik).toBe("0001611983")
+	})
+
+	it("keeps the highest-scoring row's spelling and ticker when collapsing share classes", () => {
+		const mixed: CompanyTickerEntry[] = [
+			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Holdings" },
+			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corporation" },
+		]
+
+		const candidates = resolveCIKCandidates("Liberty Broadband Corporation", mixed)
+
+		expect(candidates).toHaveLength(1)
+		expect(candidates[0]?.companyName).toBe("Liberty Broadband Corporation")
+		expect(candidates[0]?.ticker).toBe("LBRDK")
+	})
+
 	it("does NOT report a candidate that merely canonicalizes to a DIFFERENT string, however close", () => {
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0003333333")!, ticker: "ACME", title: "Acme Corporation" },
