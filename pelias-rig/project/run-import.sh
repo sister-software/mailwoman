@@ -45,6 +45,52 @@ fi
 
 count() { curl -sf "$ES/pelias/_count" | sed -n 's/.*"count":\([0-9]*\).*/\1/p'; }
 
+# PREFLIGHT: can the CONTAINER read every input file?
+#
+# A read-only bind mount does not make a 0600 file readable. `--userns keep-id` maps only the
+# INVOKING user's uid into the container, and the pelias images run as their own `pelias` user, which
+# lands on a subuid matching neither the owner nor the group of a `-rw------- lab:lab` file. Our
+# OpenAddresses tree is a shared extraction built over months by different unzip runs, and 417 of its
+# CSVs were 0600.
+#
+# The cost of not checking, measured: the importer read 13 of 311 files, indexed 32,344,348 documents
+# from those 13, printed "Total time taken: 4086.069s", and THEN died on the 14th with EACCES. 68
+# minutes of work, an index that looked plausibly full, and the only tell was `rc=1`. A count is not
+# a coverage check — France and eleven German files can total 32 million rows.
+#
+# So the input list is checked from the host, against the same `other`-readable bit the container
+# needs, before a single container starts.
+preflight() {
+	local missing=0 unreadable=0 file
+	local oa_root=$(sed -n 's/^OA_EXTRACTED=//p' "$HERE/.env")
+
+	while IFS= read -r relative; do
+		[ -n "$relative" ] || continue
+		file="$oa_root/$relative"
+		if [ ! -f "$file" ]; then
+			echo "  MISSING    $relative"
+			missing=$((missing + 1))
+		elif [ ! -r "$file" ] || [ -z "$(find "$file" -perm -o=r -print -quit)" ]; then
+			echo "  UNREADABLE $relative $(stat -c '%A %U:%G' "$file")"
+			unreadable=$((unreadable + 1))
+		fi
+	done < <(python3 -c "
+import json
+print('\n'.join(json.load(open('$HERE/pelias.json'))['imports']['openaddresses']['files']))
+")
+
+	if [ "$missing" -gt 0 ] || [ "$unreadable" -gt 0 ]; then
+		echo "PREFLIGHT FAILED: $missing missing, $unreadable unreadable — refusing to start $SERVICE"
+		echo "  fix readability with: find <oa-root> -type d -exec chmod a+rX {} + ; find <oa-root> -type f -name '*.csv' -exec chmod a+r {} +"
+		return 1
+	fi
+	echo "preflight ok"
+}
+
+if [ "$SERVICE" = "openaddresses" ]; then
+	preflight || exit 1
+fi
+
 before=$(count)
 start=$(date +%s)
 echo "== $SERVICE start $(date -u +%FT%TZ) before=$before cmd=${CMD[*]}"
