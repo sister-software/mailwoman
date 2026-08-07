@@ -4,4 +4,5 @@
 
 export * from "./linkage-corpus.ts"
 export * from "./linkage-eval.ts"
+export * from "./edgar-ingest.ts"
 export * from "./linkage-metrics.ts"
