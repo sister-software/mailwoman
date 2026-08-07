@@ -77,9 +77,12 @@ the check caught a real one (`recaseUniform` keyed on the wrong thing).
 ```
 9b8dc1bd4  feat(filer): FCC CORES registration lookup — a second name surface per FRN
 8e4f69e82  feat(filer): read the Form 499 workbook the FCC actually publishes
+f3d6adcde  feat(filer)!: supersession as a relationship, and a valid_to that something writes
+a4a67eb1e  feat(filer): write the lifecycle — cessation windows and supersession edges
+<this one>  feat(filer): the CIK corroboration gate
 ```
 
-`filer/` is at **510 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean.
+`filer/` is at **542 tests**, `yarn typecheck:tests` 0 errors, oxlint and oxfmt clean.
 
 ### `filer/sdk/cores-client.ts`
 
@@ -150,7 +153,7 @@ path stays for artifacts already built against it.
 
 ## Open tasks, in dependency order
 
-### 1. `filer.db` schema change — supersession edges and `valid_to`
+### ~~1. `filer.db` schema change — supersession edges and `valid_to`~~ — DONE
 
 Currently `filer/schema.ts` has:
 
@@ -164,7 +167,19 @@ export const FilerRelationship = {
 } as const
 ```
 
-Add a supersession member (`Superseded`/`SupersededBy` — pick one direction and document it). Then:
+**Landed as `FilerRelationship.SupersededBy`, pinned NOT ownership per operator ruling 2026-08-07.**
+`FILER_SCHEMA_VERSION = 3` sits alongside `FILER_FAMILY_SCHEMA_VERSION = 2`: the first answers "should I trust
+a temporal answer from this artifact", the second "can I read it at all". No table changed shape.
+
+⚠ **The one finding worth carrying forward:** the cessation date does NOT always postdate the last filing.
+Form 499 is an ANNUAL filing, so a carrier that ceased 2013-09-08 still files 2014-04-01. Of 9,706 dated
+cessations, **3,916 PREDATE the last filing** and 76 land the same day. Closing `valid_to` unconditionally
+writes an inverted window, `valid_from <= t < valid_to` matches nothing across one, and every affected filer
+vanishes from every `asOf` read silently. `closeableCessationDate` closes only coherent windows and counts
+the rest. The identity edge (`FRN ↔ form499ID`) is deliberately left open — an identifier mapping does not
+expire when the company does.
+
+Original notes below, kept for the reasoning:
 
 - `Form499Lifecycle.ceasedAt` → `valid_to` on that filer's edges. Nothing sets `valid_to` today, so
   every ceased carrier currently reads as open-ended.
@@ -179,7 +194,7 @@ precisely so a new class cannot silently fall through to "counts as ownership". 
 **Ruling needed: does supersession assert ownership?** My recommendation is **no** — it is identity
 continuity, not control — so pin it `false`. Ask the operator if unsure; it changes an eval's score.
 
-### 2. SIC corroboration gate
+### ~~2. SIC corroboration gate~~ — DONE (`filer/sdk/cik-corroboration.ts`)
 
 Name-only CIK resolution produced **2 confidently wrong registrants out of 24** on a real run: "Altice
 USA, Inc." → AlTi Global, Inc. at 0.829, and "WideOpenWest, Inc." → WidePoint Corp at 0.886. Both are
@@ -198,38 +213,44 @@ Bandwidth        7372  Prepackaged Software              rejected ✗  ← a rea
 Ooma             7374  Computer Processing               rejected ✗  ← a real VoIP carrier
 ```
 
+**Landed.** `corroborateCIK(cik, sic, { pinnedCIKs, acceptedSICCodes })` returns a verdict with a `basis`
+that distinguishes a source agreeing (`telecom-sic`), an operator decision (`pinned`), a real rejection
+(`non-telecom-sic`) and a gap in what EDGAR published (`no-sic`). The last is an abstention, not a denial.
+The allowlist is enumerated rather than a `48xx` prefix test, and the pin list is the escape valve for the
+Bandwidth/Ooma class — there is no SIC range admitting 7372 and 7374 while excluding WidePoint's 7373.
+
 SIC comes from the submissions payload (`https://data.sec.gov/submissions/CIK##########.json`, field
-`sic`). Pair the gate with an **operator-pinned CIK list** for the 737x-classified carriers — a pin is
+`sic`). The pins should be an **operator-maintained list** for the 737x-classified carriers — a pin is
 documented and auditable, which widening the allowlist until the false matches creep back is not.
 
 Worth checking first: whether EDGAR's bulk `submissions.zip` gives SIC for every registrant in one
 download, which would replace one request per candidate. See
 `https://www.sec.gov/search-filings/edgar-application-programming-interfaces`.
 
-### 3. The orchestrator
+### 1. The orchestrator — NEXT
 
 Produce `EdgarSubsidiaryRow`s (`filer/sdk/build-filer.ts:216`) and feed `buildFilerDatabase`'s existing
 `edgarRows` option. The chain pieces all exist and are tested:
 
 ```
 cik-lookup-data.txt  →  resolveCIKCandidates      (edgar-filings.ts, share-class collapse landed)
-                     →  SIC gate + pins           (TASK 2 — not built)
+                     →  corroborateCIK            (cik-corroboration.ts, landed)
   fetchTenKFilings   →  findExhibit21Documents    (edgar-filings.ts, landed)
                      →  fetchExhibit21 / parseExhibit21  (exhibit21.ts, landed, measured on 21 real filings)
-                     →  EdgarSubsidiaryRow[]      (TASK 3 — not built)
+                     →  EdgarSubsidiaryRow[]      (NOT BUILT — this is the next task)
 ```
 
 `resolveCIKCandidates` deliberately returns **every** candidate above a threshold, never a single
 winner, and reports a genuine tie in full even at `limit: 1`. Do not "fix" that into a single pick — it
 is the guard against exactly the two false matches above.
 
-### 4. CLI
+### 2. CLI
 
 `mailwoman filer edgar-ingest`, alongside the existing `mailwoman/commands/filer/linkage-eval.tsx`.
 Tools live in `filer/tools/` as library modules with no argv and no `process.exit`; the command owns
 parsing and exit codes.
 
-### 5. First real run + writeup
+### 3. First real run + writeup
 
 Land the eval under `docs/records/evals/`. **Note that path deploys publicly on merge** — the Docusaurus
 exclusion list covers only `reviews/**` and postmortems. Flag it for the operator rather than deciding.
