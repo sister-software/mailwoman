@@ -30,7 +30,8 @@
  *   **Ambiguity stops the registrant, it does not get resolved here.** When the top score is a genuine tie
  *   between DIFFERENT CIKs and more than one survives corroboration, this abstains and counts it. Picking
  *   one would be the exact false-identity-link failure `resolveCIKCandidates` refuses to commit, relocated
- *   one file downstream.
+ *   one file downstream. A pinned CIK that is among the tied survivors DOES break the tie — an operator
+ *   decision about one registrant's identity is a stronger signal than a name score.
  */
 
 import type { EdgarSubsidiaryRow } from "./build-filer.ts"
@@ -186,6 +187,14 @@ async function resolveCorroboratedCIK(
 	// With the 7,998-entry ticker file this never diverged from `corroborated.length > 1`; with the
 	// 1,054,085-entry cik-lookup-data it catches 10 of 24 names as false ambiguities.
 	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
+		// A pinned CIK at the top score breaks the tie — the operator already decided this registrant
+		// is in scope, which is a decision about identity, not just corroboration.
+		const pinnedBreak = corroborated.find(
+			(candidate) => options.pinnedCIKs?.has(candidate.cik) && candidate.score === corroborated[0]!.score
+		)
+
+		if (pinnedBreak) return { ok: true, ...pinnedBreak }
+
 		return { ok: false, reason: EdgarSkipReason.AmbiguousCIK }
 	}
 
