@@ -182,6 +182,9 @@ export const PrivateEnvSchema = z.object({
 	// SEC EDGAR fair-access User-Agent (`filer/sdk/sec-client.ts`) — "Company Name AdminContact@domain.com".
 	SEC_EDGAR_USER_AGENT: z.string().optional(),
 
+	USAC_API_KEY_ID: z.string().optional(),
+	USAC_API_SECRET_KEY: z.string().optional(),
+
 	// Google Maps Platform key for the reference-geocoder ORACLE (`geocode-oracle/sdk/google-client.ts`).
 	// Verification tooling only — nothing on the parse path reads this, and `@mailwoman/geocode-oracle` is
 	// a private workspace precisely so it cannot become a runtime dependency of a published package.
