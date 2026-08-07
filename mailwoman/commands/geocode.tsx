@@ -40,7 +40,7 @@ import { Text } from "ink"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 import {
 	geocodeAddress,
 	parseForGeocode,
@@ -461,7 +461,13 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 		return <Spinner />
 	}
 
-	return <Text>{state.result}</Text>
+	// Machine formats bypass Ink's <Text> renderer — it word-wraps long lines at the terminal
+	// width (80 when piped), corrupting JSON string values (see writeRawStdout).
+	if (options.format === "text") {
+		return <Text>{state.result}</Text>
+	}
+
+	return writeRawStdout(state.result)
 }
 
 export default GeocodeCommand

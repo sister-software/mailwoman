@@ -19,7 +19,7 @@ import { argument } from "pastel"
 import type React from "react"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
@@ -255,7 +255,7 @@ function ParseTask({
 	options: zod.infer<typeof ParseConfigSchema>
 	args: zod.infer<typeof ArgumentsSchema>
 	weightsOutcome: WeightsOutcome
-}): React.ReactElement {
+}): React.ReactElement | null {
 	const state = useCommandTask(async () => {
 		const input = args[0]!
 
@@ -299,7 +299,9 @@ function ParseTask({
 		return <Spinner />
 	}
 
-	return <Text>{state.result}</Text>
+	// Every parse format (json/tuple/xml) is machine-readable — bypass Ink's word-wrapping
+	// <Text> renderer, which corrupts long JSON lines at 80 cols when piped (see writeRawStdout).
+	return writeRawStdout(state.result)
 }
 
 /**

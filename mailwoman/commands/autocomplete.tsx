@@ -22,7 +22,7 @@ import { Text } from "ink"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 
@@ -167,6 +167,12 @@ const AutocompleteCommand: CommandComponent<typeof AutocompleteConfigSchema, typ
 
 	if (state.status === "running") {
 		return <Text dimColor>Searching...</Text>
+	}
+
+	// --json emits a raw JSON array — bypass Ink's word-wrapping <Text> renderer, which corrupts
+	// long lines at 80 cols when piped (see writeRawStdout).
+	if (options.json) {
+		return writeRawStdout(state.result)
 	}
 
 	return <Text>{state.result}</Text>

@@ -86,6 +86,24 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 /* oxlint-enable react-hooks/exhaustive-deps */
 
 /**
+ * Emit a command's final output as raw bytes, bypassing Ink's `<Text>` renderer.
+ *
+ * Ink word-wraps rendered text at the terminal width — and at 80 columns when stdout is piped — which corrupts
+ * machine-readable output: a JSON string value longer than the width gets real newlines inserted mid-string, breaking
+ * the document (observed 2026-08-07: `geocode --format json` on "Toledo Ohio" wrapped `intent_markers[].message` at 80
+ * cols). Machine formats (json/jsonld/xml/tuple, `--json` flags) must never pass through `<Text>`.
+ *
+ * Returns `null` so the caller can `return writeRawStdout(result)` from the done branch. Safe to call from render:
+ * {@linkcode useCommandTask} renders the done frame exactly once before its `process.exit`. Same pattern as
+ * `commands/gazetteer/inspect/graph.tsx`.
+ */
+export function writeRawStdout(text: string): null {
+	process.stdout.write(text + "\n")
+
+	return null
+}
+
+/**
  * Build a guidance-grade error whose rendered form is exactly `message` — no stack. {@linkcode useCommandTask} renders
  * `error.stack ?? error.message`, which is right for unexpected failures but turns deliberate user-facing guidance
  * ("Set $MAILWOMAN_WOF_DB…") into a stack dump. Throw `commandError(msg)` for those instead of `new Error(msg)`.
