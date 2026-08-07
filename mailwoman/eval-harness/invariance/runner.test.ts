@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { type InvarianceRow, type ParseFn, loadSuite, runInvarianceSuite } from "./runner.ts"
+import { type InvarianceRow, type ParseFn, loadSuite, localeForCountry, runInvarianceSuite } from "./runner.ts"
 
 describe("loadSuite", () => {
 	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", () => {
@@ -188,6 +188,7 @@ describe("runInvarianceSuite", () => {
 		expect(result.outcomes[0]?.verdict).toBe("LOST")
 		expect(result.outcomes[0]?.baselineVerdict).toBe("DEGRADED")
 		expect(result.outcomes[0]?.preExisting).toBe(false) // NOT pre-existing — the candidate is WORSE
+		expect(result.outcomes[0]?.gainedCapability).toBe(false) // baseline's original HAS criticals — not a gained row
 		expect(result.newCounts.lost).toBe(1)
 		expect(result.pass).toBe(false) // gates
 	})
@@ -273,5 +274,184 @@ describe("runInvarianceSuite", () => {
 		const parse: ParseFn = async (): Promise<Record<string, string>> => ({})
 
 		await expect(runInvarianceSuite({ rows: [badRow], parse })).rejects.toThrow(/unknown invariance transform id/)
+	})
+})
+
+describe("per-row locale + gained-capability class (#1516)", () => {
+	it("localeForCountry maps the suite's four countries and falls back to en-US", () => {
+		expect(localeForCountry("US")).toBe("en-US")
+		expect(localeForCountry("GB")).toBe("en-GB")
+		expect(localeForCountry("FR")).toBe("fr-FR")
+		expect(localeForCountry("DE")).toBe("de-DE")
+		expect(localeForCountry("XX")).toBe("en-US")
+	})
+
+	it("threads the row's country-derived locale into EVERY parse call (candidate and baseline, original and perturbed and idempotence)", async () => {
+		const calls: Array<{ raw: string; locale?: string }> = []
+
+		const parse: ParseFn = async (raw, opts) => {
+			calls.push({ raw, locale: opts?.locale })
+
+			return { house_number: "1", street: "Fake St", locality: "Faketown" }
+		}
+
+		const rows: InvarianceRow[] = [
+			{ id: "fr-row", raw: "123 Rue Montmartre, Paris", country: "FR", transforms: ["lowercase", "comma-drop"] },
+			{ id: "gb-row", raw: "The Grange, Fishburn, Stockton-on-Tees", country: "GB", transforms: ["lowercase"] },
+			{
+				id: "us-row",
+				raw: "1600 Pennsylvania Ave NW, Washington, DC 20500",
+				country: "US",
+				transforms: ["lowercase", "idempotence"],
+			},
+		]
+
+		// Transformed raws (lowercased, comma-dropped) won't equal any original raw, so key on a token
+		// each row's raw keeps under every transform (matched case-insensitively).
+		const localeByToken = new Map([
+			["montmartre", "fr-FR"],
+			["the grange", "en-GB"],
+			["pennsylvania", "en-US"],
+		] as const)
+
+		// Same fake parser on both sides — this is a locale-THREADING test, not a regression test.
+		await runInvarianceSuite({ rows, parse, baselineParse: parse })
+
+		expect(calls.length).toBeGreaterThan(0)
+
+		for (const call of calls) {
+			const lower = call.raw.toLowerCase()
+			const expected = localeByToken.get(localeByToken.keys().find((token) => lower.includes(token))!)
+
+			expect(call.locale).toBe(expected)
+		}
+	})
+
+	it("--baseline: a pair the candidate holds but the baseline violated is GAINED — reported, non-blocking", async () => {
+		// The measured #1516 shape: the baseline's original parse never emits the row's critical
+		// components (the quoted venue's street), so the whole row is a gained capability; on top of
+		// that, this pair specifically flips — candidate INVARIANT where baseline DEGRADED.
+		const row: InvarianceRow = {
+			id: "gb-quoted-gain",
+			raw: "The Grange, Fishburn, Stockton-on-Tees",
+			country: "GB",
+			transforms: ["case-fold"],
+		}
+
+		// Baseline: never parses the venue (no criticals anywhere); case-fold flips its region tag.
+		const baselineParse: ParseFn = async (raw): Promise<Record<string, string>> =>
+			raw === raw.toUpperCase()
+				? { region: "Stockton-on-Tees", locality: "The Grange Fishburn" }
+				: { locality: "The Grange Fishburn" }
+
+		// Candidate: holds the full address, INVARIANT under case-fold.
+		const parse: ParseFn = async (): Promise<Record<string, string>> => ({
+			street: "The Grange",
+			dependent_locality: "Fishburn",
+			region: "Stockton-on-Tees",
+		})
+
+		const lines: string[] = []
+
+		const result = await runInvarianceSuite({
+			rows: [row],
+			parse,
+			baselineParse,
+			report: (line) => lines.push(line),
+		})
+
+		const outcome = result.outcomes[0]!
+		expect(outcome.verdict).toBe("GAINED")
+		expect(outcome.baselineVerdict).toBe("DEGRADED")
+		expect(outcome.gainedCapability).toBe(true)
+		expect(result.counts.gained).toBe(1)
+		expect(result.newCounts.gained).toBe(1)
+		expect(result.counts.lost).toBe(0)
+		expect(result.newCounts.lost).toBe(0)
+		expect(result.pass).toBe(true) // a gain is never a gate failure
+		expect(lines.some((l) => l.startsWith("  + GAINED") && l.includes("[baseline verdict was DEGRADED]"))).toBe(true)
+	})
+
+	it("--baseline: violations on a row the baseline never parsed are gained-capability residuals — reported, non-blocking", async () => {
+		// The measured #1516 shape for gb-quoted-venue: the baseline (v4.0.1) never emits the venue's
+		// street in ANY register, so the row's baseline ORIGINAL has no critical components; the
+		// candidate (v4.2.0) gained the street in 7/8 registers and loses it only on the register-flat
+		// tail (quoted + comma-dropped). Those residual LOST/DEGRADED pairs are gains, not regressions.
+		const row: InvarianceRow = {
+			id: "gb-quoted-residual",
+			raw: "The Grange, Fishburn, Stockton-on-Tees",
+			country: "GB",
+			transforms: ["comma-drop", "case-fold"],
+		}
+
+		// Baseline: parses the row WITHOUT any critical component, in every register.
+		const baselineParse: ParseFn = async (): Promise<Record<string, string>> => ({
+			region: "Stockton-on-Tees",
+			locality: "The Grange",
+		})
+
+		// Candidate: holds the street on the original, loses it on comma-drop (LOST), flips the city
+		// tag on case-fold (DEGRADED).
+		const parse: ParseFn = async (raw): Promise<Record<string, string>> => {
+			if (!raw.includes(",")) return { region: "Stockton-on-Tees", street: "The" }
+
+			if (raw === raw.toUpperCase()) {
+				return { region: "Stockton-on-Tees", dependent_locality: "Fishburn", street: "The Grange" }
+			}
+
+			return { locality: "Stockton-on-Tees", dependent_locality: "Fishburn", street: "The Grange" }
+		}
+
+		const result = await runInvarianceSuite({ rows: [row], parse, baselineParse })
+
+		const commaDrop = result.outcomes.find((o) => o.transformID === "comma-drop")!
+		expect(commaDrop.verdict).toBe("LOST")
+		expect(commaDrop.gainedCapability).toBe(true)
+		expect(commaDrop.preExisting).toBe(false) // not "the baseline also violates" — it could not
+
+		const caseFold = result.outcomes.find((o) => o.transformID === "case-fold")!
+		expect(caseFold.verdict).toBe("DEGRADED")
+		expect(caseFold.gainedCapability).toBe(true)
+
+		// The register-flat tail does not touch the gate: nothing is NEW.
+		expect(result.newCounts.lost).toBe(0)
+		expect(result.newCounts.degraded).toBe(0)
+		expect(result.pass).toBe(true)
+	})
+
+	it("the violation report marks gained-capability residuals as non-blocking, not NEW", async () => {
+		const row: InvarianceRow = {
+			id: "gb-quoted-report",
+			raw: "The Grange, Fishburn, Stockton-on-Tees",
+			country: "GB",
+			transforms: ["comma-drop"],
+		}
+
+		const baselineParse: ParseFn = async (): Promise<Record<string, string>> => ({
+			region: "Stockton-on-Tees",
+			locality: "The Grange",
+		})
+
+		const parse: ParseFn = async (raw): Promise<Record<string, string>> =>
+			raw.includes(",")
+				? { region: "Stockton-on-Tees", dependent_locality: "Fishburn", street: "The Grange" }
+				: { region: "Stockton-on-Tees", street: "The" }
+
+		const lines: string[] = []
+
+		await runInvarianceSuite({
+			rows: [row],
+			parse,
+			baselineParse,
+			report: (line) => lines.push(line),
+		})
+
+		const violationLine = lines.find((l) => l.includes("✗ LOST"))
+
+		expect(violationLine).toContain(
+			"[gained-capability residual — the baseline never parsed this row's critical components — non-blocking]"
+		)
+
+		expect(violationLine).not.toContain("[NEW")
 	})
 })
