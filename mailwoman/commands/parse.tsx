@@ -67,9 +67,9 @@ const ParseConfigSchema = zod.object({
 		.default("auto")
 		.describe(
 			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
-				"'auto' (default) only on the FTS backend — the candidate backend ranks country-agnostically, " +
-				"so 'auto' leaves it unscoped. Pin 'locale' or 'none' to hold country policy fixed while " +
-				"changing backends. An explicit --default-country outranks all three."
+				"'auto' (default) passes the locale's region subtag regardless of backend. " +
+				"Pin 'locale' or 'none' to hold country policy fixed while changing backends. " +
+				"An explicit --default-country outranks all three."
 		),
 	adminCoherence: zod
 		.boolean()
@@ -327,18 +327,22 @@ export type CountryScope = "auto" | "locale" | "none"
  *
  * Without a scope, a bare region abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often
  * a foreign homonym rather than the US state — so the FTS backend needs the locale default to match the demo. The
- * candidate-table backend does not: it ranks population-first and country-agnostically, which is the demo's GLOBAL
- * behavior (bare "Moscow" → the Russian city), and imposing a country on top of it would contradict the ranking it was
- * built for. `auto` encodes exactly that, and is the default.
+ * candidate-table backend uses population-first ranking (#1546, alias-surface recall), but the locale hint is still
+ * valuable: a structured query under en-NZ that the model parses to house+street+locality carries enough signal that
+ * the country scope should gate the candidate lookup (2026-08-08 NZ scope-leakage diagnosis — "22 Customs Street East,
+ * Auckland Central" resolved to Queensland under en-US default because the candidate backend dropped the NZ locale
+ * hint).
  *
- * `auto` also makes backend and country policy ONE switch, which is a hazard when measuring either: flipping the
- * backend silently flips the country filter too, so a comparison between backends is really a comparison between four
- * conditions. `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a
- * backend difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
+ * Bare-locality trees ("Hillsborough" / "Paris") are protected separately by {@link isBareLocalityTree} — those queries
+ * navigate through the `!isBareLocalityTree` gate before reaching this function, so a lone "Paris" under en-US will
+ * never be hard-scoped to Paris, Texas.
+ *
+ * `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a backend
+ * difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
  */
 export function resolverDefaultCountry(
 	options: { defaultCountry?: string; locale?: string; countryScope?: CountryScope },
-	candidateActive = false
+	_candidateActive = false
 ): string | undefined {
 	if (options.defaultCountry === "none") return undefined
 
@@ -350,7 +354,7 @@ export function resolverDefaultCountry(
 		case "locale":
 			return localeToCountry(options.locale)
 		default:
-			return candidateActive ? undefined : localeToCountry(options.locale)
+			return localeToCountry(options.locale)
 	}
 }
 
