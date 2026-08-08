@@ -1,0 +1,39 @@
+{
+	"name": "@mailwoman/neural-weights-en-au",
+	"version": "9.0.0",
+	"description": "Mailwoman neural-classifier weights for locale 'en-au'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the au-specific data siblings. Loaded by @mailwoman/neural at runtime.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "neural-weights-en-au"
+	},
+	"files": [
+		"model-card.json",
+		"locality-surface-lexicon-v7.json",
+		"street-type-lexicon-v3.json",
+		"country-surface-lexicon-v1.json",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!scripts/**"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/neural-weights-en-us": "workspace:*"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
+	},
+	"mailwoman": {
+		"baseWeights": "@mailwoman/neural-weights-en-us"
+	}
+}
