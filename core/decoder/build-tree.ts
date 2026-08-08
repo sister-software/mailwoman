@@ -246,7 +246,7 @@ function sortByStart(nodes: AddressNode[]): void {
  *
  * Applied BEFORE containment/children are built so the moved words re-attach to the correct parent.
  */
-function tightenSuffixSpans(spans: AddressNode[], raw: string): void {
+function tightenSuffixSpans(spans: AddressNode[], _raw: string): void {
 	const suffixIdx = spans.findIndex((s) => s.tag === "street_suffix")
 	const streetIdx = spans.findIndex((s) => s.tag === "street")
 
