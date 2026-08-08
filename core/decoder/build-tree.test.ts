@@ -230,6 +230,72 @@ describe("buildAddressTree — boundary trim", () => {
 	})
 })
 
+describe("buildAddressTree — terminal-suffix tightening (#1539)", () => {
+	test("tightens multi-word suffix to terminal word only — 'Blue Hill Rd'", () => {
+		// "Rd" is the terminal suffix; "Hill" should move to street.
+		const raw = "Blue Hill Rd, Boston, MA"
+
+		const tokens: DecoderToken[] = [
+			tok("Blue", 0, 4, "B-street"),
+			tok("Hill", 5, 9, "B-street_suffix"),
+			tok("Rd,", 10, 14, "I-street_suffix"),
+			tok("Boston,", 15, 22, "B-locality"),
+			tok("MA", 23, 25, "B-region"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+		const suffix = findByTag(tree.roots, "street_suffix")!
+		expect(suffix.value).toBe("Rd")
+		const street = findByTag(tree.roots, "street")!
+		expect(street.value).toBe("Blue Hill")
+	})
+
+	test("preserves single-word suffix — 'Sutton Hollow' (terminal is correct)", () => {
+		// "Hollow" IS the terminal suffix — no tightening needed. This is the contrast case.
+		const raw = "Sutton Hollow, Columbus, OH"
+
+		const tokens: DecoderToken[] = [
+			tok("Sutton", 0, 6, "B-street"),
+			tok("Hollow,", 7, 14, "B-street_suffix"),
+			tok("Columbus,", 15, 24, "B-locality"),
+			tok("OH", 25, 27, "B-region"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+		const suffix = findByTag(tree.roots, "street_suffix")!
+		expect(suffix.value).toBe("Hollow")
+		const street = findByTag(tree.roots, "street")!
+		expect(street.value).toBe("Sutton")
+	})
+
+	test("creates street node if missing — suffix-only query", () => {
+		// Model emits only suffix, no street. Pre-words become a new street node.
+		const raw = "Hill Rd"
+
+		const tokens: DecoderToken[] = [tok("Hill", 0, 4, "B-street_suffix"), tok("Rd", 5, 7, "I-street_suffix")]
+
+		const tree = buildAddressTree(raw, tokens)
+		const suffix = findByTag(tree.roots, "street_suffix")!
+		expect(suffix.value).toBe("Rd")
+		const street = findByTag(tree.roots, "street")!
+		expect(street.value).toBe("Hill")
+	})
+
+	test("no-op: single-word suffix unchanged", () => {
+		const raw = "Main Street, Springfield"
+
+		const tokens: DecoderToken[] = [
+			tok("Main", 0, 4, "B-street"),
+			tok("Street,", 5, 12, "B-street_suffix"),
+			tok("Springfield", 13, 25, "B-locality"),
+		]
+
+		const tree = buildAddressTree(raw, tokens)
+		const suffix = findByTag(tree.roots, "street_suffix")!
+		expect(suffix.value).toBe("Street")
+	})
+})
+
 // Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
 // `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time, with no notion of
 // "pairing" at all. That's what makes it inherently safe for UNBALANCED paired punctuation too: it never looks for a

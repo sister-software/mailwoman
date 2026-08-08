@@ -234,8 +234,74 @@ function sortByStart(nodes: AddressNode[]): void {
  * @param opts Optional attribution stamped on every emitted node. Callers in the neural pipeline pass `{ source:
  *   "neural", sourceID: <model-card-version> }` to mark provenance for the XML serializer's `src` attribute.
  */
+/**
+ * Terminal-suffix tightening: when the model emits a multi-word suffix ("Hill Rd"), keep only the TERMINAL word as
+ * `street_suffix` and move the preceding words into the `street` span. The model correctly identifies suffix-lexicon
+ * words but extends the span too far — this is a boundary correction (same class as {@link trimBoundary} for trailing
+ * punctuation), not a semantic reassignment. Per the SCHEMA.mdx terminal-suffix rule: earlier suffix-like tokens remain
+ * part of the street name unless they are the final suffix element.
+ *
+ * Contrast case that must survive: "Sutton Hollow" — "Hollow" IS the terminal suffix (no later suffix word), so the
+ * suffix span stays as-is. Only multi-word suffixes are tightened.
+ *
+ * Applied BEFORE containment/children are built so the moved words re-attach to the correct parent.
+ */
+function tightenSuffixSpans(spans: AddressNode[], raw: string): void {
+	const suffixIdx = spans.findIndex((s) => s.tag === "street_suffix")
+	const streetIdx = spans.findIndex((s) => s.tag === "street")
+
+	if (suffixIdx === -1) return
+
+	const suffix = spans[suffixIdx]!
+
+	// Only multi-word suffixes need tightening — a single-word suffix is already terminal.
+	const lastSpace = suffix.value.lastIndexOf(" ")
+
+	if (lastSpace === -1) return
+
+	// Split: everything before the last space → street, last word → suffix.
+	const preWords = suffix.value.slice(0, lastSpace)
+	const terminalWord = suffix.value.slice(lastSpace + 1)
+
+	if (!terminalWord) return
+
+	// Compute the byte offset of the split point in `raw`.
+	const terminalStart = suffix.end - terminalWord.length
+	// Save original start before modifying the suffix node.
+	const originalSuffixStart = suffix.start
+
+	// Update the suffix node: now only the terminal word.
+	suffix.value = terminalWord
+	suffix.start = terminalStart
+	// Confidence unchanged — the model's confidence in the suffix tag applies to the terminal word.
+
+	// Move the preceding words into the street span.
+	const preStart = originalSuffixStart
+
+	if (streetIdx !== -1) {
+		// Append to existing street: the pre-words come AFTER the street in token order
+		// ("Blue" B-street then "Hill Rd" B-street_suffix → "Blue Hill" + "Rd").
+		const street = spans[streetIdx]!
+
+		street.value = street.value + " " + preWords
+		street.end = terminalStart - 1 // extend street span to cover the pre-words
+		// Confidence unchanged — the model's street confidence is separate.
+	} else {
+		// No existing street node: create one from the pre-words.
+		spans.push({
+			tag: "street",
+			start: preStart,
+			end: suffix.start - 1, // just before the terminal suffix word
+			value: preWords,
+			confidence: suffix.confidence,
+			children: [],
+		})
+	}
+}
+
 export function buildAddressTree(raw: string, tokens: DecoderToken[], opts: BuildTreeOpts = {}): AddressTree {
 	const spans = emitSpans(raw, tokens, opts)
+	tightenSuffixSpans(spans, raw)
 	const roots: AddressNode[] = []
 	const parentOf = containmentFor(opts.system)
 
