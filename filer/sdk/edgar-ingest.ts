@@ -30,7 +30,8 @@
  *   **Ambiguity stops the registrant, it does not get resolved here.** When the top score is a genuine tie
  *   between DIFFERENT CIKs and more than one survives corroboration, this abstains and counts it. Picking
  *   one would be the exact false-identity-link failure `resolveCIKCandidates` refuses to commit, relocated
- *   one file downstream.
+ *   one file downstream. A pinned CIK that is among the tied survivors DOES break the tie — an operator
+ *   decision about one registrant's identity is a stronger signal than a name score.
  */
 
 import type { EdgarSubsidiaryRow } from "./build-filer.ts"
@@ -157,7 +158,7 @@ async function resolveCorroboratedCIK(
 
 	if (!candidates.length) return { ok: false, reason: EdgarSkipReason.Unresolved }
 
-	const corroborated: Array<{ cik: CIK; registrantName: string; sic?: string; payload: unknown }> = []
+	const corroborated: Array<{ cik: CIK; registrantName: string; sic?: string; payload: unknown; score: number }> = []
 
 	for (const candidate of candidates) {
 		const payload = await client.get<SubmissionsPayload>(submissionsURL(candidate.cik))
@@ -171,14 +172,31 @@ async function resolveCorroboratedCIK(
 			registrantName: typeof payload?.name === "string" ? payload.name : candidate.companyName,
 			sic: verdict.sic,
 			payload,
+			score: candidate.score,
 		})
 	}
 
 	if (!corroborated.length) return { ok: false, reason: EdgarSkipReason.Uncorroborated }
 
-	// More than one survivor is real ambiguity, not a ranking problem — abstain rather than relocate the
-	// false-identity-link decision `resolveCIKCandidates` refuses to make.
-	if (corroborated.length > 1) return { ok: false, reason: EdgarSkipReason.AmbiguousCIK }
+	// Sort corroborated by score, highest first — the order from resolveCIKCandidates can shift once
+	// some candidates are dropped by the SIC gate.
+	corroborated.sort((a, b) => b.score - a.score)
+
+	// Ambiguity is a genuine TIE at the top, not "more than one survived". A slower-scoring candidate
+	// that also happened to be a telecom company is not ambiguity — it's noise the score already ranked.
+	// With the 7,998-entry ticker file this never diverged from `corroborated.length > 1`; with the
+	// 1,054,085-entry cik-lookup-data it catches 10 of 24 names as false ambiguities.
+	if (corroborated.length > 1 && corroborated[0]!.score === corroborated[1]!.score) {
+		// A pinned CIK at the top score breaks the tie — the operator already decided this registrant
+		// is in scope, which is a decision about identity, not just corroboration.
+		const pinnedBreak = corroborated.find(
+			(candidate) => options.pinnedCIKs?.has(candidate.cik) && candidate.score === corroborated[0]!.score
+		)
+
+		if (pinnedBreak) return { ok: true, ...pinnedBreak }
+
+		return { ok: false, reason: EdgarSkipReason.AmbiguousCIK }
+	}
 
 	return { ok: true, ...corroborated[0]! }
 }
@@ -190,12 +208,27 @@ async function collectForFiling(
 	client: SECIngestClient,
 	filing: TenKFiling
 ): Promise<{ rows: EdgarSubsidiaryRow[]; unparseable: number }> {
-	const documents = await fetchExhibit21Documents(client, filing)
+	// EDGAR occasionally 404s a filing document that objectively exists — a transient fetch failure, not a
+	// missing filing. Catching here rather than letting a single 404 kill the whole run.
+	let documents: { url: string }[]
+
+	try {
+		documents = await fetchExhibit21Documents(client, filing)
+	} catch {
+		return { rows: [], unparseable: 0 }
+	}
+
 	const rows: EdgarSubsidiaryRow[] = []
 	let unparseable = 0
 
 	for (const document of documents) {
-		const parsed = parseExhibit21(await client.getDocument(document.url))
+		let parsed
+
+		try {
+			parsed = parseExhibit21(await client.getDocument(document.url))
+		} catch {
+			continue
+		}
 
 		unparseable += parsed.unparseable
 

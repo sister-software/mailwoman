@@ -156,6 +156,57 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
 }
 
 /**
+ * EDGAR's `cik-lookup-data.txt` — the FULL registrant index, including entities without a ticker. The format is one
+ * entry per line, colon-delimited:
+ *
+ *     COMPANY NAME:0001234567:
+ *
+ * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB; read the file
+ * once and keep the result rather than reparsing it per query.
+ *
+ * An entry whose CIK won't parse is skipped without throwing — this is a flat file, not SEC's documented API shape, and
+ * a malformed line is the rule rather than the exception. A CIK that rounds to zero (EDGAR pads to 10 digits) is also
+ * skipped.
+ *
+ * **1,054,085 entries → one `resolveCIKCandidates` call scores ALL of them.** The function does a single O(n) pass with
+ * a cheap `nameSimilarity` call per entry, which is fast enough for a tool that runs once per vintage. A caller running
+ * thousands of queries should build a prefix index instead; that is not this.
+ */
+export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
+	const entries: CompanyTickerEntry[] = []
+
+	// oxlint-disable mailwoman/prefer-spliterator — 40 MB flat file, consumed inline by resolveCIKCandidates
+	// which does an O(n) canonicalization scan and needs every entry resident.
+	for (const line of text.split("\n")) {
+		// oxlint-enable mailwoman/prefer-spliterator
+		const trimmed = line.trim()
+
+		if (!trimmed) continue
+
+		const firstColon = trimmed.indexOf(":")
+		const lastColon = trimmed.lastIndexOf(":")
+
+		if (firstColon === -1 || firstColon === lastColon) continue
+
+		const title = trimmed.slice(0, firstColon)
+
+		if (!title) continue
+
+		const numeric = Number(trimmed.slice(firstColon + 1, lastColon))
+
+		if (!numeric) continue
+
+		const cik = toCIK(numeric)
+
+		if (!cik) continue
+
+		entries.push({ cik, title, ticker: "" })
+	}
+
+	return entries
+}
+
+/**
  * One name→CIK candidate {@linkcode resolveCIKCandidates} reports — never THE answer, just a scored possibility. See the
  * module docstring for why this function refuses to pick a single winner.
  */

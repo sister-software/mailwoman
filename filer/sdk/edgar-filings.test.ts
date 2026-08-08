@@ -25,6 +25,7 @@ import {
 	fetchTenKFilings,
 	findExhibit21Documents,
 	isCIK,
+	parseCIKLookupData,
 	parseCompanyTickers,
 	parseFilingDocuments,
 	parseTenKFilings,
@@ -96,6 +97,24 @@ describe("fetchCompanyTickers", () => {
 		}
 
 		expect(await fetchCompanyTickers(client)).toEqual([{ cik: "0000789019", ticker: "MSFT", title: "MICROSOFT CORP" }])
+	})
+})
+
+describe("parseCIKLookupData", () => {
+	it("parses the real file format — NAME:CIK: per line, no ticker", () => {
+		const entries = parseCIKLookupData("CELLCO PARTNERSHIP:0001175215:\nWINDSTREAM ALABAMA, LLC:0001377589:\n")
+		expect(entries).toHaveLength(2)
+		expect(entries[0]).toEqual({ cik: toCIK("0001175215"), title: "CELLCO PARTNERSHIP", ticker: "" })
+		expect(entries[1]?.ticker).toBe("")
+	})
+
+	it("skips a line whose CIK does not parse to a valid 10-digit CIK", () => {
+		expect(parseCIKLookupData("BADCO:0:\nGOODCO:0001175215:\n")).toHaveLength(1)
+	})
+
+	it("skips blank and malformed lines without throwing — this is a flat file, not an API shape", () => {
+		expect(() => parseCIKLookupData("")).not.toThrow()
+		expect(parseCIKLookupData("garbage line\n:nocolons:\n:0001175215:\n")).toEqual([])
 	})
 })
 
