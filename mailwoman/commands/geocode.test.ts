@@ -227,6 +227,27 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 		expect(stdout).toMatch(/coordinate/)
 	}, 60_000)
 
+	test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", () => {
+		// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON
+		// string. Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped
+		// output at 80 cols, inserting REAL newlines inside the JSON string and breaking
+		// JSON.parse. This test fails against the unfixed CLI.
+		const stdout = withCLISpawnLock(() =>
+			execFileSync(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {
+				encoding: "utf8",
+				timeout: 60_000,
+			})
+		)
+
+		const result = parseJSONStrict<{ lat: number | null; lon: number | null }>(stdout)
+
+		expect(result.lat).not.toBeNull()
+		expect(result.lon).not.toBeNull()
+		// Toledo, OH — the route_pair reading resolves to the toponym pair's locality.
+		expect(result.lat!).toBeGreaterThan(41)
+		expect(result.lat!).toBeLessThan(42)
+	}, 60_000)
+
 	test("--format=jsonld emits a valid schema.org Place JSON-LD object (#1052)", () => {
 		const stdout = withCLISpawnLock(() =>
 			execFileSync(

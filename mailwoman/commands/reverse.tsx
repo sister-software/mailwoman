@@ -22,7 +22,7 @@ import { Text } from "ink"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 
 /**
  * Largest absolute latitude in WGS-84 degrees.
@@ -176,7 +176,13 @@ const ReverseCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 		return <Spinner />
 	}
 
-	return <Text>{state.result}</Text>
+	// Machine format (json) bypasses Ink's word-wrapping <Text> renderer, which corrupts long
+	// JSON lines at 80 cols when piped (see writeRawStdout).
+	if (options.format === "text") {
+		return <Text>{state.result}</Text>
+	}
+
+	return writeRawStdout(state.result)
 }
 
 export default ReverseCommand
