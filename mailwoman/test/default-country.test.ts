@@ -86,12 +86,12 @@ describe("resolverDefaultCountry", () => {
 })
 
 describe("--country-scope separates country policy from the resolver backend", () => {
-	// The hazard this pins: under 'auto', backend and country scope are ONE switch, so an A/B that
-	// changes the backend has silently changed the filter too and is comparing four conditions, not
-	// two. 'locale' and 'none' are what a measurement pins to hold one variable still.
-	test("'auto' is what the backend argument reaches — the historical coupling", () => {
+	// 'auto' passes the locale-derived country regardless of backend (2026-08-08 NZ scope-leakage fix —
+	// the candidate backend was dropping the locale hint, causing structured queries under en-NZ to resolve
+	// to foreign namesakes). 'locale' and 'none' still pin the policy explicitly for A/B measurements.
+	test("'auto' passes locale country on both backends", () => {
 		expect(resolverDefaultCountry({ locale: "en-US" }, false)).toBe("US")
-		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBeUndefined()
+		expect(resolverDefaultCountry({ locale: "en-US" }, true)).toBe("US")
 	})
 
 	test("'locale' scopes on either backend", () => {
