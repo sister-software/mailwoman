@@ -112,6 +112,10 @@ Two small data items, one discipline:
   **never from mailwoman's own resolver** (circularity poisons the instrument). Stamp
   source + retrieval date. Panel becomes `panel-v2.jsonl` with a new sha256 — the v1 hash
   is frozen in the benchmark record; never overwrite v1.
+  - Operator note: These are all real addresses.
+    - Epping, UK: https://maps.app.goo.gl/EmxNjxwVmb2whiL78
+    - Warwick, UK: https://maps.app.goo.gl/nM4WfVwd9Nh6sjHd7
+    - COMER parís.méxico, 96 Rue d'Hauteville, 75010 Paris, France: https://maps.app.goo.gl/Ebx9bPEeHeQ856FF8
 
 **Verification bar:** rebuilt artifact re-answers de-de-013 sanely; panel-v2 hash recorded.
 **Prohibited:** hand-editing sealed DBs or panel-v1.
