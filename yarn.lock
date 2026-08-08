@@ -4849,6 +4849,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/neural-weights-en-au@workspace:neural-weights-en-au":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-en-au@workspace:neural-weights-en-au"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/neural-weights-en-us": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb"
