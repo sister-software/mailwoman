@@ -15,13 +15,12 @@ import {
 	synchronizeRepo,
 } from "@mailwoman/core"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import { useMemo, useState } from "react"
 import { parallelMap } from "spliterator"
 import zod from "zod"
 import { $ } from "zx"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"

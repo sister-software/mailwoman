@@ -13,11 +13,10 @@
  */
 
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 import zod from "zod"
 import { $ } from "zx"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 

@@ -42,9 +42,8 @@ import { DatabaseSync } from "node:sqlite"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	outDir: zod

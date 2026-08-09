@@ -26,9 +26,9 @@ import { execFileSync } from "node:child_process"
 import { LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { artifactSizeMB } from "../../../gazetteer-pipeline/admin/index.ts"
 import {
 	bboxCoverageCells,

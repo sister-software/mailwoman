@@ -19,10 +19,9 @@
 import { Spinner } from "@inkjs/ui"
 import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 
 /**
  * Largest absolute latitude in WGS-84 degrees.

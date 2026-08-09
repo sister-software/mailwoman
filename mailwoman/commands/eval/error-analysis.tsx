@@ -10,9 +10,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { evalErrorAnalysis } from "../../eval-harness/error-analysis.ts"
 
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote gate)"

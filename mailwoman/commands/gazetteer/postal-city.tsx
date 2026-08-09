@@ -26,9 +26,8 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
+import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	candidateDb: zod.string().describe("Candidate DB to add the side-index to (MODIFIED IN PLACE — run on a copy first)"),

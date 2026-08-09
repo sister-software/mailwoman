@@ -11,9 +11,8 @@
 
 import { filerLinkageEval } from "@mailwoman/filer/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	outMd: zod.string().optional().describe("Also write the markdown report here"),

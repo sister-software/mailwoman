@@ -11,10 +11,10 @@
 
 import { trainCrossSourceGBT, trainDedupGBT, trainOrgCrossSourceGBT } from "@mailwoman/registry/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { evalGeocoderFactory } from "./run.tsx"
 
 const ArgsSchema = zod.tuple([

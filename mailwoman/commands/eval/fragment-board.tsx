@@ -12,9 +12,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runFragmentBoard } from "../../eval-harness/fragment-board.ts"
 
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"

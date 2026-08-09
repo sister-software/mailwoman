@@ -15,9 +15,8 @@
 import { createMailwomanAPI, MAILWOMAN_API_DOC_INFO } from "@mailwoman/api"
 import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../cli-kit/index.ts"
 
 export const description = "Emit the native @mailwoman/api OpenAPI document"
 

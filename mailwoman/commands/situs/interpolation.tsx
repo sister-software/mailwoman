@@ -36,10 +36,9 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { TextSpliterator } from "spliterator"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 /**
  * A successful response; anything else is an error page or an unfollowed redirect.

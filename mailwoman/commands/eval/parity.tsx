@@ -11,9 +11,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runParityEval } from "../../eval-harness/parity-corpus.ts"
 
 export const description = "Parity-corpus eval — rescued v1 gold vs a checkpoint (plan-2 swap floors)"

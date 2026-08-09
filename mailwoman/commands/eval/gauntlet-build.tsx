@@ -12,10 +12,10 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { buildFDICHoldout } from "../../eval-harness/gauntlet/build-fdic-holdout.ts"
 import { buildRegressionDB } from "../../eval-harness/gauntlet/build-regression-db.ts"
 

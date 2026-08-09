@@ -33,9 +33,8 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	release: zod

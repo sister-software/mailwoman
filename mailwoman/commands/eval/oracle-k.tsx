@@ -10,9 +10,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runOracleK } from "../../eval-harness/oracle-k.ts"
 
 export const description = "Oracle-recall@k — k-best segment-decode headroom over the parity corpus (#727 stage-2)"

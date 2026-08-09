@@ -33,9 +33,8 @@ import { COUNTRY_LOOKUP } from "@mailwoman/codex/country"
 import { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 /**
  * Homographs printed before the list is truncated.

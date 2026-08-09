@@ -12,10 +12,9 @@
 
 import { evalCoarsePlacer, evalLatinOffmap, evalOpenSet, evalQuantCompare } from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 export const description = "Evaluate the coarse placer (#244): in-distribution | openset | latin-offmap | quant-compare"
 

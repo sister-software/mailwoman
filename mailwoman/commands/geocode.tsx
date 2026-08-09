@@ -37,10 +37,10 @@ import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 import {
 	geocodeAddress,
 	parseForGeocode,

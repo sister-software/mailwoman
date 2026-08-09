@@ -43,9 +43,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 // imports), so the value import is safe at module level — no heavy ONNX runtime is pulled in.
 import { serializePostcodeBinary } from "@mailwoman/neural/postcode-binary-resolver"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import {
 	buildPostcodeBinaryEntries,
 	type GBGranularity,

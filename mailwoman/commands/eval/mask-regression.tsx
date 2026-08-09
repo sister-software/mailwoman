@@ -11,9 +11,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { maskRegressionGate } from "../../eval-harness/mask-regression.ts"
 
 export const description = "Mask-regression gate (#718) — mask-off vs mask-on per-tag F1, 2pp lock"

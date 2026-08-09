@@ -13,10 +13,9 @@
 
 import { Spinner } from "@inkjs/ui"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	state: zod.string().describe("Two-digit state FIPS, e.g. 06 (California)."),

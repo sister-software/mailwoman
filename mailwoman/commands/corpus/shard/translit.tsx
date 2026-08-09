@@ -11,9 +11,8 @@
 
 import { buildTranslitShard } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	jsonl: zod.string().describe("Canonical transliteration JSONL to shard"),

@@ -18,9 +18,8 @@ import { dirname } from "node:path"
 import { AbbreviationToDirectional, DirectionalToAbbreviationMap, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	output: zod.string().optional().describe("Output path. Default <repo>/data/gazetteer/affix-relabel-lexicon-v1.json"),

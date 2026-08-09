@@ -46,10 +46,10 @@ import {
 	referentialFromPopulation,
 } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
+import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
-import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import {
 	emptyFanoutStats,
 	type FanoutCandidate,

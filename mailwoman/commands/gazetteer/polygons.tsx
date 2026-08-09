@@ -34,9 +34,8 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.

@@ -24,9 +24,8 @@
 
 import { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	wikidataDir: zod.string().optional().describe("Directory holding the wikidata-subvenue fetch output"),

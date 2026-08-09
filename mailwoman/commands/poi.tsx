@@ -34,10 +34,10 @@ import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 import { emitOverpassQL } from "../poi-overpass.ts"
 import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
 

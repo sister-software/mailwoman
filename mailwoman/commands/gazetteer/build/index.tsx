@@ -13,9 +13,9 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import {
 	artifactSizeMB,
 	buildAdmin,

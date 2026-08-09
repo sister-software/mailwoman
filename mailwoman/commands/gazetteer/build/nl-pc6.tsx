@@ -9,9 +9,8 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	csv: zod.string().optional().describe("CBS PC6 centroid CSV. Default <data-root>/cbs/pc6-centroids.csv"),

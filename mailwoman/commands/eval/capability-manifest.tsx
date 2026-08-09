@@ -10,9 +10,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { generateCapabilityManifest } from "../../eval-harness/capability-manifest.ts"
 
 export const description = "Generate the model-card capability manifest (#718/#719)"

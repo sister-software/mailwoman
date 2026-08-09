@@ -20,9 +20,9 @@ import { dirname } from "node:path"
 
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { renderGranularityReport } from "../../gazetteer-pipeline/granularity-report.ts"
 import { DEFAULT_COVERAGE_FLOOR, bottomsOutAt, buildGranularityLadder } from "../../gazetteer-pipeline/granularity.ts"
 

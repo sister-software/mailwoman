@@ -12,10 +12,9 @@
 
 import { crossDatasetMap, geocodeFirstSurface, sourceProvenanceMap, yardstickFigure } from "@mailwoman/registry/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const ArgsSchema = zod.tuple([
 	zod.enum(["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"]).describe(

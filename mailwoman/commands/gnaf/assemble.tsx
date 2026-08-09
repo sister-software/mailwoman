@@ -18,10 +18,9 @@
 
 import { assembleGNAF } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	standardDir: zod.string().describe("G-NAF `Standard` directory holding the per-state *_psv.psv tables"),

@@ -9,9 +9,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { presetCompare } from "../../eval-harness/preset-compare.ts"
 
 export const description = "Compare the 6 demo presets between the shipped baseline and a candidate"

@@ -15,9 +15,8 @@ import { createWriteStream } from "node:fs"
 
 import { getShardRecipe, listShardRecipes, type ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../../cli-kit/index.ts"
 
 /**
  * Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands.

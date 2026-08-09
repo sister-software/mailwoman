@@ -10,8 +10,7 @@
 
 import { generateCountryReference } from "@mailwoman/codex/tools"
 import { Text } from "ink"
-
-import { useCommandTask } from "../../../cli-kit/index.ts"
+import { useCommandTask } from "mailwoman/cli-kit"
 
 const report = (line: string): void => console.error(line)
 

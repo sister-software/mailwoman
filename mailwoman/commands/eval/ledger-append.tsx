@@ -10,9 +10,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { ledgerAppend } from "../../eval-harness/ledger-append.ts"
 
 export const description = "Append a promotion-gate run to evals/scores-by-version.json (#885)"

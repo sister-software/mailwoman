@@ -13,9 +13,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runPromotionGate } from "../../eval-harness/promotion-gate.ts"
 
 export const description = "Promotion gate (#479) — eval battery + gate-spec floors → verdict.json"

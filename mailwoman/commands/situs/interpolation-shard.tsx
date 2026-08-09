@@ -33,9 +33,9 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
 
 /**

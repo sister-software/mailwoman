@@ -15,9 +15,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runPOIBoard } from "../../eval-harness/poi-board.ts"
 
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"

@@ -43,11 +43,11 @@ import { pipeline } from "node:stream/promises"
 import { APIClient } from "@mailwoman/core/api"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Text } from "ink"
+import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import { resolvePath } from "path-ts"
 import zod from "zod"
 
-import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import {
 	artifactURL,
 	BUNDLES,

@@ -39,10 +39,10 @@ import {
 	type PostcodePrefixTier,
 } from "@mailwoman/neural/postcode-prefix-index"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { buildPostcodePrefixIndex, type PostcodePrefixLevel } from "../../../gazetteer-pipeline/postcode-prefix.ts"
 
 /**

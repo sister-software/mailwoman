@@ -10,9 +10,8 @@
 
 import { trainCoarsePlacer } from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 export const description = "Train the coarse placer (#244) — SGD logistic regression, CPU-only"
 

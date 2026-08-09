@@ -15,9 +15,9 @@
  */
 
 import { Box, Text } from "ink"
+import { CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { CheckList, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { generateClients } from "../../tools/generate-clients.ts"
 
 export const description = "Generate + verify the Python and Rust API clients from the emitted OpenAPI specs"

@@ -48,10 +48,10 @@ import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tool
 import { createWOFResolver } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 import { geocodeAddress, ShardProvider, type ShardResolver } from "../../geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
 import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../../resolver-backend.ts"

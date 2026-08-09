@@ -10,10 +10,10 @@
  */
 
 import { Text } from "ink"
+import { type PositionalCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type PositionalCommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 import { lintMDXAngles } from "../../../dev-tools/lint-mdx-angles.ts"
 
 const ArgumentsSchema = zod

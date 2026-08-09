@@ -20,9 +20,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runGauntlet } from "../../eval-harness/gauntlet/run.ts"
 
 export const description = "The Gauntlet gate — regression + metamorphic + held-out, one verdict"

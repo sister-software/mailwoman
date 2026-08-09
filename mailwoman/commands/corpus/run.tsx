@@ -13,10 +13,9 @@
 import { ProgressBar } from "@inkjs/ui"
 import { defaultAdapterRegistry, runAdapter } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Adapter id (e.g. wof-admin, ban, openaddresses)"))
 

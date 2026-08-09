@@ -35,9 +35,8 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	state: zod.string().optional().describe("US state abbreviation, e.g. VT"),

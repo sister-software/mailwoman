@@ -29,10 +29,9 @@ import { existsSync, statSync } from "node:fs"
 import { Spinner } from "@inkjs/ui"
 import { $private } from "@mailwoman/core/env"
 import { Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 import { $ } from "zx"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	file: zod.string().describe("Path to the .pmtiles archive to upload"),

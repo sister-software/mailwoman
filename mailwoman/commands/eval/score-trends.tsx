@@ -9,9 +9,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { buildScoreTrends } from "../../eval-harness/score-trends.ts"
 
 export const description = "Regenerate the per-tag score-trend page from evals/scores-by-version.json"

@@ -8,9 +8,9 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { runFragmentDev } from "../../eval-harness/fragment-dev.ts"
 
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"

@@ -33,9 +33,8 @@ import * as path from "node:path"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const DEFAULT_RELEASE = "2026-05-20.0"
 

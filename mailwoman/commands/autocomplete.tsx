@@ -19,10 +19,9 @@ import { readFileSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
 import { Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "../cli-kit/index.ts"
 
 export { ArgumentsSchema as args, AutocompleteConfigSchema as options }
 

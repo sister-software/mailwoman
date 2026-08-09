@@ -14,10 +14,9 @@ import { DatabaseSync } from "node:sqlite"
 
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { Text } from "ink"
+import { type Check, CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { type Check, CheckList, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const ArgsSchema = zod.array(
 	zod.string().describe(

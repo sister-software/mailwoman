@@ -17,11 +17,9 @@ import { availableParallelism } from "node:os"
 import { Spinner } from "@inkjs/ui"
 import { generatePlacetypeTree, Placetype, type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
 import { Box, Text } from "ink"
-import { parseRoles } from "mailwoman/cli-kit"
+import { parseRoles, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 

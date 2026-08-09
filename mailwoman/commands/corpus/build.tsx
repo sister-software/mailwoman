@@ -18,10 +18,9 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { buildCorpus, defaultAdapterRegistry, type BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 import zod from "zod"
-
-import { type CommandComponent, commandError, useCommandTask } from "../../cli-kit/index.ts"
 
 /**
  * `--inputs` accepts either:

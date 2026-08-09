@@ -19,10 +19,10 @@
  */
 
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import type * as React from "react"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../cli-kit/index.ts"
 import { CheckStatus, type DoctorCheck, type DoctorReport } from "../doctor/checks.ts"
 import { runDoctor } from "../doctor/runner.ts"
 

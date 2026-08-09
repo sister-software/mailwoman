@@ -15,7 +15,7 @@ import { useState } from "react"
 import zod from "zod"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { buildCoverageTiles } from "../../coverage-core.ts"
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 const OptionsSchema = zod.object({
 	states: zod.string().optional().default("all").describe("Comma-separated state slugs (e.g. CA,TX) or 'all'"),

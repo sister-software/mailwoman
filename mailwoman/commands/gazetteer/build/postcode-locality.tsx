@@ -18,9 +18,8 @@
  */
 
 import { Text } from "ink"
+import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	recipe: zod.enum(["base", "jp", "kr", "tw"]).describe("Which postcode-locality table to build"),

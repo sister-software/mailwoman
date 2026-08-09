@@ -40,10 +40,9 @@ import { cpSync, existsSync, rmSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { Text } from "ink"
+import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
 import zod from "zod"
-
-import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	dest: zod

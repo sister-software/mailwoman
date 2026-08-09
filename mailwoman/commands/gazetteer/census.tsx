@@ -35,9 +35,9 @@ import {
 	type PlacetypeCensusNode,
 } from "@mailwoman/neural/placetype-census"
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 import { buildPlacetypeCensus, toBaseRates } from "../../gazetteer-pipeline/placetype-census.ts"
 
 /**

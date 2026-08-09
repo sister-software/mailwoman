@@ -24,11 +24,9 @@ import {
 } from "@mailwoman/core"
 import * as d3Chromatic from "d3-scale-chromatic"
 import { Box, Text } from "ink"
-import { parseRoles } from "mailwoman/cli-kit"
+import { parseRoles, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const BATCH_SIZE = availableParallelism()
 

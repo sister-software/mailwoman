@@ -9,9 +9,8 @@
 
 import { downloadLibpostalResources } from "@mailwoman/core/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	force: zod.boolean().default(false).describe("Delete an existing dictionaries directory instead of erroring out"),

@@ -11,9 +11,8 @@
  */
 
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	input: zod.string().describe("Parent golden version dir (read-only), e.g. data/eval/golden/v0.1.2"),

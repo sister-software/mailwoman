@@ -17,11 +17,11 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import { serveNode, type ServerHandle } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
 import { Box, Text } from "ink"
+import type { CommandComponent } from "mailwoman/cli-kit"
 import { useEffect, useState } from "react"
 import zod from "zod"
 
 import { createServeEngine } from "../api-engine.ts"
-import type { CommandComponent } from "../cli-kit/index.ts"
 
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
 // move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and

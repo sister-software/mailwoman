@@ -11,9 +11,8 @@
 
 import { promoteGolden } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
 
 const OptionsSchema = zod.object({
 	input: zod.string().describe("Candidates JSONL from corpus golden expand"),
