@@ -12,9 +12,8 @@
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { artifactSizeMB, buildAdmin } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { artifactSizeMB, buildAdmin } from "../../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
 	data: zod.string().optional().describe("WOF repos root. Default <data-root>/wof/repos"),

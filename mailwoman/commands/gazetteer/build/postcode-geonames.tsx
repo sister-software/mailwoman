@@ -16,13 +16,12 @@
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
-
 import {
 	artifactSizeMB,
 	buildPostcodeGeonamesTail,
 	DEFAULT_GEONAMES_TAIL_COUNTRIES,
-} from "../../../gazetteer-pipeline/index.ts"
+} from "mailwoman/gazetteer-pipeline"
+import zod from "zod"
 
 const OptionsSchema = zod.object({
 	countries: zod

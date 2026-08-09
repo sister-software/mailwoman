@@ -21,9 +21,8 @@
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { artifactSizeMB } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { artifactSizeMB } from "../../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
 	sourceDir: zod

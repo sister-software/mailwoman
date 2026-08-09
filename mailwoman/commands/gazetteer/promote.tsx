@@ -14,9 +14,8 @@ import { join } from "node:path"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "../../gazetteer-pipeline/index.ts"
 
 const ArgumentsSchema = zod.array(
 	zod.string().describe(`Candidate DB to promote. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)

@@ -13,9 +13,8 @@ import { join } from "node:path"
 
 import { Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { wofDir } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { wofDir } from "../../../gazetteer-pipeline/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Queries to probe"))
 export { ArgumentsSchema as args }

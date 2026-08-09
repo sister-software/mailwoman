@@ -23,9 +23,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
 import { CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } from "../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("Admin DB to verify. Default <data-root>/wof/admin-global-priority.db"),

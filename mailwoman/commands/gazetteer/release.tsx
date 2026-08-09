@@ -17,8 +17,6 @@ import { join } from "node:path"
 import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
-
 import {
 	buildCandidate,
 	DEFAULT_ADMIN_DB,
@@ -30,7 +28,8 @@ import {
 	publishGazetteer,
 	resolvePostcodeShards,
 	wofDir,
-} from "../../gazetteer-pipeline/index.ts"
+} from "mailwoman/gazetteer-pipeline"
+import zod from "zod"
 
 const OptionsSchema = zod.object({
 	admin: zod.string().optional().describe("Admin source DB. Default <data-root>/wof/admin-global-priority.db"),
