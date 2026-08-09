@@ -9,9 +9,9 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { readCanonicalRows, useScratchDir } from "../../../test-kit/index.ts"
 import { runAdapter } from "../../runner.ts"
 import { FCC_BDC_ADAPTER_ID, FCC_BDC_DEFAULT_LICENSE, buildPostcode, createFccBdcAdapter } from "./adapter.ts"
 

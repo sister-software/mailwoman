@@ -59,6 +59,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./dev-tools/*": {
+			"node": "./dev-tools/*.ts",
+			"default": "./out/dev-tools/*.js",
+			"types": "./out/dev-tools/*.d.ts"
+		},
 		"./geocode-core": {
 			"node": "./geocode-core.ts",
 			"default": "./out/geocode-core.js",
@@ -78,6 +83,11 @@
 			"node": "./gazetteer-pipeline/index.ts",
 			"default": "./out/gazetteer-pipeline/index.js",
 			"types": "./out/gazetteer-pipeline/index.d.ts"
+		},
+		"./gazetteer-pipeline/admin": {
+			"node": "./gazetteer-pipeline/admin/index.ts",
+			"default": "./out/gazetteer-pipeline/admin/index.js",
+			"types": "./out/gazetteer-pipeline/admin/index.d.ts"
 		},
 		"./gazetteer-pipeline/*": {
 			"node": "./gazetteer-pipeline/*.ts",

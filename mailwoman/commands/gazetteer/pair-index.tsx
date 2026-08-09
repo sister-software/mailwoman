@@ -43,12 +43,12 @@ import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { PairIndexBuilder, applyPairIndexHoldout } from "mailwoman/gazetteer-pipeline/pair-index"
 import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import zod from "zod"
 
 import { extractBoroughPairs } from "../../gazetteer-pipeline/borough-pairs.ts"
 import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
-import { PairIndexBuilder, applyPairIndexHoldout } from "../../gazetteer-pipeline/pair-index.ts"
 
 /**
  * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW

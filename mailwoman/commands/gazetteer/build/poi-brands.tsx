@@ -18,8 +18,6 @@ import { execFileSync } from "node:child_process"
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
-
 import {
 	buildBrandTable,
 	DEFAULT_DOMINANCE,
@@ -27,7 +25,8 @@ import {
 	defaultBrandTableOutPath,
 	defaultPOIDatabasePath,
 	writeBrandTable,
-} from "../../../gazetteer-pipeline/poi/build-brands.ts"
+} from "mailwoman/gazetteer-pipeline/poi/build-brands"
+import zod from "zod"
 
 const OptionsSchema = zod.object({
 	db: zod.string().optional().describe("Built poi.db to read. Default <data-root>/poi/poi.db"),

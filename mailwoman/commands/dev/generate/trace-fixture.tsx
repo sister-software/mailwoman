@@ -12,10 +12,9 @@
 
 import { Text } from "ink"
 import { type PositionalCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { generateTraceFixture } from "mailwoman/dev-tools/generate-trace-fixture"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { generateTraceFixture } from "../../../dev-tools/generate-trace-fixture.ts"
 
 const ArgumentsSchema = zod
 	.array(

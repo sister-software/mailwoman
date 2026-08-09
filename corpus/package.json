@@ -56,6 +56,11 @@
 			"default": "./out/src/adapters/index.js",
 			"types": "./out/src/adapters/index.d.ts"
 		},
+		"./test-kit": {
+			"node": "./test-kit/index.ts",
+			"default": "./out/test-kit/index.js",
+			"types": "./out/test-kit/index.d.ts"
+		},
 		"./tools": {
 			"node": "./src/tools/index.ts",
 			"default": "./out/src/tools/index.js",

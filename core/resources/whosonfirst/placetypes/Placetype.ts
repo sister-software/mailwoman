@@ -6,12 +6,12 @@
 
 import * as fs from "node:fs/promises"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { prepareRepositoryDirectories, type RepositorySource } from "@mailwoman/core/resources"
 import FastGlob from "fast-glob"
 import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
 
-import { parseJSONStrict } from "../../../objects.ts"
-import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"
 import {
 	normalizePlacetypeDefinition,
 	type PlacetypeDefinition,

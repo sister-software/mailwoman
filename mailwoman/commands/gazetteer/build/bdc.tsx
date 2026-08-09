@@ -51,9 +51,8 @@ import type { FilerDatabase } from "@mailwoman/filer"
 import { parseProviderList } from "@mailwoman/filer/sdk"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { artifactSizeMB } from "mailwoman/gazetteer-pipeline/admin"
 import zod from "zod"
-
-import { artifactSizeMB } from "../../../gazetteer-pipeline/admin/index.ts"
 
 const OptionsSchema = zod.object({
 	state: zod.string().describe('2-digit FCC state/territory FIPS code (e.g. "06" for California)'),

@@ -27,9 +27,7 @@ import { LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
-
-import { artifactSizeMB } from "../../../gazetteer-pipeline/admin/index.ts"
+import { artifactSizeMB } from "mailwoman/gazetteer-pipeline/admin"
 import {
 	bboxCoverageCells,
 	buildPOIDatabase,
@@ -37,7 +35,8 @@ import {
 	ingestPlaces,
 	type BBox,
 	type POISourceRow,
-} from "../../../gazetteer-pipeline/poi/build-poi.ts"
+} from "mailwoman/gazetteer-pipeline/poi/build-poi"
+import zod from "zod"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 

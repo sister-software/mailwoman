@@ -40,10 +40,9 @@ import {
 } from "@mailwoman/neural/postcode-prefix-index"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { buildPostcodePrefixIndex, type PostcodePrefixLevel } from "mailwoman/gazetteer-pipeline/postcode-prefix"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { buildPostcodePrefixIndex, type PostcodePrefixLevel } from "../../../gazetteer-pipeline/postcode-prefix.ts"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database. A prefix index
