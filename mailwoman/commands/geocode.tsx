@@ -295,6 +295,18 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		nationalShards = undefined
 	}
 
+	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
+	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
+	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
+	let osmProvider: { for: (country: string) => StateShards; close(): void } | undefined
+
+	try {
+		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
+		osmProvider = new OSMShardProvider(options.dataRoot)
+	} catch {
+		osmProvider = undefined
+	}
+
 	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
 	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
@@ -334,6 +346,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			resolver,
 			shards,
 			...(nationalShards ? { nationalShards } : {}),
+			...(osmProvider ? { osmShards: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
@@ -358,6 +371,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		explicitAp?.close()
 		explicitIp?.close()
 		shardProvider.close()
+		osmProvider?.close()
 		lookup.close()
 	}
 }

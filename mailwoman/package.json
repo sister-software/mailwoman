@@ -59,13 +59,6 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
-		"./commands": "./out/commands/index.js",
-		"./commands/*.tsx": "./out/commands/*.js",
-		"./commands/*": {
-			"node": "./commands/*.ts",
-			"default": "./out/commands/*.js",
-			"types": "./out/commands/*.d.ts"
-		},
 		"./dev-tools/*": {
 			"node": "./dev-tools/*.ts",
 			"default": "./out/dev-tools/*.js",
@@ -110,6 +103,11 @@
 			"node": "./cli-kit/dropin.ts",
 			"default": "./out/cli-kit/dropin.js",
 			"types": "./out/cli-kit/dropin.d.ts"
+		},
+		"./cli-kit/weights-guard": {
+			"node": "./out/cli-kit/weights-guard.js",
+			"default": "./out/cli-kit/weights-guard.js",
+			"types": "./out/cli-kit/weights-guard.d.ts"
 		},
 		"./test-kit": {
 			"node": "./test-kit/index.ts",

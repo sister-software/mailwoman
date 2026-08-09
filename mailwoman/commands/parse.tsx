@@ -16,11 +16,11 @@ import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
 import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { probeWeights, WeightsGuard, type WeightsOutcome } from "mailwoman/cli-kit/weights-guard"
 import { argument } from "pastel"
 import type React from "react"
 import zod from "zod"
 
-import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
 /**
