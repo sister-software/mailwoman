@@ -8,10 +8,10 @@ import { rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.ts"
 import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.ts"
 
 const scratch = useScratchDir("oa")

@@ -8,10 +8,10 @@ import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { describe, expect, it } from "vitest"
 
-import { runAdapter } from "../../runner.ts"
 import { WOF_POSTALCODE_ADAPTER_ID, createWOFPostalcodeAdapter, postcodeVariantsFor } from "./adapter.ts"
 
 const scratch = useScratchDir("wof-postalcode-json")

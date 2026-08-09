@@ -10,16 +10,16 @@
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.ts"
 import {
 	DEFAULT_US_BASES,
 	generateIntersectionRows,
 	synthesizeIntersectionRow,
 	type SynthesizedIntersectionRow,
-} from "./synthesize-intersection.ts"
-import type { CanonicalRow } from "./types.ts"
+} from "./intersection.ts"
 
 function asCanonical(r: SynthesizedIntersectionRow): CanonicalRow {
 	return { ...r, country: "US", source: "synth-intersection", source_id: "synth-intersection:test" } as CanonicalRow

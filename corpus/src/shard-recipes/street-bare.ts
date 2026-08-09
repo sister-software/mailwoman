@@ -17,9 +17,10 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
-import { alignRow } from "../align.ts"
-import { DEFAULT_US_BASES } from "../synthesize-intersection.ts"
-import { synthesizeStreetRow, type StreetBaseTuple } from "../synthesize-street.ts"
+import { DEFAULT_US_BASES } from "@mailwoman/corpus/synthesizers/intersection"
+import { synthesizeStreetRow, type StreetBaseTuple } from "@mailwoman/corpus/synthesizers/street"
+import { alignRow } from "@mailwoman/corpus/utils"
+
 import { makeMulberry32, shardSourceID, type CanonicalShardRow, type ShardRecipe } from "./scaffold.ts"
 
 /**

@@ -21,8 +21,8 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
-import { dataRootPath } from "../../utils/data-root.ts"
-import { repoRootPath } from "../../utils/repo.ts"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+
 import { hashFNV1a } from "./fnv-hash.ts"
 
 interface DatasetRow {

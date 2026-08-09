@@ -8,11 +8,11 @@ import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "../../align.ts"
-import { runAdapter } from "../../runner.ts"
 import { USGOV_HRSA_FQHC_ADAPTER_ID, USGOV_HRSA_FQHC_DEFAULT_LICENSE, createUsgovHrsaFqhcAdapter } from "./adapter.ts"
 
 const scratch = useScratchDir("usgov-hrsa")

@@ -38,7 +38,7 @@ training pipeline (`corpus-python/`).
 | **`expand-golden.ts`**  | Expand reference addresses into training rows with alignment       |
 | **`align.ts`**          | Tokenize raw address → BIO label sequence                          |
 | **`validate.ts`**       | Validate corpus integrity, label coverage, shard balance           |
-| **`synthesize-*.ts`**   | Synthetic shard generators (boundary stress, order variants, etc.) |
+| **`synthesizers/*.ts`** | Synthetic shard generators (boundary stress, order variants, etc.) |
 | **`ingest/`**           | Overture Maps + NAD ingestion                                      |
 | **`shard-registry.ts`** | Shard metadata and composition                                     |
 | **`stats.ts`**          | Per-shard and per-tag statistics                                   |

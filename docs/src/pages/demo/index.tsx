@@ -7,7 +7,7 @@
  *   `@mailwoman/react/map` `<GeocoderDemo>` driven by the REAL docs runtime ({@link useDemoMapRuntime}):
  *
  *   - `@mailwoman/neural/web-loader` (onnxruntime-web, WASM SIMD with WebGPU fallback) for the BIO classifier,
- *   - sql.js-httpvfs (`../../shared/httpvfs-resolver`) range-loading the same-origin WOF + polygon DBs,
+ *   - sql.js-httpvfs (`@mailwoman/docs/shared/httpvfs-resolver`) range-loading the same-origin WOF + polygon DBs,
  *   - `@mailwoman/cartographer` `StyleSpecificationComposer` over the v4 protomaps basemap.
  *
  *   The docs-only chrome (about box, permalink, result panel, geo-bias row, calibration + dev-mode
@@ -22,6 +22,12 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import "@mailwoman/react/styles.css"
 import BrowserOnly from "@docusaurus/BrowserOnly"
 import Head from "@docusaurus/Head"
+import { AboutDemo } from "@mailwoman/docs/components/AboutDemo/AboutDemo"
+import { PermalinkButton } from "@mailwoman/docs/components/PermalinkButton/PermalinkButton"
+import { ResultPanel as DocsResultPanel } from "@mailwoman/docs/components/ResultPanel/ResultPanel"
+import { useSiteConfig } from "@mailwoman/docs/hooks/site"
+import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "@mailwoman/docs/shared/demo-helpers"
+import type { DemoResult } from "@mailwoman/docs/shared/resources"
 import { GeocoderDemo } from "@mailwoman/react/map"
 import type { DemoPanels } from "@mailwoman/react/map"
 import type { Coordinates2D } from "@mailwoman/spatial"
@@ -29,12 +35,6 @@ import Layout from "@theme/Layout"
 import type React from "react"
 import { useMemo, useState } from "react"
 
-import { AboutDemo } from "../../components/AboutDemo/AboutDemo.tsx"
-import { PermalinkButton } from "../../components/PermalinkButton/PermalinkButton.tsx"
-import { ResultPanel as DocsResultPanel } from "../../components/ResultPanel/ResultPanel.tsx"
-import { useSiteConfig } from "../../hooks/site.ts"
-import { DEFAULT_ADDRESS, EXAMPLE_ADDRESSES } from "../../shared/demo-helpers.ts"
-import type { DemoResult } from "../../shared/resources.tsx"
 import { DemoCompare } from "./_compare.tsx"
 import { CalibrationToggle, DevModeToggle, GeoBiasRow } from "./_controls.tsx"
 import { DemoDebugDrawer } from "./_devDrawer.tsx"

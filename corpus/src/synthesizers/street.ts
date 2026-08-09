@@ -19,8 +19,8 @@
  *   adapter.
  */
 
-import { decomposeStreet } from "./adapters/tiger/street-decompose.ts"
-import type { CanonicalRow } from "./types.ts"
+import { decomposeStreet } from "@mailwoman/corpus/adapters/tiger/street-decompose"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 
 // Hand-curated US street name pool. Real frequency-weighted street names — sampled
 // from US Census TIGER 2024 top-1000 by occurrence count. Keep ~50 entries so the

@@ -19,8 +19,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
-import { parseJSONStrict } from "../../objects.ts"
-import { dataRootPath } from "../../utils/data-root.ts"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { dataRootPath } from "@mailwoman/core/utils"
+
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
 
 /**

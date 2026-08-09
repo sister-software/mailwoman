@@ -10,15 +10,15 @@
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.ts"
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
 	type SynthesizedBoundaryStressRow,
-} from "./synthesize-boundary-stress.ts"
-import type { CanonicalRow } from "./types.ts"
+} from "./boundary-stress.ts"
 
 function asCanonical(r: SynthesizedBoundaryStressRow): CanonicalRow {
 	return {

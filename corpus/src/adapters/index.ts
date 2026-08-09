@@ -19,8 +19,9 @@
  *   implementations; the registered ids are unchanged).
  */
 
-import { defaultAdapterRegistry } from "../adapter.ts"
-import type { CorpusAdapter } from "../types.ts"
+import { defaultAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
+import type { CorpusAdapter } from "@mailwoman/corpus/types"
+
 import { banAdapter } from "./ban/adapter.ts"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.ts"
 import { geonamesPostalAdapter } from "./geonames-postal/adapter.ts"

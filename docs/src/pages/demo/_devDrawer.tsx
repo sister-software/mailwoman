@@ -10,12 +10,12 @@
  *   "🐛 Dev mode" toggle.
  */
 
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { ParseResult } from "@mailwoman/react"
 import type React from "react"
 import { useEffect, useState } from "react"
 
 import { ModelVisualizer } from "../../components/ModelVisualizer/ModelVisualizer.tsx"
-import type { ParseTraceLike } from "../../shared/resources.tsx"
 
 import demoStyles from "./styles.module.css"
 

@@ -31,9 +31,8 @@ import { mkdir, unlink, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
-
-import type { CanonicalRow, LabeledRow } from "./types.ts"
 
 export type SplitName = "train" | "val" | "test"
 

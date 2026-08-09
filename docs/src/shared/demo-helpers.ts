@@ -16,7 +16,7 @@ import type { ParseResult } from "@mailwoman/react"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
-import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
+import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
 
 // Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
 export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"

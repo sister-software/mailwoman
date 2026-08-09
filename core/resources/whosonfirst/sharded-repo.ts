@@ -13,9 +13,9 @@
 
 import { existsSync, readFileSync } from "node:fs"
 
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { resolvePath } from "path-ts"
 
-import { tryParsingJSON } from "../../objects.ts"
 import type { WOFFeature } from "./placetypes/admin.ts"
 
 /**

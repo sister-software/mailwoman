@@ -15,7 +15,7 @@
 import { describe, expect, test, vi } from "vitest"
 
 import { runCascade } from "./demo-helpers.ts"
-import type { MailwomanLookupLike } from "./resources.tsx"
+import type { MailwomanLookupLike } from "./resources/index.ts"
 
 type FindPlaceQuery = Parameters<MailwomanLookupLike["findPlace"]>[0]
 

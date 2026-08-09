@@ -5,9 +5,9 @@
  */
 
 import { repoRootPath } from "@mailwoman/core/utils"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 
-import type { CanonicalRow } from "../../types.ts"
 import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "./adapter.ts"
 
 const FIXTURE_DIR = repoRootPath("corpus", "src", "adapters", "usgov-nad", "fixtures")

@@ -7,7 +7,7 @@
  *
  *   Consumes a JSONL stream of (locality, region, postcode, country) tuples — typically extracted
  *   from existing corpus output (TIGER/NAD/BAN/WOF) — and emits synthetic PO box training rows. See
- *   `../../synthesize-po-box.ts` for the per-locale templates and number-noise logic.
+ *   `@mailwoman/corpus/synthesizers/po-box` for the per-locale templates and number-noise logic.
  *
  *   Why an adapter and not an augmenter:
  *
@@ -22,17 +22,16 @@
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { makeLcg } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
-
-import { stableSourceID } from "../../adapter.ts"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
 import {
 	countryToLocale,
 	REGION_OPTIONAL_LOCALES,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
 	type PoBoxBaseTuple,
-} from "../../synthesize-po-box.ts"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
+} from "@mailwoman/corpus/synthesizers/po-box"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

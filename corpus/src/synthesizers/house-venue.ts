@@ -9,7 +9,7 @@
  *   house_number recall by ~4-5pp. DeepSeek's turn-8 root-cause:
  *
  *   1. Direct: `5th Avenue Theatre`-style adversarial venues teach the model that tokens like "5th"
- *        belong to venues, not house_numbers. (Fixed in `synthesize-no-street.ts` by removing
+ *        belong to venues, not house_numbers. (Fixed in `no-street.ts` by removing
  *        digit+ordinal venue patterns.)
  *   2. Distributional dilution: synth-no-street adds 122K rows where house_number is absent. The model's
  *        training distribution shifts toward "house_number is rare," and it under-emits the tag at
@@ -23,12 +23,12 @@
  *   Real-world shape: business cards, mailing labels, store directories — `"123 Main St, Sunrise
  *   Bakery, Springfield, IL 62701"` is a perfectly ordinary address form.
  *
- *   Venue pool: PLAIN_VENUES from `synthesize-no-street.ts` (re-exported here). Adversarial venues
+ *   Venue pool: PLAIN_VENUES from `no-street.ts` (re-exported here). Adversarial venues
  *   are deliberately NOT used here — the point is to teach co-occurrence, not to re-introduce
  *   decompose-mode pressure.
  */
 
-import type { CanonicalRow } from "./types.ts"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 
 export interface HouseVenueBaseTuple {
 	locality: string
@@ -61,7 +61,7 @@ export interface SynthesizedHouseVenueRow {
 
 /**
  * PLAIN venue names, carrying no street-typing tokens. This shard teaches house_number + venue coexistence, NOT
- * decompose-mode pressure — adversarial venue names live in `synthesize-no-street.ts`.
+ * decompose-mode pressure — adversarial venue names live in `no-street.ts`.
  */
 const PLAIN_VENUES: ReadonlyArray<string> = [
 	"Bob's Pizza",

@@ -7,10 +7,10 @@
  *   via Storybook (ModelVisualizer.stories.tsx) against the committed fixture.
  */
 
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { NeuralParseTrace } from "@mailwoman/neural"
 import { describe, expect, it } from "vitest"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
 import fixture from "./fixtures/white-house.trace.json"
 import { changedIndices, emissionColor, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
 

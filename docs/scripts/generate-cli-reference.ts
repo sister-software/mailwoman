@@ -41,6 +41,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises"
+import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
 // Types-only: Pastel's generateOptions/generateArguments return commander objects; nothing here
@@ -385,11 +386,13 @@ function collectCommands(
 	}
 }
 
+const packagePath = import.meta.resolve("mailwoman/commands")
+
 /**
  * The compiled command tree this generator reads, resolved from this file rather than a working directory so the script
  * behaves the same from the repo root and from `docs/`.
  */
-export const COMMANDS_DIRECTORY = fileURLToPath(new URL("../../mailwoman/out/commands", import.meta.url))
+export const COMMANDS_DIRECTORY = dirname(packagePath)
 
 /**
  * Read the compiled command tree and partition it by {@link DOCUMENTED_GROUPS}.

@@ -23,7 +23,7 @@ import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
 import { loadHTTPVFSDatabase, WOFCandidateTableLookup } from "./httpvfs-resolver.ts"
-import { adminGazetteerURL, poiLayerURL } from "./resources.tsx"
+import { adminGazetteerURL, poiLayerURL } from "./resources/index.ts"
 
 /**
  * Resolution the published `poi.db`'s `h3_cell` column is keyed at — MUST match the builder (poi-lookup.ts's

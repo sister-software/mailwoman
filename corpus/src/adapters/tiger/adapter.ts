@@ -36,9 +36,10 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { lookupFipsState } from "../../codex/us-fips-state.ts"
-import { formatAddress, reconcileComponents } from "../../format.ts"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
+import { lookupFipsState } from "@mailwoman/corpus/codex/us-fips-state"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+
 import { decomposeStreet } from "./street-decompose.ts"
 
 /**

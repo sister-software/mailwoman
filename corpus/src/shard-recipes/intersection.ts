@@ -39,11 +39,11 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { JSONSpliterator } from "spliterator"
 
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
-import type { CanonicalRow, LabeledRow } from "../types.ts"
 import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 interface County {

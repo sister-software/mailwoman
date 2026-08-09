@@ -21,12 +21,10 @@ import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
+import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "@mailwoman/corpus/utils"
+import type { ShardManifest } from "@mailwoman/corpus/utils"
 import { JSONSpliterator } from "spliterator"
-
-import { alignRow } from "../align.ts"
-import type { ShardManifest } from "../parquet.ts"
-import { PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "../parquet.ts"
-import type { CanonicalRow, LabeledRow } from "../types.ts"
 
 export interface ShardKryptoniteOptions {
 	jsonl: string

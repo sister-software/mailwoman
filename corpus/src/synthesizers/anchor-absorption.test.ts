@@ -6,10 +6,12 @@
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
+import {
+	synthesizeAnchorAbsorptionRow,
+	type AnchorAbsorptionTemplate,
+} from "@mailwoman/corpus/synthesizers/anchor-absorption"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
-
-import { alignRow } from "./align.ts"
-import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "./synthesize-anchor-absorption.ts"
 
 // A deterministic RNG so the assertions are stable.
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {
@@ -38,7 +40,7 @@ function leadingTag(aligned: ReturnType<typeof alignRow>): string | null {
 	return l && l !== "O" ? l.slice(2) : (l ?? null)
 }
 
-describe("synthesize-anchor-absorption", () => {
+describe("synthesize anchor-absorption", () => {
 	const templates: AnchorAbsorptionTemplate[] = [
 		"h-adversarial",
 		"h-no-trailing-locality",

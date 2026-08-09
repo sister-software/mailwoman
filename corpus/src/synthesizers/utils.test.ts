@@ -5,9 +5,10 @@
  */
 
 import { BIO_LABELS, type ComponentTag } from "@mailwoman/core/types"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.ts"
 import {
 	AUGMENTATIONS,
 	accentStrip,
@@ -29,8 +30,7 @@ import {
 	unitDesignatorAbbreviate,
 	unitDesignatorExpand,
 	zipPlus4DashDrop,
-} from "./synthesize.ts"
-import type { CanonicalRow, LabeledRow } from "./types.ts"
+} from "./utils.ts"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",

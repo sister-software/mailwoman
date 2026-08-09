@@ -6,11 +6,19 @@
 	"imports": {
 		"#e2e": "./test/e2e/index.ts",
 		"#e2e/*": "./test/e2e/*",
+		"#components/*": "./src/components/*.tsx",
+		"#contexts/*": "./src/contexts/*.tsx",
+		"#hooks/*": "./src/hooks/*.ts",
+		"#shared/resources": "./src/shared/resources/index.ts",
 		"#shared/*": "./src/shared/*.ts"
 	},
 	"exports": {
+		"./package.json": "./package.json",
 		"./components/*": "./src/components/*.tsx",
-		"./contexts/*": "./src/contexts/*.tsx"
+		"./contexts/*": "./src/contexts/*.tsx",
+		"./hooks/*": "./src/hooks/*.ts",
+		"./shared/resources": "./src/shared/resources/index.ts",
+		"./shared/*": "./src/shared/*.ts"
 	},
 	"scripts": {
 		"build": "yarn prebuild && docusaurus build",

@@ -16,9 +16,9 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import type { SynthesizedLocaleRow } from "@mailwoman/corpus/synthesizers/german"
 import { afterAll, describe, expect, it } from "vitest"
 
-import type { SynthesizedLocaleRow } from "../synthesize-german.ts"
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,

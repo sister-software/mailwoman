@@ -19,9 +19,9 @@
  *   `useDemoEmbed()`. Spec: docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md.
  */
 
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import React, { useMemo, useState } from "react"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
 import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
 
 import styles from "./styles.module.css"

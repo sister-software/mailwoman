@@ -32,24 +32,25 @@ import { DatabaseSync } from "node:sqlite"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { LocaleBaseTuple } from "@mailwoman/corpus/synthesizers/german"
+import {
+	classifyIdentifier,
+	readSubVenueJSONL,
+	type SubVenueLexiconTable,
+	SUBVENUE_PROMOTIONS,
+	type SubVenuePromotion,
+} from "@mailwoman/corpus/tools"
 
-import type { LocaleBaseTuple } from "../synthesize-german.ts"
-import { classifyIdentifier, readSubVenueJSONL, type SubVenueLexiconTable } from "../tools/sub-venue-lexicon.ts"
-import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "../tools/sub-venue-promotions.ts"
 import { readTuples as readLocaleTuples, type LocalePart } from "./locale.ts"
 import { makeMulberry32, readTuples as readShardTuples } from "./scaffold.ts"
 
 //#region Lexicon
 
-const require_ = createRequire(import.meta.url)
-
 /**
- * The committed lexicon, resolved through the package manifest rather than by counting `..` segments — the same file
- * sits at `corpus/data/` from both the source tree and the compiled `out/` tree, and `createRequire().resolve` finds it
- * from either without a `__isCompiledTree` flag of its own.
+ * The committed lexicon, resolved through the package manifest.
  */
 export function defaultLexiconPath(): string {
-	return resolve(dirname(require_.resolve("@mailwoman/corpus/package.json")), "data", "sub-venue-lexicon.json")
+	return dirname(import.meta.resolve("@mailwoman/corpus/data/sub-venue-lexicon.json"))
 }
 
 /**

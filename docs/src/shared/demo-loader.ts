@@ -20,7 +20,12 @@ import type { DemoAssetsLoadContext } from "@mailwoman/react"
 
 import type { Calibrator, ReleaseInfo, SelectPairIndex } from "./demo-helpers.ts"
 import { createCalibrator, DEFAULT_LOCALE } from "./demo-helpers.ts"
-import type { FSTMatcherLike, FSTProvenanceLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources.tsx"
+import type {
+	FSTMatcherLike,
+	FSTProvenanceLike,
+	MailwomanClassifierLike,
+	MailwomanLookupLike,
+} from "./resources/index.ts"
 import {
 	adminGazetteerURL,
 	assetURL,
@@ -29,7 +34,7 @@ import {
 	neuralClassifierLoadURLs,
 	pairIndexURLs,
 	resolvePairIndexBaseURL,
-} from "./resources.tsx"
+} from "./resources/index.ts"
 
 /**
  * The docs-side asset bundle `useDemoRuntime` loads + holds for the selected version (opaque to the package). The map

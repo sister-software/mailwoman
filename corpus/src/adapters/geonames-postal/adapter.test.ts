@@ -8,9 +8,9 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { beforeEach, describe, expect, it } from "vitest"
 
-import type { CanonicalRow } from "../../types.ts"
 import { createGeonamesPostalAdapter, GEONAMES_POSTAL_ADAPTER_ID, GEONAMES_POSTAL_DEFAULT_LICENSE } from "./adapter.ts"
 
 let scratch: string

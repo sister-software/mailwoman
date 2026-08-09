@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -12,8 +13,7 @@ import {
 	splitStreetLine,
 	stableSourceID,
 	streamingSha256,
-} from "./adapter.ts"
-import type { CanonicalRow, CorpusAdapter } from "./types.ts"
+} from "./index.ts"
 
 function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
 	return {

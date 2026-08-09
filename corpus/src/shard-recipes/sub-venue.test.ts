@@ -12,9 +12,9 @@
  *   `Gate` from `Briggate` are asserted directly, against the committed lexicon.
  */
 
+import { SUBVENUE_PROMOTIONS } from "@mailwoman/corpus/tools"
 import { describe, expect, it } from "vitest"
 
-import { SUBVENUE_PROMOTIONS } from "../tools/sub-venue-promotions.ts"
 import { makeMulberry32 } from "./scaffold.ts"
 import {
 	allocate,

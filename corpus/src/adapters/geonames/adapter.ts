@@ -30,12 +30,11 @@
 
 import { existsSync } from "node:fs"
 
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { reconcileComponents } from "@mailwoman/formatter"
 import { dirname, join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
-
-import { stableSourceID } from "../../adapter.ts"
-import { reconcileComponents } from "../../format.ts"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

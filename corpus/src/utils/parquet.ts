@@ -37,15 +37,14 @@
  *   close — cheap relative to writing it).
  */
 
-import { createReadStream } from "node:fs"
 import { mkdir, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { sha256File } from "@mailwoman/core/utils"
+import { ParquetWriter, type ParquetSchemaDefinition } from "@mailwoman/corpus/parquet-wrapper"
+import type { LabeledRow } from "@mailwoman/corpus/types"
 
-import { ParquetWriter, type ParquetSchemaDefinition } from "./parquet-wrapper/index.ts"
 import type { SplitName } from "./split.ts"
-import type { LabeledRow } from "./types.ts"
 
 /**
  * Row groups flush at this many rows (parquetjs internal cadence within a shard).

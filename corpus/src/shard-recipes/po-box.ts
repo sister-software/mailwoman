@@ -9,7 +9,12 @@
  *   scripts/build-po-box-shard.mjs.
  */
 
-import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "../synthesize-po-box.ts"
+import {
+	synthesizeMilitaryPoBoxRow,
+	synthesizePoBoxRow,
+	type PoBoxBaseTuple,
+} from "@mailwoman/corpus/synthesizers/po-box"
+
 import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"

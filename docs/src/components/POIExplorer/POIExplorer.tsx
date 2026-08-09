@@ -7,7 +7,7 @@
  *   (classify → subject → OverpassQL) lives entirely in the package and is self-contained. This file
  *   supplies only the ONE docs-specific concern: the live poi.db search, which needs the site's staged
  *   sql.js-httpvfs assets and the byte-ranged published layer. It's injected as a `runLiveSearch`
- *   function that dynamically imports `../../shared/poi-httpvfs.ts` on first use, so the httpvfs/worker
+ *   function that dynamically imports `@mailwoman/docs/shared/poi-httpvfs` on first use, so the httpvfs/worker
  *   machinery never enters the package's browser graph and the intent-only common case pays nothing.
  *
  *   The injected probe is CATEGORY-ONLY, and `brandLiveSearch` is left off (default), so a chain-brand
@@ -51,7 +51,8 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 	// Preserves the tester's two failure modes — anchor unplaceable vs layer unreachable.
 	const runLiveSearch = useCallback<POILiveSearch>(
 		async ({ categoryID, overtureCategoryIDs, anchor }) => {
-			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } = await import("../../shared/poi-httpvfs.ts")
+			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } =
+				await import("@mailwoman/docs/shared/poi-httpvfs")
 
 			const center = await resolveAnchorCenter(sqljsBaseURL, anchor)
 

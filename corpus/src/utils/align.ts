@@ -34,10 +34,10 @@
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
+import type { CanonicalRow, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "./tokenize.ts"
-import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.ts"
 
 /**
  * Options for `alignRow`.

@@ -32,11 +32,11 @@
 
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
 
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
-import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler

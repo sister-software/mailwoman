@@ -39,15 +39,15 @@ import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { TextSpliterator, TSVSpliterator } from "spliterator"
-
-import { alignRow } from "../align.ts"
 import {
 	maybeNoisifyBoxNumber,
 	PO_BOX_LOCALE_TEMPLATES,
 	synthesizeMilitaryPoBoxRow,
 	type LocaleTemplate,
-} from "../synthesize-po-box.ts"
+} from "@mailwoman/corpus/synthesizers/po-box"
+import { alignRow } from "@mailwoman/corpus/utils"
+import { TextSpliterator, TSVSpliterator } from "spliterator"
+
 import {
 	makeMulberry32,
 	readCSVRecords,

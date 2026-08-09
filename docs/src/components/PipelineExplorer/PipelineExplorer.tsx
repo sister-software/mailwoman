@@ -23,25 +23,25 @@
  * ```
  */
 
-import { PipelineExplorer as ReactPipelineExplorer } from "@mailwoman/react"
-import type { ParseResult, PipelinePanels, PipelineRuntime, ResolvedPlaceView } from "@mailwoman/react"
-import { useMemo } from "react"
+import { AboutDemo } from "@mailwoman/docs/components/AboutDemo/AboutDemo"
+import { BIOHighlight } from "@mailwoman/docs/components/BIOHighlight/BIOHighlight"
+import { ClassifierOverlay } from "@mailwoman/docs/components/ClassifierOverlay/ClassifierOverlay"
 
 import "@mailwoman/react/styles.css"
 
-import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
-import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "../../shared/demo-helpers.ts"
-import { AboutDemo } from "../AboutDemo/AboutDemo.tsx"
-import { BIOHighlight } from "../BIOHighlight/BIOHighlight.tsx"
-import { ClassifierOverlay } from "../ClassifierOverlay/ClassifierOverlay.tsx"
-import { CRFDiff } from "../CRFDiff/CRFDiff.tsx"
-import { FailureDiagnostic } from "../FailureDiagnostic/FailureDiagnostic.tsx"
-import { FSTWalker } from "../FSTWalker/FSTWalker.tsx"
-import { GuidedTour } from "../GuidedTour/GuidedTour.tsx"
-import { SpanHighlight } from "../SpanHighlight/SpanHighlight.tsx"
-import { SubwordExplorer } from "../SubwordExplorer/SubwordExplorer.tsx"
-import { TimingPanel } from "../TimingPanel/TimingPanel.tsx"
-import { TreeView } from "../TreeView/TreeView.tsx"
+import { CRFDiff } from "@mailwoman/docs/components/CRFDiff/CRFDiff"
+import { FailureDiagnostic } from "@mailwoman/docs/components/FailureDiagnostic/FailureDiagnostic"
+import { FSTWalker } from "@mailwoman/docs/components/FSTWalker/FSTWalker"
+import { GuidedTour } from "@mailwoman/docs/components/GuidedTour/GuidedTour"
+import { SpanHighlight } from "@mailwoman/docs/components/SpanHighlight/SpanHighlight"
+import { SubwordExplorer } from "@mailwoman/docs/components/SubwordExplorer/SubwordExplorer"
+import { TimingPanel } from "@mailwoman/docs/components/TimingPanel/TimingPanel"
+import { TreeView } from "@mailwoman/docs/components/TreeView/TreeView"
+import { useDemoEmbed } from "@mailwoman/docs/contexts/DemoEmbed"
+import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "@mailwoman/docs/shared/demo-helpers"
+import { PipelineExplorer as ReactPipelineExplorer } from "@mailwoman/react"
+import type { ParseResult, PipelinePanels, PipelineRuntime, ResolvedPlaceView } from "@mailwoman/react"
+import { useMemo } from "react"
 
 import styles from "./styles.module.css"
 

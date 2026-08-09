@@ -36,25 +36,46 @@
 			"default": "./out/src/types.js",
 			"types": "./out/src/types.d.ts"
 		},
-		"./format": {
-			"node": "./src/format.ts",
-			"default": "./out/src/format.js",
-			"types": "./out/src/format.d.ts"
+		"./data/*": "./src/data/*",
+		"./utils": {
+			"node": "./src/utils/index.ts",
+			"default": "./out/src/utils/index.js",
+			"types": "./out/src/utils/index.d.ts"
 		},
-		"./license": {
-			"node": "./src/license.ts",
-			"default": "./out/src/license.js",
-			"types": "./out/src/license.d.ts"
+		"./parquet-wrapper": {
+			"node": "./src/parquet-wrapper/index.ts",
+			"default": "./out/src/parquet-wrapper/index.js",
+			"types": "./out/src/parquet-wrapper/index.d.ts"
+		},
+		"./runner": {
+			"node": "./src/runner.ts",
+			"default": "./out/src/runner.js",
+			"types": "./out/src/runner.d.ts"
 		},
 		"./build": {
 			"node": "./src/build.ts",
 			"default": "./out/src/build.js",
 			"types": "./out/src/build.d.ts"
 		},
+		"./synthesizers/*": {
+			"node": "./src/synthesizers/*.ts",
+			"default": "./out/src/synthesizers/*.js",
+			"types": "./out/src/synthesizers/*.d.ts"
+		},
+		"./adapters/utils": {
+			"node": "./src/adapters/utils/index.ts",
+			"default": "./out/src/adapters/utils/index.js",
+			"types": "./out/src/adapters/utils/index.d.ts"
+		},
 		"./adapters": {
 			"node": "./src/adapters/index.ts",
 			"default": "./out/src/adapters/index.js",
 			"types": "./out/src/adapters/index.d.ts"
+		},
+		"./adapters/*": {
+			"node": "./src/adapters/*.ts",
+			"default": "./out/src/adapters/*.js",
+			"types": "./out/src/adapters/*.d.ts"
 		},
 		"./test-kit": {
 			"node": "./test-kit/index.ts",
@@ -65,6 +86,11 @@
 			"node": "./src/tools/index.ts",
 			"default": "./out/src/tools/index.js",
 			"types": "./out/src/tools/index.d.ts"
+		},
+		"./codex/*": {
+			"node": "./src/codex/*.ts",
+			"default": "./out/src/codex/*.js",
+			"types": "./out/src/codex/*.d.ts"
 		}
 	},
 	"publishConfig": {

@@ -25,7 +25,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { wofAdminAdapter } from "./adapters/wof-admin-json/adapter.ts"
 import { buildCorpus, type BuildStage } from "./build.ts"
 import { ParquetReader } from "./parquet-wrapper/index.ts"
-import type { ParquetRow } from "./parquet.ts"
+import type { ParquetRow } from "./utils/parquet.ts"
 
 const fixtureRoot = repoRootPath("corpus", "fixtures", "wof-admin-json")
 

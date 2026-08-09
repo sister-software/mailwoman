@@ -34,10 +34,10 @@
  *   counter-example signal the model is missing.
  *
  *   This complements (does not replace) the existing US-base-tuple source used by
- *   `synthesize-po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
+ *   `po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
  */
 
-import type { CanonicalRow } from "./types.ts"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 
 //#region Types
 

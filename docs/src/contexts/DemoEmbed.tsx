@@ -17,27 +17,26 @@
  *   public context shape is unchanged.
  */
 
-import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
-import { useDemoRuntime } from "@mailwoman/react"
-import type React from "react"
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
-
-import type { Calibrator, ReleaseInfo, ReleasesManifest, SelectPairIndex } from "../shared/demo-helpers.ts"
-import { DEFAULT_LOCALE, normalizeReleasesManifest } from "../shared/demo-helpers.ts"
-import type { DocsDemoAssets } from "../shared/demo-loader.ts"
-import { loadDemoAssets } from "../shared/demo-loader.ts"
-import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "../shared/register-range-sw.ts"
+import type { Calibrator, ReleaseInfo, ReleasesManifest, SelectPairIndex } from "@mailwoman/docs/shared/demo-helpers"
+import { DEFAULT_LOCALE, normalizeReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
+import type { DocsDemoAssets } from "@mailwoman/docs/shared/demo-loader"
+import { loadDemoAssets } from "@mailwoman/docs/shared/demo-loader"
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "@mailwoman/docs/shared/register-range-sw"
 import type {
 	FSTMatcherLike,
 	FSTProvenanceLike,
 	MailwomanClassifierLike,
 	MailwomanLookupLike,
-} from "../shared/resources.tsx"
-import { assetURL } from "../shared/resources.tsx"
+} from "@mailwoman/docs/shared/resources"
+import { assetURL } from "@mailwoman/docs/shared/resources"
+import type { DemoAssetsLoadContext, DemoManifest } from "@mailwoman/react"
+import { useDemoRuntime } from "@mailwoman/react"
+import type React from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react"
 
 //#region Types
 
-export type { ReleaseInfo, ReleasesManifest } from "../shared/demo-helpers.ts"
+export type { ReleaseInfo, ReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
 
 export interface DemoEmbedState {
 	/**

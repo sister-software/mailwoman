@@ -30,11 +30,15 @@ import { createReadStream } from "node:fs"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import {
+	type LocaleBaseTuple,
+	type SynthesizedLocaleRow,
+	synthesizeLocaleRow,
+} from "@mailwoman/corpus/synthesizers/german"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
-import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "../synthesize-german.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**

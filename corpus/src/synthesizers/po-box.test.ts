@@ -5,9 +5,10 @@
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.ts"
 import {
 	composePoBoxPhrase,
 	countryToLocale,
@@ -15,8 +16,7 @@ import {
 	supportedLocales,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
-} from "./synthesize-po-box.ts"
-import type { CanonicalRow } from "./types.ts"
+} from "./po-box.ts"
 
 // Deterministic RNG for reproducible tests.
 describe("synthesizePoBoxRow", () => {

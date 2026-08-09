@@ -8,10 +8,10 @@
  *   built before the trace seam lack it, in which case we say so instead of crashing.
  */
 
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import React, { useCallback, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
-import type { ParseTraceLike } from "../../shared/resources.tsx"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
 
 import styles from "./styles.module.css"

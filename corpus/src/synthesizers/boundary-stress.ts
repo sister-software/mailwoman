@@ -46,10 +46,10 @@
  *   tokenizer splits `/`) and is the worst within-token class — but it inherently requires non-base
  *   AU/NZ/UK locales, which contradict the US/FR/DE base (the lint catch). It belongs in a
  *   separately-scoped AU/NZ/UK boundary-coverage shard that ALSO adds AU base coverage, not in this
- *   base-locale shard. `synthesize-boundary-stress.test.ts` proves the alignments.
+ *   base-locale shard. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
-import type { CanonicalRow } from "./types.ts"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the

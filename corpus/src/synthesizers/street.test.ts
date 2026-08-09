@@ -7,7 +7,7 @@
 import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-import { synthesizeStreetRow } from "./synthesize-street.ts"
+import { synthesizeStreetRow } from "./street.ts"
 
 describe("synthesizeStreetRow", () => {
 	it("emits all required components", () => {
@@ -22,7 +22,7 @@ describe("synthesizeStreetRow", () => {
 		expect(row!.components.region).toBe("VT")
 		expect(row!.components.postcode).toBe("05401")
 		// `country` is intentionally omitted from `components` — see the note in
-		// `synthesize-street.ts` about the aligner's edit-distance-2 fuzzy match spuriously
+		// `synthesizers/street.ts` about the aligner's edit-distance-2 fuzzy match spuriously
 		// pairing "US" with arbitrary 2-char tokens (e.g. a house number "45"). The base country
 		// is consumed only to gate the synthesizer (US-only) and to select the locale tag.
 		expect(row!.components.country).toBeUndefined()

@@ -22,10 +22,9 @@
 import { readdir } from "node:fs/promises"
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+import { reconcileComponents } from "@mailwoman/formatter"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
-
-import { reconcileComponents } from "./format.ts"
 
 const TAG_SET = new Set<string>(COMPONENT_TAGS as readonly string[])
 

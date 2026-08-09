@@ -7,7 +7,7 @@
 import { makeLcg } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "./synthesize-house-venue.ts"
+import { type HouseVenueBaseTuple, hasHouseNumberAndVenue, synthesizeHouseVenueRow } from "./house-venue.ts"
 
 const TUPLE: HouseVenueBaseTuple = {
 	locality: "Boston",

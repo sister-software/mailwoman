@@ -5,9 +5,8 @@
  */
 
 import { BIO_LABELS, COMPONENT_TAGS } from "@mailwoman/core/types"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
-
-import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow, QuarantinedRow } from "./types.ts"
 
 describe("corpus types", () => {
 	it("CanonicalRow accepts every COMPONENT_TAG as a component key", () => {

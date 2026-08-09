@@ -35,10 +35,10 @@ import {
 } from "@mailwoman/codex/us"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 } from "@mailwoman/core/utils"
+import type { CanonicalRow, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
+import { alignRow, assertSpanInvariants, type ComponentSpan } from "@mailwoman/corpus/utils"
 
-import { alignRow, assertSpanInvariants, type ComponentSpan } from "./align.ts"
-import { whitespaceTokenizer, type Tokenizer } from "./tokenize.ts"
-import type { CanonicalRow, LabeledRow, QuarantinedRow } from "./types.ts"
+import { whitespaceTokenizer, type Tokenizer } from "../utils/tokenize.ts"
 
 /**
  * An augmentation transforms a single row. Return `null` if the augmentation doesn't apply (e.g. accent-strip on a row

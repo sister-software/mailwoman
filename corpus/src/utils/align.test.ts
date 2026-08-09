@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-import { alignRow } from "./align.ts"
 import { whitespaceTokenizer } from "./tokenize.ts"
-import type { CanonicalRow } from "./types.ts"
 
 const baseRow = (over: Partial<CanonicalRow>): CanonicalRow => ({
 	raw: "",

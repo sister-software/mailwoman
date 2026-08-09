@@ -10,7 +10,8 @@
  *   scripts/build-no-street-shard.mjs.
  */
 
-import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "../synthesize-no-street.ts"
+import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "@mailwoman/corpus/synthesizers/no-street"
+
 import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 
 const LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"

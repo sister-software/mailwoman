@@ -9,11 +9,11 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter, type RunnerProgress } from "./runner.ts"
-import type { CanonicalRow, CorpusAdapter } from "./types.ts"
 
 function makeAdapter(opts: {
 	id?: string

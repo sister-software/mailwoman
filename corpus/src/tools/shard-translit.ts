@@ -34,13 +34,19 @@ import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
+import {
+	alignRow,
+	LABELED_ROW_SCHEMA,
+	PARQUET_COLUMNS,
+	ROW_GROUP_SIZE,
+	rowToParquet,
+	SHARD_COMPRESSION,
+} from "@mailwoman/corpus/utils"
+import type { ParquetRow, ShardDescriptor, ShardManifest } from "@mailwoman/corpus/utils"
 import { JSONSpliterator } from "spliterator"
 
-import { alignRow } from "../align.ts"
 import { ParquetWriter } from "../parquet-wrapper/index.ts"
-import type { ParquetRow, ShardDescriptor, ShardManifest } from "../parquet.ts"
-import { LABELED_ROW_SCHEMA, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, SHARD_COMPRESSION } from "../parquet.ts"
-import type { CanonicalRow, LabeledRow } from "../types.ts"
 
 export interface ShardTranslitOptions {
 	jsonl: string

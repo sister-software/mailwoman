@@ -16,10 +16,10 @@ import { readFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import { synthesizeAnchorAbsorptionRow } from "@mailwoman/corpus/synthesizers/anchor-absorption"
+import { alignRow } from "@mailwoman/corpus/utils"
 
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
-import { synthesizeAnchorAbsorptionRow } from "../synthesize-anchor-absorption.ts"
 import { makeLcg, type ShardRecipe } from "./scaffold.ts"
 
 /**

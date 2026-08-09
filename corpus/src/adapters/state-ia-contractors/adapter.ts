@@ -16,12 +16,11 @@
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
+import { splitStreetLine, stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import { lookupStateAbbreviation } from "@mailwoman/corpus/codex/us-fips-state"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
-
-import { splitStreetLine, stableSourceID } from "../../adapter.ts"
-import { lookupStateAbbreviation } from "../../codex/us-fips-state.ts"
-import { reconcileComponents } from "../../format.ts"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

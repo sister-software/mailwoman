@@ -13,12 +13,11 @@ import { existsSync } from "node:fs"
 
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import { alignRow } from "@mailwoman/corpus/utils"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator } from "spliterator"
-
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
 
 /**
  * {@link stableSourceID}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't

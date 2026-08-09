@@ -13,10 +13,9 @@
  *   offsets). Each pipeline stage's contribution is annotated per word where applicable.
  */
 
+import { confidenceTier } from "@mailwoman/docs/shared/confidence-tiers"
+import type { KindResult, ResultNode, StageTiming } from "@mailwoman/docs/shared/resources"
 import type React from "react"
-
-import { confidenceTier } from "../../shared/confidence-tiers.ts"
-import type { KindResult, ResultNode, StageTiming } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 

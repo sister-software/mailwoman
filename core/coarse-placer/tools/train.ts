@@ -15,10 +15,9 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
-import { dataRootPath } from "../../utils/data-root.ts"
-import { repoRootPath } from "../../utils/repo.ts"
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "../featurize.ts"
 
 /**

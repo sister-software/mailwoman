@@ -31,11 +31,11 @@
  *   country !== FR).
  */
 
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "../../adapter.ts"
-import { reconcileComponents } from "../../format.ts"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "../../types.ts"
 import { decomposeFrStreet } from "./street-decompose.ts"
 
 /**

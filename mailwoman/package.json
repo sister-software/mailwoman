@@ -59,6 +59,13 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./commands": "./out/commands/index.js",
+		"./commands/*.tsx": "./out/commands/*.js",
+		"./commands/*": {
+			"node": "./commands/*.ts",
+			"default": "./out/commands/*.js",
+			"types": "./out/commands/*.d.ts"
+		},
 		"./dev-tools/*": {
 			"node": "./dev-tools/*.ts",
 			"default": "./out/dev-tools/*.js",

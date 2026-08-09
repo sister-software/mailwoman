@@ -27,10 +27,10 @@
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
+import { alignRow } from "@mailwoman/corpus/utils"
 
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
-import type { CanonicalRow } from "../types.ts"
 import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 // v2: the country TOKEN is decoupled from the skeleton's locale and drawn from a BROAD pool — every

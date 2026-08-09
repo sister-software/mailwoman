@@ -1,7 +1,6 @@
+import { ResourceError } from "@mailwoman/core/errors"
+import { ConsoleLogger } from "@mailwoman/core/logging"
 import { defaultRegistry } from "async-init"
-
-import { ResourceError } from "../../errors/index.ts"
-import { ConsoleLogger } from "../../logging/index.ts"
 
 /**
  * Logs an error that occurred while running a script.

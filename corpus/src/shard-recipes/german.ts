@@ -16,10 +16,10 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import { synthesizeGermanRow, type LocaleBaseTuple } from "@mailwoman/corpus/synthesizers/german"
+import { alignRow } from "@mailwoman/corpus/utils"
 
-import { stableSourceID } from "../adapter.ts"
-import { alignRow } from "../align.ts"
-import { synthesizeGermanRow, type LocaleBaseTuple } from "../synthesize-german.ts"
 import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**

@@ -27,7 +27,7 @@
 
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 
-import type { MailwomanLookupLike } from "./resources.tsx"
+import type { MailwomanLookupLike } from "./resources/index.ts"
 
 type LookupHit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
 

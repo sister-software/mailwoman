@@ -16,7 +16,7 @@ import {
 	type NoStreetTemplate,
 	STREET_SIDE_TAGS,
 	synthesizeNoStreetRow,
-} from "./synthesize-no-street.ts"
+} from "./no-street.ts"
 
 const SAMPLE_BASE: NoStreetBaseTuple = {
 	locality: "Boston",

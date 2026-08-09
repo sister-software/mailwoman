@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
 import fixture from "./fixtures/white-house.trace.json"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
 

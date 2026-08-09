@@ -9,7 +9,7 @@
  *   per word.
  */
 
-import type { ResultNode } from "../../shared/resources.tsx"
+import type { ResultNode } from "@mailwoman/docs/shared/resources"
 
 import styles from "./styles.module.css"
 

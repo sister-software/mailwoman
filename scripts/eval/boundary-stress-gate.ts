@@ -33,13 +33,12 @@ import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { mulberry32 } from "@mailwoman/core/utils"
-import { createScorer } from "@mailwoman/neural/scorer"
-import { resolveWeights } from "@mailwoman/neural/weights"
-
 import {
 	type BoundaryStressTemplate,
 	synthesizeBoundaryStressRow,
-} from "../../corpus/src/synthesize-boundary-stress.ts"
+} from "@mailwoman/corpus/synthesizers/boundary-stress"
+import { createScorer } from "@mailwoman/neural/scorer"
+import { resolveWeights } from "@mailwoman/neural/weights"
 
 const { values: args } = parseArgs({
 	options: {

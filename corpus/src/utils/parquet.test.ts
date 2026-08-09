@@ -12,9 +12,10 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
+import type { LabeledRow } from "@mailwoman/corpus/types"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-import { ParquetReader } from "./parquet-wrapper/index.ts"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -24,7 +25,6 @@ import {
 	writeShards,
 	type ParquetRow,
 } from "./parquet.ts"
-import type { LabeledRow } from "./types.ts"
 
 const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	raw: "Paris",

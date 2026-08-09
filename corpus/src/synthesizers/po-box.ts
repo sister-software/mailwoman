@@ -24,7 +24,7 @@
  *   - USPS DMM 508 §4.1.4 / §4.5.4 — PO Box and street-addressed PO Box
  */
 
-import type { CanonicalRow } from "./types.ts"
+import type { CanonicalRow } from "@mailwoman/corpus/types"
 
 /**
  * Digits a box number needs before a thousands comma is plausible (`1,234`).
