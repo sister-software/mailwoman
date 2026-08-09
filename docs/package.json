@@ -79,7 +79,7 @@
 		"@types/react-map-gl": "^6.1.8",
 		"@vitejs/plugin-react": "^6.0.5",
 		"@vvago/vale": "^3.17.0",
-		"commander": "^14.0.1",
+		"commander": "^15.0.0",
 		"ink": "^7.1.1",
 		"pastel": "^4.0.1",
 		"spliterator": "^6.1.0",
