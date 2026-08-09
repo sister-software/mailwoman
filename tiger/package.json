@@ -63,7 +63,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"@turf/boolean-contains": "^7.3.5",
+		"@turf/boolean-contains": "^7.4.0",
 		"kysely": "^0.29.4",
 		"shapefile-parser": "^1.0.3",
 		"spliterator": "^6.1.0",
