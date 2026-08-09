@@ -76,6 +76,28 @@ export interface PlaceCandidate {
 	 */
 	population?: number
 	/**
+	 * REFERENTIAL likelihood in [0, 1] — `referentialFromPopulation(population)`, the named form of the prominence key
+	 * this resolver has always ranked namesakes by (ROAD_TO_V9 §2, ratified 2026-08-06).
+	 *
+	 * It is a strictly-increasing function of {@link PlaceCandidate.population} below `REFERENTIAL_SATURATION_POPULATION`
+	 * and constant above it, so ordering by it — via `compareReferential`, which restores the megacity order with a
+	 * population tiebreak — is the SAME ORDER as ordering by population. That equivalence is the point: naming the
+	 * ranking key costs nothing at the ranking.
+	 *
+	 * Absent when the candidate has no population on record, exactly as {@link PlaceCandidate.population} is.
+	 */
+	referential?: number
+	/**
+	 * Encyclopedic (Wikipedia) importance in [0, 1], fan-out-guarded per #1497 — CARRIED, NEVER RANKED ON.
+	 *
+	 * Present only when the shard's `place_importance` table carries the split columns. `undefined` means either "this
+	 * place has no Wikipedia article" or "this gazetteer predates the split"; both are absence, and neither is 0.
+	 *
+	 * Saint-Denis is why this is not a ranking key: the Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the
+	 * Aude hamlet (pop 418) scores 0.5683. Consumers that want to display salience read this; the ranking never does.
+	 */
+	encyclopedic?: number
+	/**
 	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns. Coarse outline for the place — a city's bbox
 	 * is the city's full extent, a postcode's is roughly the postcode polygon's envelope. Optional because not all
 	 * callers ask for it; implementations are free to omit when the underlying schema lacks the columns.
@@ -141,6 +163,13 @@ export interface FindPlaceQuery {
 	 * postcode_locality shard is present.
 	 */
 	postcode?: string
+	/**
+	 * Postcode-containment coherence (#31, Mechanism 2) — when true on a locality query that also carries `postcode`,
+	 * candidate rows within `POSTCODE_CONTAINMENT_GATE_KM` of the postcode's own centroid sort by distance first, the
+	 * rest appended in their original order. Set by the resolver from `ResolveOpts.postcodeContainmentCoherence`; absent
+	 * → the population-first order is untouched (byte-identical).
+	 */
+	postcodeContainmentCoherence?: boolean
 	/**
 	 * Proximity hint — candidates close to this point get a ranking boost.
 	 */

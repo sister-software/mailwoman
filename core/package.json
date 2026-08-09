@@ -97,6 +97,11 @@
 			"default": "./out/fs/node.js",
 			"types": "./out/fs/node.d.ts"
 		},
+		"./fs/zip": {
+			"node": "./fs/zip.ts",
+			"default": "./out/fs/zip.js",
+			"types": "./out/fs/zip.d.ts"
+		},
 		"./scripting": {
 			"node": "./scripting/index.ts",
 			"default": "./out/scripting/index.js",
@@ -197,6 +202,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
 		"axios": "^1.19.0",
 		"axios-cache-interceptor": "^1.12.1",
@@ -211,8 +217,9 @@
 		"pino-pretty": "^13.1.3",
 		"pluralize": "^8.0.0",
 		"regenerate": "^1.4.2",
-		"spliterator": "^6.0.1",
+		"spliterator": "^6.1.0",
 		"type-fest": "^5.8.0",
+		"yauzl-promise": "^4.0.0",
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
@@ -220,6 +227,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@types/d3-color": "^3.1.3",
-		"@types/d3-scale-chromatic": "^3.1.0"
+		"@types/d3-scale-chromatic": "^3.1.0",
+		"@types/yauzl-promise": "^4.0.1"
 	}
 }

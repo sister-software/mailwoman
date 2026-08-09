@@ -6,11 +6,19 @@
 	"imports": {
 		"#e2e": "./test/e2e/index.ts",
 		"#e2e/*": "./test/e2e/*",
+		"#components/*": "./src/components/*.tsx",
+		"#contexts/*": "./src/contexts/*.tsx",
+		"#hooks/*": "./src/hooks/*.ts",
+		"#shared/resources": "./src/shared/resources/index.ts",
 		"#shared/*": "./src/shared/*.ts"
 	},
 	"exports": {
+		"./package.json": "./package.json",
 		"./components/*": "./src/components/*.tsx",
-		"./contexts/*": "./src/contexts/*.tsx"
+		"./contexts/*": "./src/contexts/*.tsx",
+		"./hooks/*": "./src/hooks/*.ts",
+		"./shared/resources": "./src/shared/resources/index.ts",
+		"./shared/*": "./src/shared/*.ts"
 	},
 	"scripts": {
 		"build": "yarn prebuild && docusaurus build",
@@ -56,7 +64,7 @@
 		"clsx": "^2.1.1",
 		"docusaurus-plugin-glossary": "^3.3.4",
 		"h3-js": "^4.5.0",
-		"js-yaml": "^4.1.0",
+		"js-yaml": "^4.3.1",
 		"maplibre-gl": "^5.24.0",
 		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2",
 		"prism-react-renderer": "^2.4.1",
@@ -82,7 +90,7 @@
 		"commander": "^14.0.1",
 		"ink": "^7.1.1",
 		"pastel": "^4.0.1",
-		"spliterator": "^6.0.1",
+		"spliterator": "^6.1.0",
 		"sql.js-httpvfs": "^0.8.12",
 		"storybook": "^10.5.5",
 		"typescript": "^6.0.3",

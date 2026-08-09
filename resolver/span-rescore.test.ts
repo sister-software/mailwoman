@@ -23,9 +23,13 @@ const norm = (s: string): string =>
 		.trim()
 
 /**
- * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments).
+ * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments), with an optional
+ * ALIAS surface per place — a row admitted by an alias stands in for the gazetteer's names table / alt_names bag, which
+ * is what stamps the backend's `exactMatch` on name-OR-alias equality.
  */
-const PLACES: ResolvedPlace[] = [
+type FixturePlace = ResolvedPlace & { aliases?: string[] }
+
+const PLACES: FixturePlace[] = [
 	{
 		id: 1,
 		name: "Grudziądz",
@@ -59,6 +63,123 @@ const PLACES: ResolvedPlace[] = [
 	},
 	// A postcode → point, near Tomaszów Mazowiecki (the gate anchor).
 	{ id: 900, name: "97-200", placetype: "postalcode", country: "PL", lat: 51.53, lon: 20.01, score: 1 },
+	// #1537 namesake group: four same-named US localities, rank order as listed. The model reads a bare
+	// "Springfield" as a `street`, so the admin walk never touches it and span-rescore is the only tier
+	// that resolves it — which is why the runner-ups have to survive THIS path to reach a consumer.
+	{
+		id: 10,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 37.19,
+		lon: -93.29,
+		score: 8,
+		prominence: 5.23,
+		exactMatch: true,
+	},
+	{
+		id: 11,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 39.78,
+		lon: -89.64,
+		score: 7,
+		prominence: 5.19,
+		exactMatch: true,
+	},
+	{
+		id: 12,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 42.1,
+		lon: -72.59,
+		score: 6,
+		prominence: 5.05,
+		exactMatch: true,
+	},
+	// Sits ~5 km from id 11 — the one same-name candidate that SURVIVES a 62701-anchored gate alongside it.
+	{
+		id: 13,
+		name: "Springfield",
+		placetype: "locality",
+		country: "US",
+		lat: 39.8,
+		lon: -89.7,
+		score: 4,
+		prominence: 4.1,
+		exactMatch: true,
+	},
+	// The gate anchor for the namesake group — resolves next to id 11 (IL).
+	{ id: 901, name: "62701", placetype: "postalcode", country: "US", lat: 39.79, lon: -89.65, score: 1 },
+	// A lone namesake: one place, one name. The "absent, not empty" case.
+	{
+		id: 20,
+		name: "Grudziądzek",
+		placetype: "locality",
+		country: "PL",
+		lat: 53.4,
+		lon: 18.7,
+		score: 9,
+		exactMatch: true,
+	},
+	// #1546: the non-Latin-primary namesake, modeled on the LIVE shipped board. Moscow RU (pop 12.7M,
+	// primary "Москва") is admitted to a "Moscow" query ONLY through its alias surface — the backend
+	// stamps exactMatch via the "Moscow" names row — and it ranks FIRST (population-first). The old
+	// span-rescore filter re-checked the PRIMARY name folded to [a-z0-9 ], and norm("Москва") is ""
+	// — so the RU entry was dropped and Moscow, Idaho won by default among the Latin-named bearers.
+	{
+		id: 30,
+		name: "Москва",
+		aliases: ["Moscow"],
+		placetype: "locality",
+		country: "RU",
+		lat: 55.75,
+		lon: 37.62,
+		score: 10,
+		prominence: 6.1,
+		exactMatch: true,
+	},
+	{
+		id: 31,
+		name: "Moscow",
+		placetype: "locality",
+		country: "US",
+		lat: 46.73,
+		lon: -117,
+		score: 9,
+		prominence: 4.4,
+		exactMatch: true,
+	},
+	{
+		id: 32,
+		name: "Moscow",
+		placetype: "locality",
+		country: "US",
+		lat: 38.94,
+		lon: -90.93,
+		score: 8,
+		prominence: 3.6,
+		exactMatch: true,
+	},
+	// The gate anchor for the #1546 group — resolves next to the Idaho bearer (id 31).
+	{ id: 902, name: "83843", placetype: "postalcode", country: "US", lat: 46.73, lon: -116.99, score: 1 },
+	// #1546: the alias surface is the recall for LATIN scripts too — a query equal to a place's ALIAS
+	// ("New York City") but not its primary name ("New York") was dropped by the same primary-name
+	// re-check, even when the backend had already flagged it exact.
+	{
+		id: 40,
+		name: "New York",
+		aliases: ["New York City"],
+		placetype: "locality",
+		country: "US",
+		lat: 40.71,
+		lon: -74.01,
+		score: 11,
+		prominence: 7,
+		exactMatch: true,
+	},
 ]
 
 function makeBackend(): ResolverBackend {
@@ -66,9 +187,11 @@ function makeBackend(): ResolverBackend {
 		async findPlace(query) {
 			const key = norm(query.text)
 
-			return PLACES.filter((p) => norm(p.name) === key && (!query.country || p.country === query.country)).map((p) => ({
-				...p,
-			}))
+			return PLACES.filter(
+				(p) =>
+					(norm(p.name) === key || (p.aliases?.some((a) => norm(a) === key) ?? false)) &&
+					(!query.country || p.country === query.country)
+			).map((p) => ({ ...p }))
 		},
 	}
 }
@@ -127,6 +250,70 @@ describe("findRescoreCandidate", () => {
 		})
 
 		expect(hit).toBeNull()
+	})
+
+	it("#1537: carries the same-span namesake runner-ups, in rank order, without moving the winner", async () => {
+		const hit = await findRescoreCandidate("Springfield", [], makeBackend(), { country: "US", gateKm: 0 })
+
+		// The winner is what it always was — the first exact match in the backend's rank order.
+		expect(hit?.place.id).toBe(10)
+		expect(hit?.alternatives.map((a) => a.id)).toEqual([11, 12, 13])
+	})
+
+	it("#1537: the postcode gate filters the runner-ups on the same rule as the winner", async () => {
+		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the gate drops them
+		// from BOTH roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
+		// postcode already excluded is not a namesake worth offering.
+		const hit = await findRescoreCandidate("Springfield", [], makeBackend(), {
+			country: "US",
+			postcode: "62701",
+			gateKm: 50,
+		})
+
+		expect(hit?.place.id).toBe(11)
+		expect(hit?.gated).toBe(true)
+		expect(hit?.alternatives.map((a) => a.id)).toEqual([13])
+	})
+
+	it("#1537: a lone namesake yields an empty runner-up list", async () => {
+		const hit = await findRescoreCandidate("Grudziądzek", [], makeBackend(), { country: "PL", gateKm: 0 })
+		expect(hit?.place.id).toBe(20)
+		expect(hit?.alternatives).toEqual([])
+	})
+
+	it("#1546: admits a non-Latin-primary namesake via its alias surface — population-first then picks it", async () => {
+		// The live Moscow board: the backend returns Moscow RU FIRST (exactMatch via the "Moscow" alias
+		// row), but the old filter re-checked only the PRIMARY name folded to [a-z0-9 ] — norm("Москва")
+		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
+		// bearers. Population-first ranking was starved, not violated; recall fixes it with no ranking
+		// change.
+		const hit = await findRescoreCandidate("Moscow", [], makeBackend(), { gateKm: 0 })
+		expect(hit?.place.id).toBe(30)
+		expect(hit?.place.name).toBe("Москва")
+		expect(hit?.alternatives.map((a) => a.id)).toEqual([31, 32])
+	})
+
+	it("#1546: the postcode gate still rejects the non-Latin namesake when it is far from the anchor", async () => {
+		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU is
+		// thousands of km away, so the gate excludes it and the Idaho winner is unchanged. Admission is
+		// recall; the gate still decides.
+		const hit = await findRescoreCandidate("Moscow", [], makeBackend(), {
+			country: "US",
+			postcode: "83843",
+			gateKm: 50,
+		})
+
+		expect(hit?.place.id).toBe(31)
+		expect(hit?.gated).toBe(true)
+	})
+
+	it("#1546: the alias surface is the recall for Latin scripts too (query equals an ALIAS, not the primary)", async () => {
+		// "New York City" matches New York only through its alias row. The old primary-name re-check
+		// (norm("New York") !== norm("New York City")) dropped the exact match the backend had already
+		// flagged — the same recall defect, without any non-Latin script.
+		const hit = await findRescoreCandidate("New York City", [], makeBackend(), { gateKm: 0 })
+		expect(hit?.place.id).toBe(40)
+		expect(hit?.alternatives).toEqual([])
 	})
 
 	it("skips a span overlapping a confident street/house_number/postcode constituent", async () => {
@@ -193,6 +380,57 @@ describe("resolveTree + spanRescore", () => {
 
 		expect(out.roots.some((n) => n.placeID)).toBe(false)
 		expect(out.roots).toHaveLength(1)
+	})
+
+	it("#1537: the injected node carries the namesake runner-ups on `alternatives`", async () => {
+		const resolver = createWOFResolver(makeBackend())
+
+		// The live shape: the model tags a bare famous namesake as a `street`, so the admin walk resolves
+		// nothing and span-rescore is what recovers it. Before #1537 this node was decorated with an empty
+		// alternatives list, so the geocode path's candidate array held ONE entry and the dominance margin
+		// `declared_ambiguity` reads could not be computed at all.
+		const out = await resolver.resolveTree(
+			tree("Springfield", [node({ tag: "street", value: "Springfield", start: 0, end: 11, confidence: 0.4 })]),
+			{
+				defaultCountry: "US",
+			}
+		)
+
+		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
+		expect(injected?.placeID).toBe("wof:10")
+		// Unchanged winner: the coordinate this query answered with before the fix.
+		expect(injected?.lat).toBe(37.19)
+		expect((injected?.alternatives as ResolvedPlace[] | undefined)?.map((a) => a.id)).toEqual([11, 12, 13])
+	})
+
+	it("#1537: `alternatives` stays ABSENT (not empty) for a lone namesake — the walk path's contract", async () => {
+		const resolver = createWOFResolver(makeBackend())
+
+		const out = await resolver.resolveTree(
+			tree("Grudziądzek", [node({ tag: "street", value: "Grudziądzek", start: 0, end: 11, confidence: 0.4 })]),
+			{ defaultCountry: "PL" }
+		)
+
+		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
+		expect(injected?.placeID).toBe("wof:20")
+		expect(injected?.alternatives).toBeUndefined()
+	})
+
+	it("#1546: the injected node for a bare Moscow is Москва RU — the winner flips only for the starved class", async () => {
+		const resolver = createWOFResolver(makeBackend())
+
+		// The live shape: a bare famous namesake reads as a `street` (no country prior — the #912 lever
+		// abstains on a bare-locality tree), the walk resolves nothing, span-rescore recovers it. Before
+		// the fix the recovered place was Moscow, Idaho: Moscow RU never entered the candidate list.
+		const out = await resolver.resolveTree(
+			tree("Moscow", [node({ tag: "street", value: "Moscow", start: 0, end: 7, confidence: 0.4 })]),
+			{}
+		)
+
+		const injected = out.roots.find((n) => n.metadata?.span_rescore === true)
+		expect(injected?.placeID).toBe("wof:30")
+		expect(injected?.lat).toBe(55.75)
+		expect((injected?.alternatives as ResolvedPlace[] | undefined)?.map((a) => a.id)).toEqual([31, 32])
 	})
 
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {

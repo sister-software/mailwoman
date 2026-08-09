@@ -17,10 +17,13 @@ import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@ma
 import {
 	type AddressPointLookup,
 	type CoincidentLocality,
+	compareReferential,
 	DEFAULT_PLACETYPE_MAP,
 	type InterpolationLookup,
 	isPlacetypeFallback,
 	type PlacetypeMap,
+	type PostcodePrefixIndexLike,
+	referentialFromPopulation,
 	type ResolvedPlace,
 	type ResolveOpts,
 	type Resolver,
@@ -35,6 +38,8 @@ import {
 	type PostcodeCountryScope,
 	stampPostcodeCountryScope,
 } from "./postcode-country-coherence.ts"
+import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcodePrefix } from "./postcode-prefix.ts"
+import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
 
@@ -58,6 +63,21 @@ interface ResolutionState {
 	 * can inject postcode-proximal locality candidates.
 	 */
 	postcode?: string
+	/**
+	 * Postcode-containment coherence (#31, Mechanism 2) — forwarded to locality lookups so a coordinate-first backend can
+	 * re-rank name candidates by proximity to the postcode's own centroid. Opt-in; OFF by default.
+	 */
+	postcodeContainmentCoherence: boolean
+	/**
+	 * Postcode-prefix prior (#31, Mechanism 3) — on a `postalcode` miss, derive the code's prefix and probe
+	 * `postcodePrefixIndex`. Opt-in; OFF by default.
+	 */
+	postcodePrefixPrior: boolean
+	/**
+	 * The injected PFX1 index (structural — `PostcodePrefixIndexLike`, core/resolver/types.ts). Absent = the prior cannot
+	 * fire.
+	 */
+	postcodePrefixIndex?: PostcodePrefixIndexLike
 	/**
 	 * Proximity-bias points (viewport, user location) — forwarded to every primary lookup.
 	 */
@@ -90,7 +110,7 @@ interface ResolutionState {
 	/**
 	 * The first region that resolved (its place — for the coincident-roles lookup).
 	 */
-	resolvedRegion: ResolvedPlace | null
+	resolvedRegion: CoordinateOptionalPlace | null
 	/**
 	 * The decorated region NODE that produced {@link resolvedRegion} — completion pushes the locality interpretation onto
 	 * it in place (no synthesized sibling).
@@ -99,17 +119,27 @@ interface ResolutionState {
 }
 
 /**
- * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). Population is the
- * PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin centroid than a tiny
- * same-name hamlet (the Niigata case from #403). Nearest centroid breaks a population tie; a genuine tie (same
- * population AND distance) ABSTAINS rather than guess.
+ * Pick the completion locality when an admin maps to several coincident same-name candidates (#405). REFERENTIAL
+ * likelihood is the PRIMARY signal — the principal city is the populous one, and it can sit FARTHER from the admin
+ * centroid than a tiny same-name hamlet (the Niigata case from #403). Nearest centroid breaks a referential tie; a
+ * genuine tie (same population AND distance) ABSTAINS rather than guess.
+ *
+ * ROAD_TO_V9 §2: `compareReferential` is referential DESC with raw population as its own tiebreak, which is the SAME
+ * ORDER as the plain `b.population - a.population` it replaced — referential is strictly increasing in population below
+ * saturation and constant above it. The abstention check below still reads raw population, deliberately: two megacities
+ * that saturate to the same referential score are not tied, and abstaining there would be a new behavior.
  */
 function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
 	if (!candidates.length) return null
 
 	if (candidates.length === 1) return candidates[0]!
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
-	const ranked = [...candidates].sort((a, b) => b.population - a.population || a.distanceKm - b.distanceKm)
+
+	const ranked = [...candidates]
+		.map((c) => ({ c, referential: referentialFromPopulation(c.population), population: c.population }))
+		// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
+		.sort((a, b) => compareReferential(a, b) || a.c.distanceKm - b.c.distanceKm)
+		.map((x) => x.c)
+
 	const [first, second] = ranked
 
 	if (first!.population === second!.population && first!.distanceKm === second!.distanceKm) return null
@@ -127,7 +157,9 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	while (stack.length) {
 		const n = stack.pop()!
 
-		if (n.tag === "postcode" && n.value.trim().length) return n.value.trim()
+		// #31 Mechanism 1: a shape-excluded span keeps its tag but contributes nothing — its code
+		// must never become the address's postcode (it would poison the country-scope pass's anchor).
+		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && n.value.trim().length) return n.value.trim()
 		stack.push(...n.children)
 	}
 
@@ -190,7 +222,12 @@ async function applySpanRescore(
 		children: [],
 	}
 
-	decorateNode(node, hit.place, [])
+	// #1537: the same-span namesake runner-ups, not an empty list. A name the model reads as a `street`
+	// ("Springfield", "Berlin", "Moscow") never reaches the admin walk, so this tier is the ONLY thing that
+	// resolves it — and decorating with `[]` meant the geocode path's `candidates` held one entry and the
+	// dominance margin `declared_ambiguity` reads was uncomputable for exactly the famous-homonym class.
+	// The winner is unchanged (see findRescoreCandidate); this is additive.
+	decorateNode(node, hit.place, hit.alternatives)
 	// `rescore_gated` carries the gate's precision signal as an EXPLICIT handle — NOT folded into the
 	// calibrated `confidence`, which would break the isotonic guarantee (a true calibrated 0.83 must not
 	// be confused with a rescore plug-in estimate; DeepSeek 2026-06-23). true = postcode gate fired
@@ -271,7 +308,8 @@ function applyPostcodeConsistency(roots: readonly AddressNode[], gateKm: number)
 	while (findAnchor.length) {
 		const n = findAnchor.pop()!
 
-		if (n.tag === "postcode" && isResolvedWithCoord(n)) {
+		// #31 Mechanism 1: a shape-excluded span never anchors the consistency re-pick either.
+		if (n.tag === "postcode" && !isShapeExcludedPostcode(n) && isResolvedWithCoord(n)) {
 			anchor = { lat: n.lat!, lon: n.lon! }
 
 			break
@@ -510,6 +548,7 @@ function revertResolverDecoration(node: AddressNode): void {
 		"classifier_source",
 		"classifier_source_id",
 		"resolver_score",
+		"resolver_prominence",
 		"resolver_name",
 		"resolver_country",
 		"resolution_quality",
@@ -754,6 +793,15 @@ class WOFResolver implements Resolver {
 	}
 
 	async resolveTree(tree: AddressTree, opts: ResolveOpts = {}): Promise<AddressTree> {
+		// Postcode-shape coherence (#31, Mechanism 1): the earliest pass in the tree — pure-sync and
+		// backend-free, run BEFORE `state.postcode` is read so an excluded span can never become the
+		// address's postcode. Opt-in (`postcodeShapeCoherence: true`), OFF by default (D-rule: demotion
+		// is the failure mode with teeth). A confirmed span's narrowed systems — the intersection of
+		// its codex shape with the tree's confident sibling systems — bound the country-scope pass
+		// below; a pure subset of codex's own candidate list, so it can only narrow, never widen.
+		// See postcode-shape-coherence.ts.
+		const shapeVerdict = opts.postcodeShapeCoherence === true ? applyPostcodeShapeCoherence(tree.roots) : null
+
 		const state: ResolutionState = {
 			lookupsRemaining: opts.maxLookups ?? 10,
 			// Full replacement when `placetypeMap` is supplied — callers that want to extend rather
@@ -764,6 +812,11 @@ class WOFResolver implements Resolver {
 			defaultCountry: opts.defaultCountry,
 			parentFallback: opts.parentFallback ?? true,
 			postcode: firstPostcodeValue(tree.roots),
+			// #31 Mechanism 2 — forwarded to locality lookups (see #lookupAndPick). Opt-in, OFF by default.
+			postcodeContainmentCoherence: opts.postcodeContainmentCoherence === true,
+			// #31 Mechanism 3 — the prefix prior + its injected index (see #lookupAndPick). Opt-in, OFF by default.
+			postcodePrefixPrior: opts.postcodePrefixPrior === true,
+			postcodePrefixIndex: opts.postcodePrefixIndex,
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2,
@@ -778,14 +831,15 @@ class WOFResolver implements Resolver {
 			resolvedRegionNode: null,
 		}
 
-		// Postcode-country coherence (#42): the ONE pre-walk pass, and the only mechanism allowed to override
-		// `defaultCountry`. Its three sibling coherence passes re-pick nodes AFTER the walk; that shape cannot
-		// work here, because what needs correcting is the walk's country SCOPE — which poisons the postcode
-		// node's own resolution, the postcode-consistency fallback that then drags the locality onto it, and
-		// the hard `country` filter on every admin lookup. So the verdict is taken once, up front, and the
-		// walk runs under the corrected country. Default-ON (operator-promoted 2026-08-05; `false` opts out) —
-		// needs a default country to correct and both a postcode and a locality to be coherent about; abstains
-		// unless EXACTLY one country (never the already-coherent default) makes the pair consistent. See
+		// Postcode-country coherence (#42): the one pre-walk LOOKUP pass (the shape verdict above is
+		// pure-sync, backend-free), and the only mechanism allowed to override `defaultCountry`. Its three
+		// sibling coherence passes re-pick nodes AFTER the walk; that shape cannot work here, because what
+		// needs correcting is the walk's country SCOPE — which poisons the postcode node's own resolution,
+		// the postcode-consistency fallback that then drags the locality onto it, and the hard `country`
+		// filter on every admin lookup. So the verdict is taken once, up front, and the walk runs under the
+		// corrected country. Default-ON (operator-promoted 2026-08-05; `false` opts out) — needs a default
+		// country to correct and both a postcode and a locality to be coherent about; abstains unless
+		// EXACTLY one country (never the already-coherent default) makes the pair consistent. See
 		// postcode-country-coherence.ts.
 		let postcodeScope: PostcodeCountryScope | null = null
 
@@ -793,6 +847,7 @@ class WOFResolver implements Resolver {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
 				defaultCountry: state.defaultCountry,
+				...(shapeVerdict?.narrowing !== undefined ? { candidateSystems: shapeVerdict.narrowing } : {}),
 				...(opts.postcodeCountryCoherenceGateKm !== undefined ? { gateKm: opts.postcodeCountryCoherenceGateKm } : {}),
 			})
 
@@ -892,7 +947,7 @@ class WOFResolver implements Resolver {
 	 * relation, the region isn't a dual-role place, or it abstains. The region node's primary role stays `region`; the
 	 * locality rides alongside.
 	 */
-	#completeRegionRole(region: ResolvedPlace, regionNode: AddressNode): void {
+	#completeRegionRole(region: CoordinateOptionalPlace, regionNode: AddressNode): void {
 		if (typeof region.id !== "number" || !this.#backend.coincidentLocalitiesFor) return
 		const loc = pickCompletion(this.#backend.coincidentLocalitiesFor(region.id))
 
@@ -911,7 +966,11 @@ class WOFResolver implements Resolver {
 		regionNode.interpretations = [...(regionNode.interpretations ?? []), interpretation]
 	}
 
-	async #walk(node: AddressNode, parentResolved: ResolvedPlace | null, state: ResolutionState): Promise<AddressNode> {
+	async #walk(
+		node: AddressNode,
+		parentResolved: CoordinateOptionalPlace | null,
+		state: ResolutionState
+	): Promise<AddressNode> {
 		// Always clone — never mutate input nodes.
 		const decorated: AddressNode = { ...node, children: [] }
 
@@ -924,14 +983,21 @@ class WOFResolver implements Resolver {
 			state.localityNodePresent = true
 		}
 
-		let resolved: ResolvedPlace | null = null
+		let resolved: CoordinateOptionalPlace | null = null
 
-		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length) {
+		// Shape-excluded postcode spans (letter-bearing ones keep their tag; #31 Mechanism 1) are
+		// stripped of their resolve contribution — the walk does not look them up. Digit-only excluded
+		// spans were retagged to `house_number` and flow through their correct sibling placetype.
+		if (placetype && state.lookupsRemaining > 0 && node.value.trim().length && !isShapeExcludedPostcode(node)) {
 			const picked = await this.#lookupAndPick(node, placetype, parentResolved, state)
 
 			if (picked) {
 				resolved = picked.top
 				decorateNode(decorated, picked.top, picked.alternatives)
+
+				if (picked.metadata) {
+					decorated.metadata = { ...decorated.metadata, ...picked.metadata }
+				}
 
 				// Lineage attachment (#404): stamp the resolved place's ancestor chain onto metadata. Opt-in
 				// + only when the backend supplies it, so the default stays byte-identical (no extra query).
@@ -960,9 +1026,13 @@ class WOFResolver implements Resolver {
 	async #lookupAndPick(
 		node: AddressNode,
 		placetype: string,
-		parentResolved: ResolvedPlace | null,
+		parentResolved: CoordinateOptionalPlace | null,
 		state: ResolutionState
-	): Promise<{ top: ResolvedPlace; alternatives: ResolvedPlace[] } | null> {
+	): Promise<{
+		top: CoordinateOptionalPlace
+		alternatives: ResolvedPlace[]
+		metadata?: Record<string, unknown>
+	} | null> {
 		state.lookupsRemaining--
 
 		const query: Parameters<ResolverBackend["findPlace"]>[0] = {
@@ -1013,9 +1083,15 @@ class WOFResolver implements Resolver {
 
 		// Coordinate-first: hand the sibling postcode to locality lookups so the backend can inject
 		// postcode-proximal candidates the name-match would miss. Only for locality (the placetype both
-		// `locality` and `dependent_locality` map to); other placetypes ignore it.
+		// `locality` and `dependent_locality` map to); other placetypes ignore it. The containment flag
+		// (#31, Mechanism 2) asks a coordinate-first backend to re-rank the candidates by proximity to
+		// the postcode's own centroid — opt-in, OFF by default.
 		if (placetype === "locality" && state.postcode) {
 			query.postcode = state.postcode
+
+			if (state.postcodeContainmentCoherence) {
+				query.postcodeContainmentCoherence = true
+			}
 		}
 
 		let candidates: ResolvedPlace[]
@@ -1037,6 +1113,33 @@ class WOFResolver implements Resolver {
 			// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 			// its classifier attribution intact.
 			return null
+		}
+
+		// Postcode-prefix prior (#31, Mechanism 3): when a `postalcode` node misses the gazetteer, derive
+		// the code's prefix and probe the injected PFX1 index (structural — never a model input). A hit
+		// resolves the node to a synthetic place (id 0), carrying a coordinate ONLY when the index node
+		// does — the ancestry-only tier stays coordinate-free (B3-3's 0% half, meaning-of-zero). The
+		// prior's payload is returned as node metadata for #walk to stamp. Opt-in via `postcodePrefixPrior`
+		// + `postcodePrefixIndex`; OFF by default (D-rule: the PCN1 posture).
+		if (!candidates.length && placetype === "postalcode" && state.postcodePrefixPrior && state.postcodePrefixIndex) {
+			const probe = probePostcodePrefix(node.value, state.postcodePrefixIndex, query.country)
+
+			if (probe) {
+				const metadata: Record<string, unknown> = {
+					postcode_prefix: probe.prefix,
+					postcode_prefix_ancestors: probe.node.ancestors,
+					...(probe.node.radiusP95Km !== undefined ? { postcode_prefix_radius_p95_km: probe.node.radiusP95Km } : {}),
+					...(probe.node.lat !== undefined && probe.node.lon !== undefined
+						? { coordinate_source: "postcode_prefix" }
+						: {}),
+				}
+
+				return {
+					top: postcodePrefixResolvedPlace(probe.prefix, probe.node, state.postcodePrefixIndex),
+					alternatives: [],
+					metadata,
+				}
+			}
 		}
 
 		if (!candidates.length) return null
@@ -1128,7 +1231,7 @@ class WOFResolver implements Resolver {
  * assertion. Surfaces the runner-up candidates on `alternatives` so callers can disambiguate (Springfield-class
  * failures, [#8 in the failure catalogue]).
  */
-function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: ResolvedPlace[]): void {
+function decorateNode(node: AddressNode, resolved: CoordinateOptionalPlace, alternatives: ResolvedPlace[]): void {
 	if (node.source !== undefined || node.sourceID !== undefined) {
 		const meta = { ...node.metadata }
 
@@ -1154,11 +1257,32 @@ function decorateNode(node: AddressNode, resolved: ResolvedPlace, alternatives: 
 	// the right PLACE (gazetteer-name vs ground-truth) rather than merely echoing the parser's text.
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 
+	// The winner's PROMINENCE, when the backend computed one. `alternatives` below are full `ResolvedPlace`s and
+	// already carry theirs; without this stamp the WINNER's is the one value in the ranked list that gets dropped,
+	// which makes a top-1-vs-top-2 margin uncomputable from the tree — and that margin is what
+	// `mailwoman/query-intent.ts` reads to decide whether a bare-toponym answer was a clear win. Additive metadata
+	// only; nothing in the resolve reads it back.
+	if (resolved.prominence !== undefined) {
+		node.metadata["resolver_prominence"] = resolved.prominence
+	}
+
 	// The resolved place's ISO-3166 alpha-2 country (from the gazetteer/candidate row), when known. #1014: lets a
 	// forward consumer fill country/countrycode without an ancestry walk — the candidate backend carries this even
 	// though it has no `ancestors()` table.
 	if (resolved.country) {
 		node.metadata["resolver_country"] = resolved.country
+	}
+
+	// The two-score split's consumer carry (ROAD_TO_V9 §2). Written ONLY when the backend actually has
+	// a value: an absent encyclopedic score means "no Wikipedia article" or "pre-split gazetteer", and
+	// a `resolver_encyclopedic: 0` on the node would assert a measurement nobody made. Nothing in the
+	// resolve path reads either key back — they exist for annotation / API surfaces downstream.
+	if (resolved.referential !== undefined) {
+		node.metadata["resolver_referential"] = resolved.referential
+	}
+
+	if (resolved.encyclopedic !== undefined) {
+		node.metadata["resolver_encyclopedic"] = resolved.encyclopedic
 	}
 
 	// The postcode/locality conflict flag (the falsehood differentiator): the postcode pointed to a

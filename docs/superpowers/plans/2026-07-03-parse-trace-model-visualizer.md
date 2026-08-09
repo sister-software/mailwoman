@@ -812,7 +812,7 @@ export interface MailwomanClassifierLike {
 
 import { describe, expect, it } from "vitest"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import fixture from "./fixtures/white-house.trace.json"
 import { changedIndices, emissionColor, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
 
@@ -1022,7 +1022,7 @@ Four bands + gauge, one shared piece-per-column x-axis. Pure — no context, no 
 
 import React, { useMemo, useState } from "react"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import { changedIndices, emissionColor, isMasked, matrixAbsMax, pieceDisplay, softmaxRow, stripBIO } from "./helpers.ts"
 import styles from "./styles.module.css"
 
@@ -1407,7 +1407,7 @@ function ChannelRow({
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import fixture from "./fixtures/white-house.trace.json"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
 
@@ -1493,7 +1493,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 import React, { useCallback, useState } from "react"
 
 import { useDemoEmbed } from "../../contexts/DemoEmbed.tsx"
-import type { ParseTraceLike } from "../../shared/resources.tsx"
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
 import styles from "./styles.module.css"
 

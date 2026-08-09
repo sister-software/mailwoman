@@ -227,8 +227,16 @@ jobs:
       - name: Enable Corepack (yarn 4)
         run: corepack enable
 
+      # The ONE job that runs Yarn's hardened mode. `.yarnrc.yml` pins `enableHardenedMode: false`
+      # repo-wide so the other install sites — the self-hosted legs included, where the registry
+      # round-trip crosses the lab's degraded uplink — install straight from the global cache. This
+      # leg is hosted, is already the lint/typecheck gate, and runs on every PR, so it is where the
+      # lockfile's resolutions get re-verified against the registry. Yarn's own guidance: enable it
+      # in one CI job, not all of them.
       - name: Install dependencies
         run: yarn install --immutable
+        env:
+          YARN_ENABLE_HARDENED_MODE: 1
 
       - name: Compile
         run: yarn compile

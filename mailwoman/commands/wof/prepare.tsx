@@ -6,8 +6,7 @@
  */
 
 import { Text } from "ink"
-
-import { useCommandTask } from "../../cli-kit/index.ts"
+import { useCommandTask } from "mailwoman/cli-kit"
 
 const WofShim = () => {
 	useCommandTask(

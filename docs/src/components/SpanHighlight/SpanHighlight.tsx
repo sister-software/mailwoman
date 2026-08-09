@@ -1,5 +1,5 @@
-import { confidenceTier } from "../../shared/confidence-tiers.ts"
-import type { ResultNode } from "../../shared/resources.tsx"
+import { confidenceTier } from "@mailwoman/docs/shared/confidence-tiers"
+import type { ResultNode } from "@mailwoman/docs/shared/resources"
 
 import styles from "./styles.module.css"
 

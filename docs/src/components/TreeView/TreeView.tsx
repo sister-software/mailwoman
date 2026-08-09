@@ -1,4 +1,4 @@
-import { confidenceTier } from "../../shared/confidence-tiers.ts"
+import { confidenceTier } from "@mailwoman/docs/shared/confidence-tiers"
 
 import styles from "./styles.module.css"
 

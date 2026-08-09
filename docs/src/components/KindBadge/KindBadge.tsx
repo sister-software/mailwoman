@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { KindResult } from "@mailwoman/docs/shared/resources"
 import type { FC } from "react"
-
-import type { KindResult } from "../../shared/resources.tsx"
 
 import styles from "./styles.module.css"
 

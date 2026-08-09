@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
-import type { ParseTraceLike } from "../../shared/resources.tsx"
 import fixture from "./fixtures/white-house.trace.json"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
 

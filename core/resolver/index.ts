@@ -11,6 +11,16 @@
  */
 
 export {
+	compareReferential,
+	REFERENTIAL_LOG2_SCALE,
+	REFERENTIAL_POPULATION_DIVISOR,
+	REFERENTIAL_SATURATION_POPULATION,
+	referentialFromPopulation,
+} from "./referential.ts"
+
+export type { ReferentiallyRankable } from "./referential.ts"
+
+export {
 	DEFAULT_PLACETYPE_MAP,
 	PLACETYPE_FILTER_GROUPS,
 	expandPlacetypeFilter,
@@ -29,6 +39,9 @@ export type {
 	InterpolatedPointHit,
 	InterpolationLookup,
 	PlacetypeMap,
+	PostcodePrefixAncestor,
+	PostcodePrefixIndexLike,
+	PostcodePrefixNode,
 	ResolveOpts,
 	ResolvedPlace,
 	Resolver,

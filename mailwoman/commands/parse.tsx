@@ -12,12 +12,12 @@ import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import { createRuntimePipeline } from "mailwoman"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { probeWeights, WeightsGuard, type WeightsOutcome } from "mailwoman/cli-kit/weights-guard"
 import { argument } from "pastel"
 import type React from "react"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
-import { probeWeights, WeightsGuard, type WeightsOutcome } from "../cli-kit/weights-guard.tsx"
 import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
 /**
@@ -64,9 +64,9 @@ const ParseConfigSchema = zod.object({
 		.default("auto")
 		.describe(
 			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
-				"'auto' (default) only on the FTS backend — the candidate backend ranks country-agnostically, " +
-				"so 'auto' leaves it unscoped. Pin 'locale' or 'none' to hold country policy fixed while " +
-				"changing backends. An explicit --default-country outranks all three."
+				"'auto' (default) passes the locale's region subtag regardless of backend. " +
+				"Pin 'locale' or 'none' to hold country policy fixed while changing backends. " +
+				"An explicit --default-country outranks all three."
 		),
 	adminCoherence: zod
 		.boolean()
@@ -86,6 +86,26 @@ const ParseConfigSchema = zod.object({
 				"Abstains when the default country is already consistent, when no country is, or when more than one is. " +
 				"ON by default (promoted 2026-08-05); pass --no-postcode-country-coherence to restore the un-overridden " +
 				"country scope. Requires --resolve."
+		),
+	postcodeShapeCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident " +
+				"sibling signal (country/region) is demoted: digit-only → house_number, letter-bearing → stamped " +
+				"'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. " +
+				"DEFAULT OFF (demotion is the failure mode with teeth); pass --postcode-shape-coherence to opt in. " +
+				"Requires --resolve."
+		),
+	postcodeContainmentCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: re-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the " +
+				"locality that CONTAINS the postcode wins the name-match tie. DEFAULT OFF; pass " +
+				"--postcode-containment-coherence to opt in. Requires --resolve."
 		),
 	neural: zod
 		.boolean()
@@ -232,7 +252,7 @@ function ParseTask({
 	options: zod.infer<typeof ParseConfigSchema>
 	args: zod.infer<typeof ArgumentsSchema>
 	weightsOutcome: WeightsOutcome
-}): React.ReactElement {
+}): React.ReactElement | null {
 	const state = useCommandTask(async () => {
 		const input = args[0]!
 
@@ -276,7 +296,9 @@ function ParseTask({
 		return <Spinner />
 	}
 
-	return <Text>{state.result}</Text>
+	// Every parse format (json/tuple/xml) is machine-readable — bypass Ink's word-wrapping
+	// <Text> renderer, which corrupts long JSON lines at 80 cols when piped (see writeRawStdout).
+	return writeRawStdout(state.result)
 }
 
 /**
@@ -304,18 +326,22 @@ export type CountryScope = "auto" | "locale" | "none"
  *
  * Without a scope, a bare region abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often
  * a foreign homonym rather than the US state — so the FTS backend needs the locale default to match the demo. The
- * candidate-table backend does not: it ranks population-first and country-agnostically, which is the demo's GLOBAL
- * behavior (bare "Moscow" → the Russian city), and imposing a country on top of it would contradict the ranking it was
- * built for. `auto` encodes exactly that, and is the default.
+ * candidate-table backend uses population-first ranking (#1546, alias-surface recall), but the locale hint is still
+ * valuable: a structured query under en-NZ that the model parses to house+street+locality carries enough signal that
+ * the country scope should gate the candidate lookup (2026-08-08 NZ scope-leakage diagnosis — "22 Customs Street East,
+ * Auckland Central" resolved to Queensland under en-US default because the candidate backend dropped the NZ locale
+ * hint).
  *
- * `auto` also makes backend and country policy ONE switch, which is a hazard when measuring either: flipping the
- * backend silently flips the country filter too, so a comparison between backends is really a comparison between four
- * conditions. `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a
- * backend difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
+ * Bare-locality trees ("Hillsborough" / "Paris") are protected separately by {@link isBareLocalityTree} — those queries
+ * navigate through the `!isBareLocalityTree` gate before reaching this function, so a lone "Paris" under en-US will
+ * never be hard-scoped to Paris, Texas.
+ *
+ * `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a backend
+ * difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
  */
 export function resolverDefaultCountry(
 	options: { defaultCountry?: string; locale?: string; countryScope?: CountryScope },
-	candidateActive = false
+	_candidateActive = false
 ): string | undefined {
 	if (options.defaultCountry === "none") return undefined
 
@@ -327,7 +353,7 @@ export function resolverDefaultCountry(
 		case "locale":
 			return localeToCountry(options.locale)
 		default:
-			return candidateActive ? undefined : localeToCountry(options.locale)
+			return localeToCountry(options.locale)
 	}
 }
 
@@ -378,6 +404,8 @@ async function resolveWithCandidates(
 		defaultCountry?: string
 		adminCoherence?: boolean
 		postcodeCountryCoherence?: boolean
+		postcodeShapeCoherence?: boolean
+		postcodeContainmentCoherence?: boolean
 	} = {}
 
 	if (options.candidates !== undefined) {
@@ -388,6 +416,15 @@ async function resolveWithCandidates(
 	// pin needs threading.
 	if (options.postcodeCountryCoherence === false) {
 		opts.postcodeCountryCoherence = false
+	}
+
+	// #31 opt-in mechanisms: library defaults are OFF, so only the explicit opt-in needs threading.
+	if (options.postcodeShapeCoherence === true) {
+		opts.postcodeShapeCoherence = true
+	}
+
+	if (options.postcodeContainmentCoherence === true) {
+		opts.postcodeContainmentCoherence = true
 	}
 
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
@@ -538,6 +575,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 		candidatesPerLookup?: number
 		defaultCountry?: string
 		postcodeCountryCoherence?: boolean
+		postcodeShapeCoherence?: boolean
+		postcodeContainmentCoherence?: boolean
 	} = {}
 
 	if (wantAlternatives) {
@@ -548,6 +587,15 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// so only the explicit --no-postcode-country-coherence opt-out needs threading.
 	if (options.resolve && options.postcodeCountryCoherence === false) {
 		resolveOpts.postcodeCountryCoherence = false
+	}
+
+	// #31 opt-in mechanisms — default-OFF, so only the explicit opt-in needs threading.
+	if (options.resolve && options.postcodeShapeCoherence === true) {
+		resolveOpts.postcodeShapeCoherence = true
+	}
+
+	if (options.resolve && options.postcodeContainmentCoherence === true) {
+		resolveOpts.postcodeContainmentCoherence = true
 	}
 
 	// Scope the resolver so a bare region abbreviation (`NY`) resolves to the intended country's place
@@ -563,7 +611,13 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 
 	const pipelineOpts: {
 		locale?: string
-		resolveOpts?: { candidatesPerLookup?: number; defaultCountry?: string; postcodeCountryCoherence?: boolean }
+		resolveOpts?: {
+			candidatesPerLookup?: number
+			defaultCountry?: string
+			postcodeCountryCoherence?: boolean
+			postcodeShapeCoherence?: boolean
+			postcodeContainmentCoherence?: boolean
+		}
 	} = {
 		locale: options.locale,
 	}
@@ -571,7 +625,9 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	if (
 		resolveOpts.candidatesPerLookup !== undefined ||
 		resolveOpts.defaultCountry !== undefined ||
-		resolveOpts.postcodeCountryCoherence !== undefined
+		resolveOpts.postcodeCountryCoherence !== undefined ||
+		resolveOpts.postcodeShapeCoherence !== undefined ||
+		resolveOpts.postcodeContainmentCoherence !== undefined
 	) {
 		pipelineOpts.resolveOpts = resolveOpts
 	}

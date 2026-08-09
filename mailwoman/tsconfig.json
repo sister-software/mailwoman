@@ -34,6 +34,7 @@
 		{ "path": "../query-shape" },
 		{ "path": "../registry" },
 		{ "path": "../resolver-wof-sqlite" },
+		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../ban" },
 		{ "path": "../spatial" },
 		{ "path": "../osm" }

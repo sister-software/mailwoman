@@ -1973,14 +1973,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@braintree/sanitize-url@npm:^7.1.1":
+"@braintree/sanitize-url@npm:^7.1.2":
   version: 7.1.2
   resolution: "@braintree/sanitize-url@npm:7.1.2"
   checksum: 10/d9626ff8f8eb5e192cd055e6e743449c21102c76bb59e405b7028fe56230fa080bfcc80dfb1e21850a6876e75adda9f7b3c888cf0685942bb74da4d2866d6ec3
   languageName: node
   linkType: hard
 
-"@chevrotain/types@npm:~11.1.1":
+"@chevrotain/types@npm:~11.1.2":
   version: 11.1.2
   resolution: "@chevrotain/types@npm:11.1.2"
   checksum: 10/ad39d7651a20b05ead9b4374f98afc39915118dda29678c2b623571aa3da3018a0f3fb799d1809605cafcae59cba637d640855ea0f97b9b01d0900d77d6781fe
@@ -4514,7 +4514,7 @@ __metadata:
   dependencies:
     "@hono/node-server": "npm:^2.0.12"
     "@hono/zod-openapi": "npm:^1.5.1"
-    hono: "npm:^4.12.32"
+    hono: "npm:^4.13.0"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -4527,7 +4527,7 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
-    hono: "npm:^4.12.32"
+    hono: "npm:^4.13.0"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -4541,7 +4541,7 @@ __metadata:
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -4596,6 +4596,8 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
+    "@types/yauzl-promise": "npm:^4.0.1"
+    adm-zip: "npm:^0.6.0"
     async-init: "npm:^1.0.0"
     axios: "npm:^1.19.0"
     axios-cache-interceptor: "npm:^1.12.1"
@@ -4610,8 +4612,9 @@ __metadata:
     pino-pretty: "npm:^13.1.3"
     pluralize: "npm:^8.0.0"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
     type-fest: "npm:^5.8.0"
+    yauzl-promise: "npm:^4.0.0"
     zod: "npm:^4.4.3"
   languageName: unknown
   linkType: soft
@@ -4630,7 +4633,7 @@ __metadata:
     fastest-levenshtein: "npm:^1.0.16"
     lru-cache: "npm:^11.5.2"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -4675,7 +4678,7 @@ __metadata:
     docusaurus-plugin-glossary: "npm:^3.3.4"
     h3-js: "npm:^4.5.0"
     ink: "npm:^7.1.1"
-    js-yaml: "npm:^4.1.0"
+    js-yaml: "npm:^4.3.1"
     maplibre-gl: "npm:^5.24.0"
     onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
     pastel: "npm:^4.0.1"
@@ -4683,7 +4686,7 @@ __metadata:
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     react-map-gl: "npm:^8.1.2"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
     sql.js-httpvfs: "npm:^0.8.12"
     storybook: "npm:^10.5.5"
     typescript: "npm:^6.0.3"
@@ -4719,7 +4722,10 @@ __metadata:
     "@mailwoman/record": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     kysely: "npm:^0.29.4"
+    read-excel-file: "npm:^9.3.5"
+    spliterator: "npm:^6.1.0"
     type-fest: "npm:^5.8.0"
+    write-excel-file: "npm:^4.1.1"
   languageName: unknown
   linkType: soft
 
@@ -4730,7 +4736,7 @@ __metadata:
     "@fragaria/address-formatter": "npm:^7.0.0"
     "@mailwoman/core": "workspace:*"
     "@types/node": "npm:>=26.1.2"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -4754,6 +4760,7 @@ __metadata:
   resolution: "@mailwoman/kind-classifier@workspace:kind-classifier"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/query-shape": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -4767,7 +4774,7 @@ __metadata:
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
-    hono: "npm:^4.12.32"
+    hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
   bin:
@@ -4842,6 +4849,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/neural-weights-en-au@workspace:neural-weights-en-au":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/neural-weights-en-au@workspace:neural-weights-en-au"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/neural-weights-en-us": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb":
   version: 0.0.0-use.local
   resolution: "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb"
@@ -4912,7 +4928,7 @@ __metadata:
     "@mailwoman/sentencepiece-wasm": "workspace:*"
     onnxruntime-node: "npm:^1.26.0"
     onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   peerDependencies:
     onnxruntime-node: ^1.26.0
     onnxruntime-web: "*"
@@ -4941,9 +4957,9 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/timezone-lookup": "workspace:*"
     "@mailwoman/un-locode-lookup": "workspace:*"
-    hono: "npm:^4.12.32"
+    hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
     zod: "npm:^4.4.3"
   bin:
     nominatim: ./out/cli.js
@@ -4976,7 +4992,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -4993,7 +5009,7 @@ __metadata:
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
-    hono: "npm:^4.12.32"
+    hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
   bin:
@@ -5081,7 +5097,7 @@ __metadata:
     "@types/node": "npm:>=26.1.2"
     h3-js: "npm:^4.5.0"
     playwright: "npm:^1.62.1"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -5096,7 +5112,7 @@ __metadata:
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   languageName: unknown
   linkType: soft
 
@@ -5157,7 +5173,7 @@ __metadata:
     "@turf/boolean-contains": "npm:^7.3.5"
     kysely: "npm:^0.29.4"
     shapefile-parser: "npm:^1.0.3"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -5191,7 +5207,7 @@ __metadata:
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
   bin:
     un-locode-lookup: ./out/cli.js
   languageName: unknown
@@ -5213,7 +5229,7 @@ __metadata:
     "@types/react": "npm:^19.2.17"
     "@types/regenerate": "npm:^1.4.3"
     "@types/semver": "npm:^7.7.1"
-    chalk: "npm:^5.6.2"
+    chalk: "npm:^6.0.0"
     fast-glob: "npm:^3.3.3"
     husky: "npm:^9.1.7"
     ink: "npm:^7.1.1"
@@ -5223,7 +5239,7 @@ __metadata:
     react: "npm:^19.2.8"
     release-it: "npm:^19.2.4"
     semver: "npm:^7.8.5"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
     typescript: "npm:^6.0.3"
     vitest: "npm:4.1.10"
     zx: "npm:^8.8.5"
@@ -5435,12 +5451,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mermaid-js/parser@npm:^1.1.1":
-  version: 1.1.1
-  resolution: "@mermaid-js/parser@npm:1.1.1"
+"@mermaid-js/parser@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@mermaid-js/parser@npm:1.2.0"
   dependencies:
-    "@chevrotain/types": "npm:~11.1.1"
-  checksum: 10/9f3645fd055c0800c16a3e7eab1ce7f05736c352ab48996e9c64fb21b27c25a5987636040816b1bb16384a4434744cecbdf746c152ef80e0bc712972cb58deed
+    "@chevrotain/types": "npm:~11.1.2"
+  checksum: 10/278ae28edd452c9bcee3723a2d45a6a3f174700cb80fc907b9a5212f2ce449c9a5a6f7d45372bb18b6d633f8040dff4c4d2533b6a3c8d3f021903b3d6ccea799
   languageName: node
   linkType: hard
 
@@ -9621,7 +9637,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"adm-zip@npm:0.6.0":
+"adm-zip@npm:^0.5.16":
+  version: 0.5.18
+  resolution: "adm-zip@npm:0.5.18"
+  checksum: 10/6eaa298828b92e543241fa24d01af774ad8709b80539b3fa60d4ba6f69fd5a15a19d8177e6d739f18f4e0933610ed555215dc6553b51c532534414702c255167
+  languageName: node
+  linkType: hard
+
+"adm-zip@npm:^0.6.0":
   version: 0.6.0
   resolution: "adm-zip@npm:0.6.0"
   checksum: 10/6a49ab39055d8f716958d3a2055491ab86fe3359c4afeed9b14bbce78fb847bcd3cbaa0ff4921aaa19824aaa29d06691def1f53263db5224d06c068f922c5ba2
@@ -10370,12 +10393,12 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.16
-  resolution: "brace-expansion@npm:1.1.16"
+  version: 1.1.18
+  resolution: "brace-expansion@npm:1.1.18"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10/94498bead66c51536df5b7bf1b0a0e581a5b7f86888be10481d06920c4bd9d976e003b13a3d19fddc733f21a09d162ff72f90e18b2c9d062b15121e973d0e13b
+  checksum: 10/b55a3c03239b8d2127c7cbb3408c9ad3a556a8c303bf3064df78bfb7c093160fc8f6e0a32e42a850a78eba12f29ccf6ef997690b9acf945d242c56c61c4aa977
   languageName: node
   linkType: hard
 
@@ -10700,6 +10723,13 @@ __metadata:
   version: 5.6.2
   resolution: "chalk@npm:5.6.2"
   checksum: 10/1b2f48f6fba1370670d5610f9cd54c391d6ede28f4b7062dd38244ea5768777af72e5be6b74fb6c6d54cb84c4a2dff3f3afa9b7cb5948f7f022cfd3d087989e0
+  languageName: node
+  linkType: hard
+
+"chalk@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "chalk@npm:6.0.0"
+  checksum: 10/bdcb895b9c848ddbce38f38df5a10a3e272d6c04d759161789c4a2fa5a1fa78bf9eecf4eef73433a2a3be7324d6da96c3c9baf5c80862f37683cc0b890597831
   languageName: node
   linkType: hard
 
@@ -11690,10 +11720,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cytoscape@npm:^3.33.1":
-  version: 3.33.4
-  resolution: "cytoscape@npm:3.33.4"
-  checksum: 10/b04bd07f16bf19ea6c76e375f8b92f4d07b6791db20bc83dc04c9a7a52fe4b7cbf004a2ebce2d08cdcc8a967e077bde1975417b126cd2760418ee7b752a2c478
+"cytoscape@npm:^3.33.3":
+  version: 3.34.0
+  resolution: "cytoscape@npm:3.34.0"
+  checksum: 10/5bbc169798829b1a0eaadcad2707e7762e7ba1a2bcd5dbeaf75b89eb2d2ab9211e51d96b24c1f5807e329ac44c50913062464e2af11c528a1255969a36b45268
   languageName: node
   linkType: hard
 
@@ -12107,10 +12137,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dayjs@npm:^1.11.19":
-  version: 1.11.20
-  resolution: "dayjs@npm:1.11.20"
-  checksum: 10/5347533f21a55b8bb1b1ef559be9b805514c3a8fb7e68b75fb7e73808131c59e70909c073aa44ce8a0d159195cd110cdd4081cf87ab96cb06fee3edacae791c6
+"dayjs@npm:^1.11.20":
+  version: 1.11.21
+  resolution: "dayjs@npm:1.11.21"
+  checksum: 10/dd16f9f2706b61b90e3c346a3211ac3afd9e26193136ce0e87f70bf74d1c17a447bceb230a88b175467fc9f5e3243d8c1544b9897092a12d9c80ee44d338dcb6
   languageName: node
   linkType: hard
 
@@ -12504,15 +12534,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.3.1":
-  version: 3.4.12
-  resolution: "dompurify@npm:3.4.12"
+"dompurify@npm:^3.3.3":
+  version: 3.4.13
+  resolution: "dompurify@npm:3.4.13"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/f826b68920887eb75115a162facb42380d1c3fac441548217b30068c9fadeed14f63fa1f7a1d2ab6f63613e5a0f897aa245c9224d4abf7939cd8ae58c04646af
+  checksum: 10/0db0a309a868a38aca042f606b37446977c35ee4501850a8c1bf2781337d79871daf1f4344bbf5b545f2a8c62e4d4e192c8fd6f1ff49ecec7c865c55a0aefee3
   languageName: node
   linkType: hard
 
@@ -13536,9 +13566,9 @@ __metadata:
   linkType: hard
 
 "fast-uri@npm:^3.0.0, fast-uri@npm:^3.0.1":
-  version: 3.1.4
-  resolution: "fast-uri@npm:3.1.4"
-  checksum: 10/1c1ff8e7b6f7b38e997b1528aa2c97e290e0173d51250bfe4e11a303e454fc297a287555b5cb2ded59dbfce7876855fb15994a1a6b439f2497a2b8926513e397
+  version: 3.1.5
+  resolution: "fast-uri@npm:3.1.5"
+  checksum: 10/784bef687ca3ecfb4587a05104a4d41101796f0fec72be47a9abed743b10109e69a24d1ad0854ee7d2705912dc2ca9d93e03d35b65df0a3da0339e05b5d83b5c
   languageName: node
   linkType: hard
 
@@ -13643,7 +13673,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fflate@npm:^0.8.2":
+"fflate@npm:^0.8.2, fflate@npm:^0.8.3":
   version: 0.8.3
   resolution: "fflate@npm:0.8.3"
   checksum: 10/6ebf528dc9c56e78e715eac615b009b25dc33e15c1920b11ebba44e6d76181c647756a81a23e19247907496b93aa99928514c53090579a65109e026ac2824aa7
@@ -14560,10 +14590,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hono@npm:^4.12.32":
-  version: 4.12.32
-  resolution: "hono@npm:4.12.32"
-  checksum: 10/82fe817b875553bb35a2d02df1e2801e09feaa5b33685bde95dbee5f9f32f5948cf8e65d1ecf132d399b8a94d44999adea2e978a8cef971a57646e680bbfdda3
+"hono@npm:^4.13.0":
+  version: 4.13.0
+  resolution: "hono@npm:4.13.0"
+  checksum: 10/ebdba06ac9c6f2b6a1c34523e5a5e2c3e174f1ca9da030084024beb81c7ecc03b32aecf5848603b9052ee523e6e19eec5217866e8c837fb9e018cee18a3aee71
   languageName: node
   linkType: hard
 
@@ -15114,9 +15144,9 @@ __metadata:
   linkType: hard
 
 "ip-address@npm:^10.1.1, ip-address@npm:^10.2.0":
-  version: 10.2.0
-  resolution: "ip-address@npm:10.2.0"
-  checksum: 10/12fec399e1af5753ac322e47a6d81a50d3a528b3abb17c09525b2a2edcaedcca628c40520706f7037bc4d8e951b0296c47e7b86d0a8e6e2335c8f0ba4afcfac1
+  version: 10.4.0
+  resolution: "ip-address@npm:10.4.0"
+  checksum: 10/8a286dd112a88c372b10c706caca14dcf5ed029a11c3911062ad8937ca0f951aa513ecacf82e15ffcf6343749ae6c079dd9741282fc94033a06ff1b7bd6ce69a
   languageName: node
   linkType: hard
 
@@ -15768,6 +15798,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"js-yaml@npm:^4.3.1":
+  version: 4.3.1
+  resolution: "js-yaml@npm:4.3.1"
+  dependencies:
+    argparse: "npm:^2.0.1"
+  bin:
+    js-yaml: bin/js-yaml.js
+  checksum: 10/2ce71b5d632abbd77da80447bf860e8a0264e54bffe94840984887d58b023761495b523727547904517a6107a1ef189854b361e0fc44995ee13a84f222d7bd42
+  languageName: node
+  linkType: hard
+
 "jsesc@npm:^3.0.2, jsesc@npm:~3.1.0":
   version: 3.1.0
   resolution: "jsesc@npm:3.1.0"
@@ -15878,7 +15919,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"katex@npm:^0.16.25":
+"katex@npm:^0.16.45":
   version: 0.16.47
   resolution: "katex@npm:0.16.47"
   dependencies:
@@ -16509,11 +16550,12 @@ __metadata:
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/resolver-wof-wasm": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
     "@types/yauzl-promise": "npm:^4.0.1"
-    chalk: "npm:^5.6.2"
+    chalk: "npm:^6.0.0"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
     fast-glob: "npm:^3.3.3"
@@ -16526,7 +16568,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     react: "npm:^19.2.8"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^6.0.1"
+    spliterator: "npm:^6.1.0"
     yauzl-promise: "npm:^4.0.0"
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
@@ -16980,31 +17022,31 @@ __metadata:
   linkType: hard
 
 "mermaid@npm:>=11.6.0":
-  version: 11.15.0
-  resolution: "mermaid@npm:11.15.0"
+  version: 11.16.1
+  resolution: "mermaid@npm:11.16.1"
   dependencies:
-    "@braintree/sanitize-url": "npm:^7.1.1"
+    "@braintree/sanitize-url": "npm:^7.1.2"
     "@iconify/utils": "npm:^3.0.2"
-    "@mermaid-js/parser": "npm:^1.1.1"
+    "@mermaid-js/parser": "npm:^1.2.0"
     "@types/d3": "npm:^7.4.3"
     "@upsetjs/venn.js": "npm:^2.0.0"
-    cytoscape: "npm:^3.33.1"
+    cytoscape: "npm:^3.33.3"
     cytoscape-cose-bilkent: "npm:^4.1.0"
     cytoscape-fcose: "npm:^2.2.0"
     d3: "npm:^7.9.0"
     d3-sankey: "npm:^0.12.3"
     dagre-d3-es: "npm:7.0.14"
-    dayjs: "npm:^1.11.19"
-    dompurify: "npm:^3.3.1"
+    dayjs: "npm:^1.11.20"
+    dompurify: "npm:^3.3.3"
     es-toolkit: "npm:^1.45.1"
-    katex: "npm:^0.16.25"
+    katex: "npm:^0.16.45"
     khroma: "npm:^2.1.0"
     marked: "npm:^16.3.0"
     roughjs: "npm:^4.6.6"
     stylis: "npm:^4.3.6"
     ts-dedent: "npm:^2.2.0"
     uuid: "npm:^11.1.0 || ^12 || ^13 || ^14.0.0"
-  checksum: 10/4a3f8ac77aba326c96adc2325f550421b6f05f1592998fcf80dfeb9fbcd751e2a0a030092559bd258e45bba60c0ad1e7415ad46ff5c165b1d9a469835e927e9a
+  checksum: 10/cd372598789afb5db49b51ae8746b212de798b79760c17384696df2b7fe4eebb2863dc915a13c742f74267bbe9afbffcb6c9ae371e4c5596176cf57ee050d9c8
   languageName: node
   linkType: hard
 
@@ -20674,6 +20716,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"read-excel-file@npm:^9.3.5":
+  version: 9.3.7
+  resolution: "read-excel-file@npm:9.3.7"
+  dependencies:
+    fflate: "npm:^0.8.3"
+    saxen: "npm:^11.1.0"
+    unzipper-esm: "npm:^0.13.3"
+    worker-f: "npm:^0.1.12"
+  checksum: 10/2fd9c20eefe702fffbfce52cc533f6a39935396a19fd488e222bc9aebd914ed3c296b2faaaf7f821f68011e65cd70635e73ad8f97dba49c2a478447a87004c05
+  languageName: node
+  linkType: hard
+
 "read-package-up@npm:^11.0.0":
   version: 11.0.0
   resolution: "read-package-up@npm:11.0.0"
@@ -21580,6 +21634,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"saxen@npm:^11.1.0":
+  version: 11.1.1
+  resolution: "saxen@npm:11.1.1"
+  checksum: 10/94a1fadb7fff9cd6c66376f0838fa3d64535a525eef34c6d09a5b4f4bcb18c9feffd7285f3bff8374a9ca69200b6dc90b4752ca2ae6b771a71600c1872fa3e39
+  languageName: node
+  linkType: hard
+
 "scheduler@npm:^0.27.0":
   version: 0.27.0
   resolution: "scheduler@npm:0.27.0"
@@ -22348,20 +22409,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^6.0.1":
-  version: 6.0.1
-  resolution: "spliterator@npm:6.0.1"
+"spliterator@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "spliterator@npm:6.1.0"
   peerDependencies:
     change-case: ^5.4.4
+    read-excel-file: ^9.3.5
     type-fest: ^5.6.0
+    write-excel-file: ^4.1.1
   peerDependenciesMeta:
     change-case:
       optional: true
+    read-excel-file:
+      optional: true
     type-fest:
+      optional: true
+    write-excel-file:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/8890c8cb34607ef90f60d74302014d0c96e439ec8c1cc098bae676b0a863416574d0f8550f2bd6829ad91ac98437605616ecf3fa0b703f4533a666501b060df2
+  checksum: 10/811d1a4ba5fa832d924a23222e157929a2a1fb3f15d2eb6cecc51e251c69b1d751822eac9821869a036726a2e05e6b574c4e745bdd594da6eec88c78280dbbdf
   languageName: node
   linkType: hard
 
@@ -23540,6 +23607,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"unzipper-esm@npm:^0.13.3":
+  version: 0.13.3
+  resolution: "unzipper-esm@npm:0.13.3"
+  dependencies:
+    graceful-fs: "npm:^4.2.2"
+    node-int64: "npm:^0.4.0"
+  checksum: 10/3790fba54f0c3126e8bbf48646cb87e5066d82d8a22681daca0aa108127315cc39dcf3194034443755d4d6783434c6365e3866df782d597884cc1ff99052b3b3
+  languageName: node
+  linkType: hard
+
 "unzipper@npm:^0.12.3":
   version: 0.12.5
   resolution: "unzipper@npm:0.12.5"
@@ -24336,6 +24413,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"worker-f@npm:^0.1.12":
+  version: 0.1.20
+  resolution: "worker-f@npm:0.1.20"
+  checksum: 10/87955570faf9e63649f9625117754d718de8714326a142d330a2388dd190d8841cbc21c846fa1e1fdae223cfe4a33a2832fdd4849ef12e60d45e8331d5eb4929
+  languageName: node
+  linkType: hard
+
 "wrap-ansi@npm:^10.0.0":
   version: 10.0.0
   resolution: "wrap-ansi@npm:10.0.0"
@@ -24373,6 +24457,15 @@ __metadata:
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"
   checksum: 10/159da4805f7e84a3d003d8841557196034155008f817172d4e986bd591f74aa82aa7db55929a54222309e01079a65a92a9e6414da5a6aa4b01ee44a511ac3ee5
+  languageName: node
+  linkType: hard
+
+"write-excel-file@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "write-excel-file@npm:4.1.1"
+  dependencies:
+    fflate: "npm:^0.8.2"
+  checksum: 10/6403979532e63679c37f9a964f6831c973a46ee9c7d8a69776dc4d9756a69e71c263c63168ff9d9f60c9eca552339dc773b810d5ca6f9d7ae415b72b1e536f35
   languageName: node
   linkType: hard
 

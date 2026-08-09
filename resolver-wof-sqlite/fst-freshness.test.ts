@@ -49,7 +49,7 @@ function fixtureMatcher(): FSTMatcher {
 					placetype: "locality",
 					name: "Aa Bb",
 					parentChain: [7],
-					importance: 0.5,
+					referential: 0.5,
 					lat: 1,
 					lon: 2,
 				},

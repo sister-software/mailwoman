@@ -25,7 +25,7 @@ import {
 	pairIndexBaseURL,
 	pairIndexURLs,
 	resolvePairIndexBaseURL,
-} from "./resources.tsx"
+} from "./resources/index.ts"
 
 const here = dirname(fileURLToPath(import.meta.url))
 

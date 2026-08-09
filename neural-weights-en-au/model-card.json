@@ -1,0 +1,108 @@
+{
+	"name": "neural-weights-en-au",
+	"version": "9.0.0",
+	"$comment": "Initial en-au overlay (2026-08-08) — country-scope delivery only. Ships NO postcode-au.bin (no AU postcode shard built), NO pair-index-au.bin (PIX1 not yet calibrated for AU), NO anchor-lexicon (anchor channel OFF for en-au). The overlay exists so --locale en-AU resolves and the resolver's country scope constrains the candidate lookup — that alone fixes the WA→Washington-State homonym class diagnosed in the 2026-08-07 FIRST-PASS benchmark (8 WA rows misrouted ≥15,000 km under en-US default). Follow-ups: AU postcode shard build, PIX1 pair-index calibration, address-point layer from OA au/countrywide.csv.",
+	"model_lineage": "Data-only overlay. Ships NO model.onnx/tokenizer.model — resolves both from @mailwoman/neural-weights-en-us via mailwoman.baseWeights (byte-identical encoder).",
+	"phase": "INITIAL — country scope only. Not yet evaluated on an AU board; the benchmark evidence is the 8 WA-scattered-rows class in FIRST_PASS.md.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"locale": "en-au",
+	"base_model": {
+		"package": "@mailwoman/neural-weights-en-us",
+		"version": "9.0.0",
+		"resolution": "mailwoman.baseWeights in package.json"
+	},
+	"au_artifacts": {
+		"no_postcode_bin": "FOLLOW-UP: this overlay ships NO postcode-au.bin — no AU postcode shard exists on disk. Until one is built, the postcode-anchor channel resolves OFF for en-au loads.",
+		"no_pair_index": "FOLLOW-UP: this overlay ships NO pair-index-au.bin — PIX1 placetype-pair retrieval not yet calibrated for AU. The AU address register (GNAF/OA) is needed for pair extraction.",
+		"no_anchor_lexicon": "FOLLOW-UP: this overlay ships NO anchor-lexicon — anchor channel OFF (same posture as en-nz)."
+	},
+	"architecture": {
+		"$comment": "Verbatim copy of the base card's architecture.",
+		"hidden_size": 384,
+		"num_hidden_layers": 6,
+		"num_attention_heads": 6,
+		"intermediate_size": 1536,
+		"max_position_embeddings": 128,
+		"vocab_size": 73143,
+		"num_labels": 33,
+		"crf_at_training": false,
+		"crf_at_inference": true,
+		"phrase_priors": true
+	},
+	"requires": {
+		"$comment": "Verbatim copy of the base card's requires block. NOTE: anchor.required is true (the encoder is anchor-trained) but this overlay ships no postcode-au.bin — anchor channel OFF on en-au loads.",
+		"anchor": {
+			"required": true
+		},
+		"gazetteer": {
+			"required": true
+		},
+		"country": {
+			"required": true
+		},
+		"conventions": {
+			"required": true,
+			"mode": "auto"
+		},
+		"bridge": {
+			"required": false
+		},
+		"suppress_gazetteer_near_postcode": true
+	},
+	"labels": [
+		"O",
+		"B-country",
+		"I-country",
+		"B-region",
+		"I-region",
+		"B-locality",
+		"I-locality",
+		"B-dependent_locality",
+		"I-dependent_locality",
+		"B-postcode",
+		"I-postcode",
+		"B-subregion",
+		"I-subregion",
+		"B-cedex",
+		"I-cedex",
+		"B-venue",
+		"I-venue",
+		"B-street",
+		"I-street",
+		"B-house_number",
+		"I-house_number",
+		"B-street_prefix",
+		"I-street_prefix",
+		"B-street_suffix",
+		"I-street_suffix",
+		"B-unit",
+		"I-unit",
+		"B-po_box",
+		"I-po_box",
+		"B-intersection_a",
+		"I-intersection_a",
+		"B-intersection_b",
+		"I-intersection_b"
+	],
+	"components_supported": [
+		"country",
+		"region",
+		"locality",
+		"dependent_locality",
+		"postcode",
+		"subregion",
+		"cedex",
+		"venue",
+		"street",
+		"house_number",
+		"street_prefix",
+		"street_suffix",
+		"unit",
+		"po_box",
+		"intersection_a",
+		"intersection_b"
+	],
+	"files": {
+		"model_card": "model-card.json"
+	}
+}

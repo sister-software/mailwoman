@@ -11,10 +11,9 @@
 import { join } from "node:path"
 
 import { Text } from "ink"
+import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { wofDir } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { commandError, type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
-import { wofDir } from "../../../gazetteer-pipeline/index.ts"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Queries to probe"))
 export { ArgumentsSchema as args }
@@ -56,15 +55,17 @@ const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof Argumen
 			console.log(`  State: ${q.stateID}, Accepting: ${q.accepting.length} interpretations`)
 
 			if (q.accepting.length) {
-				const sorted = [...q.accepting].toSorted((a, b) => b.importance - a.importance)
+				const sorted = [...q.accepting].toSorted((a, b) => b.referential - a.referential)
 
-				console.log(`  Top by importance:`)
+				console.log(`  Top by referential likelihood:`)
 
 				for (const p of sorted.slice(0, maxResults)) {
-					const imp = p.importance > 0 ? ` imp ${p.importance.toFixed(4)}` : ""
+					const ref = p.referential > 0 ? ` ref ${p.referential.toFixed(4)}` : ""
+					// Printed only when the artifact carries one — an absent article must not read as 0.00.
+					const enc = p.encyclopedic === undefined ? "" : ` enc ${p.encyclopedic.toFixed(4)}`
 					const chain = p.parentChain.length ? ` chain=[${p.parentChain.join("→")}]` : ""
 
-					console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${imp}${chain}  wof:${p.wofID}`)
+					console.log(`    ${p.placetype.padEnd(12)} ${p.name.padEnd(20)}${ref}${enc}${chain}  wof:${p.wofID}`)
 				}
 
 				if (sorted.length > maxResults) {

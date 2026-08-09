@@ -10,10 +10,9 @@
  */
 
 import { Box, Text } from "ink"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { artifactSizeMB, buildPostcodeShard } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
-import { artifactSizeMB, buildPostcodeShard } from "../../../gazetteer-pipeline/index.ts"
 
 const OptionsSchema = zod.object({
 	country: zod.string().describe("ISO-2 country (the whosonfirst-data-postalcode-<cc> repo to build)"),

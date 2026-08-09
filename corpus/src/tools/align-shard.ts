@@ -26,7 +26,7 @@ import { createWriteStream } from "node:fs"
  * --output /tmp/kryptonite-labeled.jsonl\
  * --corpus-version 0.5.0
  */
-import { alignRow } from "@mailwoman/corpus"
+import { alignRow } from "@mailwoman/corpus/utils"
 import { JSONSpliterator } from "spliterator"
 
 export interface AlignShardOptions {

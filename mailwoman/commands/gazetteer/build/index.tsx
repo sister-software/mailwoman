@@ -12,9 +12,7 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import zod from "zod"
-
-import { type CommandComponent, useCommandTask } from "../../../cli-kit/index.ts"
+import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import {
 	artifactSizeMB,
 	buildAdmin,
@@ -22,7 +20,8 @@ import {
 	DEFAULT_CANDIDATE_OUT,
 	resolvePostcodeShards,
 	wofDir,
-} from "../../../gazetteer-pipeline/index.ts"
+} from "mailwoman/gazetteer-pipeline"
+import zod from "zod"
 
 const OptionsSchema = zod.object({
 	data: zod.string().optional().describe("WOF repos root. Default <data-root>/wof/repos"),

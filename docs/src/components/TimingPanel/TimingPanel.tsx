@@ -1,4 +1,4 @@
-import type { StageTiming } from "../../shared/resources.tsx"
+import type { StageTiming } from "@mailwoman/docs/shared/resources"
 
 import styles from "./styles.module.css"
 

@@ -22,7 +22,7 @@ import { join } from "node:path"
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-import { LexiconVersionMismatchError, resolveWeights } from "../weights.ts"
+import { LexiconVersionMismatchError, resolveWeights, weightsCachePackageDir } from "../weights.ts"
 
 let cacheRoot: string
 let packageDir: string
@@ -54,7 +54,7 @@ function cardDeclaring(lexicon: string | undefined): Record<string, unknown> {
 
 beforeEach(() => {
 	cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-lexicon-card-"))
-	packageDir = join(cacheRoot, "node_modules", "@mailwoman", "neural-weights-en-us")
+	packageDir = weightsCachePackageDir(cacheRoot, "en-us")
 	mkdirSync(packageDir, { recursive: true })
 })
 

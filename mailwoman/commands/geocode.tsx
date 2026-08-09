@@ -36,10 +36,10 @@ import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
+import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { type CommandComponent, commandError, useCommandTask } from "../cli-kit/index.ts"
 import {
 	geocodeAddress,
 	parseForGeocode,
@@ -155,6 +155,25 @@ const OptionsSchema = zod.object({
 				"to Addison, Texas (ZIP 75001). Abstains when the default country is already consistent, when no country " +
 				"is, or when more than one is. ON by default (promoted 2026-08-05); pass " +
 				"--no-postcode-country-coherence to restore the un-overridden country scope."
+		),
+	postcodeShapeCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident " +
+				"sibling signal (country/region) is demoted: digit-only → house_number, letter-bearing → stamped " +
+				"'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. " +
+				"DEFAULT OFF (demotion is the failure mode with teeth); pass --postcode-shape-coherence to opt in."
+		),
+	postcodeContainmentCoherence: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#31: re-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the " +
+				"locality that CONTAINS the postcode wins the name-match tie. DEFAULT OFF; pass " +
+				"--postcode-containment-coherence to opt in."
 		),
 	placeCountryThreshold: zod
 		.number()
@@ -275,6 +294,18 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		nationalShards = undefined
 	}
 
+	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
+	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
+	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
+	let osmProvider: { for: (country: string) => StateShards; close(): void } | undefined
+
+	try {
+		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
+		osmProvider = new OSMShardProvider(options.dataRoot)
+	} catch {
+		osmProvider = undefined
+	}
+
 	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
 	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
@@ -314,12 +345,16 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			resolver,
 			shards,
 			...(nationalShards ? { nationalShards } : {}),
+			...(osmProvider ? { osmShards: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
 			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
 			// threading (an unset dep already reads as ON downstream).
 			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
+			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
+			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
+			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
@@ -335,6 +370,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		explicitAp?.close()
 		explicitIp?.close()
 		shardProvider.close()
+		osmProvider?.close()
 		lookup.close()
 	}
 }
@@ -438,7 +474,13 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 		return <Spinner />
 	}
 
-	return <Text>{state.result}</Text>
+	// Machine formats bypass Ink's <Text> renderer — it word-wraps long lines at the terminal
+	// width (80 when piped), corrupting JSON string values (see writeRawStdout).
+	if (options.format === "text") {
+		return <Text>{state.result}</Text>
+	}
+
+	return writeRawStdout(state.result)
 }
 
 export default GeocodeCommand

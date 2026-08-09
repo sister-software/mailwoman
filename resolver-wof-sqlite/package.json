@@ -86,6 +86,11 @@
 			"default": "./out/fst-deserialize-web.js",
 			"types": "./out/fst-deserialize-web.d.ts"
 		},
+		"./place-importance-schema": {
+			"node": "./place-importance-schema.ts",
+			"default": "./out/place-importance-schema.js",
+			"types": "./out/place-importance-schema.d.ts"
+		},
 		"./unified-schema": {
 			"node": "./unified-schema.ts",
 			"default": "./out/unified-schema.js",
@@ -173,6 +178,6 @@
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",
-		"spliterator": "^6.0.1"
+		"spliterator": "^6.1.0"
 	}
 }

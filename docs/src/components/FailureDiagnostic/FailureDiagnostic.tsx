@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { ResultNode } from "../../shared/resources.tsx"
+import type { ResultNode } from "@mailwoman/docs/shared/resources"
 
 import styles from "./styles.module.css"
 
