@@ -65,6 +65,20 @@ import type { ResolvedPlace } from "@mailwoman/core/resolver"
 export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
 
 /**
+ * Importance margin below which two SAME-COUNTRY bearers are a tie, and the tie falls back to referential (size) order.
+ * Ratified 2026-08-11 (the five bare-query flip decisions): bare `Springfield` must stay on the referential answer —
+ * the live chain is IL 0.612605 → MA 0.611142 → MO 0.596195 (adjacent gaps 0.0015 and 0.0149, full span 0.0164), so the
+ * band must cover at least the 0.0149 adjacent gap for the trio to chain into one cluster.
+ *
+ * The band never compares across countries, and that scope is forced by decided rows, not preference: Windsor's
+ * accepted flip (GB 0.564842 over CA 0.560687) sits at a 0.0042 gap — inside ANY band that covers Springfield. The two
+ * decisions are only co-satisfiable if the band binds same-country pairs alone. That is also what the §2 referential
+ * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
+ * cross-country question — which country's bearer a bare query meant.
+ */
+export const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
+
+/**
  * The fields a ranking key reads. Structural rather than `ResolvedPlace` so the backend's own `PlaceCandidate` (a
  * structural twin) can be ranked without a cast.
  */
@@ -116,9 +130,9 @@ const measured = (c: Rankable): boolean => typeof c.importance === "number" && N
  * between them.
  *
  * So for `Whitby` — CA(0.5089), GB(0.5496), TC(—), then four unscored bearers — the swap is confined to slots 0 and 1,
- * GB takes the lead, and TC never moves. No threshold, no tuned band, no free parameter.
+ * GB takes the lead, and TC never moves.
  */
-function reorderMeasured<T extends Rankable>(tier: readonly T[], compare: (a: T, b: T) => number): T[] {
+function reorderMeasured<T extends Rankable>(tier: readonly T[], order: (measuredRows: T[]) => T[]): T[] {
 	const slots: number[] = []
 
 	for (const [i, c] of tier.entries()) {
@@ -128,7 +142,7 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], compare: (a: T,
 	}
 
 	if (slots.length < 2) return [...tier]
-	const sorted = slots.map((i) => tier[i]!).toSorted(compare)
+	const sorted = order(slots.map((i) => tier[i]!))
 	const out = [...tier]
 
 	for (const [k, slot] of slots.entries()) {
@@ -136,6 +150,68 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], compare: (a: T,
 	}
 
 	return out
+}
+
+/**
+ * The importance ordering over MEASURED rows, with the {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND} applied.
+ *
+ * Same-country bearers whose adjacent importance gaps sit inside the band chain into one cluster (transitive on purpose
+ * — otherwise the boundary would depend on comparison order), and a cluster orders its members referentially (size
+ * DESC). Clusters — including every cross-country row, which is always its own cluster — rank by their most important
+ * member, then head size, then input order. A cluster therefore moves as a unit: a same-country near-tie cannot be
+ * split by a foreign row falling between its members' scores.
+ */
+function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] {
+	// Group by country in first-appearance order; a row without a country can never substantiate a
+	// same-country tie, so it stays a singleton.
+	const groups = new Map<string, { firstIndex: number; members: T[] }>()
+	const clusters: Array<{ firstIndex: number; members: T[] }> = []
+
+	for (const [i, row] of rows.entries()) {
+		const country = row.country?.toUpperCase()
+
+		if (!country) {
+			clusters.push({ firstIndex: i, members: [row] })
+
+			continue
+		}
+
+		const group = groups.get(country)
+
+		if (group) {
+			group.members.push(row)
+		} else {
+			groups.set(country, { firstIndex: i, members: [row] })
+		}
+	}
+
+	for (const group of groups.values()) {
+		const sorted = group.members.toSorted((a, b) => b.importance! - a.importance! || size(b) - size(a))
+		let open: T[] = []
+
+		for (const row of sorted) {
+			if (open.length && open.at(-1)!.importance! - row.importance! > SAME_COUNTRY_IMPORTANCE_TIE_BAND) {
+				clusters.push({ firstIndex: group.firstIndex, members: open })
+				open = []
+			}
+
+			open.push(row)
+		}
+
+		if (open.length) {
+			clusters.push({ firstIndex: group.firstIndex, members: open })
+		}
+	}
+
+	const keyed = clusters.map((cluster) => ({
+		firstIndex: cluster.firstIndex,
+		key: Math.max(...cluster.members.map((m) => m.importance!)),
+		members: cluster.members.toSorted((a, b) => size(b) - size(a)),
+	}))
+
+	keyed.sort((a, b) => b.key - a.key || size(b.members[0]!) - size(a.members[0]!) || a.firstIndex - b.firstIndex)
+
+	return keyed.flatMap((c) => c.members)
 }
 
 /**
@@ -151,6 +227,11 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], compare: (a: T,
  * `candidate-schema.ts` → `CandidateTable.importance` for why the strict channel is deliberately NOT what lands there).
  * On an artifact predating the column, `importance` is `undefined` on every candidate the backend produces and the
  * abstention below keeps the ranking byte-stable.
+ *
+ * Flip decisions, ratified 2026-08-11: bare `Moscow`→Москва, `Manchester`→GB, `Fulda`→DE, `Cambridge`→GB are ACCEPTED
+ * behavior — all cross-country contests, where this prior answers the question population cannot. Bare `Springfield`
+ * ABSTAINS to the referential answer via {@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}; no candidate is dropped, so the
+ * runner-up survives as a declared alternative downstream.
  */
 export function rankByImportance<T extends Rankable>(candidates: readonly T[]): T[] {
 	if (candidates.length < 2) return [...candidates]
@@ -169,9 +250,7 @@ export function rankByImportance<T extends Rankable>(candidates: readonly T[]): 
 		;(c.exactMatch === true ? exact : rest).push(c)
 	}
 
-	const compare = (a: T, b: T) => (b.importance ?? 0) - (a.importance ?? 0) || size(b) - size(a)
-
-	return [...reorderMeasured(exact, compare), ...reorderMeasured(rest, compare)]
+	return [...reorderMeasured(exact, orderMeasuredByImportance), ...reorderMeasured(rest, orderMeasuredByImportance)]
 }
 
 /**

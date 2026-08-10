@@ -125,6 +125,79 @@ describe("rankByImportance", () => {
 	})
 })
 
+describe("rankByImportance same-country tie band (Springfield decision, 2026-08-11)", () => {
+	// The decided calibration row, live values off the treatment candidate.db: three US Springfields
+	// whose importance order inverts their population order on margins inside the band. The ratified
+	// §2 policy pins the bare query to the REFERENTIAL answer (MO), so the chained trio must fall back
+	// to size order — MO (171,589), MA (153,672), IL (112,544).
+	const SPRINGFIELD: ResolvedPlace[] = [
+		place({ id: 85_940_429, name: "Springfield", country: "US", prominence: 5.0513, importance: 0.612605 }),
+		place({ id: 85_950_393, name: "Springfield", country: "US", prominence: 5.1866, importance: 0.611142 }),
+		place({ id: 85_971_363, name: "Springfield", country: "US", prominence: 5.2345, importance: 0.596195 }),
+	]
+
+	it("abstains to referential order inside a same-country band (bare Springfield stays MO)", () => {
+		expect(rankByImportance(SPRINGFIELD).map((c) => c.id)).toEqual([85_971_363, 85_950_393, 85_940_429])
+	})
+
+	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
+		// The decided-flip guard: any band wide enough to cover Springfield (0.0164) also covers
+		// Windsor's gap. The band must therefore never compare across countries, or the four accepted
+		// flips regress.
+		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
+	})
+
+	it("lets importance separate same-country bearers when the gap clears the band", () => {
+		const clear = [
+			place({ id: 1, name: "X", country: "US", prominence: 6, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 3, importance: 0.65 }),
+		]
+
+		expect(rankByImportance(clear).map((c) => c.id)).toEqual([2, 1])
+	})
+
+	it("chains adjacent gaps transitively — a run of near-ties is ONE cluster", () => {
+		// A–B and B–C each sit inside the band while A–C does not. Chaining is deliberate: without it
+		// the cluster boundary would depend on which pair the sort compared first.
+		const run = [
+			place({ id: 1, name: "X", country: "US", prominence: 3, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 4, importance: 0.585 }),
+			place({ id: 3, name: "X", country: "US", prominence: 5, importance: 0.57 }),
+		]
+
+		expect(rankByImportance(run).map((c) => c.id)).toEqual([3, 2, 1])
+	})
+
+	it("moves a banded cluster as a unit, keyed by its most important member", () => {
+		const interleaved = [
+			place({ id: 1, name: "X", country: "US", prominence: 5, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 6, importance: 0.59 }),
+			place({ id: 3, name: "X", country: "GB", prominence: 2, importance: 0.595 }),
+		]
+
+		expect(rankByImportance(interleaved).map((c) => c.id)).toEqual([2, 1, 3])
+	})
+
+	it("keeps unmeasured rows on their slots while a band resolves among the measured", () => {
+		const withUnmeasured = [
+			SPRINGFIELD[0]!,
+			place({ id: 4, name: "Springfield", country: "US", prominence: 4.9 }),
+			SPRINGFIELD[2]!,
+		]
+
+		expect(rankByImportance(withUnmeasured).map((c) => c.id)).toEqual([85_971_363, 4, 85_940_429])
+	})
+
+	it("never bands a candidate that carries no country", () => {
+		const anonymous = [
+			place({ id: 1, name: "X", country: undefined as unknown as string, prominence: 6, importance: 0.6 }),
+			place({ id: 2, name: "X", country: "US", prominence: 3, importance: 0.61 }),
+		]
+
+		expect(rankByImportance(anonymous).map((c) => c.id)).toEqual([2, 1])
+	})
+})
+
 describe("rankByCountryPrior", () => {
 	it("lets a far more prominent foreign namesake outrank the locale country (Zürich)", () => {
 		// Zurich, Kansas (pop 81, prominence 1.91) cannot clear Zürich CH (443,037) with a +2 bonus.
