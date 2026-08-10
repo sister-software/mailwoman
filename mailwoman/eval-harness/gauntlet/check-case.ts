@@ -62,6 +62,123 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 }
 
 /**
+ * The script families a component value can be written in, for the dual-script comparison below. Grouped, not
+ * per-Unicode-script: Han, the two kana and Hangul are ONE family, because a single Japanese rendering routinely mixes
+ * Han and kana within one word (`表参道ヒルズ`) and splitting on that boundary would shred one rendering into three.
+ * Latin/Cyrillic — the pair the Mongolian rows are written in — is the case this exists for.
+ *
+ * Anything not listed collapses to `"other"`: an unlisted script still forms ONE run, so a value written in it is never
+ * shredded, it only cannot be told apart from another unlisted script. Adding a family here is safe; the only effect is
+ * that two renderings previously fused into one `"other"` run become two.
+ */
+const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
+	["latin", /\p{Script=Latin}/u],
+	["cyrillic", /\p{Script=Cyrillic}/u],
+	["cjk", /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Bopomofo}]/u],
+	["greek", /\p{Script=Greek}/u],
+	["arabic", /\p{Script=Arabic}/u],
+	["hebrew", /\p{Script=Hebrew}/u],
+	["devanagari", /\p{Script=Devanagari}/u],
+	["thai", /\p{Script=Thai}/u],
+]
+
+/**
+ * The script family of one character, or `null` when the character carries no script of its own — digits, punctuation,
+ * whitespace, combining marks. Those are NEUTRAL: they belong to whichever rendering surrounds them, which is what lets
+ * `BGD - 16 khoroo` stay one Latin rendering instead of four.
+ */
+function scriptFamilyOf(char: string): string | null {
+	if (!/\p{L}/u.test(char)) return null
+
+	for (const [family, re] of SCRIPT_FAMILIES) {
+		if (re.test(char)) return family
+	}
+
+	return "other"
+}
+
+/**
+ * Split a component value into one rendering per script family, in source order.
+ *
+ * The dual-script rows (`mn-ws-gandantegchinlen-dual-script` and its siblings) carry the SAME address twice — a
+ * Cyrillic/Mongolian rendering and a Latin/English one, slash-joined — so a parse that correctly tags BOTH produces one
+ * span holding both. Each maximal run of one script family, with the neutral characters BETWEEN two letters of that
+ * family absorbed into it, is one rendering; the neutrals that sit at a family BOUNDARY are the joiner and belong to
+ * neither (`" / "`, `", "`, `" — "` all fall out the same way).
+ *
+ * A mono-script value yields exactly one rendering — the value itself, minus any leading/trailing non-letters — so it
+ * can never satisfy a contract that lists two. That is the whole precision story: the splitter only ever speaks on a
+ * value written in two or more scripts, and since 2026-08-11 it speaks only for the rows that OPT IN via
+ * `expect_component_renderings` (see {@linkcode checkCase}) — ordinary component assertions never reach it.
+ *
+ * Exported for `check-case.test.ts`, which pins the family grouping directly — the JP kana case in particular has no
+ * reachable expression through `checkCase` (the Latin model never emits the JP tags).
+ */
+export function scriptRenderings(value: string): string[] {
+	const renderings: string[] = []
+	let family: string | null = null
+	let chars: string[] = []
+	let pending: string[] = []
+
+	for (const char of value) {
+		const charFamily = scriptFamilyOf(char)
+
+		if (charFamily === null) {
+			pending.push(char)
+
+			continue
+		}
+
+		if (charFamily === family) {
+			// Same family across the gap — the neutrals were interior, not a joiner. Keep them.
+			chars.push(...pending, char)
+		} else {
+			if (chars.length) {
+				renderings.push(chars.join(""))
+			}
+
+			family = charFamily
+			chars = [char]
+		}
+
+		pending = []
+	}
+
+	if (chars.length) {
+		renderings.push(chars.join(""))
+	}
+
+	return renderings
+}
+
+/**
+ * Does `got` satisfy the asserted `expected`? EXACT case-folded equality, nothing else — the whole of the contract for
+ * every ordinary `expect_components` key.
+ *
+ * A global set-based fallback over {@linkcode scriptRenderings} lived here briefly (2026-08-10 → 2026-08-11) so a
+ * dual-script span could satisfy a truth freezing one of its renderings. Its cost was a cross-tag bleed grading as a
+ * pass — the value alone cannot say whether its two renderings are two writings of the SAME element or two DIFFERENT
+ * elements that ran together, so a `locality` of `四季酒家 Manchester` satisfied `Manchester`. Review converted the
+ * relaxation into the per-row `expect_component_renderings` OPT-IN: a case that genuinely carries a span in two scripts
+ * lists the renderings it requires, a key so listed supersedes the same key here, and every other assertion stays this
+ * strict equality. See {@linkcode checkCase}'s component gate for the contract.
+ */
+function componentMatches(got: string, expected: string): boolean {
+	return got.toLowerCase() === expected.toLowerCase()
+}
+
+/**
+ * Grade one `expect_component_renderings` entry: which of the required renderings are ABSENT from
+ * {@linkcode scriptRenderings}`(got)`, case-folded? Empty = the contract is satisfied. Nothing else about `got` is
+ * asserted — neutral separators between renderings, and any EXTRA rendering, ride along free.
+ */
+function missingRenderings(got: string, required: readonly string[]): string[] {
+	const present = new Set(scriptRenderings(got).map((rendering) => rendering.toLowerCase()))
+
+	return required.filter((rendering) => !present.has(rendering.toLowerCase()))
+}
+
+/**
  * The resolved place a `expect_place_id` / `expect_place_name` row grades against: the most specific admin node the
  * RESOLVER decorated (`hierarchy` is sorted locality → dependent_locality → subregion → region → country).
  *
@@ -88,8 +205,13 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
  *    RIGHT parsed locality and only a coordinate 8,045 km away to say so, and a row whose expected place sits inside a
  *    25 km bar of its impostor would have had nothing at all. The corpus stored both columns from the first migration
  *    and no branch read them, so "wrong place, plausible coordinate" was unassertable for the corpus's whole life.
- * 4. COMPONENTS, case-insensitive per key, against the parsed/assembled spans. Last because a corrupt `expect_components`
- *    JSON short-circuits the rest of ITS gate, and the place gate must still have run.
+ * 4. COMPONENTS, exact case-insensitive per key, against the parsed/assembled spans ({@linkcode componentMatches}). Last
+ *    because a corrupt `expect_components` JSON short-circuits the rest of ITS gate, and the place gate must still have
+ *    run. Rows whose input carries a span in two or more scripts opt in per key via `expect_component_renderings` — `{
+ *    tag: [rendering, …] }` — and for a listed key the assertion becomes: {@linkcode scriptRenderings} of the got value
+ *    must CONTAIN EVERY listed rendering, case-folded (both scripts required when the case defines both). Nothing else
+ *    about that value is asserted. PRECEDENCE: a key present in `expect_component_renderings` supersedes the same key
+ *    in `expect_components`; an empty rendering list throws (an authoring bug the seed schema refuses upstream).
  */
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
@@ -130,6 +252,18 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 		}
 	}
 
+	// Parsed ahead of the expect_components loop because its keys take PRECEDENCE there. `undefined` tolerated
+	// alongside null: a pre-2026-08-11 regression.db has no such column at all (not that the runner would grade
+	// one — the corpus stamp refuses first).
+	const renderingContract =
+		c.expect_component_renderings != null
+			? tryParsingJSON<Record<string, string[]>>(c.expect_component_renderings)
+			: null
+
+	if (c.expect_component_renderings != null && !renderingContract) {
+		issues.push(`expect_component_renderings is not valid JSON (corrupt regression.db row?)`)
+	}
+
 	if (c.expect_components != null) {
 		// From our own builder's JSON.stringify, so malformed = a corrupt DB row — surface it as a
 		// case issue (loud, per-case) rather than letting a raw SyntaxError kill the whole gate.
@@ -137,15 +271,35 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 		if (!exp) {
 			issues.push(`expect_components is not valid JSON (corrupt regression.db row?)`)
+		} else {
+			for (const [k, v] of Object.entries(exp)) {
+				// Superseded: the rendering contract owns this key outright.
+				if (renderingContract && k in renderingContract) continue
 
-			return issues
+				const got = componentOf(r, k)
+
+				if (!componentMatches(got ?? "", v)) {
+					issues.push(`${k} "${got}" ≠ "${v}"`)
+				}
+			}
 		}
+	}
 
-		for (const [k, v] of Object.entries(exp)) {
+	if (renderingContract) {
+		for (const [k, required] of Object.entries(renderingContract)) {
+			// LOUD, like the unknown-key throw above: an empty or non-string-array list would assert nothing while
+			// looking asserted. The seed schema refuses these on load, so reaching one here means a row bypassed it.
+			if (!Array.isArray(required) || !required.length || required.some((v) => typeof v !== "string")) {
+				throw new Error(
+					`expect_component_renderings["${k}"] must be a non-empty string array — authoring bug (the seed schema refuses this; how was this DB built?)`
+				)
+			}
+
 			const got = componentOf(r, k)
+			const missing = missingRenderings(got ?? "", required)
 
-			if ((got ?? "").toLowerCase() !== v.toLowerCase()) {
-				issues.push(`${k} "${got}" ≠ "${v}"`)
+			if (missing.length) {
+				issues.push(`${k} "${got}" missing rendering(s) ${missing.map((m) => `"${m}"`).join(", ")}`)
 			}
 		}
 	}

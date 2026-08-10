@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { checkCase, componentOf } from "./check-case.ts"
+import { checkCase, componentOf, scriptRenderings } from "./check-case.ts"
 import type { GauntletResult } from "./harness.ts"
 import type { GauntletCaseTable } from "./schema.ts"
 
@@ -29,6 +29,7 @@ function storedCase(over: Partial<GauntletCaseTable> = {}): GauntletCaseTable {
 		country: "XX",
 		status: "pass",
 		expect_components: null,
+		expect_component_renderings: null,
 		expect_place_id: null,
 		expect_place_name: null,
 		expect_lat: null,
@@ -196,5 +197,155 @@ describe("the place-identity gate (#1507)", () => {
 		const r = result({ hierarchy: [{ tag: "locality", name: "Aichegg", placeID: "wof:9000000121151" }] })
 
 		expect(checkCase(storedCase(), r)).toEqual([])
+	})
+})
+
+describe("the component gate is exact — multi-script truth is a per-row opt-in (#34)", () => {
+	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering) let a
+	// cross-tag bleed grade as a pass, so review converted it into the `expect_component_renderings` opt-in.
+	// The first two tests pin the reversal; the rest pin the opt-in contract itself.
+	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
+		// The exposure the global relaxation disclosed: a locality that swallowed the CJK venue next door
+		// graded as a pass. With no rendering contract on the row, this must FAIL again.
+		const c = storedCase({ expect_components: JSON.stringify({ locality: "Manchester" }) })
+
+		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([
+			`locality "四季酒家 Manchester" ≠ "Manchester"`,
+		])
+	})
+
+	it("no longer accepts a dual-script span against a truth freezing one rendering — that is the opt-in's job", () => {
+		const c = storedCase({ expect_components: JSON.stringify({ venue: "Gandantegchinlen Monastery" }) })
+
+		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toHaveLength(1)
+	})
+
+	it("passes a rendering contract when the span carries every listed rendering", () => {
+		const c = storedCase({
+			expect_component_renderings: JSON.stringify({
+				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
+			}),
+		})
+
+		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toEqual([])
+	})
+
+	it("passes the bleed-shaped got too, once a contract SAYS both elements belong — explicit, not global", () => {
+		const c = storedCase({ expect_component_renderings: JSON.stringify({ locality: ["四季酒家", "Manchester"] }) })
+
+		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([])
+	})
+
+	it("fails a span carrying only ONE of two required renderings, naming the missing one", () => {
+		const c = storedCase({
+			expect_component_renderings: JSON.stringify({
+				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
+			}),
+		})
+
+		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery" }))).toEqual([
+			`venue "Gandantegchinlen Monastery" missing rendering(s) "Гандантэгчинлэн хийд"`,
+		])
+	})
+
+	it("folds case inside the contract, exactly as the exact path does", () => {
+		const c = storedCase({
+			expect_component_renderings: JSON.stringify({ locality: ["ulaanbaatar", "улаанбаатар"] }),
+		})
+
+		expect(checkCase(c, result({ locality: "Улаанбаатар, Ulaanbaatar" }))).toEqual([])
+	})
+
+	it("asserts nothing beyond the listed renderings — an extra rendering rides along free", () => {
+		const c = storedCase({
+			expect_component_renderings: JSON.stringify({ locality: ["Ulaanbaatar", "Улаанбаатар"] }),
+		})
+
+		expect(checkCase(c, result({ locality: "Улаанбаатар / Ulaanbaatar / ウランバートル" }))).toEqual([])
+	})
+
+	it("lets a contract key supersede the same key in expect_components", () => {
+		// expect_components freezes the Latin half; the contract requires both. The dual span passes (the
+		// superseded exact comparison would have failed it), the frozen half alone fails (the contract owns
+		// the key), and an unrelated exact key on the same row still grades through expect_components.
+		const c = storedCase({
+			expect_components: JSON.stringify({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
+			expect_component_renderings: JSON.stringify({
+				venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"],
+			}),
+		})
+
+		const dual = result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд", postcode: "16040" })
+
+		expect(checkCase(c, dual)).toEqual([])
+		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery", postcode: "16040" }))).toHaveLength(1)
+
+		expect(checkCase(c, result({ venue: "Gandantegchinlen Monastery / Гандантэгчинлэн хийд" }))).toEqual([
+			`postcode "null" ≠ "16040"`,
+		])
+	})
+
+	it("surfaces a corrupt expect_component_renderings row as a case issue, not a throw", () => {
+		const c = storedCase({ expect_component_renderings: "{not json" })
+
+		expect(checkCase(c, result())).toEqual([
+			"expect_component_renderings is not valid JSON (corrupt regression.db row?)",
+		])
+	})
+
+	it("throws on an empty rendering list — an authoring bug the seed schema refuses upstream", () => {
+		const c = storedCase({ expect_component_renderings: JSON.stringify({ venue: [] }) })
+
+		expect(() => checkCase(c, result())).toThrow(/non-empty string array/)
+	})
+
+	it("throws on a non-array contract value for the same reason", () => {
+		const c = storedCase({ expect_component_renderings: JSON.stringify({ venue: "Гандантэгчинлэн хийд" }) })
+
+		expect(() => checkCase(c, result())).toThrow(/non-empty string array/)
+	})
+
+	it("leaves a SAME-script concatenation failing — the plus-code row's error must stay visible", () => {
+		// mn-ws-national-university-pluscode-sbd-6-khoroo: a model that types the Open Location Code as
+		// `postcode` emits two postcode spans next to the real 14200. No contract lists them, so the exact
+		// comparison keeps failing (that visibility is the row's point).
+		const c = storedCase({ expect_components: JSON.stringify({ postcode: "14200" }) })
+
+		expect(checkCase(c, result({ postcode: "WWF9+6H6 14200" }))).toEqual([`postcode "WWF9+6H6 14200" ≠ "14200"`])
+	})
+
+	it("does not let a mono-script multi-word truth be satisfied by one of its words", () => {
+		const c = storedCase({ expect_components: JSON.stringify({ locality: "Chicago" }) })
+
+		expect(checkCase(c, result({ locality: "Springfield Chicago" }))).toHaveLength(1)
+	})
+})
+
+describe("scriptRenderings", () => {
+	it("splits a slash-joined dual-script value into one rendering per script", () => {
+		expect(scriptRenderings("Gandantegchinlen Monastery / Гандантэгчинлэн хийд")).toEqual([
+			"Gandantegchinlen Monastery",
+			"Гандантэгчинлэн хийд",
+		])
+	})
+
+	it("keeps digits and punctuation INSIDE a rendering when letters of one script flank them", () => {
+		expect(scriptRenderings("ХУД - 15 хороо, Ulaanbaatar")).toEqual(["ХУД - 15 хороо", "Ulaanbaatar"])
+	})
+
+	it("returns a single rendering for a mono-script value — nothing for a two-rendering contract to accept", () => {
+		// A rendering starts and ends at a LETTER, so the trailing digits fall off — harmless, because a
+		// mono-script value can never contain the two renderings a dual-script contract requires.
+		expect(scriptRenderings("WWF9+6H6 14200")).toEqual(["WWF9+6H"])
+		expect(scriptRenderings("Springfield Chicago")).toEqual(["Springfield Chicago"])
+	})
+
+	it("treats Han/kana as ONE family so a Japanese rendering is not shredded", () => {
+		expect(scriptRenderings("東京都渋谷区 Tokyo")).toEqual(["東京都渋谷区", "Tokyo"])
+		expect(scriptRenderings("表参道ヒルズ ゼルコバテラス")).toEqual(["表参道ヒルズ ゼルコバテラス"])
+	})
+
+	it("returns nothing for a value with no letters at all", () => {
+		expect(scriptRenderings("16040")).toEqual([])
 	})
 })

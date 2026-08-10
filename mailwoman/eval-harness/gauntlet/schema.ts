@@ -64,6 +64,13 @@ export interface GauntletCaseTable {
 	 */
 	expect_components: string | null
 	/**
+	 * OPT-IN multi-script rendering contract as JSON `{ tag: [rendering, …] }` (null = no contract). For a listed key the
+	 * grader asserts that `scriptRenderings(got)` contains EVERY listed rendering, case-folded, and the same key in
+	 * {@linkcode expect_components} is superseded — see `check-case.ts`. Every list must be non-empty (the seed schema
+	 * refuses an empty one; the grader throws on one that reaches a built DB anyway).
+	 */
+	expect_component_renderings: string | null
+	/**
 	 * Expected resolved place id (null = place not asserted).
 	 *
 	 * Graded against `hierarchy[0].placeID` — see `check-case.ts`. Stored from the corpus's first migration and read by
@@ -190,6 +197,8 @@ export const GAUNTLET_CASE_COLUMNS = [
 	// Appended 2026-08-05 (the ablation expectation model). APPEND-ONLY: this list is the positional INSERT order, so a
 	// new column goes on the END or every existing row shifts.
 	"ablation_expect",
+	// Appended 2026-08-11 (the per-row multi-script rendering contract). Same append-only rule.
+	"expect_component_renderings",
 ] as const
 
 /**
@@ -216,6 +225,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("bug_ref", "text")
 		.addColumn("note", "text")
 		.addColumn("ablation_expect", "text")
+		.addColumn("expect_component_renderings", "text")
 		.execute()
 
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"

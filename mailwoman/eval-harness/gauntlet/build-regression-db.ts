@@ -83,7 +83,8 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 			c.addedAt,
 			c.bugRef ?? null,
 			c.note ?? null,
-			c.ablationExpect ? JSON.stringify(c.ablationExpect) : null
+			c.ablationExpect ? JSON.stringify(c.ablationExpect) : null,
+			c.expectComponentRenderings ? JSON.stringify(c.expectComponentRenderings) : null
 		)
 	}
 
