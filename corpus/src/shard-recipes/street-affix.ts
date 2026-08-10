@@ -42,7 +42,8 @@ import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
 import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { alignRow } from "@mailwoman/corpus/utils"
 
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
+import { NAME_PRONE_US_SUFFIXES } from "../name-prone-us-suffixes.ts"
+import { makeMulberry32, readCSVRecords, readZippedCSVRecords, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -138,6 +139,7 @@ interface USTuple {
 	locality: string
 	region: string
 	postcode: string
+	base_source_id: string
 }
 
 /**
@@ -175,7 +177,15 @@ async function readTuples(source: USSource): Promise<USTuple[]> {
 
 		if (seen.has(key)) continue
 		seen.add(key)
-		tuples.push({ house_number, street, locality, region: source.region, postcode: row.postcode ?? "" })
+
+		tuples.push({
+			house_number,
+			street,
+			locality,
+			region: source.region,
+			postcode: row.postcode ?? "",
+			base_source_id: `openaddresses:${source.csv}:${key}`,
+		})
 	}
 
 	return tuples
@@ -195,7 +205,10 @@ const isSuffixOrDirectional = (word: string): boolean =>
  * Split an OA street into { prefix?, name, suffix } using the codex. Requires a trailing suffix and a non-empty name
  * that isn't itself an affix token. Returns null when the street has no usable suffix.
  */
-function parseStreet(street: string): { prefix: Prefix | null; name: string; suffix: string } | null {
+function parseStreet(
+	street: string,
+	opts: { allowNameProneTail?: boolean } = {}
+): { prefix: Prefix | null; name: string; suffix: string } | null {
 	let words = street.trim().split(/\s+/)
 
 	if (words.length < 2) return null
@@ -215,9 +228,40 @@ function parseStreet(street: string): { prefix: Prefix | null; name: string; suf
 	const suffix = trail.canonical
 	const name = words.slice(0, -1).join(" ")
 
-	if (!name || isSuffixOrDirectional(name)) return null
+	if (!name) return null
+
+	if (isSuffixOrDirectional(name)) {
+		const nameTail = matchTrailingSuffix(name)
+
+		if (!opts.allowNameProneTail || !nameTail || !NAME_PRONE_US_SUFFIXES.has(nameTail.canonical)) return null
+	}
 
 	return { prefix, name, suffix }
+}
+
+export type SuffixBoundaryClass = "terminal-only" | "terminal-contrast"
+
+/**
+ * Classify a real street surface for #1569. `terminal-only` has an ambiguous suffix-eligible name word immediately
+ * before a different terminal type (`Blue Hill Rd`); `terminal-contrast` ends at the ambiguous word itself (`Sutton
+ * Hollow`). The contrast check intentionally wins when both final words are name-prone: only the LAST token is the
+ * suffix under the canonical rule.
+ */
+export function classifySuffixBoundaryStreet(street: string): SuffixBoundaryClass | null {
+	const words = street.trim().split(/\s+/)
+
+	if (words.length < 2) return null
+	const terminal = matchTrailingSuffix(words.at(-1)!)
+
+	if (!terminal) return null
+
+	if (NAME_PRONE_US_SUFFIXES.has(terminal.canonical)) return "terminal-contrast"
+
+	if (words.length < 3) return null
+
+	const penultimate = matchTrailingSuffix(words.at(-2)!)
+
+	return penultimate && NAME_PRONE_US_SUFFIXES.has(penultimate.canonical) ? "terminal-only" : null
 }
 
 /**
@@ -269,18 +313,65 @@ function renderStreet(
  */
 const VENUES = ["John Doe", "Jane Smith", "Acme Inc", "Wayne Enterprises", "Maria Garcia", "Riverside Clinic"]
 
+/**
+ * Real-venue pool for the suffix-boundary v2 venue shell (corpus 0.19.0). The 2026-08-10 recipe review found the
+ * v0.18.x shard's venue-led rows detectable as templates (six fixed venue strings), and the frozen B1 board's failures
+ * concentrate in exactly that shell (rich rows 5/43 vs bare 53/65 at v4.3.3 step-40k). HRSA's health-center site file
+ * supplies thousands of REAL US facility names ('Alburg Health Center'-register), US-government public domain, already
+ * a corpus source (`usgov-hrsa-fqhc`). Kept verbatim (including the ~11% all-caps names — real register diversity);
+ * comma-carrying names are dropped because the venue layout uses commas as its field delimiter.
+ */
+const VENUE_POOL_CSV = dataRootPath(
+	"corpus",
+	"sources",
+	"usgov-hrsa-fqhc",
+	"Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
+)
+
+async function readVenuePool(csvPath: string): Promise<string[]> {
+	const seen = new Set<string>()
+	const pool: string[] = []
+
+	for await (const record of readCSVRecords(csvPath)) {
+		const name = (record["site name"] ?? record["Site Name"] ?? "").trim().replaceAll(/\s+/gu, " ")
+
+		if (name.length < 3 || name.length > 60 || name.includes(",") || !/\p{L}/u.test(name)) continue
+		const key = name.toLowerCase()
+
+		if (seen.has(key)) continue
+		seen.add(key)
+		pool.push(name)
+	}
+
+	return pool
+}
+
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
+
+/**
+ * Layout-shell options for {@link renderRow}. `cuts` are the cumulative random() cutoffs for [full, bare, street-only] —
+ * the remainder is the venue shell. Defaults reproduce the original street-affix distribution (40/25/20/15) with the
+ * six template venues.
+ */
+interface RenderRowOpts {
+	venues?: readonly string[]
+	cuts?: readonly [number, number, number]
+}
 
 /**
  * Embed the rendered street in a RANDOM layout so the model recognizes affixes wherever the street sits: full address,
  * bare house+street, street-only (pure affix parse), or venue-prefixed.
  */
-function renderRow(
+export function renderRow(
 	random: () => number,
 	base: USTuple,
 	street: string,
-	streetComponents: Partial<Record<ComponentTag, string>>
+	streetComponents: Partial<Record<ComponentTag, string>>,
+	opts: RenderRowOpts = {}
 ): { fmt: string; raw: string; components: Partial<Record<ComponentTag, string>> } {
+	const venues = opts.venues ?? VENUES
+	const [fullCut, bareCut, streetOnlyCut] = opts.cuts ?? [0.4, 0.65, 0.85]
+
 	const hn = base.house_number,
 		loc = base.locality,
 		reg = base.region,
@@ -290,17 +381,17 @@ function renderRow(
 	const withRoad: Partial<Record<ComponentTag, string>> = { house_number: hn, ...streetComponents }
 	const r = random()
 
-	if (r < 0.4)
+	if (r < fullCut)
 		return {
 			fmt: "full",
 			raw: `${road}, ${tail(loc, reg, pc)}`,
 			components: { ...withRoad, locality: loc, region: reg, ...(pc ? { postcode: pc } : {}) },
 		}
 
-	if (r < 0.65) return { fmt: "bare", raw: road, components: withRoad }
+	if (r < bareCut) return { fmt: "bare", raw: road, components: withRoad }
 
-	if (r < 0.85) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
-	const v = VENUES[Math.floor(random() * VENUES.length)]!
+	if (r < streetOnlyCut) return { fmt: "street-only", raw: street, components: { ...streetComponents } }
+	const v = venues[Math.floor(random() * venues.length)]!
 
 	return {
 		fmt: "venue",
@@ -560,5 +651,175 @@ export const streetAffixRecipe: ShardRecipe = {
 		)
 
 		return { emitted: emitted + balanceEmitted, skipped: skipped + balanceSkipped }
+	},
+}
+
+/**
+ * #1569 root-fix shard. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
+ * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row TRAIN sample only 4→11
+ * while contrast was already 95/100 before training (93/100 after). Post-run audit found that the global affix relabel
+ * pass corrupts many already-decomposed target rows into double suffixes; do not retrain this recipe until relabel is
+ * idempotent over a decomposed street family. The 20% contrast leg remains explicit, additive to the already-strong
+ * base distribution, and B2 still gates it unchanged.
+ *
+ * V2 (corpus 0.19.0, 2026-08-10 recipe review): the v4.3.3 board split (rich venue-led rows 5/43 vs bare 53/65) showed
+ * the model separating template rows from real ones, and the venue shell was the giveaway — six fixed venue strings. v2
+ * draws the venue shell from thousands of REAL HRSA facility names and raises its share (venue 30%, full 35%, bare 20%,
+ * street-only 15%). Dose policy moved to the recipe's config side: weight ≤4 effective passes per run (Muennighoff
+ * 2023's repetition knee) and the source is excluded from the augmentation pool — see the v4.4.0 config.
+ */
+export const suffixBoundaryRecipe: ShardRecipe = {
+	name: "suffix-boundary",
+	description: "US #1569 suffix boundary: OA terminal-only positives + over-sampled terminal contrasts",
+	mode: "generate",
+	async run(opts, write) {
+		const random = makeMulberry32(opts.seed)
+		const count = opts.count ?? 30_000
+		const source = opts.sourceName ?? "synth-suffix-boundary"
+		const sources = opts.golden ? [EVAL_SOURCE] : TRAIN_SOURCES
+
+		// v2 venue shell: real facility names, loud when the source file is missing or thin.
+		const venuePool = await readVenuePool(VENUE_POOL_CSV)
+
+		if (venuePool.length < 500) {
+			throw new Error(
+				`suffix-boundary v2 venue pool too thin: ${venuePool.length} names from ${VENUE_POOL_CSV} — ` +
+					"is the usgov-hrsa-fqhc source present?"
+			)
+		}
+
+		const shell: RenderRowOpts = { venues: venuePool, cuts: [0.35, 0.55, 0.7] }
+
+		const pool: Record<SuffixBoundaryClass, USTuple[]> = {
+			"terminal-only": [],
+			"terminal-contrast": [],
+		}
+
+		for (const s of sources) {
+			for (const tuple of await readTuples(s)) {
+				const rowClass = classifySuffixBoundaryStreet(tuple.street)
+
+				if (rowClass) {
+					pool[rowClass].push(tuple)
+				}
+			}
+		}
+
+		if (!pool["terminal-only"].length || !pool["terminal-contrast"].length) {
+			throw new Error(
+				`Suffix-boundary source class missing: terminal-only=${pool["terminal-only"].length}, ` +
+					`terminal-contrast=${pool["terminal-contrast"].length}`
+			)
+		}
+
+		let emitted = 0
+		let skipped = 0
+		const classCounts: Record<SuffixBoundaryClass, number> = { "terminal-only": 0, "terminal-contrast": 0 }
+		const terminalOnlyTarget = Math.round(count * 0.8)
+
+		const classTargets: Record<SuffixBoundaryClass, number> = {
+			"terminal-only": terminalOnlyTarget,
+			"terminal-contrast": count - terminalOnlyTarget,
+		}
+
+		const formatCounts: Record<string, number> = {}
+		let stemPairs = 0
+
+		const emitOne = (
+			rowClass: SuffixBoundaryClass,
+			base: USTuple,
+			parsed: NonNullable<ReturnType<typeof parseStreet>>,
+			method: string
+		): boolean => {
+			const { street, components: streetComponents } = renderStreet(random, parsed)
+			const { fmt, raw, components } = renderRow(random, base, street, streetComponents, shell)
+
+			const canonical: CanonicalRow = {
+				raw,
+				components,
+				country: "US",
+				locale: "en-US",
+				source,
+				source_id: shardSourceID(source, { ...components, class: rowClass, n: String(emitted) }),
+				corpus_version: "0.19.0",
+				license:
+					"OpenAddresses US (non-VT) skeletons; terminal suffix labels via USPS Pub-28 codex; venue shell from HRSA site names (US public domain)",
+			}
+
+			const aligned = alignRow(canonical)
+
+			if (aligned.kind !== "labeled" || !aligned.row) {
+				skipped++
+
+				return false
+			}
+
+			write(JSON.stringify({ ...aligned.row, synth_method: method, synth_base_id: base.base_source_id }) + "\n")
+
+			classCounts[rowClass]++
+			formatCounts[fmt] = (formatCounts[fmt] ?? 0) + 1
+
+			emitted++
+
+			return true
+		}
+
+		// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- emitted/skipped advance inside emitOne (a closure); the rule cannot see through the call
+		while (emitted < count && emitted + skipped < count * 10) {
+			const terminalOnlyOpen = classCounts["terminal-only"] < classTargets["terminal-only"]
+			const terminalContrastOpen = classCounts["terminal-contrast"] < classTargets["terminal-contrast"]
+
+			const rowClass: SuffixBoundaryClass =
+				terminalOnlyOpen && terminalContrastOpen
+					? random() < 0.8
+						? "terminal-only"
+						: "terminal-contrast"
+					: terminalContrastOpen
+						? "terminal-contrast"
+						: "terminal-only"
+
+			const classPool = pool[rowClass]
+			const base = classPool[Math.floor(random() * classPool.length)]!
+			const parsed = parseStreet(base.street, { allowNameProneTail: rowClass === "terminal-only" })
+
+			if (!parsed) {
+				skipped++
+
+				continue
+			}
+
+			if (!emitOne(rowClass, base, parsed, `suffix-boundary:${rowClass}`)) continue
+
+			// Stem-pair hard negative (v2, 2026-08-10 recipe review): after a terminal-only row
+			// ('Menlo Park' + 'Road'), also emit the SAME stem without its true suffix as a
+			// contrast row ('Menlo' + 'Park' under the canonical last-token rule). Sharing the stem
+			// forces the model to key on the licensing evidence — the trailing true suffix — rather
+			// than on name identity. Dose-neutral: these fill the existing 20% contrast target.
+			if (
+				rowClass === "terminal-only" &&
+				classCounts["terminal-contrast"] < classTargets["terminal-contrast"] &&
+				emitted < count &&
+				random() < 0.5
+			) {
+				const stemParsed = parseStreet(parsed.name)
+
+				if (
+					stemParsed &&
+					emitOne("terminal-contrast", base, stemParsed, "suffix-boundary:terminal-contrast:stem-pair")
+				) {
+					stemPairs++
+				}
+			}
+		}
+
+		console.error(
+			`Done: emitted ${emitted}, skipped ${skipped}; source pools ${JSON.stringify({
+				terminalOnly: pool["terminal-only"].length,
+				terminalContrast: pool["terminal-contrast"].length,
+			})}; classes ${JSON.stringify(classCounts)}; stem pairs ${stemPairs}; ` +
+				`venue pool ${venuePool.length}; formats ${JSON.stringify(formatCounts)}`
+		)
+
+		return { emitted, skipped }
 	},
 }

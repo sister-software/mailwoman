@@ -29,7 +29,7 @@ import { poBoxCedexRecipe } from "./po-box-cedex.ts"
 import { poBoxRecipe } from "./po-box.ts"
 import type { ShardRecipe } from "./scaffold.ts"
 import { siBareVillageRecipe } from "./si-bare-village.ts"
-import { streetAffixRecipe } from "./street-affix.ts"
+import { streetAffixRecipe, suffixBoundaryRecipe } from "./street-affix.ts"
 import { streetBareRecipe } from "./street-bare.ts"
 import { streetRecipe } from "./street.ts"
 import { subVenueRecipe } from "./sub-venue.ts"
@@ -44,6 +44,7 @@ const RECIPES: readonly ShardRecipe[] = [
 	streetRecipe,
 	streetBareRecipe,
 	streetAffixRecipe,
+	suffixBoundaryRecipe,
 	noStreetRecipe,
 	houseVenueRecipe,
 	poBoxRecipe,

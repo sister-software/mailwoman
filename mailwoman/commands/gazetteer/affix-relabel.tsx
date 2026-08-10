@@ -9,27 +9,36 @@
  *   matchers stay canonical; Python consumes a dumb variant→canonical map so the relabel pass
  *   agrees with the affix shard builder (which calls the codex matchers directly) by construction.
  *
- *   Output: data/gazetteer/affix-relabel-lexicon-v1.json
+ *   v2 (2026-08-10, #1569 five-whys): adds `name_prone` — the codex name-prone canonicals
+ *   (PARK/HILL/CREEK…) that license the positional split of e.g. `Menlo Park | Road` in the
+ *   loader's relabel pass. A v1 artifact without the key leaves licensing off (old behavior).
+ *
+ *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
  */
 
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { AbbreviationToDirectional, DirectionalToAbbreviationMap, US_STREET_SUFFIX_LOOKUP } from "@mailwoman/codex/us"
+import {
+	AbbreviationToDirectional,
+	DirectionalToAbbreviationMap,
+	NAME_PRONE_US_SUFFIXES,
+	US_STREET_SUFFIX_LOOKUP,
+} from "@mailwoman/codex/us"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
-	output: zod.string().optional().describe("Output path. Default <repo>/data/gazetteer/affix-relabel-lexicon-v1.json"),
+	output: zod.string().optional().describe("Output path. Default <repo>/data/gazetteer/affix-relabel-lexicon-v2.json"),
 })
 
 export { OptionsSchema as options }
 
 const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v1.json"))
+		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
 
 		// Directionals: every SINGLE-TOKEN surface variant → canonical abbreviation. The codex maps are
 		// Maps keyed by the Pub-28 spaced names ("NORTH WEST"); real US streets use the one-word form
@@ -55,10 +64,15 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 		}
 
 		const lexicon = {
-			version: "affix-relabel-v1",
-			source: "@mailwoman/codex us/street-directional + us/street-suffix (USPS Pub 28)",
+			version: "affix-relabel-v2",
+			source: "@mailwoman/codex us/street-directional + us/street-suffix.json (USPS Pub 28 + name-prone curation)",
 			directionals,
 			suffixes,
+			// Licenses the positional split of a >=2-word name whose FINAL word is merely
+			// name-prone-shaped when a TRUE suffix follows ('Menlo Park | Road') — the #1569
+			// five-whys countermeasure. Loaders reading a v1 artifact (key absent) keep the old
+			// blanket rejection.
+			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),
 		}
 
 		mkdirSync(dirname(output), { recursive: true })
@@ -66,7 +80,8 @@ const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options
 
 		return [
 			`${output}`,
-			`${Object.keys(directionals).length} directional variants, ${Object.keys(suffixes).length} suffix variants`,
+			`${Object.keys(directionals).length} directional variants, ${Object.keys(suffixes).length} suffix variants, ` +
+				`${NAME_PRONE_US_SUFFIXES.size} name-prone canonicals`,
 		]
 	})
 

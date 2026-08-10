@@ -64,6 +64,8 @@ import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256File } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
+import { NAME_PRONE_US_SUFFIXES } from "../name-prone-us-suffixes.ts"
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 /**
@@ -136,71 +138,6 @@ export interface GoldenRelabelResult {
  * pass 3 — the whole flagged class is 60 rows of 1,906), not from the whole 200-entry table: flagging every possible
  * name-head would mark a third of the corrections and stop being a review artifact.
  */
-const NAME_PRONE_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set<USStreetSuffix>([
-	"BEACH",
-	"BROOK",
-	"BROOKS",
-	"CAMP",
-	"CENTER",
-	"CENTERS",
-	"CLUB",
-	"COMMON",
-	"COMMONS",
-	"CREEK",
-	"CROSSING",
-	"ESTATE",
-	"ESTATES",
-	"FIELD",
-	"FIELDS",
-	"FOREST",
-	"GARDEN",
-	"GARDENS",
-	"GLEN",
-	"GREEN",
-	"GREENS",
-	"GROVE",
-	"GROVES",
-	"HARBOR",
-	"HEIGHTS",
-	"HILL",
-	"HILLS",
-	"HOLLOW",
-	"ISLAND",
-	"ISLANDS",
-	"ISLE",
-	"JUNCTION",
-	"LAKE",
-	"LAKES",
-	"LANDING",
-	"MALL",
-	"MANOR",
-	"MEADOW",
-	"MEADOWS",
-	"MILL",
-	"MILLS",
-	"MISSION",
-	"ORCHARD",
-	"PARK",
-	"PASS",
-	"PLAZA",
-	"POINT",
-	"POINTS",
-	"RANCH",
-	"RIDGE",
-	"SHORE",
-	"SHORES",
-	"SPRING",
-	"SPRINGS",
-	"SQUARE",
-	"STATION",
-	"SUMMIT",
-	"VALLEY",
-	"VIEW",
-	"VIEWS",
-	"VILLAGE",
-	"VISTA",
-])
-
 // ── Byte-exact tail split ──────────────────────────────────────────────────
 
 interface TailSplit {
@@ -381,7 +318,7 @@ export function relabelGoldenStreetRow(
 		throw new Error(`golden-relabel: span reconstruction failed for ${JSON.stringify(street)}`)
 	}
 
-	if (canonical && NAME_PRONE_SUFFIXES.has(canonical)) {
+	if (canonical && NAME_PRONE_US_SUFFIXES.has(canonical)) {
 		flags.push({
 			kind: "name-prone-suffix",
 			detail: `${canonical} heads proper names as often as street types`,

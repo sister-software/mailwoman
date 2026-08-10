@@ -15,7 +15,7 @@ This page is the flag contract for the `mailwoman` command-line interface. Each 
 the command's own schema, and each description is that flag's help text verbatim, so this page and
 `mailwoman <command> --help` cannot disagree.
 
-The CLI carries 135 commands. This page documents the 20 that a consumer of the published
+The CLI carries 136 commands. This page documents the 21 that a consumer of the published
 package runs. The rest build the datasets and train the models inside a checkout of the repository,
 and they are listed by group under [Commands this page does not cover](#commands-this-page-does-not-cover).
 
@@ -49,15 +49,20 @@ mailwoman autocomplete [options] <prefix...>
 
 ### `mailwoman doctor`
 
+Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it.
+
 ```
 mailwoman doctor [options]
 ```
 
-| Flag     | Type    | Default | Description                                                                                                                                                                                                                        |
-| -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--json` | boolean | `false` | Emit the report as JSON instead of a checklist: &#123; checks: [&#123; id, label, status, detail, fix?, core &#125;], exitCode &#125; — a superset of &#123; id, status, detail, fix? &#125; (label + core aid machine consumers). |
+| Flag        | Type    | Default | Description                                                                                                                                                                                                                                                                                                                                         |
+| ----------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--json`    | boolean | `false` | Emit the report as JSON instead of a checklist: &#123; checks: [&#123; id, label, status, detail, consequence?, fix?, core &#125;], exitCode &#125; — a superset of &#123; id, status, detail, fix? &#125; (label + core + consequence aid machine consumers). With --verbose, an `environment` array of &#123; key, value, source &#125; is added. |
+| `--verbose` | boolean | `false` | Also print every path and environment variable the checks resolved (data root, candidate.db, WOF shards, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.                                                                                                    |
 
 ### `mailwoman geocode`
+
+Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the rooftop/interpolation shards. Reports which tier answered (address_point &gt; interpolated &gt; admin); run `mailwoman doctor` when a lookup comes back admin-only or errors on a missing database.
 
 ```
 mailwoman geocode [options] <address...>
@@ -79,12 +84,16 @@ mailwoman geocode [options] <address...>
 | `--address-points-db [address-points-db]`             | string                       | —                     | Explicit path to an address-points (situs) SQLite shard. Bypasses the per-state shard selection from the resolved region. Use when you already know the right shard or are testing a specific file.                                                                                                                                                                                                                                                                                       |
 | `--interpolation-db [interpolation-db]`               | string                       | —                     | Explicit path to an interpolation SQLite shard. Bypasses the per-state shard selection. Use when you already know the right shard or are testing a specific file.                                                                                                                                                                                                                                                                                                                         |
 | `--interp-calibration [interp-calibration]`           | number                       | —                     | Conformal calibration multiplier for the interpolation tier's reported uncertainty_m (#374). The raw half-segment radius covers only ~72% of true errors. Default (unset): the shard's own baked value (its interp_calibration metadata table) when it carries one, else the in-code per-region table (#584) selected by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured states — for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw). |
+| `--locale-country-prior`                              | boolean                      | `false`               | #27: when --locale's country is withheld from the resolver (a bare city name — see #912), hand it down as a SOFT ranking bonus instead of dropping it, so `--locale en-GB Whitby` stops answering Whitby, Ontario. OFF by default: the bonus that flips the bare GB names also flips 'Paris' to Texas and 'Athens' to Georgia, because population plus a locale cannot separate the two classes.                                                                                          |
 | `--no-place-country`                                  | boolean                      | `true`                | The #244 coarse-placer soft country prior (open-set rule). A confident whole-string country guess biases the resolver's locality/region ranking toward the right country (never filters); most useful when no --default-country / locale pins it. ON by default after the M2 misroute gate (0 misroutes); pass --no-place-country to disable.                                                                                                                                             |
 | `--no-postcode-country-coherence`                     | boolean                      | `true`                | #42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a wrong --default-country / locale scope. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise geocodes to Addison, Texas (ZIP 75001). Abstains when the default country is already consistent, when no country is, or when more than one is. ON by default (promoted 2026-08-05); pass --no-postcode-country-coherence to restore the un-overridden country scope.               |
 | `--postcode-shape-coherence`                          | boolean                      | `false`               | #31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident sibling signal (country/region) is demoted: digit-only → house_number, letter-bearing → stamped 'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. DEFAULT OFF (demotion is the failure mode with teeth); pass --postcode-shape-coherence to opt in.                                                                                         |
 | `--postcode-containment-coherence`                    | boolean                      | `false`               | #31: re-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the locality that CONTAINS the postcode wins the name-match tie. DEFAULT OFF; pass --postcode-containment-coherence to opt in.                                                                                                                                                                                                                                                                |
 | `--place-country-threshold [place-country-threshold]` | number                       | `0.9`                 | Abstention threshold for --place-country: below this calibrated confidence the prior is skipped. Default 0.9.                                                                                                                                                                                                                                                                                                                                                                             |
-| `--format [format]`                                   | `json` \| `text` \| `jsonld` | `json`                | Output format. "json" (default) emits the native machine-readable result; "text" prints a human summary; "jsonld" emits a schema.org Place/PostalAddress/GeoCoordinates JSON-LD object (the web's native address format).                                                                                                                                                                                                                                                                 |
+| `--format [format]`                                   | `json` \| `text` \| `jsonld` | `json`                | Output format. "json" (default) emits the native machine-readable result; "text" prints a human summary; "jsonld" emits a schema.org Place/PostalAddress/GeoCoordinates JSON-LD object (the web's native address format). Each value also has a bare-flag shorthand: --json, --text, --jsonld.                                                                                                                                                                                            |
+| `--json`                                              | boolean                      | `false`               | Shorthand for --format json (the default).                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `--text`                                              | boolean                      | `false`               | Shorthand for --format text — the human-readable summary.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `--jsonld`                                            | boolean                      | `false`               | Shorthand for --format jsonld — schema.org JSON-LD.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ### `mailwoman openapi`
 
@@ -100,6 +109,8 @@ mailwoman openapi [options]
 | `--out [out]`       | string         | —       | Write to this path instead of stdout              |
 
 ### `mailwoman parse`
+
+Label the parts of an address — house number, street, locality, postcode — without looking anything up: the output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then resolves those parts against the gazetteer to produce a coordinate.
 
 ```
 mailwoman parse [options] <address...>
@@ -182,6 +193,18 @@ mailwoman serve [options]
 | `--cpus [cpus]` | number | —         | The number of worker processes to fork. Default: every available core. |
 
 ## `mailwoman data`
+
+### `mailwoman data`
+
+Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data --list` shows what exists, `data pull &lt;bundle&gt;` downloads one, `data status` reports what is already on disk, and `mailwoman doctor` names the one you are missing.
+
+```
+mailwoman data [options]
+```
+
+| Flag     | Type    | Default | Description                                                                               |
+| -------- | ------- | ------- | ----------------------------------------------------------------------------------------- |
+| `--list` | boolean | `false` | List every downloadable bundle: what it ships, how big it is, and where it lands on disk. |
 
 ### `mailwoman data pull`
 
@@ -457,7 +480,7 @@ flag changes, and nothing catches it. The generator reads the same Pastel and Co
 builds the binary, so a flag string here is the flag string `--help` prints. A test asserts the
 committed page against a fresh render, which turns a stale page into a failing build.
 
-The scope split is deliberate. Publishing all 135 commands would bury the 20 that run against
+The scope split is deliberate. Publishing all 136 commands would bury the 21 that run against
 an installed package under training and dataset tooling that requires the repository, its data root,
 and hours of wall clock. The generator refuses to run if it meets a command group it has never been
 told about, so the boundary is a decision someone makes rather than an omission.

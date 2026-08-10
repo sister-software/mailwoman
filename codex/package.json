@@ -20,7 +20,9 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"us/street-suffix.json",
+		"out/us/street-suffix.json"
 	],
 	"type": "module",
 	"exports": {

@@ -5,233 +5,46 @@
  *
  *   USPS Publication 28, Appendix C — Postal Service Standard Suffix Abbreviations.
  *
- *   For each canonical suffix the value lists every recognized variant in USPS-published order; the
- *   first variant is the preferred USPS abbreviation (e.g. `AVENUE → ["AVE", "AV", "AVEN", "AVENU",
- *   "AVN", "AVNUE"]` — `AVE` is what the post office prints).
+ *   The DATA lives in `./street-suffix.json` so non-TS consumers (the Python training loader's
+ *   lexicon builder, audits) read the identical record — no hand-mirrored copies. Two keys:
  *
- *   This module is the single home for the USPS suffix table. It carries both the synthesis-layer
- *   helpers (`US_STREET_SUFFIX_PREFERRED_ABBR`, `matchCase`, `matchTrailingSuffix` — used by
- *   `@mailwoman/corpus`) and the richer branded-type lookup (`StreetSuffix`, `lookupStreetSuffix`,
- *   `isStreetSuffix`) The data is verbatim USPS Pub-28; the two APIs share one underlying record.
+ *   - `variants` — verbatim USPS Pub-28: canonical suffix → every recognized variant in
+ *     USPS-published order; the first variant is the preferred USPS abbreviation (e.g.
+ *     `AVENUE → ["AVE", ...]` — `AVE` is what the post office prints).
+ *   - `nameProneCanonicals` — OUR curation, not Pub-28: canonicals also observed as ordinary
+ *     proper-name heads in street names (PARK, HILL, CREEK…), from golden v0.1.3 + the OA street
+ *     pool. Shared by the golden relabel flags, the #1569 shard recipe, and (via the
+ *     `gazetteer affix-relabel` v2 lexicon) the Python relabel pass, so the instrument and the
+ *     training feed cannot drift onto different definitions of the ambiguous class.
+ *
+ *   This module remains the single TS home for the table: the synthesis-layer helpers
+ *   (`US_STREET_SUFFIX_PREFERRED_ABBR`, `matchCase`, `matchTrailingSuffix` — used by
+ *   `@mailwoman/corpus`) and the richer branded-type lookup (`StreetSuffix`,
+ *   `lookupStreetSuffix`, `isStreetSuffix`) share the one underlying JSON record.
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
  */
 
+import streetSuffixData from "./street-suffix.json" with { type: "json" }
+
 /**
  * Canonical USPS street suffix → list of recognized variants. The first variant in each list is the preferred USPS
- * abbreviation. Keys + values are uppercase per the publication.
+ * abbreviation. Keys + values are uppercase per the publication. Data: `./street-suffix.json`.
  */
-export const US_STREET_SUFFIX_VARIANTS = {
-	ALLEY: ["ALY", "ALLEE", "ALLY"],
-	ANEX: ["ANX", "ANNEX", "ANNX"],
-	ARCADE: ["ARC"],
-	AVENUE: ["AVE", "AV", "AVEN", "AVENU", "AVN", "AVNUE"],
-	BAYOU: ["BYU", "BAYOO"],
-	BEACH: ["BCH"],
-	BEND: ["BND"],
-	BLUFF: ["BLF", "BLUF"],
-	BLUFFS: ["BLFS"],
-	BOTTOM: ["BTM", "BOT", "BOTTM"],
-	BOULEVARD: ["BLVD", "BOUL", "BOULV"],
-	BRANCH: ["BR", "BRNCH"],
-	BRIDGE: ["BRG", "BRDGE"],
-	BROOK: ["BRK"],
-	BROOKS: ["BRKS"],
-	BURG: ["BG"],
-	BURGS: ["BGS"],
-	BYPASS: ["BYP", "BYPA", "BYPAS", "BYPS"],
-	CAMP: ["CP", "CMP"],
-	CANYON: ["CYN", "CANYN", "CNYN"],
-	CAPE: ["CPE"],
-	CAUSEWAY: ["CSWY", "CAUSWA"],
-	CENTER: ["CTR", "CEN", "CENT", "CENTR", "CENTRE", "CNTER", "CNTR"],
-	CENTERS: ["CTRS"],
-	CIRCLE: ["CIR", "CIRC", "CIRCL", "CRCL", "CRCLE"],
-	CIRCLES: ["CIRS"],
-	CLIFF: ["CLF"],
-	CLIFFS: ["CLFS"],
-	CLUB: ["CLB"],
-	COMMON: ["CMN"],
-	COMMONS: ["CMNS"],
-	CORNER: ["COR"],
-	CORNERS: ["CORS"],
-	COURSE: ["CRSE"],
-	COURT: ["CT"],
-	COURTS: ["CTS"],
-	COVE: ["CV"],
-	COVES: ["CVS"],
-	CREEK: ["CRK"],
-	CRESCENT: ["CRES", "CRSENT", "CRSNT"],
-	CREST: ["CRST"],
-	CROSSING: ["XING", "CRSSNG"],
-	CROSSROAD: ["XRD"],
-	CROSSROADS: ["XRDS"],
-	CURVE: ["CURV"],
-	DALE: ["DL"],
-	DAM: ["DM"],
-	DIVIDE: ["DV", "DIV", "DVD"],
-	DRIVE: ["DR", "DRIV", "DRV"],
-	DRIVES: ["DRS"],
-	ESTATE: ["EST"],
-	ESTATES: ["ESTS"],
-	EXPRESSWAY: ["EXPY", "EXP", "EXPR", "EXPRESS", "EXPW"],
-	EXTENSION: ["EXT", "EXTN", "EXTNSN"],
-	EXTENSIONS: ["EXTS"],
-	FALL: ["FALL"],
-	FALLS: ["FLS"],
-	FERRY: ["FRY", "FRRY"],
-	FIELD: ["FLD"],
-	FIELDS: ["FLDS"],
-	FLAT: ["FLT"],
-	FLATS: ["FLTS"],
-	FORD: ["FRD"],
-	FORDS: ["FRDS"],
-	FOREST: ["FRST", "FORESTS"],
-	FORGE: ["FRG", "FORG"],
-	FORGES: ["FRGS"],
-	FORK: ["FRK"],
-	FORKS: ["FRKS"],
-	FORT: ["FT", "FRT"],
-	FREEWAY: ["FWY", "FREEWY", "FRWAY", "FRWY"],
-	GARDEN: ["GDN", "GARDN", "GRDEN", "GRDN"],
-	GARDENS: ["GDNS", "GRDNS"],
-	GATEWAY: ["GTWY", "GATEWY", "GATWAY", "GTWAY"],
-	GLEN: ["GLN"],
-	GLENS: ["GLNS"],
-	GREEN: ["GRN"],
-	GREENS: ["GRNS"],
-	GROVE: ["GRV", "GROV"],
-	GROVES: ["GRVS"],
-	HARBOR: ["HBR", "HARB", "HARBR", "HRBOR"],
-	HARBORS: ["HBRS"],
-	HAVEN: ["HVN"],
-	HEIGHTS: ["HTS", "HT"],
-	HIGHWAY: ["HWY", "HIGHWY", "HIWAY", "HIWY", "HWAY"],
-	HILL: ["HL"],
-	HILLS: ["HLS"],
-	HOLLOW: ["HOLW", "HLLW", "HOLLOWS", "HOLWS"],
-	INLET: ["INLT"],
-	ISLAND: ["IS", "ISLND"],
-	ISLANDS: ["ISS", "ISLNDS"],
-	ISLE: ["ISLE", "ISLES"],
-	JUNCTION: ["JCT", "JCTION", "JCTN", "JUNCTN", "JUNCTON"],
-	JUNCTIONS: ["JCTS", "JCTNS"],
-	KEY: ["KY"],
-	KEYS: ["KYS"],
-	KNOLL: ["KNL", "KNOL"],
-	KNOLLS: ["KNLS"],
-	LAKE: ["LK"],
-	LAKES: ["LKS"],
-	LAND: ["LAND"],
-	LANDING: ["LNDG", "LNDNG"],
-	LANE: ["LN"],
-	LIGHT: ["LGT"],
-	LIGHTS: ["LGTS"],
-	LOAF: ["LF"],
-	LOCK: ["LCK"],
-	LOCKS: ["LCKS"],
-	LODGE: ["LDG", "LDGE", "LODG"],
-	LOOP: ["LOOP", "LOOPS"],
-	MALL: ["MALL"],
-	MANOR: ["MNR"],
-	MANORS: ["MNRS"],
-	MEADOW: ["MDW"],
-	MEADOWS: ["MDWS", "MDW", "MEDOWS"],
-	MEWS: ["MEWS"],
-	MILL: ["ML"],
-	MILLS: ["MLS"],
-	MISSION: ["MSN", "MISSN", "MSSN"],
-	MOTORWAY: ["MTWY"],
-	MOUNT: ["MT", "MNT"],
-	MOUNTAIN: ["MTN", "MNTAIN", "MNTN", "MOUNTIN", "MTIN"],
-	MOUNTAINS: ["MTNS", "MNTNS"],
-	NECK: ["NCK"],
-	ORCHARD: ["ORCH", "ORCHRD"],
-	OVAL: ["OVAL", "OVL"],
-	OVERPASS: ["OPAS"],
-	PARK: ["PARK", "PRK", "PARKS"],
-	PARKWAY: ["PKWY", "PARKWY", "PKWAY", "PKY"],
-	PARKWAYS: ["PKWY", "PKWYS"],
-	PASS: ["PASS"],
-	PASSAGE: ["PSGE"],
-	PATH: ["PATH", "PATHS"],
-	PIKE: ["PIKE", "PIKES"],
-	PINE: ["PNE"],
-	PINES: ["PNES"],
-	PLACE: ["PL"],
-	PLAIN: ["PLN"],
-	PLAINS: ["PLNS"],
-	PLAZA: ["PLZ", "PLZA"],
-	POINT: ["PT"],
-	POINTS: ["PTS"],
-	PORT: ["PRT"],
-	PORTS: ["PRTS"],
-	PRAIRIE: ["PR", "PRR"],
-	RADIAL: ["RADL", "RAD", "RADIEL"],
-	RAMP: ["RAMP"],
-	RANCH: ["RNCH", "RANCHES", "RNCHS"],
-	RAPID: ["RPD"],
-	RAPIDS: ["RPDS"],
-	REST: ["RST"],
-	RIDGE: ["RDG", "RDGE"],
-	RIDGES: ["RDGS"],
-	RIVER: ["RIV", "RVR", "RIVR"],
-	ROAD: ["RD"],
-	ROADS: ["RDS"],
-	ROUTE: ["RTE"],
-	ROW: ["ROW"],
-	RUE: ["RUE"],
-	RUN: ["RUN"],
-	SHOAL: ["SHL"],
-	SHOALS: ["SHLS"],
-	SHORE: ["SHR", "SHOAR"],
-	SHORES: ["SHRS", "SHOARS"],
-	SKYWAY: ["SKWY"],
-	SPRING: ["SPG", "SPNG", "SPRNG"],
-	SPRINGS: ["SPGS", "SPNGS", "SPRNGS"],
-	SPUR: ["SPUR"],
-	SPURS: ["SPUR"],
-	SQUARE: ["SQ", "SQR", "SQRE", "SQU"],
-	SQUARES: ["SQS", "SQRS"],
-	STATION: ["STA", "STATN", "STN"],
-	STRAVENUE: ["STRA", "STRAV", "STRAVEN", "STRAVN", "STRVN", "STRVNUE"],
-	STREAM: ["STRM", "STREME"],
-	STREET: ["ST", "STRT", "STR"],
-	STREETS: ["STS"],
-	SUMMIT: ["SMT", "SUMIT", "SUMITT"],
-	TERRACE: ["TER", "TERR"],
-	THROUGHWAY: ["TRWY"],
-	TRACE: ["TRCE", "TRACES"],
-	TRACK: ["TRAK", "TRACKS", "TRK", "TRKS"],
-	TRAFFICWAY: ["TRFY"],
-	TRAIL: ["TRL", "TRAILS", "TRLS"],
-	TRAILER: ["TRLR", "TRLRS"],
-	TUNNEL: ["TUNL", "TUNEL", "TUNLS", "TUNNELS", "TUNNL"],
-	TURNPIKE: ["TPKE", "TRNPK", "TURNPK"],
-	UNDERPASS: ["UPAS"],
-	UNION: ["UN"],
-	UNIONS: ["UNS"],
-	VALLEY: ["VLY", "VALLY", "VLLY"],
-	VALLEYS: ["VLYS"],
-	VIADUCT: ["VIA", "VDCT", "VIADCT"],
-	VIEW: ["VW"],
-	VIEWS: ["VWS"],
-	VILLAGE: ["VLG", "VILL", "VILLAG", "VILLG", "VILLIAGE"],
-	VILLAGES: ["VLGS"],
-	VILLE: ["VL"],
-	VISTA: ["VIS", "VIST", "VST", "VSTA"],
-	WALK: ["WALK"],
-	WALKS: ["WALK"],
-	WALL: ["WALL"],
-	WAY: ["WAY", "WY"],
-	WAYS: ["WAYS"],
-	WELL: ["WL"],
-	WELLS: ["WLS"],
-} as const satisfies Record<string, readonly string[]>
+export const US_STREET_SUFFIX_VARIANTS = streetSuffixData.variants
 
 /**
  * Canonical USPS suffix (full word, uppercase per the publication).
  */
 export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
+
+/**
+ * Pub-28 canonicals that are also common head nouns in street/place names ("Menlo PARK Road", "Blue HILL Rd") — the
+ * ambiguous class behind #1569. Curated (golden v0.1.3 + OA street pool), NOT part of the USPS publication; see
+ * `nameProneCanonicals` in `./street-suffix.json`.
+ */
+export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(
+	streetSuffixData.nameProneCanonicals as USStreetSuffix[]
+)
 
 /**
  * Inverse lookup: every variant abbreviation OR full canonical word → its canonical key. Built once at module load,
@@ -260,7 +73,9 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
  * Preferred USPS abbreviation per canonical (`AVENUE → "AVE"`, `STREET → "ST"`).
  */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
-	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]])
+	// Every Pub-28 canonical carries >= 1 variant (the preferred abbreviation is first); the JSON
+	// import types values as string[], so assert the head's presence.
+	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]!])
 ) as Readonly<Record<USStreetSuffix, string>>
 
 /**
@@ -345,7 +160,7 @@ export function lookupStreetSuffix(input: string | null | undefined): StreetSuff
 
 	if (!suffix) return null
 
-	return { suffix, abbreviation: US_STREET_SUFFIX_VARIANTS[suffix][0] }
+	return { suffix, abbreviation: US_STREET_SUFFIX_VARIANTS[suffix][0]! }
 }
 
 /**
