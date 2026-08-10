@@ -43,7 +43,7 @@ import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcod
 import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByEncyclopedic } from "./toponym-prior.ts"
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -1230,26 +1230,25 @@ class WOFResolver implements Resolver {
 		// documents why (the weight that flips the four bare GB rows and the weight that holds the en-US
 		// board are disjoint intervals), so this is inert unless a caller opts in.
 		//
-		// Runs BEFORE the encyclopedic key deliberately, matching span-rescore: fame is the stronger signal
+		// Runs BEFORE the importance key deliberately, matching span-rescore: fame is the stronger signal
 		// wherever it has been measured, and it leaves an unscored candidate exactly where the prior put it.
 		if (state.localeCountryPrior && !state.defaultCountry && !state.anchorPosterior && anchorEligible) {
 			ranked = rankByCountryPrior(ranked, state.localeCountryPrior, state.localeCountryPriorWeight)
 		}
 
-		// Encyclopedic-first (#17, ROAD_TO_V9 §2). The two-score split has been carrying `encyclopedic`
-		// from the backend to node metadata since it landed, and no ranking key anywhere read it back —
-		// so a bare famous name was decided on POPULATION alone, which is measurably the wrong prior for
-		// the class: `Whitby` answers Whitby, Ontario (128,377) over Whitby, North Yorkshire (13,130),
-		// 5,508 km from where the person meant. Fame is what a bare toponym is asking about, and the
-		// gazetteer measures it. Tier-safe and positive-evidence-only (an UNSCORED candidate keeps the rank
-		// population gave it; only the scored ones permute), so it is byte-stable on the artifacts shipping
-		// today — neither `candidate.db` nor `admin-global-priority.db` has a `place_importance` table.
+		// Importance-first (#17/#28). Before this key a bare famous name was decided on POPULATION
+		// alone, which is measurably the wrong prior for the class: `Whitby` answered Whitby, Ontario
+		// (128,377) over Whitby, North Yorkshire (13,130), 5,508 km from where the person meant. Fame is
+		// what a bare toponym is asking about, and the candidate build's blended `importance` column
+		// measures it. Tier-safe and positive-evidence-only (an UNSCORED candidate keeps the rank
+		// population gave it; only the scored ones permute), so it abstains byte-stably on an artifact
+		// that predates the column.
 		//
 		// Skipped outright when an anchor posterior is in force. Fame is the prior of LAST resort: it answers
 		// "which one did you probably mean" only when nothing in the query answered it, and a #369 posterior is
 		// derived from the address's OWN postcode. Evidence outranks a prior. See `toponym-prior.ts`.
 		if (!state.anchorPosterior) {
-			ranked = rankByEncyclopedic(ranked)
+			ranked = rankByImportance(ranked)
 		}
 
 		// Exact-type preference (#718): when the placetype-equivalence group let a broader admin tier
@@ -1332,16 +1331,22 @@ function decorateNode(node: AddressNode, resolved: CoordinateOptionalPlace, alte
 		node.metadata["resolver_country"] = resolved.country
 	}
 
-	// The two-score split's consumer carry (ROAD_TO_V9 §2). Written ONLY when the backend actually has
-	// a value: an absent encyclopedic score means "no Wikipedia article" or "pre-split gazetteer", and
-	// a `resolver_encyclopedic: 0` on the node would assert a measurement nobody made. Nothing in the
-	// resolve path reads either key back — they exist for annotation / API surfaces downstream.
+	// The score-channel carries (ROAD_TO_V9 §2 + #28). Written ONLY when the backend actually has a
+	// value: an absent score means "unmeasured" or "pre-split gazetteer", and a `resolver_*: 0` on the
+	// node would assert a measurement nobody made. Nothing in the resolve path reads these keys back —
+	// they exist for annotation / API surfaces downstream. `resolver_importance` is the blended #28
+	// prior (the value the ranking consulted); `resolver_encyclopedic` is the strict channel, reserved
+	// until a strict-channel source ships.
 	if (resolved.referential !== undefined) {
 		node.metadata["resolver_referential"] = resolved.referential
 	}
 
 	if (resolved.encyclopedic !== undefined) {
 		node.metadata["resolver_encyclopedic"] = resolved.encyclopedic
+	}
+
+	if (resolved.importance !== undefined) {
+		node.metadata["resolver_importance"] = resolved.importance
 	}
 
 	// The postcode/locality conflict flag (the falsehood differentiator): the postcode pointed to a

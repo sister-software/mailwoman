@@ -26,6 +26,12 @@
  *
  *   Measured (2026-06-20, vs the 2.6 GB full-DB FTS): ~5 M rows; ~12 range fetches per 8-query
  *   session (the full DB needs 243); US locality 96.8% (region bbox), EU coord parity 88.6%.
+ *
+ *   #28 adds one more denormalized field, `importance` — the toponym-fame prior that decides a BARE
+ *   city name, joined in from a separate score source by name rather than by id (see
+ *   `candidate-importance.ts`, which owns that join and explains why the id would be wrong). It is
+ *   optional: without {@link BuildCandidateOptions.importance} the column is NULL on every row, which
+ *   the consumer reads as unmeasured and ignores.
  */
 
 import { existsSync, rmSync } from "node:fs"
@@ -34,6 +40,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 import { createCandidateFTS } from "./candidate-fts.ts"
+import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "./candidate-importance.ts"
 import {
 	CANDIDATE_COLUMNS,
 	createCandidateStagingTables,
@@ -66,6 +73,18 @@ export interface BuildCandidateOptions {
 	 */
 	postcodes?: string[]
 	/**
+	 * Optional WOF admin database carrying a `place_importance` table — the source of the `importance` column (#28), the
+	 * toponym-fame prior that decides the bare-city-name class. Joined by `(name_key, country, placetype)` + nearest
+	 * centroid, NOT by id; see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
+	 * prior exists to demote.
+	 *
+	 * Omit it and every row's `importance` is NULL — unmeasured, which is what the consumer's positive-evidence-only rule
+	 * already treats as "do not participate", so the artifact is byte-identical to a pre-#28 build except for the empty
+	 * column. That is the honest degradation and it is the DEFAULT: a caller with no score source must not get a
+	 * population-derived stand-in written into a column that means fame.
+	 */
+	importance?: string
+	/**
 	 * Optional progress callback for CLI / test introspection.
 	 */
 	onProgress?: (phase: string, message: string) => void
@@ -84,6 +103,21 @@ export interface BuildCandidateResult {
 	 * through `onProgress`.
 	 */
 	postcodeAliases: number
+	/**
+	 * Places that took an `importance` score from the join (#28).
+	 *
+	 * `undefined` and `0` mean different things. `undefined` is "the pass did not run" — no score source was given. A `0`
+	 * would be the source matching NOTHING, which is a finding. Never collapse the two.
+	 */
+	importanceScored?: number
+	/**
+	 * Places whose `(name_key, country, placetype)` matched a scored group but whose nearest scored centroid was outside
+	 * {@link IMPORTANCE_JOIN_GATE_KM} — a different town wearing the same name, refused rather than scored.
+	 *
+	 * Worth watching across rebuilds: a jump here means the score source and the admin source have drifted apart, and the
+	 * join is being asked to guess.
+	 */
+	importanceGated?: number
 }
 
 interface PlaceAttrs {
@@ -100,6 +134,12 @@ interface PlaceAttrs {
 	pop: number
 	neg: number
 	pkey: string
+	/**
+	 * The place's toponym-fame score, or null when the score source has no measurement for it (#28). A property of the
+	 * PLACE, so it rides {@link stageRow} onto the alias and abbrev rows too — that is how a bare `Moscow` reaches
+	 * Москва's score through the alias row that carries the key.
+	 */
+	imp: number | null
 }
 
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
@@ -144,6 +184,25 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		}
 
 		return id
+	}
+
+	// --- importance source (#28): loaded BEFORE pass 1, which is the only pass that sees a place's
+	// name/country/placetype/centroid together. Absent → every row's `importance` stays NULL. ---
+	let importance: ReturnType<typeof loadImportanceIndex> | undefined
+
+	if (opts.importance) {
+		progress("importance", `loading place_importance from ${opts.importance}`)
+		importance = loadImportanceIndex(opts.importance)
+
+		progress(
+			"importance",
+			`${importance.stats.places.toLocaleString()} scored places in ${importance.stats.keys.toLocaleString()} (name, country, placetype) groups` +
+				(importance.stats.unkeyable ? `; ${importance.stats.unkeyable.toLocaleString()} unkeyable names skipped` : "")
+		)
+	} else {
+		// Never a silent column of nulls: a build without a score source produces one, and the reason has
+		// to be visible in the log rather than inferred from the artifact.
+		progress("importance", "no score source given — `importance` will be NULL on every row")
 	}
 
 	// --- region_id per place (its region-tier ancestor) for same-name disambiguation ---
@@ -206,14 +265,16 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const neg = -Math.log10(pop + 1)
 		const name = String(r.name ?? "")
 		const pkey = normalizeLocalityForKey(name)
+		const lat = r.lat as number
+		const lon = r.lon as number
 
 		const a: PlaceAttrs = {
 			cid,
 			rid,
 			ptid,
 			name,
-			lat: r.lat as number,
-			lon: r.lon as number,
+			lat,
+			lon,
 			mnLat: r.mnlat as number,
 			mnLon: r.mnlon as number,
 			mxLat: r.mxlat as number,
@@ -221,12 +282,30 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			pop,
 			neg,
 			pkey,
+			imp: importance?.find(name, r.country as string | null, r.placetype as string | null, lat, lon) ?? null,
 		}
 
 		attrs.set(sid, a)
 
 		if (pkey) {
-			insStage.run(pkey, cid, rid, ptid, neg, sid, name, a.lat, a.lon, a.mnLat, a.mnLon, a.mxLat, a.mxLon, pop, 1)
+			insStage.run(
+				pkey,
+				cid,
+				rid,
+				ptid,
+				neg,
+				sid,
+				name,
+				a.lat,
+				a.lon,
+				a.mnLat,
+				a.mnLon,
+				a.mxLat,
+				a.mxLon,
+				pop,
+				1,
+				a.imp
+			)
 
 			nPrim++
 		}
@@ -234,6 +313,14 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	out.exec("COMMIT")
 	progress("primaries", `${nPrim.toLocaleString()} primaries; ${attrs.size.toLocaleString()} places`)
+
+	if (importance) {
+		progress(
+			"importance",
+			`${importance.matched.toLocaleString()} places scored; ` +
+				`${importance.gated.toLocaleString()} refused (nearest same-name place > ${IMPORTANCE_JOIN_GATE_KM} km away)`
+		)
+	}
 
 	const stageRow = (k: string, a: PlaceAttrs, sid: number, isPrimary: number): void => {
 		insStage.run(
@@ -251,7 +338,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			a.mxLat,
 			a.mxLon,
 			a.pop,
-			isPrimary
+			isPrimary,
+			a.imp
 		)
 	}
 
@@ -352,6 +440,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 				pop: 0,
 				neg: 0,
 				pkey: key,
+				// A postcode has no toponym fame — nobody writes an encyclopedia article about SW1A 2AA — and
+				// the score source carries no `postalcode` rows to join against anyway. NULL is the truthful
+				// value: unmeasured, so the ranking key leaves postcode rows exactly where they were.
+				imp: null,
 			}
 
 			pcAttrs.set(Number(r.id), a)
@@ -478,5 +570,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		abbrevs: nAbbr,
 		postcodes: nPostcode,
 		postcodeAliases: nPostcodeAlias,
+		...(importance ? { importanceScored: importance.matched, importanceGated: importance.gated } : {}),
 	}
 }

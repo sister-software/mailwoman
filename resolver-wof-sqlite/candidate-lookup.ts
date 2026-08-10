@@ -34,7 +34,7 @@ import { haversineKm } from "./geo.ts"
 import { trigramJaccard } from "./lookup.ts"
 import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
-import { hasTable } from "./sqlite-utils.ts"
+import { hasColumn, hasTable } from "./sqlite-utils.ts"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
@@ -68,7 +68,13 @@ type CandidateRow = Pick<
 	| "neg_rank"
 	| "is_primary"
 	| "population"
->
+> &
+	// `importance` is OPTIONAL on the row rather than `number | null`, because whether the SELECT names it
+	// depends on the artifact: a candidate.db built before #28 has no such column and the probe leaves it
+	// out (see `#importanceSelect`). `undefined` therefore means "this build cannot tell you", which is the
+	// same answer as `null`'s "the score source had no measurement" — both are UNMEASURED, and the emit
+	// below collapses them into the one thing the consumer understands: no `importance` field at all.
+	Partial<Pick<CandidateTable, "importance">>
 
 /**
  * FTS5-trigram over-fetch before the trigram-Jaccard re-rank, and the minimum similarity to count as a fuzzy hit (below
@@ -246,6 +252,13 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * (the hard-country coverage gate, guard-B plausibility) falls back to its code constants byte-identically.
 	 */
 	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
+	/**
+	 * `", importance"` when this artifact carries the #28 fame column, `""` when it does not — spliced into the probe's
+	 * SELECT list. Existence-gated exactly like `#ftsProbe` and `#postalCityProbe` above, and for the same reason: a
+	 * candidate.db built before the column is a valid artifact, and naming a column it lacks would turn a stale gazetteer
+	 * into `no such column` on the first keystroke rather than into "no fame signal", which is what it is.
+	 */
+	readonly #importanceSelect: string
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
@@ -290,6 +303,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 			this.#nameKeyExistsProbe = this.#db.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
 		}
+
+		// #28 fame column: probed ONCE here (it runs a PRAGMA, and `findPlace` is per-keystroke hot).
+		this.#importanceSelect = hasColumn(this.#db, "candidate", "importance") ? ", importance" : ""
 
 		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-gated like
 		// the probes above — a candidate.db built before the manifest reads `undefined` and consumers keep
@@ -445,9 +461,13 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// `population` rides along for the REFERENTIAL score on the result (ROAD_TO_V9 §2) — one more
 			// column off a clustered row the probe already reads, and it is NOT what the probe orders by:
 			// `neg_rank` remains the sort key, so this changes no ordering, only what the result reports.
+			// `importance` (#28) rides along on the same terms, and there is deliberately NO `ORDER BY` on it:
+			// the fame prior is applied by the RESOLVER (`resolver/toponym-prior.ts`), which alone knows
+			// whether the query was bare enough to deserve it. A backend that pre-sorted by fame would apply
+			// it to every lookup, including the qualified addresses the D-rule guard exists to protect.
 			const sql =
-				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population " +
-				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
+				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
+				`${this.#importanceSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
 
 			const fetched = this.#db.prepare(sql).all(...params, Math.max(limit, RERANK_FETCH)) as unknown as CandidateRow[]
 
@@ -601,11 +621,26 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				exactMatch: !row.demoted && !row.fuzzy,
 				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence this
 				// backend has always ordered by — `neg_rank` IS `-log10(population + 1)`, so the score and
-				// the sort key are two readings of the same number. `encyclopedic` is absent by
-				// construction: `candidate.db` carries no `place_importance`, and absent is absent.
+				// the sort key are two readings of the same number.
 				...(row.population === null || row.population <= 0
 					? {}
 					: { population: row.population, referential: referentialFromPopulation(row.population) }),
+				// #28: the fame prior, from the `importance` column the candidate build joins in. Emitted ONLY
+				// when the artifact measured this place — an absent field is what `rankByImportance` reads as
+				// "does not participate", and a 0 would be a claim nobody made (meaning-of-zero).
+				//
+				// The field name matches the column because they hold the same thing: the score source's
+				// BLENDED prior — the concordance's encyclopedia-derived channel where a concordance matched, a
+				// population-derived proxy everywhere else. It is NOT the strict `encyclopedic` channel
+				// `place-importance-schema.ts` defines, and it deliberately does not land in that field: the
+				// strict channel was measured on 2026-08-10 and covers eleven countries, none of them CA/AU/RU,
+				// which makes it inert on three of the four homonym contests the prior exists to settle.
+				// `PlaceCandidate.encyclopedic` stays reserved for a strict-channel source (the FTS backend's
+				// clauses are strict and today emit NULL for everything — no shipped admin DB has the split
+				// table at all). See `candidate-schema.ts` → {@link CandidateTable.importance}.
+				...(typeof row.importance === "number" && Number.isFinite(row.importance)
+					? { importance: row.importance }
+					: {}),
 				...(hasBbox
 					? {
 							bbox: {

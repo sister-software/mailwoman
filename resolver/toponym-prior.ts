@@ -21,10 +21,13 @@
  *   Every one of those is a place people know for something other than its size, and the gazetteer
  *   already measures that: `admin-global-priority-importance.db` ranks all four the RIGHT way round
  *   (Whitby GB 0.5496 over CA 0.5089; Windsor GB 0.5648 over CA 0.5607 — a 0.004 margin population
- *   inverts by a factor of eight). That is the ENCYCLOPEDIC half of the ROAD_TO_V9 §2 two-score
- *   split, and until now nothing consumed it: `ResolvedPlace.encyclopedic` was carried from the
- *   backend, stamped onto node metadata, and read by no ranking key anywhere in the resolver.
- *   {@link rankByEncyclopedic} consumes it.
+ *   inverts by a factor of eight). What it measures is a BLENDED global toponym prior
+ *   (`ResolvedPlace.importance`): the concordance's encyclopedia-derived channel where a concordance
+ *   matched, a population-derived proxy everywhere else — the one scale on which every bearer of a
+ *   name is scored comparably, which is the precondition for comparing them at all.
+ *   {@link rankByImportance} consumes it. (The STRICT encyclopedia-evidence channel keeps its own
+ *   reserved slot, `ResolvedPlace.encyclopedic`, which no ranking key reads and no shipped artifact
+ *   yet populates — see `core/resolver/types.ts`.)
  *
  *   {@link rankByCountryPrior} covers the other half of the class — the query where a country IS
  *   known, but only because a locale said so. See `span-rescore.ts` for where that one applies.
@@ -35,9 +38,9 @@
  *      promotes a partial match over an exact one.
  *   2. **Positive evidence only.** An absent score is unmeasured, not zero (the meaning-of-zero rule), so an
  *      unscored candidate is never moved BY the signal and never penalized FOR lacking it — it keeps the
- *      rank population gave it while the scored rows reorder among themselves. On today's shipped
- *      `candidate.db` — which carries no `place_importance` at all — nothing is scored, so
- *      {@link rankByEncyclopedic} is byte-stable by construction.
+ *      rank population gave it while the scored rows reorder among themselves. On a candidate.db built
+ *      before the #28 `importance` column, nothing is scored, so {@link rankByImportance} is
+ *      byte-stable by construction.
  *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath.
  */
 
@@ -66,7 +69,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * structural twin) can be ranked without a cast.
  */
 type Rankable = Pick<ResolvedPlace, "score"> &
-	Partial<Pick<ResolvedPlace, "country" | "encyclopedic" | "exactMatch" | "prominence">>
+	Partial<Pick<ResolvedPlace, "country" | "exactMatch" | "importance" | "prominence">>
 
 /**
  * Partition into (exact, rest), sort each half with `key` DESC, and re-join. The partition is what keeps a soft prior
@@ -97,10 +100,10 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 const size = (c: Rankable): number => c.prominence ?? c.score
 
 /**
- * A candidate the gazetteer actually scored. An absent value means "no Wikipedia article" OR "this row predates the
- * split" OR "the id didn't join" — three different things, none of them zero.
+ * A candidate the gazetteer actually scored. An absent value means "the score source never measured this place" OR
+ * "this artifact predates the column" OR "the join refused the row" — three different things, none of them zero.
  */
-const measured = (c: Rankable): boolean => typeof c.encyclopedic === "number" && Number.isFinite(c.encyclopedic)
+const measured = (c: Rankable): boolean => typeof c.importance === "number" && Number.isFinite(c.importance)
 
 /**
  * Reorder ONLY the measured candidates, and only among the positions they already occupy.
@@ -136,20 +139,20 @@ function reorderMeasured<T extends Rankable>(tier: readonly T[], compare: (a: T,
 }
 
 /**
- * Encyclopedic-first ordering — the two-score split's other half, consumed (ROAD_TO_V9 §2).
+ * Importance-first ordering — the #28 fame prior, consumed.
  *
- * Ranks by `encyclopedic` DESC within the exact tier, with `prominence`/`score` as the tiebreak (two places of equal
- * fame separate on size). Candidates the gazetteer never scored do not participate — they hold the rank population gave
- * them while the scored rows permute among their own slots (see {@link reorderMeasured}). Returns the input untouched
- * when fewer than two candidates are scored.
+ * Ranks by `importance` DESC within the exact tier, with `prominence`/`score` as the tiebreak (two places of equal fame
+ * separate on size). Candidates the gazetteer never scored do not participate — they hold the rank population gave them
+ * while the scored rows permute among their own slots (see {@link reorderMeasured}). Returns the input untouched when
+ * fewer than two candidates are scored.
  *
- * **This is inert on the artifacts shipping today.** `candidate.db` carries no `place_importance` table and the FTS
- * `admin-global-priority.db` doesn't either, so `encyclopedic` is `undefined` on every candidate the Node path produces
- * and the abstention above fires every time. The measured scores live in `admin-global-priority-importance.db`, which
- * is not the artifact either backend opens. So this key is the CONSUMER, in place and pinned by tests, waiting on the
- * producer — see the receipt for what a candidate.db carrying `encyclopedic` would do to the four GB panel rows.
+ * The producer is the candidate build's `importance` column (#28) — the BLENDED prior (the concordance's
+ * encyclopedia-derived channel where a concordance matched, a population-derived proxy elsewhere; see
+ * `candidate-schema.ts` → `CandidateTable.importance` for why the strict channel is deliberately NOT what lands there).
+ * On an artifact predating the column, `importance` is `undefined` on every candidate the backend produces and the
+ * abstention below keeps the ranking byte-stable.
  */
-export function rankByEncyclopedic<T extends Rankable>(candidates: readonly T[]): T[] {
+export function rankByImportance<T extends Rankable>(candidates: readonly T[]): T[] {
 	if (candidates.length < 2) return [...candidates]
 
 	// Abstain entirely until at least one candidate carries a MEASURED score — the tier split
@@ -166,7 +169,7 @@ export function rankByEncyclopedic<T extends Rankable>(candidates: readonly T[])
 		;(c.exactMatch === true ? exact : rest).push(c)
 	}
 
-	const compare = (a: T, b: T) => (b.encyclopedic ?? 0) - (a.encyclopedic ?? 0) || size(b) - size(a)
+	const compare = (a: T, b: T) => (b.importance ?? 0) - (a.importance ?? 0) || size(b) - size(a)
 
 	return [...reorderMeasured(exact, compare), ...reorderMeasured(rest, compare)]
 }

@@ -4,20 +4,20 @@
  * @author Teffen Ellis, et al.
  *
  *   #17 bare city-name disambiguation. Two ranking keys for the bare-toponym class, both SOFT priors:
- *   `rankByEncyclopedic` (the ROAD_TO_V9 §2 two-score split's dangling `encyclopedic` signal, consumed
- *   at last) and `rankByCountryPrior` (a locale country demoted from hard filter to additive bonus).
+ *   `rankByImportance` (the #28 blended toponym-fame signal, consumed at last) and
+ *   `rankByCountryPrior` (a locale country demoted from hard filter to additive bonus).
  *
  *   The measurement these pin (2026-08-10, shipped `candidate.db`): the panel's bare GB rows resolve to
  *   a more-POPULOUS foreign namesake — Whitby CA 128,377 over Whitby GB 13,130 — while the importance
  *   artifact ranks them the other way (GB 0.5496 over CA 0.5089). Population cannot separate them;
- *   encyclopedic can. The country prior covers the other half: bare `Zürich` under an en-US locale is
+ *   importance can. The country prior covers the other half: bare `Zürich` under an en-US locale is
  *   hard-scoped to US and lands on Zurich, Kansas (pop 81) 8,043 km off.
  */
 
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByEncyclopedic } from "./toponym-prior.ts"
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
 
 const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" | "country">): ResolvedPlace => ({
 	placetype: "locality",
@@ -30,42 +30,43 @@ const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" 
 
 /**
  * The live rows behind the panel failures, measured off the shipped artifacts on 2026-08-10: `prominence` from
- * `candidate.db` (`-neg_rank`, i.e. log10(population + 1)), `encyclopedic` from `admin-global-priority-importance.db`.
+ * `candidate.db` (`-neg_rank`, i.e. log10(population + 1)), `importance` from `admin-global-priority-importance.db`.
  */
 const WHITBY: ResolvedPlace[] = [
-	place({ id: 8_143_502_164_401, name: "Whitby", country: "CA", prominence: 5.1085, encyclopedic: 0.5089 }),
-	place({ id: 101_874_191, name: "Whitby", country: "GB", prominence: 4.1183, encyclopedic: 0.5496 }),
-	place({ id: 9_000_000_663_998, name: "Whitby", country: "TC", prominence: 2.7505, encyclopedic: 0.1 }),
+	place({ id: 8_143_502_164_401, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
+	place({ id: 101_874_191, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
+	place({ id: 9_000_000_663_998, name: "Whitby", country: "TC", prominence: 2.7505, importance: 0.1 }),
 ]
 
 const WINDSOR: ResolvedPlace[] = [
-	place({ id: 1, name: "Windsor", country: "CA", prominence: 5.3368, encyclopedic: 0.5607 }),
-	place({ id: 2, name: "Windsor", country: "US", prominence: 4.5809, encyclopedic: 0.4638 }),
-	place({ id: 3, name: "Windsor", country: "GB", prominence: 4.4295, encyclopedic: 0.5648 }),
+	place({ id: 1, name: "Windsor", country: "CA", prominence: 5.3368, importance: 0.5607 }),
+	place({ id: 2, name: "Windsor", country: "US", prominence: 4.5809, importance: 0.4638 }),
+	place({ id: 3, name: "Windsor", country: "GB", prominence: 4.4295, importance: 0.5648 }),
 ]
 
-describe("rankByEncyclopedic", () => {
+describe("rankByImportance", () => {
 	it("prefers the encyclopedically prominent namesake over the more POPULOUS one", () => {
 		// Whitby, North Yorkshire (13,130) over Whitby, Ontario (128,377) — the population key ranks
 		// these backwards, which is the whole #17 failure.
-		const ranked = rankByEncyclopedic(WHITBY)
+		const ranked = rankByImportance(WHITBY)
 		expect(ranked.map((c) => c.country)).toEqual(["GB", "CA", "TC"])
 	})
 
 	it("separates a near-tie the population key gets wrong (Windsor: 0.5648 GB vs 0.5607 CA)", () => {
-		expect(rankByEncyclopedic(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
+		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
 	})
 
 	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
-		// A missing encyclopedic means "no Wikipedia article" OR "pre-split gazetteer" OR "the id didn't
-		// join" — never 0. The meaning-of-zero rule: a magnitude never carries its own absence, so a lone
-		// measured 0.55 must not be read as beating an unmeasured megacity.
+		// A missing importance means "the score source never measured this place" OR "pre-split
+		// gazetteer" OR "the id didn't join" — never 0. The meaning-of-zero rule: a magnitude never
+		// carries its own absence, so a lone measured 0.55 must not be read as beating an unmeasured
+		// megacity.
 		const partial = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085 }),
-			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, encyclopedic: 0.5496 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
 		]
 
-		expect(rankByEncyclopedic(partial).map((c) => c.country)).toEqual(["CA", "GB"])
+		expect(rankByImportance(partial).map((c) => c.country)).toEqual(["CA", "GB"])
 	})
 
 	it("leaves UNSCORED candidates on their population rank and permutes only the scored slots", () => {
@@ -73,13 +74,13 @@ describe("rankByEncyclopedic", () => {
 		// of them. Abstaining on that throws the only usable signal away; zero-filling would let a scored
 		// hamlet leapfrog an unscored metropolis. Neither — the unscored rows simply sit still.
 		const live = [
-			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, encyclopedic: 0.5089 }),
-			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, encyclopedic: 0.5496 }),
+			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
+			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
 			place({ id: 3, name: "Whitby", country: "TC", prominence: 2.7505 }),
 			place({ id: 4, name: "Whitby", country: "US", prominence: 0 }),
 		]
 
-		expect(rankByEncyclopedic(live).map((c) => c.country)).toEqual(["GB", "CA", "TC", "US"])
+		expect(rankByImportance(live).map((c) => c.country)).toEqual(["GB", "CA", "TC", "US"])
 	})
 
 	it("never lets a scored small place jump an UNSCORED larger one", () => {
@@ -87,11 +88,11 @@ describe("rankByEncyclopedic", () => {
 		// slot 0 no matter what the scored rows below it measure.
 		const rows = [
 			place({ id: 1, name: "X", country: "A", prominence: 7 }),
-			place({ id: 2, name: "X", country: "B", prominence: 3, encyclopedic: 0.1 }),
-			place({ id: 3, name: "X", country: "C", prominence: 2, encyclopedic: 0.9 }),
+			place({ id: 2, name: "X", country: "B", prominence: 3, importance: 0.1 }),
+			place({ id: 3, name: "X", country: "C", prominence: 2, importance: 0.9 }),
 		]
 
-		expect(rankByEncyclopedic(rows).map((c) => c.country)).toEqual(["A", "C", "B"])
+		expect(rankByImportance(rows).map((c) => c.country)).toEqual(["A", "C", "B"])
 	})
 
 	it("is byte-stable on today's shipped artifacts (candidate.db carries no place_importance)", () => {
@@ -100,27 +101,27 @@ describe("rankByEncyclopedic", () => {
 			place({ id: 2, name: "Berlin", country: "US", prominence: 4.2981 }),
 		]
 
-		expect(rankByEncyclopedic(none)).toEqual(none)
+		expect(rankByImportance(none)).toEqual(none)
 	})
 
 	it("never crosses the exact/partial boundary", () => {
 		// Tier is the PRIMARY key everywhere in this resolver; a soft prior re-orders WITHIN a tier only.
 		const mixed = [
-			place({ id: 1, name: "Whitby", country: "CA", encyclopedic: 0.2, exactMatch: true }),
-			place({ id: 2, name: "Whitby Bay", country: "GB", encyclopedic: 0.9, exactMatch: false }),
-			place({ id: 3, name: "Whitby", country: "GB", encyclopedic: 0.55, exactMatch: true }),
+			place({ id: 1, name: "Whitby", country: "CA", importance: 0.2, exactMatch: true }),
+			place({ id: 2, name: "Whitby Bay", country: "GB", importance: 0.9, exactMatch: false }),
+			place({ id: 3, name: "Whitby", country: "GB", importance: 0.55, exactMatch: true }),
 		]
 
-		expect(rankByEncyclopedic(mixed).map((c) => c.id)).toEqual([3, 1, 2])
+		expect(rankByImportance(mixed).map((c) => c.id)).toEqual([3, 1, 2])
 	})
 
-	it("breaks an encyclopedic tie on prominence, then leaves the input order", () => {
+	it("breaks an importance tie on prominence, then leaves the input order", () => {
 		const tied = [
-			place({ id: 1, name: "X", country: "A", prominence: 3, encyclopedic: 0.5 }),
-			place({ id: 2, name: "X", country: "B", prominence: 4, encyclopedic: 0.5 }),
+			place({ id: 1, name: "X", country: "A", prominence: 3, importance: 0.5 }),
+			place({ id: 2, name: "X", country: "B", prominence: 4, importance: 0.5 }),
 		]
 
-		expect(rankByEncyclopedic(tied).map((c) => c.id)).toEqual([2, 1])
+		expect(rankByImportance(tied).map((c) => c.id)).toEqual([2, 1])
 	})
 })
 

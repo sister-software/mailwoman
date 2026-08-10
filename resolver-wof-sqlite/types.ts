@@ -89,15 +89,25 @@ export interface PlaceCandidate {
 	 */
 	referential?: number
 	/**
-	 * Encyclopedic (Wikipedia) importance in [0, 1], fan-out-guarded per #1497 — CARRIED, NEVER RANKED ON.
+	 * STRICT encyclopedia-evidence importance in [0, 1], fan-out-guarded per #1497 — CARRIED, NEVER RANKED ON.
 	 *
-	 * Present only when the shard's `place_importance` table carries the split columns. `undefined` means either "this
-	 * place has no Wikipedia article" or "this gazetteer predates the split"; both are absence, and neither is 0.
+	 * RESERVED SLOT awaiting a strict-channel source: present only when a shard's `place_importance` table carries the
+	 * split columns, and no shipped shard does — the FTS lookup's clauses emit NULL for everything today. `undefined`
+	 * means either "no encyclopedia entry for this place" or "this gazetteer predates the split"; both are absence, and
+	 * neither is 0. The BLENDED prior the ranking reads is {@link PlaceCandidate.importance}.
 	 *
 	 * Saint-Denis is why this is not a ranking key: the Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the
 	 * Aude hamlet (pop 418) scores 0.5683. Consumers that want to display salience read this; the ranking never does.
 	 */
 	encyclopedic?: number
+	/**
+	 * BLENDED global toponym prior in [0, 1] (#28) — `candidate.importance` surfaced verbatim: the score source's legacy
+	 * blended importance (encyclopedia-derived where the concordance matched, a population-derived proxy elsewhere).
+	 * Emitted only by the candidate-table backend, and only when the artifact measured this place — absent is UNMEASURED,
+	 * never zero. Consumed by `rankByImportance` (`resolver/toponym-prior.ts`) for the bare-toponym class. See
+	 * `candidate-schema.ts` → `CandidateTable.importance` for why the blend, not the strict channel, is what ships.
+	 */
+	importance?: number
 	/**
 	 * Bounding box from WOF's `spr.{min,max}_{latitude,longitude}` columns. Coarse outline for the place — a city's bbox
 	 * is the city's full extent, a postcode's is roughly the postcode polygon's envelope. Optional because not all

@@ -15,7 +15,7 @@
  *   - Postcode rows resolve, and placeholder 0,0-coord rows were dropped at build.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
+import { copyFile, mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
@@ -777,6 +777,133 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 			expect(a.placeID).toBe("wof:722")
 			expect(b.placeID).toBe(a.placeID)
 			expect(a.lat).toBeCloseTo(37.76, 2)
+		} finally {
+			lk.close()
+		}
+	})
+})
+
+/**
+ * The read side of the #28 fame column: `candidate.importance` → `PlaceCandidate.importance`.
+ *
+ * Three states have to be distinguishable, because the consumer (`resolver/toponym-prior.ts`) treats exactly one of
+ * them as evidence:
+ *
+ * 1. The artifact scored this place → the field is present;
+ * 2. The artifact has the column but no measurement for this place → the field is ABSENT (not 0);
+ * 3. The artifact predates the column entirely → the field is absent, and nothing throws.
+ */
+describe("WOFCandidateTableLookup — importance (#28)", () => {
+	let scoredPath: string
+
+	/**
+	 * A score source for the lookup fixture's homonym pair. Moscow RU is scored ABOVE Moscow, Idaho; Chicago is scored;
+	 * Lenk deliberately is not. Ids are unrelated to the admin fixture's, as they are in production.
+	 */
+	function buildFixtureImportance(path: string): void {
+		const db = new DatabaseSync(path)
+
+		db.exec(`
+			CREATE TABLE spr (
+				id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
+				latitude REAL, longitude REAL, is_current INTEGER, is_deprecated INTEGER
+			);
+			CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL NOT NULL);
+
+			INSERT INTO spr VALUES (7000000000300, 'Moscow', 'locality', 'RU', 55.75, 37.62, -1, 0);
+			INSERT INTO spr VALUES (7000000000301, 'Moscow', 'locality', 'US', 46.73, -117.00, -1, 0);
+			INSERT INTO spr VALUES (7000000000200, 'Chicago', 'locality', 'US', 41.88, -87.63, -1, 0);
+
+			INSERT INTO place_importance VALUES (7000000000300, 0.9530);
+			INSERT INTO place_importance VALUES (7000000000301, 0.5465);
+			INSERT INTO place_importance VALUES (7000000000200, 0.8125);
+		`)
+
+		db.close()
+	}
+
+	beforeEach(async () => {
+		const input = join(scratch, "admin-scored.db")
+		const importance = join(scratch, "importance.db")
+		scoredPath = join(scratch, "candidate-scored.db")
+		buildFixtureAdmin(input)
+		buildFixtureImportance(importance)
+		await buildCandidateTable({ input, output: scoredPath, importance })
+	})
+
+	test("surfaces a measured score as `importance`", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+			expect(hits).toHaveLength(2)
+			expect(hits[0]!.country).toBe("RU")
+			expect(hits[0]!.importance).toBeCloseTo(0.953, 4)
+			expect(hits[1]!.importance).toBeCloseTo(0.5465, 4)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("an ALIAS row carries the place's score (the Москва → 'moscow' path)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
+
+		try {
+			// "Moskva" is an alt-name of the same RU place; the row is denormalized onto that place, so it
+			// must report the place's fame, not nothing.
+			const hits = await lk.findPlace({ text: "Moskva", placetype: "locality", limit: 5 })
+			expect(hits).toHaveLength(1)
+			expect(hits[0]!.country).toBe("RU")
+			expect(hits[0]!.importance).toBeCloseTo(0.953, 4)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("an unmeasured place omits the field entirely — absent, not zero", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Lenk", placetype: "locality", limit: 5 })
+			expect(hits).toHaveLength(1)
+			// `undefined`, and the KEY must not be present at all — `rankByImportance` reads a 0 as a
+			// measurement and would let a scored hamlet leapfrog an unscored metropolis.
+			expect(hits[0]!.importance).toBeUndefined()
+			expect("importance" in hits[0]!).toBe(false)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("an artifact built WITHOUT a score source reports no fame anywhere", async () => {
+		// `candidatePath` is the shared fixture, built with no `importance` option.
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+			expect(hits).toHaveLength(2)
+			expect(hits.every((h) => h.importance === undefined)).toBe(true)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("an artifact PREDATING the column still resolves — the probe is existence-gated", async () => {
+		// Reproduce a pre-#28 gazetteer by removing the column from a real build, rather than hand-writing
+		// an old DDL that could drift from what the old builder actually emitted.
+		const legacyPath = join(scratch, "candidate-legacy.db")
+		await copyFile(scoredPath, legacyPath)
+		const rw = new DatabaseSync(legacyPath)
+		rw.exec("ALTER TABLE candidate DROP COLUMN importance")
+		rw.close()
+
+		const lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+			expect(hits).toHaveLength(2)
+			expect(hits[0]!.country).toBe("RU")
+			expect(hits.every((h) => h.importance === undefined)).toBe(true)
 		} finally {
 			lk.close()
 		}

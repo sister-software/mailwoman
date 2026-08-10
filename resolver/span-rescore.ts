@@ -29,7 +29,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByEncyclopedic } from "./toponym-prior.ts"
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
 
 export interface SpanRescoreOptions {
 	/**
@@ -394,12 +394,13 @@ export async function findRescoreCandidate(
 		// first ranking starved, not violated. The alias surface is the recall; ranking then does its job.
 		// The postcode gate below still applies to every admitted candidate, Moscow RU included.
 		//
-		// #17: encyclopedic-first WITHIN the admitted set. Inert on the artifacts shipping today (nothing
-		// populates `encyclopedic`), so this changes no live pick — it is the consumer for the two-score
-		// split's other half, which is the only key that separates the bare GB panel rows. See
-		// `toponym-prior.ts`. It runs after the country prior deliberately: fame is the stronger signal
-		// when it has been measured, and leaves an unscored candidate exactly where population put it.
-		const exact = rankByEncyclopedic(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
+		// #17: importance-first WITHIN the admitted set. The key is the #28 blended fame prior
+		// (`PlaceCandidate.importance`, produced by the candidate build) — the only key that separates
+		// the bare GB panel rows; on an artifact predating the column it abstains and changes no pick.
+		// See `toponym-prior.ts`. It runs after the country prior deliberately: fame is the stronger
+		// signal when it has been measured, and leaves an unscored candidate exactly where population
+		// put it.
+		const exact = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
 
 		const withinGate = (p: ResolvedPlace): boolean =>
 			!anchor || gateKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= gateKm
