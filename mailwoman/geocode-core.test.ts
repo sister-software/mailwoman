@@ -20,6 +20,7 @@ import {
 	geocodeAddress,
 	countryFromPostcodeFormat,
 	extractGeocodeResult,
+	recognizeBarePostcode,
 	type GeocodeClassifier,
 	type GeocodeDeps,
 	parseForGeocode,
@@ -277,6 +278,150 @@ describe("extractGeocodeResult — parsed house-grade fields (#1041)", () => {
 		const r = extractGeocodeResult("berlin", tree)
 		expect(r.house_number).toBeNull()
 		expect(r.street).toBeNull()
+	})
+
+	it("retains locale-specific parsed components that have no legacy named result field", () => {
+		const tree: AddressTree = {
+			raw: "りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57",
+			roots: [
+				node({ tag: "venue", value: "りんりん" }),
+				node({ tag: "postcode", value: "506-0025" }),
+				node({ tag: "prefecture", value: "岐阜県" }),
+				node({ tag: "municipality", value: "高山市" }),
+				node({ tag: "district", value: "天満町" }),
+				node({ tag: "block", value: "3丁目" }),
+				node({ tag: "house_number", value: "57" }),
+			],
+		}
+
+		expect(extractGeocodeResult(tree.raw, tree).components).toMatchObject({
+			venue: "りんりん",
+			postcode: "506-0025",
+			prefecture: "岐阜県",
+			municipality: "高山市",
+			district: "天満町",
+			block: "3丁目",
+			house_number: "57",
+		})
+	})
+})
+
+describe("recognizeBarePostcode (#22)", () => {
+	const tree = (roots: AddressNode[], raw = "N7 0BT"): AddressTree => ({ raw, roots })
+
+	it("retags a whole-input GB postcode the model read as a street", () => {
+		const out = recognizeBarePostcode(tree([node({ tag: "street", value: "N7 0BT", end: 6 })]))
+		expect(out.roots[0]?.tag).toBe("postcode")
+		expect(out.roots[0]?.metadata?.["bare_postcode_retag"]).toBe(true)
+	})
+
+	it("retags a CA postal code the same way", () => {
+		const out = recognizeBarePostcode(tree([node({ tag: "venue", value: "K2P 1L4" })], "K2P 1L4"))
+		expect(out.roots[0]?.tag).toBe("postcode")
+	})
+
+	it("leaves a tree that already found a postcode alone", () => {
+		const out = recognizeBarePostcode(tree([node({ tag: "postcode", value: "N7 0BT" })], "N7 0BT"))
+		expect(out.roots[0]?.tag).toBe("postcode")
+		expect(out.roots[0]?.metadata?.["bare_postcode_retag"]).toBeUndefined()
+	})
+
+	it("never touches a postcode-shaped span inside a longer address", () => {
+		const out = recognizeBarePostcode(
+			tree([node({ tag: "locality", value: "London" }), node({ tag: "street", value: "N7 0BT" })], "London N7 0BT")
+		)
+
+		expect(out.roots[1]?.tag).toBe("street")
+	})
+
+	it("never touches a street name that is not an unforgeable postcode shape", () => {
+		for (const value of ["Main Street", "90210", "1012 LG", "75013", "Broadway"]) {
+			const out = recognizeBarePostcode(tree([node({ tag: "street", value })], value))
+			expect(out.roots[0]?.tag).toBe("street")
+		}
+	})
+})
+
+describe("extractGeocodeResult — unit-grade postcodes lead the admin ladder (#977 NL, #22 GB)", () => {
+	/**
+	 * The GB shape of the defect: `29 Brecknock Road, London, N7 0BT` resolves BOTH the locality (the London centroid,
+	 * 51.5005/-0.1094) and the unit postcode (`N70BT`, 51.5500/-0.1307 — 38 m from the rooftop truth), and the admin
+	 * ladder returned London, 5.6 km out. Coordinates are the live `candidate.db` rows, read 2026-08-10.
+	 */
+	const gbTree = (postcodeName = "N70BT"): AddressTree => ({
+		raw: "29 Brecknock Road, London, N7 0BT",
+		roots: [
+			node({
+				tag: "locality",
+				value: "London",
+				lat: 51.500525578898,
+				lon: -0.109400835283853,
+				placeID: "wof:101750367",
+				metadata: { resolver_name: "London", resolver_country: "GB" },
+			}),
+			node({
+				tag: "postcode",
+				value: "N7 0BT",
+				lat: 51.54997980304472,
+				lon: -0.1306932211473067,
+				placeID: "wof:1",
+				metadata: { resolver_name: postcodeName, resolver_country: "GB" },
+			}),
+		],
+	})
+
+	it("returns the GB unit-postcode centroid, not the locality centroid", () => {
+		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree())
+		expect(r.lat).toBeCloseTo(51.54998, 4)
+		expect(r.lon).toBeCloseTo(-0.130693, 4)
+	})
+
+	it("keeps the locality centroid when the resolver only reached the OUTWARD stem", () => {
+		// A stem hit (`N7`) is district-class — coarser than the locality, so it must NOT lead.
+		const r = extractGeocodeResult("29 Brecknock Road, London, N7 0BT", gbTree("N7"))
+		expect(r.lat).toBeCloseTo(51.500526, 4)
+	})
+
+	it("keeps the locality centroid for a US ZIP (area-class, the locality-first epoch convention)", () => {
+		const tree: AddressTree = {
+			raw: "350 5th Ave, New York, NY 10118",
+			roots: [
+				node({
+					tag: "locality",
+					value: "New York",
+					lat: 40.7128,
+					lon: -74.006,
+					metadata: { resolver_name: "New York", resolver_country: "US" },
+				}),
+				node({
+					tag: "postcode",
+					value: "10118",
+					lat: 40.7484,
+					lon: -73.9857,
+					metadata: { resolver_name: "10118", resolver_country: "US" },
+				}),
+			],
+		}
+
+		expect(extractGeocodeResult(tree.raw, tree).lat).toBeCloseTo(40.7128, 4)
+	})
+
+	it("still leads with an NL PC6 exact hit (#977 unchanged)", () => {
+		const tree: AddressTree = {
+			raw: "Damrak 1, 1012 LG Amsterdam",
+			roots: [
+				node({ tag: "locality", value: "Amsterdam", lat: 52.3676, lon: 4.9041 }),
+				node({
+					tag: "postcode",
+					value: "1012 LG",
+					lat: 52.3759,
+					lon: 4.8975,
+					metadata: { resolver_name: "1012LG" },
+				}),
+			],
+		}
+
+		expect(extractGeocodeResult(tree.raw, tree).lat).toBeCloseTo(52.3759, 4)
 	})
 })
 

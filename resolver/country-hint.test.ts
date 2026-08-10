@@ -62,6 +62,29 @@ const AUGUSTA_IT: ResolvedPlace = {
 	exactMatch: true,
 }
 
+const WESTERN_AUSTRALIA: ResolvedPlace = {
+	id: 30,
+	name: "Western Australia",
+	placetype: "region",
+	country: "AU",
+	lat: -25.27,
+	lon: 133.78,
+	score: 6,
+	exactMatch: true,
+}
+
+const CURRAMBINE_AU: ResolvedPlace = {
+	id: 31,
+	name: "Currambine",
+	placetype: "locality",
+	country: "AU",
+	parent_id: 30,
+	lat: -31.74,
+	lon: 115.74,
+	score: 6,
+	exactMatch: true,
+}
+
 /**
  * Backend filtered by name + placetype + country + parentID. Regions match any 2-letter token (abbrev).
  */
@@ -133,5 +156,31 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 
 		expect(loc?.lat).toBeCloseTo(37.2, 1)
 		expect(loc?.lon).toBeCloseTo(15.2, 1)
+	})
+
+	it("lets an explicit AU locale scope outrank the ambiguous US hint on WA", async () => {
+		const resolver = createWOFResolver(makeBackend([MAINE, WESTERN_AUSTRALIA, CURRAMBINE_AU]))
+
+		const input: AddressTree = {
+			raw: "Currambine WA",
+			system: "western",
+			roots: [
+				node({
+					tag: "region",
+					value: "WA",
+					start: 11,
+					end: 13,
+					metadata: { country_hint: "US" },
+					children: [node({ tag: "locality", value: "Currambine", start: 0, end: 10 })],
+				}),
+			],
+		}
+
+		const out = await resolver.resolveTree(input, { defaultCountry: "AU" })
+		const loc = localityOf(out)
+
+		expect(loc?.lat).toBeCloseTo(-31.74, 2)
+		expect(loc?.lon).toBeCloseTo(115.74, 2)
+		expect(loc?.metadata?.["resolver_country"]).toBe("AU")
 	})
 })

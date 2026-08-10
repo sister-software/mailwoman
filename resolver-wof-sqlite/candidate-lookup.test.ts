@@ -334,6 +334,44 @@ describe("WOFCandidateTableLookup", () => {
 		}
 	})
 
+	test("a typo-corrected row is NOT an exact match (#17)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// `exactMatch` is a MATCH-QUALITY claim, and the trigram tier's whole job is to answer a query
+			// that matched nothing. Stamping its rows exact made this backend disagree with the FTS one
+			// (where the flag is a real tier discriminator) and, worse, fed a lie to every consumer that
+			// filters on it. Span-rescore is the one that got hurt: it enumerates raw spans LONGEST-first
+			// and takes the first exact hit, so a 2-token span that only fuzzy-matches out-claimed the
+			// 1-token span that matched exactly — measured 2026-08-10, `geocode 'Weimar Thüringen'` came
+			// back as Thüringenhausen (population 105) instead of Weimar (65,228), 47.7 km off.
+			const exact = await lk.findPlace({ text: "Chicago", placetype: "locality", country: "US" })
+			expect(exact[0]?.name).toBe("Chicago")
+			expect(exact[0]?.exactMatch).toBe(true)
+
+			const fuzzy = await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" })
+			// Recall is untouched — the typo still resolves, it just stops claiming to be exact.
+			expect(fuzzy[0]?.name).toBe("Chicago")
+			expect(fuzzy[0]?.exactMatch).toBe(false)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("the qualifier-strip fallback KEEPS its exact claim — it is a name-key normalization, not a guess", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// "Lenk im Simmental" → "Lenk" strips a qualifier the gazetteer's canonical name omits. That is
+			// the same place under a longer label, not a misspelling, so it stays in the exact tier.
+			const stripped = await lk.findPlace({ text: "Lenk im Simmental", placetype: "locality", country: "CH" })
+			expect(stripped[0]?.name).toBe("Lenk")
+			expect(stripped[0]?.exactMatch).toBe(true)
+		} finally {
+			lk.close()
+		}
+	})
+
 	test("the fuzzy fallback NEVER fires for postcodes — an unknown code abstains, it does not become a different code", async () => {
 		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 

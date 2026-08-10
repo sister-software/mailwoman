@@ -117,6 +117,42 @@ const GeocodeCandidateSchema = z
 	.openapi("GeocodeCandidate")
 
 /**
+ * Canonical parsed-component map carried by `GeocodeResult.components`. Spelled out at this engine-agnostic API
+ * boundary for the same reason the result schema is hand-modeled; the compile-time drift pin in
+ * `mailwoman/test/api-schema-drift.test.ts` catches any mismatch with the real `ComponentTag`-keyed result type.
+ */
+const GeocodeComponentsSchema = z.partialRecord(
+	z.enum([
+		"country",
+		"region",
+		"locality",
+		"dependent_locality",
+		"postcode",
+		"subregion",
+		"house_number",
+		"street",
+		"street_prefix",
+		"street_prefix_particle",
+		"street_suffix",
+		"intersection_a",
+		"intersection_b",
+		"unit",
+		"venue",
+		"attention",
+		"po_box",
+		"cedex",
+		"prefecture",
+		"municipality",
+		"district",
+		"block",
+		"sub_block",
+		"building_number",
+		"building_name",
+	]),
+	z.string()
+)
+
+/**
  * One `GeocodeOutcome.intent_markers` entry — an advisory the ROAD_TO_V9 §4 intent vocabulary raised about the QUERY.
  * Mirrors `QueryIntentMarker` (`core/pipeline/types.ts`).
  *
@@ -163,6 +199,7 @@ const QueryIntentMarkerSchema = z
 export const GeocodeOutcomeSchema = z
 	.object({
 		input: z.string(),
+		components: GeocodeComponentsSchema,
 		lat: z.number().nullable(),
 		lon: z.number().nullable(),
 		resolution_tier: z.enum(["address_point", "interpolated", "street", "admin"]),

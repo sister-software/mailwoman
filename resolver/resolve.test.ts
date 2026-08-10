@@ -11,6 +11,7 @@ import type { AddressNode, Interpretation, AddressTree, ComponentTag } from "@ma
 import { decodeAsXML } from "@mailwoman/core/decoder"
 import type {
 	Ancestor,
+	AddressPointLookup,
 	CoincidentLocality,
 	InterpolationLookup,
 	ResolvedPlace,
@@ -934,6 +935,56 @@ describe("resolveTree — interpolation tier (#483)", () => {
 		expect(street?.metadata?.["address_point"]).toMatchObject({ lat: 44.2, lon: -72.6 })
 		// the gate held: no interpolated estimate stamped
 		expect(street?.metadata?.["interpolated_point"]).toBeUndefined()
+	})
+
+	test("retries an exact address point after span-rescore recovers its locality", async () => {
+		const backend = new FakeResolverBackend([
+			{
+				id: 1,
+				name: "Thames",
+				placetype: "locality",
+				country: "NZ",
+				lat: -37.1368,
+				lon: 175.6056,
+				score: 9,
+				exactMatch: true,
+			},
+		])
+
+		const calls: Parameters<AddressPointLookup["find"]>[0][] = []
+
+		const exact: AddressPointLookup = {
+			find: (query) => {
+				calls.push(query)
+
+				return query.locality === "Thames"
+					? { lat: -37.137364, lon: 175.541779, source: "openstreetmap:nz", release: "2026-08-06" }
+					: null
+			},
+		}
+
+		const input = tree("620B Pollen Street, Thames", [
+			node("street", "Pollen", 5, 11, [node("house_number", "620B", 0, 4), node("street_suffix", "Street", 12, 18)]),
+			node("region", "Thames", 20, 26),
+		])
+
+		const result = await createWOFResolver(backend).resolveTree(input, {
+			addressPoints: exact,
+			defaultCountry: "NZ",
+		})
+
+		const street = result.roots.find((n) => n.tag === "street")
+		const locality = result.roots.find((n) => n.tag === "locality")
+
+		expect(calls).toHaveLength(2)
+		expect(calls[0]).toMatchObject({ street: "Pollen Street", number: "620B", locality: undefined })
+		expect(calls[1]).toMatchObject({ street: "Pollen Street", number: "620B", locality: "Thames" })
+		expect(locality?.metadata?.["span_rescore"]).toBe(true)
+
+		expect(street?.metadata).toMatchObject({
+			resolution_tier: "address_point",
+			address_point: { lat: -37.137364, lon: 175.541779 },
+		})
 	})
 
 	test("miss → no stamp, admin untouched", async () => {

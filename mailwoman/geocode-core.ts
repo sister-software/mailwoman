@@ -24,6 +24,8 @@
 
 import { existsSync } from "node:fs"
 
+import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
+import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import {
@@ -65,6 +67,12 @@ export type ResolutionTier = "address_point" | "interpolated" | "street" | "admi
 
 export interface GeocodeResult {
 	input: string
+	/**
+	 * Every parsed component, projected directly from the resolved tree. The named fields below remain the stable,
+	 * convenience surface (and `street` remains reassembled), while this map keeps locale-specific schema such as JP's
+	 * `prefecture` / `block` observable instead of silently dropping it at the geocoder boundary.
+	 */
+	components: Partial<Record<ComponentTag, string>>
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
@@ -235,6 +243,23 @@ export interface GeocodeDeps {
 	 */
 	defaultCountry?: string
 	/**
+	 * #27 — the LOCALE's country as a SOFT ranking prior (`ResolveOpts.localeCountryPrior`), for the query shape where
+	 * {@link defaultCountry} is deliberately withheld: a bare toponym.
+	 *
+	 * The #912 guard in `mailwoman/commands/geocode.tsx` drops the locale-inferred country for a bare-locality tree,
+	 * because as a HARD filter it is a disaster (`--locale en-US "Zürich"` scoped to US answers Zurich, Kansas). What it
+	 * does NOT do is hand the country down in a form that cannot filter — so `--locale en-GB "Whitby"` and
+	 * `--default-country GB "Whitby"` disagree, and only the second is gold. This field is that form.
+	 *
+	 * Ignored when {@link defaultCountry} is set (a hard scope makes the prior a no-op), and OPT-IN at the CLI — see
+	 * `ResolveOpts.localeCountryPrior` for the measured reason it is not a default.
+	 */
+	localeCountryPrior?: string
+	/**
+	 * Weight of {@link localeCountryPrior} in log10(population + 1). Default 2 at the resolver.
+	 */
+	localeCountryPriorWeight?: number
+	/**
 	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin pass through
 	 * untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility locality
 	 * 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the casing, so on comma-joined input it is a
@@ -387,6 +412,59 @@ const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly cou
 ]
 
 /**
+ * Postcode shapes whose code is UNIT-GRADE — a delivery-walk or street-block unit, categorically tighter than any
+ * locality centroid, so an EXACT hit on one leads the admin ladder in {@link extractGeocodeResult} instead of following
+ * the locality-first epoch convention.
+ *
+ * The convention exists because most postal systems are AREA-class: an FR 5-digit zone is coarser than the commune it
+ * contains, so promoting it would trade a good answer for a worse one. Two systems are the other way round, and
+ * membership here is earned by MEASUREMENT of the code's granularity, never by "the code has letters in it":
+ *
+ * - **NL PC6** (`1012 LG`) — ~8 addresses per code; the CBS polygon centroid (#977, the original carve-out).
+ * - **GB unit** (`N7 0BT`) — ~15 addresses per code, and the shipped gazetteer carries 1,751,733 of them from Ordnance
+ *   Survey Code-Point Open. Measured 2026-08-10 against the panel-v2 GB rooftop truth: the unit centroid is within 1 km
+ *   of truth on 15/15 rows, median 38 m, max 100 m, while the locality centroid the ladder returned instead was
+ *   5.1–14.6 km out.
+ *
+ * **CA is deliberately absent.** `candidate.db` does carry 843,739 six-character CA codes (full LDU, block-face grade),
+ * so the shape would fire — but nothing has measured a CA LDU centroid against a rooftop truth, and an unmeasured
+ * granularity claim does not earn a default-on tier promotion. IE is absent for the blunter reason that the gazetteer
+ * holds zero Eircode rows. Add either with a measurement, not with a regex.
+ */
+const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
+	// NL PC6 — `1012 LG` / `1012LG`.
+	/^\d{4}\s?[A-Z]{2}$/i,
+	// GB unit — the codex's own shape (`@mailwoman/codex/gb`), so the parser, the country prior and this
+	// tier can never disagree about what a UK postcode looks like.
+	UK_POSTCODE_PATTERN,
+]
+
+/**
+ * Strip everything but letters and digits, upper-cased — the comparison surface for "did the resolver hit the FULL code
+ * or a coarser stem?". `N7 0BT` and `N70BT` are the same code; `N7` is not.
+ */
+const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
+
+/**
+ * True when this resolved postcode node is an EXACT hit on a unit-grade code — the three-way guard #977 specified,
+ * generalized past NL:
+ *
+ * 1. The PARSED span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed;
+ * 2. The node resolved (a coordinate is present — checked by the caller); and
+ * 3. The resolver's own hit is the FULL code, not a coarsened prefix. The lookup ladder is allowed to fall back to a
+ *    4-digit NL stem or a GB outward district, and those are AREA-class: promoting one over the locality would be the
+ *    exact trade the epoch convention forbids. `resolver_name` is the gazetteer's canonical name for the row that won,
+ *    so comparing it to the parsed span is what separates the two.
+ */
+export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
+	const value = parsed.trim()
+
+	if (!value || !UNIT_GRADE_POSTCODE.some((re) => re.test(value))) return false
+
+	return alnum(resolverName ?? "") === alnum(value)
+}
+
+/**
  * The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}.
  */
 export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
@@ -397,6 +475,57 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 	for (const { re, country } of POSTCODE_FORMAT_COUNTRY) if (re.test(p)) return country
 
 	return null
+}
+
+/**
+ * Retag a WHOLE-INPUT span the model read as something else when the string is an unambiguous postcode — the
+ * bare-postcode class (#22).
+ *
+ * `mailwoman geocode --locale en-GB "N7 0BT"` parses to `{ street: "N7 0BT" }` and returns no coordinate, while the
+ * same code inside a full address (`… London, N7 0BT`) parses as a postcode and resolves to a point 38 m from the
+ * rooftop. Nothing downstream can recover it: the walk only looks up a `postcode` node, and span-rescore's
+ * confident-constituent guard treats the street span as un-recoverable material (correctly — that guard is what stops
+ * "Ave" resolving to Ave, France).
+ *
+ * The gate is deliberately the narrowest one that fixes the class:
+ *
+ * - The tree carries NO postcode node already (never second-guess a parse that found one),
+ * - The retagged node is the ONLY value-bearing node in the tree, and
+ * - Its value matches a format that is UNFORGEABLE across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
+ *   GB/CA/IE, the same table #928 already trusts to name a country outright).
+ *
+ * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name. A US ZIP is
+ * out of scope by construction: `90210` alone is five digits, which the model already tags `postcode`, and the format
+ * table would not distinguish it from a DE PLZ anyway.
+ *
+ * Mutates and returns the tree (same posture as `recognizeUSRegions`).
+ */
+export function recognizeBarePostcode(tree: AddressTree): AddressTree {
+	const valued: AddressNode[] = []
+	const stack = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		// The parse already found a postcode — never second-guess it.
+		if (n.tag === "postcode") return tree
+
+		if (n.value.trim().length) {
+			valued.push(n)
+		}
+
+		stack.push(...n.children)
+	}
+
+	if (valued.length !== 1) return tree
+	const only = valued[0]!
+
+	if (!countryFromPostcodeFormat(only.value)) return tree
+	only.tag = "postcode"
+
+	only.metadata = { ...only.metadata, bare_postcode_retag: true }
+
+	return tree
 }
 
 /**
@@ -576,10 +705,11 @@ export class ShardProvider {
 
 /**
  * The exact parse `geocodeAddress` runs internally: Stage-1 deterministic preprocessing (`normalizeInput`) →
- * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUSRegions`. Exposed so a caller can run it once and
- * feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and another consumer of the parse (e.g.
- * `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address twice. The inference is ~3 ms/row — the
- * single most expensive step — so sharing it is a ~1.3× win on a parse-then-geocode pipeline.
+ * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUSRegions` → {@link recognizeBarePostcode}. Exposed
+ * so a caller can run it once and feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and
+ * another consumer of the parse (e.g. `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address
+ * twice. The inference is ~3 ms/row — the single most expensive step — so sharing it is a ~1.3× win on a
+ * parse-then-geocode pipeline.
  */
 /**
  * The kind-derived register for a geocode input (Decision A) — shared by the parse and the retry rider.
@@ -615,15 +745,19 @@ export async function parseForGeocode(
 	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline).
 	const inputMode = deps.inputMode ?? deriveGeocodeRegister(parseInput, queryShape)
 
-	return recognizeUSRegions(
-		await deps.classifier.parse(parseInput, {
-			postcodeRepair: true,
-			normalizeCase: deps.normalizeCase ?? true,
-			queryShape,
-			inputMode,
-			// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
-			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-		})
+	// #22: a bare unambiguous postcode the model read as a street ("N7 0BT" → `{ street: … }`) is retagged
+	// before the resolve — see recognizeBarePostcode for why nothing downstream can recover it.
+	return recognizeBarePostcode(
+		recognizeUSRegions(
+			await deps.classifier.parse(parseInput, {
+				postcodeRepair: true,
+				normalizeCase: deps.normalizeCase ?? true,
+				queryShape,
+				inputMode,
+				// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
+				enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+			})
+		)
 	)
 }
 
@@ -685,6 +819,16 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (deps.defaultCountry) {
 		opts.defaultCountry = deps.defaultCountry
+	}
+
+	// #27: the locale country as a SOFT prior, only where no hard scope is in force. Nothing else in the
+	// cascade is disturbed — the resolver ignores it under a `defaultCountry` or an `anchorPosterior`.
+	if (deps.localeCountryPrior && !opts.defaultCountry) {
+		opts.localeCountryPrior = deps.localeCountryPrior
+
+		if (deps.localeCountryPriorWeight !== undefined) {
+			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
+		}
 	}
 
 	if (deps.bias && deps.bias.length) {
@@ -992,6 +1136,7 @@ function assembleStreetName(streetNode: AddressNode): string {
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
+	const components = decodeAsJSON(tree)
 	const allNodes: AddressNode[] = []
 
 	const flatten = (nodes: readonly AddressNode[]) => {
@@ -1050,22 +1195,23 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// query resolves the postcode node itself — without it here the result reported 0,0 despite
 		// a resolved coordinate (found building the proximity-bias feature's 48026 case).
 		//
-		// #977: EXCEPT when the resolved postcode is a full NL PC6 EXACT hit — a PC6 is street-block-class
-		// (avg ~8 addresses; the CBS polygon centroid), categorically tighter than any locality centroid,
-		// so it leads the ladder. Guarded three ways so the locality-first epoch convention (adopted for
-		// FR, where 5-digit zone centroids are COARSER than communes) is untouched everywhere else:
-		// (1) the parsed text is the full NL shape (`1012 LG`), (2) the node resolved, and (3) the
-		// resolver's hit is the FULL code, not the 4-digit-stem fallback (the stem is area-class — the
-		// lookup ladder can coarsen to it, and a stem hit must NOT outrank the locality).
+		// #977 / #22: EXCEPT when the resolved postcode is an EXACT hit on a UNIT-GRADE code — an NL PC6 or a
+		// GB unit postcode is street-block-class (~8 and ~15 addresses respectively), categorically tighter
+		// than any locality centroid, so it leads the ladder. See {@link isUnitGradePostcodeHit} for the
+		// three-way guard that keeps the locality-first epoch convention (adopted for FR, where 5-digit zone
+		// centroids are COARSER than communes) untouched everywhere else.
+		//
+		// The GB half is what #22 fixed: `29 Brecknock Road, London, N7 0BT` resolved its unit postcode to
+		// 51.5500/-0.1307 — 38 m from the rooftop truth — and the ladder returned the London centroid 5.6 km
+		// away, on all 15 GB rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer
+		// and no lookup failed; the answer was on the tree and this list did not ask for it.
 		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
-		const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
 
-		const pc6Exact =
+		const unitPostcodeExact =
 			pcNode !== undefined &&
-			/^\d{4}\s?[A-Z]{2}$/i.test(pcNode.value.trim()) &&
-			alnum(String(pcNode.metadata?.["resolver_name"] ?? "")) === alnum(pcNode.value)
+			isUnitGradePostcodeHit(pcNode.value, pcNode.metadata?.["resolver_name"] as string | undefined)
 
-		const adminPriority: ReadonlyArray<string> = pc6Exact
+		const adminPriority: ReadonlyArray<string> = unitPostcodeExact
 			? ["postcode", "locality", "dependent_locality", "region", "country"]
 			: ["locality", "dependent_locality", "postcode", "region", "country"]
 
@@ -1197,6 +1343,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 
 	return {
 		input,
+		components,
 		lat,
 		lon,
 		resolution_tier: tier,

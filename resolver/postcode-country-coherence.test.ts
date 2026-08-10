@@ -226,6 +226,94 @@ const LONDON_OH: ResolvedPlace = {
 
 //#endregion
 
+//#region Fixtures — the 2026-08-09 eu-mixed panel block (#24)
+
+// `Valy 117, 37901 Třeboň` — the pair case the codex shape list could not reach (no `cz` slice).
+const PC_37901_CZ: ResolvedPlace = {
+	id: 900_100,
+	name: "37901",
+	placetype: "postalcode",
+	country: "CZ",
+	lat: 49.0038,
+	lon: 14.7714,
+	score: 9,
+	exactMatch: true,
+}
+
+const PC_37901_US: ResolvedPlace = {
+	id: 900_101,
+	name: "37901",
+	placetype: "postalcode",
+	country: "US",
+	lat: 35.9606,
+	lon: -83.9207,
+	score: 9,
+	exactMatch: true,
+}
+
+const TREBON_CZ: ResolvedPlace = {
+	id: 900_102,
+	name: "Třeboň",
+	placetype: "locality",
+	country: "CZ",
+	lat: 49.0033,
+	lon: 14.7702,
+	score: 9,
+	prominence: 8400,
+	exactMatch: true,
+}
+
+// `Biskupcova 1843/3, 13000 Praha 3` — the POSTCODE-ONLY case. `13000` is held in exactly one country
+// and `Praha 3` (a municipal district) is not a gazetteer name anywhere, so the pair test can never fire.
+const PC_13000_CZ: ResolvedPlace = {
+	id: 900_110,
+	name: "13000",
+	placetype: "postalcode",
+	country: "CZ",
+	lat: 50.08662,
+	lon: 14.47988,
+	score: 9,
+	exactMatch: true,
+}
+
+// `Bahnhofplatz 1, 6060 Sarnen` — the LOCALITY-ONLY case. The gazetteer holds no CH postcodes at all, so
+// `6060` resolves in NL/AT and never in CH; `Sarnen` exists in exactly one country.
+const PC_6060_NL: ResolvedPlace = {
+	id: 900_120,
+	name: "6060",
+	placetype: "postalcode",
+	country: "NL",
+	lat: 51.2712,
+	lon: 5.8306,
+	score: 9,
+	exactMatch: true,
+}
+
+const PC_6060_AT: ResolvedPlace = {
+	id: 900_121,
+	name: "6060",
+	placetype: "postalcode",
+	country: "AT",
+	lat: 47.2833,
+	lon: 11.5,
+	score: 9,
+	exactMatch: true,
+}
+
+const SARNEN_CH: ResolvedPlace = {
+	id: 900_122,
+	name: "Sarnen",
+	placetype: "locality",
+	country: "CH",
+	lat: 46.8959,
+	lon: 8.2456,
+	score: 9,
+	prominence: 10_200,
+	exactMatch: true,
+}
+
+//#endregion
+
 /**
  * Models the two backend behaviours that cause the bug: `country` is a HARD filter (a US-scoped query never returns a
  * foreign row — `spr.country = ?`), and within the exact tier population is the primary key (#905), so Paris TX beats
@@ -302,8 +390,8 @@ describe("findPostcodeCountryScope", () => {
 		})
 
 		expect(scope?.country).toBe("FR")
-		expect(scope?.localityPlace.id).toBe(PARIS_FR.id)
-		expect(scope?.postcodePlace.id).toBe(PC_75001_FR.id)
+		expect(scope?.localityPlace?.id).toBe(PARIS_FR.id)
+		expect(scope?.postcodePlace?.id).toBe(PC_75001_FR.id)
 		// Paris 1er's postcode point to the Paris locality point.
 		expect(scope?.distanceKm).toBeLessThan(1)
 	})
@@ -419,7 +507,12 @@ describe("findPostcodeCountryScope", () => {
 		expect(scope).toBeNull()
 	})
 
-	it("never proposes a country with no codex slice (the gazetteer's PL 75001 is unreachable)", async () => {
+	// Until #24 this asserted the opposite — that PL was UNREACHABLE, because the candidate set came from
+	// `candidateSystemsForPostcode` and there is no `pl` codex slice. That was a corollary of the source,
+	// never a safety property: the pair is coherent in exactly one country and the pass exists to say so.
+	// The gazetteer's own postcode membership is now the candidate source, so the 8 codex slices stop
+	// bounding the mechanism. (The abstention rules are unchanged and tested below.)
+	it("proposes a country with no codex slice when the GAZETTEER holds the postcode there", async () => {
 		const plPostcode: ResolvedPlace = {
 			id: 8_000_048_250,
 			name: "75001",
@@ -450,8 +543,22 @@ describe("findPostcodeCountryScope", () => {
 			defaultCountry: "US",
 		})
 
-		// The pair IS coherent in PL, but `candidateSystemsForPostcode` has no `pl` slice, so PL is never a candidate.
-		expect(scope).toBeNull()
+		expect(scope?.country).toBe("PL")
+		expect(scope?.evidence).toBe("pair")
+	})
+
+	// The CZ block of the 2026-08-09 panel: `Valy 117, 37901 Třeboň` under the en-US locale. `37901` shapes
+	// as [US, DE, FR] and the gazetteer holds it in US and CZ; only CZ has a Třeboň next to it.
+	it("recovers CZ for a 5-digit code the shape list calls US/DE/FR", async () => {
+		const backend = makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
+
+		const scope = await findPostcodeCountryScope(addressTree("37901", "Třeboň").roots, backend, {
+			postcode: "37901",
+			defaultCountry: "US",
+		})
+
+		expect(scope?.country).toBe("CZ")
+		expect(scope?.evidence).toBe("pair")
 	})
 
 	it("recovers DE for (10115, Berlin) under a US default — generality beyond FR", async () => {
@@ -463,7 +570,7 @@ describe("findPostcodeCountryScope", () => {
 		})
 
 		expect(scope?.country).toBe("DE")
-		expect(scope?.localityPlace.id).toBe(BERLIN_DE.id)
+		expect(scope?.localityPlace?.id).toBe(BERLIN_DE.id)
 	})
 
 	it("recovers GB for a letter-bearing shape the default country cannot place", async () => {
@@ -475,7 +582,175 @@ describe("findPostcodeCountryScope", () => {
 		})
 
 		expect(scope?.country).toBe("GB")
-		expect(scope?.localityPlace.id).toBe(LONDON_GB.id)
+		expect(scope?.localityPlace?.id).toBe(LONDON_GB.id)
+	})
+})
+
+/**
+ * The single-sided rungs (#24). The pair test can only speak when BOTH halves are in the gazetteer, and on the
+ * 2026-08-09 eu-mixed panel that condition failed 10 times for two opposite reasons — a municipal district the
+ * gazetteer does not name (`Praha 3`), and a country whose postcodes the gazetteer does not carry at all (CH, BE). Each
+ * rung fires only when the DEFAULT country corroborates NEITHER half, and only when its own half names exactly one
+ * country.
+ */
+describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
+	it("scopes on the LOCALITY alone when it names exactly one country (Sarnen → CH)", async () => {
+		const backend = makeBackend([PC_6060_NL, PC_6060_AT, SARNEN_CH])
+
+		const scope = await findPostcodeCountryScope(addressTree("6060", "Sarnen").roots, backend, {
+			postcode: "6060",
+			defaultCountry: "US",
+		})
+
+		expect(scope?.country).toBe("CH")
+		expect(scope?.evidence).toBe("locality")
+		expect(scope?.localityPlace?.id).toBe(SARNEN_CH.id)
+		expect(scope?.postcodePlace).toBeUndefined()
+		expect(scope?.distanceKm).toBeUndefined()
+	})
+
+	it("scopes on the POSTCODE alone when the locality is in no gazetteer (13000 / Praha 3 → CZ)", async () => {
+		const backend = makeBackend([PC_13000_CZ])
+
+		const scope = await findPostcodeCountryScope(addressTree("13000", "Praha 3").roots, backend, {
+			postcode: "13000",
+			defaultCountry: "US",
+		})
+
+		expect(scope?.country).toBe("CZ")
+		expect(scope?.evidence).toBe("postcode")
+		expect(scope?.postcodePlace?.id).toBe(PC_13000_CZ.id)
+	})
+
+	it("abstains when the locality names more than one country (Charleroi BE/US)", async () => {
+		const charleroiBE: ResolvedPlace = {
+			id: 900_130,
+			name: "Charleroi",
+			placetype: "locality",
+			country: "BE",
+			lat: 50.4108,
+			lon: 4.4446,
+			score: 9,
+			prominence: 201_816,
+			exactMatch: true,
+		}
+
+		const charleroiUS: ResolvedPlace = {
+			id: 900_131,
+			name: "Charleroi",
+			placetype: "locality",
+			country: "US",
+			lat: 40.1387,
+			lon: -79.8992,
+			score: 5,
+			prominence: 4120,
+			exactMatch: true,
+		}
+
+		const backend = makeBackend([charleroiBE, charleroiUS])
+
+		const scope = await findPostcodeCountryScope(addressTree("6000", "Charleroi").roots, backend, {
+			postcode: "6000",
+			defaultCountry: "US",
+		})
+
+		expect(scope).toBeNull()
+	})
+
+	it("abstains when the DEFAULT country holds the locality (a domestic address whose ZIP is missing)", async () => {
+		// `123 Main St, Vienna, VA 22180` with `22180` absent from the gazetteer. `Vienna` exists in the
+		// default country, so the address is domestic-plausible and no foreign scope may be proposed —
+		// even though AT's Wien/Vienna is the only OTHER bearer.
+		const viennaUS: ResolvedPlace = {
+			id: 900_140,
+			name: "Vienna",
+			placetype: "locality",
+			country: "US",
+			lat: 38.9012,
+			lon: -77.2653,
+			score: 6,
+			prominence: 16_473,
+			exactMatch: true,
+		}
+
+		const viennaAT: ResolvedPlace = {
+			id: 900_141,
+			name: "Vienna",
+			placetype: "locality",
+			country: "AT",
+			lat: 48.2083,
+			lon: 16.3725,
+			score: 9,
+			prominence: 1_897_491,
+			exactMatch: true,
+		}
+
+		const backend = makeBackend([viennaUS, viennaAT])
+
+		const scope = await findPostcodeCountryScope(addressTree("22180", "Vienna").roots, backend, {
+			postcode: "22180",
+			defaultCountry: "US",
+		})
+
+		expect(scope).toBeNull()
+	})
+
+	it("abstains when the DEFAULT country holds the postcode (a domestic address whose city is unlisted)", async () => {
+		const zipUS: ResolvedPlace = {
+			id: 900_150,
+			name: "62701",
+			placetype: "postalcode",
+			country: "US",
+			lat: 39.799,
+			lon: -89.65,
+			score: 9,
+			exactMatch: true,
+		}
+
+		const backend = makeBackend([zipUS, SARNEN_CH])
+
+		const scope = await findPostcodeCountryScope(addressTree("62701", "Sarnen").roots, backend, {
+			postcode: "62701",
+			defaultCountry: "US",
+		})
+
+		expect(scope).toBeNull()
+	})
+
+	it("never scopes to a country whose own postcode row CONTRADICTS the locality", async () => {
+		// The locality is unique to CH, but this gazetteer also holds `6060` in CH, 900 km away — the two
+		// halves disagree inside the same country, which is the one thing the pair test exists to catch.
+		const pc6060CH: ResolvedPlace = {
+			id: 900_160,
+			name: "6060",
+			placetype: "postalcode",
+			country: "CH",
+			lat: 40,
+			lon: 2,
+			score: 9,
+			exactMatch: true,
+		}
+
+		const backend = makeBackend([pc6060CH, SARNEN_CH])
+
+		const scope = await findPostcodeCountryScope(addressTree("6060", "Sarnen").roots, backend, {
+			postcode: "6060",
+			defaultCountry: "US",
+		})
+
+		expect(scope).toBeNull()
+	})
+
+	it("prefers the PAIR rung over either single-sided one", async () => {
+		const backend = makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
+
+		const scope = await findPostcodeCountryScope(addressTree("37901", "Třeboň").roots, backend, {
+			postcode: "37901",
+			defaultCountry: "US",
+		})
+
+		expect(scope?.evidence).toBe("pair")
+		expect(scope?.distanceKm).toBeLessThan(1)
 	})
 })
 

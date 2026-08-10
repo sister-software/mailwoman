@@ -500,6 +500,39 @@ export interface ResolveOpts {
 	 */
 	anchorWeight?: number
 	/**
+	 * #27 — the LOCALE's country as a SOFT ranking prior on the admin walk, for the one query shape that has no other
+	 * country signal: a bare toponym.
+	 *
+	 * `--locale en-GB "Whitby"` and `--default-country GB "Whitby"` should not disagree, and they do: the second is gold
+	 * and the first answers Whitby, Ontario, 5,508 km away. The #912 guard in the CLI is why — it drops the
+	 * locale-inferred country entirely for a bare-locality tree, because as a HARD filter that country is a disaster
+	 * (`--locale en-US "Zürich"` hard-scoped to US returns Zurich, Kansas, population 81). Dropping it is the right call
+	 * for a filter and the wrong call for a prior, and this field is the third option: `rankByCountryPrior`
+	 * (`resolver/toponym-prior.ts`) adds {@link localeCountryPriorWeight} to an in-country candidate's prominence, within
+	 * the exact tier, never as a filter.
+	 *
+	 * **Undefined by default, and the CLI leaves it undefined** — this is an OPT-IN lever (`--locale-country-prior`), not
+	 * a shipped default, and the reason is measured rather than cautious. In log10-population units the weight needed to
+	 * flip the four bare GB panel rows is ≥ 0.99 (Whitby CA 5.11 over GB 4.12), and the weight that leaves the en-US
+	 * board intact is < 0.07 (Cambridge CA 5.14 over US 5.07). The two intervals are disjoint, and they interleave:
+	 * `Athens` (GR over US, gap 0.38) and `Cambridge` (0.07) sit BELOW `Warwick` (0.41) and `Epping` (0.41), so no
+	 * threshold, margin or rank rule separates the class either. Population plus a locale cannot answer this question.
+	 * The key that can is `encyclopedic` — the two-score split's other half, which ranks all four the right way round and
+	 * whose consumer (`rankByEncyclopedic`) is already wired here; what is missing is the producer. See
+	 * `scratchpad/resolver-plumbing-receipt-2026-08-10.md`.
+	 *
+	 * Ignored whenever a {@link defaultCountry} or an {@link anchorPosterior} is in force: a hard scope makes the prior a
+	 * no-op by construction, and a posterior derived from the address's own postcode is EVIDENCE, which outranks a guess
+	 * about where the user is sitting.
+	 */
+	localeCountryPrior?: string
+	/**
+	 * Weight of {@link localeCountryPrior}, in log10(population + 1) — the candidate backend's own `prominence` scale.
+	 * Default `DEFAULT_COUNTRY_PRIOR_WEIGHT` (2): "the in-country place may be up to 100x smaller and still win". Only
+	 * consulted when `localeCountryPrior` is set.
+	 */
+	localeCountryPriorWeight?: number
+	/**
 	 * #743/#194 — a CONFIDENT coarse-placer country applied as a HARD candidate filter (`query.country`), not the soft
 	 * {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't
 	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is

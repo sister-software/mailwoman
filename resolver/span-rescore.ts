@@ -29,6 +29,8 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByEncyclopedic } from "./toponym-prior.ts"
+
 export interface SpanRescoreOptions {
 	/**
 	 * ISO-3166 alpha-2 country to constrain the gazetteer match (the parse's detected/ default country).
@@ -60,6 +62,17 @@ export interface SpanRescoreOptions {
 	 * France" guard). Default false.
 	 */
 	postalCompoundRecovery?: boolean
+	/**
+	 * #17 bare-toponym soft country. When the span covers the WHOLE unqualified input, treat {@link country} as an
+	 * additive prior instead of a hard gazetteer filter (see the block comment on {@link findRescoreCandidate}'s bare
+	 * branch). Default true; `false` restores the hard filter byte-for-byte.
+	 */
+	bareToponymSoftCountry?: boolean
+	/**
+	 * Weight of that prior, in log10-population units. Default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT} (2). A large value
+	 * makes the country effectively hard again without changing the code path; 0 removes the locale's say entirely.
+	 */
+	bareToponymCountryWeight?: number
 }
 
 /**
@@ -150,6 +163,44 @@ export function postcodeCodeSubset(postcode: string): string {
 		.filter((t) => /\d/.test(t))
 		.join(" ")
 		.trim()
+}
+
+/**
+ * Over-fetch for the #17 bare-toponym probe. Without a country filter the top 5 worldwide bearers of a common name are
+ * often all in one country, and the candidate the soft prior exists to promote sits below the fold — "Warwick" puts
+ * five US rows ahead of Warwick, Warwickshire. The backend orders by the same population key either way, so a wider
+ * window only admits more of the same list.
+ */
+const BARE_TOPONYM_FETCH = 20
+
+/**
+ * True when the tree names its OWN admin context — a region, subregion, country, postcode or house number the parser
+ * read out of the input. Such a query is not relying on a locale guess, so the #17 soft-country prior stands down and
+ * the hard filter keeps its say: this is what holds 'Berlin, Wisconsin' on Berlin, Wisconsin.
+ */
+function hasAdminQualifier(roots: readonly AddressNode[]): boolean {
+	const stack: AddressNode[] = [...roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (
+			(n.tag === "region" ||
+				n.tag === "subregion" ||
+				n.tag === "country" ||
+				n.tag === "postcode" ||
+				n.tag === "house_number") &&
+			n.value.trim().length
+		) {
+			return true
+		}
+
+		if (n.children?.length) {
+			stack.push(...n.children)
+		}
+	}
+
+	return false
 }
 
 /**
@@ -296,11 +347,45 @@ export async function findRescoreCandidate(
 
 	spans.sort((a, b) => b.len - a.len)
 
+	// #17 bare-toponym soft country. The caller's `country` is a LOCALE DEFAULT, not knowledge — the #961
+	// block below already says so, and for a bare city name it is the ONLY country signal there is, which
+	// makes hard-filtering on it the worst possible use of it. Measured through the compiled CLI on
+	// 2026-08-10: `--locale en-US 'Zürich'` returned Zurich, Kansas (population 81) 8,043 km off, and
+	// `--locale en-GB 'Zürich'` returned nothing at all, because GB holds no Zurich to filter down to.
+	//
+	// So for this ONE query shape the filter is demoted to an additive prior: probe the gazetteer
+	// unscoped, then rank with `rankByCountryPrior` so an in-country place may be up to 100x smaller and
+	// still win. This is the #912 lever ("Paris under en-US must not be hard-scoped to Paris, Texas")
+	// applied at the tier that actually decides the class — #912 lives upstream in the CLI and keys on a
+	// `locality`-tagged tree, but the model reads a bare famous name as a `street`, so the shape that
+	// needs it most is exactly the shape that guard cannot see.
+	//
+	// The shape gate is deliberately narrow. `qualified` below is the D-rule guard: a postcode, a region,
+	// a country or a house number in the tree means the address named its own context and a locale guess
+	// is no longer the only evidence — 'Berlin, Wisconsin' keeps resolving to Berlin, Wisconsin. And the
+	// span must cover the WHOLE input: a sub-span of a longer query is not a bare toponym, so
+	// "Weimar Thüringen" falls back to the country-scoped probe that lands the gold.
+	const softCountry = opts.bareToponymSoftCountry !== false
+	const countryWeight = opts.bareToponymCountryWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT
+	const qualified = !!postcode || hasAdminQualifier(roots)
+	const wholeInput = toks.length ? { start: toks[0]!.start, end: toks.at(-1)!.end } : null
+	// Everything the prior needs EXCEPT the span itself — hoisted so the per-span test is one comparison.
+	const softCountryEligible = softCountry && !!country && !qualified && !!wholeInput
+
 	for (const sp of spans) {
 		const key = norm(sp.text)
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
-		const hits = await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
+		const bare = softCountryEligible && sp.start === wholeInput!.start && sp.end === wholeInput!.end
+
+		const hits = bare
+			? rankByCountryPrior(
+					await backend.findPlace({ text: sp.text, postcode, placetype: "locality", limit: BARE_TOPONYM_FETCH }),
+					country,
+					countryWeight
+				)
+			: await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
+
 		// #1546: NO primary-name re-check here — the backend's `exactMatch` IS the name-OR-alias surface
 		// equality (the names table / alt_names bag), so a query matches a place when ANY stored name
 		// equals it. Re-comparing only the PRIMARY name folded to [a-z0-9 ] excluded exactly the
@@ -308,7 +393,13 @@ export async function findRescoreCandidate(
 		// entered the list and Moscow, Idaho won by default among the Latin-named bearers — population-
 		// first ranking starved, not violated. The alias surface is the recall; ranking then does its job.
 		// The postcode gate below still applies to every admitted candidate, Moscow RU included.
-		const exact = hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0))
+		//
+		// #17: encyclopedic-first WITHIN the admitted set. Inert on the artifacts shipping today (nothing
+		// populates `encyclopedic`), so this changes no live pick — it is the consumer for the two-score
+		// split's other half, which is the only key that separates the bare GB panel rows. See
+		// `toponym-prior.ts`. It runs after the country prior deliberately: fame is the stronger signal
+		// when it has been measured, and leaves an unscored candidate exactly where population put it.
+		const exact = rankByEncyclopedic(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
 
 		const withinGate = (p: ResolvedPlace): boolean =>
 			!anchor || gateKm <= 0 || haversineKm(anchor.lat, anchor.lon, p.lat, p.lon) <= gateKm

@@ -118,6 +118,8 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 
 	if (!street || !houseNumber) return
 
+	if (street.metadata?.["resolution_tier"] === "address_point") return
+
 	// #247 OSM bbox fall-through: when enabled (an OSM shard is wired) and the locality resolved to a
 	// coordinate, scope a final `(street, number)` probe by the locality's box — recovering OSM points that
 	// carry no postcode/locality tag of their own. US situs never enables it, so its probes are byte-identical.

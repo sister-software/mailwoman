@@ -135,6 +135,14 @@ export type RankedRow<R> = R & {
 	 * tier, and a same-country nickname (San Francisco's "Frisco") is never touched.
 	 */
 	demoted: boolean
+	/**
+	 * True when this row came from the TYPO-CORRECTOR tier — the FTS5-trigram fallback that fires only after the exact
+	 * and qualifier-strip probes both missed. Such a row answers a query the gazetteer does not contain, so it is a fuzzy
+	 * match by construction and must not claim `exactMatch` (#17). Recall is unaffected: the row is still returned, still
+	 * ranked, still resolvable — it just stops asserting a match quality it does not have, which is what the FTS backend
+	 * has always done and what every `exactMatch`-filtering consumer assumed.
+	 */
+	fuzzy?: boolean
 }
 
 /**
@@ -502,7 +510,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 					for (const h of ranked) {
 						if (seen.has(h.nk)) continue
 						seen.add(h.nk)
-						rows.push(...probe(h.nk, regionID))
+						// #17: stamp the tier. These rows answer a name the gazetteer does not carry, so they are
+						// fuzzy matches and `exactMatch` below must say so — see `RankedRow.fuzzy`.
+						rows.push(...probe(h.nk, regionID).map((r) => ({ ...r, fuzzy: true })))
 
 						if (rows.length >= limit) break
 					}
@@ -585,8 +595,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				// Every candidate row IS an exact normalized-name (or alias/abbrev) match — the cascade's exact tier
 				// accepts alias-exact hits ("New York City" → New York) the same as canonical — EXCEPT a cross-country
 				// alias that lost the bounded contest to a same-key primary (`demoted`): it drops to the partial tier so
-				// the walk's country posterior can't cross back over the primary (see `RankedRow.demoted`).
-				exactMatch: !row.demoted,
+				// the walk's country posterior can't cross back over the primary (see `RankedRow.demoted`) — and
+				// EXCEPT a row the typo-corrector produced (`fuzzy`), which by definition answers a name the
+				// gazetteer does not carry (see `RankedRow.fuzzy`).
+				exactMatch: !row.demoted && !row.fuzzy,
 				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence this
 				// backend has always ordered by — `neg_rank` IS `-log10(population + 1)`, so the score and
 				// the sort key are two readings of the same number. `encyclopedic` is absent by

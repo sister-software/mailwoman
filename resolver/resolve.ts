@@ -43,6 +43,7 @@ import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcod
 import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByEncyclopedic } from "./toponym-prior.ts"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -91,6 +92,15 @@ interface ResolutionState {
 	 * Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set.
 	 */
 	anchorWeight: number
+	/**
+	 * #27 locale-country SOFT prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
+	 * byte-stable. See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
+	 */
+	localeCountryPrior?: string
+	/**
+	 * Weight of that prior in log10-population units. Only consulted when `localeCountryPrior` is set.
+	 */
+	localeCountryPriorWeight: number
 	/**
 	 * #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off = undefined.
 	 */
@@ -821,6 +831,8 @@ class WOFResolver implements Resolver {
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2,
+			localeCountryPrior: opts.localeCountryPrior,
+			localeCountryPriorWeight: opts.localeCountryPriorWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT,
 			hardCountry: opts.hardCountry,
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
@@ -926,6 +938,15 @@ class WOFResolver implements Resolver {
 		// US path). Explicit opt-OUT via `spanRescore: false`; byte-stable then.
 		if (opts.spanRescore !== false) {
 			await applySpanRescore(newRoots, tree.raw, this.#backend, opts)
+		}
+
+		// A failed admin walk can leave the exact-point tier without a locality even though span-rescore
+		// recovers one immediately afterward (for example, a locality the model tagged as `region`). Give
+		// the exact register one bounded retry with that newly established scope. An existing situs hit is
+		// returned early by applyAddressPoint, so the normal path performs no duplicate lookup; interpolation
+		// remains subordinate because an exact point is allowed to replace its estimate.
+		if (opts.addressPoints) {
+			applyAddressPoint(newRoots, opts.addressPoints, opts.addressPointBboxFallback)
 		}
 
 		// Street-centroid tier (#1042): LAST, after span-rescore, so it can (a) union the span-rescore-recovered
@@ -1068,14 +1089,16 @@ class WOFResolver implements Resolver {
 		// collapses the tail (FI 18 km, PL p99 8172→494) at a coverage-bounded recall cost.
 		// #833 forward linkage: a node's own `country_hint` (an address-system recognizer's derived country —
 		// today `recognizeUSRegions` stamping "US" on a recognized closed-set US state) constrains THIS node's
-		// lookup, below a resolved parent's country but above the global defaults. It breaks the two-consistent-
-		// pairs tie ("Augusta, ME" → Maine, not Augusta/Messina) that pure geographic consistency cannot.
+		// lookup when the caller supplied no locale/default country. A caller scope outranks this derived hint:
+		// `WA` is both Washington and Western Australia, so en-AU must reach the AU candidate instead of being
+		// overwritten by the US-only recognizer. A genuine foreign subdivision under the wrong locale is recovered
+		// later by region-country coherence after the scoped lookup abstains.
 		const countryHint = node.metadata?.["country_hint"]
 
 		const country =
 			parentResolved?.country ??
-			(typeof countryHint === "string" ? countryHint : undefined) ??
 			state.defaultCountry ??
+			(typeof countryHint === "string" ? countryHint : undefined) ??
 			state.hardCountry
 
 		if (country) {
@@ -1192,6 +1215,41 @@ class WOFResolver implements Resolver {
 
 				return bKey - aKey || b.score - a.score
 			})
+		}
+
+		// Locale-country soft prior (#27) — the #912 lever's other half, at the tier that decides a bare
+		// toponym the model tagged `locality`. `--locale en-GB "Whitby"` answers Whitby, Ontario while
+		// `--default-country GB "Whitby"` answers the gold, because the CLI DROPS the locale-inferred
+		// country for this shape rather than choosing between "hard filter" and "nothing". This is the
+		// third option: an additive bonus inside the exact tier, never a filter.
+		//
+		// Three stand-downs, in the order they matter. A `defaultCountry` makes the prior a no-op by
+		// construction (every candidate is already in it), so we skip the work rather than pretend. An
+		// `anchorPosterior` is derived from the address's OWN postcode — evidence, which outranks a guess
+		// about where the user is sitting. And an absent prior is the SHIPPED default: `ResolveOpts`
+		// documents why (the weight that flips the four bare GB rows and the weight that holds the en-US
+		// board are disjoint intervals), so this is inert unless a caller opts in.
+		//
+		// Runs BEFORE the encyclopedic key deliberately, matching span-rescore: fame is the stronger signal
+		// wherever it has been measured, and it leaves an unscored candidate exactly where the prior put it.
+		if (state.localeCountryPrior && !state.defaultCountry && !state.anchorPosterior && anchorEligible) {
+			ranked = rankByCountryPrior(ranked, state.localeCountryPrior, state.localeCountryPriorWeight)
+		}
+
+		// Encyclopedic-first (#17, ROAD_TO_V9 §2). The two-score split has been carrying `encyclopedic`
+		// from the backend to node metadata since it landed, and no ranking key anywhere read it back —
+		// so a bare famous name was decided on POPULATION alone, which is measurably the wrong prior for
+		// the class: `Whitby` answers Whitby, Ontario (128,377) over Whitby, North Yorkshire (13,130),
+		// 5,508 km from where the person meant. Fame is what a bare toponym is asking about, and the
+		// gazetteer measures it. Tier-safe and positive-evidence-only (an UNSCORED candidate keeps the rank
+		// population gave it; only the scored ones permute), so it is byte-stable on the artifacts shipping
+		// today — neither `candidate.db` nor `admin-global-priority.db` has a `place_importance` table.
+		//
+		// Skipped outright when an anchor posterior is in force. Fame is the prior of LAST resort: it answers
+		// "which one did you probably mean" only when nothing in the query answered it, and a #369 posterior is
+		// derived from the address's OWN postcode. Evidence outranks a prior. See `toponym-prior.ts`.
+		if (!state.anchorPosterior) {
+			ranked = rankByEncyclopedic(ranked)
 		}
 
 		// Exact-type preference (#718): when the placetype-equivalence group let a broader admin tier

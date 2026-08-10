@@ -162,7 +162,7 @@ export function normalizeStreetForKey(street: string): string {
  * article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't absorb
  * the false-negatives).
  */
-export type StreetLocale = "us" | "fr" | "de" | "nl"
+export type StreetLocale = "us" | "en" | "fr" | "de" | "nl"
 
 /**
  * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French address types
@@ -195,13 +195,14 @@ const FR_STREET_ABBREV = new Map<string, string>([
  * Normalize a street name for the address-point key in a non-US locale. Same function build-side and probe-side (the
  * one-function discipline). US delegates to {@link normalizeStreetForKey}.
  *
+ * - **en** — the shared English address-key pipeline (directionals + suffix aliases), currently identical to US.
  * - **fr** — fold + expand leading type abbreviations and Saint/Sainte (token map).
  * - **de** — fold + ß→ss + canonicalize the GLUED `-str(.)` suffix to `-strasse` ("Lindenstr." → "lindenstrasse",
  *   "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
  * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): string {
-	if (locale === "us") return normalizeStreetForKey(street)
+	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
 
 	// Hyphen → space so a compound name keys the same whether the source or the query writes the
 	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure

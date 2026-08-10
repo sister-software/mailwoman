@@ -140,7 +140,7 @@ for (const probe of PROBES) {
 
 	console.log(
 		`| ${probe.system} | ${probe.country} | ${rows.get(probe.country) ?? 0} | ${located ? "yes" : "**no**"} | ` +
-			`${exact ? "yes" : "**no**"} | ${scope ? `yes → ${scope.country} @ ${scope.distanceKm.toFixed(1)} km` : "**no**"} |`
+			`${exact ? "yes" : "**no**"} | ${scope ? `yes → ${scope.country} (${scope.evidence})${scope.distanceKm === undefined ? "" : ` @ ${scope.distanceKm.toFixed(1)} km`}` : "**no**"} |`
 	)
 }
 

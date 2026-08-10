@@ -112,6 +112,7 @@ export type _ResultAcceptsSchema = Expect<IsAssignable<Inferred, GeocodeResult>>
  */
 const GEOCODE_RESULT_FIELD_NAMES = {
 	input: true,
+	components: true,
 	lat: true,
 	lon: true,
 	resolution_tier: true,
