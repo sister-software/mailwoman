@@ -64,11 +64,44 @@ and an uncertainty, but **how the granularity was reached**:
 An inferred result should name its constraints and their contribution, e.g. _locality resolved
 (retrieved) → street unknown but excluded against 1,412 held streets (negative evidence, coverage
 complete) → naming-family affinity to the presidents block (p=0.7) → slope/land-cover exclusion →
-2.1 km² region, centroid reported with 1.4 km uncertainty_.
+2.1 km² candidate region with calibrated containment probability_.
 
 This is the best-of-both-worlds the operator asked for: the precision of inference with the
 legibility of the obvious failure. It also fits the existing calibration and attribution work
 rather than fighting it — `resolution_tier`, `uncertainty_m` and per-node `source` already exist.
+
+## Evidence is typed; derivation is the product
+
+Not every constraint is allowed to do the same thing. The operational vocabulary should separate:
+
+- **Observation** — retrieved directly from a named source at a named vintage.
+- **Exclusion** — proves a candidate impossible, but only inside an explicitly complete coverage
+  scope. A failed lookup without that coverage assertion is `unknown`, never negative evidence.
+- **Relation / affinity** — establishes structural compatibility between entities or regions.
+- **Prior** — changes probability and can never, by itself, prove or exclude.
+
+The derivation graph is therefore the central data structure, not metadata attached after the
+resolver has chosen an answer. A result is a projection of that graph:
+
+```text
+observations + coverage-qualified exclusions + relations + priors
+                              ↓
+                    surviving candidate space
+                              ↓
+             spatial claim + epistemic status + uncertainty
+```
+
+The epistemic status is likewise explicit: `designated` (assigned by an authority), `observed`,
+`derived`, `inferred`, or `unresolved`. `Retrieved` describes the resolution mechanism; it does
+not silently upgrade a source's observation into an authoritative designation. `resolution_tier`
+and the response geometry should be derived from the graph so they cannot disagree with its evidence.
+
+Evidence sources that observe the same latent factor are not independent. Population, road
+density, broadband availability, POI density and built-up area are all partial observations of
+urbanisation; multiplying them as five independent likelihoods would manufacture confidence. A
+model must represent those correlations (directly or through latent factors), and calibration must
+use geographically held-out regions rather than random nearby rows. An 80% candidate region should
+contain the withheld truth approximately 80% of the time in genuinely novel geographies.
 
 ## Central place theory, grounded
 
@@ -109,6 +142,23 @@ the targeted-precompute lever already filed as
 [#1549](https://github.com/sister-software/mailwoman/issues/1549) — with the caution recorded there
 intact: precompute freezes a query distribution, so only stable and hot query classes earn an
 artifact.
+
+## Benchmarks are discovery instruments
+
+Pelias, Photon and Nominatim are not merely finish-line competitors. Each incumbent is an
+instrument for discovering a class of claims that users reasonably expect a geocoder to handle out
+of the box. A benchmark discrepancy must terminate in one of four receipts:
+
+1. a parser/model lever;
+2. a resolver or ranking lever;
+3. a coverage/artifact lever; or
+4. a documented product boundary where abstention is the honest answer.
+
+Issue #1569 is the exemplar: the comparison exposed a terminal-suffix span failure, which became a
+specific training augmentation with a falsifiable recovery bar instead of an anecdotal bad result.
+Provider arms must also preserve their exact lineage. A Photon official planet dump, for example,
+is a valid incumbent arm but not a controlled Photon-versus-Nominatim engine comparison against an
+identical corpus. Version, scope, source lineage and snapshot date belong in every score receipt.
 
 ## The unifying thesis — physical constraint as claim verification
 
@@ -159,6 +209,72 @@ prior that quietly promotes a plausible-but-wrong coordinate is worse than no pr
 constraint must be named in the derivation, and every fitted relationship must carry the residual
 it was fitted at.
 
+## Source and distribution boundaries
+
+The evidence graph cannot erase the licence or legal posture of its inputs. Code, build recipes,
+source observations, fitted artifacts and runtime outputs are separate objects and may have
+different distribution rights. Every assertion retains its source and licence metadata through
+projection; a permissive output cannot be claimed merely because the combining code is open source.
+
+A source that is unavailable for a proposed use is not an observation the engine may consume. The
+resolver must behave identically whether that source was never acquired or was deliberately excluded:
+it reports the remaining public evidence and abstains where that evidence is insufficient. Likewise,
+an inferred or derived relationship never acquires the designation status of an authority merely
+because it agrees with one.
+
+This is the same architectural boundary already used for ODbL shards: isolate inputs by legal
+posture, keep source assertions plural, and make distributability an artifact-manifest property
+rather than an assumption embedded in application code.
+
+## Consequence for OSM ingestion
+
+OSM should enter the engine as versioned observations, not as a timeless truth table. The ingest
+contract is:
+
+```text
+acquire snapshot/replication sequence
+  → bounded pilot and resource projection
+  → independent resumable shards
+  → structural + geographic + licence validation
+  → seal manifest and coverage assertions
+  → immutable publish
+  → verified atomic runtime activation
+```
+
+Natural source identity is `(osm_type, osm_id, version)`; the artifact also records snapshot or
+replication sequence, source URL/hash, builder version, region, timestamps and ODbL attribution.
+Current state and history are separate products. Deletes and redactions are events, not missing
+rows silently forgotten by a rebuild.
+
+Coverage is a first-class output distinct from row count. A shard may assert `observed_no_match` in
+a processed cell, `unsurveyed` outside its extract, or `layer_missing` when the artifact was not
+loaded; only a separately justified completeness claim can power hard negative evidence. OSM's
+crowdsourced absence almost never supplies that completeness by itself.
+
+Source assertions remain plural. OSM, TIGER, BAN, Overture and future public address sources retain
+their own provenance and may disagree; ingestion does not overwrite them into one allegedly
+authoritative row. Reconciliation happens in the derivation graph. Users consume sealed artifacts
+and verified deltas rather than running the acquisition pipeline, while the build recipe remains
+reproducible subject to the source licence and the existing ODbL counsel gate on `@mailwoman/osm`.
+
+The current rooftop builder already has four sound foundations: it quarantines ODbL shards from the
+permissive gazetteer, keeps countries independent, measures rather than guesses the street-association
+gap, and builds on a temporary database before atomic replacement. Before full-scale ingestion it
+still needs:
+
+- required source URL/hash/size, extract polygon, OSM timestamp or replication sequence and builder
+  Git SHA (`--release unknown` must fail, not ship);
+- an embedded layer manifest plus surveyed-extent coverage whose completeness does not default to
+  1 merely because the PBF was traversed;
+- a companion assertion table retaining OSM type/id/version, geometry method (node versus polygon
+  centroid), street method (explicit versus recovered), and recovery distance/confidence;
+- deterministic resumable work units, merge validation, SQLite integrity/geographic checks, sealing,
+  preservation of the previous artifact and a post-activation probe;
+- an explicit snapshot-versus-delta policy for deletes, upstream redactions and history retention.
+
+The resolver's hot `address_point` table can remain stable; these receipts can live in companion
+tables and the sealed artifact manifest rather than widening every lookup row.
+
 ## Cheap versus speculative
 
 **Cheap, and useful on its own:**
@@ -193,8 +309,9 @@ it was fitted at.
 
 - **Never emit an inferred point as though retrieved.** Provenance is mandatory, not optional
   decoration.
-- **Positive evidence only, soft priors.** Registries and theory nudge ranking; they never hard-gate
-  a candidate out (`registry-backed-structured-prediction` doctrine).
+- **Soft priors never exclude.** Registries and theory may nudge ranking; only a typed exclusion
+  backed by a hard rule and an explicitly complete coverage scope may remove a candidate
+  (`registry-backed-structured-prediction` doctrine).
 - **A bounded region with stated confidence, never a fabricated coordinate.** If the honest output
   is a 40 km² polygon, that is the output.
 - **Fit before assert.** No CPT parameter ships without its residual measured against held-out POI
