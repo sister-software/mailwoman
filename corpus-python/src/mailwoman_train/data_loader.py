@@ -347,7 +347,10 @@ def _raw_row_stream(
        order. Each iterator yields rows after country + coarse filtering.
     3. On each pull, sample a source via the ``source_weights`` multinomial (or uniform
        when ``source_weights`` is None) and yield the next row from that source's iterator.
-       When a source's iterator exhausts, drop it from the multinomial and renormalize.
+       The multinomial is FIXED for the whole epoch: an exhausted source restarts with a
+       fresh shuffled pass, and the epoch ends once every source has completed at least one
+       full pass (stationary mixture — see the 2026-08-09 P0 note at the sampling loop).
+       Non-train splits skip all of this and stream every shard's rows directly.
 
     Why this and not per-row source acceptance:
 
@@ -366,6 +369,33 @@ def _raw_row_stream(
     """
     shard_paths = _shard_paths(corpus_dir, split)
     max_weight = max(country_weights.values())
+
+    # Non-train splits bypass source bucketing entirely (2026-08-09 P0). The bucketing below
+    # identifies a shard's source from its FIRST row and filters every row to it — correct for
+    # the source-segregated train corpus, but a MIXED-source validation shard silently loses
+    # every later-source row (the inherited val shards are mixed, so "3 val shards" was never a
+    # coverage receipt). Held-out streams have no source mixture to steer; yield every
+    # filter-accepted row of every shard, shard order shuffled.
+    if split != "train":
+        order = [s for s in shard_paths if s.exists()]
+        rng.shuffle(order)
+        for s in order:
+            # Keep the --golden footgun guard the bucketing path used to provide: a label-less
+            # golden shard (source=None) scoring as val would produce garbage metrics silently.
+            if _shard_first_source(s) is None:
+                raise ValueError(
+                    f"shard {s} has no `source` field — likely a --golden (label-less) shard used as a "
+                    f"{split!r} shard. Rebuild that shard WITHOUT --golden so rows carry source + labels."
+                )
+            yield from _shard_row_iter(
+                s,
+                expected_source=None,
+                rng=rng,
+                country_weights=country_weights,
+                max_weight=max_weight,
+                coarse_filter=coarse_filter,
+            )
+        return
 
     logger.info("Indexing %d shards by source...", len(shard_paths))
     by_source: dict[str, list[Path]] = {}
@@ -397,6 +427,17 @@ def _raw_row_stream(
             f"{n_none} shard rows have no `source` field — likely a --golden (label-less) shard used as a "
             "train/val shard. Rebuild that shard WITHOUT --golden so rows carry source + labels."
         )
+    # ``source_weights`` describes the desired TRAIN mixture. Validation corpora intentionally
+    # contain only a small fixed source subset, so requiring every positive training source there
+    # would make the first scheduled validation fail even though its own shards are healthy. Keep
+    # the stale-config guard on the split where the recipe makes its coverage claim.
+    if source_weights is not None and split == "train":
+        missing_positive = sorted(src for src, weight in source_weights.items() if weight > 0 and src not in by_source)
+        if missing_positive:
+            raise ValueError(
+                f"positive source_weights entries have no shards in the {split!r} split: "
+                f"{missing_positive}. Remove the stale weights or rebuild the corpus with those sources."
+            )
     logger.info(
         "Shard index: %s",
         ", ".join(f"{src}={len(shards)}" for src, shards in sorted(by_source.items())),
@@ -413,28 +454,41 @@ def _raw_row_stream(
                 f"is missing from or zero-weighted in source_weights={source_weights!r}"
             )
 
-    iters: dict[str, Iterator[dict]] = {
-        src: _source_iter(
-            shards,
+    def _fresh_iter(src: str) -> Iterator[dict]:
+        return _source_iter(
+            by_source[src],
             expected_source=src,
             rng=rng,
             country_weights=country_weights,
             max_weight=max_weight,
             coarse_filter=coarse_filter,
         )
-        for src, shards in by_source.items()
-    }
+
+    iters: dict[str, Iterator[dict]] = {src: _fresh_iter(src) for src in by_source}
     weights: dict[str, float] = {
         src: float(source_weights[src]) if source_weights is not None else 1.0 for src in iters
     }
 
-    while iters:
-        sources = list(iters.keys())
-        cum: list[float] = []
-        total = 0.0
-        for src in sources:
-            total += weights[src]
-            cum.append(total)
+    # STATIONARY mixture (2026-08-09 P0). The previous loop deleted an exhausted source and
+    # renormalized the remaining weights, so ``source_weights`` was only the OPENING
+    # distribution: a small oversampled source (the #1569 30k-row suffix shard at weight 12.0)
+    # was live for ~3,330 of each ~7,812-step epoch and silent afterwards — the v4.3.3 B1
+    # board oscillated in lockstep with those exposure windows. Now the multinomial is fixed
+    # for the whole epoch: an exhausted source restarts with a fresh shuffled pass (weighted
+    # sampling with replacement at the pass level), and the epoch ends once EVERY source has
+    # completed >= 1 full pass — the largest source is seen exactly once, and no source ever
+    # silently leaves the mixture.
+    sources = list(iters.keys())
+    cum: list[float] = []
+    total = 0.0
+    for src in sources:
+        total += weights[src]
+        cum.append(total)
+    passes: dict[str, int] = dict.fromkeys(sources, 0)
+    pass_rows: dict[str, int] = dict.fromkeys(sources, 0)
+    realized: dict[str, int] = dict.fromkeys(sources, 0)
+
+    while True:
         r = rng.random() * total
         chosen = sources[-1]
         for src, c in zip(sources, cum, strict=True):
@@ -442,10 +496,31 @@ def _raw_row_stream(
                 chosen = src
                 break
         try:
-            yield next(iters[chosen])
+            row = next(iters[chosen])
         except StopIteration:
-            del iters[chosen]
-            del weights[chosen]
+            # A pass that yielded nothing can never yield on a rerun (same rows, same
+            # filters) — a positive-weight source with zero selectable rows is a recipe/
+            # corpus contract violation, the runtime sibling of the unreachable-positive-
+            # weight guard above. Loud, never a silent drop.
+            if pass_rows[chosen] == 0:
+                raise ValueError(
+                    f"source {chosen!r} has a positive weight but yielded zero selectable rows in a "
+                    "full pass (country_weights / coarse_filter admit nothing) — fix the recipe or "
+                    "the corpus; a silent drop would change the training mixture"
+                ) from None
+            passes[chosen] += 1
+            if all(n >= 1 for n in passes.values()):
+                logger.info(
+                    "Epoch complete (every source >= 1 full pass). Realized draws per source: %s",
+                    ", ".join(f"{src}={realized[src]}" for src in sorted(realized)),
+                )
+                return
+            pass_rows[chosen] = 0
+            iters[chosen] = _fresh_iter(chosen)
+            row = next(iters[chosen])
+        pass_rows[chosen] += 1
+        realized[chosen] += 1
+        yield row
 
 
 def iter_rows(
@@ -464,6 +539,7 @@ def iter_rows(
     augment_punct_drop_prob: float = 0.0,
     augment_upper_case_prob: float = 0.0,
     augment_ordinal_prob: float = 0.0,
+    augment_exclude_sources: Sequence[str] = (),
     affix_relabel_lexicon: AffixRelabelLexicon | None = None,
     shuffle_buffer: int = 131072,
 ) -> Iterator[dict]:
@@ -497,6 +573,44 @@ def iter_rows(
     """
     if not country_weights:
         raise ValueError("country_weights must be non-empty")
+    # TRAIN-ONLY policy stays out of held-out streams (2026-08-09 P0): source weighting,
+    # random augmentation, and the online affix relabel are training-mixture decisions.
+    # Applied to val they made the headline metric score an augmented, training-filtered
+    # slice — deterministic under the fixed seed, but not clean held-out performance. A
+    # deliberately-augmented robustness suite must be an explicitly named second eval, not
+    # the default val stream. Neutralize here, at the single choke point every caller
+    # (train loop, eval scripts) flows through.
+    if split != "train":
+        neutralized = [
+            name
+            for name, active in (
+                ("source_weights", source_weights is not None),
+                (
+                    "augmentation",
+                    any(
+                        p > 0
+                        for p in (
+                            augment_directional_prob,
+                            augment_region_prob,
+                            augment_glue_prob,
+                            augment_case_prob,
+                            augment_punct_drop_prob,
+                            augment_upper_case_prob,
+                            augment_ordinal_prob,
+                        )
+                    ),
+                ),
+                ("affix_relabel", affix_relabel_lexicon is not None),
+            )
+            if active
+        ]
+        if neutralized:
+            logger.info("split=%r: train-only policy disabled for held-out stream: %s", split, neutralized)
+        source_weights = None
+        augment_directional_prob = augment_region_prob = augment_glue_prob = 0.0
+        augment_case_prob = augment_punct_drop_prob = augment_upper_case_prob = 0.0
+        augment_ordinal_prob = 0.0
+        affix_relabel_lexicon = None
     upstream = _raw_row_stream(
         corpus_dir,
         split,
@@ -523,11 +637,16 @@ def iter_rows(
         or augment_ordinal_prob > 0
     )
 
+    augment_excluded = frozenset(augment_exclude_sources)
+
     def _emit(row: dict) -> Iterator[dict]:
         # Relabel runs AFTER augmentation so label-inheriting directional expansions are caught
         # (#511 — see relabel.py). augment_row yields fresh dicts but shares the labels list with
         # the source row on the no-op path, so relabel copies before mutating.
-        if do_augment:
+        # Augmentation-pool exclusion (2026-08-10): listed sources bypass augmentation entirely —
+        # copies of an oversampled shard compound its repetition dose without adding diversity.
+        # The relabel still applies below; the two policies are independent.
+        if do_augment and row["source"] not in augment_excluded:
             for augmented in augment_row(
                 row,
                 rng,
@@ -676,6 +795,7 @@ def iter_encoded(
         augment_punct_drop_prob=getattr(cfg_data, "augment_punct_drop_prob", 0.0),
         augment_upper_case_prob=getattr(cfg_data, "augment_upper_case_prob", 0.0),
         augment_ordinal_prob=getattr(cfg_data, "augment_ordinal_prob", 0.0),
+        augment_exclude_sources=getattr(cfg_data, "augment_exclude_sources", ()),
         affix_relabel_lexicon=affix_relabel_lexicon,
     ):
         # v0.5.0 stopgap (#519 offset-unit mismatch): the corpus stores span offsets in UTF-16 code
