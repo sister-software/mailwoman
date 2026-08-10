@@ -135,6 +135,70 @@ describe("repairPostcodeLabels", () => {
 		expect(out.find((t) => t.piece === "CA")!.label).not.toBe("I-postcode")
 	})
 
+	it("keeps a BR CEP whole: NNNNN-NNN is a shape, not a 5-digit postcode with a stray tail (#35)", () => {
+		// The model emits the full CEP (verified against the shipped model on both BR world-structures
+		// rows). Without a BR shape the generic 5-digit pattern matched only "95090", snapped the span to
+		// it, and the trailing-smear clip discarded "-020" — the repair pass TRUNCATED a correct parse.
+		const text = "Caxias do Sul, RS 95090-020, Brazil"
+
+		const tokens = [
+			tok("Caxias do Sul", 0, 13, "B-locality"),
+			tok(",", 13, 14, "O"),
+			tok("RS", 15, 17, "B-region"),
+			tok("95090", 18, 23, "B-postcode"),
+			tok("-", 23, 24, "I-postcode"),
+			tok("020", 24, 27, "I-postcode"),
+			tok(",", 27, 28, "O"),
+			tok("Brazil", 29, 35, "B-country"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("95090-020")
+	})
+
+	it("SNAPs a fragmented BR CEP back to the full shape", () => {
+		// The other half of the same shape gap: the model kept only the 5-digit head.
+		const text = "Brasília - Federal District, 70390-100, Brazil"
+
+		const tokens = [
+			tok("Brasília", 0, 8, "B-locality"),
+			tok(" - ", 8, 11, "O"),
+			tok("Federal District", 11, 27, "B-region"),
+			tok(",", 27, 28, "O"),
+			tok("70390", 29, 34, "B-postcode"),
+			tok("-", 34, 35, "O"),
+			tok("100", 35, 38, "B-locality"),
+			tok(",", 38, 39, "O"),
+			tok("Brazil", 40, 46, "B-country"),
+		]
+
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("70390-100")
+	})
+
+	it("does not let the BR shape steal the tail of a US ZIP+4", () => {
+		// `\d{5}-\d{3}` could bite the first nine chars of "94610-2737"; the trailing \b forbids it, and
+		// longest-match-wins settles anything left over.
+		const text = "Oakland 94610-2737"
+		const tokens = [tok("Oakland", 0, 7, "B-locality"), tok("94610-2737", 8, 18, "B-postcode")]
+		const { tokens: out } = repairPostcodeLabels(text, tokens)
+		expect(postcodeValue(text, out)).toBe("94610-2737")
+	})
+
+	it("still refuses to CREATE a BR-shaped postcode — numeric shapes stay SNAP-only", () => {
+		const text = "12345-678 Main St"
+
+		const tokens = [
+			tok("12345-678", 0, 9, "B-house_number"),
+			tok("Main", 10, 14, "B-street"),
+			tok("St", 15, 17, "I-street"),
+		]
+
+		const { tokens: out, changed } = repairPostcodeLabels(text, tokens)
+		expect(changed).toBe(0)
+		expect(postcodeValue(text, out)).toBeNull()
+	})
+
 	it("clips smear: postcode label bleeding onto a neighbour is trimmed to the match", () => {
 		const text = "Paris 75008 France"
 
