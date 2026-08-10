@@ -35,6 +35,18 @@ const ArgumentsSchema = zod
 	.array(zod.string())
 	.describe(argument({ name: "address", description: "A formatted postal address" }))
 
+/**
+ * Shown at the top of `mailwoman parse --help`. The one thing it has to settle is parse-vs-geocode (#1577): the two
+ * commands take the same argument and the difference is invisible until you have run both.
+ *
+ * Commander reuses this string for the root `mailwoman --help` listing (it has no `summary()` seam Pastel exposes), so
+ * it is held to two sentences — long enough to draw the line, short enough not to swamp the 30-command index.
+ */
+export const description =
+	"Label the parts of an address — house number, street, locality, postcode — without looking anything up: the " +
+	"output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then resolves those " +
+	"parts against the gazetteer to produce a coordinate."
+
 export { ArgumentsSchema as args, ParseConfigSchema as options }
 
 const ParseConfigSchema = zod.object({

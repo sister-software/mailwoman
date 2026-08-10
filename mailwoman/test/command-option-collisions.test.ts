@@ -47,6 +47,21 @@ import { describe, expect, test } from "vitest"
  */
 const RESERVED_FLAGS = new Set(["version", "help"])
 
+/**
+ * SHORT flags the root program owns, which a command claims via pastel's `option({ alias })`.
+ *
+ * The long-name rule above is not the whole hazard. Commander is left in its default mode — no
+ * `enablePositionalOptions()` — so the ROOT scans the entire argv for its own options before a subcommand is dispatched
+ * (`parseOptions`: the `_findCommand(arg)` early-break is gated on `_enablePositionalOptions`). Measured 2026-08-10
+ * against commander 14 with pastel's exact registration order: a subcommand that declares `-v, --verbose` ITSELF still
+ * loses — `<cli> doctor -v` prints the version number and exits 0, the same silent swallow #1491 documented for
+ * `--version`.
+ *
+ * So an alias here is not "shadowed sometimes"; it never fires. `mailwoman doctor` carries the worked example in its
+ * docstring, and ships `--verbose` with no short form because of this.
+ */
+const RESERVED_ALIASES = new Set(["v", "h"])
+
 const COMMANDS_ROOT = repoRootPath("mailwoman", "commands")
 
 /**
@@ -137,6 +152,43 @@ function optionNames(literal: ts.ObjectLiteralExpression): string[] {
 	return names
 }
 
+/**
+ * Every single-letter alias the module hands pastel's `option({ alias: "x" })`, wherever it appears.
+ *
+ * Deliberately a whole-file walk rather than a schema walk: `option(...)` is only ever meaningful inside a
+ * `.describe()` on an options-schema property, so any occurrence in a command module IS a declared alias, and finding
+ * them by shape survives the schema being built somewhere this file's narrow schema parser cannot follow.
+ */
+function optionAliases(source: ts.SourceFile): string[] {
+	const aliases: string[] = []
+
+	const visit = (node: ts.Node): void => {
+		if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === "option") {
+			const [config] = node.arguments
+
+			if (config && ts.isObjectLiteralExpression(config)) {
+				for (const property of config.properties) {
+					if (
+						ts.isPropertyAssignment(property) &&
+						property.name &&
+						(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) &&
+						property.name.text === "alias" &&
+						ts.isStringLiteral(property.initializer)
+					) {
+						aliases.push(property.initializer.text)
+					}
+				}
+			}
+		}
+
+		ts.forEachChild(node, visit)
+	}
+
+	visit(source)
+
+	return aliases
+}
+
 describe("command option names never collide with the root program's flags", () => {
 	test("no commands/**/*.tsx option derives --version or --help", async () => {
 		const files = await listCommandModules()
@@ -156,6 +208,13 @@ describe("command option names never collide with the root program's flags", () 
 
 			const text = await readFile(file, "utf8")
 			const source = ts.createSourceFile(file, text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TSX)
+
+			for (const alias of optionAliases(source)) {
+				if (RESERVED_ALIASES.has(alias)) {
+					collisions.push(`${commandPath}: alias -${alias} is owned by the root program and never reaches the command`)
+				}
+			}
+
 			const binding = findOptionsBinding(source)
 
 			// No options export at all — an argument-only command. Nothing to collide.

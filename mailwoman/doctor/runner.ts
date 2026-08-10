@@ -289,9 +289,14 @@ function gatherOverlay(deps: DoctorDeps, locale: string): DoctorCheck {
 }
 
 /**
- * Run every diagnostic and assemble the report. The check ORDER is the render order: core first (weights, runtime),
- * then the optional data layers, then the informational locale overlays. Pure verdict logic lives in
- * {@link ./checks.ts}; this only gathers the facts through the injected {@link DoctorDeps}.
+ * Run every diagnostic and assemble the report. The check ORDER is the render order, and it is RUNTIME FIRST (#1577):
+ * node version, then the ONNX binding, then the model weights, then the optional data layers, then the informational
+ * locale overlays.
+ *
+ * The order is a reading order, not an importance ranking. A stale node or an unloadable native binding explains every
+ * other symptom in the report — a reader who sees "weights ok" first and stops has learned nothing, because ok weights
+ * on a runtime that cannot run them still parse nothing. Pure verdict logic lives in {@link ./checks.ts}; this only
+ * gathers the facts through the injected {@link DoctorDeps}.
  */
 export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<DoctorReport> {
 	const deps: DoctorDeps = { ...defaultDoctorDeps(), ...overrides }
@@ -328,5 +333,74 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	// Informational: locale overlays.
 	const overlays = deps.overlayLocales.map((locale) => gatherOverlay(deps, locale))
 
-	return assembleReport([weights, nodeCheck, onnx, dataRoot, gazetteer, poi, ...overlays])
+	return assembleReport([nodeCheck, onnx, weights, dataRoot, gazetteer, poi, ...overlays])
 }
+
+//#region --verbose environment dump
+
+/**
+ * One resolved setting in the `--verbose` dump.
+ */
+export interface EnvironmentEntry {
+	key: string
+	/**
+	 * The resolved value, or `undefined` when the variable is unset / the path unresolvable. `undefined` is rendered as
+	 * `(unset)` rather than omitted — the whole point of the dump is to distinguish "set to something surprising" from
+	 * "never set", and a missing row answers neither.
+	 */
+	value: string | undefined
+	/**
+	 * Where the value came from, when that is not obvious from the key (`env` vs `default` vs `derived`).
+	 */
+	source?: string
+}
+
+/**
+ * Every path and variable the checks above resolved, for `mailwoman doctor --verbose` (#1577).
+ *
+ * Reads through the SAME {@link DoctorDeps} the checks do, so the dump can never disagree with the verdicts printed
+ * above it — that disagreement is exactly the bug a verbose mode exists to catch (a reader who exported
+ * `$MAILWOMAN_DATA_ROOT` in one shell and ran the CLI in another).
+ */
+export function describeEnvironment(overrides?: Partial<DoctorDeps>): EnvironmentEntry[] {
+	const deps: DoctorDeps = { ...defaultDoctorDeps(), ...overrides }
+	const root = deps.dataRoot()
+
+	const entries: EnvironmentEntry[] = [
+		{ key: "node", value: `v${deps.nodeVersion}`, source: `engines ${deps.enginesFloor}` },
+		{ key: "platform", value: `${process.platform}-${process.arch}` },
+		{ key: "MAILWOMAN_DATA_ROOT", value: $public.MAILWOMAN_DATA_ROOT, source: root.fromEnv ? "env" : "unset" },
+		{ key: "data root (resolved)", value: root.path, source: root.fromEnv ? "env" : "default" },
+		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB, source: "env" },
+		{ key: "candidate.db (convention)", value: deps.conventionCandidatePath(), source: "derived" },
+		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB, source: "env" },
+		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
+	]
+
+	for (const [index, shard] of deps.wofShardPaths().entries()) {
+		entries.push({
+			key: `WOF shard [${index}]`,
+			value: shard,
+			source: deps.existsSync(shard) ? "on disk" : "absent",
+		})
+	}
+
+	try {
+		const resolved = deps.resolveWeights("en-us")
+
+		entries.push(
+			{ key: "weights model.onnx", value: resolved.modelPath, source: resolved.source },
+			{ key: "weights tokenizer.model", value: resolved.tokenizerPath, source: resolved.source }
+		)
+	} catch (error) {
+		entries.push({
+			key: "weights",
+			value: undefined,
+			source: `unresolvable: ${error instanceof Error ? error.message : String(error)}`,
+		})
+	}
+
+	return entries
+}
+
+//#endregion

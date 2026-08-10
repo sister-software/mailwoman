@@ -20,6 +20,12 @@
 const BYTES_PER_MB = 1_000_000
 
 /**
+ * Bytes per GB. The data bundles are the reason this tier exists: `data --list` reported the US street tier as "41261.8
+ * MB", a number nobody can read as "don't start this on a laptop SSD".
+ */
+const BYTES_PER_GB = 1_000_000_000
+
+/**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
  */
 export const CheckStatus = {
@@ -41,6 +47,15 @@ export interface DoctorCheck {
 	label: string
 	status: CheckStatus
 	detail: string
+	/**
+	 * What the reader LOSES while this check is not ok, in product terms ("geocode can only place you in the city, not on
+	 * the street"), not implementation terms. Present whenever `status !== "ok"` (#1577).
+	 *
+	 * A red line and a fix command say what to type; they never say whether typing it matters to the thing the reader was
+	 * actually trying to do. Every optional layer here is genuinely optional for SOMEONE, so a bare ✗ next to "POI layer"
+	 * is unreadable without knowing that the POI layer is what makes "coffee near me" resolve at all.
+	 */
+	consequence?: string
 	/**
 	 * The single command/URL that closes the gap. Present whenever `status !== "ok"`.
 	 */
@@ -110,10 +125,12 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 }
 
 /**
- * Bytes → a compact `12.3 MB` / `640 KB` / `12 B` string.
+ * Bytes → a compact `41.3 GB` / `12.3 MB` / `640 KB` / `12 B` string.
  */
 export function formatBytes(bytes: number): string {
-	if (bytes >= BYTES_PER_MB) return `${(bytes / 1_000_000).toFixed(1)} MB`
+	if (bytes >= BYTES_PER_GB) return `${(bytes / BYTES_PER_GB).toFixed(1)} GB`
+
+	if (bytes >= BYTES_PER_MB) return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`
 
 	if (bytes >= 1000) return `${(bytes / 1000).toFixed(0)} KB`
 
@@ -146,6 +163,11 @@ export interface WeightsObservation {
 
 const WEIGHTS_FIX = "npm install @mailwoman/neural-weights-en-us   (or: mailwoman parse --download-weights)"
 
+const WEIGHTS_CONSEQUENCE =
+	"The trained model is what reads an address. Without it every parse falls back to the structural " +
+	"pipeline, which can only recognise shapes it is certain of (a bare postcode, a bare locality) and " +
+	"leaves the rest of the address unlabelled."
+
 /**
  * Check #1 — the trained model bundle. CORE: parse cannot run without it.
  */
@@ -157,6 +179,7 @@ export function weightsCheck(o: WeightsObservation): DoctorCheck {
 			...base,
 			status: CheckStatus.Missing,
 			detail: o.error ? firstLine(o.error) : "@mailwoman/neural-weights-en-us is not resolvable",
+			consequence: WEIGHTS_CONSEQUENCE,
 			fix: WEIGHTS_FIX,
 		}
 	}
@@ -166,6 +189,7 @@ export function weightsCheck(o: WeightsObservation): DoctorCheck {
 			...base,
 			status: CheckStatus.Degraded,
 			detail: `resolved (${o.resolved.source}) but a weight file is empty — model.onnx ${formatBytes(o.modelSize ?? 0)}, tokenizer.model ${formatBytes(o.tokenizerSize ?? 0)}`,
+			consequence: WEIGHTS_CONSEQUENCE,
 			fix: WEIGHTS_FIX,
 		}
 	}
@@ -201,6 +225,10 @@ export function localeOverlayCheck(o: LocaleOverlayObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.Missing,
 		detail: `${o.packageName} not installed (optional — only needed for ${o.locale} parsing)`,
+		consequence:
+			`Passing --locale ${o.locale} will not change how an address is read: the en-us model handles it, ` +
+			`and the country-specific conventions that overlay carries (postcode shape, house-number placement) ` +
+			`are not applied.`,
 		fix: `npm install ${o.packageName}`,
 	}
 }
@@ -221,6 +249,10 @@ export interface DataRootObservation {
 	fromEnv: boolean
 }
 
+const DATA_ROOT_CONSEQUENCE =
+	"This is where every downloadable layer lands. `mailwoman data pull` has nowhere to write, and any " +
+	"database already installed elsewhere will not be found unless you point $MAILWOMAN_DATA_ROOT at it."
+
 /**
  * Check #3 — the data root. Optional: an unwritable/absent root only blocks build tooling, not parse.
  */
@@ -233,6 +265,7 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 			...base,
 			status: CheckStatus.Missing,
 			detail: `${o.path} (${source}) does not exist`,
+			consequence: DATA_ROOT_CONSEQUENCE,
 			fix: `mkdir -p ${o.path}   (or set $MAILWOMAN_DATA_ROOT to an existing dir)`,
 		}
 	}
@@ -242,6 +275,7 @@ export function dataRootCheck(o: DataRootObservation): DoctorCheck {
 			...base,
 			status: CheckStatus.Degraded,
 			detail: `${o.path} (${source}) exists but is not writable`,
+			consequence: DATA_ROOT_CONSEQUENCE,
 			fix: `chmod u+w ${o.path}   (or set $MAILWOMAN_DATA_ROOT to a writable dir)`,
 		}
 	}
@@ -304,6 +338,9 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.Missing,
 		detail: `no candidate.db or WOF shard found (probed ${o.probed.length} path${o.probed.length === 1 ? "" : "s"})`,
+		consequence:
+			"Nothing can be turned into a coordinate. `mailwoman parse` still labels an address, but " +
+			"`mailwoman geocode` has no gazetteer to look a place up in, so it errors instead of answering.",
 		fix: `mailwoman data pull candidate`,
 	}
 }
@@ -331,8 +368,12 @@ export function checkPOI(o: POIObservation): DoctorCheck {
 	const base = { id: "poi-layer", label: "POI layer", core: false }
 	const fix = "mailwoman gazetteer build poi   (or: mailwoman data pull poi)"
 
+	const consequence =
+		"A Point of Interest (POI) database is necessary to geocode businesses and landmarks. Without it a query " +
+		"like 'blue bottle coffee, oakland' can only reach the locality, never the storefront."
+
 	if (!o.exists) {
-		return { ...base, status: CheckStatus.Missing, detail: `${o.path} not found`, fix }
+		return { ...base, status: CheckStatus.Missing, detail: `${o.path} not found`, consequence, fix }
 	}
 
 	if (!o.manifest) {
@@ -340,6 +381,7 @@ export function checkPOI(o: POIObservation): DoctorCheck {
 			...base,
 			status: CheckStatus.Degraded,
 			detail: `${o.path} present but the layer manifest is unreadable${o.error ? `: ${firstLine(o.error)}` : ""}`,
+			consequence,
 			fix,
 		}
 	}
@@ -373,6 +415,9 @@ export function nodeVersionCheck(o: NodeRuntimeObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.Degraded,
 		detail: `node v${o.nodeVersion} is below the required ${o.enginesFloor}`,
+		consequence:
+			"Mailwoman ships TypeScript that node type-strips at run time. On an older runtime the CLI can fail " +
+			"to start at all, and the failure reads as a syntax error in our source rather than as a version gap.",
 		fix: `upgrade Node to satisfy ${o.enginesFloor}`,
 	}
 }
@@ -399,6 +444,9 @@ export function onnxRuntimeCheck(o: ONNXRuntimeObservation): DoctorCheck {
 		...base,
 		status: CheckStatus.Degraded,
 		detail: `onnxruntime-node failed to load${o.error ? `: ${firstLine(o.error)}` : ""}`,
+		consequence:
+			"This is the native binding that runs the model. Installed weights are unusable without it, so every " +
+			"parse degrades to the structural pipeline no matter what else this report says is green.",
 		fix: "npm install onnxruntime-node   (or reinstall @mailwoman/neural)",
 	}
 }

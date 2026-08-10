@@ -51,11 +51,14 @@ describe("version parsing + floor comparison", () => {
 })
 
 describe("formatBytes", () => {
-	it("scales to B / KB / MB", () => {
+	it("scales to B / KB / MB / GB", () => {
 		expect(formatBytes(0)).toBe("0 B")
 		expect(formatBytes(512)).toBe("512 B")
 		expect(formatBytes(64_000)).toBe("64 KB")
 		expect(formatBytes(35_800_000)).toBe("35.8 MB")
+		// The data bundles live here: candidate.db, poi.db, and the 41 GB US street tier.
+		expect(formatBytes(1_652_916_224)).toBe("1.7 GB")
+		expect(formatBytes(41_261_826_048)).toBe("41.3 GB")
 	})
 })
 
@@ -145,7 +148,8 @@ describe("gazetteerCheck (optional)", () => {
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
-		expect(c.detail).toContain("MB")
+		// 1.4e9 bytes reads as GB, not "1400.0 MB" — see formatBytes' GB tier.
+		expect(c.detail).toContain("1.4 GB")
 	})
 
 	it("ok on a discovered WOF shard", () => {
@@ -277,5 +281,54 @@ describe("computeExitCode + assembleReport (meaning-of-zero)", () => {
 	it("exits 1 when a core check is degraded", () => {
 		const checks = [ok("weights", true), bad("onnxruntime", true, CheckStatus.Degraded)]
 		expect(computeExitCode(checks)).toBe(1)
+	})
+})
+
+describe("every failing check states its consequence (#1577)", () => {
+	// The point of `consequence` is that a reader can decide whether a red line is worth acting on
+	// TODAY. A check that fails without one has silently opted out of that contract, and nothing else
+	// in the tree would notice — so enumerate the failing branch of every check here rather than
+	// spot-checking one.
+	const failing: Array<[string, DoctorCheck]> = [
+		["weights absent", weightsCheck({ error: "Could not resolve @mailwoman/neural-weights-en-us" })],
+		[
+			"weights empty",
+			weightsCheck({
+				resolved: { source: "package:x", modelPath: "/m", tokenizerPath: "/t" },
+				modelSize: 0,
+				tokenizerSize: 0,
+			}),
+		],
+		["node below floor", nodeVersionCheck({ nodeVersion: "20.0.0", enginesFloor: ">=24.18.0" })],
+		["onnx unloadable", onnxRuntimeCheck({ loadable: false, error: "boom" })],
+		["data root absent", dataRootCheck({ path: "/nope", exists: false, writable: false, fromEnv: false })],
+		["data root read-only", dataRootCheck({ path: "/ro", exists: true, writable: false, fromEnv: true })],
+		["gazetteer absent", gazetteerCheck({ probed: ["/a", "/b"] })],
+		["poi absent", checkPOI({ path: "/poi.db", exists: false })],
+		["poi unreadable", checkPOI({ path: "/poi.db", exists: true, error: "not a database" })],
+		[
+			"overlay absent",
+			localeOverlayCheck({ locale: "fr-fr", packageName: "@mailwoman/neural-weights-fr-fr", resolved: false }),
+		],
+	]
+
+	for (const [name, check] of failing) {
+		it(`${name} → consequence + fix`, () => {
+			expect(check.status).not.toBe(CheckStatus.OK)
+			expect(check.consequence).toBeTruthy()
+			expect(check.fix).toBeTruthy()
+		})
+	}
+
+	it("names the POI layer's consequence in product terms, verbatim from the ask", () => {
+		expect(checkPOI({ path: "/poi.db", exists: false }).consequence).toContain(
+			"A Point of Interest (POI) database is necessary to geocode businesses and landmarks."
+		)
+	})
+
+	it("a passing check carries no consequence — there is nothing to lose", () => {
+		const c = nodeVersionCheck({ nodeVersion: "24.18.0", enginesFloor: ">=24.18.0" })
+		expect(c.status).toBe(CheckStatus.OK)
+		expect(c.consequence).toBeUndefined()
 	})
 })

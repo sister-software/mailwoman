@@ -28,7 +28,10 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "mailwoman"
 	},
-	"bin": "./out/cli.js",
+	"bin": {
+		"mailwoman": "./out/cli.js",
+		"mw": "./out/cli.js"
+	},
 	"files": [
 		"!out/test/**/*",
 		"out/**/*.js",

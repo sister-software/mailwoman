@@ -17,7 +17,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { describe, expect, it } from "vitest"
 
 import { CheckStatus, type DoctorCheck } from "./checks.ts"
-import { defaultDoctorDeps, runDoctor, type DoctorDeps } from "./runner.ts"
+import { defaultDoctorDeps, describeEnvironment, runDoctor, type DoctorDeps } from "./runner.ts"
 
 /**
  * A fully-healthy set of seams; individual tests override just the fields they exercise.
@@ -59,10 +59,12 @@ describe("runDoctor (injected seams)", () => {
 		const report = await runDoctor(healthyDeps())
 		expect(report.exitCode).toBe(0)
 
+		// RUNTIME FIRST (#1577): a stale node or an unloadable native binding explains every later line,
+		// so it has to be read first. Weights follow, then the optional data layers, then the overlays.
 		expect(report.checks.map((c) => c.id)).toEqual([
-			"weights",
 			"node-version",
 			"onnxruntime",
+			"weights",
 			"data-root",
 			"gazetteer",
 			"poi-layer",
@@ -177,5 +179,43 @@ describe("defaultDoctorDeps — engines floor via package self-reference", () =>
 
 		expect(manifest.engines?.node).toBeTruthy()
 		expect(defaultDoctorDeps().enginesFloor).toBe(manifest.engines!.node)
+	})
+})
+
+describe("describeEnvironment (--verbose)", () => {
+	it("reports the resolved paths through the same seams the checks used", () => {
+		const entries = describeEnvironment(healthyDeps())
+		const byKey = new Map(entries.map((entry) => [entry.key, entry]))
+
+		expect(byKey.get("data root (resolved)")?.value).toBe("/data")
+		expect(byKey.get("POI layer")?.value).toBe("/data/poi/poi.db")
+		expect(byKey.get("weights model.onnx")?.value).toBe("/w/en-us/model.onnx")
+		expect(byKey.get("weights tokenizer.model")?.value).toBe("/w/en-us/tokenizer.model")
+		expect(byKey.get("node")?.value).toBe("v24.18.0")
+		// Every shard the gazetteer check probed is listed, tagged on-disk or absent.
+		expect(byKey.get("WOF shard [0]")).toEqual({ key: "WOF shard [0]", value: "/data/wof/admin.db", source: "on disk" })
+	})
+
+	it("keys with no value are present and marked, never dropped", () => {
+		// The dump exists to tell "set to something surprising" apart from "never set". A row that
+		// disappears when the variable is unset answers neither question.
+		const entries = describeEnvironment({ ...healthyDeps(), conventionCandidatePath: () => undefined })
+		const convention = entries.find((entry) => entry.key === "candidate.db (convention)")
+
+		expect(convention).toBeDefined()
+		expect(convention?.value).toBeUndefined()
+	})
+
+	it("an unresolvable weights package is reported, not thrown", () => {
+		const entries = describeEnvironment({
+			...healthyDeps(),
+			resolveWeights: () => {
+				throw new Error("Could not resolve @mailwoman/neural-weights-en-us")
+			},
+		})
+
+		const weights = entries.find((entry) => entry.key === "weights")
+		expect(weights?.value).toBeUndefined()
+		expect(weights?.source).toContain("unresolvable")
 	})
 })

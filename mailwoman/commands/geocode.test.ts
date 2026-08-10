@@ -77,14 +77,18 @@ const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
 // MARK: Argument-validation tests (unconditional — no DB required)
 
 describe("geocode argument validation", () => {
-	test("missing address argument exits 1 with a descriptive error", () => {
+	test("a bare `mailwoman geocode` prints the command's help and still exits 1", () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
 			return
 		}
 
-		expect(() =>
+		let threw = false
+		let output = ""
+		let status: number | undefined
+
+		try {
 			withCLISpawnLock(() =>
 				execFileSync(process.execPath, [CLI_PATH, "geocode"], {
 					encoding: "utf8",
@@ -93,7 +97,47 @@ describe("geocode argument validation", () => {
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
 			)
-		).toThrow(/Command failed/)
+		} catch (error: unknown) {
+			threw = true
+			const execErr = error as { stdout?: string; stderr?: string; status?: number }
+			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
+			status = execErr.status
+		}
+
+		// #1577: the old answer was commander's one-liner `error: missing required argument 'address'`
+		// — no usage, no flags, no hint. `cli.ts` rewrites the bare invocation to `--help`, and nudges
+		// the exit code back to 1 because a missing required operand is still a usage error.
+		expect(threw).toBe(true)
+		expect(status).toBe(1)
+		expect(output).toMatch(/Usage:.*geocode/u)
+		expect(output).toMatch(/--format/)
+		expect(output).not.toMatch(/missing required argument/)
+	})
+
+	test("two output shorthands at once is a usage error, not a silent pick", () => {
+		if (!hasCLICompiled) {
+			console.warn("Skipping: CLI not compiled at", CLI_PATH)
+
+			return
+		}
+
+		let output = ""
+
+		try {
+			withCLISpawnLock(() =>
+				execFileSync(process.execPath, [CLI_PATH, "geocode", "350 5th Ave, New York, NY", "--json", "--jsonld"], {
+					encoding: "utf8",
+					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
+					timeout: CLI_SPAWN_TIMEOUT_MS,
+				})
+			)
+		} catch (error: unknown) {
+			const execErr = error as { stdout?: string; stderr?: string }
+			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
+		}
+
+		// Rejected BEFORE any database or weights work, so this test needs neither.
+		expect(output).toMatch(/Pick one output format/)
 	})
 
 	test("empty address string exits 1", () => {
@@ -284,6 +328,19 @@ describe.skipIf(!hasCLICompiled || !hasWOFDb || !hasTxShards)(`geocode integrati
 		// Lossy by design: no resolution tier / uncertainty / candidates leak into the JSON-LD.
 		expect(stdout).not.toMatch(/resolution_tier|uncertainty_m|candidates/)
 	}, 60_000)
+
+	test("--jsonld and --text are byte-identical shorthands for the --format values (#1577)", () => {
+		const run = (...flags: string[]): string =>
+			withCLISpawnLock(() =>
+				execFileSync(process.execPath, [CLI_PATH, "geocode", TX_ADDRESS, `--resolve-db=${wofPath}`, ...flags], {
+					encoding: "utf8",
+					timeout: 60_000,
+				})
+			)
+
+		expect(run("--jsonld")).toBe(run("--format=jsonld"))
+		expect(run("--text")).toBe(run("--format=text"))
+	}, 240_000)
 })
 
 /**

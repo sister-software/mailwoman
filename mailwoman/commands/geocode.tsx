@@ -24,11 +24,27 @@
  *
  *   - 0 successful geocode (including admin-only degradation when shards are absent)
  *   - 1 bad arguments, missing required DB, or fatal parse/resolve error
+ *
+ *   NOTHING ON THE SUCCESS PATH RENDERS THROUGH INK (#1577). Measured 2026-08-10 with `script` on a
+ *   TTY, the pre-fix command damaged the terminal two ways, both caused by Ink owning stdout while
+ *   the result was written to it:
+ *
+ *   1. `--format text` rendered an Ink `<Text>` frame. When that frame is at least as tall as the
+ *      viewport, Ink emits `\x1b[2J\x1b[3J\x1b[H` — and `3J` wipes the SCROLLBACK, not just the
+ *      screen. Reproduced at `stty rows 6`: two full clears per run.
+ *   2. Every format left a one-line `<Spinner />` frame on screen while the task ran. The final
+ *      (empty) frame then erased two lines — the ones our raw write had just put there — so a piped-
+ *      to-nothing `mailwoman geocode "…"` printed JSON with its closing `}` rubbed out.
+ *
+ *   Both disappear when Ink is given nothing to draw: the running state renders `null` (height 0, so
+ *   there is no previous frame to erase and no frame that can overflow the viewport) and every
+ *   format goes out through {@linkcode writeRawStdout}. The cost is the spinner; a spinner on stderr
+ *   would collide with the `[resolver] …` banner the resolver already writes there, and no progress
+ *   indicator is worth corrupting stdout.
  */
 
 import { existsSync } from "node:fs"
 
-import { Spinner } from "@inkjs/ui"
 import { type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { $public } from "@mailwoman/core/env"
@@ -58,6 +74,15 @@ import { resolverDefaultCountry } from "./parse.tsx"
 const ArgumentsSchema = zod
 	.array(zod.string())
 	.describe(argument({ name: "address", description: "A formatted postal address to geocode" }))
+
+/**
+ * Shown at the top of `mailwoman geocode --help` — which is also what a bare `mailwoman geocode` now prints (#1577, see
+ * `cli.ts`) — and reused by commander for the root command listing, so it stays to two sentences.
+ */
+export const description =
+	"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the " +
+	"rooftop/interpolation shards. Reports which tier answered (address_point > interpolated > admin); run " +
+	"`mailwoman doctor` when a lookup comes back admin-only or errors on a missing database."
 
 export { ArgumentsSchema as args, OptionsSchema as options }
 
@@ -136,6 +161,16 @@ const OptionsSchema = zod.object({
 				"per-region table (#584) selected by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured " +
 				"states — for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw)."
 		),
+	localeCountryPrior: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"#27: when --locale's country is withheld from the resolver (a bare city name — see #912), hand it down " +
+				"as a SOFT ranking bonus instead of dropping it, so `--locale en-GB Whitby` stops answering Whitby, " +
+				"Ontario. OFF by default: the bonus that flips the bare GB names also flips 'Paris' to Texas and " +
+				"'Athens' to Georgia, because population plus a locale cannot separate the two classes."
+		),
 	placeCountry: zod
 		.boolean()
 		.optional()
@@ -189,9 +224,42 @@ const OptionsSchema = zod.object({
 		.default("json")
 		.describe(
 			'Output format. "json" (default) emits the native machine-readable result; "text" prints a human summary; ' +
-				'"jsonld" emits a schema.org Place/PostalAddress/GeoCoordinates JSON-LD object (the web\'s native address format).'
+				'"jsonld" emits a schema.org Place/PostalAddress/GeoCoordinates JSON-LD object (the web\'s native address format). ' +
+				"Each value also has a bare-flag shorthand: --json, --text, --jsonld."
 		),
+	json: zod.boolean().optional().default(false).describe("Shorthand for --format json (the default)."),
+	text: zod.boolean().optional().default(false).describe("Shorthand for --format text — the human-readable summary."),
+	jsonld: zod.boolean().optional().default(false).describe("Shorthand for --format jsonld — schema.org JSON-LD."),
 })
+
+//#endregion
+
+//#region Format resolution
+
+/**
+ * The format this invocation actually emits. `--json` / `--text` / `--jsonld` are bare-flag shorthands for the
+ * corresponding `--format` value (#1577), and a shorthand OUTRANKS `--format` — `--format` carries a default, so there
+ * is no way to tell "the user typed `--format json`" from "nobody passed one", and silently ignoring an explicit
+ * `--jsonld` because of a default would be the worse failure.
+ *
+ * Two shorthands at once is a usage error rather than a silent pick: `--json --jsonld` has no defensible winner.
+ */
+export function resolveFormat(options: {
+	format?: "json" | "text" | "jsonld"
+	json?: boolean
+	text?: boolean
+	jsonld?: boolean
+}): "json" | "text" | "jsonld" {
+	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
+
+	if (shorthands.length > 1) {
+		throw commandError(
+			`Pick one output format: ${shorthands.map((name) => `--${name}`).join(" and ")} were both passed.`
+		)
+	}
+
+	return shorthands[0] ?? options.format ?? "json"
+}
 
 //#endregion
 
@@ -227,6 +295,10 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
 //#region Core geocode logic
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	// Validate the format pair BEFORE any DB/weights work — a `--json --jsonld` typo should fail in
+	// milliseconds, not after a multi-second model load.
+	const format = resolveFormat(options)
+
 	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
 	// check, so surface that error before the (slower) weights load. (Order matters for the CLI contract:
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
@@ -341,6 +413,12 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		const parsedTree = await parseForGeocode(input, { classifier })
 		const inferredScopeOK = options.defaultCountry || !isBareLocalityTree(parsedTree)
 
+		// #27: the country #912 just withheld. `inferredScopeOK` false is precisely "we HAVE a locale
+		// country and chose not to scope by it", so this is the one place that knows the value was
+		// dropped rather than never derived. Handed on as a soft prior (never a filter) when the operator
+		// opts in with --locale-country-prior; the resolver additionally ignores it under any hard scope.
+		const withheldCountry = inferredScopeOK ? undefined : resolverDefaultCountry(options, !!candidateDb)
+
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,
@@ -350,6 +428,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
+			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
 			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
 			// threading (an unset dep already reads as ON downstream).
 			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
@@ -362,9 +441,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			placeCountry: placer ? (t: string) => placer.predict(t) : false,
 		})
 
-		if (options.format === "text") return formatText(result)
+		if (format === "text") return formatText(result)
 
-		if (options.format === "jsonld") return JSON.stringify(geocodeToSchemaOrg(result), null, 2)
+		if (format === "jsonld") return JSON.stringify(geocodeToSchemaOrg(result), null, 2)
 
 		return JSON.stringify(result, null, 2)
 	} finally {
@@ -471,16 +550,15 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 		return <Text color="red">{state.message}</Text>
 	}
 
+	// No spinner: an Ink frame here is what erased the tail of the raw output on a TTY, and a tall
+	// one wipes the scrollback outright (see the module docstring). Height 0 means neither can happen.
 	if (state.status !== "done") {
-		return <Spinner />
+		return null
 	}
 
-	// Machine formats bypass Ink's <Text> renderer — it word-wraps long lines at the terminal
-	// width (80 when piped), corrupting JSON string values (see writeRawStdout).
-	if (options.format === "text") {
-		return <Text>{state.result}</Text>
-	}
-
+	// EVERY format — `text` included — bypasses Ink's <Text> renderer. It word-wraps at the terminal
+	// width (80 when piped), which corrupts JSON string values, and a frame taller than the viewport
+	// makes Ink clear the terminal + scrollback.
 	return writeRawStdout(state.result)
 }
 
