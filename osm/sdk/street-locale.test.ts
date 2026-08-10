@@ -43,10 +43,21 @@ test("nl: glued -str folds to -straat", () => {
 	expect(normalizeStreetForKeyLocale("Kerkstr", "nl")).toBe("kerkstraat")
 })
 
-test("streetLocaleForCountry: maps the shipped countries, throws otherwise", () => {
+test("en: GB/NZ street suffix surfaces key consistently", () => {
+	expect(normalizeStreetForKeyLocale("Miramar North Rd", "en")).toBe(
+		normalizeStreetForKeyLocale("Miramar North Road", "en")
+	)
+
+	expect(normalizeStreetForKeyLocale("Fellbrook St", "en")).toBe(normalizeStreetForKeyLocale("Fellbrook Street", "en"))
+	expect(normalizeStreetForKeyLocale("Avery Hill Rd", "en")).toBe(normalizeStreetForKeyLocale("Avery Hill Road", "en"))
+})
+
+test("streetLocaleForCountry: maps the supported countries, throws otherwise", () => {
+	expect(streetLocaleForCountry("GB")).toBe("en")
+	expect(streetLocaleForCountry("nz")).toBe("en")
 	expect(streetLocaleForCountry("FR")).toBe("fr")
 	expect(streetLocaleForCountry("de")).toBe("de")
 	expect(streetLocaleForCountry("nl")).toBe("nl")
-	expect(supportedOSMCountries().toSorted()).toEqual(["de", "fr", "nl"])
+	expect(supportedOSMCountries().toSorted()).toEqual(["de", "fr", "gb", "nl", "nz"])
 	expect(() => streetLocaleForCountry("xx")).toThrow(/No street-normalization locale/)
 })

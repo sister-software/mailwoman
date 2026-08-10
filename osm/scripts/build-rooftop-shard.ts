@@ -17,6 +17,7 @@
  *   Usage:
  *     node osm/scripts/build-rooftop-shard.ts \
  *       --country fr --slug idf --release 260627 \
+ *       --created-at 2026-06-27T00:00:00.000Z --build-sha $(git rev-parse HEAD) \
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
@@ -26,15 +27,24 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
+import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import {
-	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
 	createAddressPointIndexes,
-	createAddressPointTable,
 } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { latLngToCell } from "h3-js"
 
+import {
+	asOSMLayerContractDB,
+	createOSMAddressPointIndexes,
+	createOSMAddressPointTables,
+	OSM_ADDRESS_H3_RESOLUTION,
+	OSM_ADDRESS_POINT_COLUMNS,
+	type OSMAddressPointDatabase,
+} from "../sdk/address-point-schema.ts"
 import { extractAddrPoints } from "../sdk/extract.ts"
 import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "../sdk/street-locale.ts"
 import { buildStreetRecoveryIndex } from "../sdk/street-recovery.ts"
@@ -44,6 +54,8 @@ interface BuildArgs {
 	slug: string
 	pbf: string
 	release: string
+	createdAt: string
+	buildSHA: string
 	output: string
 	/**
 	 * #250: recover the street for no-`addr:street` points from the nearest named highway.
@@ -59,6 +71,8 @@ function parse(): BuildArgs {
 			slug: { type: "string" },
 			pbf: { type: "string" },
 			release: { type: "string" },
+			"created-at": { type: "string" },
+			"build-sha": { type: "string" },
 			out: { type: "string" },
 			recover: { type: "boolean" },
 			"recover-radius-m": { type: "string" },
@@ -69,7 +83,10 @@ function parse(): BuildArgs {
 	const pbf = values.pbf
 
 	if (!country || !pbf) {
-		throw new Error("required: --country <cc> --pbf <path.osm.pbf> [--slug <slug>] [--release <tag>] [--out <path>]")
+		throw new Error(
+			"required: --country <cc> --pbf <path.osm.pbf> --created-at <ISO-8601> --build-sha <git-sha> " +
+				"[--slug <slug>] [--release <tag>] [--out <path>]"
+		)
 	}
 
 	if (!existsSync(pbf)) throw new Error(`PBF not found: ${pbf}`)
@@ -77,11 +94,19 @@ function parse(): BuildArgs {
 	streetLocaleForCountry(country)
 	const slug = values.slug?.toLowerCase() || country
 	const release = values.release || "unknown"
+	const createdAt = values["created-at"]
+	const buildSHA = values["build-sha"]
+
+	if (!createdAt || !Number.isFinite(Date.parse(createdAt)) || new Date(createdAt).toISOString() !== createdAt) {
+		throw new Error("required: --created-at <ISO-8601 timestamp>; the builder never invents provenance time")
+	}
+
+	if (!buildSHA) throw new Error("required: --build-sha <git-sha>")
 	const output = values.out || dataRootPath("osm", `address-points-${country}-${slug}.db`)
 	const recover = Boolean(values.recover)
 	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 
-	return { country, slug, pbf, release, output, recover, recoverRadiusKm }
+	return { country, slug, pbf, release, createdAt, buildSHA, output, recover, recoverRadiusKm }
 }
 
 async function main(): Promise<void> {
@@ -108,10 +133,12 @@ async function main(): Promise<void> {
 
 	const out = new DatabaseSync(tmp)
 	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: out })
-	await createAddressPointTable(kdb)
+	const kdb = new DatabaseClient<OSMAddressPointDatabase>({ database: out })
+	await createOSMAddressPointTables(kdb)
 
-	const insert = out.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
+	const insert = out.prepare(
+		`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
+	)
 
 	let total = 0
 	let written = 0
@@ -161,20 +188,23 @@ async function main(): Promise<void> {
 			continue
 		}
 
-		// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
-		// locality_norm, street_raw, lat, lon, source, release.
+		const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
+		const locality = rec.suburb ?? rec.city
+
+		// Positional, in OSM_ADDRESS_POINT_COLUMNS order: the shared address columns, then h3_cell.
 		insert.run(
 			streetNorm,
 			canonicalizeRouteKey(streetNorm),
 			number,
 			null,
 			rec.postcode?.trim() || null,
-			rec.city ? normalizeLocalityForKey(rec.city) : null,
+			locality ? normalizeLocalityForKey(locality) : null,
 			street,
 			rec.lat,
 			rec.lon,
 			rowSource,
-			args.release
+			args.release,
+			h3Cell
 		)
 
 		written++
@@ -193,12 +223,31 @@ async function main(): Promise<void> {
 
 	console.error(`[osm] indexing…`)
 
-	await createAddressPointIndexes(kdb)
+	await createAddressPointIndexes(kdb as unknown as DatabaseClient<AddressPointDatabase>)
+	await createOSMAddressPointIndexes(kdb)
+
+	await writeLayerManifest(asOSMLayerContractDB(kdb), {
+		name: `osm-address-points-${args.country}-${args.slug}`,
+		version: args.release,
+		schemaVersion: 1,
+		tier: LayerTier.BuildLocal,
+		license: "ODbL-1.0",
+		attribution: "© OpenStreetMap contributors",
+		source,
+		sourceVintage: args.release,
+		buildCmd: "node osm/out/scripts/build-rooftop-shard.js",
+		buildSHA: args.buildSHA,
+		freshnessPolicy: LayerFreshnessPolicy.Sealed,
+		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+		createdAt: args.createdAt,
+	})
+
 	out.exec("ANALYZE")
 	await kdb.destroy()
 
 	// Build-on-copy: only now swap the freshly-built shard into place.
 	swapDatabaseIntoPlace(tmp, args.output)
+	sealDatabase(args.output)
 
 	const gap = total > 0 ? ((noStreet / total) * 100).toFixed(1) : "0.0"
 

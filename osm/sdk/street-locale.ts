@@ -20,6 +20,8 @@ export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resol
  * `normalizeStreetForKeyLocale` — keep them in lockstep.
  */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
+	["gb", "en"],
+	["nz", "en"],
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],

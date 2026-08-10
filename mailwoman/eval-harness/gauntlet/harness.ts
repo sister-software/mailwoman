@@ -375,6 +375,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
  * The slice of the assembled result the Gauntlet asserts on.
  */
 export interface GauntletResult {
+	/**
+	 * All parsed components, including locale-specific tags that have no legacy named result slot.
+	 */
+	components: GeocodeResult["components"]
 	lat: number | null
 	lon: number | null
 	tier: GeocodeResult["resolution_tier"]
@@ -413,6 +417,7 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 	const g = await deps.geocode(input, opts)
 
 	return {
+		components: g.components,
 		lat: g.lat,
 		lon: g.lon,
 		tier: g.resolution_tier,

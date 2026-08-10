@@ -33,6 +33,7 @@ export interface OSMAddrRecord {
 	 */
 	street: string | null
 	postcode: string | null
+	suburb: string | null
 	city: string | null
 	lon: number
 	lat: number
@@ -51,6 +52,7 @@ function addrSQL(layer: string): string {
 		`SELECT hstore_get_value(other_tags,'addr:housenumber') AS housenumber, ` +
 		`hstore_get_value(other_tags,'addr:street') AS street, ` +
 		`hstore_get_value(other_tags,'addr:postcode') AS postcode, ` +
+		`hstore_get_value(other_tags,'addr:suburb') AS suburb, ` +
 		`hstore_get_value(other_tags,'addr:city') AS city ` +
 		`FROM ${layer} WHERE other_tags LIKE '%addr:housenumber%'`
 	)
@@ -121,6 +123,7 @@ function toRecord(feature: {
 		housenumber: String(housenumber),
 		street: p["street"] != null && p["street"] !== "" ? String(p["street"]) : null,
 		postcode: p["postcode"] != null && p["postcode"] !== "" ? String(p["postcode"]) : null,
+		suburb: p["suburb"] != null && p["suburb"] !== "" ? String(p["suburb"]) : null,
 		city: p["city"] != null && p["city"] !== "" ? String(p["city"]) : null,
 		lon: pt[0],
 		lat: pt[1],

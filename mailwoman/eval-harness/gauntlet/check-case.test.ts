@@ -46,6 +46,7 @@ function storedCase(over: Partial<GauntletCaseTable> = {}): GauntletCaseTable {
 
 function result(over: Partial<GauntletResult> = {}): GauntletResult {
 	return {
+		components: {},
 		lat: null,
 		lon: null,
 		tier: "admin",
@@ -114,11 +115,18 @@ describe("the coordinate / tier / component gates", () => {
 	})
 
 	it("maps every component key the corpus can assert", () => {
-		const r = result({ venue: "Big Hall", unit: "Apt 4", dependent_locality: "Abbey Hey" })
+		const r = result({
+			components: { block: "3丁目", municipality: "高山市" },
+			venue: "Big Hall",
+			unit: "Apt 4",
+			dependent_locality: "Abbey Hey",
+		})
 
 		expect(componentOf(r, "venue")).toBe("Big Hall")
 		expect(componentOf(r, "unit")).toBe("Apt 4")
 		expect(componentOf(r, "dependent_locality")).toBe("Abbey Hey")
+		expect(componentOf(r, "block")).toBe("3丁目")
+		expect(componentOf(r, "municipality")).toBe("高山市")
 	})
 })
 

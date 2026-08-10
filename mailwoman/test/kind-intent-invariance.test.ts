@@ -24,7 +24,7 @@
  *       `poi_category`.
  *
  *   A verdict whose top `kind` and `confidence` are unchanged cannot move any of the three. So the
- *   pin below is over `(kind, confidence, inputMode)` for all 306 committed corpus rows in BOTH
+ *   pin below is over `(kind, confidence, inputMode)` for all 514 committed corpus rows in BOTH
  *   registers, computed against a from-scratch replay of the PRE-§4 scorer set. That is a stronger
  *   receipt than a sample of parses would be — it is every row, it is exact rather than
  *   within-tolerance, and it needs no weights, so it runs in CI on every commit rather than on the
@@ -104,9 +104,9 @@ beforeAll(async () => {
 	corpus = cases.map((c) => c.input)
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 306-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 514-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(306)
+		expect(corpus).toHaveLength(514)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
@@ -161,9 +161,34 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 306-case corpus", ()
 	 * The list is exhaustive and exact so that a future rule change which GROWS the fork population fails here rather
 	 * than passing quietly.
 	 */
-	const EXPECTED_FORK_ROWS = ["Antigua Guatemala", "COMER parís.méxico", "Diego Garcia", "Petaling Jaya"]
+	// 2026-08-10: grew 4 → 19 with the operator-supplied street-name-boundaries and
+	// world-structures boards (306 → 514 cases). The 15 additions are all bare famous-street
+	// rows ('Avenida Alvear', 'Savile Row', 'Gran Vía' …) — single street-name surfaces with no
+	// structural anchor, exactly the declared-fork shape the marker exists for. Deliberate pin
+	// move, reviewed row-by-row; not silent growth.
+	const EXPECTED_FORK_ROWS = [
+		"Antigua Guatemala",
+		"Avenida Alvear",
+		"Avenida Atlântica",
+		"Avenida Corrientes",
+		"Avenida Diagonal",
+		"Avenida Paulista",
+		"COMER parís.méxico",
+		"Diego Garcia",
+		"Gran Vía",
+		"Kärntner Straße",
+		"Mariahilfer Straße",
+		"Nevsky Prospect",
+		"Petaling Jaya",
+		"Rua Augusta",
+		"Rua Garrett",
+		"Rue Saint-Honoré",
+		"Rue Sainte-Catherine",
+		"Savile Row",
+		"Via Laietana",
+	]
 
-	test("the fork population over the corpus is the 4 rows structure cannot resolve", () => {
+	test("the fork population over the corpus is the 19 rows structure cannot resolve", () => {
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
@@ -176,8 +201,10 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 306-case corpus", ()
 			}
 		}
 
-		// Both registers of each row, and nothing else.
-		expect(marked.map((m) => m.input).toSorted()).toEqual(
+		// Both registers of each row, and nothing else. Compared as SETS of inputs: the corpus may
+		// legitimately carry the same surface in two boards ('Rua Augusta' is a Lisbon case AND a
+		// São Paulo case), and the population claim is about distinct inputs, not case rows.
+		expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
 			[...EXPECTED_FORK_ROWS, ...EXPECTED_FORK_ROWS.map((r) => r.toLowerCase())].toSorted()
 		)
 

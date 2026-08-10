@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="mailwoman-fixture">
+  <node id="1" lat="48.8566000" lon="2.3522000" visible="true">
+    <tag k="addr:housenumber" v="2"/>
+    <tag k="addr:street" v="Rue de Rivoli"/>
+    <tag k="addr:postcode" v="75001"/>
+    <tag k="addr:city" v="Paris"/>
+  </node>
+</osm>

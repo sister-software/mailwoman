@@ -11,6 +11,7 @@
  *   expectation columns that no branch here ever read) survived every review of the layer that calls it.
  */
 
+import { COMPONENT_TAGS } from "@mailwoman/core"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -50,6 +51,10 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 		case "unit":
 			return r.unit
 		default:
+			if (COMPONENT_TAGS.includes(key as (typeof COMPONENT_TAGS)[number])) {
+				return r.components[key as (typeof COMPONENT_TAGS)[number]] ?? null
+			}
+
 			// LOUD: a silent null here made venue/dependent_locality expectations grade against
 			// nothing for their whole life (caught 2026-08-01). An unknown key is an authoring bug.
 			throw new Error(`expect_components key "${key}" has no GauntletResult mapping — extend componentOf`)

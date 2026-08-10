@@ -54,6 +54,7 @@ function result(over: Partial<GauntletResult> = {}): GauntletResult {
 		unit: null,
 		postcode_country_scope: null,
 		hierarchy: [],
+		components: {},
 		...over,
 	}
 }
