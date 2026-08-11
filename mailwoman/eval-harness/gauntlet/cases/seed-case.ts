@@ -42,6 +42,14 @@ export interface SeedCase {
 	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively).
 	 */
 	expectComponents?: Record<string, string>
+	/**
+	 * OPT-IN multi-script rendering contract, per component key — `{ venue: ["Gandantegchinlen Monastery",
+	 * "Гандантэгчинлэн хийд"] }`. For a listed key the grader asserts that `scriptRenderings(got)` contains EVERY listed
+	 * rendering (case-folded), and the same key in {@linkcode expectComponents} is superseded — see `check-case.ts`'s
+	 * component gate. Only for a row whose INPUT genuinely carries a span in two or more scripts; every list must be
+	 * non-empty (the schema refuses an empty one).
+	 */
+	expectComponentRenderings?: Record<string, string[]>
 	expectPlaceID?: string
 	expectPlaceName?: string
 	expectLat?: number
@@ -79,6 +87,7 @@ export const SEED_CASE_KEY_ORDER = [
 	"status",
 	"defaultCountry",
 	"expectComponents",
+	"expectComponentRenderings",
 	"expectPlaceID",
 	"expectPlaceName",
 	"expectLat",
@@ -105,6 +114,9 @@ export const SeedCaseSchema = zod.strictObject({
 	status: zod.enum(["pass", "known_fail", "improvement_target"]),
 	defaultCountry: zod.string().optional(),
 	expectComponents: zod.record(zod.string(), zod.string()).optional(),
+	// Non-empty string arrays only: an empty rendering list would assert nothing while looking asserted, and a
+	// non-array value is the `expectComponents` shape filed under the wrong key.
+	expectComponentRenderings: zod.record(zod.string(), zod.array(zod.string().min(1)).min(1)).optional(),
 	expectPlaceID: zod.string().optional(),
 	expectPlaceName: zod.string().optional(),
 	expectLat: zod.number().optional(),

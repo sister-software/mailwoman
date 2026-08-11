@@ -501,8 +501,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// row from the probe's 17-row fused-path population. Measured against the model 7.0.0 from-scratch base
 	// (both legs per row against scratchpad/en-nz-ship-verify/transition-probe-rows.json), 15 of the 17
 	// rows self-recover BETA-LESS — including Hedon and Ashby Parva, which never recovered at any β on the
-	// fine-tune lineage. Glenfield (margin 3.10) is the pinned discriminator; Wheatley is the other row
-	// that still needs the artifact.
+	// fine-tune lineage. Glenfield (margin 3.10) was the pinned discriminator on that base.
 	//
 	// STALENESS TRAP, and it has bitten this test before: the pin is graded against a LOCALLY BUILT index,
 	// so a stale artifact keeps the test green while the row it names has quietly started self-recovering
@@ -511,15 +510,16 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 	// new source joining the index (a borough DB, a checked-in London pair set) — and the CI cache key has
 	// to track the same set. A pass here is only as trustworthy as the artifact's freshness.
 	//
-	// Expect this pin to keep moving: it is by construction whichever row sits nearest the delta
-	// threshold, so any delta recalibration or pair-set growth reshuffles it. A failure here means
-	// "re-measure which rows still need beta", not "beta broke" — and the measurement is a sweep of the
-	// probe rows through both legs, which is how Glenfield was recovered as the current discriminator.
-	// NO row regresses with the artifact on. The beta-less leg pins the pre-beta behavior on the same
-	// bytes: the emission-only prior fires yet the child span still emits nothing — proving the
-	// artifact's transitionBeta (not some other change) is what recovers the row.
+	// THE CONTRAST RETIRED AT THE 9.1.0 CUT (2026-08-11): under the v4.4.0 suffix-boundary base, the
+	// discriminator population is EMPTY as far as a fresh 191-pair PPD sweep can see — 190/191 rows
+	// recover the dependent locality in BOTH legs (Glenfield included), 0 rows need β, 0 rows regress
+	// with β on, 1 row misses in both. There is no row to move the pin to, so the beta-less leg now
+	// asserts the measured self-recovery instead of a miss. The artifact keeps β=5 as insurance
+	// (harmless by the same sweep). If a future base regresses this class, the failure lands on the
+	// beta-less assertion below — re-run the sweep (both legs over PPD five-field rows whose pair
+	// probes to dependent_locality) and re-pin a discriminator the way Glenfield once was.
 	test.skipIf(!haveModel || !haveCLI || !havePPDSource)(
-		"en-gb: the transitionBeta=5 artifact flips a comma-free fused-path row; a beta-less view of the same index does not (TRANSITION-BETA)",
+		"en-gb: the transitionBeta=5 artifact carries its header contract; the comma-free fused-path row recovers in both legs (TRANSITION-BETA)",
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
@@ -535,20 +535,17 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const row = "12 Church Road Glenfield Leicester LE3 8DP"
 
-			// Beta-less view of the SAME index bytes: probe + delta identical, transitionBeta withheld — the
-			// exact decode every pre-TRANSITION-BETA build produces on this row (the measured current-main
-			// behavior: the emission bias fires, the fused path survives, the child span emits nothing).
-			// `parentDelta` is withheld ALONGSIDE `transitionBeta`, and that is not an oversight. The view models
-			// the pre-TRANSITION-BETA build, which also predates the whole-edge parent bias (#46). Carrying the
-			// artifact's parentDelta=5 through gives this row a SECOND recovery lever: the parent bias alone
-			// re-splits the fused span and `dependent_locality` comes back as "Glenfield", so the assertion below
-			// stops isolating β and starts measuring "either lever fired". Verified by trying it.
+			// Beta-less view of the SAME index bytes: probe + delta identical, transitionBeta (and parentDelta,
+			// which arrived with the same generation of levers) withheld. On the 7.0.0 base this leg pinned the
+			// pre-β miss; on the v4.4.0 base the 2026-08-11 sweep measured 190/191 PPD rows recovering in both
+			// legs, so the leg now asserts the self-recovery — the wiring proof (applied:true) is unchanged, and
+			// a regression of this class fails HERE first (see the header comment for the re-pin recipe).
 			const betaLessView: PairIndexLike = { probe: (c, p) => resolver.probe(c, p), delta: resolver.delta }
 
 			const betaLessTrace = await cls.traceParse(row, { placetypePair: { index: betaLessView } })
 			expect(betaLessTrace.priors.find((p) => p.kind === "placetypePair")?.applied).toBe(true)
 			const betaLessJSON = await cls.parseJSON(row, { placetypePair: { index: betaLessView } })
-			expect(betaLessJSON.dependent_locality).toBeUndefined()
+			expect(betaLessJSON.dependent_locality).toBe("Glenfield")
 
 			// The auto-wired config default (the shipped artifact, beta 5) recovers the row.
 			const json = await cls.parseJSON(row)

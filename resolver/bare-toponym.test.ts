@@ -287,10 +287,10 @@ describe("bare-toponym soft country prior (#17)", () => {
  * The other half of the bare-toponym class: the queries the model DOES tag `locality`, which reach the admin walk
  * instead of span-rescore. `Whitby` / `Warwick` / `Epping` / `Windsor` all land here, and no country reaches the
  * resolver for them at all (the #912 guard upstream drops the locale default for a bare-locality tree), so the pick is
- * population and nothing else. Encyclopedic is the only key that separates them — see `toponym-prior.ts` for the
- * measured table.
+ * population and nothing else. Importance is the only key that separates them — see `toponym-prior.ts` for the measured
+ * table.
  */
-describe("encyclopedic key in the admin walk (#17)", () => {
+describe("importance key in the admin walk (#17)", () => {
 	const WHITBY: ResolvedPlace[] = [
 		{
 			id: 1,
@@ -332,7 +332,7 @@ describe("encyclopedic key in the admin walk (#17)", () => {
 	}
 
 	it("prefers the encyclopedically prominent namesake when the gazetteer measures both", async () => {
-		const withScores = WHITBY.map((c, i) => ({ ...c, encyclopedic: i === 0 ? 0.5089 : 0.5496 }))
+		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
 		const out = await walk(withScores)
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("GB")
 	})
@@ -346,7 +346,7 @@ describe("encyclopedic key in the admin walk (#17)", () => {
 		// Fame is the prior of LAST resort — it answers "which one did you probably mean" only when
 		// nothing in the query answered it. A #369 anchor posterior is derived from the address's own
 		// postcode, which is evidence, and evidence outranks a prior every time.
-		const withScores = WHITBY.map((c, i) => ({ ...c, encyclopedic: i === 0 ? 0.5089 : 0.5496 }))
+		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
 		const out = await walk(withScores, { anchorPosterior: { CA: 1 } })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})

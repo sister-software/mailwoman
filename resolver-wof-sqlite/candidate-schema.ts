@@ -59,6 +59,30 @@ export interface CandidateTable {
 	 * 1 when the row is the place's canonical name (vs an alias/abbrev).
 	 */
 	is_primary: number | null
+	/**
+	 * Blended place importance in [0, 1] — the toponym-fame prior the bare-city-name class is decided on (#28). NULL
+	 * means the score source had no row for this place: UNMEASURED, never "an importance of zero" (meaning-of-zero).
+	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the PLACE,
+	 * not of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the alias row.
+	 *
+	 * **THIS IS THE PRE-SPLIT CONFLATION, AND THE NAME SAYS SO.** It is `place_importance.importance` copied verbatim
+	 * from the score source — a legacy blended importance whose own build already coalesced the concordance's
+	 * encyclopedia-derived channel with a population-derived fallback; `place-importance-schema.ts` calls that column
+	 * DEPRECATED. It is NOT the split `encyclopedic` channel, and the two must not be conflated in a future build:
+	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key INERT on three of the
+	 * four rows it exists to fix. The reason is coverage, not principle — the encyclopedia-concordance join in
+	 * `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places and only eleven countries
+	 * (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW). CA, AU and RU have ZERO concordance rows, so Whitby CA, Windsor CA and Epping
+	 * AU carry the population fallback and nothing else. Under the strict split those three become unmeasured, the
+	 * consumer's positive-evidence-only rule leaves them exactly where population put them (first), and the famous GB
+	 * bearer can never overtake them. The conflated column is the only one on which every bearer of a name is scored on a
+	 * single comparable scale, which is the precondition for comparing them at all.
+	 *
+	 * So a consumer reads this as "fame, with population standing in where fame was never measured" — the legacy blended
+	 * semantics — and NOT as "this place has an encyclopedia entry of this importance". When the score source grows a
+	 * real `encyclopedic` column for every country, add a SECOND column rather than redefining this one.
+	 */
+	importance: number | null
 }
 
 /**
@@ -114,6 +138,9 @@ export const CANDIDATE_COLUMNS = [
 	"max_lon",
 	"population",
 	"is_primary",
+	// Appended, never inserted mid-list: the first six entries ARE the clustered primary key, and the
+	// positional `INSERT INTO cand_stage VALUES (…)` in the builder binds by position.
+	"importance",
 ] as const
 
 /**
@@ -151,6 +178,7 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 		.addColumn("max_lon", "real")
 		.addColumn("population", "integer")
 		.addColumn("is_primary", "integer")
+		.addColumn("importance", "real")
 		.execute()
 }
 
@@ -176,6 +204,7 @@ export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promi
 		.addColumn("max_lon", "real")
 		.addColumn("population", "integer")
 		.addColumn("is_primary", "integer")
+		.addColumn("importance", "real")
 		.addPrimaryKeyConstraint("candidate_pk", [
 			"name_key",
 			"country_id",

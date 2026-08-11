@@ -19,7 +19,9 @@ import {
 	DEFAULT_ADMIN_DB,
 	DEFAULT_CANDIDATE_OUT,
 	DEFAULT_FOLD_COUNTRIES,
+	DEFAULT_IMPORTANCE_DB,
 	foldGeonamesIntoAdmin,
+	resolveImportanceDb,
 	resolvePostcodeShards,
 	wofDir,
 } from "mailwoman/gazetteer-pipeline"
@@ -45,6 +47,16 @@ const OptionsSchema = zod.object({
 		.optional()
 		.describe(`Comma-separated ISO codes for the fold. Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`),
 	foldOut: zod.string().optional().describe("Folded admin-DB path. Default <admin>-geonames.db"),
+	// #28. Two separate options rather than one tri-state flag: Pastel binds `--importance` to whatever
+	// the zod type says, so a string override and a boolean opt-out cannot share a name.
+	importance: zod
+		.string()
+		.optional()
+		.describe(`Score source for the importance column. Default <data-root>/wof/${DEFAULT_IMPORTANCE_DB} if present`),
+	skipImportance: zod
+		.boolean()
+		.default(false)
+		.describe("Build with an EMPTY importance column even when the score source is present"),
 })
 
 export { OptionsSchema as options }
@@ -88,19 +100,36 @@ const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ optio
 		}
 
 		const shards = resolvePostcodeShards(undefined, root)
+		const importanceDb = options.skipImportance ? false : (options.importance ?? resolveImportanceDb(undefined, root))
 
 		console.error(`▸ candidate build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+
+		if (importanceDb) {
+			console.error(`  importance ← ${importanceDb}`)
+		} else {
+			// Say which of the two absences this is. "No importance column" from a missing artifact and
+			// from `--skip-importance` produce the same DB and want different follow-ups.
+			console.error(
+				options.skipImportance
+					? "  importance: SKIPPED by --skip-importance — the column will be empty"
+					: `  importance: no ${DEFAULT_IMPORTANCE_DB} under ${wofDir(root)} — the column will be empty`
+			)
+		}
 
 		const r = await buildCandidate({
 			adminDb,
 			out,
 			postcodeShards: shards,
+			importanceDb,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 
 		return [
 			`gazetteer: ${out}`,
 			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode + ${r.postcodeAliases.toLocaleString()} postcode-alias (from ${r.places.toLocaleString()} places)`,
+			r.importanceScored === undefined
+				? "importance: not joined (no score source) — the column is empty"
+				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceGated?.toLocaleString() ?? 0} refused as a different same-name place`,
 			`next: mailwoman gazetteer promote   (then publish, or run gazetteer release for all of it)`,
 		]
 	})

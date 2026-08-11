@@ -24,11 +24,18 @@
  *   - Alphanumeric shapes (GB/CA/NL/DE-prefixed) are high-confidence "this IS a postcode" patterns →
  *       eligible to ADD a span where the model emitted none, but only over non-structural labels
  *       (never over house_number/street/etc.).
- *   - Numeric shapes (\d{5}, ZIP+4, JP, PT, PL) are ambiguous (a bare 5-digit could be a house number)
+ *   - Numeric shapes (\d{5}, ZIP+4, BR, JP, PT, PL) are ambiguous (a bare 5-digit could be a house number)
  *       → SNAP-only: they expand/clip an EXISTING postcode span, never create one from scratch.
  *   - Smear cleanup is LOCAL: only postcode tokens immediately flanking a snapped span are cleared. We
  *       never globally clear unmatched postcode tokens — that would regress shapes we don't
  *       pattern-match (AU 4-digit, IN 6-digit, …).
+ *
+ *   A MISSING shape is not neutral for a HYPHENATED postcode. The local smear cleanup is local to a
+ *   MATCH, and an unlisted compound shape still matches at its numeric head: `NUM5` claims the five
+ *   digits of an unlisted `NNNNN-NNN`, snaps the span down to them, and clips the suffix the model
+ *   correctly labeled. That is how BR CEPs were truncated for the pass's whole life (#35, diagnosed
+ *   2026-08-10) while the unhyphenated shapes above degraded gracefully. Before concluding a hyphenated
+ *   postcode is a model failure, re-parse it with `postcodeRepair: false`.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -77,6 +84,14 @@ export const POSTCODE_PATTERNS: Array<{ label: string; kind: "alnum" | "numeric"
 	{ label: "NL", kind: "alnum", re: /\b\d{4}\s?[A-Z]{2}\b/g },
 	// --- Numeric (SNAP-only) ---
 	{ label: "ZIP4", kind: "numeric", re: /\b\d{5}-\d{4}\b/g }, // US ZIP+4
+	// BR CEP: NNNNN-NNN (70390-100, 95090-020). Without it the generic NUM5 below matched the five-digit
+	// head of a CEP, snapped the span to it, and the trailing-smear clip DISCARDED the sector suffix — so
+	// the repair pass truncated a parse the model had got right (measured 2026-08-10 on both BR
+	// world-structures rows: repair OFF "95090-020", repair ON "95090"). The trailing `\b` keeps it off a
+	// ZIP+4's first nine characters ("94610-2737" has a digit after "273"), and longest-match-wins in
+	// `selectNonOverlappingMatches` settles the rest. SNAP-only like every numeric shape, so it can never
+	// invent a postcode over a hyphenated house number.
+	{ label: "BR", kind: "numeric", re: /\b\d{5}-\d{3}\b/g },
 	{ label: "JP", kind: "numeric", re: /\b\d{3}-\d{4}\b/g }, // 100-0001
 	{ label: "PT", kind: "numeric", re: /\b\d{4}-\d{3}\b/g }, // 3060-187
 	{ label: "PL", kind: "numeric", re: /\b\d{2}-\d{3}\b/g }, // 47-400

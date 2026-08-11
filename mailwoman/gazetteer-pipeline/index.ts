@@ -112,6 +112,13 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
  * The conventional candidate-build output.
  */
 export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
+/**
+ * The conventional source of the `importance` column (#28) — a WOF admin database carrying `place_importance`, built by
+ * `mailwoman gazetteer importance`. Deliberately a SEPARATE artifact from {@link DEFAULT_ADMIN_DB}: the scores are
+ * expensive to derive and change on their own cadence, so the shipped admin DB has never carried the table, and the
+ * candidate build joins them in by name rather than assuming one file holds both.
+ */
+export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 
 /**
  * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink live.
@@ -148,6 +155,22 @@ export function resolvePostcodeShards(
 	dataRoot: string = mailwomanDataRoot()
 ): string[] {
 	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+}
+
+/**
+ * Resolve the conventional score source, or `undefined` when this machine has none.
+ *
+ * Same tolerate-and-degrade shape as {@link resolvePostcodeShards}, and the same reason: the scores are a build-local
+ * artifact on the machine that derived them, and a deployment without the file must build a candidate DB with an empty
+ * `importance` column rather than fail. Absent is UNMEASURED, which is what the consumer already handles.
+ */
+export function resolveImportanceDb(
+	filename: string = DEFAULT_IMPORTANCE_DB,
+	dataRoot: string = mailwomanDataRoot()
+): string | undefined {
+	const path = resolvePath(wofDir(dataRoot), filename)
+
+	return existsSync(path) ? path : undefined
 }
 
 export interface FoldOptions {
@@ -301,6 +324,11 @@ export interface BuildOptions {
 	 * Absolute postcode-shard paths to fold in (default {@link resolvePostcodeShards}).
 	 */
 	postcodeShards?: readonly string[]
+	/**
+	 * Score source for the `importance` column (default {@link resolveImportanceDb}). Pass `false` to build the column
+	 * empty on purpose.
+	 */
+	importanceDb?: string | false
 	onProgress?: (phase: string, message: string) => void
 }
 
@@ -312,10 +340,16 @@ export interface BuildOptions {
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
 
+	// `undefined` means "use the convention"; `false` means "the caller chose an empty column". Only the
+	// second may skip the resolve — collapsing them would make a missing artifact indistinguishable from a
+	// deliberate opt-out in the build log.
+	const importance = opts.importanceDb === false ? undefined : (opts.importanceDb ?? resolveImportanceDb())
+
 	const result = await buildCandidateTable({
 		input: opts.adminDb,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
+		...(importance ? { importance } : {}),
 		onProgress: opts.onProgress,
 	})
 

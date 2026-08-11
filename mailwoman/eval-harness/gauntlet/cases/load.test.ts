@@ -58,9 +58,13 @@ const CORPUS_SIZE = 514
  * `regression.db` (the `gauntlet_meta` stamp), and a runner refuses to grade when the two disagree — so a corpus edit
  * leaves the DB stale until it is rebuilt, by design.
  *
- * Moved again 2026-08-10 — `848548e6…` → this — by the 24-row `operator:world-structures-2026-08-10` batch.
+ * Moved 2026-08-10 — `848548e6…` → `02026054…` — by the 24-row `operator:world-structures-2026-08-10` batch.
+ *
+ * Moved again 2026-08-11 — `02026054…` → this — when `mn-ws-gandantegchinlen-dual-script` gained the per-row
+ * `expectComponentRenderings` contract (#34: the global dual-script grader relaxation became a per-row opt-in). Row
+ * count and every `id`+`input` were untouched, so the board id below stays.
  */
-const CORPUS_HASH = "02026054b8b579a579a977a0227ce578a5872072f9267576985a351314143cf0"
+const CORPUS_HASH = "f87db0a953a8d927f61fd465d1b9b751ff653003c0aec3559eb0e0523c924951"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -153,6 +157,24 @@ describe("the row schema", () => {
 	it("accepts the optional ablation pin (#1502), unused by the corpus today", () => {
 		expect(SeedCaseSchema.safeParse({ ...SAMPLE, ablationExpect: { country: "region" } }).success).toBe(true)
 	})
+
+	it("accepts the per-component rendering contract (#34)", () => {
+		const contract = { venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }
+
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: contract }).success).toBe(true)
+	})
+
+	it("rejects a rendering value that is not a string array", () => {
+		// The `expectComponents` shape filed under the wrong key — the likeliest authoring slip.
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } }).success).toBe(false)
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: [42] } }).success).toBe(false)
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: ["хийд"] }).success).toBe(false)
+	})
+
+	it("rejects an empty rendering list — it would assert nothing while looking asserted", () => {
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: [] } }).success).toBe(false)
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: [""] } }).success).toBe(false)
+	})
 })
 
 describe("a malformed row names its file and line", () => {
@@ -170,6 +192,14 @@ describe("a malformed row names its file and line", () => {
 		})
 
 		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
+	})
+
+	it("on a malformed rendering contract, naming the field", async () => {
+		const root = scratchCorpus({
+			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } })}\n`,
+		})
+
+		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
 	})
 
 	it("counts blank lines, so the number matches the editor's", async () => {

@@ -16592,6 +16592,7 @@ __metadata:
       optional: true
   bin:
     mailwoman: ./out/cli.js
+    mw: ./out/cli.js
   languageName: unknown
   linkType: soft
 

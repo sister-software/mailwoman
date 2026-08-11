@@ -359,4 +359,140 @@ describe("buildCandidateTable", () => {
 			db.close()
 		}
 	})
+
+	describe("the importance column (#28)", () => {
+		/**
+		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway. Chicago and
+		 * Saint-Étienne are scored; Springfield deliberately is NOT (the unmeasured case).
+		 */
+		function buildFixtureImportance(path: string): void {
+			const db = new DatabaseSync(path)
+
+			db.exec(`
+				CREATE TABLE spr (
+					id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
+					latitude REAL, longitude REAL, is_current INTEGER, is_deprecated INTEGER
+				);
+				CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL NOT NULL);
+
+				INSERT INTO spr VALUES (7000000000200, 'Chicago', 'locality', 'US', 41.88, -87.63, -1, 0);
+				INSERT INTO spr VALUES (7000000000202, 'Saint-Étienne', 'locality', 'FR', 45.43, 4.39, -1, 0);
+				-- Same name + country + placetype as the admin fixture's Springfield, but 1,500 km away:
+				-- a DIFFERENT town, so the gate must refuse it rather than lend it the score.
+				INSERT INTO spr VALUES (7000000000201, 'Springfield', 'locality', 'US', 42.10, -72.59, -1, 0);
+				-- A postcode-shaped row: the shard fold must not pick it up either way.
+				INSERT INTO spr VALUES (7000000060601, '60601', 'postalcode', 'US', 41.885, -87.62, -1, 0);
+
+				INSERT INTO place_importance VALUES (7000000000200, 0.8125);
+				INSERT INTO place_importance VALUES (7000000000202, 0.4400);
+				INSERT INTO place_importance VALUES (7000000000201, 0.6126);
+				INSERT INTO place_importance VALUES (7000000060601, 0.1000);
+			`)
+
+			db.close()
+		}
+
+		function importanceOf(db: DatabaseSync, key: string): Array<number | null> {
+			return (
+				db
+					.prepare("SELECT importance FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC")
+					.all(key) as unknown as Array<{ importance: number | null }>
+			).map((r) => r.importance)
+		}
+
+		test("joins the score onto the place, and onto its ALIAS rows too", async () => {
+			const input = join(scratch, "admin.db")
+			const importance = join(scratch, "importance.db")
+			const output = join(scratch, "candidate.db")
+			buildFixtureAdmin(input)
+			buildFixtureImportance(importance)
+
+			const result = await buildCandidateTable({ input, output, importance })
+			expect(result.importanceScored).toBe(2) // Chicago + Saint-Étienne
+			expect(result.importanceGated).toBe(1) // Springfield — same key, wrong town
+
+			const db = new DatabaseSync(output, { readOnly: true })
+
+			try {
+				expect(importanceOf(db, normalizeLocalityForKey("Chicago"))).toEqual([0.8125])
+				// The score is a property of the PLACE, so the alias rows carry it. This is what lets a bare
+				// "Moscow" reach Москва's score through the alias row that holds the Latin key.
+				expect(importanceOf(db, normalizeLocalityForKey("Chi-Town"))).toEqual([0.8125])
+				expect(importanceOf(db, normalizeLocalityForKey("Windy City"))).toEqual([0.8125])
+				// Folded key parity holds on the join too: "Saint-Étienne" scores through its folded form,
+				// and its alias row inherits.
+				expect(importanceOf(db, normalizeLocalityForKey("Saint-Étienne"))).toEqual([0.44])
+				expect(importanceOf(db, normalizeLocalityForKey("St Etienne"))).toEqual([0.44])
+			} finally {
+				db.close()
+			}
+		})
+
+		test("an unmatched place is NULL — unmeasured, never 0", async () => {
+			const input = join(scratch, "admin.db")
+			const importance = join(scratch, "importance.db")
+			const output = join(scratch, "candidate.db")
+			buildFixtureAdmin(input)
+			buildFixtureImportance(importance)
+			await buildCandidateTable({ input, output, importance })
+
+			const db = new DatabaseSync(output, { readOnly: true })
+
+			try {
+				// Springfield's only same-key scored place is 1,500 km away — a different town. The gate
+				// refuses it, and the refusal is recorded as ABSENCE, not as a zero a consumer could rank on.
+				expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
+				// Illinois (region) and the US (country) were never scored at all.
+				expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])
+				expect(importanceOf(db, normalizeLocalityForKey("IL"))).toEqual([null])
+			} finally {
+				db.close()
+			}
+		})
+
+		test("postcode rows are NULL even when the source carries a same-named row", async () => {
+			const input = join(scratch, "admin.db")
+			const pc = join(scratch, "postcodes.db")
+			const importance = join(scratch, "importance.db")
+			const output = join(scratch, "candidate.db")
+			buildFixtureAdmin(input)
+			buildFixturePostcodes(pc)
+			buildFixtureImportance(importance)
+			await buildCandidateTable({ input, output, postcodes: [pc], importance })
+
+			const db = new DatabaseSync(output, { readOnly: true })
+
+			try {
+				// A postcode has no toponym fame; the score source's 60601 row must not leak onto it.
+				expect(importanceOf(db, "60601")).toEqual([null])
+				// …including the delivery-city alias hanging off the same postcode row.
+				expect(importanceOf(db, normalizeLocalityForKey("Brooklyn"))).toEqual([null])
+			} finally {
+				db.close()
+			}
+		})
+
+		test("without a score source the column exists and is empty — and the result says so", async () => {
+			const input = join(scratch, "admin.db")
+			const output = join(scratch, "candidate.db")
+			buildFixtureAdmin(input)
+
+			const result = await buildCandidateTable({ input, output })
+			// `undefined`, not 0: the pass did not run. A 0 would claim the source matched nothing.
+			expect(result.importanceScored).toBeUndefined()
+			expect(result.importanceGated).toBeUndefined()
+
+			const db = new DatabaseSync(output, { readOnly: true })
+
+			try {
+				const { n } = db.prepare("SELECT COUNT(*) AS n FROM candidate WHERE importance IS NOT NULL").get() as {
+					n: number
+				}
+
+				expect(n).toBe(0)
+			} finally {
+				db.close()
+			}
+		})
+	})
 })

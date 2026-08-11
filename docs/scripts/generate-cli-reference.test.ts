@@ -68,13 +68,16 @@ describe("generate-cli-reference", () => {
 		expect(sectionFor(page, "doctor")).toMatchInlineSnapshot(`
 			"### \`mailwoman doctor\`
 
+			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it.
+
 			\`\`\`
 			mailwoman doctor [options]
 			\`\`\`
 
-			| Flag     | Type    | Default | Description                                                                                                                                                                                                                        |
-			| -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-			| \`--json\` | boolean | \`false\` | Emit the report as JSON instead of a checklist: &#123; checks: [&#123; id, label, status, detail, fix?, core &#125;], exitCode &#125; — a superset of &#123; id, status, detail, fix? &#125; (label + core aid machine consumers). |"
+			| Flag        | Type    | Default | Description                                                                                                                                                                                                                                                                                                                                         |
+			| ----------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+			| \`--json\`    | boolean | \`false\` | Emit the report as JSON instead of a checklist: &#123; checks: [&#123; id, label, status, detail, consequence?, fix?, core &#125;], exitCode &#125; — a superset of &#123; id, status, detail, fix? &#125; (label + core + consequence aid machine consumers). With --verbose, an \`environment\` array of &#123; key, value, source &#125; is added. |
+			| \`--verbose\` | boolean | \`false\` | Also print every path and environment variable the checks resolved (data root, candidate.db, WOF shards, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.                                                                                                    |"
 		`)
 	})
 

@@ -72,15 +72,34 @@ export interface ResolvedPlace {
 	 */
 	referential?: number
 	/**
-	 * ENCYCLOPEDIC (Wikipedia) importance in [0, 1] — CARRIED FOR CONSUMERS, NEVER RANKED ON.
+	 * STRICT encyclopedia-evidence importance in [0, 1] — CARRIED FOR CONSUMERS, NEVER RANKED ON.
 	 *
-	 * Annotation and API surfaces may expose it; no ranking site in `@mailwoman/resolver` or any backend reads it. The
-	 * canonical reason is Saint-Denis: the Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the Aude hamlet (pop
-	 * 418) scores 0.5683, so ranking on this inverts the answer every user means.
+	 * RESERVED SLOT: it awaits a strict-channel source. Only a backend reading a post-split `place_importance` table can
+	 * populate it, and today the FTS backend's clauses emit NULL for everything (no shipped admin DB carries the split
+	 * columns), so nothing produces it and nothing consumes it. The BLENDED prior the ranking reads is
+	 * {@link ResolvedPlace.importance} — keep the two apart.
 	 *
-	 * Absent means "no article" OR "this gazetteer predates the two-score split" — both absence, neither 0.
+	 * Ranking on this channel is forbidden even once populated. The canonical reason is Saint-Denis: the
+	 * Seine-Saint-Denis suburb (pop 96,128) scores 0.1173 while the Aude hamlet (pop 418) scores 0.5683, so ranking on it
+	 * inverts the answer every user means.
+	 *
+	 * Absent means "no encyclopedia entry" OR "this gazetteer predates the two-score split" — both absence, neither 0.
 	 */
 	encyclopedic?: number
+	/**
+	 * BLENDED global toponym prior in [0, 1] (#28) — the fame key the bare-toponym class is decided on.
+	 *
+	 * The value is the score source's legacy blended importance: the concordance's encyclopedia-derived channel where a
+	 * concordance matched, a population-derived proxy everywhere else. The blend is deliberate — it is the only scale on
+	 * which EVERY bearer of a name is scored comparably (the strict channel reaches eleven countries and is blind on
+	 * CA/AU/RU, exactly the homonym contests the prior exists to settle; see `candidate-schema.ts` →
+	 * `CandidateTable.importance`). Consumed by `rankByImportance` (`resolver/toponym-prior.ts`), a soft tier-safe
+	 * re-rank, never a gate.
+	 *
+	 * Absent means UNMEASURED — the score source had no row, the join refused it, or the artifact predates the column —
+	 * and an unmeasured candidate holds the rank population gave it (meaning-of-zero: never fill a 0 in).
+	 */
+	importance?: number
 	/**
 	 * Set by the backend when this candidate is an EXACT name/alias match for the query (vs a partial token match). The
 	 * postcode-anchor re-rank (#369) uses it as the PRIMARY key so a country posterior can pin the country WITHOUT
@@ -517,8 +536,8 @@ export interface ResolveOpts {
 	 * board intact is < 0.07 (Cambridge CA 5.14 over US 5.07). The two intervals are disjoint, and they interleave:
 	 * `Athens` (GR over US, gap 0.38) and `Cambridge` (0.07) sit BELOW `Warwick` (0.41) and `Epping` (0.41), so no
 	 * threshold, margin or rank rule separates the class either. Population plus a locale cannot answer this question.
-	 * The key that can is `encyclopedic` — the two-score split's other half, which ranks all four the right way round and
-	 * whose consumer (`rankByEncyclopedic`) is already wired here; what is missing is the producer. See
+	 * The key that can is `importance` — the blended global toponym prior, which ranks all four the right way round and
+	 * whose consumer (`rankByImportance`) is already wired here; the #28 candidate build produces it. See
 	 * `scratchpad/resolver-plumbing-receipt-2026-08-10.md`.
 	 *
 	 * Ignored whenever a {@link defaultCountry} or an {@link anchorPosterior} is in force: a hard scope makes the prior a

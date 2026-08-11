@@ -22,6 +22,14 @@ export type {
 export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpts } from "./lookup.ts"
 
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
+
+export {
+	ImportanceIndex,
+	IMPORTANCE_JOIN_GATE_KM,
+	type ImportanceIndexStats,
+	loadImportanceIndex,
+} from "./candidate-importance.ts"
+
 export { WOFCandidateTableLookup, type WOFCandidateTableLookupOpts } from "./candidate-lookup.ts"
 
 export {

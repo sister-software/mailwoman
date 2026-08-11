@@ -9,6 +9,7 @@
 		"directory": "corpus"
 	},
 	"files": [
+		"data/**",
 		"out/**/*.js",
 		"out/**/*.js.map",
 		"out/**/*.d.ts",
@@ -36,7 +37,7 @@
 			"default": "./out/src/types.js",
 			"types": "./out/src/types.d.ts"
 		},
-		"./data/*": "./src/data/*",
+		"./data/*": "./data/*",
 		"./utils": {
 			"node": "./src/utils/index.ts",
 			"default": "./out/src/utils/index.js",
