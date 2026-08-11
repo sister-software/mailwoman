@@ -75,6 +75,23 @@ describe("artifactURL", () => {
 
 		expect(artifactURL(artifact)).toBe(`${PUBLIC_BUCKET_BASE_URL}gazetteer/2026-07-07a/candidate.db`)
 	})
+
+	it("substitutes a --host base for the same key, repairing a missing trailing slash", () => {
+		const artifact: BundleArtifact = {
+			remotePath: "gazetteer/2026-07-07a/candidate.db",
+			localPath: "wof/candidate.db",
+			md5Sidecar: false,
+			approxBytes: 100,
+		}
+
+		expect(artifactURL(artifact, "https://mirror.example/mailwoman/")).toBe(
+			"https://mirror.example/mailwoman/gazetteer/2026-07-07a/candidate.db"
+		)
+
+		expect(artifactURL(artifact, "https://mirror.example/mailwoman")).toBe(
+			"https://mirror.example/mailwoman/gazetteer/2026-07-07a/candidate.db"
+		)
+	})
 })
 
 describe("resolveBundleArtifacts — maps versioned names", () => {
