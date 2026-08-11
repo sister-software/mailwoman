@@ -21,6 +21,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
 	DERIVED_WEIGHTS_INPUTS,
 	type DerivedWeightsInput,
+	derivedStoreServeViolation,
 	derivedWeightsDir,
 	derivedWeightsKey,
 	derivedWeightsKeyFrom,
@@ -152,5 +153,61 @@ describe("derivedWeightsKey", () => {
 describe("derivedWeightsDir", () => {
 	it("lands under the data root's derived/weights namespace", () => {
 		expect(derivedWeightsDir("deadbeefdeadbeef")).toMatch(/\/derived\/weights\/deadbeefdeadbeef$/)
+	})
+})
+
+describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
+	function pcb1(records: number): Buffer {
+		const header = Buffer.alloc(9)
+		header.write("PCB1", 0, "latin1")
+		header.writeUInt32LE(records, 4)
+		header.writeUInt8(1, 8)
+
+		return header
+	}
+
+	let dir: string
+
+	beforeEach(async () => {
+		dir = await mkdtemp(join(tmpdir(), "derived-serve-"))
+	})
+
+	afterEach(async () => {
+		await rm(dir, { recursive: true, force: true })
+	})
+
+	it("refuses the #1528 reproduction: an empty GB binary is never a valid entry", async () => {
+		const path = join(dir, "postcode-gb.bin")
+		await writeFile(path, pcb1(0))
+
+		expect(derivedStoreServeViolation("postcode-gb.bin", path)).toMatch(/below the GB floor/)
+	})
+
+	it("refuses a collapsed FR binary below its calibrated floor", async () => {
+		const path = join(dir, "postcode-fr.bin")
+		await writeFile(path, pcb1(500))
+
+		expect(derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
+	})
+
+	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve gate", async () => {
+		const path = join(dir, "postcode-gb.bin")
+		await writeFile(path, pcb1(1500))
+
+		expect(derivedStoreServeViolation("postcode-gb.bin", path)).toBeNull()
+	})
+
+	it("refuses bytes that are not a PCB1 at all", async () => {
+		const path = join(dir, "postcode-de.bin")
+		await writeFile(path, Buffer.from("not a binary"))
+
+		expect(derivedStoreServeViolation("postcode-de.bin", path)).toMatch(/not a PCB1/)
+	})
+
+	it("passes non-postcode entries untouched — pair indexes validate their own header on load", async () => {
+		const path = join(dir, "pair-index-gb.bin")
+		await writeFile(path, Buffer.from("anything"))
+
+		expect(derivedStoreServeViolation("pair-index-gb.bin", path)).toBeNull()
 	})
 })

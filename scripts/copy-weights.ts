@@ -36,7 +36,7 @@
 
 import { spawnSync } from "node:child_process"
 import type { PathLike } from "node:fs"
-import { copyFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, unlinkSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
@@ -45,7 +45,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 
-import { derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
+import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
 
 const repoRoot = repoRootPath()
 
@@ -68,6 +68,17 @@ function serveFromDerivedStore(dir: string, filename: string): boolean {
 	const cached = resolve(derivedStore, filename)
 
 	if (!existsSync(cached)) return false
+
+	// A poisoned entry is worse than a miss: it reports HIT while feeding a channel nothing (#1528's
+	// empty postcode-gb.bin). Refuse, evict, rebuild.
+	const violation = derivedStoreServeViolation(filename, cached)
+
+	if (violation) {
+		process.stderr.write(`derived store POISONED entry evicted → ${filename}: ${violation}\n`)
+		rmSync(cached, { force: true })
+
+		return false
+	}
 
 	const dest = resolve(dir, filename)
 
@@ -94,6 +105,17 @@ function serveFromDerivedStore(dir: string, filename: string): boolean {
  * next run five minutes and nothing else.
  */
 function stashDerived(dir: string, filename: string): void {
+	// Never poison the store: a below-floor build must not become the artifact every future run
+	// receives as a HIT. The build-time floors are the primary gate; this holds when they are
+	// bypassed (a stale-compiled builder predating them was #1528's exact shape).
+	const violation = derivedStoreServeViolation(filename, resolve(dir, filename))
+
+	if (violation) {
+		process.stderr.write(`derived store stash REFUSED for ${filename}: ${violation}\n`)
+
+		return
+	}
+
 	try {
 		mkdirSync(derivedStore, { recursive: true })
 		copyFileSync(resolve(dir, filename), resolve(derivedStore, filename))
