@@ -25,13 +25,13 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import { expandPlacetypeFilter, type GazetteerArtifactCoverage } from "@mailwoman/resolver"
 
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
 import { haversineKm } from "./geo.ts"
-import { trigramJaccard } from "./lookup.ts"
 import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
 import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary-preference.ts"
@@ -81,11 +81,29 @@ type CandidateRow = Pick<
 	Partial<Pick<CandidateTable, "importance">>
 
 /**
- * FTS5-trigram over-fetch before the trigram-Jaccard re-rank, and the minimum similarity to count as a fuzzy hit (below
- * it the trigram overlap is noise, e.g. unrelated same-trigram names). Tunable.
+ * FTS5-trigram over-fetch before the WORD-LEVEL re-rank. The trigram index stays the candidate GENERATOR (it is what
+ * the artifact carries); the scoring moved off trigram-Jaccard on 2026-08-12 (#1614), which the aucklnad receipts
+ * falsified as a typo measure: it scored the true transposition correction 'auckland' at 0.333 — below its own 0.34 bar
+ * — while 'auckley' scored 0.375 and the 'gore bay' scrape 0.455, because shared generic suffixes count as trigram
+ * evidence and transpositions count against it.
  */
 const FUZZY_FETCH = 40
-const FUZZY_MIN = 0.34
+
+/**
+ * Minimum WORD-LEVEL similarity (max of Jaro-Winkler and normalized edit similarity — the `match/comparators`
+ * primitives, deliberately WITHOUT `nameSimilarity`'s token-subset floor, which is a person-name rule that would hand
+ * 'stanmore bay' to a place named 'Bay') for a fuzzy correction to count. Measured on the #1614 receipts:
+ * 'aucklnad'→'auckland' 0.975 (in), →'auckley' 0.868 (in, but outranked), 'stanmore bay'→'gore bay' ~0.70 (out),
+ * 'sacremento'→'sacramento' ~0.97 (in).
+ */
+const WORD_FUZZY_MIN = 0.85
+
+/**
+ * The word-level correction similarity — see {@link WORD_FUZZY_MIN}.
+ */
+function wordFuzzySimilarity(a: string, b: string): number {
+	return Math.max(jaroWinkler(a, b), levenshteinSimilarity(a, b))
+}
 
 /**
  * Postcode-containment re-rank gate radius (km) — the SAME value the resolver's country pass measures at
@@ -439,8 +457,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 					const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
 
 					const ranked = hits
-						.map((h) => ({ nk: String(h.name_key), s: trigramJaccard(nameKey, String(h.name_key)) }))
-						.filter((h) => h.s >= FUZZY_MIN)
+						.map((h) => ({ nk: String(h.name_key), s: wordFuzzySimilarity(nameKey, String(h.name_key)) }))
+						.filter((h) => h.s >= WORD_FUZZY_MIN)
 						// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
 						.sort((a, b) => b.s - a.s)
 
