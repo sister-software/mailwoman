@@ -707,9 +707,9 @@
 	},
 	"fisher_artifact": {
 		"$comment": "The consolidation artifact (v8.3.0 D4/#1354): diagonal empirical Fisher over the base run's final 2,000 steps, covering all 39,261,743 trainable parameters. The EWC brake input for every fine-tune off this base (train.ewc_fisher_path). HF/R2-distributed ONLY — the runtime never reads it, so it stays out of the npm tarball.",
-		"file": "fisher-diag-v1-model-9.0.0.npz",
-		"sidecar": "fisher-diag-v1-model-9.0.0.json",
-		"md5": "70fd21bec09e409991fcca5a1cb9e718",
+		"file": "fisher-diag-v1-model-9.1.0.npz",
+		"sidecar": "fisher-diag-v1-model-9.1.0.json",
+		"md5": "e9d77f7d8b785109a07df0ee05f5e3ee",
 		"captured_at_step": 60000,
 		"count_batches": 2000,
 		"distribution": "hf+r2"
