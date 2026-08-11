@@ -90,6 +90,15 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 				if (neuralDir) {
 					alias["@mailwoman/neural/onnx-runner"] = resolveWorkspaceFile(neuralDir, "onnx-runner-browser")
 				}
+			} else {
+				// spliterator's XLSX side reaches the client bundle as dead code (same passenger as its
+				// file/worker side, see the fallback comment below) and holds dynamic imports of its two
+				// optional vendor peers. Whenever a workspace installs either peer, those imports RESOLVE,
+				// and webpack drags unzipper-esm + graceful-fs — bare `zlib`/`assert`/`constants` requires
+				// the fallback map deliberately omits — into the client compile. Shim the vendor entries so
+				// resolution never crosses into them; the XLSX API stays server-only.
+				alias["read-excel-file/node"] = emptyShim
+				alias["write-excel-file/node"] = emptyShim
 			}
 
 			// Webpack does not evict its filesystem cache when an alias changes (webpack#13627), and an
