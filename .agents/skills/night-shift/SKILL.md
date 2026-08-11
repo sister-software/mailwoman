@@ -194,7 +194,7 @@ relaxation lives in a separate, explicit "gate-revision" note with a stated
 reason; the table in the doc cites the config bars verbatim above any
 scorecard.
 
-When writing a scorecard or comparison table in `docs/articles/evals/`:
+When writing a scorecard or comparison table in `docs/records/evals/`:
 
 1. **Quote the config-canonical bar above the table.** Example:
    `gate (config v1.0.0-consolidation.yaml): affix prefix ≥78, suffix ≥67, US street ≥80.4, …`
@@ -257,7 +257,7 @@ Don't let a workspace change cause silent CI failures for hours.
 End every autonomous shift with a structured handoff committed to a known path:
 
 ```
-docs/articles/evals/YYYY-MM-DD-night-N-postmortem.md
+docs/records/evals/YYYY-MM-DD-night-N-postmortem.md
 ```
 
 Sections (in this order):
