@@ -410,10 +410,10 @@ const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly cou
 	// overlap; Belfast `BT1 5GS` stays GB — Northern Ireland uses GB postcodes). The placer mis-routes IE
 	// 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
-	// NL PC6 `1012 LG` — digits-first then exactly two letters. No other postal system uses the shape:
-	// GB/CA/IE are letters-first, and the digit-only families (US/FR/DE 5-digit, DK/CH/AT 4-digit) carry
-	// no letters. The same regex already earns NL its UNIT_GRADE_POSTCODE tier below.
-	{ re: /^\d{4}\s?[A-Z]{2}$/i, country: "NL" },
+	// NL PC6 is DELIBERATELY ABSENT: `\d{4} [A-Z]{2}` is forgeable in parse context — a US
+	// house-number + directional fragment (`1234 NE`, `8990 SW`) matches it exactly, and this table
+	// feeds recognizeBarePostcode, which must never touch a street name. NL lives in
+	// countriesFromPostcodeFormat instead, whose consumers gate on a bare-postcode TREE.
 ]
 
 /**
@@ -490,9 +490,21 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 const SHARED_NNN_NN = /^\d{3} \d{2}$/
 
 /**
- * EVERY country a parsed postcode's FORMAT is consistent with — the singles table plus the shared `NNN NN` family.
- * Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more; that family stays with the locale prior
- * on purpose — the `75008` contract).
+ * NL PC6 (`1012 LG`) — digits-first then exactly two letters. NL-unique as a POSTCODE shape (GB/CA/IE are
+ * letters-first; the digit-only families carry no letters), but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US
+ * house-number + directional fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode. It belongs
+ * only here, where every consumer gates on a tree that IS a bare postcode.
+ */
+const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
+
+/**
+ * EVERY country a parsed postcode's FORMAT is consistent with — the singles table, the NL PC6 shape, and the shared
+ * `NNN NN` family. Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more; that family stays with
+ * the locale prior on purpose — the `75008` contract).
+ *
+ * Unlike {@link countryFromPostcodeFormat}, this is NOT an unforgeable-in-any-context claim: consumers (the resolver's
+ * implied-set probe, the CLI's withheld-scope guard) apply it only to a tree that is a bare postcode, where the
+ * street-fragment collision the singles table must exclude cannot arise.
  */
 export function countriesFromPostcodeFormat(postcode: string | undefined): readonly string[] {
 	const p = postcode?.trim()
@@ -502,6 +514,8 @@ export function countriesFromPostcodeFormat(postcode: string | undefined): reado
 	const single = countryFromPostcodeFormat(p)
 
 	if (single) return [single]
+
+	if (NL_PC6.test(p)) return ["NL"]
 
 	if (SHARED_NNN_NN.test(p)) return ["CZ", "SK", "SE", "GR"]
 
