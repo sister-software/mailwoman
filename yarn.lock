@@ -5108,6 +5108,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/match": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"

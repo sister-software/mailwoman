@@ -298,18 +298,10 @@ const BAND: Perturbation[] = [
  * but the MODEL absorbing the undertrained "Bd" into house_number ("2 Bd") pre-lookup — fixed by enabling Stage-1
  * `expandAbbreviations` in the geocode path with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp; EN suffixes deliberately
  * untouched). Keep the anti-rot loop honest: a NEW deterministic INV break belongs here with a tracked note, never
- * silently gated. comma-drop (#1101 delimiter-free invariant): the FR "Rue du Chevaleret" base loses rooftop resolution
- * when its comma is stripped (address_point → admin tier, coord → null) — the comma-free parsing gap the
- * punctuation-drop training augmentation (#1101) exists to close. Tracked here (visible, non-blocking) until that
- * augmentation lands; the anti-rot loop will flag it "newly passing" the moment a retrain fixes it.
+ * silently gated. The #1101 FR comma-drop xfail ("181 Rue du Chevaleret, Paris" losing its rooftop) was removed
+ * 2026-08-12 when the anti-rot loop flagged it newly passing — the comma-free base now holds its rooftop.
  */
-const KNOWN_INV_XFAIL = new Map<string, string>([
-	// The FR comma-free rooftop loss. Its US twin ("1600 Pennsylvania Ave NW Washington DC") had the SAME
-	// #1101 failure on the shipped model (v6.4.0), but the punct-drop augmentation (v3.8.x,
-	// augment_punct_drop_prob) FIXES it — it holds on merit — so it is deliberately NOT tracked. The FR base
-	// still loses its rooftop after the fix (a resolver dependency beyond the parse), so it stays here.
-	["comma-drop|181 Rue du Chevaleret, Paris", "#1101: comma-free FR address loses rooftop (address_point→admin)"],
-])
+const KNOWN_INV_XFAIL = new Map<string, string>()
 
 /**
  * Known, DETERMINISTIC BAND misses — the tolerance-band analog of KNOWN_INV_XFAIL, same anti-rot bookkeeping. These are
@@ -328,9 +320,9 @@ const KNOWN_BAND_XFAIL = new Map<string, string>([
 	// A single-char corruption of a rooftop street token drops the exact match to a ~6.4km fallback (anchor-off).
 	["transpose|100 Centre Street, New York, NY", "anchor-off: corrupted street token loses the rooftop (~6.4km)"],
 	["typo-sub|100 Centre Street, New York, NY", "anchor-off: corrupted street token loses the rooftop (~6.4km)"],
-	// A typo'd NL locality with no \d{5} anchor loses resolution entirely — the case the gazetteer soft-feed exists for.
-	["transpose|Damrak 1, 1012 LG Amsterdam", "anchor-off: typo'd locality, no postcode anchor → no-resolve"],
-	["typo-sub|Damrak 1, 1012 LG Amsterdam", "anchor-off: typo'd locality, no postcode anchor → no-resolve"],
+	// The Damrak transpose/typo-sub pair ("typo'd NL locality, no postcode anchor → no-resolve") was removed
+	// 2026-08-12: the word-level fuzzy measure (#1614) corrects the corrupted locality and both perturbations
+	// now land in-band.
 ])
 
 /**
