@@ -63,6 +63,12 @@ interface BfsItem {
 	stateID: number
 	depth: number
 	tokens: string[]
+	/**
+	 * Absolute token depth of the state this item's expansion STARTED from. The two seeding interpretations start one
+	 * token apart (the complete-token walk sits at N, the partial-token prefix at N−1), so a shared outer base would
+	 * mislabel one branch's depths.
+	 */
+	base: number
 }
 
 /**
@@ -93,35 +99,40 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 
 	const seen = new Map<number, AutocompleteSuggestion>()
 	const queue: BfsItem[] = []
-	let depth: number
 
 	const match = fst.walk(normalizedTokens)
+	// Both interpretations of the last token run, ALWAYS: it can be a complete edge AND a partial of
+	// longer edges at once — the live en-us artifact holds a place literally named "Chic", and
+	// letting its successful walk short-circuit silently dropped "Chicago" and every other longer
+	// completion from the typeahead.
+	const complete = normalizedTokens.slice(0, -1)
+	const partial = normalizedTokens.at(-1)!
+	const prefixState = !complete.length ? 0 : (fst.walk(complete)?.stateID ?? undefined)
+
+	if (!match && prefixState === undefined) {
+		return { query, normalizedTokens, depth: 0, suggestions: [] }
+	}
+
+	const depth = match?.depth ?? complete.length
 
 	if (match) {
-		// COMPLETE-token prefix landed on a state. Seed at the match state (accepting + continuations).
-		depth = match.depth
-
+		// COMPLETE-token interpretation: the typed tokens land on a state. Seed its accepting entries
+		// and its continuations.
 		for (const entry of fst.accepting(match.stateID)) {
 			addSuggestion(seen, entry, match.depth, [])
 		}
 
 		for (const cont of fst.continuations(match.stateID)) {
-			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
+			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token], base: match.depth })
 		}
-	} else {
-		// PARTIAL last token — walk the complete prefix, complete the partial by prefix-filtering edges.
-		const complete = normalizedTokens.slice(0, -1)
-		const partial = normalizedTokens.at(-1)!
-		const prefixState = !complete.length ? 0 : (fst.walk(complete)?.stateID ?? undefined)
+	}
 
-		if (prefixState === undefined) {
-			return { query, normalizedTokens, depth: 0, suggestions: [] }
-		}
-
-		depth = complete.length
-
+	if (prefixState !== undefined) {
+		// PARTIAL-token interpretation: complete the last token by prefix-filtering the continuation
+		// edges. The exact edge is skipped — when it exists, the complete-token seeding above already
+		// covered that state.
 		for (const cont of fst.continuations(prefixState)) {
-			if (!cont.token.startsWith(partial)) continue
+			if (cont.token === partial || !cont.token.startsWith(partial)) continue
 
 			// This edge completes the typed partial token — its target is a real match at depth+1.
 			for (const entry of topByReferential(fst.accepting(cont.targetState), PER_BRANCH)) {
@@ -129,7 +140,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 			}
 
 			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
-			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token] })
+			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token], base: complete.length })
 		}
 	}
 
@@ -143,12 +154,17 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		if (item.depth > maxExpansionDepth) continue
 
 		for (const entry of topByReferential(fst.accepting(item.stateID), PER_BRANCH)) {
-			addSuggestion(seen, entry, depth + item.depth, item.tokens)
+			addSuggestion(seen, entry, item.base + item.depth, item.tokens)
 		}
 
 		if (item.depth < maxExpansionDepth) {
 			for (const cont of fst.continuations(item.stateID)) {
-				queue.push({ stateID: cont.targetState, depth: item.depth + 1, tokens: [...item.tokens, cont.token] })
+				queue.push({
+					stateID: cont.targetState,
+					depth: item.depth + 1,
+					tokens: [...item.tokens, cont.token],
+					base: item.base,
+				})
 			}
 		}
 	}

@@ -129,6 +129,31 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(r.suggestions[0]?.name).toBe("Chicago")
 	})
 
+	it("a complete-token walk must not SHADOW the partial interpretation: 'chic' with a real place named Chic still reaches Chicago", () => {
+		// The live en-us artifact holds a place literally named "Chic" — with it, the typed prefix is
+		// BOTH a complete edge and a partial of "chicago", and the walk's success silently dropped
+		// every longer completion (the prod typeahead offered only "Chic" for "Chic").
+		const shadowed = new FSTMatcher([
+			{
+				edges: new Map([
+					["chic", 1],
+					["chicago", 2],
+				]),
+				places: [],
+			}, // 0 root
+			{ edges: new Map(), places: [place(10, "Chic", "locality", 0.1)] }, // 1 "chic"
+			{ edges: new Map([["heights", 3]]), places: [place(11, "Chicago", "locality", 0.85)] }, // 2 "chicago"
+			{ edges: new Map(), places: [place(12, "Chicago Heights", "locality", 0.4)] }, // 3 "chicago heights"
+		])
+
+		const r = autocomplete(shadowed, "chic")
+		const names = r.suggestions.map((s) => s.name)
+
+		expect(names).toContain("Chic")
+		expect(names).toContain("Chicago")
+		expect(r.suggestions[0]?.name).toBe("Chicago")
+	})
+
 	it("does not mis-complete: 'san fr' → San Francisco (not San anything-else)", () => {
 		const r = autocomplete(matcher, "san fr")
 		expect(r.suggestions.map((s) => s.name)).toEqual(["San Francisco"])
