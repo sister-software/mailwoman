@@ -41,6 +41,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",

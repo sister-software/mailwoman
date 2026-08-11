@@ -500,24 +500,6 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 //#region WOF resolution
 
 /**
- * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
- * eval harnesses use; `postalcode` outranks `locality` (the old cascade's "postcode first, most precise" tier), peers
- * of locality sit just below it.
- */
-const PIN_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
-	borough: 4,
-	localadmin: 4,
-	neighbourhood: 4,
-	county: 3,
-	macrocounty: 3,
-	region: 2,
-	macroregion: 2,
-	country: 1,
-}
-
-/**
  * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
  */
 interface ResolvedTreeNode {

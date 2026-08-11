@@ -24,7 +24,7 @@
 
 import { existsSync } from "node:fs"
 
-import { UK_POSTCODE_PATTERN } from "@mailwoman/codex/gb"
+import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -38,6 +38,7 @@ import {
 	type QueryIntentMarker,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
+import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
@@ -55,6 +56,14 @@ import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.t
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
+
+export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
+
+export {
+	countriesFromPostcodeFormat,
+	countryFromPostcodeFormat,
+	POSTCODE_FORMAT_COUNTRY,
+} from "@mailwoman/core/resolver"
 
 /**
  * The resolution tier that produced the coordinate. `address_point` > `interpolated` > `street` > `admin`.
@@ -399,136 +408,6 @@ export interface GeocodeDeps {
  * guess is broader/softer than a postcode anchor (2.0), so it blends gently.
  */
 const COARSE_PLACER_ANCHOR_WEIGHT = 1
-
-/**
- * #928: distinctive postcode FORMATS that unambiguously indicate a country — a stronger country signal than the
- * language-based coarse placer, which conflates GB/US (both carry English street patterns) and mis-routes GB addresses
- * to US namesakes (`London E4 9AZ` → London, Ohio) at 0.94–0.96 confidence. The format is unforgeable across these
- * countries: the GB pattern (letters-first) never matches a US ZIP or an NL `\d{4} [A-Z]{2}` code. Extend ONLY with
- * formats validated as non-overlapping. Feeds the `postcodeCountryPrior` lever (gated, default-off pending its gate).
- */
-const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
-	// GB `E4 9AZ` — letters-first, ends `\d[A-Z]{2}`. Never matches a US ZIP / NL / FR / CA code.
-	{ re: /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i, country: "GB" },
-	// CA `K2P 1L4` — `A#A #A#`, ends `\d[A-Z]\d` (distinct from GB's `\d[A-Z]{2}`). The placer conflates CA
-	// with US (English) / FR (Québec) at 0.9–1.0 confidence, same failure as GB; the format is unambiguous.
-	{ re: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, country: "CA" },
-	// IE Eircode `D02 AF30` — routing key (letter + 2 digits, or the D6W special) + a 4-alnum unique part.
-	// The 4-char unique part is what separates it from GB's 3-char `\d[A-Z]{2}` inward (no real-code
-	// overlap; Belfast `BT1 5GS` stays GB — Northern Ireland uses GB postcodes). The placer mis-routes IE
-	// 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
-	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
-	// NL PC6 is DELIBERATELY ABSENT: `\d{4} [A-Z]{2}` is forgeable in parse context — a US
-	// house-number + directional fragment (`1234 NE`, `8990 SW`) matches it exactly, and this table
-	// feeds recognizeBarePostcode, which must never touch a street name. NL lives in
-	// countriesFromPostcodeFormat instead, whose consumers gate on a bare-postcode TREE.
-]
-
-/**
- * Postcode shapes whose code is UNIT-GRADE — a delivery-walk or street-block unit, categorically tighter than any
- * locality centroid, so an EXACT hit on one leads the admin ladder in {@link extractGeocodeResult} instead of following
- * the locality-first epoch convention.
- *
- * The convention exists because most postal systems are AREA-class: an FR 5-digit zone is coarser than the commune it
- * contains, so promoting it would trade a good answer for a worse one. Two systems are the other way round, and
- * membership here is earned by MEASUREMENT of the code's granularity, never by "the code has letters in it":
- *
- * - **NL PC6** (`1012 LG`) — ~8 addresses per code; the CBS polygon centroid (#977, the original carve-out).
- * - **GB unit** (`N7 0BT`) — ~15 addresses per code, and the shipped gazetteer carries 1,751,733 of them from Ordnance
- *   Survey Code-Point Open. Measured 2026-08-10 against the panel-v2 GB rooftop truth: the unit centroid is within 1 km
- *   of truth on 15/15 rows, median 38 m, max 100 m, while the locality centroid the ladder returned instead was
- *   5.1–14.6 km out.
- *
- * **CA is deliberately absent.** `candidate.db` does carry 843,739 six-character CA codes (full LDU, block-face grade),
- * so the shape would fire — but nothing has measured a CA LDU centroid against a rooftop truth, and an unmeasured
- * granularity claim does not earn a default-on tier promotion. IE is absent for the blunter reason that the gazetteer
- * holds zero Eircode rows. Add either with a measurement, not with a regex.
- */
-const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
-	// NL PC6 — `1012 LG` / `1012LG`.
-	/^\d{4}\s?[A-Z]{2}$/i,
-	// GB unit — the codex's own shape (`@mailwoman/codex/gb`), so the parser, the country prior and this
-	// tier can never disagree about what a UK postcode looks like.
-	UK_POSTCODE_PATTERN,
-]
-
-/**
- * Strip everything but letters and digits, upper-cased — the comparison surface for "did the resolver hit the FULL code
- * or a coarser stem?". `N7 0BT` and `N70BT` are the same code; `N7` is not.
- */
-const alnum = (s: string): string => s.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
-
-/**
- * True when this resolved postcode node is an EXACT hit on a unit-grade code — the three-way guard #977 specified,
- * generalized past NL:
- *
- * 1. The PARSED span is a full unit shape ({@link UNIT_GRADE_POSTCODE}), not a stem the user typed;
- * 2. The node resolved (a coordinate is present — checked by the caller); and
- * 3. The resolver's own hit is the FULL code, not a coarsened prefix. The lookup ladder is allowed to fall back to a
- *    4-digit NL stem or a GB outward district, and those are AREA-class: promoting one over the locality would be the
- *    exact trade the epoch convention forbids. `resolver_name` is the gazetteer's canonical name for the row that won,
- *    so comparing it to the parsed span is what separates the two.
- */
-export function isUnitGradePostcodeHit(parsed: string, resolverName: string | undefined): boolean {
-	const value = parsed.trim()
-
-	if (!value || !UNIT_GRADE_POSTCODE.some((re) => re.test(value))) return false
-
-	return alnum(resolverName ?? "") === alnum(value)
-}
-
-/**
- * The country a parsed postcode's FORMAT implies, or null. See {@link POSTCODE_FORMAT_COUNTRY}.
- */
-export function countryFromPostcodeFormat(postcode: string | undefined): string | null {
-	const p = postcode?.trim()
-
-	if (!p) return null
-
-	for (const { re, country } of POSTCODE_FORMAT_COUNTRY) if (re.test(p)) return country
-
-	return null
-}
-
-/**
- * Spaced `NNN NN` — the CZ/SK/SE/GR shared postcode space (#1589's `100 00`). Unlike the
- * {@link POSTCODE_FORMAT_COUNTRY} singles, this shape implies a SET: no single country owns it, so it can gate a
- * locale-inferred scope but never name one country outright.
- */
-const SHARED_NNN_NN = /^\d{3} \d{2}$/
-
-/**
- * NL PC6 (`1012 LG`) — digits-first then exactly two letters. NL-unique as a POSTCODE shape (GB/CA/IE are
- * letters-first; the digit-only families carry no letters), but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US
- * house-number + directional fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode. It belongs
- * only here, where every consumer gates on a tree that IS a bare postcode.
- */
-const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
-
-/**
- * EVERY country a parsed postcode's FORMAT is consistent with — the singles table, the NL PC6 shape, and the shared
- * `NNN NN` family. Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more; that family stays with
- * the locale prior on purpose — the `75008` contract).
- *
- * Unlike {@link countryFromPostcodeFormat}, this is NOT an unforgeable-in-any-context claim: consumers (the resolver's
- * implied-set probe, the CLI's withheld-scope guard) apply it only to a tree that is a bare postcode, where the
- * street-fragment collision the singles table must exclude cannot arise.
- */
-export function countriesFromPostcodeFormat(postcode: string | undefined): readonly string[] {
-	const p = postcode?.trim()
-
-	if (!p) return []
-
-	const single = countryFromPostcodeFormat(p)
-
-	if (single) return [single]
-
-	if (NL_PC6.test(p)) return ["NL"]
-
-	if (SHARED_NNN_NN.test(p)) return ["CZ", "SK", "SE", "GR"]
-
-	return []
-}
 
 /**
  * The first `postcode` node's value in a parsed tree, or undefined.
