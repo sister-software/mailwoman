@@ -16,6 +16,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { describe, expect, it } from "vitest"
 
 import { listGateSpecs, resolveGateSpecPath, runPromotionGate } from "./promotion-gate.ts"
@@ -159,14 +160,15 @@ describe("resolveGateSpecPath", () => {
 
 describe("paired weights-caches (#47)", () => {
 	/**
-	 * Lay out a fake package-shaped weights cache: `<root>/node_modules/@mailwoman/neural-weights-en-us/` with a
-	 * model.onnx whose bytes do (int8) or don't (fp32) carry the DynamicQuantizeLinear needle the provenance guard scans
-	 * for, plus the tokenizer + card the pre-battery reads touch. Every guard under test returns exit 2 BEFORE any
-	 * battery, so no real ONNX is ever loaded.
+	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8) or don't (fp32) carry the
+	 * DynamicQuantizeLinear needle the provenance guard scans for, plus the tokenizer + card the pre-battery reads touch.
+	 * The package dir comes from `weightsCachePackageDir` — the resolver's OWN layout function, so the fixture cannot
+	 * drift from what the gate resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
+	 * ever loaded.
 	 */
 	function stageFakeCache(kind: "fp32" | "int8", salt: string): string {
 		const root = mkdtempSync(join(tmpdir(), `gate-pair-${kind}-`))
-		const pkg = join(root, "node_modules", "@mailwoman", "neural-weights-en-us")
+		const pkg = weightsCachePackageDir(root, "en-us")
 
 		mkdirSync(pkg, { recursive: true })
 
