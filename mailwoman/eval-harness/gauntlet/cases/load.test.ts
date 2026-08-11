@@ -83,8 +83,12 @@ const CORPUS_SIZE = 530
  *
  * Moved 2026-08-11 (fifth) — → this — by the #1585 MECHANISM landing: the sacremento row flips improvement_target →
  * pass with its measured receipt. Row count and every `id`+`input` untouched, so the board id stays.
+ *
+ * Moved 2026-08-11 (sixth) — → this — by the NZ re-pins after the LINZ shard promote (#1617): the two Stanmore Bay rows
+ * flip improvement_target → pass with the shard's real coordinates replacing their pre-shard abstain pins. Row count
+ * and every `id`+`input` untouched, so the board id stays.
  */
-const CORPUS_HASH = "f9158e3e5b8692ef8ae903ff9f4e83088061ad7111c138fccbb5dd42deb05fe6"
+const CORPUS_HASH = "64a6b3263d6117c1c61d3a1dec453ba131a0f15c2f461d409ed7f640d1a6e993"
 
 /**
  * `ablationBoardID` of the corpus.
