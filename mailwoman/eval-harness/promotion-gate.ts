@@ -10,9 +10,16 @@
  *
  *   Usage: mailwoman eval gate\
  *   --model <fp32.onnx> [--int8 <int8.onnx>]\
+ *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
  *   --gate mailwoman/eval-harness/gates/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
  *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/gate-<label>]
+ *
+ *   The --model dual grades RAW artifacts: its fp32↔int8 deltas are valid, but its absolute floors
+ *   are NOT for any channel-trained model — the package channel siblings (anchor, gazetteer,
+ *   COUNTRY) never load on that path. Package-shaped grading (--weights-cache) is the only
+ *   in-distribution floor read, and a PAIR of caches (#47) grades floors and the delta cap together
+ *   in one run — the release path.
  *
  *   Behavior:
  *
@@ -151,6 +158,14 @@ export interface PromotionGateOptions {
 	 */
 	weightsCache?: string
 	/**
+	 * Package-shaped INT8 candidate dir, same layout as {@linkcode PromotionGateOptions.weightsCache} — pairing them runs
+	 * the dual fp32+int8 battery entirely package-shaped (#47). The `--model`+`--int8` dual under-feeds the country
+	 * channel (channel siblings never load), so its absolute floors are invalid and a release grade needed a second,
+	 * single-artifact `--weights-cache` run; a pair makes floors AND deltas valid in one run. Requires
+	 * {@linkcode PromotionGateOptions.weightsCache} (the fp32 arm) and excludes the `--model`/`--int8` flow.
+	 */
+	int8WeightsCache?: string
+	/**
 	 * Battery output dir. Default `/tmp/gate-<label>-<hhmm>`.
 	 */
 	outDir?: string
@@ -211,13 +226,14 @@ export function listGateSpecs(): string[] {
 async function runLoreGuards(env: {
 	WC: string
 	WC_MODEL: string
+	WC8_MODEL: string
 	MODEL: string
 	INT8: string
 	TOK: string
 	OUT_DIR: string
 	card: ModelCard
 }): Promise<number | null> {
-	const { WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
+	const { WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
 	// --- lore guard: tokenizer comparability -----------------------------------
 	const CARD_TOK = card.training.tokenizer_version
 
@@ -306,19 +322,48 @@ async function runLoreGuards(env: {
 
 	const md5 = async (p: string): Promise<string> => md5File(p)
 
-	// --weights-cache: one artifact (the shipped package int8) — log its provenance, skip the
-	// fp32/int8 dual-artifact assertions (they exist for the --model fp32 + --int8 sibling flow).
+	// --weights-cache alone: one artifact (typically the shipped package int8) graded in the primary
+	// slot — log its provenance, skip the dual-artifact assertions (there is no pair to cross-check).
+	// A PAIR (#47) restores them: the primary arm is the fp32 by contract, so the same three mislabel
+	// assertions the --model flow carries apply, against the package-resolved bytes.
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
 
-		const provenance =
-			[
-				`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
-				`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
-			].join("\n") + "\n"
+		const provLines = [
+			`graded at ${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}`,
+			`WEIGHTS-CACHE  ${await md5(WC_MODEL)}  dql=${wcDql}  ${WC_MODEL}`,
+		]
 
+		let wc8Dql = ""
+
+		if (WC8_MODEL) {
+			wc8Dql = await dql(WC8_MODEL)
+			provLines.push(`WC-INT8        ${await md5(WC8_MODEL)}  dql=${wc8Dql}  ${WC8_MODEL}`)
+		}
+
+		const provenance = provLines.join("\n") + "\n"
 		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance)
 		process.stdout.write(provenance)
+
+		if (WC8_MODEL) {
+			if (wcDql !== "0") {
+				console.error(`✗ paired --weights-cache '${WC_MODEL}' carries int8 quant nodes — it is not the fp32 arm`)
+
+				return 2
+			}
+
+			if (wc8Dql === "0") {
+				console.error(`✗ --int8-weights-cache '${WC8_MODEL}' has no quant nodes — it is not a quantized artifact`)
+
+				return 2
+			}
+
+			if ((await md5(WC_MODEL)) === (await md5(WC8_MODEL))) {
+				console.error("✗ the paired weights-caches are byte-identical — one arm is mislabeled")
+
+				return 2
+			}
+		}
 	} else {
 		const modelDql = await dql(MODEL)
 
@@ -465,8 +510,25 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const EFF_TOK = WC ? resolve(WC_PACKAGE, "tokenizer.model") : TOK
 	const EFF_CARD = WC ? resolve(WC_PACKAGE, "model-card.json") : CARD
 
+	// The int8 arm of a package-shaped pair (#47) — same layout, resolved the same deliberate way.
+	const WC8 = options.int8WeightsCache ?? ""
+	const WC8_PACKAGE = WC8 ? weightsCachePackageDir(WC8, "en-us") : ""
+	const WC8_MODEL = WC8 ? resolve(WC8_PACKAGE, "model.onnx") : ""
+
 	if (!GATE || (!MODEL && !WC)) {
 		console.error("✗ --gate and one of --model / --weights-cache required")
+
+		return 2
+	}
+
+	if (WC8 && !WC) {
+		console.error("✗ --int8-weights-cache requires --weights-cache (the fp32 arm of the pair)")
+
+		return 2
+	}
+
+	if (WC8 && (MODEL || INT8)) {
+		console.error("✗ --int8-weights-cache pairs with --weights-cache only — drop --model/--int8")
 
 		return 2
 	}
@@ -484,7 +546,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	mkdirSync(OUT_DIR, { recursive: true })
 
 	const card = parseJSONStrict<ModelCard>(readFileSync(EFF_CARD, "utf8"))
-	const guardExit = await runLoreGuards({ WC, WC_MODEL, MODEL, INT8, TOK, OUT_DIR, card })
+	const guardExit = await runLoreGuards({ WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card })
 
 	if (guardExit !== null) return guardExit
 
@@ -524,19 +586,29 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		console.log(`golden dir: ${gate.golden_dir} (spec-declared)`)
 	}
 
-	const shipModel = WC ? WC_MODEL : INT8 || MODEL
+	// The ship artifact: the int8 arm when a pair is graded (the int8 is what ships), else the
+	// single cache, else the --model flow's int8-or-fp32.
+	const shipModel = WC ? WC8_MODEL || WC_MODEL : INT8 || MODEL
 
-	const runBattery = async (m: string, tag: string): Promise<void> => {
+	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
 		// Package-shaped (#718): the metric probes (which support weightsCache) load ALL channels —
 		// anchor + gazetteer + COUNTRY — from the package. The country-orthogonal de-order watch lens
-		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = WC_MODEL when WC.
-		const plOptions = WC
-			? { weightsCache: WC }
+		// stays on the explicit path against the cache siblings (EFF_TOK/EFF_CARD); m = the arm's own
+		// model when package-shaped. `wc` is the PER-BATTERY cache root so a paired int8 arm (#47)
+		// loads its own package, not the fp32 arm's.
+		const plOptions = wc
+			? { weightsCache: wc }
 			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: String(LK) }
 
-		const probeOptions = WC ? { weightsCache: WC } : { model: m }
+		const probeOptions = wc ? { weightsCache: wc } : { model: m }
+
+		// The de-order watch lens takes explicit paths, so it names the ARM's own siblings — a paired
+		// int8 arm must not be decoded under the fp32 arm's card if the two bundles ever diverge.
+		const armPackage = wc ? weightsCachePackageDir(wc, "en-us") : ""
+		const armTok = wc ? resolve(armPackage, "tokenizer.model") : EFF_TOK
+		const armCard = wc ? resolve(armPackage, "model-card.json") : EFF_CARD
 
 		// Each leg below captured a child's stdout into one `.md`. In-process the sink collects the same
 		// lines and `renderLines` re-adds the newline console.log would have. A bare `$` THREW on a
@@ -621,8 +693,8 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			await deOrderEval(
 				{
 					model: m,
-					card: EFF_CARD,
-					tokenizer: EFF_TOK,
+					card: armCard,
+					tokenizer: armTok,
 					anchorLookup: String(LK),
 					out: `${OUT_DIR}/${tag}-deorder`,
 				},
@@ -636,11 +708,18 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${renderLines(deorderOut)}${renderLines(deorderErr)}`)
 	}
 
-	// --weights-cache grades the single shipped package (int8) in the primary slot; the verdict reads
-	// the `fp32-*` files (its primary-artifact slot) with withInt8=false. The --model path keeps the
-	// fp32 + optional int8 dual-artifact flow.
+	// --weights-cache alone grades the single shipped package (int8) in the primary slot; the verdict
+	// reads the `fp32-*` files (its primary-artifact slot) with withInt8=false. Paired (#47), the
+	// fp32 arm takes the primary slot and the int8 arm runs the same battery from its OWN package, so
+	// floors and the delta cap are both graded in-distribution in one run. The --model path keeps the
+	// fp32 + optional int8 dual-artifact flow (deltas valid; absolute floors under-fed — the country
+	// channel's siblings never load there).
 	if (WC) {
 		await runBattery(WC_MODEL, "fp32")
+
+		if (WC8) {
+			await runBattery(WC8_MODEL, "int8", WC8)
+		}
 	} else {
 		await runBattery(MODEL, "fp32")
 
@@ -816,7 +895,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		const { failed } = assemblePromotionVerdict({
 			gate: GATE,
 			outDir: OUT_DIR,
-			withInt8: Boolean(INT8),
+			withInt8: Boolean(INT8 || WC8),
 			...(options.weightsCache ? { gradedArtifact: "weights-cache" as const } : {}),
 		})
 

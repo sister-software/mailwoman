@@ -11,12 +11,15 @@
  *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid gate battery.
  */
 
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { describe, expect, it } from "vitest"
 
-import { listGateSpecs, resolveGateSpecPath } from "./promotion-gate.ts"
+import { listGateSpecs, resolveGateSpecPath, runPromotionGate } from "./promotion-gate.ts"
 
 /**
  * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one), segment-based so no dynamic RegExp is
@@ -152,5 +155,73 @@ describe("resolveGateSpecPath", () => {
 
 		// baselines.json resolves through the same source-tree-fallback pattern (baseline-assert.ts).
 		expect(shipsInPackage(pkg.files, "eval-harness/baselines.json")).toBe(true)
+	})
+})
+
+describe("paired weights-caches (#47)", () => {
+	/**
+	 * Lay out a fake package-shaped weights cache with a model.onnx whose bytes do (int8) or don't (fp32) carry the
+	 * DynamicQuantizeLinear needle the provenance guard scans for, plus the tokenizer + card the pre-battery reads touch.
+	 * The package dir comes from `weightsCachePackageDir` — the resolver's OWN layout function, so the fixture cannot
+	 * drift from what the gate resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
+	 * ever loaded.
+	 */
+	function stageFakeCache(kind: "fp32" | "int8", salt: string): string {
+		const root = mkdtempSync(join(tmpdir(), `gate-pair-${kind}-`))
+		const pkg = weightsCachePackageDir(root, "en-us")
+
+		mkdirSync(pkg, { recursive: true })
+
+		writeFileSync(
+			join(pkg, "model.onnx"),
+			kind === "int8" ? `fake-onnx ${salt}\nDynamicQuantizeLinear\n` : `fake-onnx ${salt}\n`
+		)
+
+		writeFileSync(join(pkg, "tokenizer.model"), "fake-tokenizer")
+		writeFileSync(join(pkg, "model-card.json"), JSON.stringify({ training: { tokenizer_version: "v0.6.0-a0" } }))
+
+		return root
+	}
+
+	it("refuses --int8-weights-cache without --weights-cache", async () => {
+		const int8 = stageFakeCache("int8", "a")
+
+		expect(await runPromotionGate({ gate: "v9.0.0-base", int8WeightsCache: int8 })).toBe(2)
+	})
+
+	it("refuses --int8-weights-cache alongside the --model/--int8 flow", async () => {
+		const wc = stageFakeCache("fp32", "b")
+		const int8 = stageFakeCache("int8", "c")
+
+		expect(
+			await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, model: "x.onnx" })
+		).toBe(2)
+	})
+
+	it("refuses a paired fp32 arm that carries quant nodes — the arms are swapped or mislabeled", async () => {
+		const wc = stageFakeCache("int8", "d")
+		const int8 = stageFakeCache("int8", "e")
+		const outDir = mkdtempSync(join(tmpdir(), "gate-pair-out-"))
+
+		expect(await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
+	})
+
+	it("refuses a paired int8 arm with no quant nodes", async () => {
+		const wc = stageFakeCache("fp32", "f")
+		const int8 = stageFakeCache("fp32", "g")
+		const outDir = mkdtempSync(join(tmpdir(), "gate-pair-out-"))
+
+		expect(await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
+	})
+
+	it("refuses byte-identical paired arms", async () => {
+		const wc = stageFakeCache("int8", "h")
+		const int8 = stageFakeCache("int8", "h")
+		const outDir = mkdtempSync(join(tmpdir(), "gate-pair-out-"))
+
+		// Same salt, same bytes: dql alone cannot tell them apart, the md5 identity check must.
+		const swapped = await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })
+
+		expect(swapped).toBe(2)
 	})
 })

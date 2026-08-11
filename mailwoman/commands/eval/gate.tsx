@@ -39,6 +39,12 @@ const OptionsSchema = zod.object({
 		.describe(
 			"Package-shaped candidate weights dir (<root>/node_modules/@mailwoman/neural-weights-en-us) — #718-safe, feeds anchor+gazetteer+country via loadFromWeights; the only correct grade for a country-channel model (v6.2.0+). Alternative to --model."
 		),
+	int8WeightsCache: zod
+		.string()
+		.optional()
+		.describe(
+			"Package-shaped INT8 candidate dir, same layout — pairs with --weights-cache (the fp32 arm) to grade floors AND the int8 delta cap package-shaped in one run (#47). Excludes --model/--int8."
+		),
 	outDir: zod.string().optional().describe("Battery output dir (default /tmp/gate-<label>-<hhmm>)"),
 })
 
