@@ -32,7 +32,7 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 530 curated regressions.
+ * The corpus today — 532 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 530
+const CORPUS_SIZE = 532
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -87,8 +87,13 @@ const CORPUS_SIZE = 530
  * Moved 2026-08-11 (sixth) — → this — by the NZ re-pins after the LINZ shard promote (#1617): the two Stanmore Bay rows
  * flip improvement_target → pass with the shard's real coordinates replacing their pre-shard abstain pins. Row count
  * and every `id`+`input` untouched, so the board id stays.
+ *
+ * Moved 2026-08-11 (seventh) — → this — by the 2-row `fork_entity` board (the declared_fork → entity-probe wire's
+ * freeze): the COMER primary (poi.db holds the worldwide-unique entity 6 m from truth; the fork abstains with no
+ * consumer) and the Savile Row hijack tripwire, pinned to the true London street with its three wrong behaviors
+ * receipted (the qualifier-strip Rhu scrape among them). 530 → 532, so the board id moves too.
  */
-const CORPUS_HASH = "64a6b3263d6117c1c61d3a1dec453ba131a0f15c2f461d409ed7f640d1a6e993"
+const CORPUS_HASH = "193d36f6e790cc4f3807b7d58f759c2a022f994d43a4c87a8df77aa4a72a3259"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -100,7 +105,7 @@ const CORPUS_HASH = "64a6b3263d6117c1c61d3a1dec453ba131a0f15c2f461d409ed7f640d1a
  * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
  * (`@522:da202fa6e714` → `@523:08b0b462cb23`), and for the 7-row fuzzy-scope board (`@523:08b0b462cb23` → this).
  */
-const BOARD_ID = "gauntlet-regression@530:3528e7e0cfa3"
+const BOARD_ID = "gauntlet-regression@532:15caa1818dd0"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
