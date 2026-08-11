@@ -32,7 +32,7 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 523 curated regressions.
+ * The corpus today — 530 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 523
+const CORPUS_SIZE = 530
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -74,8 +74,14 @@ const CORPUS_SIZE = 523
  * the GB green control (522 → 523, so the board id moves too), and the 75008 locale-prior row gains `defaultCountry:
  * US` — the locale prior reaches the library as the CLI's inferred defaultCountry, and without the field the harness
  * measured the no-locale arm, where the pin never held (baseline: unresolved).
+ *
+ * Moved 2026-08-11 (fourth) — `b639adfe…` → this — by the 7-row `bug:#1585` fuzzy-scope board (nz ×3, us, fr, ru ×2):
+ * the cross-country typo-tier receipts (Stanmore Bay → Banmore IN under en-NZ; Sacremento → BE; Aucklnad → GB), the
+ * in-country scrape (Gore Bay, pop 39), and the exact-match contract controls (Paris under en-US passes; bare Moscow
+ * and structured 'Moscow, Russia' pin their separate exact-tier drops). First rows to carry the new `locale` and
+ * `expectAbstain` fields. 523 → 530, so the board id moves too.
  */
-const CORPUS_HASH = "b639adfe5a43e219f9bd4af4c50f1218351783db2f4f90dbc4bdf53167027223"
+const CORPUS_HASH = "1e61c9872db0f06168cdaa70c02fe90ea09655fc3259baa30096436b8e364902"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -85,9 +91,9 @@ const CORPUS_HASH = "b639adfe5a43e219f9bd4af4c50f1218351783db2f4f90dbc4bdf531670
  * should: the ablation board is genuinely a different board. Same again for the 24-row world-structures batch on
  * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode board on 2026-08-11
  * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
- * (`@522:da202fa6e714` → this).
+ * (`@522:da202fa6e714` → `@523:08b0b462cb23`), and for the 7-row fuzzy-scope board (`@523:08b0b462cb23` → this).
  */
-const BOARD_ID = "gauntlet-regression@523:08b0b462cb23"
+const BOARD_ID = "gauntlet-regression@530:3528e7e0cfa3"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.

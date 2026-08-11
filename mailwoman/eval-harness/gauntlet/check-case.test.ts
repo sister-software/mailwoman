@@ -37,6 +37,8 @@ function storedCase(over: Partial<GauntletCaseTable> = {}): GauntletCaseTable {
 		expect_tolerance_m: null,
 		expect_tier: null,
 		default_country: null,
+		locale: null,
+		expect_abstain: null,
 		added_at: "2026-08-06",
 		bug_ref: null,
 		note: null,

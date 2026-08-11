@@ -104,9 +104,9 @@ beforeAll(async () => {
 	corpus = cases.map((c) => c.input)
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 523-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 530-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(523)
+		expect(corpus).toHaveLength(530)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
@@ -167,7 +167,8 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 523-case corpus", ()
 	// structural anchor, exactly the declared-fork shape the marker exists for. Deliberate pin
 	// move, reviewed row-by-row; not silent growth.
 	// 2026-08-11: corpus 514 → 523 with the bare-foreign-postcode board (#1589) — 9 postcode
-	// surfaces ('100 00', 'SW1A 1AA', 'N7 0BT', …). None are fork-shaped; the fork list is
+	// surfaces ('100 00', 'SW1A 1AA', 'N7 0BT', …), then 523 → 530 with the #1585 fuzzy-scope
+	// board (bare toponyms + two exact-match controls). None are fork-shaped; the fork list is
 	// unchanged.
 	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",
