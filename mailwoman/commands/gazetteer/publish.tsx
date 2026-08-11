@@ -47,7 +47,7 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 		const uploadScript = String(repoRootPathBuilder("scripts", "publish-demo-assets-to-r2.py"))
 
 		const resourcesFile = options.bumpDemo
-			? String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx"))
+			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))
 			: undefined
 
 		const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
@@ -71,7 +71,7 @@ const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsS
 		return [
 			`R2: ${r.key}`,
 			r.bumped
-				? `demo: ADMIN_GAZETTEER_VERSION → ${version} (commit docs/src/shared/resources.tsx)`
+				? `demo: ADMIN_GAZETTEER_VERSION → ${version} (commit docs/src/shared/resources/index.ts)`
 				: "demo: not bumped",
 		]
 	})

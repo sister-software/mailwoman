@@ -427,7 +427,7 @@ export interface PublishOptions {
 	 */
 	stageDir: string
 	/**
-	 * `docs/src/shared/resources.tsx` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
+	 * `docs/src/shared/resources/index.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
 	 */
 	resourcesFile?: string
 	bucket?: string
