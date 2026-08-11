@@ -14,34 +14,12 @@
  *   never holds it: a web stream piped to a write stream.
  */
 
-import { spawn } from "node:child_process"
 import { createWriteStream, existsSync } from "node:fs"
 import { rename } from "node:fs/promises"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
-
-/**
- * Run a command and resolve its stdout, rejecting with the captured stderr on a non-zero exit.
- *
- * Used for the `unzip -tq` integrity probe below — a shelled-out check rather than a library one because the archives
- * are large and `unzip -t` streams them without materializing the contents.
- */
-export function runCapture(cmd: string, args: string[]): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const child = spawn(cmd, args)
-		let out = ""
-		let err = ""
-		child.stdout.on("data", (d) => (out += d))
-		child.stderr.on("data", (d) => (err += d))
-		child.on("error", reject)
-
-		child.on("close", (code) =>
-			code === 0 ? resolve(out) : reject(new Error(`${cmd} exited ${code}: ${err.slice(0, 500)}`))
-		)
-	})
-}
 
 /**
  * Download `url` to `dest` unless a VALID copy is already there. Returns `true` when the cache was reused, `false` when
