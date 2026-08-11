@@ -36,6 +36,10 @@ export type KnownFormat =
 	| "de_postcode"
 	| "jp_postcode"
 	| "nl_postcode"
+	| "cz_postcode"
+	| "sk_postcode"
+	| "se_postcode"
+	| "gr_postcode"
 	| "po_box"
 
 /**

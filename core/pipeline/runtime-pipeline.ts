@@ -144,6 +144,32 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
 }
 
 /**
+ * #1589's sibling of the #912 guard: true when the tree's ONLY value-bearing node is a `postcode`.
+ *
+ * A bare postcode under a locale-inferred country scope is the same disaster shape as a bare locality: `SW1A 1AA` under
+ * the default en-US locale gets a HARD `defaultCountry: "US"` that filters the GB postalcode row the gazetteer holds,
+ * and the query resolves to nothing — while the identical query under `--locale en-GB` answers 38 m from the rooftop.
+ * The postcode's own FORMAT is harder evidence than the locale hint (the #928 table's premise), so the caller withholds
+ * the inferred scope for this shape when the format implies countries that exclude it.
+ */
+export function isBarePostcodeTree(tree: AddressTree): boolean {
+	let sawPostcode = false
+	const stack = [...tree.roots]
+
+	while (stack.length) {
+		const node = stack.pop()!
+
+		if (node.tag === "postcode") {
+			sawPostcode = true
+		} else if (node.value.trim() !== "") return false
+
+		stack.push(...node.children)
+	}
+
+	return sawPostcode
+}
+
+/**
  * #743/#194: the shared coverage-guard gate — decide whether a confident coarse-placer country should become a HARD
  * candidate filter. Exported so the two production placeCountry call sites (the runtime pipeline AND `geocodeAddress`)
  * apply the SAME three gates and can't drift: confidence ≥ {@link HARD_PLACE_COUNTRY_MIN_CONF}, country in the safelist
@@ -600,7 +626,9 @@ export async function runPipeline(
 
 		// #912 lever 1: the placer abstains on a single bare locality — strip ONLY the anchor it
 		// added (a caller-supplied posterior was never overwritten and passes through untouched).
-		if (placerAnchorApplied && isBareLocalityTree(tree)) {
+		// #1589: a bare POSTCODE abstains the same way — the code's format carries the country
+		// evidence, and the placer's language read of it is noise (see isBarePostcodeTree).
+		if (placerAnchorApplied && (isBareLocalityTree(tree) || isBarePostcodeTree(tree))) {
 			effectiveOpts = opts
 		}
 
