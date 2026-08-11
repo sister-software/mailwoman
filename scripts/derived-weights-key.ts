@@ -23,14 +23,23 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { join, relative, resolve } from "node:path"
 
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
 
 /**
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
  * {@link derivedWeightsInputPaths}.
  *
  * The first entry mirrors the retired workflow cache key. The rest are what that key MISSED: the modules that generate
- * the binaries. Add here whenever a new input starts feeding the build — a key that omits an input serves stale
- * artifacts silently, which is the failure this list exists to prevent.
+ * the binaries — each SOURCE module paired with its COMPILED counterpart, because the build spawns the compiled CLI.
+ * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled builder under already-fixed
+ * source computes the FIXED key, builds with the broken code, and the store then serves that artifact to every
+ * fresh-compiled run forever. With the compiled bytes in the key, a stale compile keys separately from a fresh one, so
+ * its output can never be served to a checkout whose compiled tree differs. (Transitive compiled imports are
+ * deliberately NOT hashed — that would invalidate the store on every unrelated commit and delete its reason to exist;
+ * the direct builder modules are where both real incidents lived.)
+ *
+ * Add here whenever a new input starts feeding the build — a key that omits an input serves stale artifacts silently,
+ * which is the failure this list exists to prevent.
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
@@ -38,6 +47,10 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"mailwoman/gazetteer-pipeline/lieudit-pairs.ts",
 	"mailwoman/commands/gazetteer/pair-index.tsx",
 	"mailwoman/commands/gazetteer/postcode-binary.tsx",
+	"mailwoman/out/gazetteer-pipeline/borough-pairs.js",
+	"mailwoman/out/gazetteer-pipeline/lieudit-pairs.js",
+	"mailwoman/out/commands/gazetteer/pair-index.js",
+	"mailwoman/out/commands/gazetteer/postcode-binary.js",
 ]
 
 /**
@@ -53,6 +66,30 @@ function gazetteerDataPaths(): string[] {
 	return readdirSync(dir)
 		.filter((name) => name.endsWith(".json") || name.endsWith(".jsonl"))
 		.map((name) => join(dir, name))
+}
+
+/**
+ * The postcode pipeline modules the postcode-binary command calls into — source and compiled, enumerated like the data
+ * payload so a new module joins the key without a code change. The #1527 fix lived HERE, one import below the command
+ * module the explicit list carried, which is how the stale build escaped the key.
+ */
+function postcodePipelinePaths(): string[] {
+	const root = repoRootPath()
+
+	const dirs = [
+		resolve(root, "mailwoman/gazetteer-pipeline/postcode"),
+		resolve(root, "mailwoman/out/gazetteer-pipeline/postcode"),
+	]
+
+	return dirs.flatMap((dir) => {
+		if (!existsSync(dir)) return []
+
+		return readdirSync(dir)
+			.filter(
+				(name) => (name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")
+			)
+			.map((name) => join(dir, name))
+	})
 }
 
 /**
@@ -78,6 +115,7 @@ export function derivedWeightsInputs(): DerivedWeightsInput[] {
 	return [
 		...DERIVED_WEIGHTS_INPUTS.map((name) => ({ name, path: resolve(root, name) })),
 		...gazetteerDataPaths().map((path) => ({ name: relative(root, path), path })),
+		...postcodePipelinePaths().map((path) => ({ name: relative(root, path), path })),
 	]
 }
 
@@ -128,4 +166,53 @@ export function derivedWeightsKey(): string {
  */
 export function derivedWeightsDir(key: string): string {
 	return String(dataRootPath("derived", "weights", key))
+}
+
+/**
+ * The reason a store entry must NOT be served (or stashed), or `null` when it looks like a product.
+ *
+ * The second net behind the build-time floors (#1509): the store once held a 10-byte empty `postcode-gb.bin` a
+ * stale-compiled builder wrote, and served it as a HIT indefinitely (#1528). A `postcode-<cc>.bin` is refused when its
+ * PCB1 header is malformed or its record count sits below the LOWEST calibrated floor for that country — for GB that is
+ * the outward floor, so a legitimate outward-granularity bin is never false-refused while the empty/collapsed class
+ * always is. The calibrated per-granularity gate remains the builder's; this one only has the header to read.
+ *
+ * Non-postcode entries (pair indexes) pass — their reader validates a typed header on load, and no measured floor
+ * exists for them yet.
+ */
+/**
+ * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve gate reads; anything shorter cannot
+ * carry a record count at all.
+ */
+const PCB1_HEADER_BYTES = 9
+
+export function derivedStoreServeViolation(filename: string, path: string): string | null {
+	const match = /^postcode-([a-z]{2})\.bin$/.exec(filename)
+
+	if (!match) return null
+
+	const country = match[1]!.toUpperCase()
+
+	let header: Buffer
+
+	try {
+		header = readFileSync(path)
+	} catch (error) {
+		return `unreadable store entry: ${String(error)}`
+	}
+
+	if (header.length < PCB1_HEADER_BYTES || header.toString("latin1", 0, 4) !== "PCB1") {
+		return `not a PCB1 binary (${header.length} bytes)`
+	}
+
+	const records = header.readUInt32LE(4)
+
+	const floor =
+		country === "GB" ? POSTCODE_BINARY_KEY_FLOORS["GB:outward"]! : (POSTCODE_BINARY_KEY_FLOORS[country] ?? 1)
+
+	if (records < floor) {
+		return `${records.toLocaleString()} records, below the ${country} floor of ${floor.toLocaleString()} — an empty or collapsed binary is never a valid cache entry (#1509/#1528)`
+	}
+
+	return null
 }
