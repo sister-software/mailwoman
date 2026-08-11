@@ -32,7 +32,7 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 532 curated regressions.
+ * The corpus today — 534 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 532
+const CORPUS_SIZE = 534
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -95,8 +95,12 @@ const CORPUS_SIZE = 532
  *
  * Moved 2026-08-11 (eighth) — → this — by the fork→entity WIRE landing: the COMER row flips improvement_target → pass
  * with its measured receipt (tier `venue`, 6 m). Row count and every `id`+`input` untouched, so the board id stays.
+ *
+ * Moved 2026-08-12 (night) — → this — by the 2-row `bare_capital_street_miss` board (Wellington, Antwerpen): the model
+ * tags the lone token `street`, the street tier nulls, and the locality walk provably answers (the resolver bisect is
+ * in each row's note). 532 → 534, so the board id moves too.
  */
-const CORPUS_HASH = "99d74e26060121aada90e56fd7a89e108ca4aa16d69b4f7652ed7783830b4dd2"
+const CORPUS_HASH = "a5c495d137671741ade1fba43abee47e424d0b2b1915f8f5ba7676ae8c04e1c8"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -108,7 +112,7 @@ const CORPUS_HASH = "99d74e26060121aada90e56fd7a89e108ca4aa16d69b4f7652ed7783830
  * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
  * (`@522:da202fa6e714` → `@523:08b0b462cb23`), and for the 7-row fuzzy-scope board (`@523:08b0b462cb23` → this).
  */
-const BOARD_ID = "gauntlet-regression@532:15caa1818dd0"
+const BOARD_ID = "gauntlet-regression@534:ee145335c825"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
