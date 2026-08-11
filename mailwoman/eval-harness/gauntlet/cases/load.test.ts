@@ -80,8 +80,11 @@ const CORPUS_SIZE = 530
  * in-country scrape (Gore Bay, pop 39), and the exact-match contract controls (Paris under en-US passes; bare Moscow
  * and structured 'Moscow, Russia' pin their separate exact-tier drops). First rows to carry the new `locale` and
  * `expectAbstain` fields. 523 → 530, so the board id moves too.
+ *
+ * Moved 2026-08-11 (fifth) — → this — by the #1585 MECHANISM landing: the sacremento row flips improvement_target →
+ * pass with its measured receipt. Row count and every `id`+`input` untouched, so the board id stays.
  */
-const CORPUS_HASH = "1e61c9872db0f06168cdaa70c02fe90ea09655fc3259baa30096436b8e364902"
+const CORPUS_HASH = "f9158e3e5b8692ef8ae903ff9f4e83088061ad7111c138fccbb5dd42deb05fe6"
 
 /**
  * `ablationBoardID` of the corpus.

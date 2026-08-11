@@ -444,13 +444,19 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
 		const regionParentID = query.parentID || undefined
 
-		const probe = (nk: string, regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
+		const probe = (nk: string, regionID: number | undefined, countryID?: number): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]
 			const params: Array<string | number> = [nk, ...filterParams]
 
 			if (regionID !== undefined) {
 				conds.push("region_id = ?")
 				params.push(regionID)
+			}
+
+			// #1585: the fuzzy tier's country scope — only the corrected-key probes pass this.
+			if (typeof countryID === "number") {
+				conds.push("country_id = ?")
+				params.push(countryID)
 			}
 
 			// Fetch population-ordered (the clustered-key order — a cheap ordered scan), over-fetching to
@@ -507,9 +513,18 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// DIFFERENT postcode. The 2026-08-05 Code-Point swap exposed the trap at scale: Northern Ireland's
 			// `BT3 9QQ` (absent — no permissive NI source) trigram-matched Sheffield's `S3 9QQ` (Jaccard 0.4
 			// on {39q, 9qq}) and resolved 200+ km wrong with full confidence. An unknown postcode must abstain.
+			// #1585: a locale HINT scopes the typo tier to its country. Only when no hard `country`
+			// filter is active (that is already narrower); a scope naming a country the table doesn't
+			// carry is a SCOPED-EMPTY — the fuzzy tier abstains rather than falling through worldwide.
+			const fuzzyCountryID =
+				!query.country && query.fuzzyCountry ? this.#countryToID.get(query.fuzzyCountry.toUpperCase()) : undefined
+
+			const fuzzyScopedOut = !query.country && !!query.fuzzyCountry && typeof fuzzyCountryID !== "number"
+
 			if (
 				!rows.length &&
 				!wantsPostcode &&
+				!fuzzyScopedOut &&
 				this.#ftsProbe &&
 				this.#nameKeyExistsProbe &&
 				!this.#nameKeyExistsProbe.get(nameKey)
@@ -532,7 +547,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 						seen.add(h.nk)
 						// #17: stamp the tier. These rows answer a name the gazetteer does not carry, so they are
 						// fuzzy matches and `exactMatch` below must say so — see `RankedRow.fuzzy`.
-						rows.push(...probe(h.nk, regionID).map((r) => ({ ...r, fuzzy: true })))
+						rows.push(...probe(h.nk, regionID, fuzzyCountryID).map((r) => ({ ...r, fuzzy: true })))
 
 						if (rows.length >= limit) break
 					}

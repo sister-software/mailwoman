@@ -164,6 +164,13 @@ export interface FindPlaceQuery {
 	 */
 	country?: string
 	/**
+	 * ISO 3166-1 alpha-2 — narrows the TYPO-FUZZY tier only (#1585). Exact and qualifier-strip probes stay worldwide (a
+	 * locale hint is a prior, never a hard filter on exact matches), but a typo CORRECTION into a different country's
+	 * namespace is nearly always a scrape, so the corrected-key probes honor this scope and a scoped-empty ABSTAINS
+	 * rather than falling through to a world-fuzzy candidate. Ignored when `country` is set (already narrower).
+	 */
+	fuzzyCountry?: string
+	/**
 	 * WOF place id — narrows to descendants of this place.
 	 */
 	parentID?: number

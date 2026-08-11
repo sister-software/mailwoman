@@ -116,6 +116,11 @@ export interface GauntletGeocodeOpts {
 	 * never emitted" when the MECHANISM was fine and the INSTRUMENT was base-only). Absent → en-US.
 	 */
 	caseCountry?: string
+	/**
+	 * #1585 — the locale hint's country for the typo-fuzzy tier (geocodeAddress's `fuzzyCountryScope`). The runner
+	 * derives it from a row's `locale` field; forwarded verbatim like `defaultCountry`.
+	 */
+	fuzzyCountryScope?: string
 }
 
 /**

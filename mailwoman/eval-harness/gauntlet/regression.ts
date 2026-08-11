@@ -114,6 +114,9 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		const geoOpts = {
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),
 			...(overlayCountry ? { caseCountry: overlayCountry } : {}),
+			// #1585: a locale row's hint scopes the typo-fuzzy tier, mirroring the CLI's unconditional
+			// threading of the locale-derived country.
+			...(c.locale ? { fuzzyCountryScope: c.locale.split("-")[1] } : {}),
 		}
 
 		const result = await runOne(c.input, deps, geoOpts)
