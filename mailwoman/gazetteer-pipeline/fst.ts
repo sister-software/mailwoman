@@ -95,8 +95,12 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
  *
  * `fst-street-morphology.bin` is deliberately ABSENT: it is built from the in-repo libpostal dictionaries, so the admin
  * DB's md5 says nothing about whether it is current and stamping it against one would be a lie the guard then enforces.
- * The CJK three and `fst-global-priority.bin` ARE here despite having no entry in {@link FST_LOCALES} — they were built
- * by the pre-#1318 flow and nothing can rebuild them today, which is a fact the check should surface rather than hide.
+ * The CJK three ARE here despite having no entry in {@link FST_LOCALES} — they were built by the pre-#1318 flow,
+ * nothing can rebuild them today, and they stay FROZEN pending the CJK arc's importance-source and WOF-geometry
+ * questions; that is a fact the check should surface rather than hide. `fst-global-priority.bin` (317 MB, retired
+ * 2026-08-06 — see RELEASING.md) is deliberately GONE from this list: a retired artifact must not keep generating
+ * freshness rows that read as a rebuild obligation. The public HF object outlives the template on purpose; removing it
+ * is a separate, operator-approved step (#1493).
  */
 export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
 	"fst-per-locale/fst-en-us.bin",
@@ -106,7 +110,6 @@ export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
 	"fst-per-locale/fst-ja-jp.bin",
 	"fst-per-locale/fst-zh-cn.bin",
 	"fst-per-locale/fst-ko-kr.bin",
-	"fst-global-priority.bin",
 ]
 
 /**
