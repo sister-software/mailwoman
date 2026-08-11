@@ -78,6 +78,13 @@ const OptionsSchema = zod.object({
 		.string()
 		.optional()
 		.describe("Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)"),
+	host: zod
+		.string()
+		.url()
+		.optional()
+		.describe(
+			"Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket."
+		),
 })
 
 export { ArgumentsSchema as args, OptionsSchema as options }
@@ -110,8 +117,12 @@ function existingLocalPath(
  * path is UNEXERCISED against live data; a failure here is loud (`console.error`), not swallowed, so the day a sidecar
  * ships, a wrong guess about which requests need `Range` shows up immediately instead of silently degrading forever.
  */
-async function probeRemote(client: APIClient, artifact: BundleArtifact): Promise<RemoteArtifactState> {
-	const url = artifactURL(artifact)
+async function probeRemote(
+	client: APIClient,
+	artifact: BundleArtifact,
+	baseURL?: string
+): Promise<RemoteArtifactState> {
+	const url = artifactURL(artifact, baseURL)
 	const state: RemoteArtifactState = {}
 
 	try {
@@ -185,7 +196,7 @@ interface PullOutcome {
 
 async function pullBundles(
 	bundleNames: string[],
-	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: string }
+	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: string; host?: string }
 ): Promise<PullOutcome> {
 	const { dataRoot } = opts
 	const manifest = readReleaseManifest(dataRoot)
@@ -240,16 +251,18 @@ async function pullBundles(
 				checks.push({
 					ok: true,
 					check: label,
-					detail: `[dry-run] ${formatBytes(artifact.approxBytes)} ${artifactURL(artifact)} → ${localAbsPath}`,
+					detail: `[dry-run] ${formatBytes(artifact.approxBytes)} ${artifactURL(artifact, opts.host)} → ${localAbsPath}`,
 				})
 
 				continue
 			}
 
-			console.error(`▸ pull ${artifactURL(artifact)} (~${formatBytes(artifact.approxBytes)}) → ${localAbsPath}`)
+			console.error(
+				`▸ pull ${artifactURL(artifact, opts.host)} (~${formatBytes(artifact.approxBytes)}) → ${localAbsPath}`
+			)
 
 			try {
-				const remote = await probeRemote(client!, artifact)
+				const remote = await probeRemote(client!, artifact, opts.host)
 				// Staged under THIS pull's data root (not necessarily the env-configured one — `--data-root`
 				// overrides it), so `dataRootPath` (which always reads `$MAILWOMAN_DATA_ROOT`) would be wrong here.
 				const stageDir = resolvePath(dataRoot, "tmp")
@@ -257,7 +270,7 @@ async function pullBundles(
 				mkdirSync(stageDir, { recursive: true })
 				const tmpPath = resolvePath(stageDir, `${Date.now()}-${basename(artifact.localPath)}`)
 
-				const bytesWritten = await downloadToDisk(artifactURL(artifact), tmpPath)
+				const bytesWritten = await downloadToDisk(artifactURL(artifact, opts.host), tmpPath)
 
 				let verifyDetail: string
 
@@ -320,6 +333,7 @@ const DataPull: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> =
 				only: options.only,
 				force: options.force,
 				dataRoot,
+				host: options.host,
 			})
 
 			if (result.pulledCandidate) {

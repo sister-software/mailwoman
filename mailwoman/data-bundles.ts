@@ -265,10 +265,15 @@ export const BUNDLES: Record<string, DataBundle> = {
 }
 
 /**
- * Resolve `${PUBLIC_BUCKET_BASE_URL}${artifact.remotePath}` — the one place that string gets built.
+ * Resolve `${base}${artifact.remotePath}` — the one place that string gets built. `baseURL` defaults to the public
+ * bucket; `data pull --host` passes a mirror or private registry serving the SAME object keys (the catalog schema is
+ * host-independent — an air-gapped install mirrors the key space, not a rewritten layout). A missing trailing slash is
+ * repaired rather than concatenated into a mangled key.
  */
-export function artifactURL(artifact: BundleArtifact): string {
-	return `${PUBLIC_BUCKET_BASE_URL}${artifact.remotePath}`
+export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_BUCKET_BASE_URL): string {
+	const base = baseURL.endsWith("/") ? baseURL : `${baseURL}/`
+
+	return `${base}${artifact.remotePath}`
 }
 
 /**
