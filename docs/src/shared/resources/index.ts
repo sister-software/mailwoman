@@ -466,61 +466,14 @@ export function pairIndexBaseURL(version: string): string {
 }
 
 /**
- * The FROZEN un-versioned base every published index lived under before 2026-08-05. Nothing new is uploaded here — see
- * {@link resolvePairIndexBaseURL} for the transition read path.
- *
- * @deprecated Remove with the fallback in {@link resolvePairIndexBaseURL} once a release has published under
- *   {@link PAIR_INDEX_VERSION} (target: the first release train after 2026-08-05).
- */
-export const LEGACY_PAIR_INDEX_BASE_URL = `${ASSET_BASE_URL}pair-index`
-
-/**
  * Build the per-country binary URLs under a pair-index base (see {@link PAIR_INDEX_COUNTRIES}).
  *
- * @param baseURL Base for the binaries, versioned or legacy — a trailing slash is tolerated.
+ * @param baseURL Base for the binaries — a trailing slash is tolerated.
  */
 export function pairIndexURLs(baseURL: string): string[] {
 	const base = baseURL.replace(/\/$/, "")
 
 	return PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
-}
-
-/**
- * Pick the pair-index base this page should read: the versioned one when that generation is published, else the frozen
- * legacy path.
- *
- * TRANSITION SHIM (2026-08-05). The bucket holds only the un-versioned objects until the next release train stages
- * `pair-index/<version>/`, so a HEAD probe of the first country's binary decides. Cheap (one request, no body), and
- * failure in either direction is non-fatal: a network/CORS error is treated as "not published" and falls through to the
- * path that works today.
- *
- * @deprecated The legacy branch (and this probe with it) comes out once a release has published under
- *   {@link PAIR_INDEX_VERSION} — at that point the caller can use `pairIndexBaseURL(PAIR_INDEX_VERSION)` directly.
- *   Target: the first release train after 2026-08-05.
- */
-export async function resolvePairIndexBaseURL(
-	version: string = PAIR_INDEX_VERSION,
-	opts: { fetchImpl?: typeof fetch; warn?: (message: string) => void } = {}
-): Promise<string> {
-	const fetchImpl = opts.fetchImpl ?? globalThis.fetch
-	const warn = opts.warn ?? console.warn
-	const versioned = pairIndexBaseURL(version)
-	const probeURL = pairIndexURLs(versioned)[0]
-
-	try {
-		const res = await fetchImpl(probeURL, { method: "HEAD" })
-
-		if (res.ok) return versioned
-	} catch {
-		// Network/CORS failure — indistinguishable from "not published", and handled the same way.
-	}
-
-	warn(
-		`[demo] pair-index generation ${version} not published (${probeURL}) — reading the frozen un-versioned path. ` +
-			`Stage pair-index/${version}/ on the next release train (RELEASING.md, "Pair-index binaries are versioned").`
-	)
-
-	return LEGACY_PAIR_INDEX_BASE_URL
 }
 
 export async function loadFSTGazetteer(
