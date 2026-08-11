@@ -9,8 +9,9 @@ import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
 import { runAdapter } from "@mailwoman/corpus/runner"
-import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
 import { describe, expect, it } from "vitest"
+
+import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 import { WOF_ADMIN_ADAPTER_ID, createWOFAdminAdapter, nameSlotsFor, variantsFor } from "./adapter.ts"
 
