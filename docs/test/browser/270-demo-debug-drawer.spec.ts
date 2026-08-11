@@ -8,7 +8,8 @@ import { expect, test } from "#e2e"
 
 test.describe("Demo — model-visualizer debug drawer", () => {
 	test("/debug opens the drawer and traces the parsed address", async ({ demo, page }) => {
-		await page.goto("/debug/", { waitUntil: "networkidle" })
+		// No trailing slash: the site builds debug.html, so /debug/ is a 404 status on Pages (the #1590 class).
+		await page.goto("/debug", { waitUntil: "networkidle" })
 		await demo.expectReady()
 		await demo.setAddress("1600 Pennsylvania Ave NW, Washington, DC 20500")
 		await demo.submit()

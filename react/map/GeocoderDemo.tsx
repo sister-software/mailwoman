@@ -19,7 +19,7 @@
  *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
  */
 
-import { type ReactNode, useCallback, useRef } from "react"
+import { type ReactNode, useCallback, useEffect, useRef } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import { ClientOnly } from "../common/ClientOnly.tsx"
@@ -80,6 +80,29 @@ function GeocoderDemoInner({
 	applyResultCamera,
 }: GeocoderDemoInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
+
+	// TEST SEAM: the e2e viewport-bias suite drives the REAL map (pan + zoom past the bias gate)
+	// before submitting, and a browser test cannot reach a React ref — so the live map handle is
+	// republished on `globalThis.__mailwomanDemoMap`, the same seam the pre-port demo carried. The
+	// ref fills only after react-map-gl instantiates the map, hence the short poll; cleared on
+	// unmount so a torn-down demo never leaves a stale handle behind.
+	useEffect(() => {
+		const seam = globalThis as { __mailwomanDemoMap?: ReturnType<MapRef["getMap"]> }
+
+		const timer = setInterval(() => {
+			const map = mapRef.current?.getMap()
+
+			if (map) {
+				seam.__mailwomanDemoMap = map
+				clearInterval(timer)
+			}
+		}, 250)
+
+		return () => {
+			clearInterval(timer)
+			delete seam.__mailwomanDemoMap
+		}
+	}, [])
 
 	// Read the viewport bias at submit time — through the map handle, never a threaded state value, so granting/zooming
 	// mid-session doesn't re-create the parse callback. Below the min-bias zoom, a whole-globe center is noise → null.
