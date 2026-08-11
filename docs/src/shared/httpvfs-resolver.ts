@@ -27,6 +27,7 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
@@ -38,6 +39,11 @@ import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sql
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
+import {
+	rankByPrimaryPreference,
+	type RankedRow,
+	RERANK_FETCH,
+} from "@mailwoman/resolver-wof-sqlite/primary-preference"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
@@ -58,7 +64,12 @@ type CandidateProbeRow = Pick<
 	| "max_lat"
 	| "max_lon"
 	| "neg_rank"
->
+> &
+	// The vintage-dependent columns are OPTIONAL on the row rather than `number | null`, mirroring the Node reader:
+	// whether the SELECT names each depends on the hosted artifact (`population`/`is_primary` predate `importance`,
+	// #28), and `undefined` means "this build cannot tell you" — the same answer as `null`'s "no measurement", both
+	// UNMEASURED (meaning-of-zero).
+	Partial<Pick<CandidateTable, "population" | "is_primary" | "importance">>
 
 const POPULATION_BOOST = 4
 const POPULATION_SCALE_LOG10 = 6
@@ -507,6 +518,14 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	 * Memoized presence of the #741 `postal_city_candidate` side-index (one worker round trip).
 	 */
 	#hasPostalCity: Promise<boolean> | undefined
+	/**
+	 * Memoized column set of the `candidate` table (one worker round trip). The reader must stay correct against EVERY
+	 * hosted artifact vintage — the live demo points at whatever `ADMIN_GAZETTEER_VERSION` names, which can trail this
+	 * code — so the probe SELECT names `population` / `is_primary` / `importance` only when the artifact carries them,
+	 * and each consumer degrades: no `is_primary` → the primary-preference re-rank no-ops (population order, today's
+	 * behavior); no `importance` → no fame prior. Mirrors the Node reader's `hasColumn` guard.
+	 */
+	#candidateColumns: Promise<Set<string>> | undefined
 
 	constructor(worker: HTTPVFSWorker) {
 		this.#worker = worker
@@ -529,6 +548,23 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		}
 
 		return this.#hasPostalCity
+	}
+
+	/**
+	 * The candidate table's column names, memoized.
+	 */
+	#columns(): Promise<Set<string>> {
+		if (!this.#candidateColumns) {
+			this.#candidateColumns = this.#worker.db
+				.exec(`SELECT name FROM pragma_table_info('candidate')`)
+				.then((res) => new Set(rowsFromExec(res).map((r) => String(r.name))))
+
+			this.#candidateColumns.catch(() => {
+				this.#candidateColumns = undefined
+			})
+		}
+
+		return this.#candidateColumns
 	}
 
 	#codeMaps(): Promise<CandidateCodeMaps> {
@@ -660,14 +696,30 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 			)
 		}
 
-		const probe = async (nk: string): Promise<CandidateProbeRow[]> => {
+		// Vintage-guarded projection: `population` / `is_primary` / `importance` join the SELECT only when
+		// the hosted artifact carries them. Absent `is_primary`, the primary-preference re-rank no-ops by
+		// construction (no row reads as primary → zero penalty, population order); absent the others, the
+		// corresponding emits stay off. One memoized round trip.
+		const columns = await this.#columns()
+
+		const optionalSelect = ["population", "is_primary", "importance"]
+			.filter((c) => columns.has(c))
+			.map((c) => `, ${c}`)
+			.join("")
+
+		const probe = async (nk: string): Promise<Array<RankedRow<CandidateProbeRow>>> => {
 			const conds = [`name_key = ${sqlStr(nk)}`, ...filters]
 
+			// Over-fetch to RERANK_FETCH so the bounded cross-country primary-preference re-rank can promote
+			// the intended primary past a cluster of more-populous foreign aliases — the same fetch discipline
+			// as the Node reader (the #861 server↔demo parity contract).
 			const sql =
-				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank ` +
-				`FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${limit}`
+				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank` +
+				`${optionalSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${Math.max(limit, RERANK_FETCH)}`
 
-			return rowsFromExec(await this.#worker.db.exec(sql)) as unknown as CandidateProbeRow[]
+			const fetched = rowsFromExec(await this.#worker.db.exec(sql)) as unknown as CandidateProbeRow[]
+
+			return rankByPrimaryPreference(fetched, limit)
 		}
 
 		let rows = await probe(nameKey)
@@ -695,10 +747,24 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				country: idToCountry.get(Number(row.country_id)),
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
+				// `score` stays the RAW population rank — the walk's absolute `minWinningScore` gate must see
+				// real prominence, never a penalized value. `prominence` carries the bounded cross-country
+				// primary preference; the walk orders by `prominence ?? score`, same as the Node reader.
 				score: -(row.neg_rank as number),
+				prominence: -Number(row.effectiveNegRank),
 				// Every candidate row IS an exact normalized-name (or alias/abbrev) match — the cascade's
-				// exact tier accepts alias-exact hits ("New York City" → New York) the same as canonical.
-				exactMatch: true,
+				// exact tier accepts alias-exact hits ("New York City" → New York) the same as canonical —
+				// EXCEPT a cross-country alias that lost the bounded contest to a same-key primary (`demoted`):
+				// it drops out of the exact tier so a country posterior can't ride it back over the primary.
+				exactMatch: !row.demoted,
+				// The two-score split's carry + the #28 fame prior, exactly as the Node reader emits them:
+				// absent when unmeasured, never 0 (meaning-of-zero).
+				...(typeof row.population === "number" && row.population > 0
+					? { population: row.population, referential: referentialFromPopulation(row.population) }
+					: {}),
+				...(typeof row.importance === "number" && Number.isFinite(row.importance)
+					? { importance: row.importance }
+					: {}),
 				bbox: hasBbox
 					? {
 							minLat: Number(row.min_lat),
