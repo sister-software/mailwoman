@@ -933,7 +933,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// An explicit defaultCountry wins; otherwise the coarse placer's country.
 	const preResolveCountry = (deps.defaultCountry ?? placedCountry)?.toLowerCase()
 
-	if (!addressPoints) {
+	// A NON-US pre-resolve country outranks a US state-slug shard match. The state-slug selection
+	// above is country-blind, and AU state codes collide with US postal states — 'Kingsley WA 6026'
+	// under an AU scope reads region 'WA' and opens the Washington shard, which can only miss.
+	// `rooftopFor` returns nothing for `us` or no-evidence, so the US path is byte-stable.
+	{
 		const rooftop = rooftopFor(preResolveCountry)
 
 		if (rooftop) {

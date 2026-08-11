@@ -32,7 +32,7 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 535 curated regressions.
+ * The corpus today — 537 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 535
+const CORPUS_SIZE = 537
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -106,6 +106,12 @@ const CORPUS_SIZE = 535
  * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row tripwire's note re-ledgers its
  * residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the board id stays.
  *
+ * Moved 2026-08-12 (fifth) — → this — by the 2-row `au_rooftop` board riding the G-NAF lane: the WA state-slug
+ * collision witness ('47 Renegade Way, Kingsley WA 6026' — the parsed region 'WA' opened the US Washington shard and
+ * starved the AU rooftop until the non-US pre-resolve country learned to outrank the state-slug match) and the rural
+ * LOT class ('LOT 373 Clifton Street, Sandstone WA 6639'). Both land status=pass with register-point receipts. 535 →
+ * 537, so the board id moves too.
+ *
  * Moved 2026-08-12 (fourth) — → this — by the #1614 word-level fuzzy measure landing plus the 1-row
  * `situs_wrong_village` board (#1631 Teichstraße, the wrong-village rooftop match panel-v2 surfaced): the aucklnad
  * measure-misalignment witness flips improvement_target → pass with its measured receipt (Auckland NZ, word-level 0.975
@@ -113,7 +119,7 @@ const CORPUS_SIZE = 535
  * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
  * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
  */
-const CORPUS_HASH = "259b866b08387d8bea200721293ba01b875f3336a09a96c3d4d6a916fde846c4"
+const CORPUS_HASH = "f5fcd79e44ac57b01a64fca93a19e7e87fe296fff49a04f1bd689e7bf8225103"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -124,9 +130,10 @@ const CORPUS_HASH = "259b866b08387d8bea200721293ba01b875f3336a09a96c3d4d6a916fde
  * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode board on 2026-08-11
  * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
  * (`@522:da202fa6e714` → `@523:08b0b462cb23`), for the 7-row fuzzy-scope board (`@523:08b0b462cb23` →
- * `@534:ee145335c825`), and for the Teichstraße situs row (`@534:ee145335c825` → this).
+ * `@534:ee145335c825`), for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`), and for the 2-row
+ * G-NAF au_rooftop board (`@535:b54fe280134e` → this).
  */
-const BOARD_ID = "gauntlet-regression@535:b54fe280134e"
+const BOARD_ID = "gauntlet-regression@537:61edb19b8e64"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.

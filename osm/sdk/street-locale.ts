@@ -22,6 +22,10 @@ export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resol
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["gb", "en"],
 	["nz", "en"],
+	// AU's shard is G-NAF-sourced (CC-BY, not OSM), but lives in this provider's home and keys with
+	// the same `en` rules — G-NAF stores street types as full words ("STREET", "CLOSE"), which is
+	// exactly the surface the `en` normalizer folds.
+	["au", "en"],
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],
