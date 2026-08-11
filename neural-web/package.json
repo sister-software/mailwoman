@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-web",
-	"version": "9.0.0",
+	"version": "9.1.0",
 	"description": "DEPRECATED — the browser neural runtime moved into @mailwoman/neural. This package re-exports it so existing imports keep working; migrate to @mailwoman/neural/web-loader and @mailwoman/neural/web-onnx-runner.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {

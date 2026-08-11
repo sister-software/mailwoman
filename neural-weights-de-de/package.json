@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/neural-weights-de-de",
-	"version": "9.0.0",
+	"version": "9.1.0",
 	"description": "German (de-DE) weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us and ships the DE placetype-pair index.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
