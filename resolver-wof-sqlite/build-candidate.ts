@@ -73,6 +73,14 @@ export interface BuildCandidateOptions {
 	 */
 	postcodes?: string[]
 	/**
+	 * Optional LOCALITY shards (`spr` rows with `placetype='locality'` + real coords, e.g. localities-nz-linz.db — the
+	 * #1564 NZ suburb tier) — folded through the same shard loop as the postcode shards, staged as `locality` candidate
+	 * rows with no region scope and UNMEASURED population (`neg_rank 0`: a shard row ranks behind any populated namesake
+	 * and wins only where its key is the answer). Each shard's `names` table folds as aliases, `is_primary = 0`, same as
+	 * the delivery-city pass.
+	 */
+	localities?: string[]
+	/**
 	 * Optional WOF admin database carrying a `place_importance` table — the source of the `importance` column (#28), the
 	 * toponym-fame prior that decides the bare-city-name class. Joined by `(name_key, country, placetype)` + nearest
 	 * centroid, NOT by id; see `candidate-importance.ts` for why the id join silently drops the foreign homonyms the
@@ -396,11 +404,14 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	 * the code dictionaries with the passes above, and nothing after it reads anything it produces except the two
 	 * counters it returns.
 	 */
-	const foldPostcodeShard = (pcDB: string): { primaries: number; aliases: number } => {
-		progress("postcodes", `reading ${pcDB}`)
+	const foldShard = (
+		pcDB: string,
+		shardPlacetype: "postalcode" | "locality"
+	): { primaries: number; aliases: number } => {
+		progress(shardPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${pcDB}`)
 
 		const pc = new DatabaseSync(pcDB, { readOnly: true })
-		const pcPtid = ptID("postalcode")
+		const pcPtid = ptID(shardPlacetype)
 		// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
 		// below has nothing to join against unless this primary loop records what it staged.
 		const pcAttrs = new Map<number, PlaceAttrs>()
@@ -413,7 +424,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			.prepare(
 				`SELECT id, name, country, latitude, longitude,
 					min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
-				 FROM spr WHERE placetype='postalcode' AND latitude != 0 AND longitude != 0`
+				 FROM spr WHERE placetype = '${shardPlacetype}' AND latitude != 0 AND longitude != 0`
 			)
 			.iterate()) {
 			const name = String(r.name ?? "")
@@ -506,7 +517,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let nPostcodeAlias = 0
 
 	for (const pcDB of opts.postcodes ?? []) {
-		const folded = foldPostcodeShard(pcDB)
+		const folded = foldShard(pcDB, "postalcode")
 
 		nPostcode += folded.primaries
 		nPostcodeAlias += folded.aliases
@@ -514,6 +525,18 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	if (nPostcode > 0) {
 		progress("postcodes", `${nPostcode.toLocaleString()} postcodes; ${nPostcodeAlias.toLocaleString()} aliases`)
+	}
+
+	let nLocality = 0
+
+	for (const locDB of opts.localities ?? []) {
+		const folded = foldShard(locDB, "locality")
+
+		nLocality += folded.primaries
+	}
+
+	if (nLocality > 0) {
+		progress("localities", `${nLocality.toLocaleString()} shard localities folded`)
 	}
 
 	// --- code dictionaries: typed batch inserts via kdb (a few hundred rows — Kysely is clean here) ---
