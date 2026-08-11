@@ -34,7 +34,9 @@ export class DemoFixture {
 	 * Navigate to the demo page and wait until the classifier is loaded (submit enables).
 	 */
 	async goto(query?: string): Promise<void> {
-		const path = query ? `/demo/?q=${encodeURIComponent(query)}` : "/demo/"
+		// No trailing slash: the site builds the page as `demo.html`, so `/demo/` is a 404 on the
+		// Pages deploy (the status Docusaurus' own dev server hides by serving the route anyway).
+		const path = query ? `/demo?q=${encodeURIComponent(query)}` : "/demo"
 		await this.page.goto(path, { waitUntil: "networkidle" })
 		await this.expectReady()
 	}
