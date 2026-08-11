@@ -83,6 +83,11 @@ interface ResolutionState {
 	 */
 	postcodeFormatCountries?: readonly string[]
 	/**
+	 * #1585 — the locale hint's country, forwarded to the backend as `fuzzyCountry` on every primary lookup. Scopes the
+	 * typo-fuzzy tier only; exact matches stay worldwide. See `ResolveOpts.fuzzyCountryScope`.
+	 */
+	fuzzyCountryScope?: string
+	/**
 	 * The injected PFX1 index (structural — `PostcodePrefixIndexLike`, core/resolver/types.ts). Absent = the prior cannot
 	 * fire.
 	 */
@@ -836,6 +841,7 @@ class WOFResolver implements Resolver {
 			postcodePrefixPrior: opts.postcodePrefixPrior === true,
 			postcodePrefixIndex: opts.postcodePrefixIndex,
 			postcodeFormatCountries: opts.postcodeFormatCountries,
+			fuzzyCountryScope: opts.fuzzyCountryScope,
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2,
@@ -1111,6 +1117,13 @@ class WOFResolver implements Resolver {
 
 		if (country) {
 			query.country = country
+		}
+
+		// #1585: the locale hint's country rides on every primary lookup as the TYPO-FUZZY tier's scope.
+		// Deliberately set even when `query.country` is (the backend ignores it there — the hard filter
+		// is already narrower): the field's contract lives in one place, the backend.
+		if (state.fuzzyCountryScope) {
+			query.fuzzyCountry = state.fuzzyCountryScope
 		}
 
 		// Coordinate-first: hand the sibling postcode to locality lookups so the backend can inject

@@ -261,6 +261,14 @@ export interface GeocodeDeps {
 	 */
 	localeCountryPriorWeight?: number
 	/**
+	 * #1585 — the locale hint's country, scoping the backend's TYPO-FUZZY tier only (`ResolveOpts.fuzzyCountryScope`).
+	 * Unlike {@link localeCountryPrior} this is NOT opt-in and NOT a ranking prior: exact matches stay worldwide, a typo
+	 * CORRECTION stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a
+	 * world-fuzzy candidate. Threaded even when {@link defaultCountry} is set (harmless — the hard scope is already
+	 * narrower).
+	 */
+	fuzzyCountryScope?: string
+	/**
 	 * Title-case all-caps ASCII input before the model (#690), detection-gated so mixed-case + non-Latin pass through
 	 * untouched. **Default `true`** — validated-beneficial on this geocode/resolveTree path (#619: TX-facility locality
 	 * 90.1 → 99.7%). The #694 comma-less crater was the space-join, not the casing, so on comma-joined input it is a
@@ -893,6 +901,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		if (formatCountries.length) {
 			opts.postcodeFormatCountries = formatCountries
 		}
+	}
+
+	// #1585: the locale hint's country scopes the typo-fuzzy tier — always threaded, never a filter on
+	// exact matches (the backend's fuzzy block is the only consumer).
+	if (deps.fuzzyCountryScope) {
+		opts.fuzzyCountryScope = deps.fuzzyCountryScope
 	}
 
 	// #27: the locale country as a SOFT prior, only where no hard scope is in force. Nothing else in the

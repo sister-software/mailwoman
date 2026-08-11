@@ -462,6 +462,11 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
+			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
+			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
+			...(resolverDefaultCountry(options, !!candidateDb)
+				? { fuzzyCountryScope: resolverDefaultCountry(options, !!candidateDb) || undefined }
+				: {}),
 			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
 			// threading (an unset dep already reads as ON downstream).
 			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),

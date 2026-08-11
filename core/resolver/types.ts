@@ -230,6 +230,12 @@ export interface ResolverBackend {
 		text: string
 		placetype?: string | string[]
 		country?: string
+		/**
+		 * ISO-3166 alpha-2 scoping the TYPO-FUZZY tier only (#1585): exact and qualifier-strip probes stay worldwide, the
+		 * corrected-key probes honor it, and a scoped-empty fuzzy ABSTAINS instead of falling through to a world-fuzzy
+		 * candidate. Backends without a fuzzy tier ignore it. Ignored when `country` is set (already narrower).
+		 */
+		fuzzyCountry?: string
 		parentID?: number | string
 		/**
 		 * Sibling postcode string, when the address carries one. A coordinate-first backend uses it to inject
@@ -476,6 +482,14 @@ export interface ResolveOpts {
 	 * overrides it deeper in the tree.
 	 */
 	defaultCountry?: string
+	/**
+	 * #1585 — the locale hint's country, scoping the backend's TYPO-FUZZY tier only. Unlike {@link defaultCountry} this
+	 * is threaded even where the bare-toponym guard withholds the hard scope: an exact foreign match still resolves
+	 * (`Paris` under en-US), but a typo CORRECTION stays inside the hinted country, and a scoped-empty correction
+	 * abstains rather than falling through to a world-fuzzy candidate (`Stanmore Bay` under en-NZ must not answer Banmore
+	 * IN). Never a country filter on exact matches — the fuzzy tier is the only consumer.
+	 */
+	fuzzyCountryScope?: string
 	/**
 	 * Ordered proximity-bias points (viewport center first, then user location, …), each optionally weighted (default
 	 * 1.0). SOFT ranking signal only — candidates near a bias point win prominence ties (the ambiguous-postcode case:
