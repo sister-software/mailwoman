@@ -36,6 +36,11 @@
 			"default": "./out/fts.js",
 			"types": "./out/fts.d.ts"
 		},
+		"./primary-preference": {
+			"node": "./primary-preference.ts",
+			"default": "./out/primary-preference.js",
+			"types": "./out/primary-preference.d.ts"
+		},
 		"./build-slim": {
 			"node": "./build-slim.ts",
 			"default": "./out/build-slim.js",
