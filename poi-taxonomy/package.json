@@ -42,6 +42,11 @@
 			"default": "./out/overpass.js",
 			"types": "./out/overpass.d.ts"
 		},
+		"./venue-word-hints": {
+			"node": "./venue-word-hints.ts",
+			"default": "./out/venue-word-hints.js",
+			"types": "./out/venue-word-hints.d.ts"
+		},
 		"./data/*.json": "./data/*.json"
 	},
 	"publishConfig": {

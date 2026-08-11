@@ -39,3 +39,20 @@ reproducible; `lookup.test.ts` asserts the committed table is content-identical 
 with the snapshot, and Overture leaves already absorbed by a curated record's `overtureCategories` are not emitted as
 standalone records (so a curated synonym like `coffee shop` → `cafe` is never shadowed by the `coffee_shop` snapshot
 leaf). To edit the curated layer, change `curated-overlay.json` and regenerate.
+
+## `venue-word-hints.json` — the mined single-token venue-class hint table
+
+Produced by `scripts/build-venue-word-hints.ts` from the f6 venue-word survey artifact
+(`$MAILWOMAN_DATA_ROOT/derived/venue-word-lexicon-f6.json`, md5 `a2ae6f4b29ee0ee45870273487d86e79`).
+**Do not hand-edit.** The survey compared token rates across 13.68M Overture poi names (the poi.db
+build corpus, CDLA-Permissive-2.0) against 4.8M candidate-gazetteer primary place names; the
+committed slice keeps the 2,249 tokens that clear the composed bars recorded in the file's own
+provenance block (venue ratio ≥ 0.9 at ≥ 100 poi occurrences, top CLASS share ≥ 0.7 excluding
+`other`, place rate ≤ 5 ppm — the toponym suppressor). Generated 2026-08-12. Regenerate with:
+
+```bash
+node poi-taxonomy/scripts/build-venue-word-hints.ts && npx oxfmt poi-taxonomy/data/venue-word-hints.json
+```
+
+No OSM-derived data: the survey's corpora are Overture poi names and the gazetteer's own primary
+names, so the table carries no ODbL obligation.
