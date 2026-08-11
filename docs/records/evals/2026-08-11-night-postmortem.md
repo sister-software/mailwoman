@@ -6,10 +6,10 @@ three E404 weights packages had been published by the operator at 02:33, before 
 
 ## What shipped
 
-Eighteen PRs, all merged via auto-merge on green CI; no releases, no npm publishes, Modal $0.
-(#1584–#1604 numbering below spans the whole shift; the first six carried the primary tasks, the
-rest came from the CI-fleet repairs, the operator-directed issue sweep, and the production e2e
-matrix completion.)
+Nineteen merged PRs in total (#1584–#1605), three of which update this postmortem itself —
+**sixteen non-postmortem PRs**, all via auto-merge on green CI; no releases, no npm publishes,
+Modal $0. The first six carried the primary tasks; the rest came from the CI-fleet repairs, the
+operator-directed issue sweep, and the production e2e matrix completion.
 
 - **#1584** — docs client-bundle fix. The handoff's unresolved §4 mystery (six dark CI runs):
   filer's `read-excel-file` dependency made spliterator's XLSX vendor imports resolvable, dragging
@@ -225,15 +225,17 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 
 ## Numbers
 
-| metric            | value                                                       |
-| ----------------- | ----------------------------------------------------------- |
-| Shift span        | 02:59–16:00 UTC (conn 03:07)                                |
-| PRs merged        | 6 (#1584, #1586, #1587, #1588, #1590, #1591)                |
-| Issues filed      | 2 (#1585, #1589) + sizing comment                           |
-| Boards closed     | #17, #47; #33 re-measured; #31 verified                     |
-| Falsifiers graded | 3 of 4 (f4 moot until inference exists)                     |
-| Modal spend       | $0 of $30                                                   |
-| NaN incidents     | 0                                                           |
-| CI failures       | 2 (1 load flake healed by rerun; 1 real guard catch, fixed) |
-| Demo regressions  | 0 introduced; 2 latent defects found + fixed (#1586, #1588) |
-| Production state  | demo on v9.1.0 (R2+HF), all md5-verified; npm untouched     |
+| metric                     | value                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------- |
+| Shift span                 | 02:59–13:09 UTC (conn 03:07; operator returned early)                                              |
+| PRs merged                 | 19 total (#1584–#1605) · 16 non-postmortem · 6 primary-task (#1584, #1586–#1588, #1590, #1591)     |
+| Issues closed              | 7 (#1491, #1371, #1377, #1507, #1528, #1559, #1561)                                                |
+| Issues filed               | 3 (#1585, #1589, #1602); advanced with receipts: #1577, #1375, #1493                               |
+| Boards closed              | #17, #47; #33 re-measured; #31 verified                                                            |
+| Falsifiers graded          | 3 of 4 (f4 moot until inference exists)                                                            |
+| Modal spend                | $0 of $30                                                                                          |
+| NaN incidents              | 0                                                                                                  |
+| CI failures on own changes | 3 (1 load flake rerun; 2 real catches — the reach-around guard, the man-page rootDir — both fixed) |
+| Dark workflows healed      | version-parity (2 stacked breaks, 5 days dark); demo-smoke unblocked to an honest red              |
+| Demo regressions           | 0 introduced; 2 latent defects found + fixed (#1586, #1588)                                        |
+| Production state           | demo on v9.1.0 (R2+HF), all md5-verified; npm untouched                                            |
