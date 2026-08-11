@@ -32,7 +32,7 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 514 curated regressions.
+ * The corpus today — 523 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 522
+const CORPUS_SIZE = 523
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -64,12 +64,18 @@ const CORPUS_SIZE = 522
  * `expectComponentRenderings` contract (#34: the global dual-script grader relaxation became a per-row opt-in). Row
  * count and every `id`+`input` were untouched, so the board id there stayed.
  *
- * Moved 2026-08-11 (second) — `f87db0a9…` → this — by the 8-row `bug:#1589` bare-foreign-postcode board (cz ×3, sk, gb,
- * nl, us ×2): six improvement_target rows pinning the first-drop stages (query-shape's missing NNN NN format; the
- * resolver's US-only bare-postcode branch) and two US pass controls (90210; the 75008 locale-prior contract). Row count
- * moves 514 → 522, so the board id below moves too.
+ * Moved 2026-08-11 (second) — `f87db0a9…` → `a379f1dc…` — by the 8-row `bug:#1589` bare-foreign-postcode board (cz ×3,
+ * sk, gb, nl, us ×2): six improvement_target rows pinning the first-drop stages (query-shape's missing NNN NN format;
+ * the resolver's US-only bare-postcode branch) and two US pass controls (90210; the 75008 locale-prior contract). Row
+ * count moves 514 → 522, so the board id below moves too.
+ *
+ * Moved 2026-08-11 (third) — `a379f1dc…` → this — by the #1589 FIX landing: four rows flip improvement_target → pass
+ * (cz ×2, sk, nl), the SW1A note narrows to the residual A-suffixed-outward drop, `gb-bare-postcode-n7-0bt` joins as
+ * the GB green control (522 → 523, so the board id moves too), and the 75008 locale-prior row gains `defaultCountry:
+ * US` — the locale prior reaches the library as the CLI's inferred defaultCountry, and without the field the harness
+ * measured the no-locale arm, where the pin never held (baseline: unresolved).
  */
-const CORPUS_HASH = "a379f1dc2098e6043e7771791aa607063d01f0d0c2c1deccb22c15867adf7865"
+const CORPUS_HASH = "b639adfe5a43e219f9bd4af4c50f1218351783db2f4f90dbc4bdf53167027223"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -77,10 +83,11 @@ const CORPUS_HASH = "a379f1dc2098e6043e7771791aa607063d01f0d0c2c1deccb22c15867ad
  * The id is content-addressed and not order-addressed, which is what carried it UNCHANGED across the 2026-08-05 array →
  * JSONL migration. The country sweep is the opposite kind of change — it adds 114 rows — so this one moves, and it
  * should: the ablation board is genuinely a different board. Same again for the 24-row world-structures batch on
- * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), and for the 8-row bare-foreign-postcode board on 2026-08-11
- * (`@514:5c5fca20db47` → this).
+ * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), for the 8-row bare-foreign-postcode board on 2026-08-11
+ * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
+ * (`@522:da202fa6e714` → this).
  */
-const BOARD_ID = "gauntlet-regression@522:da202fa6e714"
+const BOARD_ID = "gauntlet-regression@523:08b0b462cb23"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
