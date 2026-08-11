@@ -231,6 +231,12 @@ export interface GeocodeDeps {
 	 * ungated probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the guard.
 	 */
 	isStreetGeneric?: (token: string) => boolean
+	/**
+	 * True when {@link defaultCountry} was INFERRED from the locale rather than user-declared. The street-miss fallback
+	 * retries a mis-tagged bare toponym as a locality, and a bare-locality retry must run under the #912 posture — the
+	 * inferred scope withheld — while an EXPLICIT scope stays supreme. Only the caller knows which; the CLI threads it.
+	 */
+	defaultCountryIsInferred?: boolean
 	classifier: GeocodeClassifier
 	resolver: Resolver
 	/**
@@ -1044,13 +1050,16 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		}
 	}
 
-	const result = extractGeocodeResult(input, resolved)
+	let result = extractGeocodeResult(input, resolved)
 
-	// ROAD_TO_V9 §4. One `classifyKindSync` over the text the parse actually saw — the same call `parseForGeocode`
-	// makes for the register, ~1.1 us/query measured (`kind-classifier/intent-rules.scaling.test.ts`). It runs here
-	// rather than being threaded out of the parse because a caller-supplied `parsedTree` skips `parseForGeocode`
-	// entirely, and an advisory that silently disappeared on the batch path would be worse than no advisory.
+	// ROAD_TO_V9 §4. One `classifyKindSync` over the text the parse actually saw — computed BEFORE the
+	// street-miss fallback below because that fallback stands down on a declared fork (see there).
 	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, computeQueryShape(parseInput))
+	const forkDeclared = (verdict.intentMarkers ?? []).some((m) => m.code === "declared_fork")
+
+	result = await applyStreetMissFallback(result, { tree, opts, deps, input, forkDeclared })
+
+	// ROAD_TO_V9 §4 marker assembly — the verdict itself is computed above the street-miss fallback.
 	const markers = [...(verdict.intentMarkers ?? [])]
 
 	const ambiguity = declaredAmbiguityMarker({
@@ -1080,6 +1089,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			result.lat = entity.latitude
 			result.lon = entity.longitude
 			result.resolution_tier = "venue"
+			result.countryCode = entity.country
 			result.venue = entity.name
 
 			result.entity = {
@@ -1094,6 +1104,80 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	result.intent_markers = markers
 
 	return result
+}
+
+/**
+ * The bare-toponym STREET-MISS fallback (the Moscow/Wellington/Antwerpen class): the model tags a lone bare token
+ * `street`, the street tier finds no such street, and the result is null — while the resolver walk, handed the same
+ * span as a locality, answers directly. Four gates: null-only (the D-rule geometry the fork wire established); a lone
+ * SINGLE-TOKEN street-tagged span (a multi-token retry re-enters the qualifier-strip scrape class — measured: the
+ * unguarded retry stripped 'COMER parís.méxico' to Comer, Georgia); never on a declared fork (those belong to the
+ * entity probe); and the retry runs under the #912 bare-locality posture — placer anchor/hard filter always withheld
+ * (measured: keeping them handed bare 'Wellington' to the GB namesake, 18,726 km out), an INFERRED default country
+ * withheld too, an explicit one supreme.
+ */
+async function applyStreetMissFallback(
+	result: GeocodeResult,
+	ctx: {
+		tree: AddressTree
+		opts: ResolveOpts
+		deps: GeocodeDeps
+		input: string
+		forkDeclared: boolean
+	}
+): Promise<GeocodeResult> {
+	const { tree, opts, deps, input, forkDeclared } = ctx
+
+	if (result.lat !== null || !deps.resolver || forkDeclared) return result
+	const bare = loneBareStreetSpan(tree)
+
+	if (bare === null || /\s/.test(bare.trim())) return result
+
+	const localityTree: AddressTree = {
+		raw: tree.raw,
+		roots: [{ tag: "locality", value: bare, start: 0, end: bare.length, confidence: 1, children: [] }],
+	}
+
+	const retryOpts = {
+		...opts,
+		hardCountry: undefined,
+		anchorPosterior: undefined,
+		...(deps.defaultCountryIsInferred === true ? { defaultCountry: undefined } : {}),
+	}
+
+	const reresolved = await deps.resolver.resolveTree(localityTree, retryOpts)
+	const retried = extractGeocodeResult(input, reresolved)
+
+	if (retried.lat === null) return result
+	retried.components = { ...result.components }
+
+	return retried
+}
+
+/**
+ * The lone bare street span the street-miss fallback retries as a locality, or `null` when the tree is anything richer:
+ * the gate is EXACTLY one value-bearing node, tagged `street`, no prefix/suffix siblings — the single-token shape the
+ * model mis-tags on unfamiliar capitals.
+ */
+function loneBareStreetSpan(tree: AddressTree): string | null {
+	const valued: AddressNode[] = []
+	const stack: AddressNode[] = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (typeof n.value === "string" && n.value.trim().length) {
+			valued.push(n)
+		}
+
+		stack.push(...n.children)
+	}
+
+	if (valued.length !== 1) return null
+
+	const lone = valued[0]!
+
+	return lone.tag === "street" ? lone.value : null
 }
 
 /**

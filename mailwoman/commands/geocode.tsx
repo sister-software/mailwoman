@@ -492,6 +492,9 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			parsedTree,
 			...(bias.length ? { bias } : {}),
 			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
+			// The street-miss fallback's #912 posture switch: explicit --default-country stays supreme
+			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
+			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
 			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).

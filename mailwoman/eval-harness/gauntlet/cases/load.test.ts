@@ -99,8 +99,11 @@ const CORPUS_SIZE = 534
  * Moved 2026-08-12 (night) — → this — by the 2-row `bare_capital_street_miss` board (Wellington, Antwerpen): the model
  * tags the lone token `street`, the street tier nulls, and the locality walk provably answers (the resolver bisect is
  * in each row's note). 532 → 534, so the board id moves too.
+ *
+ * Moved 2026-08-12 (second) — → this — by the street-miss FALLBACK landing: both bare-capital rows flip
+ * improvement_target → pass with measured receipts. Row count and every `id`+`input` untouched, so the board id stays.
  */
-const CORPUS_HASH = "a5c495d137671741ade1fba43abee47e424d0b2b1915f8f5ba7676ae8c04e1c8"
+const CORPUS_HASH = "f2167f84b1a987ebe1e4b54f9cb99658a8c763ffcf77a85a242f1483d8a3c07d"
 
 /**
  * `ablationBoardID` of the corpus.
