@@ -4,9 +4,14 @@
 		"outDir": "./out",
 		"emitDeclarationOnly": false,
 		"rewriteRelativeImportExtensions": true,
-		"erasableSyntaxOnly": true
+		"erasableSyntaxOnly": true,
+		"resolveJsonModule": true
 	},
-	"include": ["./**/*"],
+	"include": ["./**/*", "./us/street-suffix.json"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../annotations" }]
+	"references": [
+		{
+			"path": "../annotations"
+		}
+	]
 }

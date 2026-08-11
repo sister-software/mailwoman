@@ -121,6 +121,52 @@ def test_empty_triple_is_a_valid_all_o_row(tmp_path: Path) -> None:
     assert rows[0]["span_starts"] == []
 
 
+def test_positive_weight_for_absent_source_raises(tmp_path: Path) -> None:
+    corpus = _write_corpus(tmp_path, [_row()])
+    with pytest.raises(ValueError, match="positive source_weights entries have no shards"):
+        list(
+            iter_rows(
+                corpus,
+                "train",
+                rng=random.Random(0),
+                country_weights={"US": 1.0},
+                source_weights={"test": 1.0, "missing": 2.0},
+                coarse_filter=False,
+            )
+        )
+
+
+def test_zero_weight_for_absent_source_is_allowed(tmp_path: Path) -> None:
+    corpus = _write_corpus(tmp_path, [_row()])
+    rows = list(
+        iter_rows(
+            corpus,
+            "train",
+            rng=random.Random(0),
+            country_weights={"US": 1.0},
+            source_weights={"test": 1.0, "missing": 0.0},
+            coarse_filter=False,
+        )
+    )
+    assert len(rows) == 1
+
+
+def test_training_source_inventory_is_not_required_in_validation_split(tmp_path: Path) -> None:
+    corpus = _write_corpus(tmp_path, [_row()])
+    (corpus / "train").rename(corpus / "val")
+    rows = list(
+        iter_rows(
+            corpus,
+            "val",
+            rng=random.Random(0),
+            country_weights={"US": 1.0},
+            source_weights={"test": 1.0, "train-only-source": 2.0},
+            coarse_filter=False,
+        )
+    )
+    assert len(rows) == 1
+
+
 def test_augmentation_plus_relabel_keep_spans_consistent_end_to_end(tmp_path: Path) -> None:
     """The mutation-upstream hazard, pinned at the loader level: with the directional expansion
     AND the #511 relabel both on, every emitted row's spans must address ITS OWN raw."""

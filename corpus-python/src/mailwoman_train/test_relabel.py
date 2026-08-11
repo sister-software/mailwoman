@@ -45,6 +45,9 @@ LEX = AffixRelabelLexicon(
         "lane": "LANE",
     },
     version="test",
+    # v2 licensing vocabulary (see TestPositionalLicensing). AVENUE et al. deliberately absent —
+    # suffix-shaped but not name-prone.
+    name_prone=frozenset({"PARK", "HILL"}),
 )
 
 
@@ -78,9 +81,12 @@ class TestSplitBuilderParity:
         # Builder parity: "W Park Ave" gets NO split because the name "Park" is a suffix variant.
         assert split("W Park Ave") is None
 
-    def test_multiword_name_with_trailing_suffix_shape_rejected(self):
-        # isSuffixOrDirectional checks the name's TRAILING word: "Cherry Hill" ends suffix-shaped.
-        assert split("W Cherry Hill Rd") is None
+    def test_multiword_name_prone_tail_is_licensed_by_the_true_suffix(self):
+        # CONTRACT CHANGE 2026-08-10 (#1569 five-whys): this case was the blanket rejection that
+        # taught the training feed to absorb true suffixes ('Cherry Hill' ends name-prone-shaped,
+        # but the trailing TRUE suffix licenses the split — TS allowNameProneTail semantics).
+        # Previously pinned as None; see TestPositionalLicensing for the full new contract.
+        assert split("W Cherry Hill Rd") == (1, 1)
 
     def test_period_not_stripped(self):
         # Conservative parity: "St." is not in the lookup, same as the TS matcher.
@@ -155,6 +161,32 @@ class TestRelabelRow:
             "B-street",
             "B-street_suffix",
         ]
+
+    def test_already_decomposed_family_is_unchanged(self):
+        row = {
+            "tokens": ["Menlo", "Park", "Road"],
+            "labels": ["B-street", "I-street", "B-street_suffix"],
+        }
+        assert relabel_row(row, LEX) is False
+        assert row["labels"] == ["B-street", "I-street", "B-street_suffix"]
+
+    def test_second_pass_is_a_no_op(self):
+        row = {
+            "tokens": ["N", "Dixie", "Box", "Road"],
+            "labels": ["B-street", "I-street", "I-street", "I-street"],
+        }
+        assert relabel_row(row, LEX) is True
+        once = list(row["labels"])
+        assert relabel_row(row, LEX) is False
+        assert row["labels"] == once
+
+    def test_existing_prefix_does_not_block_suffix_split(self):
+        row = {
+            "tokens": ["N", "Main", "St"],
+            "labels": ["B-street_prefix", "B-street", "I-street"],
+        }
+        assert relabel_row(row, LEX) is True
+        assert row["labels"] == ["B-street_prefix", "B-street", "B-street_suffix"]
 
 
 class TestRelabelSpans:
@@ -281,6 +313,48 @@ class TestRelabelSpans:
         with pytest.raises(ValueError, match="partial char-offset span triple"):
             relabel_spans(row, LEX)
 
+    def test_already_decomposed_family_is_unchanged(self):
+        row = {
+            "raw": "Menlo Park Road",
+            "tokens": ["Menlo", "Park", "Road"],
+            "labels": ["B-street", "I-street", "B-street_suffix"],
+            "span_starts": [0, 11],
+            "span_ends": [10, 15],
+            "span_tags": ["street", "street_suffix"],
+        }
+        assert relabel_row(row, LEX) is False
+        assert self._slices(row) == [("street", "Menlo Park"), ("street_suffix", "Road")]
+
+    def test_second_pass_is_a_no_op(self):
+        row = {
+            "raw": "N Dixie Box Road",
+            "tokens": ["N", "Dixie", "Box", "Road"],
+            "labels": ["B-street", "I-street", "I-street", "I-street"],
+            "span_starts": [0],
+            "span_ends": [16],
+            "span_tags": ["street"],
+        }
+        assert relabel_row(row, LEX) is True
+        once = (list(row["span_starts"]), list(row["span_ends"]), list(row["span_tags"]))
+        assert relabel_row(row, LEX) is False
+        assert (row["span_starts"], row["span_ends"], row["span_tags"]) == once
+
+    def test_existing_prefix_span_does_not_block_suffix_split(self):
+        row = {
+            "raw": "N Main St",
+            "tokens": ["N", "Main", "St"],
+            "labels": ["B-street_prefix", "B-street", "I-street"],
+            "span_starts": [0, 2],
+            "span_ends": [1, 9],
+            "span_tags": ["street_prefix", "street"],
+        }
+        assert relabel_row(row, LEX) is True
+        assert self._slices(row) == [
+            ("street_prefix", "N"),
+            ("street", "Main"),
+            ("street_suffix", "St"),
+        ]
+
 
 class TestLexiconLoading:
     def test_loud_on_missing_file(self, tmp_path):
@@ -298,3 +372,69 @@ class TestLexiconLoading:
         p.write_text(json.dumps({"directionals": {}, "suffixes": {}, "version": "x"}))
         with pytest.raises(ValueError, match="empty vocab"):
             AffixRelabelLexicon.load(p)
+
+
+class TestPositionalLicensing:
+    """2026-08-10 five-whys root cause (#1569): suffix-shape was judged per WORD, so every
+    ordinary-source row shaped like 'Menlo Park Road' kept a monolithic street label and taught
+    the model to absorb the true suffix in real contexts (~78% of terminal-only carriers).
+    The licensing rule mirrors the TS recipe's ``allowNameProneTail`` (street-affix.ts, shared
+    with the golden relabel — the golden truth already encodes these splits): a name of >= 2
+    words whose FINAL word is merely name-prone-shaped is licensed by the true suffix that
+    follows it. Single-word names stay refused ('W Park Ave')."""
+
+    def test_name_prone_tail_with_true_suffix_splits(self):
+        assert split("Menlo Park Road") == (0, 1)
+
+    def test_name_prone_tail_with_abbreviated_suffix_splits(self):
+        assert split("Industrial Park Rd") == (0, 1)
+
+    def test_directional_prefix_plus_name_prone_tail_splits(self):
+        # Flips the old blanket rejection: the trailing TRUE suffix licenses 'Cherry Hill'.
+        assert split("W Cherry Hill Rd") == (1, 1)
+
+    def test_single_word_name_prone_name_still_refused(self):
+        assert split("Park Ave") is None
+        assert split("W Park Ave") is None
+
+    def test_non_name_prone_suffix_shaped_tail_still_refused(self):
+        # 'Avenue' is suffix-shaped but NOT a name-prone head noun — no license.
+        assert split("Old Avenue Road") is None
+
+    def test_bio_end_to_end(self):
+        row = {
+            "tokens": ["64", "Industrial", "Park", "Rd", "Alburgh", "VT"],
+            "labels": ["B-house_number", "B-street", "I-street", "I-street", "B-locality", "B-region"],
+        }
+        assert relabel_row(row, LEX) is True
+        assert row["labels"] == [
+            "B-house_number",
+            "B-street",
+            "I-street",
+            "B-street_suffix",
+            "B-locality",
+            "B-region",
+        ]
+
+    def test_v1_artifact_without_name_prone_keeps_the_old_blanket_rejection(self):
+        """Back-compat: a v1 lexicon (no ``name_prone`` key) must reproduce the pre-licensing
+        behavior byte-for-byte — old runs stay reproducible; the fix rides the v2 artifact."""
+        import dataclasses
+
+        lex_v1 = dataclasses.replace(LEX, name_prone=frozenset())
+        assert split_street_span("Menlo Park Road".split(), lex_v1) is None
+        assert split_street_span("W Cherry Hill Rd".split(), lex_v1) is None
+
+    def test_v2_artifact_name_prone_matches_the_codex_source(self):
+        """Drift guard across the build boundary: the committed v2 lexicon artifact's
+        ``name_prone`` must equal ``nameProneCanonicals`` in codex/us/street-suffix.json —
+        the single authored source both TS and this loader descend from."""
+        from pathlib import Path
+
+        repo = Path(__file__).resolve().parents[3]
+        codex = json.loads((repo / "codex" / "us" / "street-suffix.json").read_text())
+        artifact = json.loads((repo / "data" / "gazetteer" / "affix-relabel-lexicon-v2.json").read_text())
+        assert artifact["version"] == "affix-relabel-v2"
+        assert sorted(artifact["name_prone"]) == sorted(codex["nameProneCanonicals"])
+        loaded = AffixRelabelLexicon.load(repo / "data" / "gazetteer" / "affix-relabel-lexicon-v2.json")
+        assert loaded.name_prone == frozenset(codex["nameProneCanonicals"])

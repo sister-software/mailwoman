@@ -142,6 +142,7 @@ output/
 # volume to local during a re-gate; each holds a ~113MB model.onnx). The exact `output/` above
 # only matches the bare dir; the suffixed per-run dirs need their own glob.
 output-*/
+!.claude/output-styles/
 
 # Pi session state (not project config)
 .pi/flow.json

@@ -21,6 +21,7 @@ import csv
 import json
 import math
 import random
+import shutil
 import time
 from dataclasses import asdict
 from pathlib import Path
@@ -181,6 +182,26 @@ def _cosine_with_warmup(optimizer: AdamW, warmup_steps: int, max_steps: int) -> 
     return LambdaLR(optimizer, lr_lambda)
 
 
+def _linear_cooldown(optimizer: AdamW, cooldown_start: int, max_steps: int) -> LambdaLR:
+    """WSD-style decay branch (2026-08-10 recipe review, lever 11).
+
+    Resume a mid-schedule checkpoint at ``cooldown_start`` with the config's ``learning_rate``
+    set to that checkpoint's CURRENT (tail) LR: the multiplier holds 1.0 through the start, so
+    the schedule-aware restamp continues the parent's LR exactly, then decays linearly to zero
+    at ``max_steps``. Approximates the matched-schedule endpoint of a mid-cosine checkpoint
+    without a full rerun (Hägele et al. 2024, arXiv:2405.18392; MiniCPM, arXiv:2404.06395;
+    Chinchilla's schedule-matching finding).
+    """
+    span = max(1, max_steps - cooldown_start)
+
+    def lr_lambda(step: int) -> float:
+        if step <= cooldown_start:
+            return 1.0
+        return max(0.0, float(max_steps - step) / float(span))
+
+    return LambdaLR(optimizer, lr_lambda)
+
+
 def _constant_with_warmup(optimizer: AdamW, warmup_steps: int) -> LambdaLR:
     # Linear warmup → constant. The verdict-smoke mode per v0.5.0 (see
     # docs/articles/plan/reference/VERDICT_SMOKES.md): cosine decay over a short window
@@ -319,7 +340,12 @@ def _build_scheduler(optim: AdamW, cfg_train) -> LambdaLR:
         return _constant_with_warmup(optim, cfg_train.warmup_steps)
     if schedule == "cosine":
         return _cosine_with_warmup(optim, cfg_train.warmup_steps, cfg_train.max_steps)
-    raise ValueError(f"unknown train.lr_schedule={schedule!r}; expected 'cosine' or 'constant'")
+    if schedule == "linear_cooldown":
+        start = getattr(cfg_train, "cooldown_start_step", None)
+        if start is None:
+            raise ValueError("train.lr_schedule='linear_cooldown' requires train.cooldown_start_step")
+        return _linear_cooldown(optim, int(start), cfg_train.max_steps)
+    raise ValueError(f"unknown train.lr_schedule={schedule!r}; expected 'cosine', 'constant', or 'linear_cooldown'")
 
 
 def _restamp_resume_lrs(
@@ -355,12 +381,25 @@ def _restamp_resume_lrs(
     Prints one `[resume-lr]` line per group whose LR the checkpoint actually clobbered; prints
     nothing when every group already matches (the checkpoint was saved with the same LRs the
     live config specifies — a byte-identical no-op).
+
+    SCHEDULE-AWARE (2026-08-09 P0): `live_lrs` are the config's BASE (peak) values, but a
+    param group's `lr` is its CURRENT value — base × the schedule multiplier at the resumed
+    step. Stamping the raw base onto `pg["lr"]` hands the FIRST resumed optimizer step the
+    peak LR before the next `scheduler.step()` restores the tail: measured 8.808e-06 →
+    5.000e-04 → 8.805e-06 resuming v4.3.3 at step 55k — a 56.8× one-step spike into a
+    nearly-converged model. The constant schedule masked this (post-warmup multiplier is
+    1.0), which is why the original restamp tests never failed. So: `initial_lr` and
+    `scheduler.base_lrs` get the live BASE; `pg["lr"]` gets base × multiplier-at-step,
+    read from the scheduler's own `lr_lambdas` at its restored `last_epoch`.
     """
+    lr_lambdas = getattr(scheduler, "lr_lambdas", None)
     for i, (pg, live_lr, label) in enumerate(zip(optim.param_groups, live_lrs, labels, strict=True)):
+        mult = lr_lambdas[i](scheduler.last_epoch) if lr_lambdas is not None else 1.0
+        live_current_lr = live_lr * mult
         checkpoint_lr = pg["lr"]
-        if checkpoint_lr != live_lr:
-            print(f"[resume-lr] group {i} ({label}): checkpoint {checkpoint_lr} -> config {live_lr}")
-        pg["lr"] = live_lr
+        if checkpoint_lr != live_current_lr:
+            print(f"[resume-lr] group {i} ({label}): checkpoint {checkpoint_lr} -> config {live_current_lr}")
+        pg["lr"] = live_current_lr
         if "initial_lr" in pg:
             pg["initial_lr"] = live_lr
     if hasattr(scheduler, "base_lrs"):
@@ -538,32 +577,53 @@ def save_checkpoint(
 ) -> Path:
     """Save model + optimizer + scheduler + RNG state into ``output_dir/step-XXXXX/``.
 
-    Full resume capability — gfx1103 has firmware GPU hangs under sustained load, so a
-    crash-and-resume loop is expected. The latest checkpoint contains everything needed to
-    pick up exactly where the previous run left off (modulo data-loader position, which is
-    re-seeded per-epoch on resume).
+    Resume capability for crash-and-resume loops (gfx1103 firmware GPU hangs; Modal
+    preemption). Model/optimizer/scheduler/step are restored exactly; the DATA stream is
+    not — sampler position is not saved, so a resumed run continues optimizer state over a
+    re-sampled stream (re-seeded per epoch), not the identical row sequence.
+
+    ATOMIC (2026-08-09 P1): everything is written into a temp directory the ``step-*``
+    discovery glob cannot see, ``training_state.json`` last, then renamed into place. A
+    mid-save interruption therefore leaves either the previous complete checkpoint set or
+    nothing — never a partial ``step-XXXXXX`` that ``--resume auto`` would load.
     """
     ck = output_dir / f"step-{step:06d}"
-    ck.mkdir(parents=True, exist_ok=True)
-    if hasattr(model, "save_pretrained"):
-        model.save_pretrained(ck)  # type: ignore[arg-type]
-    else:
-        torch.save(model.state_dict(), ck / "pytorch_model.bin")
-    if optim is not None:
-        torch.save(optim.state_dict(), ck / "optimizer.pt")
-    if scheduler is not None:
-        torch.save(scheduler.state_dict(), ck / "scheduler.pt")
-    if rng_state is not None:
-        torch.save(rng_state, ck / "rng_state.pt")
-    (ck / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
+    tmp = output_dir / f".tmp-step-{step:06d}"
+    if tmp.exists():
+        shutil.rmtree(tmp)
+    tmp.mkdir(parents=True)
+    try:
+        if hasattr(model, "save_pretrained"):
+            model.save_pretrained(tmp)  # type: ignore[arg-type]
+        else:
+            torch.save(model.state_dict(), tmp / "pytorch_model.bin")
+        if optim is not None:
+            torch.save(optim.state_dict(), tmp / "optimizer.pt")
+        if scheduler is not None:
+            torch.save(scheduler.state_dict(), tmp / "scheduler.pt")
+        if rng_state is not None:
+            torch.save(rng_state, tmp / "rng_state.pt")
+        # Written LAST: its presence is the completeness marker find_latest_checkpoint trusts.
+        (tmp / "training_state.json").write_text(json.dumps(extras, indent=2) + "\n", encoding="utf-8")
+    except BaseException:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+    if ck.exists():
+        shutil.rmtree(ck)
+    tmp.rename(ck)
     return ck
 
 
 def find_latest_checkpoint(output_dir: Path) -> Path | None:
-    """Return the highest-step ``step-XXXXXX`` checkpoint dir under ``output_dir``, or None."""
+    """Return the highest-step COMPLETE ``step-XXXXXX`` checkpoint dir under ``output_dir``.
+
+    Complete = carries ``training_state.json``, which ``save_checkpoint`` writes last (and
+    every durable historical checkpoint already has). A partial directory from an
+    interrupted pre-atomic save is skipped, never resumed.
+    """
     if not output_dir.is_dir():
         return None
-    candidates = sorted(output_dir.glob("step-*"))
+    candidates = sorted(p for p in output_dir.glob("step-*") if (p / "training_state.json").is_file())
     return candidates[-1] if candidates else None
 
 

@@ -1,6 +1,6 @@
 {
 	"name": "mailwoman",
-	"version": "9.0.0",
+	"version": "9.1.0",
 	"description": "A calibrated, retrieval-augmented postal-address parser — CLI + library.",
 	"keywords": [
 		"address",
@@ -28,7 +28,10 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "mailwoman"
 	},
-	"bin": "./out/cli.js",
+	"bin": {
+		"mailwoman": "./out/cli.js",
+		"mw": "./out/cli.js"
+	},
 	"files": [
 		"!out/test/**/*",
 		"out/**/*.js",

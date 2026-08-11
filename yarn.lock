@@ -4990,6 +4990,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
     spliterator: "npm:^6.1.0"
@@ -16591,6 +16592,7 @@ __metadata:
       optional: true
   bin:
     mailwoman: ./out/cli.js
+    mw: ./out/cli.js
   languageName: unknown
   linkType: soft
 

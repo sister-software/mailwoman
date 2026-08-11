@@ -31,12 +31,19 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 306 curated regressions.
+ * The corpus today — 514 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
- * country-coverage sweep's measured FAILs; see `batch-notes.md`). Country dirs went 29 → 121 in the same batch.
+ * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
+ * 2026-08-09 (12 GB venue/address boundaries and the same JP rooftop in English and Japanese), plus 170 locale-scoped
+ * bare-street boundary cases from the operator's multilingual street-name audit, plus 24
+ * `operator:world-structures-2026-08-10` cases — real-world addresses from eleven countries whose STRUCTURE the
+ * `ComponentTag` union cannot fully express (Brasília's sector/quadra hierarchy, Colombian cross-street nomenclatura,
+ * GhanaPostGPS digital codes, plus codes, Irish townland recursion, Mongolian district/khoroo nesting, Nicaraguan
+ * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
+ * ng are new).
  */
-const CORPUS_SIZE = 306
+const CORPUS_SIZE = 514
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -44,21 +51,29 @@ const CORPUS_SIZE = 306
  * Changing the corpus changes this. That is the point: an edit to a `.jsonl` row now needs a matching edit here, and
  * the diff says "the corpus changed" rather than "a 3,500-line file changed".
  *
- * Moved 2026-08-06 (#1507) — `ab541bba…` → this — when seven country-sweep family-A rows gained `expectPlaceName`. Row
- * COUNT is unchanged, which is why the board id below did not move: those rows already existed and their `id`+`input`
- * are untouched. As of the same day this value also lives in every built `regression.db` (the `gauntlet_meta` stamp),
- * and a runner refuses to grade when the two disagree.
+ * Moved 2026-08-06 (#1507) — `ab541bba…` → `848548e6…` — when seven country-sweep family-A rows gained
+ * `expectPlaceName`. Row COUNT was unchanged there, which is why the board id below did not move: those rows already
+ * existed and their `id`+`input` were untouched. As of the same day this value also lives in every built
+ * `regression.db` (the `gauntlet_meta` stamp), and a runner refuses to grade when the two disagree — so a corpus edit
+ * leaves the DB stale until it is rebuilt, by design.
+ *
+ * Moved 2026-08-10 — `848548e6…` → `02026054…` — by the 24-row `operator:world-structures-2026-08-10` batch.
+ *
+ * Moved again 2026-08-11 — `02026054…` → this — when `mn-ws-gandantegchinlen-dual-script` gained the per-row
+ * `expectComponentRenderings` contract (#34: the global dual-script grader relaxation became a per-row opt-in). Row
+ * count and every `id`+`input` were untouched, so the board id below stays.
  */
-const CORPUS_HASH = "3445d44f09ca637b91a1443b01f89cfe1fbaaeb0099661682bb05da82751eb0e"
+const CORPUS_HASH = "f87db0a953a8d927f61fd465d1b9b751ff653003c0aec3559eb0e0523c924951"
 
 /**
  * `ablationBoardID` of the corpus.
  *
  * The id is content-addressed and not order-addressed, which is what carried it UNCHANGED across the 2026-08-05 array →
  * JSONL migration. The country sweep is the opposite kind of change — it adds 114 rows — so this one moves, and it
- * should: the ablation board is genuinely a different board.
+ * should: the ablation board is genuinely a different board. Same again for the 24-row world-structures batch on
+ * 2026-08-10 (`@490:c7bd678905d0` → this).
  */
-const BOARD_ID = "gauntlet-regression@306:ba944d75c9df"
+const BOARD_ID = "gauntlet-regression@514:5c5fca20db47"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
@@ -141,6 +156,24 @@ describe("the row schema", () => {
 	it("accepts the optional ablation pin (#1502), unused by the corpus today", () => {
 		expect(SeedCaseSchema.safeParse({ ...SAMPLE, ablationExpect: { country: "region" } }).success).toBe(true)
 	})
+
+	it("accepts the per-component rendering contract (#34)", () => {
+		const contract = { venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }
+
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: contract }).success).toBe(true)
+	})
+
+	it("rejects a rendering value that is not a string array", () => {
+		// The `expectComponents` shape filed under the wrong key — the likeliest authoring slip.
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } }).success).toBe(false)
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: [42] } }).success).toBe(false)
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: ["хийд"] }).success).toBe(false)
+	})
+
+	it("rejects an empty rendering list — it would assert nothing while looking asserted", () => {
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: [] } }).success).toBe(false)
+		expect(SeedCaseSchema.safeParse({ ...SAMPLE, expectComponentRenderings: { venue: [""] } }).success).toBe(false)
+	})
 })
 
 describe("a malformed row names its file and line", () => {
@@ -158,6 +191,14 @@ describe("a malformed row names its file and line", () => {
 		})
 
 		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
+	})
+
+	it("on a malformed rendering contract, naming the field", async () => {
+		const root = scratchCorpus({
+			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } })}\n`,
+		})
+
+		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
 	})
 
 	it("counts blank lines, so the number matches the editor's", async () => {

@@ -44,12 +44,39 @@ from pathlib import Path
 
 from .augment import row_span_triple
 
+_STREET_SUFFIX_TAG = "street_suffix"
+
+
+def _bio_component(label: str) -> str | None:
+    """Return the component part of a BIO label, or None for O/non-BIO labels."""
+    if label.startswith(("B-", "I-")):
+        return label[2:]
+    return None
+
+
+def _has_adjacent_suffix(labels: list[str], end: int) -> bool:
+    """Whether a BIO street span is immediately followed by an authored suffix."""
+    after = _bio_component(labels[end]) if end < len(labels) else None
+    return after == _STREET_SUFFIX_TAG
+
+
+def _span_has_adjacent_suffix(tags: list[str], index: int) -> bool:
+    """Whether a char-offset street span is immediately followed by an authored suffix."""
+    after = tags[index + 1] if index + 1 < len(tags) else None
+    return after == _STREET_SUFFIX_TAG
+
 
 @dataclass(frozen=True)
 class AffixRelabelLexicon:
     directionals: dict[str, str]  # lowercase variant -> canonical abbreviation
     suffixes: dict[str, str]  # lowercase variant -> canonical suffix
     version: str
+    # v2 (2026-08-10, #1569): Pub-28 canonicals that are also common street-name head nouns
+    # (PARK/HILL/CREEK...). Sourced from codex/us/street-suffix.json via the
+    # `mailwoman gazetteer affix-relabel` builder — never hand-typed here. Empty (a v1
+    # artifact) leaves the positional licensing in split_street_span OFF: old artifacts keep
+    # the old blanket-rejection behavior, by construction.
+    name_prone: frozenset[str] = frozenset()
 
     @classmethod
     def load(cls, path: str | Path) -> AffixRelabelLexicon:
@@ -62,7 +89,12 @@ class AffixRelabelLexicon:
                 raise ValueError(f"affix relabel lexicon missing key {key!r}: {p}")
         if not data["directionals"] or not data["suffixes"]:
             raise ValueError(f"affix relabel lexicon has empty vocab: {p}")
-        return cls(directionals=data["directionals"], suffixes=data["suffixes"], version=data["version"])
+        return cls(
+            directionals=data["directionals"],
+            suffixes=data["suffixes"],
+            version=data["version"],
+            name_prone=frozenset(data.get("name_prone", ())),
+        )
 
 
 def _is_affix_shaped(words: list[str], lex: AffixRelabelLexicon) -> bool:
@@ -93,7 +125,20 @@ def split_street_span(words: list[str], lex: AffixRelabelLexicon) -> tuple[int, 
         return None
     name = rest[:-1]
     if _is_affix_shaped(name, lex):
-        return None
+        # Positional licensing (2026-08-10, #1569 five-whys root cause). The blanket rejection
+        # made suffix-shape a property of the WORD, so every ordinary-source 'Menlo Park Road'
+        # kept a monolithic street label and ~78% of terminal-only carriers taught the model to
+        # absorb the true suffix in real contexts. Mirror of the TS recipe's allowNameProneTail
+        # (street-affix.ts; the golden truth already encodes these splits): a name of >= 2 words
+        # whose FINAL word is merely a name-prone head noun (PARK/HILL/CREEK...) is licensed by
+        # the TRUE suffix that follows it. Single-word names ('W Park Ave' -> name ['Park']) and
+        # non-name-prone suffix-shaped tails ('Old Avenue Road') stay refused. `lex.name_prone`
+        # rides the v2 lexicon artifact (built from codex/us/street-suffix.json); a v1 artifact
+        # has it empty, so licensing is inert and old runs reproduce byte-for-byte.
+        tail_canonical = lex.suffixes.get(name[-1].lower())
+        licensed = len(name) >= 2 and tail_canonical in lex.name_prone and name[0].lower() not in lex.directionals
+        if not licensed:
+            return None
     return (prefix, 1)
 
 
@@ -116,6 +161,12 @@ def relabel_row(row: dict, lex: AffixRelabelLexicon) -> bool:
         j = i + 1
         while j < n and labels[j] == "I-street":
             j += 1
+        # An authored following suffix proves this boundary already exists. Reopening the
+        # street can manufacture a second suffix ("Menlo Park" + "Road" -> "Menlo" + "Park" + "Road").
+        if _has_adjacent_suffix(labels, j):
+            i = j
+            continue
+
         span_words = tokens[i:j]
         split = split_street_span(span_words, lex)
         if split is not None:
@@ -157,8 +208,14 @@ def relabel_spans(row: dict, lex: AffixRelabelLexicon) -> bool:
     new_ends: list[int] = []
     new_tags: list[str] = []
     changed = False
-    for start, end, tag in zip(starts, ends, tags, strict=True):
+    for index, (start, end, tag) in enumerate(zip(starts, ends, tags, strict=True)):
         if tag != "street":
+            new_starts.append(start)
+            new_ends.append(end)
+            new_tags.append(tag)
+            continue
+        # As on the BIO path, an authored following suffix proves this boundary exists.
+        if _span_has_adjacent_suffix(tags, index):
             new_starts.append(start)
             new_ends.append(end)
             new_tags.append(tag)

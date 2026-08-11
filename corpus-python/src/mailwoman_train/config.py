@@ -53,6 +53,12 @@ class DataConfig:
     # gold). Model-first vs a deterministic delimiter-normalizer. 0 = disabled (rng-stream bit-identical).
     augment_punct_drop_prob: float = 0.0
     augment_upper_case_prob: float = 0.0
+    # Augmentation-pool exclusion (2026-08-10 recipe review): sources whose rows bypass the
+    # augmentation stage entirely (original emitted exactly once). Augmented copies of an
+    # OVERSAMPLED synthetic shard are near-duplicates that compound its repetition dose while
+    # adding none of the diversity that moves OOD boards; list that shard here. The affix
+    # relabel still applies — label policy and augmentation policy are independent.
+    augment_exclude_sources: list[str] = field(default_factory=list)
     # Postcode-anchor lookup (#239/#240). Path to the JSON {postcode: [posterior, lat, lon]} table
     # (built by scripts/build-pilot-anchor-lookup.ts). When set AND model.use_postcode_anchor is on,
     # the loader projects per-piece anchor features onto each row. None → no anchor features.
@@ -376,6 +382,12 @@ class TrainConfig:
     # smoke window masks divergence by collapsing LR before the loss curve shows it; the
     # constant-LR mode keeps the signal visible. See the ref doc for when to pick which.
     lr_schedule: str = "cosine"
+    # ``"linear_cooldown"``'s branch point (2026-08-10 recipe review, lever 11): resume a
+    # mid-schedule checkpoint at this step with ``learning_rate`` set to that checkpoint's
+    # CURRENT (tail) LR; multiplier holds 1.0 through the start, then decays linearly to zero
+    # at ``max_steps`` — the WSD-style read of a mid-cosine checkpoint's finished-schedule
+    # endpoint. Required by (and only read by) lr_schedule='linear_cooldown'.
+    cooldown_start_step: int | None = None
     # Gazetteer-anchor confidence curriculum (#464, v0.9.13). When True, the trainer ramps a per-row
     # zero-out of the gazetteer clue's confidence by step (same schedule as the postcode anchor) so the
     # model can't over-rely on the always-on clue — the v0.9.12 US-postcode-recovery knob. Off keeps

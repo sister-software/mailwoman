@@ -9,7 +9,8 @@ Usage:
     # First time: sync corpus from R2 (takes ~3 min at datacenter speed)
     modal run scripts/modal/train_remote.py::sync_corpus
 
-    # Run the training (~1h on A100)
+    # Run the training (wall clock scales with cfg.train.max_steps — a 60k-step recipe is
+    # ~4h on an A100; see TRAIN_TIMEOUT_SECONDS)
     modal run scripts/modal/train_remote.py
 
     # Download results
@@ -143,6 +144,27 @@ hf_secret = modal.Secret.from_dict(_load_hf_env())
 BUCKET = "mailwoman-assets"
 VOL_MOUNT = "/data"
 OUTPUT_DIR = "/data/output"
+
+# Training-function wall-clock budget (2026-08-09 P1). The old decorator value was 14,400 s
+# under a stale "training should take ~1h" comment, and killed a 60k-step run at step 59,900:
+# at the measured throughput 60k optimizer steps alone need ~3h55m, before image boot, volume
+# reload, loader init, validation, checkpointing, and the final save/commit. 21,600 s (6h)
+# covers the 60k A100 recipe with real headroom, and `_required_train_seconds` preflights any
+# recipe against the ceiling INSIDE train() — a config that cannot fit fails in minute one,
+# not at the wire.
+TRAIN_TIMEOUT_SECONDS = 21600
+# Measured on the v4.3.3 A100 run (2026-08-09): ~4.25 optimizer steps/s at batch 128.
+MEASURED_STEPS_PER_SECOND = 4.25
+# Multiplicative headroom over the measured rate (validation pauses, checkpoint writes, slow
+# batches) plus a flat allowance for startup/shutdown outside the step loop.
+TIMEOUT_HEADROOM = 1.35
+STARTUP_SHUTDOWN_OVERHEAD_SECONDS = 1800
+
+
+def _required_train_seconds(max_steps: int) -> int:
+    """Conservative wall-clock estimate for a run of ``max_steps`` optimizer steps."""
+    return int(max_steps / MEASURED_STEPS_PER_SECOND * TIMEOUT_HEADROOM) + STARTUP_SHUTDOWN_OVERHEAD_SECONDS
+
 
 # ---------------------------------------------------------------------------
 # Sync corpus from R2 into the volume
@@ -1948,7 +1970,7 @@ def push_artifact_r2(volume_path: str, r2_subpath: str):
     volumes={VOL_MOUNT: vol},
     secrets=[hf_secret],  # HF_TOKEN for optional Trackio Space upload (empty/no-op when unset)
     gpu="A100",
-    timeout=14400,  # 4h max (training should take ~1h)
+    timeout=TRAIN_TIMEOUT_SECONDS,  # 6h — see the TRAIN_TIMEOUT_SECONDS derivation above
     memory=32768,  # 32GB RAM
 )
 def train(
@@ -2013,6 +2035,20 @@ def train(
     shard_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
     print(f"Corpus: {cfg.data.corpus_dir} ({shard_count} train shards)")
 
+    # Preflight the wall-clock budget (2026-08-09 P1): a recipe whose step count cannot fit
+    # this function's timeout must fail HERE, not die at the wire like the 60k predecessor
+    # that Modal killed at step 59,900.
+    required = _required_train_seconds(cfg.train.max_steps)
+    if required > TRAIN_TIMEOUT_SECONDS:
+        raise RuntimeError(
+            f"cfg.train.max_steps={cfg.train.max_steps} needs ~{required}s wall clock "
+            f"({MEASURED_STEPS_PER_SECOND} steps/s measured, ×{TIMEOUT_HEADROOM} headroom, "
+            f"+{STARTUP_SHUTDOWN_OVERHEAD_SECONDS}s startup/shutdown) but the train function's "
+            f"timeout is {TRAIN_TIMEOUT_SECONDS}s. Raise TRAIN_TIMEOUT_SECONDS deliberately; "
+            "do not let Modal kill the run at the wire."
+        )
+    print(f"Wall-clock preflight: ~{required}s required of {TRAIN_TIMEOUT_SECONDS}s budget")
+
     # CLI overrides for experiment tracking (take precedence over the YAML config).
     if trackio:
         cfg.train.trackio_enabled = True
@@ -2035,6 +2071,11 @@ def train(
 
     if resume == "auto":
         run_train(cfg, resume_from="auto")
+    elif resume and resume != "none":
+        # Explicit checkpoint path — the branch-run mechanism (e.g. the linear_cooldown read of
+        # a mid-cosine checkpoint under a NEW output dir). Previously silently dropped, which
+        # made every non-auto resume a fresh run.
+        run_train(cfg, resume_from=resume)
     else:
         run_train(cfg)
 
@@ -2047,6 +2088,58 @@ def train(
             path = os.path.join(root, f)
             size = os.path.getsize(path)
             print(f"  {os.path.relpath(path, OUTPUT_DIR)}: {size / 1e6:.1f} MB")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    gpu="A100",
+    timeout=3600,
+    memory=32768,
+)
+def diagnose_suffix_plasticity(
+    learning_rate: float = 1.0e-5,
+    max_steps: int = 2000,
+    name: str = "ewc-off-lr1e5-2k",
+):
+    """Non-candidate #1569 plasticity probe: v4.3.1 with EWC disabled.
+
+    This is diagnostic evidence only, never a third promotion attempt. It holds the corrected corpus,
+    initialization, optimizer family, batch size and model geometry fixed; disables EWC, uses a constant
+    learning rate so a short probe does not disappear into a cosine tail, and saves every 500 steps.
+    """
+    import sys
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    from mailwoman_train.config import load_config
+    from mailwoman_train.train import train as run_train
+
+    config_path = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/v4.3.1-suffix-boundary-target-dose-8k.yaml"
+    cfg = load_config(config_path)
+    cfg.train.ewc_lambda = 0.0
+    cfg.train.ewc_fisher_path = ""
+    cfg.train.ewc_reference = ""
+    cfg.train.learning_rate = float(learning_rate)
+    cfg.train.max_steps = int(max_steps)
+    cfg.train.lr_schedule = "constant"
+    cfg.train.eval_every_steps = 500
+    cfg.train.save_every_steps = 500
+    cfg.train.output_dir = f"{VOL_MOUNT}/diagnostic-v431-suffix-{name}/checkpoints"
+    cfg.train.csv_log_path = f"{VOL_MOUNT}/diagnostic-v431-suffix-{name}/train_log.csv"
+    cfg.train.trackio_enabled = False
+    cfg.train.trackio_run_name = f"diagnostic-v431-suffix-{name}"
+
+    print("NON-CANDIDATE #1569 PLASTICITY DIAGNOSTIC")
+    print(f"  EWC lambda: {cfg.train.ewc_lambda}")
+    print(f"  learning rate: {cfg.train.learning_rate}")
+    print(f"  schedule: {cfg.train.lr_schedule}")
+    print(f"  max steps: {cfg.train.max_steps}")
+    print(f"  output: {cfg.train.output_dir}")
+    run_train(cfg)
+    vol.commit()
+    print("Diagnostic complete; artifact is NOT promotion-eligible.")
 
 
 # ---------------------------------------------------------------------------
@@ -3852,3 +3945,266 @@ def sync_v420_batch():
             f"{VOL_MOUNT}/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue/train/part-house-venue.parquet"
         ),
     )
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v431_suffix_boundary():
+    """Sync the corrected #1569 target-dose corpus and v4.3.1 training code from R2.
+
+    The overlay manifest retains the 706 v0.17.0-batch shards at their existing volume paths and
+    adds one 30k-row shard: 24k terminal-only targets plus 6k terminal-contrast guards. As with the
+    earlier corpus syncs, transfer is container-side because direct Modal Volume writes are unsafe.
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v4.3.1 suffix-boundary code + corrected overlay from R2 (container-side)...")
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.18.1-suffix-boundary/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.18.1-suffix-boundary/corpus-v0.18.1-suffix-boundary/ {retry}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:100]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv4.3.1 suffix-boundary sync complete. Volume committed.")
+
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.18.1-suffix-boundary/corpus-v0.18.1-suffix-boundary"
+    checks = {
+        "v4.3.1 config": os.path.isfile(f"{package}/configs/v4.3.1-suffix-boundary-target-dose-8k.yaml"),
+        "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "suffix-boundary shard": os.path.isfile(f"{corpus}/train/part-suffix-boundary.parquet"),
+        "re-rooted base shard": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
+        ),
+        "init checkpoint": os.path.isfile(
+            f"{VOL_MOUNT}/output-v420-base-anchor-v2-s42/checkpoints/step-060000/pytorch_model.bin"
+        ),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label} present: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v4.3.1 sync verification failed: {', '.join(missing)}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_substrate_repairs():
+    """Sync the 2026-08-09 substrate-repaired training code from R2.
+
+    Delivers the four P0/P1 repairs (stationary cycling sampler, split-aware val policy,
+    schedule-aware LR restamp, atomic checkpoints) plus the new epoch-mixture audit module.
+    Code-only: no corpus changes. Container-side rclone because direct Modal Volume writes
+    are unsafe (`modal volume put` is blind to mounted containers).
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing substrate-repaired training code from R2 (container-side)...")
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        # v2 affix lexicon (adds name_prone — the #1569 positional-licensing vocabulary). The
+        # v1 file stays untouched beside it; configs opt in per artifact.
+        f"rclone copy :s3:{BUCKET}/gazetteer/affix-relabel-lexicon-v2.json {VOL_MOUNT}/gazetteer/ {retry}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:110]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nSubstrate-repair sync complete. Volume committed.")
+
+    def _contains(path: str, needle: str) -> bool:
+        with open(path, encoding="utf-8") as fh:
+            return needle in fh.read()
+
+    checks = {
+        "epoch-mixture audit module": os.path.isfile(f"{package}/audit_epoch_mixture.py"),
+        "stationary sampler landed": _contains(f"{package}/data_loader.py", "STATIONARY mixture"),
+        "val-policy guard landed": _contains(f"{package}/data_loader.py", "TRAIN-ONLY policy"),
+        "schedule-aware restamp landed": _contains(f"{package}/train.py", "SCHEDULE-AWARE"),
+        "atomic checkpoint save landed": _contains(f"{package}/train.py", "completeness marker"),
+        "linear_cooldown schedule landed": _contains(f"{package}/train.py", "_linear_cooldown"),
+        "positional licensing landed": _contains(f"{package}/relabel.py", "Positional licensing"),
+        "cooldown branch config": os.path.isfile(f"{package}/configs/v4.3.3-cooldown46k.yaml"),
+        "v2 affix lexicon": os.path.isfile(f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"substrate-repair sync verification failed: {', '.join(missing)}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
+def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml", window: int = 100000):
+    """Full-epoch source/country mixture audit against the volume corpus (handoff action 7).
+
+    CPU-only; runs the repaired loader over one row-limited epoch exactly as the trainer
+    would sample it (seed = train.seed + 1) and writes the JSON receipt to
+    /data/audits/epoch-mixture-<config-stem>.json. Pull it with
+    `modal volume get mailwoman-training /audits/<name>.json scratchpad/<name>.json`.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}")
+    if not config_path.is_file():
+        raise RuntimeError(f"Config not found: {config_path}")
+
+    from mailwoman_train.audit_epoch_mixture import run
+
+    stem = config_path.stem
+    json_path = Path(f"{VOL_MOUNT}/audits/epoch-mixture-{stem}.json")
+    run(config_path, json_path=json_path, window=window)
+    vol.commit()
+    print(f"\nAudit committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
+def audit_suffix_feed(
+    config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml",
+    relabel_lexicon: str = "/data/gazetteer/affix-relabel-lexicon-v2.json",
+    rows: int = 250000,
+    seed: int = 1569,
+):
+    """Terminal-only carrier audit over the volume feed (#1569 five-whys countermeasure receipt).
+
+    Classification always uses the v2 lexicon (it defines the name-prone classes); the RELABEL
+    lexicon is the variable — pass v1 to reproduce the 2026-08-09 baseline (ordinary carriers
+    ~22.1% correct), v2 to measure the positional-licensing fix. JSON lands under /data/audits/.
+    """
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}")
+    if not config_path.is_file():
+        raise RuntimeError(f"Config not found: {config_path}")
+
+    from mailwoman_train.audit_suffix_feed import run
+
+    relabel_path = Path(relabel_lexicon)
+    json_path = Path(f"{VOL_MOUNT}/audits/suffix-feed-{config_path.stem}-{relabel_path.stem}.json")
+    run(
+        config_path,
+        classify_lexicon=Path(f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json"),
+        relabel_lexicon=relabel_path,
+        rows=rows,
+        seed=seed,
+        json_path=json_path,
+    )
+    vol.commit()
+    print(f"\nAudit committed to volume: {json_path}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v440():
+    """Sync the v4.4.0 corrected-contract run inputs from R2.
+
+    Corpus v0.19.0 overlay (suffix-boundary shard v2: real venue shell, stem-pair contrasts;
+    A/B byte-identical, sha256 d939a762…) + the current training code + config. The v2 affix
+    lexicon is synced by sync_substrate_repairs and verified again here — the run's four
+    deltas all ride data/config, so every input is checked before a dollar of GPU.
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v4.4.0 inputs from R2 (container-side)...")
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.19.0-suffix-boundary-v2/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2/ {retry}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:110]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv4.4.0 sync complete. Volume committed.")
+
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.19.0-suffix-boundary-v2/corpus-v0.19.0-suffix-boundary-v2"
+    checks = {
+        "v4.4.0 config": os.path.isfile(f"{package}/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml"),
+        "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "v2 shard parquet": os.path.isfile(f"{corpus}/train/part-suffix-boundary-v2.parquet"),
+        "v2 affix lexicon": os.path.isfile(f"{VOL_MOUNT}/gazetteer/affix-relabel-lexicon-v2.json"),
+        "augment exclusion in loader": _file_contains(f"{package}/data_loader.py", "augment_exclude_sources"),
+        "base shard reachable": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
+        ),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v4.4.0 sync verification failed: {', '.join(missing)}")
+
+
+def _file_contains(path: str, needle: str) -> bool:
+    with open(path, encoding="utf-8") as fh:
+        return needle in fh.read()
