@@ -94,9 +94,12 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
-	// #920: the GeoNames-postal tail shard — NINE countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE
-	// (56,075 rows). GB rode in this shard 2026-07-03 → 2026-08-05 and moved to Code-Point Open above.
-	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE`.
+	// #920: the GeoNames-postal tail shard — TEN countries in ingest order FI/CZ/SK/SI/DK/NO/HR/PL/SE/BE
+	// (57,221 rows; BE joined 2026-08-12 with 1,146 codes after the Overture BE parquet measured too thin —
+	// 203 codes, none of the eu-mixed panel's). GB rode in this shard 2026-07-03 → 2026-08-05 and moved to
+	// Code-Point Open above. The swap is parity-gated: the nine prior countries re-joined byte-identical
+	// (56,075 rows, worst coordinate delta 0).
+	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE,BE`.
 	"postalcode-geonames-tail.db",
 	"postcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
@@ -162,7 +165,13 @@ export function resolvePostcodeShards(
  * LINZ-derived NZ suburb shard (#1564; `gazetteer build nz-localities`). A machine without the shard builds without it,
  * and the artifact's NZ locality namespace stays exactly as thin as the sources that fed it.
  */
-export const DEFAULT_LOCALITY_SHARDS: readonly string[] = ["localities-nz-linz.db"]
+export const DEFAULT_LOCALITY_SHARDS: readonly string[] = [
+	"localities-nz-linz.db",
+	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality half; 22 rows
+	// from GeoNames CZ, `gazetteer build cz-districts`). Verified 2026-08-12: the Chabeřická panel row
+	// moved from a 6,733 km US answer to CZ at ~400 m.
+	"localities-cz-districts.db",
+]
 
 /**
  * Resolve the conventional locality shards present on this machine.
