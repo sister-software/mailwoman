@@ -48,7 +48,13 @@ import { buildFTS } from "../fts.ts"
  * the artifact (1,839,678 of 1,895,753 rows, ~946 MB). Keep the order: it is what makes a rebuild id-comparable to the
  * frozen shard.
  */
-export const DEFAULT_GEONAMES_TAIL_COUNTRIES = ["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "GB"] as const
+/**
+ * The tail shard's country set, in the frozen artifact's own ingest order. GB left for Code-Point Open 2026-08-05; BE
+ * joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the panel's,
+ * while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity gate against
+ * the prior shard, and swap under the .prev rotation.
+ */
+export const DEFAULT_GEONAMES_TAIL_COUNTRIES = ["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"] as const
 
 /**
  * `meta` is the artifact's own provenance record — a key/value table read at open, so the licence obligation and the
