@@ -104,9 +104,9 @@ beforeAll(async () => {
 	corpus = cases.map((c) => c.input)
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 535-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 537-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(535)
+		expect(corpus).toHaveLength(537)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
