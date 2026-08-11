@@ -26,9 +26,8 @@
  */
 
 import { readFileSync } from "node:fs"
-import { createRequire } from "node:module"
-import { dirname, resolve } from "node:path"
 import { DatabaseSync } from "node:sqlite"
+import { fileURLToPath } from "node:url"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -50,7 +49,7 @@ import { makeMulberry32, readTuples as readShardTuples } from "./scaffold.ts"
  * The committed lexicon, resolved through the package manifest.
  */
 export function defaultLexiconPath(): string {
-	return dirname(import.meta.resolve("@mailwoman/corpus/data/sub-venue-lexicon.json"))
+	return fileURLToPath(import.meta.resolve("@mailwoman/corpus/data/sub-venue-lexicon.json"))
 }
 
 /**
