@@ -22,11 +22,13 @@
  *   is on file, releases run from CI over OIDC with no second factor at all.
  */
 
+import { existsSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { parseArgs } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -40,7 +42,7 @@ const AUTH_URL_PATTERN = /https:\/\/www\.npmjs\.com\/auth\/cli\/[\w-]+/
 const { values: flags, positionals: dirs } = parseArgs({
 	options: {
 		version: { type: "string" }, // optional semver bump
-		file: { type: "string", default: "release.yml" }, // workflow filename (case-sensitive, .yml)
+		file: { type: "string", default: "publish.yml" }, // workflow that runs npm publish (case-sensitive, .yml)
 		env: { type: "string" }, // optional GH Actions environment
 		provider: { type: "string", default: "github" }, // github | gitlab
 		"no-trust": { type: "boolean", default: false }, // publish only; configure trust separately
@@ -111,6 +113,25 @@ async function runNPMWrite(proc: ProcessPromise): Promise<void> {
 	})
 
 	await proc
+}
+
+/**
+ * Refuse a workflow filename this repository does not have.
+ *
+ * The registry matches `claims.workflow_ref.file` literally against the workflow path carried by the OIDC token, and it
+ * never checks that the claim names a real file. A claim that names nothing is accepted at configuration time and then
+ * denies every CI publish with a bare `E404 Not Found - PUT` naming neither trust nor the workflow. This stat is the
+ * last cheap moment to catch that: once the config is on file it must be read and revoked, and each of those steps
+ * costs its own interactive 2FA approval.
+ */
+function assertWorkflowExists(file: string): void {
+	if (flags.provider !== "github") return
+
+	const workflowPath = repoRootPath(".github", "workflows", file)
+
+	if (existsSync(workflowPath)) return
+
+	throw new Error(`--file ${file}: no such workflow — ${workflowPath} does not exist`)
 }
 
 interface Pkg {
@@ -227,13 +248,30 @@ async function trust(dir: string): Promise<void> {
 		await runNPMWrite(npmWrite`npm ${args}`)
 
 		console.log(`• ${pkg.name}: trusted publisher configured`)
-	} catch {
-		console.warn(`⚠ ${pkg.name}: trust not configured (it may already be). Run by hand:`)
+	} catch (error) {
+		// The create endpoint is not idempotent: a package that already carries a trust config answers
+		// 409 whatever that config SAYS, so a stale one (wrong workflow file, wrong repo) is
+		// indistinguishable from a correct one here. Name that case, because the repair is a revoke
+		// rather than a retry — retrying returns 409 forever.
+		const stderr = String((error as { stderr?: string } | undefined)?.stderr ?? error)
+
+		if (/\b409\b/.test(stderr)) {
+			console.warn(`⚠ ${pkg.name}: a trust config already exists (409). Read it, and replace it if it is stale:`)
+			console.warn(`    npm trust list ${pkg.name}`)
+			console.warn(`    npm trust revoke ${pkg.name} --id <id>`)
+			console.warn(`    npm ${args.join(" ")}`)
+
+			return
+		}
+
+		console.warn(`⚠ ${pkg.name}: trust not configured. Run by hand:`)
 		console.warn(`    npm ${args.join(" ")}`)
 	}
 }
 
 async function main(): Promise<void> {
+	assertWorkflowExists(flags.file!)
+
 	for (const dir of dirs) {
 		const d = path.resolve(dir)
 

@@ -229,6 +229,8 @@ Read the workspace-local docstrings before changing infrastructure files. The he
 
 Corollary for the docstring you write afterwards: if the claim was established by measurement, put the number in. `27,405 ms → 175 ms on 8 MB` tells the next reader whether the constraint still binds. "This is slow" does not.
 
+That corollary covers a MEASUREMENT THAT STILL BINDS, and nothing else. It is not a licence for the story of the change: a comment states the invariant, the non-obvious constraint, or the reason an obvious implementation is unsafe, and the incident that produced it goes in the commit message, the PR, or the runbook page. **A date, a version number, or a list of affected packages inside a comment is the tell** — strike it and see whether the sentence still stands; if it doesn't, the sentence was history. `scripts/bless-package.ts`'s workflow-file guard was the worked example: the durable half (the registry matches `claims.workflow_ref.file` literally and never checks that it names a real file, so a bad claim is accepted and then denies CI publishes with a bare `E404`) belongs at the guard, and the release it burned belongs in `RELEASING.md`, which is where a reader chasing that release will look. Written into both, the code copy is the one that goes stale.
+
 ## Addendum
 
 - We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink/Pastel commands, which are TSX and require compiling.

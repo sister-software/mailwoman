@@ -623,6 +623,17 @@ done
 
 Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`). After that, OIDC publishes it like every other package and you never touch it manually again.
 
+`scripts/bless-package.ts` does both halves (first publish + trust config) from the terminal — it
+runs npm's web-auth flow, so a hardware key on the laptop signs for a publish from the lab host. **The
+workflow filename it claims must be the workflow that actually publishes** (`publish.yml`; the script
+now refuses a name that is not in `.github/workflows/`). npm stores the claim verbatim and never
+checks it, so a wrong one is accepted and then denies every CI publish with a bare `E404 Not Found -
+PUT` that names neither trust nor the workflow. That is what held `neural-weights-{en-in,it-it,es-es}`
+at 8.6.0 through the 9.0.0 and 9.1.0 releases: they were blessed on 2026-08-02 with this flag's
+then-default, `release.yml` — a file this repo has never had. A package that already carries a config answers `409 Conflict` to a
+second `npm trust github`, whatever that config says — read it with `npm trust list <pkg>` and replace
+a stale one with `npm trust revoke <pkg> --id <id>`, since retrying returns 409 forever.
+
 Two traps that wasted time during 4.0.0, worth knowing:
 
 - **`npm view <pkg> version` caches for minutes** and will report `UNPUBLISHED` right after a successful publish. Verify against the registry directly: `curl -s https://registry.npmjs.org/@mailwoman%2F<pkg>` (HTTP 200 + a `dist-tags.latest` = published).
