@@ -216,6 +216,19 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
+	// The ABSTAIN contract (#1585): the row's expected outcome is NO coordinate, so the grade inverts —
+	// any resolved coordinate fails it. Mutually exclusive with a pinned coordinate; a row carrying both
+	// is an authoring bug that must be loud, not a precedence question.
+	if (c.expect_abstain) {
+		if (c.expect_lat != null || c.expect_lon != null) {
+			throw new Error(`case ${c.id}: expect_abstain and expect_lat/expect_lon are mutually exclusive`)
+		}
+
+		if (r.lat != null && r.lon != null) {
+			issues.push(`resolved (${r.lat.toFixed(4)}, ${r.lon.toFixed(4)}) ≠ abstain`)
+		}
+	}
+
 	if (c.expect_lat != null && c.expect_lon != null) {
 		const tolKm = (c.expect_tolerance_m ?? DEFAULT_TOL_M) / 1000
 		const km = r.lat != null && r.lon != null ? haversineKm(r.lat, r.lon, c.expect_lat, c.expect_lon) : Infinity

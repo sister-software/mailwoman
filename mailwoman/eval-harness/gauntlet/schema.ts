@@ -124,6 +124,21 @@ export interface GauntletCaseTable {
 	 * these would be telling you the derivation is wrong, not that the rows are special.
 	 */
 	ablation_expect: string | null
+	/**
+	 * The CLI locale this row runs under (`en-NZ`), or null for the harness default. The runner derives the weights
+	 * overlay from its region subtag, mirroring production's locale-gate routing. This is a LOCALE HINT, never a country
+	 * constraint: `--locale` selects an address system and supplies a country prior, and an exact foreign match must
+	 * still resolve under it (#1585's contract) — `country` above stays the TRUTH's country, which for a locale row can
+	 * differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 */
+	locale: string | null
+	/**
+	 * 1 = this row's expected outcome is NO COORDINATE — the resolver abstains rather than answering. The grade inverts:
+	 * any resolved coordinate fails the row. For the #1585 fuzzy-scope class, a scoped-empty typo correction must
+	 * abstain, not fall through to a world-fuzzy candidate; the abstain pin IS the contract, and lands re-pinned to real
+	 * coordinates once coverage arrives (the row's note says which artifact).
+	 */
+	expect_abstain: number | null
 }
 
 /**
@@ -199,6 +214,9 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"ablation_expect",
 	// Appended 2026-08-11 (the per-row multi-script rendering contract). Same append-only rule.
 	"expect_component_renderings",
+	// Appended 2026-08-11 (the #1585 fuzzy-scope board: per-row locale arm + the abstain contract).
+	"locale",
+	"expect_abstain",
 ] as const
 
 /**
@@ -226,6 +244,8 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("note", "text")
 		.addColumn("ablation_expect", "text")
 		.addColumn("expect_component_renderings", "text")
+		.addColumn("locale", "text")
+		.addColumn("expect_abstain", "integer")
 		.execute()
 
 	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"

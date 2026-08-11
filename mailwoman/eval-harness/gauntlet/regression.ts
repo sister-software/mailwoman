@@ -106,9 +106,14 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 	for (const c of cases) {
 		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index) — see harness.ts.
+		// A row carrying `locale` runs under THAT locale's overlay instead of the truth country's: a
+		// #1585 locale-arm row like `Paris` under `en-US` is an FR row (country=FR pins the truth) whose
+		// production route goes through the US register. The region subtag is the overlay key.
+		const overlayCountry = c.locale?.split("-")[1] ?? c.country
+
 		const geoOpts = {
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),
-			...(c.country ? { caseCountry: c.country } : {}),
+			...(overlayCountry ? { caseCountry: overlayCountry } : {}),
 		}
 
 		const result = await runOne(c.input, deps, geoOpts)

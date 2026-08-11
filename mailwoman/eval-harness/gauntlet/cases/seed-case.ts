@@ -39,6 +39,13 @@ export interface SeedCase {
 	 */
 	defaultCountry?: string
 	/**
+	 * The CLI locale this row runs under (`en-NZ`); the runner derives the weights overlay from its region subtag,
+	 * mirroring production's locale-gate routing. A LOCALE HINT, never a country constraint — `country` above stays the
+	 * TRUTH's country, which for a locale row can differ (`Paris` under `en-US` is an FR row run with the US overlay).
+	 * See #1585's contract.
+	 */
+	locale?: string
+	/**
 	 * Asserted admin/parse fields, when relevant — `{ country?, region?, locality? }` (matched case-insensitively).
 	 */
 	expectComponents?: Record<string, string>
@@ -59,6 +66,13 @@ export interface SeedCase {
 	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
+	/**
+	 * True = the expected outcome is NO COORDINATE: the resolver abstains rather than answering, and any resolved
+	 * coordinate FAILS the row. Mutually exclusive with `expectLat`/`expectLon` (the schema refuses the combination). The
+	 * #1585 fuzzy-scope contract: a scoped-empty typo correction abstains instead of falling through world-fuzzy; such a
+	 * row is re-pinned to real coordinates once coverage arrives (its note names the artifact).
+	 */
+	expectAbstain?: boolean
 	addedAt: string
 	bugRef?: string
 	note?: string
@@ -86,6 +100,7 @@ export const SEED_CASE_KEY_ORDER = [
 	"country",
 	"status",
 	"defaultCountry",
+	"locale",
 	"expectComponents",
 	"expectComponentRenderings",
 	"expectPlaceID",
@@ -94,6 +109,7 @@ export const SEED_CASE_KEY_ORDER = [
 	"expectLon",
 	"expectToleranceM",
 	"expectTier",
+	"expectAbstain",
 	"addedAt",
 	"bugRef",
 	"note",
@@ -113,6 +129,10 @@ export const SeedCaseSchema = zod.strictObject({
 	country: zod.string().min(1),
 	status: zod.enum(["pass", "known_fail", "improvement_target"]),
 	defaultCountry: zod.string().optional(),
+	locale: zod
+		.string()
+		.regex(/^[a-z]{2}-[A-Z]{2}$/)
+		.optional(),
 	expectComponents: zod.record(zod.string(), zod.string()).optional(),
 	// Non-empty string arrays only: an empty rendering list would assert nothing while looking asserted, and a
 	// non-array value is the `expectComponents` shape filed under the wrong key.
@@ -123,6 +143,7 @@ export const SeedCaseSchema = zod.strictObject({
 	expectLon: zod.number().optional(),
 	expectToleranceM: zod.number().optional(),
 	expectTier: zod.enum(["address_point", "interpolated", "street", "admin"]).optional(),
+	expectAbstain: zod.boolean().optional(),
 	addedAt: zod.string().min(1),
 	bugRef: zod.string().optional(),
 	note: zod.string().optional(),
