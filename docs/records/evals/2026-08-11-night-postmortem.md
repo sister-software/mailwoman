@@ -6,7 +6,9 @@ three E404 weights packages had been published by the operator at 02:33, before 
 
 ## What shipped
 
-Six PRs, all merged via auto-merge on green CI; no releases, no npm publishes, Modal $0.
+Sixteen PRs, all merged via auto-merge on green CI; no releases, no npm publishes, Modal $0.
+(#1584–#1599 numbering below spans the whole shift; the first six carried the primary tasks, the
+rest came from the CI-fleet repairs and the operator-directed issue sweep.)
 
 - **#1584** — docs client-bundle fix. The handoff's unresolved §4 mystery (six dark CI runs):
   filer's `read-excel-file` dependency made spliterator's XLSX vendor imports resolvable, dragging
@@ -69,6 +71,61 @@ prod e2e cascade at 8/9 (the one red is pre-existing, filed #1589).
   3/60 → ~55+/60.
 - **#1589** — a bare non-US postcode never probes the postcode tier (`100 00` → nothing while
   candidate.db holds Prague at 50.077/14.466; parse correct, ladder abstains).
+
+## The CI-fleet tail (08:00–09:30 UTC)
+
+- **Version parity had been dark FIVE DAYS under two stacked breaks** (PRs #1593 + #1594): #1451's
+  APIClient migration of `check-release-parity.ts` ended the workflow's zero-install premise but
+  only the script moved (daily `ERR_MODULE_NOT_FOUND`), and underneath, the script still read the
+  pre-reorg `docs/articles/releases.mdx` path — the same stale-docstring trap that misdirected the
+  v9.1.0 prepare preflight. Post-fix dispatch: **"All release surfaces in parity"** (npm 9.1.0 =
+  demo v9.1.0 = matrix current row) — the check's first green since the reorg, and an independent
+  CI verification of the night's repoint.
+- **The intent-rules scaling canary hardened** (PR #1595) after its third same-night load flake
+  (3.19–3.25x against the 3x bar, algorithm healthy each time): paired back-to-back arms + median
+  per-pair ratio replace sequential best-of blocks; the bar itself untouched.
+- The scheduled demo smoke now RUNS (unblocked by #1590) and honestly reds on the Zabiče case
+  every cycle until the demo republish — flagged as an operator decision, not silently quieted.
+
+## The issue sweep (operator-directed, 10:20–12:10 UTC)
+
+Six issues resolved, three advanced with receipts:
+
+- **#1491 closed** — verified already fixed (`--corpus-version` + the command-tree collision guard
+  test, green).
+- **#1377 closed** (PR #1596) — filer 3a residuals: the supersession docstring un-conflated
+  (`sourceVintage` ≠ `validFrom`, the exact confusion the field split guards), `assertISODate`
+  caller threading, `deriveClusterMembersAsOf` IN-list chunked at 8k (the adjacency map already
+  membership-filters both endpoints, so the computed component is identical past the 16k
+  bound-variable ceiling). filer 556/556.
+- **#1371 closed** (PR #1597) — bdc build robustness, with the crash window fixed in the SHARED
+  `swapDatabaseIntoPlace` (restore-on-failed-forward-rename, two new tests) so every sealed-artifact
+  builder inherits it; bdc migrated onto the helper + heals an orphaned aside at build start.
+- **#1559 closed** — both awk-translated shard readers verified BYTE-IDENTICAL against the real
+  sources (FR stride: 501 lines; GeoNames CA admin1=10/08: 483/572 localities, the numeric-coercion
+  seam included). `fr__countrywide.zip` (609 MB) + `geonames/CA.zip` now cached on the host.
+- **#1507 closed** — verified already wired (check-case grades place identity; 7 world-capital
+  cases live; 34/34 tests).
+- **#1561 closed** (PR #1600) — the four unzip subprocesses were already migrated
+  (`extractZipEntries`/`verifyZipIntegrity`); removed the dead `runCapture` and its stale
+  `unzip -tq` docstring.
+- **#1577 advanced** (PR #1598) — `man mailwoman` derives from the CLI's own help tree
+  (freshness-tested, `package.json#man` wired); full audit comment: 8 bullets verified
+  already-shipped, 2 open (data pull `--host`, progress bar), the terminal-clear unreproduced with
+  pty receipts.
+- **#1528 advanced to close** (PR #1599) — the derived-weights key hashes the COMPILED builder
+  counterparts + the postcode pipeline dir (where #1527's fix actually lived), and a serve-time
+  PCB1 floor guard evicts poisoned entries and refuses poisoned stashes (the 0-record GB
+  reproduction pinned in tests).
+- **#1375 advanced** — the FIRST real-PBF build-local OSM runs: DC 18 rows with an EXACT Overpass
+  match (18 = 18 inside `area[wikidata=Q61]`; a naive bbox reads 51 by crossing into VA/MD),
+  VT 103 rows triangulating between polygon truth (95) and bbox world (261) per the Geofabrik
+  buffer; 18/18 coverage-derivation agreement. Finding fed to the coverage-register record: the
+  bbox polyfill writes coverage over unsurveyed corners (VT: 1,062 cells blanketing NY/NH/MA/QC
+  territory the PBF doesn't hold).
+- **#1493 advanced** — evidence pinned: nothing in-tree can LOAD `fst-global-priority.bin` (317 MB,
+  retirement looks free, held for the operator); the CJK three are real frozen 2026-05-28 files
+  with the #1176/#1142 forks stated.
 
 ## Decisions made autonomously
 
