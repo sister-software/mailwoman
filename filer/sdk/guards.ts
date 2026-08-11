@@ -36,10 +36,10 @@ const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
  * (`BuildFilerOptions.validFrom`, `ClusterFilersOptions.validFrom`) instead of relying on this function (or any other)
  * to guess one from a label.
  */
-export function assertISODate(value: string, context: string): string {
+export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(
-			`buildFilerDatabase: malformed ${context} — ${JSON.stringify(value)} is not an ISO YYYY-MM-DD date. ` +
+			`${caller}: malformed ${context} — ${JSON.stringify(value)} is not an ISO YYYY-MM-DD date. ` +
 				`valid_from/valid_to must always be ISO-sortable dates (decision 7 / gate 1's asOf predicate is a ` +
 				`plain string comparison over them) — a vintage LABEL like "2026-Q2" sorts lexicographically ABOVE ` +
 				`any real ISO date and would silently break every asOf-scoped read against the edge it's written to.`

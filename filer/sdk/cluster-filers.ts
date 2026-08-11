@@ -572,7 +572,7 @@ export async function clusterInferredLinks(
 
 	// Fails fast, before any query/write — see ClusterFilersOptions.validFrom's docstring and assertISODate's:
 	// a vintage LABEL like "2026-cluster-v1" must never reach valid_from/valid_to.
-	const validFrom = assertISODate(options.validFrom, "options.validFrom")
+	const validFrom = assertISODate(options.validFrom, "options.validFrom", "clusterInferredLinks")
 
 	const records = await buildInferredRecords(db)
 

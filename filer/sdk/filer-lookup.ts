@@ -645,16 +645,28 @@ async function deriveClusterMembersAsOf(
 	// cluster, matching this reader's existing "no authoritative cluster assignment" null case.
 	if (candidateMembers.length <= 1) return null
 
-	const edges = await db
-		.selectFrom("filer_edge")
-		.select(["from_node_id", "to_node_id"])
-		.where("assertion", "=", FilerEdgeAssertion.Authoritative)
-		.where("relationship", "=", FilerRelationship.SameEntity)
-		.where("from_node_id", "in", candidateMembers)
-		.where("to_node_id", "in", candidateMembers)
-		.where("valid_from", "<=", asOf)
-		.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
-		.execute()
+	// One IN list, chunked — never two whole-set lists: SQLite's bound-variable ceiling
+	// (SQLITE_MAX_VARIABLE_NUMBER) turns a double IN over the full member set into a throw past
+	// roughly 16k members. The to-side membership test lives in the adjacency map below, which only
+	// records an edge when BOTH endpoints are candidate members (`?.add` on an absent key no-ops),
+	// so dropping the to-side clause fetches a few extra member→non-member rows and computes the
+	// identical component at any cluster size.
+	const MEMBER_CHUNK = 8000
+	const edges: Array<{ from_node_id: string; to_node_id: string }> = []
+
+	for (let offset = 0; offset < candidateMembers.length; offset += MEMBER_CHUNK) {
+		edges.push(
+			...(await db
+				.selectFrom("filer_edge")
+				.select(["from_node_id", "to_node_id"])
+				.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+				.where("relationship", "=", FilerRelationship.SameEntity)
+				.where("from_node_id", "in", candidateMembers.slice(offset, offset + MEMBER_CHUNK))
+				.where("valid_from", "<=", asOf)
+				.where((eb) => eb.or([eb("valid_to", "is", null), eb("valid_to", ">", asOf)]))
+				.execute())
+		)
+	}
 
 	const adjacency = new Map<string, Set<string>>(candidateMembers.map((member) => [member, new Set<string>()]))
 
