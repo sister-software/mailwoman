@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 514
+const CORPUS_SIZE = 522
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -60,11 +60,16 @@ const CORPUS_SIZE = 514
  *
  * Moved 2026-08-10 — `848548e6…` → `02026054…` — by the 24-row `operator:world-structures-2026-08-10` batch.
  *
- * Moved again 2026-08-11 — `02026054…` → this — when `mn-ws-gandantegchinlen-dual-script` gained the per-row
+ * Moved again 2026-08-11 — `02026054…` → `f87db0a9…` — when `mn-ws-gandantegchinlen-dual-script` gained the per-row
  * `expectComponentRenderings` contract (#34: the global dual-script grader relaxation became a per-row opt-in). Row
- * count and every `id`+`input` were untouched, so the board id below stays.
+ * count and every `id`+`input` were untouched, so the board id there stayed.
+ *
+ * Moved 2026-08-11 (second) — `f87db0a9…` → this — by the 8-row `bug:#1589` bare-foreign-postcode board (cz ×3, sk, gb,
+ * nl, us ×2): six improvement_target rows pinning the first-drop stages (query-shape's missing NNN NN format; the
+ * resolver's US-only bare-postcode branch) and two US pass controls (90210; the 75008 locale-prior contract). Row count
+ * moves 514 → 522, so the board id below moves too.
  */
-const CORPUS_HASH = "f87db0a953a8d927f61fd465d1b9b751ff653003c0aec3559eb0e0523c924951"
+const CORPUS_HASH = "a379f1dc2098e6043e7771791aa607063d01f0d0c2c1deccb22c15867adf7865"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -72,9 +77,10 @@ const CORPUS_HASH = "f87db0a953a8d927f61fd465d1b9b751ff653003c0aec3559eb0e0523c9
  * The id is content-addressed and not order-addressed, which is what carried it UNCHANGED across the 2026-08-05 array →
  * JSONL migration. The country sweep is the opposite kind of change — it adds 114 rows — so this one moves, and it
  * should: the ablation board is genuinely a different board. Same again for the 24-row world-structures batch on
- * 2026-08-10 (`@490:c7bd678905d0` → this).
+ * 2026-08-10 (`@490:c7bd678905d0` → `@514:5c5fca20db47`), and for the 8-row bare-foreign-postcode board on 2026-08-11
+ * (`@514:5c5fca20db47` → this).
  */
-const BOARD_ID = "gauntlet-regression@514:5c5fca20db47"
+const BOARD_ID = "gauntlet-regression@522:da202fa6e714"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.

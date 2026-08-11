@@ -104,9 +104,9 @@ beforeAll(async () => {
 	corpus = cases.map((c) => c.input)
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 514-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 522-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(514)
+		expect(corpus).toHaveLength(522)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
@@ -166,6 +166,8 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 514-case corpus", ()
 	// rows ('Avenida Alvear', 'Savile Row', 'Gran Vía' …) — single street-name surfaces with no
 	// structural anchor, exactly the declared-fork shape the marker exists for. Deliberate pin
 	// move, reviewed row-by-row; not silent growth.
+	// 2026-08-11: corpus 514 → 522 with the bare-foreign-postcode board (#1589) — 8 postcode
+	// surfaces ('100 00', 'SW1A 1AA', …). None are fork-shaped; the fork list is unchanged.
 	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",
 		"Avenida Alvear",
