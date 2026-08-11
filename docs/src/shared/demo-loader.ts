@@ -32,8 +32,9 @@ import {
 	loadFSTGazetteer,
 	loadStreetMorphologyFST,
 	neuralClassifierLoadURLs,
+	PAIR_INDEX_VERSION,
+	pairIndexBaseURL,
 	pairIndexURLs,
-	resolvePairIndexBaseURL,
 } from "./resources/index.ts"
 
 /**
@@ -105,10 +106,9 @@ export async function loadDemoAssets(
 	//
 	// VERSIONED since 2026-08-05: the objects ship `immutable` Cache-Control, so an in-place re-cut
 	// (the PIX schema-3 move) left the CDN serving schema-1 bytes a reader that throws on them could
-	// not use. `resolvePairIndexBaseURL` prefers `pair-index/<generation>/` and falls back to the
-	// frozen un-versioned path until the next release train stages it — see its docstring for the
-	// removal condition.
-	const pairIndexBase = await resolvePairIndexBaseURL()
+	// not use. Every generation object is published under this path, so it is read directly — the
+	// transition HEAD probe retired once the bucket held them (its own removal condition).
+	const pairIndexBase = pairIndexBaseURL(PAIR_INDEX_VERSION)
 
 	// Dynamic so the ~MB of runtime lands in its own chunk rather than the page's entry. The loader's
 	// runtime API is wider than its TS types (it returns `postcodeAnchorLookup`, which the declaration
