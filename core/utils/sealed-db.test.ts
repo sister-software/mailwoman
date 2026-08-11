@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { mkdtempSync, statSync } from "node:fs"
+import { existsSync, mkdtempSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { describe, expect, it } from "vitest"
 
-import { isSealed, openBuiltDatabase, SealedArtifactError, sealDatabase } from "./sealed-db.ts"
+import { isSealed, openBuiltDatabase, SealedArtifactError, sealDatabase, swapDatabaseIntoPlace } from "./sealed-db.ts"
 
 function makeDB(): string {
 	const dir = mkdtempSync(join(tmpdir(), "sealed-db-"))
@@ -66,5 +66,37 @@ describe("openBuiltDatabase", () => {
 
 		expect(() => db.exec("INSERT INTO t (v) VALUES ('y')")).not.toThrow()
 		db.close()
+	})
+})
+
+describe("swapDatabaseIntoPlace", () => {
+	it("replaces the prior version and clears the aside copy", () => {
+		const final = makeDB()
+		const tmp = join(dirname(final), "replacement.db")
+		const db = new DatabaseSync(tmp)
+		db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)")
+		db.exec("INSERT INTO t (v) VALUES ('replacement')")
+		db.close()
+
+		swapDatabaseIntoPlace(tmp, final)
+
+		const swapped = new DatabaseSync(final, { readOnly: true })
+		expect((swapped.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("replacement")
+		swapped.close()
+		expect(existsSync(`${final}.old-${process.pid}`)).toBe(false)
+	})
+
+	it("restores the prior version when the forward rename fails — the slot is never left empty", () => {
+		const final = makeDB()
+		const missingTmp = join(dirname(final), "never-built.db")
+
+		// A nonexistent tmp makes the forward rename throw AFTER the prior version was moved aside —
+		// the exact crash window the restore closes.
+		expect(() => swapDatabaseIntoPlace(missingTmp, final)).toThrow(/ENOENT/)
+
+		expect(existsSync(final)).toBe(true)
+		const restored = new DatabaseSync(final, { readOnly: true })
+		expect((restored.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
+		restored.close()
 	})
 })
