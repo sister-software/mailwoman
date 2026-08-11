@@ -32,7 +32,7 @@ import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "./loa
 import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * The corpus today — 537 curated regressions.
+ * The corpus today — 538 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 537
+const CORPUS_SIZE = 538
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -106,6 +106,10 @@ const CORPUS_SIZE = 537
  * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row tripwire's note re-ledgers its
  * residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the board id stays.
  *
+ * Moved 2026-08-12 (sixth) — → this — by the range-surface fallback landing with its 1-row pin ('32-36 Osborne Drive,
+ * Burpengary QLD 4505' — the reader's null-only low-end retry keys the register's NUMBER_FIRST). 537 → 538, so the
+ * board id moves too.
+ *
  * Moved 2026-08-12 (fifth) — → this — by the 2-row `au_rooftop` board riding the G-NAF lane: the WA state-slug
  * collision witness ('47 Renegade Way, Kingsley WA 6026' — the parsed region 'WA' opened the US Washington shard and
  * starved the AU rooftop until the non-US pre-resolve country learned to outrank the state-slug match) and the rural
@@ -119,7 +123,7 @@ const CORPUS_SIZE = 537
  * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
  * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
  */
-const CORPUS_HASH = "f5fcd79e44ac57b01a64fca93a19e7e87fe296fff49a04f1bd689e7bf8225103"
+const CORPUS_HASH = "8b2be721edfa4c6d9193992994ca4bca92c8b6b3e18feb7334fbec8227364fc0"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -131,9 +135,10 @@ const CORPUS_HASH = "f5fcd79e44ac57b01a64fca93a19e7e87fe296fff49a04f1bd689e7bf82
  * (`@514:5c5fca20db47` → `@522:da202fa6e714`), and for the N7 0BT control the #1589 fix added the same day
  * (`@522:da202fa6e714` → `@523:08b0b462cb23`), for the 7-row fuzzy-scope board (`@523:08b0b462cb23` →
  * `@534:ee145335c825`), for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`), and for the 2-row
- * G-NAF au_rooftop board (`@535:b54fe280134e` → this).
+ * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
+ * (`@537:61edb19b8e64` → this).
  */
-const BOARD_ID = "gauntlet-regression@537:61edb19b8e64"
+const BOARD_ID = "gauntlet-regression@538:fff64efb0f29"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
