@@ -158,6 +158,23 @@ export function resolvePostcodeShards(
 }
 
 /**
+ * Locality shards folded into the candidate build by default, existence-filtered like the postcode set — today the
+ * LINZ-derived NZ suburb shard (#1564; `gazetteer build nz-localities`). A machine without the shard builds without it,
+ * and the artifact's NZ locality namespace stays exactly as thin as the sources that fed it.
+ */
+export const DEFAULT_LOCALITY_SHARDS: readonly string[] = ["localities-nz-linz.db"]
+
+/**
+ * Resolve the conventional locality shards present on this machine.
+ */
+export function resolveLocalityShards(
+	shards: readonly string[] = DEFAULT_LOCALITY_SHARDS,
+	dataRoot: string = mailwomanDataRoot()
+): string[] {
+	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+}
+
+/**
  * Resolve the conventional score source, or `undefined` when this machine has none.
  *
  * Same tolerate-and-degrade shape as {@link resolvePostcodeShards}, and the same reason: the scores are a build-local
@@ -325,6 +342,11 @@ export interface BuildOptions {
 	 */
 	postcodeShards?: readonly string[]
 	/**
+	 * Absolute LOCALITY-shard paths to fold in (default {@link resolveLocalityShards} — today the LINZ-derived NZ suburb
+	 * shard, when the machine holds it). Same tolerate-and-degrade shape as the postcode shards.
+	 */
+	localityShards?: readonly string[]
+	/**
 	 * Score source for the `importance` column (default {@link resolveImportanceDb}). Pass `false` to build the column
 	 * empty on purpose.
 	 */
@@ -349,6 +371,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		input: opts.adminDb,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
+		localities: [...(opts.localityShards ?? resolveLocalityShards())],
 		...(importance ? { importance } : {}),
 		onProgress: opts.onProgress,
 	})
