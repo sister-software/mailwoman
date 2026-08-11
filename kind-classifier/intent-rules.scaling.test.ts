@@ -68,31 +68,65 @@ function bestOf(run: () => void): number {
 	return best
 }
 
+/**
+ * Median of per-pair ratios, with the two arms measured BACK-TO-BACK inside each pair. Measuring all small trials then
+ * all large trials (even as best-of-N) leaves the ratio exposed to a load burst that arrives between the two blocks —
+ * on a host that also runs the CI fleet, that is the common case, and it fired the 3x bar three times in one night at
+ * 3.19–3.25x with both arms individually healthy. Pairing puts any burst into both arms of the affected pair, and the
+ * median sheds the corrupted pairs in either direction; a genuinely quadratic run still shows ~4x in every clean pair.
+ */
+function medianPairedRatio(small: () => void, large: () => void): { ratio: number; smallMs: number; largeMs: number } {
+	small()
+	large()
+
+	const ratios: number[] = []
+	let bestSmall = Number.POSITIVE_INFINITY
+	let bestLarge = Number.POSITIVE_INFINITY
+
+	for (let i = 0; i < TIMING_SAMPLES; i++) {
+		const s0 = performance.now()
+
+		small()
+		const s = performance.now() - s0
+
+		const l0 = performance.now()
+
+		large()
+		const l = performance.now() - l0
+
+		ratios.push(l / Math.max(s, 0.001))
+		bestSmall = Math.min(bestSmall, s)
+		bestLarge = Math.min(bestLarge, l)
+	}
+
+	ratios.sort((a, b) => a - b)
+
+	return { ratio: ratios[Math.floor(ratios.length / 2)]!, smallMs: bestSmall, largeMs: bestLarge }
+}
+
 test("the intent rules stay linear in input length", () => {
-	const at = (chars: number): number => {
+	const runAt = (chars: number): (() => void) => {
 		const text = CAPS_RUN_UNIT.repeat(Math.ceil(chars / CAPS_RUN_UNIT.length))
 		const input: NormalizedInputLite = { raw: text, normalized: text }
 		const shape = computeQueryShape(text)
 
-		return bestOf(() => {
+		return () => {
 			scoreBareToponym(input, shape as QueryShapeLike)
 			scoreRoutePair(input, shape as QueryShapeLike)
 			scoreNearMe(input, shape as QueryShapeLike)
-		})
+		}
 	}
 
 	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement lands under 0.3 ms,
 	// where scheduler noise on a parallel test runner is larger than the signal and the ratio flakes (measured: 3.25x on
 	// a run where both arms were sub-millisecond). The work being timed is a `trim` + `toLowerCase` + two anchored
 	// regexes over the full string, which is linear; the length gate rejects everything else at 30 characters.
-	const small = at(500_000)
-	const large = at(1_000_000)
-	const ratio = large / Math.max(small, 0.001)
+	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
 
 	expect(
 		ratio,
 		`doubling the input multiplied the intent-rule cost by ${ratio.toFixed(2)}x ` +
-			`(${small.toFixed(3)}ms -> ${large.toFixed(3)}ms). Linear is ~2x; quadratic is ~4x.`
+			`(best ${smallMs.toFixed(3)}ms -> ${largeMs.toFixed(3)}ms). Linear is ~2x; quadratic is ~4x.`
 	).toBeLessThan(3)
 })
 
