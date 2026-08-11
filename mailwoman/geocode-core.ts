@@ -410,6 +410,10 @@ const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly cou
 	// overlap; Belfast `BT1 5GS` stays GB — Northern Ireland uses GB postcodes). The placer mis-routes IE
 	// 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
+	// NL PC6 `1012 LG` — digits-first then exactly two letters. No other postal system uses the shape:
+	// GB/CA/IE are letters-first, and the digit-only families (US/FR/DE 5-digit, DK/CH/AT 4-digit) carry
+	// no letters. The same regex already earns NL its UNIT_GRADE_POSTCODE tier below.
+	{ re: /^\d{4}\s?[A-Z]{2}$/i, country: "NL" },
 ]
 
 /**
