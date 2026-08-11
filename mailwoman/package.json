@@ -28,6 +28,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "mailwoman"
 	},
+	"man": "./man/mailwoman.1",
 	"bin": {
 		"mailwoman": "./out/cli.js",
 		"mw": "./out/cli.js"
@@ -52,7 +53,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"man/mailwoman.1"
 	],
 	"type": "module",
 	"exports": {
