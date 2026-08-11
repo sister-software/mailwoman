@@ -92,8 +92,11 @@ const CORPUS_SIZE = 532
  * freeze): the COMER primary (poi.db holds the worldwide-unique entity 6 m from truth; the fork abstains with no
  * consumer) and the Savile Row hijack tripwire, pinned to the true London street with its three wrong behaviors
  * receipted (the qualifier-strip Rhu scrape among them). 530 → 532, so the board id moves too.
+ *
+ * Moved 2026-08-11 (eighth) — → this — by the fork→entity WIRE landing: the COMER row flips improvement_target → pass
+ * with its measured receipt (tier `venue`, 6 m). Row count and every `id`+`input` untouched, so the board id stays.
  */
-const CORPUS_HASH = "193d36f6e790cc4f3807b7d58f759c2a022f994d43a4c87a8df77aa4a72a3259"
+const CORPUS_HASH = "99d74e26060121aada90e56fd7a89e108ca4aa16d69b4f7652ed7783830b4dd2"
 
 /**
  * `ablationBoardID` of the corpus.

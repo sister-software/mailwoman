@@ -53,6 +53,7 @@ import type {
 
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
+import { probeForkEntity } from "./fork-entity.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
@@ -73,7 +74,7 @@ export {
  * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
  * - `admin` — admin centroid; uncertainty_m is null (no sub-locality estimate available)
  */
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue"
 
 export interface GeocodeResult {
 	input: string
@@ -86,6 +87,12 @@ export interface GeocodeResult {
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
+	/**
+	 * The entity the fork→entity probe resolved (#1585's entity half) — present ONLY when the `venue` tier answered: the
+	 * decoder declared a fork, the incumbent path produced no coordinate, and exactly one poi.db entity bears the query's
+	 * exact name (see `fork-entity.ts` for the three gates). Positive evidence only; absent everywhere else.
+	 */
+	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
 	 * Uncertainty radius in meters. null for the admin tier.
 	 */
@@ -214,6 +221,16 @@ export interface GeocodeClassifier {
 }
 
 export interface GeocodeDeps {
+	/**
+	 * Poi.db reader for the fork→entity probe (`fork-entity.ts`). Absent = the probe never runs (tolerate-and-degrade,
+	 * like every optional artifact). Both this AND {@link isStreetGeneric} are required for a probe.
+	 */
+	poiLookup?: import("./poi-executor.ts").POIExecutorLookup
+	/**
+	 * Street-morphology token test (the #1315 gate's matcher) — gate 2 of the fork→entity probe. Absent = no probe: an
+	 * ungated probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the guard.
+	 */
+	isStreetGeneric?: (token: string) => boolean
 	classifier: GeocodeClassifier
 	resolver: Resolver
 	/**
@@ -1045,6 +1062,33 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (ambiguity) {
 		markers.push(ambiguity)
+	}
+
+	// The fork→entity probe (#1585's entity half; fork-entity.ts owns the three gates). Fires only on
+	// a DECLARED fork whose incumbent resolution produced no coordinate — a null is the only thing
+	// that can change, which is what makes this default-on under the D-rule. Positive evidence only:
+	// the probe adds an answer where there was none; it never contests one.
+	if (
+		result.lat === null &&
+		markers.some((m) => m.code === "declared_fork") &&
+		deps.poiLookup &&
+		deps.isStreetGeneric
+	) {
+		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+
+		if (entity) {
+			result.lat = entity.latitude
+			result.lon = entity.longitude
+			result.resolution_tier = "venue"
+			result.venue = entity.name
+
+			result.entity = {
+				name: entity.name,
+				categoryID: entity.categoryID,
+				confidence: entity.confidence,
+				country: entity.country,
+			}
+		}
 	}
 
 	result.intent_markers = markers

@@ -14,11 +14,12 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-import { type GeocodeResult, geocodeAddress, ShardProvider } from "../../geocode-core.ts"
+import { type GeocodeResult, geocodeAddress, ShardProvider, type GeocodeDeps } from "../../geocode-core.ts"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 
 export interface GauntletDeps {
@@ -354,6 +355,27 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	console.error(`[gauntlet] ${describeResolverLevers(opts.levers)}`)
 
+	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every optional
+	// artifact (a machine without poi.db grades the incumbent behavior; the fork-entity board rows are
+	// improvement_target until it is present). Mirrors the CLI's wiring exactly, so the board grades
+	// what production runs.
+	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
+	const poiDBPath = String(dataRootPath("poi", "poi.db"))
+
+	if (existsSync(poiDBPath)) {
+		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
+			import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
+			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+		])
+
+		const morphology = loadStreetMorphologyFST()
+
+		forkEntityDeps = {
+			poiLookup: new POILookup({ databasePath: poiDBPath }),
+			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
+		}
+	}
+
 	return {
 		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry, ...forwarded } = geoOpts ?? {}
@@ -365,6 +387,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
+				...forkEntityDeps,
 				...forwarded,
 			})
 		},
