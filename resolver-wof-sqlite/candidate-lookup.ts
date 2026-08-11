@@ -390,7 +390,14 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 				if (strippedKey && strippedKey !== nameKey) {
-					rows = probe(strippedKey, regionID)
+					// #1626: a stripped probe may answer only through a NON-PRIMARY alias key, which is a
+					// scrape, not a qualifier match — 'Savile Row' stripped to 'row' resolved Rhu, Scotland
+					// (585 km) through the village's historical-name alias. The legitimate qualifier class
+					// matches the place's own primary key ('Lenk im Simmental' → the Lenk row keyed 'lenk',
+					// is_primary=1), so refusing alias-keyed rows keeps every intended case and kills the
+					// scrape. The alias tier remains fully available to EXACT queries — only the stripped
+					// RETRY loses it, because the query's own surface never named the alias.
+					rows = probe(strippedKey, regionID).filter((r) => r.is_primary === 1)
 				}
 			}
 
