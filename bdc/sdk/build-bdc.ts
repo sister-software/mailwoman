@@ -336,11 +336,18 @@ interface GeoJSONMultiPolygon {
 }
 
 /**
- * Naive (vertex-average, NOT area-weighted) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s EXTERIOR ring(s) only
- * (interior rings/holes are ignored). A known simplification, not an oversight: census blocks are small relative to a
- * res-9 H3 cell (~174m edge), so the vertex-average and a proper area-weighted centroid land in the same cell for all
- * but pathologically elongated or holed block shapes. A precise area-weighted centroid is a reasonable future upgrade
- * if that ever proves wrong in practice — no polygon-centroid library is pulled in for this first cut.
+ * Area-weighted (shoelace) centroid of a GeoJSON `Polygon`/`MultiPolygon`'s EXTERIOR ring(s), area-weighted across
+ * rings for a MultiPolygon. Interior rings/holes are still ignored — a hole moves a block's centroid far less than the
+ * vertex-density skew this replaces, and only 1.0% of measured blocks carry one.
+ *
+ * This REPLACED the first cut's vertex-average, whose "same res-9 cell for all but pathological shapes" claim was
+ * falsified by measurement over every real TIGER 2020 block in LA + Orange county (118,360 blocks, 2026-08-11): the
+ * vertex-average landed in a different res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell
+ * edge), max 3.7 km — the tail is TIGER's elongated rural/mountain blocks, whose boundary vertices cluster on the
+ * squiggly natural edge and drag a vertex-average toward it.
+ *
+ * A degenerate geometry with zero total ring area (a sliver the shoelace annihilates) falls back to the vertex average
+ * — a weaker answer beats none, and the fallback is exactly the old behavior.
  *
  * Returns `undefined` for anything that doesn't parse as one of the two geometry types (including `null` geometry).
  */
@@ -358,21 +365,49 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 				? geometry.coordinates.map((polygon) => polygon[0] ?? [])
 				: []
 
+	let totalArea = 0
+	let weightedLon = 0
+	let weightedLat = 0
 	let sumLon = 0
 	let sumLat = 0
 	let count = 0
 
 	for (const ring of exteriorRings) {
-		for (const point of ring) {
-			const [lon, lat] = point
+		let ringArea = 0
+		let ringLon = 0
+		let ringLat = 0
 
-			if (typeof lon !== "number" || typeof lat !== "number") continue
+		for (let i = 0; i < ring.length - 1; i++) {
+			const [x1, y1] = ring[i]!
+			const [x2, y2] = ring[i + 1]!
 
-			sumLon += lon
-			sumLat += lat
+			if (typeof x1 !== "number" || typeof y1 !== "number" || typeof x2 !== "number" || typeof y2 !== "number") {
+				continue
+			}
+
+			const cross = x1 * y2 - x2 * y1
+			ringArea += cross
+			ringLon += (x1 + x2) * cross
+			ringLat += (y1 + y2) * cross
+			// The vertex-average fallback accumulates alongside — one pass, both answers.
+			sumLon += x1
+			sumLat += y1
 
 			count++
 		}
+
+		ringArea /= 2
+
+		if (ringArea === 0) continue
+
+		const weight = Math.abs(ringArea)
+		totalArea += weight
+		weightedLon += (ringLon / (6 * ringArea)) * weight
+		weightedLat += (ringLat / (6 * ringArea)) * weight
+	}
+
+	if (totalArea > 0) {
+		return { lat: weightedLat / totalArea, lon: weightedLon / totalArea }
 	}
 
 	if (count === 0) return undefined

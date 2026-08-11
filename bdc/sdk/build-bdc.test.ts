@@ -814,11 +814,11 @@ describe("geometryCentroid", () => {
 
 		const centroid = geometryCentroid(multiPolygon)
 		expect(centroid).toBeDefined()
-		// Vertex-average, not area-weighted: the ring's repeated closing vertex ([0,0], counted twice out of
-		// 5 points) pulls the average toward that corner rather than the square's true (1, 1) geometric center —
-		// exactly the documented naive-centroid tradeoff, not a bug.
-		expect(centroid!.lon).toBeCloseTo(0.8, 5)
-		expect(centroid!.lat).toBeCloseTo(0.8, 5)
+		// Area-weighted (shoelace): the square's TRUE geometric center, immune to the repeated closing
+		// vertex that dragged the retired vertex-average to (0.8, 0.8) — the tradeoff the 118k-block
+		// TIGER measurement falsified (#1375).
+		expect(centroid!.lon).toBeCloseTo(1, 5)
+		expect(centroid!.lat).toBeCloseTo(1, 5)
 	})
 
 	it("returns undefined for null or unparseable geometry", () => {
