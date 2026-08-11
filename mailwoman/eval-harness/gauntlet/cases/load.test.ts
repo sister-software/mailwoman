@@ -102,8 +102,11 @@ const CORPUS_SIZE = 534
  *
  * Moved 2026-08-12 (second) — → this — by the street-miss FALLBACK landing: both bare-capital rows flip
  * improvement_target → pass with measured receipts. Row count and every `id`+`input` untouched, so the board id stays.
+ *
+ * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row tripwire's note re-ledgers its
+ * residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the board id stays.
  */
-const CORPUS_HASH = "f2167f84b1a987ebe1e4b54f9cb99658a8c763ffcf77a85a242f1483d8a3c07d"
+const CORPUS_HASH = "efea678233f519a25c9e3a54b9f134c1c61c62c537117e740d0257c69c543837"
 
 /**
  * `ablationBoardID` of the corpus.
