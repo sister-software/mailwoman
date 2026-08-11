@@ -120,7 +120,17 @@ export function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void 
 		rmSync(finalPath + sfx, { force: true })
 	}
 
-	renameSync(tmpPath, finalPath)
+	try {
+		renameSync(tmpPath, finalPath)
+	} catch (error) {
+		// The prior version is already aside at this point — a failed forward rename must not leave
+		// the slot empty while a restorable artifact sits one rename away.
+		if (existsSync(aside) && !existsSync(finalPath)) {
+			renameSync(aside, finalPath)
+		}
+
+		throw error
+	}
 
 	for (const sfx of ["-wal", "-shm"]) {
 		rmSync(tmpPath + sfx, { force: true })

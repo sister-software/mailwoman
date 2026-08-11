@@ -51,9 +51,9 @@
  *      the house rule exists for.
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs"
 import { readFile } from "node:fs/promises"
-import { dirname } from "node:path"
+import { basename, dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -67,7 +67,7 @@ import {
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { openBuiltDatabase, sealDatabase } from "@mailwoman/core/utils"
+import { openBuiltDatabase, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
@@ -536,6 +536,22 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	mkdirSync(dirname(options.out), { recursive: true })
 
+	// A crash inside a PRIOR run's swap can leave the slot empty while the previous version sits
+	// parked aside — restore it before building, so a failure in THIS run still leaves an artifact
+	// serving. Both aside spellings: this builder's old `.prev` and swapDatabaseIntoPlace's `.old-<pid>`.
+	if (!existsSync(options.out)) {
+		const base = basename(options.out)
+
+		const parked = readdirSync(dirname(options.out)).find(
+			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
+		)
+
+		if (parked) {
+			renameSync(join(dirname(options.out), parked), options.out)
+			progress(`restored ${parked} into place (a prior run crashed mid-swap)`)
+		}
+	}
+
 	const rowSource: AsyncIterable<BDCAvailabilityRow> | Iterable<BDCAvailabilityRow> =
 		options.rows ?? readAvailabilityRowsFromCSVPaths(options.csvPaths!)
 
@@ -544,264 +560,273 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 	const kdb = new DatabaseClient<BDCDatabase>({ database: db })
 
-	progress("creating manifest/coverage/availability/provider/stage tables")
-	await createLayerManifestTable(asContractDB(kdb))
-	await createLayerCoverageTable(asContractDB(kdb))
-	await createBDCAvailabilityTable(kdb)
-	await createBDCProviderTable(kdb)
-	await createBDCStageTable(kdb)
+	// Assigned at the end of the try — the tallies live inside its scope; the seal + swap do not.
+	let result: BuildBDCResult
 
-	const insStage = db.prepare(
-		`INSERT OR IGNORE INTO bdc_stage (
+	try {
+		progress("creating manifest/coverage/availability/provider/stage tables")
+		await createLayerManifestTable(asContractDB(kdb))
+		await createLayerCoverageTable(asContractDB(kdb))
+		await createBDCAvailabilityTable(kdb)
+		await createBDCProviderTable(kdb)
+		await createBDCStageTable(kdb)
+
+		const insStage = db.prepare(
+			`INSERT OR IGNORE INTO bdc_stage (
 			geoid, provider_id, technology_code, location_id,
 			max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-	)
-
-	let staged = 0
-	let batch = 0
-
-	progress("staging rows — raw prepared INSERT OR IGNORE on the natural key (the Redis-dedup replacement)")
-	db.exec("BEGIN")
-
-	for await (const row of rowSource) {
-		insStage.run(
-			row.geoid,
-			row.provider_id,
-			row.technology_code,
-			row.location_id,
-			row.max_advertised_download_speed,
-			row.max_advertised_upload_speed,
-			row.low_latency,
-			row.business_residential_code
 		)
 
-		staged++
+		let staged = 0
+		let batch = 0
 
-		batch++
+		progress("staging rows — raw prepared INSERT OR IGNORE on the natural key (the Redis-dedup replacement)")
+		db.exec("BEGIN")
 
-		if (batch >= STAGE_BATCH_SIZE) {
-			db.exec("COMMIT")
-			db.exec("BEGIN")
-			batch = 0
+		for await (const row of rowSource) {
+			insStage.run(
+				row.geoid,
+				row.provider_id,
+				row.technology_code,
+				row.location_id,
+				row.max_advertised_download_speed,
+				row.max_advertised_upload_speed,
+				row.low_latency,
+				row.business_residential_code
+			)
+
+			staged++
+
+			batch++
+
+			if (batch >= STAGE_BATCH_SIZE) {
+				db.exec("COMMIT")
+				db.exec("BEGIN")
+				batch = 0
+			}
 		}
-	}
 
-	db.exec("COMMIT")
+		db.exec("COMMIT")
 
-	const stagedCountRow = db.prepare("SELECT COUNT(*) AS staged_count FROM bdc_stage").get() as {
-		staged_count: number
-	}
+		const stagedCountRow = db.prepare("SELECT COUNT(*) AS staged_count FROM bdc_stage").get() as {
+			staged_count: number
+		}
 
-	const deduped = staged - stagedCountRow.staged_count
+		const deduped = staged - stagedCountRow.staged_count
 
-	progress(
-		`staged ${stagedCountRow.staged_count.toLocaleString()} distinct row(s), ${deduped.toLocaleString()} deduped`
-	)
+		progress(
+			`staged ${stagedCountRow.staged_count.toLocaleString()} distinct row(s), ${deduped.toLocaleString()} deduped`
+		)
 
-	const centroidCache = new Map<string, { h3Cell: number; coverageCell: number } | null>()
-	/**
-	 * Res-6 short-cell int → observed row count, aggregated during materialize (one pass, no second scan) — matches
-	 * `build-poi.ts`'s `coverage` Map.
-	 */
-	const coverage = new Map<number, number>()
-	const providers = new Set<number>()
-	let unknownGeoids = 0
-	let inserted = 0
+		const centroidCache = new Map<string, { h3Cell: number; coverageCell: number } | null>()
+		/**
+		 * Res-6 short-cell int → observed row count, aggregated during materialize (one pass, no second scan) — matches
+		 * `build-poi.ts`'s `coverage` Map.
+		 */
+		const coverage = new Map<number, number>()
+		const providers = new Set<number>()
+		let unknownGeoids = 0
+		let inserted = 0
 
-	const insAvailability = db.prepare(
-		`INSERT INTO bdc_availability (
+		const insAvailability = db.prepare(
+			`INSERT INTO bdc_availability (
 			h3_cell, geoid, wof_id, provider_id, technology_code,
 			max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code, location_id
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	)
-
-	// The FCC's per-provider CSVs are per-BSL: the SAME (geoid, provider_id, technology_code, speeds, low_latency,
-	// business_residential_code) tuple can repeat once per Broadband Serviceable Location within that block (a
-	// dense urban block can carry ~100 BSLs) — `bdc_stage`'s natural key includes `location_id`, so those BSL rows
-	// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
-	// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode, when those BSLs
-	// ALSO share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
-	// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) — `SELECT DISTINCT`
-	// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
-	// IMPORTANT — this is NOT a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
-	// same triple with DIFFERING speeds/flags are NOT the same tuple, so `SELECT DISTINCT` does not merge them —
-	// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug; see the module
-	// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
-	const stageStmt = options.includeLocationIDs
-		? db.prepare(
-				`SELECT geoid, provider_id, technology_code, location_id,
-					max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
-				 FROM bdc_stage`
-			)
-		: db.prepare(
-				`SELECT DISTINCT geoid, provider_id, technology_code,
-					max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
-				 FROM bdc_stage`
-			)
-
-	progress(
-		"materializing bdc_availability — resolving block centroids to h3_cell (unknown geoids skipped, never guessed)"
-	)
-
-	db.exec("BEGIN")
-	batch = 0
-
-	for (const row of stageStmt.iterate() as IterableIterator<BDCStageRow>) {
-		let resolved = centroidCache.get(row.geoid)
-
-		if (resolved === undefined) {
-			const centroid = options.blockCentroids(row.geoid)
-
-			resolved = centroid
-				? (() => {
-						// Coverage cell MUST be derived as the res-9 cell's H3 hierarchy parent — NOT a second,
-						// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
-						// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
-						// disagree for a real fraction of points (~6% empirically over CONUS — hexagon/pentagon
-						// boundary artifacts). Deriving both `h3_cell` and the coverage cell from
-						// the SAME full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
-						// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
-						// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
-						// the res-6 parent identically, or a genuinely-surveyed block can read back as unknown.
-						const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
-
-						return {
-							h3Cell: shortCellToInt(fullRes9Cell),
-							coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
-						}
-					})()
-				: null
-
-			centroidCache.set(row.geoid, resolved)
-		}
-
-		if (!resolved) {
-			unknownGeoids++
-
-			continue
-		}
-
-		insAvailability.run(
-			resolved.h3Cell,
-			row.geoid,
-			// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a later
-			// registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
-			null,
-			row.provider_id,
-			row.technology_code,
-			row.max_advertised_download_speed,
-			row.max_advertised_upload_speed,
-			row.low_latency,
-			row.business_residential_code,
-			options.includeLocationIDs ? (row.location_id ?? null) : null
 		)
 
-		inserted++
-		providers.add(row.provider_id)
-		coverage.set(resolved.coverageCell, (coverage.get(resolved.coverageCell) ?? 0) + 1)
+		// The FCC's per-provider CSVs are per-BSL: the SAME (geoid, provider_id, technology_code, speeds, low_latency,
+		// business_residential_code) tuple can repeat once per Broadband Serviceable Location within that block (a
+		// dense urban block can carry ~100 BSLs) — `bdc_stage`'s natural key includes `location_id`, so those BSL rows
+		// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
+		// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode, when those BSLs
+		// ALSO share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
+		// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) — `SELECT DISTINCT`
+		// over every column EXCEPT `location_id` collapses those byte-identical BSL duplicates down to one row.
+		// IMPORTANT — this is NOT a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
+		// same triple with DIFFERING speeds/flags are NOT the same tuple, so `SELECT DISTINCT` does not merge them —
+		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted, not a bug; see the module
+		// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
+		const stageStmt = options.includeLocationIDs
+			? db.prepare(
+					`SELECT geoid, provider_id, technology_code, location_id,
+					max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
+				 FROM bdc_stage`
+				)
+			: db.prepare(
+					`SELECT DISTINCT geoid, provider_id, technology_code,
+					max_advertised_download_speed, max_advertised_upload_speed, low_latency, business_residential_code
+				 FROM bdc_stage`
+				)
 
-		batch++
-
-		if (batch >= STAGE_BATCH_SIZE) {
-			db.exec("COMMIT")
-			db.exec("BEGIN")
-			batch = 0
-		}
-	}
-
-	db.exec("COMMIT")
-
-	progress(
-		`materialized ${inserted.toLocaleString()} row(s) across ${providers.size} provider(s) ` +
-			`(${unknownGeoids.toLocaleString()} unknown geoid(s) skipped)`
-	)
-
-	await kdb.schema.dropTable("bdc_stage").execute()
-
-	progress("geoid index (index-after-load — see schema.ts)")
-	await createBDCGeoidIndex(kdb)
-
-	// Coverage is SOURCE-LEVEL, not survey completeness — same convention build-poi.ts documents: a res-6 cell we
-	// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
-	// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
-	const coverageCells = [...coverage.entries()].map(([h3Cell, observedRows]) => ({
-		h3Cell,
-		completeness: 1,
-		observedRows,
-	}))
-
-	await writeLayerCoverage(asContractDB(kdb), coverageCells)
-
-	progress("writing layer manifest")
-
-	await writeLayerManifest(asContractDB(kdb), {
-		name: "bdc",
-		version: options.asOfDate,
-		schemaVersion: 1,
-		tier: LayerTier.Shipped,
-		license: "public-domain",
-		attribution: BDC_ATTRIBUTION,
-		source: "fcc-bdc",
-		sourceVintage: options.asOfDate,
-		buildCmd: "mailwoman gazetteer build bdc",
-		buildSHA: options.buildSHA,
-		freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
-		spineKeys: { h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION }, wofID: "wof_id" },
-		createdAt: new Date().toISOString(),
-	})
-
-	// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and gated behind
-	// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty (see
-	// `BuildBDCOptions.providers`'s docstring for the default-path guarantee).
-	let providersPopulated = 0
-
-	if (options.providers) {
-		progress("populating bdc_provider from the provider list (decision 6 — lossy denormalization, see schema.ts)")
-
-		providersPopulated = await populateBDCProviderTable(
-			kdb,
-			options.providers,
-			options.filerDB,
-			options.primaryFRNAsOf ?? options.asOfDate
+		progress(
+			"materializing bdc_availability — resolving block centroids to h3_cell (unknown geoids skipped, never guessed)"
 		)
 
-		progress(`bdc_provider: ${providersPopulated.toLocaleString()} provider(s) populated`)
-	}
+		db.exec("BEGIN")
+		batch = 0
 
-	progress("finalize: ANALYZE + VACUUM")
-	db.exec("ANALYZE")
-	// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
-	// `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size (build-poi.ts's
-	// same discipline).
-	db.exec("PRAGMA page_size=8192")
-	db.exec("VACUUM")
-	await kdb.destroy()
+		for (const row of stageStmt.iterate() as IterableIterator<BDCStageRow>) {
+			let resolved = centroidCache.get(row.geoid)
+
+			if (resolved === undefined) {
+				const centroid = options.blockCentroids(row.geoid)
+
+				resolved = centroid
+					? (() => {
+							// Coverage cell MUST be derived as the res-9 cell's H3 hierarchy parent — NOT a second,
+							// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
+							// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
+							// disagree for a real fraction of points (~6% empirically over CONUS — hexagon/pentagon
+							// boundary artifacts). Deriving both `h3_cell` and the coverage cell from
+							// the SAME full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
+							// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
+							// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
+							// the res-6 parent identically, or a genuinely-surveyed block can read back as unknown.
+							const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
+
+							return {
+								h3Cell: shortCellToInt(fullRes9Cell),
+								coverageCell: shortCellToInt(cellToParent(fullRes9Cell, BDC_COVERAGE_H3_RESOLUTION) as H3Cell),
+							}
+						})()
+					: null
+
+				centroidCache.set(row.geoid, resolved)
+			}
+
+			if (!resolved) {
+				unknownGeoids++
+
+				continue
+			}
+
+			insAvailability.run(
+				resolved.h3Cell,
+				row.geoid,
+				// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a later
+				// registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
+				null,
+				row.provider_id,
+				row.technology_code,
+				row.max_advertised_download_speed,
+				row.max_advertised_upload_speed,
+				row.low_latency,
+				row.business_residential_code,
+				options.includeLocationIDs ? (row.location_id ?? null) : null
+			)
+
+			inserted++
+			providers.add(row.provider_id)
+			coverage.set(resolved.coverageCell, (coverage.get(resolved.coverageCell) ?? 0) + 1)
+
+			batch++
+
+			if (batch >= STAGE_BATCH_SIZE) {
+				db.exec("COMMIT")
+				db.exec("BEGIN")
+				batch = 0
+			}
+		}
+
+		db.exec("COMMIT")
+
+		progress(
+			`materialized ${inserted.toLocaleString()} row(s) across ${providers.size} provider(s) ` +
+				`(${unknownGeoids.toLocaleString()} unknown geoid(s) skipped)`
+		)
+
+		await kdb.schema.dropTable("bdc_stage").execute()
+
+		progress("geoid index (index-after-load — see schema.ts)")
+		await createBDCGeoidIndex(kdb)
+
+		// Coverage is SOURCE-LEVEL, not survey completeness — same convention build-poi.ts documents: a res-6 cell we
+		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
+		// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
+		const coverageCells = [...coverage.entries()].map(([h3Cell, observedRows]) => ({
+			h3Cell,
+			completeness: 1,
+			observedRows,
+		}))
+
+		await writeLayerCoverage(asContractDB(kdb), coverageCells)
+
+		progress("writing layer manifest")
+
+		await writeLayerManifest(asContractDB(kdb), {
+			name: "bdc",
+			version: options.asOfDate,
+			schemaVersion: 1,
+			tier: LayerTier.Shipped,
+			license: "public-domain",
+			attribution: BDC_ATTRIBUTION,
+			source: "fcc-bdc",
+			sourceVintage: options.asOfDate,
+			buildCmd: "mailwoman gazetteer build bdc",
+			buildSHA: options.buildSHA,
+			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
+			spineKeys: { h3: { column: "h3_cell", resolution: BDC_H3_RESOLUTION }, wofID: "wof_id" },
+			createdAt: new Date().toISOString(),
+		})
+
+		// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and gated behind
+		// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty (see
+		// `BuildBDCOptions.providers`'s docstring for the default-path guarantee).
+		let providersPopulated = 0
+
+		if (options.providers) {
+			progress("populating bdc_provider from the provider list (decision 6 — lossy denormalization, see schema.ts)")
+
+			providersPopulated = await populateBDCProviderTable(
+				kdb,
+				options.providers,
+				options.filerDB,
+				options.primaryFRNAsOf ?? options.asOfDate
+			)
+
+			progress(`bdc_provider: ${providersPopulated.toLocaleString()} provider(s) populated`)
+		}
+
+		progress("finalize: ANALYZE + VACUUM")
+		db.exec("ANALYZE")
+		// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
+		// `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size (build-poi.ts's
+		// same discipline).
+		db.exec("PRAGMA page_size=8192")
+		db.exec("VACUUM")
+		await kdb.destroy()
+
+		result = {
+			out: options.out,
+			rows: inserted,
+			deduped,
+			providers: providers.size,
+			coverageCells: coverageCells.length,
+			unknownGeoids,
+			providersPopulated,
+		}
+	} catch (error) {
+		// A mid-build throw must not leak the handle or orphan the staging file. The original error
+		// always wins over anything the cleanup itself throws.
+		try {
+			await kdb.destroy()
+		} catch {
+			// The handle may already be closed or mid-statement — nothing more to release.
+		}
+
+		rmSync(buildingPath, { force: true })
+
+		throw error
+	}
 
 	progress("seal")
 	sealDatabase(buildingPath)
 
-	// Atomic move-into-place — the previous version is moved ASIDE FIRST, per the AGENTS.md database house rule
-	// ("build successfully, then move the previous version to a temp directory, and then move the new version into
-	// place"). Mirrors `mailwoman/eval-harness/gauntlet/build-regression-db.ts`'s `${output}.prev` swap. Deliberate
-	// deviation from `build-poi.ts`'s direct-write — see the module docstring.
-	if (existsSync(options.out)) {
-		renameSync(options.out, `${options.out}.prev`)
-	}
+	// Atomic move-into-place via the shared helper (the AGENTS.md database house rule): prior
+	// version aside first, forward rename restored on failure so the slot is never left empty.
+	swapDatabaseIntoPlace(buildingPath, options.out)
 
-	renameSync(buildingPath, options.out)
-
-	if (existsSync(`${options.out}.prev`)) {
-		rmSync(`${options.out}.prev`)
-	}
-
-	return {
-		out: options.out,
-		rows: inserted,
-		deduped,
-		providers: providers.size,
-		coverageCells: coverageCells.length,
-		unknownGeoids,
-		providersPopulated,
-	}
+	return result
 }
