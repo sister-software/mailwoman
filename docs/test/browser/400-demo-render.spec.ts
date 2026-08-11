@@ -16,9 +16,10 @@ test.describe("Demo — structural render", () => {
 	test("paints the page shell, map, about box, and form on load", async ({ demo, page }) => {
 		await demo.goto()
 
-		// Header + intro copy.
-		await expect(page.getByRole("heading", { name: "Mailwoman geocoder demo" })).toBeVisible()
-		await expect(page.getByText(/runs entirely in your browser/i)).toBeVisible()
+		// Intro copy. (The React port dropped the page-title heading — the navbar carries the identity;
+		// the in-browser claim marks the demo shell, and it lives INSIDE the collapsed About box now,
+		// so it is asserted attached here and visible after the expand below.)
+		await expect(page.getByText(/runs entirely in your browser/i)).toBeAttached()
 
 		// The full-viewport map container is present and sized.
 		const mapBox = await page.locator(".maplibregl-map").boundingBox()
@@ -30,12 +31,12 @@ test.describe("Demo — structural render", () => {
 
 		// Address form: label, input, submit.
 		await expect(page.getByLabel("Address")).toBeVisible()
-		await expect(page.locator("#addr-input")).toBeVisible()
+		await expect(page.locator("#mw-pipeline-input")).toBeVisible()
 		await expect(page.locator("button[type='submit']")).toBeVisible()
 
 		// Example chips row.
 		await expect(page.getByText("Try:")).toBeVisible()
-		await expect(page.getByRole("button", { name: "Empire State" })).toBeVisible()
+		await expect(page.getByRole("button", { name: "Space Needle" })).toBeVisible()
 
 		demo.console.assertNoFailEvents()
 	})
