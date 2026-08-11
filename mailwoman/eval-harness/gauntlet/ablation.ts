@@ -291,6 +291,8 @@ export function classifySlot(deleted: string, emitted: string | null): SlotOutco
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
+		// A resolved entity is house-grade — the poi row is the venue's own point, peer of a situs hit.
+		case "venue":
 		case "address_point":
 			return 4
 		case "interpolated":

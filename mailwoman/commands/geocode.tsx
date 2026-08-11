@@ -49,6 +49,7 @@ import { type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { $public } from "@mailwoman/core/env"
 import { isBareLocalityTree, isBarePostcodeTree } from "@mailwoman/core/pipeline"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -62,6 +63,7 @@ import {
 	geocodeAddress,
 	parseForGeocode,
 	ShardProvider,
+	type GeocodeDeps,
 	type GeocodeResult,
 	type ShardResolver,
 	type StateShards,
@@ -192,6 +194,16 @@ const OptionsSchema = zod.object({
 				"to Addison, Texas (ZIP 75001). Abstains when the default country is already consistent, when no country " +
 				"is, or when more than one is. ON by default (promoted 2026-08-05); pass " +
 				"--no-postcode-country-coherence to restore the un-overridden country scope."
+		),
+	forkEntity: zod
+		.boolean()
+		.optional()
+		.default(true)
+		.describe(
+			"#1585: when the parse declares a FORK (a surface structure cannot decide) and nothing resolves, probe " +
+				"poi.db for the single entity bearing the query's exact name ('COMER parís.méxico' → the Paris " +
+				"restaurant). Positive evidence only; street-flavored forks and ambiguous names abstain. Needs poi.db " +
+				"in the data root; pass --no-fork-entity to disable."
 		),
 	postcodeShapeCoherence: zod
 		.boolean()
@@ -452,6 +464,25 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 		// opts in with --locale-country-prior; the resolver additionally ignores it under any hard scope.
 		const withheldCountry = inferredScopeOK ? undefined : resolverDefaultCountry(options, !!candidateDb)
 
+		// The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row
+		// hijack; fork-entity.ts gate 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
+		let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
+		const poiDBPath = String(dataRootPath("poi", "poi.db"))
+
+		if (options.forkEntity !== false && existsSync(poiDBPath)) {
+			const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
+				import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
+				import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+			])
+
+			const morphology = loadStreetMorphologyFST()
+
+			forkEntityDeps = {
+				poiLookup: new POILookup({ databasePath: poiDBPath }),
+				isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
+			}
+		}
+
 		const result = await geocodeAddress(input, {
 			classifier,
 			resolver,
@@ -477,6 +508,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
 			placeCountry: placer ? (t: string) => placer.predict(t) : false,
+			...forkEntityDeps,
 		})
 
 		if (format === "text") return formatText(result)
