@@ -875,14 +875,19 @@ describe("resolveTree + postcode-country coherence", () => {
 		expect(JSON.stringify(on)).toBe(JSON.stringify(off))
 	})
 
-	it("does not fire without a default country (nothing was hard-filtered)", async () => {
+	it("fires WITHOUT a default country when exactly one country makes the pair coherent (the browser-cascade arm)", async () => {
+		// The 2026-08-11 contract flip (the staged-repoint e2e): with no default in force there is
+		// nothing to override, but the pair rung still CONSTRAINS — (75001, Paris) is coherent in FR
+		// alone (Paris TX sits ~150 km from the Addison ZIP), so the walk scopes to FR instead of
+		// resolving population-first. Only the pair rung runs on this arm; the single-sided rungs
+		// keep needing the default as their domestic-plausibility guard.
 		const backend = makeBackend(RIVOLI_POOL)
 
 		const out = await createWOFResolver(backend).resolveTree(addressTree("75001", "Paris"), {
 			postcodeCountryCoherence: true,
 		})
 
-		expect(nodeByTag(out, "locality")?.metadata?.["postcode_country_scope"]).toBeUndefined()
+		expect(nodeByTag(out, "locality")?.metadata?.["postcode_country_scope"]).toBe("FR")
 	})
 
 	it("does not fire when the tree carries no postcode", async () => {

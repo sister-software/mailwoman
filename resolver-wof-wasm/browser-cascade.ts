@@ -14,6 +14,7 @@
  *   lookup, the WASM lookup here, and any future one all satisfy it.
  */
 
+import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
@@ -125,13 +126,18 @@ const WOF_RANK_LOCALITY = 5
 const WOF_RANK_REGION = 4
 
 /**
- * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node. Same ordering the
- * eval harnesses use; `postalcode` outranks `locality` (the old cascade's "postcode first, most precise" tier), peers
- * of locality sit just below it.
+ * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node — under the
+ * locality-first EPOCH CONVENTION the Node ladder follows (`extractGeocodeResult`): an AREA-class postcode (an FR
+ * 5-digit zone, an SI 4-digit code) is coarser than the locality it sits in, so it ranks BELOW locality and pins only
+ * when nothing finer resolved. A UNIT-GRADE exact hit (`isUnitGradePostcodeHit` — NL PC6, GB unit) is categorically
+ * tighter than any locality centroid and keeps the top rank. Before 2026-08-11 this table put every postcode first (the
+ * old cascade's tier order) — the staged-repoint e2e measured the demo pinning the SI `6250` AREA centroid where Node
+ * pins the Zabiče locality, the exact drift the #861 convergence exists to prevent.
  */
 const PIN_RANK: Record<string, number> = {
-	postalcode: 6,
 	locality: 5,
+	// An AREA-class postcode: below locality, above the locality peers — it still pins a bare-postcode query.
+	postalcode: 4.5,
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
@@ -141,6 +147,11 @@ const PIN_RANK: Record<string, number> = {
 	macroregion: 2,
 	country: 1,
 }
+
+/**
+ * The unit-grade exact hit's rank — above locality (the #977/#22 tier promotion, same as Node's ladder).
+ */
+const PIN_RANK_UNIT_POSTCODE = 6
 
 export class CandidateResolverBackend implements ResolverBackend {
 	readonly #lookup: MailwomanLookupLike
@@ -262,7 +273,11 @@ export async function runCascade(
 			}
 
 			if (!(hit.lat === 0 && hit.lon === 0)) {
-				collected.push({ hit, rank: PIN_RANK[placetype] ?? 0 })
+				const unitGrade =
+					placetype === "postalcode" &&
+					isUnitGradePostcodeHit(String(node.value ?? ""), String(node.metadata?.["resolver_name"] ?? ""))
+
+				collected.push({ hit, rank: unitGrade ? PIN_RANK_UNIT_POSTCODE : (PIN_RANK[placetype] ?? 0) })
 
 				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
 

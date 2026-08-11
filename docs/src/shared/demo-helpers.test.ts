@@ -120,7 +120,10 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 		expect(hits[0]?.country).toBe("AT")
 	})
 
-	test("postcode pin outranks the locality when countries agree", async () => {
+	test("the locality outpins an AREA-class postcode (the epoch convention, 2026-08-11 convergence)", async () => {
+		// A US 5-digit ZIP is coarser than the locality it sits in — Node's ladder pins the locality,
+		// and the demo now agrees (the staged-repoint e2e measured the old postcode-first order
+		// pinning the SI 6250 area centroid where Node pins Zabiče).
 		const lookup = stubLookup([
 			{ id: 20, name: "20500", placetype: "postalcode", country: "US", lat: 38.9, lon: -77.03, score: 1 },
 			{ id: 21, name: "Washington", placetype: "locality", country: "US", lat: 38.9, lon: -77.04, score: 8 },
@@ -130,6 +133,34 @@ describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 			lookup,
 			tree("Washington 20500", [node("locality", "Washington"), node("postcode", "20500")]),
 			"Washington 20500"
+		)
+
+		expect(hits[0]?.placetype).toBe("locality")
+	})
+
+	test("a UNIT-GRADE exact postcode hit keeps the top pin (#977/#22 — the GB unit tier)", async () => {
+		// `N7 0BT` resolves its own full unit code (~15 addresses) — categorically tighter than the
+		// London centroid, so it pins above the locality, same as Node's ladder.
+		const lookup = stubLookup([
+			// `nameKeys` carries the spaced query surface; `name` stays the gazetteer's canonical unspaced
+			// form — the exact pair isUnitGradePostcodeHit compares.
+			{
+				id: 30,
+				name: "N70BT",
+				nameKeys: ["n7 0bt"],
+				placetype: "postalcode",
+				country: "GB",
+				lat: 51.55,
+				lon: -0.1307,
+				score: 1,
+			},
+			{ id: 31, name: "London", placetype: "locality", country: "GB", lat: 51.5, lon: -0.11, score: 9 },
+		])
+
+		const hits = await runCascade(
+			lookup,
+			tree("N7 0BT, London", [node("locality", "London"), node("postcode", "N7 0BT")]),
+			"N7 0BT, London"
 		)
 
 		expect(hits[0]?.placetype).toBe("postalcode")

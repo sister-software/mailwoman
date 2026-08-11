@@ -30,6 +30,7 @@ import {
 	type Resolver,
 	type ResolverBackend,
 	type StreetCentroidLookup,
+	countriesFromPostcodeFormat,
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -840,7 +841,11 @@ class WOFResolver implements Resolver {
 			// #31 Mechanism 3 — the prefix prior + its injected index (see #lookupAndPick). Opt-in, OFF by default.
 			postcodePrefixPrior: opts.postcodePrefixPrior === true,
 			postcodePrefixIndex: opts.postcodePrefixIndex,
-			postcodeFormatCountries: opts.postcodeFormatCountries,
+			// #1589: derived here when the caller didn't thread it, so the browser cascade and the
+			// drop-ins get the implied-set probe without per-caller wiring (the staged-repoint e2e
+			// caught `100 00` resolving in Node and not in the browser over the same artifact).
+			postcodeFormatCountries:
+				opts.postcodeFormatCountries ?? countriesFromPostcodeFormat(firstPostcodeValue(tree.roots)),
 			fuzzyCountryScope: opts.fuzzyCountryScope,
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
@@ -870,7 +875,12 @@ class WOFResolver implements Resolver {
 		// postcode-country-coherence.ts.
 		let postcodeScope: PostcodeCountryScope | null = null
 
-		if (opts.postcodeCountryCoherence !== false && state.defaultCountry && state.postcode) {
+		// The pass also runs with NO default in force (#1585/#861 convergence): there is nothing to
+		// override, but the same exactly-one-country abstention lets the postcode+locality pair
+		// CONSTRAIN an otherwise population-first walk — `Zabiče 8, 6250 Zabiče` picks the SI row
+		// coherent with the SI 6250 centroid instead of the more-populous Polish namesake. The
+		// browser cascade (which sets no default by design) is the consumer this exists for.
+		if (opts.postcodeCountryCoherence !== false && state.postcode) {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
 				defaultCountry: state.defaultCountry,
@@ -1143,9 +1153,12 @@ class WOFResolver implements Resolver {
 
 		// #1589: a `postalcode` whose FORMAT implies specific countries, with no surviving country
 		// constraint, probes exactly the implied set — most populous hit wins, and an all-miss
-		// ABSTAINS. The unconstrained fold is not a fallback here: `100 00` space-strips to `10000`,
-		// which answers Troyes FR while the CZ rows sit in the artifact under both keyings; a scoped
-		// empty must stay empty (the same contract as the fuzzy tier's, #1585).
+		// leaves the candidate set EMPTY rather than falling through to the unconstrained fold:
+		// `100 00` space-strips to `10000`, which answers Troyes FR while the CZ rows sit in the
+		// artifact under both keyings; a scoped empty must stay empty (the same contract as the
+		// fuzzy tier's, #1585). The postcode-prefix prior below still gets its turn on the empty
+		// set — its index is country-scoped by construction, so it is not the fold this branch
+		// exists to avoid (the B3 tests hold that path).
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
 			let best: ResolvedPlace | undefined
 
@@ -1164,26 +1177,28 @@ class WOFResolver implements Resolver {
 				}
 			}
 
-			return best ? { top: best, alternatives: [] } : null
-		}
+			if (best) return { top: best, alternatives: [] }
 
-		try {
-			candidates = await this.#backend.findPlace(query)
-
-			// Parent soft-gating: `parentID` is a HARD descendant filter in the backend, which wrongly
-			// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
-			// (a real locality whose `ancestors` chain is missing its region). Rather than turn a
-			// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
-			// prefer a parent-scoped hit but never sacrifice recall. The country constraint is kept, so
-			// this still can't wander to a foreign place. Same logical resolution → no extra budget.
-			if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
-				delete query.parentID
+			candidates = []
+		} else {
+			try {
 				candidates = await this.#backend.findPlace(query)
+
+				// Parent soft-gating: `parentID` is a HARD descendant filter in the backend, which wrongly
+				// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
+				// (a real locality whose `ancestors` chain is missing its region). Rather than turn a
+				// resolvable node into an unresolved one, retry once WITHOUT the parent constraint — we
+				// prefer a parent-scoped hit but never sacrifice recall. The country constraint is kept, so
+				// this still can't wander to a foreign place. Same logical resolution → no extra budget.
+				if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
+					delete query.parentID
+					candidates = await this.#backend.findPlace(query)
+				}
+			} catch {
+				// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
+				// its classifier attribution intact.
+				return null
 			}
-		} catch {
-			// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
-			// its classifier attribution intact.
-			return null
 		}
 
 		// Postcode-prefix prior (#31, Mechanism 3): when a `postalcode` node misses the gazetteer, derive

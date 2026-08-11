@@ -36,5 +36,12 @@ export * as gb from "./gb/index.ts"
 export * as jp from "./jp/index.ts"
 export * as levels from "./level-semantics.ts"
 export * as nz from "./nz/index.ts"
-export { candidateSystemsForPostcode, type SystemCode } from "./postcode-systems.ts"
+
+export {
+	candidateSystemsForPostcode,
+	isUnitGradePostcodeHit,
+	type SystemCode,
+	UNIT_GRADE_POSTCODE,
+} from "./postcode-systems.ts"
+
 export * as us from "./us/index.ts"

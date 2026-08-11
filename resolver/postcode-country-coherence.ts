@@ -171,10 +171,12 @@ export interface PostcodeCountryScopeOpts {
 	 */
 	postcode: string
 	/**
-	 * The country the caller's `defaultCountry` would hard-filter to. Required: this pass exists to correct a wrong one,
-	 * so with no default there is nothing to correct and the caller should not be calling.
+	 * The country the caller's `defaultCountry` would hard-filter to — or `undefined` when no default is in force (the
+	 * browser cascade), where the pass CONSTRAINS instead of overriding: the default-coherence short-circuit is vacuous
+	 * and the exactly-one-country abstention carries the safety alone. Historically required: this pass was built to
+	 * correct a wrong one, so with no default there is nothing to correct and the caller should not be calling.
 	 */
-	defaultCountry: string
+	defaultCountry: string | undefined
 	/**
 	 * Consistency gate radius in km. Defaults to {@link POSTCODE_COUNTRY_COHERENCE_GATE_KM}.
 	 */
@@ -358,9 +360,9 @@ export async function findPostcodeCountryScope(
 	opts: PostcodeCountryScopeOpts
 ): Promise<PostcodeCountryScope | null> {
 	const postcode = opts.postcode.trim()
-	const defaultCountry = opts.defaultCountry.trim().toUpperCase()
+	const defaultCountry = opts.defaultCountry?.trim().toUpperCase() || undefined
 
-	if (!postcode || !defaultCountry) return null
+	if (!postcode) return null
 
 	const locality = firstLocalityValue(roots)
 
@@ -372,8 +374,9 @@ export async function findPostcodeCountryScope(
 	const gateKm = opts.gateKm ?? POSTCODE_COUNTRY_COHERENCE_GATE_KM
 
 	// 1. Is the caller's own default country coherent? If so we are done — positive evidence for the default,
-	//    no override, and the common domestic path costs two lookups and changes nothing.
-	if (await coherenceIn(defaultCountry, postcode, locality, backend, gateKm)) return null
+	//    no override, and the common domestic path costs two lookups and changes nothing. With no default in
+	//    force (the browser cascade) there is nothing to test — the sweep below carries the whole verdict.
+	if (defaultCountry && (await coherenceIn(defaultCountry, postcode, locality, backend, gateKm))) return null
 
 	// 2. The default could not place this pair. Which countries could? Two sources, unioned:
 	//
@@ -413,6 +416,12 @@ export async function findPostcodeCountryScope(
 	if (coherent.length === 1) return coherent[0]!
 
 	if (coherent.length > 1) return null
+
+	// The single-sided rungs below lean on the DEFAULT country as the domestic-plausibility guard
+	// ("Vienna, VA" stays in Virginia because the default corroborates a half). With no default there
+	// is no such anchor, so the no-default path ends at the pair rung: a pair verdict (Zabiče) is
+	// in-scope, a single-sided guess is not.
+	if (!defaultCountry) return null
 
 	// 4. No country makes the PAIR consistent. On the 2026-08-09 panel that happened 10 times for two opposite
 	//    reasons, and in both the address's country was never in doubt — only unrepresentable as a pair:

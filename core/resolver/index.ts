@@ -21,6 +21,8 @@ export {
 
 export type { ReferentiallyRankable } from "./referential.ts"
 
+export { countriesFromPostcodeFormat, countryFromPostcodeFormat, POSTCODE_FORMAT_COUNTRY } from "./postcode-format.ts"
+
 export {
 	DEFAULT_PLACETYPE_MAP,
 	PLACETYPE_FILTER_GROUPS,
