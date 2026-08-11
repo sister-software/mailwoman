@@ -89,10 +89,42 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 
 		if (!streetNorm || !number) return null
 
+		let row = this.#probe(streetNorm, number, query)
+
+		// Range-surface fallback: every register this reader serves stores ONE number per point
+		// (G-NAF `NUMBER_FIRST`, BAN, OA, OSM `addr:housenumber`), but the attested surface is often
+		// a range — "385-387 Esplanade" keys `385`. Null-only: an exact range key that matched above
+		// (some OSM points DO carry "385-387" verbatim) is never second-guessed.
+		if (!row) {
+			const low = /^(\d+[a-z]?)-\d+[a-z]?$/.exec(number)?.[1]
+
+			if (low) {
+				row = this.#probe(streetNorm, low, query)
+			}
+		}
+
+		if (!row) return null
+
+		return { lat: row.lat, lon: row.lon, source: row.source, release: row.release }
+	}
+
+	/**
+	 * The scope ladder for one (street, number) key: postcode, then locality, then the bbox fall-through — each rung only
+	 * when the prior missed.
+	 */
+	#probe(
+		streetNorm: string,
+		number: string,
+		query: {
+			postcode?: string
+			locality?: string
+			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+		}
+	): AddressPointRow | undefined {
 		let row: AddressPointRow | undefined
 
 		if (query.postcode) {
-			row = this.#byPostcode.get(query.postcode.trim(), streetNorm, number) as AddressPointRow | undefined
+			row = this.#byPostcode!.get(query.postcode.trim(), streetNorm, number) as AddressPointRow | undefined
 		}
 
 		if (!row && query.locality) {
@@ -104,19 +136,17 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
 					: normalizeLocalityForKey(query.locality)
 
-			row = this.#byLocality.get(localityKey, streetNorm, number) as AddressPointRow | undefined
+			row = this.#byLocality!.get(localityKey, streetNorm, number) as AddressPointRow | undefined
 		}
 
 		// Bbox fall-through (#247): the point carries no postcode/locality of its own, but its coordinate falls
 		// inside the resolved locality's box. Only reached when the scoped probes missed AND a bbox was supplied.
 		if (!row && query.bbox) {
 			const b = query.bbox
-			row = this.#byBbox.get(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon) as AddressPointRow | undefined
+			row = this.#byBbox!.get(streetNorm, number, b.minLat, b.maxLat, b.minLon, b.maxLon) as AddressPointRow | undefined
 		}
 
-		if (!row) return null
-
-		return { lat: row.lat, lon: row.lon, source: row.source, release: row.release }
+		return row
 	}
 
 	close(): void {
