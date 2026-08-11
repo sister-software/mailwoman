@@ -6,9 +6,10 @@ three E404 weights packages had been published by the operator at 02:33, before 
 
 ## What shipped
 
-Sixteen PRs, all merged via auto-merge on green CI; no releases, no npm publishes, Modal $0.
-(#1584–#1599 numbering below spans the whole shift; the first six carried the primary tasks, the
-rest came from the CI-fleet repairs and the operator-directed issue sweep.)
+Eighteen PRs, all merged via auto-merge on green CI; no releases, no npm publishes, Modal $0.
+(#1584–#1604 numbering below spans the whole shift; the first six carried the primary tasks, the
+rest came from the CI-fleet repairs, the operator-directed issue sweep, and the production e2e
+matrix completion.)
 
 - **#1584** — docs client-bundle fix. The handoff's unresolved §4 mystery (six dark CI runs):
   filer's `read-excel-file` dependency made spliterator's XLSX vendor imports resolvable, dragging
@@ -126,6 +127,31 @@ Six issues resolved, three advanced with receipts:
 - **#1493 advanced** — evidence pinned: nothing in-tree can LOAD `fst-global-priority.bin` (317 MB,
   retirement looks free, held for the operator); the CJK three are real frozen 2026-05-28 files
   with the #1176/#1142 forks stated.
+
+## The production e2e matrix, completed (12:00–12:20 UTC)
+
+The migrated suite was driven to a fully-dispositioned state against the live deploy:
+
+- **Green**: cold-load, structural render, the resolve cascade (Chicago, Berlin native-order, the
+  ZIP marker, rooftop siblings), street tier, viewport bias, debug drawer, theme — with two more
+  port casualties found and fixed on the way (PR #1603: the `__mailwomanDemoMap` test seam the
+  viewport suite drives the real map through, dropped by the port and restored with a documented
+  TEST SEAM comment; the `/debug/` trailing-slash navigation missed by #1590 because the spec
+  bypasses the fixture).
+- **#1602 filed (NEW model-boundary finding)**: `1502 A Cage Street, Houston, TX 77020` misses the
+  situs tier on prod AND the Node path — v4.4.0 parses `street="Cage"`, `house_number="1502 A"`
+  while the TX shard keys `street_norm="a cage street"`, `number="1502"`; either mismatch kills
+  the keyed probe. The #48 (identifier/unit boundary) family, now with a live resolver-visible
+  receipt and two lever shapes (a leading-letter-street board slice; a self-validating probe
+  retry).
+- **The two standing reds, not relaxed**: Zabiče SI (demo republish debt) and the autocomplete
+  typeahead (port interaction drift).
+- **PR #1604**: ConsoleFixture failures now NAME their resource URL (`msg.location()`) — its first
+  capture resolved what had looked like an intermittent 404 into a stale-tree artifact on the
+  spot.
+- One CI catch on #1598 (the man page): the freshness test's cross-rootDir import (TS6059 — the
+  standing vitest≠tsc lesson); moved beside its generator per the `derived-weights-key.test.ts`
+  precedent.
 
 ## Decisions made autonomously
 
