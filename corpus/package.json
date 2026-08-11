@@ -25,6 +25,9 @@
 		"!test-kit/**/*"
 	],
 	"type": "module",
+	"imports": {
+		"#test-kit": "./test-kit/index.ts"
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -77,11 +80,6 @@
 			"node": "./src/adapters/*.ts",
 			"default": "./out/src/adapters/*.js",
 			"types": "./out/src/adapters/*.d.ts"
-		},
-		"./test-kit": {
-			"node": "./test-kit/index.ts",
-			"default": "./out/test-kit/index.js",
-			"types": "./out/test-kit/index.d.ts"
 		},
 		"./tools": {
 			"node": "./src/tools/index.ts",
