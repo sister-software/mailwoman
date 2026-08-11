@@ -408,17 +408,32 @@ export function defaultCountryLexiconURL(modelURL: string): string {
 }
 
 /**
- * Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout).
+ * Default location of the street-type evidence lexicon: a sibling of the model file (the weights-package layout), under
+ * the card-declared generation when the card names one.
  */
-function defaultStreetTypeLexiconURL(modelURL: string): string {
-	return siblingURL(modelURL, "street-type-lexicon-v3.json")
+function defaultStreetTypeLexiconURL(modelURL: string, declaredName?: string): string {
+	return siblingURL(modelURL, declaredName ?? "street-type-lexicon-v3.json")
 }
 
 /**
- * Default location of the locality-surface evidence lexicon: a sibling of the model file.
+ * Default location of the locality-surface evidence lexicon: a sibling of the model file, under the card-declared
+ * generation when the card names one. The bare name is the LEGACY fallback for pre-declaration bundles — deriving it
+ * for a card-bearing bundle is how the demo ran a locality_surface-required model with the channel silently unfed (the
+ * tolerant fetch turns a wrong generation into a 404 into channel-off, with no error anywhere).
  */
-function defaultLocalitySurfaceLexiconURL(modelURL: string): string {
-	return siblingURL(modelURL, "locality-surface-lexicon-v6.json")
+function defaultLocalitySurfaceLexiconURL(modelURL: string, declaredName?: string): string {
+	return siblingURL(modelURL, declaredName ?? "locality-surface-lexicon-v6.json")
+}
+
+/**
+ * The card-declared lexicon FILENAME for an evidence channel (`requires.<channel>.lexicon`) — the browser analogue of
+ * the Node resolver's declared-artifact families. `undefined` when the card is absent or silent for the channel.
+ */
+function declaredLexiconName(card: Record<string, unknown> | null, channel: string): string | undefined {
+	const requires = card?.requires as Record<string, { lexicon?: unknown }> | undefined
+	const name = requires?.[channel]?.lexicon
+
+	return typeof name === "string" && name.length ? name : undefined
 }
 
 /**
@@ -438,6 +453,13 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 		throw new Error("no fetch implementation available — pass fetchImpl in non-fetch environments")
 	}
 
+	// The card is fetched FIRST because it does double duty: `labels` for the decoder, and the
+	// `requires.<channel>.lexicon` declarations that name which lexicon GENERATION the model trained
+	// against. Deriving the lexicon URLs before reading the card is how a generation bump upstream
+	// becomes a silent 404 → channel-off here.
+	const modelCard = opts.modelCardURL ? await fetchModelCardJSON(opts.modelCardURL, fetchImpl) : null
+	const labels = modelCard ? labelsFromModelCard(modelCard, opts.modelCardURL!) : null
+
 	const gazetteerLexiconURL =
 		opts.gazetteerLexiconURL === null ? null : (opts.gazetteerLexiconURL ?? defaultGazetteerLexiconURL(opts.modelURL))
 
@@ -447,31 +469,25 @@ export async function loadNeuralClassifierFromURLs(opts: LoadFromURLsOptions): P
 	const streetTypeLexiconURL =
 		opts.streetTypeLexiconURL === null
 			? null
-			: (opts.streetTypeLexiconURL ?? defaultStreetTypeLexiconURL(opts.modelURL))
+			: (opts.streetTypeLexiconURL ??
+				defaultStreetTypeLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "street_type")))
 
 	const localitySurfaceLexiconURL =
 		opts.localitySurfaceLexiconURL === null
 			? null
-			: (opts.localitySurfaceLexiconURL ?? defaultLocalitySurfaceLexiconURL(opts.modelURL))
+			: (opts.localitySurfaceLexiconURL ??
+				defaultLocalitySurfaceLexiconURL(opts.modelURL, declaredLexiconName(modelCard, "locality_surface")))
 
-	const [
-		modelBytes,
-		tokenizerBytes,
-		labels,
-		gazetteerLexicon,
-		countryLexicon,
-		streetTypeLexicon,
-		localitySurfaceLexicon,
-	] = await Promise.all([
-		fetchBytes(opts.modelURL, fetchImpl),
-		fetchBytes(opts.tokenizerURL, fetchImpl),
-		opts.modelCardURL ? fetchLabelsFromModelCard(opts.modelCardURL, fetchImpl) : Promise.resolve(null),
-		gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
-		countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
-		// The evidence lexicons share the anchor-lexicon JSON schema — the same fetch+parse applies.
-		streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
-		localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
-	])
+	const [modelBytes, tokenizerBytes, gazetteerLexicon, countryLexicon, streetTypeLexicon, localitySurfaceLexicon] =
+		await Promise.all([
+			fetchBytes(opts.modelURL, fetchImpl),
+			fetchBytes(opts.tokenizerURL, fetchImpl),
+			gazetteerLexiconURL ? fetchGazetteerLexicon(gazetteerLexiconURL, fetchImpl) : Promise.resolve(null),
+			countryLexiconURL ? fetchCountryLexicon(countryLexiconURL, fetchImpl) : Promise.resolve(null),
+			// The evidence lexicons share the anchor-lexicon JSON schema — the same fetch+parse applies.
+			streetTypeLexiconURL ? fetchGazetteerLexicon(streetTypeLexiconURL, fetchImpl) : Promise.resolve(null),
+			localitySurfaceLexiconURL ? fetchGazetteerLexicon(localitySurfaceLexiconURL, fetchImpl) : Promise.resolve(null),
+		])
 
 	const [tokenizer, runner, postcodeAnchorLookup, pairIndexes] = await Promise.all([
 		MailwomanTokenizer.loadFromBase64(toBase64(tokenizerBytes)),
@@ -665,14 +681,10 @@ async function fetchCountryLexicon(url: string, fetchImpl: typeof fetch): Promis
 }
 
 /**
- * Browser-side analogue of `weights.readLabelsFromModelCard`. Same shape contract: returns the `labels` array only when
- * the card has a non-empty string array, throws on a present-but-malformed field, returns `null` when the field is
- * simply absent (legacy pre-v0.4.0 card).
- *
- * A 404 on the model-card itself is treated as "no card provided" — we tolerate older bundles that shipped without one
- * and let the classifier fall back to its compile-time default.
+ * Fetch and parse the model-card JSON. A 404 is treated as "no card provided" — we tolerate older bundles that shipped
+ * without one; every card consumer (labels, declared lexicon generations) then falls back the same way.
  */
-async function fetchLabelsFromModelCard(url: string, fetchImpl: typeof fetch): Promise<readonly string[] | null> {
+async function fetchModelCardJSON(url: string, fetchImpl: typeof fetch): Promise<Record<string, unknown> | null> {
 	const res = await fetchImpl(url)
 
 	if (!res.ok) {
@@ -680,8 +692,16 @@ async function fetchLabelsFromModelCard(url: string, fetchImpl: typeof fetch): P
 		throw new Error(`fetch ${url} failed: ${res.status} ${res.statusText}`)
 	}
 
-	const parsed = (await res.json()) as { labels?: unknown }
-	const labels = parsed.labels
+	return (await res.json()) as Record<string, unknown>
+}
+
+/**
+ * Browser-side analogue of `weights.readLabelsFromModelCard`. Same shape contract: returns the `labels` array only when
+ * the card has a non-empty string array, throws on a present-but-malformed field, returns `null` when the field is
+ * simply absent (legacy pre-v0.4.0 card).
+ */
+function labelsFromModelCard(card: Record<string, unknown>, url: string): readonly string[] | null {
+	const labels = card.labels
 
 	if (labels === undefined) return null
 
