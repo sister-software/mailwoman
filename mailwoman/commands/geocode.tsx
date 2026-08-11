@@ -48,7 +48,7 @@ import { existsSync } from "node:fs"
 import { type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import { $public } from "@mailwoman/core/env"
-import { isBareLocalityTree } from "@mailwoman/core/pipeline"
+import { isBareLocalityTree, isBarePostcodeTree } from "@mailwoman/core/pipeline"
 import { formatAddress } from "@mailwoman/formatter"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -58,6 +58,7 @@ import { argument } from "pastel"
 import zod from "zod"
 
 import {
+	countriesFromPostcodeFormat,
 	geocodeAddress,
 	parseForGeocode,
 	ShardProvider,
@@ -411,7 +412,39 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 			})
 
 		const parsedTree = await parseForGeocode(input, { classifier })
-		const inferredScopeOK = options.defaultCountry || !isBareLocalityTree(parsedTree)
+
+		// #1589, the #912 guard's sibling: a bare POSTCODE whose format implies countries that exclude
+		// the locale-inferred one must not be hard-scoped by the locale. `SW1A 1AA` under the default
+		// en-US locale was scoped to US and resolved nothing while the gazetteer held the GB row; the
+		// code's own format is harder evidence than the locale hint. An explicit --default-country
+		// still wins (checked first, same as #912), and the bare 5-digit family implies no countries
+		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior contract is untouched.
+		const barePostcodeFormatConflict = (): boolean => {
+			if (!isBarePostcodeTree(parsedTree)) return false
+			const inferred = resolverDefaultCountry(options, !!candidateDb)
+
+			if (!inferred) return false
+			let postcodeValue: string | undefined
+			const stack = [...parsedTree.roots]
+
+			while (stack.length) {
+				const node = stack.pop()!
+
+				if (node.tag === "postcode") {
+					postcodeValue = node.value
+
+					break
+				}
+
+				stack.push(...node.children)
+			}
+
+			const implied = countriesFromPostcodeFormat(postcodeValue)
+
+			return implied.length > 0 && !implied.includes(inferred)
+		}
+
+		const inferredScopeOK = options.defaultCountry || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
 
 		// #27: the country #912 just withheld. `inferredScopeOK` false is precisely "we HAVE a locale
 		// country and chose not to scope by it", so this is the one place that knows the value was

@@ -76,6 +76,13 @@ interface ResolutionState {
 	 */
 	postcodePrefixPrior: boolean
 	/**
+	 * #1589 — the countries the parsed postcode's FORMAT implies (the #928 singles plus the shared `NNN NN` family). When
+	 * set AND no country constraint survives, the `postalcode` lookup probes exactly these countries and abstains if all
+	 * miss — never falling through to an unconstrained probe, whose space-stripped fold collides across systems (`100 00`
+	 * folded to `10000` answers Troyes FR while Prague sits in the artifact under both keyings).
+	 */
+	postcodeFormatCountries?: readonly string[]
+	/**
 	 * The injected PFX1 index (structural — `PostcodePrefixIndexLike`, core/resolver/types.ts). Absent = the prior cannot
 	 * fire.
 	 */
@@ -828,6 +835,7 @@ class WOFResolver implements Resolver {
 			// #31 Mechanism 3 — the prefix prior + its injected index (see #lookupAndPick). Opt-in, OFF by default.
 			postcodePrefixPrior: opts.postcodePrefixPrior === true,
 			postcodePrefixIndex: opts.postcodePrefixIndex,
+			postcodeFormatCountries: opts.postcodeFormatCountries,
 			bias: opts.bias,
 			anchorPosterior: opts.anchorPosterior,
 			anchorWeight: opts.anchorWeight ?? 2,
@@ -1119,6 +1127,32 @@ class WOFResolver implements Resolver {
 		}
 
 		let candidates: ResolvedPlace[]
+
+		// #1589: a `postalcode` whose FORMAT implies specific countries, with no surviving country
+		// constraint, probes exactly the implied set — most populous hit wins, and an all-miss
+		// ABSTAINS. The unconstrained fold is not a fallback here: `100 00` space-strips to `10000`,
+		// which answers Troyes FR while the CZ rows sit in the artifact under both keyings; a scoped
+		// empty must stay empty (the same contract as the fuzzy tier's, #1585).
+		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
+			let best: ResolvedPlace | undefined
+
+			for (const impliedCountry of state.postcodeFormatCountries) {
+				try {
+					const hits = await this.#backend.findPlace({ ...query, country: impliedCountry })
+					const top = hits[0]
+
+					// `score` is the backend's own population-first ranking metric, so comparing the
+					// per-country winners by it keeps the cross-country pick population-first too.
+					if (top && (!best || top.score > best.score)) {
+						best = top
+					}
+				} catch {
+					// A per-country probe failure reads as a miss for that country, never an abort.
+				}
+			}
+
+			return best ? { top: best, alternatives: [] } : null
+		}
 
 		try {
 			candidates = await this.#backend.findPlace(query)

@@ -48,6 +48,13 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	{ format: "us_zip", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "fr_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "de_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
+	// Spaced NNN NN (CZ/SK/SE/GR shared space — #1589's `100 00`). The same multi-hit discipline as
+	// the 5-digit trio: every country whose system writes this shape surfaces, and the caller
+	// disambiguates. Two tokens only — the unspaced five-digit form already rides the trio above.
+	{ format: "cz_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
+	{ format: "sk_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
+	{ format: "se_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
+	{ format: "gr_postcode", pattern: /^\d{3} \d{2}$/, tokenSpan: 2, confidence: 0.6 },
 	// PO Box variants (US + FR). The pattern matches across 2-3 tokens — handled separately.
 ]
 

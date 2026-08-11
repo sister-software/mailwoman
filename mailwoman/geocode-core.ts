@@ -34,6 +34,7 @@ import {
 	type ClassifierOpts,
 	hardCountryFor,
 	isBareLocalityTree,
+	isBarePostcodeTree,
 	type QueryIntentMarker,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
@@ -409,6 +410,10 @@ const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly cou
 	// overlap; Belfast `BT1 5GS` stays GB — Northern Ireland uses GB postcodes). The placer mis-routes IE
 	// 5/5 (Cork→US 0.99, Drogheda→US 1.00) — the same conflation class as GB/CA.
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
+	// NL PC6 is DELIBERATELY ABSENT: `\d{4} [A-Z]{2}` is forgeable in parse context — a US
+	// house-number + directional fragment (`1234 NE`, `8990 SW`) matches it exactly, and this table
+	// feeds recognizeBarePostcode, which must never touch a street name. NL lives in
+	// countriesFromPostcodeFormat instead, whose consumers gate on a bare-postcode TREE.
 ]
 
 /**
@@ -475,6 +480,63 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 	for (const { re, country } of POSTCODE_FORMAT_COUNTRY) if (re.test(p)) return country
 
 	return null
+}
+
+/**
+ * Spaced `NNN NN` — the CZ/SK/SE/GR shared postcode space (#1589's `100 00`). Unlike the
+ * {@link POSTCODE_FORMAT_COUNTRY} singles, this shape implies a SET: no single country owns it, so it can gate a
+ * locale-inferred scope but never name one country outright.
+ */
+const SHARED_NNN_NN = /^\d{3} \d{2}$/
+
+/**
+ * NL PC6 (`1012 LG`) — digits-first then exactly two letters. NL-unique as a POSTCODE shape (GB/CA/IE are
+ * letters-first; the digit-only families carry no letters), but too forgeable for {@link POSTCODE_FORMAT_COUNTRY}: a US
+ * house-number + directional fragment (`1234 NE`) matches it, so it must never feed recognizeBarePostcode. It belongs
+ * only here, where every consumer gates on a tree that IS a bare postcode.
+ */
+const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
+
+/**
+ * EVERY country a parsed postcode's FORMAT is consistent with — the singles table, the NL PC6 shape, and the shared
+ * `NNN NN` family. Empty when the shape implies nothing (a bare 5-digit reads US/FR/DE and more; that family stays with
+ * the locale prior on purpose — the `75008` contract).
+ *
+ * Unlike {@link countryFromPostcodeFormat}, this is NOT an unforgeable-in-any-context claim: consumers (the resolver's
+ * implied-set probe, the CLI's withheld-scope guard) apply it only to a tree that is a bare postcode, where the
+ * street-fragment collision the singles table must exclude cannot arise.
+ */
+export function countriesFromPostcodeFormat(postcode: string | undefined): readonly string[] {
+	const p = postcode?.trim()
+
+	if (!p) return []
+
+	const single = countryFromPostcodeFormat(p)
+
+	if (single) return [single]
+
+	if (NL_PC6.test(p)) return ["NL"]
+
+	if (SHARED_NNN_NN.test(p)) return ["CZ", "SK", "SE", "GR"]
+
+	return []
+}
+
+/**
+ * The first `postcode` node's value in a parsed tree, or undefined.
+ */
+export function treePostcodeValue(tree: AddressTree): string | undefined {
+	const stack = [...tree.roots]
+
+	while (stack.length) {
+		const node = stack.pop()!
+
+		if (node.tag === "postcode") return node.value
+
+		stack.push(...node.children)
+	}
+
+	return undefined
 }
 
 /**
@@ -821,6 +883,18 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.defaultCountry = deps.defaultCountry
 	}
 
+	// #1589: the parsed postcode's format-implied countries, for the resolver's scoped `postalcode`
+	// probe. Threaded unconditionally — the resolver applies it ONLY when no country constraint
+	// survives, which keeps an explicit defaultCountry supreme over format evidence, which in turn
+	// outranks a locale hint (the withheld-scope path in the CLI).
+	{
+		const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
+
+		if (formatCountries.length) {
+			opts.postcodeFormatCountries = formatCountries
+		}
+	}
+
 	// #27: the locale country as a SOFT prior, only where no hard scope is in force. Nothing else in the
 	// cascade is disturbed — the resolver ignores it under a `defaultCountry` or an `anchorPosterior`.
 	if (deps.localeCountryPrior && !opts.defaultCountry) {
@@ -891,7 +965,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// #912 lever 1: the placer abstains on a single bare locality — OOD input, and the wrong soft
 	// posterior overrides the resolver's better-informed exact-tier/population ranking (see
 	// isBareLocalityTree). Explicit defaultCountry / anchorPosterior from the caller are untouched.
-	if (placeCountry && placerResult && !isBareLocalityTree(tree)) {
+	// #1589 extends the abstention to a bare POSTCODE: the placer's language model reading `SW1A 1AA`
+	// as English placed US at safelist confidence, and the resulting hardCountry filtered the GB row
+	// out before the format-implied probe could run. The code's own format says more than its script.
+	if (placeCountry && placerResult && !isBareLocalityTree(tree) && !isBarePostcodeTree(tree)) {
 		const placed = placerResult
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 

@@ -18,7 +18,14 @@ export type {
 	ScoreBreakdown,
 } from "./reconcile.ts"
 
-export { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree, runPipeline } from "./runtime-pipeline.ts"
+export {
+	HARD_PLACE_COUNTRY_SAFELIST,
+	hardCountryFor,
+	isBareLocalityTree,
+	isBarePostcodeTree,
+	runPipeline,
+} from "./runtime-pipeline.ts"
+
 export { aggregateSpanLogits } from "./span-logit-aggregation.ts"
 export type { SpanBounds, TokenPiece } from "./span-logit-aggregation.ts"
 export { EMPTY_SPAN_PROPOSER_LEXICON, proposeSpans } from "./span-proposer.ts"
