@@ -12,7 +12,7 @@
  *
  *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket — the
  *      exact URL the demo fetches) vs the latest published npm version.
- *   2. The docs release matrix (`docs/articles/releases.mdx` "(current)" row) vs the same npm
+ *   2. The docs release matrix (`docs/records/site-2026-08/releases.mdx` "(current)" row) vs the same npm
  *      version — the row went stale twice (v4.11.0 era, then again within hours of v5.1.0).
  *
  *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch). Zero workspace
@@ -50,7 +50,7 @@ const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releas
  * seeing a version comparison at all).
  */
 const REPO_ROOT = resolve(import.meta.dirname, "..")
-const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "articles", "releases.mdx")
+const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "records", "site-2026-08", "releases.mdx")
 const MODEL_CARD_PATH = resolve(REPO_ROOT, "neural-weights-en-us", "model-card.json")
 
 interface ParityCheck {
@@ -180,7 +180,7 @@ checks.push({
 const docsCurrent = readDocsCurrentVersion()
 
 checks.push({
-	name: "docs/articles/releases.mdx (current) row",
+	name: "docs/records/site-2026-08/releases.mdx (current) row",
 	value: docsCurrent,
 	ok: docsCurrent === npmLatest,
 	expected: npmLatest,
