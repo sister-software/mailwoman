@@ -17,6 +17,13 @@
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 
 /**
+ * The order-cycle slot for the STREET-LESS form (`«city» «pc», Česko`) — the exact surface of the
+ * `cz-full-praha-100-00` board row, whose absence from the street-bearing orders was the v4.5.0 no-promote's measured
+ * gap.
+ */
+const STREETLESS_ORDER = 3
+
+/**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
  * and `description` below for the surface form it generates.
  */
@@ -44,7 +51,7 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 				continue
 			}
 
-			const order = read % 3
+			const order = read % 4
 			// The OFFICIAL Czech rendering spaces the PSČ as `NNN NN` ('512 44'); OpenAddresses stores it
 			// unspaced ('51244'), and a model trained only on the source form reads the spaced surface as
 			// house_number + garbage (the 'Praha 100 00' mangle). Alternate the two renderings so both
@@ -53,19 +60,24 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 			const postcodeSurface = spaced ? `${postcode.slice(0, 3)} ${postcode.slice(3)}` : postcode
 			let raw: string
 
-			const components: Record<string, string> = {
-				street,
-				house_number: number,
-				postcode: postcodeSurface,
-				locality: city,
-			}
+			const components: Record<string, string> =
+				order === STREETLESS_ORDER
+					? { locality: city, postcode: postcodeSurface, country: "Česko" }
+					: { street, house_number: number, postcode: postcodeSurface, locality: city }
 
 			if (order === 0) {
 				raw = `${postcodeSurface} ${city}, ${street} ${number}`
 			} else if (order === 1) {
 				raw = `${street} ${number}, ${postcodeSurface} ${city}`
-			} else {
+			} else if (order === 2) {
 				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
+			} else {
+				// order === STREETLESS_ORDER: the street-less form — `«city» «pc», Česko` — the exact surface of the
+				// cz-full-praha-100-00 board row. The v4.5.0 no-promote receipt measured the gap: every
+				// prior order was street-bearing, so the model never saw a spaced PSČ beside a bare
+				// locality and mangled 'Praha 100 00, Czechia' into house_number spans. Street/number
+				// stay OUT of the components for this form (they are not in the surface).
+				raw = `${city} ${postcodeSurface}, Česko`
 			}
 
 			const source_id = shardSourceID("synth-cz-pcfirst-preposition", {
