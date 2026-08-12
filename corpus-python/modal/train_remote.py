@@ -4205,6 +4205,128 @@ def sync_v440():
         raise RuntimeError(f"v4.4.0 sync verification failed: {', '.join(missing)}")
 
 
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v450():
+    """Sync the v4.5.0 psc-frsurfaces probe inputs from R2.
+
+    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface shards, old
+    vintages zeroed in the config: cz-pcfirst v20 spaced-PSC #1640, fr-bare-street v20
+    three-surface #1641) + the current training code + config. Every input verified before a
+    dollar of GPU, including the v4.4.0 init checkpoint + its Fisher (the B11 brake).
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v4.5.0 inputs from R2 (container-side)...")
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.20.0-psc-frsurfaces/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.20.0-psc-frsurfaces/corpus-v0.20.0-psc-frsurfaces/ {retry}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:110]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv4.5.0 sync complete. Volume committed.")
+
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.20.0-psc-frsurfaces/corpus-v0.20.0-psc-frsurfaces"
+    ckpt = f"{VOL_MOUNT}/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000"
+    checks = {
+        "v4.5.0 probe config": os.path.isfile(f"{package}/configs/v4.5.0-psc-frsurfaces-2k.yaml"),
+        "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "cz v20 parquet": os.path.isfile(f"{corpus}/train/part-cz-pcfirst-v20.parquet"),
+        "fr v20 parquet": os.path.isfile(f"{corpus}/train/part-fr-bare-street-v20.parquet"),
+        "base shard reachable": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
+        ),
+        "v4.4.0 init checkpoint": os.path.isfile(f"{ckpt}/pytorch_model.bin"),
+        "v4.4.0 fisher diag": os.path.isfile(f"{ckpt}/fisher-diag-v1.npz"),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v4.5.0 sync verification failed: {', '.join(missing)}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v451():
+    """Sync the v4.5.1 psc-frsurfaces probe inputs from R2.
+
+    Corpus v0.20.0 overlay (v0.19.0 base VERBATIM + the two regenerated surface shards, old
+    vintages zeroed in the config: cz-pcfirst v20 spaced-PSC #1640, fr-bare-street v20
+    three-surface #1641) + the current training code + config. Every input verified before a
+    dollar of GPU, including the v4.4.0 init checkpoint + its Fisher (the B11 brake).
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v4.5.1 inputs from R2 (container-side)...")
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.21.0-psc-frsurfaces-v2/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.21.0-psc-frsurfaces-v2/corpus-v0.21.0-psc-frsurfaces-v2/ {retry}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:110]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv4.5.1 sync complete. Volume committed.")
+
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.21.0-psc-frsurfaces-v2/corpus-v0.21.0-psc-frsurfaces-v2"
+    ckpt = f"{VOL_MOUNT}/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000"
+    checks = {
+        "v4.5.1 probe config": os.path.isfile(f"{package}/configs/v4.5.1-psc-frsurfaces-2k.yaml"),
+        "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "cz v20 parquet": os.path.isfile(f"{corpus}/train/part-cz-pcfirst-v21.parquet"),
+        "fr v20 parquet": os.path.isfile(f"{corpus}/train/part-fr-bare-street-v21.parquet"),
+        "base shard reachable": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
+        ),
+        "v4.4.0 init checkpoint": os.path.isfile(f"{ckpt}/pytorch_model.bin"),
+        "v4.4.0 fisher diag": os.path.isfile(f"{ckpt}/fisher-diag-v1.npz"),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v4.5.1 sync verification failed: {', '.join(missing)}")
+
+
 def _file_contains(path: str, needle: str) -> bool:
     with open(path, encoding="utf-8") as fh:
         return needle in fh.read()
