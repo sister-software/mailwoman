@@ -45,26 +45,33 @@ export const czPcFirstPrepositionRecipe: ShardRecipe = {
 			}
 
 			const order = read % 3
+			// The OFFICIAL Czech rendering spaces the PSČ as `NNN NN` ('512 44'); OpenAddresses stores it
+			// unspaced ('51244'), and a model trained only on the source form reads the spaced surface as
+			// house_number + garbage (the 'Praha 100 00' mangle). Alternate the two renderings so both
+			// orthographies are attested — the LABEL is the postcode either way.
+			const spaced = read % 2 === 0 && /^\d{5}$/.test(postcode)
+			const postcodeSurface = spaced ? `${postcode.slice(0, 3)} ${postcode.slice(3)}` : postcode
 			let raw: string
 
 			const components: Record<string, string> = {
 				street,
 				house_number: number,
-				postcode,
+				postcode: postcodeSurface,
 				locality: city,
 			}
 
 			if (order === 0) {
-				raw = `${postcode} ${city}, ${street} ${number}`
+				raw = `${postcodeSurface} ${city}, ${street} ${number}`
 			} else if (order === 1) {
-				raw = `${street} ${number}, ${postcode} ${city}`
+				raw = `${street} ${number}, ${postcodeSurface} ${city}`
 			} else {
-				raw = `${city}, ${postcode}, ${street} ${number}`
+				raw = `${city}, ${postcodeSurface}, ${street} ${number}`
 			}
 
 			const source_id = shardSourceID("synth-cz-pcfirst-preposition", {
 				...components,
 				o: String(order),
+				s: spaced ? "1" : "0",
 				v: String(read),
 			})
 
