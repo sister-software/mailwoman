@@ -20,8 +20,18 @@
  *   run including this shard.
  */
 
+import { FR_VOIE_TYPES } from "@mailwoman/codex/fr"
+
 import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+
+/**
+ * Canonical voie type (lowercase, accent-kept) → its most common written abbreviation, from the codex table's first
+ * entry. Types with no attested abbreviation stay canonical in the abbreviated form.
+ */
+const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
+	Object.entries(FR_VOIE_TYPES).flatMap(([canonical, abbrevs]) => (abbrevs[0] ? [[canonical, abbrevs[0]]] : []))
+)
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
@@ -30,7 +40,7 @@ import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourc
 export const frBareStreetRecipe: ShardRecipe = {
 	name: "fr-bare-street",
 	description:
-		"FR bare comma-form street+city, NO postcode (#251): '<n> Rue <name>, <City>' — the postcode-anchoring lever",
+		"FR bare street+city, NO postcode (#251): comma / comma-free / abbreviated-voie surfaces over one label set",
 	mode: "tuples",
 	async run(opts, write) {
 		// Seeded for parity with the other recipes; unused beyond reproducibility (the tuples drive the content).
@@ -60,16 +70,27 @@ export const frBareStreetRecipe: ShardRecipe = {
 				continue
 			}
 
+			// Three surfaces over the same tuple, cycled deterministically. The comma form was the
+			// original lever; the COMMA-FREE form is the colloquial register users actually type
+			// ('12 rue de Rome Paris' — the street↔locality boundary with NO delimiter, the fr-fr
+			// panel's named loss), and the ABBREVIATED form is the typeahead register ('12 r de Rome
+			// Paris' / 'pl'-class voie abbreviations) the geocoder-tester FR slice attests at scale.
+			// The TAGS are identical across all three; each component VALUE is the span as written
+			// (the abbreviated form labels the abbreviation — BIO alignment binds value to surface).
+			const form = read % 3
+			const prefixSurface = form === 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
+
 			const components: Record<string, string> = {
 				house_number: number,
-				street_prefix: prefix,
+				street_prefix: prefixSurface,
 				street,
 				locality,
 			}
 
-			// BARE comma form, number-before (FR's dominant order), NO postcode — the whole point.
-			const raw = `${number} ${prefix} ${street}, ${locality}`
-			const source_id = shardSourceID("synth-fr-bare-street", { ...components, v: String(read) })
+			const raw =
+				form === 0 ? `${number} ${prefix} ${street}, ${locality}` : `${number} ${prefixSurface} ${street} ${locality}`
+
+			const source_id = shardSourceID("synth-fr-bare-street", { ...components, f: String(form), v: String(read) })
 
 			const canonical = {
 				raw,
