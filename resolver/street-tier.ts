@@ -146,7 +146,16 @@ export function applyAddressPoint(roots: AddressNode[], lookup: AddressPointLook
 
 	street.metadata = {
 		...street.metadata,
-		address_point: { lat: hit.lat, lon: hit.lon, source: hit.source, release: hit.release },
+		address_point: {
+			lat: hit.lat,
+			lon: hit.lon,
+			source: hit.source,
+			release: hit.release,
+			// The register row's OWN scope tags, when carried — a rooftop consumer can decorate the
+			// commune/postcode the register attests even when the query never named them.
+			...(hit.localityNorm ? { locality_norm: hit.localityNorm } : {}),
+			...(hit.postcode ? { postcode: hit.postcode } : {}),
+		},
 		resolution_tier: "address_point",
 	}
 }

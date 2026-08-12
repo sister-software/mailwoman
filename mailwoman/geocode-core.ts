@@ -94,6 +94,13 @@ export interface GeocodeResult {
 	 */
 	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
 	/**
+	 * The register row's OWN scope tags when the `address_point` tier answered and its shard carries them: the attested
+	 * locality (normalized key form) and postcode of the ROOFTOP, independent of what the query named. Consumers may
+	 * decorate an answer with the register's commune/postcode (the Photon drop-in's `city` slot); never a filter, absent
+	 * on every other tier.
+	 */
+	rooftop?: { localityNorm?: string; postcode?: string }
+	/**
 	 * Uncertainty radius in meters. null for the admin tier.
 	 */
 	uncertainty_m: number | null
@@ -1257,14 +1264,26 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 	let tier: ResolutionTier = "admin"
 	let uncertaintyM: number | null = null
 
+	let rooftop: { localityNorm?: string; postcode?: string } | undefined
+
 	if (streetNode?.metadata?.["resolution_tier"] === "address_point") {
-		const ap = streetNode.metadata["address_point"] as { lat: number; lon: number } | undefined
+		const ap = streetNode.metadata["address_point"] as
+			| { lat: number; lon: number; locality_norm?: string; postcode?: string }
+			| undefined
 
 		if (ap) {
 			lat = ap.lat
 			lon = ap.lon
 			tier = "address_point"
-			uncertaintyM = 1 // Floor: situs point is essentially exact.
+			uncertaintyM = 1
+			// Floor: situs point is essentially exact.
+
+			if (ap.locality_norm || ap.postcode) {
+				rooftop = {
+					...(ap.locality_norm ? { localityNorm: ap.locality_norm } : {}),
+					...(ap.postcode ? { postcode: ap.postcode } : {}),
+				}
+			}
 		}
 	}
 
@@ -1461,6 +1480,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		countryCode,
 		hierarchy,
 		candidates,
+		...(rooftop ? { rooftop } : {}),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
 		// `extractGeocodeResult` is a pure tree->result projection and has no access to the kind verdict, so it states
 		// the empty case. `geocodeAddressOnce` is the caller that classifies and fills this in.

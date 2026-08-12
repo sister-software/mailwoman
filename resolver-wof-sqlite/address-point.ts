@@ -32,13 +32,13 @@ import {
  * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in
  * `build-address-point-shard.ts` (the writer) is a compile error here (the reader).
  */
-type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release">
+type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "release" | "locality_norm" | "postcode">
 
 /**
  * The 4 columns the reader SELECTs, in the schema's order — referenced by the prepared SELECTs so the projected
  * `AddressPointRow` stays in lockstep with the shared schema.
  */
-const SELECT_COLS = "lat, lon, source, release"
+const SELECT_COLS = "lat, lon, source, release, locality_norm, postcode"
 
 export class AddressPointSqliteLookup implements AddressPointLookup {
 	readonly #db: DatabaseSync
@@ -103,9 +103,33 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 			}
 		}
 
+		// Letter-suffix spacing fallback: the registers disagree on the joint — BAN stores "3 a"
+		// (space-separated), G-NAF and most OA sources store "3a" — and the parsed surface can arrive
+		// either way. On a miss, retry the OTHER spacing; on a double miss, the BASE number (the
+		// register attests no 3A but does attest 3 — the adjacent-parcel approximation, priced the
+		// same as the range fallback's low end). Null-only throughout, and only for the
+		// digits+single-letter shape (never touches "12 1/2" or unit-bearing forms).
+		if (!row) {
+			const joined = /^(\d+)\s+([a-z])$/.exec(number)
+			const spaced = /^(\d+)([a-z])$/.exec(number)
+
+			if (joined) {
+				row = this.#probe(streetNorm, `${joined[1]}${joined[2]}`, query) ?? this.#probe(streetNorm, joined[1]!, query)
+			} else if (spaced) {
+				row = this.#probe(streetNorm, `${spaced[1]} ${spaced[2]}`, query) ?? this.#probe(streetNorm, spaced[1]!, query)
+			}
+		}
+
 		if (!row) return null
 
-		return { lat: row.lat, lon: row.lon, source: row.source, release: row.release }
+		return {
+			lat: row.lat,
+			lon: row.lon,
+			source: row.source,
+			release: row.release,
+			...(row.locality_norm ? { localityNorm: row.locality_norm } : {}),
+			...(row.postcode ? { postcode: row.postcode } : {}),
+		}
 	}
 
 	/**

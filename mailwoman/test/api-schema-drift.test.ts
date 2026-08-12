@@ -129,6 +129,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	countryCode: true,
 	hierarchy: true,
 	candidates: true,
+	rooftop: true,
 	postcode_country_scope: true,
 	intent_markers: true,
 } satisfies Record<keyof GeocodeResult, true>
