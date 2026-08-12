@@ -228,6 +228,14 @@ export const GeocodeOutcomeSchema = z
 		countryCode: z.string().nullable(),
 		hierarchy: z.array(GeocodeHierarchyEntrySchema),
 		candidates: z.array(GeocodeCandidateSchema),
+		// The register row's OWN scope tags when the address_point tier answered and its shard carries
+		// them (normalized locality key + postcode of the ROOFTOP) — see geocode-core's GeocodeResult.rooftop.
+		rooftop: z
+			.object({
+				localityNorm: z.string().optional(),
+				postcode: z.string().optional(),
+			})
+			.optional(),
 		// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when it
 		// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
 		// evidence bought the change instead of reading it as a bug.

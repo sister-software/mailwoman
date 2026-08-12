@@ -18,6 +18,7 @@ import { parseArgs } from "node:util"
 
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
+import { pyTitle } from "@mailwoman/core"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
@@ -41,6 +42,7 @@ import {
 	type PhotonEngine,
 	type PhotonProperties,
 } from "./index.ts"
+import { createLocalityPostcodeLookup } from "./locality-postcode.ts"
 
 /**
  * WOF placetype → Photon property key.
@@ -86,6 +88,7 @@ async function serve(): Promise<void> {
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
+	const postcodeOfLocality = createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
 	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
 	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
@@ -129,12 +132,42 @@ async function serve(): Promise<void> {
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
 
+			// The register row's own scope tags (result.rooftop) decorate a house-grade answer whose
+			// hierarchy carries no locality/postcode — the register ATTESTS the rooftop's commune and
+			// postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
+			// doctrine covers register attestations exactly as it covers gazetteer rows. The key form is
+			// normalized; title-case it for display (the shards store no display-cased locality).
+			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
+
+			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
+				// The key form is normalized lowercase (the shards store no display-cased locality);
+				// pyTitle display-cases it particle-and-apostrophe-aware.
+				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
+			}
+
+			// Locality→postcode enrichment: an admin answer for a place whose CONTAINING postcode is
+			// unambiguous (exactly one) carries that postcode — the register/WOF attests it, the query
+			// simply never said it. Multi-postcode cities (Paris) get NOTHING: the exactly-one rule is
+			// the abstention, per the registry doctrine. Keyed by the resolved place's WOF id, so no
+			// name matching is involved.
+			let enrichedPostcode: string | undefined
+
+			if (!result.postcode && !result.rooftop?.postcode) {
+				const localityID = result.hierarchy.find(
+					(h) => (h.tag === "locality" || h.tag === "localadmin") && h.placeID?.startsWith("wof:")
+				)?.placeID
+
+				if (localityID) {
+					enrichedPostcode = postcodeOfLocality(Number(localityID.slice(4)), result.countryCode)
+				}
+			}
+
 			const primary: PhotonForwardInput = {
 				lat: result.lat,
 				lon: result.lon,
-				postcode: result.postcode,
+				postcode: result.postcode ?? result.rooftop?.postcode ?? enrichedPostcode,
 				country: country ? { name: country.canonical, code: country.iso2 } : undefined,
-				places: result.hierarchy.map((h) => ({ tag: h.tag, name: h.name })),
+				places,
 				...(houseGrade ? { house: { number: result.house_number, street: result.street } } : {}),
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}

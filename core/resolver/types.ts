@@ -323,6 +323,14 @@ export interface AddressPointHit {
 	 * Pinned data release the point came from, e.g. `"2026-05-20.0"`.
 	 */
 	release: string
+	/**
+	 * The point's OWN scope tags, when the shard row carries them — the register's locality (normalized key form) and
+	 * postcode. A rooftop answer can then be DECORATED with the commune/postcode the register attests, which a query that
+	 * never named them cannot supply. Optional: not every source carries both, and existing readers/consumers predate the
+	 * fields.
+	 */
+	localityNorm?: string
+	postcode?: string
 }
 
 /**
