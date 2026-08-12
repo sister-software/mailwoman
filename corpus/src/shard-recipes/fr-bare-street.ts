@@ -34,6 +34,12 @@ const FR_VOIE_ABBREV: Record<string, string> = Object.fromEntries(
 )
 
 /**
+ * The order-cycle slot for the BARE-STREET-ONLY form (`«voie» «name»`, no number, no locality) — the absence
+ * counterweight to the locality-terminated comma-free forms (see the cycle comment).
+ */
+const BARE_STREET_ONLY_FORM = 3
+
+/**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
  * and `description` below for the surface form it generates.
  */
@@ -70,25 +76,32 @@ export const frBareStreetRecipe: ShardRecipe = {
 				continue
 			}
 
-			// Three surfaces over the same tuple, cycled deterministically. The comma form was the
+			// Four surfaces over the same tuple, cycled deterministically. The comma form was the
 			// original lever; the COMMA-FREE form is the colloquial register users actually type
 			// ('12 rue de Rome Paris' — the street↔locality boundary with NO delimiter, the fr-fr
-			// panel's named loss), and the ABBREVIATED form is the typeahead register ('12 r de Rome
-			// Paris' / 'pl'-class voie abbreviations) the geocoder-tester FR slice attests at scale.
-			// The TAGS are identical across all three; each component VALUE is the span as written
-			// (the abbreviated form labels the abbreviation — BIO alignment binds value to surface).
-			const form = read % 3
-			const prefixSurface = form === 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
+			// panel's named loss); the ABBREVIATED form is the typeahead register the geocoder-tester
+			// FR slice attests at scale; and the BARE-STREET-ONLY form is the absence counterweight —
+			// without it, every delimiter-free surface in the mix ENDS in a locality, the model learns
+			// "trailing span = locality" as categorical, and bare street names across locales flip to
+			// locality wholesale (the v4.5.0 no-promote's measured erosion: 'Calle de Alcalá',
+			// 'Madison Square West', and COMER's fork all fell to that prior). Tags are identical
+			// where present; each component VALUE is the span as written (BIO alignment binds value
+			// to surface); the bare form carries NO number and NO locality because the surface has
+			// neither.
+			const form = read % 4
+			const prefixSurface = form >= 2 ? (FR_VOIE_ABBREV[prefix.toLowerCase()] ?? prefix) : prefix
 
-			const components: Record<string, string> = {
-				house_number: number,
-				street_prefix: prefixSurface,
-				street,
-				locality,
-			}
+			const components: Record<string, string> =
+				form === BARE_STREET_ONLY_FORM
+					? { street_prefix: prefix, street }
+					: { house_number: number, street_prefix: prefixSurface, street, locality }
 
 			const raw =
-				form === 0 ? `${number} ${prefix} ${street}, ${locality}` : `${number} ${prefixSurface} ${street} ${locality}`
+				form === 0
+					? `${number} ${prefix} ${street}, ${locality}`
+					: form === BARE_STREET_ONLY_FORM
+						? `${prefix} ${street}`
+						: `${number} ${prefixSurface} ${street} ${locality}`
 
 			const source_id = shardSourceID("synth-fr-bare-street", { ...components, f: String(form), v: String(read) })
 
