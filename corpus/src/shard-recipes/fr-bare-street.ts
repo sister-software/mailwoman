@@ -69,8 +69,38 @@ export const frBareStreetRecipe: ShardRecipe = {
 
 			const { prefix, street } = decomposeFrStreet(fullStreet)
 
-			// The failing class is the prefix-led FR street; a no-prefix nom_voie ("La Ville Mois") isn't it.
+			// A no-prefix nom_voie ("La Ville Mois") is not the prefix-led class the numbered forms
+			// exercise — but as a BARE surface it is exactly the non-voie-led counterweight the v4.5.1
+			// probe showed missing ('Savile Row'-shaped spans still fell to the trailing-locality
+			// prior; the voie-led bare form protected only voie-led spans). Alternate rows emit the
+			// whole span as a bare street; the rest skip as before.
 			if (!prefix || !street) {
+				if (read % 2 === 0 && fullStreet.split(" ").length >= 2) {
+					const bare = {
+						raw: fullStreet,
+						components: { street: fullStreet } as Record<string, string>,
+						country: "FR",
+						locale: "fr-FR",
+						source: "synth-fr-bare-street",
+						source_id: shardSourceID("synth-fr-bare-street", {
+							street: fullStreet,
+							f: "bare-nonvoie",
+							v: String(read),
+						}),
+						corpus_version: "0.9.4",
+						license:
+							"Synthetic — fr-bare-street; (street, number, city) from BAN (Base Adresse Nationale, Licence Ouverte)",
+					}
+
+					if (alignAndWrite(write, bare, "fr-bare-street")) {
+						emitted++
+					} else {
+						skipped++
+					}
+
+					continue
+				}
+
 				skipped++
 
 				continue
@@ -96,9 +126,20 @@ export const frBareStreetRecipe: ShardRecipe = {
 					? { street_prefix: prefix, street }
 					: { house_number: number, street_prefix: prefixSurface, street, locality }
 
+			// When the tuple carries a WOF-attested neighbourhood, the comma slot renders the
+			// THREE-slot middle surface — the dependent-locality counterweight (the v4.5.1 erosion's
+			// untouched half: the two-slot comma-free endings squeezed the middle tag out).
+			const hood = String(t.neighbourhood ?? "").trim()
+
+			if (form === 0 && hood) {
+				components.dependent_locality = hood
+			}
+
 			const raw =
 				form === 0
-					? `${number} ${prefix} ${street}, ${locality}`
+					? hood
+						? `${number} ${prefix} ${street}, ${hood}, ${locality}`
+						: `${number} ${prefix} ${street}, ${locality}`
 					: form === BARE_STREET_ONLY_FORM
 						? `${prefix} ${street}`
 						: `${number} ${prefixSurface} ${street} ${locality}`
