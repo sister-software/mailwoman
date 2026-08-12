@@ -106,6 +106,11 @@ const CORPUS_SIZE = 538
  * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row tripwire's note re-ledgers its
  * residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the board id stays.
  *
+ * Moved 2026-08-12 (seventh) — → this — by the ANTI-ROT PROMOTION SWEEP: 218 improvement_target rows whose now-PASSES
+ * flags were byte-identical across three same-corpus production boards (the sweep baseline, the register-scope-tags
+ * board, and the range-fallback board) flip to pass in one reviewed batch. Status-only — every id, input, and note
+ * untouched, so the board id stays; the gated set grows 107 → 325.
+ *
  * Moved 2026-08-12 (sixth) — → this — by the range-surface fallback landing with its 1-row pin ('32-36 Osborne Drive,
  * Burpengary QLD 4505' — the reader's null-only low-end retry keys the register's NUMBER_FIRST). 537 → 538, so the
  * board id moves too.
@@ -123,7 +128,7 @@ const CORPUS_SIZE = 538
  * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
  * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
  */
-const CORPUS_HASH = "8b2be721edfa4c6d9193992994ca4bca92c8b6b3e18feb7334fbec8227364fc0"
+const CORPUS_HASH = "28086c27364ccecabbf1eb38d0aff8be3eaff6a4b07979a634f2817253f0bd21"
 
 /**
  * `ablationBoardID` of the corpus.
