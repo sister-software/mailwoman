@@ -8,6 +8,9 @@
  *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) AND a WOF admin
  *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDb` predicate exactly (same env var,
  *   same convention path) so the two suites skip and run together rather than disagreeing about the environment.
+ *
+ *   The `--debug-size` floor test below runs UNCONDITIONALLY (no guard): `assertDebugSizeFloor` fires before
+ *   `runStaticDebug` ever calls `createGeocodeSession`, so the rejection needs neither weights nor a database.
  */
 
 import { existsSync } from "node:fs"
@@ -73,5 +76,20 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		// The raw query echoed back in the input row.
 		expect(text).toContain("3215 SE Clinton St, Portland OR")
+	})
+})
+
+// MARK: --debug-size floor
+
+describe("runStaticDebug --debug-size floor", () => {
+	test("a --debug-size below 60x14 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
+		const options = geocodeOptionsSchema.parse({ debugSize: "100x5" })
+
+		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw at this size
+		// (mapPaneCellSize's row math goes negative before map-tui's allocation does) — assertDebugSizeFloor now
+		// catches it before any DB/weights work, so this rejects even without a resolvable session.
+		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
+			/--debug-size below the 60x14 minimum: 100x5/
+		)
 	})
 })

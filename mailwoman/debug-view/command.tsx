@@ -55,19 +55,36 @@ export function initialZoomForTier(result: GeocodeResult): number {
 
 //#endregion
 
-//#region Format-shorthand guard
+//#region CLI-usage guards
 
 /**
  * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format` shorthand has no
  * defensible reading. Thrown with {@link commandError} so it reports through the standard error state (exit code 1) on
- * both the static path (below) and the Task 13 interactive path, matching `resolveFormat`'s two-shorthands-at-once
- * check in `geocode.tsx`.
+ * the static path below; Task 13's interactive session wires the same guard at mount, matching `resolveFormat`'s
+ * two-shorthands-at-once check in `geocode.tsx`.
  */
 function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
 
 	if (shorthands.length) {
 		throw commandError(`--debug is its own output surface; drop ${shorthands.map((name) => `--${name}`).join(" ")}.`)
+	}
+}
+
+/**
+ * The smallest `--debug-size` `mapPaneCellSize` can turn into a map-tui viewport that actually renders. Below it,
+ * `mapPaneCellSize`'s row math goes non-positive before `MapRenderer` ever runs: measured 2026-08-13, `100x5`
+ * (`mapPaneCellSize` rows -3) crashes with a raw `RangeError: Invalid typed array length: -4608` from `new RGBAGrid`
+ * deep inside map-tui, and `100x8` (rows 0) renders but with the ribbon/output/map panes overlapping garbled. `60x14`
+ * (`mapPaneCellSize` → 28x6) is the smallest size that renders a legible, non-degenerate frame, so that's the floor —
+ * checked at the CLI boundary, before any DB/weights work, same posture as {@link assertDebugFormatSanity}.
+ */
+const MIN_DEBUG_COLUMNS = 60
+const MIN_DEBUG_ROWS = 14
+
+function assertDebugSizeFloor(columns: number, rows: number): void {
+	if (columns < MIN_DEBUG_COLUMNS || rows < MIN_DEBUG_ROWS) {
+		throw commandError(`--debug-size below the ${MIN_DEBUG_COLUMNS}x${MIN_DEBUG_ROWS} minimum: ${columns}x${rows}`)
 	}
 }
 
@@ -88,6 +105,9 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 	assertDebugFormatSanity(options)
 
 	const [columns, rows] = options.debugSize.split("x").map(Number) as [number, number]
+
+	assertDebugSizeFloor(columns, rows)
+
 	const session = await createGeocodeSession(options)
 
 	try {

@@ -4,8 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { AddressTree } from "@mailwoman/core/decoder"
 import { describe, expect, it } from "vitest"
 
+import type { GeocodeResult } from "../geocode-core.ts"
 import { DebugFrame, mapPaneCellSize, ribbonSegments } from "./DebugFrame.tsx"
 import { renderInkToString } from "./static-render.ts"
 
@@ -17,7 +19,7 @@ const TREE = {
 		{ tag: "locality", value: "Portland", start: 20, end: 28, confidence: 0.97, children: [] },
 		{ tag: "region", value: "OR", start: 29, end: 31, confidence: 0.96, children: [] },
 	],
-} as never
+} as unknown as AddressTree
 
 const RESULT = {
 	input: "3215 SE Clinton St, Portland OR",
@@ -35,7 +37,7 @@ const RESULT = {
 	components: {},
 	venue: null,
 	dependent_locality: null,
-} as never
+} as unknown as GeocodeResult
 
 describe("DebugFrame", () => {
 	it("renders all three panes with the parse and the resolution", async () => {

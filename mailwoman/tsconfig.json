@@ -37,6 +37,7 @@
 		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../ban" },
 		{ "path": "../spatial" },
-		{ "path": "../osm" }
+		{ "path": "../osm" },
+		{ "path": "../map-tui" }
 	]
 }
