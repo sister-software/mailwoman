@@ -161,8 +161,19 @@ export class MapBrowser {
 	private error: string | null = null
 	private resolveExit: ((code: number) => void) | null = null
 
+	/**
+	 * The trailing bytes of the last chunk that could not be decoded yet — a sequence the kernel split across two reads.
+	 * Threading it back through `decodeInputChunk` is what keeps a split mouse report from being read as an Esc keypress
+	 * (which used to quit); the decoder itself stays pure.
+	 */
+	private pendingInput = ""
+
 	private readonly onData = (chunk: string): void => {
-		for (const event of decodeInputChunk(chunk)) {
+		const decoded = decodeInputChunk(chunk, this.pendingInput)
+
+		this.pendingInput = decoded.pending
+
+		for (const event of decoded.events) {
 			this.handleInput(event)
 		}
 	}

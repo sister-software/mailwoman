@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { collectMissingExportTargets, collectMissingFileEntries } from "./verify-tarball.ts"
+import { collectMissingBinTargets, collectMissingExportTargets, collectMissingFileEntries } from "./verify-tarball.ts"
 
 /**
  * What `@mailwoman/neural-weights-en-in@8.6.0` actually shipped — read back off the registry.
@@ -91,5 +91,32 @@ describe("collectMissingExportTargets", () => {
 
 	it("tolerates an absent exports map", () => {
 		expect(collectMissingExportTargets(undefined, new Set())).toEqual([])
+	})
+})
+
+describe("collectMissingBinTargets", () => {
+	it("flags a bin whose file the tarball lacks — the map-tui class", () => {
+		// `@mailwoman/map-tui` declares `bin: { "map-tui": "./out/cli.js" }` and packs `out/` as a GLOB, so an
+		// unbuilt tree packs clean and npm PATH-links a file that isn't there. Nothing else in the manifest
+		// mentions `out/cli.js`, which is why neither the files nor the exports guard sees it.
+		const bin = { "map-tui": "./out/cli.js" }
+
+		expect(collectMissingBinTargets(bin, new Set(["./package.json", "./out/frame.js"]))).toEqual(["./out/cli.js"])
+		expect(collectMissingBinTargets(bin, new Set(["./out/cli.js"]))).toEqual([])
+	})
+
+	it("reads both spellings npm accepts", () => {
+		// The string form names the package itself; the map form names each command.
+		expect(collectMissingBinTargets("./out/cli.js", new Set())).toEqual(["./out/cli.js"])
+
+		expect(collectMissingBinTargets({ mailwoman: "./out/cli.js", mw: "./out/cli.js" }, new Set())).toEqual([
+			"./out/cli.js",
+			"./out/cli.js",
+		])
+	})
+
+	it("tolerates a package with no bin at all", () => {
+		expect(collectMissingBinTargets(undefined, new Set())).toEqual([])
+		expect(collectMissingBinTargets(null, new Set())).toEqual([])
 	})
 })

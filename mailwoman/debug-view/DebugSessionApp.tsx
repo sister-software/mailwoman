@@ -461,9 +461,17 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	}
 
 	const onOutputKey = (key: Key): void => {
-		// Clamped against the pane's OWN line list and window — the same builder and the same capacity function
-		// `DebugFrame` renders with, so the scroll can never run past what the pane can show, and the last page
-		// stays full instead of scrolling into empty rows.
+		if (key.upArrow) {
+			setScrollOffset((prior) => Math.max(0, prior - 1))
+
+			return
+		}
+
+		if (!key.downArrow) return
+
+		// Only the DOWN arrow needs the bound, so only it pays for the list. Clamped against the pane's OWN lines
+		// and window — the same builder and capacity function `DebugFrame` renders with, so the scroll can never run
+		// past what the pane shows, and the last page stays full instead of scrolling into empty rows.
 		const lineCount = run
 			? outputLines({
 					result: run.result,
@@ -476,11 +484,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 		const lastOffset = Math.max(0, lineCount - outputPaneCapacity(size.rows))
 
-		if (key.upArrow) {
-			setScrollOffset((prior) => Math.max(0, prior - 1))
-		} else if (key.downArrow) {
-			setScrollOffset((prior) => Math.min(lastOffset, prior + 1))
-		}
+		setScrollOffset((prior) => Math.min(lastOffset, prior + 1))
 	}
 
 	useInput(

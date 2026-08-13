@@ -31,9 +31,62 @@ import { createElement, type ReactElement } from "react"
 export interface InputState {
 	value: string
 	/**
-	 * Character index the cursor sits BEFORE, in `[0, value.length]`.
+	 * UTF-16 offset the cursor sits BEFORE, in `[0, value.length]`, and never INSIDE a surrogate pair — every move and
+	 * every delete in this module steps by whole codepoints, so `value.slice(cursor)` is always a valid string. (Ink
+	 * measures and slices in UTF-16 too; keeping the offset in the same units as the render is what makes the two agree.
+	 * See {@link stepLeft}.)
 	 */
 	cursor: number
+}
+
+/**
+ * The UTF-16 offset one CODEPOINT left of `index`.
+ *
+ * `codePointAt(index - 2)` returns a value above the BMP only when `index - 2` genuinely starts a surrogate pair, so
+ * this steps 2 across `🏠` and 1 across everything else. Stepping by one unit instead is how a backspace after an emoji
+ * leaves a lone surrogate in the query — a string that renders as `�` and that the tokenizer never saw in training.
+ */
+function stepLeft(value: string, index: number): number {
+	if (index <= 0) return 0
+
+	const previous = value.codePointAt(index - 2)
+
+	return previous != null && previous > 0xff_ff ? index - 2 : index - 1
+}
+
+/**
+ * The UTF-16 offset one CODEPOINT right of `index`.
+ */
+function stepRight(value: string, index: number): number {
+	if (index >= value.length) return value.length
+
+	const current = value.codePointAt(index)
+
+	return current != null && current > 0xff_ff ? index + 2 : index + 1
+}
+
+/**
+ * Bound an offset to the value AND out of the middle of a surrogate pair — the only place a caller-supplied cursor can
+ * be illegal.
+ */
+function clampCursor(value: string, index: number): number {
+	const bounded = Math.max(0, Math.min(index, value.length))
+	const unit = value.charCodeAt(bounded)
+
+	// A low surrogate at the cursor means the offset landed inside a pair; the codepoint starts one unit back.
+	return unit >= 0xdc_00 && unit <= 0xdf_ff ? bounded - 1 : bounded
+}
+
+/**
+ * What survives from a typed or PASTED run: CR/LF/tab runs collapse to one space, other control characters are dropped,
+ * and everything else is kept.
+ *
+ * Collapsing rather than rejecting is the point. Pasting a multi-line address into a one-line field is a thing people
+ * do constantly, and refusing the whole paste because it contains a newline drops the address on the floor with no
+ * feedback — the field just doesn't respond. `12 Rue de Rivoli\n75001 Paris` becomes the query it obviously means.
+ */
+function printableRun(input: string): string {
+	return input.replaceAll(/[\r\n\t]+/gu, " ").replaceAll(/\p{Cc}/gu, "")
 }
 
 /**
@@ -71,19 +124,28 @@ function deleteRange(state: InputState, start: number, end: number): InputState 
  * prove the edits are right, without either having to do the other's job.
  */
 export function applyKey(state: InputState, input: string, key: Key): InputState {
-	if (key.leftArrow) return { ...state, cursor: Math.max(0, state.cursor - 1) }
+	const { value } = state
+	const cursor = clampCursor(value, state.cursor)
 
-	if (key.rightArrow) return { ...state, cursor: Math.min(state.value.length, state.cursor + 1) }
+	if (key.leftArrow) return { value, cursor: stepLeft(value, cursor) }
 
-	if (key.home) return { ...state, cursor: 0 }
+	if (key.rightArrow) return { value, cursor: stepRight(value, cursor) }
 
-	if (key.end) return { ...state, cursor: state.value.length }
+	if (key.home) return { value, cursor: 0 }
 
-	if (key.backspace || key.delete) {
-		// Meta+backspace is the word-delete the terminal is asking for; a bare backspace is one character.
-		const start = key.meta ? wordStart(state.value, state.cursor) : state.cursor - 1
+	if (key.end) return { value, cursor: value.length }
 
-		return deleteRange(state, Math.max(0, start), state.cursor)
+	// Ink names the two deletes apart, and so does the keyboard: `backspace` is the key above Enter (`\x7f`),
+	// `delete` is the FORWARD Delete of the navigation cluster (`ESC[3~`). Folding them together made the Delete
+	// key eat the character behind the cursor, which is the opposite of what it says on it.
+	if (key.backspace) {
+		const start = key.meta ? wordStart(value, cursor) : stepLeft(value, cursor)
+
+		return deleteRange({ value, cursor }, start, cursor)
+	}
+
+	if (key.delete) {
+		return deleteRange({ value, cursor }, cursor, stepRight(value, cursor))
 	}
 
 	if (key.ctrl) {
@@ -91,27 +153,31 @@ export function applyKey(state: InputState, input: string, key: Key): InputState
 		// the letter), so anything NOT listed has to fall through to the drop below — inserting it is the bug.
 		switch (input) {
 			case "w":
-				return deleteRange(state, wordStart(state.value, state.cursor), state.cursor)
+				return deleteRange({ value, cursor }, wordStart(value, cursor), cursor)
 			case "u":
-				return deleteRange(state, 0, state.cursor)
+				return deleteRange({ value, cursor }, 0, cursor)
 			case "k":
-				return deleteRange(state, state.cursor, state.value.length)
+				return deleteRange({ value, cursor }, cursor, value.length)
 			case "a":
-				return { ...state, cursor: 0 }
+				return { value, cursor: 0 }
 			case "e":
-				return { ...state, cursor: state.value.length }
+				return { value, cursor: value.length }
 			default:
 				return state
 		}
 	}
 
-	// An unhandled meta chord (alt+f, alt+b, …) and every non-printable sequence Ink hands through are DROPPED.
-	// `input` is empty for the keys Ink names (arrows, escape, tab); the control-character test catches the rest.
-	if (key.meta || !input.length || /[\p{Cc}]/u.test(input)) return state
+	// An unhandled meta chord (alt+f, alt+b, …) is DROPPED, and so is anything with no printable content left —
+	// `input` is empty for the keys Ink names (arrows, escape, tab).
+	if (key.meta) return state
+
+	const insert = printableRun(input)
+
+	if (!insert.length) return state
 
 	return {
-		value: state.value.slice(0, state.cursor) + input + state.value.slice(state.cursor),
-		cursor: state.cursor + input.length,
+		value: value.slice(0, cursor) + insert + value.slice(cursor),
+		cursor: cursor + insert.length,
 	}
 }
 
@@ -164,15 +230,18 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 
 	if (!focus) return createElement(Text, { wrap: "truncate-end" }, value)
 
-	const safeCursor = Math.max(0, Math.min(cursor, value.length))
-	const under = value.slice(safeCursor, safeCursor + 1) || CURSOR_PAD
+	// The inverted cell is a whole CODEPOINT, not a UTF-16 unit: `slice(cursor, cursor + 1)` over `🏠` inverts half a
+	// surrogate pair and paints `�` under the cursor.
+	const safeCursor = clampCursor(value, cursor)
+	const point = value.codePointAt(safeCursor)
+	const under = point == null ? CURSOR_PAD : String.fromCodePoint(point)
 
 	return createElement(
 		Text,
 		{ wrap: "truncate-end" },
 		value.slice(0, safeCursor),
 		createElement(Text, { inverse: true }, under),
-		value.slice(safeCursor + 1)
+		value.slice(safeCursor + (point == null ? 0 : under.length))
 	)
 }
 

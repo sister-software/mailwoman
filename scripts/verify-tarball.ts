@@ -45,6 +45,7 @@ export interface TarballContents {
 		name?: string
 		files?: unknown
 		exports?: unknown
+		bin?: unknown
 	}
 	/**
 	 * Every path in the tarball, `./`-relative to the package root (tar's `package/` prefix stripped).
@@ -99,6 +100,29 @@ export function collectMissingExportTargets(exports: unknown, shipped: Set<strin
 }
 
 /**
+ * Every path a `bin` field promises — npm accepts both the string form (`"bin": "./out/cli.js"`) and the map form.
+ */
+function collectBinTargets(bin: unknown): string[] {
+	if (typeof bin === "string") return [bin]
+
+	if (!bin || typeof bin !== "object") return []
+
+	return Object.values(bin as Record<string, unknown>).filter((target): target is string => typeof target === "string")
+}
+
+/**
+ * Which `bin` targets the tarball does not contain. Exported for tests.
+ *
+ * The same promise an `exports` target makes, and the same silent failure when it is broken: `files` globs decide what
+ * is packed, `bin` decides what npm symlinks onto the user's PATH, and nothing reconciles the two. A workspace whose
+ * `out/` was never built packs fine, publishes fine, and then `npx <pkg>` dies with ENOENT on a path the manifest
+ * itself named.
+ */
+export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): string[] {
+	return collectBinTargets(bin).filter((target) => !isShipped(normalizeEntry(target), shipped))
+}
+
+/**
  * Read a packed tarball's member list and its `package.json`. Throws with the tar exit status rather than a parse error
  * on a truncated or non-tarball input, so a pack failure upstream reads as a pack failure here.
  */
@@ -136,6 +160,10 @@ export interface TarballAudit {
 	 * Concrete `exports` targets verified present.
 	 */
 	exportTargets: number
+	/**
+	 * `bin` targets verified present.
+	 */
+	binTargets: number
 }
 
 /**
@@ -149,8 +177,9 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 	const name = manifest.name ?? tarballPath
 	const missingFiles = collectMissingFileEntries(manifest.files, shipped)
 	const missingExports = collectMissingExportTargets(manifest.exports, shipped)
+	const missingBins = collectMissingBinTargets(manifest.bin, shipped)
 
-	if (missingFiles.length || missingExports.length) {
+	if (missingFiles.length || missingExports.length || missingBins.length) {
 		const lines = [`verify-tarball: ${name} does not contain what its manifest promises — refusing to publish:`]
 
 		for (const entry of missingFiles) {
@@ -159,6 +188,10 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 
 		for (const target of missingExports) {
 			lines.push(`  - exports target ${target} is not in the tarball`)
+		}
+
+		for (const target of missingBins) {
+			lines.push(`  - bin target ${target} is not in the tarball (npm would PATH-link a file that isn't there)`)
 		}
 
 		throw new Error(lines.join("\n"))
@@ -171,5 +204,6 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 				typeof entry === "string" && !entry.startsWith("!") && !GLOB_PATTERN.test(entry)
 		).length,
 		exportTargets: collectExportTargets(manifest.exports ?? {}).length,
+		binTargets: collectBinTargets(manifest.bin).length,
 	}
 }

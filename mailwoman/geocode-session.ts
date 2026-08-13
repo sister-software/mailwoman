@@ -140,9 +140,10 @@ export interface GeocodeRun {
 	result: GeocodeResult
 	tree: AddressTree
 	/**
-	 * Wall-clock milliseconds per phase — `parse`, `resolve`, `total`, plus `trace` when tracing is on. MEASURED here
-	 * rather than read off a `PipelineResult`, because this path never builds one: these are the phases the session
-	 * actually runs, so a caller rendering them is reading its own clock, not a neighbouring path's.
+	 * Wall-clock milliseconds per phase — `parse`, `resolve`, `total`, plus `trace` on a session that ATTEMPTED one
+	 * (present even when the attempt threw, so the phases always sum to `total`). MEASURED here rather than read off a
+	 * `PipelineResult`, because this path never builds one: these are the phases the session actually runs, so a caller
+	 * rendering them is reading its own clock, not a neighbouring path's.
 	 */
 	timing: PipelineTiming
 	/**
@@ -382,6 +383,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	}
 
 	/**
+	 * The parse dependencies, built ONCE. `parseForGeocode` and `geocodeParseInputs` must be handed the same object:
+	 * every field on it (`normalizeInput`, `normalizeCase`, `inputMode`) changes what the classifier is given, so two
+	 * separately-built dep objects are two decodes that can silently diverge — which is the exact failure the shared
+	 * derivation exists to prevent.
+	 */
+	const parseDeps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode"> = { classifier }
+
+	/**
 	 * The debug evidence for one input, or undefined when tracing is off. Runs `traceParse` under the SAME opts
 	 * `parseForGeocode` just used ({@link geocodeParseInputs} is the shared derivation), so the record describes this
 	 * input's decode rather than a re-derived one.
@@ -389,7 +398,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const traceOf = async (input: string): Promise<GeocodeTrace | undefined> => {
 		if (!options.trace) return undefined
 
-		const inputs = geocodeParseInputs(input, {})
+		const inputs = geocodeParseInputs(input, parseDeps)
 
 		try {
 			return {
@@ -413,7 +422,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
 		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
 		// wins (resolverDefaultCountry returns it before the locale inference is consulted).
-		const parsedTree = await parseForGeocode(input, { classifier })
+		const parsedTree = await parseForGeocode(input, parseDeps)
 		const parsedAt = performance.now()
 		const trace = await traceOf(input)
 		const tracedAt = performance.now()
@@ -495,7 +504,11 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			tree: parsedTree,
 			timing: {
 				parse: parsedAt - startedAt,
-				...(trace ? { trace: tracedAt - parsedAt } : {}),
+				// Present whenever tracing was ATTEMPTED, including the attempt that threw — its milliseconds are
+				// real and were spent, and hiding them inside `total` would leave the phases not summing to it
+				// (`meaning of zero`: a trace entry of 12 ms next to an absent trace says the attempt failed and
+				// what it cost, which is a different fact from "tracing was off").
+				...(options.trace ? { trace: tracedAt - parsedAt } : {}),
 				resolve: finishedAt - tracedAt,
 				total: finishedAt - startedAt,
 			},

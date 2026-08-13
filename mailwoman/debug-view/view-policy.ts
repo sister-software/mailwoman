@@ -29,7 +29,11 @@ import type { GeocodeResult } from "../geocode-core.ts"
 export function initialZoomForTier(result: GeocodeResult): number {
 	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
 
-	const leaf = result.hierarchy.at(-1)?.tag
+	// `hierarchy` is ordered MOST SPECIFIC FIRST (`GeocodeResult.hierarchy`: "locality → country"), so the head is the
+	// finest place the resolver decorated. Reading `.at(-1)` took the COUNTRY instead and opened every admin-tier
+	// answer at the whole-country zoom 4: a bare "Portland, Oregon" resolved its locality and then showed North
+	// America.
+	const leaf = result.hierarchy.at(0)?.tag
 
 	if (leaf === "locality" || leaf === "dependent_locality") return 11
 
