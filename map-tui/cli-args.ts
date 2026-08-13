@@ -91,7 +91,7 @@ Usage
   npx @mailwoman/map-tui --tiles <archive.pmtiles> [options]
 
 Options
-  --tiles <path>    PMTiles archive to read (default: $MAILWOMAN_TILES)
+  --tiles <path|url>  PMTiles archive — local path or https:// URL (default: $MAILWOMAN_TILES)
   --lat <degrees>   Initial center latitude, -90..90 (default: ${DEFAULT_LAT})
   --lon <degrees>   Initial center longitude, -180..180 (default: ${DEFAULT_LON})
   --zoom <level>    Initial zoom, ${MIN_ZOOM}..${MAX_ZOOM} (default: ${DEFAULT_ZOOM})

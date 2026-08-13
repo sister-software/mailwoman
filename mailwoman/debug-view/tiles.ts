@@ -11,6 +11,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
  * --tiles flag → $MAILWOMAN_TILES → dataRootPath("tiles", "planet.pmtiles") if it exists → null (degrade).
+ *
+ * Flag and environment values pass through verbatim — an `https://` archive URL is as valid as a path, and
+ * `TileSource.open` reads either. Only the data-root fallback is existence-probed; a URL is never probed here.
  */
 export function resolveTilesPath(flagValue?: string): string | null {
 	if (flagValue) return flagValue

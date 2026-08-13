@@ -43,14 +43,14 @@ dragging pans, and a click centers the map on the cell you clicked.
 
 ### Flags
 
-| Flag              | Does                                                     |
-| ----------------- | -------------------------------------------------------- |
-| `--tiles <path>`  | PMTiles archive to read. Defaults to `$MAILWOMAN_TILES`. |
-| `--lat <deg>`     | Initial center latitude (default `0`).                   |
-| `--lon <deg>`     | Initial center longitude (default `0`).                  |
-| `--zoom <level>`  | Initial zoom, 0–24 (default `2` — a world view).         |
-| `--help`, `-h`    | Print the flags and key bindings.                        |
-| `--version`, `-v` | Print the package version.                               |
+| Flag                  | Does                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `--tiles <path\|url>` | PMTiles archive — a local path or an `https://` URL read via range requests. Defaults to `$MAILWOMAN_TILES`. |
+| `--lat <deg>`         | Initial center latitude (default `0`).                                                                       |
+| `--lon <deg>`         | Initial center longitude (default `0`).                                                                      |
+| `--zoom <level>`      | Initial zoom, 0–24 (default `2` — a world view).                                                             |
+| `--help`, `-h`        | Print the flags and key bindings.                                                                            |
+| `--version`, `-v`     | Print the package version.                                                                                   |
 
 ### Where to get an archive
 

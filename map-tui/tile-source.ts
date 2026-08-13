@@ -46,6 +46,18 @@ class FilePMTilesSource implements Source {
 const TILE_CACHE_LIMIT = 64
 
 /**
+ * Plain-text attribution out of archive metadata (HTML tags stripped); empty string when absent.
+ */
+function readAttribution(metadata: unknown): string {
+	return typeof metadata === "object" &&
+		metadata !== null &&
+		"attribution" in metadata &&
+		typeof (metadata as { attribution: unknown }).attribution === "string"
+		? (metadata as { attribution: string }).attribution.replaceAll(/<[^>]+>/gu, "").trim()
+		: ""
+}
+
+/**
  * A single LRU cache slot. Wrapping the decoded tile in an object lets `getTile` tell "cached and known absent" (`{
  * tile: null }`) apart from "not yet cached" (no entry in the Map) using plain presence, with no comparison against
  * `undefined` needed.
@@ -63,11 +75,20 @@ export class TileSource {
 	 */
 	readonly attribution: string
 
-	private readonly handle: FileHandle
+	/**
+	 * Null for HTTP sources — fetch connections have no handle to hold or close.
+	 */
+	private readonly handle: FileHandle | null
 	private readonly pmtiles: PMTiles
 	private readonly cache = new Map<string, CacheEntry>()
 
-	private constructor(handle: FileHandle, pmtiles: PMTiles, minZoom: number, maxZoom: number, attribution: string) {
+	private constructor(
+		handle: FileHandle | null,
+		pmtiles: PMTiles,
+		minZoom: number,
+		maxZoom: number,
+		attribution: string
+	) {
 		this.handle = handle
 		this.pmtiles = pmtiles
 		this.minZoom = minZoom
@@ -75,21 +96,24 @@ export class TileSource {
 		this.attribution = attribution
 	}
 
-	static async open(path: string): Promise<TileSource> {
-		const handle = await open(path, "r")
-		const pmtiles = new PMTiles(new FilePMTilesSource(path, handle))
+	/**
+	 * Opens a local `.pmtiles` path, or an `http(s)://` URL read via range requests — a hosted archive needs no tile
+	 * server, only a host honoring `Range` (any static file server or object store does).
+	 */
+	static async open(pathOrURL: string): Promise<TileSource> {
+		if (/^https?:\/\//u.test(pathOrURL)) {
+			const pmtiles = new PMTiles(pathOrURL)
+			const [header, metadata] = await Promise.all([pmtiles.getHeader(), pmtiles.getMetadata()])
+
+			return new TileSource(null, pmtiles, header.minZoom, header.maxZoom, readAttribution(metadata))
+		}
+
+		const handle = await open(pathOrURL, "r")
+		const pmtiles = new PMTiles(new FilePMTilesSource(pathOrURL, handle))
 
 		const [header, metadata] = await Promise.all([pmtiles.getHeader(), pmtiles.getMetadata()])
 
-		const attribution =
-			typeof metadata === "object" &&
-			metadata !== null &&
-			"attribution" in metadata &&
-			typeof (metadata as { attribution: unknown }).attribution === "string"
-				? (metadata as { attribution: string }).attribution.replaceAll(/<[^>]+>/gu, "").trim()
-				: ""
-
-		return new TileSource(handle, pmtiles, header.minZoom, header.maxZoom, attribution)
+		return new TileSource(handle, pmtiles, header.minZoom, header.maxZoom, readAttribution(metadata))
 	}
 
 	/**
@@ -125,6 +149,6 @@ export class TileSource {
 	}
 
 	async close(): Promise<void> {
-		await this.handle.close()
+		await this.handle?.close()
 	}
 }
