@@ -75,8 +75,7 @@ export interface DebugFrameProps {
 	 */
 	errorNote?: string | null
 	/**
-	 * Map-pane SGR color. Callers pass `$public.NO_COLOR == null` — Ink/chalk honor NO_COLOR on their own, raw SGR does
-	 * not.
+	 * Map-pane SGR color. Callers pass `!$public.NO_COLOR` — Ink/chalk honor NO_COLOR on their own, raw SGR does not.
 	 */
 	color: boolean
 }
