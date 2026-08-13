@@ -8,9 +8,9 @@
  * Web-Mercator projection math for map-tui.
  *
  * This module reimplements the standard Web-Mercator projection (EPSG:3857) math locally rather than importing from
- * @mailwoman/cartographer or @mailwoman/spatial. The cartographer dependency drags maplibre-gl + @mailwoman/tiger;
- * spatial drags @mailwoman/core's shipped data. map-tui maintains a dependency-lean surface for the standalone `npx`
- * story (the nuts-lookup precedent).
+ * `@mailwoman/cartographer` or `@mailwoman/spatial`. The cartographer dependency drags maplibre-gl +
+ * `@mailwoman/tiger`; spatial drags `@mailwoman/core`'s shipped data. map-tui maintains a dependency-lean surface for
+ * the standalone `npx` story (the nuts-lookup precedent).
  */
 
 /**
