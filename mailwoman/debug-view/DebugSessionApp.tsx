@@ -27,14 +27,15 @@
 import { $public } from "@mailwoman/core/env"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
-import TextInput from "ink-text-input"
 import { commandError } from "mailwoman/cli-kit"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
 import type { GeocodeResult } from "../geocode-core.ts"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "../geocode-session.ts"
-import { DebugFrame, mapPaneCellSize, type DebugData, type DebugPane } from "./DebugFrame.tsx"
+import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
+import { outputLines } from "./output-lines.ts"
+import { QueryInput, type InputState } from "./QueryInput.ts"
 import { resolveTilesPath } from "./tiles.ts"
 import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "./view-policy.ts"
 
@@ -172,7 +173,9 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
  * anything else throws, and the caller turns it into the fatal phase.
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
-	const session = await createGeocodeSession(options)
+	// `trace: true` is the debug view's own opt-in — it buys the evidence rows one extra decode per input, which
+	// no other caller of the session should pay for.
+	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = resolveTilesPath(options.tiles)
 
 	if (!tilesPath) return { session, source: null, renderer: null, mapNote: NO_TILES_NOTE }
@@ -220,7 +223,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	const [mapNote, setMapNote] = useState<string | null>(null)
 	const [errorNote, setErrorNote] = useState<string | null>(null)
 	const [focused, setFocused] = useState<DebugPane>("input")
-	const [inputValue, setInputValue] = useState(initialInput)
+	const [field, setField] = useState<InputState>(() => ({ value: initialInput, cursor: initialInput.length }))
 	const [viewport, setViewport] = useState<Viewport | null>(null)
 	const [scrollOffset, setScrollOffset] = useState(0)
 
@@ -458,12 +461,25 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	}
 
 	const onOutputKey = (key: Key): void => {
-		const lastRow = Math.max(0, (run?.result.hierarchy.length ?? 0) - 1)
+		// Clamped against the pane's OWN line list and window — the same builder and the same capacity function
+		// `DebugFrame` renders with, so the scroll can never run past what the pane can show, and the last page
+		// stays full instead of scrolling into empty rows.
+		const lineCount = run
+			? outputLines({
+					result: run.result,
+					tree: run.tree,
+					...(run.trace ? { trace: run.trace } : {}),
+					timing: run.timing,
+					errorNote,
+				}).length
+			: 0
+
+		const lastOffset = Math.max(0, lineCount - outputPaneCapacity(size.rows))
 
 		if (key.upArrow) {
 			setScrollOffset((prior) => Math.max(0, prior - 1))
 		} else if (key.downArrow) {
-			setScrollOffset((prior) => Math.min(lastRow, prior + 1))
+			setScrollOffset((prior) => Math.min(lastOffset, prior + 1))
 		}
 	}
 
@@ -508,27 +524,35 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	// re-measured by `string-width` and re-tokenized by `ansi-tokenize` on any prop identity change. Typing in the
 	// input row changes none of these values.
 	//
-	// The hierarchy slice IS the output pane's scroll — those rows are the only variable-length block in it. It lives
-	// here rather than in `DebugFrame` so the frame effect keeps depending on the untouched `run.result` identity;
-	// re-slicing inside the frame would re-render the map on every keypress.
+	// The scroll offset is deliberately NOT in here: it rides its own prop into the output pane, so scrolling leaves
+	// `data` identical and the map frame effect (which depends on `run`) never re-runs on an arrow key.
 	const data = useMemo<DebugData | null>(
 		() =>
 			run
 				? {
 						input: run.input,
 						tree: run.tree,
-						result:
-							scrollOffset > 0 ? { ...run.result, hierarchy: run.result.hierarchy.slice(scrollOffset) } : run.result,
+						result: run.result,
 						frame,
 						mapNote,
+						...(run.trace ? { trace: run.trace } : {}),
+						timing: run.timing,
 					}
 				: null,
-		[run, scrollOffset, frame, mapNote]
+		[run, frame, mapNote]
 	)
 
 	const inputField = useMemo(
-		() => <TextInput value={inputValue} onChange={setInputValue} onSubmit={submit} focus={focused === "input"} />,
-		[inputValue, focused, submit]
+		() => (
+			<QueryInput
+				value={field.value}
+				cursor={field.cursor}
+				onChange={setField}
+				onSubmit={submit}
+				focus={focused === "input"}
+			/>
+		),
+		[field, focused, submit]
 	)
 
 	if (phase === "fatal") return null
@@ -543,6 +567,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			busy={phase === "busy"}
 			color={!$public.NO_COLOR}
 			errorNote={errorNote}
+			scrollOffset={scrollOffset}
 			data={data}
 			inputField={inputField}
 		/>
