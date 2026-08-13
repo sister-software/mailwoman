@@ -32,6 +32,28 @@ describe("applyCjkNormalization", () => {
 		expect(r.folded).toBe(1)
 	})
 
+	it("folds half-width katakana and maps a dakuten contraction to its raw base", () => {
+		const r = applyCjkNormalization("813ﾛ号ﾃﾞ2")
+
+		expect(r.text).toBe("813ロ号デ2")
+		expect(r.map).toEqual([0, 1, 2, 3, 4, 5, 7])
+		expect(r.folded).toBe(3)
+	})
+
+	it("folds the half-width prolonged mark to full width without treating it as a hyphen", () => {
+		const r = applyCjkNormalization("ﾒｰﾙ")
+
+		expect(r.text).toBe("メール")
+	})
+
+	it("preserves non-BMP characters and their UTF-16 offset units around contractions", () => {
+		const raw = "𠮷ﾃﾞ野家"
+		const out = normalize(raw)
+
+		expect(out.normalized).toBe("𠮷デ野家")
+		expect(out.offsetMap).toEqual([0, 1, 2, 4, 5])
+	})
+
 	it("leaves kanji numerals alone (place names carry them — 三田, 四谷)", () => {
 		const r = applyCjkNormalization("三田") // Mita — must NOT become "3田"
 		expect(r.text).toBe("三田")
@@ -69,6 +91,12 @@ describe("normalize() integration", () => {
 	it("folds the JP minus-sign block separator (U+2212) to an ASCII hyphen (1−2−3 → 1-2-3)", () => {
 		const out = normalize("銀座1−2−3")
 		expect(out.normalized).toBe("銀座1-2-3")
+	})
+
+	it("folds the remaining unambiguous JP hyphen forms without touching the prolonged-sound mark", () => {
+		const out = normalize("銀座1‐2﹣3 メール")
+
+		expect(out.normalized).toBe("銀座1-2-3 メール")
 	})
 
 	it("does not add a normalize_cjk transform for Latin input", () => {

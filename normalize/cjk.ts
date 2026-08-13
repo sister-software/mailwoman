@@ -16,6 +16,9 @@
  *       1, a full-width `－` always a hyphen — keyboards and copy-paste produce these constantly.
  *       Folding them to ASCII makes `１０４−００６１` and `104-0061` the same input.
  *   - **Fold the ideographic space (U+3000 → ' ').**
+ *   - **Fold half-width katakana (U+FF61–U+FF9F).** This matches the JP corpus builder. A voiced
+ *       pair such as `ﾃﾞ` contracts from two UTF-16 units to one `デ`; the output offset maps to the
+ *       first raw unit in the pair.
  *
  *   It deliberately does NOT convert **kanji numerals** (一二三…): place names carry numeral kanji as
  *   ordinary characters (三田 _Mita_, 四谷 _Yotsuya_), so a blind 三→3 would corrupt them.
@@ -59,6 +62,13 @@ const IDEOGRAPHIC_SPACE = 0x30_00
  * 〒.
  */
 const POSTAL_MARK = 0x30_12
+const HALFWIDTH_KATAKANA_START = 0xff_61
+const HALFWIDTH_KATAKANA_END = 0xff_9f
+const HALFWIDTH_VOICING_START = 0xff_9e
+
+function isHalfwidthKatakana(code: number): boolean {
+	return code >= HALFWIDTH_KATAKANA_START && code <= HALFWIDTH_KATAKANA_END
+}
 
 export function applyCjkNormalization(input: string): CjkResult {
 	let folded = 0
@@ -89,6 +99,30 @@ export function applyCjkNormalization(input: string): CjkResult {
 			out.push(" ")
 			map.push(i)
 			folded += 1
+
+			continue
+		}
+
+		if (isHalfwidthKatakana(code)) {
+			const next = input.charCodeAt(i + 1)
+
+			const consumesVoicingMark =
+				code < HALFWIDTH_VOICING_START && next >= HALFWIDTH_VOICING_START && next <= HALFWIDTH_KATAKANA_END
+
+			const width = consumesVoicingMark ? 2 : 1
+
+			const normalized = input
+				.slice(i, i + width)
+				.normalize("NFKC")
+				.normalize("NFC")
+
+			for (const unit of normalized) {
+				out.push(unit)
+				map.push(i)
+			}
+
+			folded += width
+			i += width - 1
 
 			continue
 		}
