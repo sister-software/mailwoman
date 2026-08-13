@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 538
+const CORPUS_SIZE = 547
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -128,7 +128,7 @@ const CORPUS_SIZE = 538
  * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
  * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
  */
-const CORPUS_HASH = "28086c27364ccecabbf1eb38d0aff8be3eaff6a4b07979a634f2817253f0bd21"
+const CORPUS_HASH = "7d4383b7ce13775a2c073960c3a49b72cdc1360b117cec80ff3803307a5eda82"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -143,7 +143,7 @@ const CORPUS_HASH = "28086c27364ccecabbf1eb38d0aff8be3eaff6a4b07979a634f2817253f
  * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
  * (`@537:61edb19b8e64` → this).
  */
-const BOARD_ID = "gauntlet-regression@538:fff64efb0f29"
+const BOARD_ID = "gauntlet-regression@547:87c16d4dd5cd"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
