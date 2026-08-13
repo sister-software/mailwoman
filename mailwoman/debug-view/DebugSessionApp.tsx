@@ -123,6 +123,11 @@ const MAX_MERCATOR_LATITUDE = 85.05112878
  */
 const FALLBACK_MAX_ZOOM = 22
 
+/**
+ * The conventional exit code for a process that ended on SIGINT: 128 + 2.
+ */
+const SIGINT_EXIT_CODE = 130
+
 //#endregion
 
 //#region Viewport math
@@ -204,7 +209,11 @@ function closeResources(resources: Resources | null): void {
 
 	resources.session.close()
 
-	void resources.source?.close()
+	void resources.source?.close().catch(() => {
+		// Teardown is best-effort. This runs after the terminal has already been restored and while the process is
+		// on its way out, so a rejected close has nobody left to tell — and an unhandled rejection would take the
+		// exit code with it.
+	})
 }
 
 //#endregion
@@ -281,7 +290,19 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 		onAlternate = true
 
+		// Ctrl+C DURING THE LOADING PHASE reaches neither mechanism. `useInput` is inactive until ready/busy and
+		// `TextInput` is not mounted, so nothing has asked for raw mode yet — the keystroke is still the tty's to
+		// interpret, and it arrives as SIGINT rather than as a key event Ink could turn into an unmount. A
+		// SIGINT-terminated process does not run `exit` listeners either, so without this the weights load is a
+		// multi-second window in which Ctrl+C strands the user on the alternate screen. Once raw mode IS on, the
+		// tty stops generating the signal and Ink's own Ctrl+C path takes over.
+		const onInterrupt = (): void => {
+			restore()
+			process.exit(SIGINT_EXIT_CODE)
+		}
+
 		process.once("exit", restore)
+		process.once("SIGINT", onInterrupt)
 		setOnAlternateScreen(true)
 
 		void (async () => {
@@ -311,7 +332,12 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		return () => {
 			disposed = true
 
+			// Symmetric with the frame effect's cleanup: an in-flight geocode that settles after teardown finds a
+			// counter it can no longer match and drops its result instead of setting state on a closed session.
+			runRequestRef.current++
+
 			process.off("exit", restore)
+			process.off("SIGINT", onInterrupt)
 			restore()
 			closeResources(opened)
 		}
@@ -425,6 +451,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		if (!resources || phase === "busy" || !query) return
 
 		setPhase("busy")
+		// The previous attempt's failure is stale the moment a new one starts — leaving it up through the busy
+		// window reads as if THIS query had already failed.
+		setErrorNote(null)
 
 		const requestID = ++runRequestRef.current
 
@@ -437,7 +466,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 				// PREVIOUS answer would otherwise leave the marker off screen.
 				setViewport(null)
 				setScrollOffset(0)
-				setErrorNote(null)
 				setPhase("ready")
 			},
 			(error: unknown) => {
