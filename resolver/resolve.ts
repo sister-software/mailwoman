@@ -15,6 +15,7 @@
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
+import { loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
 	type AddressPointLookup,
 	type CoincidentLocality,
@@ -211,19 +212,7 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
  */
 function loneBareLocalityNode(tree: AddressTree, placetypeMap: PlacetypeMap): AddressNode | null {
 	if (placetypeMap["locality" as ComponentTag] !== "locality") return null
-	let lone: AddressNode | null = null
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (n.value.trim().length) {
-			if (lone !== null) return null
-			lone = n
-		}
-
-		stack.push(...n.children)
-	}
+	const lone = loneValueBearingNode(tree)
 
 	return lone?.tag === "locality" ? lone : null
 }

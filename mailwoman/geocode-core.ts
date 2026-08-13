@@ -27,7 +27,7 @@ import { existsSync } from "node:fs"
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
 	deriveInputMode,
 	type InputMode,
@@ -1178,24 +1178,9 @@ async function applyStreetMissFallback(
  * model mis-tags on unfamiliar capitals.
  */
 function loneBareStreetSpan(tree: AddressTree): string | null {
-	const valued: AddressNode[] = []
-	const stack: AddressNode[] = [...tree.roots]
+	const lone = loneValueBearingNode(tree)
 
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.value === "string" && n.value.trim().length) {
-			valued.push(n)
-		}
-
-		stack.push(...n.children)
-	}
-
-	if (valued.length !== 1) return null
-
-	const lone = valued[0]!
-
-	return lone.tag === "street" ? lone.value : null
+	return lone?.tag === "street" ? lone.value : null
 }
 
 /**

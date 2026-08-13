@@ -12,6 +12,7 @@
  *   Implementation contract per `docs/engineering/reference/STAGES.md`.
  */
 
+import { isBareTreeOf } from "../decoder/tree-shape.ts"
 import type { AddressNode, AddressTree } from "../decoder/types.ts"
 import type { ComponentTag } from "../types/component.ts"
 import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
@@ -127,20 +128,7 @@ export const HARD_PLACE_COUNTRY_SAFELIST: ReadonlySet<string> = new Set([
  * runs as before.
  */
 export function isBareLocalityTree(tree: AddressTree): boolean {
-	let sawLocality = false
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-
-		if (node.tag === "locality") {
-			sawLocality = true
-		} else if (node.value.trim() !== "") return false
-
-		stack.push(...node.children)
-	}
-
-	return sawLocality
+	return isBareTreeOf(tree, "locality")
 }
 
 /**
@@ -153,20 +141,7 @@ export function isBareLocalityTree(tree: AddressTree): boolean {
  * the inferred scope for this shape when the format implies countries that exclude it.
  */
 export function isBarePostcodeTree(tree: AddressTree): boolean {
-	let sawPostcode = false
-	const stack = [...tree.roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-
-		if (node.tag === "postcode") {
-			sawPostcode = true
-		} else if (node.value.trim() !== "") return false
-
-		stack.push(...node.children)
-	}
-
-	return sawPostcode
+	return isBareTreeOf(tree, "postcode")
 }
 
 /**
