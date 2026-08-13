@@ -33,6 +33,7 @@ import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { isBareLocalityTree, isBarePostcodeTree } from "@mailwoman/core/pipeline"
+import type { Resolver } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -92,8 +93,8 @@ export interface GeocodeRun {
 }
 
 /**
- * A warm geocoder over one set of options. Call {@link GeocodeSession.close} when done — the shard, OSM and gazetteer
- * handles are open for the session's whole life.
+ * A warm geocoder over one set of options. Call {@link GeocodeSession.close} when done — the gazetteer, shard, OSM and
+ * poi.db handles stay open for the session's whole life, and `close` releases every one of them.
  */
 export interface GeocodeSession {
 	geocode(input: string): Promise<GeocodeRun>
@@ -147,16 +148,23 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 		})
 }
 
+interface ForkEntityProbe {
+	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
+	/**
+	 * The poi.db handle behind {@link deps}' `poiLookup`, so the session can release it. Carried separately because
+	 * `POIExecutorLookup` is a read interface and declares no `close`.
+	 */
+	handle?: { close(): void }
+}
+
 /**
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
-async function loadForkEntityDeps(
-	options: Pick<GeocodeSessionOptions, "forkEntity">
-): Promise<Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">> {
+async function loadForkEntityDeps(options: Pick<GeocodeSessionOptions, "forkEntity">): Promise<ForkEntityProbe> {
 	const poiDBPath = String(dataRootPath("poi", "poi.db"))
 
-	if (options.forkEntity === false || !existsSync(poiDBPath)) return {}
+	if (options.forkEntity === false || !existsSync(poiDBPath)) return { deps: {} }
 
 	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
@@ -164,10 +172,14 @@ async function loadForkEntityDeps(
 	])
 
 	const morphology = loadStreetMorphologyFST()
+	const poiLookup = new POILookup({ databasePath: poiDBPath })
 
 	return {
-		poiLookup: new POILookup({ databasePath: poiDBPath }),
-		isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
+		deps: {
+			poiLookup,
+			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
+		},
+		handle: poiLookup,
 	}
 }
 
@@ -256,23 +268,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		osmProvider = undefined
 	}
 
-	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
-	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
-	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
-	// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute gates), so it's ON
-	// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
-	// an explicit placer instead of the default-on bundled one.
-	const placer = options.placeCountry
-		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
-		: undefined
-
-	const resolver = createWOFResolver(lookup)
+	let poiHandle: { close(): void } | undefined
 
 	const closeQuietly = (handle: { close(): void } | undefined): void => {
 		try {
 			handle?.close()
 		} catch {
-			// A handle that refuses to close must not strand the other four open.
+			// A handle that refuses to close must not strand the others open.
 		}
 	}
 
@@ -282,17 +284,36 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		closeQuietly(shardProvider)
 		closeQuietly(osmProvider)
 		closeQuietly(lookup)
+		closeQuietly(poiHandle)
 	}
 
-	// The remaining one-time work can still THROW, and by then the handles above are open — so it runs
-	// behind the same release the per-input path gets. Its POSITION is the contract: a bad --bias is still
-	// reported after the gazetteer, weights and resolver-package checks, never in front of them.
+	// Everything past this point can THROW while the handles above are already open, so it runs behind the
+	// release the per-input path gets. ORDER inside the guard is the contract, not an implementation detail:
+	// a coarse-placer or --bias failure still reports after the gazetteer, weights and resolver-package
+	// checks, never in front of them.
+	let placer: CoarsePlacer | undefined
+	let resolver: Resolver
 	let bias: NonNullable<GeocodeDeps["bias"]>
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
 	try {
+		// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
+		// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
+		// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
+		// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute gates), so it's ON
+		// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
+		// an explicit placer instead of the default-on bundled one.
+		placer = options.placeCountry
+			? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
+			: undefined
+
+		resolver = createWOFResolver(lookup)
 		bias = parseBiasPoints(options.bias)
-		forkEntityDeps = await loadForkEntityDeps(options)
+
+		const probe = await loadForkEntityDeps(options)
+
+		forkEntityDeps = probe.deps
+		poiHandle = probe.handle
 	} catch (error) {
 		close()
 
