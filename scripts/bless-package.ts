@@ -168,7 +168,11 @@ async function packAndPublish(dir: string): Promise<void> {
 	const pkg = await readPkg(dir)
 
 	if (flags.version) {
-		await $({ cwd: dir })`npm version ${flags.version} --allow-same-version --no-git-tag-version`
+		// npm's default follows the bump with an arborist install of the workspace ROOT,
+		// which cannot parse the yarn-only protocol `workspace:*`
+		// `--no-workspaces-update` prevents it.
+
+		await $({ cwd: dir })`npm version ${flags.version} --allow-same-version --no-git-tag-version --no-workspaces-update`
 	}
 
 	const exists = await existsOnRegistry(pkg.name)
