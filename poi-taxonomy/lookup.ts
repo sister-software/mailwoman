@@ -30,6 +30,14 @@ export function lookupPOICategory(text: string, locale?: string) {
 	return CORE.lookupPOICategory(text, locale)
 }
 
+export function lookupPOICategoryLocaleNormalized(text: string, locale?: string) {
+	return CORE.lookupPOICategoryLocaleNormalized(text, locale)
+}
+
+export function lookupPOICategoryTypo(text: string, locale?: string) {
+	return CORE.lookupPOICategoryTypo(text, locale)
+}
+
 /**
  * Fetch a category by id.
  */

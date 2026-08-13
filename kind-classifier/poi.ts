@@ -29,6 +29,8 @@ export interface POIPhraseMatch {
 	categoryID: string
 	matchedPhrase: string
 	confidence: number
+	mechanism?: "exact" | "locale_normalized" | "typo"
+	inputPhrase?: string
 	/**
 	 * Absent = "category" (the pre-brand shape) — optional so pre-7.3 POIPhraseLookup implementors stay
 	 * source-compatible.

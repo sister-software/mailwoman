@@ -16,8 +16,10 @@
 
 import { readFileSync } from "node:fs"
 
+import { $public } from "@mailwoman/core/env"
 import {
 	runPipeline,
+	type MachinePreferences,
 	type PipelineOpts,
 	type PipelineResult,
 	type POIIntent,
@@ -84,6 +86,12 @@ function buildSyncReverseGeocode(
 }
 
 export interface CreateRuntimePipelineOpts {
+	/**
+	 * Preferences used only when neither the caller nor input structure identifies a locale. `undefined` reads the
+	 * current Intl defaults; `false` disables host inference for servers/containers. `MW_LOCALE` remains the stronger
+	 * process-level override in either mode.
+	 */
+	machinePreferences?: MachinePreferences | false
 	/**
 	 * The Stage 3 classifier — typically a `NeuralAddressClassifier`.
 	 */
@@ -285,6 +293,22 @@ function autoLoadStreetMorphology(classifier: CreateRuntimePipelineOpts["classif
 	}
 }
 
+/**
+ * Read the JavaScript host's language and timezone as independent, diagnostic preference signals.
+ */
+export function getMachinePreferences(): MachinePreferences {
+	try {
+		const { locale, timeZone } = Intl.DateTimeFormat().resolvedOptions()
+
+		return {
+			...(locale ? { locale } : {}),
+			...(timeZone ? { timeZone } : {}),
+		}
+	} catch {
+		return {}
+	}
+}
+
 export function createRuntimePipeline(
 	opts: CreateRuntimePipelineOpts = {}
 ): (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult> {
@@ -293,6 +317,10 @@ export function createRuntimePipeline(
 	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
 	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
 	const poiQueryKindEffective = opts.poiQueryKind ?? true
+
+	const machinePreferences =
+		opts.machinePreferences === false ? undefined : (opts.machinePreferences ?? getMachinePreferences())
+
 	let poiNameLookup: POIPhraseLookup | undefined
 
 	const poiSubjectLookup: POIPhraseLookup = (phrase, locale) => {
@@ -332,7 +360,14 @@ export function createRuntimePipeline(
 		// Default locale gate: rule-based from @mailwoman/locale-gate. Derives locale from
 		// QueryShape character class (CJK→ja-JP, Cyrillic→ru-RU, Arabic→ar) + known-format
 		// hits (us_zip→en-US, fr_postcode→fr-FR, uk_postcode→en-GB). Caller-hint wins when set.
-		detectLocale: opts.detectLocale ?? defaultDetectLocale,
+		detectLocale:
+			opts.detectLocale ??
+			((input, shape, detectOpts) =>
+				defaultDetectLocale(input, shape, {
+					...detectOpts,
+					...($public.MW_LOCALE ? { environmentLocale: $public.MW_LOCALE } : {}),
+					...(machinePreferences ? { machinePreferences } : {}),
+				})),
 	}
 
 	// Build-local abstain (`requires_build_local_layer`) needs no db, so the executor is wired in BOTH
@@ -499,6 +534,7 @@ export type {
 	ClassifierOpts,
 	FSTMatcherLike,
 	LocaleHint,
+	MachinePreferences,
 	NormalizedInputLite,
 	PhraseGrouper,
 	PhraseKind,

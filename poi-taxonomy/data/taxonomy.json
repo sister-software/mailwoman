@@ -15365,6 +15365,11 @@
 			"categoryID": "trail"
 		},
 		{
+			"phrase": "hôpital",
+			"categoryID": "hospital",
+			"locales": ["fr"]
+		},
+		{
 			"phrase": "house of worship",
 			"categoryID": "place_of_worship"
 		},

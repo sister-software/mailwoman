@@ -78,6 +78,33 @@ describe("poiTaxonomyLookup adapter", () => {
 		expect(poiTaxonomyLookup("mcdo", "en-US")).toEqual([])
 	})
 
+	it("recovers spelling only under the presumed language", () => {
+		expect(poiTaxonomyLookup("hopital", "fr-FR")[0]).toMatchObject({
+			kind: "category",
+			categoryID: "hospital",
+			matchedPhrase: "hôpital",
+			mechanism: "locale_normalized",
+		})
+
+		expect(poiTaxonomyLookup("hopital", "en-US")[0]).toMatchObject({
+			kind: "category",
+			categoryID: "hospital",
+			mechanism: "typo",
+		})
+
+		expect(poiTaxonomyLookup("resturant", "en-US")[0]).toMatchObject({
+			kind: "category",
+			categoryID: "restaurant",
+			mechanism: "typo",
+		})
+
+		expect(poiTaxonomyLookup("resturant", undefined)).toEqual([])
+	})
+
+	it("does not presume that Boots means pharmacy in the US", () => {
+		expect(poiTaxonomyLookup("boots", "en-US")).toEqual([])
+	})
+
 	it("prefers a category match over a brand match when both could apply (precedence, structural)", () => {
 		// No real phrase collides in the shipped tables (verified separately) — this exercises the early-return
 		// precedence structurally: a category hit short-circuits before the brand table is even consulted.

@@ -18,4 +18,12 @@
 export { detectLocale, detectLocaleSync } from "./detect.ts"
 export { scoreByPostcode, scoreByScript, scoreFallback } from "./rules.ts"
 export type { LocaleCandidate } from "./rules.ts"
-export type { DetectLocaleOpts, LocaleHint, LocaleTag, NormalizedInputLite, QueryShapeLike } from "./types.ts"
+
+export type {
+	DetectLocaleOpts,
+	LocaleHint,
+	LocaleTag,
+	MachinePreferences,
+	NormalizedInputLite,
+	QueryShapeLike,
+} from "./types.ts"

@@ -39,6 +39,7 @@ export type {
 	InputMode,
 	LocaleHint,
 	LocaleTag,
+	MachinePreferences,
 	NormalizedInputLite,
 	PhraseGrouper,
 	PhraseKind,

@@ -61,7 +61,33 @@ export function detectLocaleSync(
 		}
 	}
 
+	if (opts.environmentLocale) {
+		return {
+			locale: opts.environmentLocale,
+			confidence: 0.95,
+			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
+			source: "environment",
+			evidence: { environmentLocale: opts.environmentLocale },
+		}
+	}
+
 	const top = deduped[0]!
+	const machineLocale = opts.machinePreferences?.locale
+
+	// The 0.3 candidate is the explicit no-input-evidence fallback. Machine locale may replace only that candidate;
+	// scripts and postal formats continue to win. Timezone is reported independently and never converted to language.
+	if (top.reason === "fallback" && machineLocale) {
+		return {
+			locale: machineLocale,
+			confidence: 0.55,
+			alternatives: deduped.map((c) => ({ locale: c.locale, confidence: c.confidence })),
+			source: "machine",
+			evidence: {
+				intlLocale: machineLocale,
+				...(opts.machinePreferences?.timeZone ? { timeZone: opts.machinePreferences.timeZone } : {}),
+			},
+		}
+	}
 
 	return {
 		locale: top.locale,

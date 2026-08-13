@@ -19,13 +19,19 @@ this list across major refactors).
 | `all/given_names.txt`, `all/surnames.txt`, `<lang>/personal_titles.txt` | `evidence-lexicons.ts`                                                                                  | The **person-name tier**: 1-token person-name surfaces blocked as locality evidence.                                                                                                                                                                            |
 | `<lang>/stopwords.txt`                                                  | `mailwoman/gazetteer-pipeline/fst.ts`                                                                   | FST gazetteer curation.                                                                                                                                                                                                                                         |
 
-Everything else — 34 of the 40 distinct filenames (`chains.txt`, `near.txt`, `cross_streets.txt`,
+Everything else — 33 of the 39 remaining distinct filenames (`near.txt`, `cross_streets.txt`,
 `unit_types_*`, `level_types_*`, `qualifiers.txt`, …) — has **no code consumer** since the rules
 excision, and `core/resources/libpostal.ts`'s generic loader (`prepareLocaleIndex`,
 `generatePlurals`) has no production caller either (only its own test). Total vestigial mass:
 ~0.13 MB of the ~0.7 MB dictionary tree.
 
-**Deliberately kept anyway.** Deleting buys ~130 KB and costs provenance: the files stay
+**Deliberately kept anyway, with one exception.** `all/chains.txt` was removed in 2026-08 after an
+explicit migration audit: only 66 of its 504 legacy rows had any exact phrase represented in the
+modern, poi.db-derived brand table, while 438 lacked current source evidence. Importing those rows
+would have promoted a stale global chain list into runtime truth and erased market scope — notably
+the distinction between a UK pharmacy brand and an ordinary US retail/name query. Brand candidates
+are derived from `poi.db`; category spelling recovery comes from the locale-gated taxonomy. The
+remaining vestigial files stay
 byte-comparable with the upstream lineage, and several vestigial classes are plausible inputs to
 named future work (the `unit_types_*`/`level_types_*`/`staircases.txt` families are libpostal's
 unit-parsing vocabulary — relevant when JP floor/unit conventions land with the CJK arc). The

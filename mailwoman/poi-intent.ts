@@ -18,7 +18,13 @@ import type {
 	POIIntentOutcome,
 } from "@mailwoman/core/pipeline"
 import { matchPOISubject, type POIPhraseLookup, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { lookupPOIBrand, lookupPOICategory, resolveBrandName } from "@mailwoman/poi-taxonomy"
+import {
+	lookupPOIBrand,
+	lookupPOICategory,
+	lookupPOICategoryLocaleNormalized,
+	lookupPOICategoryTypo,
+	resolveBrandName,
+} from "@mailwoman/poi-taxonomy"
 import type { AliasLookupResult, BrandAlias } from "@mailwoman/variant-aliases"
 import { lookupVariantAliases } from "@mailwoman/variant-aliases"
 
@@ -89,6 +95,32 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 			categoryID: m.category.id,
 			matchedPhrase: m.matchedPhrase,
 			confidence: m.confidence,
+		}))
+	}
+
+	const localeNormalizedHits = lookupPOICategoryLocaleNormalized(phrase, locale)
+
+	if (localeNormalizedHits.length) {
+		return localeNormalizedHits.map((m) => ({
+			kind: "category",
+			categoryID: m.category.id,
+			matchedPhrase: m.matchedPhrase,
+			confidence: m.confidence,
+			mechanism: "locale_normalized",
+			inputPhrase: phrase,
+		}))
+	}
+
+	const typoHits = lookupPOICategoryTypo(phrase, locale)
+
+	if (typoHits.length) {
+		return typoHits.map((m) => ({
+			kind: "category",
+			categoryID: m.category.id,
+			matchedPhrase: m.matchedPhrase,
+			confidence: m.confidence,
+			mechanism: "typo",
+			inputPhrase: phrase,
 		}))
 	}
 

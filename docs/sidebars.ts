@@ -163,6 +163,11 @@ const sidebars: SidebarsConfig = {
 			items: [
 				{
 					type: "category",
+					label: "Localization",
+					items: ["developers/knowledge-base/localization/cross-locale-queries"],
+				},
+				{
+					type: "category",
 					label: "Postal systems",
 					// Reading order. The first four build one idea: an address is an instruction to a
 					// postal service (what an address is), the routing code inside it is a path through a

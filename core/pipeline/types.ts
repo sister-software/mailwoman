@@ -20,6 +20,14 @@ import type { Section } from "../types/classifier.ts"
 export type LocaleTag = string
 
 /**
+ * Independent host/browser preferences. A timezone is evidence, never a locale conversion.
+ */
+export interface MachinePreferences {
+	locale?: LocaleTag
+	timeZone?: string
+}
+
+/**
  * Optional user-location signal for Stage 6 resolver scoring.
  */
 export type UserLocation = { lat: number; lon: number } | { country: string } | { region: string; country: string }
@@ -136,7 +144,15 @@ export interface LocaleHint {
 	locale: LocaleTag
 	confidence: number
 	alternatives: ReadonlyArray<{ locale: LocaleTag; confidence: number }>
-	source: "caller" | "detected" | "ensemble"
+	source: "caller" | "environment" | "machine" | "detected" | "ensemble"
+	/**
+	 * Diagnostic provenance for inferred preferences. Locale and timezone remain independent signals.
+	 */
+	evidence?: {
+		intlLocale?: string
+		timeZone?: string
+		environmentLocale?: string
+	}
 }
 
 /**
@@ -491,7 +507,11 @@ export interface AddressClassifier {
 export interface RuntimePipelineStages {
 	normalize?: (raw: string, opts?: { locale?: string }) => NormalizedInputLite
 	computeQueryShape?: (input: NormalizedInputLite | string, opts?: { locale?: string }) => QueryShapeLite
-	detectLocale?: (input: NormalizedInputLite, shape: QueryShapeLite, opts?: { hint?: LocaleTag }) => Promise<LocaleHint>
+	detectLocale?: (
+		input: NormalizedInputLite,
+		shape: QueryShapeLite,
+		opts?: { hint?: LocaleTag; machinePreferences?: MachinePreferences; environmentLocale?: LocaleTag }
+	) => Promise<LocaleHint>
 	classifyKind?: (input: NormalizedInputLite, shape: QueryShapeLite, locale: LocaleHint) => Promise<QueryKindResult>
 	/**
 	 * Coarse country router (#244). A `(normalizedText) → { country, confidence, posterior? }` predictor (a
