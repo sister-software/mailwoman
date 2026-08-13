@@ -54,6 +54,7 @@ import { type CommandComponent, commandError, useCommandTask, writeRawStdout } f
 import { argument } from "pastel"
 import zod from "zod"
 
+import { GeocodeDebugCommand } from "../debug-view/command.tsx"
 import type { GeocodeResult } from "../geocode-core.ts"
 import { createGeocodeSession } from "../geocode-session.ts"
 import { mailwomanDataRoot } from "../resolver-backend.ts"
@@ -229,7 +230,35 @@ const OptionsSchema = zod.object({
 	json: zod.boolean().optional().default(false).describe("Shorthand for --format json (the default)."),
 	text: zod.boolean().optional().default(false).describe("Shorthand for --format text — the human-readable summary."),
 	jsonld: zod.boolean().optional().default(false).describe("Shorthand for --format jsonld — schema.org JSON-LD."),
+	debug: zod
+		.boolean()
+		.optional()
+		.default(false)
+		.describe(
+			"Interactive three-panel debug view (input / parse+resolution / map) on a TTY; " +
+				"a single rendered frame on a pipe. Not combinable with --json/--text/--jsonld."
+		),
+	debugSize: zod
+		.string()
+		.regex(/^\d+x\d+$/u, "Expected COLSxROWS, e.g. 120x36")
+		.optional()
+		.default("120x36")
+		.describe("Frame size for the non-TTY --debug render. Ignored on a TTY (the terminal sizes the view)."),
+	tiles: zod
+		.string()
+		.optional()
+		.describe(
+			"PMTiles archive for the --debug map pane. Defaults to $MAILWOMAN_TILES, then " +
+				"<dataRoot>/tiles/planet.pmtiles when present. Absent tiles degrade the pane to a note."
+		),
 })
+
+/**
+ * The command's fully-parsed options — every zod default applied. Exported so `debug-view/command.tsx` can name the
+ * type its `GeocodeDebugCommand` / `runStaticDebug` accept without importing the schema itself (the debug module is the
+ * consumer here; `geocode-session.ts`'s structural {@link GeocodeSessionOptions} is a separate, narrower contract).
+ */
+export type GeocodeCommandOptions = zod.infer<typeof OptionsSchema>
 
 //#endregion
 
@@ -361,7 +390,7 @@ function formatText(result: GeocodeResult): string {
 
 //#region React command component
 
-const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
+const GeocodeOneShot: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
@@ -389,6 +418,18 @@ const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 	// makes Ink clear the terminal + scrollback.
 	return writeRawStdout(state.result)
 }
+
+/**
+ * Top-level dispatch between the one-shot output path and `--debug`'s three-panel view. Deliberately hook-free:
+ * `GeocodeOneShot` and `GeocodeDebugCommand` each own their own hook lifecycle, so switching on `options.debug` HERE —
+ * above both — can never make either branch's hook calls conditional.
+ */
+const GeocodeCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) =>
+	options.debug ? (
+		<GeocodeDebugCommand input={(args[0] ?? "").trim()} options={options} />
+	) : (
+		<GeocodeOneShot args={args} options={options} />
+	)
 
 export default GeocodeCommand
 
