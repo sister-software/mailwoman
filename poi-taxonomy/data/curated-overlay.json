@@ -241,6 +241,11 @@
 			"categoryID": "hospital"
 		},
 		{
+			"phrase": "hôpital",
+			"categoryID": "hospital",
+			"locales": ["fr"]
+		},
+		{
 			"phrase": "er",
 			"categoryID": "hospital",
 			"locales": ["en-US"]

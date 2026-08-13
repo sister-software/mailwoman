@@ -36,6 +36,7 @@ const TWO_CATEGORY_TABLE: POITaxonomyTable = {
 	synonyms: [
 		// Locale-gated synonym case, same semantics as the node entry's `chemist` fixture.
 		{ phrase: "hospice", categoryID: hospital.id, locales: ["en-GB"] },
+		{ phrase: "hôpital", categoryID: hospital.id, locales: ["fr"] },
 		// Infra-flag case: an ungated synonym pointing at the mailwoman-infra category.
 		{ phrase: "fiber hut", categoryID: telecomCabinet.id },
 	],
@@ -56,6 +57,16 @@ describe("createPOITaxonomyLookup", () => {
 		expect(lookup.lookupPOICategory("hospice", "en-IE")[0]?.confidence).toBe(0.5)
 		expect(lookup.lookupPOICategory("hospice", "fr-FR")).toEqual([])
 		expect(lookup.lookupPOICategory("hospice")).toEqual([])
+	})
+
+	it("normalizes diacritics and typos only within the presumed language", () => {
+		const lookup = createPOITaxonomyLookup(TWO_CATEGORY_TABLE)
+
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital", "fr-FR")[0]?.category.id).toBe("hospital")
+		expect(lookup.lookupPOICategoryLocaleNormalized("hopital", "en-US")).toEqual([])
+		expect(lookup.lookupPOICategoryTypo("hospitl", "en-US")[0]?.category.id).toBe("hospital")
+		expect(lookup.lookupPOICategoryTypo("hospitl", "fr-FR")).toEqual([])
+		expect(lookup.lookupPOICategoryTypo("hospitl")).toEqual([])
 	})
 
 	it("maps infrastructure phrases and flags the build-local requirement", () => {

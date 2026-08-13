@@ -24,6 +24,8 @@ export interface CategoryMatch {
 
 export interface POITaxonomyLookup {
 	lookupPOICategory(text: string, locale?: string): CategoryMatch[]
+	lookupPOICategoryLocaleNormalized(text: string, locale?: string): CategoryMatch[]
+	lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[]
 	getPOICategory(id: string): CategoryRecord | undefined
 	getAllCategories(): ReadonlyArray<CategoryRecord>
 	requiresBuildLocalLayer(category: CategoryRecord): boolean
@@ -35,6 +37,11 @@ interface PhraseEntry {
 	phrase: string
 	locales?: string[]
 }
+
+/**
+ * Below five characters, one edit changes too much of the signal to infer a category safely.
+ */
+const MIN_TYPO_LENGTH = 5
 
 /**
  * Builds the matching core over an in-memory {@link POITaxonomyTable}. Throws at construction when a synonym's
@@ -122,6 +129,88 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
+	 * Diacritic-insensitive matching is deliberately limited to locale-gated synonyms. This lets `hopital` recover the
+	 * French `hôpital` without turning every English taxonomy label into a globally fuzzy alias.
+	 */
+	function lookupPOICategoryLocaleNormalized(text: string, locale?: string): CategoryMatch[] {
+		if (!locale) return []
+
+		const norm = foldDiacritics(text.trim().toLowerCase())
+
+		if (!norm || byPhrase.has(text.trim().toLowerCase())) return []
+
+		const language = locale.split(/[-_]/)[0]!
+		const best = new Map<string, CategoryMatch>()
+
+		for (const [phrase, entries] of byPhrase) {
+			if (foldDiacritics(phrase) !== norm) continue
+
+			for (const entry of entries) {
+				if (!entry.locales) continue
+				const exact = entry.locales.includes(locale)
+				const languageMatch = entry.locales.some((candidate) => candidate.split(/[-_]/)[0] === language)
+
+				if (!exact && !languageMatch) continue
+
+				const confidence = exact ? 0.94 : 0.78
+				const existing = best.get(entry.category.id)
+
+				if (!existing || existing.confidence < confidence) {
+					best.set(entry.category.id, { category: entry.category, matchedPhrase: entry.phrase, confidence })
+				}
+			}
+		}
+
+		return [...best.values()].toSorted((a, b) => b.confidence - a.confidence)
+	}
+
+	/**
+	 * One-edit recovery over the same locale-gated phrase index. Returns a result only when the best edit distance maps
+	 * to exactly one category; ambiguity is an abstention. Short inputs are excluded because one edit is too permissive.
+	 */
+	function lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[] {
+		const norm = text.trim().toLowerCase()
+
+		// With no presumed language, a correction is guesswork. Abstention is useful evidence to the caller.
+		if (!locale || norm.length < MIN_TYPO_LENGTH || byPhrase.has(norm)) return []
+
+		const language = locale.split(/[-_]/)[0]!
+		let bestDistance = 2
+		const best = new Map<string, CategoryMatch>()
+
+		for (const [phrase, entries] of byPhrase) {
+			if (Math.abs(phrase.length - norm.length) > 1) continue
+
+			const distance = oneEditDistance(norm, phrase)
+
+			if (distance > bestDistance) continue
+
+			for (const entry of entries) {
+				// Category ids and labels come from Overture's English taxonomy. Localized synonyms declare their languages.
+				if (!entry.locales && language !== "en") continue
+
+				const allowed =
+					!entry.locales || entry.locales.includes(locale) || entry.locales.some((l) => l.split(/[-_]/)[0] === language)
+
+				if (!allowed) continue
+
+				if (distance < bestDistance) {
+					bestDistance = distance
+					best.clear()
+				}
+
+				best.set(entry.category.id, {
+					category: entry.category,
+					matchedPhrase: entry.phrase,
+					confidence: 0.82,
+				})
+			}
+		}
+
+		return bestDistance === 1 && best.size === 1 ? [...best.values()] : []
+	}
+
+	/**
 	 * Fetch a category by id.
 	 */
 	function getPOICategory(id: string): CategoryRecord | undefined {
@@ -158,5 +247,66 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 			: [category.id]
 	}
 
-	return { lookupPOICategory, getPOICategory, getAllCategories, requiresBuildLocalLayer, resolveOvertureCategories }
+	return {
+		lookupPOICategory,
+		lookupPOICategoryLocaleNormalized,
+		lookupPOICategoryTypo,
+		getPOICategory,
+		getAllCategories,
+		requiresBuildLocalLayer,
+		resolveOvertureCategories,
+	}
+}
+
+function foldDiacritics(text: string): string {
+	return text.normalize("NFD").replaceAll(/\p{M}/gu, "")
+}
+
+function oneEditDistance(a: string, b: string): number {
+	if (a === b) return 0
+
+	if (Math.abs(a.length - b.length) > 1) return 2
+
+	if (a.length === b.length) {
+		const mismatches: number[] = []
+
+		for (let i = 0; i < a.length; i++) {
+			if (a[i] !== b[i]) {
+				mismatches.push(i)
+			}
+
+			if (mismatches.length > 2) return 2
+		}
+
+		if (mismatches.length === 1) return 1
+
+		if (mismatches.length === 2) {
+			const [i, j] = mismatches
+
+			return j === i! + 1 && a[i!] === b[j!] && a[j!] === b[i!] ? 1 : 2
+		}
+
+		return 2
+	}
+
+	const [shorter, longer] = a.length < b.length ? [a, b] : [b, a]
+	let i = 0
+	let j = 0
+	let edits = 0
+
+	while (i < shorter.length && j < longer.length) {
+		if (shorter[i] === longer[j]) {
+			i++
+
+			j++
+		} else {
+			edits++
+
+			j++
+
+			if (edits > 1) return 2
+		}
+	}
+
+	return 1
 }
