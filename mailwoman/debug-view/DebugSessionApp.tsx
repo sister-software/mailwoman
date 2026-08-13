@@ -575,7 +575,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			rows={size.rows}
 			focused={focused}
 			busy={phase === "busy"}
-			color={$public.NO_COLOR == null}
+			color={!$public.NO_COLOR}
 			errorNote={errorNote}
 			data={data}
 			inputField={

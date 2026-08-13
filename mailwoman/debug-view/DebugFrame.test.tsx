@@ -85,7 +85,7 @@ describe("DebugFrame", () => {
 		// #493 round trip: concatenating every segment's value reproduces the raw input exactly — the
 		// ", " between the street and the locality must survive as an `unknown` segment, not vanish.
 		expect(segments.map((segment) => segment.value).join("")).toBe(TREE.raw)
-		expect(segments.some((segment) => segment.tag === undefined && segment.value.includes(","))).toBe(true)
+		expect(segments.some((segment) => segment.tag == null && segment.value.includes(","))).toBe(true)
 	})
 
 	it("sizes a map frame from mapPaneCellSize so MapPane renders it without dropping any chrome", async () => {

@@ -73,7 +73,7 @@ Mailwoman is a postal-address parser shipped as the unscoped entry package `mail
 
 Source files live at each workspace's root, with exactly two exceptions: **`corpus/` and `docs/` nest under `src/`** (which is why the root vitest config maps `@mailwoman/corpus/*` to `corpus/src/*`).
 
-Beyond the 53 workspaces the repo root holds workspace config, `scripts/`, and six directories that are **not** workspaces — do not go looking for them in the table:
+Beyond the 55 workspaces the repo root holds workspace config, `scripts/`, and six directories that are **not** workspaces — do not go looking for them in the table:
 
 - `apps/web-demo/` — a standalone Python + single-page-HTML parser demo (`server.py`, no `package.json`), served behind the playpen nginx
 - `corpus-python/` — the Python training code, including the Modal launcher

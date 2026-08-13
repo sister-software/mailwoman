@@ -28,7 +28,7 @@
 import { $public } from "@mailwoman/core/env"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
 import { Text } from "ink"
-import { useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import type React from "react"
 
 import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
@@ -51,6 +51,12 @@ import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } fro
  * caller outside this directory should import it.
  */
 export async function runStaticDebug(input: string, options: GeocodeCommandOptions): Promise<string> {
+	if (!input.trim().length) {
+		throw commandError(
+			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
+		)
+	}
+
 	assertDebugFormatSanity(options)
 
 	const [columns, rows] = options.debugSize.split("x").map(Number) as [number, number]
@@ -101,7 +107,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 				columns={columns}
 				rows={rows}
 				focused={null}
-				color={$public.NO_COLOR == null}
+				color={!$public.NO_COLOR}
 				data={{ input, tree, result, frame, mapNote }}
 			/>,
 			columns

@@ -9,8 +9,9 @@
  *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDb` predicate exactly (same env var,
  *   same convention path) so the two suites skip and run together rather than disagreeing about the environment.
  *
- *   The `--debug-size` floor test below runs UNCONDITIONALLY (no guard): `assertDebugSizeFloor` fires before
- *   `runStaticDebug` ever calls `createGeocodeSession`, so the rejection needs neither weights nor a database.
+ *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run UNCONDITIONALLY (no guard):
+ *   each rejection fires before `runStaticDebug` ever calls `createGeocodeSession`, so none of the three needs
+ *   weights or a database.
  */
 
 import { existsSync } from "node:fs"
@@ -90,6 +91,39 @@ describe("runStaticDebug --debug-size floor", () => {
 		// catches it before any DB/weights work, so this rejects even without a resolvable session.
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			/--debug-size below the 60x14 minimum: 100x5/
+		)
+	})
+})
+
+// MARK: empty input
+
+describe("runStaticDebug empty input", () => {
+	test("an empty input rejects with the one-shot path's missing-argument message, not a junk frame", async () => {
+		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor and before
+		// createGeocodeSession, so this rejects even without a resolvable session — same unconditional posture as
+		// the --debug-size floor test above.
+		await expect(runStaticDebug("", geocodeOptionsSchema.parse({}))).rejects.toThrow(
+			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
+		)
+	})
+})
+
+// MARK: --debug format guard
+
+describe("runStaticDebug --debug format guard", () => {
+	test("a --format shorthand alongside --debug rejects, not a silent pick", async () => {
+		const options = geocodeOptionsSchema.parse({ text: true })
+
+		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
+			"--debug is its own output surface; drop --text."
+		)
+	})
+
+	test("an explicit non-default --format alongside --debug rejects the same way", async () => {
+		const options = geocodeOptionsSchema.parse({ format: "text" })
+
+		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
+			"--debug is its own output surface; drop --format text."
 		)
 	})
 })

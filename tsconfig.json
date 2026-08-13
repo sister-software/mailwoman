@@ -79,6 +79,7 @@
 		{ "path": "./libpostal/tsconfig.test.json" },
 		{ "path": "./locale-gate/tsconfig.test.json" },
 		{ "path": "./mailwoman/tsconfig.test.json" },
+		{ "path": "./map-tui/tsconfig.test.json" },
 		{ "path": "./match/tsconfig.test.json" },
 		{ "path": "./mcp/tsconfig.test.json" },
 		{ "path": "./neural/tsconfig.test.json" },

@@ -43,16 +43,23 @@ export function initialZoomForTier(result: GeocodeResult): number {
 //#region CLI-usage guards
 
 /**
- * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format` shorthand has no
- * defensible reading. Thrown with {@link commandError} so it reports through the standard error state (exit code 1) on
- * the static path; the interactive session runs the same guard as the FIRST statement of its mount effect, before it
- * takes the alternate screen, matching `resolveFormat`'s two-shorthands-at-once check in `geocode.tsx`.
+ * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format` shorthand, or with an
+ * explicit non-default `--format` value, has no defensible reading. Thrown with {@link commandError} so it reports
+ * through the standard error state (exit code 1) on the static path; the interactive session runs the same guard as the
+ * FIRST statement of its mount effect, before it takes the alternate screen, matching `resolveFormat`'s
+ * two-shorthands-at-once check in `geocode.tsx`.
  */
 export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
 
 	if (shorthands.length) {
 		throw commandError(`--debug is its own output surface; drop ${shorthands.map((name) => `--${name}`).join(" ")}.`)
+	}
+
+	// `--format json` stays indistinguishable from the default (unset) here — same documented blind spot as
+	// `resolveFormat` in `geocode.tsx`. Only an explicit non-default value is a usage error.
+	if (options.format && options.format !== "json") {
+		throw commandError(`--debug is its own output surface; drop --format ${options.format}.`)
 	}
 }
 

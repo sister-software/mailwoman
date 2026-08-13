@@ -1400,6 +1400,8 @@ Input row: `<TextInput value={inputValue} onChange focus={focused === "input"} o
 
 1. **No `@mailwoman/spatial` dependency in map-tui.** The uncertainty ring needs only `metersPerPixel` (ground resolution), not haversine; cartographer/spatial both drag heavy transitive deps (maplibre-gl + tiger; core's shipped data). map-tui carries a local 40-line `mercator.ts` with the priced-and-declined note — the `nuts-lookup` precedent. Net: zero `@mailwoman/*` runtime deps, which also serves the phase-2 standalone `npx` story.
 2. **No `ink-testing-library`.** `renderInkToString` (Task 11) is both the static-path mechanism and the component-test harness — one less dev dep, and the test exercises the production capture path.
+3. **No graticule in the tile-less map pane.** Spec §3's degrade shape ("marker on a graticule") shipped as the note alone; the graticule is deferred to phase 2 with the standalone browser.
+4. **Fixed 12-px pan step.** The interactive pan step is a constant 12 device pixels per keypress (6 cells horizontal, 3 vertical), not the terminal-proportional step the plan sketched — same physical nudge at every terminal size.
 
 ## Explicitly out of scope (phase 2+)
 
