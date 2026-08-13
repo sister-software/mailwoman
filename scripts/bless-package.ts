@@ -168,7 +168,7 @@ async function packAndPublish(dir: string): Promise<void> {
 	const pkg = await readPkg(dir)
 
 	if (flags.version) {
-		await $({ cwd: dir })`npm version ${flags.version} --no-git-tag-version`
+		await $({ cwd: dir })`npm version ${flags.version} --allow-same-version --no-git-tag-version`
 	}
 
 	const exists = await existsOnRegistry(pkg.name)
