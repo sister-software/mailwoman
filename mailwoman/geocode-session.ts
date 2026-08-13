@@ -32,10 +32,17 @@ import { existsSync } from "node:fs"
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { isBareLocalityTree, isBarePostcodeTree } from "@mailwoman/core/pipeline"
+import {
+	isBareLocalityTree,
+	isBarePostcodeTree,
+	type InputMode,
+	type PipelineTiming,
+	type QueryKindResult,
+} from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { commandError } from "mailwoman/cli-kit"
 
@@ -43,9 +50,11 @@ import { resolverDefaultCountry } from "./commands/parse.tsx"
 import {
 	countriesFromPostcodeFormat,
 	geocodeAddress,
+	geocodeParseInputs,
 	parseForGeocode,
 	ShardProvider,
 	type GeocodeDeps,
+	type GeocodeParseInputs,
 	type GeocodeResult,
 	type ShardResolver,
 	type StateShards,
@@ -81,6 +90,46 @@ export interface GeocodeSessionOptions {
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	placeCountryThreshold: number
+	/**
+	 * Record a {@link GeocodeTrace} per input. OFF by default and NOT a command flag: the `--debug` surfaces opt in
+	 * (`createGeocodeSession({ ...options, trace: true })`), and every other caller keeps the one-shot cost. Tracing
+	 * spends one EXTRA decode per input (`traceParse` alongside the resolve's own parse, ~3 ms warm) — the two run the
+	 * same opts through the same `#decode`, so the trace describes the decode that produced the tree, and the tree the
+	 * resolver walks is still `parseForGeocode`'s.
+	 */
+	trace?: boolean
+}
+
+/**
+ * What the model and the cheap structural stages had to say about one input — the `--debug` view's evidence rows.
+ *
+ * Assembled ONLY when the session was opened with {@link GeocodeSessionOptions.trace}. Every field is a value some stage
+ * actually produced; there is no field here a surface has to invent a number for. What it deliberately does NOT carry
+ * is a `PipelineResult`: `geocodeAddress`'s cascade is not `runPipeline` (see `geocode-core.ts`'s header — the
+ * pipeline's reconcile stage drops the street node the coordinate tiers need), so the stages that never run on this
+ * path — the locale gate, the phrase grouper, the POI branch — have nothing to report and are absent rather than
+ * defaulted.
+ */
+export interface GeocodeTrace {
+	/**
+	 * The decode-path record for the parse this run resolved: pieces, soft-feature channels as fed, the locale head,
+	 * prior participation, the viterbi path, repair diffs, final tokens.
+	 */
+	parse: NeuralParseTrace
+	/**
+	 * The Stage-2 structural priors the classifier conditioned on (known formats, segments, character class).
+	 */
+	queryShape: QueryShape
+	/**
+	 * The Stage-2.5 kind verdict {@link inputMode} was derived from — absent when a caller pinned the register (see
+	 * {@link GeocodeParseInputs.kind}).
+	 */
+	kind?: QueryKindResult
+	inputMode: InputMode
+	/**
+	 * The session's `--locale`, for the surface that shows the head's verdict next to the operator's assertion.
+	 */
+	locale: string
 }
 
 /**
@@ -90,6 +139,18 @@ export interface GeocodeSessionOptions {
 export interface GeocodeRun {
 	result: GeocodeResult
 	tree: AddressTree
+	/**
+	 * Wall-clock milliseconds per phase — `parse`, `resolve`, `total`, plus `trace` when tracing is on. MEASURED here
+	 * rather than read off a `PipelineResult`, because this path never builds one: these are the phases the session
+	 * actually runs, so a caller rendering them is reading its own clock, not a neighbouring path's.
+	 */
+	timing: PipelineTiming
+	/**
+	 * The debug evidence, present only when the session was opened with {@link GeocodeSessionOptions.trace} AND the loaded
+	 * classifier could produce one. A bundle whose classifier throws on `traceParse` degrades to no trace — the geocode
+	 * is the answer the caller came for, and the evidence rows report their own absence.
+	 */
+	trace?: GeocodeTrace
 }
 
 /**
@@ -320,12 +381,42 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		throw error
 	}
 
+	/**
+	 * The debug evidence for one input, or undefined when tracing is off. Runs `traceParse` under the SAME opts
+	 * `parseForGeocode` just used ({@link geocodeParseInputs} is the shared derivation), so the record describes this
+	 * input's decode rather than a re-derived one.
+	 */
+	const traceOf = async (input: string): Promise<GeocodeTrace | undefined> => {
+		if (!options.trace) return undefined
+
+		const inputs = geocodeParseInputs(input, {})
+
+		try {
+			return {
+				parse: await classifier.traceParse(inputs.parseInput, inputs.opts),
+				queryShape: inputs.queryShape,
+				...(inputs.kind ? { kind: inputs.kind } : {}),
+				inputMode: inputs.inputMode,
+				locale: options.locale,
+			}
+		} catch {
+			// Evidence is never worth the answer: a bundle that can't trace still geocodes, and the surface
+			// renders its rows as absent instead of the whole run failing.
+			return undefined
+		}
+	}
+
 	const geocode = async (input: string): Promise<GeocodeRun> => {
+		const startedAt = performance.now()
+
 		// #912 lever 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
 		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
 		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
 		// wins (resolverDefaultCountry returns it before the locale inference is consulted).
 		const parsedTree = await parseForGeocode(input, { classifier })
+		const parsedAt = performance.now()
+		const trace = await traceOf(input)
+		const tracedAt = performance.now()
 
 		// #1589, the #912 guard's sibling: a bare POSTCODE whose format implies countries that exclude
 		// the locale-inferred one must not be hard-scoped by the locale. `SW1A 1AA` under the default
@@ -397,7 +488,19 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...forkEntityDeps,
 		})
 
-		return { result, tree: parsedTree }
+		const finishedAt = performance.now()
+
+		return {
+			result,
+			tree: parsedTree,
+			timing: {
+				parse: parsedAt - startedAt,
+				...(trace ? { trace: tracedAt - parsedAt } : {}),
+				resolve: finishedAt - tracedAt,
+				total: finishedAt - startedAt,
+			},
+			...(trace ? { trace } : {}),
+		}
 	}
 
 	return { geocode, close }

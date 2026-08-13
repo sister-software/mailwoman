@@ -36,6 +36,7 @@ import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
 	type QueryIntentMarker,
+	type QueryKindResult,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
@@ -683,24 +684,40 @@ export class ShardProvider {
 }
 
 /**
- * The exact parse `geocodeAddress` runs internally: Stage-1 deterministic preprocessing (`normalizeInput`) →
- * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUSRegions` → {@link recognizeBarePostcode}. Exposed
- * so a caller can run it once and feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and
- * another consumer of the parse (e.g. `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address
- * twice. The inference is ~3 ms/row — the single most expensive step — so sharing it is a ~1.3× win on a
- * parse-then-geocode pipeline.
- */
-/**
  * The kind-derived register for a geocode input (Decision A) — shared by the parse and the retry rider.
  */
 export function deriveGeocodeRegister(parseInput: string, queryShape = computeQueryShape(parseInput)): InputMode {
 	return deriveInputMode(classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape).kind)
 }
 
-export async function parseForGeocode(
+/**
+ * Everything {@link parseForGeocode} derives BEFORE the model runs: the text the classifier actually sees, the
+ * query-shape prior, the register, and the classifier opts.
+ *
+ * Split out so a second consumer can run the SAME decode under a different classifier entry point — today that is the
+ * `--debug` session, which calls `classifier.traceParse(parseInput, opts)` to record what the model saw. A trace built
+ * from re-derived opts would describe a decode nobody ran; sharing this function is what makes the trace a receipt for
+ * the tree instead of a plausible reconstruction of it.
+ */
+export interface GeocodeParseInputs {
+	/**
+	 * The exact text handed to the classifier (post Stage-1 normalize), NOT the caller's raw input.
+	 */
+	parseInput: string
+	queryShape: QueryShape
+	inputMode: InputMode
+	/**
+	 * The kind verdict {@link inputMode} was derived from. ABSENT when the caller PINNED a register — nothing was
+	 * classified, and reporting a kind here would be inventing one.
+	 */
+	kind?: QueryKindResult
+	opts: NonNullable<Parameters<GeocodeClassifier["parse"]>[1]>
+}
+
+export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode">
-): Promise<AddressTree> {
+	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode">
+): GeocodeParseInputs {
 	// #1002: expandAbbreviations with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp → the expanded street
 	// type). The model mis-parses undertrained FR abbreviations ("2 Bd du Palais" → house_number "2 Bd",
 	// which then fails the point-tier number match); the EN suffixes are deliberately NOT expanded (the
@@ -721,23 +738,49 @@ export async function parseForGeocode(
 	const queryShape = computeQueryShape(parseInput)
 
 	// Decision A: explicit register wins; otherwise the kind verdict decides (same derivation as the
-	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline).
-	const inputMode = deps.inputMode ?? deriveGeocodeRegister(parseInput, queryShape)
+	// runtime pipeline — the drop-ins + geocode CLI reach parse through HERE, not runPipeline). The kind
+	// classifier stays UNCALLED under an explicit register, exactly as before the split.
+	let inputMode = deps.inputMode
+	let kind: QueryKindResult | undefined
+
+	if (!inputMode) {
+		kind = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)
+		inputMode = deriveInputMode(kind.kind)
+	}
+
+	return {
+		parseInput,
+		queryShape,
+		inputMode,
+		...(kind ? { kind } : {}),
+		opts: {
+			postcodeRepair: true,
+			normalizeCase: deps.normalizeCase ?? true,
+			queryShape,
+			inputMode,
+			// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
+			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+		},
+	}
+}
+
+/**
+ * The exact parse `geocodeAddress` runs internally: Stage-1 deterministic preprocessing (`normalizeInput`) →
+ * `classifier.parse` (postcodeRepair + normalizeCase) → `recognizeUSRegions` → {@link recognizeBarePostcode}. Exposed
+ * so a caller can run it once and feed the result to both {@link geocodeAddress} (via `GeocodeDeps.parsedTree`) and
+ * another consumer of the parse (e.g. `decodeAsJSON(tree)` → a PostalAddress), instead of parsing the same address
+ * twice. The inference is ~3 ms/row — the single most expensive step — so sharing it is a ~1.3× win on a
+ * parse-then-geocode pipeline.
+ */
+export async function parseForGeocode(
+	input: string,
+	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode">
+): Promise<AddressTree> {
+	const { parseInput, opts } = geocodeParseInputs(input, deps)
 
 	// #22: a bare unambiguous postcode the model read as a street ("N7 0BT" → `{ street: … }`) is retagged
 	// before the resolve — see recognizeBarePostcode for why nothing downstream can recover it.
-	return recognizeBarePostcode(
-		recognizeUSRegions(
-			await deps.classifier.parse(parseInput, {
-				postcodeRepair: true,
-				normalizeCase: deps.normalizeCase ?? true,
-				queryShape,
-				inputMode,
-				// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
-				enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			})
-		)
-	)
+	return recognizeBarePostcode(recognizeUSRegions(await deps.classifier.parse(parseInput, opts)))
 }
 
 /**
@@ -1276,6 +1319,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			lon = ap.lon
 			tier = "address_point"
 			uncertaintyM = 1
+
 			// Floor: situs point is essentially exact.
 
 			if (ap.locality_norm || ap.postcode) {
