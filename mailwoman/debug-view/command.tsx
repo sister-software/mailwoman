@@ -63,10 +63,12 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 
 	assertDebugSizeFloor(columns, rows)
 
-	const session = await createGeocodeSession(options)
+	// Same opt-in the interactive session makes: the captured frame carries the evidence rows, so it has to pay
+	// for the trace too.
+	const session = await createGeocodeSession({ ...options, trace: true })
 
 	try {
-		const { result, tree } = await session.geocode(input)
+		const { result, tree, trace, timing } = await session.geocode(input)
 		const tilesPath = resolveTilesPath(options.tiles)
 		let frame: MapFrame | null = null
 		let mapNote: string | null = null
@@ -108,7 +110,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 				rows={rows}
 				focused={null}
 				color={!$public.NO_COLOR}
-				data={{ input, tree, result, frame, mapNote }}
+				data={{ input, tree, result, frame, mapNote, ...(trace ? { trace } : {}), timing }}
 			/>,
 			columns
 		)
