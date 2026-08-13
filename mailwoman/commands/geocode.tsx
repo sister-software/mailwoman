@@ -14,6 +14,10 @@
  *   4. Extract the best available coordinate + resolution tier from the resolved tree and emit a flat
  *        geocode result object.
  *
+ *   Steps 1–4 and every dependency they need live in `geocode-session.ts`, so a caller that geocodes more
+ *   than once opens the classifier and the databases once. This module is the CLI shell around it: flags,
+ *   format selection, and the three renderers.
+ *
  *   Resolution tiers (best → worst):
  *
  *   - `address_point` — exact situs coordinate from the address-points shard
@@ -43,34 +47,16 @@
  *   indicator is worth corrupting stdout.
  */
 
-import { existsSync } from "node:fs"
-
 import { type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
-import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
-import { $public } from "@mailwoman/core/env"
-import { isBareLocalityTree, isBarePostcodeTree } from "@mailwoman/core/pipeline"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { formatAddress } from "@mailwoman/formatter"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import {
-	countriesFromPostcodeFormat,
-	geocodeAddress,
-	parseForGeocode,
-	ShardProvider,
-	type GeocodeDeps,
-	type GeocodeResult,
-	type ShardResolver,
-	type StateShards,
-} from "../geocode-core.ts"
-import { INTERP_RADIUS_CALIBRATION } from "../interp-calibration.ts"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
-import { resolverDefaultCountry } from "./parse.tsx"
+import type { GeocodeResult } from "../geocode-core.ts"
+import { createGeocodeSession } from "../geocode-session.ts"
+import { mailwomanDataRoot } from "../resolver-backend.ts"
 
 //#region CLI contract — args + options
 
@@ -276,243 +262,16 @@ export function resolveFormat(options: {
 
 //#endregion
 
-//#region Path helpers
-
-function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string[] {
-	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
-	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
-	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
-	const raw = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
-
-	const paths = (
-		raw
-			? raw
-					.split(",")
-					.map((p: string) => p.trim())
-					.filter(Boolean)
-			: wofShardPaths()
-	).filter((p: string) => existsSync(p))
-
-	if (!paths.length) {
-		throw commandError(
-			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
-				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
-		)
-	}
-
-	return paths
-}
-
-//#endregion
-
 //#region Core geocode logic
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	// Validate the format pair BEFORE any DB/weights work — a `--json --jsonld` typo should fail in
 	// milliseconds, not after a multi-second model load.
 	const format = resolveFormat(options)
-
-	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
-	// check, so surface that error before the (slower) weights load. (Order matters for the CLI contract:
-	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
-	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
-	// stands alone and a WOF admin path isn't required.
-	const candidateDb = resolveCandidateDBPath(options.candidateDb)
-	const wofPath = candidateDb ? [] : resolveWOFPath(options)
-
-	// Load the neural classifier (required for street-level; weights must be present).
-	let classifier: NeuralAddressClassifier
+	const session = await createGeocodeSession(options)
 
 	try {
-		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
-	} catch {
-		throw commandError(
-			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
-		)
-	}
-
-	// Open the WOF admin resolver + the situs/interpolation shard provider.
-	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
-
-	try {
-		mod = await import("@mailwoman/resolver-wof-sqlite")
-	} catch {
-		throw commandError(
-			"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
-				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
-		)
-	}
-
-	const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths: wofPath })
-	const shardProvider = new ShardProvider(mod, options.dataRoot)
-	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
-	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
-	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
-	// normalizer, and a "us"-keyed probe against an FR shard silently misses wherever the rules diverge.
-	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
-
-	const explicitAp = options.addressPointsDb
-		? new mod.AddressPointSqliteLookup(options.addressPointsDb, { streetLocale: explicitApLocale })
-		: undefined
-
-	const explicitIp = options.interpolationDb
-		? new mod.StreetInterpolator({ dbPath: options.interpolationDb })
-		: undefined
-
-	const shards: ShardResolver =
-		explicitAp || explicitIp
-			? (slug) => {
-					const base = explicitAp && explicitIp ? {} : shardProvider.for(slug)
-
-					return { addressPoints: explicitAp ?? base.addressPoints, interpolation: explicitIp ?? base.interpolation }
-				}
-			: shardProvider.for
-
-	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. Optional
-	// like the resolver backend above — absent `@mailwoman/ban` ⇒ no national tier (admin/OSM path unchanged),
-	// and the provider itself is a no-op when the shard isn't on disk. Keeps the CLI backend-agnostic.
-	let nationalShards: ((country: string) => StateShards) | undefined
-
-	try {
-		const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-		nationalShards = new BANShardProvider(options.dataRoot).for
-	} catch {
-		nationalShards = undefined
-	}
-
-	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
-	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
-	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
-	let osmProvider: { for: (country: string) => StateShards; close(): void } | undefined
-
-	try {
-		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = new OSMShardProvider(options.dataRoot)
-	} catch {
-		osmProvider = undefined
-	}
-
-	// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
-	// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
-	// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
-	// right-country 85.3→91.2% with 0 regressions / 0 misroutes (the pipeline + misroute gates), so it's ON
-	// by default. --no-place-country disables it (passes `false`); a custom --place-country-threshold builds
-	// an explicit placer instead of the default-on bundled one.
-	const placer = options.placeCountry
-		? await CoarsePlacer.fromBundled({ abstainBelow: options.placeCountryThreshold, openSet: true })
-		: undefined
-
-	try {
-		const resolver = createWOFResolver(lookup)
-
-		// #912 lever 3: parse ONCE up front (shared into geocodeAddress via parsedTree — no re-parse)
-		// so a single bare locality can skip the locale-INFERRED default country. "Paris" under the
-		// en-US locale must not be hard-scoped to Paris, Texas; an explicit --default-country still
-		// wins (resolverDefaultCountry returns it before the locale inference is consulted).
-		// --bias 'lat,lon[:weight];…' → ordered soft proximity hints (viewport first by convention).
-		const bias = (options.bias ?? "")
-			.split(";")
-			.map((part: string) => part.trim())
-			.filter(Boolean)
-			.map((part: string) => {
-				const [coords, w] = part.split(":")
-				const [lat, lon] = coords!.split(",").map(Number)
-
-				if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw commandError(`--bias: bad point '${part}'`)
-
-				return { lat: lat!, lon: lon!, ...(w !== undefined ? { weight: Number(w) } : {}) }
-			})
-
-		const parsedTree = await parseForGeocode(input, { classifier })
-
-		// #1589, the #912 guard's sibling: a bare POSTCODE whose format implies countries that exclude
-		// the locale-inferred one must not be hard-scoped by the locale. `SW1A 1AA` under the default
-		// en-US locale was scoped to US and resolved nothing while the gazetteer held the GB row; the
-		// code's own format is harder evidence than the locale hint. An explicit --default-country
-		// still wins (checked first, same as #912), and the bare 5-digit family implies no countries
-		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior contract is untouched.
-		const barePostcodeFormatConflict = (): boolean => {
-			if (!isBarePostcodeTree(parsedTree)) return false
-			const inferred = resolverDefaultCountry(options, !!candidateDb)
-
-			if (!inferred) return false
-			let postcodeValue: string | undefined
-			const stack = [...parsedTree.roots]
-
-			while (stack.length) {
-				const node = stack.pop()!
-
-				if (node.tag === "postcode") {
-					postcodeValue = node.value
-
-					break
-				}
-
-				stack.push(...node.children)
-			}
-
-			const implied = countriesFromPostcodeFormat(postcodeValue)
-
-			return implied.length > 0 && !implied.includes(inferred)
-		}
-
-		const inferredScopeOK = options.defaultCountry || (!isBareLocalityTree(parsedTree) && !barePostcodeFormatConflict())
-
-		// #27: the country #912 just withheld. `inferredScopeOK` false is precisely "we HAVE a locale
-		// country and chose not to scope by it", so this is the one place that knows the value was
-		// dropped rather than never derived. Handed on as a soft prior (never a filter) when the operator
-		// opts in with --locale-country-prior; the resolver additionally ignores it under any hard scope.
-		const withheldCountry = inferredScopeOK ? undefined : resolverDefaultCountry(options, !!candidateDb)
-
-		// The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row
-		// hijack; fork-entity.ts gate 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
-		let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
-		const poiDBPath = String(dataRootPath("poi", "poi.db"))
-
-		if (options.forkEntity !== false && existsSync(poiDBPath)) {
-			const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
-				import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
-				import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
-			])
-
-			const morphology = loadStreetMorphologyFST()
-
-			forkEntityDeps = {
-				poiLookup: new POILookup({ databasePath: poiDBPath }),
-				isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
-			}
-		}
-
-		const result = await geocodeAddress(input, {
-			classifier,
-			resolver,
-			shards,
-			...(nationalShards ? { nationalShards } : {}),
-			...(osmProvider ? { osmShards: osmProvider.for } : {}),
-			parsedTree,
-			...(bias.length ? { bias } : {}),
-			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
-			// The street-miss fallback's #912 posture switch: explicit --default-country stays supreme
-			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
-			defaultCountryIsInferred: !options.defaultCountry,
-			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
-			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
-			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
-			...(resolverDefaultCountry(options, !!candidateDb)
-				? { fuzzyCountryScope: resolverDefaultCountry(options, !!candidateDb) || undefined }
-				: {}),
-			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
-			// threading (an unset dep already reads as ON downstream).
-			...(options.postcodeCountryCoherence === false ? { postcodeCountryCoherence: false } : {}),
-			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
-			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
-			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
-			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
-			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
-			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
-			placeCountry: placer ? (t: string) => placer.predict(t) : false,
-			...forkEntityDeps,
-		})
+		const { result } = await session.geocode(input)
 
 		if (format === "text") return formatText(result)
 
@@ -520,11 +279,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 		return JSON.stringify(result, null, 2)
 	} finally {
-		explicitAp?.close()
-		explicitIp?.close()
-		shardProvider.close()
-		osmProvider?.close()
-		lookup.close()
+		session.close()
 	}
 }
 
