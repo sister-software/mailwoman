@@ -91,6 +91,9 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/registry": "registry",
 	"@mailwoman/address-id": "address-id",
 	"@mailwoman/corpus": "corpus",
+	// The map TUI — a runtime dep of mailwoman (the CLI's terminal map view); zero @mailwoman deps of
+	// its own, so the closure ends here.
+	"@mailwoman/map-tui": "map-tui",
 	mailwoman: "mailwoman",
 	// The annotations layer + drop-in API packages (the "replace Nominatim" surface).
 	"@mailwoman/annotations": "annotations",
