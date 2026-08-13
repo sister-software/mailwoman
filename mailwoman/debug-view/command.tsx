@@ -3,92 +3,41 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `--debug` branch of `mailwoman geocode` (Task 12/13). Two paths share one geocode:
+ *   The `--debug` branch of `mailwoman geocode`. Two paths share one geocode:
  *
  *   - A piped/non-TTY invocation renders exactly ONE {@link DebugFrame} (the input row + the resolved output +
  *     a rendered map pane) through {@link renderInkToString} and writes it out with `writeRawStdout` — the same
  *     #1577 posture as `geocode.tsx`'s one-shot JSON/text/jsonld path: nothing on the success path renders
  *     through Ink's live reconciler, so there is no frame for Ink to clear and no frame tall enough to wipe the
  *     scrollback.
- *   - A TTY invocation gets the interactive three-panel session — landing in Task 13. This module only shows a
- *     placeholder for it today.
+ *   - A TTY invocation gets the interactive three-panel session, {@link DebugSessionApp}, which owns its own
+ *     session, tile archive and alternate-screen lifecycle.
  *
  *   {@linkcode GeocodeDebugCommand} is itself a hook-free dispatcher between the two, the same shape
  *   `geocode.tsx`'s top-level `GeocodeCommand` uses to choose between this module and its own one-shot path.
  *   Branching on `process.stdout.isTTY` INSIDE a component that also calls `useCommandTask` would make that
  *   hook call conditional — forbidden by the rules of hooks even though `isTTY` never changes mid-process, because
  *   a static analyzer has no way to know that. Splitting the static and interactive halves into their own
- *   components (`GeocodeDebugStatic` / `GeocodeDebugInteractive`) keeps each one's own hook usage unconditional.
+ *   components (`GeocodeDebugStatic` / {@link DebugSessionApp}) keeps each one's own hook usage unconditional.
+ *
+ *   The decisions both surfaces have to agree on — the opening zoom, the `--format` guard, the map-pane size floor —
+ *   live in `view-policy.ts` rather than here. This module imports the session, so the session cannot import back out
+ *   of it (`import/no-cycle`), and a second copy of a guard is a second place for it to drift.
  */
 
 import { $public } from "@mailwoman/core/env"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
 import { Text } from "ink"
-import { commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import type React from "react"
 
 import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
-import type { GeocodeResult } from "../geocode-core.ts"
 import { createGeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize } from "./DebugFrame.tsx"
+import { DebugSessionApp } from "./DebugSessionApp.tsx"
 import { renderInkToString } from "./static-render.ts"
 import { resolveTilesPath } from "./tiles.ts"
-
-//#region Zoom heuristic
-
-/**
- * The map pane's initial zoom for a freshly-geocoded result, before any interactive pan/zoom (Task 13). Tight for a
- * house-grade fix; progressively wider for whatever admin tier the resolve actually reached, so an admin-only fallback
- * doesn't open on a single-building zoom over a whole region or country.
- */
-export function initialZoomForTier(result: GeocodeResult): number {
-	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
-
-	const leaf = result.hierarchy.at(-1)?.tag
-
-	if (leaf === "locality" || leaf === "dependent_locality") return 11
-
-	if (leaf === "region") return 6
-
-	return 4
-}
-
-//#endregion
-
-//#region CLI-usage guards
-
-/**
- * `--debug` is its own rendered surface (a captured Ink frame) — combining it with a `--format` shorthand has no
- * defensible reading. Thrown with {@link commandError} so it reports through the standard error state (exit code 1) on
- * the static path below; Task 13's interactive session wires the same guard at mount, matching `resolveFormat`'s
- * two-shorthands-at-once check in `geocode.tsx`.
- */
-function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
-	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
-
-	if (shorthands.length) {
-		throw commandError(`--debug is its own output surface; drop ${shorthands.map((name) => `--${name}`).join(" ")}.`)
-	}
-}
-
-/**
- * The smallest `--debug-size` `mapPaneCellSize` can turn into a map-tui viewport that actually renders. Below it,
- * `mapPaneCellSize`'s row math goes non-positive before `MapRenderer` ever runs: measured 2026-08-13, `100x5`
- * (`mapPaneCellSize` rows -3) crashes with a raw `RangeError: Invalid typed array length: -4608` from `new RGBAGrid`
- * deep inside map-tui, and `100x8` (rows 0) renders but with the ribbon/output/map panes overlapping garbled. `60x14`
- * (`mapPaneCellSize` → 28x6) is the smallest size that renders a legible, non-degenerate frame, so that's the floor —
- * checked at the CLI boundary, before any DB/weights work, same posture as {@link assertDebugFormatSanity}.
- */
-const MIN_DEBUG_COLUMNS = 60
-const MIN_DEBUG_ROWS = 14
-
-function assertDebugSizeFloor(columns: number, rows: number): void {
-	if (columns < MIN_DEBUG_COLUMNS || rows < MIN_DEBUG_ROWS) {
-		throw commandError(`--debug-size below the ${MIN_DEBUG_COLUMNS}x${MIN_DEBUG_ROWS} minimum: ${columns}x${rows}`)
-	}
-}
-
-//#endregion
+import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } from "./view-policy.ts"
 
 //#region Static (non-TTY) path
 
@@ -98,8 +47,8 @@ function assertDebugSizeFloor(columns: number, rows: number): void {
  * archive is a debug-view-only concern) and both are released in `finally`, so a mid-render throw — a corrupt tiles
  * archive, say — still closes every handle.
  *
- * Exported for `static.test.ts` only — not part of this module's consumer-facing surface (`GeocodeDebugCommand`,
- * `initialZoomForTier`); no caller outside this directory should import it.
+ * Exported for `static.test.ts` only — not part of this module's consumer-facing surface (`GeocodeDebugCommand`); no
+ * caller outside this directory should import it.
  */
 export async function runStaticDebug(input: string, options: GeocodeCommandOptions): Promise<string> {
 	assertDebugFormatSanity(options)
@@ -183,19 +132,14 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
 
 //#endregion
 
-//#region Interactive (TTY) placeholder — Task 13 replaces this
-
-function GeocodeDebugInteractive(): React.ReactElement {
-	return <Text>interactive session lands in the next commit</Text>
-}
-
-//#endregion
-
 //#region Dispatcher
 
-export function GeocodeDebugCommand(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement {
+export function GeocodeDebugCommand(props: {
+	input: string
+	options: GeocodeCommandOptions
+}): React.ReactElement | null {
 	return process.stdout.isTTY ? (
-		<GeocodeDebugInteractive />
+		<DebugSessionApp initialInput={props.input} options={props.options} />
 	) : (
 		<GeocodeDebugStatic input={props.input} options={props.options} />
 	)

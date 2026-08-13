@@ -69,6 +69,12 @@ export interface DebugFrameProps {
 	inputField?: React.ReactNode
 	busy?: boolean
 	/**
+	 * A failed re-run's message, rendered red at the top of the output pane. The interactive session keeps the PREVIOUS
+	 * result on screen when a geocode rejects — the failure is one line of news, not a reason to blank three panes — so
+	 * the note needs a home that is neither the result nor the map. Static renders pass nothing.
+	 */
+	errorNote?: string | null
+	/**
 	 * Map-pane SGR color. Callers pass `$public.NO_COLOR == null` — Ink/chalk honor NO_COLOR on their own, raw SGR does
 	 * not.
 	 */
@@ -294,6 +300,7 @@ function OutputPane(props: {
 	data: DebugData
 	focused: DebugPane | null
 	busy: boolean | undefined
+	errorNote: string | null | undefined
 	width: number
 	height: number
 }): React.ReactElement {
@@ -308,6 +315,7 @@ function OutputPane(props: {
 			height={props.height}
 		>
 			<Text>{paneTitle("output", "output", props.focused, props.busy)}</Text>
+			{props.errorNote ? <Text color="red">{props.errorNote}</Text> : null}
 			<Text>tier: {result.resolution_tier}</Text>
 			<Text>coordinate: {formatCoordinate(result.lat, result.lon)}</Text>
 			<Text>uncertainty: {result.uncertainty_m == null ? "unknown" : `${result.uncertainty_m} m`}</Text>
@@ -371,6 +379,7 @@ export function DebugFrame(props: DebugFrameProps): React.ReactElement {
 					data={props.data}
 					focused={props.focused}
 					busy={props.busy}
+					errorNote={props.errorNote}
 					width={outputWidth}
 					height={bottomHeight}
 				/>
