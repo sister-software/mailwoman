@@ -491,6 +491,15 @@ export interface ResolveOpts {
 	 */
 	defaultCountry?: string
 	/**
+	 * True when {@link defaultCountry} was INFERRED from the locale rather than user-declared. A `country`-placetype
+	 * lookup under an inferred scope is a self-contradiction — the query names a country outright, and the filter can
+	 * only admit the scope country itself (bare `Germany` under the default en-US locale filtered out the DE row and fell
+	 * through to a US locality whose historical alias is "Germany, Ohio"). The resolver therefore withholds an inferred
+	 * {@link defaultCountry} from `country`-placetype lookups only; an EXPLICIT scope stays supreme (the #912 posture), as
+	 * do parent evidence and the confident placer.
+	 */
+	defaultCountryIsInferred?: boolean
+	/**
 	 * #1585 — the locale hint's country, scoping the backend's TYPO-FUZZY tier only. Unlike {@link defaultCountry} this
 	 * is threaded even where the bare-toponym guard withholds the hard scope: an exact foreign match still resolves
 	 * (`Paris` under en-US), but a typo CORRECTION stays inside the hinted country, and a scoped-empty correction

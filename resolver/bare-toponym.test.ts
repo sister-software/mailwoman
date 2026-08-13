@@ -388,3 +388,183 @@ describe("importance key in the admin walk (#17)", () => {
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
 })
+
+/**
+ * The bare-COUNTRY class: "Japan" / "China" / "Germany" as the whole query. Two independent defects, measured through
+ * the compiled CLI on 2026-08-13 against the shipped candidate.db (which carries every country at `placetype: country`
+ * with real centroids and `is_primary = 1`):
+ *
+ * - The parser tags bare country names `locality` about half the time (Japan, China, Nigeria, Australia — vs France,
+ *   Germany, United States tagged `country`), and the locality placetype filter made the country row unreachable at any
+ *   rank: bare `Japan` answered Japan, Pennsylvania. Fix: the lone bare locality-tagged span ALSO races the `country`
+ *   placetype, prominence arbitrates.
+ * - Even a CORRECT `country` tag failed under the locale-inferred default scope: the hard filter can only admit the scope
+ *   country itself, so bare `Germany` under en-US filtered out the DE row and fell to Camp Dennison, Ohio (an FTS alias
+ *   — its historical name is "Germany"). Fix: an INFERRED scope is withheld from `country`-placetype lookups; an
+ *   explicit scope stays supreme.
+ */
+describe("bare-country class", () => {
+	const WORLD: ResolvedPlace[] = [
+		// prominence = log10(population + 1), the #938 unit — Japan 126,264,931 / Germany 83,237,124.
+		{
+			id: 10,
+			name: "Japan",
+			placetype: "country",
+			country: "JP",
+			lat: 37.5293,
+			lon: 137.9448,
+			score: 8.1013,
+			prominence: 8.1013,
+			exactMatch: true,
+		},
+		{
+			id: 11,
+			name: "Japan",
+			placetype: "locality",
+			country: "US",
+			lat: 40.9926,
+			lon: -75.9102,
+			score: 0,
+			prominence: 0,
+			exactMatch: true,
+		},
+		{
+			id: 12,
+			name: "Germany",
+			placetype: "country",
+			country: "DE",
+			lat: 51.1102,
+			lon: 10.3923,
+			score: 8.9204,
+			prominence: 8.9204,
+			exactMatch: true,
+		},
+		{
+			id: 13,
+			name: "Nigeria",
+			placetype: "country",
+			country: "NG",
+			lat: 9,
+			lon: 7.9,
+			score: 8.3424,
+			prominence: 8.3424,
+			exactMatch: true,
+		},
+		{
+			id: 14,
+			name: "Paris",
+			placetype: "locality",
+			country: "FR",
+			lat: 48.8566,
+			lon: 2.3522,
+			score: 6.3405,
+			prominence: 6.3405,
+			exactMatch: true,
+		},
+	]
+
+	const backend = (calls?: Array<{ text: string; placetype?: unknown; country?: string }>): ResolverBackend => ({
+		async findPlace(query) {
+			calls?.push({ text: query.text, placetype: query.placetype, country: query.country })
+			const key = norm(query.text)
+			const want = Array.isArray(query.placetype) ? query.placetype : query.placetype ? [query.placetype] : null
+
+			return WORLD.filter(
+				(p) =>
+					norm(p.name) === key &&
+					(!want || want.includes(p.placetype)) &&
+					(!query.country || p.country === query.country.toUpperCase())
+			).map((p) => ({ ...p }))
+		},
+	})
+
+	const bareTree = (tag: "locality" | "country", value: string) => ({
+		raw: value,
+		roots: [node({ tag, value, start: 0, end: value.length, confidence: 0.9 })],
+	})
+
+	it("repicks a bare locality-tagged country name to the country row (Japan over Japan, Pennsylvania)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"))
+		const root = out.roots[0]!
+
+		expect(root.metadata?.["resolver_country"]).toBe("JP")
+		expect(root.metadata?.["bare_country_repick"]).toBe(true)
+		expect(root.lat).toBeCloseTo(37.5293, 3)
+	})
+
+	it("keeps the displaced locality first among the alternatives", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"))
+		const alternatives = (out.roots[0]?.alternatives ?? []) as readonly ResolvedPlace[]
+
+		expect(alternatives[0]?.country).toBe("US")
+	})
+
+	it("resolves a bare name with NO locality namesake through the empty-candidates hook (Nigeria)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Nigeria"))
+
+		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("NG")
+		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBe(true)
+	})
+
+	it("never fires without a country namesake — bare 'Paris' is byte-stable", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Paris"))
+		const root = out.roots[0]!
+
+		expect(root.metadata?.["resolver_country"]).toBe("FR")
+		expect(root.metadata?.["bare_country_repick"]).toBeUndefined()
+	})
+
+	it("never fires on an address-shaped tree — a second value-bearing node keeps the race off", async () => {
+		const tree = {
+			raw: "Japan, Pennsylvania",
+			roots: [
+				node({ tag: "locality", value: "Japan", start: 0, end: 5, confidence: 0.9 }),
+				node({ tag: "region", value: "Pennsylvania", start: 7, end: 19, confidence: 0.9 }),
+			],
+		}
+
+		const out = await createWOFResolver(backend()).resolveTree(tree)
+
+		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("US")
+		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBeUndefined()
+	})
+
+	it("stays inside an EXPLICIT country scope — the race cannot promote a foreign country row", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"), {
+			defaultCountry: "US",
+		})
+
+		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("US")
+		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBeUndefined()
+	})
+
+	it("resolves a country-TAGGED node under an inferred scope (bare 'Germany' under the en-US default)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("country", "Germany"), {
+			defaultCountry: "us",
+			defaultCountryIsInferred: true,
+		})
+
+		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("DE")
+	})
+
+	it("keeps an EXPLICIT scope supreme on country-tagged nodes (byte-stable legacy behavior)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("country", "Germany"), {
+			defaultCountry: "us",
+		})
+
+		expect(out.roots[0]?.metadata?.["resolver_country"]).toBeUndefined()
+	})
+
+	it("scopes the country race by the inferred filter's own query country only when explicit", async () => {
+		// Under the inferred posture the caller (the #912 guard) has already withheld the scope for the
+		// bare-locality shape, so the race runs worldwide; nothing here asserts an inferred locality
+		// filter, because that combination does not reach the resolver in production.
+		const calls: Array<{ text: string; placetype?: unknown; country?: string }> = []
+
+		await createWOFResolver(backend(calls)).resolveTree(bareTree("locality", "Japan"))
+		const race = calls.find((c) => c.placetype === "country")
+
+		expect(race).toBeDefined()
+		expect(race?.country).toBeUndefined()
+	})
+})

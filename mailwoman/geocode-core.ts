@@ -27,7 +27,7 @@ import { existsSync } from "node:fs"
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
 	deriveInputMode,
 	type InputMode,
@@ -798,6 +798,13 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (deps.defaultCountry) {
 		opts.defaultCountry = deps.defaultCountry
+
+		// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
+		// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
+		// default locale filters out the DE country row and falls to a US alias locality.
+		if (deps.defaultCountryIsInferred === true) {
+			opts.defaultCountryIsInferred = true
+		}
 	}
 
 	// #1589: the parsed postcode's format-implied countries, for the resolver's scoped `postalcode`
@@ -1171,24 +1178,9 @@ async function applyStreetMissFallback(
  * model mis-tags on unfamiliar capitals.
  */
 function loneBareStreetSpan(tree: AddressTree): string | null {
-	const valued: AddressNode[] = []
-	const stack: AddressNode[] = [...tree.roots]
+	const lone = loneValueBearingNode(tree)
 
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.value === "string" && n.value.trim().length) {
-			valued.push(n)
-		}
-
-		stack.push(...n.children)
-	}
-
-	if (valued.length !== 1) return null
-
-	const lone = valued[0]!
-
-	return lone.tag === "street" ? lone.value : null
+	return lone?.tag === "street" ? lone.value : null
 }
 
 /**
@@ -1276,6 +1268,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 			lon = ap.lon
 			tier = "address_point"
 			uncertaintyM = 1
+
 			// Floor: situs point is essentially exact.
 
 			if (ap.locality_norm || ap.postcode) {

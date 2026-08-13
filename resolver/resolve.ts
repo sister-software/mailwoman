@@ -15,6 +15,7 @@
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
+import { loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
 	type AddressPointLookup,
 	type CoincidentLocality,
@@ -60,6 +61,17 @@ interface ResolutionState {
 	minWinningScore: number
 	candidatesPerLookup: number
 	defaultCountry?: string
+	/**
+	 * Whether {@link defaultCountry} came from the locale rather than the caller. Consulted only by `country`-placetype
+	 * lookups, which skip an inferred scope — see `ResolveOpts.defaultCountryIsInferred`.
+	 */
+	defaultCountryIsInferred: boolean
+	/**
+	 * The tree's single value-bearing node when it is locality-tagged (the bare-toponym shape), else null. Gates the
+	 * country-placetype sibling race in `#lookupAndPick` — a bare name can be a country the parser tagged `locality`
+	 * ("Japan", "China"), and the locality placetype filter makes the country row unreachable no matter how it ranks.
+	 */
+	bareLocalityNode: AddressNode | null
 	parentFallback: boolean
 	/**
 	 * The address's postcode string, extracted once up front, passed to locality lookups so a coordinate-first backend
@@ -188,6 +200,21 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	}
 
 	return undefined
+}
+
+/**
+ * The tree's single value-bearing node when it is locality-tagged, else null — the bare-toponym shape whose
+ * country-placetype sibling race `#lookupAndPick` runs. A bare name the parser tagged `locality` can name a country
+ * ("Japan", "China" — single country names are out of the parser's training distribution), and the locality placetype
+ * filter makes the country row unreachable regardless of how the ranking would order it. Any second value-bearing node
+ * makes the input address-shaped and the race stays off; `dependent_locality` maps to the same placetype but is an
+ * address-interior tag, so only a literal `locality` qualifies.
+ */
+function loneBareLocalityNode(tree: AddressTree, placetypeMap: PlacetypeMap): AddressNode | null {
+	if (placetypeMap["locality" as ComponentTag] !== "locality") return null
+	const lone = loneValueBearingNode(tree)
+
+	return lone?.tag === "locality" ? lone : null
 }
 
 /**
@@ -834,6 +861,8 @@ class WOFResolver implements Resolver {
 			minWinningScore: opts.minWinningScore ?? 0,
 			candidatesPerLookup: opts.candidatesPerLookup ?? 5,
 			defaultCountry: opts.defaultCountry,
+			defaultCountryIsInferred: opts.defaultCountryIsInferred === true,
+			bareLocalityNode: loneBareLocalityNode(tree, opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP),
 			parentFallback: opts.parentFallback ?? true,
 			postcode: firstPostcodeValue(tree.roots),
 			// #31 Mechanism 2 — forwarded to locality lookups (see #lookupAndPick). Opt-in, OFF by default.
@@ -1119,9 +1148,17 @@ class WOFResolver implements Resolver {
 		// later by region-country coherence after the scoped lookup abstains.
 		const countryHint = node.metadata?.["country_hint"]
 
+		// A locale-INFERRED default country never filters a `country`-placetype lookup: the span names a
+		// country outright, and the filter can only admit the scope country itself (bare "Germany" under
+		// the en-US default filtered out the DE row; the unresolved span then fell to a US locality whose
+		// historical alias is "Germany, Ohio"). An EXPLICIT caller scope stays supreme, matching the #912
+		// posture; parent evidence and the confident placer are untouched.
+		const defaultCountryForLookup =
+			placetype === "country" && state.defaultCountryIsInferred ? undefined : state.defaultCountry
+
 		const country =
 			parentResolved?.country ??
-			state.defaultCountry ??
+			defaultCountryForLookup ??
 			(typeof countryHint === "string" ? countryHint : undefined) ??
 			state.hardCountry
 
@@ -1228,7 +1265,25 @@ class WOFResolver implements Resolver {
 			}
 		}
 
-		if (!candidates.length) return null
+		// The bare-toponym country race (fix B of the bare-country class): a lone locality-tagged span
+		// also races the `country` placetype, because the parser tags bare country names `locality`
+		// about half the time ("Japan", "China") and the locality filter makes the country row
+		// unreachable at any rank. Runs ONLY for the tree's single value-bearing node, so every
+		// address-shaped input is byte-stable. The locality winner's prominence arbitrates below;
+		// with no locality candidates at all, a country hit resolves the span outright.
+		const bareCountry =
+			placetype === "locality" && node === state.bareLocalityNode
+				? await this.#bareCountryCandidate(node.value, query.country)
+				: null
+
+		if (!candidates.length) {
+			if (bareCountry) {
+				return { top: bareCountry, alternatives: [], metadata: { bare_country_repick: true } }
+			}
+
+			return null
+		}
+
 		// Postcode-anchor re-rank (#369): when a country posterior is supplied (from the address's
 		// postcode), boost candidates by `anchorWeight * posterior[candidate.country]` and re-sort, so a
 		// postcode that pins the country pulls the right-country place over a higher-BM25 foreign namesake
@@ -1334,6 +1389,15 @@ class WOFResolver implements Resolver {
 
 		if (top.score < state.minWinningScore) return null
 
+		// The country side of the bare-toponym race: the country row wins only when its prominence
+		// strictly exceeds the locality winner's — Japan-the-country (pop 126M) over Japan,
+		// Pennsylvania (pop 0), while a bare name with no country namesake ("Paris", "Springfield")
+		// never reaches this line. The displaced locality stays first among the alternatives, so the
+		// declared-ambiguity marker and any disambiguation UI still see it.
+		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
+			return { top: bareCountry, alternatives: ranked, metadata: { bare_country_repick: true } }
+		}
+
 		// Fallback-observability (#718): if the winner is a macro-type AND no exact-type candidate
 		// existed for this span, annotate that a broader tier stood in for the true one. Additive —
 		// identity/coordinate are unchanged; only `metadata.resolution_quality` is stamped downstream.
@@ -1342,6 +1406,34 @@ class WOFResolver implements Resolver {
 		}
 
 		return { top, alternatives: ranked.slice(1) }
+	}
+
+	/**
+	 * The best `country`-placetype row for a bare toponym span, or null. `scopedCountry` is the same hard filter the
+	 * locality query ran under — an EXPLICIT caller scope therefore bounds this race too (a foreign country row cannot
+	 * outrank inside an explicit scope), while the bare-locality posture's withheld scope leaves it worldwide. Exact
+	 * matches only: the fuzzy tier exists for typo recovery on address spans, and a fuzzy country is a guess this race
+	 * must never promote.
+	 */
+	async #bareCountryCandidate(text: string, scopedCountry: string | undefined): Promise<ResolvedPlace | null> {
+		try {
+			const hits = await this.#backend.findPlace({
+				text,
+				placetype: "country",
+				limit: 1,
+				...(scopedCountry ? { country: scopedCountry } : {}),
+			})
+
+			const top = hits[0]
+
+			// The placetype check is load-bearing, not paranoia: a backend that ignores the filter
+			// (several test stubs, and any future partial implementation) would otherwise hand this
+			// race a LOCALITY row wearing a country costume, and the repick would demote the real pick.
+			return top && top.placetype === "country" && top.exactMatch !== false ? top : null
+		} catch {
+			// A failed side race must never abort the primary lookup — the locality answer stands.
+			return null
+		}
 	}
 }
 
