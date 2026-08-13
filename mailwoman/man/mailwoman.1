@@ -258,6 +258,9 @@ Options:
   \-\-json                                               Shorthand for \-\-format json (the default). (default: false)
   \-\-text                                               Shorthand for \-\-format text — the human\-readable summary. (default: false)
   \-\-jsonld                                             Shorthand for \-\-format jsonld — schema.org JSON\-LD. (default: false)
+  \-\-debug                                              Interactive three\-panel debug view (input / parse+resolution / map) on a TTY; a single rendered frame on a pipe. Not combinable with \-\-json/\-\-text/\-\-jsonld. (default: false)
+  \-\-debug\-size [debug\-size]                            Frame size for the non\-TTY \-\-debug render. Ignored on a TTY (the terminal sizes the view). (default: "120x36")
+  \-\-tiles [tiles]                                      PMTiles archive for the \-\-debug map pane. Defaults to $MAILWOMAN_TILES, then <dataRoot>/tiles/planet.pmtiles when present. Absent tiles degrade the pane to a note.
   \-h, \-\-help                                           Show help
 .fi
 .SH AUTOCOMPLETE
