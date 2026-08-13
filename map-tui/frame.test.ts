@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { AsciifyTerminal } from "@sister.software/asciify/tui"
 import { describe, expect, it } from "vitest"
 
-import { frameToANSILines, overlayText, rasterizeToFrame, rgbToPacked } from "./frame.ts"
+import { blitFrame, type MapFrame, frameToANSILines, overlayText, rasterizeToFrame, rgbToPacked } from "./frame.ts"
 import { RGBAGrid } from "./raster.ts"
 
 const BRAILLE_FULL = 0x28_ff
@@ -76,5 +77,58 @@ describe("overlayText", () => {
 describe("rgbToPacked", () => {
 	it("packs RGB channels into 0xRRGGBB", () => {
 		expect(rgbToPacked([255, 128, 0])).toBe(0xff_80_00)
+	})
+})
+
+describe("blitFrame", () => {
+	function capturingTerminal(columns: number, rows: number): { terminal: AsciifyTerminal; read: () => string } {
+		let written = ""
+
+		const terminal = new AsciifyTerminal(
+			{ write: (chunk: string) => (written += chunk), columns, rows },
+			{ mode: "braille", colorDepth: "truecolor", synchronizedOutput: false }
+		)
+
+		terminal.setSize(columns, rows)
+
+		return { terminal, read: () => written }
+	}
+
+	it("copies a frame's cells and colors into a terminal", () => {
+		const grid = new RGBAGrid(4, 8)
+
+		for (let y = 0; y < 4; y++) {
+			for (let x = 0; x < 2; x++) {
+				grid.setPixel(x, y, [255, 0, 0])
+			}
+		}
+
+		const frame = rasterizeToFrame(grid, 2, 2, "")
+		const { terminal, read } = capturingTerminal(2, 2)
+
+		blitFrame(terminal, frame)
+		terminal.flush()
+
+		expect(read()).toContain(String.fromCodePoint(frame.chars[0]!))
+		expect(read()).toContain("\u001B[38;2;255;0;0m")
+	})
+
+	// `MapFrame` marks an empty cell with codepoint 0, which is not a character a terminal can be asked to draw.
+	it("writes a space where the frame has no codepoint", () => {
+		const frame: MapFrame = {
+			columns: 1,
+			rows: 1,
+			chars: new Uint32Array([0]),
+			colors: new Uint32Array([0]),
+			attribution: "",
+		}
+
+		const { terminal, read } = capturingTerminal(1, 1)
+
+		blitFrame(terminal, frame)
+		terminal.flush()
+
+		expect(read()).toContain(" ")
+		expect(read()).not.toContain("\u001B[38;2;")
 	})
 })
