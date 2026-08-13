@@ -73,8 +73,9 @@ function clampCursor(value: string, index: number): number {
 	const bounded = Math.max(0, Math.min(index, value.length))
 	const unit = value.charCodeAt(bounded)
 
-	// A low surrogate at the cursor means the offset landed inside a pair; the codepoint starts one unit back.
-	return unit >= 0xdc_00 && unit <= 0xdf_ff ? bounded - 1 : bounded
+	// A low surrogate at the cursor means the offset landed inside a pair; the codepoint starts one unit back —
+	// unless the string opens with an unpaired low surrogate, where there is no unit back to snap to.
+	return unit >= 0xdc_00 && unit <= 0xdf_ff ? Math.max(0, bounded - 1) : bounded
 }
 
 /**
