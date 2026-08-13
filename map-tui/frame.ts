@@ -138,7 +138,7 @@ export function overlayText(
 
 				if (checkColumn < 0 || checkColumn >= frame.columns) continue
 
-				if (occupied[checkColumn]) return false
+				if (occupied[row * frame.columns + checkColumn]) return false
 			}
 		}
 	}
@@ -154,7 +154,7 @@ export function overlayText(
 		frame.colors[cellIndex] = color
 
 		if (occupied) {
-			occupied[cellColumn] = 1
+			occupied[cellIndex] = 1
 		}
 	}
 

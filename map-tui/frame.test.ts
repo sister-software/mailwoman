@@ -10,6 +10,7 @@ import { frameToANSILines, overlayText, rasterizeToFrame, rgbToPacked } from "./
 import { RGBAGrid } from "./raster.ts"
 
 const BRAILLE_FULL = 0x28_ff
+
 // all 8 dots
 
 describe("rasterizeToFrame", () => {
@@ -60,6 +61,15 @@ describe("overlayText", () => {
 		expect(overlayText(frame, 1, 0, "Portland", 0xff_ff_ff, occupied)).toBe(true)
 		expect(String.fromCodePoint(frame.chars[1]!)).toBe("P")
 		expect(overlayText(frame, 3, 0, "X", 0xff_ff_ff, occupied)).toBe(false)
+	})
+
+	it("does not collide across rows — the bitmap is row-aware", () => {
+		const frame = rasterizeToFrame(new RGBAGrid(20, 8), 10, 2, "")
+		const occupied = new Uint8Array(20)
+		expect(overlayText(frame, 1, 0, "Portland", 0xff_ff_ff, occupied)).toBe(true)
+		// Same columns as "Portland" above, but on the next row — must NOT collide.
+		expect(overlayText(frame, 3, 1, "X", 0xff_ff_ff, occupied)).toBe(true)
+		expect(String.fromCodePoint(frame.chars[1 * 10 + 3]!)).toBe("X")
 	})
 })
 
