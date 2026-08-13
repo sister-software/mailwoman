@@ -37,6 +37,27 @@ function passthroughResolver(): Resolver {
 }
 
 describe("createRuntimePipeline — wiring", () => {
+	it("surfaces inferred machine locale and timezone when the query has no locale evidence", async () => {
+		const pipeline = createRuntimePipeline({
+			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
+		})
+
+		const result = await pipeline("Paris")
+
+		expect(result.locale).toMatchObject({
+			locale: "en-GB",
+			source: "machine",
+			evidence: { intlLocale: "en-GB", timeZone: "Europe/London" },
+		})
+	})
+
+	it("can disable host inference for a server runtime", async () => {
+		const pipeline = createRuntimePipeline({ machinePreferences: false })
+		const result = await pipeline("Paris")
+
+		expect(result.locale).toMatchObject({ locale: "en-US", confidence: 0.3, source: "detected" })
+	})
+
 	it("runs normalize + queryShape + classifier + resolver in order", async () => {
 		const classifier = fakeClassifier()
 		const resolver = passthroughResolver()

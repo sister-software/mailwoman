@@ -126,6 +126,52 @@ describe("detectLocale — fallback + always-decisive", () => {
 		expect(r.confidence).toBeLessThanOrEqual(0.5)
 	})
 
+	it("uses machine locale only when input evidence reaches the fallback", () => {
+		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }), {
+			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
+		})
+
+		expect(r).toMatchObject({
+			locale: "en-GB",
+			confidence: 0.55,
+			source: "machine",
+			evidence: { intlLocale: "en-GB", timeZone: "Europe/London" },
+		})
+
+		expect(r.alternatives).toContainEqual({ locale: "en-US", confidence: 0.3 })
+	})
+
+	it("keeps timezone independent and does not turn UTC into a locale", () => {
+		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }), {
+			machinePreferences: { timeZone: "UTC" },
+		})
+
+		expect(r).toMatchObject({ locale: "en-US", confidence: 0.3, source: "detected" })
+		expect(r.evidence).toBeUndefined()
+	})
+
+	it("does not let machine preferences outrank script evidence", () => {
+		const r = detectLocaleSync(input("東京"), shape({ characterClass: "cjk" }), {
+			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
+		})
+
+		expect(r).toMatchObject({ locale: "ja-JP", confidence: 0.8, source: "detected" })
+	})
+
+	it("gives an environment locale precedence over inferred machine preferences", () => {
+		const r = detectLocaleSync(input("Paris"), shape({ characterClass: "alpha" }), {
+			environmentLocale: "fr-FR",
+			machinePreferences: { locale: "en-GB", timeZone: "Europe/London" },
+		})
+
+		expect(r).toMatchObject({
+			locale: "fr-FR",
+			confidence: 0.95,
+			source: "environment",
+			evidence: { environmentLocale: "fr-FR" },
+		})
+	})
+
 	it("empty shape still emits a decisive locale", () => {
 		const r = detectLocaleSync(input(""), shape())
 		expect(r.locale).toBeDefined()

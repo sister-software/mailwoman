@@ -23,6 +23,10 @@ export const PublicEnvSchema = z.object({
 	// `.catch` (not `.default`) so an unknown value never throws — vitest sets NODE_ENV=test, CI may set others.
 	NODE_ENV: z.enum(["development", "production", "test"]).catch("development"),
 	CI: z.coerce.boolean().default(false),
+	/**
+	 * Operator locale override used when a request supplies no locale. Safe to expose in diagnostics.
+	 */
+	MW_LOCALE: z.string().min(1).optional(),
 
 	// Gazetteer / resolver database paths. CLI flags (`--resolve-db`, …) override these at the call site.
 	MAILWOMAN_WOF_DB: z.string().optional(),
