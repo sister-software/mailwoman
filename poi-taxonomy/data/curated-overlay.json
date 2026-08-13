@@ -1,6 +1,24 @@
 {
 	"categories": [
 		{
+			"id": "place_of_worship",
+			"label": "Place of worship",
+			"hierarchy": ["religious_organization", "place_of_worship"],
+			"basicLabel": null,
+			"osmTag": "amenity=place_of_worship",
+			"source": "overture",
+			"retainOvertureLeaves": true,
+			"overtureCategories": [
+				"church_cathedral",
+				"mosque",
+				"synagogue",
+				"hindu_temple",
+				"buddhist_temple",
+				"sikh_temple",
+				"temple"
+			]
+		},
+		{
 			"id": "hospital",
 			"label": "Hospital",
 			"hierarchy": ["health_and_medical", "hospital"],
@@ -417,6 +435,30 @@
 		{
 			"phrase": "radio mast",
 			"categoryID": "tower_comms"
+		},
+		{
+			"phrase": "church",
+			"categoryID": "place_of_worship"
+		},
+		{
+			"phrase": "churches",
+			"categoryID": "place_of_worship"
+		},
+		{
+			"phrase": "house of worship",
+			"categoryID": "place_of_worship"
+		},
+		{
+			"phrase": "places of worship",
+			"categoryID": "place_of_worship"
+		},
+		{
+			"phrase": "flight",
+			"categoryID": "airport"
+		},
+		{
+			"phrase": "flights",
+			"categoryID": "airport"
 		}
 	]
 }

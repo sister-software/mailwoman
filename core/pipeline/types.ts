@@ -304,6 +304,10 @@ export interface POIIntent {
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }
 	/**
+	 * The relation crossing from the recognized subject span to the anchor span.
+	 */
+	relation?: "comma" | "near" | "in" | "at" | "around" | "to"
+	/**
 	 * Spatial anchor: the split-off remainder text and its parse, when the query carried one.
 	 */
 	anchor?: {

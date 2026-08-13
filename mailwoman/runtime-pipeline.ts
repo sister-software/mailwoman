@@ -24,7 +24,11 @@ import {
 	type POIIntentOutcome,
 	type RuntimePipelineStages,
 } from "@mailwoman/core/pipeline"
-import { classifyKind as defaultClassifyKind, createKindClassifier } from "@mailwoman/kind-classifier"
+import {
+	classifyKind as defaultClassifyKind,
+	createKindClassifier,
+	type POIPhraseLookup,
+} from "@mailwoman/kind-classifier"
 import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
@@ -41,7 +45,7 @@ import { loadDefaultReverseGeocoder } from "./default-reverse-geocoder.ts"
 import { loadDefaultStreetEvidence } from "./default-street-evidence.ts"
 import { rerankByStreetEvidence } from "./kbest-street-rerank.ts"
 import { createPOIExecutor, type POIAncestryEntry } from "./poi-executor.ts"
-import { createPOIIntentStage, poiTaxonomyLookup } from "./poi-intent.ts"
+import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "./poi-intent.ts"
 
 /**
  * Structural shape of a `WOFReverseGeocoder`'s sync core — just what {@link buildSyncReverseGeocode} calls.
@@ -289,6 +293,13 @@ export function createRuntimePipeline(
 	// disables; the object form (executes against a real poi.db) passes through unchanged. Follows
 	// the same `?? true` factory-default merge pattern as `hardPlaceCountry` below.
 	const poiQueryKindEffective = opts.poiQueryKind ?? true
+	let poiNameLookup: POIPhraseLookup | undefined
+
+	const poiSubjectLookup: POIPhraseLookup = (phrase, locale) => {
+		const lexical = poiTaxonomyLookup(phrase, locale)
+
+		return lexical.length ? lexical : (poiNameLookup?.(phrase, locale) ?? [])
+	}
 
 	const stages: RuntimePipelineStages = {
 		normalize,
@@ -300,7 +311,7 @@ export function createRuntimePipeline(
 		// because anchorStages.poiIntent is absent and anchorStages.classifyKind is the default.
 		classifyKind:
 			opts.classifyKind ??
-			(poiQueryKindEffective ? createKindClassifier({ poiLexicon: poiTaxonomyLookup }) : defaultClassifyKind),
+			(poiQueryKindEffective ? createKindClassifier({ poiLexicon: poiSubjectLookup }) : defaultClassifyKind),
 		// Default phrase grouper: rule-based from @mailwoman/phrase-grouper. Hard dep in v0.5.0 —
 		// not an opt-in shim. The plan doc framed Stage 2.7 as backward-compatible-opt-in for the
 		// v0.4.0 pipeline; we have no current users to migrate, so v0.5.0 ships it as a required
@@ -343,7 +354,7 @@ export function createRuntimePipeline(
 
 	if (poiQueryKindEffective) {
 		stages.poiIntent = createPOIIntentStage({
-			lookup: poiTaxonomyLookup,
+			lookup: poiSubjectLookup,
 			// Inline spread, evaluated at CALL time: the factory's lazy stages (placeCountry,
 			// streetEvidence) mutate `stages` on first run, and this form always sees the final
 			// wiring. classifyKind reverts to the default (no poi lexicon) and poiIntent is
@@ -405,8 +416,11 @@ export function createRuntimePipeline(
 				// poi.db-missing catch below).
 				const reverseGeocoder = await loadDefaultReverseGeocoder()
 
+				const lookup = new POILookup({ databasePath: poiDatabasePath })
+				poiNameLookup = createPOINameLookup(lookup)
+
 				poiExecute = createPOIExecutor({
-					lookup: new POILookup({ databasePath: poiDatabasePath }),
+					lookup,
 					requiresBuildLocal,
 					resolveOvertureCategories,
 					reverseGeocode: reverseGeocoder ? buildSyncReverseGeocode(reverseGeocoder) : undefined,

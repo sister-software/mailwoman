@@ -21,7 +21,7 @@
  *   data so the runtime never reaches the network. See `data/PROVENANCE.md`.
  *
  *   ── Merge rules ─────────────────────────────────────────────────────────────────────────────────
- *   • Curated records (the 23 in `curated-overlay.json`) are preserved verbatim and WIN id collisions
+ *   • Curated records (the 26 in `curated-overlay.json`) are preserved verbatim and WIN id collisions
  *     with the snapshot (a curated `bank`/`school`/`cafe` keeps its curated hierarchy, `osmTag`, and
  *     `overtureCategories` — the snapshot's same-id row is dropped).
  *   • Overture leaves a curated record already ABSORBS via its `overtureCategories` (e.g. `coffee_shop`
@@ -29,7 +29,8 @@
  *     standalone snapshot records. Those leaves belong to their curated canonical id — emitting them
  *     twice would let a snapshot id-phrase (`coffee shop`) shadow the curated synonym (`coffee shop` →
  *     `cafe`) in the phrase index, which the POI board depends on NOT happening. The db still stores
- *     the raw leaves; `resolveOvertureCategories` fans the curated id back out to them.
+ *     the raw leaves; `resolveOvertureCategories` fans the curated id back out to them. Umbrella records may set
+ *     `retainOvertureLeaves` when each mapped leaf remains independently meaningful.
  *   • Every other snapshot row becomes an identity Overture record (id = code, humanized label,
  *     hierarchy path retained, `basicLabel: null`, no `osmTag`, no `overtureCategories`).
  *   • Deterministic order: categories by id, synonyms by (phrase, categoryID) — `localeCompare`, the
@@ -61,7 +62,7 @@ export const OVERTURE_RELEASE = "v1.17.0"
 /**
  * This taxonomy table's own data version — bump when the snapshot vintage or merge semantics change.
  */
-export const TAXONOMY_VERSION = "0.3.0"
+export const TAXONOMY_VERSION = "0.4.0"
 
 /**
  * Source URL for `--fetch` and provenance.
@@ -152,7 +153,10 @@ export function humanizeCode(code: string): string {
  */
 export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: CuratedOverlay): POITaxonomyTable {
 	const curatedIDs = new Set<string>(overlay.categories.map((c) => c.id))
-	const absorbedLeaves = new Set<string>(overlay.categories.flatMap((c) => c.overtureCategories ?? []))
+
+	const absorbedLeaves = new Set<string>(
+		overlay.categories.flatMap((c) => (c.retainOvertureLeaves ? [] : (c.overtureCategories ?? [])))
+	)
 
 	const snapshotRecords: CategoryRecord[] = snapshot
 		.filter((row) => !curatedIDs.has(row.code) && !absorbedLeaves.has(row.code))

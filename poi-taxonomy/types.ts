@@ -72,6 +72,12 @@ export interface CategoryRecord {
 	 * this omitted too.
 	 */
 	overtureCategories?: POICategoryID[]
+	/**
+	 * Keep the mapped Overture leaves as standalone categories as well. Used by umbrella query categories whose leaves
+	 * remain independently meaningful (`place_of_worship` maps several faith-specific categories). Absent preserves the
+	 * canonicalization behavior for aliases such as `supermarket` → `grocery_store`.
+	 */
+	retainOvertureLeaves?: boolean
 }
 
 /**

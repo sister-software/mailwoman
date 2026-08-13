@@ -1,5 +1,5 @@
 {
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"overtureRelease": "v1.17.0",
 	"categories": [
 		{
@@ -10794,6 +10794,24 @@
 			"source": "overture"
 		},
 		{
+			"id": "place_of_worship",
+			"label": "Place of worship",
+			"hierarchy": ["religious_organization", "place_of_worship"],
+			"basicLabel": null,
+			"osmTag": "amenity=place_of_worship",
+			"source": "overture",
+			"retainOvertureLeaves": true,
+			"overtureCategories": [
+				"church_cathedral",
+				"mosque",
+				"synagogue",
+				"hindu_temple",
+				"buddhist_temple",
+				"sikh_temple",
+				"temple"
+			]
+		},
+		{
 			"id": "placenta_encapsulation_service",
 			"label": "Placenta encapsulation service",
 			"hierarchy": ["health_and_medical", "placenta_encapsulation_service"],
@@ -15224,6 +15242,14 @@
 			"locales": ["en-GB", "en-AU", "en-NZ"]
 		},
 		{
+			"phrase": "church",
+			"categoryID": "place_of_worship"
+		},
+		{
+			"phrase": "churches",
+			"categoryID": "place_of_worship"
+		},
+		{
 			"phrase": "coffee",
 			"categoryID": "cafe"
 		},
@@ -15306,6 +15332,14 @@
 			"categoryID": "fire_hydrant"
 		},
 		{
+			"phrase": "flight",
+			"categoryID": "airport"
+		},
+		{
+			"phrase": "flights",
+			"categoryID": "airport"
+		},
+		{
 			"phrase": "fuel",
 			"categoryID": "gas_station"
 		},
@@ -15329,6 +15363,10 @@
 		{
 			"phrase": "hiking trail",
 			"categoryID": "trail"
+		},
+		{
+			"phrase": "house of worship",
+			"categoryID": "place_of_worship"
 		},
 		{
 			"phrase": "hydrant",
@@ -15355,6 +15393,10 @@
 			"phrase": "petrol station",
 			"categoryID": "gas_station",
 			"locales": ["en-GB", "en-AU", "en-NZ", "en-ZA"]
+		},
+		{
+			"phrase": "places of worship",
+			"categoryID": "place_of_worship"
 		},
 		{
 			"phrase": "post box",

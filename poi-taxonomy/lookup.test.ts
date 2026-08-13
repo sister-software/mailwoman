@@ -97,6 +97,19 @@ describe("taxonomy integrity", () => {
 	})
 })
 
+describe("umbrella categories", () => {
+	it("keeps place-of-worship leaves independently addressable", () => {
+		expect(lookupPOICategory("mosque")[0]?.category.id).toBe("mosque")
+		expect(lookupPOICategory("synagogue")[0]?.category.id).toBe("synagogue")
+	})
+
+	it("fans the place-of-worship umbrella out without absorbing its leaves", () => {
+		expect(lookupPOICategory("places of worship")[0]?.category.id).toBe("place_of_worship")
+		expect(resolveOvertureCategories("place_of_worship")).toContain("church_cathedral")
+		expect(resolveOvertureCategories("place_of_worship")).toContain("mosque")
+	})
+})
+
 describe("resolveOvertureCategories", () => {
 	it("fans a mismatched seed id out over its Overture leaves", () => {
 		const supermarket = resolveOvertureCategories("supermarket")
