@@ -42,6 +42,7 @@
 				"react",
 				"bdc",
 				"filer",
+				"map-tui",
 				"mailwoman",
 				"mcp",
 				"timezone-lookup",
