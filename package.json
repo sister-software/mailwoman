@@ -67,6 +67,7 @@
 		"resolver-wof-sqlite",
 		"resolver-wof-wasm",
 		"tile-worker",
+		"map-tui",
 		"docs",
 		"neural-weights-base-latn"
 	],

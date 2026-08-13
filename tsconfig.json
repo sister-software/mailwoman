@@ -61,6 +61,7 @@
 		{ "path": "./un-locode-lookup" },
 		{ "path": "./nuts-lookup" },
 		{ "path": "./tile-worker" },
+		{ "path": "./map-tui" },
 		{ "path": "./address-id/tsconfig.test.json" },
 		{ "path": "./annotations/tsconfig.test.json" },
 		{ "path": "./api-kit/tsconfig.test.json" },

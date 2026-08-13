@@ -1,0 +1,11 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"allowSyntheticDefaultImports": true,
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./test/**/*", "./scripts/**/*"],
+	"references": []
+}
