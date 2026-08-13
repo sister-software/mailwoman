@@ -33,6 +33,7 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_FST_BIN: z.string().optional(),
 	MAILWOMAN_MODEL_CARD: z.string().optional(),
 	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional(),
+	MAILWOMAN_TILES: z.string().optional(),
 
 	// ONNX intra-op thread cap. Deployment-shaped rather than code-shaped: the right value depends on how many
 	// mailwoman processes share the host, which the library cannot know. See DEFAULT_INTRA_OP_THREADS.
@@ -141,6 +142,7 @@ export const PublicEnvSchema = z.object({
 	MW_DUMP_REGRESSIONS: z.string().optional(),
 	PROBE_N: z.string().optional(),
 	DEBUG: z.string().optional(),
+	NO_COLOR: z.string().optional(),
 })
 
 /**
