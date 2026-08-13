@@ -16,8 +16,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runPromotionGate } from "../../eval-harness/promotion-gate.ts"
-
 export const description = "Promotion gate (#479) — eval battery + gate-spec floors → verdict.json"
 
 const OptionsSchema = zod.object({
@@ -52,7 +50,11 @@ export { OptionsSchema as options }
 
 const EvalGate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		() => runPromotionGate(options),
+		async () => {
+			const { runPromotionGate } = await import("../../eval-harness/promotion-gate.ts")
+
+			return runPromotionGate(options)
+		},
 		(exitCode) => exitCode
 	)
 

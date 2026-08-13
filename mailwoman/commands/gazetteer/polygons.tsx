@@ -30,8 +30,6 @@
 import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
@@ -181,6 +179,9 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 
 const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { tryParsingJSON } = await import("@mailwoman/core/objects")
+
 		const out = options.out
 		const points = options.points ?? ""
 		const admin = options.admin ?? ""

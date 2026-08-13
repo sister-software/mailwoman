@@ -9,7 +9,6 @@
  *   number.
  */
 
-import { jsonlToParquet } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -25,9 +24,11 @@ export { OptionsSchema as options }
 const report = (line: string): void => console.error(line)
 
 const DevJSONLToParquet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		jsonlToParquet({ input: options.input, output: options.output, rowGroupSize: options.rowGroupSize }, report)
-	)
+	const state = useCommandTask(async () => {
+		const { jsonlToParquet } = await import("@mailwoman/corpus/tools")
+
+		return jsonlToParquet({ input: options.input, output: options.output, rowGroupSize: options.rowGroupSize }, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

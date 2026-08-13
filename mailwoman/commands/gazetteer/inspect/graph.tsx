@@ -16,7 +16,8 @@ import * as fs from "node:fs/promises"
 import { availableParallelism } from "node:os"
 
 import { Spinner } from "@inkjs/ui"
-import { generatePlacetypeGraph, Placetype, type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
+import type { PlacetypeRole } from "@mailwoman/core"
+import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
 import { parseRoles, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
@@ -51,6 +52,8 @@ const WOFGraph: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> =
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
+		const { generatePlacetypeGraph, Placetype } = await import("@mailwoman/core")
+
 		if (!args[0]) {
 			throw commandError("Missing required positional argument: <localRepoDirectory>")
 		}

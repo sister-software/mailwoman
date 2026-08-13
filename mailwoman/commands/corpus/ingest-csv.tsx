@@ -8,7 +8,6 @@
  *   without importing.
  */
 
-import { ingestCSV } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -27,7 +26,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const CorpusIngestCSV: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => ingestCSV(options))
+	const state = useCommandTask(async () => {
+		const { ingestCSV } = await import("@mailwoman/corpus/tools")
+
+		return ingestCSV(options)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

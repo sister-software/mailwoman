@@ -23,8 +23,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runGauntlet } from "../../eval-harness/gauntlet/run.ts"
-
 export const description = "The Gauntlet gate — regression + metamorphic + held-out, one verdict"
 
 const OptionsSchema = zod.object({
@@ -70,8 +68,10 @@ const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const { postcodeCountryCoherenceOff, components, ...rest } = options
 
 	const state = useCommandTask(
-		async () =>
-			(
+		async () => {
+			const { runGauntlet } = await import("../../eval-harness/gauntlet/run.ts")
+
+			return (
 				await runGauntlet({
 					...rest,
 					weightsCacheRoot: options.weightsCache,
@@ -96,7 +96,8 @@ const EvalGauntlet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 							? false
 							: undefined,
 				})
-			).exitCode,
+			).exitCode
+		},
 		(exitCode) => exitCode
 	)
 

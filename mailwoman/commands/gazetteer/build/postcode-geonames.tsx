@@ -16,11 +16,7 @@
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import {
-	artifactSizeMB,
-	buildPostcodeGeonamesTail,
-	DEFAULT_GEONAMES_TAIL_COUNTRIES,
-} from "mailwoman/gazetteer-pipeline"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -39,6 +35,8 @@ export { OptionsSchema as options }
 
 const GazetteerBuildPostcodeGeonames: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { artifactSizeMB, buildPostcodeGeonamesTail } = await import("mailwoman/gazetteer-pipeline")
+
 		const countries = options.countries
 			? options.countries
 					.split(",")

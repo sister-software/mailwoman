@@ -47,17 +47,14 @@
  *   indicator is worth corrupting stdout.
  */
 
-import { type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
-import { formatAddress } from "@mailwoman/formatter"
+import type { SchemaOrgPlace } from "@mailwoman/annotations"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { type CommandComponent, commandError, lazyComponent, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { GeocodeDebugCommand } from "../debug-view/command.tsx"
 import type { GeocodeResult } from "../geocode-core.ts"
-import { createGeocodeSession } from "../geocode-session.ts"
-import { mailwomanDataRoot } from "../resolver-backend.ts"
 
 //#region CLI contract — args + options
 
@@ -67,7 +64,7 @@ const ArgumentsSchema = zod
 
 /**
  * Shown at the top of `mailwoman geocode --help` — which is also what a bare `mailwoman geocode` now prints (#1577, see
- * `cli.ts`) — and reused by commander for the root command listing, so it stays to two sentences.
+ * `cli-main.ts`) — and reused by commander for the root command listing, so it stays to two sentences.
  */
 export const description =
 	"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the " +
@@ -295,8 +292,10 @@ export function resolveFormat(options: {
 
 async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	// Validate the format pair BEFORE any DB/weights work — a `--json --jsonld` typo should fail in
-	// milliseconds, not after a multi-second model load.
+	// milliseconds, not after a multi-second model load. The import is part of that load: `geocode-session.ts`
+	// reaches onnxruntime and the SentencePiece WASM blob.
 	const format = resolveFormat(options)
+	const { createGeocodeSession } = await import("../geocode-session.ts")
 	const session = await createGeocodeSession(options)
 
 	try {
@@ -304,7 +303,7 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
 
 		if (format === "text") return formatText(result)
 
-		if (format === "jsonld") return JSON.stringify(geocodeToSchemaOrg(result), null, 2)
+		if (format === "jsonld") return JSON.stringify(await geocodeToSchemaOrg(result), null, 2)
 
 		return JSON.stringify(result, null, 2)
 	} finally {
@@ -323,7 +322,10 @@ async function runGeocode(input: string, options: zod.infer<typeof OptionsSchema
  * `@mailwoman/annotations`' {@link toSchemaOrg}. Lossy by design: tiers/uncertainty/candidates don't fit the vocabulary
  * and are dropped.
  */
-function geocodeToSchemaOrg(result: GeocodeResult): SchemaOrgPlace {
+async function geocodeToSchemaOrg(result: GeocodeResult): Promise<SchemaOrgPlace> {
+	const { toSchemaOrg } = await import("@mailwoman/annotations")
+	const { formatAddress } = await import("@mailwoman/formatter")
+
 	const streetAddress = formatAddress(
 		{
 			...(result.house_number ? { house_number: result.house_number } : {}),
@@ -418,6 +420,17 @@ const GeocodeOneShot: CommandComponent<typeof OptionsSchema, typeof ArgumentsSch
 	// makes Ink clear the terminal + scrollback.
 	return writeRawStdout(state.result)
 }
+
+/**
+ * `--debug`'s three-panel view, loaded on first render. The debug module reaches the neural classifier, onnxruntime and
+ * the SentencePiece WASM blob, and Pastel imports this file on EVERY invocation — a static import would put all of it
+ * behind `mailwoman --version`.
+ */
+const GeocodeDebugCommand = lazyComponent<{ input: string; options: GeocodeCommandOptions }>(async () => {
+	const module = await import("../debug-view/command.tsx")
+
+	return module.GeocodeDebugCommand
+})
 
 /**
  * Top-level dispatch between the one-shot output path and `--debug`'s three-panel view. Deliberately hook-free:

@@ -88,14 +88,14 @@ try {
 
 	packWorkspaceForPublish(cwd, tarballPath)
 
-	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target
-	// AND every literal `files` entry (see verify-tarball.ts for the en-in incident this second
-	// guard exists for).
+	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target,
+	// every literal `files` entry (see verify-tarball.ts for the en-in incident that guard exists for),
+	// and every `bin` target.
 	try {
 		const audit = verifyTarball(tarballPath)
 
 		console.error(
-			`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files)`
+			`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files, ${audit.binTargets} bin targets)`
 		)
 	} catch (error) {
 		console.error(error instanceof Error ? error.message : error)

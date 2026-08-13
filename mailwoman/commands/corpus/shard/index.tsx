@@ -13,7 +13,7 @@
 
 import { createWriteStream } from "node:fs"
 
-import { getShardRecipe, listShardRecipes, type ShardRecipeOpts } from "@mailwoman/corpus"
+import type { ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -79,6 +79,8 @@ const num = (s: string | undefined): number | undefined => (s == null ? undefine
 
 const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
+		const { getShardRecipe, listShardRecipes } = await import("@mailwoman/corpus")
+
 		if (options.list || !args.length) {
 			return [
 				"recipes:",

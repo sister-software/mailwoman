@@ -16,9 +16,6 @@ import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { buildFDICHoldout } from "../../eval-harness/gauntlet/build-fdic-holdout.ts"
-import { buildRegressionDB } from "../../eval-harness/gauntlet/build-regression-db.ts"
-
 export const description = "Build the Gauntlet data artifacts (fdic-holdout, regression-db)"
 
 const ArgsSchema = zod.tuple([
@@ -36,6 +33,9 @@ export { ArgsSchema as args, OptionsSchema as options }
 
 const EvalGauntletBuild: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ args }) => {
 	const state = useCommandTask(async () => {
+		const { buildFDICHoldout } = await import("../../eval-harness/gauntlet/build-fdic-holdout.ts")
+		const { buildRegressionDB } = await import("../../eval-harness/gauntlet/build-regression-db.ts")
+
 		switch (args[0]) {
 			case "fdic-holdout":
 				await buildFDICHoldout()

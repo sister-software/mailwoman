@@ -14,8 +14,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { maskRegressionGate } from "../../eval-harness/mask-regression.ts"
-
 export const description = "Mask-regression gate (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
 const OptionsSchema = zod.object({
@@ -35,7 +33,11 @@ export { OptionsSchema as options }
 
 const EvalMaskRegression: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () => (await maskRegressionGate(options)).pass,
+		async () => {
+			const { maskRegressionGate } = await import("../../eval-harness/mask-regression.ts")
+
+			return (await maskRegressionGate(options)).pass
+		},
 		(pass) => (pass ? 0 : 1)
 	)
 

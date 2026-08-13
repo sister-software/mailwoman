@@ -18,14 +18,7 @@ import { execFileSync } from "node:child_process"
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import {
-	buildBrandTable,
-	DEFAULT_DOMINANCE,
-	DEFAULT_MIN_ROWS,
-	defaultBrandTableOutPath,
-	defaultPOIDatabasePath,
-	writeBrandTable,
-} from "mailwoman/gazetteer-pipeline/poi/build-brands"
+import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "mailwoman/gazetteer-pipeline/poi/defaults"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -45,6 +38,9 @@ export { OptionsSchema as options }
 
 const GazetteerBuildPOIBrands: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { buildBrandTable, defaultBrandTableOutPath, defaultPOIDatabasePath, writeBrandTable } =
+			await import("mailwoman/gazetteer-pipeline/poi/build-brands")
+
 		const dbPath = options.db ?? defaultPOIDatabasePath()
 		const out = options.out ?? defaultBrandTableOutPath()
 		const minRows = options.minRows ? Number.parseInt(options.minRows, 10) : DEFAULT_MIN_ROWS

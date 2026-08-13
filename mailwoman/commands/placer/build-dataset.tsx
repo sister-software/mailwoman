@@ -10,12 +10,6 @@
  *   outlier builders append to its splits.
  */
 
-import {
-	buildDataset,
-	buildOutlierExposure,
-	buildOutlierLatin,
-	buildOutlierOA,
-} from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -51,6 +45,9 @@ type Options = zod.infer<typeof OptionsSchema>
 const report = (line: string): void => console.error(line)
 
 async function run(options: Options): Promise<string> {
+	const { buildDataset, buildOutlierExposure, buildOutlierLatin, buildOutlierOA } =
+		await import("@mailwoman/core/coarse-placer/tools")
+
 	switch (options.outliers) {
 		case "exposure": {
 			const res = await buildOutlierExposure({ perLang: options.perLang, wof: options.wof, data: options.data }, report)
@@ -82,7 +79,7 @@ async function run(options: Options): Promise<string> {
 }
 
 const PlacerBuildDataset: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => run(options))
+	const state = useCommandTask(async () => run(options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

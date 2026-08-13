@@ -9,7 +9,6 @@
  *   Requires `DEEPSEEK_API_KEY` (or `ANTHROPIC_API_KEY` with `--provider anthropic`).
  */
 
-import { expandGolden } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -31,8 +30,10 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const CorpusGoldenExpand: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		expandGolden(
+	const state = useCommandTask(async () => {
+		const { expandGolden } = await import("@mailwoman/corpus/tools")
+
+		return expandGolden(
 			{
 				corpus: options.corpus,
 				count: options.count,
@@ -45,7 +46,7 @@ const CorpusGoldenExpand: CommandComponent<typeof OptionsSchema> = ({ options })
 			},
 			(line) => console.error(line)
 		)
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

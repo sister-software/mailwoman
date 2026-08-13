@@ -10,7 +10,9 @@
  *   importable under node's type stripping (the dev `node →` exports condition).
  */
 
-import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
+// Never the `@mailwoman/core` barrel: Pastel imports every command module before argv is parsed, every one of them
+// imports this file, and the barrel is 117 ms against `@mailwoman/core/placetypes`'s ~0.
+import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
 import { createElement as h, useEffect, useState } from "react"
 import type * as React from "react"
@@ -84,6 +86,80 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 }
 
 /* oxlint-enable react-hooks/exhaustive-deps */
+
+/**
+ * The lifecycle of a {@linkcode lazyComponent}'s import. Deliberately the same three states as
+ * {@linkcode CommandTaskState}: a deferred import is a one-shot async task that happens to resolve to a component.
+ */
+type LazyComponentState<P extends object> =
+	| { status: "loading" }
+	| { status: "loaded"; component: React.FC<P> }
+	| { status: "error"; message: string }
+
+/**
+ * Wrap a heavy child component so its module loads on FIRST RENDER rather than at import.
+ *
+ * A component reached from JSX has to be a top-level import, and Pastel imports every command module before commander
+ * parses a single argument — so one `import { DebugView } from "…"` in a branch nobody took still pays for that
+ * branch's whole graph on `mailwoman --version`. `load` runs in an effect instead, and the wrapper renders nothing
+ * until it resolves.
+ *
+ * Nothing on screen for one frame is the right fallback here and not a placeholder: Ink erases the previous frame when
+ * it draws, so a "loading…" line taller than zero is a line the real first frame has to scrub. Commands that want a
+ * spinner own one INSIDE the loaded component, where it can outlive the load.
+ *
+ * A REJECTED import is a command failure, and it takes {@linkcode useCommandTask}'s exact contract: the message renders
+ * red and the process exits 1 from a `setImmediate`, after the frame has committed. That matters here more than for an
+ * ordinary task — the usual reason a deferred import rejects is a missing optional peer dependency, and the alternative
+ * is an unhandled rejection: node's default handler prints a react-reconciler stack over whatever the command had drawn
+ * and takes the exit code with it.
+ *
+ * `React.lazy`/`Suspense` would express the happy path too, but its fallback lands in the same erase path and Ink has
+ * no error boundary — a throw in render escapes `render()` itself, which is the reconciler stack this exists to avoid.
+ */
+export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
+	return function LazyComponent(props: P) {
+		const [state, setState] = useState<LazyComponentState<P>>({ status: "loading" })
+
+		useEffect(() => {
+			let live = true
+
+			void load().then(
+				(component) => {
+					if (live) {
+						setState({ status: "loaded", component })
+					}
+				},
+				(error: unknown) => {
+					if (live) {
+						setState({
+							status: "error",
+							message: error instanceof Error ? (error.stack ?? error.message) : String(error),
+						})
+					}
+				}
+			)
+
+			return () => {
+				live = false
+			}
+			// oxlint-disable-next-line react-hooks/exhaustive-deps -- `load` closes over a module specifier, which
+			// cannot change for the life of the process; tracking it would re-import on every render.
+		}, [])
+
+		useEffect(() => {
+			if (state.status !== "error") return
+
+			setImmediate(() => process.exit(1))
+		}, [state])
+
+		if (state.status === "error") {
+			return h(Text, { color: "red" }, state.message)
+		}
+
+		return state.status === "loaded" ? h(state.component, props) : null
+	}
+}
 
 /**
  * Emit a command's final output as raw bytes, bypassing Ink's `<Text>` renderer.

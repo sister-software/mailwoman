@@ -23,6 +23,7 @@ import { describe, expect, test } from "vitest"
 
 import { options as geocodeOptionsSchema } from "../commands/geocode.tsx"
 import { runStaticDebug } from "./command.tsx"
+import { mapPaneCellSize } from "./DebugFrame.tsx"
 
 // MARK: Environment guard
 
@@ -78,20 +79,58 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 		// The raw query echoed back in the input row.
 		expect(text).toContain("3215 SE Clinton St, Portland OR")
 	})
+
+	test("the captured frame carries the dev-mode evidence rows and result sections from REAL pipeline data", async () => {
+		const options = geocodeOptionsSchema.parse({ tiles: TILES_PATH, debugSize: "140x40" })
+
+		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
+
+		// The evidence rows, each with a value only the live classifier can produce: the conventions system and how
+		// it was chosen, the locale head's own axis, the SentencePiece stream, the channels as fed, the decode.
+		expect(text).toMatch(/system\s+us \((auto|pinned)\)/u)
+		expect(text).toContain("mode ")
+		expect(text).toMatch(/locale-head\s+[A-Z]{2} \d\.\d\d/u)
+		expect(text).toMatch(/tokens\s+\d+\s+▁3/u)
+		expect(text).toMatch(/channels\s+anchor (not fed|\d+\/\d+)/u)
+		expect(text).toMatch(/decode\s+(viterbi|argmax)/u)
+
+		// The result panel's sections.
+		for (const heading of ["components", "kind", "timing", "resolved"]) {
+			expect(text).toContain(heading)
+		}
+
+		// Timing is measured, not defaulted — a zero here would mean the session handed over a placeholder.
+		expect(text).toMatch(/parse\s+\d+\.\d ms/u)
+
+		// And the footer says what this frame is.
+		expect(text).toContain("static frame")
+	})
 })
 
 // MARK: --debug-size floor
 
 describe("runStaticDebug --debug-size floor", () => {
-	test("a --debug-size below 60x14 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
+	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
 		const options = geocodeOptionsSchema.parse({ debugSize: "100x5" })
 
 		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw at this size
 		// (mapPaneCellSize's row math goes negative before map-tui's allocation does) — assertDebugSizeFloor now
 		// catches it before any DB/weights work, so this rejects even without a resolvable session.
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
-			/--debug-size below the 60x14 minimum: 100x5/
+			/--debug-size below the 60x20 minimum: 100x5/
 		)
+	})
+
+	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
+		// The floor is arithmetic, not taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
+		// the pair is what keeps the constant and `mapPaneCellSize` from drifting apart the next time a row is added
+		// to the input area.
+		expect(mapPaneCellSize(60, 20).rows).toBe(6)
+		expect(mapPaneCellSize(60, 19).rows).toBe(5)
+
+		await expect(
+			runStaticDebug("3215 SE Clinton St, Portland OR", geocodeOptionsSchema.parse({ debugSize: "60x19" }))
+		).rejects.toThrow(/--debug-size below the 60x20 minimum: 60x19/)
 	})
 })
 

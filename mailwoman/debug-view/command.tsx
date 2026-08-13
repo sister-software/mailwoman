@@ -10,15 +10,15 @@
  *     #1577 posture as `geocode.tsx`'s one-shot JSON/text/jsonld path: nothing on the success path renders
  *     through Ink's live reconciler, so there is no frame for Ink to clear and no frame tall enough to wipe the
  *     scrollback.
- *   - A TTY invocation gets the interactive three-panel session, {@link DebugSessionApp}, which owns its own
- *     session, tile archive and alternate-screen lifecycle.
+ *   - A TTY invocation gets the interactive three-panel session, {@link DebugSessionApp}, rendered through an Ink
+ *     instance THIS MODULE creates — see {@link DebugSessionHandoff}.
  *
  *   {@linkcode GeocodeDebugCommand} is itself a hook-free dispatcher between the two, the same shape
  *   `geocode.tsx`'s top-level `GeocodeCommand` uses to choose between this module and its own one-shot path.
  *   Branching on `process.stdout.isTTY` INSIDE a component that also calls `useCommandTask` would make that
  *   hook call conditional — forbidden by the rules of hooks even though `isTTY` never changes mid-process, because
  *   a static analyzer has no way to know that. Splitting the static and interactive halves into their own
- *   components (`GeocodeDebugStatic` / {@link DebugSessionApp}) keeps each one's own hook usage unconditional.
+ *   components (`GeocodeDebugStatic` / {@link DebugSessionHandoff}) keeps each one's own hook usage unconditional.
  *
  *   The decisions both surfaces have to agree on — the opening zoom, the `--format` guard, the map-pane size floor —
  *   live in `view-policy.ts` rather than here. This module imports the session, so the session cannot import back out
@@ -27,9 +27,9 @@
 
 import { $public } from "@mailwoman/core/env"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
-import { Text } from "ink"
+import { render, Text, useApp } from "ink"
 import { commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
-import type React from "react"
+import React, { useEffect } from "react"
 
 import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
 import { createGeocodeSession } from "../geocode-session.ts"
@@ -63,10 +63,12 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 
 	assertDebugSizeFloor(columns, rows)
 
-	const session = await createGeocodeSession(options)
+	// Same opt-in the interactive session makes: the captured frame carries the evidence rows, so it has to pay
+	// for the trace too.
+	const session = await createGeocodeSession({ ...options, trace: true })
 
 	try {
-		const { result, tree } = await session.geocode(input)
+		const { result, tree, trace, timing } = await session.geocode(input)
 		const tilesPath = resolveTilesPath(options.tiles)
 		let frame: MapFrame | null = null
 		let mapNote: string | null = null
@@ -108,7 +110,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 				rows={rows}
 				focused={null}
 				color={!$public.NO_COLOR}
-				data={{ input, tree, result, frame, mapNote }}
+				data={{ input, tree, result, frame, mapNote, ...(trace ? { trace } : {}), timing }}
 			/>,
 			columns
 		)
@@ -138,6 +140,80 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
 
 //#endregion
 
+//#region Interactive (TTY) path — the Ink handoff
+
+/**
+ * Hand the terminal from Pastel's Ink instance to one this module configures, then run the session in it.
+ *
+ * Pastel calls `render(element)` with no options and never exposes the instance, so a session rendered inside its tree
+ * inherits Ink's defaults — and two of them are wrong for a full-screen view redrawn on every keystroke. With
+ * `incrementalRendering` off, Ink rewrites the whole frame per commit: **7.10 KB down the tty per keystroke at 120×36,
+ * against 0.33 KB with it on**, all of it truecolor braille that the emulator (and, over SSH, the wire) has to chew
+ * through. And Ink has no alternate-screen buffer unless it is asked for one, which is what forced the hand-rolled
+ * escapes this component's callee used to carry — a frame exactly as tall as the terminal makes Ink emit `\x1b[3J`, and
+ * that wipes the user's SCROLLBACK (#1577).
+ *
+ * Ink keeps ONE renderer per stdout (`ink/render.js`'s `getInstance`) and warns, then reuses the old one, if a second
+ * `render()` arrives for the same stream. So the handoff is an unmount-then-render, not a second mount: `exit()`
+ * unmounts Pastel's tree synchronously through to `instances.delete(stdout)`, which frees the slot. It runs from a
+ * `setImmediate` rather than from the effect body because `exit()` unmounts the tree this effect belongs to, and React
+ * should not be asked to do that from inside its own commit.
+ *
+ * Pastel's tree renders `null` throughout — height 0, so the primary buffer is never written to and there is nothing
+ * left in the scrollback once the session exits.
+ */
+/* oxlint-disable react-hooks/exhaustive-deps -- One-shot by contract, like `useCommandTask`: the handoff happens
+	 once at mount, and a fresh `options` object per render must not repeat it. The empty deps array is the point. */
+
+function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {
+	const { exit } = useApp()
+
+	useEffect(() => {
+		let handed = false
+
+		const handoff = setImmediate(() => {
+			handed = true
+			exit()
+
+			const session = render(<DebugSessionApp initialInput={props.input} options={props.options} />, {
+				// The two Pastel cannot pass. `alternateScreen` also retires the hand-rolled enter/leave escapes:
+				// Ink enters before its first frame and leaves from `unmount()`, which its `signal-exit`
+				// subscription reaches on a signal death too.
+				alternateScreen: true,
+				incrementalRendering: true,
+				// Nothing in the session logs through `console`; leaving the native methods alone keeps the
+				// resolver's own stderr banner out of Ink's re-render path.
+				patchConsole: false,
+			})
+
+			// Ink's own Ctrl+C handling unmounts the app, so this settles on every exit path — Esc, `q`, Ctrl+C,
+			// a fatal. `waitUntilExit` resolves after the teardown writes have flushed, so the primary buffer is
+			// back before either branch writes: the session reports a fatal by exiting WITH the error (Ink discards
+			// alternate-screen teardown output, so a message rendered inside the session would not survive the
+			// switch), and stderr here is where it lands.
+			void session.waitUntilExit().then(
+				() => process.exit(process.exitCode ?? 0),
+				(error: unknown) => {
+					process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+					process.exit(1)
+				}
+			)
+		})
+
+		return () => {
+			if (!handed) {
+				clearImmediate(handoff)
+			}
+		}
+	}, [])
+
+	return null
+}
+
+/* oxlint-enable react-hooks/exhaustive-deps */
+
+//#endregion
+
 //#region Dispatcher
 
 export function GeocodeDebugCommand(props: {
@@ -145,7 +221,7 @@ export function GeocodeDebugCommand(props: {
 	options: GeocodeCommandOptions
 }): React.ReactElement | null {
 	return process.stdout.isTTY ? (
-		<DebugSessionApp initialInput={props.input} options={props.options} />
+		<DebugSessionHandoff input={props.input} options={props.options} />
 	) : (
 		<GeocodeDebugStatic input={props.input} options={props.options} />
 	)

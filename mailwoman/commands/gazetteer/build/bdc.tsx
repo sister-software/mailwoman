@@ -32,26 +32,10 @@ import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import {
-	BDCFileCategory,
-	BDCFilingDataType,
-	BDCProviderSubCategory,
-	buildBDCDatabase,
-	createBDCClient,
-	createTIGERBlockCentroidLookup,
-	downloadBDCFile,
-	formatBDCThrottleStats,
-	resolveLatestVintage,
-	retrieveAvailabilityFiles,
-	retrieveFilingDates,
-} from "@mailwoman/bdc/sdk"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
+import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/core/kysley/client"
 import type { FilerDatabase } from "@mailwoman/filer"
-import { parseProviderList } from "@mailwoman/filer/sdk"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { artifactSizeMB } from "mailwoman/gazetteer-pipeline/admin"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -82,6 +66,26 @@ export { OptionsSchema as options }
 
 const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline/admin")
+
+		const {
+			BDCFileCategory,
+			BDCFilingDataType,
+			BDCProviderSubCategory,
+			buildBDCDatabase,
+			createBDCClient,
+			createTIGERBlockCentroidLookup,
+			downloadBDCFile,
+			formatBDCThrottleStats,
+			resolveLatestVintage,
+			retrieveAvailabilityFiles,
+			retrieveFilingDates,
+		} = await import("@mailwoman/bdc/sdk")
+
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { parseProviderList } = await import("@mailwoman/filer/sdk")
+
 		// Fail-fast guards — checked BEFORE any network/download work
 		// starts. `populateBDCProviderTable` only runs after the availability ingest AND writeLayerManifest, so
 		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
@@ -155,7 +159,7 @@ const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		// --provider-list-path (decision 6) opts into populating bdc_provider — omitted, `providers`/
 		// `filerDB` stay undefined and buildBDCDatabase runs its default path. Both paths were already
 		// existsSync-validated above, so this can't ENOENT.
-		let filerDB: DatabaseClient<FilerDatabase> | undefined
+		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
 
 		if (filerDbPath) {
 			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDbPath})`)

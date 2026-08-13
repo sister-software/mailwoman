@@ -31,16 +31,10 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { dataRootPath, md5File, median } from "@mailwoman/core/utils"
-import {
-	PostcodePrefixIndexResolver,
-	serializePostcodePrefixIndex,
-	type PostcodePrefixHeader,
-	type PostcodePrefixTier,
-} from "@mailwoman/neural/postcode-prefix-index"
+import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { buildPostcodePrefixIndex, type PostcodePrefixLevel } from "mailwoman/gazetteer-pipeline/postcode-prefix"
+import type { PostcodePrefixLevel } from "mailwoman/gazetteer-pipeline/postcode-prefix"
 import { argument } from "pastel"
 import zod from "zod"
 
@@ -128,6 +122,13 @@ export { ArgsSchema as args, OptionsSchema as options }
 
 const GazetteerBuildPostcodePrefix: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath, md5File, median } = await import("@mailwoman/core/utils")
+
+		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
+			await import("@mailwoman/neural/postcode-prefix-index")
+
+		const { buildPostcodePrefixIndex } = await import("mailwoman/gazetteer-pipeline/postcode-prefix")
+
 		const shard = args[0] as ShardName
 		const recipe: ShardRecipe = SHARD_RECIPES[shard]
 		const sourcePath = options.source ?? String(dataRootPath("wof", recipe.sourceFile))

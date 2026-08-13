@@ -29,7 +29,11 @@ import type { GeocodeResult } from "../geocode-core.ts"
 export function initialZoomForTier(result: GeocodeResult): number {
 	if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") return 15
 
-	const leaf = result.hierarchy.at(-1)?.tag
+	// `hierarchy` is ordered MOST SPECIFIC FIRST (`GeocodeResult.hierarchy`: "locality → country"), so the head is the
+	// finest place the resolver decorated. Reading `.at(-1)` took the COUNTRY instead and opened every admin-tier
+	// answer at the whole-country zoom 4: a bare "Portland, Oregon" resolved its locality and then showed North
+	// America.
+	const leaf = result.hierarchy.at(0)?.tag
 
 	if (leaf === "locality" || leaf === "dependent_locality") return 11
 
@@ -67,11 +71,14 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
  * The smallest frame `mapPaneCellSize` can turn into a map-tui viewport that actually renders. Below it,
  * `mapPaneCellSize`'s row math goes non-positive before `MapRenderer` ever runs: measured 2026-08-13, `100x5`
  * (`mapPaneCellSize` rows -3) crashes with a raw `RangeError: Invalid typed array length: -4608` from `new RGBAGrid`
- * deep inside map-tui, and `100x8` (rows 0) renders but with the ribbon/output/map panes overlapping garbled. `60x14`
- * (`mapPaneCellSize` → 28x6) is the smallest size that renders a legible, non-degenerate frame.
+ * deep inside map-tui, and a size whose map-pane row budget lands at 0 renders with the panes overlapping garbled.
+ *
+ * The row floor is `DebugFrame`'s fixed chrome plus the 6 map rows that were the smallest legible pane: input area 9 +
+ * footer 1 + MapPane's own 4 = 14, so 20. (It was 14 while the input area was 4 rows and there was no footer — the
+ * evidence rows and the key hints moved the floor, not a change of mind about how small a map may be.)
  */
 const MIN_DEBUG_COLUMNS = 60
-const MIN_DEBUG_ROWS = 14
+const MIN_DEBUG_ROWS = 20
 
 /**
  * A COLSxROWS pair's floor violation as reportable text, or null when it clears the floor. One function decides the

@@ -40,11 +40,8 @@
 import { copyFileSync, existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { TSVSpliterator } from "spliterator"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -89,6 +86,8 @@ interface PostcodeAcc {
  * Stream the GeoNames postal TSV, accumulating centroid + bbox per (country, postcode).
  */
 async function readGeonames(file: string, want: Set<string>): Promise<Map<string, PostcodeAcc>> {
+	const { TSVSpliterator } = await import("spliterator")
+
 	const acc = new Map<string, PostcodeAcc>()
 
 	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy. The GeoNames allCountries
@@ -180,6 +179,8 @@ const SPR_COLUMNS = [
 ] as const
 
 async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
+	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+
 	if (existsSync(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
@@ -340,6 +341,8 @@ async function foldIntoCandidate(
 
 const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
 

@@ -8,14 +8,17 @@
  *   is committed for provenance.
  */
 
-import { generateCountryReference } from "@mailwoman/codex/tools"
 import { Text } from "ink"
 import { useCommandTask } from "mailwoman/cli-kit"
 
 const report = (line: string): void => console.error(line)
 
 const DevGenerateCountryReference = () => {
-	const state = useCommandTask(() => generateCountryReference({}, report))
+	const state = useCommandTask(async () => {
+		const { generateCountryReference } = await import("@mailwoman/codex/tools")
+
+		return generateCountryReference({}, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

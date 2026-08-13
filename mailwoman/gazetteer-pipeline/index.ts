@@ -43,20 +43,12 @@ import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
 import { emitCoverageManifest } from "./coverage-manifest.ts"
-import { DEFAULT_GEONAMES_COUNTRIES, geonamesAdminGapCountries } from "./defaults.ts"
-
-/**
- * The country set a standalone fold re-derives — the SAME recipe `buildAdmin` bakes into the admin artifact
- * ({@link DEFAULT_GEONAMES_COUNTRIES}), because the fold rewrites its whole id range and any narrower list drops the
- * difference (#1514).
- *
- * It used to be the 14-country bilingual EU set this fold was born for (#743/#193 — FI hard-resolve 69.5 → 85.8 %),
- * from when the fold was a separate step run against an UNFOLDED admin. #1027 moved the fold inside `buildAdmin` and
- * widened it to 161 countries; the 14-country default outlived that and became the payload of the 2026-08-05 incident,
- * re-folding 212,993 places over the front of a 774,338-place range and leaving the rest of the world's names attached
- * to Austrian, Swiss and Lithuanian villages.
- */
-export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
+import {
+	DEFAULT_CANDIDATE_OUT,
+	DEFAULT_FOLD_COUNTRIES,
+	DEFAULT_IMPORTANCE_DB,
+	geonamesAdminGapCountries,
+} from "./defaults.ts"
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
@@ -111,17 +103,6 @@ export const DEFAULT_POSTCODE_SHARDS = [
  * The conventional admin source the fold copies from.
  */
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
-/**
- * The conventional candidate-build output.
- */
-export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
-/**
- * The conventional source of the `importance` column (#28) — a WOF admin database carrying `place_importance`, built by
- * `mailwoman gazetteer importance`. Deliberately a SEPARATE artifact from {@link DEFAULT_ADMIN_DB}: the scores are
- * expensive to derive and change on their own cadence, so the shipped admin DB has never carried the table, and the
- * candidate build joins them in by name rather than assuming one file holds both.
- */
-export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 
 /**
  * `<data-root>/wof`, where the admin DB, candidate DB, postcode shards, and the convention symlink live.

@@ -7,7 +7,6 @@
  *   Pair with `--config` to weight the counts by a training YAML's source_weights block.
  */
 
-import { audit } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -31,6 +30,8 @@ export { ArgsSchema as args, OptionsSchema as options }
 
 const CorpusAudit: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
+		const { audit } = await import("@mailwoman/corpus/tools")
+
 		audit({ corpusDir: args[0], configPath: options.config, sampleShardCount: options.sample })
 	})
 

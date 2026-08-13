@@ -8,7 +8,6 @@
  *   docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the reproducibility contract.
  */
 
-import { buildKryptoniteShard } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -25,6 +24,8 @@ export { OptionsSchema as options }
 
 const CorpusShardKryptonite: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { buildKryptoniteShard } = await import("@mailwoman/corpus/tools")
+
 		await buildKryptoniteShard(
 			{
 				jsonl: options.jsonl,

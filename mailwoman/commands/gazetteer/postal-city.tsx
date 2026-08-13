@@ -22,8 +22,6 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
@@ -42,6 +40,9 @@ export { OptionsSchema as options }
 
 const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		const candidateDb = options.candidateDb
 
 		if (!candidateDb) {

@@ -38,7 +38,7 @@ import { type CommandComponent, useCommandTask, writeRawStdout } from "mailwoman
 import zod from "zod"
 
 import { CheckStatus, type DoctorCheck, type DoctorReport } from "../doctor/checks.ts"
-import { describeEnvironment, runDoctor, type EnvironmentEntry } from "../doctor/runner.ts"
+import type { EnvironmentEntry } from "../doctor/runner.ts"
 
 /**
  * Shown at the top of `mailwoman doctor --help` — the explainer #1577 asked for. Commander reuses it in the root
@@ -156,6 +156,8 @@ const DoctorCommand: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	// module docstring — either way Ink is handed nothing to draw.
 	const state = useCommandTask<DoctorOutcome>(
 		async () => {
+			const { describeEnvironment, runDoctor } = await import("../doctor/runner.ts")
+
 			const report = await runDoctor()
 			const environment = options.verbose ? describeEnvironment() : undefined
 

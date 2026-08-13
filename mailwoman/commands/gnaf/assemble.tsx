@@ -16,7 +16,6 @@
  *   training shard never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
  */
 
-import { assembleGNAF } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
@@ -46,6 +45,8 @@ const GNAFAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [progress, setProgress] = useState<string>()
 
 	const state = useCommandTask(async () => {
+		const { assembleGNAF } = await import("@mailwoman/corpus")
+
 		return assembleGNAF({
 			standardDir: options.standardDir,
 			sampleSize: options.n,

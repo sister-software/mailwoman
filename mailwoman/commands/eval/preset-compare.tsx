@@ -12,8 +12,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { presetCompare } from "../../eval-harness/preset-compare.ts"
-
 export const description = "Compare the 6 demo presets between the shipped baseline and a candidate"
 
 const OptionsSchema = zod.object({
@@ -24,7 +22,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalPresetCompare: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => presetCompare(options))
+	const state = useCommandTask(async () => {
+		const { presetCompare } = await import("../../eval-harness/preset-compare.ts")
+
+		return presetCompare(options)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

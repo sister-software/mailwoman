@@ -14,8 +14,6 @@ import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { publishReleaseToHF } from "../../release-tools/publish-hf.ts"
-
 const ArgsSchema = zod.array(
 	zod.string().describe(
 		argument({
@@ -78,7 +76,11 @@ const OptionsSchema = zod.object({
 export { ArgsSchema as args, OptionsSchema as options }
 
 const ReleaseHF: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
-	const state = useCommandTask(() => publishReleaseToHF({ ...options, version: args[0] }))
+	const state = useCommandTask(async () => {
+		const { publishReleaseToHF } = await import("../../release-tools/publish-hf.ts")
+
+		return publishReleaseToHF({ ...options, version: args[0] })
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

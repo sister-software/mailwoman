@@ -11,7 +11,6 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
-import { defaultAdapterRegistry, runAdapter } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
@@ -57,6 +56,8 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 	})
 
 	const state = useCommandTask(async () => {
+		const { defaultAdapterRegistry, runAdapter } = await import("@mailwoman/corpus")
+
 		const adapterID = args[0]
 
 		if (!adapterID) {

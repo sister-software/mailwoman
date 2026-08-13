@@ -22,7 +22,6 @@
  *   be promoted — that is the correct failure, not a convenience.
  */
 
-import { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -60,6 +59,9 @@ function parseExtracts(spec: string | undefined): Array<{ path: string; region: 
 
 const CorpusSubVenueLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } =
+			await import("@mailwoman/corpus/tools")
+
 		const overtureRows = options.overtureDb
 			? await readOvertureSubVenues({ databasePath: options.overtureDb })
 			: undefined

@@ -19,13 +19,6 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import {
-	AbbreviationToDirectional,
-	DirectionalToAbbreviationMap,
-	NAME_PRONE_US_SUFFIXES,
-	US_STREET_SUFFIX_LOOKUP,
-} from "@mailwoman/codex/us"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -38,6 +31,11 @@ export { OptionsSchema as options }
 
 const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
+			await import("@mailwoman/codex/us")
+
+		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
+
 		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "affix-relabel-lexicon-v2.json"))
 
 		// Directionals: every SINGLE-TOKEN surface variant → canonical abbreviation. The codex maps are

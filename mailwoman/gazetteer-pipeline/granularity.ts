@@ -29,7 +29,10 @@ import { DatabaseSync } from "node:sqlite"
 import type { ComponentTag } from "@mailwoman/core/types"
 
 import { OVERTURE_ID_BASE } from "./admin/fold-overture.ts"
+import { DEFAULT_COVERAGE_FLOOR } from "./defaults.ts"
 import { PLACETYPE_PROJECTION } from "./placetype-census.ts"
+
+export { DEFAULT_COVERAGE_FLOOR } from "./defaults.ts"
 
 /**
  * Synthetic id base for the GeoNames alias fold. Mirrors `GEONAMES_ID_BASE` in
@@ -268,15 +271,6 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 		db.close()
 	}
 }
-
-/**
- * Default parent-coverage floor for crediting a sub-locality rung.
- *
- * This is the weakest number in the design and is deliberately a parameter. GB — the one country with a validated
- * reading — sits around 33%, so 5% is far below the only calibration point we have; it is set low on purpose, to catch
- * thin-but-real tiers rather than to certify them. A second calibration point should harden it.
- */
-export const DEFAULT_COVERAGE_FLOOR = 0.05
 
 /**
  * The deepest rung a country actually reaches, or `null` when it has nothing live at any rung.

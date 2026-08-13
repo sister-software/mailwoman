@@ -7,7 +7,6 @@
  *   under `core/data/libpostal/dictionaries/` (shallow clone + code-point sort).
  */
 
-import { downloadLibpostalResources } from "@mailwoman/core/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -19,7 +18,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const DevDownloadLibpostalResources: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => downloadLibpostalResources(options, (line) => console.error(line)))
+	const state = useCommandTask(async () => {
+		const { downloadLibpostalResources } = await import("@mailwoman/core/tools")
+
+		return downloadLibpostalResources(options, (line) => console.error(line))
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

@@ -4,45 +4,38 @@
  * @author Teffen Ellis, et al.
  *
  *   The interactive half of `mailwoman geocode --debug`: one component owning the whole session — the warm
- *   {@link createGeocodeSession}, the PMTiles handle behind the map pane, focus/pan/zoom/scroll state, and the
- *   alternate-screen lifecycle. {@link DebugFrame} stays pure; everything below is the shell that feeds it.
+ *   {@link createGeocodeSession}, the PMTiles handle behind the map pane, and focus/pan/zoom/scroll state.
+ *   {@link DebugFrame} stays pure; everything below is the shell that feeds it.
  *
- *   ALTERNATE SCREEN, and why it is written by hand. The frame is exactly as tall as the terminal, which is the
- *   condition under which Ink emits `\x1b[2J\x1b[3J\x1b[H` — and `3J` wipes the SCROLLBACK, the #1577 damage
- *   `geocode.tsx`'s one-shot path exists to avoid. On the alternate screen that clear is free: the buffer has no
- *   scrollback of its own, and leaving it restores the primary buffer untouched. Ink 7 can own this itself
- *   (`render`'s `alternateScreen` option), but Pastel calls `render()` for us and exposes no options, so the escapes
- *   are ours to write — and ours to guarantee on the way out. Two mechanisms cover that: the mount effect's cleanup
- *   (the normal path — Esc, `q`, Ctrl+C, an unmount) and a `process` `exit` listener the same effect installs and
- *   removes, so a teardown that never reaches React cleanup still hands the user back their terminal. `restore` is
- *   idempotent; a terminal stranded on the alternate screen is worth the second belt.
- *
- *   FRAME ORDER, and why the first render draws nothing. Ink paints its first frame during the commit, BEFORE any
- *   effect runs, so nothing a mount effect does can precede it. Rendering `null` there (height 0 — the same posture
- *   `GeocodeDebugStatic` takes) means the primary buffer is never written to at all: no flash, and nothing left in
- *   the scrollback after the session exits. The "loading model…" note then paints INSIDE the alternate screen, which
- *   is where the user is actually looking during the multi-second weights load.
+ *   THE ALTERNATE SCREEN IS NOT THIS COMPONENT'S. `command.tsx` renders it through an Ink instance configured with
+ *   `alternateScreen: true`, and Ink enters before its first frame and leaves from `unmount()` — which its
+ *   `signal-exit` subscription reaches on a signal death too. The buffer is what makes the full-height frame safe at
+ *   all: Ink emits `\x1b[2J\x1b[3J\x1b[H` for a frame as tall as the terminal, and `3J` wipes the SCROLLBACK (the
+ *   #1577 damage `geocode.tsx`'s one-shot path exists to avoid). On the alternate screen that clear costs nothing —
+ *   the buffer has no scrollback of its own, and leaving it restores the primary buffer untouched. So this component
+ *   may render a full-height frame from its FIRST frame; there is no primary buffer underneath to protect.
  *
  *   FATAL is reachable only from the loading phase — a failed format guard, an empty query, or a session that could
- *   not open (missing weights/gazetteer, whose {@link commandError} messages ARE the CLI's error contract). That
- *   bound is what makes restoring the primary buffer before rendering the message safe: Ink erases `lastOutputHeight`
- *   lines before its next write, and during loading that height is at most the one-line note. A post-`ready` fatal
- *   would make Ink erase a full screen's worth of the user's scrollback, so failures after the first result are NOT
- *   fatal — a rejected re-run reports in the output pane and keeps the previous result, and a map render that throws
- *   degrades that pane to a note.
+ *   not open (missing weights/gazetteer, whose {@link commandError} messages ARE the CLI's error contract). It is
+ *   reported by exiting the app WITH the error rather than by rendering it: Ink treats alternate-screen teardown
+ *   output as disposable, so a message painted here would be erased by the buffer switch on the way out. `command.tsx`
+ *   writes it to stderr once the primary buffer is back. Failures after the first result are NOT fatal — a rejected
+ *   re-run reports in the output pane and keeps the previous result, and a map render that throws degrades that pane
+ *   to a note.
  */
 
 import { $public } from "@mailwoman/core/env"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
-import TextInput from "ink-text-input"
 import { commandError } from "mailwoman/cli-kit"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
 import type { GeocodeResult } from "../geocode-core.ts"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "../geocode-session.ts"
-import { DebugFrame, mapPaneCellSize, type DebugData, type DebugPane } from "./DebugFrame.tsx"
+import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
+import { outputLines } from "./output-lines.ts"
+import { QueryInput, type InputState } from "./QueryInput.ts"
 import { resolveTilesPath } from "./tiles.ts"
 import { assertDebugFormatSanity, debugSizeFloorViolation, initialZoomForTier } from "./view-policy.ts"
 
@@ -95,9 +88,6 @@ interface SessionRun extends GeocodeRun {
 
 //#region Constants
 
-const ALTERNATE_SCREEN_ENTER = "\u001B[?1049h"
-const ALTERNATE_SCREEN_LEAVE = "\u001B[?1049l"
-
 const PANE_CYCLE: readonly DebugPane[] = ["input", "output", "map"]
 
 const NO_TILES_NOTE = "no tiles: set $MAILWOMAN_TILES or --tiles"
@@ -122,11 +112,6 @@ const MAX_MERCATOR_LATITUDE = 85.05112878
  * keep the stored viewport sane.
  */
 const FALLBACK_MAX_ZOOM = 22
-
-/**
- * The conventional exit code for a process that ended on SIGINT: 128 + 2.
- */
-const SIGINT_EXIT_CODE = 130
 
 //#endregion
 
@@ -188,7 +173,9 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
  * anything else throws, and the caller turns it into the fatal phase.
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
-	const session = await createGeocodeSession(options)
+	// `trace: true` is the debug view's own opt-in — it buys the evidence rows one extra decode per input, which
+	// no other caller of the session should pay for.
+	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = resolveTilesPath(options.tiles)
 
 	if (!tilesPath) return { session, source: null, renderer: null, mapNote: NO_TILES_NOTE }
@@ -220,9 +207,8 @@ function closeResources(resources: Resources | null): void {
 
 /* oxlint-disable react-hooks/exhaustive-deps -- The mount effect is one-shot BY CONTRACT: it opens the
 	 session, the tile archive and the first geocode, and its cleanup is the only thing that closes them.
-	 Tracking `options`/`initialInput`/`stdout` would re-open every handle on any identity change — a fresh
-	 options object per render is enough — and re-enter the alternate screen mid-session. The empty deps
-	 array is the point, same as `useCommandTask`. */
+	 Tracking `options`/`initialInput` would re-open every handle on any identity change — a fresh options
+	 object per render is enough. The empty deps array is the point, same as `useCommandTask`. */
 
 export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps): React.ReactElement | null {
 	const { exit } = useApp()
@@ -230,15 +216,14 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	const [size, setSize] = useState(() => ({ columns: stdout.columns || 80, rows: stdout.rows || 24 }))
 	const [phase, setPhase] = useState<SessionPhase>("loading")
-	const [fatalMessage, setFatalMessage] = useState<string | null>(null)
-	const [onAlternateScreen, setOnAlternateScreen] = useState(false)
+	const [fatalError, setFatalError] = useState<unknown>(null)
 	const [resources, setResources] = useState<Resources | null>(null)
 	const [run, setRun] = useState<SessionRun | null>(null)
 	const [frame, setFrame] = useState<MapFrame | null>(null)
 	const [mapNote, setMapNote] = useState<string | null>(null)
 	const [errorNote, setErrorNote] = useState<string | null>(null)
 	const [focused, setFocused] = useState<DebugPane>("input")
-	const [inputValue, setInputValue] = useState(initialInput)
+	const [field, setField] = useState<InputState>(() => ({ value: initialInput, cursor: initialInput.length }))
 	const [viewport, setViewport] = useState<Viewport | null>(null)
 	const [scrollOffset, setScrollOffset] = useState(0)
 
@@ -248,28 +233,14 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	const frameRequestRef = useRef(0)
 	const runRequestRef = useRef(0)
 
-	//#region Lifecycle — mount, alternate screen, resize, fatal exit
+	//#region Lifecycle — mount, resize, fatal exit
 
 	useEffect(() => {
 		let disposed = false
 		let opened: Resources | null = null
-		let onAlternate = false
-
-		// Idempotent, and a no-op until the buffer was actually taken: `\x1b[?1049l` is not inert on the primary
-		// buffer — xterm's 1049 low is a DECRC, so a terminal that never saw the matching 1049 high restores the
-		// cursor to its default (home) and the next frame paints over whatever the user was looking at. The guard
-		// is what lets the pre-alternate-screen failures below share one exit path with the rest.
-		const restore = (): void => {
-			if (!onAlternate) return
-
-			onAlternate = false
-
-			stdout.write(ALTERNATE_SCREEN_LEAVE)
-		}
 
 		const fail = (error: unknown): void => {
-			restore()
-			setFatalMessage(messageOf(error))
+			setFatalError(error)
 			setPhase("fatal")
 		}
 
@@ -280,30 +251,10 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 				throw commandError('--debug needs an address to start from: mailwoman geocode "<address>" --debug')
 			}
 		} catch (error) {
-			// Still on the primary buffer — `restore` no-ops, and the message renders where the user can read it.
 			fail(error)
 
 			return
 		}
-
-		stdout.write(ALTERNATE_SCREEN_ENTER)
-
-		onAlternate = true
-
-		// Ctrl+C DURING THE LOADING PHASE reaches neither mechanism. `useInput` is inactive until ready/busy and
-		// `TextInput` is not mounted, so nothing has asked for raw mode yet — the keystroke is still the tty's to
-		// interpret, and it arrives as SIGINT rather than as a key event Ink could turn into an unmount. A
-		// SIGINT-terminated process does not run `exit` listeners either, so without this the weights load is a
-		// multi-second window in which Ctrl+C strands the user on the alternate screen. Once raw mode IS on, the
-		// tty stops generating the signal and Ink's own Ctrl+C path takes over.
-		const onInterrupt = (): void => {
-			restore()
-			process.exit(SIGINT_EXIT_CODE)
-		}
-
-		process.once("exit", restore)
-		process.once("SIGINT", onInterrupt)
-		setOnAlternateScreen(true)
 
 		void (async () => {
 			try {
@@ -336,9 +287,6 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			// counter it can no longer match and drops its result instead of setting state on a closed session.
 			runRequestRef.current++
 
-			process.off("exit", restore)
-			process.off("SIGINT", onInterrupt)
-			restore()
 			closeResources(opened)
 		}
 	}, [])
@@ -362,13 +310,13 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [stdout])
 
+	// Exiting WITH the error rather than rendering it — see the header. Ink unmounts, restores the primary buffer,
+	// and rejects `waitUntilExit()`, which is where `command.tsx` prints the message.
 	useEffect(() => {
 		if (phase !== "fatal") return
 
-		process.exitCode = 1
-
-		exit()
-	}, [phase, exit])
+		exit(fatalError instanceof Error ? fatalError : commandError(messageOf(fatalError)))
+	}, [phase, fatalError, exit])
 
 	//#endregion
 
@@ -445,38 +393,43 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Input + keys
 
-	const submit = (value: string): void => {
-		const query = value.trim()
+	// Stable across a keystroke so the memoized input field is, too — it is the ONE element that has to re-render
+	// when the user types, and a fresh handler identity would drag the whole frame with it.
+	const submit = useCallback(
+		(value: string): void => {
+			const query = value.trim()
 
-		if (!resources || phase === "busy" || !query) return
+			if (!resources || phase === "busy" || !query) return
 
-		setPhase("busy")
-		// The previous attempt's failure is stale the moment a new one starts — leaving it up through the busy
-		// window reads as if THIS query had already failed.
-		setErrorNote(null)
+			setPhase("busy")
+			// The previous attempt's failure is stale the moment a new one starts — leaving it up through the busy
+			// window reads as if THIS query had already failed.
+			setErrorNote(null)
 
-		const requestID = ++runRequestRef.current
+			const requestID = ++runRequestRef.current
 
-		void resources.session.geocode(query).then(
-			(reran) => {
-				if (requestID !== runRequestRef.current) return
+			void resources.session.geocode(query).then(
+				(reran) => {
+					if (requestID !== runRequestRef.current) return
 
-				setRun({ input: query, ...reran })
-				// A new result re-centers the map and re-anchors the output pane; a pan the user made against the
-				// PREVIOUS answer would otherwise leave the marker off screen.
-				setViewport(null)
-				setScrollOffset(0)
-				setPhase("ready")
-			},
-			(error: unknown) => {
-				if (requestID !== runRequestRef.current) return
+					setRun({ input: query, ...reran })
+					// A new result re-centers the map and re-anchors the output pane; a pan the user made against the
+					// PREVIOUS answer would otherwise leave the marker off screen.
+					setViewport(null)
+					setScrollOffset(0)
+					setPhase("ready")
+				},
+				(error: unknown) => {
+					if (requestID !== runRequestRef.current) return
 
-				// The previous result stays on screen — a failed re-run is a message, not a reset.
-				setErrorNote(messageOf(error))
-				setPhase("ready")
-			}
-		)
-	}
+					// The previous result stays on screen — a failed re-run is a message, not a reset.
+					setErrorNote(messageOf(error))
+					setPhase("ready")
+				}
+			)
+		},
+		[resources, phase]
+	)
 
 	const nudge = (mutate: (view: Viewport) => Viewport): void => {
 		if (!run) return
@@ -508,13 +461,30 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	}
 
 	const onOutputKey = (key: Key): void => {
-		const lastRow = Math.max(0, (run?.result.hierarchy.length ?? 0) - 1)
-
 		if (key.upArrow) {
 			setScrollOffset((prior) => Math.max(0, prior - 1))
-		} else if (key.downArrow) {
-			setScrollOffset((prior) => Math.min(lastRow, prior + 1))
+
+			return
 		}
+
+		if (!key.downArrow) return
+
+		// Only the DOWN arrow needs the bound, so only it pays for the list. Clamped against the pane's OWN lines
+		// and window — the same builder and capacity function `DebugFrame` renders with, so the scroll can never run
+		// past what the pane shows, and the last page stays full instead of scrolling into empty rows.
+		const lineCount = run
+			? outputLines({
+					result: run.result,
+					tree: run.tree,
+					...(run.trace ? { trace: run.trace } : {}),
+					timing: run.timing,
+					errorNote,
+				}).length
+			: 0
+
+		const lastOffset = Math.max(0, lineCount - outputPaneCapacity(size.rows))
+
+		setScrollOffset((prior) => Math.min(lastOffset, prior + 1))
 	}
 
 	useInput(
@@ -553,21 +523,45 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 	//#region Render
 
-	if (phase === "fatal") return <Text color="red">{fatalMessage}</Text>
+	// Memoized because `DebugFrame`'s panes are memoized: a fresh object literal per render would defeat every one of
+	// them, and the map pane is the expensive one — 28 rows of truecolor braille whose longest line is ~1 kB of SGR,
+	// re-measured by `string-width` and re-tokenized by `ansi-tokenize` on any prop identity change. Typing in the
+	// input row changes none of these values.
+	//
+	// The scroll offset is deliberately NOT in here: it rides its own prop into the output pane, so scrolling leaves
+	// `data` identical and the map frame effect (which depends on `run`) never re-runs on an arrow key.
+	const data = useMemo<DebugData | null>(
+		() =>
+			run
+				? {
+						input: run.input,
+						tree: run.tree,
+						result: run.result,
+						frame,
+						mapNote,
+						...(run.trace ? { trace: run.trace } : {}),
+						timing: run.timing,
+					}
+				: null,
+		[run, frame, mapNote]
+	)
 
-	// Height 0 until the alternate screen is up (see the header): the primary buffer is never written to.
-	if (!run) return onAlternateScreen ? <Text>loading model…</Text> : null
+	const inputField = useMemo(
+		() => (
+			<QueryInput
+				value={field.value}
+				cursor={field.cursor}
+				onChange={setField}
+				onSubmit={submit}
+				focus={focused === "input"}
+			/>
+		),
+		[field, focused, submit]
+	)
 
-	const data: DebugData = {
-		input: run.input,
-		tree: run.tree,
-		// The output pane's scroll: the hierarchy rows are the only variable-length block in it, so sliding a window
-		// over them IS the scroll. Sliced here rather than inside `DebugFrame` so the frame effect keeps depending on
-		// the untouched `run.result` identity — re-slicing per render would re-render the map on every keypress.
-		result: scrollOffset > 0 ? { ...run.result, hierarchy: run.result.hierarchy.slice(scrollOffset) } : run.result,
-		frame,
-		mapNote,
-	}
+	if (phase === "fatal") return null
+
+	if (!run || !data) return <Text>loading model…</Text>
 
 	return (
 		<DebugFrame
@@ -577,10 +571,9 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			busy={phase === "busy"}
 			color={!$public.NO_COLOR}
 			errorNote={errorNote}
+			scrollOffset={scrollOffset}
 			data={data}
-			inputField={
-				<TextInput value={inputValue} onChange={setInputValue} onSubmit={submit} focus={focused === "input"} />
-			}
+			inputField={inputField}
 		/>
 	)
 

@@ -23,19 +23,10 @@
 
 import { execFileSync } from "node:child_process"
 
-import { LayerTier } from "@mailwoman/core/layers"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { artifactSizeMB } from "mailwoman/gazetteer-pipeline/admin"
-import {
-	bboxCoverageCells,
-	buildPOIDatabase,
-	DEFAULT_RELEASE,
-	ingestPlaces,
-	type BBox,
-	type POISourceRow,
-} from "mailwoman/gazetteer-pipeline/poi/build-poi"
+import type { BBox, POISourceRow } from "mailwoman/gazetteer-pipeline/poi/build-poi"
+import { DEFAULT_RELEASE } from "mailwoman/gazetteer-pipeline/poi/defaults"
 import zod from "zod"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
@@ -100,6 +91,13 @@ function parseBBoxFlag(raw: string): BBox {
 
 const GazetteerBuildPOI: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline/admin")
+		const { LayerTier } = await import("@mailwoman/core/layers")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
+		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } =
+			await import("mailwoman/gazetteer-pipeline/poi/build-poi")
+
 		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		if (options.source === "osm") {

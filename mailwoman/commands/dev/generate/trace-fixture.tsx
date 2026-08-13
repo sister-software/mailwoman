@@ -12,7 +12,6 @@
 
 import { Text } from "ink"
 import { type PositionalCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { generateTraceFixture } from "mailwoman/dev-tools/generate-trace-fixture"
 import { argument } from "pastel"
 import zod from "zod"
 
@@ -32,7 +31,11 @@ export { ArgumentsSchema as args }
 const report = (line: string): void => console.error(line)
 
 const DevGenerateTraceFixture: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args }) => {
-	const state = useCommandTask(() => generateTraceFixture({ text: args[0] }, report))
+	const state = useCommandTask(async () => {
+		const { generateTraceFixture } = await import("mailwoman/dev-tools/generate-trace-fixture")
+
+		return generateTraceFixture({ text: args[0] }, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

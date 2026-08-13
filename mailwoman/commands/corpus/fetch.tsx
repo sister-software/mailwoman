@@ -10,19 +10,6 @@
  */
 
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
-import {
-	fetchBan,
-	fetchHRSA,
-	fetchIMLSPLS,
-	fetchNAD,
-	fetchNPPES,
-	fetchOpenAddresses,
-	fetchOurAirports,
-	fetchStateHISchools,
-	fetchStateSources,
-	fetchTigerFull,
-	fetchWikidataSubVenue,
-} from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -83,7 +70,21 @@ type Options = zod.infer<typeof OptionsSchema>
 
 const report = (line: string): void => console.error(line)
 
-function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
+async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
+	const {
+		fetchBan,
+		fetchHRSA,
+		fetchIMLSPLS,
+		fetchNAD,
+		fetchNPPES,
+		fetchOpenAddresses,
+		fetchOurAirports,
+		fetchStateHISchools,
+		fetchStateSources,
+		fetchTigerFull,
+		fetchWikidataSubVenue,
+	} = await import("@mailwoman/corpus/tools")
+
 	const base = { outRoot: options.outRoot }
 
 	switch (source) {

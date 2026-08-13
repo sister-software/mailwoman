@@ -14,8 +14,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { buildESPostcodeCentroids } from "../../eval-harness/es-postcode-centroids.ts"
-
 export const description = "Build Overture-derived postcode-centroid spr DBs (#474)"
 
 const OptionsSchema = zod.object({
@@ -31,7 +29,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalESPostcodeCentroids: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => buildESPostcodeCentroids(options))
+	const state = useCommandTask(async () => {
+		const { buildESPostcodeCentroids } = await import("../../eval-harness/es-postcode-centroids.ts")
+
+		return buildESPostcodeCentroids(options)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

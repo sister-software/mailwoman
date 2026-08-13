@@ -105,7 +105,7 @@ describe("geocode argument validation", () => {
 		}
 
 		// #1577: the old answer was commander's one-liner `error: missing required argument 'address'`
-		// — no usage, no flags, no hint. `cli.ts` rewrites the bare invocation to `--help`, and nudges
+		// — no usage, no flags, no hint. `cli-main.ts` rewrites the bare invocation to `--help`, and nudges
 		// the exit code back to 1 because a missing required operand is still a usage error.
 		expect(threw).toBe(true)
 		expect(status).toBe(1)

@@ -12,7 +12,6 @@
 import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { Text } from "ink"
 import { type Check, CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -39,6 +38,8 @@ export { ArgsSchema as args, OptionsSchema as options }
 const GazetteerBuildFTS: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
+			const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")
+
 			if (!args.length) throw new Error("expected at least one <wof-db> path")
 			const checks: Check[] = []
 

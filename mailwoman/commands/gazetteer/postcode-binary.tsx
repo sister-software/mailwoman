@@ -38,20 +38,11 @@ import { existsSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath } from "@mailwoman/core/utils"
-// @mailwoman/neural is a direct dep and this subpath is a self-contained serializer (type-only
-// imports), so the value import is safe at module level — no heavy ONNX runtime is pulled in.
-import { serializePostcodeBinary } from "@mailwoman/neural/postcode-binary-resolver"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import {
-	buildPostcodeBinaryEntries,
-	type GBGranularity,
-	keyFloorViolation,
-	type PostcodeShardRow,
-} from "../../gazetteer-pipeline/postcode/binary.ts"
+import type { GBGranularity, PostcodeShardRow } from "../../gazetteer-pipeline/postcode/binary.ts"
 
 interface LocaleSource {
 	country: string
@@ -91,6 +82,14 @@ export { OptionsSchema as options }
 
 const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer whose only imports are
+		// type-only, so this load costs a file read rather than the ONNX runtime the package name suggests.
+		const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode-binary-resolver")
+
+		const { buildPostcodeBinaryEntries, keyFloorViolation } =
+			await import("../../gazetteer-pipeline/postcode/binary.ts")
+
 		const wof = dataRootPath("wof")
 		const outDir = options.out
 

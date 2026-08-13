@@ -12,25 +12,11 @@
  *   record-matcher source files + weights + WOF/shard data locally — operator-run, not CI.
  */
 
-import {
-	coverageReconciliation,
-	crossDatasetCorrelation,
-	crossSourceThresholdSweep,
-	dedupCeiling,
-	geocoderNamesakeProbe,
-	geocoderVsProvidedCoords,
-	nppesDedupBenchmark,
-	scorerClusteringEval,
-	scorerCrossStateEval,
-	scorerPairwiseEval,
-	type EvalGeocodeStream,
-} from "@mailwoman/registry/tools"
+import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { evalGeocoderFactory } from "./run.tsx"
 
 const ArgsSchema = zod.tuple([
 	zod
@@ -122,6 +108,21 @@ type Kind = zod.infer<typeof ArgsSchema>[0]
 const report = (line: string): void => console.error(line)
 
 async function runKind(kind: Kind, options: Options): Promise<string> {
+	const {
+		coverageReconciliation,
+		crossDatasetCorrelation,
+		crossSourceThresholdSweep,
+		dedupCeiling,
+		geocoderNamesakeProbe,
+		geocoderVsProvidedCoords,
+		nppesDedupBenchmark,
+		scorerClusteringEval,
+		scorerCrossStateEval,
+		scorerPairwiseEval,
+	} = await import("@mailwoman/registry/tools")
+
+	const { evalGeocoderFactory } = await import("./run.tsx")
+
 	const createGeocoder = evalGeocoderFactory({
 		wof: options.wof,
 		dataRoot: options.dataRoot,

@@ -7,7 +7,6 @@
  *   symmetric scales, 4× smaller). Verify the accuracy cost with `placer eval quant-compare`.
  */
 
-import { quantizeCoarsePlacer } from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -24,7 +23,11 @@ export { OptionsSchema as options }
 const report = (line: string): void => console.error(line)
 
 const PlacerQuantize: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => quantizeCoarsePlacer({ in: options.in, out: options.out }, report))
+	const state = useCommandTask(async () => {
+		const { quantizeCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
+
+		return quantizeCoarsePlacer({ in: options.in, out: options.out }, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

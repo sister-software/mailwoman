@@ -8,7 +8,6 @@
  *   precision). Geocode-free + label-free; emits the markdown report to stdout.
  */
 
-import { dedupCeiling } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -27,12 +26,14 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const RegistryDedupCeiling: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		dedupCeiling(
+	const state = useCommandTask(async () => {
+		const { dedupCeiling } = await import("@mailwoman/registry/tools")
+
+		return dedupCeiling(
 			{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
 			(line) => console.error(line)
 		)
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

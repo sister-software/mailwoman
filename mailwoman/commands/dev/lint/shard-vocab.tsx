@@ -10,7 +10,6 @@
  *   contradiction.
  */
 
-import { lintShardVocab } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -28,15 +27,18 @@ export { OptionsSchema as options }
 
 const DevLintShardVocab: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		() =>
-			lintShardVocab({
+		async () => {
+			const { lintShardVocab } = await import("@mailwoman/corpus/tools")
+
+			return lintShardVocab({
 				shard: options.shard,
 				baseVersion: options.baseVersion,
 				baseRoot: options.baseRoot,
 				threshold: options.threshold,
 				minCount: options.minCount,
 				fraction: options.fraction,
-			}),
+			})
+		},
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)
 

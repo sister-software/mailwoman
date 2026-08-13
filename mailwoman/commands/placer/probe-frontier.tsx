@@ -8,7 +8,6 @@
  *   under-confident / low-quality signal / no change) that drives the Phase-2 fix choice.
  */
 
-import { probeFrontier } from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -29,7 +28,11 @@ export { OptionsSchema as options }
 const report = (line: string): void => console.error(line)
 
 const PlacerProbeFrontier: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => probeFrontier({ model: options.model, n: options.n, out: options.out }, report))
+	const state = useCommandTask(async () => {
+		const { probeFrontier } = await import("@mailwoman/core/coarse-placer/tools")
+
+		return probeFrontier({ model: options.model, n: options.n, out: options.out }, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

@@ -23,7 +23,6 @@ import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
 import { CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -43,6 +42,9 @@ export { OptionsSchema as options }
 const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
+			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } =
+				await import("mailwoman/gazetteer-pipeline")
+
 			const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
 
 			console.error(`Verifying ${dbPath}...`)

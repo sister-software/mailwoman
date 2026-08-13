@@ -8,7 +8,6 @@
  *   (`cik-lookup-data.txt`); requires `SEC_EDGAR_USER_AGENT` set in the environment. Paced at 9 req/s.
  */
 
-import { filerEdgarIngest } from "@mailwoman/filer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -31,6 +30,8 @@ export { OptionsSchema as options }
 
 const FilerEdgarIngest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { filerEdgarIngest } = await import("@mailwoman/filer/tools")
+
 		const { readFileSync } = await import("node:fs")
 
 		// oxlint-disable mailwoman/prefer-spliterator

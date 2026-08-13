@@ -199,7 +199,7 @@ async function packAndPublish(dir: string): Promise<void> {
 	const audit = verifyTarball(tgz)
 
 	console.log(
-		`• ${pkg.name}: tarball verified — ${audit.literalFiles} literal files, ${audit.exportTargets} exports targets`
+		`• ${pkg.name}: tarball verified — ${audit.literalFiles} literal files, ${audit.exportTargets} exports targets, ${audit.binTargets} bin targets`
 	)
 
 	if (flags["dry-run"]) {

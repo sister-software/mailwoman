@@ -28,15 +28,11 @@ import { globSync, mkdirSync, rmSync } from "node:fs"
 import { basename, dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
 
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
@@ -143,6 +139,10 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 
 const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { parseJSONStrict } = await import("@mailwoman/core/objects")
+		const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
+
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {
 			throw commandError(
 				`--state required (one of: ${Object.keys(STATE_FIPS).join(", ")} — extend STATE_FIPS for others)`

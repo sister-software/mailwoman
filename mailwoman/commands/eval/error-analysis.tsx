@@ -13,8 +13,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { evalErrorAnalysis } from "../../eval-harness/error-analysis.ts"
-
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote gate)"
 
 const OptionsSchema = zod.object({
@@ -37,7 +35,11 @@ export { OptionsSchema as options }
 
 const EvalErrorAnalysis: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		() => evalErrorAnalysis(options),
+		async () => {
+			const { evalErrorAnalysis } = await import("../../eval-harness/error-analysis.ts")
+
+			return evalErrorAnalysis(options)
+		},
 		(exitCode) => exitCode
 	)
 

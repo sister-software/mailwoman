@@ -13,8 +13,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { oaResolverEval } from "../../eval-harness/oa-resolver-eval.ts"
-
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 
 const OptionsSchema = zod.object({
@@ -93,8 +91,10 @@ export { OptionsSchema as options }
 const EvalOAResolver: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const { adminCoherenceOff, adminFst, postcodeCountryCoherenceOff, ...rest } = options
 
-	const state = useCommandTask(() =>
-		oaResolverEval({
+	const state = useCommandTask(async () => {
+		const { oaResolverEval } = await import("../../eval-harness/oa-resolver-eval.ts")
+
+		return oaResolverEval({
 			...rest,
 			noAdminCoherence: adminCoherenceOff,
 			noPostcodeCountryCoherence: postcodeCountryCoherenceOff,
@@ -102,7 +102,7 @@ const EvalOAResolver: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 			// the house spelling, so the rename happens here rather than in the eval's own contract.
 			...(adminFst ? { adminFST: adminFst } : {}),
 		})
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

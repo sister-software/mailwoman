@@ -12,7 +12,6 @@
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { artifactSizeMB, buildAdmin } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -45,6 +44,8 @@ const csv = (raw: string | undefined): string[] | undefined =>
 
 const GazetteerBuildAdmin: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { artifactSizeMB, buildAdmin } = await import("mailwoman/gazetteer-pipeline")
+
 		const result = await buildAdmin({
 			dataDir: options.data,
 			out: options.out,

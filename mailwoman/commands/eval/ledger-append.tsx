@@ -13,8 +13,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { ledgerAppend } from "../../eval-harness/ledger-append.ts"
-
 export const description = "Append a promotion-gate run to evals/scores-by-version.json (#885)"
 
 const OptionsSchema = zod.object({
@@ -43,7 +41,11 @@ export { OptionsSchema as options }
 
 const EvalLedgerAppend: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () => ledgerAppend(options),
+		async () => {
+			const { ledgerAppend } = await import("../../eval-harness/ledger-append.ts")
+
+			return ledgerAppend(options)
+		},
 		(exitCode) => exitCode
 	)
 

@@ -9,13 +9,10 @@
  *   record-matcher source files, weights, and WOF/shard data locally — operator-run, not CI.
  */
 
-import { trainCrossSourceGBT, trainDedupGBT, trainOrgCrossSourceGBT } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { evalGeocoderFactory } from "./run.tsx"
 
 const ArgsSchema = zod.tuple([
 	zod.enum(["gbt", "cross-gbt", "org-cross-gbt"]).describe(
@@ -57,7 +54,10 @@ type Variant = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)
 
-function runVariant(variant: Variant, options: Options): Promise<{ out: string; pairs: number }> {
+async function runVariant(variant: Variant, options: Options): Promise<{ out: string; pairs: number }> {
+	const { trainCrossSourceGBT, trainDedupGBT, trainOrgCrossSourceGBT } = await import("@mailwoman/registry/tools")
+	const { evalGeocoderFactory } = await import("./run.tsx")
+
 	const createGeocoder = evalGeocoderFactory({
 		wof: options.wof,
 		dataRoot: options.dataRoot,

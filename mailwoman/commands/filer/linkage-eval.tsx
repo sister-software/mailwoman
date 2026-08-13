@@ -9,7 +9,6 @@
  *   the report's dated H1 so the committed scorecard can be regenerated without editing code.
  */
 
-import { filerLinkageEval } from "@mailwoman/filer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -30,9 +29,11 @@ function formatScoreValue(value: number | null): string {
 }
 
 const FilerLinkageEval: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		filerLinkageEval({ outMd: options.outMd, date: options.date }, (line) => console.error(line))
-	)
+	const state = useCommandTask(async () => {
+		const { filerLinkageEval } = await import("@mailwoman/filer/tools")
+
+		return filerLinkageEval({ outMd: options.outMd, date: options.date }, (line) => console.error(line))
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

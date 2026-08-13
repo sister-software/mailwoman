@@ -25,9 +25,6 @@
 import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
@@ -100,6 +97,10 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 
 const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { parseJSONStrict } = await import("@mailwoman/core/objects")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 

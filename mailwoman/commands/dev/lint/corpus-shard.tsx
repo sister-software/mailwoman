@@ -9,7 +9,6 @@
  *   exits 1 when any error-severity flag fires (warnings don't gate).
  */
 
-import { lintCorpusShard } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -28,8 +27,10 @@ const report = (line: string): void => console.error(line)
 
 const DevLintCorpusShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () =>
-			lintCorpusShard(
+		async () => {
+			const { lintCorpusShard } = await import("@mailwoman/corpus/tools")
+
+			return lintCorpusShard(
 				{
 					shardPath: options.shard,
 					statsPath: options.stats,
@@ -38,7 +39,8 @@ const DevLintCorpusShard: CommandComponent<typeof OptionsSchema> = ({ options })
 					outJSON: options.outJSON,
 				},
 				report
-			),
+			)
+		},
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)
 

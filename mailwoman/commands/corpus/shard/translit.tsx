@@ -9,7 +9,6 @@
  *   paths (`$MAILWOMAN_DATA_ROOT/…` → `/data/…`).
  */
 
-import { buildTranslitShard } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -31,6 +30,8 @@ export { OptionsSchema as options }
 
 const CorpusShardTranslit: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { buildTranslitShard } = await import("@mailwoman/corpus/tools")
+
 		await buildTranslitShard(
 			{
 				jsonl: options.jsonl,

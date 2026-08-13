@@ -15,14 +15,8 @@ import * as fs from "node:fs/promises"
 import { availableParallelism } from "node:os"
 
 import { Spinner } from "@inkjs/ui"
-import {
-	generateMermaidMarkup,
-	type InterpolateColorCallback,
-	Placetype,
-	type PlacetypeRole,
-	PlacetypeRoles,
-} from "@mailwoman/core"
-import * as d3Chromatic from "d3-scale-chromatic"
+import type { InterpolateColorCallback, PlacetypeRole } from "@mailwoman/core"
+import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
 import { parseRoles, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
@@ -35,7 +29,8 @@ const BATCH_SIZE = availableParallelism()
  * map it to `interpolateViridis`. Categorical scales (`scheme*`) are deliberately excluded — they're string[]s, not
  * (t)=>string.
  */
-const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
+async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCallback>> {
+	const d3Chromatic = await import("d3-scale-chromatic")
 	const out: Record<string, InterpolateColorCallback> = {}
 
 	for (const [key, value] of Object.entries(d3Chromatic)) {
@@ -44,9 +39,7 @@ const D3_INTERPOLATORS: Record<string, InterpolateColorCallback> = (() => {
 	}
 
 	return out
-})()
-
-const D3_INTERPOLATOR_NAMES = Object.keys(D3_INTERPOLATORS).toSorted()
+}
 
 const ArgumentsSchema = zod
 	.array(zod.string())
@@ -73,12 +66,14 @@ const OptionsSchema = zod.object({
 
 export { ArgumentsSchema as args, OptionsSchema as options }
 
-function resolveInterpolator(raw: string | undefined): InterpolateColorCallback | undefined {
+async function resolveInterpolator(raw: string | undefined): Promise<InterpolateColorCallback | undefined> {
 	if (!raw) return undefined
-	const fn = D3_INTERPOLATORS[raw.toLowerCase()]
+
+	const interpolators = await loadD3Interpolators()
+	const fn = interpolators[raw.toLowerCase()]
 
 	if (!fn) {
-		throw commandError(`Unknown interpolator '${raw}'. Available: ${D3_INTERPOLATOR_NAMES.join(", ")}.`)
+		throw commandError(`Unknown interpolator '${raw}'. Available: ${Object.keys(interpolators).toSorted().join(", ")}.`)
 	}
 
 	return fn
@@ -88,6 +83,8 @@ const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
+		const { generateMermaidMarkup, Placetype } = await import("@mailwoman/core")
+
 		if (!args[0]) {
 			throw commandError("Missing required positional argument: <localRepoDirectory>")
 		}
@@ -99,7 +96,7 @@ const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 		}
 
 		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
-		const interpolator: InterpolateColorCallback | undefined = resolveInterpolator(options.interpolator)
+		const interpolator: InterpolateColorCallback | undefined = await resolveInterpolator(options.interpolator)
 
 		await Placetype.prepare({ batchSize: BATCH_SIZE, localRepoDirectory })
 

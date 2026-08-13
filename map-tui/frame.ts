@@ -11,7 +11,7 @@
  * per cell. The braille dither/luminance work is asciify's — `FrameRasterizer` subclasses `AsciifyTerminal` with a
  * no-op sink purely to reach its protected `_computeBrailleCells`, `_cellChars`, `_cellColors`, so this module never
  * re-implements the dot math. `frameToANSILines` and `overlayText` then work on the plain `MapFrame` value, with no
- * further asciify dependency.
+ * further asciify dependency; `blitFrame` is the seam back the other way, for callers driving a live terminal.
  */
 
 import { AsciifyTerminal } from "@sister.software/asciify/tui"
@@ -167,4 +167,33 @@ export function overlayText(
  */
 export function rgbToPacked(color: RGB): number {
 	return (color[0] << 16) | (color[1] << 8) | color[2]
+}
+
+/**
+ * Codepoint written for a cell the frame left empty. `MapFrame` stores 0 there; `AsciifyTerminal` expects a real
+ * character, and normalizes a space to the inkless color itself.
+ */
+const SPACE_CODEPOINT = 0x20
+
+/**
+ * Writes a frame's cells into an `AsciifyTerminal`'s current frame. Call `flush()` afterwards to emit the damage.
+ *
+ * The frame's packed color is the exact representation asciify canonicalizes truecolor to, so this is a copy and not a
+ * conversion — the channels are unpacked here only because {@linkcode AsciifyTerminal.setCell} takes them apart. Cells
+ * beyond the terminal's own grid are dropped by `setCell`, so a frame larger than the pane clips rather than throws.
+ */
+export function blitFrame(terminal: AsciifyTerminal, frame: MapFrame): void {
+	for (let row = 0; row < frame.rows; row++) {
+		for (let column = 0; column < frame.columns; column++) {
+			const cellIndex = row * frame.columns + column
+			const char = frame.chars[cellIndex]!
+			const color = frame.colors[cellIndex]!
+
+			terminal.setCell(column, row, char === 0 ? SPACE_CODEPOINT : char, [
+				(color >> 16) & 0xff,
+				(color >> 8) & 0xff,
+				color & 0xff,
+			])
+		}
+	}
 }

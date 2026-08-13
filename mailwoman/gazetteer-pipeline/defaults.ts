@@ -319,3 +319,52 @@ export function geonamesAdminGapCountries(): string[] {
 
 	return DEFAULT_GEONAMES_COUNTRIES.filter((cc) => !covered.has(cc))
 }
+
+/**
+ * The country set a standalone fold re-derives — the SAME recipe `buildAdmin` bakes into the admin artifact
+ * ({@link DEFAULT_GEONAMES_COUNTRIES}), because the fold rewrites its whole id range and any narrower list drops the
+ * difference (#1514).
+ *
+ * It used to be the 14-country bilingual EU set this fold was born for (#743/#193 — FI hard-resolve 69.5 → 85.8 %),
+ * from when the fold was a separate step run against an UNFOLDED admin. #1027 moved the fold inside `buildAdmin` and
+ * widened it to 161 countries; the 14-country default outlived that and became the payload of the 2026-08-05 incident,
+ * re-folding 212,993 places over the front of a 774,338-place range and leaving the rest of the world's names attached
+ * to Austrian, Swiss and Lithuanian villages.
+ */
+export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
+
+/**
+ * The conventional candidate-build output.
+ */
+export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
+/**
+ * The conventional source of the `importance` column (#28) — a WOF admin database carrying `place_importance`, built by
+ * `mailwoman gazetteer importance`. Deliberately a SEPARATE artifact from {@link DEFAULT_ADMIN_DB}: the scores are
+ * expensive to derive and change on their own cadence, so the shipped admin DB has never carried the table, and the
+ * candidate build joins them in by name rather than assuming one file holds both.
+ */
+export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
+
+/**
+ * The frozen artifact's ten countries, IN ITS INGEST ORDER (recovered from its per-country `spr.id` ranges: FI @
+ * 9500000000000 … GB @ 9500000056075). The first nine are the #920 namesake-tail set the original
+ * `--geonames-postal-countries` flag carried; GB was appended in a later pass from the `GB_full` dump and is 97 % of
+ * the artifact (1,839,678 of 1,895,753 rows, ~946 MB). Keep the order: it is what makes a rebuild id-comparable to the
+ * frozen shard.
+ */
+/**
+ * The tail shard's country set, in the frozen artifact's own ingest order. GB left for Code-Point Open 2026-08-05; BE
+ * joined 2026-08-12 (the eu-mixed lane — the Overture BE parquet measured too thin at 203 codes, none of the panel's,
+ * while GeoNames carries the full 1,146). A change here re-freezes the artifact: rebuild, run the parity gate against
+ * the prior shard, and swap under the .prev rotation.
+ */
+export const DEFAULT_GEONAMES_TAIL_COUNTRIES = ["FI", "CZ", "SK", "SI", "DK", "NO", "HR", "PL", "SE", "BE"] as const
+
+/**
+ * Default parent-coverage floor for crediting a sub-locality rung.
+ *
+ * This is the weakest number in the design and is deliberately a parameter. GB — the one country with a validated
+ * reading — sits around 33%, so 5% is far below the only calibration point we have; it is set low on purpose, to catch
+ * thin-but-real tiers rather than to certify them. A second calibration point should harden it.
+ */
+export const DEFAULT_COVERAGE_FLOOR = 0.05
