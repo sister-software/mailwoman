@@ -258,7 +258,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 }
 
 const RegistryScorerEval: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
-	const state = useCommandTask(async () => runKind(args[0], options))
+	const state = useCommandTask(() => runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

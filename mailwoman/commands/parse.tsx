@@ -973,7 +973,7 @@ async function runNeural(
 		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options))
 	}
 
-	return await serializeTree(tree, options.format, { includeAlternatives: options.candidates !== undefined })
+	return await serializeTree(tree, options.format, { includeAlternatives: options.candidates != null })
 }
 
 export default ParseCommand

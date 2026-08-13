@@ -145,8 +145,8 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
  *
  * Pastel calls `render(element)` with no options and never exposes the instance, so a session rendered inside its tree
  * inherits Ink's defaults — and two of them are wrong for a full-screen view redrawn on every keystroke. With
- * `incrementalRendering` off, Ink rewrites the whole frame per commit: **7.01 KB down the tty per keystroke at 120×36,
- * against 0.25 KB with it on**, all of it truecolor braille that the emulator (and, over SSH, the wire) has to chew
+ * `incrementalRendering` off, Ink rewrites the whole frame per commit: **7.10 KB down the tty per keystroke at 120×36,
+ * against 0.33 KB with it on**, all of it truecolor braille that the emulator (and, over SSH, the wire) has to chew
  * through. And Ink has no alternate-screen buffer unless it is asked for one, which is what forced the hand-rolled
  * escapes this component's callee used to carry — a frame exactly as tall as the terminal makes Ink emit `\x1b[3J`, and
  * that wipes the user's SCROLLBACK (#1577).

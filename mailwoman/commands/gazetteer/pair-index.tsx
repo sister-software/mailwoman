@@ -35,9 +35,6 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:
 import { join } from "node:path"
 
 import type { ComponentTag } from "@mailwoman/core/types"
-// @mailwoman/neural's fst-prior and pair-index-resolver subpaths are self-contained (fst-prior only
-// type-imports from a sibling module; pair-index-resolver only imports core/types) — safe value
-// imports at module level, no heavy ONNX runtime pulled in (mirrors postcode-binary.tsx's comment).
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
@@ -225,6 +222,8 @@ export { OptionsSchema as options }
 const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		// Both `@mailwoman/neural` subpaths are self-contained — `fst-prior` type-imports from a sibling and
+		// `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
 		const { PairIndexBuilder, applyPairIndexHoldout } = await import("mailwoman/gazetteer-pipeline/pair-index")

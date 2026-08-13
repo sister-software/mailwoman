@@ -42,6 +42,8 @@ import { join } from "path-ts"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
 import { buildFTS } from "../fts.ts"
 
+export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
+
 /**
  * `meta` is the artifact's own provenance record — a key/value table read at open, so the licence obligation and the
  * source fingerprints travel WITH the database instead of in a document that can drift from it.

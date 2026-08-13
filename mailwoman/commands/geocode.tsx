@@ -64,7 +64,7 @@ const ArgumentsSchema = zod
 
 /**
  * Shown at the top of `mailwoman geocode --help` — which is also what a bare `mailwoman geocode` now prints (#1577, see
- * `cli.ts`) — and reused by commander for the root command listing, so it stays to two sentences.
+ * `cli-main.ts`) — and reused by commander for the root command listing, so it stays to two sentences.
  */
 export const description =
 	"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the " +
