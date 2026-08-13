@@ -160,7 +160,7 @@
 		"h3-js": "^4.5.0",
 		"ink": "^7.1.1",
 		"ink-text-input": "^6.0.0",
-		"kysely": "^0.29.4",
+		"kysely": "^0.29.5",
 		"onnxruntime-node": "^1.26.0",
 		"pastel": "^4.0.1",
 		"path-ts": "^2.1.0",
