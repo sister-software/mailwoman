@@ -22,9 +22,9 @@ const MAX_POI_SEGMENTS = 3
  */
 export interface POIPhraseMatch {
 	/**
-	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id. For
-	 * `kind: "brand"`, the brand's canonical display name (NOT a taxonomy id) — `matchPOISubject` never reads this field
-	 * itself, so the caller (`mailwoman`'s `poi-intent.ts`) is the one that interprets it per `kind`.
+	 * The matched subject's identifier string. For `kind: "category"`, a `@mailwoman/poi-taxonomy` category id; for
+	 * `kind: "brand"` or `kind: "name"`, the canonical display name. `matchPOISubject` treats it opaquely; the caller
+	 * (`mailwoman`'s `poi-intent.ts`) interprets it per `kind`.
 	 */
 	categoryID: string
 	matchedPhrase: string
@@ -33,7 +33,7 @@ export interface POIPhraseMatch {
 	 * Absent = "category" (the pre-brand shape) — optional so pre-7.3 POIPhraseLookup implementors stay
 	 * source-compatible.
 	 */
-	kind?: "category" | "brand"
+	kind?: "category" | "brand" | "name"
 	/**
 	 * Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match).
 	 */
@@ -45,6 +45,17 @@ export interface POIPhraseMatch {
  */
 export type POIPhraseLookup = (phrase: string, locale?: string) => ReadonlyArray<POIPhraseMatch>
 
+export type POISpatialRelation = "comma" | "near" | "in" | "at" | "around" | "to"
+
+export interface POIQuerySpan {
+	text: string
+	/**
+	 * Half-open character offsets into the normalized input.
+	 */
+	start: number
+	end: number
+}
+
 /**
  * Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default).
  */
@@ -54,15 +65,22 @@ export interface POISubjectMatch {
 	 * The matched subject text as it appeared in the query.
 	 */
 	subject: string
+	subjectSpan: POIQuerySpan
+	/**
+	 * The relation crossing from the subject span to the anchor span.
+	 */
+	relation?: POISpatialRelation
+	relationSpan?: POIQuerySpan
 	/**
 	 * The anchor remainder after the separator; `""` when the whole input matched.
 	 */
 	remainder: string
+	anchorSpan?: POIQuerySpan
 }
 
 /**
- * Anchor separator between subject and place: comma, or near/in/at/around — scanned left-to-right until a prefix hits
- * the lexicon.
+ * Anchor separator between subject and place: comma, or near/in/at/around/to — scanned left-to-right until a prefix
+ * hits the lexicon.
  *
  * Linear by construction (no polynomial ReDoS): neither alternative places an unbounded whitespace quantifier _before_
  * its required literal — the classic `\s*`/`\s+`-then-literal backtracking shape that CodeQL's `js/polynomial-redos`
@@ -78,16 +96,16 @@ export interface POISubjectMatch {
  * lastIndex) identical, preserving the exact subsequent-match sequence. Verified: 0 divergences across 22.7k inputs
  * (systematic + fuzzed adversarial whitespace + shared-whitespace anchor/comma chains).
  */
-const ANCHOR_SEPARATOR = /,\s*|\s(?:near|in|at|around)\s+/gi
+const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to)\s+/gi
 
 /**
- * Longest subject we accept, in tokens. Lexicon phrases are short; 4 covers the table.
+ * Longest subject we accept, in tokens. Eight covers compound taxonomy phrases while bounding lexicon probes.
  */
-const MAX_SUBJECT_TOKENS = 4
+const MAX_SUBJECT_TOKENS = 8
 
 /**
  * Match a POI subject: the whole input, or the text before the FIRST anchor separator WHOSE PREFIX HITS THE LEXICON (≤
- * 4 tokens). Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator word
+ * 8 tokens). Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator word
  * (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point. Returns null when the
  * lexicon never fires — including comma-ridden full addresses whose leading segment isn't a lexicon phrase.
  */
@@ -97,13 +115,19 @@ export function matchPOISubject(
 	lookup: POIPhraseLookup
 ): POISubjectMatch | null {
 	const trimmed = text.trim()
+	const inputStart = text.indexOf(trimmed)
 
 	if (!trimmed) return null
 
 	const whole = lookup(trimmed, locale)
 
 	if (whole.length) {
-		return { match: whole[0]!, subject: trimmed, remainder: "" }
+		return {
+			match: whole[0]!,
+			subject: trimmed,
+			subjectSpan: { text: trimmed, start: inputStart, end: inputStart + trimmed.length },
+			remainder: "",
+		}
 	}
 
 	for (const separator of trimmed.matchAll(ANCHOR_SEPARATOR)) {
@@ -120,7 +144,34 @@ export function matchPOISubject(
 
 		const remainder = trimmed.slice(separator.index + separator[0].length).trim()
 
-		return { match: hits[0]!, subject, remainder }
+		if (!remainder) continue
+
+		const subjectOffset = trimmed.slice(0, separator.index).indexOf(subject)
+		const anchorOffset = trimmed.indexOf(remainder, separator.index + separator[0].length)
+		const relationText = separator[1] ?? ","
+		const relationOffset = separator[1] ? separator.index + separator[0].indexOf(separator[1]) : separator.index
+
+		return {
+			match: hits[0]!,
+			subject,
+			subjectSpan: {
+				text: subject,
+				start: inputStart + subjectOffset,
+				end: inputStart + subjectOffset + subject.length,
+			},
+			relation: relationText === "," ? "comma" : (relationText.toLowerCase() as POISpatialRelation),
+			relationSpan: {
+				text: relationText,
+				start: inputStart + relationOffset,
+				end: inputStart + relationOffset + relationText.length,
+			},
+			remainder,
+			anchorSpan: {
+				text: remainder,
+				start: inputStart + anchorOffset,
+				end: inputStart + anchorOffset + remainder.length,
+			},
+		}
 	}
 
 	return null

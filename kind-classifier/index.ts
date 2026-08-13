@@ -19,7 +19,7 @@ export { deriveIntentMarkers } from "./intent-markers.ts"
 export type { IntentMarkerContext } from "./intent-markers.ts"
 export { nearMeSubject, scoreBareToponym, scoreNearMe, scoreRoutePair } from "./intent-rules.ts"
 export { matchPOICategory, matchPOISubject } from "./poi.ts"
-export type { POIPhraseMatch, POIPhraseLookup, POISubjectMatch } from "./poi.ts"
+export type { POIPhraseMatch, POIPhraseLookup, POIQuerySpan, POISpatialRelation, POISubjectMatch } from "./poi.ts"
 
 export {
 	scoreIntersection,

@@ -19,8 +19,8 @@ the network.
 
 ## `curated-overlay.json` — mailwoman's hand-maintained overlay
 
-The 23 curated category records (curated hierarchies, `osmTag`s, `overtureCategories` rollups, and the 6
-`mailwoman-infra` street-furniture classes) plus the 35 synonym phrases. This is the source of truth for the curated
+The 26 curated category records (curated hierarchies, `osmTag`s, `overtureCategories` rollups, and the 6
+`mailwoman-infra` street-furniture classes) plus the 54 synonym phrases. This is the source of truth for the curated
 layer; the generator merges it over the Overture snapshot.
 
 ## `taxonomy.json` — the generated, committed merge

@@ -28,6 +28,10 @@ const LOOKUP: POIPhraseLookup = (phrase) => {
 		return [{ kind: "category", categoryID: "clinic", matchedPhrase: "walk in clinic", confidence: 1 }]
 	}
 
+	if (norm === "places of worship") {
+		return [{ kind: "category", categoryID: "place_of_worship", matchedPhrase: norm, confidence: 1 }]
+	}
+
 	if (norm === "chevron") {
 		return [{ kind: "brand", categoryID: "Chevron", wikidata: "Q319642", matchedPhrase: "chevron", confidence: 1 }]
 	}
@@ -56,6 +60,10 @@ describe("matchPOISubject", () => {
 		expect(m?.match.categoryID).toBe("drinking_water")
 		expect(m?.subject).toBe("drinking fountain")
 		expect(m?.remainder).toBe("Springfield IL")
+		expect(m?.relation).toBe("near")
+		expect(m?.subjectSpan).toEqual({ text: "drinking fountain", start: 0, end: 17 })
+		expect(m?.relationSpan).toEqual({ text: "near", start: 18, end: 22 })
+		expect(m?.anchorSpan).toEqual({ text: "Springfield IL", start: 23, end: 37 })
 	})
 
 	it("splits on a comma separator", () => {
@@ -72,6 +80,19 @@ describe("matchPOISubject", () => {
 		expect(m?.match.categoryID).toBe("clinic")
 		expect(m?.subject).toBe("walk in clinic")
 		expect(m?.remainder).toBe("Boston MA")
+	})
+
+	it("preserves internal prepositions in both a known subject and an unknown anchor", () => {
+		const m = matchPOISubject("places of worship in Stratford-upon-Avon", "en-GB", LOOKUP)
+
+		expect(m).toMatchObject({
+			subject: "places of worship",
+			relation: "in",
+			remainder: "Stratford-upon-Avon",
+		})
+
+		expect(m?.subjectSpan.text).toBe("places of worship")
+		expect(m?.anchorSpan?.text).toBe("Stratford-upon-Avon")
 	})
 
 	it("carries a brand hit's kind + wikidata through opaquely (mechanics don't special-case brand)", () => {
@@ -148,6 +169,7 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 		expect(m).toEqual({
 			match: { kind: "category", categoryID: "cafe", matchedPhrase: "cafe", confidence: 1 },
 			subject: "cafe",
+			subjectSpan: { text: "cafe", start: 0, end: 4 },
 			remainder: "",
 		})
 	})
@@ -165,6 +187,68 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	it("substring anchor words without whitespace flanks do NOT split (identical to the old regex)", () => {
 		// "maintain" contains "in" and "at"; "nearby" contains "near" — none are whitespace-flanked, so no split.
 		expect(matchPOISubject("maintainnearby", "en-US", subjectLookup)).toBeNull()
+	})
+})
+
+describe("span-first adversarial place names", () => {
+	const categoryLookup: POIPhraseLookup = (phrase) => {
+		const subject = phrase.trim().toLowerCase()
+		const known = new Set(["restaurants", "hotels", "trains", "flights", "pharmacies", "churches", "places of worship"])
+
+		return known.has(subject) ? [{ kind: "category", categoryID: subject, matchedPhrase: subject, confidence: 1 }] : []
+	}
+
+	const cases = [
+		["restaurants in Carmel-by-the-Sea", "restaurants", "in", "Carmel-by-the-Sea"],
+		["restaurants in Carmel by the Sea", "restaurants", "in", "Carmel by the Sea"],
+		["restaurants in the sea", "restaurants", "in", "the sea"],
+		["hotels near Stow-on-the-Wold", "hotels", "near", "Stow-on-the-Wold"],
+		["trains to Newcastle-upon-Tyne", "trains", "to", "Newcastle-upon-Tyne"],
+		["flights to Isle of Man", "flights", "to", "Isle of Man"],
+		["pharmacies in City of London", "pharmacies", "in", "City of London"],
+		["churches near Church of the Holy Sepulchre", "churches", "near", "Church of the Holy Sepulchre"],
+		["places of worship in Stratford-upon-Avon", "places of worship", "in", "Stratford-upon-Avon"],
+	] as const
+
+	it.each(cases)("keeps %s as subject | relation | maximal anchor", (text, subject, relation, anchor) => {
+		const matched = matchPOISubject(text, "en-GB", categoryLookup)
+
+		expect(matched).toMatchObject({ subject, relation, remainder: anchor })
+		expect(matched?.subjectSpan.text).toBe(subject)
+		expect(matched?.relationSpan?.text).toBe(relation)
+		expect(matched?.anchorSpan?.text).toBe(anchor)
+	})
+
+	it.each(["Carmel-by-the-Sea", "12 Carmel-by-the-Sea Road", "Church of the Holy Sepulchre"])(
+		"does not manufacture a category span for %s",
+		(text) => expect(matchPOISubject(text, "en-GB", categoryLookup)).toBeNull()
+	)
+})
+
+describe("span-first multilingual anchors", () => {
+	const categoryLookup: POIPhraseLookup = (phrase) => {
+		const subject = phrase.trim().toLowerCase()
+
+		return ["restaurant", "hotel", "pharmacy", "cafe"].includes(subject)
+			? [{ kind: "category", categoryID: subject, matchedPhrase: subject, confidence: 1 }]
+			: []
+	}
+
+	const cases = [
+		["restaurant in München", "de-DE", "restaurant", "in", "München"],
+		["hotel near São Tomé and Príncipe", "pt-PT", "hotel", "near", "São Tomé and Príncipe"],
+		["pharmacy in مدينة الكويت", "ar-KW", "pharmacy", "in", "مدينة الكويت"],
+		["restaurant in 東京", "ja-JP", "restaurant", "in", "東京"],
+		["hotel near Санкт-Петербург", "ru-RU", "hotel", "near", "Санкт-Петербург"],
+		["cafe in Côte d’Ivoire", "fr-FR", "cafe", "in", "Côte d’Ivoire"],
+	] as const
+
+	it.each(cases)("keeps the Unicode anchor intact for %s", (text, locale, subject, relation, anchor) => {
+		const matched = matchPOISubject(text, locale, categoryLookup)
+
+		expect(matched).toMatchObject({ subject, relation, remainder: anchor })
+		expect(matched?.anchorSpan?.text).toBe(anchor)
+		expect(text.slice(matched?.anchorSpan?.start, matched?.anchorSpan?.end)).toBe(anchor)
 	})
 })
 
