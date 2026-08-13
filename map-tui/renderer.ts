@@ -19,7 +19,7 @@ import { type MapFrame, overlayText, rasterizeToFrame, rgbToPacked } from "./fra
 import { lonLatToWorldPx, metersPerPixel, TILE_SIZE } from "./mercator.ts"
 import type { DecodedFeature } from "./mvt.ts"
 import { drawCircle, drawPolyline, fillPolygon, RGBAGrid } from "./raster.ts"
-import { type LayerStyle, type RGB, stylesFor } from "./style.ts"
+import { type LayerStyle, type RGB, styleForFeatureKind, stylesFor } from "./style.ts"
 import type { DecodedTile, TileSource } from "./tile-source.ts"
 
 export interface Viewport {
@@ -193,8 +193,10 @@ function rasterizeTileForKind(
 
 		const projection: TileProjection = { tileX, tileY, scale: TILE_SIZE / layer.extent, origin }
 
-		for (const style of styles) {
-			for (const feature of layer.features) {
+		for (const feature of layer.features) {
+			const style = styleForFeatureKind(styles, feature.properties.kind)
+
+			if (style) {
 				rasterizeFeature(grid, feature, style, renderZoom, projection, pendingLabels)
 			}
 		}

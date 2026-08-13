@@ -14,9 +14,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git",
 		"directory": "map-tui"
 	},
-	"bin": {
-		"map-tui": "./out/cli.js"
-	},
+	"bin": "./out/cli.js",
 	"files": [
 		"out/",
 		"*.ts",
