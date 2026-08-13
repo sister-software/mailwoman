@@ -22,6 +22,17 @@ export interface DecodedTile {
 	layers: DecodedLayer[]
 }
 
+/**
+ * What a renderer needs from a tile archive — the read surface of {@link TileSource}, separated so a renderer can be
+ * driven by any provider: a single archive, a stub in tests, or a composite over several archives.
+ */
+export interface TileProvider {
+	readonly minZoom: number
+	readonly maxZoom: number
+	readonly attribution: string
+	getTile(z: number, x: number, y: number): Promise<DecodedTile | null>
+}
+
 class FilePMTilesSource implements Source {
 	private readonly path: string
 	private readonly handle: FileHandle
@@ -46,15 +57,35 @@ class FilePMTilesSource implements Source {
 const TILE_CACHE_LIMIT = 64
 
 /**
- * Plain-text attribution out of archive metadata (HTML tags stripped); empty string when absent.
+ * The named entities attribution strings actually carry — archive metadata is HTML (`<a>&copy; OpenStreetMap</a>`), and
+ * a terminal shows entities raw unless they decode here.
  */
-function readAttribution(metadata: unknown): string {
-	return typeof metadata === "object" &&
-		metadata !== null &&
-		"attribution" in metadata &&
-		typeof (metadata as { attribution: unknown }).attribution === "string"
-		? (metadata as { attribution: string }).attribution.replaceAll(/<[^>]+>/gu, "").trim()
-		: ""
+const HTML_ENTITIES: Record<string, string> = {
+	"&amp;": "&",
+	"&copy;": "©",
+	"&gt;": ">",
+	"&lt;": "<",
+	"&quot;": '"',
+	"&#39;": "'",
+}
+
+/**
+ * Plain-text attribution out of archive metadata (HTML tags stripped, entities decoded); empty string when absent.
+ */
+export function readAttribution(metadata: unknown): string {
+	if (
+		typeof metadata !== "object" ||
+		metadata === null ||
+		!("attribution" in metadata) ||
+		typeof (metadata as { attribution: unknown }).attribution !== "string"
+	) {
+		return ""
+	}
+
+	return (metadata as { attribution: string }).attribution
+		.replaceAll(/<[^>]+>/gu, "")
+		.replaceAll(/&[a-z]+;|&#\d+;/gu, (entity) => HTML_ENTITIES[entity] ?? entity)
+		.trim()
 }
 
 /**
@@ -66,7 +97,7 @@ interface CacheEntry {
 	tile: DecodedTile | null
 }
 
-export class TileSource {
+export class TileSource implements TileProvider {
 	readonly minZoom: number
 	readonly maxZoom: number
 

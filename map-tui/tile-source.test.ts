@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url"
 
 import { afterAll, describe, expect, it } from "vitest"
 
-import { TileSource } from "./tile-source.ts"
+import { readAttribution, TileSource } from "./tile-source.ts"
 
 const FIXTURE = fileURLToPath(new URL("./test/fixtures/portland.pmtiles", import.meta.url))
 
@@ -23,6 +23,10 @@ describe("TileSource", async () => {
 	it("reads header zoom bounds", () => {
 		expect(source.minZoom).toBe(0)
 		expect(source.maxZoom).toBeGreaterThanOrEqual(14)
+	})
+
+	it("carries no attribution for the synthetic fixture — absent metadata reads as empty, not unknown", () => {
+		expect(source.attribution).toBe("")
 	})
 
 	it("decodes the z0 world tile with the fixture layers", async () => {
@@ -99,5 +103,22 @@ describe("TileSource over HTTP", async () => {
 		const named = roads!.features.map((f) => f.properties["name"]).filter(Boolean)
 
 		expect(named).toContain("SE Clinton St")
+	})
+})
+
+describe("readAttribution", () => {
+	it("strips tags and decodes entities to plain terminal text", () => {
+		expect(
+			readAttribution({ attribution: '<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>' })
+		).toBe("© OpenStreetMap")
+	})
+
+	it("keeps an unknown entity raw rather than guessing", () => {
+		expect(readAttribution({ attribution: "&copy; Foo &odot; Bar" })).toBe("© Foo &odot; Bar")
+	})
+
+	it("reads absent or malformed metadata as empty", () => {
+		expect(readAttribution(null)).toBe("")
+		expect(readAttribution({ attribution: 7 })).toBe("")
 	})
 })

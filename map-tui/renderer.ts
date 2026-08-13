@@ -20,7 +20,7 @@ import { lonLatToWorldPx, metersPerPixel, TILE_SIZE } from "./mercator.ts"
 import type { DecodedFeature } from "./mvt.ts"
 import { drawCircle, drawPolyline, fillPolygon, RGBAGrid } from "./raster.ts"
 import { type LayerStyle, type RGB, styleForFeatureKind, stylesFor } from "./style.ts"
-import type { DecodedTile, TileSource } from "./tile-source.ts"
+import type { DecodedTile, TileProvider } from "./tile-source.ts"
 
 export interface Viewport {
 	centerLon: number
@@ -84,12 +84,29 @@ interface GridOrigin {
  * — that's what keeps `rasterizeFeature` under `max-params` (8) once `style`, `renderZoom`, and `pendingLabels` join
  * it. Threaded through as a value rather than closed over so those rasterizers stay free functions (no nesting inside
  * `renderFrame` deep enough to trip `max-depth`).
+ *
+ * `worldX`/`worldY` are the tile's top-left corner in render-zoom world pixels — for a native tile that is `tileX *
+ * TILE_SIZE`, for an overzoomed parent it is scaled by the tile's span, so the projection needs no zoom arithmetic of
+ * its own.
  */
 interface TileProjection {
-	tileX: number
-	tileY: number
+	worldX: number
+	worldY: number
 	scale: number
 	origin: GridOrigin
+}
+
+/**
+ * A tile chosen for a viewport slot: the native tile when the archive has one, otherwise the nearest ancestor that
+ * exists. `span` is how many render-zoom world pixels the tile covers (`TILE_SIZE << dz` for an ancestor `dz` levels
+ * up) — a spatially sparse archive (deep zooms only where people are) degrades to coarse geometry instead of blank
+ * cells.
+ */
+interface ResolvedTile {
+	tile: DecodedTile
+	tileX: number
+	tileY: number
+	span: number
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -98,8 +115,8 @@ function clamp(value: number, min: number, max: number): number {
 
 function projectPoint(projection: TileProjection, gx: number, gy: number): ProjectedPoint {
 	return {
-		x: projection.tileX * TILE_SIZE + gx * projection.scale - projection.origin.x,
-		y: projection.tileY * TILE_SIZE + gy * projection.scale - projection.origin.y,
+		x: projection.worldX + gx * projection.scale - projection.origin.x,
+		y: projection.worldY + gy * projection.scale - projection.origin.y,
 	}
 }
 
@@ -178,20 +195,23 @@ function rasterizeFeature(
  */
 function rasterizeTileForKind(
 	grid: RGBAGrid,
-	tile: DecodedTile,
-	tileX: number,
-	tileY: number,
+	resolved: ResolvedTile,
 	kind: LayerStyle["kind"],
 	renderZoom: number,
 	origin: GridOrigin,
 	pendingLabels: PendingLabel[]
 ): void {
-	for (const layer of tile.layers) {
+	for (const layer of resolved.tile.layers) {
 		const styles = stylesFor(layer.name, renderZoom).filter((style) => style.kind === kind)
 
 		if (!styles.length) continue
 
-		const projection: TileProjection = { tileX, tileY, scale: TILE_SIZE / layer.extent, origin }
+		const projection: TileProjection = {
+			worldX: resolved.tileX * resolved.span,
+			worldY: resolved.tileY * resolved.span,
+			scale: resolved.span / layer.extent,
+			origin,
+		}
 
 		for (const feature of layer.features) {
 			const style = styleForFeatureKind(styles, feature.properties.kind)
@@ -209,10 +229,46 @@ function rasterizeTileForKind(
  * `TileSource` — it holds no per-frame state itself.
  */
 export class MapRenderer {
-	private readonly source: TileSource
+	private readonly source: TileProvider
 
-	constructor(source: TileSource) {
+	constructor(source: TileProvider) {
 		this.source = source
+	}
+
+	/**
+	 * Resolves each viewport slot to its native tile or, when the archive has none — a spatially sparse deep band, a
+	 * zoom-capped extract — the nearest existing ancestor. Ancestors shared by several absent slots are deduplicated so
+	 * their geometry rasterizes once, and coarse tiles sort first so native detail paints over the fallback wherever both
+	 * cover a cell.
+	 */
+	private async resolveTiles(
+		tileCoords: ReadonlyArray<{ x: number; y: number }>,
+		renderZoom: number
+	): Promise<ResolvedTile[]> {
+		const resolved = new Map<string, ResolvedTile>()
+
+		await Promise.all(
+			tileCoords.map(async ({ x, y }) => {
+				for (let zoom = renderZoom; zoom >= this.source.minZoom; zoom--) {
+					const shift = renderZoom - zoom
+					const tileX = x >> shift
+					const tileY = y >> shift
+					const key = `${zoom}/${tileX}/${tileY}`
+
+					if (resolved.has(key)) return
+
+					const tile = await this.source.getTile(zoom, tileX, tileY)
+
+					if (tile) {
+						resolved.set(key, { tile, tileX, tileY, span: TILE_SIZE * 2 ** shift })
+
+						return
+					}
+				}
+			})
+		)
+
+		return [...resolved.values()].toSorted((a, b) => b.span - a.span)
 	}
 
 	async renderFrame(viewport: Viewport, overlays?: { markers?: MarkerSpec[]; ring?: RingSpec }): Promise<MapFrame> {
@@ -239,20 +295,14 @@ export class MapRenderer {
 			}
 		}
 
-		const tiles = await Promise.all(tileCoords.map((coord) => this.source.getTile(renderZoom, coord.x, coord.y)))
+		const resolvedTiles = await this.resolveTiles(tileCoords, renderZoom)
 
 		const grid = new RGBAGrid(subpixelW, subpixelH)
 		const pendingLabels: PendingLabel[] = []
 
 		for (const kind of ["fill", "line", "label"] as const) {
-			for (let i = 0; i < tileCoords.length; i++) {
-				const tile = tiles[i]
-
-				if (!tile) continue
-
-				const { x: tileX, y: tileY } = tileCoords[i]!
-
-				rasterizeTileForKind(grid, tile, tileX, tileY, kind, renderZoom, origin, pendingLabels)
+			for (const resolved of resolvedTiles) {
+				rasterizeTileForKind(grid, resolved, kind, renderZoom, origin, pendingLabels)
 			}
 		}
 
