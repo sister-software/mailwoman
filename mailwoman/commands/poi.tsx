@@ -29,17 +29,12 @@ import { existsSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { getPOICategory } from "@mailwoman/poi-taxonomy"
-import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
-import { createRuntimePipeline } from "mailwoman"
 import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
-
-import { emitOverpassQL } from "../poi-overpass.ts"
-import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "../resolver-backend.ts"
 
 const ArgumentsSchema = zod
 	.array(zod.string())
@@ -99,6 +94,8 @@ const OptionsSchema = zod.object({
  */
 async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | undefined> {
 	try {
+		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+
 		return await NeuralAddressClassifier.loadFromWeights({ locale })
 	} catch {
 		return undefined
@@ -115,6 +112,7 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
 async function tryLoadResolver(
 	options: zod.infer<typeof OptionsSchema>
 ): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
 	const candidateDb = resolveCandidateDBPath(options.candidateDb)
 
 	const wofPaths = candidateDb
@@ -136,6 +134,8 @@ async function tryLoadResolver(
 
 	try {
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
+		const { createResolverBackend } = await import("../resolver-backend.ts")
+		const { createWOFResolver } = await import("@mailwoman/resolver")
 		const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
@@ -163,8 +163,11 @@ function formatSubject(subject: POIIntent["subject"]): string {
 /**
  * Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping.
  */
-function formatOverpassBlock(intent: POIIntent): string {
+async function formatOverpassBlock(intent: POIIntent): Promise<string> {
+	const { emitOverpassQL } = await import("../poi-overpass.ts")
+
 	if (intent.subject.kind === "category") {
+		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const category = getPOICategory(intent.subject.categoryID)
 
 		if (!category?.osmTag) {
@@ -214,7 +217,7 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 	return lines
 }
 
-function formatOutcome(outcome: POIIntentOutcome, options: zod.infer<typeof OptionsSchema>): string {
+async function formatOutcome(outcome: POIIntentOutcome, options: zod.infer<typeof OptionsSchema>): Promise<string> {
 	const lines: string[] = []
 
 	if (outcome.type === "abstain") {
@@ -241,13 +244,15 @@ function formatOutcome(outcome: POIIntentOutcome, options: zod.infer<typeof Opti
 	if (options.overpass) {
 		lines.push("")
 		lines.push("OverpassQL:")
-		lines.push(formatOverpassBlock(intent))
+		lines.push(await formatOverpassBlock(intent))
 	}
 
 	return lines.join("\n")
 }
 
 async function runPOI(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const { createRuntimePipeline } = await import("mailwoman")
+
 	const classifier = await tryLoadNeural(options.locale)
 	const resolverHandle = await tryLoadResolver(options)
 

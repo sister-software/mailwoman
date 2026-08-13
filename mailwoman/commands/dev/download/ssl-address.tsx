@@ -7,7 +7,6 @@
  *   per-country metadata under `core/data/chromium-i18n/ssl-address/`.
  */
 
-import { downloadSSLAddress } from "@mailwoman/core/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -21,7 +20,11 @@ export { OptionsSchema as options }
 
 const DevDownloadSSLAddress: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		() => downloadSSLAddress(options, (line) => console.error(line)),
+		async () => {
+			const { downloadSSLAddress } = await import("@mailwoman/core/tools")
+
+			return downloadSSLAddress(options, (line) => console.error(line))
+		},
 		(result) => (result.failed > 0 ? 1 : 0)
 	)
 

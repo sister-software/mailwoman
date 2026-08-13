@@ -35,20 +35,13 @@ import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:
 import { join } from "node:path"
 
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
 // @mailwoman/neural's fst-prior and pair-index-resolver subpaths are self-contained (fst-prior only
 // type-imports from a sibling module; pair-index-resolver only imports core/types) — safe value
 // imports at module level, no heavy ONNX runtime pulled in (mirrors postcode-binary.tsx's comment).
-import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { PairIndexBuilder, applyPairIndexHoldout } from "mailwoman/gazetteer-pipeline/pair-index"
-import { CSVSpliterator, JSONSpliterator } from "spliterator"
 import zod from "zod"
-
-import { extractBoroughPairs } from "../../gazetteer-pipeline/borough-pairs.ts"
-import { extractLieuDitPairs } from "../../gazetteer-pipeline/lieudit-pairs.ts"
 
 /**
  * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
@@ -231,6 +224,14 @@ export { OptionsSchema as options }
 
 const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
+		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
+		const { PairIndexBuilder, applyPairIndexHoldout } = await import("mailwoman/gazetteer-pipeline/pair-index")
+		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
+		const { extractBoroughPairs } = await import("../../gazetteer-pipeline/borough-pairs.ts")
+		const { extractLieuDitPairs } = await import("../../gazetteer-pipeline/lieudit-pairs.ts")
+
 		const country = options.country.toLowerCase()
 
 		// The PPD tuples CSV is a GB national register — there is no equivalent for the US instance (USPS routes

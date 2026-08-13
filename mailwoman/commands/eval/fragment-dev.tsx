@@ -11,8 +11,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runFragmentDev } from "../../eval-harness/fragment-dev.ts"
-
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"
 
 const OptionsSchema = zod.object({
@@ -26,6 +24,8 @@ export { OptionsSchema as options }
 
 const EvalFragmentDev: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { runFragmentDev } = await import("../../eval-harness/fragment-dev.ts")
+
 		await runFragmentDev({
 			locale: options.locale,
 			weightsCacheRoot: options.weightsCache,

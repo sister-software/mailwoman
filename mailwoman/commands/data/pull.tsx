@@ -40,7 +40,7 @@ import { basename, dirname } from "node:path"
 import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
-import { APIClient } from "@mailwoman/core/api"
+import type { APIClient } from "@mailwoman/core/api"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Text } from "ink"
 import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
@@ -206,7 +206,11 @@ async function pullBundles(
 
 	const client = opts.dryRun
 		? null
-		: new APIClient({ displayName: "mailwoman data", minRequestIntervalMs: 150, retry: true })
+		: new (await import("@mailwoman/core/api")).APIClient({
+				displayName: "mailwoman data",
+				minRequestIntervalMs: 150,
+				retry: true,
+			})
 
 	for (const name of bundleNames) {
 		const bundle = BUNDLES[name]

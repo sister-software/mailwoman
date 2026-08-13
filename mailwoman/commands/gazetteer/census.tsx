@@ -26,19 +26,10 @@ import { existsSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import type { ComponentTag } from "@mailwoman/core/types"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import {
-	PlacetypeCensusResolver,
-	serializePlacetypeCensus,
-	type PlacetypeCensusHeader,
-	type PlacetypeCensusNode,
-} from "@mailwoman/neural/placetype-census"
+import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-
-import { buildPlacetypeCensus, toBaseRates } from "../../gazetteer-pipeline/placetype-census.ts"
 
 /**
  * Known parents probed after write, PER COUNTRY. Probing another country's names against a freshly built census prints
@@ -66,6 +57,11 @@ export { OptionsSchema as options }
 
 const GazetteerCensus: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
+		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype-census")
+		const { buildPlacetypeCensus, toBaseRates } = await import("../../gazetteer-pipeline/placetype-census.ts")
+
 		const country = options.country.toLowerCase()
 		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
 

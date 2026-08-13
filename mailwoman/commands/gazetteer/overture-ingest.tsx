@@ -31,7 +31,6 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -102,6 +101,8 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 
 const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		if (!options.countries) {
 			throw commandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
 		}

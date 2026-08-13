@@ -11,20 +11,13 @@
 
 import { join } from "node:path"
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import {
-	buildCandidate,
-	DEFAULT_ADMIN_DB,
 	DEFAULT_CANDIDATE_OUT,
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
-	foldGeonamesIntoAdmin,
-	resolveImportanceDb,
-	resolvePostcodeShards,
-	wofDir,
-} from "mailwoman/gazetteer-pipeline"
+} from "mailwoman/gazetteer-pipeline/defaults"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -63,6 +56,17 @@ export { OptionsSchema as options }
 
 const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+
+		const {
+			buildCandidate,
+			DEFAULT_ADMIN_DB,
+			foldGeonamesIntoAdmin,
+			resolveImportanceDb,
+			resolvePostcodeShards,
+			wofDir,
+		} = await import("mailwoman/gazetteer-pipeline")
+
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)

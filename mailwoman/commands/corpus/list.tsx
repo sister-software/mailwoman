@@ -10,23 +10,31 @@
  *   Phase 1 while adapters are still being authored.
  */
 
-import { defaultAdapterRegistry } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
+import { useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id when the host stdout
  * is non-TTY (CI, spawned tests). The list is meant to be grep-friendly, not pretty.
  */
 const CorpusList = () => {
-	const adapters = defaultAdapterRegistry.list()
+	const state = useCommandTask(async () => {
+		const { defaultAdapterRegistry } = await import("@mailwoman/corpus")
 
-	if (!adapters.length) {
+		return defaultAdapterRegistry.list()
+	})
+
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
+	if (state.status !== "done") return null
+
+	if (!state.result.length) {
 		return <Text dimColor>No adapters registered.</Text>
 	}
 
 	return (
 		<Box flexDirection="column">
-			{adapters.map((a) => (
+			{state.result.map((a) => (
 				<Text key={a.id}>{`${a.id}\t${a.defaultLicense}\t${a.description}`}</Text>
 			))}
 		</Box>

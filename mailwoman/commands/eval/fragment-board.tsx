@@ -15,8 +15,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runFragmentBoard } from "../../eval-harness/fragment-board.ts"
-
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 
 const OptionsSchema = zod.object({
@@ -33,15 +31,18 @@ export { OptionsSchema as options }
 
 const EvalFragmentBoard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () =>
-			(
+		async () => {
+			const { runFragmentBoard } = await import("../../eval-harness/fragment-board.ts")
+
+			return (
 				await runFragmentBoard({
 					locale: options.locale,
 					weightsCacheRoot: options.weightsCache,
 					fixturesPath: options.fixtures,
 					klass: options.klass,
 				})
-			).exitCode,
+			).exitCode
+		},
 		(exitCode) => exitCode
 	)
 

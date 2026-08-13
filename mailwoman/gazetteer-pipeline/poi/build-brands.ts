@@ -34,18 +34,9 @@ import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/l
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 
-/**
- * `--min-rows` default — keeps the table to real chains, not one-off name collisions (~low-thousands of entries).
- */
-export const DEFAULT_MIN_ROWS = 25
+import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
 
-/**
- * `--dominance` default — a QID's modal name must cover at least this fraction of its total rows to qualify. Below the
- * floor, the QID is systematically mistagged (many unrelated chains sharing one Wikidata QID, e.g. Q4835981's "CVS"
- * over ~20 unrelated chains) rather than one real chain with noisy alias spellings — dropped entirely, not just demoted
- * out of the alias list the way sub-noise-floor variants are.
- */
-export const DEFAULT_DOMINANCE = 0.5
+export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
 
 /**
  * The brand TABLE's own schema/data version — bump when the shape or matching semantics change. Independent of

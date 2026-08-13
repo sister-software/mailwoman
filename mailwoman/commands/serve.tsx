@@ -13,15 +13,11 @@ import { availableParallelism } from "node:os"
 import process from "node:process"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
-import { createMailwomanAPI } from "@mailwoman/api"
-import { serveNode, type ServerHandle } from "@mailwoman/api-kit"
-import { $public } from "@mailwoman/core/env"
+import type { ServerHandle } from "@mailwoman/api-kit"
 import { Box, Text } from "ink"
 import type { CommandComponent } from "mailwoman/cli-kit"
 import { useEffect, useState } from "react"
 import zod from "zod"
-
-import { createServeEngine } from "../api-engine.ts"
 
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
 // move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
@@ -181,6 +177,11 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 		let handle: ServerHandle | undefined
 
 		void (async () => {
+			const { createMailwomanAPI } = await import("@mailwoman/api")
+			const { serveNode } = await import("@mailwoman/api-kit")
+			const { $public } = await import("@mailwoman/core/env")
+			const { createServeEngine } = await import("../api-engine.ts")
+
 			const { engine, preflight } = await createServeEngine()
 
 			if (!preflight.ok) {

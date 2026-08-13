@@ -18,7 +18,8 @@ import { DatabaseSync } from "node:sqlite"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-import { buildPostcodeGeonamesTail, DEFAULT_GEONAMES_TAIL_COUNTRIES } from "./geonames-tail.ts"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
+import { buildPostcodeGeonamesTail } from "./geonames-tail.ts"
 
 let root: string
 let postalDir: string

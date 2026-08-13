@@ -39,8 +39,6 @@ import * as os from "node:os"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -152,6 +150,9 @@ interface StateManifestEntry {
 
 const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
 		const states = (

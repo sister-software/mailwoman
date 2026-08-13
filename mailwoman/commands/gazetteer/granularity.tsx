@@ -18,13 +18,11 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { renderGranularityReport } from "../../gazetteer-pipeline/granularity-report.ts"
-import { DEFAULT_COVERAGE_FLOOR, bottomsOutAt, buildGranularityLadder } from "../../gazetteer-pipeline/granularity.ts"
+import { DEFAULT_COVERAGE_FLOOR } from "../../gazetteer-pipeline/defaults.ts"
 
 const OptionsSchema = zod.object({
 	out: zod
@@ -45,6 +43,10 @@ export { OptionsSchema as options }
 
 const GazetteerGranularity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { bottomsOutAt, buildGranularityLadder } = await import("../../gazetteer-pipeline/granularity.ts")
+		const { renderGranularityReport } = await import("../../gazetteer-pipeline/granularity-report.ts")
+
 		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
 		const rows = buildGranularityLadder(sourcePath)
 

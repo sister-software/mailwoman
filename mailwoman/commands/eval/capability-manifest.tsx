@@ -13,8 +13,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { generateCapabilityManifest } from "../../eval-harness/capability-manifest.ts"
-
 export const description = "Generate the model-card capability manifest (#718/#719)"
 
 const OptionsSchema = zod.object({
@@ -32,7 +30,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalCapabilityManifest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => generateCapabilityManifest(options))
+	const state = useCommandTask(async () => {
+		const { generateCapabilityManifest } = await import("../../eval-harness/capability-manifest.ts")
+
+		return generateCapabilityManifest(options)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

@@ -13,7 +13,6 @@ import { join } from "node:path"
 
 import { Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { wofDir } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
 
 const ArgumentsSchema = zod.array(zod.string().describe("Queries to probe"))
@@ -29,6 +28,8 @@ export { OptionsSchema as options }
 
 const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
+		const { wofDir } = await import("mailwoman/gazetteer-pipeline")
+
 		if (!args.length) throw commandError("pass at least one query")
 		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
 		const maxResults = Number.parseInt(options.max ?? "10", 10)

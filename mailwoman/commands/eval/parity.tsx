@@ -14,8 +14,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runParityEval } from "../../eval-harness/parity-corpus.ts"
-
 export const description = "Parity-corpus eval — rescued v1 gold vs a checkpoint (plan-2 swap floors)"
 
 const OptionsSchema = zod.object({
@@ -63,8 +61,10 @@ export { OptionsSchema as options }
 
 const EvalParity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () =>
-			(
+		async () => {
+			const { runParityEval } = await import("../../eval-harness/parity-corpus.ts")
+
+			return (
 				await runParityEval({
 					locale: options.locale,
 					modelPath: options.model,
@@ -76,7 +76,8 @@ const EvalParity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					wordConsistency: options.wordConsistency,
 					failing: options.failing,
 				})
-			).exitCode,
+			).exitCode
+		},
 		(exitCode) => exitCode
 	)
 

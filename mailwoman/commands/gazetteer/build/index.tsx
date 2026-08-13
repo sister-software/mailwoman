@@ -14,14 +14,6 @@ import { join } from "node:path"
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import {
-	artifactSizeMB,
-	buildAdmin,
-	buildCandidate,
-	DEFAULT_CANDIDATE_OUT,
-	resolvePostcodeShards,
-	wofDir,
-} from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -36,6 +28,9 @@ export { OptionsSchema as options }
 
 const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { artifactSizeMB, buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeShards, wofDir } =
+			await import("mailwoman/gazetteer-pipeline")
+
 		console.error("▸ build admin (staging)")
 
 		const admin = await buildAdmin({

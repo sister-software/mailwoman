@@ -15,8 +15,6 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { COMPONENT_TAGS } from "@mailwoman/core"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -73,6 +71,9 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 
 const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { COMPONENT_TAGS } = await import("@mailwoman/core")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		const dbPath = options.db ?? dataRootPath("wof", "admin-global-priority.db").toString()
 		const country = options.country
 

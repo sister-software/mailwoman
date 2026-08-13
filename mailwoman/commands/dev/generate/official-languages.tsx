@@ -8,7 +8,6 @@
  *   cldr-aliases.json from disk instead of fetching the pinned cldr-core release from jsdelivr.
  */
 
-import { generateOfficialLanguages } from "@mailwoman/codex/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -23,9 +22,11 @@ export { OptionsSchema as options }
 const report = (line: string): void => console.error(line)
 
 const DevGenerateOfficialLanguages: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		generateOfficialLanguages({ cldrDir: options.cldrDir, cldrVersion: options.cldrVersion }, report)
-	)
+	const state = useCommandTask(async () => {
+		const { generateOfficialLanguages } = await import("@mailwoman/codex/tools")
+
+		return generateOfficialLanguages({ cldrDir: options.cldrDir, cldrVersion: options.cldrVersion }, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

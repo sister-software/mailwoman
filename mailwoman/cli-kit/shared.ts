@@ -10,7 +10,9 @@
  *   importable under node's type stripping (the dev `node →` exports condition).
  */
 
-import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core"
+// Never the `@mailwoman/core` barrel: Pastel imports every command module before argv is parsed, every one of them
+// imports this file, and the barrel is 117 ms against `@mailwoman/core/placetypes`'s ~0.
+import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
 import { createElement as h, useEffect, useState } from "react"
 import type * as React from "react"
@@ -84,6 +86,46 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 }
 
 /* oxlint-enable react-hooks/exhaustive-deps */
+
+/**
+ * Wrap a heavy child component so its module loads on FIRST RENDER rather than at import.
+ *
+ * A component reached from JSX has to be a top-level import, and Pastel imports every command module before commander
+ * parses a single argument — so one `import { DebugView } from "…"` in a branch nobody took still pays for that
+ * branch's whole graph on `mailwoman --version`. `load` runs in an effect instead, and the wrapper renders nothing
+ * until it resolves.
+ *
+ * Nothing on screen for one frame is the right fallback here and not a placeholder: Ink erases the previous frame when
+ * it draws, so a "loading…" line taller than zero is a line the real first frame has to scrub. Commands that want a
+ * spinner own one INSIDE the loaded component, where it can outlive the load.
+ *
+ * `React.lazy`/`Suspense` would express this too, but its fallback lands in the same erase path and Ink has no boundary
+ * to catch a rejected import — a missing optional peer would take down the render instead of reaching the command's own
+ * error branch.
+ */
+export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>): React.FC<P> {
+	return function LazyComponent(props: P) {
+		const [Loaded, setLoaded] = useState<{ current: React.FC<P> } | null>(null)
+
+		useEffect(() => {
+			let live = true
+
+			void load().then((component) => {
+				if (live) {
+					setLoaded({ current: component })
+				}
+			})
+
+			return () => {
+				live = false
+			}
+			// oxlint-disable-next-line react-hooks/exhaustive-deps -- `load` closes over a module specifier, which
+			// cannot change for the life of the process; tracking it would re-import on every render.
+		}, [])
+
+		return Loaded ? h(Loaded.current, props) : null
+	}
+}
 
 /**
  * Emit a command's final output as raw bytes, bypassing Ink's `<Text>` renderer.

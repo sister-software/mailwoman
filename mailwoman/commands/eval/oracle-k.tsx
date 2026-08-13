@@ -13,8 +13,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runOracleK } from "../../eval-harness/oracle-k.ts"
-
 export const description = "Oracle-recall@k — k-best segment-decode headroom over the parity corpus (#727 stage-2)"
 
 const OptionsSchema = zod.object({
@@ -39,8 +37,10 @@ export { OptionsSchema as options }
 
 const EvalOracleK: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		async () =>
-			(
+		async () => {
+			const { runOracleK } = await import("../../eval-harness/oracle-k.ts")
+
+			return (
 				await runOracleK({
 					locale: options.locale,
 					weightsCacheRoot: options.weightsCache,
@@ -49,7 +49,8 @@ const EvalOracleK: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 					k: options.k,
 					assertBaseline: options.assertBaseline,
 				})
-			).exitCode,
+			).exitCode
+		},
 		(exitCode) => exitCode
 	)
 

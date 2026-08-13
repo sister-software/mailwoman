@@ -8,7 +8,6 @@
  *   stdout.
  */
 
-import { goldSetSample } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -28,8 +27,10 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const RegistryGoldSetSample: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		goldSetSample(
+	const state = useCommandTask(async () => {
+		const { goldSetSample } = await import("@mailwoman/registry/tools")
+
+		return goldSetSample(
 			{
 				sources: options.sources,
 				cap: options.cap,
@@ -40,7 +41,7 @@ const RegistryGoldSetSample: CommandComponent<typeof OptionsSchema> = ({ options
 			},
 			(line) => console.error(line)
 		)
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

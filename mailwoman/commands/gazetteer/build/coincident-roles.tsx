@@ -13,7 +13,6 @@
 import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { Text } from "ink"
 import { type Check, CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -43,6 +42,8 @@ const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, type
 }) => {
 	const state = useCommandTask(
 		async () => {
+			const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
+
 			if (!args.length) throw new Error("expected at least one <admin-db> path")
 			const checks: Check[] = []
 

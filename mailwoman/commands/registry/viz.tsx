@@ -10,7 +10,6 @@
  *   `@mailwoman/registry/tools` (lazy playwright).
  */
 
-import { crossDatasetMap, geocodeFirstSurface, sourceProvenanceMap, yardstickFigure } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -56,7 +55,10 @@ type Figure = zod.infer<typeof ArgsSchema>[0]
 
 const report = (line: string): void => console.error(line)
 
-function runFigure(figure: Figure, options: Options): string {
+async function runFigure(figure: Figure, options: Options): Promise<string> {
+	const { crossDatasetMap, geocodeFirstSurface, sourceProvenanceMap, yardstickFigure } =
+		await import("@mailwoman/registry/tools")
+
 	switch (figure) {
 		case "cross-dataset-map":
 			return crossDatasetMap(
@@ -83,7 +85,7 @@ function runFigure(figure: Figure, options: Options): string {
 }
 
 const RegistryViz: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
-	const state = useCommandTask(async () => runFigure(args[0], options))
+	const state = useCommandTask(() => runFigure(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

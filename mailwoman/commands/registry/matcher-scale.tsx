@@ -8,7 +8,6 @@
  *   markdown report to stdout. Tip: run with `node --expose-gc` for cleaner per-size RSS.
  */
 
-import { matcherScale } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -23,8 +22,10 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const RegistryMatcherScale: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		matcherScale(
+	const state = useCommandTask(async () => {
+		const { matcherScale } = await import("@mailwoman/registry/tools")
+
+		return matcherScale(
 			{
 				sizes: options.sizes
 					.split(",")
@@ -36,7 +37,7 @@ const RegistryMatcherScale: CommandComponent<typeof OptionsSchema> = ({ options 
 			},
 			(line) => console.error(line)
 		)
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

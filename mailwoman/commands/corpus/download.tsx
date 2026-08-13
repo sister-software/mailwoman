@@ -16,7 +16,6 @@ import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 import zod from "zod"
-import { $ } from "zx"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
@@ -51,6 +50,8 @@ const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => 
 	}
 
 	useCommandTask(async () => {
+		const { $ } = await import("zx")
+
 		const rcloneBase = `:s3:${options.bucket}`
 		const dryFlag = options.dryRun ? "--dry-run" : ""
 		const out = options.outDir

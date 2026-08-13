@@ -22,39 +22,18 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
-import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
-import {
-	geocodeAddressVia,
-	inferMapping,
-	ingestRows,
-	parseCSV,
-	reconcileCoverage,
-	reconciliationGeoJSON,
-	reconciliationReport,
-	resolveEntities,
-	streamRows,
-	toGeoJSON,
-	toMapHTML,
-	type ColumnMapping,
-	type EntityGeoData,
-	type GeocodeAddress,
-	type SourceRecord,
-} from "@mailwoman/registry"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
-import { createWOFResolver } from "@mailwoman/resolver"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
 import zod from "zod"
 
-import { geocodeAddress, ShardProvider, type ShardResolver } from "../../geocode-core.ts"
-import { INTERP_RADIUS_CALIBRATION } from "../../interp-calibration.ts"
-import { createResolverBackend, mailwomanDataRoot, resolveCandidateDBPath } from "../../resolver-backend.ts"
+import type { ShardResolver } from "../../geocode-core.ts"
 import { resolverDefaultCountry } from "../parse.tsx"
 
 /**
@@ -211,7 +190,8 @@ export function loadMapping(
 	return { ...base, ...provided, ...(source ? { source } : {}) }
 }
 
-function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
+async function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const { $public } = await import("@mailwoman/core/env")
 	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
@@ -229,7 +209,15 @@ function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): string {
 async function buildGeocoder(
 	options: zod.infer<typeof OptionsSchema>
 ): Promise<{ seam: GeocodeAddress; close: () => void }> {
-	const wofPath = resolveWOFPath(options)
+	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
+	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+	const { geocodeAddressVia } = await import("@mailwoman/registry")
+	const { createWOFResolver } = await import("@mailwoman/resolver")
+	const { geocodeAddress, ShardProvider } = await import("../../geocode-core.ts")
+	const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
+	const { createResolverBackend, resolveCandidateDBPath } = await import("../../resolver-backend.ts")
+
+	const wofPath = await resolveWOFPath(options)
 
 	let classifier: NeuralAddressClassifier
 
@@ -312,6 +300,13 @@ export interface EvalGeocoderFlags {
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { decodeAsJSON } = await import("@mailwoman/core/decoder")
+		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+		const { geocodeAddressVia } = await import("@mailwoman/registry")
+		const { createWOFResolver } = await import("@mailwoman/resolver")
+		const { geocodeAddress, ShardProvider } = await import("../../geocode-core.ts")
+
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
 		const dataRoot = flags.dataRoot || mailwomanDataRoot()
 
@@ -395,11 +390,13 @@ export function loadSources(option: string): MultiSourceSpec[] {
  * append to the run summary. Returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original
  * default). Shared by both pipeline paths.
  */
-function writeOutputs(
+async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
 	options: zod.infer<typeof OptionsSchema>
-): string | null {
+): Promise<string | null> {
 	if (!options.out && !options.mapOut) return null
+
+	const { toMapHTML } = await import("@mailwoman/registry")
 	const lines: string[] = []
 
 	if (options.out) {
@@ -421,6 +418,16 @@ function writeOutputs(
  * geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const {
+		ingestRows,
+		reconcileCoverage,
+		reconciliationGeoJSON,
+		reconciliationReport,
+		resolveEntities,
+		streamRows,
+		toGeoJSON,
+	} = await import("@mailwoman/registry")
+
 	const { seam, close } = await buildGeocoder(options)
 
 	try {
@@ -493,7 +500,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 					"cross-source signal, so it is pinned off here. See #655.",
 			})
 
-			const written = writeOutputs(geojson, options)
+			const written = await writeOutputs(geojson, options)
 
 			return written === null ? report : `${report}\n\n${written}`
 		}
@@ -508,7 +515,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
 			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
 
-		const written = writeOutputs(geojson, options)
+		const written = await writeOutputs(geojson, options)
 
 		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 	} finally {
@@ -521,6 +528,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 //#region Core
 
 async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const { inferMapping, ingestRows, parseCSV, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
+
 	if (options.reconcile) {
 		throw commandError(
 			"--reconcile is a cross-source mode: pass --sources <config.json> (each entry tagged with a " +
@@ -553,7 +562,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 			`${result.entities.length} entities ` +
 			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
 
-		const written = writeOutputs(geojson, options)
+		const written = await writeOutputs(geojson, options)
 
 		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 	} finally {

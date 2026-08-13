@@ -11,7 +11,6 @@
 
 import { Text } from "ink"
 import { type PositionalCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { lintMDXAngles } from "mailwoman/dev-tools/lint-mdx-angles"
 import { argument } from "pastel"
 import zod from "zod"
 
@@ -32,7 +31,11 @@ const report = (line: string): void => console.error(line)
 
 const DevLintMDXAngles: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args }) => {
 	const state = useCommandTask(
-		async () => lintMDXAngles({ files: args }, report),
+		async () => {
+			const { lintMDXAngles } = await import("mailwoman/dev-tools/lint-mdx-angles")
+
+			return lintMDXAngles({ files: args }, report)
+		},
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)
 

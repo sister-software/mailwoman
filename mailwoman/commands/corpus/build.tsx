@@ -14,8 +14,7 @@
  *   the CLI handles partial builds during development.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { buildCorpus, defaultAdapterRegistry, type BuildStage } from "@mailwoman/corpus"
+import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
@@ -69,6 +68,9 @@ const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) =>
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
+		const { parseJSONStrict } = await import("@mailwoman/core/objects")
+		const { buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+
 		let inputsParsed: Record<string, zod.infer<typeof AdapterInputSchema>>
 
 		try {

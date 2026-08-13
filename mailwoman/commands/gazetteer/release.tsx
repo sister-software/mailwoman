@@ -14,21 +14,9 @@ import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import {
-	buildCandidate,
-	DEFAULT_ADMIN_DB,
-	DEFAULT_CANDIDATE_OUT,
-	DEFAULT_FOLD_COUNTRIES,
-	defaultGazetteerVersion,
-	foldGeonamesIntoAdmin,
-	promoteCandidate,
-	publishGazetteer,
-	resolvePostcodeShards,
-	wofDir,
-} from "mailwoman/gazetteer-pipeline"
+import { DEFAULT_FOLD_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -50,6 +38,20 @@ export { OptionsSchema as options }
 
 const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+
+		const {
+			buildCandidate,
+			DEFAULT_ADMIN_DB,
+			DEFAULT_CANDIDATE_OUT,
+			defaultGazetteerVersion,
+			foldGeonamesIntoAdmin,
+			promoteCandidate,
+			publishGazetteer,
+			resolvePostcodeShards,
+			wofDir,
+		} = await import("mailwoman/gazetteer-pipeline")
+
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
 		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)

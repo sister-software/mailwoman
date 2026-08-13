@@ -21,8 +21,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runInvarianceCommand } from "../../eval-harness/invariance/command.ts"
-
 export const description =
 	"Metamorphic invariance mini-suite (comma-drop/abbrev/case/idempotence) — standing probe guard"
 
@@ -55,7 +53,11 @@ export { OptionsSchema as options }
 
 const EvalInvariance: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		() => runInvarianceCommand(options),
+		async () => {
+			const { runInvarianceCommand } = await import("../../eval-harness/invariance/command.ts")
+
+			return runInvarianceCommand(options)
+		},
 		(exitCode) => exitCode
 	)
 

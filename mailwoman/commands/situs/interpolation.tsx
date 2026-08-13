@@ -31,8 +31,6 @@ import * as https from "node:https"
 import * as path from "node:path"
 import { pipeline } from "node:stream/promises"
 
-import { extractZipEntries } from "@mailwoman/core/fs/zip"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -224,6 +222,8 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
  * the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
+	const { parseJSONStrict } = await import("@mailwoman/core/objects")
+
 	if (existsSync(RANKED_FILE)) {
 		return parseJSONStrict<CountyRecord[]>(readFileSync(RANKED_FILE, "utf8"))
 	}
@@ -343,6 +343,8 @@ const SHAPEFILE_MEMBERS = /\.(?:shp|dbf|prj|shx)$/i
  * level).
  */
 async function extractEdgesZip(zipPath: string, destDir: string): Promise<void> {
+	const { extractZipEntries } = await import("@mailwoman/core/fs/zip")
+
 	await extractZipEntries(zipPath, destDir, { selector: SHAPEFILE_MEMBERS, flatten: true })
 }
 

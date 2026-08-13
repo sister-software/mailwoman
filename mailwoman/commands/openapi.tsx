@@ -12,8 +12,6 @@
  *   progenitor) instead of the default 3.1.0.
  */
 
-import { createMailwomanAPI, MAILWOMAN_API_DOC_INFO } from "@mailwoman/api"
-import { printOpenAPIDocument } from "@mailwoman/api-kit"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -29,6 +27,9 @@ export { OptionsSchema as options }
 
 const Openapi: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { createMailwomanAPI, MAILWOMAN_API_DOC_INFO } = await import("@mailwoman/api")
+		const { printOpenAPIDocument } = await import("@mailwoman/api-kit")
+
 		const app = createMailwomanAPI({})
 
 		printOpenAPIDocument(app, MAILWOMAN_API_DOC_INFO, options)

@@ -31,8 +31,6 @@ import { mkdirSync, rmSync } from "node:fs"
 import { basename, dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
@@ -84,6 +82,9 @@ export { OptionsSchema as options }
 
 const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { dataRootPath, swapDatabaseIntoPlace } = await import("@mailwoman/core/utils")
+
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
 		const OA_MODE = Boolean(options.oaCSV)
 

@@ -77,6 +77,11 @@
 			"default": "./out/resources/index.js",
 			"types": "./out/resources/index.d.ts"
 		},
+		"./resources/locale": {
+			"node": "./resources/locale.ts",
+			"default": "./out/resources/locale.js",
+			"types": "./out/resources/locale.d.ts"
+		},
 		"./resources/languages": {
 			"node": "./resources/languages/index.ts",
 			"default": "./out/resources/languages/index.js",
@@ -86,6 +91,11 @@
 			"node": "./resources/whosonfirst/index.ts",
 			"default": "./out/resources/whosonfirst/index.js",
 			"types": "./out/resources/whosonfirst/index.d.ts"
+		},
+		"./placetypes": {
+			"node": "./resources/whosonfirst/placetypes/definition.ts",
+			"default": "./out/resources/whosonfirst/placetypes/definition.js",
+			"types": "./out/resources/whosonfirst/placetypes/definition.d.ts"
 		},
 		"./utils": {
 			"node": "./utils/index.ts",

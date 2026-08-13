@@ -17,7 +17,6 @@
  *   short terminal it would.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
@@ -106,6 +105,8 @@ function overview(dataRoot: string): string {
 
 const DataIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+
 		const dataRoot = mailwomanDataRoot()
 
 		return options.list ? listBundles(dataRoot) : overview(dataRoot)

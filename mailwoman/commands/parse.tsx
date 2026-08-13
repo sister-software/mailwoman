@@ -5,23 +5,20 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { type AddressTree, decodeAsJSON, decodeAsTuples, decodeAsXML, proposalsToTree } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
-import { collectProposals, filterByPolicy, InMemoryPolicyRegistry, type PolicyMode } from "@mailwoman/core/policy"
+import type { AddressTree } from "@mailwoman/core/decoder"
+import type { PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
-import { createNeuralProposalClassifier, NeuralAddressClassifier } from "@mailwoman/neural"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
-import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
-import { createRuntimePipeline } from "mailwoman"
+import type { createRuntimePipeline } from "mailwoman"
 import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { probeWeights, WeightsGuard, type WeightsOutcome } from "mailwoman/cli-kit/weights-guard"
 import { argument } from "pastel"
 import type React from "react"
 import zod from "zod"
-
-import { createResolverBackend, resolveCandidateDBPath } from "../resolver-backend.ts"
 
 /**
  * Bytes per KiB, for human-readable sizes.
@@ -372,7 +369,8 @@ export function resolverDefaultCountry(
 	}
 }
 
-function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
+async function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	const { $public } = await import("@mailwoman/core/env")
 	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
@@ -387,6 +385,7 @@ function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): string {
 }
 
 async function tryBuildFST(options: zod.infer<typeof ParseConfigSchema>): Promise<FSTMatcher | undefined> {
+	const { $public } = await import("@mailwoman/core/env")
 	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined
@@ -442,6 +441,7 @@ async function resolveWithCandidates(
 		opts.postcodeContainmentCoherence = true
 	}
 
+	const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
 	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 	if (dc) {
@@ -460,6 +460,9 @@ async function withResolver<T>(
 	options: zod.infer<typeof ParseConfigSchema>,
 	fn: (resolver: Resolver) => Promise<T>
 ): Promise<T> {
+	const { createWOFResolver } = await import("@mailwoman/resolver")
+	const { createResolverBackend, resolveCandidateDBPath } = await import("../resolver-backend.ts")
+
 	// Dynamic import so `@mailwoman/resolver-wof-sqlite` stays a true optional peer dep — users who
 	// never set --resolve don't pay for kysely + the resolver bundle.
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
@@ -475,7 +478,7 @@ async function withResolver<T>(
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
 	const lookup = createResolverBackend(mod, {
-		wofPaths: resolveCandidateDBPath() ? "" : resolveWOFPath(options),
+		wofPaths: resolveCandidateDBPath() ? "" : await resolveWOFPath(options),
 	})
 
 	try {
@@ -489,11 +492,13 @@ async function withResolver<T>(
 	}
 }
 
-function serializeTree(
+async function serializeTree(
 	tree: AddressTree,
 	format: "json" | "tuple" | "xml",
 	opts: { includeAlternatives?: boolean } = {}
-): string {
+): Promise<string> {
+	const { decodeAsJSON, decodeAsTuples, decodeAsXML } = await import("@mailwoman/core/decoder")
+
 	switch (format) {
 		case "xml":
 			return decodeAsXML(tree, { includeAlternatives: opts.includeAlternatives })
@@ -543,13 +548,14 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  * already printed — so no path degrades silently, and none double-warns.
  */
 async function runStructuralPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+	const { createRuntimePipeline } = await import("mailwoman")
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
 	emitFaultWarnings(result)
 
 	return options.debug
-		? JSON.stringify(serializeResult(result, options.format), null, 2)
-		: serializeTree(result.tree, options.format, { includeAlternatives: false })
+		? JSON.stringify(await serializeResult(result, options.format), null, 2)
+		: await serializeTree(result.tree, options.format, { includeAlternatives: false })
 }
 
 /**
@@ -617,6 +623,7 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
+		const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
 		const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
 
 		if (dc) {
@@ -651,6 +658,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	// ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
+	const { createRuntimePipeline } = await import("mailwoman")
+
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
@@ -659,8 +668,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 			emitFaultWarnings(result)
 
 			return options.debug
-				? JSON.stringify(serializeResult(result, options.format), null, 2)
-				: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+				? JSON.stringify(await serializeResult(result, options.format), null, 2)
+				: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 		})
 	}
 
@@ -670,8 +679,8 @@ async function runPipeline(input: string, options: zod.infer<typeof ParseConfigS
 	emitFaultWarnings(result)
 
 	return options.debug
-		? JSON.stringify(serializeResult(result, options.format), null, 2)
-		: serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
+		? JSON.stringify(await serializeResult(result, options.format), null, 2)
+		: await serializeTree(result.tree, options.format, { includeAlternatives: wantAlternatives })
 }
 
 const BENCHMARK_WARMUP_ITERATIONS = 5
@@ -772,6 +781,8 @@ async function runBenchmark(
 		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
 	}
 
+	const { createRuntimePipeline } = await import("mailwoman")
+
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>
 				collect(createRuntimePipeline({ classifier, resolver, poiQueryKind: options.poi }))
@@ -842,6 +853,8 @@ async function tryLoadNeural(
 	options: zod.infer<typeof ParseConfigSchema>
 ): Promise<NeuralAddressClassifier | undefined> {
 	try {
+		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+
 		return await NeuralAddressClassifier.loadFromWeights({
 			locale: options.locale,
 			modelPath: options.model,
@@ -874,10 +887,12 @@ async function tryLoadNeural(
  * Serialize the full pipeline result for `--debug`. Shows tree + timing + path + kind so callers can see which stage
  * owned which output.
  */
-function serializeResult(
+async function serializeResult(
 	result: Awaited<ReturnType<ReturnType<typeof createRuntimePipeline>>>,
 	format: "json" | "tuple" | "xml"
-): unknown {
+): Promise<unknown> {
+	const { decodeAsXML } = await import("@mailwoman/core/decoder")
+
 	return {
 		input: result.input,
 		normalized: result.normalized,
@@ -903,6 +918,10 @@ async function runNeural(
 	options: zod.infer<typeof ParseConfigSchema>,
 	policyOverrides: readonly PolicyOverride[]
 ): Promise<string> {
+	const { collectProposals, filterByPolicy, InMemoryPolicyRegistry } = await import("@mailwoman/core/policy")
+	const { proposalsToTree } = await import("@mailwoman/core/decoder")
+	const { createNeuralProposalClassifier, NeuralAddressClassifier } = await import("@mailwoman/neural")
+
 	const neural = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale,
 		modelPath: options.model,
@@ -954,7 +973,7 @@ async function runNeural(
 		tree = await withResolver(options, (resolver) => resolveWithCandidates(resolver, tree, options))
 	}
 
-	return serializeTree(tree, options.format, { includeAlternatives: options.candidates !== undefined })
+	return await serializeTree(tree, options.format, { includeAlternatives: options.candidates !== undefined })
 }
 
 export default ParseCommand

@@ -8,14 +8,17 @@
  *   `internal/languages.csv` resource dictionary. Offline codegen.
  */
 
-import { generateLanguageTypes } from "@mailwoman/core/tools"
 import { Text } from "ink"
 import { useCommandTask } from "mailwoman/cli-kit"
 
 const report = (line: string): void => console.error(line)
 
 const DevGenerateLanguageTypes = () => {
-	const state = useCommandTask(() => generateLanguageTypes({}, report))
+	const state = useCommandTask(async () => {
+		const { generateLanguageTypes } = await import("@mailwoman/core/tools")
+
+		return generateLanguageTypes({}, report)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

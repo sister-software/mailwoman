@@ -21,7 +21,6 @@
 
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { artifactSizeMB } from "mailwoman/gazetteer-pipeline"
 import zod from "zod"
 
 const OptionsSchema = zod.object({
@@ -42,6 +41,8 @@ export { OptionsSchema as options }
 
 const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
+
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
 			await import("../../../gazetteer-pipeline/postcode/ni-osm-shard.ts")
 

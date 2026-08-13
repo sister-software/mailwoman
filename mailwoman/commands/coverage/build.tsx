@@ -14,7 +14,6 @@ import { Box, Text } from "ink"
 import { useState } from "react"
 import zod from "zod"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { buildCoverageTiles } from "../../coverage-core.ts"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 const OptionsSchema = zod.object({
@@ -67,6 +66,8 @@ export { OptionsSchema as options }
 const CoverageBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
 	const state = useCommandTask(async () => {
+		const { buildCoverageTiles } = await import("../../coverage-core.ts")
+
 		const rollup = options.rollup
 			.split(",")
 			.map((s) => Number(s.trim()))

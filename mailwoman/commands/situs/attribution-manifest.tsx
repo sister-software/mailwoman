@@ -20,7 +20,6 @@ import { readdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -44,6 +43,8 @@ interface StateLedger {
 
 const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+
 		const outDir = options.outDir ?? dataRootPath("address-points")
 
 		// Canonical per-state shards only: address-points-us-<2-letter-slug>.db. Excludes county-scoped

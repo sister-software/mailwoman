@@ -12,8 +12,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { buildScoreTrends } from "../../eval-harness/score-trends.ts"
-
 export const description = "Regenerate the per-tag score-trend page from evals/scores-by-version.json"
 
 const OptionsSchema = zod.object({
@@ -24,7 +22,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const EvalScoreTrends: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(async () => buildScoreTrends(options))
+	const state = useCommandTask(async () => {
+		const { buildScoreTrends } = await import("../../eval-harness/score-trends.ts")
+
+		return buildScoreTrends(options)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

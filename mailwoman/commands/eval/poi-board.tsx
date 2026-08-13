@@ -18,8 +18,6 @@ import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { runPOIBoard } from "../../eval-harness/poi-board.ts"
-
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
 const OptionsSchema = zod.object({
@@ -64,6 +62,8 @@ export { OptionsSchema as options }
 const EvalPoiBoard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
+			const { runPOIBoard } = await import("../../eval-harness/poi-board.ts")
+
 			const { report, exitCode } = await runPOIBoard({
 				locale: options.locale,
 				weightsCacheRoot: options.weightsCache,

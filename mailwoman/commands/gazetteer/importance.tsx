@@ -39,23 +39,12 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import {
-	createPlaceImportanceTable,
-	type PlaceImportanceDatabase,
-	referentialFromPopulation,
-} from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
 import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { TextSpliterator } from "spliterator"
 import zod from "zod"
 
-import {
-	emptyFanoutStats,
-	type FanoutCandidate,
-	recordFanout,
-	resolveConcordanceFanout,
-} from "../../gazetteer-pipeline/importance-fanout.ts"
+import type { FanoutCandidate } from "../../gazetteer-pipeline/importance-fanout.ts"
 
 /**
  * Permanent redirect.
@@ -119,6 +108,16 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 
 const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+
+		const { createPlaceImportanceTable, referentialFromPopulation } =
+			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
+
+		const { TextSpliterator } = await import("spliterator")
+
+		const { emptyFanoutStats, recordFanout, resolveConcordanceFanout } =
+			await import("../../gazetteer-pipeline/importance-fanout.ts")
+
 		const dbPath = options.db
 		const tsvPath = options.tsv
 		const t0 = performance.now()

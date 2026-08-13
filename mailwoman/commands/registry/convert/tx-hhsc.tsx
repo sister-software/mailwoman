@@ -9,7 +9,6 @@
  *   `oa-resolver-eval --address-points`.
  */
 
-import { convertTXHHSC } from "@mailwoman/registry/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -25,9 +24,11 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const RegistryConvertTXHHSC: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(async () =>
-		convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
-	)
+	const state = useCommandTask(async () => {
+		const { convertTXHHSC } = await import("@mailwoman/registry/tools")
+
+		return convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

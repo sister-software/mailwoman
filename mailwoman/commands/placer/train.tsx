@@ -8,7 +8,6 @@
  *   GPU/Modal). Fits a val-NLL temperature and writes the `meta.json` + `weights.bin` artifact.
  */
 
-import { trainCoarsePlacer } from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -28,12 +27,14 @@ export { OptionsSchema as options }
 const report = (line: string): void => console.error(line)
 
 const PlacerTrain: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		trainCoarsePlacer(
+	const state = useCommandTask(async () => {
+		const { trainCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
+
+		return trainCoarsePlacer(
 			{ epochs: options.epochs, lr: options.lr, l2: options.l2, out: options.out, data: options.data },
 			report
 		)
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

@@ -9,7 +9,6 @@
  *   with per-file sha256.
  */
 
-import { promoteGolden } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -26,8 +25,10 @@ const OptionsSchema = zod.object({
 export { OptionsSchema as options }
 
 const CorpusGoldenPromote: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() =>
-		promoteGolden(
+	const state = useCommandTask(async () => {
+		const { promoteGolden } = await import("@mailwoman/corpus/tools")
+
+		return promoteGolden(
 			{
 				input: options.input,
 				bumpTo: options.bumpTo,
@@ -38,7 +39,7 @@ const CorpusGoldenPromote: CommandComponent<typeof OptionsSchema> = ({ options }
 			},
 			(line) => console.error(line)
 		)
-	)
+	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

@@ -18,8 +18,6 @@ import { Box, Text } from "ink"
 import { CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
 
-import { generateClients } from "../../tools/generate-clients.ts"
-
 export const description = "Generate + verify the Python and Rust API clients from the emitted OpenAPI specs"
 
 const OptionsSchema = zod.object({
@@ -36,12 +34,15 @@ export { OptionsSchema as options }
 
 const ClientsGenerate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(
-		() =>
-			generateClients({
+		async () => {
+			const { generateClients } = await import("../../tools/generate-clients.ts")
+
+			return generateClients({
 				outDir: options.outDir,
 				skipVerify: options.skipVerify,
 				onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
-			}),
+			})
+		},
 		(result) => (result.ok ? 0 : 1)
 	)
 

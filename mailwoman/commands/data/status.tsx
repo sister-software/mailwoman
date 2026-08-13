@@ -18,8 +18,7 @@
 
 import { existsSync, statSync } from "node:fs"
 
-import { APIClient } from "@mailwoman/core/api"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import type { APIClient } from "@mailwoman/core/api"
 import { Text } from "ink"
 import { type Check, CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -98,7 +97,11 @@ async function statusForBundles(
 	let ok = true
 
 	const client = checkRemote
-		? new APIClient({ displayName: "mailwoman data status", minRequestIntervalMs: 150, retry: true })
+		? new (await import("@mailwoman/core/api")).APIClient({
+				displayName: "mailwoman data status",
+				minRequestIntervalMs: 150,
+				retry: true,
+			})
 		: null
 
 	for (const name of bundleNames) {
@@ -163,6 +166,8 @@ async function statusForBundles(
 const DataStatus: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
+			const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+
 			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
 			const names = args.length ? args : Object.keys(BUNDLES)
 

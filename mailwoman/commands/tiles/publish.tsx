@@ -27,11 +27,9 @@
 import { existsSync, statSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
-import { $private } from "@mailwoman/core/env"
 import { Text } from "ink"
 import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
-import { $ } from "zx"
 
 const OptionsSchema = zod.object({
 	file: zod.string().describe("Path to the .pmtiles archive to upload"),
@@ -46,6 +44,9 @@ export { OptionsSchema as options }
 const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
 
 async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<string> {
+	const { $private } = await import("@mailwoman/core/env")
+	const { $ } = await import("zx")
+
 	if (!existsSync(options.file)) throw commandError(`--file not found: ${options.file}`)
 
 	if (!options.file.endsWith(".pmtiles")) throw commandError(`--file must be a .pmtiles archive: ${options.file}`)
@@ -78,7 +79,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 }
 
 const TilesPublish: CommandComponent<typeof OptionsSchema> = ({ options }) => {
-	const state = useCommandTask(() => publishTiles(options))
+	const state = useCommandTask(async () => publishTiles(options))
 
 	if (state.status === "error") return <Text color="red">{state.message}</Text>
 

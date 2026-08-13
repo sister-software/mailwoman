@@ -62,16 +62,9 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-n
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 
-/**
- * Pinned Overture release for the places-theme ingest. Matches `overture-ingest.tsx`'s own `DEFAULT_RELEASE` pin (the
- * addresses-theme ingest) as of this writing — a monthly Overture release covers every theme at once, so the two pins
- * move together in practice. Kept as an INDEPENDENT constant here rather than imported from that `.tsx` command:
- * `gazetteer-pipeline/*.ts` must stay importable under plain `node` type-stripping (no JSX transform), and
- * `commands/**\/*.tsx` files are Ink/Pastel presentation that require compiling (AGENTS.md) — pulling a value FROM a
- * `.tsx` file into this pipeline layer would invert that dependency direction. If the pins drift, `--release` overrides
- * either independently.
- */
-export const DEFAULT_RELEASE = "2026-05-20.0"
+import { DEFAULT_RELEASE } from "./defaults.ts"
+
+export { DEFAULT_RELEASE } from "./defaults.ts"
 
 /**
  * Coverage is aggregated one level coarser than the row spine — a res-6 cell covers a whole metro area.

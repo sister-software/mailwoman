@@ -10,7 +10,6 @@
  *   dataset + model artifacts locally — operator-run, not CI.
  */
 
-import { evalCoarsePlacer, evalLatinOffmap, evalOpenSet, evalQuantCompare } from "@mailwoman/core/coarse-placer/tools"
 import { Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { argument } from "pastel"
@@ -52,6 +51,9 @@ type Kind = zod.infer<typeof ArgsSchema>[0]
 const report = (line: string): void => console.error(line)
 
 async function runKind(kind: Kind, options: Options): Promise<string> {
+	const { evalCoarsePlacer, evalLatinOffmap, evalOpenSet, evalQuantCompare } =
+		await import("@mailwoman/core/coarse-placer/tools")
+
 	switch (kind) {
 		case "in-distribution": {
 			const res = await evalCoarsePlacer({ model: options.model, abstain: options.abstain, data: options.data })
@@ -85,7 +87,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 }
 
 const PlacerEval: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
-	const state = useCommandTask(() => runKind(args[0], options))
+	const state = useCommandTask(async () => runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

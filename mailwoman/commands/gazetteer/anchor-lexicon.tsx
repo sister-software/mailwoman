@@ -28,10 +28,6 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import { wordNorm, wordNormLower } from "@mailwoman/codex"
-import { COUNTRY_LOOKUP } from "@mailwoman/codex/country"
-import { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
-import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import zod from "zod"
@@ -75,6 +71,14 @@ const isShortCode = (s: string): boolean => {
 
 const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 	const state = useCommandTask(async () => {
+		const { wordNorm, wordNormLower } = await import("@mailwoman/codex")
+		const { COUNTRY_LOOKUP } = await import("@mailwoman/codex/country")
+
+		const { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } =
+			await import("@mailwoman/codex/us")
+
+		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
+
 		const output = options.output ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
 
 		// surface → bits, split across the two match-rule maps.

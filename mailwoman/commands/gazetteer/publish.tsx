@@ -16,10 +16,9 @@ import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { mailwomanDataRoot, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_CANDIDATE_OUT, defaultGazetteerVersion, publishGazetteer, wofDir } from "mailwoman/gazetteer-pipeline"
+import { DEFAULT_CANDIDATE_OUT } from "mailwoman/gazetteer-pipeline/defaults"
 import zod from "zod"
 
 const ArgumentsSchema = zod.array(
@@ -41,6 +40,9 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 
 const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
+		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("mailwoman/gazetteer-pipeline")
+
 		const root = mailwomanDataRoot()
 		const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())

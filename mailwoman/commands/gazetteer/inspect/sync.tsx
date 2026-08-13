@@ -7,20 +7,13 @@
 import { availableParallelism } from "node:os"
 
 import { ProgressBar } from "@inkjs/ui"
-import {
-	formatQuantity,
-	Placetype,
-	PLACETYPES_REPO_SOURCE,
-	type RepositorySource,
-	synchronizeRepo,
-} from "@mailwoman/core"
+import type { RepositorySource } from "@mailwoman/core"
+import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import { useMemo, useState } from "react"
-import { parallelMap } from "spliterator"
 import zod from "zod"
-import { $ } from "zx"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"
@@ -68,6 +61,10 @@ const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 	const allow = useMemo(() => parseReposFilter(options.repos), [options.repos])
 
 	const state = useCommandTask(async () => {
+		const { Placetype, PLACETYPES_REPO_SOURCE, synchronizeRepo } = await import("@mailwoman/core")
+		const { parallelMap } = await import("spliterator")
+		const { $ } = await import("zx")
+
 		const discovered = $.sync`gh repo list ${WOF_REPO_OWNER} --no-archived --limit 1000 --json 'name' --json 'url'`
 			.json<Omit<RepositorySource, "owner">[]>()
 			.map((entry): RepositorySource => ({ ...entry, owner: WOF_REPO_OWNER }))

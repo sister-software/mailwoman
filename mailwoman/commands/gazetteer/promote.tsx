@@ -11,10 +11,9 @@
 
 import { join } from "node:path"
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_CANDIDATE_OUT, promoteCandidate, wofDir } from "mailwoman/gazetteer-pipeline"
+import { DEFAULT_CANDIDATE_OUT } from "mailwoman/gazetteer-pipeline/defaults"
 import zod from "zod"
 
 const ArgumentsSchema = zod.array(
@@ -27,6 +26,9 @@ export { ArgumentsSchema as args, OptionsSchema as options }
 
 const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args }) => {
 	const state = useCommandTask(async () => {
+		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+		const { promoteCandidate, wofDir } = await import("mailwoman/gazetteer-pipeline")
+
 		const root = mailwomanDataRoot()
 		const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 		const linkPath = promoteCandidate(candidateDb, root)
