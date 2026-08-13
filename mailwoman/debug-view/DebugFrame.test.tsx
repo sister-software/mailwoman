@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { DebugFrame } from "./DebugFrame.tsx"
+import { DebugFrame, mapPaneCellSize, ribbonSegments } from "./DebugFrame.tsx"
 import { renderInkToString } from "./static-render.ts"
 
 const TREE = {
@@ -75,5 +75,59 @@ describe("DebugFrame", () => {
 		)
 
 		expect(focusedText).toContain("map") // focused pane title is highlighted + suffixed, e.g. "map ◀"
+	})
+
+	it("the ribbon losslessly reconstructs the input, connector text included", () => {
+		const segments = ribbonSegments(TREE)
+
+		// #493 round trip: concatenating every segment's value reproduces the raw input exactly — the
+		// ", " between the street and the locality must survive as an `unknown` segment, not vanish.
+		expect(segments.map((segment) => segment.value).join("")).toBe(TREE.raw)
+		expect(segments.some((segment) => segment.tag === undefined && segment.value.includes(","))).toBe(true)
+	})
+
+	it("sizes a map frame from mapPaneCellSize so MapPane renders it without dropping any chrome", async () => {
+		const columns = 100
+		const rows = 30
+		const cellSize = mapPaneCellSize(columns, rows)
+		const cellCount = cellSize.columns * cellSize.rows
+		// Every cell inked with a distinctive marker char, so a dropped frame row is visible directly
+		// (a naive total-line-count check can't tell "rendered" from "silently clipped" — Ink doesn't
+		// grow a Box past its declared `height` when children overflow it; it drops rows to fit, which
+		// keeps the outer line count unchanged and would pass a line-count-only assertion).
+		const MARKER_CODEPOINT = "#".codePointAt(0)!
+
+		const frame = {
+			columns: cellSize.columns,
+			rows: cellSize.rows,
+			chars: new Uint32Array(cellCount).fill(MARKER_CODEPOINT),
+			colors: new Uint32Array(cellCount),
+			attribution: "test attribution",
+		}
+
+		const text = await renderInkToString(
+			<DebugFrame
+				columns={columns}
+				rows={rows}
+				focused={null}
+				color={true}
+				data={{ input: RESULT.input, tree: TREE, result: RESULT, frame, mapNote: null }}
+			/>,
+			columns
+		)
+
+		// Ink's raw write ends with a trailing "\n" (an empty final split element, not an extra row). The
+		// string being split is one already-rendered terminal frame — small, bounded, and never re-split
+		// or grown — so a spliterator buys nothing here.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame, not a stream
+		const lines = text.endsWith("\n") ? text.slice(0, -1).split("\n") : text.split("\n")
+		const markedLineCount = lines.filter((line) => line.includes("#")).length
+
+		// Every requested frame row actually rendered — an undercounted chrome budget clips rows (and/or
+		// the title) to fit MapPane's declared box height instead of growing past it.
+		expect(markedLineCount).toBe(cellSize.rows)
+		expect(text).toContain("map")
+		expect(text).toContain("test attribution")
+		expect(lines).toHaveLength(rows)
 	})
 })

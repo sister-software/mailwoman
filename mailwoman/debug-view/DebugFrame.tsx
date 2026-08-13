@@ -19,11 +19,19 @@
  *   - The output pane takes `floor(columns / 2)`; the map pane takes what's left, so the two always
  *     sum to `columns` regardless of parity.
  *   - {@link mapPaneCellSize} hands a caller (the live command, sizing the actual map-tui renderer
- *     viewport) the map pane's usable CONTENT cell budget — pane width minus its own two border
- *     columns, bottom-row height minus the map pane's two border rows.
+ *     viewport) the map pane's usable CONTENT cell budget: pane width minus its own two border
+ *     columns ({@link MAP_PANE_CHROME_COLUMNS}); bottom-row height minus MapPane's own four chrome
+ *     rows — top+bottom border, the title line, and the attribution line
+ *     ({@link MAP_PANE_CHROME_ROWS}) — so a frame built to exactly these dimensions fills MapPane
+ *     without any row getting clipped. Measured 2026-08-13: Ink does NOT grow a `Box` past a fixed
+ *     `height` when its children need more room — it silently DROPS rows (observed: the title line
+ *     disappeared first, then a trailing frame line) rather than overflowing the terminal output, so
+ *     an undercounted chrome budget is invisible to a plain output-line-count check. Verified in
+ *     `DebugFrame.test.tsx` by filling every frame cell with a marker character and counting marked
+ *     lines against `cellSize.rows`, plus asserting the title and attribution both still appear.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { losslessSegments, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { frameToANSILines, type MapFrame } from "@mailwoman/map-tui"
 import { Box, Text } from "ink"
 import type React from "react"
@@ -77,11 +85,29 @@ export interface DebugFrameProps {
 const INPUT_ROW_HEIGHT = 4
 
 /**
- * The map pane's usable content-cell budget for the map-tui renderer viewport: pane width/height minus its own border
- * rows/columns. Exported so a live command can request a frame already sized to fit.
+ * MapPane's own top+bottom border rows, plus its title line, plus its attribution line — the chrome `mapPaneCellSize`
+ * must subtract from the bottom row's height so a requested frame fills the pane exactly. Counted directly off
+ * {@link MapPane}'s render tree: `borderStyle="round"` (2), the `paneTitle` `<Text>` (1), the right-aligned attribution
+ * `<Box><Text>` when a frame is present (1).
+ */
+const MAP_PANE_CHROME_ROWS = 4
+
+/**
+ * MapPane's own left+right border columns. Its title/attribution lines run inside that same width, so they add no
+ * additional column chrome.
+ */
+const MAP_PANE_CHROME_COLUMNS = 2
+
+/**
+ * The map pane's usable content-cell budget for the map-tui renderer viewport: pane width minus its own border columns,
+ * bottom-row height minus the input row's height AND MapPane's own chrome rows. Exported so a live command can request
+ * a frame already sized to fit MapPane without overflow.
  */
 export function mapPaneCellSize(columns: number, rows: number): { columns: number; rows: number } {
-	return { columns: columns - Math.floor(columns / 2) - 2, rows: rows - 4 - 2 }
+	return {
+		columns: columns - Math.floor(columns / 2) - MAP_PANE_CHROME_COLUMNS,
+		rows: rows - INPUT_ROW_HEIGHT - MAP_PANE_CHROME_ROWS,
+	}
 }
 
 //#endregion
@@ -103,24 +129,85 @@ function paneTitle(label: string, pane: DebugPane, focused: DebugPane | null, bu
 }
 
 /**
- * The tree's leaf nodes (no children — the finest-grained spans the model actually assigned a tag to), in source order.
- * DFS traversal order doesn't matter here since the result is sorted by `start`.
+ * A component tag, or `undefined` for a run no node covers.
  */
-function leafNodes(tree: AddressTree): AddressNode[] {
-	const leaves: AddressNode[] = []
-	const stack: AddressNode[] = [...tree.roots]
+type Tag = AddressNode["tag"]
 
-	while (stack.length) {
-		const node = stack.pop()!
+/**
+ * Per-character tag ownership over `tree.raw`: for every index some node covers, the tag of the DEEPEST node whose span
+ * contains it — a child's tag overrides its ancestor's on the range they share, so a leaf's tag wins where one exists,
+ * and a parent's own text that no child covers still gets the parent's tag rather than falling through to "no owner".
+ * Indices no node covers at all stay `undefined` (the `losslessSegments` `unknown` runs).
+ */
+function tagOwnership(tree: AddressTree): (Tag | undefined)[] {
+	const owners: (Tag | undefined)[] = new Array(tree.raw.length).fill(undefined)
 
-		if (node.children.length) {
-			stack.push(...node.children)
-		} else {
-			leaves.push(node)
+	const visit = (node: AddressNode): void => {
+		const lo = Math.max(0, node.start)
+		const hi = Math.min(owners.length, node.end)
+
+		for (let i = lo; i < hi; i++) {
+			owners[i] = node.tag
+		}
+
+		for (const child of node.children) {
+			visit(child)
 		}
 	}
 
-	return leaves.toSorted((a, b) => a.start - b.start)
+	for (const root of tree.roots) {
+		visit(root)
+	}
+
+	return owners
+}
+
+/**
+ * One tile of the span ribbon: a run of `value` colored by `tag`, or an `unknown` (uncovered) run when `tag` is
+ * `undefined`.
+ */
+export interface RibbonSegment {
+	value: string
+	tag: Tag | undefined
+}
+
+/**
+ * Tile `tree.raw` into ribbon segments for the input row.
+ *
+ * Built on `losslessSegments` (`@mailwoman/core/decoder`, #493) for the covered/`unknown` split — every character of
+ * the input belongs to exactly one segment, so the ribbon never silently drops the connector text between spans (the
+ * comma-space between a street and a locality, say) the way walking only leaf nodes did. Each `covered` run is further
+ * split at {@link tagOwnership} boundaries so every ribbon chip carries exactly one tag's color. Concatenating every
+ * segment's `value`, in order, reproduces `tree.raw` exactly — the same round-trip invariant `losslessSegments`
+ * guarantees.
+ */
+export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
+	const owners = tagOwnership(tree)
+	const segments: RibbonSegment[] = []
+
+	for (const run of losslessSegments(tree)) {
+		if (run.kind === "unknown") {
+			segments.push({ value: run.value, tag: undefined })
+
+			continue
+		}
+
+		let cursor = run.start
+
+		while (cursor < run.end) {
+			const tag = owners[cursor]
+			let next = cursor + 1
+
+			while (next < run.end && owners[next] === tag) {
+				next++
+			}
+
+			segments.push({ value: tree.raw.slice(cursor, next), tag })
+			cursor = next
+		}
+	}
+
+	return segments
 }
 
 //#endregion
@@ -133,7 +220,14 @@ function InputBar(props: {
 	inputField: React.ReactNode | undefined
 	columns: number
 }): React.ReactElement {
-	const leaves = leafNodes(props.data.tree)
+	const segments = ribbonSegments(props.data.tree)
+	const legendTags: Tag[] = []
+
+	for (const segment of segments) {
+		if (segment.tag && !legendTags.includes(segment.tag)) {
+			legendTags.push(segment.tag)
+		}
+	}
 
 	return (
 		<Box
@@ -145,16 +239,22 @@ function InputBar(props: {
 		>
 			<Box>{props.inputField ?? <Text>{props.data.input}</Text>}</Box>
 			<Box>
-				{leaves.map((node, i) => (
-					<Text key={`segment-${i}`} backgroundColor={tagColor(node.tag)}>
-						{` ${node.value} `}
-					</Text>
-				))}
+				{segments.map((segment, i) =>
+					segment.tag ? (
+						<Text key={`segment-${i}`} backgroundColor={tagColor(segment.tag)}>
+							{segment.value}
+						</Text>
+					) : (
+						<Text key={`segment-${i}`} dimColor>
+							{segment.value}
+						</Text>
+					)
+				)}
 				<Text> </Text>
-				{leaves.map((node, i) => (
-					<Text key={`legend-${i}`} color={tagColor(node.tag)}>
+				{legendTags.map((tag, i) => (
+					<Text key={`legend-${i}`} color={tagColor(tag)}>
 						{i > 0 ? " " : ""}
-						{node.tag}
+						{tag}
 					</Text>
 				))}
 			</Box>
