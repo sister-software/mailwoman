@@ -225,6 +225,33 @@ describe("span-first adversarial place names", () => {
 	)
 })
 
+describe("span-first multilingual anchors", () => {
+	const categoryLookup: POIPhraseLookup = (phrase) => {
+		const subject = phrase.trim().toLowerCase()
+
+		return ["restaurant", "hotel", "pharmacy", "cafe"].includes(subject)
+			? [{ kind: "category", categoryID: subject, matchedPhrase: subject, confidence: 1 }]
+			: []
+	}
+
+	const cases = [
+		["restaurant in München", "de-DE", "restaurant", "in", "München"],
+		["hotel near São Tomé and Príncipe", "pt-PT", "hotel", "near", "São Tomé and Príncipe"],
+		["pharmacy in مدينة الكويت", "ar-KW", "pharmacy", "in", "مدينة الكويت"],
+		["restaurant in 東京", "ja-JP", "restaurant", "in", "東京"],
+		["hotel near Санкт-Петербург", "ru-RU", "hotel", "near", "Санкт-Петербург"],
+		["cafe in Côte d’Ivoire", "fr-FR", "cafe", "in", "Côte d’Ivoire"],
+	] as const
+
+	it.each(cases)("keeps the Unicode anchor intact for %s", (text, locale, subject, relation, anchor) => {
+		const matched = matchPOISubject(text, locale, categoryLookup)
+
+		expect(matched).toMatchObject({ subject, relation, remainder: anchor })
+		expect(matched?.anchorSpan?.text).toBe(anchor)
+		expect(text.slice(matched?.anchorSpan?.start, matched?.anchorSpan?.end)).toBe(anchor)
+	})
+})
+
 describe("ANCHOR_SEPARATOR is linear (ReDoS safety)", () => {
 	// Never-hitting lexicon forces the full separator scan over the whole input on every call.
 	const neverHits: POIPhraseLookup = () => []

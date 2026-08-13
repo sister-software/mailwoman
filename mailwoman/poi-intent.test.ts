@@ -110,6 +110,16 @@ describe("createPOINameLookup", () => {
 		expect(lookup("Statue of Liberty", "en-US")).toEqual([])
 	})
 
+	it.each([
+		["東京タワー", "東京タワー"],
+		["MÜNCHEN HBF", "München Hbf"],
+		["Cafe\u0301 de Flore", "Café de Flore"],
+	])("accepts normalized exact multilingual name evidence for %s", (query, canonical) => {
+		const lookup = createPOINameLookup({ search: () => [{ name: canonical, confidence: 0.9 }] })
+
+		expect(lookup(query)[0]).toMatchObject({ kind: "name", categoryID: canonical, matchedPhrase: canonical })
+	})
+
 	it("promotes an exact known name into the POI lane", async () => {
 		const lookup = createPOINameLookup({ search: () => [statueHit] })
 		const classify = createKindClassifier({ poiLexicon: lookup })
@@ -287,6 +297,27 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 		expect(result.poiIntent.intent.anchor?.text).toBe(anchor)
 	})
 
+	it.each([
+		["restaurant in München", "de-DE", "restaurant", "München"],
+		["hotel near São Tomé and Príncipe", "pt-PT", "hotel", "São Tomé and Príncipe"],
+		["pharmacy in مدينة الكويت", "ar-KW", "pharmacy", "مدينة الكويت"],
+		["restaurant in 東京", "ja-JP", "restaurant", "東京"],
+		["hotel near Санкт-Петербург", "ru-RU", "hotel", "Санкт-Петербург"],
+	] as const)("preserves the multilingual anchor in %s", async (query, locale, categoryID, anchor) => {
+		const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: true })
+		const result = await pipeline(query, { locale })
+
+		expect(result.path).toBe("poi")
+		expect(result.poiIntent?.type).toBe("intent")
+
+		if (result.poiIntent?.type !== "intent" || result.poiIntent.intent.subject.kind !== "category") {
+			throw new Error("unreachable")
+		}
+
+		expect(result.poiIntent.intent.subject.categoryID).toBe(categoryID)
+		expect(result.poiIntent.intent.anchor?.text).toBe(anchor)
+	})
+
 	it.each(["Carmel-by-the-Sea", "12 Carmel-by-the-Sea Road", "Church of the Holy Sepulchre"])(
 		"does not route the control %s as a category query",
 		async (query) => {
@@ -337,6 +368,16 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 				0
 			)
 
+			const tokyoNameKey = "東京タワー"
+
+			db.prepare(
+				`INSERT INTO poi
+				 (h3_cell, category_id, neg_rank, name, brand_wikidata, latitude, longitude, country, confidence, name_key, gers_id)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			).run(0, 0, -0.98, "東京タワー", null, 35.6586, 139.7454, "JP", 0.98, tokyoNameKey, "tokyo-tower")
+
+			db.prepare("INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)").run("東京タワー", tokyoNameKey, 0)
+
 			db.close()
 
 			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: { poiDatabasePath: databasePath } })
@@ -349,6 +390,16 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 			expect(result.poiIntent.intent.subject).toEqual({ kind: "name", text: "Statue of Liberty" })
 			expect(result.poiIntent.results?.[0]?.name).toBe("Statue of Liberty")
+
+			const multilingual = await pipeline("東京タワー", { locale: "ja-JP" })
+
+			expect(multilingual.path).toBe("poi")
+			expect(multilingual.poiIntent?.type).toBe("intent")
+
+			if (multilingual.poiIntent?.type !== "intent") throw new Error("unreachable")
+
+			expect(multilingual.poiIntent.intent.subject).toEqual({ kind: "name", text: "東京タワー" })
+			expect(multilingual.poiIntent.results?.[0]?.name).toBe("東京タワー")
 
 			const overlap = await pipeline("Statue of Liberty Museum", { locale: "en-US" })
 
