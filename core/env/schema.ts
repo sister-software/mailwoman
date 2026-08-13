@@ -33,6 +33,7 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_FST_BIN: z.string().optional(),
 	MAILWOMAN_MODEL_CARD: z.string().optional(),
 	MAILWOMAN_COARSE_PLACER_DIR: z.string().optional(),
+	// PMTiles archive for the geocode --debug map pane; --tiles outranks it at the call site.
 	MAILWOMAN_TILES: z.string().optional(),
 
 	// ONNX intra-op thread cap. Deployment-shaped rather than code-shaped: the right value depends on how many
@@ -142,6 +143,7 @@ export const PublicEnvSchema = z.object({
 	MW_DUMP_REGRESSIONS: z.string().optional(),
 	PROBE_N: z.string().optional(),
 	DEBUG: z.string().optional(),
+	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own; declared here because the debug view's map pane emits raw SGR and must consult it itself — the schema strips unlisted vars.
 	NO_COLOR: z.string().optional(),
 })
 

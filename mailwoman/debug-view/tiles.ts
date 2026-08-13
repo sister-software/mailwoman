@@ -1,5 +1,8 @@
-// Copyright 2024 Sister Software, Inc. dba mailwoman
-// SPDX-License-Identifier: AGPL-3.0-only
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
 
 import { existsSync } from "node:fs"
 
@@ -14,7 +17,7 @@ export function resolveTilesPath(flagValue?: string): string | null {
 
 	if ($public.MAILWOMAN_TILES) return $public.MAILWOMAN_TILES
 
-	const fallback = String(dataRootPath("tiles", "planet.pmtiles"))
+	const fallback = dataRootPath("tiles", "planet.pmtiles")
 
 	return existsSync(fallback) ? fallback : null
 }
