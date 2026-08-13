@@ -34,7 +34,7 @@
 import { losslessSegments, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { frameToANSILines, type MapFrame } from "@mailwoman/map-tui"
 import { Box, Text } from "ink"
-import type React from "react"
+import React, { memo, useMemo } from "react"
 
 import type { GeocodeResult } from "../geocode-core.ts"
 import { tagColor } from "./tag-colors.ts"
@@ -219,20 +219,25 @@ export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 
 //#region Input row
 
-function InputBar(props: {
-	data: DebugData
+const InputBar = memo(function InputBar(props: {
+	input: string
+	tree: AddressTree
 	focused: DebugPane | null
 	inputField: React.ReactNode | undefined
 	columns: number
 }): React.ReactElement {
-	const segments = ribbonSegments(props.data.tree)
-	const legendTags: Tag[] = []
+	const { segments, legendTags } = useMemo(() => {
+		const parsed = ribbonSegments(props.tree)
+		const tags: Tag[] = []
 
-	for (const segment of segments) {
-		if (segment.tag && !legendTags.includes(segment.tag)) {
-			legendTags.push(segment.tag)
+		for (const segment of parsed) {
+			if (segment.tag && !tags.includes(segment.tag)) {
+				tags.push(segment.tag)
+			}
 		}
-	}
+
+		return { segments: parsed, legendTags: tags }
+	}, [props.tree])
 
 	return (
 		<Box
@@ -242,7 +247,7 @@ function InputBar(props: {
 			width={props.columns}
 			height={INPUT_ROW_HEIGHT}
 		>
-			<Box>{props.inputField ?? <Text>{props.data.input}</Text>}</Box>
+			<Box>{props.inputField ?? <Text>{props.input}</Text>}</Box>
 			<Box>
 				{segments.map((segment, i) =>
 					segment.tag ? (
@@ -265,7 +270,7 @@ function InputBar(props: {
 			</Box>
 		</Box>
 	)
-}
+})
 
 //#endregion
 
@@ -295,15 +300,15 @@ function HierarchyRow(props: { entry: GeocodeResult["hierarchy"][number] }): Rea
 	)
 }
 
-function OutputPane(props: {
-	data: DebugData
+const OutputPane = memo(function OutputPane(props: {
+	result: GeocodeResult
 	focused: DebugPane | null
 	busy: boolean | undefined
 	errorNote: string | null | undefined
 	width: number
 	height: number
 }): React.ReactElement {
-	const { result } = props.data
+	const { result } = props
 
 	return (
 		<Box
@@ -323,20 +328,32 @@ function OutputPane(props: {
 			))}
 		</Box>
 	)
-}
+})
 
 //#endregion
 
 //#region Map pane
 
-function MapPane(props: {
-	data: DebugData
+/**
+ * The expensive pane, and the one that depends on nothing the input row changes — so it takes the fields it reads
+ * rather than the shared {@link DebugData} bag, which is what lets `memo` see stable props across a keystroke.
+ *
+ * Know what this buys and what it does not. It removes React's reconciliation of the 28 `<Text>` rows: worth 2.3 ms of
+ * the 12.9 ms keystroke against React's DEVELOPMENT build, and inside the noise floor against its production build
+ * (measured 2026-08-13, 120×36, six interleaved pairs each). It cannot touch the dominant cost, because Ink's
+ * `render-node-to-output` walks the whole yoga tree and re-serializes it every frame no matter which subtrees React
+ * skipped — that is what `incrementalRendering` is for, and the two are complementary rather than redundant.
+ */
+const MapPane = memo(function MapPane(props: {
+	frame: MapFrame | null
+	mapNote: string | null
 	focused: DebugPane | null
 	color: boolean
 	width: number
 	height: number
 }): React.ReactElement {
-	const { frame, mapNote } = props.data
+	const { frame, mapNote } = props
+	const lines = useMemo(() => (frame ? frameToANSILines(frame, { color: props.color }) : null), [frame, props.color])
 
 	return (
 		<Box
@@ -347,9 +364,9 @@ function MapPane(props: {
 			height={props.height}
 		>
 			<Text>{paneTitle("map", "map", props.focused)}</Text>
-			{frame ? (
+			{frame && lines ? (
 				<>
-					{frameToANSILines(frame, { color: props.color }).map((line, i) => (
+					{lines.map((line, i) => (
 						<Text key={i}>{line}</Text>
 					))}
 					<Box justifyContent="flex-end">
@@ -361,7 +378,7 @@ function MapPane(props: {
 			)}
 		</Box>
 	)
-}
+})
 
 //#endregion
 
@@ -372,17 +389,30 @@ export function DebugFrame(props: DebugFrameProps): React.ReactElement {
 
 	return (
 		<Box flexDirection="column" width={props.columns} height={props.rows}>
-			<InputBar data={props.data} focused={props.focused} inputField={props.inputField} columns={props.columns} />
+			<InputBar
+				input={props.data.input}
+				tree={props.data.tree}
+				focused={props.focused}
+				inputField={props.inputField}
+				columns={props.columns}
+			/>
 			<Box flexDirection="row" width={props.columns} height={bottomHeight}>
 				<OutputPane
-					data={props.data}
+					result={props.data.result}
 					focused={props.focused}
 					busy={props.busy}
 					errorNote={props.errorNote}
 					width={outputWidth}
 					height={bottomHeight}
 				/>
-				<MapPane data={props.data} focused={props.focused} color={props.color} width={mapWidth} height={bottomHeight} />
+				<MapPane
+					frame={props.data.frame}
+					mapNote={props.data.mapNote}
+					focused={props.focused}
+					color={props.color}
+					width={mapWidth}
+					height={bottomHeight}
+				/>
 			</Box>
 		</Box>
 	)

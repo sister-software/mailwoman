@@ -10,11 +10,12 @@
  *
  *   The split is load-bearing. ESM evaluates every static import before a module's own body runs, so a preamble
  *   written as body code in `cli-main.ts` would execute AFTER `pastel` → `ink` → `react` and its ~2,700-module graph
- *   had already been compiled and initialized — too late to change how any of it loads. Only `node:module` is imported
+ *   had already been compiled and initialized — too late for either knob below. Only `node:module` is imported
  *   statically here (a builtin, already resident); the real CLI arrives through `await import()`, which evaluates after
  *   this body.
  *
- *   So keep this file at one static import: anything added to the top of it is compiled before the cache exists.
+ *   So keep this file at one static import: anything added to the top of it is compiled before the cache exists and,
+ *   if it reaches React, pins the development build.
  */
 
 import { enableCompileCache } from "node:module"
@@ -26,5 +27,19 @@ import { enableCompileCache } from "node:module"
 try {
 	enableCompileCache()
 } catch {}
+
+// React's CJS entry picks its development or production build from `NODE_ENV` at import time, and the development
+// build is 23.5% of the render work in `geocode --debug`'s interactive session: 12.35 ms → 4.25 ms of synchronous
+// main-thread work per keystroke at 120×36. Nothing in the CLI reads React's dev warnings, so production is the right
+// default — `??=` and not `=`, because vitest sets `NODE_ENV=test` and `core/env` models all three values.
+//
+// `@mailwoman/core/env` is the blessed READER of a live view over `process.env`; it has no writer, and importing one
+// here would defeat the point of this file. The `readonly NODE_ENV` in `mailwoman/types/node.d.ts` guards against a
+// library mutating the ambient environment out from under the process — this is the process's own entry point, ahead
+// of the first reader, which is the one place the guard is not aimed at.
+// oxlint-disable-next-line sister-software/no-process-globals -- see above.
+const environment = process.env as { NODE_ENV?: string }
+
+environment.NODE_ENV ??= "production"
 
 await import("./cli-main.ts")
