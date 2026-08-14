@@ -33,12 +33,12 @@
 import { existsSync, lstatSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, workspacePath } from "@mailwoman/core/utils"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
-const PKG_DIR = repoRootPath("neural-weights-en-au")
+const PKG_DIR = workspacePath("neural-weights-en-au")
 
 /**
  * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain

@@ -4727,9 +4727,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/geocode-oracle@workspace:geocode-oracle":
+"@mailwoman/geocode-oracle@workspace:packages/geocode-oracle":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/geocode-oracle@workspace:geocode-oracle"
+  resolution: "@mailwoman/geocode-oracle@workspace:packages/geocode-oracle"
   dependencies:
     "@mailwoman/address-id": "workspace:*"
     "@mailwoman/codex": "workspace:*"
@@ -4833,9 +4833,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-base-latn@workspace:neural-weights-base-latn":
+"@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-base-latn@workspace:neural-weights-base-latn"
+  resolution: "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn"
   dependencies:
     "@mailwoman/core": "workspace:*"
   languageName: unknown
@@ -4850,9 +4850,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-en-au@workspace:neural-weights-en-au":
+"@mailwoman/neural-weights-en-au@workspace:packages/neural-weights-en-au":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-en-au@workspace:neural-weights-en-au"
+  resolution: "@mailwoman/neural-weights-en-au@workspace:packages/neural-weights-en-au"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
@@ -4991,9 +4991,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:osm":
+"@mailwoman/osm@workspace:*, @mailwoman/osm@workspace:packages/osm":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/osm@workspace:osm"
+  resolution: "@mailwoman/osm@workspace:packages/osm"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -5190,9 +5190,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/tile-worker@workspace:tile-worker":
+"@mailwoman/tile-worker@workspace:packages/tile-worker":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/tile-worker@workspace:tile-worker"
+  resolution: "@mailwoman/tile-worker@workspace:packages/tile-worker"
   dependencies:
     "@cloudflare/workers-types": "npm:^5.20260730.1"
     "@mailwoman/cartographer": "workspace:*"

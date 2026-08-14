@@ -13,7 +13,7 @@ import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
-const PKG_DIR = repoRootPath("neural-weights-base-latn")
+const PKG_DIR = workspacePath("neural-weights-base-latn")
 
 function linkForce(src: string, dest: string): void {
 	const tmp = `${dest}.tmp-link`

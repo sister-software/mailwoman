@@ -9,8 +9,8 @@
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
-		{ "path": "../packages/core" },
-		{ "path": "../packages/spatial" },
-		{ "path": "../packages/resolver-wof-sqlite" }
+		{ "path": "../core" },
+		{ "path": "../spatial" },
+		{ "path": "../resolver-wof-sqlite" }
 	]
 }

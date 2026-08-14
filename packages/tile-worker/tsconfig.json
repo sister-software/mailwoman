@@ -14,8 +14,8 @@
 	"exclude": ["./out/**/*"],
 	"references": [
 		// ---
-		{ "path": "../packages/core" },
-		{ "path": "../packages/spatial" },
-		{ "path": "../packages/cartographer" }
+		{ "path": "../core" },
+		{ "path": "../spatial" },
+		{ "path": "../cartographer" }
 	]
 }
