@@ -20,7 +20,19 @@ const exists = (url: URL): Promise<boolean> =>
 const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`../commands/${parts.join("/")}${index ? "/index" : ""}.js`, import.meta.url)
 
-const camelCase = (value: string): string => value.replaceAll(/-([a-z])/gu, (_, letter: string) => letter.toUpperCase())
+const OPTION_INITIALISMS = new Map([["db", "DB"]])
+
+/**
+ * Convert a kebab-case option name to its TypeScript property name.
+ */
+export function optionPropertyName(value: string): string {
+	const [head = "", ...tail] = value.split("-")
+
+	return (
+		head +
+		tail.map((part) => OPTION_INITIALISMS.get(part) ?? `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join("")
+	)
+}
 
 async function runCommand(module: CommandModule, commandPath: string, argv: readonly string[]): Promise<number> {
 	if (!module.spec) throw new TypeError(`Command ${commandPath} does not export a CommandSpec.`)
@@ -34,7 +46,10 @@ async function runCommand(module: CommandModule, commandPath: string, argv: read
 		return 0
 	}
 
-	const options = Object.fromEntries(Object.entries(parsed.values).map(([name, value]) => [camelCase(name), value]))
+	const options = Object.fromEntries(
+		Object.entries(parsed.values).map(([name, value]) => [optionPropertyName(name), value])
+	)
+
 	const instance = render(createElement(module.default, { options, args: parsed.positionals }))
 	await instance.waitUntilExit()
 
