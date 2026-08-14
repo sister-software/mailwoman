@@ -3,41 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The geocode-first decision surface — the headline concept figure for the record matcher.
- *
- *   What a reader should walk away with: **geography is the primary key; string similarity only
- *   refines within a place.** The figure makes that legible as a _landscape_. Two surfaces of
- *   P(match) over the same record-pair space (string similarity × geographic distance), scored by
- *   the SAME Fellegi-Sunter machinery, differing only in which evidence each model is allowed to
- *   see:
- *
- *   - **String-first** sees the name agreement only → its decision boundary is _vertical_: high string
- *       similarity ⇒ match, at any distance. It fuses `Springfield General (IL)` with `Springfield
- *       General (MA)` (identical name, ~1500 km apart) and still misses `123 Main St` ↔ `123 Main
- *       Street Apt 2` when the strings drift.
- *   - **Geocode-first** also sees the distance agreement → its boundary _bends with geography_: near
- *       the same coordinate a modest name match suffices; far apart, even an exact name is
- *       rejected. It gets both traps right.
- *
- *   Honesty notes (so the figure can't mislead):
- *
- *   - The per-level weights are the REAL Bayes factors from the codebase — `NAME_LEVELS`
- *       (`registry/resolve.ts`) and `DEFAULT_DISTANCE_LEVELS` (`match/distance.ts`). Geography
- *       simply carries the heaviest evidence: ±9.45 bits at the same-building grain vs ±6.32 for an
- *       exact name.
- *   - The PRIOR is illustrative (λ shown in the caption), not production's λ=1e-4. Production is even
- *       more conservative and leans on additional corroboration (phone, the spatial exact-key) that
- *       this two-axis slice deliberately omits — the point here is the _shape of the boundary_, not
- *       a reproduction of a production score. The caption says so.
- *
- *   Emits a self-contained Plotly HTML (twin 3D landscapes + an annotated 2D contour). Render to PNG
- *   with `renderPlotlyHTMLToPNG` (`./render.ts` — Playwright + swiftshader for headless WebGL).
- *
- *   Run: `mailwoman registry viz geocode-first-surface [--lambda 0.02]
- *   [--out-html /tmp/geocode-first-surface.html]`
+ *   Plot string-only and string-plus-distance match probabilities using the record matcher's
+ *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained HTML.
  */
 
 import { writeFileSync } from "node:fs"
+
+import { tempRootPath } from "@mailwoman/core/utils"
 
 /**
  * Options for {@linkcode geocodeFirstSurface}.
@@ -115,7 +87,7 @@ export function geocodeFirstSurface(
 	report?: (line: string) => void
 ): { outHTML: string } {
 	const LAMBDA = options.lambda ?? 0.02
-	const OUT_HTML = options.outHTML || "/tmp/geocode-first-surface.html"
+	const OUT_HTML = options.outHTML || tempRootPath("geocode-first-surface.html")
 
 	const PRIOR = priorWeight(LAMBDA)
 

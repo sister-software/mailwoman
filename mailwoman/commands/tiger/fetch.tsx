@@ -13,34 +13,47 @@
 
 import { Spinner } from "@inkjs/ui"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	state: zod.string().describe("Two-digit state FIPS, e.g. 06 (California)."),
-	level: zod
-		.enum(["tabblock20", "place", "addrfeat"])
-		.default("tabblock20")
-		.describe("TIGER level: tabblock20 (blocks+geometry), place, or addrfeat (streets, per county)."),
-	vintage: zod
-		.number()
-		.optional()
-		.describe("TIGER vintage. Default 2020 for blocks (matches the P.L.), 2024 for place/addrfeat."),
-	county: zod.string().optional().describe("Optional three-digit county FIPS filter (blocks only)."),
-	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger.db."),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "fetch",
+	description: "Fetch TIGER geography into SQLite.",
+	options: {
+		state: {
+			type: "string",
+			required: true,
+			validate: (value) => /^\d{2}$/u.test(value),
+			validationMessage: "--state must be a two-digit FIPS code.",
+			description: "State FIPS",
+		},
+		level: {
+			type: "string",
+			choices: ["tabblock20", "place", "addrfeat"],
+			default: "tabblock20",
+			description: "TIGER level",
+		},
+		vintage: { type: "number", description: "TIGER vintage" },
+		county: { type: "string", description: "County FIPS" },
+		out: { type: "string", description: "Output database" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	state: string
+	level: "tabblock20" | "place" | "addrfeat"
+	vintage?: number
+	county?: string
+	out?: string
+}
 
-const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const TIGERFetch: ParsedCommandComponent<Options> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
 
 	const state = useCommandTask(async () => {
-		if (!/^\d{2}$/.test(options.state)) {
-			throw commandError(`--state must be a two-digit FIPS code (got "${options.state}")`)
-		}
-
 		// `@mailwoman/tiger` is an OPTIONAL dependency (the census-TIGER fetch tooling is for
 		// operators building the street tier, not end-user geocoding) — imported lazily here so a
 		// clean geocoding-only install of the CLI never loads it at startup, and a missing optional
@@ -50,7 +63,7 @@ const TIGERFetch: CommandComponent<typeof OptionsSchema> = ({ options }) => {
 		try {
 			;({ fetchTIGER } = await import("@mailwoman/tiger/sdk"))
 		} catch {
-			throw commandError(
+			throw new CommandError(
 				"`tiger fetch` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
 			)
 		}

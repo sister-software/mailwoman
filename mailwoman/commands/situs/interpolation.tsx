@@ -34,9 +34,8 @@ import { pipeline } from "node:stream/promises"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { TextSpliterator } from "spliterator"
-import zod from "zod"
 
 /**
  * A successful response; anything else is an error page or an unfollowed redirect.
@@ -63,33 +62,42 @@ const HTTP_SERVER_ERROR_MIN = 500
  */
 const MAX_LISTED_FAILURES = 20
 
-const OptionsSchema = zod.object({
-	edgesDir: zod
-		.string()
-		.default(dataRootPath("census", "tiger2023-edges"))
-		.describe("Download destination for TIGER ZIP + SHP files"),
-	outDir: zod.string().optional().describe("Directory for per-state shard DBs. Default <data-root>/interpolation"),
-	release: zod.string().default("TIGER2023").describe("TIGER vintage tag written into each shard row"),
-	states: zod
-		.string()
-		.optional()
-		.describe("Comma-separated state abbreviations to build (e.g. VT,DE). Omit to build all 50 states + DC"),
-	topCounties: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("Build only the N most-populated counties (across all selected states)"),
-	concurrency: zod.coerce.number().int().positive().default(12).describe("Max parallel ZIP downloads"),
-	force: zod.boolean().default(false).describe("Re-build state shards even if the output DB already exists"),
-	downloadOnly: zod.boolean().default(false).describe("Download ZIPs and unpack; skip the shard build step"),
-	buildOnly: zod
-		.boolean()
-		.default(false)
-		.describe("Skip downloads; build shards from whatever is already in --edges-dir"),
-})
+const positiveInteger = (v: number): boolean => Number.isInteger(v) && v > 0
 
-export { OptionsSchema as options }
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "interpolation",
+	description: "Download TIGER EDGES and build interpolation shards",
+	options: {
+		"edges-dir": {
+			type: "string",
+			default: dataRootPath("census", "tiger2023-edges"),
+			description: "TIGER download directory",
+		},
+		"out-dir": { type: "string", description: "Shard output directory" },
+		release: { type: "string", default: "TIGER2023", description: "TIGER vintage" },
+		states: { type: "string", description: "Comma-separated states" },
+		"top-counties": { type: "number", validate: positiveInteger, description: "Most-populated county limit" },
+		concurrency: { type: "number", default: 12, validate: positiveInteger, description: "Parallel downloads" },
+		force: { type: "boolean", default: false, description: "Rebuild existing shards" },
+		"download-only": { type: "boolean", default: false, description: "Only download and unpack" },
+		"build-only": { type: "boolean", default: false, description: "Only build existing downloads" },
+	},
+} as const satisfies CommandSpec
+
+interface Options {
+	edgesDir: string
+	outDir?: string
+	release: string
+	states?: string
+	topCounties?: number
+	concurrency: number
+	force: boolean
+	downloadOnly: boolean
+	buildOnly: boolean
+}
 
 //#region State FIPS map
 
@@ -515,7 +523,7 @@ interface StateResult {
 	skipped?: boolean
 }
 
-const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const EDGES_DIR = options.edgesDir
 		const OUT_DIR = options.outDir ?? dataRootPath("interpolation")
@@ -535,7 +543,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 			: Object.keys(STATE_FIPS)
 
 		if (!TARGET_STATES.length) {
-			throw commandError("No valid states specified. Check --states values against the STATE_FIPS map.")
+			throw new CommandError("No valid states specified. Check --states values against the STATE_FIPS map.")
 		}
 
 		console.error("=== National TIGER interpolation shard build ===")
@@ -625,7 +633,7 @@ const SitusInterpolation: CommandComponent<typeof OptionsSchema> = ({ options })
 		})
 
 		if (!availableStates.length) {
-			throw commandError("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
+			throw new CommandError("No county SHPs found in edges-dir for any target state. Run without --build-only first.")
 		}
 
 		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)

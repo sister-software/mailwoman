@@ -41,21 +41,30 @@ import { copyFileSync, existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	geonames: zod
-		.string()
-		.optional()
-		.describe("GeoNames postal TSV. Default <data-root>/geonames/allCountries-postal.txt"),
-	countries: zod.string().optional().describe("Comma-separated ISO codes to extract. Default: PL,CZ"),
-	out: zod.string().optional().describe("Shard output path. Default <data-root>/wof/postalcode-geonames-intl.db"),
-	foldInto: zod.string().optional().describe("Existing candidate DB to fold the shard into (a copy, never mutated)"),
-	foldOut: zod.string().optional().describe("Destination for the folded candidate DB (required with --fold-into)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-intl",
+	description: "Build international GeoNames postcode shards",
+	options: {
+		geonames: { type: "string", description: "GeoNames postal TSV" },
+		countries: { type: "string", description: "Comma-separated ISO codes" },
+		out: { type: "string", description: "Shard output path" },
+		"fold-into": { type: "string", description: "Candidate DB to fold" },
+		"fold-out": { type: "string", description: "Folded candidate destination" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	geonames?: string
+	countries?: string
+	out?: string
+	foldInto?: string
+	foldOut?: string
+}
 
 /**
  * The street-normalize key function, threaded in after a dynamic import of the optional peer.
@@ -93,41 +102,60 @@ async function readGeonames(file: string, want: Set<string>): Promise<Map<string
 	// TSV cols: 0=country 1=postcode 2=place 3..8=admin 9=lat 10=lon 11=accuracy. The GeoNames allCountries
 	// postal dump is headerless (header: false) and LF-only upstream, so field indices map straight through —
 	// and empty admin columns are preserved (v3 no longer drops them), keeping the offsets aligned.
-	for await (const f of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
-		const cc = f[0]
+	for await (const fields of TSVSpliterator.fromAsync(file, { header: false, mode: "array" })) {
+		const countryCode = fields[0]
 
-		if (!cc || !want.has(cc)) continue
-		const pc = f[1]
-		const lat = Number(f[9])
-		const lon = Number(f[10])
+		if (!countryCode || !want.has(countryCode)) continue
+		const postalCode = fields[1]
+		const latitude = Number(fields[9])
+		const longitude = Number(fields[10])
 
-		if (!pc || !Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) continue
-		const key = `${cc}\t${pc}`
+		// TODO: use spatial point helpers.
+		if (
+			!postalCode ||
+			!Number.isFinite(latitude) ||
+			!Number.isFinite(longitude) ||
+			(latitude === 0 && longitude === 0)
+		) {
+			continue
+		}
+
+		const key = `${countryCode}\t${postalCode}`
 		const cur = acc.get(key)
 
 		if (cur) {
-			cur.sumLat += lat
-			cur.sumLon += lon
+			cur.sumLat += latitude
+			cur.sumLon += longitude
 
 			cur.n++
 
-			if (lat < cur.minLat) {
-				cur.minLat = lat
+			if (latitude < cur.minLat) {
+				cur.minLat = latitude
 			}
 
-			if (lat > cur.maxLat) {
-				cur.maxLat = lat
+			if (latitude > cur.maxLat) {
+				cur.maxLat = latitude
 			}
 
-			if (lon < cur.minLon) {
-				cur.minLon = lon
+			if (longitude < cur.minLon) {
+				cur.minLon = longitude
 			}
 
-			if (lon > cur.maxLon) {
-				cur.maxLon = lon
+			if (longitude > cur.maxLon) {
+				cur.maxLon = longitude
 			}
 		} else {
-			acc.set(key, { cc, pc, sumLat: lat, sumLon: lon, n: 1, minLat: lat, minLon: lon, maxLat: lat, maxLon: lon })
+			acc.set(key, {
+				cc: countryCode,
+				pc: postalCode,
+				sumLat: latitude,
+				sumLon: longitude,
+				n: 1,
+				minLat: latitude,
+				minLon: longitude,
+				maxLat: latitude,
+				maxLon: longitude,
+			})
 		}
 	}
 
@@ -339,7 +367,7 @@ async function foldIntoCandidate(
 	return n
 }
 
-const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
@@ -357,7 +385,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 		const foldOut = options.foldOut
 
 		if (!existsSync(geonames)) {
-			throw commandError(`Missing GeoNames file: ${geonames}`)
+			throw new CommandError(`Missing GeoNames file: ${geonames}`)
 		}
 
 		// street-normalize lives in the optional `@mailwoman/resolver-wof-sqlite` peer — load it
@@ -387,7 +415,7 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 
 		if (foldInto && foldOut) {
 			if (!existsSync(foldInto)) {
-				throw commandError(`Missing --fold-into candidate DB: ${foldInto}`)
+				throw new CommandError(`Missing --fold-into candidate DB: ${foldInto}`)
 			}
 
 			console.error(`Folding shard into a copy of ${foldInto} → ${foldOut} (VACUUM after) …`)
@@ -408,7 +436,9 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status === "error") {
+		return <Text color="red">✗ {state.message}</Text>
+	}
 
 	if (state.status === "done") {
 		return (
@@ -423,7 +453,8 @@ const GazetteerPostcodeIntl: CommandComponent<typeof OptionsSchema> = ({ options
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	// progress streams to stderr until the summary lands
+	return null
 }
 
 export default GazetteerPostcodeIntl

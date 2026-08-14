@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The coarse-placer tools' shared FNV-1a hash — the one home for the four byte-identical copies
- *   the 2026-07-09 dedupe survey found (`build-dataset` / `build-outlier-{oa,latin,exposure}`).
- *   Deterministic ordering + variant choice depends on this exact stream — datasets rebuilt with a
- *   different hash won't reproduce. Internal to the tools; deliberately NOT exported from
- *   `@mailwoman/core` (featurize.ts carries its own FNV, bucketed mod FEATURE_DIM — different
- *   contract, do not merge).
+ *   FNV-1a hashing for deterministic coarse-placer dataset ordering and variant selection.
  */
 
 /**

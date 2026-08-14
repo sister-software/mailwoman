@@ -15,51 +15,40 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
-const OptionsSchema = zod.object({
-	locale: zod
-		.string()
-		.optional()
-		.default("en-US")
-		.describe("Weights package locale for the classifier (default en-US)"),
-	weightsCache: zod
-		.string()
-		.optional()
-		.describe("Package-shaped candidate weights dir (mirrors eval parity --weights-cache)"),
-	fixtures: zod.string().optional().describe("Fixture JSONL override (default: the committed poi-board fixtures)"),
-	db: zod
-		.string()
-		.optional()
-		.describe("Sealed poi.db to query (default <data-root>/poi/poi.db — the gazetteer build poi default)"),
-	resolveDb: zod
-		.string()
-		.optional()
-		.describe("WOF admin shard path(s) for anchor resolution, comma-separated (same as `mailwoman poi --resolve-db`)"),
-	candidateDb: zod
-		.string()
-		.optional()
-		.describe(
-			"Byte-range candidate.db for anchor resolution (same as `mailwoman poi --candidate-db`; wins over --resolve-db)"
-		),
-	json: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Print the full report as JSON instead of the human-readable table"),
-	enforce: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Exit non-zero if any pre-registered floor is breached (overall ≥ 90%, abstain/address = 100%)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "poi-board",
+	description,
+	options: {
+		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		"weights-cache": { type: "string", description: "Candidate weights dir" },
+		fixtures: { type: "string", description: "Fixture JSONL override" },
+		db: { type: "string", description: "Sealed poi.db" },
+		"resolve-db": { type: "string", description: "WOF admin shards" },
+		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
+		json: { type: "boolean", default: false, description: "Print JSON" },
+		enforce: { type: "boolean", default: false, description: "Enforce registered floors" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	locale: string
+	weightsCache?: string
+	fixtures?: string
+	db?: string
+	resolveDb?: string
+	candidateDb?: string
+	json: boolean
+	enforce: boolean
+}
 
-const EvalPoiBoard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runPOIBoard } = await import("../../eval-harness/poi-board.ts")

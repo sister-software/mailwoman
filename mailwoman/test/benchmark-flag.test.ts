@@ -19,37 +19,37 @@ import { promisify } from "node:util"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
-import { ZodError } from "zod"
 
-import { options as parseOptions } from "../commands/parse.tsx"
+import { parseCommand } from "../cli-native/spec.ts"
+import { spec as parseSpec } from "../commands/parse.tsx"
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-describe("--benchmark schema", () => {
+describe("--benchmark option", () => {
 	test("accepts integer in [1, 10000]", () => {
-		expect(() => parseOptions.parse({ benchmark: 1 })).not.toThrow()
-		expect(() => parseOptions.parse({ benchmark: 100 })).not.toThrow()
-		expect(() => parseOptions.parse({ benchmark: 10_000 })).not.toThrow()
+		for (const value of [1, 100, 10_000]) {
+			expect(() => parseCommand(parseSpec, ["--benchmark", String(value), "address"])).not.toThrow()
+		}
 	})
 
 	test("coerces numeric strings", () => {
-		const parsed = parseOptions.parse({ benchmark: "50" } as unknown as Record<string, unknown>)
-		expect(parsed.benchmark).toBe(50)
+		const parsed = parseCommand(parseSpec, ["--benchmark", "50", "address"])
+		expect(parsed.values.benchmark).toBe(50)
 	})
 
 	test("rejects out-of-range values", () => {
-		expect(() => parseOptions.parse({ benchmark: 0 })).toThrow(ZodError)
-		expect(() => parseOptions.parse({ benchmark: -1 })).toThrow(ZodError)
-		expect(() => parseOptions.parse({ benchmark: 10_001 })).toThrow(ZodError)
+		for (const value of [0, -1, 10_001]) {
+			expect(() => parseCommand(parseSpec, ["--benchmark", String(value), "address"])).toThrow(/benchmark/)
+		}
 	})
 
 	test("rejects non-integers", () => {
-		expect(() => parseOptions.parse({ benchmark: 1.5 })).toThrow(ZodError)
+		expect(() => parseCommand(parseSpec, ["--benchmark", "1.5", "address"])).toThrow(/benchmark/)
 	})
 
 	test("benchmark is optional", () => {
-		expect(() => parseOptions.parse({})).not.toThrow()
+		expect(() => parseCommand(parseSpec, ["address"])).not.toThrow()
 	})
 })
 

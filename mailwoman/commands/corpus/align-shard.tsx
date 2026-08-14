@@ -3,23 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus align-shard` — ported from the scripts drawer (PR E, #1029). The tool module is
- *   lazy-imported so eager command loading stays dependency-light.
+ *   Align one corpus shard with the current tokenizer.
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	input: zod.string().describe("Canonical jsonl input"),
-	output: zod.string().describe("Labeled jsonl output"),
-	corpusVersion: zod.string().describe("Corpus version stamp for the emitted rows"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "align-shard",
+	description: "Align a canonical corpus shard.",
+	options: {
+		input: { type: "string", required: true, description: "Canonical jsonl input" },
+		output: { type: "string", required: true, description: "Labeled jsonl output" },
+		"corpus-version": { type: "string", required: true, description: "Corpus version stamp for the emitted rows" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	input: string
+	output: string
+	corpusVersion: string
+}
 
-const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { alignCanonicalShard } = await import("@mailwoman/corpus/tools")
 

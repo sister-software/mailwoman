@@ -1,40 +1,57 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
-import { dirname, resolve } from "node:path"
+import { dirname } from "node:path"
+
+import envPaths from "env-paths"
+import { resolvePath } from "path-ts"
+
+const platformPaths = envPaths("mailwoman", { suffix: "" })
 
 /**
- * Resolve a path relative to the directory Claude Code is running in (cwd).
- *
- * @param paths Path segments to join onto cwd.
+ * Platform-native filesystem defaults used by the typed environment schema.
+ */
+export const defaultMailwomanPaths = {
+	data: resolvePath(platformPaths.data),
+	config: resolvePath(platformPaths.config),
+	cache: resolvePath(platformPaths.cache),
+	log: resolvePath(platformPaths.log),
+	temp: resolvePath(platformPaths.temp),
+} as const
+
+/**
+ * Resolve a path relative to the current working directory.
  */
 export function cwdPathBuilder(...paths: string[]): string {
-	return resolve(process.cwd(), ...paths)
+	return resolvePath(process.cwd(), ...paths)
 }
 
 /**
- * Find all `.env` files from the current working directory up to the home directory or repo root.
- *
- * @returns An array of `.env` file paths, ordered from shallowest to deepest (cwd last).
+ * Find `.env` files from the current working directory up to the home directory or repository root.
  */
 export function cwdEnvPaths(): string[] {
 	const found: string[] = []
-	let dir = process.cwd()
+	let directory = process.cwd()
 	const home = homedir()
 
 	while (true) {
-		const candidate = resolve(dir, ".env")
+		const candidate = resolvePath(directory, ".env")
 
 		if (existsSync(candidate)) {
 			found.push(candidate)
 		}
 
-		const parent = dirname(dir)
-		const atRepoRoot = existsSync(resolve(dir, ".git"))
+		const parent = dirname(directory)
+		const atRepoRoot = existsSync(resolvePath(directory, ".git"))
 
-		if (atRepoRoot || dir === home || parent === dir) break
-		dir = parent
+		if (atRepoRoot || directory === home || parent === directory) break
+		directory = parent
 	}
 
-	// `found` is deepest-first (cwd first); reverse so cwd is applied last and wins.
 	return found.toReversed()
 }

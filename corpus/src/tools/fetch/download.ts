@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Download + manifest plumbing for the `mailwoman corpus fetch <source>` family — one download-with-retry and
- *   one MANIFEST.json idiom instead of the per-script clones the 2026-07-09 dedupe survey counted
- *   (6× `downloadToFile`, 2× `isTransientStatus`, 9× manifest writes).
+ *   Download and manifest utilities for `mailwoman corpus fetch <source>`.
  */
 
 import { existsSync } from "node:fs"

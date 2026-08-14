@@ -2,6 +2,8 @@ import { ResourceError } from "@mailwoman/core/errors"
 import { ConsoleLogger } from "@mailwoman/core/logging"
 import { defaultRegistry } from "async-init"
 
+export { cliArguments, scriptEntryPath } from "../arguments.ts"
+
 /**
  * Logs an error that occurred while running a script.
  */
@@ -74,18 +76,6 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
 }
 
 /**
- * The ONE blessed accessor for CLI arguments. Everything outside `core/env` + this module is forbidden from touching
- * `process.argv` directly (enforced by the `sister-software/no-process-globals` oxlint rule) — prefer `node:util`
- * `parseArgs` (which reads this same slice by default) and reach for this only where `parseArgs` cannot express the
- * grammar (e.g. verbatim passthrough of undeclared flags to a child process — see
- * `corpus-python/scripts/train_with_resume.ts`).
- */
-export function cliArguments(): string[] {
-	// oxlint-disable-next-line sister-software/no-process-globals
-	return process.argv.slice(2)
-}
-
-/**
  * The ONE blessed way to build a child-process environment: the current environment with explicit overrides. Everything
  * outside `core/env` + this module is forbidden from touching `process.env` directly (enforced by
  * `scripts/lint-raw-env-argv.ts`) — read config through `$public`/`$private`.
@@ -93,12 +83,4 @@ export function cliArguments(): string[] {
 export function childEnv(overrides: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
 	// oxlint-disable-next-line sister-software/no-process-globals
 	return { ...process.env, ...overrides }
-}
-
-/**
- * The path of the executing script (`argv[1]`) — for commands that re-spawn or reference their own CLI entry.
- */
-export function scriptEntryPath(): string {
-	// oxlint-disable-next-line sister-software/no-process-globals
-	return process.argv[1]!
 }

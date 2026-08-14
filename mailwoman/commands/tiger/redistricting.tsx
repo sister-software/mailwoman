@@ -13,30 +13,40 @@
 
 import { Spinner } from "@inkjs/ui"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	state: zod.string().describe("Two-digit state FIPS, e.g. 06 (California)."),
-	vintage: zod.number().default(2020).describe("Decennial vintage. Default 2020."),
-	county: zod
-		.string()
-		.optional()
-		.describe("Optional three-digit county FIPS filter, e.g. 059 — loads only that county's blocks."),
-	out: zod.string().optional().describe("Output .db path. Default <dataRoot>/tiger/tiger.db."),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "redistricting",
+	description: "Load Census redistricting block counts.",
+	options: {
+		state: {
+			type: "string",
+			required: true,
+			validate: (value) => /^\d{2}$/u.test(value),
+			validationMessage: "--state must be a two-digit FIPS code.",
+			description: "Two-digit state FIPS",
+		},
+		vintage: { type: "number", default: 2020, description: "Decennial vintage" },
+		county: { type: "string", description: "Three-digit county FIPS" },
+		out: { type: "string", description: "Output database" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	state: string
+	vintage: number
+	county?: string
+	out?: string
+}
 
-const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const TIGERRedistricting: ParsedCommandComponent<Options> = ({ options }) => {
 	const [status, setStatus] = useState("Starting…")
 
 	const state = useCommandTask(async () => {
-		if (!/^\d{2}$/.test(options.state)) {
-			throw commandError(`--state must be a two-digit FIPS code (got "${options.state}")`)
-		}
-
 		// Optional `@mailwoman/tiger` (operator street-tier tooling) — lazy-imported so the geocoding
 		// CLI never loads it at startup and a missing optional dep degrades gracefully. See fetch.tsx.
 		let fetchRedistricting: typeof import("@mailwoman/tiger/sdk").fetchRedistricting
@@ -44,7 +54,7 @@ const TIGERRedistricting: CommandComponent<typeof OptionsSchema> = ({ options })
 		try {
 			;({ fetchRedistricting } = await import("@mailwoman/tiger/sdk"))
 		} catch {
-			throw commandError(
+			throw new CommandError(
 				"`tiger redistricting` needs the optional @mailwoman/tiger package — install it with: npm install @mailwoman/tiger"
 			)
 		}

@@ -5,3 +5,6 @@
  */
 
 export * from "./shared.ts"
+export * from "./metadata.ts"
+export type { CommandSpec } from "../cli-native/spec.ts"
+export { CommandError } from "@mailwoman/core/scripting/command"

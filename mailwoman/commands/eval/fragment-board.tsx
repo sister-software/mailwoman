@@ -12,24 +12,35 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 
-const OptionsSchema = zod.object({
-	locale: zod.string().optional().default("en-US").describe("Weights package locale (default en-US)"),
-	weightsCache: zod
-		.string()
-		.optional()
-		.describe("Package-shaped candidate weights dir (mirrors eval parity --weights-cache)"),
-	fixtures: zod.string().optional().describe("Fixture JSONL override (default: the BAN FR fragment board)"),
-	klass: zod.string().optional().describe("Score only one class (e.g. bare-street) for a fast loop"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "fragment-board",
+	description,
+	options: {
+		locale: { type: "string", default: "en-US", description: "Weights package locale (default en-US)" },
+		"weights-cache": {
+			type: "string",
+			description: "Package-shaped candidate weights dir (mirrors eval parity --weights-cache)",
+		},
+		fixtures: { type: "string", description: "Fixture JSONL override (default: the BAN FR fragment board)" },
+		klass: { type: "string", description: "Score only one class (e.g. bare-street) for a fast loop" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	locale: string
+	weightsCache?: string
+	fixtures?: string
+	klass?: string
+}
 
-const EvalFragmentBoard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalFragmentBoard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runFragmentBoard } = await import("../../eval-harness/fragment-board.ts")

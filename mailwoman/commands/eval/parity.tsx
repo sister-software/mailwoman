@@ -11,55 +11,53 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+/**
+ * Largest disagreement sample that keeps parity output reviewable.
+ */
+const MAX_REPORTED_DISAGREEMENTS = 50
 
 export const description = "Parity-corpus eval — rescued v1 gold vs a checkpoint (plan-2 swap floors)"
 
-const OptionsSchema = zod.object({
-	locale: zod.string().optional().default("en-US").describe("Weights package locale (default en-US)"),
-	model: zod.string().optional().describe("Candidate model.onnx (omit for the shipped default)"),
-	tokenizer: zod.string().optional().describe("Candidate tokenizer.model"),
-	card: zod.string().optional().describe("Candidate model-card.json (label vocab for --model)"),
-	fixtures: zod
-		.string()
-		.optional()
-		.describe(
-			"Fixture JSONL override (default: the ratified triaged corpus; pass parity-corpus.jsonl for the pre-triage v1 denominator)"
-		),
-	weightsCache: zod
-		.string()
-		.optional()
-		.describe(
-			"Grade a candidate laid out package-shaped under <dir>/node_modules/@mailwoman/neural-weights-<locale> " +
-				"(feeds anchor/gazetteer/calibration siblings — PREFER over --model for candidates; the explicit-path " +
-				"branch grades a channel-starved model)"
-		),
-	streetMorphology: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Probe 0: decode-time street-morphology emission bias (libpostal street_types, all locales)"),
-	wordConsistency: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe(
-			"Ship-config word-consistency heal (default ON per the 2026-07-15 gate revision; --no-word-consistency for pre-heal baselines)"
-		),
-	failing: zod.coerce
-		.number()
-		.int()
-		.min(0)
-		.max(50)
-		.optional()
-		.default(0)
-		.describe("List the first N disagreeing inputs per floor label"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "parity",
+	description,
+	options: {
+		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		model: { type: "string", description: "Candidate model.onnx" },
+		tokenizer: { type: "string", description: "Candidate tokenizer.model" },
+		card: { type: "string", description: "Candidate model-card.json" },
+		fixtures: { type: "string", description: "Fixture JSONL override" },
+		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
+		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
+		"word-consistency": { type: "boolean", default: true, description: "Enable word-consistency healing" },
+		failing: {
+			type: "number",
+			default: 0,
+			validate: (value) => Number.isInteger(value) && value >= 0 && value <= MAX_REPORTED_DISAGREEMENTS,
+			validationMessage: "--failing must be an integer between 0 and 50.",
+			description: "List the first N disagreements per floor label",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	locale: string
+	model?: string
+	tokenizer?: string
+	card?: string
+	fixtures?: string
+	weightsCache?: string
+	streetMorphology: boolean
+	wordConsistency: boolean
+	failing: number
+}
 
-const EvalParity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runParityEval } = await import("../../eval-harness/parity-corpus.ts")

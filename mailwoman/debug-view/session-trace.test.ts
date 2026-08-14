@@ -18,7 +18,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
-import { options as geocodeOptionsSchema } from "../commands/geocode.tsx"
+import { createGeocodeCommandOptions } from "../geocode-command-options.ts"
 import { createGeocodeSession } from "../geocode-session.ts"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
@@ -42,7 +42,7 @@ describe.skipIf(!(hasWOFDb && hasWeights))("geocode session tracing", () => {
 	test(
 		"records the decode that produced the tree, and resolves the same answer as an untraced session",
 		async () => {
-			const options = geocodeOptionsSchema.parse({})
+			const options = createGeocodeCommandOptions()
 			const traced = await createGeocodeSession({ ...options, trace: true })
 			const plain = await createGeocodeSession(options)
 

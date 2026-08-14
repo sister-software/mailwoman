@@ -15,18 +15,34 @@ import process from "node:process"
 import { Spinner, StatusMessage } from "@inkjs/ui"
 import type { ServerHandle } from "@mailwoman/api-kit"
 import { Box, Text } from "ink"
-import type { CommandComponent } from "mailwoman/cli-kit"
+import type { CommandSpec, ParsedCommandComponent } from "mailwoman/cli-kit"
 import { useEffect, useState } from "react"
-import zod from "zod"
+
+interface ServerConfig {
+	port: number
+	host: string
+	cpus?: number
+}
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "serve",
+	description: "Run the Mailwoman HTTP server",
+	options: {
+		port: { type: "number", default: 3000, description: "Port to listen on" },
+		host: { type: "string", default: "0.0.0.0", description: "Network interface to bind" },
+		cpus: { type: "number", description: "Worker processes. Default: every available core" },
+	},
+} as const satisfies CommandSpec
 
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
 // move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
 // ChildThread's effect boots the @mailwoman/api Hono app over a node listener; there is no
 // `setImmediate(process.exit)` here — SIGINT/SIGTERM now drive an explicit graceful `server.close()`).
 
-const ClusterManager: CommandComponent<typeof ServerConfigSchema> = ({
-	options: { cpus = availableParallelism() },
-}) => {
+const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
 	const [workers, setWorkers] = useState<Worker[]>()
 
 	useEffect(() => {
@@ -172,7 +188,7 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 	)
 }
 
-const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { port, host } }) => {
+const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, host } }) => {
 	useEffect(() => {
 		let handle: ServerHandle | undefined
 
@@ -234,18 +250,6 @@ const ChildThread: CommandComponent<typeof ServerConfigSchema> = ({ options: { p
 
 	return null
 }
-
-const ServerConfigSchema = zod.object({
-	port: zod.number().optional().default(3000).describe("The port to listen on"),
-	host: zod.string().optional().default("0.0.0.0").describe("The network interface to bind to"),
-	// No zod `.default()` on purpose: the effective default is `availableParallelism()`, which is
-	// host-dependent, and baking it into the schema would print THIS machine's core count into
-	// `--help` and into the generated CLI reference. `ClusterManager` applies it at destructure time
-	// instead; the description carries it so neither surface under-reports single-process.
-	cpus: zod.number().optional().describe("The number of worker processes to fork. Default: every available core."),
-})
-
-export const options = ServerConfigSchema
 
 const ParseCommand = cluster.isPrimary ? ClusterManager : ChildThread
 

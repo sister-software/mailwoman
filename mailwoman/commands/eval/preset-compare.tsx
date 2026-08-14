@@ -9,19 +9,28 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Compare the 6 demo presets between the shipped baseline and a candidate"
 
-const OptionsSchema = zod.object({
-	modelPath: zod.string().optional().describe("Candidate ONNX (omit to print the baseline only)"),
-	tokenizerPath: zod.string().optional().describe("Candidate tokenizer (paired with --model-path)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "preset-compare",
+	description,
+	options: {
+		"model-path": { type: "string", description: "Candidate ONNX (omit to print the baseline only)" },
+		"tokenizer-path": { type: "string", description: "Candidate tokenizer (paired with --model-path)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	modelPath?: string
+	tokenizerPath?: string
+}
 
-const EvalPresetCompare: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalPresetCompare: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { presetCompare } = await import("../../eval-harness/preset-compare.ts")
 

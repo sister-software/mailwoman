@@ -29,12 +29,10 @@ import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from 
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
+import { resolverDefaultCountry } from "../../country-scope.ts"
 import type { ShardResolver } from "../../geocode-core.ts"
-import { resolverDefaultCountry } from "../parse.tsx"
 
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
@@ -43,109 +41,54 @@ export const isDefault = true
 
 //#region CLI contract — args + options
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.optional()
-	.describe(
-		argument({
-			name: "csv",
-			description:
-				"Path(s) to a CSV file of contact / organization records. Optional when --sources is given (multi-source mode supplies the inputs).",
-		})
-	)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "run",
+	description: "Resolve records into matched entities",
+	positionals: [{ name: "csv", multiple: true, description: "CSV input paths" }],
+	options: {
+		mapping: { type: "string", description: "Column mapping JSON or path" },
+		"infer-mapping": { type: "boolean", default: false, description: "Infer mapping from headers" },
+		sources: { type: "string", description: "Multi-source specification JSON or path" },
+		out: { type: "string", description: "GeoJSON output" },
+		"map-out": { type: "string", description: "Standalone HTML map output" },
+		"train-em": { type: "boolean", default: true, description: "Train Fellegi-Sunter parameters" },
+		threshold: { type: "number", default: 0, description: "Entity link threshold" },
+		"max-block-size": { type: "number", description: "Maximum scanned block size" },
+		reconcile: { type: "boolean", default: false, description: "Run coverage reconciliation" },
+		source: { type: "string", description: "Provenance label" },
+		locale: {
+			type: "string",
+			default: "en-US",
+			validate: (v: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(v),
+			description: "BCP-47 locale",
+		},
+		"default-country": { type: "string", description: "Resolver country scope" },
+		"place-country": { type: "boolean", default: true, description: "Enable coarse country prior" },
+		"resolve-db": { type: "string", description: "WOF admin database" },
+		"data-root": { type: "string", default: mailwomanDataRoot(), description: "State-shard root" },
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	mapping: zod
-		.string()
-		.optional()
-		.describe(
-			"Column mapping: a path to a JSON file (or inline JSON) of { id?, source?, name?, organization?, address?, " +
-				"phone?, email? }, where each field names the CSV column(s) to draw from. Merged over the base (the built-in " +
-				"default, or --infer-mapping's inference); column names are matched case-sensitively."
-		),
-	inferMapping: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Infer the column mapping from the header by keyword (best-effort — point it at any reasonably-named CSV). " +
-				"Used as the base instead of the built-in default; an explicit --mapping still merges on top. Single-CSV mode."
-		),
-	sources: zod
-		.string()
-		.optional()
-		.describe(
-			"Multi-source mode: a path to a JSON file (or inline JSON) of [{ path, delimiter?, mapping, source?, limit? }] " +
-				"— each dataset gets its own column mapping + provenance label, all resolved into ONE entity set across " +
-				"sources with no shared key. An entity spanning ≥2 sources is a cross-dataset link. The positional CSV is " +
-				"ignored when --sources is set. Inputs are streamed as UNQUOTED delimited files (tab inferred from .tsv) — " +
-				"right for the big government TSVs; convert a quoted CSV first or use the single-CSV path for those."
-		),
-	out: zod.string().optional().describe("Write the GeoJSON FeatureCollection here. Default: print to stdout."),
-	mapOut: zod
-		.string()
-		.optional()
-		.describe(
-			"Also write a standalone HTML map of the resolved entities here (MapLibre + the house Protomaps " +
-				"basemap). Points are sized by records-merged and colored by cross-dataset-link status. SERVE IT OVER " +
-				"localhost (e.g. `npx serve`), don't open the file directly — the basemap tiles are CORS-restricted to " +
-				"localhost + the docs domain. Pairs naturally with --sources."
-		),
-	trainEm: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe(
-			"Fit the Fellegi-Sunter m/u + prior to the data with EM (label-free) before scoring. --no-train-em uses the seeds."
-		),
-	threshold: zod
-		.number()
-		.optional()
-		.default(0)
-		.describe("Link two records into one entity at or above this match weight (bits). Higher = stricter. Default 0."),
-	maxBlockSize: zod
-		.number()
-		.optional()
-		.describe("Skip + report blocks larger than this rather than scanning them (recall vs cost). Default: scan all."),
-	reconcile: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Coverage reconciliation (#621): classify each resolved entity by which KIND of source its records " +
-				"span — `enrolled` (eligibility + funding), `eligible-not-enrolled` (the anti-join), or " +
-				'`funded-not-eligible`. Requires --sources where each spec carries `role: "eligibility" | "funding"`. ' +
-				"Prints a set-membership report to stdout; --out writes bucket-tagged GeoJSON, --map-out a bucket-colored " +
-				"map. A reconciliation, never a determination."
-		),
-	source: zod.string().optional().describe("A provenance label stamped on every record (e.g. the dataset name)."),
-	locale: zod
-		.string()
-		.regex(/^[a-z]{2}(-[A-Z]{2})?$/u, "Expected a BCP-47 tag like en-US or fr-FR")
-		.optional()
-		.default("en-US")
-		.describe("Locale tag matching an installed weights package. Default en-US."),
-	defaultCountry: zod
-		.string()
-		.optional()
-		.describe("ISO-3166 country to scope the resolver. Defaults from --locale's region subtag (en-US → US)."),
-	placeCountry: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe("The #244 coarse-placer soft country prior (on by default). --no-place-country disables it."),
-	resolveDb: zod
-		.string()
-		.optional()
-		.describe("Path to a WOF admin SQLite distribution. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."),
-	dataRoot: zod
-		.string()
-		.optional()
-		.default(mailwomanDataRoot())
-		.describe("Root directory for per-state address-point + interpolation shards. Defaults to $MAILWOMAN_DATA_ROOT."),
-})
-
-export { ArgumentsSchema as args, OptionsSchema as options }
+interface Options {
+	mapping?: string
+	inferMapping: boolean
+	sources?: string
+	out?: string
+	mapOut?: string
+	trainEm: boolean
+	threshold: number
+	maxBlockSize?: number
+	reconcile: boolean
+	source?: string
+	locale: string
+	defaultCountry?: string
+	placeCountry: boolean
+	resolveDb?: string
+	dataRoot: string
+}
 
 //#endregion
 
@@ -181,7 +124,7 @@ export function loadMapping(
 		const parsed = tryParsingJSON<Partial<ColumnMapping>>(text)
 
 		if (!parsed) {
-			throw commandError(`--mapping is neither a readable file nor a JSON object: ${text}`)
+			throw new CommandError(`--mapping is neither a readable file nor a JSON object: ${text}`)
 		}
 
 		provided = parsed
@@ -190,12 +133,12 @@ export function loadMapping(
 	return { ...base, ...provided, ...(source ? { source } : {}) }
 }
 
-async function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): Promise<string> {
+async function resolveWOFPath(options: Options): Promise<string> {
 	const { $public } = await import("@mailwoman/core/env")
 	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
-		throw commandError("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")
+		throw new CommandError("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")
 	}
 
 	return path
@@ -206,9 +149,7 @@ async function resolveWOFPath(options: zod.infer<typeof OptionsSchema>): Promise
  * {@link GeocodeAddress} seam. Returns the seam plus a `close` to release the DB handles. Shared by the single-CSV and
  * multi-source paths.
  */
-async function buildGeocoder(
-	options: zod.infer<typeof OptionsSchema>
-): Promise<{ seam: GeocodeAddress; close: () => void }> {
+async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress; close: () => void }> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
@@ -224,7 +165,7 @@ async function buildGeocoder(
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
-		throw commandError(
+		throw new CommandError(
 			"registry requires the neural weights. Install @mailwoman/neural-weights-en-us (or a --locale match)."
 		)
 	}
@@ -234,7 +175,7 @@ async function buildGeocoder(
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw commandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
+		throw new CommandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
 	}
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend; else FTS over wofPath.
@@ -375,11 +316,11 @@ export function loadSources(option: string): MultiSourceSpec[] {
 	const parsed = tryParsingJSON(text)
 
 	if (parsed === null) {
-		throw commandError(`--sources is neither a readable file nor valid JSON: ${text}`)
+		throw new CommandError(`--sources is neither a readable file nor valid JSON: ${text}`)
 	}
 
 	if (!Array.isArray(parsed) || parsed.some((s) => !s || typeof (s as MultiSourceSpec).path !== "string")) {
-		throw commandError("--sources must be a JSON array of { path, mapping, source?, delimiter?, limit? }.")
+		throw new CommandError("--sources must be a JSON array of { path, mapping, source?, delimiter?, limit? }.")
 	}
 
 	return parsed as MultiSourceSpec[]
@@ -392,7 +333,7 @@ export function loadSources(option: string): MultiSourceSpec[] {
  */
 async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
-	options: zod.infer<typeof OptionsSchema>
+	options: Options
 ): Promise<string | null> {
 	if (!options.out && !options.mapOut) return null
 
@@ -417,7 +358,7 @@ async function writeOutputs(
  * geocode, resolve, and report the entities that span ≥2 sources — the cross-dataset links. No shared key required;
  * geography is the join.
  */
-async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeof OptionsSchema>): Promise<string> {
+async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promise<string> {
 	const {
 		ingestRows,
 		reconcileCoverage,
@@ -434,14 +375,17 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 		const records: SourceRecord[] = []
 		const perSource: string[] = []
 
-		for (const spec of specs) {
-			const label = spec.source ?? spec.path
-			const mapping: ColumnMapping = { ...spec.mapping, source: label }
+		for (const sourceSpec of specs) {
+			const label = sourceSpec.source ?? sourceSpec.path
+			const mapping: ColumnMapping = { ...sourceSpec.mapping, source: label }
 			let read = 0
 
 			const rows = (async function* () {
-				for await (const row of streamRows(spec.path, spec.delimiter ? { delimiter: spec.delimiter } : {})) {
-					if (spec.limit !== undefined && read >= spec.limit) break
+				for await (const row of streamRows(
+					sourceSpec.path,
+					sourceSpec.delimiter ? { delimiter: sourceSpec.delimiter } : {}
+				)) {
+					if (sourceSpec.limit !== undefined && read >= sourceSpec.limit) break
 
 					read++
 					yield row
@@ -480,7 +424,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
 
 			if (!eligibilitySources.length || !fundingSources.length) {
-				throw commandError(
+				throw new CommandError(
 					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
 						"(at least one of each)."
 				)
@@ -527,11 +471,11 @@ async function runMultiSource(specs: MultiSourceSpec[], options: zod.infer<typeo
 
 //#region Core
 
-async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const { inferMapping, ingestRows, parseCSV, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
 
 	if (options.reconcile) {
-		throw commandError(
+		throw new CommandError(
 			"--reconcile is a cross-source mode: pass --sources <config.json> (each entry tagged with a " +
 				"`role`), not a single positional CSV."
 		)
@@ -574,7 +518,7 @@ async function runRegistry(csvPath: string, options: zod.infer<typeof OptionsSch
 
 //#region React command component
 
-const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
+const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		// `loadSources` can throw on a malformed config — the hook routes its error to the same handler.
 		if (options.sources) {
@@ -584,7 +528,7 @@ const RegistryCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSc
 		const csv = args?.[0]
 
 		if (!csv || !csv.trim().length) {
-			throw commandError(
+			throw new CommandError(
 				"registry requires a positional CSV path (or --sources <config.json> for multi-source). " +
 					"e.g. mailwoman registry contacts.csv --out entities.geojson"
 			)

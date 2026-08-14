@@ -3,52 +3,39 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The command toolkit for `mailwoman/commands/*` — Pastel/Ink helper types, the one-shot
+ *   The command toolkit for `mailwoman/commands/*` — Ink helper types, the one-shot
  *   {@linkcode useCommandTask} runner, and the {@linkcode CheckList} renderer. Lives OUTSIDE
- *   `commands/` (Pastel treats every file there as a command) and OUTSIDE `sdk/` (`sdk/` submodules
+ *   `commands/` (the router treats every file there as a command) and OUTSIDE `sdk/` (`sdk/` submodules
  *   mean data acquisition). Built with `createElement`, not JSX, so the module stays plain `.ts` —
  *   importable under node's type stripping (the dev `node →` exports condition).
  */
 
-// Never the `@mailwoman/core` barrel: Pastel imports every command module before argv is parsed, every one of them
-// imports this file, and the barrel is 117 ms against `@mailwoman/core/placetypes`'s ~0.
+// Never the `@mailwoman/core` barrel: this is shared by every interactive command, and the barrel needlessly widens
+// each selected command's import graph.
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
+import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
 import { createElement as h, useEffect, useState } from "react"
 import type * as React from "react"
-import type * as zod from "zod"
+
+/**
+ * Props shared by commands parsed through the native command specification.
+ */
+export interface ParsedCommandProps<Options, Args extends unknown[] = string[]> {
+	options: Options
+	args: Args
+}
+
+/**
+ * React component whose arguments have already been parsed by the native command specification.
+ */
+export type ParsedCommandComponent<Options = Record<string, never>, Args extends unknown[] = string[]> = React.FC<
+	ParsedCommandProps<Options, Args>
+>
 
 /**
  * Type-helper to infer the positional arguments of a command.
  */
-export interface PositionalArguments<T extends zod.ZodTypeAny> {
-	args: zod.infer<T>
-}
-
-/**
- * React component for a command with positional arguments.
- */
-export type PositionalCommandComponent<T extends zod.ZodTypeAny> = React.FC<PositionalArguments<T>>
-
-/**
- * Type-helper to infer the options of a command.
- */
-export interface CommandProps<
-	OptionProps extends zod.ZodObject,
-	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
-> {
-	options: zod.infer<OptionProps>
-	args: PositionalProps extends zod.ZodTypeAny ? zod.infer<PositionalProps> : unknown[]
-}
-
-/**
- * React component for a command with options.
- */
-export type CommandComponent<
-	OptionProps extends zod.ZodObject,
-	PositionalProps extends zod.ZodTypeAny | unknown = unknown,
-> = React.FC<CommandProps<OptionProps, PositionalProps>>
-
 /**
  * The lifecycle of a command's one-shot async task.
  */
@@ -71,8 +58,7 @@ export function useCommandTask<T>(task: () => Promise<T>, exitCode?: (result: T)
 	useEffect(() => {
 		void task().then(
 			(result) => setState({ status: "done", result }),
-			(error: unknown) =>
-				setState({ status: "error", message: error instanceof Error ? (error.stack ?? error.message) : String(error) })
+			(error: unknown) => setState({ status: "error", message: formatCommandError(error) })
 		)
 	}, [])
 
@@ -99,10 +85,9 @@ type LazyComponentState<P extends object> =
 /**
  * Wrap a heavy child component so its module loads on FIRST RENDER rather than at import.
  *
- * A component reached from JSX has to be a top-level import, and Pastel imports every command module before commander
- * parses a single argument — so one `import { DebugView } from "…"` in a branch nobody took still pays for that
- * branch's whole graph on `mailwoman --version`. `load` runs in an effect instead, and the wrapper renders nothing
- * until it resolves.
+ * A component reached from JSX normally needs a top-level import, so one `import { DebugView } from "…"` in a branch
+ * nobody took still widens the selected command's graph. `load` runs in an effect instead, and the wrapper renders
+ * nothing until it resolves.
  *
  * Nothing on screen for one frame is the right fallback here and not a placeholder: Ink erases the previous frame when
  * it draws, so a "loading…" line taller than zero is a line the real first frame has to scrub. Commands that want a
@@ -134,7 +119,7 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
 					if (live) {
 						setState({
 							status: "error",
-							message: error instanceof Error ? (error.stack ?? error.message) : String(error),
+							message: formatCommandError(error),
 						})
 					}
 				}
@@ -180,18 +165,6 @@ export function writeRawStdout(text: string): null {
 }
 
 /**
- * Build a guidance-grade error whose rendered form is exactly `message` — no stack. {@linkcode useCommandTask} renders
- * `error.stack ?? error.message`, which is right for unexpected failures but turns deliberate user-facing guidance
- * ("Set $MAILWOMAN_WOF_DB…") into a stack dump. Throw `commandError(msg)` for those instead of `new Error(msg)`.
- */
-export function commandError(message: string): Error {
-	const error = new Error(message)
-	error.stack = message
-
-	return error
-}
-
-/**
  * One ✓/✗ line in a {@linkcode CheckList}.
  */
 export interface Check {
@@ -229,7 +202,7 @@ export function CheckList({ checks, verdict }: { checks: readonly Check[]; verdi
  * Parse a `--roles a,b,c` flag into validated {@link PlacetypeRole}s, or `undefined` when the flag is absent (which
  * every caller reads as "all roles").
  *
- * Rejects an unknown role with {@link commandError} rather than silently filtering it — a typo in a role name would
+ * Rejects an unknown role with {@link CommandError} rather than silently filtering it — a typo in a role name would
  * otherwise produce an empty, entirely plausible-looking result.
  */
 export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined {
@@ -244,7 +217,7 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 
 	for (const role of parsed) {
 		if (!valid.has(role)) {
-			throw commandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
+			throw new CommandError(`Unknown placetype role '${role}'. Valid roles: ${PlacetypeRoles.join(", ")}.`)
 		}
 	}
 

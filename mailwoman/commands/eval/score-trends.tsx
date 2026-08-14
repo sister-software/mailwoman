@@ -9,19 +9,28 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Regenerate the per-tag score-trend page from evals/scores-by-version.json"
 
-const OptionsSchema = zod.object({
-	ledger: zod.string().optional().describe("The eval ledger (default: evals/scores-by-version.json)"),
-	out: zod.string().optional().describe("Destination markdown (default: docs/records/evals/score-trends.md)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "score-trends",
+	description,
+	options: {
+		ledger: { type: "string", description: "The eval ledger (default: evals/scores-by-version.json)" },
+		out: { type: "string", description: "Destination markdown (default: docs/records/evals/score-trends.md)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	ledger?: string
+	out?: string
+}
 
-const EvalScoreTrends: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalScoreTrends: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildScoreTrends } = await import("../../eval-harness/score-trends.ts")
 

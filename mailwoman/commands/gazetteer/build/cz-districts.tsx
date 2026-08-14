@@ -10,17 +10,26 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	source: zod.string().optional().describe("GeoNames CZ places file. Default <data-root>/geonames/CZ.txt"),
-	out: zod.string().optional().describe("Output shard. Default <data-root>/wof/localities-cz-districts.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "cz-districts",
+	description: "Build the Prague municipal-district locality shard.",
+	options: {
+		source: { type: "string", description: "GeoNames CZ places file. Default <data-root>/geonames/CZ.txt" },
+		out: { type: "string", description: "Output shard. Default <data-root>/wof/localities-cz-districts.db" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	source?: string
+	out?: string
+}
 
-const GazetteerBuildCZDistricts: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildCZDistricts: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCZDistrictsShard } = await import("../../../gazetteer-pipeline/cz-districts.ts")
 		const r = await buildCZDistrictsShard({ sourcePath: options.source, out: options.out })

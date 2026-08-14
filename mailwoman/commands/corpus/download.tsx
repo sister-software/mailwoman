@@ -12,24 +12,31 @@
  *   Requires RCLONE_S3_* env vars (Cloudflare R2 credentials).
  */
 
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
 
-const OptionsSchema = zod.object({
-	bucket: zod.string().optional().default(DEFAULT_BUCKET).describe("R2 bucket name"),
-	outDir: zod
-		.string()
-		.optional()
-		.default("/data")
-		.describe("Local output root (corpus lands at <outDir>/corpus/, tokenizer at <outDir>/models/tokenizer/)"),
-	dryRun: zod.boolean().optional().default(false).describe("Show what would be downloaded without downloading"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "download",
+	description: "Download corpus artifacts from R2.",
+	options: {
+		bucket: { type: "string", default: DEFAULT_BUCKET, description: "R2 bucket" },
+		"out-dir": { type: "string", default: mailwomanDataRoot(), description: "Local output root" },
+		"dry-run": { type: "boolean", default: false, description: "Show without downloading" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	bucket: string
+	outDir: string
+	dryRun: boolean
+}
 
 interface Step {
 	label: string
@@ -37,7 +44,7 @@ interface Step {
 	detail?: string
 }
 
-const CorpusDownload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusDownload: ParsedCommandComponent<Options> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([
 		{ label: "Download corpus v0.3.0", status: "pending" },
 		{ label: "Download corpus v0.4.0", status: "pending" },

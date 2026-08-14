@@ -16,25 +16,35 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
  */
 const UNDERTRAINED_PLACETYPE_COUNT = 200_000
 
-const OptionsSchema = zod.object({
-	db: zod.string().optional().describe("WOF admin DB. Default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db"),
-	country: zod
-		.string()
-		.regex(/^[A-Z]{2}$/u, "ISO 3166-1 alpha-2 (e.g. NZ, US)")
-		.optional()
-		.describe("Filter to one country's places"),
-	json: zod.boolean().optional().describe("Emit the raw stats as JSON (feeds a soft-prior / Fable analysis)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "placetype-stats",
+	description: "Report WOF placetype statistics",
+	options: {
+		db: { type: "string", description: "WOF admin DB" },
+		country: {
+			type: "string",
+			validate: (value: string) => /^[A-Z]{2}$/u.test(value),
+			description: "ISO 3166-1 alpha-2 filter",
+		},
+		json: { type: "boolean", description: "Emit raw JSON" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	db?: string
+	country?: string
+	json?: boolean
+}
 
 interface PlacetypeStat {
 	placetype: string
@@ -69,7 +79,7 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 	localadmin: "subregion",
 }
 
-const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { COMPONENT_TAGS } = await import("@mailwoman/core")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
@@ -82,7 +92,7 @@ const GazetteerPlacetypeStats: CommandComponent<typeof OptionsSchema> = ({ optio
 		try {
 			db = new DatabaseSync(dbPath, { readOnly: true })
 		} catch (error) {
-			throw commandError(`Cannot open WOF DB ${dbPath}: ${(error as Error).message}`)
+			throw new CommandError(`Cannot open WOF DB ${dbPath}: ${(error as Error).message}`)
 		}
 
 		const where = country ? "AND s.country = ?" : ""

@@ -22,9 +22,8 @@
  *   result, so a caller that also wants the parse (a debug view drawing spans, a PostalAddress) does not pay
  *   for the inference twice.
  *
- *   This module reaches into the `parse` command for `resolverDefaultCountry`, so it carries a JSX
- *   dependency and bare node cannot type-strip it. It must not gain a package `exports` entry with a
- *   `node → .ts` condition until that function has a non-command home.
+ *   Country-scope policy lives in `country-scope.ts`, outside the CLI adapters, so constructing a session never
+ *   imports React, Ink, or the parse command.
  */
 
 import { existsSync } from "node:fs"
@@ -44,9 +43,9 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { commandError } from "mailwoman/cli-kit"
+import { CommandError } from "mailwoman/cli-kit"
 
-import { resolverDefaultCountry } from "./commands/parse.tsx"
+import { resolverDefaultCountry } from "./country-scope.ts"
 import {
 	countriesFromPostcodeFormat,
 	geocodeAddress,
@@ -67,10 +66,9 @@ import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "./
 /**
  * The slice of the geocode command's parsed options a session reads.
  *
- * Declared structurally rather than as `zod.infer<typeof OptionsSchema>`: the session is the lower layer, and naming
- * the command's schema here would point the dependency the wrong way. The command hands over its whole parsed options
- * object and structural typing accepts the superset — the field types are copied from the schema, so a default in the
- * schema shows up here as a required field.
+ * Declared structurally because the session is the lower layer; importing the CLI specification here would point the
+ * dependency the wrong way. The command hands over its whole parsed options object and structural typing accepts the
+ * superset. Fields with CLI defaults are required here.
  */
 export interface GeocodeSessionOptions {
 	locale: string
@@ -98,6 +96,10 @@ export interface GeocodeSessionOptions {
 	 * resolver walks is still `parseForGeocode`'s.
 	 */
 	trace?: boolean
+	/**
+	 * Optional one-time initialization milestones for interactive callers.
+	 */
+	onProgress?: (message: string) => void
 }
 
 /**
@@ -159,6 +161,10 @@ export interface GeocodeRun {
  * poi.db handles stay open for the session's whole life, and `close` releases every one of them.
  */
 export interface GeocodeSession {
+	/**
+	 * One-time session construction phases, in wall-clock milliseconds.
+	 */
+	initTiming: PipelineTiming
 	geocode(input: string): Promise<GeocodeRun>
 	close(): void
 }
@@ -183,7 +189,7 @@ function resolveWOFPath(options: Pick<GeocodeSessionOptions, "resolveDb">): stri
 	).filter((p: string) => existsSync(p))
 
 	if (!paths.length) {
-		throw commandError(
+		throw new CommandError(
 			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
 		)
@@ -204,7 +210,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 			const [coords, w] = part.split(":")
 			const [lat, lon] = coords!.split(",").map(Number)
 
-			if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw commandError(`--bias: bad point '${part}'`)
+			if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new CommandError(`--bias: bad point '${part}'`)
 
 			return { lat: lat!, lon: lon!, ...(w != null ? { weight: Number(w) } : {}) }
 		})
@@ -250,6 +256,10 @@ async function loadForkEntityDeps(options: Pick<GeocodeSessionOptions, "forkEnti
 //#region Session
 
 export async function createGeocodeSession(options: GeocodeSessionOptions): Promise<GeocodeSession> {
+	const initStartedAt = performance.now()
+	const progress = options.onProgress ?? (() => {})
+
+	progress("Checking gazetteer…")
 	// Resolve the gazetteer path FIRST — it's the most common missing prerequisite and the cheapest to
 	// check, so surface that error before the (slower) weights load. (Order matters for the CLI contract:
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
@@ -257,29 +267,38 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// stands alone and a WOF admin path isn't required.
 	const candidateDb = resolveCandidateDBPath(options.candidateDb)
 	const wofPath = candidateDb ? [] : resolveWOFPath(options)
+	const pathsResolvedAt = performance.now()
 
 	// Load the neural classifier (required for street-level; weights must be present).
+	progress("Loading neural model…")
+
 	let classifier: NeuralAddressClassifier
 
 	try {
 		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
 	} catch {
-		throw commandError(
+		throw new CommandError(
 			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
 		)
 	}
 
+	const weightsLoadedAt = performance.now()
+
 	// Open the WOF admin resolver + the situs/interpolation shard provider.
+	progress("Opening resolver…")
+
 	let mod: typeof import("@mailwoman/resolver-wof-sqlite")
 
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw commandError(
+		throw new CommandError(
 			"geocode requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
 				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
 		)
 	}
+
+	const resolverImportedAt = performance.now()
 
 	const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
@@ -306,6 +325,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				}
 			: shardProvider.for
 
+	const backendsOpenedAt = performance.now()
+	progress("Loading optional data providers…")
+
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. Optional
 	// like the resolver backend above — absent `@mailwoman/ban` ⇒ no national tier (admin/OSM path unchanged),
 	// and the provider itself is a no-op when the shard isn't on disk. Keeps the CLI backend-agnostic.
@@ -329,6 +351,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	} catch {
 		osmProvider = undefined
 	}
+
+	const optionalProvidersLoadedAt = performance.now()
 
 	let poiHandle: { close(): void } | undefined
 
@@ -359,6 +383,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
 	try {
+		progress("Loading geographic priors…")
+
 		// Coarse-placer soft country prior (#244) — opt-in. Loads the int8 model bundled in @mailwoman/core
 		// at the requested abstention threshold; a confident in-map guess feeds the resolver's anchorPosterior.
 		// The M2 open-set reject rule (reject on in-map MASS 1-P(OTHER), route on the in-map argmax) lifts in-map
@@ -380,6 +406,19 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		close()
 
 		throw error
+	}
+
+	const initializedAt = performance.now()
+	progress("Ready; geocoding…")
+
+	const initTiming: PipelineTiming = {
+		paths: pathsResolvedAt - initStartedAt,
+		weights: weightsLoadedAt - pathsResolvedAt,
+		resolver_import: resolverImportedAt - weightsLoadedAt,
+		backends: backendsOpenedAt - resolverImportedAt,
+		optional_providers: optionalProvidersLoadedAt - backendsOpenedAt,
+		placer_and_priors: initializedAt - optionalProvidersLoadedAt,
+		total: initializedAt - initStartedAt,
 	}
 
 	/**
@@ -516,7 +555,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		}
 	}
 
-	return { geocode, close }
+	return { initTiming, geocode, close }
 }
 
 //#endregion

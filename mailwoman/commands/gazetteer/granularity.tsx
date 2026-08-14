@@ -19,29 +19,34 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 import { DEFAULT_COVERAGE_FLOOR } from "../../gazetteer-pipeline/defaults.ts"
 
-const OptionsSchema = zod.object({
-	out: zod
-		.string()
-		.default("docs/records/evals/coverage/gazetteer-depth-scorecard.md")
-		.describe("Output path for the markdown scorecard"),
-	source: zod.string().optional().describe("WOF admin DB. Default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db"),
-	floor: zod
-		.number()
-		.default(DEFAULT_COVERAGE_FLOOR)
-		.describe(
-			`Parent-coverage floor for crediting a sub-locality rung. Default ${DEFAULT_COVERAGE_FLOOR} — set low on ` +
-				"purpose, to catch thin-but-real tiers rather than certify them."
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "granularity",
+	description: "Build the gazetteer-depth scorecard.",
+	options: {
+		out: {
+			type: "string",
+			default: "docs/records/evals/coverage/gazetteer-depth-scorecard.md",
+			description: "Output markdown",
+		},
+		source: { type: "string", description: "WOF admin DB" },
+		floor: { type: "number", default: DEFAULT_COVERAGE_FLOOR, description: "Parent-coverage floor" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	out: string
+	source?: string
+	floor: number
+}
 
-const GazetteerGranularity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
 		const { bottomsOutAt, buildGranularityLadder } = await import("../../gazetteer-pipeline/granularity.ts")

@@ -5,10 +5,9 @@
  *
  *   The POI build's tunable defaults, and NOTHING else — no imports, so the module is free to load.
  *
- *   They live apart from the builders that consume them because `commands/gazetteer/build/poi*.tsx` interpolate them
- *   into their `--help` text, which zod evaluates at module load. A command that reaches them through `build-poi.ts` or
- *   `build-brands.ts` therefore drags DuckDB, h3-js and the whole resolver-wof-sqlite schema layer into every `mailwoman
- *   --version`. The builders re-export the names, so nothing outside this directory needs to know they moved.
+ *   They live apart from the builders that consume them so command specifications can interpolate the defaults without
+ *   importing DuckDB, h3-js, or the resolver schema layer. The builders re-export the names, so callers need not know
+ *   where the constants live.
  */
 
 /**
@@ -16,9 +15,9 @@
  * addresses-theme ingest) as of this writing — a monthly Overture release covers every theme at once, so the two pins
  * move together in practice. Kept as an INDEPENDENT constant here rather than imported from that `.tsx` command:
  * `gazetteer-pipeline/*.ts` must stay importable under plain `node` type-stripping (no JSX transform), and
- * `commands/**\/*.tsx` files are Ink/Pastel presentation that require compiling (AGENTS.md) — pulling a value FROM a
- * `.tsx` file into this pipeline layer would invert that dependency direction. If the pins drift, `--release` overrides
- * either independently.
+ * `commands/**\/*.tsx` files are Ink presentation that require compiling (AGENTS.md) — pulling a value FROM a `.tsx`
+ * file into this pipeline layer would invert that dependency direction. If the pins drift, `--release` overrides either
+ * independently.
  */
 export const DEFAULT_RELEASE = "2026-05-20.0"
 

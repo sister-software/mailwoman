@@ -22,7 +22,7 @@
  *   `@mailwoman/photon`'s and `@mailwoman/nominatim`'s `serve` commands use for their own
  *   `WOFReverseGeocoder` (`photon/cli.ts`, `nominatim/cli.ts`): first existing shard in the list wins
  *   (`admin-global-priority.db` first). The polygon sidecar is read from `$MAILWOMAN_WOF_POLYGONS_DB` —
- *   the same env var `mailwoman reverse` reads (`commands/reverse.tsx`).
+ *   the same env var `mailwoman reverse` reads.
  */
 
 import { existsSync } from "node:fs"

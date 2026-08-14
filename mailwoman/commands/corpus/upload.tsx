@@ -11,23 +11,35 @@
  *   Requires RCLONE_S3_* env vars set in .env (Cloudflare R2 credentials).
  */
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
-const DEFAULT_CORPUS_DIR = "/data/corpus/versioned"
-const DEFAULT_TOKENIZER_DIR = "/data/models/tokenizer"
+const DEFAULT_CORPUS_DIR = dataRootPath("corpus", "versioned")
+const DEFAULT_TOKENIZER_DIR = dataRootPath("models", "tokenizer")
 
-const OptionsSchema = zod.object({
-	bucket: zod.string().optional().default(DEFAULT_BUCKET).describe("R2 bucket name"),
-	corpusDir: zod.string().optional().default(DEFAULT_CORPUS_DIR).describe("Local corpus root"),
-	tokenizerDir: zod.string().optional().default(DEFAULT_TOKENIZER_DIR).describe("Local tokenizer root"),
-	dryRun: zod.boolean().optional().default(false).describe("Show what would be uploaded without uploading"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "upload",
+	description: "Upload corpus and tokenizer artifacts",
+	options: {
+		bucket: { type: "string", default: DEFAULT_BUCKET, description: "R2 bucket name" },
+		"corpus-dir": { type: "string", default: DEFAULT_CORPUS_DIR, description: "Local corpus root" },
+		"tokenizer-dir": { type: "string", default: DEFAULT_TOKENIZER_DIR, description: "Local tokenizer root" },
+		"dry-run": { type: "boolean", default: false, description: "Show what would be uploaded without uploading" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	bucket: string
+	corpusDir: string
+	tokenizerDir: string
+	dryRun: boolean
+}
 
 interface Step {
 	label: string
@@ -35,7 +47,7 @@ interface Step {
 	detail?: string
 }
 
-const CorpusUpload: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 	const [steps, setSteps] = useState<Step[]>([
 		{ label: "Create bucket (if needed)", status: "pending" },
 		{ label: "Sync corpus v0.3.0", status: "pending" },

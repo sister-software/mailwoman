@@ -12,58 +12,21 @@
 
 import { Box, Text } from "ink"
 import { useState } from "react"
-import zod from "zod"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	states: zod.string().optional().default("all").describe("Comma-separated state slugs (e.g. CA,TX) or 'all'"),
-	excludeStates: zod.string().optional().default("AK").describe("Comma-separated slugs to exclude (default AK — antimeridian)"),
-	dataRoot: zod
-		.string()
-		.optional()
-		.default(dataRootPath("address-points"))
-		.describe("Root holding address-points-us-<st>.db shards"),
-	interp: zod.coerce.boolean().optional().default(true).describe("Blend the TIGER street-segment signal (--no-interp to disable)"),
-	interpRoot: zod
-		.string()
-		.optional()
-		.default(dataRootPath("interpolation"))
-		.describe("Root holding interpolation-us-<st>.db shards"),
-	fineRes: zod.coerce.number().int().min(0).max(15).optional().default(9).describe("Finest H3 resolution (fog floor; 9 ≈ 174 m)"),
-	rollup: zod.string().optional().default("7,5").describe("Coarser rollup resolutions (comma-separated)"),
-	domainRes: zod.coerce.number().int().min(0).max(15).optional().default(6).describe("Parent res defining the fog neighborhood (6 ≈ 3.2 km)"),
-	saturation: zod.coerce.number().positive().optional().default(25).describe("Address-point count at which a fine cell fully clears"),
-	satSeg: zod.coerce.number().positive().optional().default(8).describe("Street-segment count at which the interp signal saturates"),
-	interpWeight: zod.coerce.number().min(0).max(1).optional().default(0.4).describe("Weight of the street-segment signal vs address points"),
-	optimisticGamma: zod.coerce.number().positive().optional().default(2).describe("Exponent for the optimistic fog curve (fog ** gamma)"),
-	postcode: zod.coerce.boolean().optional().default(true).describe("Add the global civilization-holes layer (--no-postcode to disable)"),
-	geonamesPostal: zod
-		.string()
-		.optional()
-		.default(dataRootPath("geonames", "allCountries-postal.txt"))
-		.describe("GeoNames postal file (12-col) — the global postcode COVERAGE signal"),
-	wofDB: zod
-		.string()
-		.optional()
-		.default(dataRootPath("wof", "admin-global-priority-importance.db"))
-		.describe("WOF DB (spr + place_importance) — the civilization/salience backdrop"),
-	postcodeCeiling: zod.coerce.number().min(0).max(1).optional().default(0.85).describe("Coverage a postcode cell contributes (clears the hole; ≤ 1)"),
-	salienceFloor: zod.coerce.number().min(0).max(1).optional().default(0.15).describe("Min place importance to flag as a hole (noise floor)"),
-	postcodeExclude: zod.string().optional().default("US").describe("Country codes the global holes layer skips (rooftop-covered; comma-separated)"),
-	maxZoom: zod.coerce.number().int().min(0).max(22).optional().default(12).describe("Highest baked zoom (MapLibre overzooms above)"),
-	out: zod
-		.string()
-		.optional()
-		.default(dataRootPath("coverage", "coverage-us.pmtiles"))
-		.describe("Output .pmtiles path"),
-	keepNdjson: zod.coerce.boolean().optional().default(false).describe("Keep the intermediate NDJSON"),
-	threads: zod.coerce.number().int().positive().optional().describe("DuckDB worker-thread cap (default: all cores)"),
-})
+const h3 = (description: string, defaultValue: number) => ({ type: "number", default: defaultValue, validate: (value: number) => Number.isInteger(value) && value >= 0 && value <= 15, validationMessage: `${description} must be an integer from 0 to 15.`, description }) as const
+const unit = (description: string, defaultValue: number) => ({ type: "number", default: defaultValue, validate: (value: number) => value >= 0 && value <= 1, validationMessage: `${description} must be between 0 and 1.`, description }) as const
+export const spec = { name: "build", description: "Build address-coverage PMTiles.", options: {
+	states: { type: "string", default: "all", description: "State slugs" }, "exclude-states": { type: "string", default: "AK", description: "Excluded states" }, "data-root": { type: "string", default: dataRootPath("address-points"), description: "Address-point root" }, interp: { type: "boolean", default: true, description: "Blend interpolation" }, "interp-root": { type: "string", default: dataRootPath("interpolation"), description: "Interpolation root" },
+	"fine-res": h3("fine resolution", 9), rollup: { type: "string", default: "7,5", description: "Rollup resolutions" }, "domain-res": h3("domain resolution", 6), saturation: { type: "number", default: 25, description: "Point saturation" }, "sat-seg": { type: "number", default: 8, description: "Segment saturation" }, "interp-weight": unit("interpolation weight", 0.4), "optimistic-gamma": { type: "number", default: 2, description: "Fog exponent" },
+	postcode: { type: "boolean", default: true, description: "Add global holes" }, "geonames-postal": { type: "string", default: dataRootPath("geonames", "allCountries-postal.txt"), description: "GeoNames postal file" }, "wof-db": { type: "string", default: dataRootPath("wof", "admin-global-priority-importance.db"), description: "WOF database" }, "postcode-ceiling": unit("postcode ceiling", 0.85), "salience-floor": unit("salience floor", 0.15), "postcode-exclude": { type: "string", default: "US", description: "Excluded postcode countries" },
+	"max-zoom": { type: "number", default: 12, validate: (value) => Number.isInteger(value) && value >= 0 && value <= 22, description: "Max zoom" }, out: { type: "string", default: dataRootPath("coverage", "coverage-us.pmtiles"), description: "Output PMTiles" }, "keep-ndjson": { type: "boolean", default: false, description: "Keep NDJSON" }, threads: { type: "number", validate: (value) => Number.isInteger(value) && value > 0, description: "Worker threads" },
+} } as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options { states: string; excludeStates: string; dataRoot: string; interp: boolean; interpRoot: string; fineRes: number; rollup: string; domainRes: number; saturation: number; satSeg: number; interpWeight: number; optimisticGamma: number; postcode: boolean; geonamesPostal: string; wofDB: string; postcodeCeiling: number; salienceFloor: number; postcodeExclude: string; maxZoom: number; out: string; keepNdjson: boolean; threads?: number }
 
-const CoverageBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: string; message: string }>()
 	const state = useCommandTask(async () => {
 		const { buildCoverageTiles } = await import("../../coverage-core.ts")

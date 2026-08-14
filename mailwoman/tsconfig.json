@@ -1,7 +1,7 @@
 {
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
-		// The Ink/Pastel commands are TSX — this package runs on Node AND renders JSX, so it declares
+		// The Ink commands are TSX — this package runs on Node AND renders JSX, so it declares
 		// the transform itself rather than inheriting one every non-rendering package would also get.
 		"jsx": "react-jsx",
 		"outDir": "./out",

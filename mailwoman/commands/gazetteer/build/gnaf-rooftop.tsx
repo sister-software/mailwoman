@@ -11,27 +11,44 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	standardDir: zod
-		.string()
-		.optional()
-		.describe("Extracted G-NAF Standard/ PSV directory. Default <data-root>/gnaf/may26/extracted/…/Standard"),
-	out: zod.string().optional().describe("Output shard. Default <data-root>/osm/address-points-au-au.db"),
-	states: zod
-		.string()
-		.optional()
-		.describe("Comma-separated state prefixes (e.g. ACT,NSW) — the smoke rung. Default all"),
-	release: zod.string().optional().describe("G-NAF release tag for provenance. Default may26-gda2020"),
-	buildSha: zod.string().describe("Git SHA recorded in the layer manifest"),
-	createdAt: zod.string().describe("ISO-8601 build timestamp — the builder never invents provenance time"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "gnaf-rooftop",
+	description: "Build the Australian G-NAF rooftop address-point shard.",
+	options: {
+		"standard-dir": {
+			type: "string",
+			description: "Extracted G-NAF Standard/ PSV directory. Default <data-root>/gnaf/may26/extracted/…/Standard",
+		},
+		out: { type: "string", description: "Output shard. Default <data-root>/osm/address-points-au-au.db" },
+		states: {
+			type: "string",
+			description: "Comma-separated state prefixes (e.g. ACT,NSW) — the smoke rung. Default all",
+		},
+		release: { type: "string", description: "G-NAF release tag for provenance. Default may26-gda2020" },
+		"build-sha": { type: "string", required: true, description: "Git SHA recorded in the layer manifest" },
+		"created-at": {
+			type: "string",
+			required: true,
+			description: "ISO-8601 build timestamp — the builder never invents provenance time",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	standardDir?: string
+	out?: string
+	states?: string
+	release?: string
+	buildSha: string
+	createdAt: string
+}
 
-const GazetteerBuildGNAFRooftop: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildGNAFRooftopShard } = await import("../../../gazetteer-pipeline/gnaf-rooftop.ts")
 

@@ -9,23 +9,35 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	sources: zod
-		.string()
-		.optional()
-		.describe("Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)"),
-	cap: zod.number().default(50_000).describe("Providers sampled from the registry"),
-	state: zod.string().default("TX").describe("State filter"),
-	tau: zod.number().default(0.7).describe("Org-name Jaccard collision threshold"),
-	outMd: zod.string().optional().describe("Also write the markdown report here"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "dedup-ceiling",
+	description: "Measure the irreducible over-merge rate for co-located providers.",
+	options: {
+		sources: {
+			type: "string",
+			description: "Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)",
+		},
+		cap: { type: "number", default: 50_000, description: "Providers sampled from the registry" },
+		state: { type: "string", default: "TX", description: "State filter" },
+		tau: { type: "number", default: 0.7, description: "Org-name Jaccard collision threshold" },
+		"out-md": { type: "string", description: "Also write the markdown report here" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	sources?: string
+	cap: number
+	state: string
+	tau: number
+	outMd?: string
+}
 
-const RegistryDedupCeiling: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const RegistryDedupCeiling: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dedupCeiling } = await import("@mailwoman/registry/tools")
 

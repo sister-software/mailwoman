@@ -28,28 +28,40 @@ import { existsSync, statSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
 import { Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	file: zod.string().describe("Path to the .pmtiles archive to upload"),
-	tileset: zod.string().describe("Tile-set name (R2 key = <prefix>/<tileset>.pmtiles; e.g. 'coverage')"),
-	bucket: zod.string().optional().default("nexus-assets").describe("R2 bucket the tile worker binds"),
-	prefix: zod.string().optional().default("tiles").describe("R2 key prefix (matches the worker's PMTILES_PATH)"),
-	dryRun: zod.coerce.boolean().optional().default(false).describe("Print the target without uploading"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "publish",
+	description: "Publish a PMTiles archive to Cloudflare R2.",
+	options: {
+		file: { type: "string", required: true, description: "Path to the .pmtiles archive to upload" },
+		tileset: { type: "string", required: true, description: "Tile-set name" },
+		bucket: { type: "string", default: "nexus-assets", description: "R2 bucket" },
+		prefix: { type: "string", default: "tiles", description: "R2 key prefix" },
+		"dry-run": { type: "boolean", default: false, description: "Print the target without uploading" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	file: string
+	tileset: string
+	bucket: string
+	prefix: string
+	dryRun: boolean
+}
 
 const REQUIRED_ENV = ["RCLONE_S3_ENDPOINT", "RCLONE_S3_ACCESS_KEY_ID", "RCLONE_S3_SECRET_ACCESS_KEY"] as const
 
-async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<string> {
+async function publishTiles(options: Options): Promise<string> {
 	const { $private } = await import("@mailwoman/core/env")
 	const { $ } = await import("zx")
 
-	if (!existsSync(options.file)) throw commandError(`--file not found: ${options.file}`)
+	if (!existsSync(options.file)) throw new CommandError(`--file not found: ${options.file}`)
 
-	if (!options.file.endsWith(".pmtiles")) throw commandError(`--file must be a .pmtiles archive: ${options.file}`)
+	if (!options.file.endsWith(".pmtiles")) throw new CommandError(`--file must be a .pmtiles archive: ${options.file}`)
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
 	const sizeMb = statSync(options.file).size / 1024 / 1024
@@ -62,7 +74,7 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 	const missing = REQUIRED_ENV.filter((v) => !$private[v])
 
 	if (missing.length) {
-		throw commandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
+		throw new CommandError(`missing env: ${missing.join(", ")} — source the repo .env first (set -a; . ./.env; set +a)`)
 	}
 
 	// rclone reads RCLONE_S3_* from the inherited env for the on-the-fly `:s3:` remote. The flags skip the
@@ -72,13 +84,13 @@ async function publishTiles(options: zod.infer<typeof OptionsSchema>): Promise<s
 	const result = await $({ nothrow: true, quiet: true })`rclone copyto ${options.file} ${remote} ${flags}`
 
 	if (result.exitCode !== 0) {
-		throw commandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
+		throw new CommandError(`rclone exited ${result.exitCode}: ${result.stderr.slice(-400)}`)
 	}
 
 	return `✓ ${options.bucket}/${key} (${sizeMb.toFixed(1)} MB)\n  served at ${servedAt}`
 }
 
-const TilesPublish: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const TilesPublish: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => publishTiles(options))
 
 	if (state.status === "error") return <Text color="red">{state.message}</Text>

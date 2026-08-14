@@ -10,36 +10,59 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Append a promotion-gate run to evals/scores-by-version.json (#885)"
 
-const OptionsSchema = zod.object({
-	outDir: zod.string().optional().describe("The promotion-gate out-dir carrying verdict.json (required)"),
-	modelVersion: zod.string().optional().describe("The npm semver being ledgered (required)"),
-	runId: zod.string().optional().describe("Stable run id, ^[a-z0-9-]+$ (required)"),
-	modelPath: zod
-		.string()
-		.optional()
-		.describe('Published artifact pointer, e.g. "@mailwoman/neural-weights-en-us@5.0.0" (required)'),
-	card: zod
-		.string()
-		.default("neural-weights-en-us/model-card.json")
-		.describe("Model card JSON (run-metadata defaults)"),
-	ledger: zod.string().default("evals/scores-by-version.json").describe("The ledger file"),
-	trainedAt: zod.string().optional().describe("ISO date the model trained (default: today)"),
-	notes: zod.string().default("").describe("Free-text notes appended to the row"),
-	replace: zod.boolean().default(false).describe("Overwrite an existing row for the same run_id / model_version"),
-	operatorException: zod
-		.array(zod.string())
-		.optional()
-		.describe("Name an adjudicated failing check to ledger a FAIL verdict (repeatable)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "ledger-append",
+	description,
+	options: {
+		"out-dir": { type: "string", description: "The promotion-gate out-dir carrying verdict.json (required)" },
+		"model-version": { type: "string", description: "The npm semver being ledgered (required)" },
+		"run-id": { type: "string", description: "Stable run id, ^[a-z0-9-]+$ (required)" },
+		"model-path": {
+			type: "string",
+			description: "Published artifact pointer, e.g. @mailwoman/neural-weights-en-us@5.0.0 (required)",
+		},
+		card: {
+			type: "string",
+			default: "neural-weights-en-us/model-card.json",
+			description: "Model card JSON (run-metadata defaults)",
+		},
+		ledger: { type: "string", default: "evals/scores-by-version.json", description: "The ledger file" },
+		"trained-at": { type: "string", description: "ISO date the model trained (default: today)" },
+		notes: { type: "string", default: "", description: "Free-text notes appended to the row" },
+		replace: {
+			type: "boolean",
+			default: false,
+			description: "Overwrite an existing row for the same run_id / model_version",
+		},
+		"operator-exception": {
+			type: "string",
+			multiple: true,
+			description: "Name an adjudicated failing check to ledger a FAIL verdict (repeatable)",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	outDir?: string
+	modelVersion?: string
+	runId?: string
+	modelPath?: string
+	card: string
+	ledger: string
+	trainedAt?: string
+	notes: string
+	replace: boolean
+	operatorException?: string[]
+}
 
-const EvalLedgerAppend: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { ledgerAppend } = await import("../../eval-harness/ledger-append.ts")

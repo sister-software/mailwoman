@@ -9,20 +9,40 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	jsonl: zod.string().describe("Canonical kryptonite JSONL to shard"),
-	baseManifest: zod.string().describe("Base corpus MANIFEST.json whose shards carry forward"),
-	outDir: zod.string().describe("Output directory (shards land under corpus-v<version>/)"),
-	corpusVersion: zod.string().default("0.4.0").describe("Corpus version stamped into rows + MANIFEST"),
-	source: zod.string().default("deepseek-kryptonite").describe("Source tag stamped on the new shard(s)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "kryptonite",
+	description: "Build a corpus shard from canonical kryptonite JSONL.",
+	options: {
+		jsonl: { type: "string", required: true, description: "Canonical kryptonite JSONL to shard" },
+		"base-manifest": {
+			type: "string",
+			required: true,
+			description: "Base corpus MANIFEST.json whose shards carry forward",
+		},
+		"out-dir": {
+			type: "string",
+			required: true,
+			description: "Output directory (shards land under corpus-v<version>/)",
+		},
+		"corpus-version": { type: "string", default: "0.4.0", description: "Corpus version stamped into rows + MANIFEST" },
+		source: { type: "string", default: "deepseek-kryptonite", description: "Source tag stamped on the new shard(s)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	jsonl: string
+	baseManifest: string
+	outDir: string
+	corpusVersion: string
+	source: string
+}
 
-const CorpusShardKryptonite: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusShardKryptonite: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildKryptoniteShard } = await import("@mailwoman/corpus/tools")
 

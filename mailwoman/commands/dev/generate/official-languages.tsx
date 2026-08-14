@@ -9,19 +9,35 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	cldrDir: zod.string().optional().describe("Read cldr-territoryInfo.json + cldr-aliases.json from this directory"),
-	cldrVersion: zod.string().default("47.0.0").describe("Pinned cldr-core release fetched from jsdelivr"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "official-languages",
+	description: "Generate the official-language table from CLDR.",
+	options: {
+		"cldr-dir": {
+			type: "string",
+			description: "Read cldr-territoryInfo.json + cldr-aliases.json from this directory",
+		},
+		"cldr-version": {
+			type: "string",
+			default: "47.0.0",
+			description: "Pinned cldr-core release fetched from jsdelivr",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	cldrDir?: string
+	cldrVersion: string
+}
 
 const report = (line: string): void => console.error(line)
 
-const DevGenerateOfficialLanguages: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevGenerateOfficialLanguages: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateOfficialLanguages } = await import("@mailwoman/codex/tools")
 

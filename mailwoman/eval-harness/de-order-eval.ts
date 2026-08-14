@@ -31,7 +31,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 import { oaResolverEval } from "./oa-resolver-eval.ts"
@@ -84,7 +84,7 @@ export async function deOrderEval(
 	const card = options.card ?? ""
 	const tok = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 	const lookup = options.anchorLookup ?? String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
-	const out = options.out ?? "/tmp/order-eval"
+	const out = options.out ?? tempRootPath("order-eval")
 
 	if (!model || !card) {
 		reportError("need --model and --card")

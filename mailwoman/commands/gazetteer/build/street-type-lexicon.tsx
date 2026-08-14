@@ -9,16 +9,24 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	output: zod.string().optional().describe("Output path (default <repo>/data/gazetteer/street-type-lexicon-v3.json)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "street-type-lexicon",
+	description: "Build the street-type evidence lexicon.",
+	options: {
+		output: { type: "string", description: "Output path (default <repo>/data/gazetteer/street-type-lexicon-v3.json)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	output?: string
+}
 
-const GazetteerBuildStreetTypeLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildStreetTypeLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildStreetTypeLexicon } = await import("../../../gazetteer-pipeline/evidence-lexicons.ts")
 		const built = await buildStreetTypeLexicon({ output: options.output })

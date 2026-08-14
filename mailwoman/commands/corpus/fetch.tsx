@@ -11,62 +11,61 @@
 
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.tuple([
-	zod
-		.enum([
-			"ban",
-			"nad",
-			"hrsa",
-			"imls-pls",
-			"nppes",
-			"openaddresses",
-			"ourairports",
-			"state-sources",
-			"state-hi-schools",
-			"tiger-full",
-			"wikidata-subvenue",
-		])
-		.describe(
-			argument({
-				name: "source",
-				description:
-					"Fetch source id (ban, nad, hrsa, imls-pls, nppes, openaddresses, ourairports, state-sources, wikidata-subvenue, …)",
-			})
-		),
-])
+const sources = [
+	"ban",
+	"nad",
+	"hrsa",
+	"imls-pls",
+	"nppes",
+	"openaddresses",
+	"ourairports",
+	"state-sources",
+	"state-hi-schools",
+	"tiger-full",
+	"wikidata-subvenue",
+] as const satisfies readonly FetchSourceID[]
 
-const OptionsSchema = zod.object({
-	outRoot: zod
-		.string()
-		.default("data/corpus/sources")
-		.describe("Destination root — each source writes its own subdirectory"),
-	// nad
-	mode: zod.enum(["featureserver", "bulk"]).optional().describe("nad: fetch strategy (default featureserver)"),
-	nadUrl: zod.string().optional().describe("nad: pre-signed S3 URL for bulk mode"),
-	chunkSize: zod.number().optional().describe("nad: records per output file (default 100000)"),
-	pageSize: zod.number().optional().describe("nad: records per HTTP request (default 5000)"),
-	concurrency: zod.number().optional().describe("nad: parallel page fetches within a chunk (default 4)"),
-	startOid: zod.number().optional().describe("nad: start OBJECTID (default 1)"),
-	endOid: zod.number().optional().describe("nad: stop before this OID (default: total count)"),
-	// openaddresses
-	country: zod.string().optional().describe("openaddresses: OA country collection code (default ca)"),
-	// tiger-full
-	skipStateFips: zod
-		.string()
-		.optional()
-		.describe('tiger-full: space-separated 2-digit state FIPS to skip (default "50")'),
-	rateSleep: zod.number().optional().describe("tiger-full: seconds between downloads (default 0.2)"),
-	maxParallel: zod.number().optional().describe("tiger-full: concurrent downloads per state (default 4)"),
-	dryRun: zod.boolean().default(false).describe("tiger-full: print planned downloads without fetching"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "fetch",
+	description: "Fetch a corpus source",
+	positionals: [{ name: "source", required: true, choices: sources, description: "Corpus source ID" }],
+	options: {
+		"out-root": { type: "string", default: "data/corpus/sources", description: "Destination root" },
+		mode: { type: "string", choices: ["featureserver", "bulk"], description: "NAD fetch strategy" },
+		"nad-url": { type: "string", description: "NAD bulk URL" },
+		"chunk-size": { type: "number", description: "NAD records per output file" },
+		"page-size": { type: "number", description: "NAD records per request" },
+		concurrency: { type: "number", description: "NAD parallel page fetches" },
+		"start-oid": { type: "number", description: "First NAD OBJECTID" },
+		"end-oid": { type: "number", description: "Exclusive final NAD OBJECTID" },
+		country: { type: "string", description: "OpenAddresses country code" },
+		"skip-state-fips": { type: "string", description: "TIGER state FIPS codes to skip" },
+		"rate-sleep": { type: "number", description: "TIGER delay between downloads" },
+		"max-parallel": { type: "number", description: "TIGER concurrent downloads" },
+		"dry-run": { type: "boolean", default: false, description: "Print planned downloads" },
+	},
+} as const satisfies CommandSpec
 
-export { ArgsSchema as args, OptionsSchema as options }
-
-type Options = zod.infer<typeof OptionsSchema>
+interface Options {
+	outRoot: string
+	mode?: "featureserver" | "bulk"
+	nadUrl?: string
+	chunkSize?: number
+	pageSize?: number
+	concurrency?: number
+	startOid?: number
+	endOid?: number
+	country?: string
+	skipStateFips?: string
+	rateSleep?: number
+	maxParallel?: number
+	dryRun: boolean
+}
 
 const report = (line: string): void => console.error(line)
 
@@ -134,7 +133,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 	}
 }
 
-const CorpusFetch: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const CorpusFetch: ParsedCommandComponent<Options, [FetchSourceID]> = ({ options, args }) => {
 	const state = useCommandTask(
 		() => runSource(args[0], options),
 		(summary) => (summary.failed > 0 ? 1 : 0)

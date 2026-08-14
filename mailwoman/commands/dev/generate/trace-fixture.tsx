@@ -11,26 +11,26 @@
  */
 
 import { Text } from "ink"
-import { type PositionalCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgumentsSchema = zod
-	.array(
-		zod.string().describe(
-			argument({
-				name: "address",
-				description: "Address to trace (default: 1600 Pennsylvania Ave NW, Washington, DC 20500)",
-			})
-		)
-	)
-	.default([])
-
-export { ArgumentsSchema as args }
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "trace-fixture",
+	description: "Regenerate the committed neural trace fixture.",
+	positionals: [
+		{
+			name: "address",
+			multiple: true,
+			description: "Address to trace (default: 1600 Pennsylvania Ave NW, Washington, DC 20500)",
+		},
+	],
+} as const satisfies CommandSpec
 
 const report = (line: string): void => console.error(line)
 
-const DevGenerateTraceFixture: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args }) => {
+const DevGenerateTraceFixture: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		const { generateTraceFixture } = await import("mailwoman/dev-tools/generate-trace-fixture")
 

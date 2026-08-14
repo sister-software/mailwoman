@@ -10,30 +10,46 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Categorized golden-set failure report (the pre-publish 2pp promote gate)"
 
-const OptionsSchema = zod.object({
-	golden: zod.string().optional().describe("Golden eval-set dir, e.g. data/eval/golden/v0.1.2 (required)"),
-	model: zod.string().optional().describe("Candidate ONNX (requires --tokenizer + --model-card)"),
-	tokenizer: zod.string().optional().describe("Candidate tokenizer"),
-	modelCard: zod.string().optional().describe("Candidate model-card"),
-	postcodeRepair: zod.boolean().default(false).describe("Parse with postcode repair enabled"),
-	wordConsistency: zod
-		.boolean()
-		.default(false)
-		.describe("Parse with the production word-consistency heal (ship default since 2026-07-15)"),
-	strict: zod
-		.boolean()
-		.default(true)
-		.describe("Fail closed if a declared channel can't be fed (--no-strict for legacy models)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "error-analysis",
+	description,
+	options: {
+		golden: { type: "string", description: "Golden eval-set dir, e.g. data/eval/golden/v0.1.2 (required)" },
+		model: { type: "string", description: "Candidate ONNX (requires --tokenizer + --model-card)" },
+		tokenizer: { type: "string", description: "Candidate tokenizer" },
+		"model-card": { type: "string", description: "Candidate model-card" },
+		"postcode-repair": { type: "boolean", default: false, description: "Parse with postcode repair enabled" },
+		"word-consistency": {
+			type: "boolean",
+			default: false,
+			description: "Parse with the production word-consistency heal (ship default since 2026-07-15)",
+		},
+		strict: {
+			type: "boolean",
+			default: true,
+			description: "Fail closed if a declared channel can't be fed (--no-strict for legacy models)",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	golden?: string
+	model?: string
+	tokenizer?: string
+	modelCard?: string
+	postcodeRepair: boolean
+	wordConsistency: boolean
+	strict: boolean
+}
 
-const EvalErrorAnalysis: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalErrorAnalysis: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { evalErrorAnalysis } = await import("../../eval-harness/error-analysis.ts")

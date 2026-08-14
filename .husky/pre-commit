@@ -86,7 +86,7 @@ fi
 
 # Raw-angle MDX lint — already staged-scoped by default (see the script header). A bare `<55` in
 # docs prose is a build-breaking MDX-JSX parse error; this class broke three builds on 2026-06-10.
-# The lint moved into the CLI (Pastel Phase 2): the tool lives at mailwoman/dev-tools/lint-mdx-angles.ts
+# The lint tool lives at mailwoman/dev-tools/lint-mdx-angles.ts
 # and needs the compiled CLI (`yarn compile`). An uncompiled tree (fresh clone) skips with a warning
 # rather than blocking every commit — CI's full lint still gates this class.
 if [ -f mailwoman/out/cli.js ]; then

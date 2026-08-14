@@ -33,7 +33,7 @@ function harness(thrown: string): string {
 	return `
 		import { createElement } from "react"
 		import { render } from "ink"
-		import { commandError, lazyComponent } from "mailwoman/cli-kit"
+		import { CommandError, lazyComponent } from "mailwoman/cli-kit"
 
 		const Boom = lazyComponent(async () => {
 			throw ${thrown}
@@ -68,15 +68,14 @@ describe("lazyComponent — a rejected import", () => {
 		expect(stderr).toBe("")
 	}, 30_000)
 
-	test("renders a commandError as guidance, with no stack", async () => {
+	test("renders a CommandError as guidance, with no stack", async () => {
 		const { code, stdout, stderr } = await runHarness(
-			`commandError("geocode --debug requires the optional @mailwoman/map-tui package")`
+			`new CommandError("geocode --debug requires the optional @mailwoman/map-tui package")`
 		)
 
 		expect(code).toBe(1)
 		expect(stdout).toMatch(/geocode --debug requires the optional @mailwoman\/map-tui package/u)
-		// `commandError` sets `stack` to the message, so the same `error.stack ?? error.message` render that shows a
-		// real failure's frames shows guidance clean — the contract `useCommandTask` already carries.
+		// Expected command guidance omits a stack; unexpected errors retain theirs.
 		expect(stdout).not.toMatch(/\s+at\s/u)
 		expect(stderr).toBe("")
 	}, 30_000)

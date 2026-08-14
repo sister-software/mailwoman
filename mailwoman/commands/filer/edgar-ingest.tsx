@@ -9,26 +9,34 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	names: zod.string().describe("Path to a file with one company name per line"),
-	lookup: zod
-		.string()
-		.optional()
-		.describe("Path to cik-lookup-data.txt (fetched from EDGAR over the network when omitted)"),
-	outDir: zod.string().default("./edgar-ingest").describe("Directory to write edgar-subsidiaries.jsonl to"),
-	pin: zod
-		.string()
-		.array()
-		.optional()
-		.describe("CIK to pin as corroborated (repeatable: --pin 0001514416 --pin 0001327688)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "edgar-ingest",
+	description: "Ingest EDGAR subsidiary relationships to JSONL.",
+	options: {
+		names: { type: "string", required: true, description: "Path to a file with one company name per line" },
+		lookup: { type: "string", description: "Path to cik-lookup-data.txt (fetched from EDGAR when omitted)" },
+		"out-dir": {
+			type: "string",
+			default: "./edgar-ingest",
+			description: "Directory to write edgar-subsidiaries.jsonl to",
+		},
+		pin: { type: "string", multiple: true, description: "CIK to pin as corroborated (repeatable)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	names: string
+	lookup?: string
+	outDir: string
+	pin?: string[]
+}
 
-const FilerEdgarIngest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerEdgarIngest } = await import("@mailwoman/filer/tools")
 

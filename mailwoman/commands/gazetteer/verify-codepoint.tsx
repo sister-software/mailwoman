@@ -11,24 +11,34 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	codepoint: zod
-		.string()
-		.optional()
-		.describe("Candidate shard. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db"),
-	incumbent: zod
-		.string()
-		.optional()
-		.describe("Incumbent shard. Default <data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db"),
-	json: zod.boolean().optional().describe("Emit the raw report as JSON instead of the rendered table"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "verify-codepoint",
+	description: "Compare a Code-Point Open shard against its incumbent.",
+	options: {
+		codepoint: {
+			type: "string",
+			description: "Candidate shard. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
+		},
+		incumbent: {
+			type: "string",
+			description: "Incumbent shard. Default <data-root>/wof/frozen-backup-2026-08-04/postalcode-geonames-tail.db",
+		},
+		json: { type: "boolean", description: "Emit the raw report as JSON instead of the rendered table" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	codepoint?: string
+	incumbent?: string
+	json?: boolean
+}
 
-const GazetteerVerifyPostcodeCodePoint: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerVerifyPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

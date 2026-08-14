@@ -10,15 +10,22 @@ import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource } from "@mailwoman/core"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
 import { useMemo, useState } from "react"
-import zod from "zod"
 
 const BATCH_SIZE = availableParallelism()
 const WOF_REPO_OWNER = "whosonfirst-data"
 
-const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On First repository admin directory"))
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "sync",
+	description: "Synchronize Who's On First repositories.",
+	positionals: [{ name: "local-repo-directory", required: true, description: "Repository root" }],
+	options: { repos: { type: "string", description: "Comma-separated repository allow-list" } },
+} as const satisfies CommandSpec
 
 /**
  * `--repos` is a comma-separated allow-list of repo names. When set, the discovery step still queries `gh repo list`
@@ -28,16 +35,9 @@ const ArgumentsSchema = zod.array(zod.string().describe("Path to the Who's On Fi
  * The corpus build only needs a small subset (4 repos for US+FR admin+postalcode + the placetypes codex). Cloning all
  * ~100 whosonfirst-data repos is otherwise ~2.9 GB of git for no reason.
  */
-const OptionsSchema = zod.object({
-	repos: zod
-		.string()
-		.optional()
-		.describe(
-			"Optional comma-separated allow-list of repo names under whosonfirst-data/. When set, only the listed repos are cloned/pulled (placetypes is always included). Example: --repos whosonfirst-data-admin-us,whosonfirst-data-admin-fr,whosonfirst-data-postalcode-us,whosonfirst-data-postalcode-fr"
-		),
-})
-
-export { ArgumentsSchema as args, OptionsSchema as options }
+interface Options {
+	repos?: string
+}
 
 function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 	if (!raw) return undefined
@@ -52,7 +52,7 @@ function parseReposFilter(raw: string | undefined): Set<string> | undefined {
 	return allow.size ? allow : undefined
 }
 
-const WOFSync: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const WOFSync: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const [repos, setRepos] = useState<RepositorySource[]>()
 	const localRepoDirectory = useMemo(() => PathBuilder.from(args[0]!), [args])
 	const [syncCount, setSyncCount] = useState(0)

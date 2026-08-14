@@ -16,7 +16,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -63,7 +63,7 @@ export function convertTXHHSC(
 	report?: (line: string) => void
 ): { written: number; skipped: number; out: string } {
 	const src = options.src || String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
-	const out = options.out || "/tmp/txhhsc-oarow.jsonl"
+	const out = options.out || tempRootPath("txhhsc-oarow.jsonl")
 
 	const records: string[] = []
 	let skipped = 0

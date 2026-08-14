@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Registry operator tools — the `run()`-style modules behind `mailwoman registry …` commands. No
- *   argv, no `process.exit`: commands own parsing, rendering, and exit codes (see the 2026-07-09
- *   scripts→Pastel spec). The heavy geocoder is INJECTED via {@link EvalGeocoderFactory} — the
- *   registry package never imports the runtime (`mailwoman` depends on this package, so the reverse
- *   import would cycle). Heavy render deps (playwright/Chromium) are lazy-imported inside their
- *   entry fns.
+ *   Registry operator tool exports.
  */
 
 export * from "./coverage-reconciliation.ts"

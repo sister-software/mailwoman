@@ -17,9 +17,8 @@
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
 /**
  * `--inputs` accepts either:
@@ -30,53 +29,71 @@ import zod from "zod"
  * The object form is required by adapters that need a country filter (OpenAddresses), or for fixture runs that want a
  * `limit`.
  */
-const AdapterInputSchema = zod.union([
-	zod.string(),
-	zod.object({
-		inputPath: zod.string(),
-		outputDir: zod.string().optional(),
-		country: zod.string().optional(),
-		limit: zod.number().int().positive().optional(),
-	}),
-])
+export const spec = {
+	name: "build",
+	description: "Build a versioned corpus.",
+	options: {
+		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
+		output: { type: "string", required: true, description: "Output root" },
+		inputs: { type: "string", required: true, description: "Adapter input JSON map" },
+		synthesize: { type: "boolean", default: true, description: "Enable augmentation" },
+		"rows-per-shard": {
+			type: "number",
+			default: 1_000_000,
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--rows-per-shard must be a positive integer.",
+			description: "Max rows per shard",
+		},
+	},
+} as const satisfies CommandSpec
 
-const InputsSchema = zod.record(zod.string(), AdapterInputSchema)
+interface Options {
+	corpusVersion: string
+	output: string
+	inputs: string
+	synthesize: boolean
+	rowsPerShard: number
+}
 
-const BuildConfigSchema = zod.object({
-	corpusVersion: zod
-		.string()
-		.default("0.1.0-dev")
-		.describe(
-			"Corpus version stamped onto every row + into the output dir name (--version is reserved by Pastel for the CLI's own version)"
-		),
-	output: zod.string().describe("Root output directory; everything lands beneath corpus-v<corpus-version>/"),
-	inputs: zod
-		.string()
-		.describe(
-			'JSON map "adapter-id" → input. Each value is either an input path string or a full ' +
-				'AdapterOptions object {"inputPath","country?","limit?"}. Adapters requiring a country ' +
-				"filter (e.g. openaddresses) need the object form. Example: " +
-				'{"wof-admin":"/data/wof.db","openaddresses":{"inputPath":"/data/oa.geojsonl","country":"US"}}'
-		),
-	synthesize: zod.coerce.boolean().optional().default(true).describe("Enable augmentation pass (default true)"),
-	rowsPerShard: zod.coerce.number().int().positive().optional().default(1_000_000).describe("Max rows per JSONL shard"),
-})
+type AdapterInput = string | AdapterOptions
 
-export { BuildConfigSchema as options }
+function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput> {
+	if (typeof input !== "object" || input === null || Array.isArray(input)) return false
 
-const CorpusBuild: CommandComponent<typeof BuildConfigSchema> = ({ options }) => {
+	return Object.values(input).every((value) => {
+		if (typeof value === "string") return true
+
+		if (typeof value !== "object" || value === null || Array.isArray(value)) return false
+
+		if (!("inputPath" in value) || typeof value.inputPath !== "string") return false
+
+		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
+
+		if ("country" in value && value.country !== undefined && typeof value.country !== "string") return false
+
+		return (
+			!("limit" in value) ||
+			value.limit === undefined ||
+			(typeof value.limit === "number" && Number.isInteger(value.limit) && value.limit > 0)
+		)
+	})
+}
+
+const CorpusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
 		const { buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
 
-		let inputsParsed: Record<string, zod.infer<typeof AdapterInputSchema>>
+		let inputsParsed: unknown
 
 		try {
-			inputsParsed = InputsSchema.parse(parseJSONStrict(options.inputs))
+			inputsParsed = parseJSONStrict(options.inputs)
+
+			if (!isAdapterInputMap(inputsParsed)) throw new TypeError("expected an adapter-id to input map")
 		} catch (error) {
-			throw commandError(`invalid --inputs JSON: ${(error as Error).message}`)
+			throw new CommandError(`invalid --inputs JSON: ${(error as Error).message}`)
 		}
 
 		const adapterInputs: Record<string, AdapterOptions> = Object.fromEntries(

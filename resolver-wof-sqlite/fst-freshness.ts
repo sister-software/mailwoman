@@ -162,7 +162,7 @@ export function peekFSTStampFields(path: string): FSTStampFields | undefined {
  *
  * The async `md5File` in `@mailwoman/core/utils` is the one to reach for anywhere else. This exists because the FST
  * builder and its whole call chain are synchronous by design (`buildFSTFromWOF` → `buildLocaleFSTs`), and making them
- * async to stamp a checksum would cascade through the Pastel commands and the tests for one hash. It reads in
+ * async to stamp a checksum would cascade through command callers and tests for one hash. It reads in
  * {@link MD5_CHUNK_BYTES} chunks rather than `readFileSync` — the source is a multi-gigabyte database.
  */
 export function md5FileSync(path: string): string {

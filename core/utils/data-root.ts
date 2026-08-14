@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Mailwoman data root — the single, env-configurable home for every shard, model, anchor, and
- *   manifest the runtime + build tooling read. Centralized here (mirroring isp-nexus's
- *   `dataSourcePathBuilder`) so the lab `/mnt/playpen/...` default lives in EXACTLY ONE place instead
- *   of as a literal scattered across the codebase, and so consumers compose paths through
- *   {@link dataRootPath} rather than re-deriving the string. Going public, this is the only file that
- *   names the operator's filesystem layout; everything else reads `$MAILWOMAN_DATA_ROOT`.
+ *   Path builders for Mailwoman's platform-native application directories.
  */
 
 import { resolvePath } from "path-ts"
@@ -16,16 +11,10 @@ import { resolvePath } from "path-ts"
 import { $public } from "../env/index.ts"
 
 /**
- * The lab default data root — the ONE place this literal appears. Everything else builds on {@link dataRootPath} /
- * {@link mailwomanDataRoot}; override per-deployment with `$MAILWOMAN_DATA_ROOT`.
- */
-const DEFAULT_MAILWOMAN_DATA_ROOT = "/mnt/playpen/mailwoman-data"
-
-/**
- * The Mailwoman data root: `$MAILWOMAN_DATA_ROOT` when set, else the lab default.
+ * The Mailwoman data root from the typed public environment.
  */
 export function mailwomanDataRoot(): string {
-	return $public.MAILWOMAN_DATA_ROOT ?? DEFAULT_MAILWOMAN_DATA_ROOT
+	return $public.MAILWOMAN_DATA_ROOT
 }
 
 /**
@@ -34,6 +23,27 @@ export function mailwomanDataRoot(): string {
  */
 export function dataRootPath(...segments: string[]): string {
 	return resolvePath(mailwomanDataRoot(), ...segments)
+}
+
+/**
+ * The Mailwoman temporary-file root from the typed public environment.
+ */
+export function mailwomanTempRoot(): string {
+	return $public.MAILWOMAN_TEMP_ROOT
+}
+
+/**
+ * Build an absolute path under Mailwoman's temporary-file root.
+ */
+export function tempRootPath(...segments: string[]): string {
+	return resolvePath(mailwomanTempRoot(), ...segments)
+}
+
+/**
+ * Build an absolute path under Mailwoman's application cache directory.
+ */
+export function cacheRootPath(...segments: string[]): string {
+	return resolvePath($public.MAILWOMAN_CACHE_ROOT, ...segments)
 }
 
 /**

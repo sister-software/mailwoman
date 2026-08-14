@@ -340,7 +340,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
-	// Pastel imports every command module at CLI startup — a static import here would break the
+	// A static import here would break the
 	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
 	const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
 	const osmProvider = new OSMShardProvider(mailwomanDataRoot())

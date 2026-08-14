@@ -27,7 +27,7 @@ const config = createOxlintConfig({
 	// more than the missing comment did. Public surface is where a reader has no other context.
 	constantDocs: {
 		scope: "exported",
-		// Pastel command modules must export these, and the framework gives each its meaning — the
+		// Command modules export these as framework metadata; the
 		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
@@ -62,7 +62,7 @@ const config = createOxlintConfig({
 			"SqliteDialect",
 			"SqliteDialectConfig",
 			"SqliteDriver",
-			// `LedgerAppendOptions` receives the Pastel option bag verbatim — its fields ARE the
+			// `LedgerAppendOptions` receives the CLI option bag verbatim — its fields ARE the
 			// `--run-id` flag names, and the house form is derived at the boundary.
 			"runId",
 		],

@@ -145,12 +145,11 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	/**
 	 * Build the probe with its reverse geocoder attached.
 	 *
-	 * The dynamic import is the same lazy posture `harness.ts` takes: Pastel imports every command module at CLI startup,
-	 * and `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for. The reverse
-	 * geocoder SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and `close()` stays
-	 * the single owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the
-	 * approximate (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants
-	 * from it.
+	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
+	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for. The reverse geocoder
+	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and `close()` stays the
+	 * single owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
+	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
 	 */
 	static async create(opts: { ancestryPath?: string; candidatePath?: string } = {}): Promise<AblationGazetteer> {
 		const gazetteer = new AblationGazetteer(opts)

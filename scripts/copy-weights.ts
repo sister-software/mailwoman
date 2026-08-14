@@ -399,8 +399,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	if (serveFromDerivedStore(dir, `postcode-${country}.bin`)) return
 
 	await removeIfPresent(binDest)
-	// `gazetteer postcode-binary` is the compiled Pastel command (ported from the old
-	// scripts/build-postcode-binary.ts). `.release-it.json` runs `yarn compile` right before this
+	// `.release-it.json` runs `yarn compile` before invoking `gazetteer postcode-binary`,
 	// script, so mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
 	// postcode-<cc>.bin directly where the `files` array expects it.
 	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
@@ -474,8 +473,8 @@ async function materializePairIndex(workspace: string, dir: string) {
 	if (serveFromDerivedStore(dir, `pair-index-${country}.bin`)) return
 
 	await removeIfPresent(binDest)
-	// `gazetteer pair-index` is the compiled Pastel command; `.release-it.json` runs `yarn compile` right
-	// before this script, so mailwoman/out/cli.js exists (same precondition as postcode-binary above).
+	// `.release-it.json` runs `yarn compile` before invoking `gazetteer pair-index`, so
+	// mailwoman/out/cli.js exists (same precondition as postcode-binary above).
 	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
 
 	const r = spawnSync(

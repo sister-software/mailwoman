@@ -10,47 +10,47 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.tuple([
-	zod.enum(["gbt", "cross-gbt", "org-cross-gbt"]).describe(
-		argument({
-			name: "variant",
-			description: "Model variant (gbt, cross-gbt, org-cross-gbt)",
-		})
-	),
-])
+const variants = ["gbt", "cross-gbt", "org-cross-gbt"] as const
 
-const OptionsSchema = zod.object({
-	sources: zod
-		.string()
-		.optional()
-		.describe("Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)"),
-	state: zod.string().optional().describe("gbt/cross-gbt: state filter (default TX)"),
-	npis: zod.number().optional().describe("gbt/cross-gbt: NPIs sampled (default 3000 gbt / 2000 cross-gbt)"),
-	cap: zod.number().optional().describe("org-cross-gbt: Care Compare facilities sampled (default 6000)"),
-	cost: zod.number().optional().describe("gbt: negative-class up-weight (#625 cost-sensitive; 1 = symmetric default)"),
-	precisionBar: zod
-		.number()
-		.optional()
-		.describe("cross-gbt/org-cross-gbt: held-out pairwise precision bar (#655 rule; default 0.95)"),
-	out: zod.string().optional().describe("Output TS module path (each variant has a registry/models default)"),
-	locale: zod.string().default("en-US").describe("Weights locale (loaded by the geocoder + stamped in the meta)"),
-	date: zod.string().optional().describe("Training date stamped into the meta (for reproducible commits)"),
-	wof: zod
-		.string()
-		.optional()
-		.describe("WOF admin SQLite path (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)"),
-	dataRoot: zod.string().optional().describe("Per-state shard root (default $MAILWOMAN_DATA_ROOT)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "train-scorer",
+	description: "Train a learned registry scorer.",
+	positionals: [{ name: "variant", required: true, choices: variants, description: "Model variant" }],
+	options: {
+		sources: { type: "string", description: "Record-matcher sources" },
+		state: { type: "string", description: "State filter" },
+		npis: { type: "number", description: "NPIs sampled" },
+		cap: { type: "number", description: "Facility cap" },
+		cost: { type: "number", description: "Negative-class weight" },
+		"precision-bar": { type: "number", description: "Held-out precision bar" },
+		out: { type: "string", description: "Output module" },
+		locale: { type: "string", default: "en-US", description: "Weights locale" },
+		date: { type: "string", description: "Training date" },
+		wof: { type: "string", description: "WOF database" },
+		"data-root": { type: "string", description: "Shard root" },
+	},
+} as const satisfies CommandSpec
 
-export { ArgsSchema as args, OptionsSchema as options }
+interface Options {
+	sources?: string
+	state?: string
+	npis?: number
+	cap?: number
+	cost?: number
+	precisionBar?: number
+	out?: string
+	locale: string
+	date?: string
+	wof?: string
+	dataRoot?: string
+}
 
-type Options = zod.infer<typeof OptionsSchema>
-
-type Variant = zod.infer<typeof ArgsSchema>[0]
+type Variant = (typeof variants)[number]
 
 const report = (line: string): void => console.error(line)
 
@@ -91,7 +91,7 @@ async function runVariant(variant: Variant, options: Options): Promise<{ out: st
 	}
 }
 
-const RegistryTrainScorer: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const RegistryTrainScorer: ParsedCommandComponent<Options, [Variant]> = ({ options, args }) => {
 	const state = useCommandTask(() => runVariant(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

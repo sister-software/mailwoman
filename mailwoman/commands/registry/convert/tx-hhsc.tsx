@@ -9,21 +9,31 @@
  *   `oa-resolver-eval --address-points`.
  */
 
+import { tempRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	src: zod
-		.string()
-		.optional()
-		.describe("TX HHSC nursing-facilities TSV (default $MAILWOMAN_DATA_ROOT/record-matcher/sources/…)"),
-	out: zod.string().default("/tmp/txhhsc-oarow.jsonl").describe("Output OaRow JSONL path"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "tx-hhsc",
+	description: "Convert the TX HHSC nursing-facilities TSV to OaRow JSONL.",
+	options: {
+		src: {
+			type: "string",
+			description: "TX HHSC nursing-facilities TSV (default $MAILWOMAN_DATA_ROOT/record-matcher/sources/…)",
+		},
+		out: { type: "string", default: tempRootPath("txhhsc-oarow.jsonl"), description: "Output OaRow JSONL path" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	src?: string
+	out: string
+}
 
-const RegistryConvertTXHHSC: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const RegistryConvertTXHHSC: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { convertTXHHSC } = await import("@mailwoman/registry/tools")
 

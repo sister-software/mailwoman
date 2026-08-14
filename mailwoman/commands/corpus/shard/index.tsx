@@ -15,69 +15,88 @@ import { createWriteStream } from "node:fs"
 
 import type { ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands.
  */
 export const isDefault = true
 
-const ArgumentsSchema = zod
-	.array(zod.string().describe("Recipe name (omit with --list to see the registry)"))
-	.default([])
+const stringOption = (description: string) => ({ type: "string" as const, description })
 
-const OptionsSchema = zod.object({
-	list: zod.boolean().default(false).describe("List the available recipes and exit"),
-	output: zod.string().optional().describe("Output JSONL path (required to build)"),
-	input: zod.string().optional().describe("Input tuples JSONL (tuples-mode recipes)"),
-	count: zod.string().optional().describe("Rows to generate (generate-mode recipes)"),
-	variants: zod.string().default("1").describe("Variants per input tuple (tuples-mode)"),
-	seed: zod.string().optional().describe("PRNG seed (default: time-based)"),
-	golden: zod.boolean().default(false).describe("Emit the golden/holdout variant where the recipe supports it"),
-	sourceName: zod.string().optional().describe("Override the source tag"),
-	// recipe-specific (each recipe reads only what it needs; see `--list` / the recipe's options):
-	houseNumberProb: zod.string().optional().describe("street: P(house number)"),
-	pmbRatio: zod.string().optional().describe("po-box: P(private-mailbox layout)"),
-	militaryRatio: zod.string().optional().describe("po-box: P(US military/diplomatic row)"),
-	reversedFraction: zod.string().optional().describe("fr-order: fraction reversed-order"),
-	edgesDir: zod.string().optional().describe("intersection: TIGER EDGES dir"),
-	country: zod.string().optional().describe("locale: target country"),
-	intlFraction: zod.string().optional().describe("german/locale: international-order fraction"),
-	countryFraction: zod
-		.string()
-		.optional()
-		.describe("locale: fraction of rows that append an explicit country surface form. Default 0"),
-	districtAsLocality: zod
-		.boolean()
-		.optional()
-		.describe(
-			"locale: override the per-part districtAsLocality mapping (--no-district-as-locality to force off). Unset leaves each part's own value untouched"
-		),
-	bareProb: zod.string().optional().describe("street-bare: P(bare street)"),
-	hnProb: zod.string().optional().describe("street-bare: P(house number)"),
-	communes: zod.string().optional().describe("fr-admin-split: communes source"),
-	banDir: zod.string().optional().describe("fr-lieudit: BAN adresses-<dept>.csv directory"),
-	excludeSurfaces: zod
-		.string()
-		.optional()
-		.describe("fr-fragment: REQUIRED — reserved street-surface list to exclude (the fragment board's eval set)"),
-	multilocaleCount: zod.string().optional().describe("street-affix: multilocale row count"),
-	lexicon: zod.string().optional().describe("sub-venue: lexicon JSON (default: the committed corpus/data one)"),
-	extractsDir: zod.string().optional().describe("sub-venue: OSM sub-venue extract JSONL directory"),
-	poiDb: zod.string().optional().describe("sub-venue: poi.db path (en-US / fr-FR venue + confound pools)"),
-	subVenueTuples: zod.string().optional().describe("sub-venue: GB/US/FR address-context tuples JSONL"),
-	negativeFraction: zod
-		.string()
-		.optional()
-		.describe("sub-venue: share of rows that are confound negatives (default 0.3)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "shard",
+	description: "Build a synthetic corpus shard",
+	positionals: [{ name: "recipe", description: "Recipe name" }],
+	options: {
+		list: { type: "boolean", default: false, description: "List recipes" },
+		output: stringOption("Output JSONL path"),
+		input: stringOption("Input tuples JSONL"),
+		count: stringOption("Rows to generate"),
+		variants: { type: "string", default: "1", description: "Variants per tuple" },
+		seed: stringOption("PRNG seed"),
+		golden: { type: "boolean", default: false, description: "Emit golden variant" },
+		"source-name": stringOption("Source tag"),
+		"house-number-prob": stringOption("street house-number probability"),
+		"pmb-ratio": stringOption("private-mailbox ratio"),
+		"military-ratio": stringOption("military row ratio"),
+		"reversed-fraction": stringOption("reversed-order fraction"),
+		"edges-dir": stringOption("TIGER EDGES directory"),
+		country: stringOption("target country"),
+		"intl-fraction": stringOption("international-order fraction"),
+		"country-fraction": stringOption("explicit-country fraction"),
+		"district-as-locality": { type: "boolean", description: "Override district-as-locality mapping" },
+		"bare-prob": stringOption("bare-street probability"),
+		"hn-prob": stringOption("house-number probability"),
+		communes: stringOption("communes source"),
+		"ban-dir": stringOption("BAN directory"),
+		"exclude-surfaces": stringOption("reserved surfaces to exclude"),
+		"multilocale-count": stringOption("multilocale row count"),
+		lexicon: stringOption("sub-venue lexicon"),
+		"extracts-dir": stringOption("OSM extract directory"),
+		"poi-db": stringOption("POI database"),
+		"sub-venue-tuples": stringOption("address-context tuples"),
+		"negative-fraction": stringOption("confound-negative fraction"),
+	},
+} as const satisfies CommandSpec
 
-export { ArgumentsSchema as args, OptionsSchema as options }
+interface Options {
+	list: boolean
+	output?: string
+	input?: string
+	count?: string
+	variants: string
+	seed?: string
+	golden: boolean
+	sourceName?: string
+	houseNumberProb?: string
+	pmbRatio?: string
+	militaryRatio?: string
+	reversedFraction?: string
+	edgesDir?: string
+	country?: string
+	intlFraction?: string
+	countryFraction?: string
+	districtAsLocality?: boolean
+	bareProb?: string
+	hnProb?: string
+	communes?: string
+	banDir?: string
+	excludeSurfaces?: string
+	multilocaleCount?: string
+	lexicon?: string
+	extractsDir?: string
+	poiDb?: string
+	subVenueTuples?: string
+	negativeFraction?: string
+}
 
 const num = (s: string | undefined): number | undefined => (s == null ? undefined : Number(s))
 
-const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const CorpusShard: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { getShardRecipe, listShardRecipes } = await import("@mailwoman/corpus")
 
@@ -94,14 +113,15 @@ const CorpusShard: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema
 		const recipe = getShardRecipe(name)
 
 		if (!recipe) {
-			throw commandError(`unknown recipe "${name}". Run \`mailwoman corpus shard --list\`.`)
+			throw new CommandError(`unknown recipe "${name}". Run \`mailwoman corpus shard --list\`.`)
 		}
 
-		if (!options.output) throw commandError("--output <out.jsonl> required")
+		if (!options.output) throw new CommandError("--output <out.jsonl> required")
 
-		if (recipe.mode === "tuples" && !options.input) throw commandError(`recipe "${name}" needs --input <tuples.jsonl>`)
+		if (recipe.mode === "tuples" && !options.input)
+			throw new CommandError(`recipe "${name}" needs --input <tuples.jsonl>`)
 
-		if (recipe.mode === "generate" && !options.count) throw commandError(`recipe "${name}" needs --count <N>`)
+		if (recipe.mode === "generate" && !options.count) throw new CommandError(`recipe "${name}" needs --count <N>`)
 
 		const seed = options.seed != null ? Number(options.seed) : Date.now()
 

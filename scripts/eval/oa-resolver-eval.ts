@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(phase5a): forwarding shim. The OpenAddresses real-point resolver eval now lives at
- *   `mailwoman/eval-harness/oa-resolver-eval.ts` behind `mailwoman eval oa-resolver`. This shim
- *   keeps the STANDING PROBES that spawn `node scripts/eval/oa-resolver-eval.ts` as a child process
- *   working unchanged — `de-order-eval.ts` (a promotion-gate battery leg), `honest-eval.ts`,
- *   `eval-de-coverage.ts`, and `de-pip-eval.ts` — until the probe triage repoints or retires them.
- *   It parses the same argv the old script did and calls the module; output is byte-identical
- *   because the module owns every printed line. Do not add logic here.
+ *   Command-line adapter for `mailwoman/eval-harness/oa-resolver-eval.ts`.
  */
 
 import { parseArgs } from "node:util"
@@ -68,7 +62,7 @@ async function main(): Promise<void> {
 		ablateToAnchor: values["ablate-to-anchor"] as boolean | undefined,
 		addressPoints: values["address-points"] as string | undefined,
 		adminCoherence: values["admin-coherence"] as boolean | undefined,
-		// The old script defaulted via `Number(values["anchor-min-conf"] || "0.5")` — same math here.
+		// Use 0.5 when the option is absent.
 		anchorMinConf: Number((values["anchor-min-conf"] as string | undefined) || "0.5"),
 		anchorOff: values["anchor-off"] as boolean | undefined,
 		anchorRerank: values["anchor-rerank"] as boolean | undefined,

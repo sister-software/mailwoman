@@ -29,8 +29,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Homographs printed before the list is truncated.
@@ -45,11 +44,20 @@ const MAX_ABBREVIATION_LETTERS = 3
 const BIT = { country: 1, region: 2, po_box: 4, cedex: 8, homograph: 16 }
 const SLOTS = ["country", "region", "po_box", "cedex", "homograph"]
 
-const OptionsSchema = zod.object({
-	output: zod.string().optional().describe("Output path. Default <repo>/data/gazetteer/anchor-lexicon-v1.json"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "anchor-lexicon",
+	description: "Build the shared anchor lexicon",
+	options: {
+		output: { type: "string", description: "Output path. Default <repo>/data/gazetteer/anchor-lexicon-v1.json" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	output?: string
+}
 
 /**
  * THE shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
@@ -69,7 +77,7 @@ const isShortCode = (s: string): boolean => {
 	return letters.length > 0 && letters.length <= MAX_ABBREVIATION_LETTERS && /^[\p{L}.\s]+$/u.test(s)
 }
 
-const GazetteerAnchorLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { wordNorm, wordNormLower } = await import("@mailwoman/codex")
 		const { COUNTRY_LOOKUP } = await import("@mailwoman/codex/country")

@@ -8,27 +8,33 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.tuple([
-	zod.string().describe(
-		argument({
-			name: "corpus-dir",
-			description: "Corpus directory (MANIFEST.json or train/val/test shards)",
-		})
-	),
-])
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "audit",
+	description: "Audit corpus shard counts against source weights.",
+	positionals: [
+		{ name: "corpus-dir", required: true, description: "Corpus directory (MANIFEST.json or train/val/test shards)" },
+	],
+	options: {
+		config: { type: "string", description: "Training YAML whose source_weights pair with the shard counts" },
+		sample: {
+			type: "number",
+			default: 100,
+			description: "Max shards sampled per split when scanning without a MANIFEST",
+		},
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	config: zod.string().optional().describe("Training YAML whose source_weights pair with the shard counts"),
-	sample: zod.number().default(100).describe("Max shards sampled per split when scanning without a MANIFEST"),
-})
+interface Options {
+	config?: string
+	sample: number
+}
 
-export { ArgsSchema as args, OptionsSchema as options }
-
-const CorpusAudit: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const CorpusAudit: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { audit } = await import("@mailwoman/corpus/tools")
 

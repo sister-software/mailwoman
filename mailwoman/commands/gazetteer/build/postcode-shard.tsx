@@ -11,21 +11,38 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	country: zod.string().describe("ISO-2 country (the whosonfirst-data-postalcode-<cc> repo to build)"),
-	out: zod.string().optional().describe("Output path. Default <data-root>/wof/postalcode-<cc>.REBUILD.db"),
-	repos: zod.string().optional().describe("WOF repos root. Default <data-root>/wof/repos"),
-	zcta: zod.string().optional().describe("Census ZCTA Gazetteer file (US). Default <data-root>/census/…"),
-	geonamesPostal: zod.string().optional().describe("GeoNames postal dump dir. Default <data-root>/geonames-postal"),
-	admin: zod.string().optional().describe("Admin gazetteer for parent borrows. Default the live admin DB"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-shard",
+	description: "Build one country's WOF postcode shard.",
+	options: {
+		country: {
+			type: "string",
+			required: true,
+			description: "ISO-2 country (the whosonfirst-data-postalcode-<cc> repo to build)",
+		},
+		out: { type: "string", description: "Output path. Default <data-root>/wof/postalcode-<cc>.REBUILD.db" },
+		repos: { type: "string", description: "WOF repos root. Default <data-root>/wof/repos" },
+		zcta: { type: "string", description: "Census ZCTA Gazetteer file (US). Default <data-root>/census/…" },
+		"geonames-postal": { type: "string", description: "GeoNames postal dump dir. Default <data-root>/geonames-postal" },
+		admin: { type: "string", description: "Admin gazetteer for parent borrows. Default the live admin DB" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	country: string
+	out?: string
+	repos?: string
+	zcta?: string
+	geonamesPostal?: string
+	admin?: string
+}
 
-const GazetteerBuildPostcodeShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildPostcodeShard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB, buildPostcodeShard } = await import("mailwoman/gazetteer-pipeline")
 

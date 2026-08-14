@@ -11,36 +11,40 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Assemble the coarse placer (#244) dataset (--outliers appends OTHER exposure)"
 
-const OptionsSchema = zod.object({
-	outliers: zod
-		.enum(["exposure", "latin", "oa"])
-		.optional()
-		.describe("Append OTHER outlier-exposure rows instead of the plain build (exposure, latin, oa)"),
-	data: zod.string().optional().describe("Dataset dir (default <repo>/data/coarse-placer)"),
-	perCountry: zod.number().optional().describe("Rows per country (default 50000 plain; 6000 for --outliers latin/oa)"),
-	perLang: zod.number().optional().describe("exposure: names per off-map language (default 2500)"),
-	wof: zod
-		.string()
-		.optional()
-		.describe("exposure: WOF admin SQLite path (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)"),
-	overture: zod
-		.string()
-		.optional()
-		.describe("latin: Overture release dir (default $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0)"),
-	oaDir: zod
-		.string()
-		.optional()
-		.describe("oa: extracted OpenAddresses root (default $MAILWOMAN_DATA_ROOT/openaddresses/extracted)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "build-dataset",
+	description,
+	options: {
+		outliers: {
+			type: "string",
+			choices: ["exposure", "latin", "oa"],
+			description: "Append OTHER outlier-exposure rows",
+		},
+		data: { type: "string", description: "Dataset dir" },
+		"per-country": { type: "number", description: "Rows per country" },
+		"per-lang": { type: "number", description: "Names per off-map language" },
+		wof: { type: "string", description: "WOF admin SQLite path" },
+		overture: { type: "string", description: "Overture release dir" },
+		"oa-dir": { type: "string", description: "OpenAddresses root" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
-
-type Options = zod.infer<typeof OptionsSchema>
+interface Options {
+	outliers?: "exposure" | "latin" | "oa"
+	data?: string
+	perCountry?: number
+	perLang?: number
+	wof?: string
+	overture?: string
+	oaDir?: string
+}
 
 const report = (line: string): void => console.error(line)
 
@@ -78,7 +82,7 @@ async function run(options: Options): Promise<string> {
 	}
 }
 
-const PlacerBuildDataset: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const PlacerBuildDataset: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => run(options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

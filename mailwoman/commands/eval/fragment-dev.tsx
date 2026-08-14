@@ -8,21 +8,42 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Fragment-dev read-out — probe-1 separator metrics (span-exact vs tag accuracy)"
 
-const OptionsSchema = zod.object({
-	locale: zod.string().optional().default("en-US").describe("Weights package locale"),
-	weightsCache: zod.string().optional().describe("Package-shaped candidate dir (see eval parity --weights-cache)"),
-	fixtures: zod.string().describe("fragment-dev.jsonl path (held-out split from build_fragment_shard)"),
-	limit: zod.coerce.number().int().min(0).optional().default(0).describe("Row cap for a fast read (0 = all)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "fragment-dev",
+	description,
+	options: {
+		locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		"weights-cache": { type: "string", description: "Package-shaped candidate dir (see eval parity --weights-cache)" },
+		fixtures: {
+			type: "string",
+			required: true,
+			description: "fragment-dev.jsonl path (held-out split from build_fragment_shard)",
+		},
+		limit: {
+			type: "number",
+			default: 0,
+			validate: Number.isInteger,
+			validationMessage: "--limit must be an integer.",
+			description: "Row cap for a fast read (0 = all)",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	locale: string
+	weightsCache?: string
+	fixtures: string
+	limit: number
+}
 
-const EvalFragmentDev: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalFragmentDev: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { runFragmentDev } = await import("../../eval-harness/fragment-dev.ts")
 

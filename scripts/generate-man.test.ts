@@ -22,7 +22,7 @@ import { describe, expect, it } from "vitest"
 import { MAN_PAGE_PATH, renderManPage } from "./generate-man.ts"
 
 describe("the man page", () => {
-	// Eight sequential CLI spawns (version + root + six commands), each a full Pastel boot.
+	// Eight sequential CLI spawns (version + root + six commands), including their selected command imports.
 	it(
 		"matches the CLI's live help tree — regenerate with `node scripts/generate-man.ts` on drift",
 		{ timeout: 60_000 },

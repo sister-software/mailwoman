@@ -6,6 +6,7 @@
 
 export * from "./bbox.ts"
 export * from "./coordinate-formats.ts"
+export * from "./coordinate-bounds.ts"
 export * from "./feature.ts"
 export * from "./geometries/index.ts"
 export * from "./google/index.ts"

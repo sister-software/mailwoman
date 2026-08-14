@@ -132,7 +132,7 @@ function openCSV(csvPath: string): NodeJS.ReadableStream {
  * caller's job for anything finer). The `rep` suffix is normalised to lower-case or null.
  */
 export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BANAddrRecord> {
-	// CSVSpliterator (quote-correct since spliterator 3.2.0) replaces the 2026-07-09 hand-rolled
+	// CSVSpliterator handles quoted fields and embedded delimiters.
 	// `split(";")` that leaked CSV quotes into lieu-dit street keys (#1044): quoted fields unwrap,
 	// doubled inner quotes fold, and a quoted `;` no longer mis-splits the row.
 	let checkedHeader = false

@@ -3,34 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The address-point provenance map — the "show your work" proof, on a map.
- *
- *   Every coordinate Mailwoman resolves to comes from an open dataset, and we keep the provenance on
- *   the point. This samples the per-state address-point DB (`address_point.source`) and renders it
- *   on the house MapLibre + Protomaps stack via {@link toMapHTML}, each dot COLORED BY its upstream
- *   open-data source — the National Address Database (a federal release) vs OpenAddresses (county /
- *   municipal open-data publishers). New York is the clean example: NAD blankets the state, and New
- *   York City arrives separately from NYC Open Data, so the source split is visible as a
- *   geography.
- *
- *   No competitor in this space will tell you which open dataset a given coordinate came from — for
- *   them the assembled pipeline is the moat. Here the provenance is the point of the map.
- *
- *   Streets without a rooftop point are covered by TIGER interpolation (`tiger:edges`), a separate
- *   layer not plotted here; this map is the rooftop-point sources only.
- *
- *   SERVE THE OUTPUT OVER LOCALHOST (the house tile server CORS-restricts to localhost + the docs
- *   domains). e.g. `python3 -m http.server -d <dir>`, or `renderServedMapToPNG` (`./render-map.ts`)
- *   against the served URL.
- *
- *   Run: `mailwoman registry viz source-provenance-map [--state ny] [--db <address-points-us-XX.db>]
- *   [--out-html /tmp/source-provenance.html] [--nad-mod 700] [--oa-mod 120] [--cap 7000]`
+ *   Sample `address_point.source` rows from a state database and render them by source in MapLibre.
+ *   The output requires an HTTP origin because the tile server does not serve `file:` origins.
  */
 
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
 /**
@@ -93,7 +73,7 @@ export function sourceProvenanceMap(
 ): { outHTML: string; points: number } {
 	const STATE = (options.state || "ny").toLowerCase()
 	const DB = options.db || String(dataRootPath("address-points", `address-points-us-${STATE}.db`))
-	const OUT = options.outHTML || "/tmp/source-provenance.html"
+	const OUT = options.outHTML || tempRootPath("source-provenance.html")
 	const NAD_MOD = options.nadMod ?? 700 // keep ~1/700 of NAD points
 	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points
 	const CAP = options.cap ?? 7000 // per-source marker cap

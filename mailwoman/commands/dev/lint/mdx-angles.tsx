@@ -10,26 +10,22 @@
  */
 
 import { Text } from "ink"
-import { type PositionalCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgumentsSchema = zod
-	.array(
-		zod.string().describe(
-			argument({
-				name: "files",
-				description: "Markdown files to check (default: staged docs/** markdown)",
-			})
-		)
-	)
-	.default([])
-
-export { ArgumentsSchema as args }
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "mdx-angles",
+	description: "Lint raw angle brackets in MDX.",
+	positionals: [
+		{ name: "files", multiple: true, description: "Markdown files to check (default: staged docs/** markdown)" },
+	],
+} as const satisfies CommandSpec
 
 const report = (line: string): void => console.error(line)
 
-const DevLintMDXAngles: PositionalCommandComponent<typeof ArgumentsSchema> = ({ args }) => {
+const DevLintMDXAngles: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintMDXAngles } = await import("mailwoman/dev-tools/lint-mdx-angles")

@@ -8,17 +8,26 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	outDir: zod.string().optional().describe("Destination directory (default: the checked-in ssl-address data)"),
-	concurrency: zod.number().default(8).describe("Parallel per-country fetches"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "ssl-address",
+	description: "Download Chromium libaddressinput metadata.",
+	options: {
+		"out-dir": { type: "string", description: "Destination directory (default: the checked-in ssl-address data)" },
+		concurrency: { type: "number", default: 8, description: "Parallel per-country fetches" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	outDir?: string
+	concurrency: number
+}
 
-const DevDownloadSSLAddress: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevDownloadSSLAddress: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { downloadSSLAddress } = await import("@mailwoman/core/tools")

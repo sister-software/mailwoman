@@ -11,28 +11,32 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	data: zod.string().optional().describe("WOF repos root. Default <data-root>/wof/repos"),
-	out: zod.string().optional().describe("Output path. Default <data-root>/wof/admin-global-priority.REBUILD.db"),
-	overtureCountries: zod
-		.string()
-		.optional()
-		.describe("CSV override of the Overture set (default: the 86 in defaults.ts)"),
-	geonamesCountries: zod
-		.string()
-		.optional()
-		.describe("CSV override of the GeoNames set (default: the 161 in defaults.ts)"),
-	overtureRelease: zod.string().optional().describe("Pinned Overture release (default: defaults.ts)"),
-	skipVerify: zod
-		.boolean()
-		.default(false)
-		.describe("Skip the verify gate (dev only — an unverified artifact must never be promoted)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "admin",
+	description: "Build and verify the global admin gazetteer.",
+	options: {
+		data: { type: "string", description: "WOF repos root. Default <data-root>/wof/repos" },
+		out: { type: "string", description: "Output path. Default <data-root>/wof/admin-global-priority.REBUILD.db" },
+		"overture-countries": { type: "string", description: "CSV override of the Overture country set" },
+		"geonames-countries": { type: "string", description: "CSV override of the GeoNames country set" },
+		"overture-release": { type: "string", description: "Pinned Overture release" },
+		"skip-verify": { type: "boolean", default: false, description: "Skip the verify gate (development only)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	data?: string
+	out?: string
+	overtureCountries?: string
+	geonamesCountries?: string
+	overtureRelease?: string
+	skipVerify: boolean
+}
 
 const csv = (raw: string | undefined): string[] | undefined =>
 	raw
@@ -42,7 +46,7 @@ const csv = (raw: string | undefined): string[] | undefined =>
 				.filter(Boolean)
 		: undefined
 
-const GazetteerBuildAdmin: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB, buildAdmin } = await import("mailwoman/gazetteer-pipeline")
 

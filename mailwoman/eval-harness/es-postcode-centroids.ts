@@ -57,7 +57,7 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	const OUT_DB = options.out || String(dataRootPath("wof", `postcode-${CC.toLowerCase()}-overture.db`))
 
 	// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load it
-	// lazily so importing this module (Pastel loads every command module at startup) never requires it.
+	// lazily so importing this module never requires it.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const conn = await instance.connect()

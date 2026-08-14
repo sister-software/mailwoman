@@ -467,14 +467,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	// the FIRST thing in this file to touch it — otherwise a later call could observe an already-resolved
 	// promise from an earlier call made under the ambient (non-stubbed) env.
 	it("object form: reverse-geocoder degrade is hermetic — no throw, intent outcome, results (if any) carry no ancestry", async () => {
-		// This lab box's default data root (/mnt/playpen/mailwoman-data, see core/utils/data-root.ts) DOES
-		// carry a real admin-global-priority.db, so without this override `loadDefaultReverseGeocoder`
-		// would resolve for real here and this test would silently stop exercising the degrade path.
-		// `MAILWOMAN_DATA_ROOT` points `wofShardPaths()` (default-reverse-geocoder.ts's admin-shard probe)
-		// at a root with no `wof/` shard on disk — `existsSync` filters everything out, same seam
-		// resolver-backend.test.ts uses (vi.stubEnv over the live $public getter in core/env/index.ts). No
-		// wiring change needed — this is the "stub via the seam that exists" branch, not the
-		// placeCountry-style injectable-override fallback.
+		// Pin an empty data directory so the reverse-geocoder probe takes its missing-data branch.
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
 
 		try {

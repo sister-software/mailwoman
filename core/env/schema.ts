@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { defaultMailwomanPaths } from "./paths.ts"
+
 /**
  * Wrap a coerced schema so a BLANK value means the same as an absent one.
  *
@@ -56,8 +58,12 @@ export const PublicEnvSchema = z.object({
 	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)),
 
-	// The gazetteer/model data root (`core/utils/data-root.ts`, `scripts/copy-weights.ts`).
-	MAILWOMAN_DATA_ROOT: z.string().optional(),
+	// Platform-native application directories. Environment values override these defaults.
+	MAILWOMAN_DATA_ROOT: z.string().default(defaultMailwomanPaths.data),
+	MAILWOMAN_CONFIG_ROOT: z.string().default(defaultMailwomanPaths.config),
+	MAILWOMAN_CACHE_ROOT: z.string().default(defaultMailwomanPaths.cache),
+	MAILWOMAN_LOG_ROOT: z.string().default(defaultMailwomanPaths.log),
+	MAILWOMAN_TEMP_ROOT: z.string().default(defaultMailwomanPaths.temp),
 
 	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
 	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.

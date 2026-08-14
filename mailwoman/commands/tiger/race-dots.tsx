@@ -8,28 +8,41 @@
  *   through tippecanoe, then render with `tiger race-dots-map`.
  */
 
+import { tempRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	db: zod
-		.string()
-		.optional()
-		.describe("TIGER SQLite DB (tabblock20 ⋈ pl_block; default $MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db)"),
-	out: zod
-		.string()
-		.default("/tmp/race-dots.ndjson")
-		.describe("Output NDJSON path (one GeoJSON Point Feature per line, tippecanoe-ready)"),
-	per: zod.number().default(10).describe("People represented by one dot"),
-	layer: zod.string().default("dots").describe("Tippecanoe layer name"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "race-dots",
+	description: "Build race-by-dot-density NDJSON from TIGER data.",
+	options: {
+		db: {
+			type: "string",
+			description: "TIGER SQLite DB (tabblock20 ⋈ pl_block; default $MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db)",
+		},
+		out: {
+			type: "string",
+			default: tempRootPath("race-dots.ndjson"),
+			description: "Output NDJSON path (one GeoJSON Point Feature per line, tippecanoe-ready)",
+		},
+		per: { type: "number", default: 10, description: "People represented by one dot" },
+		layer: { type: "string", default: "dots", description: "Tippecanoe layer name" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	db?: string
+	out: string
+	per: number
+	layer: string
+}
 
 const report = (line: string): void => console.error(line)
 
-const TIGERRaceDots: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const TIGERRaceDots: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		// Optional `@mailwoman/tiger` (operator census tooling) — lazy-imported so a geocoding-only
 		// install of the CLI degrades to a friendly message instead of crashing (see `tiger fetch`).

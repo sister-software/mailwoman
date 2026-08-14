@@ -10,22 +10,34 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	shard: zod.string().describe("The new shard parquet to lint"),
-	stats: zod.string().describe("Pre-computed corpus stats JSON"),
-	rules: zod.string().optional().describe("Anti-pattern rules JSON (default: the bundled lint-rules.json)"),
-	outMd: zod.string().optional().describe("Write the markdown report here as well as stdout"),
-	outJSON: zod.string().optional().describe("Write a JSON sidecar of the flags + summary here"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "corpus-shard",
+	description: "Lint a corpus shard against pre-computed statistics.",
+	options: {
+		shard: { type: "string", required: true, description: "The new shard parquet to lint" },
+		stats: { type: "string", required: true, description: "Pre-computed corpus stats JSON" },
+		rules: { type: "string", description: "Anti-pattern rules JSON (default: the bundled lint-rules.json)" },
+		"out-md": { type: "string", description: "Write the markdown report here as well as stdout" },
+		"out-json": { type: "string", description: "Write a JSON sidecar of the flags + summary here" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	shard: string
+	stats: string
+	rules?: string
+	outMd?: string
+	outJSON?: string
+}
 
 const report = (line: string): void => console.error(line)
 
-const DevLintCorpusShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevLintCorpusShard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintCorpusShard } = await import("@mailwoman/corpus/tools")
@@ -46,8 +58,7 @@ const DevLintCorpusShard: CommandComponent<typeof OptionsSchema> = ({ options })
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 
-	// The tool already narrates LINT PASSED/FAILED on stderr (the old script's exact output) —
-	// rendering it again here would duplicate the verdict line.
+	// The tool writes its verdict to stderr, so the component has no additional result frame.
 	return null
 }
 

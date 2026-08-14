@@ -16,7 +16,7 @@
  *   may render a full-height frame from its FIRST frame; there is no primary buffer underneath to protect.
  *
  *   FATAL is reachable only from the loading phase — a failed format guard, an empty query, or a session that could
- *   not open (missing weights/gazetteer, whose {@link commandError} messages ARE the CLI's error contract). It is
+ *   not open (missing weights/gazetteer, whose {@link CommandError} messages ARE the CLI's error contract). It is
  *   reported by exiting the app WITH the error rather than by rendering it: Ink treats alternate-screen teardown
  *   output as disposable, so a message painted here would be erased by the buffer switch on the way out. `command.tsx`
  *   writes it to stderr once the primary buffer is back. Failures after the first result are NOT fatal — a rejected
@@ -27,10 +27,10 @@
 import { $public } from "@mailwoman/core/env"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
-import { commandError } from "mailwoman/cli-kit"
+import { CommandError } from "mailwoman/cli-kit"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
+import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
 import type { GeocodeResult } from "../geocode-core.ts"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
@@ -248,7 +248,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			assertDebugFormatSanity(options)
 
 			if (!initialInput) {
-				throw commandError('--debug needs an address to start from: mailwoman geocode "<address>" --debug')
+				throw new CommandError('--debug needs an address to start from: mailwoman geocode "<address>" --debug')
 			}
 		} catch (error) {
 			fail(error)
@@ -315,7 +315,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	useEffect(() => {
 		if (phase !== "fatal") return
 
-		exit(fatalError instanceof Error ? fatalError : commandError(messageOf(fatalError)))
+		exit(fatalError instanceof Error ? fatalError : new CommandError(messageOf(fatalError)))
 	}, [phase, fatalError, exit])
 
 	//#endregion

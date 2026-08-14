@@ -25,7 +25,7 @@ import { createWriteStream } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 
 /**
  * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.
@@ -112,7 +112,7 @@ export async function raceDots(
 	report?: (line: string) => void
 ): Promise<RaceDotsResult> {
 	const DB = options.db || dataRootPath("tiger", "tiger-oc.db")
-	const OUT = options.out || "/tmp/race-dots.ndjson"
+	const OUT = options.out || tempRootPath("race-dots.ndjson")
 	const PER = options.per ?? 10 // people represented by one dot
 	const LAYER = options.layer || "dots"
 

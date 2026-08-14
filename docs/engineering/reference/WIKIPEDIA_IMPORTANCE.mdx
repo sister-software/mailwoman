@@ -59,7 +59,7 @@ Run after any WOF data refresh:
 node scripts/build-importance.js --db /path/to/wof-unified.db [--tsv /path/to/wikimedia-importance.csv.gz]
 ```
 
-The TSV is cached at `/tmp/wikimedia-importance.csv.gz` after first download. Pass `--tsv` to skip the download.
+The TSV is cached beneath `$MAILWOMAN_CACHE_ROOT` after first download. Pass `--tsv` to skip the download.
 
 ## See also
 

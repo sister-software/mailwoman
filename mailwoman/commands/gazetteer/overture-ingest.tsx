@@ -32,8 +32,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import * as path from "node:path"
 
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 const DEFAULT_RELEASE = "2026-05-20.0"
 
@@ -54,16 +53,30 @@ interface CountryProbe {
 	oa_lineage_pct: number
 }
 
-const OptionsSchema = zod.object({
-	release: zod.string().optional().describe(`Pinned Overture release. Default ${DEFAULT_RELEASE}`),
-	countries: zod.string().optional().describe("ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR (required)"),
-	limit: zod.string().optional().describe("Cap rows per country (debug)"),
-	out: zod.string().optional().describe("Output root. Default <data-root>/overture"),
-	probeOnly: zod.boolean().default(false).describe("Skip ingest; probe the already-materialized local Parquet"),
-	corpusJsonl: zod.boolean().default(false).describe("Also emit the flattened corpus-input JSONL per country"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "overture-ingest",
+	description: "Ingest and probe Overture addresses",
+	options: {
+		release: { type: "string", description: `Pinned release. Default ${DEFAULT_RELEASE}` },
+		countries: { type: "string", required: true, description: "Comma-separated ISO country codes" },
+		limit: { type: "string", description: "Rows per country" },
+		out: { type: "string", description: "Output root" },
+		"probe-only": { type: "boolean", default: false, description: "Only probe local Parquet" },
+		"corpus-jsonl": { type: "boolean", default: false, description: "Emit corpus JSONL" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	release?: string
+	countries: string
+	limit?: string
+	out?: string
+	probeOnly: boolean
+	corpusJsonl: boolean
+}
 
 function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	const lines = [
@@ -99,12 +112,12 @@ function renderMarkdown(release: string, probes: CountryProbe[]): string {
 	return lines.join("\n")
 }
 
-const GazetteerOvertureIngest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		if (!options.countries) {
-			throw commandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
+			throw new CommandError("--countries is required (ISO 3166-1 alpha-2, comma-separated, e.g. US,DE,FR)")
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE

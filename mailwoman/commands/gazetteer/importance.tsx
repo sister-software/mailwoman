@@ -32,17 +32,16 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
-import { createReadStream, existsSync, writeFileSync } from "node:fs"
+import { createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"
 import { get as httpsGet } from "node:https"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
 
+import { cacheRootPath } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 import type { FanoutCandidate } from "../../gazetteer-pipeline/importance-fanout.ts"
 
@@ -63,12 +62,22 @@ const MIN_WIKIDATA_COLUMNS = 5
 
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
-const OptionsSchema = zod.object({
-	db: zod.string().describe("WOF SQLite DB to add place_importance to (must carry the concordances table)"),
-	tsv: zod.string().optional().describe("Pre-downloaded wikimedia-importance.csv.gz. Default: download to $TMPDIR"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "importance",
+	description: "Add place importance to a WOF database",
+	options: {
+		db: { type: "string", required: true, description: "WOF SQLite database" },
+		tsv: { type: "string", description: "Pre-downloaded Wikimedia importance data" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	db: string
+	tsv?: string
+}
 
 function downloadToFile(url: string, dest: string): Promise<void> {
 	return new Promise((resolve, reject) => {
@@ -106,7 +115,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 	})
 }
 
-const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 
@@ -122,7 +131,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 		const tsvPath = options.tsv
 		const t0 = performance.now()
 
-		if (!existsSync(dbPath)) throw commandError(`Database not found: ${dbPath}`)
+		if (!existsSync(dbPath)) throw new CommandError(`Database not found: ${dbPath}`)
 
 		const db = new DatabaseSync(dbPath, { open: true })
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
@@ -182,7 +191,7 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 			)
 		} catch (error) {
 			if (error instanceof Error && error.message.includes("no such table")) {
-				throw commandError("No concordances table found. Run `mailwoman gazetteer build admin` first.")
+				throw new CommandError("No concordances table found. Run `mailwoman gazetteer build admin` first.")
 			}
 
 			throw error
@@ -192,12 +201,14 @@ const GazetteerImportance: CommandComponent<typeof OptionsSchema> = ({ options }
 		let gzPath = tsvPath
 
 		if (!gzPath) {
-			gzPath = join(tmpdir(), "wikimedia-importance.csv.gz")
+			gzPath = cacheRootPath("wikimedia-importance.csv.gz")
 
 			if (existsSync(gzPath)) {
 				console.error(`  Using cached TSV: ${gzPath}`)
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)
+
+				mkdirSync(dirname(gzPath), { recursive: true })
 
 				await downloadToFile(IMPORTANCE_URL, gzPath)
 

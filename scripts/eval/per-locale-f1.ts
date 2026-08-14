@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(de-shell): forwarding shim. The per-locale held-out F1 tripwire now lives at
- *   `mailwoman/eval-harness/per-locale-f1.ts` and the promotion gate calls it IN-PROCESS. This shim
- *   keeps standalone invocation working unchanged: it parses the same argv the old script did and
- *   calls the module. Output is byte-identical because the module owns every printed line — the
- *   markdown report on stdout, the progress narration on stderr. Do not add logic here.
+ *   Command-line adapter for `mailwoman/eval-harness/per-locale-f1.ts`.
  */
 
 import { parseArgs } from "node:util"

@@ -63,7 +63,10 @@ function troffEscape(line: string): string {
  */
 function preformatted(text: string): string {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a help screen is a few dozen bounded lines
-	const lines = text.replace(/\s+$/, "").split("\n").map(troffEscape)
+	const lines = text
+		.replace(/\s+$/, "")
+		.split("\n")
+		.map((line) => troffEscape(line.trimEnd()))
 
 	return [".nf", ...lines, ".fi"].join("\n")
 }

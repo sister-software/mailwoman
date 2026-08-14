@@ -32,6 +32,7 @@
 
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { tempRootPath } from "@mailwoman/core/utils"
 import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
 import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { alignRow } from "@mailwoman/corpus/utils"
@@ -45,7 +46,7 @@ import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
 
-const DEFAULT_COMMUNES = "/tmp/reg/fr-communes.tsv"
+const DEFAULT_COMMUNES = tempRootPath("reg", "fr-communes.tsv")
 const LICENSE = "BAN (Base Adresse Nationale) commune+postcode tuples, rendered admin-split — see ingest SOURCE"
 
 /**

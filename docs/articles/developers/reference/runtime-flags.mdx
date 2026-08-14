@@ -27,18 +27,22 @@ option on `createRuntimePipeline`, `geocodeAddress`, or the resolver, and the ta
 
 Every variable below is read by shipped runtime code. Each has no default unless the table says so.
 
-| Variable                         | Default                        | Effect                                                                                      | Set it when                                                                                |
-| -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `MAILWOMAN_DATA_ROOT`            | a built-in path                | The root directory for every downloaded artifact: gazetteers, shards, POI layer             | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
-| `MAILWOMAN_CANDIDATE_DB`         | `<data root>/wof/candidate.db` | Path to `candidate.db`, overriding the convention path. `none` pins the FTS backend instead | Your copy lives outside the data root, or you want the FTS backend                         |
-| `MAILWOMAN_WOF_DB`               | unset                          | Path to a full Who's On First SQLite distribution, used by the search backend               | You resolve against a full distribution rather than `candidate.db`                         |
-| `MAILWOMAN_WOF_ADMIN_DB`         | unset                          | Path to the full WOF distribution for `mailwoman reverse`                                   | You reverse geocode                                                                        |
-| `MAILWOMAN_WOF_POLYGONS_DB`      | unset                          | Path to the polygon sidecar. Without it every reverse result is approximate                 | You need polygon-exact containment                                                         |
-| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset                          | Path to the postal-city alias database, which adds an alias-aware scoring pass              | You geocode United States mailing addresses at volume                                      |
-| `MAILWOMAN_FST_BIN`              | unset                          | Path to the gazetteer index `mailwoman autocomplete` reads                                  | You run autocomplete against an index outside a weights package                            |
-| `MAILWOMAN_MODEL_CARD`           | the package's card             | Path to a model card, read by the server's `/health` report                                 | You serve a model whose card is not beside it                                              |
-| `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer             | Directory holding the coarse country placer                                                 | You replace the bundled placer                                                             |
-| `MAILWOMAN_BATCH_MAX`            | `1000`                         | The row cap on `POST /v1/batch` under `mailwoman serve`                                     | You batch more than 1000 rows per request                                                  |
+| Variable                         | Default                                        | Effect                                                                                      | Set it when                                                                                |
+| -------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `MAILWOMAN_DATA_ROOT`            | platform data directory                        | The root directory for every downloaded artifact: gazetteers, shards, POI layer             | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
+| `MAILWOMAN_CONFIG_ROOT`          | platform config directory                      | Configuration files owned by Mailwoman                                                      | You need a deployment-specific configuration location                                      |
+| `MAILWOMAN_CACHE_ROOT`           | platform cache directory                       | Reusable downloaded and generated caches                                                    | You need caches on a different volume                                                      |
+| `MAILWOMAN_LOG_ROOT`             | platform log directory                         | Persistent Mailwoman logs                                                                   | Your service manager expects another log location                                          |
+| `MAILWOMAN_TEMP_ROOT`            | platform temporary directory                   | Named temporary outputs and evaluation staging                                              | Temporary artifacts need another volume                                                    |
+| `MAILWOMAN_CANDIDATE_DB`         | `<data root>/wof/candidate.db`                 | Path to `candidate.db`, overriding the convention path. `none` pins the FTS backend instead | Your copy lives outside the data root, or you want the FTS backend                         |
+| `MAILWOMAN_WOF_DB`               | unset                                          | Path to a full Who's On First SQLite distribution, used by the search backend               | You resolve against a full distribution rather than `candidate.db`                         |
+| `MAILWOMAN_WOF_ADMIN_DB`         | unset                                          | Path to the full WOF distribution for `mailwoman reverse`                                   | You reverse geocode                                                                        |
+| `MAILWOMAN_WOF_POLYGONS_DB`      | unset                                          | Path to the polygon sidecar. Without it every reverse result is approximate                 | You need polygon-exact containment                                                         |
+| `MAILWOMAN_POSTAL_CITY_ALIAS_DB` | unset                                          | Path to the postal-city alias database, which adds an alias-aware scoring pass              | You geocode United States mailing addresses at volume                                      |
+| `MAILWOMAN_FST_BIN`              | `<data root>/wof/fst-per-locale/fst-en-US.bin` | Path to the gazetteer index `mailwoman autocomplete` reads                                  | You run autocomplete against another index                                                 |
+| `MAILWOMAN_MODEL_CARD`           | the package's card                             | Path to a model card, read by the server's `/health` report                                 | You serve a model whose card is not beside it                                              |
+| `MAILWOMAN_COARSE_PLACER_DIR`    | the bundled placer                             | Directory holding the coarse country placer                                                 | You replace the bundled placer                                                             |
+| `MAILWOMAN_BATCH_MAX`            | `1000`                                         | The row cap on `POST /v1/batch` under `mailwoman serve`                                     | You batch more than 1000 rows per request                                                  |
 
 `MAILWOMAN_CANDIDATE_DB` is the variable most installs no longer need to set. Since `8.7.0` the
 candidate gazetteer is the default backend, and it is discovered rather than configured. Every
@@ -75,7 +79,7 @@ are on [CLI](./cli.mdx); each flag's description names the variable it falls bac
 ```
 --resolve-db <path>   >   $MAILWOMAN_WOF_DB        >  error, with the fix printed
 --candidate-db <path> >   $MAILWOMAN_CANDIDATE_DB  >  <data root>/wof/candidate.db  >  the search backend
---data-root <path>    >   $MAILWOMAN_DATA_ROOT     >  a built-in path
+--data-root <path>    >   $MAILWOMAN_DATA_ROOT     >  the platform data directory
 ```
 
 The candidate row has one wrinkle the other two do not. Each position is used only if the file it

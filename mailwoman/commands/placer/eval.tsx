@@ -11,42 +11,41 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Evaluate the coarse placer (#244): in-distribution | openset | latin-offmap | quant-compare"
 
-const ArgsSchema = zod.tuple([
-	zod.enum(["in-distribution", "openset", "latin-offmap", "quant-compare"]).describe(
-		argument({
-			name: "kind",
-			description: "Eval kind (in-distribution, openset, latin-offmap, quant-compare)",
-		})
-	),
-])
+const kinds = ["in-distribution", "openset", "latin-offmap", "quant-compare"] as const
 
-const OptionsSchema = zod.object({
-	model: zod.string().optional().describe("Model artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model)"),
-	data: zod.string().optional().describe("Dataset dir (default <repo>/data/coarse-placer)"),
-	abstain: zod.number().optional().describe("in-distribution/latin-offmap: abstention threshold (default 0.5)"),
-	fitPerClass: zod.number().optional().describe("openset: Mahalanobis fit rows per class (default 2000)"),
-	outMd: zod.string().optional().describe("openset: also write the markdown report here"),
-	fp32: zod
-		.string()
-		.optional()
-		.describe("quant-compare: fp32 artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model)"),
-	int8: zod
-		.string()
-		.optional()
-		.describe("quant-compare: int8 artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model-int8)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "eval",
+	description,
+	positionals: [{ name: "kind", required: true, choices: kinds, description: "Eval kind" }],
+	options: {
+		model: { type: "string", description: "Model artifact dir" },
+		data: { type: "string", description: "Dataset dir" },
+		abstain: { type: "number", description: "Abstention threshold" },
+		"fit-per-class": { type: "number", description: "Mahalanobis fit rows per class" },
+		"out-md": { type: "string", description: "Markdown report" },
+		fp32: { type: "string", description: "fp32 artifact dir" },
+		int8: { type: "string", description: "int8 artifact dir" },
+	},
+} as const satisfies CommandSpec
 
-export { ArgsSchema as args, OptionsSchema as options }
+interface Options {
+	model?: string
+	data?: string
+	abstain?: number
+	fitPerClass?: number
+	outMd?: string
+	fp32?: string
+	int8?: string
+}
 
-type Options = zod.infer<typeof OptionsSchema>
-
-type Kind = zod.infer<typeof ArgsSchema>[0]
+type Kind = (typeof kinds)[number]
 
 const report = (line: string): void => console.error(line)
 
@@ -86,7 +85,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const PlacerEval: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const PlacerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

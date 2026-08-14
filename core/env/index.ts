@@ -4,6 +4,8 @@ import { loadEnvFile } from "./load.ts"
 import { cwdPathBuilder } from "./paths.ts"
 import { PrivateEnvSchema, PublicEnvSchema } from "./schema.ts"
 
+export { defaultMailwomanPaths } from "./paths.ts"
+
 // The optional `.env` is read once (it can't change mid-process); the real environment is layered on top
 // LIVE. `process.env` can change during a process — a test stubbing a var, a late setter — and `$public` /
 // `$private` must reflect it, exactly like `process.env` itself. So each key is a getter that re-parses the

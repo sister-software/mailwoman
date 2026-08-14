@@ -18,50 +18,47 @@ import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
-import { parseRoles, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import {
+	type CommandSpec,
+	type ParsedCommandComponent,
+	CommandError,
+	parseRoles,
+	useCommandTask,
+} from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
-import zod from "zod"
 
 const BATCH_SIZE = availableParallelism()
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.describe(
-		"Positional args: <localRepoDirectory> <placetype>. The directory should contain a clone of whosonfirst/whosonfirst-placetypes (run `mailwoman wof sync` first)."
-	)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "tree",
+	description: "Render a WOF placetype tree.",
+	positionals: [
+		{ name: "local-repo-directory", required: true, description: "Placetype repository" },
+		{ name: "placetype", required: true, description: "Root placetype" },
+	],
+	options: {
+		roles: { type: "string", description: `Role filter: ${PlacetypeRoles.join(", ")}` },
+		output: { type: "string", description: "Output JSON" },
+		compact: { type: "boolean", default: false, description: "Emit compact JSON" },
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	roles: zod
-		.string()
-		.optional()
-		.describe(
-			`Optional comma-separated role filter. One or more of: ${PlacetypeRoles.join(", ")}. Defaults to all roles.`
-		),
-	output: zod.string().optional().describe("Path to write the JSON tree to. Defaults to stdout."),
-	compact: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Emit single-line JSON instead of pretty-printed (indent = 2)."),
-})
+interface Options {
+	roles?: string
+	output?: string
+	compact: boolean
+}
 
-export { ArgumentsSchema as args, OptionsSchema as options }
-
-const WOFTree: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
+const WOFTree: ParsedCommandComponent<Options, [string, string]> = ({ args, options }) => {
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
 		const { generatePlacetypeTree, Placetype } = await import("@mailwoman/core")
 
-		if (!args[0]) {
-			throw commandError("Missing required positional argument: <localRepoDirectory>")
-		}
-
 		const localRepoDirectory = PathBuilder.from(args[0])
-
-		if (!placetypeName) {
-			throw commandError("Missing required positional argument: <placetype>")
-		}
 
 		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
 
@@ -70,7 +67,7 @@ const WOFTree: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = 
 		const placetype = Placetype.find(placetypeName)
 
 		if (!placetype) {
-			throw commandError(
+			throw new CommandError(
 				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
 			)
 		}

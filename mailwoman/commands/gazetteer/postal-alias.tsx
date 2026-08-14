@@ -31,26 +31,33 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	release: zod
-		.string()
-		.default("2026-05-20.0")
-		.describe("Pinned Overture release dir under <data-root>/overture/<release>/addresses-us.parquet"),
-	minCount: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.default(25)
-		.describe("Drop (postcode, postal_city, geo_locality) aggregates observed fewer than this many times"),
-	out: zod.string().optional().describe("Output DB path. Default <data-root>/wof/postal-city-alias-us.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postal-alias",
+	description: "Build the postal-city alias database",
+	options: {
+		release: { type: "string", default: "2026-05-20.0", description: "Pinned Overture release" },
+		"min-count": {
+			type: "number",
+			default: 25,
+			validate: (value: number) => Number.isInteger(value) && value > 0,
+			description: "Minimum aggregate observation count",
+		},
+		out: { type: "string", description: "Output DB path. Default <data-root>/wof/postal-city-alias-us.db" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	release: string
+	minCount: number
+	out?: string
+}
 
-const GazetteerPostalAlias: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

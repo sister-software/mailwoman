@@ -13,42 +13,42 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Promotion gate (#479) — eval battery + gate-spec floors → verdict.json"
 
-const OptionsSchema = zod.object({
-	model: zod.string().optional().describe("Candidate fp32 ONNX (required)"),
-	int8: zod.string().optional().describe("Quantized int8 sibling — adds the int8 battery + delta cap"),
-	gate: zod
-		.string()
-		.optional()
-		.describe("Gate-spec JSON: a path, or a spec name resolved against eval-harness/gates/ (required)"),
-	tokenizer: zod.string().optional().describe("Tokenizer path (default: the v0.6.0-a0 tokenizer under the data root)"),
-	card: zod.string().optional().describe("Model-card JSON (default neural-weights-en-us/model-card.json)"),
-	gazetteerLexicon: zod
-		.string()
-		.optional()
-		.describe("Gazetteer lexicon JSON (default data/gazetteer/anchor-lexicon-v1.json)"),
-	weightsCache: zod
-		.string()
-		.optional()
-		.describe(
-			"Package-shaped candidate weights dir (<root>/node_modules/@mailwoman/neural-weights-en-us) — #718-safe, feeds anchor+gazetteer+country via loadFromWeights; the only correct grade for a country-channel model (v6.2.0+). Alternative to --model."
-		),
-	int8WeightsCache: zod
-		.string()
-		.optional()
-		.describe(
-			"Package-shaped INT8 candidate dir, same layout — pairs with --weights-cache (the fp32 arm) to grade floors AND the int8 delta cap package-shaped in one run (#47). Excludes --model/--int8."
-		),
-	outDir: zod.string().optional().describe("Battery output dir (default /tmp/gate-<label>-<hhmm>)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "gate",
+	description,
+	options: {
+		model: { type: "string", description: "Candidate fp32 ONNX (required)" },
+		int8: { type: "string", description: "Quantized int8 sibling — adds the int8 battery + delta cap" },
+		gate: { type: "string", description: "Gate-spec JSON path or registered name (required)" },
+		tokenizer: { type: "string", description: "Tokenizer path" },
+		card: { type: "string", description: "Model-card JSON" },
+		"gazetteer-lexicon": { type: "string", description: "Gazetteer lexicon JSON" },
+		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
+		"int8-weights-cache": { type: "string", description: "Package-shaped INT8 candidate directory" },
+		"out-dir": { type: "string", description: "Battery output dir (default /tmp/gate-<label>-<hhmm>)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	model?: string
+	int8?: string
+	gate?: string
+	tokenizer?: string
+	card?: string
+	gazetteerLexicon?: string
+	weightsCache?: string
+	int8WeightsCache?: string
+	outDir?: string
+}
 
-const EvalGate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runPromotionGate } = await import("../../eval-harness/promotion-gate.ts")

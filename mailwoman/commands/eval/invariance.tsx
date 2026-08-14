@@ -18,40 +18,50 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description =
 	"Metamorphic invariance mini-suite (comma-drop/abbrev/case/idempotence) — standing probe guard"
 
-const OptionsSchema = zod.object({
-	suite: zod.string().optional().describe("Alternate suite.jsonl path (default: the shipped fixture)"),
-	model: zod.string().optional().describe("Candidate ONNX (requires --tokenizer + --model-card)"),
-	tokenizer: zod.string().optional().describe("Candidate tokenizer path"),
-	modelCard: zod.string().optional().describe("Candidate model-card path"),
-	weightsCache: zod
-		.string()
-		.optional()
-		.describe(
-			"Package-shaped candidate weights dir (<root>/node_modules/@mailwoman/neural-weights-<locale>) — #718-safe, alternative to --model"
-		),
-	locale: zod.string().optional().describe("Locale tag for weights-package resolution (default en-US)"),
-	maxDegraded: zod.number().optional().describe("Fail if the NEW-violation DEGRADED count exceeds this (default 0)"),
-	baseline: zod
-		.string()
-		.optional()
-		.describe("Baseline ONNX for regression mode (requires --baseline-tokenizer + --baseline-model-card)"),
-	baselineTokenizer: zod.string().optional().describe("Baseline tokenizer path"),
-	baselineModelCard: zod.string().optional().describe("Baseline model-card path"),
-	baselineWeightsCache: zod
-		.string()
-		.optional()
-		.describe("Package-shaped baseline weights dir — alternative to --baseline + the two flags above"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "invariance",
+	description,
+	options: {
+		suite: { type: "string", description: "Alternate suite.jsonl path (default: the shipped fixture)" },
+		model: { type: "string", description: "Candidate ONNX (requires --tokenizer + --model-card)" },
+		tokenizer: { type: "string", description: "Candidate tokenizer path" },
+		"model-card": { type: "string", description: "Candidate model-card path" },
+		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
+		locale: { type: "string", description: "Locale tag for weights-package resolution (default en-US)" },
+		"max-degraded": {
+			type: "number",
+			description: "Fail if the new-violation degraded count exceeds this (default 0)",
+		},
+		baseline: { type: "string", description: "Baseline ONNX for regression mode" },
+		"baseline-tokenizer": { type: "string", description: "Baseline tokenizer path" },
+		"baseline-model-card": { type: "string", description: "Baseline model-card path" },
+		"baseline-weights-cache": { type: "string", description: "Package-shaped baseline weights directory" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	suite?: string
+	model?: string
+	tokenizer?: string
+	modelCard?: string
+	weightsCache?: string
+	locale?: string
+	maxDegraded?: number
+	baseline?: string
+	baselineTokenizer?: string
+	baselineModelCard?: string
+	baselineWeightsCache?: string
+}
 
-const EvalInvariance: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalInvariance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runInvarianceCommand } = await import("../../eval-harness/invariance/command.ts")

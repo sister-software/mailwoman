@@ -26,7 +26,7 @@ import { parseArgs } from "node:util"
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
-import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { dataRootPath, percentile, tempRootPath } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -151,7 +151,7 @@ const norm = (s: string | undefined): string =>
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 
 async function main() {
-	const goldenPath = stringArgs["golden"] || "/tmp/reg/fr-admin-split-golden.jsonl"
+	const goldenPath = stringArgs["golden"] || tempRootPath("reg", "fr-admin-split-golden.jsonl")
 	const label = stringArgs["label"] || "model"
 	// Comma-separated multi-shard support (night-31): postcodeConsistency needs a resolvable postcode
 	// node, which needs a postalcode shard attached alongside the admin DB.

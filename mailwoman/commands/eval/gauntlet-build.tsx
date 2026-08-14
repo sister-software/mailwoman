@@ -12,26 +12,29 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Build the Gauntlet data artifacts (fdic-holdout, regression-db)"
 
-const ArgsSchema = zod.tuple([
-	zod.enum(["fdic-holdout", "regression-db"]).describe(
-		argument({
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "gauntlet-build",
+	description,
+	positionals: [
+		{
 			name: "artifact",
+			required: true,
+			choices: ["fdic-holdout", "regression-db"],
 			description: "Which artifact to build (fdic-holdout, regression-db)",
-		})
-	),
-])
+		},
+	],
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({})
-
-export { ArgsSchema as args, OptionsSchema as options }
-
-const EvalGauntletBuild: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ args }) => {
+const EvalGauntletBuild: ParsedCommandComponent<Record<string, never>, ["fdic-holdout" | "regression-db"]> = ({
+	args,
+}) => {
 	const state = useCommandTask(async () => {
 		const { buildFDICHoldout } = await import("../../eval-harness/gauntlet/build-fdic-holdout.ts")
 		const { buildRegressionDB } = await import("../../eval-harness/gauntlet/build-regression-db.ts")

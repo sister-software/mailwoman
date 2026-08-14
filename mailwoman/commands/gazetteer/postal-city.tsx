@@ -24,30 +24,33 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	candidateDb: zod.string().describe("Candidate DB to add the side-index to (MODIFIED IN PLACE — run on a copy first)"),
-	aliasDB: zod.string().optional().describe("Postal-city alias DB. Default <data-root>/wof/postal-city-alias-us.db"),
-	postcodeLocalityDB: zod
-		.string()
-		.optional()
-		.describe("Postcode→locality shard DB. Default <data-root>/wof/postcode-locality-us.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postal-city",
+	description: "Add the postal-city side index to a candidate database",
+	options: {
+		"candidate-db": { type: "string", required: true, description: "Candidate DB to modify in place" },
+		"alias-db": { type: "string", description: "Postal-city alias DB" },
+		"postcode-locality-db": { type: "string", description: "Postcode-to-locality DB" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	candidateDb: string
+	aliasDB?: string
+	postcodeLocalityDB?: string
+}
 
-const GazetteerPostalCity: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const candidateDb = options.candidateDb
-
-		if (!candidateDb) {
-			throw commandError("--candidate-db is required (modified in place — run on a copy first)")
-		}
 
 		const aliasDB = options.aliasDB ?? dataRootPath("wof", "postal-city-alias-us.db")
 		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("wof", "postcode-locality-us.db")

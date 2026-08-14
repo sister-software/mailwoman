@@ -40,18 +40,30 @@ import { cpSync, existsSync, rmSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { Text } from "ink"
-import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import {
+	type Check,
+	CheckList,
+	type CommandSpec,
+	type ParsedCommandComponent,
+	CommandError,
+	useCommandTask,
+} from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	dest: zod
-		.string()
-		.optional()
-		.describe("Directory to install into — writes <dest>/.claude/skills/mailwoman/. Default: the current directory."),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "install",
+	description: "Install the packaged Mailwoman skill.",
+	options: {
+		dest: { type: "string", description: "Destination project directory" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	dest?: string
+}
 
 /**
  * The packaged skill's source directory, resolved relative to THIS package's root. See the module docstring for why two
@@ -66,7 +78,7 @@ function resolveSkillSourceDir(): string {
 
 	if (existsSync(sourceTreeCandidate)) return fileURLToPath(sourceTreeCandidate)
 
-	throw commandError(
+	throw new CommandError(
 		`Could not locate the packaged skill directory relative to ${import.meta.url}. ` +
 			"This is a packaging bug in the mailwoman npm package — please file an issue."
 	)
@@ -102,7 +114,7 @@ function installSkill(dest: string | undefined): InstallOutcome {
 	}
 }
 
-const SkillInstall: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const SkillInstall: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		() => Promise.resolve(installSkill(options.dest)),
 		(result) => (result.ok ? 0 : 1)

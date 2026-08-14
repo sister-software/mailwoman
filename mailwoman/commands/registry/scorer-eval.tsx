@@ -14,96 +14,97 @@
 
 import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.tuple([
-	zod
-		.enum([
-			"pairwise",
-			"clustering",
-			"cross-state",
-			"dedup-ceiling",
-			"nppes-benchmark",
-			"coverage-reconciliation",
-			"cross-dataset",
-			"threshold-sweep",
-			"namesake-probe",
-			"vs-provided-coords",
-		])
-		.describe(
-			argument({
-				name: "kind",
-				description: "Eval kind (pairwise, clustering, cross-state, nppes-benchmark, …)",
-			})
-		),
-])
+const kinds = [
+	"pairwise",
+	"clustering",
+	"cross-state",
+	"dedup-ceiling",
+	"nppes-benchmark",
+	"coverage-reconciliation",
+	"cross-dataset",
+	"threshold-sweep",
+	"namesake-probe",
+	"vs-provided-coords",
+] as const
 
-const OptionsSchema = zod.object({
-	// shared data wiring
-	sources: zod
-		.string()
-		.optional()
-		.describe("Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)"),
-	wof: zod
-		.string()
-		.optional()
-		.describe("WOF admin SQLite path (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)"),
-	dataRoot: zod.string().optional().describe("Per-state shard root (default $MAILWOMAN_DATA_ROOT)"),
-	outMd: zod.string().optional().describe("Also write the markdown report here"),
-	// sampling
-	state: zod.string().optional().describe("State filter (default TX)"),
-	npis: zod.number().optional().describe("pairwise/clustering/cross-state: NPIs sampled"),
-	cap: zod
-		.number()
-		.optional()
-		.describe("dedup-ceiling/coverage-reconciliation/cross-dataset/threshold-sweep: sample cap"),
-	max: zod.number().optional().describe("vs-provided-coords: facilities geocoded (default 2000)"),
-	maxNpis: zod.number().optional().describe("nppes-benchmark: NPIs sampled (default 300)"),
-	tau: zod.number().optional().describe("dedup-ceiling: org-name Jaccard collision threshold (default 0.7)"),
-	// splits + seeds
-	seed: zod.number().optional().describe("pairwise/clustering: base PRNG seed (default 1)"),
-	seeds: zod.number().optional().describe("pairwise/clustering: splits averaged (default 8 / 4)"),
-	split: zod.number().optional().describe("clustering: train fraction of the NPI split (default 0.67)"),
-	trainState: zod.string().optional().describe("cross-state: state the GBT/LR train on (default TX)"),
-	evalState: zod.string().optional().describe("cross-state: held-out state clustered (default CA)"),
-	// nppes-benchmark
-	trainEm: zod.boolean().default(true).describe("nppes-benchmark: EM-train the FS arms (--no-train-em uses seeds)"),
-	legacyJoin: zod
-		.boolean()
-		.default(false)
-		.describe("nppes-benchmark: #694 A/B — pre-flip space-join + normalizeCase off"),
-	candidate: zod
-		.string()
-		.optional()
-		.describe("nppes-benchmark/threshold-sweep: a trained GBT TS module to grade as an extra arm"),
-	dumpOvermerges: zod.string().optional().describe("nppes-benchmark: write the #625 gold-set adjudication packet here"),
-	h3Res: zod.number().optional().describe("nppes-benchmark: H3 resolution for the org-name-h3 grain (default 11)"),
-	parallelGeocode: zod
-		.boolean()
-		.default(false)
-		.describe("nppes-benchmark: geocode across a worker pool (mailwoman/geocode-stream)"),
-	geoConcurrency: zod.number().optional().describe("nppes-benchmark: worker-pool concurrency (default 2)"),
-	model: zod.string().optional().describe("nppes-benchmark: model-swap ONNX path (requires --model-card)"),
-	tokenizer: zod.string().optional().describe("nppes-benchmark: model-swap tokenizer path"),
-	modelCard: zod.string().optional().describe("nppes-benchmark: model-swap model-card path"),
-	// cross-dataset family
-	corpusFrequency: zod
-		.boolean()
-		.default(true)
-		.describe("cross-dataset: build the corpus-wide address-frequency table (--no-corpus-frequency skips)"),
-	outGeojson: zod
-		.string()
-		.optional()
-		.describe("coverage-reconciliation/cross-dataset: also write the GeoJSON artifact here"),
-})
+type Kind = (typeof kinds)[number]
+const stringOption = (description: string) => ({ type: "string" as const, description })
+const numberOption = (description: string) => ({ type: "number" as const, description })
 
-export { ArgsSchema as args, OptionsSchema as options }
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "scorer-eval",
+	description: "Run a registry scorer evaluation",
+	positionals: [{ name: "kind", required: true, choices: kinds, description: "Evaluation kind" }],
+	options: {
+		// shared data wiring
+		sources: stringOption("Record-matcher sources directory"),
+		wof: stringOption("WOF admin SQLite path"),
+		"data-root": stringOption("Per-state shard root"),
+		"out-md": stringOption("Markdown report path"),
+		// sampling
+		state: stringOption("State filter"),
+		npis: numberOption("NPIs sampled"),
+		cap: numberOption("Sample cap"),
+		max: numberOption("Facilities geocoded"),
+		"max-npis": numberOption("NPPES sample size"),
+		tau: numberOption("Collision threshold"),
+		// splits + seeds
+		seed: numberOption("PRNG seed"),
+		seeds: numberOption("Splits averaged"),
+		split: numberOption("Train fraction"),
+		"train-state": stringOption("Training state"),
+		"eval-state": stringOption("Evaluation state"),
+		// nppes-benchmark
+		"train-em": { type: "boolean", default: true, description: "EM-train FS arms" },
+		"legacy-join": { type: "boolean", default: false, description: "Use legacy join" },
+		candidate: stringOption("GBT module"),
+		"dump-overmerges": stringOption("Adjudication packet path"),
+		"h3-res": numberOption("H3 resolution"),
+		"parallel-geocode": { type: "boolean", default: false, description: "Use geocode worker pool" },
+		"geo-concurrency": numberOption("Geocode concurrency"),
+		model: stringOption("Model path"),
+		tokenizer: stringOption("Tokenizer path"),
+		"model-card": stringOption("Model card path"),
+		// cross-dataset family
+		"corpus-frequency": { type: "boolean", default: true, description: "Build corpus frequency table" },
+		"out-geojson": stringOption("GeoJSON artifact path"),
+	},
+} as const satisfies CommandSpec
 
-type Options = zod.infer<typeof OptionsSchema>
-
-type Kind = zod.infer<typeof ArgsSchema>[0]
+interface Options {
+	sources?: string
+	wof?: string
+	dataRoot?: string
+	outMd?: string
+	state?: string
+	npis?: number
+	cap?: number
+	max?: number
+	maxNpis?: number
+	tau?: number
+	seed?: number
+	seeds?: number
+	split?: number
+	trainState?: string
+	evalState?: string
+	trainEm: boolean
+	legacyJoin: boolean
+	candidate?: string
+	dumpOvermerges?: string
+	h3Res?: number
+	parallelGeocode: boolean
+	geoConcurrency?: number
+	model?: string
+	tokenizer?: string
+	modelCard?: string
+	corpusFrequency: boolean
+	outGeojson?: string
+}
 
 const report = (line: string): void => console.error(line)
 
@@ -257,7 +258,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 	}
 }
 
-const RegistryScorerEval: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const RegistryScorerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(() => runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

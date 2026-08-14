@@ -10,32 +10,56 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+/**
+ * Largest useful hypothesis set for the bounded oracle probe.
+ */
+const MAX_ORACLE_HYPOTHESES = 50
 
 export const description = "Oracle-recall@k — k-best segment-decode headroom over the parity corpus (#727 stage-2)"
 
-const OptionsSchema = zod.object({
-	locale: zod.string().optional().default("en-US").describe("Weights package locale (default en-US)"),
-	weightsCache: zod
-		.string()
-		.optional()
-		.describe("Package-shaped candidate weights dir (mirrors eval parity --weights-cache)"),
-	fixtures: zod.string().optional().describe("Fixture JSONL override (default: the ratified triaged parity corpus)"),
-	goldenDir: zod
-		.string()
-		.optional()
-		.describe("Golden dev dir for the transition-bigram estimate (default data/eval/golden/v0.1.2/dev)"),
-	k: zod.coerce.number().int().min(1).max(50).optional().default(10).describe("Hypotheses kept per input"),
-	assertBaseline: zod
-		.string()
-		.optional()
-		.describe("Registered baseline profile (v264, v301) — refuse to report if the instruments read wrong"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "oracle-k",
+	description,
+	options: {
+		locale: { type: "string", default: "en-US", description: "Weights package locale (default en-US)" },
+		"weights-cache": {
+			type: "string",
+			description: "Package-shaped candidate weights dir (mirrors eval parity --weights-cache)",
+		},
+		fixtures: { type: "string", description: "Fixture JSONL override (default: the ratified triaged parity corpus)" },
+		"golden-dir": {
+			type: "string",
+			description: "Golden dev dir for the transition-bigram estimate (default data/eval/golden/v0.1.2/dev)",
+		},
+		k: {
+			type: "number",
+			default: 10,
+			validate: (value) => Number.isInteger(value) && value >= 1 && value <= MAX_ORACLE_HYPOTHESES,
+			validationMessage: "--k must be an integer between 1 and 50.",
+			description: "Hypotheses kept per input",
+		},
+		"assert-baseline": {
+			type: "string",
+			description: "Registered baseline profile (v264, v301) — refuse to report if the instruments read wrong",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	locale: string
+	weightsCache?: string
+	fixtures?: string
+	goldenDir?: string
+	k: number
+	assertBaseline?: string
+}
 
-const EvalOracleK: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalOracleK: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { runOracleK } = await import("../../eval-harness/oracle-k.ts")

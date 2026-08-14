@@ -37,6 +37,7 @@ import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, resolve } from "node:path"
 
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
 /**
@@ -114,11 +115,7 @@ export interface PublishHFOptions {
 }
 
 function fail(msg: string): never {
-	// Guidance-grade refusal: stack suppressed so the CLI renders exactly `✗ <msg>` (the old
-	// script's output shape) instead of a stack dump.
-	const error = new Error(msg)
-	error.stack = msg
-	throw error
+	throw new CommandError(msg)
 }
 
 function run(cmd: string, args: string[]) {

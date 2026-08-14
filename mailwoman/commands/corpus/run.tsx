@@ -12,43 +12,50 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
-const ArgumentsSchema = zod.array(zod.string().describe("Adapter id (e.g. wof-admin, ban, openaddresses)"))
+const positiveInteger = (description: string, defaultValue?: number) =>
+	({
+		type: "number",
+		...(defaultValue === undefined ? {} : { default: defaultValue }),
+		validate: (value: number) => Number.isInteger(value) && value > 0,
+		validationMessage: `${description} must be a positive integer.`,
+		description,
+	}) as const
 
-const RunConfigSchema = zod.object({
-	input: zod.string().describe("Path to the adapter's input data (file, directory, or URL — adapter-specific)"),
-	output: zod.string().describe("Output root directory; the runner creates <output>/<adapter-id>/ under it"),
-	country: zod
-		.string()
-		.regex(/^[A-Z]{2}$/u, "Expected ISO 3166-1 alpha-2 country code (e.g. US, FR)")
-		.optional()
-		.describe("Filter to a single ISO 3166-1 alpha-2 country"),
-	limit: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("Soft cap on rows the adapter is allowed to emit (smoke runs, fixtures)"),
-	corpusVersion: zod
-		.string()
-		.optional()
-		.default("0.1.0-dev")
-		.describe("Corpus version string stamped onto every row; locks tokenizer pairing"),
-	progressEvery: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.default(1000)
-		.describe("Yield count between progress ticks (smaller = chattier, larger = quieter)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "run",
+	description: "Run one corpus adapter.",
+	positionals: [{ name: "adapter-id", required: true, description: "Adapter id" }],
+	options: {
+		input: { type: "string", required: true, description: "Adapter input" },
+		output: { type: "string", required: true, description: "Output root" },
+		country: {
+			type: "string",
+			validate: (value) => /^[A-Z]{2}$/u.test(value),
+			validationMessage: "--country must be an ISO alpha-2 code.",
+			description: "Country filter",
+		},
+		limit: positiveInteger("--limit"),
+		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
+		"progress-every": positiveInteger("--progress-every", 1000),
+	},
+} as const satisfies CommandSpec
 
-export { ArgumentsSchema as args, RunConfigSchema as options }
+interface Options {
+	input: string
+	output: string
+	country?: string
+	limit?: number
+	corpusVersion: string
+	progressEvery: number
+}
 
-const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const CorpusRun: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const [progress, setProgress] = useState<{ yielded: number; written: number; bytes: number }>({
 		yielded: 0,
 		written: 0,
@@ -60,16 +67,12 @@ const CorpusRun: CommandComponent<typeof RunConfigSchema, typeof ArgumentsSchema
 
 		const adapterID = args[0]
 
-		if (!adapterID) {
-			throw commandError("missing positional argument: <adapter-id>")
-		}
-
 		const adapter = defaultAdapterRegistry.get(adapterID)
 
 		if (!adapter) {
 			const ids = defaultAdapterRegistry.ids()
 			const hint = !ids.length ? "(no adapters registered yet)" : `registered: ${ids.join(", ")}`
-			throw commandError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
+			throw new CommandError(`unknown adapter id ${JSON.stringify(adapterID)}; ${hint}`)
 		}
 
 		const ac = new AbortController()

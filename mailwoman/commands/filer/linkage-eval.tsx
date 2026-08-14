@@ -10,15 +10,24 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	outMd: zod.string().optional().describe("Also write the markdown report here"),
-	date: zod.string().optional().describe("Report date (YYYY-MM-DD) for the H1 — defaults to today"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "linkage-eval",
+	description: "Evaluate corporate-family linkage recovery.",
+	options: {
+		"out-md": { type: "string", description: "Also write the markdown report here" },
+		date: { type: "string", description: "Report date (YYYY-MM-DD) for the H1 — defaults to today" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	outMd?: string
+	date?: string
+}
 
 /**
  * `null` renders as `N/A`, never as `0.000` — the withheld run makes no positive call, so its precision and F1 are
@@ -28,7 +37,7 @@ function formatScoreValue(value: number | null): string {
 	return value === null ? "N/A" : value.toFixed(3)
 }
 
-const FilerLinkageEval: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const FilerLinkageEval: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerLinkageEval } = await import("@mailwoman/filer/tools")
 

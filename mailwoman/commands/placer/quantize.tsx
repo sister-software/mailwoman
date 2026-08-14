@@ -8,21 +8,30 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Int8-quantize the coarse placer (#244) weights (4× smaller)"
 
-const OptionsSchema = zod.object({
-	in: zod.string().optional().describe("Fp32 artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model)"),
-	out: zod.string().optional().describe("Int8 output dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model-int8)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "quantize",
+	description,
+	options: {
+		in: { type: "string", description: "Fp32 artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model)" },
+		out: { type: "string", description: "Int8 output dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model-int8)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	in?: string
+	out?: string
+}
 
 const report = (line: string): void => console.error(line)
 
-const PlacerQuantize: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const PlacerQuantize: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { quantizeCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 

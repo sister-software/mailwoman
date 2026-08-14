@@ -28,8 +28,7 @@ import { join } from "node:path"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Known parents probed after write, PER COUNTRY. Probing another country's names against a freshly built census prints
@@ -40,22 +39,28 @@ const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
 	us: ["New York", "Chicago", "Springfield"],
 }
 
-const OptionsSchema = zod.object({
-	out: zod.string().default("docs/static/mailwoman").describe("Output dir for placetype-census-<country>.bin"),
-	country: zod.string().default("gb").describe("ISO country code this census is built for"),
-	source: zod.string().optional().describe("WOF admin DB. Default <data-root>/wof/admin-global-priority.db"),
-	delta: zod
-		.number()
-		.optional()
-		.describe(
-			"OPTIONAL soft-prior magnitude written into the header. Omit (the default) for an un-wired census — R4c " +
-				"ships data + loader + offline probe only; a calibration rung supplies the real value."
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "census",
+	description: "Build a placetype census",
+	options: {
+		out: { type: "string", default: "docs/static/mailwoman", description: "Output directory" },
+		country: { type: "string", default: "gb", description: "ISO country code" },
+		source: { type: "string", description: "WOF admin DB" },
+		delta: { type: "number", description: "Optional soft-prior magnitude" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	out: string
+	country: string
+	source?: string
+	delta?: number
+}
 
-const GazetteerCensus: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")

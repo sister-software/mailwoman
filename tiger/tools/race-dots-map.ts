@@ -19,6 +19,8 @@
 
 import { writeFileSync } from "node:fs"
 
+import { tempRootPath } from "@mailwoman/core/utils"
+
 /**
  * Options for {@linkcode raceDotsMap}.
  */
@@ -104,7 +106,7 @@ export async function raceDotsMap(
 	report?: (line: string) => void
 ): Promise<RaceDotsMapResult> {
 	const PMTILES_URL = options.pmtilesURL || "http://localhost:8899/race-dots-oc.pmtiles"
-	const OUT = options.out || "/tmp/race-dots-oc.html"
+	const OUT = options.out || tempRootPath("race-dots-oc.html")
 	const PER = options.per ?? 5
 	const PER_PHRASE = PER === 1 ? "one dot is one person" : `one dot ≈ ${PER} people`
 	const TITLE = options.title || `Race in Orange County, CA — ${PER_PHRASE} (2020 Census)`

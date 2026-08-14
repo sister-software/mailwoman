@@ -104,9 +104,7 @@ describe("geocode argument validation", () => {
 			status = execErr.status
 		}
 
-		// #1577: the old answer was commander's one-liner `error: missing required argument 'address'`
-		// — no usage, no flags, no hint. `cli-main.ts` rewrites the bare invocation to `--help`, and nudges
-		// the exit code back to 1 because a missing required operand is still a usage error.
+		// A missing required operand is a usage error, but the response still includes actionable command help.
 		expect(threw).toBe(true)
 		expect(status).toBe(1)
 		expect(output).toMatch(/Usage:.*geocode/u)
@@ -184,7 +182,7 @@ describe("geocode argument validation", () => {
 		} catch (error: unknown) {
 			threw = true
 			const execErr = error as { stderr?: string; stdout?: string }
-			// Pastel renders errors to stdout (as a React component); stderr may be empty.
+			// Accept either diagnostic stream because interactive commands may render through Ink.
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
 		}
 

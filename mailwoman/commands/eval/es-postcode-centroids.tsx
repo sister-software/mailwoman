@@ -11,24 +11,35 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Build Overture-derived postcode-centroid spr DBs (#474)"
 
-const OptionsSchema = zod.object({
-	country: zod.string().default("ES").describe("ISO country code (selects the parquet + output name)"),
-	pcLen: zod.number().optional().describe("Postcode lpad width; 0 = no lpad (default 5)"),
-	parquet: zod
-		.string()
-		.optional()
-		.describe("Overture addresses parquet (default: the pinned release under the data root)"),
-	out: zod.string().optional().describe("Output SQLite DB (default <data-root>/wof/postcode-<cc>-overture.db)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "es-postcode-centroids",
+	description,
+	options: {
+		country: { type: "string", default: "ES", description: "ISO country code (selects the parquet + output name)" },
+		"pc-len": { type: "number", description: "Postcode lpad width; 0 = no lpad (default 5)" },
+		parquet: {
+			type: "string",
+			description: "Overture addresses parquet (default: the pinned release under the data root)",
+		},
+		out: { type: "string", description: "Output SQLite DB (default <data-root>/wof/postcode-<cc>-overture.db)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	country: string
+	pcLen?: number
+	parquet?: string
+	out?: string
+}
 
-const EvalESPostcodeCentroids: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalESPostcodeCentroids: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildESPostcodeCentroids } = await import("../../eval-harness/es-postcode-centroids.ts")
 

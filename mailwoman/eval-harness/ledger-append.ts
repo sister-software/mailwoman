@@ -94,8 +94,8 @@ interface Ledger {
 }
 
 /**
- * Append one gate run to the ledger. Returns the process-style exit code the old script used: 0 = appended, 1 = refused
- * (duplicate without `replace`, or an un-excepted FAIL verdict), 2 = usage error.
+ * Append one gate run to the ledger. Returns 0 when appended and 1 when refused. (duplicate without `replace`, or an
+ * un-excepted FAIL verdict), 2 = usage error.
  */
 export function ledgerAppend(options: LedgerAppendOptions): number {
 	const card = options.card ?? "neural-weights-en-us/model-card.json"

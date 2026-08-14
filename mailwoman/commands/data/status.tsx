@@ -20,44 +20,32 @@ import { existsSync, statSync } from "node:fs"
 
 import type { APIClient } from "@mailwoman/core/api"
 import { Text } from "ink"
-import { type Check, CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
+import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
-import zod from "zod"
 
 import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "../../data-bundles.ts"
 import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
 import { formatBytes } from "../../doctor/checks.ts"
 
-// `.default([])` (not just `.optional()`) is what makes Pastel emit an OPTIONAL variadic argument
-// (`[bundle...]`, zero or more) instead of a required one (`<bundle...>`) — see
-// `pastel/build/generate-arguments.js`'s `ZodArray` branch: only `ZodDefault`/`ZodOptional` wrapping
-// sets `isOptionalByDefault`. A bare `zod.array(...)` renders `<bundle...>` and Commander then REQUIRES
-// at least one positional, so a bare `mailwoman data status` would error instead of reporting on
-// every bundle.
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.default([])
-	.describe(
-		argument({
-			name: "bundle",
-			description: `Bundle name(s) to report on. Default: every bundle (${Object.keys(BUNDLES).join(", ")})`,
-		})
-	)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "status",
+	description: "Report data bundle status",
+	positionals: [
+		{ name: "bundle", multiple: true, description: `Bundle names. Default: ${Object.keys(BUNDLES).join(", ")}` },
+	],
+	options: {
+		"check-remote": { type: "boolean", default: false, description: "Check live artifact sizes" },
+		"data-root": { type: "string", description: "Override the data root" },
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	checkRemote: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("HEAD each present artifact's live Content-Length via APIClient instead of trusting the recorded size"),
-	dataRoot: zod
-		.string()
-		.optional()
-		.describe("Override the data root (default: $MAILWOMAN_DATA_ROOT or the built-in default)"),
-})
-
-export { ArgumentsSchema as args, OptionsSchema as options }
+interface Options {
+	checkRemote: boolean
+	dataRoot?: string
+}
 
 /**
  * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) — the caller falls back
@@ -163,7 +151,7 @@ async function statusForBundles(
 	return { ok, checks }
 }
 
-const DataStatus: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const DataStatus: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { mailwomanDataRoot } = await import("@mailwoman/core/utils")

@@ -18,31 +18,51 @@
  */
 
 import { Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	recipe: zod.enum(["base", "jp", "kr", "tw"]).describe("Which postcode-locality table to build"),
-	output: zod.string().describe("Output DB path (sealed 0444)"),
-	country: zod.string().optional().describe("base/jp: ISO-2 country"),
-	adminRepo: zod.string().optional().describe("base: WOF admin repo dir"),
-	postcodeDb: zod.string().optional().describe("base: postcode shard DB"),
-	radiusKm: zod.string().optional().describe("base: candidate radius km (default 10)"),
-	maxCandidates: zod.string().optional().describe("base: max candidates per postcode (default 4)"),
-	finalize: zod.boolean().default(false).describe("base: freeze an accumulated multi-country table"),
-	postalNames: zod.string().optional().describe("jp: KEN_ALL.CSV path"),
-	geonames: zod.string().optional().describe("jp/kr: GeoNames dump path"),
-	adminDb: zod.string().optional().describe("jp/kr/tw: admin gazetteer DB"),
-	postalXML: zod.string().optional().describe("tw: postal districts XML"),
-	divisions: zod.string().optional().describe("tw: Overture divisions parquet/dir"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-locality",
+	description: "Build a postcode-to-locality table.",
+	options: {
+		recipe: { type: "string", required: true, choices: ["base", "jp", "kr", "tw"], description: "Build recipe" },
+		output: { type: "string", required: true, description: "Output database" },
+		country: { type: "string", description: "ISO-2 country" },
+		"admin-repo": { type: "string", description: "WOF admin repo" },
+		"postcode-db": { type: "string", description: "Postcode shard" },
+		"radius-km": { type: "number", description: "Candidate radius km" },
+		"max-candidates": { type: "number", description: "Candidates per postcode" },
+		finalize: { type: "boolean", default: false, description: "Freeze the table" },
+		"postal-names": { type: "string", description: "KEN_ALL.CSV" },
+		geonames: { type: "string", description: "GeoNames dump" },
+		"admin-db": { type: "string", description: "Admin database" },
+		"postal-xml": { type: "string", description: "Postal districts XML" },
+		divisions: { type: "string", description: "Overture divisions" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	recipe: "base" | "jp" | "kr" | "tw"
+	output: string
+	country?: string
+	adminRepo?: string
+	postcodeDb?: string
+	radiusKm?: number
+	maxCandidates?: number
+	finalize: boolean
+	postalNames?: string
+	geonames?: string
+	adminDb?: string
+	postalXML?: string
+	divisions?: string
+}
 
-const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const need = (name: string, v: string | undefined): string => {
-			if (!v) throw commandError(`--${name} is required for --recipe ${options.recipe}`)
+			if (!v) throw new CommandError(`--${name} is required for --recipe ${options.recipe}`)
 
 			return v
 		}
@@ -63,8 +83,8 @@ const GazetteerBuildPostcodeLocality: CommandComponent<typeof OptionsSchema> = (
 					adminRepo: need("admin-repo", options.adminRepo),
 					postcodeDB: need("postcode-db", options.postcodeDb),
 					output: options.output,
-					radiusKm: Number(options.radiusKm ?? "10.0"),
-					maxCandidates: Number.parseInt(options.maxCandidates ?? "4", 10),
+					radiusKm: options.radiusKm ?? 10,
+					maxCandidates: options.maxCandidates ?? 4,
 					finalize: false,
 				})
 

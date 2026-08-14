@@ -10,19 +10,30 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	locales: zod.string().optional().describe("Comma-separated locales (default: all shipped FST locales)"),
-	db: zod.string().optional().describe("WOF admin DB (default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)"),
-	output: zod.string().optional().describe("Output dir (default: $MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated)"),
-	uncurated: zod.boolean().default(false).describe("A/B control build: same DB, no curation"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "fst",
+	description: "Build curated per-locale decode-bias FST gazetteers.",
+	options: {
+		locales: { type: "string", description: "Comma-separated locales (default: all shipped FST locales)" },
+		db: { type: "string", description: "WOF admin DB (default: $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)" },
+		output: { type: "string", description: "Output dir (default: $MAILWOMAN_DATA_ROOT/wof/fst-per-locale-curated)" },
+		uncurated: { type: "boolean", default: false, description: "A/B control build: same DB, no curation" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	locales?: string
+	db?: string
+	output?: string
+	uncurated: boolean
+}
 
-const GazetteerBuildFST: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildFST: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildLocaleFSTs } = await import("../../../gazetteer-pipeline/fst.ts")
 

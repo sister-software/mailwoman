@@ -20,16 +20,24 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	output: zod.string().optional().describe("Output path. Default <repo>/data/gazetteer/affix-relabel-lexicon-v2.json"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "affix-relabel",
+	description: "Export the street-affix relabel lexicon.",
+	options: {
+		output: { type: "string", description: "Output path" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	output?: string
+}
 
-const GazetteerAffixRelabel: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerAffixRelabel: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { AbbreviationToDirectional, DirectionalToAbbreviationMap, NAME_PRONE_US_SUFFIXES, US_STREET_SUFFIX_LOOKUP } =
 			await import("@mailwoman/codex/us")

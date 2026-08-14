@@ -1,0 +1,60 @@
+---
+title: CLI architecture
+---
+
+# CLI architecture
+
+Mailwoman's CLI uses an explicit lazy router. Selecting a command must not import unrelated commands or interactive UI
+dependencies.
+
+## Command shape
+
+`mailwoman/cli.ts` is the small process entry. It applies process-wide settings, reads arguments through
+`@mailwoman/core/scripting/arguments`, and asks `mailwoman/cli-native/router.ts` for an explicitly registered command.
+The router holds only a summary, an optional routing predicate, and a dynamic loader:
+
+```ts
+geocode: {
+  summary: "Turn an address into a coordinate.",
+  accepts: args => !args.includes("--debug"),
+  load: () => import("./commands/geocode.ts"),
+}
+```
+
+An ordinary command is an async `run(args) → exitCode` function. Its framework-neutral `CommandSpec` drives strict
+`node:util.parseArgs` parsing and detailed help. `@isaacs/cliui/min` is dynamically imported only by the help renderer.
+Ink is reserved for interactive interfaces and must sit behind a dynamic route such as `geocode --debug`.
+
+## Dependency rules
+
+- The root router never imports command implementations statically.
+- Root command summaries live in the router; root help does not load commands to discover metadata.
+- Validation happens before heavy runtime imports.
+- Command results go directly to stdout; diagnostics and progress go to stderr.
+- Machine output never passes through an Ink frame.
+- Shared domain policy lives outside command adapters.
+- Process argument access lives in `@mailwoman/core/scripting/arguments`. Cleanup and logging remain in the heavier
+  `@mailwoman/core/scripting/utils` entry.
+
+## Adding or converting a command
+
+1. Define its static router summary and lazy loader.
+2. Express flags and positionals as a `CommandSpec`.
+3. Put reusable work in a framework-free function.
+4. Implement `run()` with direct stdout/stderr and an explicit exit code.
+5. Dynamically import optional or heavy dependencies only after parsing and validation.
+6. Test help, errors, output bytes, and exit codes.
+7. Keep an Ink adapter only when the command has a genuinely interactive route.
+
+## Runtime schema policy
+
+Use runtime schemas at external data boundaries, not as a general-purpose source of TypeScript types:
+
+- Keep `@hono/zod-openapi` where schemas both validate HTTP requests and generate OpenAPI.
+- Validate environment variables before deriving typed configuration.
+- Keep MCP tool input schemas while the SDK consumes Zod contracts.
+- Validate decoded eval and corpus records when malformed persisted data would otherwise enter the runtime.
+- Validate structured values embedded in CLI arguments after `CommandSpec` has parsed the argument itself.
+- Test native command validation through `CLIUsageError`, not through a schema library's error class.
+
+Do not use Zod merely to coerce a CLI number, enumerate flag choices, or infer a command component's props.

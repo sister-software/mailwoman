@@ -23,18 +23,28 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	pbf: zod.string().describe("Geofabrik .osm.pbf extract to read"),
-	out: zod.string().describe("Destination JSONL"),
-	country: zod.string().optional().describe("ISO 3166-1 alpha-2 stamped onto every row"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "sub-venue-extract",
+	description: "Extract sub-venue structure from an OSM PBF.",
+	options: {
+		pbf: { type: "string", required: true, description: "Geofabrik .osm.pbf extract to read" },
+		out: { type: "string", required: true, description: "Destination JSONL" },
+		country: { type: "string", description: "ISO 3166-1 alpha-2 stamped onto every row" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	pbf: string
+	out: string
+	country?: string
+}
 
-const CorpusSubVenueExtract: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusSubVenueExtract: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		// @mailwoman/osm is a devDependency ONLY — it is unpublished (ODbL counsel sign-off pending,
 		// see osm/README.md), so a static import here breaks every clean install of the published

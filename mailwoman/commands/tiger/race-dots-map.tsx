@@ -9,34 +9,49 @@
  *   posture of `mailwoman serve`.
  */
 
+import { tempRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	pmtilesUrl: zod
-		.string()
-		.default("http://localhost:8899/race-dots-oc.pmtiles")
-		.describe("Dots tileset URL the page reads client-side"),
-	out: zod.string().default("/tmp/race-dots-oc.html").describe("Output HTML path"),
-	per: zod.number().default(5).describe("People represented by one dot (title/legend copy)"),
-	title: zod.string().optional().describe("Page title (default derives from --per)"),
-	lng: zod.number().default(-117.83).describe("Initial map center longitude"),
-	lat: zod.number().default(33.68).describe("Initial map center latitude"),
-	zoom: zod.number().default(9.4).describe("Initial map zoom"),
-	serve: zod
-		.boolean()
-		.default(false)
-		.describe("After writing, serve the output directory with HTTP Range support and stay running"),
-	port: zod.number().default(8899).describe("--serve port"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "race-dots-map",
+	description: "Render a race-dots PMTiles map.",
+	options: {
+		"pmtiles-url": {
+			type: "string",
+			default: "http://localhost:8899/race-dots-oc.pmtiles",
+			description: "Dots tileset URL",
+		},
+		out: { type: "string", default: tempRootPath("race-dots-oc.html"), description: "Output HTML" },
+		per: { type: "number", default: 5, description: "People per dot" },
+		title: { type: "string", description: "Page title" },
+		lng: { type: "number", default: -117.83, description: "Center longitude" },
+		lat: { type: "number", default: 33.68, description: "Center latitude" },
+		zoom: { type: "number", default: 9.4, description: "Initial zoom" },
+		serve: { type: "boolean", default: false, description: "Serve after writing" },
+		port: { type: "number", default: 8899, description: "Server port" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	pmtilesUrl: string
+	out: string
+	per: number
+	title?: string
+	lng: number
+	lat: number
+	zoom: number
+	serve: boolean
+	port: number
+}
 
 const report = (line: string): void => console.error(line)
 
-const TIGERRaceDotsMap: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 	const [serving, setServing] = useState<{ dir: string; port: number } | null>(null)
 
 	const state = useCommandTask(async () => {

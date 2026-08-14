@@ -18,7 +18,7 @@
  *   three drop-ins already declare `mailwoman` as a dependency, so landing the whole thing here adds
  *   no dependency to anyone.
  *
- *   WHY IT IS NOT IN `cli-kit/index.ts`: that barrel is the Pastel/Ink toolkit for
+ *   WHY IT IS NOT IN `cli-kit/index.ts`: that barrel is the Ink toolkit for
  *   `mailwoman/commands/*` and imports `ink` + `react`. The drop-ins are plain `parseArgs` scripts
  *   that render no UI, and `npx @mailwoman/libpostal serve` should not pay for a TUI runtime to
  *   start an HTTP server. Hence a standalone module with its own `mailwoman/cli-kit/dropin`

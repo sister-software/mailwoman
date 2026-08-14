@@ -9,24 +9,36 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Train the coarse placer (#244) — SGD logistic regression, CPU-only"
 
-const OptionsSchema = zod.object({
-	epochs: zod.number().default(12).describe("SGD epochs"),
-	lr: zod.number().default(0.1).describe("Initial learning rate (decays per epoch)"),
-	l2: zod.number().default(0.000001).describe("L2 regularization"),
-	out: zod.string().optional().describe("Artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model)"),
-	data: zod.string().optional().describe("Dataset dir (default <repo>/data/coarse-placer)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "train",
+	description,
+	options: {
+		epochs: { type: "number", default: 12, description: "SGD epochs" },
+		lr: { type: "number", default: 0.1, description: "Initial learning rate (decays per epoch)" },
+		l2: { type: "number", default: 0.000001, description: "L2 regularization" },
+		out: { type: "string", description: "Artifact dir (default $MAILWOMAN_DATA_ROOT/coarse-placer/model)" },
+		data: { type: "string", description: "Dataset dir (default <repo>/data/coarse-placer)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	epochs: number
+	lr: number
+	l2: number
+	out?: string
+	data?: string
+}
 
 const report = (line: string): void => console.error(line)
 
-const PlacerTrain: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const PlacerTrain: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { trainCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 

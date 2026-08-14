@@ -14,11 +14,20 @@ import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
 import type { createRuntimePipeline } from "mailwoman"
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	type ParsedCommandComponent,
+	useCommandTask,
+	writeRawStdout,
+} from "mailwoman/cli-kit"
 import { probeWeights, WeightsGuard, type WeightsOutcome } from "mailwoman/cli-kit/weights-guard"
-import { argument } from "pastel"
 import type React from "react"
-import zod from "zod"
+
+import { resolverDefaultCountry } from "../country-scope.ts"
+
+export { localeToCountry, resolverDefaultCountry } from "../country-scope.ts"
+export type { CountryScope } from "../country-scope.ts"
 
 /**
  * Bytes per KiB, for human-readable sizes.
@@ -28,201 +37,115 @@ const BYTES_PER_KIB = 1024
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.describe(argument({ name: "address", description: "A formatted postal address" }))
-
 /**
  * Shown at the top of `mailwoman parse --help`. The one thing it has to settle is parse-vs-geocode (#1577): the two
  * commands take the same argument and the difference is invisible until you have run both.
  *
- * Commander reuses this string for the root `mailwoman --help` listing (it has no `summary()` seam Pastel exposes), so
- * it is held to two sentences — long enough to draw the line, short enough not to swamp the 30-command index.
+ * Keep this short enough to draw the parse/geocode line without swamping command help.
  */
 export const description =
 	"Label the parts of an address — house number, street, locality, postcode — without looking anything up: the " +
 	"output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then resolves those " +
 	"parts against the gazetteer to produce a coordinate."
 
-export { ArgumentsSchema as args, ParseConfigSchema as options }
+const boundedInteger =
+	(maximum: number) =>
+	(value: number): boolean =>
+		Number.isInteger(value) && value >= 1 && value <= maximum
 
-const ParseConfigSchema = zod.object({
-	debug: zod.boolean().optional().default(false).describe("Enable verbose debugging output"),
-	inputMode: zod
-		.enum(["fragmented", "formatted"])
-		.optional()
-		.describe(
-			"Input register (Decision A): 'fragmented' feeds the evidence-bundle channels (map-search register), " +
-				"'formatted' runs them off (validation/record register). Unset → derived from the input's shape."
-		),
-	locale: zod
-		.string()
-		.regex(/^[a-z]{2}(-[A-Z]{2})?$/u, "Expected a BCP-47 tag like en-US or fr-FR")
-		.optional()
-		.default("en-US")
-		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
-	defaultCountry: zod
-		.string()
-		.optional()
-		.describe(
-			"ISO-3166 country to scope the WOF resolver when the parse carries no resolved country node — " +
-				"e.g. 'US' so a bare 'NY' resolves to the US state, not a higher-priority foreign homonym. " +
-				"Requires --resolve. Defaults from --locale's region subtag (en-US → US); pass 'none' to disable " +
-				"the filter and let ranking alone decide."
-		),
-	countryScope: zod
-		.enum(["auto", "locale", "none"])
-		.optional()
-		.default("auto")
-		.describe(
-			"Whether the locale-inferred country scopes the resolver: 'locale' always, 'none' never, " +
-				"'auto' (default) passes the locale's region subtag regardless of backend. " +
-				"Pin 'locale' or 'none' to hold country policy fixed while changing backends. " +
-				"An explicit --default-country outranks all three."
-		),
-	adminCoherence: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe(
-			"Joint admin-consistency re-pick during --resolve (#263/#822: 'Portland, ME' binds to Maine, not Messina). " +
-				"ON by default (#895); pass --no-admin-coherence to restore the greedy population-first ranking."
-		),
-	postcodeCountryCoherence: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe(
-			"#42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a " +
-				"wrong --default-country. '12 Rue de Rivoli, 75001 Paris' under en-US otherwise resolves to Paris, Texas. " +
-				"Abstains when the default country is already consistent, when no country is, or when more than one is. " +
-				"ON by default (promoted 2026-08-05); pass --no-postcode-country-coherence to restore the un-overridden " +
-				"country scope. Requires --resolve."
-		),
-	postcodeShapeCoherence: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"#31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident " +
-				"sibling signal (country/region) is demoted: digit-only → house_number, letter-bearing → stamped " +
-				"'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. " +
-				"DEFAULT OFF (demotion is the failure mode with teeth); pass --postcode-shape-coherence to opt in. " +
-				"Requires --resolve."
-		),
-	postcodeContainmentCoherence: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"#31: re-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the " +
-				"locality that CONTAINS the postcode wins the name-match tie. DEFAULT OFF; pass " +
-				"--postcode-containment-coherence to opt in. Requires --resolve."
-		),
-	neural: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("[Legacy] Force the neural-classifier-only path (skips Stage 1 + 2 + 2.5 of the pipeline)."),
-	poi: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe(
-			"poi_query detection (poiQueryKind flag). DEFAULT-ON since 2026-07-20 (promotion battery: 0/4507 golden " +
-				"misroutes, 6/6 demo presets byte-identical). Pass --no-poi to restore the pre-flag address-only kind classification."
-		),
-	downloadWeights: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"If the locale's neural weights aren't installed, download them into ~/.cache/mailwoman/weights " +
-				"without prompting, then parse. Non-interactive-safe (CI, pipes)."
-		),
-	degraded: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Run the structural pipeline stages only (normalize, query-shape, kind, grouper) without the neural " +
-				"encoder, even when weights are installed. A stderr banner names what's degraded."
-		),
-	format: zod.enum(["json", "tuple", "xml"]).optional().default("json").describe("Output projection."),
-	model: zod.string().optional().describe("Explicit model.onnx path (--neural only). Overrides --locale resolution."),
-	tokenizer: zod
-		.string()
-		.optional()
-		.describe("Explicit tokenizer.model path (--neural only). Overrides --locale resolution."),
-	policy: zod
-		.array(zod.string().regex(POLICY_SPEC_RE, "Expected <component>=<mode> e.g. postcode=neural_preferred"))
-		.optional()
-		.describe(
-			"Per-component policy override, repeatable. <component>=<mode> where mode is one of: " +
-				POLICY_MODES.join(", ") +
-				". Requires --neural."
-		),
-	resolve: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Run the parsed tree through the WOF resolver (Phase 4.3) — decorates matched nodes with wof:<id> + lat/lon. Requires --neural."
-		),
-	resolveDb: zod
-		.string()
-		.optional()
-		.describe(
-			"Path to a WOF SQLite distribution for --resolve. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set."
-		),
-	streetEvidenceRerank: zod
-		.boolean()
-		.optional()
-		.default(true)
-		.describe(
-			"#727 phase-4c: rerank the STREET on BAN name-existence evidence (FR street-centroids). DEFAULT-ON: a no-op " +
-				"unless a v3+ span-head model + street-centroids-fr.db are both present (byte-stable otherwise). " +
-				"Splices only an atlas-confirmed street into the argmax tree. Pass --no-street-evidence-rerank to disable."
-		),
-	candidates: zod.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(20)
-		.optional()
-		.describe(
-			"Surface up to N alternative resolutions per resolved node (Springfield-class disambiguation). " +
-				"Requires --resolve. Output format-dependent: json emits node.alternatives arrays, xml emits " +
-				"<alternative> child elements, tuple unchanged."
-		),
-	benchmark: zod.coerce
-		.number()
-		.int()
-		.min(1)
-		.max(10_000)
-		.optional()
-		.describe(
-			"Run the pipeline N times against the input and emit per-stage p50/p95/p99 + total wall + heap delta. " +
-				"5-iteration warmup is excluded from the stats. Default path only (incompatible with --policy)."
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "parse",
+	description,
+	positionals: [{ name: "address", required: true, multiple: true, description: "Formatted postal address" }],
+	options: {
+		debug: { type: "boolean", default: false, description: "Enable verbose output" },
+		"input-mode": { type: "string", choices: ["fragmented", "formatted"], description: "Input register" },
+		locale: {
+			type: "string",
+			default: "en-US",
+			validate: (v: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(v),
+			description: "BCP-47 locale",
+		},
+		"default-country": { type: "string", description: "Resolver country scope" },
+		"country-scope": {
+			type: "string",
+			choices: ["auto", "locale", "none"],
+			default: "auto",
+			description: "Locale country-scoping policy",
+		},
+		"admin-coherence": { type: "boolean", default: true, description: "Joint admin consistency" },
+		"postcode-country-coherence": { type: "boolean", default: true, description: "Postcode country consistency" },
+		"postcode-shape-coherence": { type: "boolean", default: false, description: "Postcode shape consistency" },
+		"postcode-containment-coherence": {
+			type: "boolean",
+			default: false,
+			description: "Postcode containment reranking",
+		},
+		neural: { type: "boolean", default: false, description: "Use neural-only path" },
+		poi: { type: "boolean", default: true, description: "Enable POI query detection" },
+		"download-weights": { type: "boolean", default: false, description: "Download missing weights" },
+		degraded: { type: "boolean", default: false, description: "Run structural stages only" },
+		format: { type: "string", choices: ["json", "tuple", "xml"], default: "json", description: "Output projection" },
+		model: { type: "string", description: "Explicit model path" },
+		tokenizer: { type: "string", description: "Explicit tokenizer path" },
+		policy: {
+			type: "string",
+			multiple: true,
+			validate: (v: string) => POLICY_SPEC_RE.test(v),
+			description: "Repeatable component policy override",
+		},
+		resolve: { type: "boolean", default: false, description: "Resolve parsed nodes against WOF" },
+		"resolve-db": { type: "string", description: "WOF SQLite distribution" },
+		"street-evidence-rerank": { type: "boolean", default: true, description: "Rerank street from atlas evidence" },
+		candidates: { type: "number", validate: boundedInteger(20), description: "Alternative resolutions per node" },
+		benchmark: { type: "number", validate: boundedInteger(10_000), description: "Benchmark iteration count" },
+	},
+} as const satisfies CommandSpec
+
+interface ParseOptions {
+	debug: boolean
+	inputMode?: "fragmented" | "formatted"
+	locale: string
+	defaultCountry?: string
+	countryScope: "auto" | "locale" | "none"
+	adminCoherence: boolean
+	postcodeCountryCoherence: boolean
+	postcodeShapeCoherence: boolean
+	postcodeContainmentCoherence: boolean
+	neural: boolean
+	poi: boolean
+	downloadWeights: boolean
+	degraded: boolean
+	format: "json" | "tuple" | "xml"
+	model?: string
+	tokenizer?: string
+	policy?: string[]
+	resolve: boolean
+	resolveDb?: string
+	streetEvidenceRerank: boolean
+	candidates?: number
+	benchmark?: number
+}
 
 interface PolicyOverride {
 	component: ComponentTag
 	mode: PolicyMode
 }
 
-function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
+function parsePolicySpecs(policySpecs: readonly string[]): PolicyOverride[] {
 	const out: PolicyOverride[] = []
 
-	for (const spec of specs) {
-		const m = POLICY_SPEC_RE.exec(spec)
+	for (const policySpec of policySpecs) {
+		const m = POLICY_SPEC_RE.exec(policySpec)
 
-		if (!m) throw commandError(`Invalid --policy spec ${spec}; expected <component>=<mode>`)
+		if (!m) throw new CommandError(`Invalid --policy spec ${policySpec}; expected <component>=<mode>`)
 		const [, component, mode] = m
 
 		if (!POLICY_MODES.includes(mode as PolicyMode)) {
-			throw commandError(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
+			throw new CommandError(`Unknown policy mode ${mode}; valid: ${POLICY_MODES.join(", ")}`)
 		}
 
 		out.push({ component: component as ComponentTag, mode: mode as PolicyMode })
@@ -231,7 +154,7 @@ function parsePolicySpecs(specs: readonly string[]): PolicyOverride[] {
 	return out
 }
 
-const ParseCommand: CommandComponent<typeof ParseConfigSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) => {
 	// The weights guard wraps the DEFAULT pipeline path only — explicit --model/--tokenizer paths and
 	// the legacy/benchmark/degraded paths keep their existing loading semantics untouched (plan 3;
 	// non-interactive absent-weights behavior stays byte-identical to pre-guard until plan 4).
@@ -261,8 +184,8 @@ function ParseTask({
 	args,
 	weightsOutcome,
 }: {
-	options: zod.infer<typeof ParseConfigSchema>
-	args: zod.infer<typeof ArgumentsSchema>
+	options: ParseOptions
+	args: string[]
 	weightsOutcome: WeightsOutcome
 }): React.ReactElement | null {
 	const state = useCommandTask(async () => {
@@ -270,7 +193,7 @@ function ParseTask({
 
 		if (options.benchmark !== undefined) {
 			if ((options.policy && options.policy.length) || options.neural) {
-				throw commandError(
+				throw new CommandError(
 					"--benchmark requires the default runtime-pipeline path (incompatible with --policy / --neural)"
 				)
 			}
@@ -313,68 +236,12 @@ function ParseTask({
 	return writeRawStdout(state.result)
 }
 
-/**
- * ISO-3166 country for the resolver's `defaultCountry`, inferred from a BCP-47 locale's region subtag (en-US → US,
- * fr-FR → FR, de-DE → DE). Returns `undefined` when the locale carries no 2-letter region subtag (so the resolver stays
- * global rather than guessing from a language alone). Script subtags (`Hant`, `Latn`) are ignored.
- */
-export function localeToCountry(locale: string | undefined): string | undefined {
-	if (!locale) return undefined
-	const parts = locale.split("-")
-	const region = parts.length > 1 ? parts.at(-1) : undefined
-
-	return region && /^[A-Za-z]{2}$/.test(region) ? region.toUpperCase() : undefined
-}
-
-/**
- * Whether the locale-inferred country scopes the resolver. `auto` defers to the backend; `locale` and `none` state the
- * policy outright.
- */
-export type CountryScope = "auto" | "locale" | "none"
-
-/**
- * The resolver's `defaultCountry` for this invocation. An explicit `--default-country` outranks everything (`none`
- * meaning "no filter"); otherwise `--country-scope` decides whether `--locale`'s region subtag becomes the scope.
- *
- * Without a scope, a bare region abbreviation (`NY`) resolves to whatever the gazetteer ranks highest globally — often
- * a foreign homonym rather than the US state — so the FTS backend needs the locale default to match the demo. The
- * candidate-table backend uses population-first ranking (#1546, alias-surface recall), but the locale hint is still
- * valuable: a structured query under en-NZ that the model parses to house+street+locality carries enough signal that
- * the country scope should gate the candidate lookup (2026-08-08 NZ scope-leakage diagnosis — "22 Customs Street East,
- * Auckland Central" resolved to Queensland under en-US default because the candidate backend dropped the NZ locale
- * hint).
- *
- * Bare-locality trees ("Hillsborough" / "Paris") are protected separately by {@link isBareLocalityTree} — those queries
- * navigate through the `!isBareLocalityTree` gate before reaching this function, so a lone "Paris" under en-US will
- * never be hard-scoped to Paris, Texas.
- *
- * `locale` and `none` exist to hold country policy fixed across a backend change. Any A/B that reports a backend
- * difference has to pin one of them — see docs/engineering/reference/resolver-backends.mdx.
- */
-export function resolverDefaultCountry(
-	options: { defaultCountry?: string; locale?: string; countryScope?: CountryScope },
-	_candidateActive = false
-): string | undefined {
-	if (options.defaultCountry === "none") return undefined
-
-	if (options.defaultCountry) return options.defaultCountry
-
-	switch (options.countryScope ?? "auto") {
-		case "none":
-			return undefined
-		case "locale":
-			return localeToCountry(options.locale)
-		default:
-			return localeToCountry(options.locale)
-	}
-}
-
-async function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+async function resolveWOFPath(options: ParseOptions): Promise<string> {
 	const { $public } = await import("@mailwoman/core/env")
 	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
-		throw commandError(
+		throw new CommandError(
 			"--resolve needs a WOF SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
 				"Download from https://data.geocode.earth/wof/dist/sqlite/ and pre-build the FTS5 index " +
 				"with `mailwoman gazetteer build fts <path>`."
@@ -384,7 +251,7 @@ async function resolveWOFPath(options: zod.infer<typeof ParseConfigSchema>): Pro
 	return path
 }
 
-async function tryBuildFST(options: zod.infer<typeof ParseConfigSchema>): Promise<FSTMatcher | undefined> {
+async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
 	const { $public } = await import("@mailwoman/core/env")
 	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
 
@@ -411,7 +278,7 @@ async function tryBuildFST(options: zod.infer<typeof ParseConfigSchema>): Promis
 async function resolveWithCandidates(
 	resolver: Resolver,
 	tree: AddressTree,
-	options: zod.infer<typeof ParseConfigSchema>
+	options: ParseOptions
 ): Promise<AddressTree> {
 	const opts: {
 		candidatesPerLookup?: number
@@ -456,10 +323,7 @@ async function resolveWithCandidates(
 	return resolver.resolveTree(tree, opts)
 }
 
-async function withResolver<T>(
-	options: zod.infer<typeof ParseConfigSchema>,
-	fn: (resolver: Resolver) => Promise<T>
-): Promise<T> {
+async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) => Promise<T>): Promise<T> {
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 	const { createResolverBackend, resolveCandidateDBPath } = await import("../resolver-backend.ts")
 
@@ -470,7 +334,7 @@ async function withResolver<T>(
 	try {
 		mod = await import("@mailwoman/resolver-wof-sqlite")
 	} catch {
-		throw commandError(
+		throw new CommandError(
 			"--resolve requires `@mailwoman/resolver-wof-sqlite` to be installed. " +
 				"Run `npm install @mailwoman/resolver-wof-sqlite` and try again."
 		)
@@ -518,7 +382,7 @@ async function serializeTree(
  * announced by `tryLoadNeural` instead (see #1108), so this banner is deliberately NOT emitted there (it would double
  * up).
  */
-function emitDegradedBanner(options: zod.infer<typeof ParseConfigSchema>): void {
+function emitDegradedBanner(options: ParseOptions): void {
 	console.error(
 		"⚠ degraded parse: the neural encoder is not loaded — output carries structural-pipeline results only.\n" +
 			`  Upgrade: npm install ${weightsPackageName(options.locale)}   or   mailwoman parse --download-weights <address>`
@@ -547,7 +411,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  * owns the degraded notice — either {@link emitDegradedBanner} or the precise absent/load-error warning `tryLoadNeural`
  * already printed — so no path degrades silently, and none double-warns.
  */
-async function runStructuralPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
 	const { createRuntimePipeline } = await import("mailwoman")
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
@@ -562,7 +426,7 @@ async function runStructuralPipeline(input: string, options: zod.infer<typeof Pa
  * Structural parse fronted by the generic degraded banner — the guard's `declined` entry point (the caller here did NOT
  * attempt an encoder load, so it owns the notice).
  */
-async function runDegraded(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+async function runDegraded(input: string, options: ParseOptions): Promise<string> {
 	emitDegradedBanner(options)
 
 	return runStructuralPipeline(input, options)
@@ -573,7 +437,7 @@ async function runDegraded(input: string, options: zod.infer<typeof ParseConfigS
  * serialized in the requested format. When the encoder is unavailable, degrades to the structural-pipeline stages
  * (normalize → query-shape → kind → grouper fast-paths) rather than any rules parser.
  */
-async function runPipeline(input: string, options: zod.infer<typeof ParseConfigSchema>): Promise<string> {
+async function runPipeline(input: string, options: ParseOptions): Promise<string> {
 	// `tryLoadNeural` emits its own precise (absent vs. corrupt/load-error) stderr warning when the load
 	// fails, so an attempted-but-failed encoder load is NEVER silent — including on the --resolve/--debug
 	// paths, which don't route through the degraded banner below (#1108). Every route into this function
@@ -718,11 +582,7 @@ function formatBytes(b: number): string {
  * first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle before measurement. Useful for
  * catching regressions when training models or coordinator changes affect inference cost.
  */
-async function runBenchmark(
-	input: string,
-	options: zod.infer<typeof ParseConfigSchema>,
-	iterations: number
-): Promise<string> {
+async function runBenchmark(input: string, options: ParseOptions, iterations: number): Promise<string> {
 	// `--degraded` is the encoder-less benchmark: the weights guard never runs on this path (it is
 	// gated on `benchmark === undefined`), so the flag has to be read here or it silently does nothing.
 	const classifier = options.degraded ? undefined : await tryLoadNeural(options)
@@ -849,9 +709,7 @@ async function runBenchmark(
  *
  * The warning goes to STDERR, never STDOUT, so piped stdout parsing is unaffected.
  */
-async function tryLoadNeural(
-	options: zod.infer<typeof ParseConfigSchema>
-): Promise<NeuralAddressClassifier | undefined> {
+async function tryLoadNeural(options: ParseOptions): Promise<NeuralAddressClassifier | undefined> {
 	try {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 
@@ -915,7 +773,7 @@ async function serializeResult(
 
 async function runNeural(
 	input: string,
-	options: zod.infer<typeof ParseConfigSchema>,
+	options: ParseOptions,
 	policyOverrides: readonly PolicyOverride[]
 ): Promise<string> {
 	const { collectProposals, filterByPolicy, InMemoryPolicyRegistry } = await import("@mailwoman/core/policy")

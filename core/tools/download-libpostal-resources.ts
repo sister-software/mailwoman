@@ -29,6 +29,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { isDirectory } from "@mailwoman/core/fs"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
@@ -68,11 +69,7 @@ export async function downloadLibpostalResources(
 			report?.("Warning: The dictionaries directory already exists. Deleting it due to --force flag.")
 			await rm(DICTIONARIES_DIR, { recursive: true, force: true })
 		} else {
-			// Guidance-grade refusal: suppress the stack so the CLI renders just the message
-			// (core can't import mailwoman/cli-kit's commandError — wrong dependency direction).
-			const error = new Error("The dictionaries directory already exists. Remove it first or pass --force.")
-			error.stack = error.message
-			throw error
+			throw new CommandError("The dictionaries directory already exists. Remove it first or pass --force.")
 		}
 	}
 

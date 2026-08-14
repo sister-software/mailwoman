@@ -12,19 +12,21 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "mailwoman/gazetteer-pipeline/defaults"
-import zod from "zod"
 
-const ArgumentsSchema = zod.array(
-	zod.string().describe(`Candidate DB to promote. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)
-)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "promote",
+	description: "Promote a candidate gazetteer database.",
+	positionals: [
+		{ name: "candidate-db", description: `Candidate DB to promote. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}` },
+	],
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({})
-
-export { ArgumentsSchema as args, OptionsSchema as options }
-
-const GazetteerPromote: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args }) => {
+const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
 		const { promoteCandidate, wofDir } = await import("mailwoman/gazetteer-pipeline")

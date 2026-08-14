@@ -43,10 +43,15 @@ import { pipeline } from "node:stream/promises"
 import type { APIClient } from "@mailwoman/core/api"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Text } from "ink"
-import { type Check, CheckList, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
+import {
+	type Check,
+	CheckList,
+	CommandError,
+	type CommandSpec,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
-import zod from "zod"
 
 import {
 	artifactURL,
@@ -59,35 +64,55 @@ import {
 import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
 import { formatBytes } from "../../doctor/checks.ts"
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.describe(argument({ name: "bundle", description: `Bundle name(s) to pull: ${Object.keys(BUNDLES).join(", ")}` }))
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "pull",
+	description: "",
+	positionals: [
+		{
+			name: "bundle",
+			required: true,
+			multiple: true,
+			description: `Bundle name(s) to pull: ${Object.keys(BUNDLES).join(", ")}`,
+		},
+	],
+	options: {
+		"dry-run": {
+			type: "boolean",
+			default: false,
+			description: "Print the download plan; touch no network and write nothing",
+		},
+		only: {
+			type: "string",
+			description: "Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)",
+		},
+		force: {
+			type: "boolean",
+			default: false,
+			description: "Re-download even when a local copy already appears present",
+		},
+		"data-root": {
+			type: "string",
+			description: "Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)",
+		},
+		host: {
+			type: "string",
+			validate: (value: string) => URL.canParse(value),
+			description:
+				"Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket.",
+		},
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	dryRun: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Print the download plan; touch no network and write nothing"),
-	only: zod
-		.string()
-		.optional()
-		.describe("Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)"),
-	force: zod.boolean().optional().default(false).describe("Re-download even when a local copy already appears present"),
-	dataRoot: zod
-		.string()
-		.optional()
-		.describe("Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)"),
-	host: zod
-		.string()
-		.url()
-		.optional()
-		.describe(
-			"Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket."
-		),
-})
-
-export { ArgumentsSchema as args, OptionsSchema as options }
+interface Options {
+	dryRun: boolean
+	only?: string
+	force: boolean
+	dataRoot?: string
+	host?: string
+}
 
 /**
  * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via `resolveShardPath`), or the
@@ -323,11 +348,11 @@ async function pullBundles(
 	return { ok, checks, pulledCandidate }
 }
 
-const DataPull: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const DataPull: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			if (!args.length) {
-				throw commandError(`mailwoman data pull <bundle...> — known bundles: ${Object.keys(BUNDLES).join(", ")}`)
+				throw new CommandError(`mailwoman data pull <bundle...> — known bundles: ${Object.keys(BUNDLES).join(", ")}`)
 			}
 
 			const dataRoot = options.dataRoot ?? mailwomanDataRoot()

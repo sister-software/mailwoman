@@ -20,7 +20,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
-import { options as parseOptions } from "../commands/parse.tsx"
+import { parseCommand } from "../cli-native/spec.ts"
+import { spec as parseSpec } from "../commands/parse.tsx"
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
@@ -31,17 +32,17 @@ const hasWOFDb = existsSync(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDb)
 
-describe("--resolve schema validation", () => {
+describe("--resolve option validation", () => {
 	test("--resolve defaults to false", () => {
-		expect(parseOptions.parse({}).resolve).toBe(false)
+		expect(parseCommand(parseSpec, ["address"]).values.resolve).toBe(false)
 	})
 
 	test("--resolve accepts true", () => {
-		expect(parseOptions.parse({ resolve: true, neural: true }).resolve).toBe(true)
+		expect(parseCommand(parseSpec, ["--resolve", "--neural", "address"]).values.resolve).toBe(true)
 	})
 
 	test("--resolve-db accepts an arbitrary path string", () => {
-		expect(parseOptions.parse({ resolveDb: "/tmp/wof.db" }).resolveDb).toBe("/tmp/wof.db")
+		expect(parseCommand(parseSpec, ["--resolve-db", "/tmp/wof.db", "address"]).values["resolve-db"]).toBe("/tmp/wof.db")
 	})
 })
 

@@ -44,9 +44,7 @@ function stripAnsiSpinner(stdout: string): string {
 
 describe("mailwoman reverse — argument and DB error paths", () => {
 	test("exits non-zero with a clear message when lat/lon are missing", async () => {
-		// Pastel intercepts missing-positional-arg BEFORE our React component runs and writes the
-		// error to stderr (not stdout). Asserting on stderr here; all other error paths go through
-		// the component and land on stdout.
+		// Native CLI usage and operational errors consistently land on stderr.
 		await expect(
 			exec("node", [cliBin, "reverse"], {
 				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
@@ -61,9 +59,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 			exec("node", [cliBin, "reverse", "40.7128", "-74.0060"], {
 				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
-		).rejects.toMatchObject({
-			stdout: expect.stringMatching(/needs an admin DB path/),
-		})
+		).rejects.toMatchObject({ stderr: expect.stringMatching(/needs an admin DB path/) })
 	})
 
 	test("exits non-zero for an out-of-range latitude", async () => {
@@ -71,9 +67,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 			exec("node", [cliBin, "reverse", "91", "0"], {
 				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
-		).rejects.toMatchObject({
-			stdout: expect.stringMatching(/Invalid latitude/),
-		})
+		).rejects.toMatchObject({ stderr: expect.stringMatching(/Invalid latitude/) })
 	})
 
 	test("exits non-zero for a non-numeric argument", async () => {
@@ -81,9 +75,7 @@ describe("mailwoman reverse — argument and DB error paths", () => {
 			exec("node", [cliBin, "reverse", "not-a-number", "0"], {
 				env: childEnv({ MAILWOMAN_WOF_ADMIN_DB: "", NODE_NO_WARNINGS: "1" }),
 			})
-		).rejects.toMatchObject({
-			stdout: expect.stringMatching(/Invalid latitude/),
-		})
+		).rejects.toMatchObject({ stderr: expect.stringMatching(/Invalid latitude/) })
 	})
 })
 

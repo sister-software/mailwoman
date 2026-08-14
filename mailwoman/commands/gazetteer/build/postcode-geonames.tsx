@@ -15,25 +15,35 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	countries: zod
-		.string()
-		.optional()
-		.describe(`Comma-separated ISO-2 codes, in ingest order. Default: ${DEFAULT_GEONAMES_TAIL_COUNTRIES.join(",")}`),
-	out: zod
-		.string()
-		.optional()
-		.describe("Output path. Default <data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db"),
-	geonamesPostal: zod.string().optional().describe("GeoNames postal dump dir. Default <data-root>/geonames-postal"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-geonames",
+	description: "Build the GeoNames postal tail shard.",
+	options: {
+		countries: {
+			type: "string",
+			description: `Comma-separated ISO-2 codes. Default: ${DEFAULT_GEONAMES_TAIL_COUNTRIES.join(",")}`,
+		},
+		out: {
+			type: "string",
+			description: "Output path. Default <data-root>/wof/postalcode-geonames-tail-<YYYY-MM-DD>.db",
+		},
+		"geonames-postal": { type: "string", description: "GeoNames postal dump dir. Default <data-root>/geonames-postal" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	countries?: string
+	out?: string
+	geonamesPostal?: string
+}
 
-const GazetteerBuildPostcodeGeonames: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB, buildPostcodeGeonamesTail } = await import("mailwoman/gazetteer-pipeline")
 

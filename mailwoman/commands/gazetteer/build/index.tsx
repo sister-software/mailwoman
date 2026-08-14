@@ -13,20 +13,26 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	data: zod.string().optional().describe("WOF repos root. Default <data-root>/wof/repos"),
-	skipVerify: zod
-		.boolean()
-		.default(false)
-		.describe("Skip the admin verify gate (dev only — an unverified artifact must never be promoted)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "build",
+	description: "Build the admin and candidate gazetteers.",
+	options: {
+		data: { type: "string", description: "WOF repos root. Default <data-root>/wof/repos" },
+		"skip-verify": { type: "boolean", default: false, description: "Skip the admin verify gate (development only)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	data?: string
+	skipVerify: boolean
+}
 
-const GazetteerBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB, buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeShards, wofDir } =
 			await import("mailwoman/gazetteer-pipeline")

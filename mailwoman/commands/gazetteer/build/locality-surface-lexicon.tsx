@@ -10,22 +10,33 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	countries: zod.string().optional().describe("Comma-separated countries (default US,FR)"),
-	placetypes: zod
-		.string()
-		.optional()
-		.describe("Comma-separated child placetypes (default locality,localadmin,neighbourhood)"),
-	db: zod.string().optional().describe("WOF admin DB (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)"),
-	output: zod.string().optional().describe("Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v5.json)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "locality-surface-lexicon",
+	description: "Build the locality-surface evidence lexicon.",
+	options: {
+		countries: { type: "string", description: "Comma-separated countries (default US,FR)" },
+		placetypes: {
+			type: "string",
+			description: "Comma-separated child placetypes (default locality,localadmin,neighbourhood)",
+		},
+		db: { type: "string", description: "WOF admin DB (default $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db)" },
+		output: { type: "string", description: "Output path (default $MAILWOMAN_DATA_ROOT/gazetteer/…-v5.json)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	countries?: string
+	placetypes?: string
+	db?: string
+	output?: string
+}
 
-const GazetteerBuildLocalitySurfaceLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildLocalitySurfaceLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildLocalitySurfaceLexicon } = await import("../../../gazetteer-pipeline/evidence-lexicons.ts")
 

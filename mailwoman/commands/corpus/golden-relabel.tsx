@@ -11,23 +11,41 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	input: zod.string().describe("Parent golden version dir (read-only), e.g. data/eval/golden/v0.1.2"),
-	output: zod.string().describe("Output golden version dir, e.g. data/eval/golden/v0.1.3"),
-	deck: zod.string().optional().describe("Review-deck JSONL path. Default <output>/REVIEW-DECK.jsonl"),
-	commit: zod.string().optional().describe("Commit SHA recorded as tool provenance in the manifest"),
-	splitPrefix: zod
-		.boolean()
-		.default(true)
-		.describe("Also lift a folded leading directional into street_prefix. --no-split-prefix measures the fold's cost"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "golden-relabel",
+	description: "Relabel a golden answer-key version without mutating its parent.",
+	options: {
+		input: {
+			type: "string",
+			required: true,
+			description: "Parent golden version dir (read-only), e.g. data/eval/golden/v0.1.2",
+		},
+		output: { type: "string", required: true, description: "Output golden version dir, e.g. data/eval/golden/v0.1.3" },
+		deck: { type: "string", description: "Review-deck JSONL path. Default <output>/REVIEW-DECK.jsonl" },
+		commit: { type: "string", description: "Commit SHA recorded as tool provenance in the manifest" },
+		"split-prefix": {
+			type: "boolean",
+			default: true,
+			description:
+				"Also lift a folded leading directional into street_prefix. --no-split-prefix measures the fold's cost",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	input: string
+	output: string
+	deck?: string
+	commit?: string
+	splitPrefix: boolean
+}
 
-const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { relabelGoldenDirectory } = await import("@mailwoman/corpus/tools")
 

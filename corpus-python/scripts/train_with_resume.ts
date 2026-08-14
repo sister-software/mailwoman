@@ -19,10 +19,11 @@ import { openSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
+import { tempRootPath } from "@mailwoman/core/utils"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
-const LOG = $public.LOG ?? "/tmp/stage1-train.log"
+const LOG = $public.LOG ?? tempRootPath("stage1-train.log")
 const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
 /**
  * DELIBERATE cliArguments: EXTRA_ARGS is a verbatim passthrough to `python -m mailwoman_train train` — parseArgs cannot

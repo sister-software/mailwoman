@@ -174,6 +174,7 @@ export async function buildTranslitShard(
 	report?: (line: string) => void
 ): Promise<void> {
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
+	// This is a portable manifest namespace, not a host filesystem default.
 	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
 	const legacyPathPrefix = options.legacyPathPrefix ?? `${mailwomanDataRoot()}/`
 

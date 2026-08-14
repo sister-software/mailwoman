@@ -3,35 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The cross-dataset linking map — the marquee record-matcher proof, on a map.
- *
- *   The matcher resolves entities ACROSS independent sources (NPPES provider registry, FCC RHC
- *   funding, TX HHSC facility licensing) with NO shared key — purely on the geocoded location +
- *   name agreement. This renders the `cross-dataset-links` GeoJSON (every entity that resolved
- *   across ≥2 sources) on the HOUSE map stack via {@link toMapHTML} (MapLibre GL + a Protomaps
- *   basemap). Each entity is colored by its SOURCE COMBINATION (a synthesized `bucket`), so the
- *   entities spanning all three sources stand out from the two-source links.
- *
- *   Neutral entity-resolution view: it shows what resolved to what and how confidently (cohesion
- *   sizes the marker). It does NOT interpret coverage/eligibility — that is the consumer's call.
- *
- *   SERVE THE OUTPUT OVER LOCALHOST (the house tile server CORS-restricts to localhost + the docs
- *   domains; a file:// page shows accurate markers on a blank basemap). e.g. `python3 -m
- *   http.server -d <dir>` then open the page; or use `renderServedMapToPNG` (`./render-map.ts`)
- *   against the served URL.
- *
- *   `--cross-agency-only` keeps just the entities whose sources span >1 AGENCY (the two FCC datasets
- *   count as one) — the harder cross-agency slice; most raw links are FCC-internal (RHC ↔
- *   commitments).
- *
- *   Run: `mailwoman registry viz cross-dataset-map [--in <links.geojson>]
- *   [--out-html /tmp/cross-dataset-map.html] [--cross-agency-only]`
+ *   Render linked entities from a GeoJSON file in MapLibre, colored by source combination.
+ *   `crossAgencyOnly` removes links whose sources belong to one agency.
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { toMapHTML } from "@mailwoman/registry"
 
 /**
@@ -93,7 +72,7 @@ export function crossDatasetMap(
 	report?: (line: string) => void
 ): { outHTML: string; kept: number; total: number; triple: number } {
 	const IN = options.in || dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson")
-	const OUT = options.outHTML || "/tmp/cross-dataset-map.html"
+	const OUT = options.outHTML || tempRootPath("cross-dataset-map.html")
 	const CROSS_AGENCY_ONLY = options.crossAgencyOnly ?? false
 
 	const parsed = parseJSONStrict<{

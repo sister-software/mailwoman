@@ -12,29 +12,28 @@ import { promisify } from "node:util"
 
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
-import { ZodError } from "zod"
 
-import { options as parseOptions } from "../commands/parse.tsx"
+import { parseCommand } from "../cli-native/spec.ts"
+import { spec as parseSpec } from "../commands/parse.tsx"
 
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-describe("--locale schema validation", () => {
+describe("--locale validation", () => {
 	test("parse command accepts en-US, fr-FR, en (any BCP-47 tag with optional region)", () => {
-		expect(() => parseOptions.parse({ locale: "en-US" })).not.toThrow()
-		expect(() => parseOptions.parse({ locale: "fr-FR" })).not.toThrow()
-		expect(() => parseOptions.parse({ locale: "ja-JP" })).not.toThrow()
-		expect(() => parseOptions.parse({ locale: "en" })).not.toThrow()
+		for (const locale of ["en-US", "fr-FR", "ja-JP", "en"]) {
+			expect(() => parseCommand(parseSpec, ["--locale", locale, "address"])).not.toThrow()
+		}
 	})
 
 	test("parse command rejects malformed locale tags", () => {
-		expect(() => parseOptions.parse({ locale: "english" })).toThrow(ZodError)
-		expect(() => parseOptions.parse({ locale: "EN-us" })).toThrow(ZodError)
-		expect(() => parseOptions.parse({ locale: "en_US" })).toThrow(ZodError)
+		for (const locale of ["english", "EN-us", "en_US"]) {
+			expect(() => parseCommand(parseSpec, ["--locale", locale, "address"])).toThrow(/locale/)
+		}
 	})
 
 	test("locale is optional", () => {
-		expect(() => parseOptions.parse({})).not.toThrow()
+		expect(() => parseCommand(parseSpec, ["address"])).not.toThrow()
 	})
 })
 

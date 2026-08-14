@@ -27,7 +27,8 @@ import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test, vi } from "vitest"
 
-import { localeToCountry, options as parseOptions, resolverDefaultCountry } from "../commands/parse.tsx"
+import { parseCommand } from "../cli-native/spec.ts"
+import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "../commands/parse.tsx"
 import { withCLISpawnLockAsync } from "../test-kit/cli-spawn-lock.ts"
 
 /**
@@ -113,17 +114,17 @@ describe("--country-scope separates country policy from the resolver backend", (
 	})
 
 	test("the schema defaults to 'auto', so an unset flag preserves the old behavior", () => {
-		expect(parseOptions.parse({}).countryScope).toBe("auto")
+		expect(parseCommand(parseSpec, ["address"]).values["country-scope"]).toBe("auto")
 	})
 })
 
 describe("--default-country schema validation", () => {
 	test("accepts an explicit ISO country", () => {
-		expect(parseOptions.parse({ defaultCountry: "US" }).defaultCountry).toBe("US")
+		expect(parseCommand(parseSpec, ["--default-country", "US", "address"]).values["default-country"]).toBe("US")
 	})
 
 	test("is optional (undefined when omitted)", () => {
-		expect(parseOptions.parse({}).defaultCountry).toBeUndefined()
+		expect(parseCommand(parseSpec, ["address"]).values["default-country"]).toBeUndefined()
 	})
 })
 

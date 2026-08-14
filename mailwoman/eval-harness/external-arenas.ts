@@ -41,6 +41,7 @@
 import { copyFileSync, mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { tempRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -89,7 +90,7 @@ export async function externalArenas(
 	// zx: capture output ourselves (don't echo the full stream) and slice the way the bash `| tail` did.
 	$.verbose = false
 
-	const outDir = options.outDir ?? "/tmp/external-arenas"
+	const outDir = options.outDir ?? tempRootPath("external-arenas")
 	mkdirSync(outDir, { recursive: true })
 	const emptyTests = join(outDir, "empty-tests")
 	mkdirSync(emptyTests, { recursive: true })

@@ -33,10 +33,8 @@ import { dirname, join } from "node:path"
 
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import type { PostcodePrefixLevel } from "mailwoman/gazetteer-pipeline/postcode-prefix"
-import { argument } from "pastel"
-import zod from "zod"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database. A prefix index
@@ -90,37 +88,31 @@ type ShardName = keyof typeof SHARD_RECIPES
 
 export const description = "Build a PFX1 postcode-prefix index from a postcode shard (B3-1)"
 
-const ArgsSchema = zod.tuple([
-	zod.enum(["gb-codepoint", "gb-ni-osm"]).describe(
-		argument({
-			name: "shard",
-			description: "Which shard to index (gb-codepoint, gb-ni-osm)",
-		})
-	),
-])
+const shardNames = ["gb-codepoint", "gb-ni-osm"] as const
 
-const OptionsSchema = zod.object({
-	source: zod.string().optional().describe("Override the shard path. Default <data-root>/wof/<shard db>"),
-	admin: zod
-		.string()
-		.optional()
-		.describe("WOF admin DB for ancestry IDs. Default <data-root>/wof/admin-global-priority.db"),
-	out: zod
-		.string()
-		.optional()
-		.describe("Output path. Default <data-root>/postcode-prefix/postcode-prefix-<scope>-<YYYY-MM-DD>.bin"),
-	delta: zod
-		.number()
-		.optional()
-		.describe(
-			"OPTIONAL soft-prior magnitude written into the header. Omit (the default) for an un-wired index — B3-1 " +
-				"ships data + loader + offline probe only; a calibration rung supplies the real value."
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-prefix",
+	description: "Build a postcode-prefix index",
+	positionals: [{ name: "shard", required: true, choices: shardNames, description: "Shard to index" }],
+	options: {
+		source: { type: "string", description: "Shard path" },
+		admin: { type: "string", description: "WOF admin DB" },
+		out: { type: "string", description: "Output path" },
+		delta: { type: "number", description: "Soft-prior magnitude" },
+	},
+} as const satisfies CommandSpec
 
-export { ArgsSchema as args, OptionsSchema as options }
+interface Options {
+	source?: string
+	admin?: string
+	out?: string
+	delta?: number
+}
 
-const GazetteerBuildPostcodePrefix: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ args, options }) => {
+const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File, median } = await import("@mailwoman/core/utils")
 

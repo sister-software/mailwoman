@@ -32,62 +32,44 @@ import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pip
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import {
+	CommandError,
+	type CommandSpec,
+	type ParsedCommandComponent,
+	useCommandTask,
+	writeRawStdout,
+} from "mailwoman/cli-kit"
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.describe(argument({ name: "query", description: "A POI-shaped query, e.g. 'fire hydrant near Springfield'" }))
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "poi",
+	description: "Parse and execute a POI-shaped query",
+	positionals: [{ name: "query", required: true, multiple: true, description: "POI query" }],
+	options: {
+		locale: {
+			type: "string",
+			default: "en-US",
+			validate: (value: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value),
+			description: "BCP-47 locale",
+		},
+		db: { type: "string", description: "Sealed poi.db layer" },
+		overpass: { type: "boolean", default: false, description: "Print an OverpassQL export block" },
+		json: { type: "boolean", default: false, description: "Emit raw JSON" },
+		"resolve-db": { type: "string", description: "WOF database for anchor resolution" },
+		"candidate-db": { type: "string", description: "Candidate database for anchor resolution" },
+	},
+} as const satisfies CommandSpec
 
-export { ArgumentsSchema as args, OptionsSchema as options }
-
-const OptionsSchema = zod.object({
-	locale: zod
-		.string()
-		.regex(/^[a-z]{2}(-[A-Z]{2})?$/u, "Expected a BCP-47 tag like en-US or fr-FR")
-		.optional()
-		.default("en-US")
-		.describe("Locale tag matching a weights package (en-US, fr-FR). Default en-US."),
-	db: zod
-		.string()
-		.optional()
-		.describe(
-			"Path to a sealed poi.db layer (mailwoman gazetteer build poi). When set, the matched intent is EXECUTED " +
-				"against it (results attached, or an anchor_required abstain). Absent = intent-only mode: the subject is " +
-				"still extracted and the build-local abstain (requires_build_local_layer) still fires."
-		),
-	overpass: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe(
-			"Additionally print an OverpassQL export block for the matched intent (spec §1: export-only — mailwoman " +
-				"never runs the query itself). A category with no @mailwoman/poi-taxonomy osmTag mapping prints a " +
-				"message instead of throwing."
-		),
-	json: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("Dump the raw POIIntentOutcome as JSON instead of the human-readable summary."),
-	resolveDb: zod
-		.string()
-		.optional()
-		.describe(
-			"Path to a WOF admin SQLite distribution for anchor resolution ('near Springfield IL' -> lat/lon). " +
-				"Defaults to $MAILWOMAN_WOF_DB, else the standard per-deployment shard set under $MAILWOMAN_DATA_ROOT " +
-				"(same default `mailwoman geocode` uses). Missing entirely -> anchors stay coordinate-less (a note is " +
-				"printed) and --db queries abstain anchor_required."
-		),
-	candidateDb: zod
-		.string()
-		.optional()
-		.describe(
-			"Path to a byte-range candidate.db (build-candidate.ts) for anchor resolution — the demo-parity, " +
-				"population-first backend. Defaults to $MAILWOMAN_CANDIDATE_DB; when present it wins over --resolve-db."
-		),
-})
+interface Options {
+	locale: string
+	db?: string
+	overpass: boolean
+	json: boolean
+	resolveDb?: string
+	candidateDb?: string
+}
 
 /**
  * Try to load the neural classifier; undefined lets the rule-based kind/fast-path stages still run.
@@ -109,9 +91,7 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  * rather than failing the probe — a stderr note explains what's missing. Caller owns closing the returned handle's
  * backend lookup.
  */
-async function tryLoadResolver(
-	options: zod.infer<typeof OptionsSchema>
-): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; close: () => void } | undefined> {
 	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
 	const candidateDb = resolveCandidateDBPath(options.candidateDb)
 
@@ -217,7 +197,7 @@ function formatResultsTable(results: NonNullable<Extract<POIIntentOutcome, { typ
 	return lines
 }
 
-async function formatOutcome(outcome: POIIntentOutcome, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promise<string> {
 	const lines: string[] = []
 
 	if (outcome.type === "abstain") {
@@ -250,7 +230,7 @@ async function formatOutcome(outcome: POIIntentOutcome, options: zod.infer<typeo
 	return lines.join("\n")
 }
 
-async function runPOI(input: string, options: zod.infer<typeof OptionsSchema>): Promise<string> {
+async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("mailwoman")
 
 	const classifier = await tryLoadNeural(options.locale)
@@ -278,12 +258,12 @@ async function runPOI(input: string, options: zod.infer<typeof OptionsSchema>): 
 	}
 }
 
-const PoiCommand: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const input = args[0]
 
 		if (!input || !input.trim().length) {
-			throw commandError(
+			throw new CommandError(
 				'mailwoman poi requires a positional query (e.g. mailwoman poi "fire hydrant near Springfield")'
 			)
 		}

@@ -10,26 +10,44 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	corpus: zod
-		.string()
-		.optional()
-		.describe("Corpus test shard path(s), comma-separated (default: the v0.2.0 test shard under the data root)"),
-	count: zod.number().default(100).describe("Total seeds to process"),
-	variants: zod.number().default(5).describe("Variants requested per seed"),
-	output: zod.string().optional().describe("JSONL output path (default data/eval/golden/candidates/expand-<ts>.jsonl)"),
-	provider: zod.enum(["deepseek", "anthropic"]).default("deepseek").describe("LLM provider"),
-	model: zod.string().optional().describe("Model id (default depends on provider)"),
-	concurrency: zod.number().default(4).describe("Parallel LLM calls"),
-	includeSources: zod.string().optional().describe("Comma-separated source allow-list"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "expand",
+	description: "Generate golden-set candidates from verified-label seeds.",
+	options: {
+		corpus: {
+			type: "string",
+			description: "Corpus test shard path(s), comma-separated (default: the v0.2.0 test shard under the data root)",
+		},
+		count: { type: "number", default: 100, description: "Total seeds to process" },
+		variants: { type: "number", default: 5, description: "Variants requested per seed" },
+		output: {
+			type: "string",
+			description: "JSONL output path (default data/eval/golden/candidates/expand-<ts>.jsonl)",
+		},
+		provider: { type: "string", choices: ["deepseek", "anthropic"], default: "deepseek", description: "LLM provider" },
+		model: { type: "string", description: "Model id (default depends on provider)" },
+		concurrency: { type: "number", default: 4, description: "Parallel LLM calls" },
+		"include-sources": { type: "string", description: "Comma-separated source allow-list" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	corpus?: string
+	count: number
+	variants: number
+	output?: string
+	provider: "deepseek" | "anthropic"
+	model?: string
+	concurrency: number
+	includeSources?: string
+}
 
-const CorpusGoldenExpand: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusGoldenExpand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { expandGolden } = await import("@mailwoman/corpus/tools")
 

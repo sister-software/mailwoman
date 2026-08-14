@@ -30,18 +30,24 @@ import { DatabaseSync } from "node:sqlite"
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	src: zod
-		.string()
-		.default("data/conventions/conventions.json")
-		.describe("Authored convention profiles — the JSON-array source of truth"),
-	output: zod.string().optional().describe("Compiled sqlite asset path. Default <data-root>/wof/conventions.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "conventions",
+	description: "Compile authored convention profiles",
+	options: {
+		src: { type: "string", default: "data/conventions/conventions.json", description: "Authored convention profiles" },
+		output: { type: "string", description: "Compiled SQLite path" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	src: string
+	output?: string
+}
 
 interface AuthoredConvention {
 	wof_id: number
@@ -92,10 +98,10 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 			}
 	}
 
-	if (errors.length) throw commandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
+	if (errors.length) throw new CommandError(`convention validation failed:\n  - ${errors.join("\n  - ")}`)
 }
 
-const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
@@ -109,7 +115,7 @@ const GazetteerConventions: CommandComponent<typeof OptionsSchema> = ({ options 
 
 		const rows = parseJSONStrict<AuthoredConvention[]>(readFileSync(src, "utf8"))
 
-		if (!Array.isArray(rows)) throw commandError(`${src} must be a JSON array of authored conventions`)
+		if (!Array.isArray(rows)) throw new CommandError(`${src} must be a JSON array of authored conventions`)
 		validate(rows, KNOWN)
 
 		const db = new DatabaseSync(output)

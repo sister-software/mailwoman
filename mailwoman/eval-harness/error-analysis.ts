@@ -105,8 +105,8 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 }
 
 /**
- * Run the categorized error analysis. Markdown report on stdout, progress on stderr. Returns the old script's exit
- * code: 0 = report emitted, 1 = usage error.
+ * Run the categorized error analysis. Markdown report on stdout, progress on stderr. Returns a process exit code: 0 =
+ * report emitted, 1 = usage error.
  */
 export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<number> {
 	const postcodeRepair = options.postcodeRepair ?? false

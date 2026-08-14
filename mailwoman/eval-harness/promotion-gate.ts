@@ -75,7 +75,7 @@ import { fileURLToPath } from "node:url"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, tempRootPath } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 
 import { deOrderEval } from "./de-order-eval.ts"
@@ -426,7 +426,7 @@ async function runDemoCascadeLeg(env: {
 	gazetteerLexicon: string
 }): Promise<void> {
 	const { outDir, shipModel, tokenizer, card, gazetteerLexicon } = env
-	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || "/tmp/v440-stage/en-us/v4.4.0/wof-hot.db"
+	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || tempRootPath("v440-stage", "en-us", "v4.4.0", "wof-hot.db")
 
 	if (!existsSync(HOT_DB)) {
 		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`

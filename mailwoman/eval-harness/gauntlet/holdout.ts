@@ -199,8 +199,8 @@ function zStat(cand: number, prod: number, n: number): number {
 }
 
 /**
- * Run the held-out candidate-vs-prod layer. `exitCode` mirrors the old script: 0 = PASS, 1 = candidate significantly
- * worse, 2 = usage error (missing candidate / unknown source).
+ * Run the held-out candidate-vs-prod layer. `exitCode` is 0 for PASS and 1 when the candidate significantly worse, 2 =
+ * usage error (missing candidate / unknown source).
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {
 	const N = options.n ?? 300

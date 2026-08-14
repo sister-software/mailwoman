@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build bdc` — the FCC BDC availability ingest + sealed `bdc.db` layer build
  *. Thin wiring only: list → download → build lives in `@mailwoman/bdc/sdk`
- *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink/Pastel or
+ *   (`buildBDCDatabase`, list-files.ts, download.ts), so it stays unit-testable without Ink or
  *   network in the loop. Mirrors `poi.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   First cut wires Fixed Broadband provider availability only (the primary wireline dataset) — mobile
@@ -35,36 +35,39 @@ import { DatabaseSync } from "node:sqlite"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/core/kysley/client"
 import type { FilerDatabase } from "@mailwoman/filer"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	state: zod.string().describe('2-digit FCC state/territory FIPS code (e.g. "06" for California)'),
-	asOfDate: zod.string().optional().describe("FCC filing as_of_date (YYYY-MM-DD). Default: latest available"),
-	out: zod.string().optional().describe("bdc.db output path. Default <data-root>/bdc/bdc.db"),
-	includeLocationIds: zod
-		.boolean()
-		.default(false)
-		.describe("Populate bdc_availability.location_id (opaque BSL join key; NULL by default)"),
-	providerListPath: zod
-		.string()
-		.optional()
-		.describe(
-			"Path to the FCC BDC provider list CSV (frn/provider_id/holding_company). When given, populates " +
-				"bdc_provider (decision 6); omit to leave bdc_provider empty."
-		),
-	filerDbPath: zod
-		.string()
-		.optional()
-		.describe(
-			"Path to filer.db, used to resolve a multi-FRN provider's primary FRN when --provider-list-path is given. " +
-				"Default <data-root>/filer/filer.db"
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "bdc",
+	description: "Build the FCC BDC database",
+	options: {
+		state: {
+			type: "string",
+			required: true,
+			validate: (value: string) => /^\d{2}$/u.test(value),
+			description: "FCC state FIPS code",
+		},
+		"as-of-date": { type: "string", description: "FCC filing date" },
+		out: { type: "string", description: "bdc.db output path" },
+		"include-location-ids": { type: "boolean", default: false, description: "Populate opaque location IDs" },
+		"provider-list-path": { type: "string", description: "FCC BDC provider-list CSV" },
+		"filer-db-path": { type: "string", description: "filer.db path" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	state: string
+	asOfDate?: string
+	out?: string
+	includeLocationIds: boolean
+	providerListPath?: string
+	filerDbPath?: string
+}
 
-const GazetteerBuildBDC: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline/admin")
 

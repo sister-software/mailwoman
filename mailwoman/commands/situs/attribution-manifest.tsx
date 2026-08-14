@@ -21,18 +21,27 @@ import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	outDir: zod
-		.string()
-		.optional()
-		.describe("Directory holding the address-points-us-<st>.db shards. Default <data-root>/address-points"),
-	release: zod.string().default("2026-05-20.0").describe("Overture release tag stamped into the manifest"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "attribution-manifest",
+	description: "Regenerate the address-point attribution manifest",
+	options: {
+		"out-dir": {
+			type: "string",
+			description: "Directory holding the address-points-us-<st>.db shards. Default <data-root>/address-points",
+		},
+		release: { type: "string", default: "2026-05-20.0", description: "Overture release tag stamped into the manifest" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	outDir?: string
+	release: string
+}
 
 interface StateLedger {
 	ok: boolean
@@ -41,7 +50,7 @@ interface StateLedger {
 	datasets?: Record<string, number>
 }
 
-const SitusAttributionManifest: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 

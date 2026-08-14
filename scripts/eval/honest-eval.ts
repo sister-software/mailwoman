@@ -34,7 +34,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -49,7 +49,7 @@ async function main() {
 	let WOF = WOF_DEFAULT
 	let LABEL = "run"
 	let OUT = ""
-	let TMP = "/tmp/honest"
+	let TMP = tempRootPath("honest")
 
 	// STRICT parseArgs — the original switch errored on unknown args; parity preserved.
 	let cliValues: Record<string, string | boolean | undefined>

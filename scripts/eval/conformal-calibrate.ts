@@ -53,7 +53,7 @@ import { parseArgs } from "node:util"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath, median } from "@mailwoman/core/utils"
+import { dataRootPath, median, tempRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -245,9 +245,9 @@ async function buildCascade(paths: {
 }
 
 async function main(): Promise<void> {
-	const holdoutPath = values["holdout"] || "/tmp/ood-truth.jsonl"
-	const addressPointsDb = values["address-points"] || "/tmp/tx-situs.db"
-	const interpolationDb = values["interpolation"] || "/tmp/tx-metro-interp.db"
+	const holdoutPath = values["holdout"] || tempRootPath("ood-truth.jsonl")
+	const addressPointsDb = values["address-points"] || tempRootPath("tx-situs.db")
+	const interpolationDb = values["interpolation"] || tempRootPath("tx-metro-interp.db")
 	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
 	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
 	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"

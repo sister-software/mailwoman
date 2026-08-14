@@ -10,21 +10,34 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	input: zod.string().describe("Candidates JSONL from corpus golden expand"),
-	bumpTo: zod.string().describe("Target golden version dir (e.g. v0.1.1)"),
-	prior: zod.string().default("v0.1.0").describe("Previous version to forward-copy + dedup against"),
-	goldenRoot: zod.string().default("data/eval/golden").describe("Golden dir root"),
-	noFilters: zod.boolean().default(false).describe("Skip the human-typed-likelihood filters"),
-	dryRun: zod.boolean().default(false).describe("Report what would be written but don't touch disk"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "promote",
+	description: "Promote reviewed golden-set candidates.",
+	options: {
+		input: { type: "string", required: true, description: "Candidates JSONL from corpus golden expand" },
+		"bump-to": { type: "string", required: true, description: "Target golden version dir (e.g. v0.1.1)" },
+		prior: { type: "string", default: "v0.1.0", description: "Previous version to forward-copy + dedup against" },
+		"golden-root": { type: "string", default: "data/eval/golden", description: "Golden dir root" },
+		"no-filters": { type: "boolean", default: false, description: "Skip the human-typed-likelihood filters" },
+		"dry-run": { type: "boolean", default: false, description: "Report what would be written but don't touch disk" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	input: string
+	bumpTo: string
+	prior: string
+	goldenRoot: string
+	noFilters: boolean
+	dryRun: boolean
+}
 
-const CorpusGoldenPromote: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusGoldenPromote: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { promoteGolden } = await import("@mailwoman/corpus/tools")
 

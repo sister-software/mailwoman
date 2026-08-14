@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   NOTE(de-shell): forwarding shim. The affix-aware per-tag scorer now lives at
- *   `mailwoman/eval-harness/score-affix.ts` and the promotion gate calls it IN-PROCESS. This shim
- *   keeps standalone invocation — `node scripts/eval/score-affix.ts --model <onnx> [--file <jsonl>]`
- *   — working unchanged: it parses the same argv the old script did and calls the module. Output is
- *   byte-identical because the module owns every printed line. Do not add logic here.
+ *   Command-line adapter for `mailwoman/eval-harness/score-affix.ts`.
  */
 
 import { parseArgs } from "node:util"

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Behavioral tests for `buildPlaceSearchFTS` — formerly exercised through the retired
- *   `mailwoman-wof-build-fts` bin (Pastel Phase 3 absorbed it into `mailwoman gazetteer build
- *   fts`); the build/no-op/rebuild semantics belong to the module, so the tests target it directly.
+ *   `mailwoman-wof-build-fts` bin; the build/no-op/rebuild semantics belong to the module, so the tests target it
+ *   directly.
  */
 
 import { mkdtemp, rm } from "node:fs/promises"

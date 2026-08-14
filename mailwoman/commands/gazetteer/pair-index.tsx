@@ -37,8 +37,7 @@ import { join } from "node:path"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
@@ -155,71 +154,47 @@ function splitPathList(value: string | undefined): string[] {
 		.filter(Boolean)
 }
 
-const OptionsSchema = zod.object({
-	out: zod.string().default("docs/static/mailwoman").describe("Output dir for pair-index-<country>.bin"),
-	country: zod.string().default("gb").describe("ISO country code this shard is built for"),
-	source: zod.string().optional().describe("Source PPD tuples CSV. Default <data-root>/ppd/2026-07-22/gb-tuples.csv"),
-	delta: zod
-		.number()
-		.describe(
-			"REQUIRED, no default — the soft-prior bias magnitude a probe hit contributes at decode time. " +
-				"The calibration task supplies the real value; this command refuses to default it silently."
-		),
-	transitionBeta: zod
-		.number()
-		.optional()
-		.describe(
-			"OPTIONAL — the decoder transition-entry bonus a probe hit contributes (+β into B-<tag> at the child's " +
-				"first piece; TRANSITION-BETA build). Written into the PIX1 header ONLY when passed — " +
-				"omitting it builds a beta-less artifact (no transition term at decode, the pre-beta behavior). " +
-				"Per-country calibration like --delta: GB ships 5; NZ ships without it."
-		),
-	parentDelta: zod
-		.number()
-		.optional()
-		.describe(
-			"OPTIONAL, no default — the WHOLE-EDGE bias magnitude a probe hit contributes to the PARENT window " +
-				"(+parentDelta on the record's own parentTag; #46). Written into the PIX1 header ONLY when passed — " +
-				"omitting it builds an artifact whose parent bias is OFF, which is the correct posture for any locale " +
-				"whose parent side no board has graded (the D-rule per-locale gate). us/gb/nz/fr ship 5 " +
-				"(docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md); de/in/es/it ship without it."
-		),
-	holdoutFraction: zod
-		.number()
-		.min(0)
-		.max(1)
-		.default(0)
-		.describe(
-			"DEV-ONLY falsifier flag (placetype-pair-prior arc) — withhold this fraction of deduplicated pairs " +
-				"from the build (seeded, deterministic; see --holdout-seed), for measuring decode-layer degradation " +
-				"against pairs the index was never trained/built on. Default 0 = a normal, complete build. NEVER pass a " +
-				"nonzero value for a shipped artifact build."
-		),
-	pairsJsonl: zod
-		.string()
-		.optional()
-		.describe(
-			"Secondary pairs JSONL ({child, parent} per line) merged through the same fold — hierarchy campaign R3 (ONSPD London wards etc.)"
-		),
-	boroughDb: zod
-		.string()
-		.optional()
-		.describe("WOF admin DB path — merge borough (child, parent) pairs for the country (hierarchy campaign R2)"),
-	banDir: zod
-		.string()
-		.optional()
-		.describe(
-			"BAN adresses-<dept>.csv directory — merge FR (lieu-dit, commune) pairs through ban/sdk's cleanLieuDit filter (hierarchy campaign R6)"
-		),
-	holdoutSeed: zod
-		.number()
-		.default(42)
-		.describe("Seed for --holdout-fraction's deterministic withholding. Ignored when --holdout-fraction is 0."),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "pair-index",
+	description: "Build a placetype-pair index",
+	options: {
+		out: { type: "string", default: "docs/static/mailwoman", description: "Output directory" },
+		country: { type: "string", default: "gb", description: "ISO country code" },
+		source: { type: "string", description: "Source tuples CSV" },
+		delta: { type: "number", required: true, description: "Soft-prior bias magnitude" },
+		"transition-beta": { type: "number", description: "Transition-entry bonus" },
+		"parent-delta": { type: "number", description: "Parent-window bias" },
+		"holdout-fraction": {
+			type: "number",
+			default: 0,
+			validate: (value: number) => value >= 0 && value <= 1,
+			description: "Deterministic holdout fraction",
+		},
+		"pairs-jsonl": { type: "string", description: "Secondary pairs JSONL" },
+		"borough-db": { type: "string", description: "WOF admin DB" },
+		"ban-dir": { type: "string", description: "BAN source directory" },
+		"holdout-seed": { type: "number", default: 42, description: "Holdout seed" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	out: string
+	country: string
+	source?: string
+	delta: number
+	transitionBeta?: number
+	parentDelta?: number
+	holdoutFraction: number
+	pairsJsonl?: string
+	boroughDb?: string
+	banDir?: string
+	holdoutSeed: number
+}
 
-const GazetteerPairIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
 		// Both `@mailwoman/neural` subpaths are self-contained — `fst-prior` type-imports from a sibling and

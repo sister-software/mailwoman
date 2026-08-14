@@ -12,49 +12,44 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import {
 	DEFAULT_CANDIDATE_OUT,
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
 } from "mailwoman/gazetteer-pipeline/defaults"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	admin: zod
-		.string()
-		.optional()
-		.describe("Admin (unified-WOF) source DB. Default <data-root>/wof/admin-global-priority.db"),
-	out: zod.string().optional().describe("Candidate-DB output path. Default <data-root>/wof/candidate-global.db"),
-	// #1514: OFF by default. `gazetteer build admin` folds all 161 GeoNames countries into the admin
-	// artifact itself (#1027), so a second fold here re-derives what is already there — and until the
-	// same issue it did so with a 14-country default, rewriting the front of the fold's id range and
-	// leaving 522,184 name rows bound to places in other countries. Pass --fold only for an admin DB
-	// built without one; foldGeonamesIntoAdmin now refuses a fold that would shrink existing coverage.
-	fold: zod
-		.boolean()
-		.default(false)
-		.describe("Re-run the GeoNames-alias fold before building (default off — `build admin` already folds)"),
-	countries: zod
-		.string()
-		.optional()
-		.describe(`Comma-separated ISO codes for the fold. Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`),
-	foldOut: zod.string().optional().describe("Folded admin-DB path. Default <admin>-geonames.db"),
-	// #28. Two separate options rather than one tri-state flag: Pastel binds `--importance` to whatever
-	// the zod type says, so a string override and a boolean opt-out cannot share a name.
-	importance: zod
-		.string()
-		.optional()
-		.describe(`Score source for the importance column. Default <data-root>/wof/${DEFAULT_IMPORTANCE_DB} if present`),
-	skipImportance: zod
-		.boolean()
-		.default(false)
-		.describe("Build with an EMPTY importance column even when the score source is present"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "candidate",
+	description: "Build the byte-range gazetteer candidate database",
+	options: {
+		admin: { type: "string", description: "Admin source DB. Default <data-root>/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Candidate DB output. Default <data-root>/wof/candidate-global.db" },
+		fold: { type: "boolean", default: false, description: "Re-run the GeoNames alias fold before building" },
+		countries: {
+			type: "string",
+			description: `Comma-separated ISO codes. Default: ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,
+		},
+		"fold-out": { type: "string", description: "Folded admin DB path. Default <admin>-geonames.db" },
+		importance: { type: "string", description: `Importance source. Default <data-root>/wof/${DEFAULT_IMPORTANCE_DB}` },
+		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	admin?: string
+	out?: string
+	fold: boolean
+	countries?: string
+	foldOut?: string
+	importance?: string
+	skipImportance: boolean
+}
 
-const GazetteerBuildCandidate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
 

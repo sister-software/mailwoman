@@ -17,28 +17,36 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "mailwoman/gazetteer-pipeline/defaults"
-import zod from "zod"
 
-const ArgumentsSchema = zod.array(
-	zod.string().describe(`Candidate DB to publish. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}`)
-)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "publish",
+	description: "Publish a candidate gazetteer to R2.",
+	positionals: [
+		{ name: "candidate-db", description: `Candidate DB. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}` },
+	],
+	options: {
+		"gazetteer-version": { type: "string", description: "Immutable gazetteer version" },
+		bucket: { type: "string", description: "R2 bucket" },
+		prefix: { type: "string", default: "mailwoman", description: "R2 key prefix" },
+		"dry-run": { type: "boolean", default: false, description: "Show without uploading" },
+		"bump-demo": { type: "boolean", default: true, description: "Bump the demo gazetteer version" },
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	gazetteerVersion: zod
-		.string()
-		.optional()
-		.describe("Immutable gazetteer version. Default today's date + 'a' (e.g. 2026-06-27a)"),
-	bucket: zod.string().optional().describe("R2 bucket (default nexus-public, per the upload script)"),
-	prefix: zod.string().default("mailwoman").describe("R2 key prefix"),
-	dryRun: zod.boolean().default(false).describe("Show what would upload; don't push or bump the demo"),
-	bumpDemo: zod.boolean().default(true).describe("Bump ADMIN_GAZETTEER_VERSION in the demo resources (default on)"),
-})
+interface Options {
+	gazetteerVersion?: string
+	bucket?: string
+	prefix: string
+	dryRun: boolean
+	bumpDemo: boolean
+}
 
-export { ArgumentsSchema as args, OptionsSchema as options }
-
-const GazetteerPublish: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ options, args }) => {
+const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("mailwoman/gazetteer-pipeline")

@@ -6,6 +6,7 @@
 
 import { join, resolve } from "node:path"
 
+import { defaultMailwomanPaths } from "@mailwoman/core/env"
 import { afterEach, expect, test, vi } from "vitest"
 
 import {
@@ -39,13 +40,13 @@ test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM
 	])
 })
 
-test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT, else the lab default; threads into wofShardPaths", () => {
+test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT, else the platform default; threads into wofShardPaths", () => {
 	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
 	expect(mailwomanDataRoot()).toBe("/custom/root")
 	expect(wofShardPaths()[0]).toBe("/custom/root/wof/admin-global-priority.db") // default arg uses the env
 
 	setEnv("MAILWOMAN_DATA_ROOT", undefined)
-	expect(mailwomanDataRoot()).toBe("/mnt/playpen/mailwoman-data")
+	expect(mailwomanDataRoot()).toBe(defaultMailwomanPaths.data)
 })
 
 test("resolveCandidateDBPath: returns an explicit/env path only when it exists on disk", () => {

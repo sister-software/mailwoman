@@ -31,8 +31,7 @@ import { DatabaseSync } from "node:sqlite"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
@@ -101,21 +100,30 @@ const STATE_FIPS: Record<string, string> = {
 	WY: "56",
 }
 
-const OptionsSchema = zod.object({
-	state: zod
-		.string()
-		.optional()
-		.describe(`US state abbreviation (one of: ${Object.keys(STATE_FIPS).join(", ")} — extend STATE_FIPS for others)`),
-	edgesDir: zod
-		.string()
-		.optional()
-		.default(dataRootPath("census", "tiger2023-edges"))
-		.describe("Directory holding the per-county TIGER EDGES shapefiles (tl_*_<statefips>???_edges.shp)"),
-	release: zod.string().optional().default("TIGER2023").describe("TIGER release tag, recorded as per-row provenance"),
-	out: zod.string().optional().describe("Output DB path. Default <data-root>/interpolation/interpolation-us-<st>.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "interpolation-shard",
+	description: "Build a state interpolation shard",
+	options: {
+		state: { type: "string", required: true, choices: Object.keys(STATE_FIPS), description: "US state abbreviation" },
+		"edges-dir": {
+			type: "string",
+			default: dataRootPath("census", "tiger2023-edges"),
+			description: "TIGER EDGES directory",
+		},
+		release: { type: "string", default: "TIGER2023", description: "TIGER release tag" },
+		out: { type: "string", description: "Output DB path" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	state: string
+	edgesDir: string
+	release: string
+	out?: string
+}
 
 /**
  * Strictly-numeric house number → integer, else null (hyphenated/alphanumeric skipped).
@@ -137,14 +145,14 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 	return f === 1 ? "odd" : "even"
 }
 
-const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
 		const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
 
 		if (!options.state || !STATE_FIPS[options.state.toUpperCase()]) {
-			throw commandError(
+			throw new CommandError(
 				`--state required (one of: ${Object.keys(STATE_FIPS).join(", ")} — extend STATE_FIPS for others)`
 			)
 		}
@@ -162,7 +170,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 			segmentSchema = await import("@mailwoman/resolver-wof-sqlite/street-segment-schema")
 			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 		} catch {
-			throw commandError(
+			throw new CommandError(
 				"situs interpolation-shard requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared street-segment schema + normalizer)."
 			)
 		}
@@ -172,7 +180,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 		try {
 			;({ DuckDBInstance } = await import("@duckdb/node-api"))
 		} catch {
-			throw commandError(
+			throw new CommandError(
 				"@duckdb/node-api is not installed — `situs interpolation-shard` is a maintainer-only data command"
 			)
 		}
@@ -185,7 +193,7 @@ const SitusInterpolationShard: CommandComponent<typeof OptionsSchema> = ({ optio
 		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toSorted()
 
 		if (!shapefiles.length) {
-			throw commandError(
+			throw new CommandError(
 				`no tl_*_${STATE_FIPS[STATE]}???_edges.shp under ${options.edgesDir} — download TIGER EDGES first`
 			)
 		}

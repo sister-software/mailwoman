@@ -33,54 +33,38 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
-import { type CommandComponent, commandError, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	state: zod.string().optional().describe("US state abbreviation, e.g. VT"),
-	release: zod
-		.string()
-		.optional()
-		.default("2026-05-20.0")
-		.describe("Overture release tag (selects the parquet + recorded as provenance)"),
-	out: zod.string().optional().describe("Output DB path. Default <data-root>/address-points/address-points-us-<st>.db"),
-	countyFips: zod
-		.string()
-		.optional()
-		.describe("5-digit state+county FIPS (e.g. 17031) — point-in-polygon scope against --county-boundary"),
-	/**
-	 * Deliberately has NO default. The boundary has to be the same TIGER vintage as the EDGES its companion interpolation
-	 * shard was built from, so the correct file is a property of the run, not of this command — a default would be right
-	 * for one vintage and silently wrong for every other.
-	 */
-	countyBoundary: zod
-		.string()
-		.optional()
-		.describe(
-			"TIGER COUNTY boundary shapefile (GEOID = state+county FIPS) for the --county-fips PIP. Required with --county-fips; use the same TIGER vintage as the interpolation shard, e.g. $MAILWOMAN_DATA_ROOT/tiger/<vintage>/tl_<vintage>_us_county.shp"
-		),
-	// ODbL-hygiene: when set, only keep rows whose Overture dataset is in this comma-separated allow-list
-	// (case-insensitive). Default absent = keep everything (byte-stable). Typical: --license-filter NAD.
-	licenseFilter: zod
-		.string()
-		.optional()
-		.describe("Comma-separated Overture dataset allow-list (case-insensitive); absent = keep all"),
-	// DuckDB worker-thread cap for the parquet scan. Default (unset) = DuckDB's default (all cores). The
-	// national driver passes a low value so N concurrent state builds don't each grab every core.
-	threads: zod.string().optional().describe("DuckDB worker-thread cap (default: all cores)"),
-	// Alternate source: comma-separated OpenAddresses conformed-CSV path(s). When set, the shard is built
-	// from these instead of the Overture parquet — for states Overture's addresses theme does NOT carry
-	// (HI, NH). The CSVs are already state-scoped, so no state/county filter applies; --state still names
-	// the output. Same address_point schema + shared normalizer as the Overture path.
-	oaCSV: zod
-		.string()
-		.optional()
-		.describe("Comma-separated OpenAddresses conformed-CSV path(s); builds from these instead of Overture"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "address-points",
+	description: "Build a state address-point shard",
+	options: {
+		state: { type: "string", required: true, description: "US state abbreviation" },
+		release: { type: "string", default: "2026-05-20.0", description: "Overture release" },
+		out: { type: "string", description: "Output DB path" },
+		"county-fips": { type: "string", validate: (v: string) => /^\d{5}$/u.test(v), description: "County FIPS" },
+		"county-boundary": { type: "string", description: "TIGER county boundary shapefile" },
+		"license-filter": { type: "string", description: "Dataset allow-list" },
+		threads: { type: "string", description: "DuckDB thread cap" },
+		"oa-csv": { type: "string", description: "OpenAddresses CSV paths" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	state: string
+	release: string
+	out?: string
+	countyFips?: string
+	countyBoundary?: string
+	licenseFilter?: string
+	threads?: string
+	oaCSV?: string
+}
 
-const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { dataRootPath, swapDatabaseIntoPlace } = await import("@mailwoman/core/utils")
@@ -89,15 +73,15 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		const OA_MODE = Boolean(options.oaCSV)
 
 		if (!options.state) {
-			throw commandError("--state required (US state abbreviation, e.g. VT)")
+			throw new CommandError("--state required (US state abbreviation, e.g. VT)")
 		}
 
 		if (options.countyFips && !/^\d{5}$/.test(options.countyFips)) {
-			throw commandError("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
+			throw new CommandError("--county-fips must be a 5-digit state+county FIPS (e.g. 17031)")
 		}
 
 		if (options.countyFips && !options.countyBoundary) {
-			throw commandError(
+			throw new CommandError(
 				"--county-fips requires --county-boundary (the TIGER COUNTY shapefile to point-in-polygon against)"
 			)
 		}
@@ -116,7 +100,7 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 			pointSchema = await import("@mailwoman/resolver-wof-sqlite/address-point-schema")
 			streetNormalize = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 		} catch {
-			throw commandError(
+			throw new CommandError(
 				"situs address-points requires `@mailwoman/resolver-wof-sqlite` to be installed (the shared address-point schema + normalizer)."
 			)
 		}
@@ -126,7 +110,9 @@ const SitusAddressPoints: CommandComponent<typeof OptionsSchema> = ({ options })
 		try {
 			;({ DuckDBInstance } = await import("@duckdb/node-api"))
 		} catch {
-			throw commandError("@duckdb/node-api is not installed — `situs address-points` is a maintainer-only data command")
+			throw new CommandError(
+				"@duckdb/node-api is not installed — `situs address-points` is a maintainer-only data command"
+			)
 		}
 
 		const { ADDRESS_POINT_COLUMNS, createAddressPointTable, createAddressPointIndexes } = pointSchema

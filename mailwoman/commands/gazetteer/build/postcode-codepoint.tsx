@@ -16,21 +16,31 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	sourceDir: zod
-		.string()
-		.optional()
-		.describe("Acquisition dir for codepo_gb.zip + extracted CSVs. Default <data-root>/codepoint/<YYYY-MM-DD>"),
-	out: zod.string().optional().describe("Output path. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db"),
-	offline: zod.boolean().optional().describe("Skip the download and use whatever is already in --source-dir"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-codepoint",
+	description: "Build the GB Code-Point Open unit-postcode shard.",
+	options: {
+		"source-dir": { type: "string", description: "Acquisition dir for codepo_gb.zip and extracted CSVs" },
+		out: {
+			type: "string",
+			description: "Output path. Default <data-root>/wof/postalcode-gb-codepoint-<YYYY-MM-DD>.db",
+		},
+		offline: { type: "boolean", description: "Skip the download and use --source-dir contents" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	sourceDir?: string
+	out?: string
+	offline?: boolean
+}
 
-const GazetteerBuildPostcodeCodePoint: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
 		const { buildPostcodeCodePoint } = await import("../../../gazetteer-pipeline/postcode/codepoint-shard.ts")

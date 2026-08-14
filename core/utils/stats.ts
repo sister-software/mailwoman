@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Small stats helpers — the canonical home for the `percentile`/`median` copies (~15) and the
- *   `pct` percentage-format lambdas (~40) the 2026-07-09 dedupe survey found across eval scripts.
- *
- *   `percentile` is byte-for-byte the gate scripts' nearest-rank implementation
- *   (oa-resolver-eval.ts / resolver-eval.ts) — gate parity depends on this exact semantics; do not
- *   "upgrade" it to linear interpolation.
+ *   Statistical helpers using nearest-rank percentiles.
  */
 
 /**

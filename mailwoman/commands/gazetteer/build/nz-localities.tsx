@@ -10,20 +10,29 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	csv: zod
-		.string()
-		.optional()
-		.describe("LINZ-derived OA NZ countrywide CSV. Default <data-root>/openaddresses/extracted/nz/countrywide.csv"),
-	out: zod.string().optional().describe("Output shard. Default <data-root>/wof/localities-nz-linz.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "nz-localities",
+	description: "Build the New Zealand locality shard.",
+	options: {
+		csv: {
+			type: "string",
+			description: "LINZ-derived OA NZ countrywide CSV. Default <data-root>/openaddresses/extracted/nz/countrywide.csv",
+		},
+		out: { type: "string", description: "Output shard. Default <data-root>/wof/localities-nz-linz.db" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	csv?: string
+	out?: string
+}
 
-const GazetteerBuildNZLocalities: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildNZLocalities: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildNZLocalitiesShard } = await import("../../../gazetteer-pipeline/nz-localities.ts")
 		const r = await buildNZLocalitiesShard({ csvPath: options.csv, out: options.out })

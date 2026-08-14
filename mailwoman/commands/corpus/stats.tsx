@@ -3,30 +3,39 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus stats` — ported from the scripts drawer (PR E, #1029). The tool module is
- *   lazy-imported so eager command loading stays dependency-light.
+ *   Report corpus statistics.
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	shards: zod.string().describe("Comma-separated parquet shard paths or a directory"),
-	output: zod.string().describe("Output corpus-stats.json path"),
-	limitPerShard: zod.string().optional().describe("Row cap per shard (debug)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "stats",
+	description: "Build corpus statistics.",
+	options: {
+		shards: { type: "string", required: true, description: "Comma-separated parquet shard paths or a directory" },
+		output: { type: "string", required: true, description: "Output corpus-stats.json path" },
+		"limit-per-shard": { type: "number", description: "Row cap per shard (debug)" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	shards: string
+	output: string
+	limitPerShard?: number
+}
 
-const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildCorpusStats } = await import("@mailwoman/corpus/tools")
 
 		await buildCorpusStats({
 			shardsArg: options.shards,
 			outputPath: options.output,
-			limitPerShard: options.limitPerShard ? Number(options.limitPerShard) : undefined,
+			limitPerShard: options.limitPerShard,
 		})
 
 		return "done"

@@ -15,28 +15,42 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { DEFAULT_FOLD_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	admin: zod.string().optional().describe("Admin source DB. Default <data-root>/wof/admin-global-priority.db"),
-	out: zod.string().optional().describe("Candidate-DB output. Default <data-root>/wof/candidate-global.db"),
-	countries: zod
-		.string()
-		.optional()
-		.describe(`Fold countries (comma-separated). Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`),
-	// #1514: OFF by default — see the note on the same flag in `build/candidate.tsx`.
-	fold: zod.boolean().default(false).describe("Re-run the GeoNames fold (default off — `build admin` already folds)"),
-	promote: zod.boolean().default(true).describe("Promote the convention path after building (default on)"),
-	publish: zod.boolean().default(true).describe("Publish to R2 + bump the demo after promoting (default on)"),
-	gazetteerVersion: zod.string().optional().describe("Gazetteer version. Default today's date + 'a'"),
-	dryRun: zod.boolean().default(false).describe("Preview the R2 upload; don't push or bump the demo"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "release",
+	description: "Build, promote, and publish a gazetteer release",
+	options: {
+		admin: { type: "string", description: "Admin source DB. Default <data-root>/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Candidate-DB output. Default <data-root>/wof/candidate-global.db" },
+		countries: {
+			type: "string",
+			description: `Fold countries (comma-separated). Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,
+		},
+		fold: { type: "boolean", default: false, description: "Re-run the GeoNames fold (default off)" },
+		promote: { type: "boolean", default: true, description: "Promote the convention path after building" },
+		publish: { type: "boolean", default: true, description: "Publish to R2 and bump the demo after promoting" },
+		"gazetteer-version": { type: "string", description: "Gazetteer version. Default today's date + 'a'" },
+		"dry-run": { type: "boolean", default: false, description: "Preview the R2 upload; don't push or bump the demo" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	admin?: string
+	out?: string
+	countries?: string
+	fold: boolean
+	promote: boolean
+	publish: boolean
+	gazetteerVersion?: string
+	dryRun: boolean
+}
 
-const GazetteerRelease: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 

@@ -234,7 +234,7 @@ That corollary covers a MEASUREMENT THAT STILL BINDS, and nothing else. It is no
 
 ## Addendum
 
-- We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink/Pastel commands, which are TSX and require compiling.
+- We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink commands, which are TSX and require compiling.
 
 ### Acronym casing in identifiers
 
@@ -242,7 +242,7 @@ Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `pa
 
 - **`snake_case`** — DB columns and wire keys (`parent_id`, `place_id`, `name_key`) stay as-is; they're string contracts, and the convention is camelCase-only by construction.
 - **External library names** — match the dependency's own casing (`HttpStatusCode` from axios, `createQueryId`/`createWithSql` from kysely, `sqlite-wasm`).
-- **Pastel/Ink CLI flag props** — the framework binds a kebab flag to a lowercase-acronym prop (`--resolve-db` → `resolveDb`), so those specific schema keys must match its derivation. Result-read fields and domain properties (`result.placeID`) still follow the convention.
+- **CLI flag props** — the schema adapter binds a kebab flag to a lowercase-acronym prop (`--resolve-db` → `resolveDb`), so those specific schema keys must match its derivation. Result-read fields and domain properties (`result.placeID`) still follow the convention.
 - **Dated historical records** — `docs/records/evals/`, `reviews/`, postmortems, and phase docs are point-in-time; don't rewrite their acronyms.
 
 `yarn lint` enforces this via `sister-software/no-title-case-acronym` from `@sister.software/oxlint-config`. It reads the AST, so it sees exported declarations, the MEMBERS of exported interfaces/classes/enums, and the exported half of a re-export — the standalone script it replaced matched `^export <keyword> <name>` and missed every member. Configure it in `oxlint.config.ts`: `extraAcronyms` layers this project's vocabulary onto the shipped list, `ignoreNames` exempts names whose casing is not ours. Prefer a scoped `// oxlint-disable-next-line sister-software/no-title-case-acronym -- <reason>` at the one site that needs it; a config entry silently covers every future declaration of that name. When adding an acronym, cap the whole component.

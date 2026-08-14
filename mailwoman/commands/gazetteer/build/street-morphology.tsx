@@ -11,24 +11,37 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	dictionaries: zod
-		.string()
-		.optional()
-		.describe("libpostal dictionaries root (default: core's bundled data/libpostal/dictionaries)"),
-	locales: zod
-		.string()
-		.optional()
-		.describe("Comma-separated locale subfolders (default: every locale with a street_types.txt)"),
-	output: zod.string().optional().describe("Output path (default: $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "street-morphology",
+	description: "Build the sealed street-morphology FST artifact.",
+	options: {
+		dictionaries: {
+			type: "string",
+			description: "libpostal dictionaries root (default: core's bundled data/libpostal/dictionaries)",
+		},
+		locales: {
+			type: "string",
+			description: "Comma-separated locale subfolders (default: every locale with a street_types.txt)",
+		},
+		output: {
+			type: "string",
+			description: "Output path (default: $MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin)",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	dictionaries?: string
+	locales?: string
+	output?: string
+}
 
-const GazetteerBuildStreetMorphology: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildStreetMorphologyArtifact } = await import("../../../gazetteer-pipeline/street-morphology.ts")
 

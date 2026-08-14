@@ -3,32 +3,44 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus overlay-manifest` — ported from the scripts drawer (PR E, #1029). The tool module is
- *   lazy-imported so eager command loading stays dependency-light.
+ *   Generate a corpus overlay manifest.
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	base: zod.string().describe("Base corpus manifest path"),
-	newDir: zod.string().describe("New overlay corpus dir"),
-	modalRoot: zod.string().describe("Modal volume root the manifest paths are relative to"),
-	// NOT `version`: Pastel registers `-v, --version` on the ROOT program, and commander resolves it
-	// before the subcommand's own options, so `--version 9.9.9` printed the CLI version (8.7.0) and
-	// exited 0 without ever running the tool (#1491). Pastel decamelizes the key, so this derives
-	// `--corpus-version`. `mailwoman/test/command-option-collisions.test.ts` keeps the whole command
-	// tree off the reserved names.
-	corpusVersion: zod.string().describe("New corpus version"),
-	shardParquet: zod.string().describe("The ONE shard parquet to add"),
-	source: zod.string().describe("Shard source label"),
-	note: zod.string().describe("Manifest note"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "overlay-manifest",
+	description: "Assemble an overlay corpus manifest.",
+	options: {
+		base: { type: "string", required: true, description: "Base corpus manifest path" },
+		"new-dir": { type: "string", required: true, description: "New overlay corpus dir" },
+		"modal-root": {
+			type: "string",
+			required: true,
+			description: "Modal volume root the manifest paths are relative to",
+		},
+		"corpus-version": { type: "string", required: true, description: "New corpus version" },
+		"shard-parquet": { type: "string", required: true, description: "The ONE shard parquet to add" },
+		source: { type: "string", required: true, description: "Shard source label" },
+		note: { type: "string", required: true, description: "Manifest note" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	base: string
+	newDir: string
+	modalRoot: string
+	corpusVersion: string
+	shardParquet: string
+	source: string
+	note: string
+}
 
-const Cmd: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { assembleOverlayManifest } = await import("@mailwoman/corpus/tools")
 

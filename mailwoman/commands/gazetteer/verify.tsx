@@ -22,24 +22,28 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
-import { CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	db: zod.string().optional().describe("Admin DB to verify. Default <data-root>/wof/admin-global-priority.db"),
-	reversePanel: zod
-		.boolean()
-		.default(true)
-		.describe("Run the reverse EU panel (end-to-end leg). --no-reverse-panel to skip"),
-	fstFreshness: zod
-		.boolean()
-		.default(true)
-		.describe("Report FST artifacts built from an older generation of this DB. --no-fst-freshness to skip"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "verify",
+	description: "Run the admin-gazetteer promotion gate.",
+	options: {
+		db: { type: "string", description: "Admin DB to verify" },
+		"reverse-panel": { type: "boolean", default: true, description: "Run the reverse EU panel" },
+		"fst-freshness": { type: "boolean", default: true, description: "Report stale derived FSTs" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	db?: string
+	reversePanel: boolean
+	fstFreshness: boolean
+}
 
-const GazetteerVerify: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerVerify: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } =

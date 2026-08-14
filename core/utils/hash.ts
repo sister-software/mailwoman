@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   File/content hashing — the canonical home for the ~12 `sha256OfFile` clones the 2026-07-09
- *   dedupe survey found across the corpus fetch scripts.
+ *   File and content hashing utilities.
  */
 
 import { createHash } from "node:crypto"

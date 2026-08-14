@@ -11,7 +11,12 @@
  */
 
 import { Box, Text } from "ink"
-import { useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, useCommandTask } from "mailwoman/cli-kit"
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = { name: "list", description: "List registered corpus adapters" } as const satisfies CommandSpec
 
 /**
  * Per-line output is rendered as a single `Text` node so Ink does not column-wrap the adapter id when the host stdout

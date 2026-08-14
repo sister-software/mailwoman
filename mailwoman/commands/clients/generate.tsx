@@ -15,24 +15,32 @@
  */
 
 import { Box, Text } from "ink"
-import { CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Generate + verify the Python and Rust API clients from the emitted OpenAPI specs"
 
-const OptionsSchema = zod.object({
-	outDir: zod.string().optional().describe("Output root. Default <repo>/clients-build (gitignored)"),
-	skipVerify: zod
-		.boolean()
-		.default(false)
-		.describe(
-			"Skip `uv build`/import-check + `cargo check --examples` (dev only — an unverified pipeline must never stand in as a release proof)"
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "generate",
+	description,
+	options: {
+		"out-dir": { type: "string", description: "Output root. Default <repo>/clients-build (gitignored)" },
+		"skip-verify": {
+			type: "boolean",
+			default: false,
+			description: "Skip client build verification (development only)",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	outDir?: string
+	skipVerify: boolean
+}
 
-const ClientsGenerate: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const ClientsGenerate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { generateClients } = await import("../../tools/generate-clients.ts")

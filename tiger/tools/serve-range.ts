@@ -15,6 +15,8 @@ import { createReadStream, statSync, type Stats } from "node:fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import { extname, join, normalize } from "node:path"
 
+import { mailwomanTempRoot } from "@mailwoman/core/utils"
+
 /**
  * Options for {@linkcode serveWithRangeSupport}.
  */
@@ -55,7 +57,7 @@ export function serveWithRangeSupport(
 	options: ServeRangeOptions = {},
 	report?: (line: string) => void
 ): Promise<RangeServer> {
-	const dir = options.dir || "/tmp"
+	const dir = options.dir || mailwomanTempRoot()
 	const port = options.port ?? 8899
 
 	const server = createServer((req: IncomingMessage, res: ServerResponse) => {

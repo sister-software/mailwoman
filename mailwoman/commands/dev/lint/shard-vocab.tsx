@@ -11,21 +11,38 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	shard: zod.string().describe("The shard parquet to lint"),
-	baseVersion: zod.string().default("v0.5.0").describe("Base corpus version"),
-	baseRoot: zod.string().optional().describe("Base corpus root (default $MAILWOMAN_DATA_ROOT/corpus/versioned)"),
-	threshold: zod.number().default(0.7).describe("Base-majority confidence floor for a contradiction"),
-	minCount: zod.number().default(50).describe("Minimum base support to judge a token"),
-	fraction: zod.number().default(1).describe("Fraction of base parts to scan (proportional per-source below 1.0)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "shard-vocab",
+	description: "Lint a synthetic shard against base-corpus token labels.",
+	options: {
+		shard: { type: "string", required: true, description: "The shard parquet to lint" },
+		"base-version": { type: "string", default: "v0.5.0", description: "Base corpus version" },
+		"base-root": { type: "string", description: "Base corpus root (default $MAILWOMAN_DATA_ROOT/corpus/versioned)" },
+		threshold: { type: "number", default: 0.7, description: "Base-majority confidence floor for a contradiction" },
+		"min-count": { type: "number", default: 50, description: "Minimum base support to judge a token" },
+		fraction: {
+			type: "number",
+			default: 1,
+			description: "Fraction of base parts to scan (proportional per-source below 1.0)",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	shard: string
+	baseVersion: string
+	baseRoot?: string
+	threshold: number
+	minCount: number
+	fraction: number
+}
 
-const DevLintShardVocab: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevLintShardVocab: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { lintShardVocab } = await import("@mailwoman/corpus/tools")

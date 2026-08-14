@@ -9,24 +9,37 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	sources: zod
-		.string()
-		.optional()
-		.describe("Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)"),
-	cap: zod.number().default(200_000).describe("Providers sampled from the registry"),
-	state: zod.string().default("TX").describe("State filter"),
-	tau: zod.number().default(0.7).describe("Org-name Jaccard collision threshold"),
-	n: zod.number().default(300).describe("Adjudication sample size (deterministic stride sample)"),
-	outJSONL: zod.string().optional().describe("Write the sampled pairs here as JSONL"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "gold-set-sample",
+	description: "Sample hard co-located name collisions for adjudication.",
+	options: {
+		sources: {
+			type: "string",
+			description: "Record-matcher sources dir (default $MAILWOMAN_DATA_ROOT/record-matcher/sources)",
+		},
+		cap: { type: "number", default: 200_000, description: "Providers sampled from the registry" },
+		state: { type: "string", default: "TX", description: "State filter" },
+		tau: { type: "number", default: 0.7, description: "Org-name Jaccard collision threshold" },
+		n: { type: "number", default: 300, description: "Adjudication sample size (deterministic stride sample)" },
+		"out-jsonl": { type: "string", description: "Write the sampled pairs here as JSONL" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	sources?: string
+	cap: number
+	state: string
+	tau: number
+	n: number
+	outJSONL?: string
+}
 
-const RegistryGoldSetSample: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const RegistryGoldSetSample: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { goldSetSample } = await import("@mailwoman/registry/tools")
 

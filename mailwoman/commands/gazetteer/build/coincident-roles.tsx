@@ -7,44 +7,34 @@
  *   `coincident_roles` relation (dual-role places: city-states, capital-seat provinces, consolidated
  *   city-counties — #403/#402) into one or more admin gazetteers. Additive + idempotent; rebuilds by
  *   default so the relation reflects the current spr/ancestors (`--no-drop` appends — incremental
- *   tests only). Absorbs the retired `mailwoman-wof-build-coincident-roles` bin (Pastel Phase 3).
+ *   tests only). Absorbs the retired `mailwoman-wof-build-coincident-roles` bin.
  */
 
 import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
-import { type Check, CheckList, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.array(
-	zod.string().describe(
-		argument({
-			name: "admin-db",
-			description: "Admin gazetteer(s) to derive the relation into, processed in sequence",
-		})
-	)
-)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "coincident-roles",
+	description: "Build coincident administrative roles.",
+	positionals: [{ name: "admin-db", required: true, multiple: true, description: "Admin gazetteers to update" }],
+	options: { drop: { type: "boolean", default: true, description: "Rebuild the relation; --no-drop appends" } },
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	drop: zod
-		.boolean()
-		.default(true)
-		.describe("Rebuild the relation from the current spr/ancestors (default). --no-drop appends instead"),
-})
+interface Options {
+	drop: boolean
+}
 
-export { ArgsSchema as args, OptionsSchema as options }
-
-const GazetteerBuildCoincidentRoles: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({
-	options,
-	args,
-}) => {
+const GazetteerBuildCoincidentRoles: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
 			const { buildCoincidentRoles } = await import("@mailwoman/resolver-wof-sqlite/coincident-roles")
 
-			if (!args.length) throw new Error("expected at least one <admin-db> path")
 			const checks: Check[] = []
 
 			for (const path of args) {

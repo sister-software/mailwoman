@@ -20,318 +20,196 @@ runs directly. Maintainer surfaces (corpus, eval, gazetteer, release) are docume
 in the repository.
 .SH COMMANDS
 .nf
-Usage: Mailwoman CLI [options] [command]
-
-A calibrated, retrieval\-augmented postal\-address parser — CLI + library.
-
-Options:
-  \-v, \-\-version                       Show version number
-  \-h, \-\-help                          Show help
+Usage: mw <command> [options]
 
 Commands:
-  autocomplete [options] <prefix...>
+  autocomplete      Complete a place\-name prefix from the FST gazetteer.
   clients
   corpus
   coverage
-  data [options]                      Fetch the reference databases geocoding
-                                      needs — far too large to ship inside the
-                                      npm package. `data \-\-list` shows what
-                                      exists, `data pull <bundle>` downloads
-                                      one, `data status` reports what is already
-                                      on disk, and `mailwoman doctor` names the
-                                      one you are missing.
+  data
   dev
-  doctor [options]                    Check whether this machine can run
-                                      mailwoman, and what each gap costs you.
-                                      Runtime first (node, ONNX), then the model
-                                      weights, then the optional data layers
-                                      geocoding needs — a missing layer is
-                                      reported, never fatal, and every failing
-                                      line carries the one command that closes
-                                      it.
+  doctor            Check runtime, model, and optional data readiness.
   eval
   filer
   gazetteer
-  geocode [options] <address...>      Turn an address into a coordinate: parse
-                                      it, then resolve the parts against the
-                                      gazetteer and the rooftop/interpolation
-                                      shards. Reports which tier answered
-                                      (address_point > interpolated > admin);
-                                      run `mailwoman doctor` when a lookup comes
-                                      back admin\-only or errors on a missing
-                                      database.
+  geocode           Turn an address into a coordinate.
   gnaf
-  openapi [options]                   Emit the native @mailwoman/api OpenAPI
-                                      document
-  parse [options] <address...>        Label the parts of an address — house
-                                      number, street, locality, postcode —
-                                      without looking anything up: the output is
-                                      your input, segmented and tagged.
-                                      `mailwoman geocode` runs this same parse,
-                                      then resolves those parts against the
-                                      gazetteer to produce a coordinate.
+  openapi           Emit the native API OpenAPI document.
+  parse
   placer
-  poi [options] <query...>
+  poi
   registry
   release
-  reverse [options] <coordinate...>
-  serve [options]
+  reverse           Resolve a coordinate to its administrative hierarchy.
+  serve
   situs
   skill
   tiger
   tiles
   wof
-  help [command]                      Show help for command
+
+Options:
+  \-h, \-\-help        Show help.
+  \-v, \-\-version     Show version.
 .fi
 .SH PARSE
 .nf
-Usage: Mailwoman CLI parse [options] <address...>
+Usage: mw parse <address...> [options]
 
-Label the parts of an address — house number, street, locality, postcode —
-without looking anything up: the output is your input, segmented and tagged.
-`mailwoman geocode` runs this same parse, then resolves those parts against the
-gazetteer to produce a coordinate.
+Label the parts of an address — house number, street, locality, postcode — without looking anything
+up: the output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then
+resolves those parts against the gazetteer to produce a coordinate.
 
 Arguments:
-  address                              A formatted postal address
+  address                   Formatted postal address
 
 Options:
-  \-\-debug                              Enable verbose debugging output (default:
-                                       false)
-  \-\-input\-mode [input\-mode]            Input register (Decision A): 'fragmented'
-                                       feeds the evidence\-bundle channels
-                                       (map\-search register), 'formatted' runs
-                                       them off (validation/record register).
-                                       Unset → derived from the input's shape.
-                                       (choices: "fragmented", "formatted")
-  \-\-locale [locale]                    Locale tag matching a weights package
-                                       (en\-US, fr\-FR). Default en\-US. (default:
-                                       "en\-US")
-  \-\-default\-country [default\-country]  ISO\-3166 country to scope the WOF
-                                       resolver when the parse carries no
-                                       resolved country node — e.g. 'US' so a
-                                       bare 'NY' resolves to the US state, not a
-                                       higher\-priority foreign homonym. Requires
-                                       \-\-resolve. Defaults from \-\-locale's
-                                       region subtag (en\-US → US); pass 'none'
-                                       to disable the filter and let ranking
-                                       alone decide.
-  \-\-country\-scope [country\-scope]      Whether the locale\-inferred country
-                                       scopes the resolver: 'locale' always,
-                                       'none' never, 'auto' (default) passes the
-                                       locale's region subtag regardless of
-                                       backend. Pin 'locale' or 'none' to hold
-                                       country policy fixed while changing
-                                       backends. An explicit \-\-default\-country
-                                       outranks all three. (choices: "auto",
-                                       "locale", "none", default: "auto")
-  \-\-no\-admin\-coherence                 Joint admin\-consistency re\-pick during
-                                       \-\-resolve (#263/#822: 'Portland, ME'
-                                       binds to Maine, not Messina). ON by
-                                       default (#895); pass \-\-no\-admin\-coherence
-                                       to restore the greedy population\-first
-                                       ranking.
-  \-\-no\-postcode\-country\-coherence      #42: let a (postcode, locality) pair that
-                                       is geographically consistent in exactly
-                                       ONE country override a wrong
-                                       \-\-default\-country. '12 Rue de Rivoli,
-                                       75001 Paris' under en\-US otherwise
-                                       resolves to Paris, Texas. Abstains when
-                                       the default country is already
-                                       consistent, when no country is, or when
-                                       more than one is. ON by default (promoted
-                                       2026\-08\-05); pass
-                                       \-\-no\-postcode\-country\-coherence to
-                                       restore the un\-overridden country scope.
-                                       Requires \-\-resolve.
-  \-\-postcode\-shape\-coherence           #31: shape as confidence and EXCLUSION —
-                                       a postcode span whose codex shape
-                                       intersects NO confident sibling signal
-                                       (country/region) is demoted: digit\-only →
-                                       house_number, letter\-bearing → stamped
-                                       'postcode_shape_excluded'. A shape no
-                                       system recognizes, or no confident
-                                       siblings, abstains. DEFAULT OFF (demotion
-                                       is the failure mode with teeth); pass
-                                       \-\-postcode\-shape\-coherence to opt in.
-                                       Requires \-\-resolve. (default: false)
-  \-\-postcode\-containment\-coherence     #31: re\-rank locality candidates by
-                                       proximity to the postcode's own centroid
-                                       (25 km gate) — the locality that CONTAINS
-                                       the postcode wins the name\-match tie.
-                                       DEFAULT OFF; pass
-                                       \-\-postcode\-containment\-coherence to opt
-                                       in. Requires \-\-resolve. (default: false)
-  \-\-neural                             [Legacy] Force the neural\-classifier\-only
-                                       path (skips Stage 1 + 2 + 2.5 of the
-                                       pipeline). (default: false)
-  \-\-no\-poi                             poi_query detection (poiQueryKind flag).
-                                       DEFAULT\-ON since 2026\-07\-20 (promotion
-                                       battery: 0/4507 golden misroutes, 6/6
-                                       demo presets byte\-identical). Pass
-                                       \-\-no\-poi to restore the pre\-flag
-                                       address\-only kind classification.
-  \-\-download\-weights                   If the locale's neural weights aren't
-                                       installed, download them into
-                                       ~/.cache/mailwoman/weights without
-                                       prompting, then parse.
-                                       Non\-interactive\-safe (CI, pipes).
-                                       (default: false)
-  \-\-degraded                           Run the structural pipeline stages only
-                                       (normalize, query\-shape, kind, grouper)
-                                       without the neural encoder, even when
-                                       weights are installed. A stderr banner
-                                       names what's degraded. (default: false)
-  \-\-format [format]                    Output projection. (choices: "json",
-                                       "tuple", "xml", default: "json")
-  \-\-model [model]                      Explicit model.onnx path (\-\-neural only).
-                                       Overrides \-\-locale resolution.
-  \-\-tokenizer [tokenizer]              Explicit tokenizer.model path (\-\-neural
-                                       only). Overrides \-\-locale resolution.
-  \-\-policy [policies...]               Per\-component policy override,
-                                       repeatable. <component>=<mode> where mode
-                                       is one of: rule_only, neural_only, both,
-                                       neural_preferred, rule_preferred.
-                                       Requires \-\-neural.
-  \-\-resolve                            Run the parsed tree through the WOF
-                                       resolver (Phase 4.3) — decorates matched
-                                       nodes with wof:<id> + lat/lon. Requires
-                                       \-\-neural. (default: false)
-  \-\-resolve\-db [resolve\-db]            Path to a WOF SQLite distribution for
-                                       \-\-resolve. Defaults to $MAILWOMAN_WOF_DB;
-                                       errors if neither is set.
-  \-\-no\-street\-evidence\-rerank          #727 phase\-4c: rerank the STREET on BAN
-                                       name\-existence evidence (FR
-                                       street\-centroids). DEFAULT\-ON: a no\-op
-                                       unless a v3+ span\-head model +
-                                       street\-centroids\-fr.db are both present
-                                       (byte\-stable otherwise). Splices only an
-                                       atlas\-confirmed street into the argmax
-                                       tree. Pass \-\-no\-street\-evidence\-rerank to
-                                       disable.
-  \-\-candidates [candidates]            Surface up to N alternative resolutions
-                                       per resolved node (Springfield\-class
-                                       disambiguation). Requires \-\-resolve.
-                                       Output format\-dependent: json emits
-                                       node.alternatives arrays, xml emits
-                                       <alternative> child elements, tuple
-                                       unchanged.
-  \-\-benchmark [benchmark]              Run the pipeline N times against the
-                                       input and emit per\-stage p50/p95/p99 +
-                                       total wall + heap delta. 5\-iteration
-                                       warmup is excluded from the stats.
-                                       Default path only (incompatible with
-                                       \-\-policy).
-  \-h, \-\-help                           Show help
+  \-h, \-\-help                      Show command help.
+  \-\-debug                                     Enable verbose output (default: false)
+  \-\-input\-mode <string>                       Input register
+  \-\-locale <string>                           BCP\-47 locale (default: en\-US)
+  \-\-default\-country <string>                  Resolver country scope
+  \-\-country\-scope <string>                    Locale country\-scoping policy (default: auto)
+  \-\-[no\-]admin\-coherence                      Joint admin consistency (default: true)
+  \-\-[no\-]postcode\-country\-coherence           Postcode country consistency (default: true)
+  \-\-postcode\-shape\-coherence                  Postcode shape consistency (default: false)
+  \-\-postcode\-containment\-coherence            Postcode containment reranking (default: false)
+  \-\-neural                                    Use neural\-only path (default: false)
+  \-\-[no\-]poi                                  Enable POI query detection (default: true)
+  \-\-download\-weights                          Download missing weights (default: false)
+  \-\-degraded                                  Run structural stages only (default: false)
+  \-\-format <string>                           Output projection (default: json)
+  \-\-model <string>                            Explicit model path
+  \-\-tokenizer <string>                        Explicit tokenizer path
+  \-\-policy <string>                           Repeatable component policy override
+  \-\-resolve                                   Resolve parsed nodes against WOF (default: false)
+  \-\-resolve\-db <string>                       WOF SQLite distribution
+  \-\-[no\-]street\-evidence\-rerank               Rerank street from atlas evidence (default: true)
+  \-\-candidates <number>                       Alternative resolutions per node
+  \-\-benchmark <number>                        Benchmark iteration count
 .fi
 .SH GEOCODE
 .nf
-Usage: Mailwoman CLI geocode [options] <address...>
+Usage: mw geocode [address...] [options]
 
-Turn an address into a coordinate: parse it, then resolve the parts against the
-gazetteer and the rooftop/interpolation shards. Reports which tier answered
-(address_point > interpolated > admin); run `mailwoman doctor` when a lookup
-comes back admin\-only or errors on a missing database.
+Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and
+rooftop/interpolation shards.
 
 Arguments:
-  address                                              A formatted postal address to geocode
+  address                   A formatted postal address to geocode. Omit when using \-\-stdin.
 
 Options:
-  \-\-locale [locale]                                    Locale tag matching a weights package (en\-US, fr\-FR). Default en\-US. (default: "en\-US")
-  \-\-bias [bias]                                        Proximity\-bias points, strongest first: 'lat,lon[:weight];lat,lon' (e.g. the map viewport center, then the user's location). Soft re\-rank only — an ambiguous bare postcode follows the nearest hint.
-  \-\-default\-country [default\-country]                  ISO\-3166 country to scope the WOF resolver. Defaults from \-\-locale's region subtag (en\-US → US). Pass 'none' to disable the country filter.
-  \-\-country\-scope [country\-scope]                      Whether the locale\-inferred country scopes the resolver: 'locale' always, 'none' never, 'auto' (default) only on the FTS backend. Pin 'locale' or 'none' to hold country policy fixed while changing backends. An explicit \-\-default\-country outranks all three. (choices: "auto", "locale", "none", default: "auto")
-  \-\-resolve\-db [resolve\-db]                            Path to a WOF admin SQLite distribution. Defaults to $MAILWOMAN_WOF_DB; errors if neither is set.
-  \-\-candidate\-db [candidate\-db]                        Path to a byte\-range candidate.db (build\-candidate.ts) — the SAME gazetteer + population\-first ranking the browser demo uses. When set (or via $MAILWOMAN_CANDIDATE_DB), the resolver matches the demo (e.g. bare 'Moscow' → Russia, not a US township) and \-\-resolve\-db is not required.
-  \-\-data\-root [data\-root]                              Root directory for per\-state address\-point and interpolation shards. Shards are expected at <dataRoot>/address\-points/address\-points\-us\-<state>.db and <dataRoot>/interpolation/interpolation\-us\-<state>.db. Defaults to $MAILWOMAN_DATA_ROOT. (default: "/mnt/playpen/mailwoman\-data")
-  \-\-address\-points\-db [address\-points\-db]              Explicit path to an address\-points (situs) SQLite shard. Bypasses the per\-state shard selection from the resolved region. Use when you already know the right shard or are testing a specific file.
-  \-\-interpolation\-db [interpolation\-db]                Explicit path to an interpolation SQLite shard. Bypasses the per\-state shard selection. Use when you already know the right shard or are testing a specific file.
-  \-\-interp\-calibration [interp\-calibration]            Conformal calibration multiplier for the interpolation tier's reported uncertainty_m (#374). The raw half\-segment radius covers only ~72% of true errors. Default (unset): the shard's own baked value (its interp_calibration metadata table) when it carries one, else the in\-code per\-region table (#584) selected by parsed region — 1.44 (DC) … 3.12 (AZ), 1.95 for unmeasured states — for a ~90% bound. Pass an explicit number to force a single multiplier everywhere (1 = raw).
-  \-\-locale\-country\-prior                               #27: when \-\-locale's country is withheld from the resolver (a bare city name — see #912), hand it down as a SOFT ranking bonus instead of dropping it, so `\-\-locale en\-GB Whitby` stops answering Whitby, Ontario. OFF by default: the bonus that flips the bare GB names also flips 'Paris' to Texas and 'Athens' to Georgia, because population plus a locale cannot separate the two classes. (default: false)
-  \-\-no\-place\-country                                   The #244 coarse\-placer soft country prior (open\-set rule). A confident whole\-string country guess biases the resolver's locality/region ranking toward the right country (never filters); most useful when no \-\-default\-country / locale pins it. ON by default after the M2 misroute gate (0 misroutes); pass \-\-no\-place\-country to disable.
-  \-\-no\-postcode\-country\-coherence                      #42: let a (postcode, locality) pair that is geographically consistent in exactly ONE country override a wrong \-\-default\-country / locale scope. '12 Rue de Rivoli, 75001 Paris' under en\-US otherwise geocodes to Addison, Texas (ZIP 75001). Abstains when the default country is already consistent, when no country is, or when more than one is. ON by default (promoted 2026\-08\-05); pass \-\-no\-postcode\-country\-coherence to restore the un\-overridden country scope.
-  \-\-no\-fork\-entity                                     #1585: when the parse declares a FORK (a surface structure cannot decide) and nothing resolves, probe poi.db for the single entity bearing the query's exact name ('COMER parís.méxico' → the Paris restaurant). Positive evidence only; street\-flavored forks and ambiguous names abstain. Needs poi.db in the data root; pass \-\-no\-fork\-entity to disable.
-  \-\-postcode\-shape\-coherence                           #31: shape as confidence and EXCLUSION — a postcode span whose codex shape intersects NO confident sibling signal (country/region) is demoted: digit\-only → house_number, letter\-bearing → stamped 'postcode_shape_excluded'. A shape no system recognizes, or no confident siblings, abstains. DEFAULT OFF (demotion is the failure mode with teeth); pass \-\-postcode\-shape\-coherence to opt in. (default: false)
-  \-\-postcode\-containment\-coherence                     #31: re\-rank locality candidates by proximity to the postcode's own centroid (25 km gate) — the locality that CONTAINS the postcode wins the name\-match tie. DEFAULT OFF; pass \-\-postcode\-containment\-coherence to opt in. (default: false)
-  \-\-place\-country\-threshold [place\-country\-threshold]  Abstention threshold for \-\-place\-country: below this calibrated confidence the prior is skipped. Default 0.9. (default: 0.9)
-  \-\-format [format]                                    Output format. "json" (default) emits the native machine\-readable result; "text" prints a human summary; "jsonld" emits a schema.org Place/PostalAddress/GeoCoordinates JSON\-LD object (the web's native address format). Each value also has a bare\-flag shorthand: \-\-json, \-\-text, \-\-jsonld. (choices: "json", "text", "jsonld", default: "json")
-  \-\-json                                               Shorthand for \-\-format json (the default). (default: false)
-  \-\-text                                               Shorthand for \-\-format text — the human\-readable summary. (default: false)
-  \-\-jsonld                                             Shorthand for \-\-format jsonld — schema.org JSON\-LD. (default: false)
-  \-\-debug                                              Interactive three\-panel debug view (input / parse+resolution / map) on a TTY; a single rendered frame on a pipe. Not combinable with \-\-json/\-\-text/\-\-jsonld. (default: false)
-  \-\-debug\-size [debug\-size]                            Frame size for the non\-TTY \-\-debug render. Ignored on a TTY (the terminal sizes the view). (default: "120x36")
-  \-\-tiles [tiles]                                      PMTiles archive for the \-\-debug map pane. Defaults to $MAILWOMAN_TILES, then <dataRoot>/tiles/planet.pmtiles when present. Absent tiles degrade the pane to a note.
-  \-h, \-\-help                                           Show help
+  \-h, \-\-help                      Show command help.
+  \-\-locale <locale>                           Locale tag matching a weights package, such as en\-US
+                                              or fr\-FR. (default: en\-US)
+  \-\-bias <points>                             Soft proximity\-bias points: lat,lon[:weight];lat,lon.
+  \-\-default\-country <country>                 ISO\-3166 resolver country scope; pass none to disable
+                                              it.
+  \-\-country\-scope <string>                    Apply the locale\-inferred resolver scope
+                                              automatically, always, or never. (default: auto)
+  \-\-resolve\-db <path>                         WOF admin SQLite distribution.
+  \-\-candidate\-db <path>                       Demo\-parity byte\-range candidate database.
+  \-\-data\-root <path>                          Root containing address\-point, interpolation, WOF,
+                                              POI, and other data shards.
+  \-\-address\-points\-db <path>                  Explicit address\-point SQLite shard, bypassing region
+                                              selection.
+  \-\-interpolation\-db <path>                   Explicit interpolation SQLite shard, bypassing region
+                                              selection.
+  \-\-interp\-calibration <multiplier>           Force one interpolation uncertainty calibration
+                                              multiplier.
+  \-\-locale\-country\-prior                      Use a withheld locale country as a soft resolver
+                                              ranking prior. (default: false)
+  \-\-[no\-]place\-country                        Use the coarse\-placer country prior;
+                                              \-\-no\-place\-country disables it. (default: true)
+  \-\-[no\-]postcode\-country\-coherence           Allow coherent postcode/locality evidence to override
+                                              a wrong country scope. (default: true)
+  \-\-[no\-]fork\-entity                          Probe POI data for exact entities when a fork parse
+                                              does not resolve. (default: true)
+  \-\-postcode\-shape\-coherence                  Opt into postcode shape exclusion/demotion. (default:
+                                              false)
+  \-\-postcode\-containment\-coherence            Opt into postcode\-centroid locality reranking.
+                                              (default: false)
+  \-\-place\-country\-threshold <probability>     Coarse\-placer abstention threshold. (default: 0.9)
+  \-\-format <string>                           Output format. (default: json)
+  \-\-json                                      Shorthand for \-\-format json. (default: false)
+  \-\-text                                      Shorthand for \-\-format text. (default: false)
+  \-\-jsonld                                    Shorthand for \-\-format jsonld. (default: false)
+  \-\-debug                                     Open the interactive parse/resolution/map view.
+                                              (default: false)
+  \-\-debug\-size <COLSxROWS>                    Frame size for non\-TTY debug rendering. (default:
+                                              120x36)
+  \-\-stdin                                     Read one address per line and emit one JSON object per
+                                              line using one warm session. (default: false)
+  \-\-timing                                    Write startup, initialization, and per\-address phase
+                                              timings to stderr. (default: false)
+  \-\-tiles <path>                              PMTiles archive for the debug map pane.
 .fi
 .SH AUTOCOMPLETE
 .nf
-Usage: Mailwoman CLI autocomplete [options] <prefix...>
+Usage: mw autocomplete [prefix...] [options]
+
+Return ranked place\-name completions for a prefix from the FST gazetteer.
 
 Arguments:
-  prefix           Prefix string to complete
+  prefix                    Prefix string to complete.
 
 Options:
-  \-\-limit [limit]  Maximum number of completions to return (default 10)
-                   (default: 10)
-  \-\-fst [fst]      Path to the FST binary (fst\-en\-US.bin). Defaults to
-                   $MAILWOMAN_FST_BIN or
-                   /tmp/v440\-stage/en\-us/v4.4.0/fst\-en\-US.bin.
-  \-\-json           Emit results as a JSON array instead of formatted text
-                   (default: false)
-  \-h, \-\-help       Show help
+  \-h, \-\-help                      Show command help.
+  \-\-limit <number>                            Maximum number of completions. (default: 10)
+  \-\-fst <path>                                FST binary; defaults from $MAILWOMAN_FST_BIN.
+  \-\-json                                      Emit a JSON array instead of formatted text. (default:
+                                              false)
 .fi
 .SH DOCTOR
 .nf
-Usage: Mailwoman CLI doctor [options]
+Usage: mw doctor [options]
 
-Check whether this machine can run mailwoman, and what each gap costs you.
-Runtime first (node, ONNX), then the model weights, then the optional data
-layers geocoding needs — a missing layer is reported, never fatal, and every
-failing line carries the one command that closes it.
+Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node,
+ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is
+reported, never fatal, and every failing line carries the one command that closes it.
+
 
 Options:
-  \-\-json      Emit the report as JSON instead of a checklist: { checks: [{ id,
-              label, status, detail, consequence?, fix?, core }], exitCode } — a
-              superset of { id, status, detail, fix? } (label + core +
-              consequence aid machine consumers). With \-\-verbose, an
-              `environment` array of { key, value, source } is added. (default:
-              false)
-  \-\-verbose   Also print every path and environment variable the checks resolved
-              (data root, candidate.db, WOF shards, weights) so a surprising
-              verdict can be traced to the setting that caused it. No \-v short
-              form: the root program owns \-v for \-\-version. (default: false)
-  \-h, \-\-help  Show help
+  \-h, \-\-help                      Show command help.
+  \-\-json                                      Emit the report as JSON instead of a checklist: {
+                                              checks: [{ id, label, status, detail, consequence?,
+                                              fix?, core }], exitCode } — a superset of { id,
+                                              status, detail, fix? } (label + core + consequence aid
+                                              machine consumers). With \-\-verbose, an `environment`
+                                              array of { key, value, source } is added. (default:
+                                              false)
+  \-\-verbose                                   Also print every path and environment variable the
+                                              checks resolved (data root, candidate.db, WOF shards,
+                                              weights) so a surprising verdict can be traced to the
+                                              setting that caused it. No \-v short form: the root
+                                              program owns \-v for \-\-version. (default: false)
 .fi
 .SH DATA
 .nf
-Usage: Mailwoman CLI data [options] [command]
+Usage: mw data [options]
 
-Fetch the reference databases geocoding needs — far too large to ship inside the
-npm package. `data \-\-list` shows what exists, `data pull <bundle>` downloads
-one, `data status` reports what is already on disk, and `mailwoman doctor` names
-the one you are missing.
+Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data
+\-\-list` shows what exists, `data pull <bundle>` downloads one, `data status` reports what is already
+on disk, and `mailwoman doctor` names the one you are missing.
+
 
 Options:
-  \-\-list                        List every downloadable bundle: what it ships,
-                                how big it is, and where it lands on disk.
-                                (default: false)
-  \-h, \-\-help                    Show help
-
-Commands:
-  pull [options] <bundle...>
-  status [options] [bundle...]
-  help [command]                Show help for command
+  \-h, \-\-help                      Show command help.
+  \-\-list                                      List every downloadable bundle (default: false)
 .fi
 .SH SERVE
 .nf
-Usage: Mailwoman CLI serve [options]
+Usage: mw serve [options]
+
+Run the Mailwoman HTTP server
+
 
 Options:
-  \-\-port [port]  The port to listen on (default: 3000)
-  \-\-host [host]  The network interface to bind to (default: "0.0.0.0")
-  \-\-cpus [cpus]  The number of worker processes to fork. Default: every
-                 available core.
-  \-h, \-\-help     Show help
+  \-h, \-\-help                      Show command help.
+  \-\-port <number>                             Port to listen on (default: 3000)
+  \-\-host <string>                             Network interface to bind (default: 0.0.0.0)
+  \-\-cpus <number>                             Worker processes. Default: every available core
 .fi
 .SH ENVIRONMENT
 .TP

@@ -21,7 +21,7 @@
  *
  *   ```
  *   node scripts/eval/demo-cascade-smoke.ts \
- *   [--stage-dir /tmp/v440-stage/en-us/v4.4.0] [--db <wof-hot.db>] [--model <onnx>] \
+ *   [--stage-dir <release-dir>] [--db <wof-hot.db>] [--model <onnx>] \
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>] [--fst <fst.bin>] \
  *   [--gazetteer-lexicon <lexicon.json>] [--file <rows.jsonl>] [--json <sidecar.json>] \
  *   [--explain]
@@ -54,6 +54,7 @@ import * as path from "node:path"
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runPipeline } from "@mailwoman/core/pipeline"
+import { tempRootPath } from "@mailwoman/core/utils"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
@@ -112,8 +113,8 @@ function flattenTree(
  */
 export interface DemoCascadeSmokeOptions {
 	/**
-	 * Staged demo release dir (byte-copies of what the live demo serves). Default `/tmp/v440-stage/en-us/v4.4.0`; every
-	 * artifact below defaults to a sibling of it.
+	 * Staged demo release directory. Defaults beneath `$MAILWOMAN_TEMP_ROOT`; every artifact below defaults to a sibling
+	 * of it.
 	 */
 	stageDir?: string
 	/**
@@ -220,7 +221,7 @@ export async function demoCascadeSmoke(
 	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
 	// runs; in a clean install without the package the leg fails HERE, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
-	const STAGE = options.stageDir || "/tmp/v440-stage/en-us/v4.4.0"
+	const STAGE = options.stageDir || tempRootPath("v440-stage", "en-us", "v4.4.0")
 	const DB = options.db || ($public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))
 	const MODEL = options.model || path.join(STAGE, "model.onnx")
 	const TOK = options.tokenizer || path.join(STAGE, "tokenizer.model")

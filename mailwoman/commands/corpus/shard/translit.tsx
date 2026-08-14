@@ -10,25 +10,49 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	jsonl: zod.string().describe("Canonical transliteration JSONL to shard"),
-	baseManifest: zod.string().describe("Base corpus MANIFEST.json whose shards carry forward"),
-	outDir: zod.string().describe("Output directory (shards land under corpus-v<version>/train/)"),
-	corpusVersion: zod.string().default("0.4.0").describe("Corpus version stamped into rows + MANIFEST"),
-	canonicalPathPrefix: zod.string().default("/data/").describe("Prefix replacing legacy base-shard paths"),
-	legacyPathPrefix: zod
-		.string()
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "translit",
+	description: "Build transliteration corpus shards and their combined manifest.",
+	options: {
+		jsonl: { type: "string", required: true, description: "Canonical transliteration JSONL to shard" },
+		"base-manifest": {
+			type: "string",
+			required: true,
+			description: "Base corpus MANIFEST.json whose shards carry forward",
+		},
+		"out-dir": {
+			type: "string",
+			required: true,
+			description: "Output directory (shards land under corpus-v<version>/train/)",
+		},
+		"corpus-version": { type: "string", default: "0.4.0", description: "Corpus version stamped into rows + MANIFEST" },
+		"canonical-path-prefix": {
+			type: "string",
+			default: "/data/",
+			description: "Prefix replacing legacy base-shard paths",
+		},
+		"legacy-path-prefix": {
+			type: "string",
+			description: "Legacy base-shard path prefix to rewrite (default: $MAILWOMAN_DATA_ROOT)",
+		},
+	},
+} as const satisfies CommandSpec
 
-		.optional()
-		.describe("Legacy base-shard path prefix to rewrite (default: $MAILWOMAN_DATA_ROOT)"),
-})
+interface Options {
+	jsonl: string
+	baseManifest: string
+	outDir: string
+	corpusVersion: string
+	canonicalPathPrefix: string
+	legacyPathPrefix?: string
+}
 
-export { OptionsSchema as options }
-
-const CorpusShardTranslit: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusShardTranslit: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildTranslitShard } = await import("@mailwoman/corpus/tools")
 

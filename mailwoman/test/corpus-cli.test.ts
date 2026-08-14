@@ -14,9 +14,9 @@ import { promisify } from "node:util"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test, vi } from "vitest"
-import { ZodError } from "zod"
 
-import { options as runOptions } from "../commands/corpus/run.tsx"
+import { parseCommand } from "../cli-native/spec.ts"
+import { spec as runSpec } from "../commands/corpus/run.tsx"
 import { withCLISpawnLockAsync } from "../test-kit/cli-spawn-lock.ts"
 
 /**
@@ -45,25 +45,35 @@ vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 const exec = promisify(execFile)
 const cliBin = repoRootPath("mailwoman", "out", "cli.js")
 
-describe("corpus run schema validation", () => {
+describe("corpus run option validation", () => {
 	test("rejects non-alpha-2 country", () => {
-		expect(() => runOptions.parse({ input: "x", output: "y", country: "USA" })).toThrow(ZodError)
-		expect(() => runOptions.parse({ input: "x", output: "y", country: "us" })).toThrow(ZodError)
-		expect(() => runOptions.parse({ input: "x", output: "y", country: "FR" })).not.toThrow()
+		expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--country", "USA"])).toThrow(
+			/country/
+		)
+
+		expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--country", "us"])).toThrow(
+			/country/
+		)
+
+		expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--country", "FR"])).not.toThrow()
 	})
 
 	test("limit must be a positive integer", () => {
-		expect(() => runOptions.parse({ input: "x", output: "y", limit: "0" })).toThrow(ZodError)
-		expect(() => runOptions.parse({ input: "x", output: "y", limit: "-1" })).toThrow(ZodError)
-		expect(() => runOptions.parse({ input: "x", output: "y", limit: "10" })).not.toThrow()
+		for (const limit of ["0", "-1"]) {
+			expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--limit", limit])).toThrow(
+				/limit/
+			)
+		}
+
+		expect(() => parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y", "--limit", "10"])).not.toThrow()
 	})
 
 	test("input + output are required; corpusVersion defaults to 0.1.0-dev", () => {
-		expect(() => runOptions.parse({ output: "y" })).toThrow(ZodError)
-		expect(() => runOptions.parse({ input: "x" })).toThrow(ZodError)
-		const parsed = runOptions.parse({ input: "x", output: "y" })
-		expect(parsed.corpusVersion).toBe("0.1.0-dev")
-		expect(parsed.progressEvery).toBe(1000)
+		expect(() => parseCommand(runSpec, ["adapter", "--output", "y"])).toThrow(/input/)
+		expect(() => parseCommand(runSpec, ["adapter", "--input", "x"])).toThrow(/output/)
+		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y"])
+		expect(parsed.values["corpus-version"]).toBe("0.1.0-dev")
+		expect(parsed.values["progress-every"]).toBe(1000)
 	})
 })
 

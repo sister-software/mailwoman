@@ -11,27 +11,44 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Mask-regression gate (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
-const OptionsSchema = zod.object({
-	model: zod.string().optional().describe("ONNX artifact (default: the production int8 under the data root)"),
-	tokenizer: zod.string().optional().describe("Tokenizer (default: the v0.6.0-a0 tokenizer under the data root)"),
-	modelCard: zod.string().optional().describe("Model card JSON (default neural-weights-en-us/model-card.json)"),
-	anchorLookup: zod.string().optional().describe("Anchor lookup JSON (default: the pilot lookup under the data root)"),
-	gazetteerLexicon: zod
-		.string()
-		.optional()
-		.describe("Gazetteer lexicon JSON (default data/gazetteer/anchor-lexicon-v1.json)"),
-	threshold: zod.number().optional().describe("Regression threshold as a fraction (default 0.02 = 2pp)"),
-	json: zod.string().optional().describe("Write the full per-tag delta table here"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "mask-regression",
+	description,
+	options: {
+		model: { type: "string", description: "ONNX artifact (default: the production int8 under the data root)" },
+		tokenizer: { type: "string", description: "Tokenizer (default: the v0.6.0-a0 tokenizer under the data root)" },
+		"model-card": { type: "string", description: "Model card JSON (default neural-weights-en-us/model-card.json)" },
+		"anchor-lookup": {
+			type: "string",
+			description: "Anchor lookup JSON (default: the pilot lookup under the data root)",
+		},
+		"gazetteer-lexicon": {
+			type: "string",
+			description: "Gazetteer lexicon JSON (default data/gazetteer/anchor-lexicon-v1.json)",
+		},
+		threshold: { type: "number", description: "Regression threshold as a fraction (default 0.02 = 2pp)" },
+		json: { type: "string", description: "Write the full per-tag delta table here" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	model?: string
+	tokenizer?: string
+	modelCard?: string
+	anchorLookup?: string
+	gazetteerLexicon?: string
+	threshold?: number
+	json?: string
+}
 
-const EvalMaskRegression: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const EvalMaskRegression: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
 			const { maskRegressionGate } = await import("../../eval-harness/mask-regression.ts")

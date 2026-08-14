@@ -40,39 +40,36 @@ import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	outDir: zod
-		.string()
-		.optional()
-		.describe("Output dir for per-state address-point shards. Default <data-root>/address-points"),
-	release: zod.string().default("2026-05-20.0").describe("Overture release tag passed to each per-state build"),
-	states: zod
-		.string()
-		.optional()
-		.describe("Comma-separated state slugs (e.g. CA,FL). Omit to build every covered state"),
-	licenseFilter: zod
-		.string()
-		.optional()
-		.describe("Comma-separated Overture datasets to keep (narrowed shard). Default: no filter (full coverage)"),
-	concurrency: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.default(4)
-		.describe("States built in parallel (each an isolated child process)"),
-	threads: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("DuckDB scan threads per child. Default: cores / concurrency"),
-	force: zod.boolean().default(false).describe("Rebuild shards even if already complete"),
-})
+const positiveInteger = (v: number): boolean => Number.isInteger(v) && v > 0
 
-export { OptionsSchema as options }
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "build",
+	description: "Build state address-point shards",
+	options: {
+		"out-dir": { type: "string", description: "Output directory" },
+		release: { type: "string", default: "2026-05-20.0", description: "Overture release" },
+		states: { type: "string", description: "Comma-separated states" },
+		"license-filter": { type: "string", description: "Dataset allow-list" },
+		concurrency: { type: "number", default: 4, validate: positiveInteger, description: "Parallel state builds" },
+		threads: { type: "number", validate: positiveInteger, description: "DuckDB threads per child" },
+		force: { type: "boolean", default: false, description: "Rebuild complete shards" },
+	},
+} as const satisfies CommandSpec
+
+interface Options {
+	outDir?: string
+	release: string
+	states?: string
+	licenseFilter?: string
+	concurrency: number
+	threads?: number
+	force: boolean
+}
 
 /**
  * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in
@@ -148,7 +145,7 @@ interface StateManifestEntry {
 	datasets?: Record<string, number>
 }
 
-const SitusBuild: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

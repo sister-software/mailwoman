@@ -5,34 +5,40 @@
  *
  *   `mailwoman gazetteer inspect fst [--db …] [--show-continuations] [--max N] <query…>` — build the
  *   FST from an admin gazetteer and probe queries (path, accepting interpretations by importance,
- *   optional continuations). Ported from the scripts drawer (PR E, #1029); the resolver module is
- *   lazy-imported (optional peer).
+ *   optional continuations).
  */
 
 import { join } from "node:path"
 
 import { Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgumentsSchema = zod.array(zod.string().describe("Queries to probe"))
-export { ArgumentsSchema as args }
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "fst",
+	description: "Probe an admin-gazetteer FST.",
+	positionals: [{ name: "query", required: true, multiple: true, description: "Queries to probe" }],
+	options: {
+		db: { type: "string", description: "Admin gazetteer DB" },
+		"show-continuations": { type: "boolean", default: false, description: "Print prefix continuations" },
+		max: { type: "number", default: 10, description: "Max interpretations per query" },
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	db: zod.string().optional().describe("Admin gazetteer DB. Default the live admin-global-priority.db"),
-	showContinuations: zod.boolean().default(false).describe("Print prefix continuations"),
-	max: zod.string().optional().describe("Max interpretations shown per query (default 10)"),
-})
+interface Options {
+	db?: string
+	showContinuations: boolean
+	max: number
+}
 
-export { OptionsSchema as options }
-
-const GazetteerInspectFST: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
+const GazetteerInspectFST: ParsedCommandComponent<Options> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
 		const { wofDir } = await import("mailwoman/gazetteer-pipeline")
 
-		if (!args.length) throw commandError("pass at least one query")
 		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
-		const maxResults = Number.parseInt(options.max ?? "10", 10)
+		const maxResults = options.max
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
 
 		console.error(`Building FST from ${dbPath}...`)

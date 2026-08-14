@@ -16,22 +16,33 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	output: zod.string().describe("Output JSON path (e.g. pilot-anchor-lookup.json)"),
-	zcta: zod.string().optional().describe("Census ZCTA Gazetteer file for the US placeholder fill"),
-	include: zod
-		.string()
-		.optional()
-		.describe("Comma-separated country codes in centroid-priority order (default: DE,FR,US)"),
-	gbOutward: zod.boolean().default(true).describe("Emit GB outward-district keys beside the unit keys"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "anchor-lookup",
+	description: "Build the postcode-to-anchor lookup.",
+	options: {
+		output: { type: "string", required: true, description: "Output JSON path (e.g. pilot-anchor-lookup.json)" },
+		zcta: { type: "string", description: "Census ZCTA Gazetteer file for the US placeholder fill" },
+		include: {
+			type: "string",
+			description: "Comma-separated country codes in centroid-priority order (default: DE,FR,US)",
+		},
+		"gb-outward": { type: "boolean", default: true, description: "Emit GB outward-district keys beside the unit keys" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	output: string
+	zcta?: string
+	include?: string
+	gbOutward: boolean
+}
 
-const GazetteerBuildAnchorLookup: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.ts")
 

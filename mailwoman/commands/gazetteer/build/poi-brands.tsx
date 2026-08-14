@@ -17,34 +17,39 @@
 import { execFileSync } from "node:child_process"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "mailwoman/gazetteer-pipeline/poi/defaults"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	db: zod.string().optional().describe("Built poi.db to read. Default <data-root>/poi/poi.db"),
-	out: zod.string().optional().describe("brands.json output path. Default poi-taxonomy/data/brands.json"),
-	minRows: zod.string().optional().describe(`Minimum total rows to keep a brand. Default ${DEFAULT_MIN_ROWS}`),
-	dominance: zod
-		.string()
-		.optional()
-		.describe(
-			`Minimum fraction of a QID's total rows its modal name must cover to qualify — below this the QID is ` +
-				`dropped entirely (systematic mistagging). Default ${DEFAULT_DOMINANCE}`
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "poi-brands",
+	description: "Build the POI brand lexicon from poi.db.",
+	options: {
+		db: { type: "string", description: "Built poi.db to read. Default <data-root>/poi/poi.db" },
+		out: { type: "string", description: "brands.json output path" },
+		"min-rows": { type: "number", description: `Minimum total rows to keep a brand. Default ${DEFAULT_MIN_ROWS}` },
+		dominance: { type: "number", description: `Minimum modal-name fraction. Default ${DEFAULT_DOMINANCE}` },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	db?: string
+	out?: string
+	minRows?: number
+	dominance?: number
+}
 
-const GazetteerBuildPOIBrands: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildBrandTable, defaultBrandTableOutPath, defaultPOIDatabasePath, writeBrandTable } =
 			await import("mailwoman/gazetteer-pipeline/poi/build-brands")
 
 		const dbPath = options.db ?? defaultPOIDatabasePath()
 		const out = options.out ?? defaultBrandTableOutPath()
-		const minRows = options.minRows ? Number.parseInt(options.minRows, 10) : DEFAULT_MIN_ROWS
-		const dominance = options.dominance ? Number.parseFloat(options.dominance) : DEFAULT_DOMINANCE
+		const minRows = options.minRows ?? DEFAULT_MIN_ROWS
+		const dominance = options.dominance ?? DEFAULT_DOMINANCE
 
 		console.error(`▸ reading ${dbPath}`)
 

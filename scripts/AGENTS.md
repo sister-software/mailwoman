@@ -6,7 +6,7 @@ If you are adding a new diagnostic script, it should be written preferably in Ty
 
 ## Build Scripts
 
-Scripts for building the training corpus, model artifacts, or other reusable outputs. These are not part of the training pipeline, but they are useful for preparing data or artifacts for training. In almost all cases these are better served as Ink/Pastel commands in @./mailwoman/commands. Ideally a human operator can run these scripts to reproduce the training corpus or model artifacts without needing to understand the details of the training pipeline.
+Scripts for building the training corpus, model artifacts, or other reusable outputs. These are not part of the training pipeline, but they are useful for preparing data or artifacts for training. In almost all cases these are better served as commands in @./mailwoman/commands. Ideally a human operator can run these commands to reproduce the training corpus or model artifacts without needing to understand the details of the training pipeline.
 
 ## Diagnostic Scripts
 
@@ -14,7 +14,7 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 # Addendum
 
-- We use a version of Node.js that can strip types without any additional CLI flags. This is appropriate for everything but the Ink/Pastel commands, which are TSX and require compiling.
+- We use a version of Node.js that can strip types without any additional CLI flags. TSX command components still require compiling.
 - Never use `require()` in a script. Use `import` instead.
 - Never use .mjs file, .sh file. Use .ts or .tsx instead.
 - If you're building building a database, remember that they are readonly artifacts which should not be modified after creation. If the script builds a database, take care to build it successfully, then move the previous version to a temp directory, and then move the new version into place. This ensures that the database is always in a consistent state, even if the build script fails halfway through.
@@ -28,14 +28,9 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 1. **Release tooling** (`publish-workspace`, `copy-weights`, `bless-package`, `check-release-parity`, `verify-*`, `rewrite-workspace-imports`, `release-workspace-repository.test`) + **CI smoke** (`smoke-*`) — the release pipeline's residents.
 2. **Codegen + lint tooling** (`generate-*`, `lint-*`, `jsonl-to-parquet`) — candidates for a future `mailwoman dev` namespace.
-3. **`eval/`** — the referenced probe battery — CI/skill/RELEASING/gate-spawned probes only, triaged 2026-07-10 (plus the Python calibration scripts and the
-   eval-local helpers in `eval/lib/`). The LIVING GATES moved out (phase 5a of the 2026-07-09
-   scripts-to-pastel spec): promotion gate, gauntlet (+ its builders), ledger-append, capability
-   manifest, oa-resolver eval, error analysis, preset compare, mask-regression, and the gate-spec
-   JSONs all live in `mailwoman/eval-harness/` behind `mailwoman eval …`. One exception:
-   `eval/oa-resolver-eval.ts` is a forwarding SHIM kept so the standing probes that spawn it
-   (de-order-eval — a gate battery leg — honest-eval, eval-de-coverage, de-pip-eval) keep working
-   until the probe triage.
+3. **`eval/`** — CI and release probes plus Python calibration scripts and helpers in `eval/lib/`.
+   Command implementations live in `mailwoman/eval-harness/` behind `mailwoman eval …`.
+   `eval/oa-resolver-eval.ts` forwards existing direct invocations to that implementation.
 4. **`diagnostic/`** — gitignored one-off investigations.
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.

@@ -4,23 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Generates `docs/articles/developers/reference/cli.mdx` — the published CLI contract — from the
- *   command schemas themselves, so the page cannot drift from the binary. Runs in the docs
+ *   command specifications themselves, so the page cannot drift from the binary. Runs in the docs
  *   `prebuild` beside the four OpenAPI emits (`docs/package.json`), and the committed page is
  *   asserted byte-for-byte by `generate-cli-reference.test.ts`.
  *
- *   HOW THE SURFACE IS DERIVED. The CLI is Pastel over Commander: `mailwoman/commands/**` is walked
- *   as a directory tree, each module exporting a zod `options` object schema, an optional zod `args`
- *   schema, and the Ink component as its default export. Rather than re-deriving flags from those
- *   schemas — which would let this page and the binary disagree silently, the one failure this file
- *   exists to prevent — the generator calls Pastel's OWN `readCommands` / `generateOptions` /
- *   `generateArguments` and reads the Commander objects the real CLI is built from. A flag string
- *   here is the flag string `--help` prints, character for character.
- *
- *   That means depending on Pastel's internal file layout: its `exports` map publishes only the
- *   package root, so the three modules are resolved as siblings of the resolved package entry
- *   (`import.meta.resolve("pastel")`). A Pastel upgrade that moves them breaks this script
- *   loudly at docs-build time, which is the intended failure mode — a silent fallback would publish
- *   a page that no longer describes the binary.
+ *   HOW THE SURFACE IS DERIVED. `mailwoman/commands/**` is walked as a directory tree, with each executable module
+ *   exporting the same native `CommandSpec` used by runtime parsing and help.
  *
  *   The walk reads the COMPILED tree (`mailwoman/out/commands`), not source: the commands are TSX,
  *   which Node cannot type-strip. `docs` already depends on that tree — every OpenAPI emit in
@@ -44,9 +33,7 @@ import { readFile, writeFile } from "node:fs/promises"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-// Types-only: Pastel's generateOptions/generateArguments return commander objects; nothing here
-// re-derives command parsing — the generator drives Pastel's own machinery end to end.
-import type { Argument, Option } from "commander"
+import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
 //#region Scope policy
 
@@ -87,7 +74,7 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
  */
 export interface CLIFlag {
 	/**
-	 * The flag as Commander renders it, e.g. `--format [format]` or `--no-admin-coherence`.
+	 * The rendered flag, e.g. `--format [format]` or `--no-admin-coherence`.
 	 */
 	flag: string
 	/**
@@ -99,7 +86,7 @@ export interface CLIFlag {
 	 */
 	default: string
 	/**
-	 * The flag's own help text, verbatim from its zod `.describe()`.
+	 * The flag's own help text from its command specification.
 	 */
 	description: string
 }
@@ -167,101 +154,19 @@ export interface CLISurface {
 
 //#endregion
 
-//#region Pastel bridge
-
-/**
- * The subset of Pastel's internal command record this generator reads.
- */
-interface PastelCommand {
-	name: string
-	description?: string
-	options?: unknown
-	args?: unknown
-	component?: unknown
-	commands?: Map<string, PastelCommand>
-}
-
-interface PastelModules {
-	readCommands: (directory: string) => Promise<Map<string, PastelCommand>>
-	generateOptions: (schema: unknown) => Option[]
-	generateArguments: (schema: unknown) => Argument[]
-}
-
-/**
- * Load Pastel's own command reader and Commander builders. See the module docstring for why this reaches past the
- * package's `exports` map, and why a rename upstream should break the build rather than degrade.
- */
-async function loadPastelModules(): Promise<PastelModules> {
-	// `import.meta.resolve` already returns a `file://` URL string, so this needs neither `createRequire` nor
-	// `pathToFileURL` — verified to resolve to the same `node_modules/pastel/build/index.js` the CJS twin returned.
-	// This script runs under plain node (`docs`'s `prebuild`), never a bundler, so the native resolver is available.
-	const entry = import.meta.resolve("pastel")
-
-	const [readCommands, generateOptions, generateArguments] = await Promise.all([
-		import(new URL("./read-commands.js", entry).href) as Promise<{ default: PastelModules["readCommands"] }>,
-		import(new URL("./generate-options.js", entry).href) as Promise<{ default: PastelModules["generateOptions"] }>,
-		import(new URL("./generate-arguments.js", entry).href) as Promise<{ default: PastelModules["generateArguments"] }>,
-	])
-
-	return {
-		readCommands: readCommands.default,
-		generateOptions: generateOptions.default,
-		generateArguments: generateArguments.default,
-	}
-}
-
-//#endregion
-
 //#region Type + default rendering
 
-/**
- * A zod schema, read structurally. zod 4 keeps the discriminant at `_zod.def.type` and wraps modifiers (`optional`,
- * `default`) around an `innerType`, which is the chain this unwraps.
- */
-interface ZodLike {
-	_zod: {
-		def: {
-			type: string
-			innerType?: ZodLike
-			element?: ZodLike
-			entries?: Record<string, unknown>
-			shape?: Record<string, ZodLike>
-		}
-	}
+function renderType(option: OptionSpec): string {
+	if (option.choices) return option.choices.map((value) => `\`${value}\``).join(" \\| ")
+
+	return `${option.type}${option.multiple ? "[]" : ""}`
 }
 
-/**
- * Strip `optional` / `default` wrappers to the schema that carries the value type.
- */
-function unwrap(schema: ZodLike): ZodLike {
-	let current = schema
+function renderFlag(name: string, option: OptionSpec): string {
+	if (option.type === "boolean") return option.default === true ? `--no-${name}` : `--${name}`
+	const placeholder = `${name}${option.multiple ? "..." : ""}`
 
-	while (current._zod.def.innerType) {
-		current = current._zod.def.innerType
-	}
-
-	return current
-}
-
-/**
- * The `Type` column. Enum members render as inline code separated by a pipe, escaped for the table.
- */
-function renderType(schema: ZodLike): string {
-	const inner = unwrap(schema)
-	const { type, element, entries } = inner._zod.def
-
-	switch (type) {
-		case "enum":
-			return entries
-				? Object.values(entries)
-						.map((value) => `\`${String(value)}\``)
-						.join(" \\| ")
-				: "enum"
-		case "array":
-			return element ? `${unwrap(element)._zod.def.type}[]` : "array"
-		default:
-			return type
-	}
+	return `--${name} ${option.required ? `<${placeholder}>` : `[${placeholder}]`}`
 }
 
 /**
@@ -328,51 +233,34 @@ export function renderTable(headers: readonly string[], rows: readonly (readonly
 //#region Collection
 
 /**
- * Walk one Pastel command node into flat {@link CLICommand} records, deepest path first.
+ * Walk one command node into flat {@link CLICommand} records, deepest path first.
  */
-function collectCommands(
-	node: PastelCommand,
-	prefix: readonly string[],
-	pastel: PastelModules,
-	into: CLICommand[]
-): void {
+function collectCommands(node: CommandNode, prefix: readonly string[], into: CLICommand[]): void {
 	const path = [...prefix, node.name]
 
-	if (node.component) {
-		const options = node.options ? pastel.generateOptions(node.options) : []
-		const args = node.args ? pastel.generateArguments(node.args) : []
+	if (node.component && node.spec) {
+		const flags: CLIFlag[] = Object.entries(node.spec.options ?? {}).map(([name, option]) => ({
+			flag: renderFlag(name, option),
+			type: renderType(option),
+			default: renderDefault(option.default),
+			description: option.description,
+		}))
 
-		// Commander's Option carries the rendered flag, description, default and choices; the value TYPE
-		// lives only in the zod schema. Pastel emits exactly one Option per shape key, in key order, so
-		// the two zip by index. Reading the shape by `option.attributeName()` instead would be wrong
-		// wherever a schema declares both `x` and `noX`: Commander renders the second as `--no-x`, whose
-		// attribute name is `x`, and both options would resolve to the first key's schema.
-		const shape = Object.values((node.options as ZodLike | undefined)?._zod.def.shape ?? {})
-
-		const flags: CLIFlag[] = options.map((option, index) => {
-			const schema = shape[index]
-
-			return {
-				flag: option.flags,
-				type: option.isBoolean() ? "boolean" : schema ? renderType(schema) : "string",
-				default: renderDefault(option.defaultValue),
-				description: option.description,
-			}
-		})
+		const args = node.spec.positionals ?? []
 
 		const placeholders = args.map((argument) => {
-			const name = `${argument.name()}${argument.variadic ? "..." : ""}`
+			const name = `${argument.name}${argument.multiple ? "..." : ""}`
 
 			return argument.required ? `<${name}>` : `[${name}]`
 		})
 
 		into.push({
 			path: path.join(" "),
-			synopsis: ["mailwoman", ...path, options.length ? "[options]" : "", ...placeholders].filter(Boolean).join(" "),
-			...(node.description ? { description: node.description } : {}),
+			synopsis: ["mailwoman", ...path, flags.length ? "[options]" : "", ...placeholders].filter(Boolean).join(" "),
+			description: node.spec.description,
 			args: args.map((argument, index) => ({
 				name: placeholders[index]!,
-				required: argument.required,
+				required: argument.required === true,
 				description: argument.description,
 			})),
 			flags,
@@ -381,7 +269,7 @@ function collectCommands(
 
 	if (node.commands) {
 		for (const child of [...node.commands.values()].toSorted((a, b) => a.name.localeCompare(b.name, "en"))) {
-			collectCommands(child, path, pastel, into)
+			collectCommands(child, path, into)
 		}
 	}
 }
@@ -393,6 +281,10 @@ const packagePath = dirname(fileURLToPath(new URL(import.meta.resolve("mailwoman
  * behaves the same from the repo root and from `docs/`.
  */
 export const COMMANDS_DIRECTORY = join(packagePath, "out", "commands")
+/**
+ * Compiled direct-command directory merged with the filesystem command tree.
+ */
+export const NATIVE_COMMANDS_DIRECTORY = join(packagePath, "out", "cli-native", "commands")
 
 /**
  * Read the compiled command tree and partition it by {@link DOCUMENTED_GROUPS}.
@@ -400,20 +292,24 @@ export const COMMANDS_DIRECTORY = join(packagePath, "out", "commands")
  * @throws When a group outside {@link DOCUMENTED_GROUPS} has no {@link GROUP_NOTES} entry.
  */
 export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY): Promise<CLISurface> {
-	const pastel = await loadPastelModules()
-	const tree = await pastel.readCommands(commandsDirectory)
+	const nativeCommands = await readCommands(NATIVE_COMMANDS_DIRECTORY)
+	const tree = await readCommands(commandsDirectory, new Set(nativeCommands.keys()))
+
+	for (const [name, command] of nativeCommands) {
+		tree.set(name, command)
+	}
 
 	const documented: CLIGroup[] = []
 	const undocumented: CLIGroupSummary[] = []
 	let totalCommands = 0
 
-	// Root commands first: Pastel keys them individually rather than under a group node.
+	// Root commands first.
 	const rootCommands: CLICommand[] = []
-	const groups = new Map<string, PastelCommand>()
+	const groups = new Map<string, CommandNode>()
 
 	for (const node of tree.values()) {
 		if (node.component && !node.commands) {
-			collectCommands(node, [], pastel, rootCommands)
+			collectCommands(node, [], rootCommands)
 		} else {
 			groups.set(node.name, node)
 		}
@@ -428,12 +324,12 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 		const commands: CLICommand[] = []
 
 		for (const child of [...(node.commands?.values() ?? [])].toSorted((a, b) => a.name.localeCompare(b.name, "en"))) {
-			collectCommands(child, [name], pastel, commands)
+			collectCommands(child, [name], commands)
 		}
 
 		// A group whose own index.tsx is a command (`corpus shard`) contributes it too.
 		if (node.component) {
-			collectCommands({ ...node, commands: undefined }, [], pastel, commands)
+			collectCommands({ ...node, commands: undefined }, [], commands)
 		}
 
 		commands.sort((a, b) => a.path.localeCompare(b.path, "en"))
@@ -485,12 +381,12 @@ export async function collectCLISurface(commandsDirectory = COMMANDS_DIRECTORY):
 const FRONTMATTER = [
 	"---",
 	"title: CLI",
-	"description: Every command and flag the published Mailwoman CLI accepts, generated from the command schemas.",
+	"description: Every command and flag the published Mailwoman CLI accepts, generated from command specifications.",
 	"role: reference",
 	"source-of-truth: generated — docs/scripts/generate-cli-reference.ts",
 	"---",
 	"",
-	"{/* Generated by docs/scripts/generate-cli-reference.ts. Edit the command schemas, not this file. */}",
+	"{/* Generated by docs/scripts/generate-cli-reference.ts. Edit command specifications, not this file. */}",
 ].join("\n")
 
 /**
@@ -626,8 +522,8 @@ export function renderCLIReference(surface: CLISurface): string {
 		"## Rationale",
 		"",
 		"This page is generated rather than written because a hand-maintained flag table is wrong the day a",
-		"flag changes, and nothing catches it. The generator reads the same Pastel and Commander code that",
-		"builds the binary, so a flag string here is the flag string `--help` prints. A test asserts the",
+		"flag changes, and nothing catches it. The generator reads the same command specifications that",
+		"build the binary, so a flag string here is the flag string `--help` prints. A test asserts the",
 		"committed page against a fresh render, which turns a stale page into a failing build.",
 		"",
 		`The scope split is deliberate. Publishing all ${surface.totalCommands} commands would bury the ${documentedCount} that run against`,

@@ -18,9 +18,14 @@ import { Spinner } from "@inkjs/ui"
 import type { InterpolateColorCallback, PlacetypeRole } from "@mailwoman/core"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
-import { parseRoles, commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	parseRoles,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
-import zod from "zod"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -41,30 +46,31 @@ async function loadD3Interpolators(): Promise<Record<string, InterpolateColorCal
 	return out
 }
 
-const ArgumentsSchema = zod
-	.array(zod.string())
-	.describe(
-		"Positional args: <localRepoDirectory> <placetype>. The directory should contain a clone of whosonfirst/whosonfirst-placetypes (run `mailwoman wof sync` first)."
-	)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "mermaid",
+	description: "Generate a Mermaid placetype hierarchy",
+	positionals: [
+		{ name: "localRepoDirectory", required: true, description: "Local whosonfirst-placetypes clone" },
+		{ name: "placetype", required: true, description: "Placetype to use as the hierarchy root" },
+	],
+	options: {
+		roles: { type: "string", description: `Comma-separated role filter: ${PlacetypeRoles.join(", ")}` },
+		output: { type: "string", description: "Path to write the Mermaid markup to. Defaults to stdout." },
+		interpolator: {
+			type: "string",
+			description: "d3-scale-chromatic sequential interpolator, such as viridis or turbo",
+		},
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	roles: zod
-		.string()
-		.optional()
-		.describe(
-			`Optional comma-separated role filter. One or more of: ${PlacetypeRoles.join(", ")}. Defaults to all roles.`
-		),
-	output: zod.string().optional().describe("Path to write the Mermaid markup to. Defaults to stdout."),
-	interpolator: zod
-		.string()
-		.optional()
-		.describe(
-			"d3-scale-chromatic sequential interpolator that colors edges by depth from the root so lineage paths trace a smooth gradient. " +
-				"Defaults to 'viridis'. Try 'turbo', 'plasma', 'cool', 'magma', etc. Node colors always use the hand-tuned role palette."
-		),
-})
-
-export { ArgumentsSchema as args, OptionsSchema as options }
+interface Options {
+	roles?: string
+	output?: string
+	interpolator?: string
+}
 
 async function resolveInterpolator(raw: string | undefined): Promise<InterpolateColorCallback | undefined> {
 	if (!raw) return undefined
@@ -73,26 +79,28 @@ async function resolveInterpolator(raw: string | undefined): Promise<Interpolate
 	const fn = interpolators[raw.toLowerCase()]
 
 	if (!fn) {
-		throw commandError(`Unknown interpolator '${raw}'. Available: ${Object.keys(interpolators).toSorted().join(", ")}.`)
+		throw new CommandError(
+			`Unknown interpolator '${raw}'. Available: ${Object.keys(interpolators).toSorted().join(", ")}.`
+		)
 	}
 
 	return fn
 }
 
-const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema> = ({ args, options }) => {
+const WOFMermaid: ParsedCommandComponent<Options, [string, string]> = ({ args, options }) => {
 	const placetypeName = args[1]
 
 	const state = useCommandTask(async () => {
 		const { generateMermaidMarkup, Placetype } = await import("@mailwoman/core")
 
 		if (!args[0]) {
-			throw commandError("Missing required positional argument: <localRepoDirectory>")
+			throw new CommandError("Missing required positional argument: <localRepoDirectory>")
 		}
 
 		const localRepoDirectory = PathBuilder.from(args[0])
 
 		if (!placetypeName) {
-			throw commandError("Missing required positional argument: <placetype>")
+			throw new CommandError("Missing required positional argument: <placetype>")
 		}
 
 		const roles: PlacetypeRole[] | undefined = parseRoles(options.roles)
@@ -103,7 +111,7 @@ const WOFMermaid: CommandComponent<typeof OptionsSchema, typeof ArgumentsSchema>
 		const placetype = Placetype.find(placetypeName)
 
 		if (!placetype) {
-			throw commandError(
+			throw new CommandError(
 				`No placetype named '${placetypeName}' found. Ensure '${localRepoDirectory.toString()}' contains a clone of whosonfirst/whosonfirst-placetypes (run \`mailwoman wof sync\` first).`
 			)
 		}

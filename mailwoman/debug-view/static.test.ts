@@ -21,7 +21,7 @@ import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
-import { options as geocodeOptionsSchema } from "../commands/geocode.tsx"
+import { createGeocodeCommandOptions } from "../geocode-command-options.ts"
 import { runStaticDebug } from "./command.tsx"
 import { mapPaneCellSize } from "./DebugFrame.tsx"
 
@@ -64,7 +64,7 @@ if (!canRun) {
 
 describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
-		const options = geocodeOptionsSchema.parse({ tiles: TILES_PATH, debugSize: "100x30" })
+		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "100x30" })
 
 		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
 
@@ -81,7 +81,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	})
 
 	test("the captured frame carries the dev-mode evidence rows and result sections from REAL pipeline data", async () => {
-		const options = geocodeOptionsSchema.parse({ tiles: TILES_PATH, debugSize: "140x40" })
+		const options = createGeocodeCommandOptions({ tiles: TILES_PATH, debugSize: "140x40" })
 
 		const text = await runStaticDebug("3215 SE Clinton St, Portland OR", options)
 
@@ -111,7 +111,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 describe("runStaticDebug --debug-size floor", () => {
 	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
-		const options = geocodeOptionsSchema.parse({ debugSize: "100x5" })
+		const options = createGeocodeCommandOptions({ debugSize: "100x5" })
 
 		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw at this size
 		// (mapPaneCellSize's row math goes negative before map-tui's allocation does) — assertDebugSizeFloor now
@@ -129,7 +129,7 @@ describe("runStaticDebug --debug-size floor", () => {
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 
 		await expect(
-			runStaticDebug("3215 SE Clinton St, Portland OR", geocodeOptionsSchema.parse({ debugSize: "60x19" }))
+			runStaticDebug("3215 SE Clinton St, Portland OR", createGeocodeCommandOptions({ debugSize: "60x19" }))
 		).rejects.toThrow(/--debug-size below the 60x20 minimum: 60x19/)
 	})
 })
@@ -141,7 +141,7 @@ describe("runStaticDebug empty input", () => {
 		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor and before
 		// createGeocodeSession, so this rejects even without a resolvable session — same unconditional posture as
 		// the --debug-size floor test above.
-		await expect(runStaticDebug("", geocodeOptionsSchema.parse({}))).rejects.toThrow(
+		await expect(runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)
 	})
@@ -151,7 +151,7 @@ describe("runStaticDebug empty input", () => {
 
 describe("runStaticDebug --debug format guard", () => {
 	test("a --format shorthand alongside --debug rejects, not a silent pick", async () => {
-		const options = geocodeOptionsSchema.parse({ text: true })
+		const options = createGeocodeCommandOptions({ text: true })
 
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			"--debug is its own output surface; drop --text."
@@ -159,7 +159,7 @@ describe("runStaticDebug --debug format guard", () => {
 	})
 
 	test("an explicit non-default --format alongside --debug rejects the same way", async () => {
-		const options = geocodeOptionsSchema.parse({ format: "text" })
+		const options = createGeocodeCommandOptions({ format: "text" })
 
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			"--debug is its own output surface; drop --format text."

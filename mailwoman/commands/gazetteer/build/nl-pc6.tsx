@@ -9,17 +9,26 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	csv: zod.string().optional().describe("CBS PC6 centroid CSV. Default <data-root>/cbs/pc6-centroids.csv"),
-	out: zod.string().optional().describe("Output shard. Default <data-root>/wof/postalcode-nl-pc6.db"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "nl-pc6",
+	description: "Build the Netherlands PC6 postcode shard.",
+	options: {
+		csv: { type: "string", description: "CBS PC6 centroid CSV. Default <data-root>/cbs/pc6-centroids.csv" },
+		out: { type: "string", description: "Output shard. Default <data-root>/wof/postalcode-nl-pc6.db" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	csv?: string
+	out?: string
+}
 
-const GazetteerBuildNLPC6: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildNLPC6: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildNLPC6Shard } = await import("../../../gazetteer-pipeline/postcode/nl-pc6.ts")
 		const r = await buildNLPC6Shard({ csvPath: options.csv, out: options.out })

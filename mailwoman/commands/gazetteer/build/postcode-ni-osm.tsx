@@ -20,26 +20,28 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	sourceDir: zod
-		.string()
-		.optional()
-		.describe(
-			"Acquisition dir for response.json + acquisition.json. Default <data-root>/osm-ni-postcodes/<YYYY-MM-DD>"
-		),
-	out: zod.string().optional().describe("Output path. Default <data-root>/wof/postalcode-ni-osm-<YYYY-MM-DD>.db"),
-	offline: zod
-		.boolean()
-		.optional()
-		.describe("Skip the Overpass query and build from whatever is already in --source-dir (the normal rebuild mode)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-ni-osm",
+	description: "Build the local Northern Ireland OSM postcode shard.",
+	options: {
+		"source-dir": { type: "string", description: "Acquisition directory" },
+		out: { type: "string", description: "Output path" },
+		offline: { type: "boolean", description: "Build from existing acquisition files" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	sourceDir?: string
+	out?: string
+	offline?: boolean
+}
 
-const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
 

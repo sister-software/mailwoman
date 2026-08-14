@@ -32,8 +32,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { commandError, type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -47,33 +46,34 @@ const MIN_CLOSED_RING_VERTICES = 4
 
 const ADMIN_PLACETYPES = new Set(["locality", "localadmin", "region", "county", "borough", "macroregion", "country"])
 
-const OptionsSchema = zod.object({
-	points: zod
-		.string()
-		.optional()
-		.describe("Slim points DB (wof-hot.db) — keeps the demo sidecar in lockstep. Mutually exclusive with --admin."),
-	admin: zod
-		.string()
-		.optional()
-		.describe("Full gazetteer admin DB (admin-global-priority.db) — broad coverage. Mutually exclusive with --points."),
-	countries: zod
-		.string()
-		.optional()
-		.describe("With --admin: comma-separated ISO codes to restrict (e.g. US,DE). Default: all."),
-	out: zod.string().optional().describe("Output wof-polygons.db path (required)."),
-	tol: zod.coerce
-		.number()
-		.optional()
-		.default(0.004)
-		.describe("Douglas-Peucker simplification tolerance in degrees (~0.004° ≈ 400 m)."),
-	repos: zod
-		.string()
-		.optional()
-		.default(dataRootPath("wof", "repos", "whosonfirst-data"))
-		.describe("Root of the per-country WOF GeoJSON repos (whosonfirst-data-admin-<cc>/...)."),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "polygons",
+	description: "Build a WOF polygon sidecar",
+	options: {
+		points: { type: "string", description: "Slim points database" },
+		admin: { type: "string", description: "Full admin database" },
+		countries: { type: "string", description: "Comma-separated ISO country filter" },
+		out: { type: "string", required: true, description: "Output database" },
+		tol: { type: "number", default: 0.004, description: "Simplification tolerance in degrees" },
+		repos: {
+			type: "string",
+			default: dataRootPath("wof", "repos", "whosonfirst-data"),
+			description: "WOF GeoJSON repository root",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	points?: string
+	admin?: string
+	countries?: string
+	out: string
+	tol: number
+	repos: string
+}
 
 type Position = number[]
 
@@ -177,7 +177,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 	return null // Points / lines: no polygon to draw.
 }
 
-const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { tryParsingJSON } = await import("@mailwoman/core/objects")
@@ -187,13 +187,13 @@ const GazetteerPolygons: CommandComponent<typeof OptionsSchema> = ({ options }) 
 		const admin = options.admin ?? ""
 
 		if (!out) {
-			throw commandError(
+			throw new CommandError(
 				"usage: mailwoman gazetteer polygons (--points <wof-hot.db> | --admin <admin.db> [--countries US,DE]) --out <wof-polygons.db> [--tol 0.004]"
 			)
 		}
 
 		if ((!points && !admin) || (points && admin)) {
-			throw commandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
+			throw new CommandError("provide exactly one source: --points <wof-hot.db> OR --admin <admin.db>")
 		}
 
 		const countries = options.countries

@@ -10,20 +10,30 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	input: zod.string().describe("The labeled-row JSONL to convert"),
-	output: zod.string().describe("The parquet shard to write"),
-	rowGroupSize: zod.number().default(50_000).describe("Parquet row-group size"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "jsonl-to-parquet",
+	description: "Convert labeled-row JSONL to a Parquet corpus shard.",
+	options: {
+		input: { type: "string", required: true, description: "The labeled-row JSONL to convert" },
+		output: { type: "string", required: true, description: "The parquet shard to write" },
+		"row-group-size": { type: "number", default: 50_000, description: "Parquet row-group size" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	input: string
+	output: string
+	rowGroupSize: number
+}
 
 const report = (line: string): void => console.error(line)
 
-const DevJSONLToParquet: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevJSONLToParquet: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { jsonlToParquet } = await import("@mailwoman/corpus/tools")
 

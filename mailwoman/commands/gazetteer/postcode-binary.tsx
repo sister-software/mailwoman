@@ -39,8 +39,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 import type { GBGranularity, PostcodeShardRow } from "../../gazetteer-pipeline/postcode/binary.ts"
 
@@ -56,31 +55,31 @@ interface LocaleSource {
  */
 const BROWSER_BUDGET_BYTES = 4 * 1024 * 1024
 
-const OptionsSchema = zod.object({
-	out: zod
-		.string()
-		.default("docs/static/mailwoman")
-		.describe("Output dir for the postcode-<cc>.bin files. Default docs/static/mailwoman"),
-	locale: zod
-		.array(zod.string())
-		.optional()
-		.describe(
-			"`<CC>:<db>` source override, repeatable (db relative to <data-root>/wof or absolute). " +
-				"Default: US + NL/FR/DE/ES/IT (postalcode-intl.db) + GB (postalcode-gb-codepoint.db)."
-		),
-	// Pastel binds the kebab flag to this lowercase-acronym prop by derivation — see AGENTS.md.
-	gbGranularity: zod
-		.enum(["unit", "outward"])
-		.default("unit")
-		.describe(
-			"GB key set: `unit` (units + outward districts, 1,749,839 keys / 20.0 MB — train-faithful, " +
-				"the anchor-v2 default) or `outward` (districts only, 2,863 keys / 0.03 MB — browser budget)."
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "postcode-binary",
+	description: "Build postcode binary indexes",
+	options: {
+		out: { type: "string", default: "docs/static/mailwoman", description: "Output directory" },
+		locale: { type: "string", multiple: true, description: "Repeatable <CC>:<db> source override" },
+		"gb-granularity": {
+			type: "string",
+			choices: ["unit", "outward"],
+			default: "unit",
+			description: "GB key granularity",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	out: string
+	locale?: string[]
+	gbGranularity: GBGranularity
+}
 
-const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		// `@mailwoman/neural/postcode-binary-resolver` is a self-contained serializer whose only imports are
@@ -95,8 +94,8 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 
 		const locales: LocaleSource[] = []
 
-		for (const spec of options.locale ?? []) {
-			const [country, db] = spec.split(":")
+		for (const localeSpec of options.locale ?? []) {
+			const [country, db] = localeSpec.split(":")
 
 			if (country && db) {
 				locales.push({ country, db: db.startsWith("/") ? db : join(wof, db) })
@@ -104,6 +103,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 		}
 
 		if (!locales.length) {
+			//.TODO: should have this in a JSON file somewhere to avoid drift.
 			locales.push(
 				{ country: "US", db: join(wof, "postalcode-us.db") },
 				{ country: "NL", db: join(wof, "postalcode-intl.db") },
@@ -170,6 +170,7 @@ const GazetteerPostcodeBinary: CommandComponent<typeof OptionsSchema> = ({ optio
 			// training painted. But this command's default `--out` is the BROWSER asset dir, where 20 MB is
 			// not a postcode binary, it is the whole page budget. The size is printed either way; this names
 			// the lever rather than deciding for the operator.
+			// TODO: Should not be a hardcoded country code but somewhere in a config.
 			if (country.toUpperCase() === "GB" && granularity === "unit" && bytes.length > BROWSER_BUDGET_BYTES) {
 				console.error(
 					`  NOTE: that is the TRAIN-FAITHFUL unit key set, sized for a serving weights package. ` +

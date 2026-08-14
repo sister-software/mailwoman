@@ -104,6 +104,11 @@
 			"default": "./out/cli-kit/index.js",
 			"types": "./out/cli-kit/index.d.ts"
 		},
+		"./cli-kit/metadata": {
+			"node": "./cli-kit/metadata.ts",
+			"default": "./out/cli-kit/metadata.js",
+			"types": "./out/cli-kit/metadata.d.ts"
+		},
 		"./cli-kit/dropin": {
 			"node": "./cli-kit/dropin.ts",
 			"default": "./out/cli-kit/dropin.js",
@@ -130,6 +135,7 @@
 	},
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
+		"@isaacs/cliui": "^9.0.0",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
@@ -161,7 +167,6 @@
 		"ink": "^7.1.1",
 		"kysely": "^0.29.4",
 		"onnxruntime-node": "^1.26.0",
-		"pastel": "^4.0.1",
 		"path-ts": "^2.1.0",
 		"pluralize": "^8.0.0",
 		"react": "^19.2.8",

@@ -9,25 +9,35 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 export const description = "Probe whether the deployed coarse placer (#244) covers the recoverable tranche (#822)"
 
-const OptionsSchema = zod.object({
-	model: zod
-		.string()
-		.optional()
-		.describe("Model artifact dir (default: the deployed bundle in @mailwoman/core, core/data/coarse-placer)"),
-	n: zod.number().default(2000).describe("Queries sampled from cities15000 (shortest first)"),
-	out: zod.string().optional().describe("Also write the markdown report here"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "probe-frontier",
+	description,
+	options: {
+		model: {
+			type: "string",
+			description: "Model artifact dir (default: the deployed bundle in @mailwoman/core, core/data/coarse-placer)",
+		},
+		n: { type: "number", default: 2000, description: "Queries sampled from cities15000 (shortest first)" },
+		out: { type: "string", description: "Also write the markdown report here" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	model?: string
+	n: number
+	out?: string
+}
 
 const report = (line: string): void => console.error(line)
 
-const PlacerProbeFrontier: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const PlacerProbeFrontier: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { probeFrontier } = await import("@mailwoman/core/coarse-placer/tools")
 

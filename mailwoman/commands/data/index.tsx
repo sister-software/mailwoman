@@ -5,11 +5,8 @@
  *
  *   `mailwoman data [--list]` — the landing page for the `data` command group (#1577).
  *
- *   Pastel turns a directory's `index.tsx` into the group command itself (`read-commands.ts`:
- *   `subCommands.get("index")` is renamed to the directory name and keeps its siblings as
- *   subcommands), which is what gives the group a description, an option of its own, and something
- *   to print when invoked bare. Before this file, `mailwoman data` printed commander's stock
- *   "Usage / Options / Commands" block, which said nothing about WHY a reader would run any of it.
+ *   A directory's `index.tsx` is the group command itself, giving the group a description, its own options, and a bare
+ *   invocation handler.
  *
  *   Output goes out through {@linkcode writeRawStdout} rather than Ink for the same reason
  *   `commands/geocode.tsx` does: an Ink frame at least as tall as the viewport makes Ink emit
@@ -18,9 +15,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
-import zod from "zod"
 
 import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "../../data-bundles.ts"
 import { formatBytes } from "../../doctor/checks.ts"
@@ -34,15 +30,20 @@ export const description =
 	"shows what exists, `data pull <bundle>` downloads one, `data status` reports what is already on disk, and " +
 	"`mailwoman doctor` names the one you are missing."
 
-const OptionsSchema = zod.object({
-	list: zod
-		.boolean()
-		.optional()
-		.default(false)
-		.describe("List every downloadable bundle: what it ships, how big it is, and where it lands on disk."),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "data",
+	description,
+	options: {
+		list: { type: "boolean", default: false, description: "List every downloadable bundle" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	list: boolean
+}
 
 /**
  * The per-bundle table `--list` prints: name, artifact count, total size, destination, and the one-line description
@@ -103,7 +104,7 @@ function overview(dataRoot: string): string {
 	].join("\n")
 }
 
-const DataIndex: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DataIndex: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
 

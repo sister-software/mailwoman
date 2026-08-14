@@ -23,28 +23,36 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	wikidataDir: zod.string().optional().describe("Directory holding the wikidata-subvenue fetch output"),
-	extracts: zod
-		.string()
-		.optional()
-		.describe("Comma-separated REGION=path pairs of sub-venue extract JSONLs (GB=…/great-britain.jsonl)"),
-	overtureDb: zod.string().optional().describe("Path to poi.db, for the Overture Places sub-venue slice"),
-	out: zod.string().default("corpus/data/sub-venue-lexicon.json").describe("Destination for the generated table"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "sub-venue-lexicon",
+	description: "Regenerate the sub-venue designator lexicon.",
+	options: {
+		"wikidata-dir": { type: "string", description: "Wikidata fetch output" },
+		extracts: { type: "string", description: "Comma-separated REGION=path extract pairs" },
+		"overture-db": { type: "string", description: "Path to poi.db" },
+		out: { type: "string", default: "corpus/data/sub-venue-lexicon.json", description: "Destination" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	wikidataDir?: string
+	extracts?: string
+	overtureDb?: string
+	out: string
+}
 
 /**
  * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs. A bare path keeps region `""`.
  */
-function parseExtracts(spec: string | undefined): Array<{ path: string; region: string }> {
-	if (!spec) return []
+function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
+	if (!extractSpec) return []
 
-	return spec
+	return extractSpec
 		.split(",")
 		.map((entry) => entry.trim())
 		.filter(Boolean)
@@ -57,7 +65,7 @@ function parseExtracts(spec: string | undefined): Array<{ path: string; region: 
 		})
 }
 
-const CorpusSubVenueLexicon: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } =
 			await import("@mailwoman/corpus/tools")

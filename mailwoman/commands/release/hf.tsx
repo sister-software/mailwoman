@@ -2,80 +2,66 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   `mailwoman release hf` — publish a model release to the HF bucket + the standalone HF model
- *   repo, verifying every artifact is reachable before releases.json is updated. The operator-side
- *   HF staging step of RELEASING.md (runs on the operator's host with HF_TOKEN; CI's publish.yml
- *   fetches what this stages).
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.array(
-	zod.string().describe(
-		argument({
-			name: "version",
-			description: "Release version, e.g. v5.9.0 (positional — `--version` is the CLI's own version flag)",
-		})
-	)
-)
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "hf",
+	description: "Stage a model release on Hugging Face.",
+	positionals: [{ name: "version", required: true, description: "Release version, e.g. v5.9.0" }],
+	options: {
+		locale: { type: "string", description: "Locale bucket, e.g. en-us" },
+		label: { type: "string", description: "Human-readable release label" },
+		description: { type: "string", description: "Release description" },
+		model: { type: "string", description: "Candidate int8 ONNX classifier path" },
+		tokenizer: { type: "string", description: "SentencePiece tokenizer path" },
+		"model-card": { type: "string", description: "Model-card JSON path" },
+		fst: { type: "string", description: "FST gazetteer path" },
+		"model-size": { type: "string", description: "Override the displayed model size" },
+		steps: { type: "number", description: "Training steps recorded in releases.json" },
+		postcodes: { type: "string", description: "Comma-separated postcode binaries" },
+		"pair-indexes": { type: "string", description: "Comma-separated placetype-pair-index binaries" },
+		fsts: { type: "string", description: "Comma-separated per-locale FST gazetteers" },
+		"gazetteer-lexicon": { type: "string", description: "Gazetteer anchor lexicon JSON" },
+		"country-lexicon": { type: "string", description: "Country-surface lexicon JSON" },
+		"street-type-lexicon": { type: "string", description: "Street-type evidence lexicon JSON" },
+		"locality-surface-lexicon": { type: "string", description: "Locality-surface evidence lexicon JSON" },
+		polygons: { type: "string", description: "Crisp-polygon DB" },
+		fisher: { type: "string", description: "Comma-separated Fisher consolidation artifacts" },
+		"set-default": { type: "boolean", default: false, description: "Set releases.json defaultVersion" },
+		"wof-hot": { type: "string", description: "Retired compatibility option; accepted and ignored" },
+	},
+} as const satisfies CommandSpec
 
-const OptionsSchema = zod.object({
-	locale: zod.string().optional().describe("Locale bucket, e.g. en-us"),
-	label: zod.string().optional().describe("Human-readable release label"),
-	description: zod.string().optional().describe("Release description"),
-	model: zod.string().optional().describe("Candidate int8 ONNX classifier path"),
-	tokenizer: zod.string().optional().describe("SentencePiece tokenizer path"),
-	modelCard: zod.string().optional().describe("Model-card JSON path"),
-	fst: zod.string().optional().describe("FST gazetteer path (remote name adapts to the locale)"),
-	modelSize: zod.string().optional().describe("Override the displayed model size (default: derived from --model)"),
-	steps: zod.number().optional().describe("Training steps recorded in releases.json (default 100000)"),
-	postcodes: zod.string().optional().describe("Comma-separated postcode soft-feed binaries (postcode-us.bin,…)"),
-	pairIndexes: zod
-		.string()
-		.optional()
-		.describe(
-			"Comma-separated placetype-pair-index soft-feed binaries (pair-index-gb.bin,…; placetype-pair-prior arc)"
-		),
-	fsts: zod
-		.string()
-		.optional()
-		.describe(
-			"Comma-separated per-locale FST gazetteers for the npm packages (fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin; #1318). Staged flat by lowercase basename; publish.yml fetches these into each weights workspace."
-		),
-	gazetteerLexicon: zod
-		.string()
-		.optional()
-		.describe("Gazetteer anchor lexicon JSON (uploaded as anchor-lexicon-v1.json)"),
-	countryLexicon: zod
-		.string()
-		.optional()
-		.describe("Country-surface lexicon JSON (#1104; uploaded as country-surface-lexicon-v1.json)"),
-	streetTypeLexicon: zod
-		.string()
-		.optional()
-		.describe("Street-type evidence lexicon JSON (Option-A bundle; uploaded as street-type-lexicon-v3.json)"),
-	localitySurfaceLexicon: zod
-		.string()
-		.optional()
-		.describe("Locality-surface evidence lexicon JSON (Option-A bundle; uploaded as locality-surface-lexicon-v6.json)"),
-	polygons: zod.string().optional().describe("Crisp-polygon DB (uploaded as wof-polygons.db)"),
-	fisher: zod
-		.string()
-		.optional()
-		.describe(
-			"Comma-separated Fisher consolidation artifacts (#1354; fisher-diag-v1-model-X.npz + .json sidecar) — staged flat by basename; never fetched by publish.yml (runtime never reads it), HEAD-checked by its preflight when the card declares fisher_artifact"
-		),
-	setDefault: zod.boolean().default(false).describe("Set this version as releases.json defaultVersion"),
-	wofHot: zod.string().optional().describe("RETIRED 2026-06-20 (slim wof-hot.db) — accepted and ignored"),
-})
+interface Options {
+	locale?: string
+	label?: string
+	description?: string
+	model?: string
+	tokenizer?: string
+	modelCard?: string
+	fst?: string
+	modelSize?: string
+	steps?: number
+	postcodes?: string
+	pairIndexes?: string
+	fsts?: string
+	gazetteerLexicon?: string
+	countryLexicon?: string
+	streetTypeLexicon?: string
+	localitySurfaceLexicon?: string
+	polygons?: string
+	fisher?: string
+	setDefault: boolean
+	wofHot?: string
+}
 
-export { ArgsSchema as args, OptionsSchema as options }
-
-const ReleaseHF: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const ReleaseHF: ParsedCommandComponent<Options, [string]> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { publishReleaseToHF } = await import("../../release-tools/publish-hf.ts")
 

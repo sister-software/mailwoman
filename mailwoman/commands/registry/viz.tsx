@@ -11,47 +11,45 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { argument } from "pastel"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const ArgsSchema = zod.tuple([
-	zod.enum(["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"]).describe(
-		argument({
-			name: "figure",
-			description: "Figure id (cross-dataset-map, geocode-first-surface, source-provenance-map, yardstick-figure)",
-		})
-	),
-])
+const figures = ["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"] as const
 
-const OptionsSchema = zod.object({
-	// cross-dataset-map
-	in: zod.string().optional().describe("cross-dataset-map: the cross-dataset-links GeoJSON"),
-	crossAgencyOnly: zod
-		.boolean()
-		.default(false)
-		.describe("cross-dataset-map: keep only entities spanning >1 agency (FCC datasets count as one)"),
-	// geocode-first-surface
-	lambda: zod.number().optional().describe("geocode-first-surface: illustrative prior λ (default 0.02)"),
-	// source-provenance-map
-	state: zod.string().optional().describe("source-provenance-map: state, lowercase postal (default ny)"),
-	db: zod.string().optional().describe("source-provenance-map: address-point DB path"),
-	nadMod: zod.number().optional().describe("source-provenance-map: keep ~1/N of NAD points (default 700)"),
-	oaMod: zod.number().optional().describe("source-provenance-map: keep ~1/N of OpenAddresses points (default 120)"),
-	cap: zod.number().optional().describe("source-provenance-map: per-source marker cap (default 7000)"),
-	// shared outputs
-	outHTML: zod.string().optional().describe("HTML figures: output path (each figure has a /tmp default)"),
-	outSVG: zod
-		.string()
-		.optional()
-		.describe("yardstick-figure: output SVG path (default docs/records/evals/charts/dedup-yardstick.svg)"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "viz",
+	description: "Render record-matcher figures.",
+	positionals: [{ name: "figure", required: true, choices: figures, description: "Figure id" }],
+	options: {
+		in: { type: "string", description: "Cross-dataset links GeoJSON" },
+		"cross-agency-only": { type: "boolean", default: false, description: "Keep only cross-agency entities" },
+		lambda: { type: "number", description: "Illustrative prior lambda" },
+		state: { type: "string", description: "State postal code" },
+		db: { type: "string", description: "Address-point database" },
+		"nad-mod": { type: "number", description: "NAD sampling modulus" },
+		"oa-mod": { type: "number", description: "OpenAddresses sampling modulus" },
+		cap: { type: "number", description: "Per-source marker cap" },
+		"out-html": { type: "string", description: "Output HTML path" },
+		"out-svg": { type: "string", description: "Output SVG path" },
+	},
+} as const satisfies CommandSpec
 
-export { ArgsSchema as args, OptionsSchema as options }
+interface Options {
+	in?: string
+	crossAgencyOnly: boolean
+	lambda?: number
+	state?: string
+	db?: string
+	nadMod?: number
+	oaMod?: number
+	cap?: number
+	outHTML?: string
+	outSVG?: string
+}
 
-type Options = zod.infer<typeof OptionsSchema>
-
-type Figure = zod.infer<typeof ArgsSchema>[0]
+type Figure = (typeof figures)[number]
 
 const report = (line: string): void => console.error(line)
 
@@ -84,7 +82,7 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 	}
 }
 
-const RegistryViz: CommandComponent<typeof OptionsSchema, typeof ArgsSchema> = ({ options, args }) => {
+const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
 	const state = useCommandTask(() => runFigure(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

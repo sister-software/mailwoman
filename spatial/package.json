@@ -33,6 +33,11 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
+		"./coordinate-bounds": {
+			"node": "./coordinate-bounds.ts",
+			"default": "./out/coordinate-bounds.js",
+			"types": "./out/coordinate-bounds.d.ts"
+		},
 		"./sdk": {
 			"node": "./sdk/index.ts",
 			"default": "./out/sdk/index.js",

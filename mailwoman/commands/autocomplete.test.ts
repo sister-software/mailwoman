@@ -14,13 +14,14 @@ import { writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { dataRootPath } from "@mailwoman/core/utils"
 import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
 import { FSTMatcher, normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst-types"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
-import { resolveFSTPath, runAutocomplete } from "./autocomplete.tsx"
+import { resolveFSTPath, runAutocomplete } from "../autocomplete-core.ts"
 
 // MARK: Fixture helpers
 
@@ -247,17 +248,17 @@ describe("resolveFSTPath", () => {
 		expect(resolveFSTPath("/explicit/path.bin")).toBe("/explicit/path.bin")
 	})
 
-	it("falls back to the staged default when no explicit path and no env var", () => {
+	it("falls back to the application data directory when no explicit path and no env var", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", undefined as unknown as string)
 
 		try {
-			expect(resolveFSTPath()).toBe("/tmp/v440-stage/en-us/v4.4.0/fst-en-US.bin")
+			expect(resolveFSTPath()).toBe(dataRootPath("wof", "fst-per-locale", "fst-en-US.bin"))
 		} finally {
 			vi.unstubAllEnvs()
 		}
 	})
 
-	it("prefers $MAILWOMAN_FST_BIN over the staged default", () => {
+	it("prefers $MAILWOMAN_FST_BIN over the application data directory", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", "/env/path.bin")
 
 		try {

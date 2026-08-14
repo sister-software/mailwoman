@@ -7,7 +7,12 @@
  */
 
 import { Text } from "ink"
-import { useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, useCommandTask } from "mailwoman/cli-kit"
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = { name: "tree", description: "Show the replacement command" } as const satisfies CommandSpec
 
 const WofShim = () => {
 	useCommandTask(

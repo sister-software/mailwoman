@@ -8,16 +8,28 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	force: zod.boolean().default(false).describe("Delete an existing dictionaries directory instead of erroring out"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "libpostal-resources",
+	description: "Download and install the libpostal dictionaries.",
+	options: {
+		force: {
+			type: "boolean",
+			default: false,
+			description: "Delete an existing dictionaries directory instead of erroring out",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	force: boolean
+}
 
-const DevDownloadLibpostalResources: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const DevDownloadLibpostalResources: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { downloadLibpostalResources } = await import("@mailwoman/core/tools")
 

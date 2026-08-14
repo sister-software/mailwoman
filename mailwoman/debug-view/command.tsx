@@ -28,10 +28,10 @@
 import { $public } from "@mailwoman/core/env"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
 import { render, Text, useApp } from "ink"
-import { commandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
+import { CommandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import React, { useEffect } from "react"
 
-import type { GeocodeCommandOptions } from "../commands/geocode.tsx"
+import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
 import { createGeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize } from "./DebugFrame.tsx"
 import { DebugSessionApp } from "./DebugSessionApp.tsx"
@@ -52,7 +52,7 @@ import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } fro
  */
 export async function runStaticDebug(input: string, options: GeocodeCommandOptions): Promise<string> {
 	if (!input.trim().length) {
-		throw commandError(
+		throw new CommandError(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)
 	}
@@ -143,23 +143,22 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
 //#region Interactive (TTY) path — the Ink handoff
 
 /**
- * Hand the terminal from Pastel's Ink instance to one this module configures, then run the session in it.
+ * Hand the terminal from the command adapter's Ink instance to a full-screen renderer configured here.
  *
- * Pastel calls `render(element)` with no options and never exposes the instance, so a session rendered inside its tree
- * inherits Ink's defaults — and two of them are wrong for a full-screen view redrawn on every keystroke. With
- * `incrementalRendering` off, Ink rewrites the whole frame per commit: **7.10 KB down the tty per keystroke at 120×36,
- * against 0.33 KB with it on**, all of it truecolor braille that the emulator (and, over SSH, the wire) has to chew
- * through. And Ink has no alternate-screen buffer unless it is asked for one, which is what forced the hand-rolled
+ * The command adapter renders with Ink's defaults, which are wrong for a full-screen view redrawn on every keystroke.
+ * With `incrementalRendering` off, Ink rewrites the whole frame per commit: **7.10 KB down the tty per keystroke at
+ * 120×36, against 0.33 KB with it on**, all of it truecolor braille that the emulator (and, over SSH, the wire) has to
+ * chew through. And Ink has no alternate-screen buffer unless it is asked for one, which is what forced the hand-rolled
  * escapes this component's callee used to carry — a frame exactly as tall as the terminal makes Ink emit `\x1b[3J`, and
  * that wipes the user's SCROLLBACK (#1577).
  *
  * Ink keeps ONE renderer per stdout (`ink/render.js`'s `getInstance`) and warns, then reuses the old one, if a second
  * `render()` arrives for the same stream. So the handoff is an unmount-then-render, not a second mount: `exit()`
- * unmounts Pastel's tree synchronously through to `instances.delete(stdout)`, which frees the slot. It runs from a
+ * unmounts the command tree synchronously through to `instances.delete(stdout)`, which frees the slot. It runs from a
  * `setImmediate` rather than from the effect body because `exit()` unmounts the tree this effect belongs to, and React
  * should not be asked to do that from inside its own commit.
  *
- * Pastel's tree renders `null` throughout — height 0, so the primary buffer is never written to and there is nothing
+ * The command tree renders `null` throughout — height 0, so the primary buffer is never written to and there is nothing
  * left in the scrollback once the session exits.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by contract, like `useCommandTask`: the handoff happens
@@ -176,7 +175,7 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 			exit()
 
 			const session = render(<DebugSessionApp initialInput={props.input} options={props.options} />, {
-				// The two Pastel cannot pass. `alternateScreen` also retires the hand-rolled enter/leave escapes:
+				// `alternateScreen` also retires the hand-rolled enter/leave escapes:
 				// Ink enters before its first frame and leaves from `unmount()`, which its `signal-exit`
 				// subscription reaches on a signal death too.
 				alternateScreen: true,

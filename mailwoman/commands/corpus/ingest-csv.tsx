@@ -9,23 +9,46 @@
  */
 
 import { Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import zod from "zod"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const OptionsSchema = zod.object({
-	input: zod.string().describe("CSV file to ingest"),
-	table: zod.string().optional().describe("SQLite table name (default: derived from the input filename)"),
-	output: zod.string().optional().describe("SQLite database path (default: <input dir>/<name>.db)"),
-	sample: zod.number().default(100).describe("Rows sampled for type inference"),
-	separator: zod.string().default(",").describe("Field separator"),
-	skip: zod.number().default(0).describe("Lines to skip before the header"),
-	noHeader: zod.boolean().default(false).describe("CSV has no header row — columns become col_0, col_1, …"),
-	dryRun: zod.boolean().default(false).describe("Infer the schema and print CREATE TABLE without importing"),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "ingest-csv",
+	description: "Ingest CSV into SQLite with sampled type inference.",
+	options: {
+		input: { type: "string", required: true, description: "CSV file to ingest" },
+		table: { type: "string", description: "SQLite table name (default: derived from the input filename)" },
+		output: { type: "string", description: "SQLite database path (default: <input dir>/<name>.db)" },
+		sample: { type: "number", default: 100, description: "Rows sampled for type inference" },
+		separator: { type: "string", default: ",", description: "Field separator" },
+		skip: { type: "number", default: 0, description: "Lines to skip before the header" },
+		"no-header": {
+			type: "boolean",
+			default: false,
+			description: "CSV has no header row — columns become col_0, col_1, …",
+		},
+		"dry-run": {
+			type: "boolean",
+			default: false,
+			description: "Infer the schema and print CREATE TABLE without importing",
+		},
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	input: string
+	table?: string
+	output?: string
+	sample: number
+	separator: string
+	skip: number
+	noHeader: boolean
+	dryRun: boolean
+}
 
-const CorpusIngestCSV: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const CorpusIngestCSV: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { ingestCSV } = await import("@mailwoman/corpus/tools")
 

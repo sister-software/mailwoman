@@ -9,7 +9,15 @@
  */
 
 import { Text } from "ink"
-import { useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, useCommandTask } from "mailwoman/cli-kit"
+
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "country-reference",
+	description: "Generate country reference data",
+} as const satisfies CommandSpec
 
 const report = (line: string): void => console.error(line)
 

@@ -17,31 +17,37 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
-import zod from "zod"
 
-const OptionsSchema = zod.object({
-	standardDir: zod.string().describe("G-NAF `Standard` directory holding the per-state *_psv.psv tables"),
-	n: zod.coerce
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.default(150_000)
-		.describe("Sample size (reservoir; population-proportional across states)"),
-	out: zod.string().describe("Output JSONL path (component tuples, consumed by the `gnaf` corpus adapter)"),
-	holdout: zod
-		.string()
-		.optional()
-		.describe(
-			"Eval JSONL whose (street,locality,postcode) are excluded so the training shard never overlaps the benchmark"
-		),
-})
+/**
+ * Native command-line contract consumed by the filesystem command router.
+ */
+export const spec = {
+	name: "assemble",
+	description: "Assemble a sampled component-labeled G-NAF address set.",
+	options: {
+		"standard-dir": { type: "string", required: true, description: "G-NAF Standard directory" },
+		n: {
+			type: "number",
+			default: 150_000,
+			validate: (value) => Number.isInteger(value) && value > 0,
+			validationMessage: "--n must be a positive integer.",
+			description: "Sample size",
+		},
+		out: { type: "string", required: true, description: "Output JSONL path" },
+		holdout: { type: "string", description: "Eval JSONL excluded from the training shard" },
+	},
+} as const satisfies CommandSpec
 
-export { OptionsSchema as options }
+interface Options {
+	standardDir: string
+	n: number
+	out: string
+	holdout?: string
+}
 
-const GNAFAssemble: CommandComponent<typeof OptionsSchema> = ({ options }) => {
+const GNAFAssemble: ParsedCommandComponent<Options> = ({ options }) => {
 	const [progress, setProgress] = useState<string>()
 
 	const state = useCommandTask(async () => {
