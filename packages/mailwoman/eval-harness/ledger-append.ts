@@ -98,7 +98,7 @@ interface Ledger {
  * un-excepted FAIL verdict), 2 = usage error.
  */
 export function ledgerAppend(options: LedgerAppendOptions): number {
-	const card = options.card ?? "neural-weights-en-us/model-card.json"
+	const card = options.card ?? "packages/neural-weights-en-us/model-card.json"
 	const ledgerPath = options.ledger ?? "evals/scores-by-version.json"
 	const notes = options.notes ?? ""
 

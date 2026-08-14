@@ -47,7 +47,7 @@ const { values } = parseArgs({
 		locale: { type: "string", default: "en-gb" },
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "candidate" },
-		fixtures: { type: "string", default: "mailwoman/eval-harness/fixtures/gb-golden.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl" },
 		"dump-spans": { type: "string" },
 	},
 })

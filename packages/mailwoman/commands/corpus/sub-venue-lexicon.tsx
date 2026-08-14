@@ -35,7 +35,7 @@ export const spec = {
 		"wikidata-dir": { type: "string", description: "Wikidata fetch output" },
 		extracts: { type: "string", description: "Comma-separated REGION=path extract pairs" },
 		"overture-db": { type: "string", description: "Path to poi.db" },
-		out: { type: "string", default: "corpus/data/sub-venue-lexicon.json", description: "Destination" },
+		out: { type: "string", default: "packages/corpus/data/sub-venue-lexicon.json", description: "Destination" },
 	},
 } as const satisfies CommandSpec
 

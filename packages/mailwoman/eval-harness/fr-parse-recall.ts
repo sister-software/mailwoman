@@ -137,7 +137,7 @@ export async function frParseRecall(
 	reportError: (line: string) => void = console.error
 ): Promise<FRParseRecallResult> {
 	const args = {
-		modelCard: options.modelCard ?? "neural-weights-en-us/model-card.json",
+		modelCard: options.modelCard ?? "packages/neural-weights-en-us/model-card.json",
 		label: options.label ?? "",
 		fixture: options.fixture ?? "scripts/eval/fixtures/fr-bare-street-40.jsonl",
 		fromDB: options.fromDB ?? false,
@@ -169,7 +169,10 @@ export async function frParseRecall(
 		if (!args.model || !args.tokenizer) return NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 		const card = parseJSONStrict<{ labels: string[] }>(readFileSync(args.modelCard, "utf8"))
-		const anchor = new PostcodeBinaryResolver(readFileSync("neural-weights-en-us/postcode-us.bin")).toAnchorLookup()
+
+		const anchor = new PostcodeBinaryResolver(
+			readFileSync("packages/neural-weights-en-us/postcode-us.bin")
+		).toAnchorLookup()
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizer),
@@ -182,7 +185,7 @@ export async function frParseRecall(
 			labels: card.labels,
 			postcodeAnchorLookup: anchor,
 			gazetteerLexicon: parseGazetteerLexicon(
-				parseJSONStrict(readFileSync("neural-weights-en-us/anchor-lexicon-v1.json", "utf8"))
+				parseJSONStrict(readFileSync("packages/neural-weights-en-us/anchor-lexicon-v1.json", "utf8"))
 			),
 			suppressGazetteerNearPostcode: true,
 			addressSystemConventions: "auto",

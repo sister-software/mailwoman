@@ -42,9 +42,9 @@ async function main() {
 	// zx: capture output ourselves and slice/parse in JS the way the bash awk/jq/grep pipes did.
 	$.verbose = false
 
-	let MODEL = "neural-weights-en-us/model.onnx"
-	let CARD = "neural-weights-en-us/model-card.json"
-	let TOK = "neural-weights-en-us/tokenizer.model"
+	let MODEL = "packages/neural-weights-en-us/model.onnx"
+	let CARD = "packages/neural-weights-en-us/model-card.json"
+	let TOK = "packages/neural-weights-en-us/tokenizer.model"
 	const WOF_DEFAULT = `${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	let WOF = WOF_DEFAULT
 	let LABEL = "run"

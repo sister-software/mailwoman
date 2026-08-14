@@ -33,21 +33,21 @@ assert("no expectations means no solutions")
 `
 
 test("extractAssertCalls: literal inputs + expected records, in file order", () => {
-	const cases = extractAssertCalls(SAMPLE, "mailwoman/test/address.usa.test.ts")
+	const cases = extractAssertCalls(SAMPLE, "packages/mailwoman/test/address.usa.test.ts")
 
 	expect(cases).toEqual([
 		{
-			file: "mailwoman/test/address.usa.test.ts",
+			file: "packages/mailwoman/test/address.usa.test.ts",
 			input: "wrigley field",
 			expected: [{ street: ["wrigley field"] }, { venue: ["wrigley field"] }],
 		},
 		{
-			file: "mailwoman/test/address.usa.test.ts",
+			file: "packages/mailwoman/test/address.usa.test.ts",
 			input: "E Cesar Chavez St",
 			expected: [{ street: ["E Cesar Chavez St"] }],
 		},
 		{
-			file: "mailwoman/test/address.usa.test.ts",
+			file: "packages/mailwoman/test/address.usa.test.ts",
 			input: "no expectations means no solutions",
 			expected: [],
 		},

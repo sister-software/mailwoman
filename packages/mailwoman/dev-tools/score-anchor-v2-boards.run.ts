@@ -152,7 +152,7 @@ function reportBoard(name: string, b: Board): void {
 
 if (board === "gb") {
 	const rows = await readJSONL<{ raw: string; components: Record<string, string> }>(
-		"mailwoman/eval-harness/fixtures/gb-golden.jsonl"
+		"packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl"
 	)
 
 	const postcode = emptyBoard()
@@ -213,7 +213,7 @@ if (board === "gb") {
 
 	const rows = (
 		await readJSONL<{ id: string; input: string; country: string; expect?: Record<string, string[]> }>(
-			"mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+			"packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 		)
 	).filter((row) => row.country === country)
 

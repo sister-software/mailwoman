@@ -264,7 +264,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: | # shell
           set -euo pipefail
-          MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')).version)")
+          MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('packages/neural-weights-en-us/model-card.json','utf8')).version)")
           BASE="https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${MODEL_VERSION}"
           # PREFLIGHT — fail fast + actionable. Without this, an unstaged version means the retry
           # loop below spends 6×5s PER FILE and then dies on a cryptic `curl (22) 404`. On 2026-07-16
@@ -280,7 +280,7 @@ jobs:
           # ship their Fisher on HF/R2 (never in the npm tarball, never fetched below — runtime never
           # reads it). Card-derived so the versioned basename never goes stale here: HEAD-check it
           # whenever the card declares fisher_artifact, and stage it via `release hf --fisher …`.
-          FISHER_FILE=$(node -e "const c=JSON.parse(require('fs').readFileSync('neural-weights-en-us/model-card.json','utf8')); console.log(c.fisher_artifact?.file ?? '')")
+          FISHER_FILE=$(node -e "const c=JSON.parse(require('fs').readFileSync('packages/neural-weights-en-us/model-card.json','utf8')); console.log(c.fisher_artifact?.file ?? '')")
           if [ -n "$FISHER_FILE" ]; then
             if ! curl -fsI "${BASE}/${FISHER_FILE}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${FISHER_FILE} (card fisher_artifact — stage with release hf --fisher)"; MISSING=1; else echo "  ✓ ${FISHER_FILE}"; fi
           fi
@@ -380,7 +380,7 @@ jobs:
       # en-gb card described neither. The fetch above wrote these binaries into the weights workspaces, so the same
       # parity test CI already runs against locally-built artifacts now grades the STAGED ones for free.
       - name: Verify staged pair indexes match their model cards
-        run: yarn vitest run neural/test/pair-index-card-parity.test.ts
+        run: yarn vitest run packages/neural/test/pair-index-card-parity.test.ts
 
       # The full-scale locality-surface build. On the PR path this is behind a path filter
       # (test.yml's `lexicon-full`), so most PRs merge with it deliberately unrun — the four laws are

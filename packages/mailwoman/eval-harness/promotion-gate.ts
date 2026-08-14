@@ -248,15 +248,15 @@ async function runLoreGuards(env: {
 	}
 
 	// --- lore guard: recompile-before-eval --------------------------------------
-	// Was `find core -maxdepth 2 -name '*.ts' -newer core/out -print -quit`. Same shape in-process: the
-	// same two directory levels, the same `.ts` filter, the same reference mtime (`core/out` itself),
-	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `core/` is large.
-	if (existsSync("core/out")) {
-		const reference = statSync("core/out").mtimeMs
+	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. Same shape in-process: the
+	// same two directory levels, the same `.ts` filter, the same reference mtime (`packages/core/out` itself),
+	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `packages/core/` is large.
+	if (existsSync("packages/core/out")) {
+		const reference = statSync("packages/core/out").mtimeMs
 
 		const staleSource = ((): string | undefined => {
-			for (const depth1 of readdirSync("core", { withFileTypes: true })) {
-				const path1 = join("core", depth1.name)
+			for (const depth1 of readdirSync("packages/core", { withFileTypes: true })) {
+				const path1 = join("packages/core", depth1.name)
 
 				if (depth1.isFile()) {
 					if (depth1.name.endsWith(".ts") && statSync(path1).mtimeMs > reference) return path1
@@ -484,7 +484,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	const GATE = options.gate ? resolveGateSpecPath(options.gate) : ""
 	let OUT_DIR = options.outDir ?? ""
 	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const CARD = options.card ?? "neural-weights-en-us/model-card.json"
+	const CARD = options.card ?? "packages/neural-weights-en-us/model-card.json"
 	const GAZ = options.gazetteerLexicon ?? "data/gazetteer/anchor-lexicon-v1.json"
 	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
 

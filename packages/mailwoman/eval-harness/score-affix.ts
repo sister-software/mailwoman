@@ -125,7 +125,9 @@ export async function scoreAffix(
 	const neural = WEIGHTS_CACHE
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 		: await (async () => {
-				const card = parseJSONStrict<{ labels: string[] }>(readFileSync("neural-weights-en-us/model-card.json", "utf8"))
+				const card = parseJSONStrict<{ labels: string[] }>(
+					readFileSync("packages/neural-weights-en-us/model-card.json", "utf8")
+				)
 
 				const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(model)])
 

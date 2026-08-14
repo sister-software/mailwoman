@@ -21,8 +21,8 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 import type { ParityCase } from "./parity-extract.ts"
 
-const IN_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
-const OUT_PATH = "mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+const IN_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
+const OUT_PATH = "packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
 
 /**
  * Parity test file basename token → ISO-3166 alpha-2. Files without a country token score as ZZ.

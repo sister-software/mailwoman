@@ -243,7 +243,7 @@ export async function maskRegressionGate(
 ): Promise<{ pass: boolean; violations: Delta[] }> {
 	const MODEL = options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
 	const TOKENIZER = options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const MODEL_CARD = options.modelCard || "neural-weights-en-us/model-card.json"
+	const MODEL_CARD = options.modelCard || "packages/neural-weights-en-us/model-card.json"
 	const ANCHOR_LOOKUP = options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
 	const GAZETTEER_LEXICON = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const JSON_OUT = options.json || ""

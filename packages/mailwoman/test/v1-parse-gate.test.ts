@@ -93,7 +93,7 @@ import { v0RecordToTree } from "../eval-harness/v0-tree-adapter.ts"
 /**
  * The frozen rules-parser capture (phase 0, PR #1092): one row per parity input, top-3 solved solutions.
  */
-const PARITY_RAW_GOLDEN = "mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl"
+const PARITY_RAW_GOLDEN = "packages/mailwoman/test-fixtures/legacy-golden/parity-raw.jsonl"
 
 /**
  * A captured rules solution's flat classification record (the shape `solutions[0].classifications` had).
@@ -143,7 +143,7 @@ const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function weightsPresent(): boolean {
 	try {
-		return existsSync(realpathSync("neural-weights-en-us/model.onnx"))
+		return existsSync(realpathSync("packages/neural-weights-en-us/model.onnx"))
 	} catch {
 		return false
 	}
@@ -214,7 +214,9 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 
 			const fixtures = (
 				await Array.fromAsync(
-					JSONSpliterator.fromAsync<ParityFixture>("mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl")
+					JSONSpliterator.fromAsync<ParityFixture>(
+						"packages/mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
+					)
 				)
 			).filter((f) => !f.dropped && f.expect)
 

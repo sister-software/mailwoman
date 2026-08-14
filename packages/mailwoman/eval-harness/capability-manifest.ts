@@ -336,7 +336,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	const paths: ResolvedPaths = {
 		model: options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),
 		tokenizer: options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
-		modelCard: options.modelCard || "neural-weights-en-us/model-card.json",
+		modelCard: options.modelCard || "packages/neural-weights-en-us/model-card.json",
 		anchorLookup: options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json")),
 		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 	}

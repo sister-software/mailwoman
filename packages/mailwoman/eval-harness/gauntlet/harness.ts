@@ -133,7 +133,7 @@ export interface GauntletGeocodeOpts {
  * this guard's job) — the model file itself is always present here (the caller `existsSync`-gated it).
  */
 function assertShippedModelMatchesCard(materializedMd5: string): void {
-	const cardPath = resolve("neural-weights-en-us/model-card.json")
+	const cardPath = resolve("packages/neural-weights-en-us/model-card.json")
 
 	if (!existsSync(cardPath)) return
 	// Soft-return on an UNPARSEABLE card too — the docstring's contract is that a card-format problem is
@@ -237,7 +237,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
 	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
-	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolve("neural-weights-en-us/model.onnx"))
+	const effModel =
+		cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolve("packages/neural-weights-en-us/model.onnx"))
 
 	if (existsSync(effModel)) {
 		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
@@ -259,9 +260,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: opts.weightsCacheRoot })
 		: opts.tokenizerPath
 			? await createScorer({
-					modelPath: resolve(opts.modelPath ?? "neural-weights-en-us/model.onnx"),
+					modelPath: resolve(opts.modelPath ?? "packages/neural-weights-en-us/model.onnx"),
 					tokenizerPath: resolve(opts.tokenizerPath),
-					modelCardPath: resolve(opts.modelCardPath ?? "neural-weights-en-us/model-card.json"),
+					modelCardPath: resolve(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
 					locale: "en-us",
 				})
 			: opts.modelPath

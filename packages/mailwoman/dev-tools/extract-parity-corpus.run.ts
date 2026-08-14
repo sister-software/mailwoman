@@ -15,8 +15,8 @@ import { createNewlineWriter } from "spliterator"
 
 import { extractAssertCalls, type ParityCase } from "./parity-extract.ts"
 
-const TEST_DIR = "mailwoman/test"
-const OUT_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
+const TEST_DIR = "packages/mailwoman/test"
+const OUT_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 
 const cases: ParityCase[] = []
 let parityFileCount = 0

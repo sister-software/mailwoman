@@ -17,9 +17,9 @@ import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 const PORT = 8199
 const BASE = `http://127.0.0.1:${PORT}`
-const PARITY_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
-const SYNTHETIC_PATH = "mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"
-const OUT_PATH = "nominatim/test-fixtures/search-golden.jsonl"
+const PARITY_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
+const SYNTHETIC_PATH = "packages/mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"
+const OUT_PATH = "packages/nominatim/test-fixtures/search-golden.jsonl"
 
 interface ParityRow {
 	input: string
@@ -41,7 +41,7 @@ const syntheticInputs = (await Array.fromAsync(TextSpliterator.fromAsync(SYNTHET
 
 const queries = [...new Set([...withHouseNumber.slice(0, 172), ...syntheticInputs])]
 
-const child = spawn("node", ["nominatim/out/cli.js", "serve", "--port", String(PORT)], {
+const child = spawn("node", ["packages/nominatim/out/cli.js", "serve", "--port", String(PORT)], {
 	stdio: ["ignore", "inherit", "inherit"],
 })
 

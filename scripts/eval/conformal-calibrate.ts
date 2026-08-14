@@ -248,9 +248,9 @@ async function main(): Promise<void> {
 	const holdoutPath = values["holdout"] || tempRootPath("ood-truth.jsonl")
 	const addressPointsDB = values["address-points"] || tempRootPath("tx-situs.db")
 	const interpolationDB = values["interpolation"] || tempRootPath("tx-metro-interp.db")
-	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
-	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
-	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
+	const modelPath = values["model"] || "packages/neural-weights-en-us/model.onnx"
+	const tokenizerPath = values["tokenizer"] || "packages/neural-weights-en-us/tokenizer.model"
+	const modelCardPath = values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 
 	const wofPaths = (
 		values["wof"] ||

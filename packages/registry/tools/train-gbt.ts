@@ -140,7 +140,7 @@ export async function trainDedupGBT(
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
 	const STATE = (options.state || "TX").toUpperCase()
 	const NPIS = options.npis ?? 3000
-	const OUT = options.out || "registry/models/dedup-gbt-en-us.ts"
+	const OUT = options.out || "packages/registry/models/dedup-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
 	const COST = options.cost ?? 1
 	const TRAIN_DATE = options.date || new Date().toISOString().slice(0, 10) // overridable for reproducible commits

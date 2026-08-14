@@ -48,7 +48,7 @@ const describeIfStack = describe.skipIf(!hasStack)
  */
 function weightsPresent(): boolean {
 	try {
-		return existsSync(realpathSync("neural-weights-en-us/model.onnx"))
+		return existsSync(realpathSync("packages/neural-weights-en-us/model.onnx"))
 	} catch {
 		return false
 	}

@@ -26,7 +26,7 @@ async function main(): Promise<void> {
 		options: {
 			model: { type: "string" },
 			tokenizer: { type: "string" },
-			"model-card": { type: "string", default: "neural-weights-en-us/model-card.json" },
+			"model-card": { type: "string", default: "packages/neural-weights-en-us/model-card.json" },
 			label: { type: "string", default: "" },
 			fixture: { type: "string", default: "scripts/eval/fixtures/fr-bare-street-40.jsonl" },
 			"from-db": { type: "boolean", default: false },

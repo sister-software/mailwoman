@@ -35,7 +35,7 @@ const { values } = parseArgs({
 		locale: { type: "string", default: "en-US" },
 		country: { type: "string" },
 		raw: { type: "boolean", default: false },
-		fixtures: { type: "string", default: "mailwoman/eval-harness/fixtures/parity-corpus.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl" },
 		verbose: { type: "boolean", default: false },
 	},
 })

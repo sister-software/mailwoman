@@ -15,9 +15,9 @@ import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterat
 import { createServeEngine } from "../api-engine.ts"
 import type { ParityCase } from "./parity-extract.ts"
 
-const PARITY_PATH = "mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
-const SYNTHETIC_PATH = "mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"
-const OUT_PATH = "mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl"
+const PARITY_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
+const SYNTHETIC_PATH = "packages/mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"
+const OUT_PATH = "packages/mailwoman/test-fixtures/legacy-golden/v1-parse-golden.jsonl"
 
 const parityInputs = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>(PARITY_PATH), (c) => c.input)
 

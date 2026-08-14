@@ -127,7 +127,7 @@ function readModelCard(): Record<string, unknown> | null {
 		/* package not resolvable from here — fall through */
 	}
 
-	candidates.push("neural-weights-en-us/model-card.json")
+	candidates.push("packages/neural-weights-en-us/model-card.json")
 
 	for (const p of candidates) {
 		try {

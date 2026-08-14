@@ -30,7 +30,7 @@ export const spec = {
 		},
 		card: {
 			type: "string",
-			default: "neural-weights-en-us/model-card.json",
+			default: "packages/neural-weights-en-us/model-card.json",
 			description: "Model card JSON (run-metadata defaults)",
 		},
 		ledger: { type: "string", default: "evals/scores-by-version.json", description: "The ledger file" },

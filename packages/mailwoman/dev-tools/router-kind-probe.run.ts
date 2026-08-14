@@ -21,7 +21,9 @@ interface Fixture {
 }
 
 const fixtures: Fixture[] = (
-	await Array.fromAsync(JSONSpliterator.fromAsync<Fixture>("mailwoman/eval-harness/fixtures/parity-corpus.jsonl"))
+	await Array.fromAsync(
+		JSONSpliterator.fromAsync<Fixture>("packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl")
+	)
 ).filter((f) => !f.dropped && f.expect)
 
 function classOf(expect: Record<string, string[]>): string {
