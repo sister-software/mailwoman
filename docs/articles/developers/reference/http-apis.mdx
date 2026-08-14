@@ -95,7 +95,7 @@ curl -sS localhost:3000/v1/parse \
 
 The full response, piped through `python3 -m json.tool`:
 
-```
+```json
 {
     "input": "221B Baker St, London NW1 6XE",
     "components": [
@@ -166,7 +166,7 @@ An omitted `address` answers the envelope:
 curl -sS localhost:3000/v1/parse -H 'content-type: application/json' -d '{}'
 ```
 
-```
+```json
 {"error":"address is required"}
 ```
 

@@ -114,7 +114,7 @@ Leave it running and open a second terminal.
 curl -s "http://127.0.0.1:2323/api?q=1600+pennsylvania+ave+nw+washington+dc+20500&limit=1" | jq '.features[0]'
 ```
 
-```
+```json
 {
   "type": "Feature",
   "geometry": {
@@ -166,7 +166,7 @@ Now the endpoint from the prerequisites:
 curl -s "http://127.0.0.1:2323/reverse?lat=52.52&lon=13.405" | jq -c
 ```
 
-```
+```json
 {"type":"FeatureCollection","features":[]}
 ```
 
@@ -229,7 +229,7 @@ npx @mailwoman/nominatim serve --port 8088
 curl -s http://127.0.0.1:8088/status
 ```
 
-```
+```json
 {"status":0,"message":"OK"}
 ```
 
@@ -240,7 +240,7 @@ block:
 curl -s "http://127.0.0.1:8088/search?q=10+Downing+Street,+London+SW1A+2AA&addressdetails=1" | jq '.[0]'
 ```
 
-```
+```json
 {
   "place_id": 1178923677,
   "licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER",
@@ -352,7 +352,7 @@ curl -s -X POST http://127.0.0.1:8081/parse -H 'content-type: application/json' 
 curl -s "http://127.0.0.1:8081/expand?address=1600%20Pennsylvania%20Ave%20NW"
 ```
 
-```
+```json
 {"expansions":["1600 Pennsylvania Ave NW","1600 Pennsylvania Avenue Northwest"]}
 ```
 

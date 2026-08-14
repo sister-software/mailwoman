@@ -125,7 +125,7 @@ structural query shape, the locale gate, the kind classifier, then the model.
 npx mailwoman parse --debug "1 madison ave madison wi 53703" | jq '{path, locale, kind, knownFormats: .queryShape.knownFormats, timing}'
 ```
 
-```
+```json
 {
   "path": "full",
   "locale": {

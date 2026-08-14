@@ -71,7 +71,7 @@ anywhere shared.
 curl -s http://127.0.0.1:7788/health | jq
 ```
 
-```
+```json
 {
   "status": "ok",
   "uptime_s": 23,
@@ -120,7 +120,7 @@ browser address bar.
 curl -s "http://127.0.0.1:7788/v1/parse?address=1%20madison%20ave%20madison%20wi%2053703" | jq '{input, components}'
 ```
 
-```
+```json
 {
   "input": "1 madison ave madison wi 53703",
   "components": [
@@ -165,7 +165,7 @@ curl -s -X POST http://127.0.0.1:7788/v1/geocode \
   | jq '{lat, lon, resolution_tier, uncertainty_m, locality, region, hierarchy}'
 ```
 
-```
+```json
 {
   "lat": 41.837235,
   "lon": -87.685969,
@@ -247,7 +247,7 @@ counterpart for the requests that succeeded:
 curl -s http://127.0.0.1:7788/metrics | jq
 ```
 
-```
+```json
 {
   "uptime_s": 60,
   "timings": {
@@ -285,7 +285,7 @@ The server emits its own OpenAPI document at `/openapi.json`.
 curl -s http://127.0.0.1:7788/openapi.json | jq '{openapi, version: .info.version, paths: (.paths | keys)}'
 ```
 
-```
+```json
 {
   "openapi": "3.1.0",
   "version": "8.7.0",

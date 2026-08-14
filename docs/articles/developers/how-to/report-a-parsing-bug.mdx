@@ -43,7 +43,7 @@ so lead with them:
 mailwoman parse --debug "$ADDRESS" | jq '{input, path, kind: {kind: .kind.kind, confidence: .kind.confidence}, timing}'
 ```
 
-```
+```json
 {
   "input": "1275 Pennsylvania Ave NW, Washington, DC 20004",
   "path": "full",
@@ -79,7 +79,7 @@ model never saw what you typed".
 mailwoman doctor --json
 ```
 
-```
+```json
 {
   "checks": [
     {

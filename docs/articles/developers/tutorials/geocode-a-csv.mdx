@@ -159,7 +159,7 @@ matched 20, mismatched 0, skipped 0 → customers.geocoded.jsonl
 head -3 customers.geocoded.jsonl
 ```
 
-```
+```json
 {"customer_id":"C-1001","company":"Harbor & Vine Catering","query":"1275 Pennsylvania Ave NW, Washington, DC, 20004","lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Washington","region":"DC"}
 {"customer_id":"C-1002","company":"Beacon Ridge Analytics","query":"800 F St NW, Washington, DC, 20004","lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Washington","region":"DC"}
 {"customer_id":"C-1003","company":"Tidewater Print Shop","query":"1000 Jefferson Dr SW, Washington, DC, 20560","lat":38.904831,"lon":-77.016216,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Washington","region":"DC"}
@@ -203,7 +203,7 @@ The third is the one to design for.
 tail -1 customers.geocoded.jsonl
 ```
 
-```
+```json
 {"customer_id":"C-1022","company":"Larkspur Tooling","query":"42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000","lat":40.168649,"lon":-74.791478,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Falls Township","region":"ZZ"}
 ```
 
@@ -242,7 +242,7 @@ wrote 20 features → customers.geojson
 jq '.features[0]' customers.geojson
 ```
 
-```
+```json
 {
   "type": "Feature",
   "geometry": {
@@ -295,7 +295,7 @@ matched 20, mismatched 0, skipped 0 → customers.geocoded.jsonl
 head -4 customers.geocoded.jsonl | jq -c '{customer_id, resolution_tier, uncertainty_m, lat, lon}'
 ```
 
-```
+```json
 {"customer_id":"C-1001","resolution_tier":"address_point","uncertainty_m":1,"lat":38.89566505262116,"lon":-77.02925468482408}
 {"customer_id":"C-1002","resolution_tier":"address_point","uncertainty_m":1,"lat":38.89698648071389,"lon":-77.02328617926172}
 {"customer_id":"C-1003","resolution_tier":"address_point","uncertainty_m":1,"lat":38.88877947111117,"lon":-77.02595808242873}

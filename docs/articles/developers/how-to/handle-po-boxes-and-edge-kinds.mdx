@@ -31,7 +31,7 @@ discovering the same thing from a coordinate that landed in the wrong hemisphere
 mailwoman parse --debug "PO Box 1234, San Francisco, CA 94119" | jq -c '{path, kind}'
 ```
 
-```
+```json
 {"path":"full","kind":{"kind":"po_box","confidence":0.95,"alternatives":[{"kind":"structured_address","confidence":0.9},{"kind":"vague","confidence":0.3}]}}
 ```
 
@@ -57,7 +57,7 @@ The verdict is a possibility, not a constraint. `vague` at 0.3 is unconditional,
 mailwoman parse "PO Box 1234, San Francisco, CA 94119"
 ```
 
-```
+```json
 {
   "region": "CA",
   "locality": "San Francisco",
@@ -78,7 +78,7 @@ in the string:
 mailwoman geocode "PO Box 1234, San Francisco, CA" | jq -c '{lat, lon, resolution_tier, locality}'
 ```
 
-```
+```json
 {"lat":37.759715,"lon":-122.693976,"resolution_tier":"admin","locality":"San Francisco"}
 ```
 
@@ -92,7 +92,7 @@ is not a delivery point", and do not route a driver to it.
 mailwoman parse "5th and Main"
 ```
 
-```
+```json
 {
   "intersection_a": "5th",
   "intersection_b": "Main"
@@ -107,7 +107,7 @@ coordinate again comes from whatever place name is present:
 mailwoman geocode "Corner of Broadway and 42nd Street, New York, NY" | jq -c '{lat, lon, resolution_tier, locality}'
 ```
 
-```
+```json
 {"lat":40.694457,"lon":-73.93045,"resolution_tier":"admin","locality":"New York"}
 ```
 
@@ -117,7 +117,7 @@ Watch what the classifier does with that same string, though:
 mailwoman parse --debug "Corner of Broadway and 42nd Street, New York, NY" | jq -c '{kind: .kind.kind, confidence: .kind.confidence}'
 ```
 
-```
+```json
 {"kind":"structured_address","confidence":0.9}
 ```
 
@@ -129,7 +129,7 @@ a city and a state outranks it. Bare, the same phrase classifies as an intersect
 mailwoman parse --debug "5th and Main" | jq -c '{kind: .kind.kind, confidence: .kind.confidence}'
 ```
 
-```
+```json
 {"kind":"intersection","confidence":0.85}
 ```
 
@@ -146,7 +146,7 @@ mailwoman parse --debug "10118-1234" | jq -c '{path, kind: .kind.kind, confidenc
 mailwoman parse --debug "10118" | jq -c '{path, kind: .kind.kind, confidence: .kind.confidence}'
 ```
 
-```
+```json
 {"path":"fast-path","kind":"postcode_only","confidence":1}
 {"path":"full","kind":"postcode_only","confidence":0.7}
 ```
@@ -174,7 +174,7 @@ alphanumeric one resolved correctly, because its shape belongs to one country.
 mailwoman geocode --default-country US "10001" | jq -c '{lat, lon, postcode, countryCode}'
 ```
 
-```
+```json
 {"lat":40.750634,"lon":-73.997176,"postcode":"10001","countryCode":"US"}
 ```
 
@@ -184,7 +184,7 @@ Correct, Manhattan. But not all of them:
 mailwoman geocode --default-country US "20500" | jq -c '{lat, lon, postcode, countryCode}'
 ```
 
-```
+```json
 {"lat":null,"lon":null,"postcode":"20500","countryCode":null}
 ```
 
@@ -200,7 +200,7 @@ mailwoman parse --debug "Empire State Building" | jq -c '{kind: .kind.kind, conf
 mailwoman parse "Empire State Building"
 ```
 
-```
+```json
 {"kind":"landmark","confidence":0.88}
 {"locality":"Empire State Building"}
 ```
@@ -218,7 +218,7 @@ One command tells you what shape you were handed and whether the pipeline short-
 mailwoman parse --debug "$ADDRESS" | jq '{path, kind: .kind.kind, confidence: .kind.confidence, alternatives: [.kind.alternatives[] | .kind]}'
 ```
 
-```
+```json
 {
   "path": "full",
   "kind": "po_box",

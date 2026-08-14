@@ -207,7 +207,7 @@ jq -c '.features[] | select(.properties.recordCount > 1)
        | {org: .properties.organization, n: .properties.recordCount, ids: .properties.sourceIds}' entities.geojson
 ```
 
-```
+```json
 {"org":"harbor and vine catering","n":3,"ids":["C-2001","C-2002","C-2003"]}
 {"org":"beacon ridge analytics","n":2,"ids":["C-2004","C-2005"]}
 {"org":"ashgrove textiles","n":3,"ids":["C-2006","C-2007","C-2008"]}
@@ -227,7 +227,7 @@ The check that catches both failure directions at once:
 jq '[.features[].properties.recordCount] | {entities: length, rows: add}' entities.geojson
 ```
 
-```
+```json
 {
   "entities": 13,
   "rows": 20
