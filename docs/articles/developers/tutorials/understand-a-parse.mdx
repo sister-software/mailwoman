@@ -127,67 +127,67 @@ npx mailwoman parse --debug "1 madison ave madison wi 53703" | jq '{path, locale
 
 ```json
 {
-  "path": "full",
-  "locale": {
-    "locale": "en-US",
-    "confidence": 1,
-    "alternatives": [
-      {
-        "locale": "en-US",
-        "confidence": 0.5
-      }
-    ],
-    "source": "caller"
-  },
-  "kind": {
-    "kind": "structured_address",
-    "confidence": 0.75,
-    "alternatives": [
-      {
-        "kind": "vague",
-        "confidence": 0.3
-      }
-    ]
-  },
-  "knownFormats": [
-    {
-      "format": "us_zip",
-      "span": {
-        "start": 25,
-        "end": 30,
-        "body": "53703"
-      },
-      "confidence": 0.6
-    },
-    {
-      "format": "fr_postcode",
-      "span": {
-        "start": 25,
-        "end": 30,
-        "body": "53703"
-      },
-      "confidence": 0.6
-    },
-    {
-      "format": "de_postcode",
-      "span": {
-        "start": 25,
-        "end": 30,
-        "body": "53703"
-      },
-      "confidence": 0.6
-    }
-  ],
-  "timing": {
-    "normalize": 0.5091919999999845,
-    "place-country": 1.043992000000344,
-    "query-shape": 0.6537020000000666,
-    "locale-gate": 0.20217800000000352,
-    "kind-classifier": 0.6429920000000493,
-    "phrase-grouper": 1.0681070000000545,
-    "token-classify": 223.19595000000027,
-    "grouper-audit": 0.14948000000003958
-  }
+	"path": "full",
+	"locale": {
+		"locale": "en-US",
+		"confidence": 1,
+		"alternatives": [
+			{
+				"locale": "en-US",
+				"confidence": 0.5
+			}
+		],
+		"source": "caller"
+	},
+	"kind": {
+		"kind": "structured_address",
+		"confidence": 0.75,
+		"alternatives": [
+			{
+				"kind": "vague",
+				"confidence": 0.3
+			}
+		]
+	},
+	"knownFormats": [
+		{
+			"format": "us_zip",
+			"span": {
+				"start": 25,
+				"end": 30,
+				"body": "53703"
+			},
+			"confidence": 0.6
+		},
+		{
+			"format": "fr_postcode",
+			"span": {
+				"start": 25,
+				"end": 30,
+				"body": "53703"
+			},
+			"confidence": 0.6
+		},
+		{
+			"format": "de_postcode",
+			"span": {
+				"start": 25,
+				"end": 30,
+				"body": "53703"
+			},
+			"confidence": 0.6
+		}
+	],
+	"timing": {
+		"normalize": 0.5091919999999845,
+		"place-country": 1.043992000000344,
+		"query-shape": 0.6537020000000666,
+		"locale-gate": 0.20217800000000352,
+		"kind-classifier": 0.6429920000000493,
+		"phrase-grouper": 1.0681070000000545,
+		"token-classify": 223.19595000000027,
+		"grouper-audit": 0.14948000000003958
+	}
 }
 ```
 

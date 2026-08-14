@@ -368,6 +368,8 @@ jobs:
   unit-slow:
     needs: data-fleet
     if: needs.data-fleet.outputs.up == 'true'
+    env:
+      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
     runs-on:
       - self-hosted
       - mailwoman-data
@@ -667,6 +669,8 @@ jobs:
   smoke:
     needs: data-fleet
     if: needs.data-fleet.outputs.up == 'true'
+    env:
+      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
     runs-on:
       - self-hosted
       - mailwoman-data

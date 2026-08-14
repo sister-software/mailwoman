@@ -32,7 +32,17 @@ mailwoman parse --debug "PO Box 1234, San Francisco, CA 94119" | jq -c '{path, k
 ```
 
 ```json
-{"path":"full","kind":{"kind":"po_box","confidence":0.95,"alternatives":[{"kind":"structured_address","confidence":0.9},{"kind":"vague","confidence":0.3}]}}
+{
+	"path": "full",
+	"kind": {
+		"kind": "po_box",
+		"confidence": 0.95,
+		"alternatives": [
+			{ "kind": "structured_address", "confidence": 0.9 },
+			{ "kind": "vague", "confidence": 0.3 }
+		]
+	}
+}
 ```
 
 Eight kinds exist, and the classifier always returns the whole ranked list rather than one answer:
@@ -59,10 +69,10 @@ mailwoman parse "PO Box 1234, San Francisco, CA 94119"
 
 ```json
 {
-  "region": "CA",
-  "locality": "San Francisco",
-  "po_box": "PO Box 1234",
-  "postcode": "94119"
+	"region": "CA",
+	"locality": "San Francisco",
+	"po_box": "PO Box 1234",
+	"postcode": "94119"
 }
 ```
 
@@ -79,7 +89,7 @@ mailwoman geocode "PO Box 1234, San Francisco, CA" | jq -c '{lat, lon, resolutio
 ```
 
 ```json
-{"lat":37.759715,"lon":-122.693976,"resolution_tier":"admin","locality":"San Francisco"}
+{ "lat": 37.759715, "lon": -122.693976, "resolution_tier": "admin", "locality": "San Francisco" }
 ```
 
 `admin` tier, San Francisco's centroid. That is the correct answer to the question the string can
@@ -94,8 +104,8 @@ mailwoman parse "5th and Main"
 
 ```json
 {
-  "intersection_a": "5th",
-  "intersection_b": "Main"
+	"intersection_a": "5th",
+	"intersection_b": "Main"
 }
 ```
 
@@ -108,7 +118,7 @@ mailwoman geocode "Corner of Broadway and 42nd Street, New York, NY" | jq -c '{l
 ```
 
 ```json
-{"lat":40.694457,"lon":-73.93045,"resolution_tier":"admin","locality":"New York"}
+{ "lat": 40.694457, "lon": -73.93045, "resolution_tier": "admin", "locality": "New York" }
 ```
 
 Watch what the classifier does with that same string, though:
@@ -118,7 +128,7 @@ mailwoman parse --debug "Corner of Broadway and 42nd Street, New York, NY" | jq 
 ```
 
 ```json
-{"kind":"structured_address","confidence":0.9}
+{ "kind": "structured_address", "confidence": 0.9 }
 ```
 
 `structured_address`, not `intersection`. The intersection rule scores a flat 0.85 regardless of
@@ -130,7 +140,7 @@ mailwoman parse --debug "5th and Main" | jq -c '{kind: .kind.kind, confidence: .
 ```
 
 ```json
-{"kind":"intersection","confidence":0.85}
+{ "kind": "intersection", "confidence": 0.85 }
 ```
 
 The components come out right either way, which is what matters. If you are routing on the kind, check
@@ -175,7 +185,7 @@ mailwoman geocode --default-country US "10001" | jq -c '{lat, lon, postcode, cou
 ```
 
 ```json
-{"lat":40.750634,"lon":-73.997176,"postcode":"10001","countryCode":"US"}
+{ "lat": 40.750634, "lon": -73.997176, "postcode": "10001", "countryCode": "US" }
 ```
 
 Correct, Manhattan. But not all of them:
@@ -185,7 +195,7 @@ mailwoman geocode --default-country US "20500" | jq -c '{lat, lon, postcode, cou
 ```
 
 ```json
-{"lat":null,"lon":null,"postcode":"20500","countryCode":null}
+{ "lat": null, "lon": null, "postcode": "20500", "countryCode": null }
 ```
 
 Null. The candidate gazetteer's US postcode coverage is partial, so scoping to the right country turns a
@@ -220,10 +230,10 @@ mailwoman parse --debug "$ADDRESS" | jq '{path, kind: .kind.kind, confidence: .k
 
 ```json
 {
-  "path": "full",
-  "kind": "po_box",
-  "confidence": 0.95,
-  "alternatives": ["structured_address", "vague"]
+	"path": "full",
+	"kind": "po_box",
+	"confidence": 0.95,
+	"alternatives": ["structured_address", "vague"]
 }
 ```
 

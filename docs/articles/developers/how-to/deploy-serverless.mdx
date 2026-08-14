@@ -205,22 +205,22 @@ mailwoman doctor --json
 
 ```json
 {
-  "checks": [
-    {
-      "id": "weights",
-      "label": "Model weights (en-us)",
-      "core": true,
-      "status": "ok",
-      "detail": "package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB"
-    },
-    {
-      "id": "onnxruntime",
-      "label": "ONNX runtime",
-      "core": true,
-      "status": "ok",
-      "detail": "onnxruntime-node loadable"
-    }
-  ]
+	"checks": [
+		{
+			"id": "weights",
+			"label": "Model weights (en-us)",
+			"core": true,
+			"status": "ok",
+			"detail": "package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB"
+		},
+		{
+			"id": "onnxruntime",
+			"label": "ONNX runtime",
+			"core": true,
+			"status": "ok",
+			"detail": "onnxruntime-node loadable"
+		}
+	]
 }
 ```
 

@@ -204,7 +204,17 @@ tail -1 customers.geocoded.jsonl
 ```
 
 ```json
-{"customer_id":"C-1022","company":"Larkspur Tooling","query":"42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000","lat":40.168649,"lon":-74.791478,"resolution_tier":"admin","uncertainty_m":null,"matched_locality":"Falls Township","region":"ZZ"}
+{
+	"customer_id": "C-1022",
+	"company": "Larkspur Tooling",
+	"query": "42 Nonexistent Ln, Zzyzx Falls, ZZ, 00000",
+	"lat": 40.168649,
+	"lon": -74.791478,
+	"resolution_tier": "admin",
+	"uncertainty_m": null,
+	"matched_locality": "Falls Township",
+	"region": "ZZ"
+}
 ```
 
 `Zzyzx Falls, ZZ` is not a place, and the row came back with a coordinate anyway — in Pennsylvania. The
@@ -244,27 +254,22 @@ jq '.features[0]' customers.geojson
 
 ```json
 {
-  "type": "Feature",
-  "geometry": {
-    "type": "Point",
-    "coordinates": [
-      -77.016216,
-      38.904831
-    ]
-  },
-  "properties": {
-    "entityID": "entity-0",
-    "recordCount": 1,
-    "cohesion": null,
-    "sourceIds": [
-      "C-1001"
-    ],
-    "sources": [],
-    "name": null,
-    "organization": "harbor and vine catering",
-    "address": "Pennsylvania Ave NW 1275, 20004 Washington",
-    "geocodeTier": "admin"
-  }
+	"type": "Feature",
+	"geometry": {
+		"type": "Point",
+		"coordinates": [-77.016216, 38.904831]
+	},
+	"properties": {
+		"entityID": "entity-0",
+		"recordCount": 1,
+		"cohesion": null,
+		"sourceIds": ["C-1001"],
+		"sources": [],
+		"name": null,
+		"organization": "harbor and vine catering",
+		"address": "Pennsylvania Ave NW 1275, 20004 Washington",
+		"geocodeTier": "admin"
+	}
 }
 ```
 
