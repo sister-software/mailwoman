@@ -2,7 +2,7 @@
 
 Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **54 scoped `@mailwoman/*` workspaces** — **55 entries in the root `workspaces` array**, which is the list to trust. The repo root is the private orchestration package `@mailwoman/universe` (not published).
 
-**49 of the 55 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: four workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending, see `packages/osm/README.md`. 4 private + 1 held out = the 5 that don't ship. The table groups them by role:
+**49 of the 55 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: four workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending, see `packages/osm/README.md`. That is five, and 55 − 49 = **six**. The sixth is `neural-weights-en-au`, which is public, already on npm, and out of the list by accident rather than decision — see the release-list pitfall below before you "fix" the count by editing this sentence. Trust the subtraction over the story: when it stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
 
 | Workspace                                                                    | npm package                                     | Purpose                                                                                                                                                                                                                                                |
 | ---------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -148,6 +148,33 @@ To make publish robust regardless of repo state, `scripts/publish-workspace.ts` 
 
 Every workspace's committed `exports` map is the DEV map only: curated subpaths with a `node` condition first pointing at `.ts` source (plain `node` runs source in the repo). Consumers can never use that condition — Node refuses to type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) — so `scripts/publish-workspace.ts` derives `publishConfig.exports` from the dev map at pack time (strip `node → .ts`, `types` first), lets `yarn pack`'s publishConfig substitution write it into the tarball manifest, and restores the workspace file. A guard then refuses to publish if any exports target is missing from the tarball. Do NOT commit a `publishConfig.exports` (the hand-maintained duplication was retired 2026-07-19 after its removal-without-replacement shipped a fully-broken v7.2.0) and maintain ONLY the dev map. Tarballs ship source `.ts` + `out/` JS + `.d.ts` (the `files` arrays include all three; the guard's first runs caught two dead `core` subpaths and mailwoman's never-shipped `.d.ts`).
 
+### Pitfall: a workspace missing from the release list freezes — silently, and at consumer expense
+
+`.release-it.json`'s workspaces list is the publish set AND the bump set. A workspace outside it is not
+merely unpublished: release-it never rewrites its `version` either, so it holds whatever number it had
+when it dropped out — in the repo and on npm — while every sibling moves on. Nothing fails. `yarn
+release` reports success, because from its side there was nothing to do.
+
+`@mailwoman/neural-weights-en-au` is the worked example: public, on npm, absent from the list. Siblings
+are at 9.1.0; en-au reads 9.0.0 in `package.json` and `latest` on npm is 9.0.0. The cost is not the one
+it looks like, and the difference is worth measuring rather than reasoning out — `npm view
+@mailwoman/neural-weights-en-au@9.0.0 dependencies` answers `{"@mailwoman/neural-weights-en-us":
+"9.1.0"}`, the CORRECT base, because `yarn pack` freezes `workspace:*` to whatever the sibling reads AT
+PACK TIME and the hand-publish happened after the 9.1.0 bump. So what it actually costs is a version
+number that no longer means anything (9.0.0 shipping against a 9.1.0 base) and a workspace that ships
+only when someone remembers it by hand. The latent hazard is ordering: pack the same package BEFORE a
+release bump and that mechanism pins a base the overlay is genuinely behind.
+
+A `private: true` flag is checkable; membership in a JSON array is not, so check the arithmetic
+whenever you add or move a workspace:
+
+```bash
+node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
+```
+
+Every name it prints needs a reason you can state. `scripts/scaffold-weights-overlay.ts` registers a
+new overlay in both lists for exactly this reason — a locale added by hand skips that step.
+
 ### Recovering from a partial release
 
 If a release fails partway through publishing:
@@ -193,7 +220,41 @@ If a release fails partway through publishing:
 
   **A duplicate is often a bug report about the shared tool.** The seven copies of a hand-rolled CSV splitter in `packages/corpus/src/shard-recipes/` were the worked example: `CSVSpliterator` was ALREADY a dependency of every one of those workspaces, so nobody had failed to find it. They found it, hit 207 seconds on a whole-buffer parse, and wrote something fast that could not see quotes. The duplication was a rational local response to a real upstream defect (a quadratic `searchMatches`, fixed in spliterator 5.0.0), and seven independent authors routed around the same pothole without filing it. So when you meet a duplicate, the useful question is not "why didn't they know" — it's **"what was wrong with the shared thing?"** Sometimes nothing. Often: too slow, async against a sync caller, or shaped for a different call site. Fix that and the duplicates collapse on their own; delete them without fixing it and they grow back.
 
+- **A pty test must force Ink interactive.** `render()` resolves `interactive` from `is-in-ci` and `stdout.isTTY` (`resolveInteractiveOption`), and CI detection wins over a real TTY — so under GitHub Actions a probe driven through `script` renders NON-interactively, and a non-interactive Ink writes only the final frame at unmount (its own `RenderOptions` doc says so). A test that reads a component's edit history out of the pty capture then finds exactly one frame: the last one, with the correct value, which is why the failure reads as a mystery rather than a config problem. Pass `render(node, { interactive: true })` in the probe — `packages/mailwoman/debug-view/test/input-probe.ts` is the worked example. The suppression costs wall-clock too: with nothing written before unmount, the harness's `READY` wait burned its full 20s timeout on every case (`input.pty.test.ts`, 42s → 2.8s once forced).
+
 - The **bare-import + subpath-import cycle** is a fragility surface. When a test file imports `@mailwoman/core` bare AND a subpath, Vite can leave the bare re-exports unbound while the slices interleave — base classes at the far side of the barrel evaluate as `undefined`. (`packages/core/resources/libpostal.ts` had a top-level `await readdir` that contributed until #481 made it a lazy `getAvailableLanguages()` getter; the cycle turned out to be **structural** — Vite's bare/subpath interleaving — not TLA-driven, so it persists after the TLA removal.) Workaround: a side-effect `import "@mailwoman/core"` at the top of the affected test file forces full init first. Full fix = import-graph hygiene (tracked on #481).
+
+### Moving a workspace
+
+`tsc -b`, `yarn lint` and `yarn typecheck:tests` all pass over a half-moved tree. The paths that break
+are STRINGS, and the compiler never reads them. Regrouping the workspaces under `packages/` left ~40
+cwd-relative literals behind, and the reason none of them failed a build is the reason they matter:
+each is read at runtime by something that treats absence as a NEGATIVE ANSWER rather than an error.
+
+- `.husky/pre-commit` matched staged files against `^mailwoman/(commands|cli-kit)/`, so the
+  CLI-reference freshness guard stopped firing entirely — the guard that exists because the docs gate
+  fired four times in one day.
+- `promotion-gate.ts`'s recompile-before-eval guard probed `existsSync("core/out")`: false, so a stale
+  core would have graded silently.
+- `api-engine.test.ts` and `v1-parse-gate.test.ts` gate on
+  `realpathSync("neural-weights-en-us/model.onnx")`, which throws, so both suites skipped. Repairing
+  the path took the slow leg from 109 to 110 files and 60 to 57 skips, all passing.
+- `publish.yml` read the model card inside two `node -e` strings and ran the pair-index parity test
+  from `neural/test/`. The prose and the `::error::` remediation string beside them had already been
+  updated by eye; the executable one-liners had not.
+
+So after a move, sweep for QUOTED literals whose first path segment is a workspace name — not for
+imports, which the compiler already checks. `.husky/`, `run:` blocks, CLI flag defaults and test
+skip-guards are where they hide. Two shapes look stale and are not: a data-root-relative path (
+`data-bundles.ts`'s `localPath`, paired with a `remotePath`), and a package specifier —
+`import("mailwoman/gazetteer-pipeline")` is the `mailwoman` package's subpath export, not a directory,
+and prefixing it with `packages/` breaks it.
+
+CodeQL reacts to a bulk rename by re-raising every existing alert at its new path, and dismissals do
+NOT follow the file: the regroup PR reported "17 new alerts, 17 high severity", which were 13 already
+open on `main` and 4 previously dismissed as false positives, at identical rules and line numbers. The
+check's own caveat says the changes were too large to attribute. Re-dismiss after merge; do not read
+the count as a regression, and do not let it gate the merge — the ruleset requires the `test` context.
 
 ## Database / inline SQL
 
