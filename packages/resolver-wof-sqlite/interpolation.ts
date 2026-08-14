@@ -34,7 +34,7 @@ import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 import { haversineKm } from "./geo.ts"
 import { hasTable } from "./sqlite-utils.ts"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.ts"
+import { canonicalizeRouteKey, streetKeyVariants } from "./street-normalize.ts"
 
 /**
  * How an interpolated answer was computed (#483 Method 2):
@@ -92,7 +92,26 @@ export interface InterpolationQuery {
 	 * ZIP scope — strongly preferred; without it common street names abstain (see module doc).
 	 */
 	postcode?: string
+	/**
+	 * The resolved locality's coordinate — the tie-breaker when no postcode was given and the parity-preferred covering
+	 * ranges still span several postcodes. See {@link NEAR_MAX_KM} for the acceptance geometry.
+	 */
+	near?: { lat: number; lon: number }
 }
+
+/**
+ * Acceptance geometry for the `near` tie-break: the winning postcode group's closest segment must sit within this many
+ * kilometres of `near`, AND the runner-up group must be at least {@link NEAR_DOMINANCE} times farther. Both measured on
+ * the two live failures: Brooklyn's `st pauls place` 11226 segment is ~2 km from the Brooklyn centroid with Great
+ * Neck's 11021 at ~24 km (12×); Fraser's `east 13 mile road` 48026 is ~2 km with Mecosta's namesake ~190 km away. A
+ * near-tie between groups is genuine ambiguity and stays an abstention.
+ */
+const NEAR_MAX_KM = 25
+
+/**
+ * See {@link NEAR_MAX_KM}.
+ */
+const NEAR_DOMINANCE = 2
 
 interface SegmentRow {
 	from_hn: number
@@ -104,6 +123,48 @@ interface SegmentRow {
 	geometry: string
 	source: string
 	release: string
+}
+
+/**
+ * The postcode group nearest `near`, under the {@link NEAR_MAX_KM} dominance geometry — or null when no group qualifies
+ * (out of range, or the runner-up is too close to call). A group's distance is its closest segment's first polyline
+ * vertex; a segment whose geometry fails to parse prices as unreachable rather than aborting the tie-break.
+ */
+function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; lon: number }): SegmentRow[] | null {
+	const groups = new Map<string, { rows: SegmentRow[]; km: number }>()
+
+	for (const row of pool) {
+		const key = row.postcode ?? ""
+		let km = Number.POSITIVE_INFINITY
+
+		try {
+			const [firstVertex] = parseJSONStrict<[number, number][]>(row.geometry)
+
+			if (firstVertex) {
+				km = haversineKm(near.lat, near.lon, firstVertex[1], firstVertex[0])
+			}
+		} catch {
+			// Unparseable geometry: this row cannot be sited, so it cannot win the tie-break.
+		}
+
+		const group = groups.get(key)
+
+		if (group) {
+			group.rows.push(row)
+			group.km = Math.min(group.km, km)
+		} else {
+			groups.set(key, { rows: [row], km })
+		}
+	}
+
+	const ranked = [...groups.values()].toSorted((a, b) => a.km - b.km)
+	const [winner, runnerUp] = ranked
+
+	if (!winner || winner.km > NEAR_MAX_KM) return null
+
+	if (runnerUp && runnerUp.km < winner.km * NEAR_DOMINANCE) return null
+
+	return winner.rows
 }
 
 export class StreetInterpolator implements InterpolationLookup {
@@ -169,29 +230,41 @@ export class StreetInterpolator implements InterpolationLookup {
 
 	find(query: InterpolationQuery): InterpolatedHit | null {
 		if (!this.#byPostcode || !this.#byStreet) return null
-		const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
 
 		// Strictly-numeric house numbers only — this tier estimates, it doesn't guess at
 		// hyphenated/alphanumeric schemes the ranges don't model.
-		if (!streetNorm || !/^\d+$/.test(numberRaw)) return null
+		if (!/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
-		let rows: SegmentRow[]
+		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
+		// collapse and the saint↔st register swap. A variant advances the ladder when it produces no
+		// ANSWER, not merely no rows — a wrong-register key can cover the number in far-away towns and
+		// then fail the ambiguity gate ("saint pauls place" reaches Nassau's rows; the Brooklyn answer
+		// lives under "st pauls place"), and stopping at rows would eclipse the right variant.
+		for (const variant of streetKeyVariants(query.street)) {
+			const streetNorm = canonicalizeRouteKey(variant)
 
-		if (query.postcode) {
 			// A given ZIP that scopes to nothing is a MISS, not a statewide guess: the retry was
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
 			// km, max 204 km — a unique name statewide can live in a far-away town).
-			rows = this.#byPostcode.all(query.postcode.trim(), streetNorm, n, n) as unknown as SegmentRow[]
-		} else {
-			// No scope given: a name matching ranges across several ZIPs is ambiguous — abstain.
-			rows = this.#byStreet.all(streetNorm, n, n) as unknown as SegmentRow[]
-			const postcodes = new Set(rows.map((r) => r.postcode ?? ""))
+			const rows = query.postcode
+				? (this.#byPostcode.all(query.postcode.trim(), streetNorm, n, n) as unknown as SegmentRow[])
+				: (this.#byStreet.all(streetNorm, n, n) as unknown as SegmentRow[])
 
-			if (postcodes.size > 1) return null
+			const hit = this.#answerFromRows(rows, n, query)
+
+			if (hit) return hit
 		}
 
+		return null
+	}
+
+	/**
+	 * Resolve one key variant's covering rows to an answer, or null when they cannot honestly give one — the
+	 * parity/ambiguity/tightest-range pipeline the module doc describes.
+	 */
+	#answerFromRows(rows: SegmentRow[], n: number, query: InterpolationQuery): InterpolatedHit | null {
 		if (!rows.length) return null
 
 		// Parity preference: exact side first, then 'mixed' (matches either), then the
@@ -200,8 +273,26 @@ export class StreetInterpolator implements InterpolationLookup {
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
 		const preferred = exact.length ? exact : mixed
-		const pool = preferred.length ? preferred : rows
+		let pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
+
+		// No scope given: the covering ranges must agree on ONE postcode or the lookup abstains — a
+		// name spanning towns is ambiguity, not an answer. Counted over the PARITY pool, not all
+		// rows: a section-line boundary road carries a different ZIP per side ("east 13 mile road"
+		// is Fraser 48026 odd / Roseville 48066 even), and the opposite side can never hold the
+		// number it would otherwise veto. When several postcodes survive parity, the caller's
+		// resolved-locality coordinate breaks the tie by segment proximity under the dominance
+		// geometry of {@link NEAR_MAX_KM} — a near-tie stays an abstention.
+		if (!query.postcode) {
+			const postcodes = new Set(pool.map((r) => r.postcode ?? ""))
+
+			if (postcodes.size > 1) {
+				const scoped = query.near ? nearestPostcodeGroup(pool, query.near) : null
+
+				if (!scoped) return null
+				pool = scoped
+			}
+		}
 
 		// Tightest range wins — the most specific claim about where this number lives.
 		let best = pool[0]!

@@ -26,6 +26,7 @@ import { existsSync } from "node:fs"
 
 import type { GeocodeOutcome, GeocodeOutcomeLike } from "@mailwoman/api"
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
+import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
@@ -513,7 +514,21 @@ export function recognizeBarePostcode(tree: AddressTree): AddressTree {
 }
 
 /**
- * Lowercase 2-letter state slug from a parsed region value / resolver name, else null.
+ * Full US state name (case-folded) → lowercase 2-letter slug, from the codex table. Built once — the inverse the codex
+ * doesn't ship directly.
+ */
+const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
+	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [
+		name.toLowerCase(),
+		abbreviation.toLowerCase(),
+	])
+)
+
+/**
+ * Lowercase 2-letter state slug from a parsed region value / resolver name, else null. Accepts the abbreviation
+ * register ("MI") and the full-name register ("Michigan", "New York") — a user spells the state however they spell it,
+ * and a null here silently drops the WHOLE per-state street tier (situs + interpolation), which is how "…, Fraser MI"
+ * reached the register while "…, Brooklyn New York" never loaded a shard.
  */
 export function regionToStateSlug(
 	regionValue: string | null | undefined,
@@ -524,6 +539,9 @@ export function regionToStateSlug(
 		const trimmed = candidate.trim()
 
 		if (/^[A-Za-z]{2}$/.test(trimmed)) return trimmed.toLowerCase()
+		const byName = US_STATE_SLUG_BY_NAME.get(trimmed.toLowerCase())
+
+		if (byName) return byName
 	}
 
 	return null

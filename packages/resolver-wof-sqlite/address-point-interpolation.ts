@@ -40,7 +40,7 @@ import type { InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "./geo.ts"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
 import { hasTable } from "./sqlite-utils.ts"
-import { canonicalizeRouteKey, normalizeStreetForKey } from "./street-normalize.ts"
+import { canonicalizeRouteKey, streetKeyVariants } from "./street-normalize.ts"
 
 /**
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past
@@ -102,16 +102,25 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	}
 
 	find(query: InterpolationQuery): InterpolatedHit | null {
-		const streetKey = canonicalizeRouteKey(normalizeStreetForKey(query.street))
 		const numberRaw = query.number.trim()
 
-		if (!streetKey || !/^\d+$/.test(numberRaw)) return null
+		if (!/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
 		// No own table (empty shard) or no postcode → defer to the segment fallback rather than query.
 		if (!this.#byPostcode || !query.postcode) return this.#fallback?.find(query) ?? null
 
-		const rows = this.#byPostcode.all(query.postcode.trim(), streetKey, n) as unknown as PointRow[]
+		// Key-variant ladder (see `streetKeyVariants`) — same probe order as the exact-point reader.
+		let rows: PointRow[] = []
+
+		for (const variant of streetKeyVariants(query.street)) {
+			const streetKey = canonicalizeRouteKey(variant)
+
+			rows = this.#byPostcode.all(query.postcode.trim(), streetKey, n) as unknown as PointRow[]
+
+			if (rows.length) break
+		}
+
 		const hit = rows.length >= 2 ? interpolateFromNeighbors(rows, n) : null
 
 		return hit ?? this.#fallback?.find(query) ?? null

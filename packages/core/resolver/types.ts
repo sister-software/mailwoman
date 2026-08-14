@@ -385,11 +385,18 @@ export interface InterpolatedPointHit {
 
 /**
  * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations own their normalization
- * (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Postcode-scoped (no
- * locality field) — the tier abstains statewide without a postcode.
+ * (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Postcode-scoped; without
+ * a postcode the tier answers only when the covering ranges agree on ONE postcode — `near` (the resolved locality's
+ * coordinate) lets an implementation break a multi-postcode tie by segment proximity instead of abstaining (the
+ * Brooklyn-vs-Great-Neck namesake class). Optional and advisory: implementations may ignore it.
  */
 export interface InterpolationLookup {
-	find(query: { street: string; number: string; postcode?: string }): InterpolatedPointHit | null
+	find(query: {
+		street: string
+		number: string
+		postcode?: string
+		near?: { lat: number; lon: number }
+	}): InterpolatedPointHit | null
 	/**
 	 * The ARTIFACT's own conformal radius multiplier for `uncertaintyM` (#374), read from the shard's
 	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent): the multiplier

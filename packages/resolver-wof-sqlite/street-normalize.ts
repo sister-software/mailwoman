@@ -316,3 +316,74 @@ export function canonicalizeRouteKey(streetNorm: string): string {
 
 	return `${match[1] === "us" ? "us" : "state"} route ${match[2]}`
 }
+
+/**
+ * The canonical street-type words (lowercase) — the VALUE side of the codex suffix table. Membership means "this
+ * normalized token is a fully-spelled street type" ("place", "street", "road" …), which is how the doubled-type
+ * collapse below recognizes its shape without any parse-tree knowledge.
+ */
+const CANONICAL_TYPE_WORDS: ReadonlySet<string> = new Set(
+	[...US_STREET_SUFFIX_LOOKUP.values()].map((v) => v.toLowerCase())
+)
+
+/**
+ * Ordered lookup-key variants for a US/EN street span — the primary normalized key first, then the null-only recovery
+ * forms a reader may probe when the primary misses. Two register mismatches motivate them, both measured on live
+ * queries (2026-08-14):
+ *
+ * - **Doubled type** — a user types the type twice ("Saint Pauls PL St"), and the normalizer canonicalizes only the LAST
+ *   type token, leaving `saint pauls pl street`, which matches nothing anywhere. The signature is visible in the key
+ *   itself: a canonical type word in last position DIRECTLY after an uncanonicalized type abbreviation. The variant
+ *   drops the trailing word and canonicalizes what remains (`saint pauls place`). A street genuinely named with two
+ *   types keys identically on both sides and is caught by the primary probe first.
+ * - **Saint↔St register split** — the artifacts preserve each SOURCE's spelling (NYC situs keys `st pauls place`, Nassau
+ *   keys `saint pauls place`), and a query arrives in whichever register the user typed. A leading `saint` or `st`
+ *   token is swapped for its sibling; leading position only — a leading `st` is always the hagionym in US street names,
+ *   and interior tokens ("Mount Saint Helens Dr") are out of scope until measured.
+ *
+ * Deduplicated and ordered most-literal-first, so probing the list in order preserves the primary key's precedence.
+ */
+export function streetKeyVariants(street: string, locale: StreetLocale = "us"): string[] {
+	const primary = locale === "us" ? normalizeStreetForKey(street) : normalizeStreetForKeyLocale(street, locale)
+	const variants: string[] = primary ? [primary] : []
+
+	if (!primary || (locale !== "us" && locale !== "en")) return variants
+
+	const tokens = primary.split(" ")
+	const last = tokens.at(-1)
+	const secondLast = tokens.at(-2)
+
+	if (
+		tokens.length > 2 &&
+		last &&
+		secondLast &&
+		CANONICAL_TYPE_WORDS.has(last) &&
+		!CANONICAL_TYPE_WORDS.has(secondLast) &&
+		US_STREET_SUFFIX_LOOKUP.has(secondLast)
+	) {
+		const collapsed = normalizeStreetForKey(tokens.slice(0, -1).join(" "))
+
+		if (collapsed && !variants.includes(collapsed)) {
+			variants.push(collapsed)
+		}
+	}
+
+	// Snapshot before the swap pass — it appends while reading, and iterating the live array would
+	// re-visit its own additions.
+	const preSwap = variants.slice()
+
+	for (const variant of preSwap) {
+		const [head, ...rest] = variant.split(" ")
+		const swapped = head === "saint" ? "st" : head === "st" ? "saint" : null
+
+		if (swapped && rest.length) {
+			const candidate = [swapped, ...rest].join(" ")
+
+			if (!variants.includes(candidate)) {
+				variants.push(candidate)
+			}
+		}
+	}
+
+	return variants
+}

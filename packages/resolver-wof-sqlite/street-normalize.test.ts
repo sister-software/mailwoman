@@ -14,6 +14,7 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
+	streetKeyVariants,
 	stripLocalityQualifier,
 } from "./street-normalize.ts"
 
@@ -117,5 +118,36 @@ describe("stripLocalityQualifier (query-side fallback)", () => {
 		// "am Main" is part of the canonical name — must NOT be over-stripped.
 		expect(stripLocalityQualifier("Frankfurt am Main")).toBe("")
 		expect(stripLocalityQualifier("New York")).toBe("")
+	})
+})
+
+describe("streetKeyVariants", () => {
+	it("keeps a plain name single-variant", () => {
+		expect(streetKeyVariants("East 13 Mile Road")).toEqual(["east 13 mile road"])
+		expect(streetKeyVariants("Main St")).toEqual(["main street"])
+	})
+
+	it("collapses the doubled-type tail and canonicalizes what remains", () => {
+		expect(streetKeyVariants("Saint Pauls PL St")).toEqual([
+			"saint pauls pl street",
+			"saint pauls place",
+			"st pauls pl street",
+			"st pauls place",
+		])
+	})
+
+	it("swaps a leading saint↔st in both directions", () => {
+		expect(streetKeyVariants("Saint Pauls Pl")).toEqual(["saint pauls place", "st pauls place"])
+		expect(streetKeyVariants("St Pauls Pl")).toEqual(["st pauls place", "saint pauls place"])
+	})
+
+	it("never touches a street genuinely named with a type word", () => {
+		// Street Road (Bucks County PA) and a one-word name: no doubled-type signature, no saint.
+		expect(streetKeyVariants("Street Road")).toEqual(["street road"])
+		expect(streetKeyVariants("Broadway")).toEqual(["broadway"])
+	})
+
+	it("stays single-variant for non-US locales", () => {
+		expect(streetKeyVariants("Rue Saint Honoré", "fr")).toHaveLength(1)
 	})
 })

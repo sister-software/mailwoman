@@ -317,3 +317,143 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		emptyDB.close()
 	})
 })
+
+/**
+ * The 2026-08-14 retrieval rungs, pinned on the two live failures that motivated them (both operator-reported): `18295
+ * East 13 Mile Road, Fraser MI` (section-line boundary road — parity decides the ZIP) and `10 Saint Pauls PL St,
+ * Brooklyn New York` (doubled type + saint↔st register split + borough-namesake near tie-break).
+ */
+describe("StreetInterpolator — parity-first ambiguity, near tie-break, key variants", () => {
+	it("answers without a postcode when PARITY selects a single ZIP (the boundary-road class)", () => {
+		// 151 is odd; only the 05601 odd side can hold it. The even 05602 namesake used to veto this
+		// via the pre-parity postcode count.
+		const hit = interpolator.find({ street: "Main St", number: "151" })
+
+		expect(hit).not.toBeNull()
+		expect(hit!.lat).toBeCloseTo(0, 9)
+		expect(hit!.parityMatched).toBe(true)
+	})
+
+	it("still abstains without a postcode when the PARITY pool itself spans ZIPs", () => {
+		// 150 is even and both even sides (05601, 05602) cover it — genuine ambiguity, no near given.
+		expect(interpolator.find({ street: "Main St", number: "150" })).toBeNull()
+	})
+
+	describe("near tie-break geometry", () => {
+		let nearDB: DatabaseSync
+		let nearInterp: StreetInterpolator
+
+		beforeAll(() => {
+			nearDB = new DatabaseSync(":memory:")
+
+			seed(nearDB, [
+				// Same street, same parity, two ZIPs ~20 km apart along the meridian.
+				{
+					street_norm: "elm street",
+					side: "R",
+					from_hn: 2,
+					to_hn: 98,
+					parity: "even",
+					postcode: "11111",
+					geometry: [
+						[0, 0],
+						[0.001, 0],
+					],
+				},
+				{
+					street_norm: "elm street",
+					side: "R",
+					from_hn: 2,
+					to_hn: 98,
+					parity: "even",
+					postcode: "22222",
+					geometry: [
+						[0, 0.18],
+						[0.001, 0.18],
+					],
+				},
+				// The register-split pair: NYC-style key in 33333, saint-style keys in two far ZIPs so
+				// the `saint` variant alone can never answer.
+				{
+					street_norm: "st pauls place",
+					side: "R",
+					from_hn: 2,
+					to_hn: 16,
+					parity: "even",
+					postcode: "33333",
+					geometry: [
+						[0, 0],
+						[0.001, 0],
+					],
+				},
+				{
+					street_norm: "saint pauls place",
+					side: "R",
+					from_hn: 2,
+					to_hn: 48,
+					parity: "even",
+					postcode: "44444",
+					geometry: [
+						[0, 0.3],
+						[0.001, 0.3],
+					],
+				},
+				{
+					street_norm: "saint pauls place",
+					side: "R",
+					from_hn: 2,
+					to_hn: 30,
+					parity: "even",
+					postcode: "55555",
+					geometry: [
+						[0, 0.6],
+						[0.001, 0.6],
+					],
+				},
+			])
+
+			nearInterp = new StreetInterpolator({ database: nearDB })
+		})
+
+		afterAll(() => {
+			nearInterp.close()
+			nearDB.close()
+		})
+
+		it("breaks a multi-ZIP tie by dominant proximity to `near`", () => {
+			const hit = nearInterp.find({ street: "Elm St", number: "50", near: { lat: 0.01, lon: 0 } })
+
+			expect(hit).not.toBeNull()
+			expect(hit!.lat).toBeCloseTo(0, 9)
+		})
+
+		it("abstains when `near` sits between the groups (no dominance)", () => {
+			expect(nearInterp.find({ street: "Elm St", number: "50", near: { lat: 0.09, lon: 0 } })).toBeNull()
+		})
+
+		it("abstains when `near` is out of range of every group", () => {
+			expect(nearInterp.find({ street: "Elm St", number: "50", near: { lat: 5, lon: 5 } })).toBeNull()
+		})
+
+		it("abstains on the multi-ZIP tie when no `near` was supplied at all", () => {
+			expect(nearInterp.find({ street: "Elm St", number: "50" })).toBeNull()
+		})
+
+		it("advances the key-variant ladder past a wrong-register variant that covers but cannot answer", () => {
+			// "Saint Pauls PL St": the doubled-type collapse gives `saint pauls place`, which reaches the
+			// two far ZIPs and fails the near gate — the ladder must go on to `st pauls place` and answer
+			// from 33333 rather than stopping at "rows found".
+			const hit = nearInterp.find({ street: "Saint Pauls PL St", number: "10", near: { lat: 0.01, lon: 0 } })
+
+			expect(hit).not.toBeNull()
+			expect(hit!.lat).toBeCloseTo(0, 9)
+		})
+
+		it("reaches the register-split key under an explicit postcode too", () => {
+			const hit = nearInterp.find({ street: "Saint Pauls Pl", number: "10", postcode: "33333" })
+
+			expect(hit).not.toBeNull()
+			expect(hit!.lat).toBeCloseTo(0, 9)
+		})
+	})
+})
