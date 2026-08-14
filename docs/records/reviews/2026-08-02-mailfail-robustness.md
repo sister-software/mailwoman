@@ -363,7 +363,7 @@ following threw, hung, or emitted anything:
   SSN-shaped digits, scientific notation, credit-card-shaped digits — none resolve. The bare
   lat/long pair `40.748817, -73.985428` correctly yields no coordinate.
 
-One untidy case worth a line: `[31m` (control characters plus an ANSI
+One untidy case worth a line: `\x01\x02\x03\x07\x1B[31m` (control characters plus an ANSI
 colour escape) emits `{"postcode":"31m"}`. Cosmetic, low severity, but the control bytes should
 have been stripped in Stage 1.
 
