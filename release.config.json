@@ -1,7 +1,7 @@
 {
 	"$comment": "Single source of truth for the coordinated release. The npm packages all publish at `version` (sync mode — see RELEASING.md). The model identity (which trained artifact + tokenizer the neural-weights-* packages bundle) lives under `weights`, decoupled from the artifact's historical filename. Paths are relative to the data root ($MAILWOMAN_DATA_ROOT, resolved by `mailwomanDataRoot()` — override individual files with MAILWOMAN_PUBLISH_MODEL / MAILWOMAN_PUBLISH_TOKENIZER). Bump `version` here in lockstep with the release; copy-weights.ts, the ship script, and the model card all read this instead of hardcoding the numbers.",
 	"version": "9.1.0",
-	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "es-es", "it-it", "en-nz"],
+	"locales": ["en-us", "fr-fr", "en-gb", "de-de", "en-in", "es-es", "it-it", "en-nz", "en-au"],
 	"weights": {
 		"model": "models/quantized/model-v440-suffix-boundary-v2-step-060000-int8.onnx",
 		"tokenizer": "models/tokenizer/v0.9.0-multisplice/tokenizer.model",
