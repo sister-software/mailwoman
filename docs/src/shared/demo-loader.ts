@@ -92,7 +92,7 @@ export async function loadDemoAssets(
 		steps.push("Loading FST gazetteer")
 	}
 
-	if (release.hasWOFDb) {
+	if (release.hasWOFDB) {
 		steps.push("Loading WOF database")
 	}
 
@@ -187,7 +187,7 @@ export async function loadDemoAssets(
 
 	let lookup: MailwomanLookupLike | null = null
 
-	if (release.hasWOFDb) {
+	if (release.hasWOFDB) {
 		try {
 			const { loadHTTPVFSDatabase, WOFCandidateTableLookup } = await import("./httpvfs-resolver")
 			const worker = await loadHTTPVFSDatabase(adminGazetteerURL(), sqljsBaseURL)

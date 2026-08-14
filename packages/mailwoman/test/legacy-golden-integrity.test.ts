@@ -1,0 +1,102 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Phase-0 legacy excision: integrity guard for the committed golden artifacts (spec §Evidence
+ *   capture). These files are the non-regression references for the v7 production swaps; this
+ *   test fails if one goes missing, truncates, or stops parsing. Deleted in plan 4 along with the
+ *   legacy suite once the swaps have landed and their gates carry the load.
+ *   The golden files are readonly artifacts: never hand-edit them — regenerate via the dev-tools
+ *   capture scripts (this guard cannot catch value edits).
+ */
+
+import { workspacePath } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
+import { expect, test } from "vitest"
+
+function readRows(path: string): Promise<unknown[]> {
+	return Array.fromAsync(JSONSpliterator.fromAsync(path))
+}
+
+test("parity-inputs.jsonl: every row has a file, an input, and expected records", async () => {
+	const rows = (await readRows(
+		workspacePath("mailwoman", "test-fixtures", "legacy-golden", "parity-inputs.jsonl")
+	)) as Array<{
+		file?: string
+		input?: string
+		expected?: unknown[]
+	}>
+
+	expect(rows.length).toBeGreaterThanOrEqual(370)
+
+	for (const row of rows) {
+		expect(typeof row.file).toBe("string")
+		expect(typeof row.input).toBe("string")
+		expect(Array.isArray(row.expected)).toBe(true)
+	}
+})
+
+test("parity-raw.jsonl: aligned 1:1 with parity-inputs", async () => {
+	const inputs = await readRows(workspacePath("mailwoman", "test-fixtures", "legacy-golden", "parity-inputs.jsonl"))
+
+	const raw = (await readRows(
+		workspacePath("mailwoman", "test-fixtures", "legacy-golden", "parity-raw.jsonl")
+	)) as Array<{
+		solutions?: unknown[]
+	}>
+
+	expect(raw).toHaveLength(inputs.length)
+
+	for (const row of raw) {
+		expect(Array.isArray(row.solutions)).toBe(true)
+	}
+})
+
+test("v1-parse-golden.jsonl: outcomes carry solutions arrays", async () => {
+	const rows = (await readRows(
+		workspacePath("mailwoman", "test-fixtures", "legacy-golden", "v1-parse-golden.jsonl")
+	)) as Array<{
+		input?: string
+		outcome?: { solutions?: unknown[] }
+	}>
+
+	expect(rows.length).toBeGreaterThanOrEqual(350)
+
+	for (const row of rows) {
+		expect(typeof row.input).toBe("string")
+		expect(Array.isArray(row.outcome?.solutions)).toBe(true)
+	}
+})
+
+test("libpostal parse-golden.jsonl: wire rows are [{label, value}] under status 200", async () => {
+	const rows = (await readRows(workspacePath("libpostal", "test-fixtures", "parse-golden.jsonl"))) as Array<{
+		status?: number
+		body?: Array<{ label?: string; value?: string }>
+	}>
+
+	expect(rows.length).toBeGreaterThanOrEqual(350)
+
+	for (const row of rows) {
+		expect(row.status).toBe(200)
+
+		for (const component of row.body ?? []) {
+			expect(typeof component.label).toBe("string")
+			expect(typeof component.value).toBe("string")
+		}
+	}
+})
+
+test("nominatim search-golden.jsonl: full responses captured", async () => {
+	const rows = (await readRows(workspacePath("nominatim", "test-fixtures", "search-golden.jsonl"))) as Array<{
+		query?: string
+		status?: number
+	}>
+
+	expect(rows.length).toBeGreaterThanOrEqual(100)
+
+	for (const row of rows) {
+		expect(typeof row.query).toBe("string")
+		expect(typeof row.status).toBe("number")
+	}
+})

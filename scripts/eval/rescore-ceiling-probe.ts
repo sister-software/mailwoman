@@ -35,7 +35,7 @@ const { values: rawValues } = parseArgs({
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { model?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-const CARD = "neural-weights-en-us/model-card.json"
+const CARD = "packages/neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const WOF = dataRootPath("wof", "admin-global-priority.db")
 const MODEL = values["model"] || "out/v191/model.onnx"

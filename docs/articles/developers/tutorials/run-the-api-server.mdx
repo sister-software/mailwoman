@@ -73,30 +73,30 @@ curl -s http://127.0.0.1:7788/health | jq
 
 ```json
 {
-  "status": "ok",
-  "uptime_s": 23,
-  "model": {
-    "name": "neural-weights-en-us",
-    "version": "7.0.0",
-    "locale": "en-us",
-    "labels": 33,
-    "format": {
-      "model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
-      "tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
-      "max_sequence_length": 128,
-      "opset": 17,
-      "fp32_size_mb": 146.6,
-      "int8_size_mb": 37.6,
-      "pair_index_us_bin": "PIX1 binary, 1,323,912 bytes, 49,033 pairs, δ=10, β=5"
-    }
-  },
-  "data": {
-    "data_root": "/tmp/mw-trial/mailwoman-data",
-    "versions": null,
-    "wof_dbs": [],
-    "situs_states": 1,
-    "interpolation_states": 1
-  }
+	"status": "ok",
+	"uptime_s": 23,
+	"model": {
+		"name": "neural-weights-en-us",
+		"version": "7.0.0",
+		"locale": "en-us",
+		"labels": 33,
+		"format": {
+			"model": "ONNX int8 dynamic (quantized from fp32, opset 17)",
+			"tokenizer": "SentencePiece unigram, byte_fallback=true, vocab_size=73143 (v0.9.0-multisplice; ships WITH the model, both runtimes load it from this bundle)",
+			"max_sequence_length": 128,
+			"opset": 17,
+			"fp32_size_mb": 146.6,
+			"int8_size_mb": 37.6,
+			"pair_index_us_bin": "PIX1 binary, 1,323,912 bytes, 49,033 pairs, δ=10, β=5"
+		}
+	},
+	"data": {
+		"data_root": "/tmp/mw-trial/mailwoman-data",
+		"versions": null,
+		"wof_dbs": [],
+		"situs_states": 1,
+		"interpolation_states": 1
+	}
 }
 ```
 
@@ -122,33 +122,33 @@ curl -s "http://127.0.0.1:7788/v1/parse?address=1%20madison%20ave%20madison%20wi
 
 ```json
 {
-  "input": "1 madison ave madison wi 53703",
-  "components": [
-    {
-      "tag": "house_number",
-      "value": "1"
-    },
-    {
-      "tag": "street",
-      "value": "Madison"
-    },
-    {
-      "tag": "street_suffix",
-      "value": "Ave"
-    },
-    {
-      "tag": "locality",
-      "value": "Madison"
-    },
-    {
-      "tag": "region",
-      "value": "WI"
-    },
-    {
-      "tag": "postcode",
-      "value": "53703"
-    }
-  ]
+	"input": "1 madison ave madison wi 53703",
+	"components": [
+		{
+			"tag": "house_number",
+			"value": "1"
+		},
+		{
+			"tag": "street",
+			"value": "Madison"
+		},
+		{
+			"tag": "street_suffix",
+			"value": "Ave"
+		},
+		{
+			"tag": "locality",
+			"value": "Madison"
+		},
+		{
+			"tag": "region",
+			"value": "WI"
+		},
+		{
+			"tag": "postcode",
+			"value": "53703"
+		}
+	]
 }
 ```
 
@@ -167,30 +167,30 @@ curl -s -X POST http://127.0.0.1:7788/v1/geocode \
 
 ```json
 {
-  "lat": 41.837235,
-  "lon": -87.685969,
-  "resolution_tier": "admin",
-  "uncertainty_m": null,
-  "locality": "Chicago",
-  "region": "IL",
-  "hierarchy": [
-    {
-      "tag": "locality",
-      "value": "Chicago",
-      "name": "Chicago",
-      "lat": 41.837235,
-      "lon": -87.685969,
-      "placeID": "wof:85940195"
-    },
-    {
-      "tag": "region",
-      "value": "IL",
-      "name": "Illinois",
-      "lat": 40.124199,
-      "lon": -89.148632,
-      "placeID": "wof:85688697"
-    }
-  ]
+	"lat": 41.837235,
+	"lon": -87.685969,
+	"resolution_tier": "admin",
+	"uncertainty_m": null,
+	"locality": "Chicago",
+	"region": "IL",
+	"hierarchy": [
+		{
+			"tag": "locality",
+			"value": "Chicago",
+			"name": "Chicago",
+			"lat": 41.837235,
+			"lon": -87.685969,
+			"placeID": "wof:85940195"
+		},
+		{
+			"tag": "region",
+			"value": "IL",
+			"name": "Illinois",
+			"lat": 40.124199,
+			"lon": -89.148632,
+			"placeID": "wof:85688697"
+		}
+	]
 }
 ```
 
@@ -249,22 +249,22 @@ curl -s http://127.0.0.1:7788/metrics | jq
 
 ```json
 {
-  "uptime_s": 60,
-  "timings": {
-    "total": 6,
-    "errors": 0,
-    "tiers": {
-      "admin": 5,
-      "batch": 1
-    },
-    "latency_ms": {
-      "p50": 11.32,
-      "p90": 37.66,
-      "p99": 37.66,
-      "max": 37.66
-    },
-    "latency_samples": 6
-  }
+	"uptime_s": 60,
+	"timings": {
+		"total": 6,
+		"errors": 0,
+		"tiers": {
+			"admin": 5,
+			"batch": 1
+		},
+		"latency_ms": {
+			"p50": 11.32,
+			"p90": 37.66,
+			"p99": 37.66,
+			"max": 37.66
+		},
+		"latency_samples": 6
+	}
 }
 ```
 
@@ -287,18 +287,9 @@ curl -s http://127.0.0.1:7788/openapi.json | jq '{openapi, version: .info.versio
 
 ```json
 {
-  "openapi": "3.1.0",
-  "version": "8.7.0",
-  "paths": [
-    "/health",
-    "/metrics",
-    "/v1/batch",
-    "/v1/format",
-    "/v1/geocode",
-    "/v1/parse",
-    "/v1/reload",
-    "/v1/resolve"
-  ]
+	"openapi": "3.1.0",
+	"version": "8.7.0",
+	"paths": ["/health", "/metrics", "/v1/batch", "/v1/format", "/v1/geocode", "/v1/parse", "/v1/reload", "/v1/resolve"]
 }
 ```
 

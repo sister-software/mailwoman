@@ -52,12 +52,12 @@ export function approxCircleGeometry(
 		: 3
 
 	// anchor-centroid postcodes carry no extent; ~ZIP-sized default
-	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
+	const radiusKM = Math.min(50, Math.max(0.5, halfDiagKm))
 	const ring: number[][] = []
 
 	for (let i = 0; i <= CIRCLE_SEGMENTS; i++) {
 		const theta = (2 * Math.PI * i) / 64
-		ring.push([lon + (radiusKm * Math.cos(theta)) / kmPerDegLon, lat + (radiusKm * Math.sin(theta)) / kmPerDegLat])
+		ring.push([lon + (radiusKM * Math.cos(theta)) / kmPerDegLon, lat + (radiusKM * Math.sin(theta)) / kmPerDegLat])
 	}
 
 	return { type: "Polygon", coordinates: [ring] }

@@ -9,8 +9,7 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { scoreAffix } from "../../mailwoman/eval-harness/score-affix.ts"
+import { scoreAffix } from "mailwoman/eval-harness/score-affix"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.

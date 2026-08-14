@@ -110,7 +110,7 @@ async function main(): Promise<void> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
 	const modelCard = parseJSONStrict<{ labels: string[] }>(
-		readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8")
+		readFileSync(values["model-card"] || "packages/neural-weights-en-us/model-card.json", "utf8")
 	)
 
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")

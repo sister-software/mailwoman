@@ -45,22 +45,22 @@ mailwoman parse --debug "$ADDRESS" | jq '{input, path, kind: {kind: .kind.kind, 
 
 ```json
 {
-  "input": "1275 Pennsylvania Ave NW, Washington, DC 20004",
-  "path": "full",
-  "kind": {
-    "kind": "structured_address",
-    "confidence": 0.9
-  },
-  "timing": {
-    "normalize": 0.405547999999726,
-    "place-country": 1.315497999999934,
-    "query-shape": 0.7962270000002718,
-    "locale-gate": 0.16185200000018085,
-    "kind-classifier": 0.5810759999999391,
-    "phrase-grouper": 1.3690379999998186,
-    "token-classify": 230.3101270000002,
-    "grouper-audit": 0.27730899999960457
-  }
+	"input": "1275 Pennsylvania Ave NW, Washington, DC 20004",
+	"path": "full",
+	"kind": {
+		"kind": "structured_address",
+		"confidence": 0.9
+	},
+	"timing": {
+		"normalize": 0.405547999999726,
+		"place-country": 1.315497999999934,
+		"query-shape": 0.7962270000002718,
+		"locale-gate": 0.16185200000018085,
+		"kind-classifier": 0.5810759999999391,
+		"phrase-grouper": 1.3690379999998186,
+		"token-classify": 230.3101270000002,
+		"grouper-audit": 0.27730899999960457
+	}
 }
 ```
 
@@ -81,36 +81,36 @@ mailwoman doctor --json
 
 ```json
 {
-  "checks": [
-    {
-      "id": "weights",
-      "label": "Model weights (en-us)",
-      "core": true,
-      "status": "ok",
-      "detail": "package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB"
-    },
-    {
-      "id": "node-version",
-      "label": "Node runtime",
-      "core": true,
-      "status": "ok",
-      "detail": "node v26.2.0 (engines: >=24.18.0)"
-    },
-    {
-      "id": "onnxruntime",
-      "label": "ONNX runtime",
-      "core": true,
-      "status": "ok",
-      "detail": "onnxruntime-node loadable"
-    },
-    {
-      "id": "data-root",
-      "label": "Data root",
-      "core": false,
-      "status": "ok",
-      "detail": "/tmp/mw-fresh-demo ($MAILWOMAN_DATA_ROOT) — exists, writable"
-    }
-  ]
+	"checks": [
+		{
+			"id": "weights",
+			"label": "Model weights (en-us)",
+			"core": true,
+			"status": "ok",
+			"detail": "package:@mailwoman/neural-weights-en-us · model.onnx 39.4 MB, tokenizer.model 1.6 MB"
+		},
+		{
+			"id": "node-version",
+			"label": "Node runtime",
+			"core": true,
+			"status": "ok",
+			"detail": "node v26.2.0 (engines: >=24.18.0)"
+		},
+		{
+			"id": "onnxruntime",
+			"label": "ONNX runtime",
+			"core": true,
+			"status": "ok",
+			"detail": "onnxruntime-node loadable"
+		},
+		{
+			"id": "data-root",
+			"label": "Data root",
+			"core": false,
+			"status": "ok",
+			"detail": "/tmp/mw-fresh-demo ($MAILWOMAN_DATA_ROOT) — exists, writable"
+		}
+	]
 }
 ```
 

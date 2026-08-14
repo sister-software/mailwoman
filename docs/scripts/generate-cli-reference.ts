@@ -483,7 +483,7 @@ export function renderCLIReference(surface: CLISurface): string {
 	sections.push(
 		"## Exit codes",
 		"",
-		"Every command shares one exit-code contract, owned by `useCommandTask` in `mailwoman/cli-kit`.",
+		"Every command shares one exit-code contract, owned by `useCommandTask` in `packages/mailwoman/cli-kit`.",
 		"",
 		renderTable(
 			["Code", "Meaning", "Next step"],

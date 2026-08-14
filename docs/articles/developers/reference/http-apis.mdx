@@ -97,61 +97,61 @@ The full response, piped through `python3 -m json.tool`:
 
 ```json
 {
-    "input": "221B Baker St, London NW1 6XE",
-    "components": [
-        { "tag": "house_number", "value": "221B" },
-        { "tag": "street", "value": "Baker" },
-        { "tag": "street_suffix", "value": "St" },
-        { "tag": "locality", "value": "London" },
-        { "tag": "postcode", "value": "NW1 6XE" }
-    ],
-    "tree": {
-        "raw": "221B Baker St, London NW1 6XE",
-        "roots": [
-            {
-                "tag": "locality",
-                "start": 15,
-                "end": 21,
-                "value": "London",
-                "confidence": 0.9503604529684699,
-                "children": [
-                    {
-                        "tag": "street",
-                        "start": 5,
-                        "end": 10,
-                        "value": "Baker",
-                        "confidence": 0.9047541558664625,
-                        "children": [
-                            {
-                                "tag": "house_number",
-                                "start": 0,
-                                "end": 4,
-                                "value": "221B",
-                                "confidence": 0.9040313732694398,
-                                "children": []
-                            },
-                            {
-                                "tag": "street_suffix",
-                                "start": 11,
-                                "end": 13,
-                                "value": "St",
-                                "confidence": 0.8870032167591001,
-                                "children": []
-                            }
-                        ]
-                    },
-                    {
-                        "tag": "postcode",
-                        "start": 22,
-                        "end": 29,
-                        "value": "NW1 6XE",
-                        "confidence": 0.6799167287312248,
-                        "children": []
-                    }
-                ]
-            }
-        ]
-    }
+	"input": "221B Baker St, London NW1 6XE",
+	"components": [
+		{ "tag": "house_number", "value": "221B" },
+		{ "tag": "street", "value": "Baker" },
+		{ "tag": "street_suffix", "value": "St" },
+		{ "tag": "locality", "value": "London" },
+		{ "tag": "postcode", "value": "NW1 6XE" }
+	],
+	"tree": {
+		"raw": "221B Baker St, London NW1 6XE",
+		"roots": [
+			{
+				"tag": "locality",
+				"start": 15,
+				"end": 21,
+				"value": "London",
+				"confidence": 0.9503604529684699,
+				"children": [
+					{
+						"tag": "street",
+						"start": 5,
+						"end": 10,
+						"value": "Baker",
+						"confidence": 0.9047541558664625,
+						"children": [
+							{
+								"tag": "house_number",
+								"start": 0,
+								"end": 4,
+								"value": "221B",
+								"confidence": 0.9040313732694398,
+								"children": []
+							},
+							{
+								"tag": "street_suffix",
+								"start": 11,
+								"end": 13,
+								"value": "St",
+								"confidence": 0.8870032167591001,
+								"children": []
+							}
+						]
+					},
+					{
+						"tag": "postcode",
+						"start": 22,
+						"end": 29,
+						"value": "NW1 6XE",
+						"confidence": 0.6799167287312248,
+						"children": []
+					}
+				]
+			}
+		]
+	}
 }
 ```
 
@@ -167,7 +167,7 @@ curl -sS localhost:3000/v1/parse -H 'content-type: application/json' -d '{}'
 ```
 
 ```json
-{"error":"address is required"}
+{ "error": "address is required" }
 ```
 
 ### Errors

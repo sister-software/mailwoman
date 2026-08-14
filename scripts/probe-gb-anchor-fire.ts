@@ -24,16 +24,15 @@
 import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
-import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
-import { JSONSpliterator } from "spliterator"
-
 // `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath, and both
 // are load-bearing here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
 // reads, and `normalizeInputCase` is what the text has been through by the time the anchor sees it
 // (#690, default-ON in `parse`). Re-implementing either is the one thing that must not drift, so this
 // repo-local diagnostic imports the modules directly.
-import { normalizeInputCase } from "../neural/case-normalize.ts"
-import { collectMatches } from "../neural/postcode-repair.ts"
+import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
+import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
+import { collectMatches } from "@mailwoman/neural/postcode-repair"
+import { JSONSpliterator } from "spliterator"
 
 /**
  * A GB unit key in the space-stripped form, mirroring `neural/anchor-inference.ts`'s outward fallback guard.
@@ -44,7 +43,7 @@ const GB_INWARD_LENGTH = 3
 const { values } = parseArgs({
 	options: {
 		bin: { type: "string" },
-		fixtures: { type: "string", default: "mailwoman/eval-harness/fixtures/gb-golden.jsonl" },
+		fixtures: { type: "string", default: "packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl" },
 	},
 })
 

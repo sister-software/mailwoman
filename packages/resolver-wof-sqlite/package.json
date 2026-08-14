@@ -1,0 +1,194 @@
+{
+	"name": "@mailwoman/resolver-wof-sqlite",
+	"version": "9.1.0",
+	"description": "Who's On First SQLite resolver — FTS5-backed PlaceLookup that resolves text queries to WOF place IDs + coordinates. Optional dependency for callers who want geocoding.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/resolver-wof-sqlite"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./fts": {
+			"node": "./fts.ts",
+			"default": "./out/fts.js",
+			"types": "./out/fts.d.ts"
+		},
+		"./primary-preference": {
+			"node": "./primary-preference.ts",
+			"default": "./out/primary-preference.js",
+			"types": "./out/primary-preference.d.ts"
+		},
+		"./build-slim": {
+			"node": "./build-slim.ts",
+			"default": "./out/build-slim.js",
+			"types": "./out/build-slim.d.ts"
+		},
+		"./fst-builder": {
+			"node": "./fst-builder.ts",
+			"default": "./out/fst-builder.js",
+			"types": "./out/fst-builder.d.ts"
+		},
+		"./street-morphology-fst-builder": {
+			"node": "./street-morphology-fst-builder.ts",
+			"default": "./out/street-morphology-fst-builder.js",
+			"types": "./out/street-morphology-fst-builder.d.ts"
+		},
+		"./street-morphology-fst-loader": {
+			"node": "./street-morphology-fst-loader.ts",
+			"default": "./out/street-morphology-fst-loader.js",
+			"types": "./out/street-morphology-fst-loader.d.ts"
+		},
+		"./fst-matcher": {
+			"node": "./fst-matcher.ts",
+			"default": "./out/fst-matcher.js",
+			"types": "./out/fst-matcher.d.ts"
+		},
+		"./fst-freshness": {
+			"node": "./fst-freshness.ts",
+			"default": "./out/fst-freshness.js",
+			"types": "./out/fst-freshness.d.ts"
+		},
+		"./fst-serialize": {
+			"node": "./fst-serialize.ts",
+			"default": "./out/fst-serialize.js",
+			"types": "./out/fst-serialize.d.ts"
+		},
+		"./fst-autocomplete": {
+			"node": "./fst-autocomplete.ts",
+			"default": "./out/fst-autocomplete.js",
+			"types": "./out/fst-autocomplete.d.ts"
+		},
+		"./fst-types": {
+			"node": "./fst-types.ts",
+			"default": "./out/fst-types.js",
+			"types": "./out/fst-types.d.ts"
+		},
+		"./fst-deserialize-web": {
+			"node": "./fst-deserialize-web.ts",
+			"default": "./out/fst-deserialize-web.js",
+			"types": "./out/fst-deserialize-web.d.ts"
+		},
+		"./place-importance-schema": {
+			"node": "./place-importance-schema.ts",
+			"default": "./out/place-importance-schema.js",
+			"types": "./out/place-importance-schema.d.ts"
+		},
+		"./unified-schema": {
+			"node": "./unified-schema.ts",
+			"default": "./out/unified-schema.js",
+			"types": "./out/unified-schema.d.ts"
+		},
+		"./ancestry-backfill": {
+			"node": "./ancestry-backfill.ts",
+			"default": "./out/ancestry-backfill.js",
+			"types": "./out/ancestry-backfill.d.ts"
+		},
+		"./coincident-roles": {
+			"node": "./coincident-roles.ts",
+			"default": "./out/coincident-roles.js",
+			"types": "./out/coincident-roles.d.ts"
+		},
+		"./geonames-aliases": {
+			"node": "./geonames-aliases.ts",
+			"default": "./out/geonames-aliases.js",
+			"types": "./out/geonames-aliases.d.ts"
+		},
+		"./geonames-postal": {
+			"node": "./geonames-postal.ts",
+			"default": "./out/geonames-postal.js",
+			"types": "./out/geonames-postal.d.ts"
+		},
+		"./geo": {
+			"node": "./geo.ts",
+			"default": "./out/geo.js",
+			"types": "./out/geo.d.ts"
+		},
+		"./street-normalize": {
+			"node": "./street-normalize.ts",
+			"default": "./out/street-normalize.js",
+			"types": "./out/street-normalize.d.ts"
+		},
+		"./build-candidate": {
+			"node": "./build-candidate.ts",
+			"default": "./out/build-candidate.js",
+			"types": "./out/build-candidate.d.ts"
+		},
+		"./candidate-schema": {
+			"node": "./candidate-schema.ts",
+			"default": "./out/candidate-schema.js",
+			"types": "./out/candidate-schema.d.ts"
+		},
+		"./postal-city-alias-schema": {
+			"node": "./postal-city-alias-schema.ts",
+			"default": "./out/postal-city-alias-schema.js",
+			"types": "./out/postal-city-alias-schema.d.ts"
+		},
+		"./address-point-schema": {
+			"node": "./address-point-schema.ts",
+			"default": "./out/address-point-schema.js",
+			"types": "./out/address-point-schema.d.ts"
+		},
+		"./street-centroid-schema": {
+			"node": "./street-centroid-schema.ts",
+			"default": "./out/street-centroid-schema.js",
+			"types": "./out/street-centroid-schema.d.ts"
+		},
+		"./street-segment-schema": {
+			"node": "./street-segment-schema.ts",
+			"default": "./out/street-segment-schema.js",
+			"types": "./out/street-segment-schema.d.ts"
+		},
+		"./poi-schema": {
+			"node": "./poi-schema.ts",
+			"default": "./out/poi-schema.js",
+			"types": "./out/poi-schema.d.ts"
+		},
+		"./poi-lookup": {
+			"node": "./poi-lookup.ts",
+			"default": "./out/poi-lookup.js",
+			"types": "./out/poi-lookup.d.ts"
+		},
+		"./weights-overlay-linker": {
+			"node": "./weights-overlay-linker.ts",
+			"default": "./out/weights-overlay-linker.js",
+			"types": "./out/weights-overlay-linker.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/match": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
+		"h3-js": "^4.5.0",
+		"kysely": "^0.29.4",
+		"path-ts": "^2.1.0",
+		"spliterator": "^6.1.0"
+	}
+}

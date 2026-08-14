@@ -38,7 +38,7 @@ import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 
 const { values } = parseArgs({
 	options: {
@@ -59,7 +59,7 @@ if (!values.locale) {
 const localeTag = values.locale
 const slug = localeTag.toLowerCase()
 const country = slug.split("-")[1] ?? ""
-const pkgDir = String(repoRootPath(`neural-weights-${slug}`))
+const pkgDir = String(workspacePath(`neural-weights-${slug}`))
 const packageName = `@mailwoman/neural-weights-${slug}`
 const artifact = values.artifact ?? `pair-index-${country}.bin`
 
@@ -122,7 +122,7 @@ writeFileSync(
 
 writeFileSync(
 	resolve(pkgDir, ".npmignore"),
-	readFileSync(String(repoRootPath("neural-weights-en-nz", ".npmignore")), "utf8")
+	readFileSync(String(repoRootPath("packages/neural-weights-en-nz", ".npmignore")), "utf8")
 )
 
 // The dev linker, emitted rather than copied. This step used to be a printed instruction reading
@@ -138,7 +138,7 @@ writeFileSync(
  *
  *   Dev-weights linker for \`${packageName}\`.
  *
- *   The build itself lives in \`scripts/weights-overlay-linker.ts\` — this overlay declares
+ *   The build itself lives in \`@mailwoman/resolver-wof-sqlite/weights-overlay-linker\` — this overlay declares
  *   \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
@@ -150,10 +150,10 @@ writeFileSync(
  *   for whichever locale you read first.
  */
 
-import { buildPairIndexOverlay } from "../../scripts/weights-overlay-linker.ts"
+import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 buildPairIndexOverlay({
-	packageDir: "neural-weights-${slug}",
+	packageDir: "packages/neural-weights-",
 	country: "${country}",
 	// TODO(${slug}): calibrate. These are the magnitudes every existing overlay was measured at, not
 	// a measurement of this one.
@@ -209,14 +209,19 @@ const registered: string[] = []
 const rootPath = String(repoRootPath("package.json"))
 const rootPkg = parseJSONStrict<{ workspaces: string[] }>(readFileSync(rootPath, "utf8"))
 
-if (!rootPkg.workspaces.includes(`neural-weights-${slug}`)) {
-	rootPkg.workspaces.splice(rootPkg.workspaces.indexOf("neural-weights-en-nz") + 1, 0, `neural-weights-${slug}`)
+if (!rootPkg.workspaces.includes(`packages/neural-weights-${slug}`)) {
+	rootPkg.workspaces.splice(
+		rootPkg.workspaces.indexOf("packages/neural-weights-en-nz") + 1,
+		0,
+		`packages/neural-weights-${slug}`
+	)
+
 	writeFileSync(rootPath, `${JSON.stringify(rootPkg, null, "\t")}\n`)
 	registered.push("root package.json workspaces")
 }
 
 // 2. Release list.
-if (registerInJSONArray(".release-it.json", "neural-weights-en-nz", `neural-weights-${slug}`)) {
+if (registerInJSONArray(".release-it.json", "packages/neural-weights-en-nz", `packages/neural-weights-${slug}`)) {
 	registered.push(".release-it.json")
 }
 
@@ -237,8 +242,8 @@ if (!smokeText.includes(packageName)) {
 	writeFileSync(
 		smokePath,
 		smokeText.replace(
-			`\t"@mailwoman/neural-weights-en-nz": "neural-weights-en-nz",`,
-			`\t"@mailwoman/neural-weights-en-nz": "neural-weights-en-nz",\n\t"${packageName}": "neural-weights-${slug}",`
+			`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",`,
+			`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",\n\t"${packageName}": "packages/neural-weights-${slug}",`
 		)
 	)
 
@@ -251,7 +256,7 @@ console.log(`  artifact: ${artifact}`)
 console.log(`  registered: ${registered.join(", ") || "(all already present)"}`)
 console.log("")
 console.log("STILL MANUAL — these name artifacts explicitly, so they stay a human decision:")
-console.log(`  1. neural/test/pair-index-card-parity.test.ts — add a PACKAGES row once the card has its block`)
+console.log(`  1. packages/neural/test/pair-index-card-parity.test.ts — add a PACKAGES row once the card has its block`)
 console.log(`  2. .github/workflows/publish.yml — add ${artifact} to the preflight list, the $CURL fetch,`)
 console.log(`     the non-empty guard and the --pair-indexes remediation string`)
 console.log(`  3. OPERATOR: first-publish ${packageName} (OIDC cannot CREATE a package)`)

@@ -19,15 +19,14 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { frParseRecall } from "../../mailwoman/eval-harness/fr-parse-recall.ts"
+import { frParseRecall } from "mailwoman/eval-harness/fr-parse-recall"
 
 async function main(): Promise<void> {
 	const { values: args } = parseArgs({
 		options: {
 			model: { type: "string" },
 			tokenizer: { type: "string" },
-			"model-card": { type: "string", default: "neural-weights-en-us/model-card.json" },
+			"model-card": { type: "string", default: "packages/neural-weights-en-us/model-card.json" },
 			label: { type: "string", default: "" },
 			fixture: { type: "string", default: "scripts/eval/fixtures/fr-bare-street-40.jsonl" },
 			"from-db": { type: "boolean", default: false },
@@ -42,7 +41,7 @@ async function main(): Promise<void> {
 		modelCard: args["model-card"],
 		label: args.label,
 		fixture: args.fixture,
-		fromDb: args["from-db"],
+		fromDB: args["from-db"],
 		json: args.json,
 		floor: args.floor,
 	})

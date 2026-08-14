@@ -193,12 +193,12 @@ async function main(): Promise<void> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
 	const modelCard = parseJSONStrict<{ labels: string[] }>(
-		readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8")
+		readFileSync(values["model-card"] || "packages/neural-weights-en-us/model-card.json", "utf8")
 	)
 
 	const [tokenizer, runner] = await Promise.all([
-		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "neural-weights-en-us/tokenizer.model"),
-		ONNXRunner.create(values["model"] || "neural-weights-en-us/model.onnx"),
+		MailwomanTokenizer.loadFromFile(values["tokenizer"] || "packages/neural-weights-en-us/tokenizer.model"),
+		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
 	])
 
 	// Ship-config channels (v4.4.0): the calibrator must describe the model AS DEPLOYED — anchor +

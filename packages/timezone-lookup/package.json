@@ -1,0 +1,47 @@
+{
+	"name": "@mailwoman/timezone-lookup",
+	"version": "9.1.0",
+	"description": "Coordinate → IANA timezone, server-side. Point-in-polygon over timezone-boundary-builder polygons in a node:sqlite DB; UTC offset via Intl (no tz-db dependency). An @mailwoman/annotations Annotator.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/timezone-lookup"
+	},
+	"bin": "./out/cli.js",
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./build": {
+			"node": "./build.ts",
+			"default": "./out/build.js",
+			"types": "./out/build.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/annotations": "workspace:*"
+	}
+}

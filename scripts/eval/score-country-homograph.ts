@@ -13,8 +13,7 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { scoreCountryHomograph } from "../../mailwoman/eval-harness/score-country-homograph.ts"
+import { scoreCountryHomograph } from "mailwoman/eval-harness/score-country-homograph"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.

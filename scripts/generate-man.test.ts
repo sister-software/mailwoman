@@ -35,7 +35,7 @@ describe("the man page", () => {
 
 	it("is wired into package.json (npm links `man` on install) and shipped in `files`", () => {
 		const pkg = parseJSONStrict<{ man?: string; files: string[] }>(
-			readFileSync(new URL("../mailwoman/package.json", import.meta.url), "utf8")
+			readFileSync(new URL("../packages/mailwoman/package.json", import.meta.url), "utf8")
 		)
 
 		expect(pkg.man).toBe("./man/mailwoman.1")

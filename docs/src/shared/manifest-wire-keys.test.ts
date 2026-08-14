@@ -7,7 +7,7 @@
  *   sweep capitalized the manifest READS while the published R2 json kept the legacy keys — every
  *   release read `undefined`, silently disabling the demo's WOF cascade and FST for three days.
  *   The resolution keeps the house casing and migrates the WIRE: the publisher writes
- *   `hasFST`/`hasWOFDb`, `normalizeReleasesManifest` is the single boundary that tolerates BOTH
+ *   `hasFST`/`hasWOFDB`, `normalizeReleasesManifest` is the single boundary that tolerates BOTH
  *   key generations (old HF mirrors still carry `hasFst`/`hasWofDb`), and no consumer reads raw
  *   wire keys outside it.
  */
@@ -35,10 +35,10 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 		const m = normalizeReleasesManifest({
 			locale: "en-us",
 			defaultVersion: "vX",
-			releases: [entry({ hasFST: true, hasWOFDb: true })],
+			releases: [entry({ hasFST: true, hasWOFDB: true })],
 		})
 
-		expect(m.releases[0]).toMatchObject({ hasFST: true, hasWOFDb: true })
+		expect(m.releases[0]).toMatchObject({ hasFST: true, hasWOFDB: true })
 	})
 
 	test("legacy wire keys (pre-2026-07-04 manifests, old HF mirrors) normalize", () => {
@@ -48,24 +48,24 @@ describe("normalizeReleasesManifest — the single wire boundary", () => {
 			releases: [entry({ hasFst: true, hasWofDb: true })],
 		})
 
-		expect(m.releases[0]).toMatchObject({ hasFST: true, hasWOFDb: true })
+		expect(m.releases[0]).toMatchObject({ hasFST: true, hasWOFDB: true })
 	})
 
 	test("house keys win when both generations appear", () => {
 		const m = normalizeReleasesManifest({
 			locale: "en-us",
 			defaultVersion: "vX",
-			releases: [entry({ hasFST: false, hasFst: true, hasWOFDb: false, hasWofDb: true })],
+			releases: [entry({ hasFST: false, hasFst: true, hasWOFDB: false, hasWofDb: true })],
 		})
 
-		expect(m.releases[0]).toMatchObject({ hasFST: false, hasWOFDb: false })
+		expect(m.releases[0]).toMatchObject({ hasFST: false, hasWOFDB: false })
 	})
 
 	test("absent keys default false, never undefined (the silent-disable failure mode)", () => {
 		const m = normalizeReleasesManifest({ locale: "en-us", defaultVersion: "vX", releases: [entry({})] })
 
 		expect(m.releases[0]!.hasFST).toBe(false)
-		expect(m.releases[0]!.hasWOFDb).toBe(false)
+		expect(m.releases[0]!.hasWOFDB).toBe(false)
 	})
 })
 
@@ -73,7 +73,7 @@ describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 	for (const rel of [
 		"../pages/demo/_runtime.ts",
 		"../contexts/DemoEmbed.tsx",
-		"../../../mailwoman/release-tools/publish-hf.ts",
+		"../../../packages/mailwoman/release-tools/publish-hf.ts",
 	]) {
 		test(`${rel} is house-cased only`, () => {
 			const src = readFileSync(new URL(rel, import.meta.url), "utf8")

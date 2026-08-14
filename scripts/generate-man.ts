@@ -29,12 +29,12 @@ const REPO_ROOT = resolve(import.meta.dirname, "..")
 /**
  * The committed artifact this script maintains — also read by the freshness test.
  */
-export const MAN_PAGE_PATH = resolve(REPO_ROOT, "mailwoman/man/mailwoman.1")
+export const MAN_PAGE_PATH = resolve(REPO_ROOT, "packages/mailwoman/man/mailwoman.1")
 
 /**
  * The compiled CLI the page derives from — the same binary consumers run.
  */
-export const CLI_PATH = resolve(REPO_ROOT, "mailwoman/out/cli.js")
+export const CLI_PATH = resolve(REPO_ROOT, "packages/mailwoman/out/cli.js")
 
 /**
  * The user-facing commands a man reader cares about. `dev`, `clients`, and the model-work groups (`corpus`, `eval`,

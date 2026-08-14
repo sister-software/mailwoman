@@ -30,7 +30,7 @@ flowchart LR
     A["Token: 'Paris'"] --> B{"Match in WOF?"}
     B -->|yes| C["WOF: 101751119<br>placetype: locality<br>name: Paris"]
     C --> D["...which implies its parents:<br>région Île-de-France<br>country France"]
-    D --> E["...which implies its neighbors are likely:<br>French postal codes (5 digits)<br>French street types (rue, avenue, boulevard)<br>NOT US state abbreviations"]
+    D --> E["...which implies its neighbors are likely:<br>French postcodes (5 digits)<br>French street types (rue, avenue, boulevard)<br>NOT US state abbreviations"]
 ```
 
 That last step — "which implies its neighbors are likely" — is the payoff. The neural model sees a single token and predicts a tag from local context. The FST gives it a _prior_ that says "if `Paris` is the city in France, then the next thing is much more likely to be `France` than `TX`." Confident model predictions stay confident. Uncertain ones get nudged toward the gazetteer-consistent reading.

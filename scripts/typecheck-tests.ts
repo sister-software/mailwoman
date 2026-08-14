@@ -18,10 +18,10 @@ import { execFile } from "node:child_process"
 import { existsSync } from "node:fs"
 import { readdir } from "node:fs/promises"
 import { cpus } from "node:os"
-import { join } from "node:path"
+import { join, relative } from "node:path"
 import { promisify } from "node:util"
 
-import { repoRootPath } from "@mailwoman/core/utils"
+import { repoRootPath, workspacePath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
 const run = promisify(execFile)
@@ -58,11 +58,20 @@ async function check(workspace: string, repoRoot: string): Promise<Result> {
 }
 
 const repoRoot = String(repoRootPath())
-const entries = await readdir(repoRoot, { withFileTypes: true })
+const workspaceDirectories = [repoRoot, workspacePath()]
 
-const workspaces = entries
-	.filter((entry) => entry.isDirectory() && existsSync(join(repoRoot, entry.name, "tsconfig.test.json")))
-	.map((entry) => entry.name)
+const workspaces = (
+	await Promise.all(
+		workspaceDirectories.map(async (directory) => {
+			const entries = await readdir(directory, { withFileTypes: true })
+
+			return entries
+				.filter((entry) => entry.isDirectory() && existsSync(join(directory, entry.name, "tsconfig.test.json")))
+				.map((entry) => relative(repoRoot, join(directory, entry.name)))
+		})
+	)
+)
+	.flat()
 	.toSorted()
 
 const results: Result[] = []
