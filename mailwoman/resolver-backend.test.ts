@@ -40,12 +40,12 @@ test("wofShardPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM
 	])
 })
 
-test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT, else the platform default; threads into wofShardPaths", () => {
+test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofShardPaths", () => {
 	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
 	expect(mailwomanDataRoot()).toBe("/custom/root")
 	expect(wofShardPaths()[0]).toBe("/custom/root/wof/admin-global-priority.db") // default arg uses the env
 
-	setEnv("MAILWOMAN_DATA_ROOT", undefined)
+	setEnv("MAILWOMAN_DATA_ROOT", defaultMailwomanPaths.data)
 	expect(mailwomanDataRoot()).toBe(defaultMailwomanPaths.data)
 })
 
@@ -81,4 +81,13 @@ test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'n
 	expect(resolveCandidateDBPath("none")).toBeUndefined()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
 	expect(resolveCandidateDBPath()).toBeUndefined()
+})
+
+test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN_DATA_ROOT", () => {
+	const root = resolve(import.meta.dirname, "test-fixtures", "candidate-root")
+
+	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
+	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
+
+	expect(resolveCandidateDBPath(undefined, root)).toBe(join(root, "wof", "candidate.db"))
 })

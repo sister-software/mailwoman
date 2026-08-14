@@ -23,20 +23,21 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
 	WOFPostalCityAliasLookup,
 	WOFSqlitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
+import { resolvePath } from "path-ts"
 
 /**
  * The candidate gazetteer's conventional home — where `mailwoman data pull candidate` writes it, and where every caller
  * looks when nothing points somewhere else.
  */
-export function conventionCandidateDBPath(): string {
-	return dataRootPath("wof", "candidate.db")
+export function conventionCandidateDBPath(dataRoot: string = mailwomanDataRoot()): string {
+	return resolvePath(dataRoot, "wof", "candidate.db")
 }
 
 /**
@@ -47,14 +48,14 @@ export function conventionCandidateDBPath(): string {
  * docs/engineering/reference/resolver-backends.mdx for the tier-1 measurement behind that default, the named residuals,
  * and the 2×2 any comparison between the two backends has to run.
  */
-export function resolveCandidateDBPath(explicit?: string): string | undefined {
+export function resolveCandidateDBPath(explicit?: string, dataRoot: string = mailwomanDataRoot()): string | undefined {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
 	if (pinned === "none") return undefined
 
 	if (pinned) return existsSync(pinned) ? pinned : undefined
 
-	const convention = conventionCandidateDBPath()
+	const convention = conventionCandidateDBPath(dataRoot)
 
 	return existsSync(convention) ? convention : undefined
 }
@@ -70,9 +71,6 @@ export function resolvePostalCityAliasDBPath(explicit?: string): string | undefi
 	return p && existsSync(p) ? p : undefined
 }
 
-// The data-root helpers now live centrally in `@mailwoman/core/utils/data-root` — the ONE place the
-// `/mnt/playpen` default appears. Re-exported here so the server routers + CLI commands keep
-// importing them from this module unchanged.
 export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
 
 /**
@@ -124,9 +122,9 @@ interface ResolverLookupModule {
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: { candidateDb?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
+	opts: { candidateDb?: string; dataRoot?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
 ): PlaceLookup {
-	const candidate = resolveCandidateDBPath(opts.candidateDb)
+	const candidate = resolveCandidateDBPath(opts.candidateDb, opts.dataRoot)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)

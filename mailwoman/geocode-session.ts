@@ -39,11 +39,11 @@ import {
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
-import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { CommandError } from "mailwoman/cli-kit"
+import { resolvePath } from "path-ts"
 
 import { resolverDefaultCountry } from "./country-scope.ts"
 import {
@@ -173,7 +173,7 @@ export interface GeocodeSession {
 
 //#region Path + flag helpers
 
-function resolveWOFPath(options: Pick<GeocodeSessionOptions, "resolveDb">): string[] {
+function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDb">): string[] {
 	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
 	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
 	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
@@ -185,13 +185,13 @@ function resolveWOFPath(options: Pick<GeocodeSessionOptions, "resolveDb">): stri
 					.split(",")
 					.map((p: string) => p.trim())
 					.filter(Boolean)
-			: wofShardPaths()
+			: wofShardPaths(options.dataRoot)
 	).filter((p: string) => existsSync(p))
 
 	if (!paths.length) {
 		throw new CommandError(
-			"geocode needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>. " +
-				"Build one with `mailwoman gazetteer build admin` + `mailwoman gazetteer build fts`."
+			`geocode found no resolver database under ${options.dataRoot}. Run \`mailwoman data pull candidate\`, ` +
+				"set $MAILWOMAN_DATA_ROOT, or pass --candidate-db / --resolve-db."
 		)
 	}
 
@@ -229,8 +229,10 @@ interface ForkEntityProbe {
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
-async function loadForkEntityDeps(options: Pick<GeocodeSessionOptions, "forkEntity">): Promise<ForkEntityProbe> {
-	const poiDBPath = String(dataRootPath("poi", "poi.db"))
+async function loadForkEntityDeps(
+	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
+): Promise<ForkEntityProbe> {
+	const poiDBPath = resolvePath(options.dataRoot, "poi", "poi.db")
 
 	if (options.forkEntity === false || !existsSync(poiDBPath)) return { deps: {} }
 
@@ -265,7 +267,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
-	const candidateDb = resolveCandidateDBPath(options.candidateDb)
+	const candidateDb = resolveCandidateDBPath(options.candidateDb, options.dataRoot)
 	const wofPath = candidateDb ? [] : resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
@@ -300,7 +302,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths: wofPath })
+	const lookup = createResolverBackend(mod, { candidateDb, dataRoot: options.dataRoot, wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key

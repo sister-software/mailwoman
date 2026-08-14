@@ -17,14 +17,15 @@ import { accessSync, constants, existsSync, readFileSync, statSync } from "node:
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
 
-import { $public } from "@mailwoman/core/env"
+import { $public, defaultMailwomanPaths } from "@mailwoman/core/env"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
+import { resolvePath } from "path-ts"
 
-import { resolveCandidateDBPath } from "../resolver-backend.ts"
+import { conventionCandidateDBPath, resolveCandidateDBPath } from "../resolver-backend.ts"
 import {
 	assembleReport,
 	checkPOI,
@@ -142,8 +143,10 @@ function readEnginesFloor(): string {
 /**
  * The `<data-root>/wof/candidate.db` convention path if it exists on disk — the file a fresh consumer downloads.
  */
-function defaultConventionCandidatePath(): string | undefined {
-	const convention = dataRootPath("wof", "candidate.db")
+function defaultConventionCandidatePath(dataRoot: string): string | undefined {
+	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return undefined
+
+	const convention = conventionCandidateDBPath(dataRoot)
 
 	return existsSync(convention) ? convention : undefined
 }
@@ -151,7 +154,7 @@ function defaultConventionCandidatePath(): string | undefined {
 /**
  * The WOF admin shard set to probe: `$MAILWOMAN_WOF_DB` (comma-split) when set, else the default shard list.
  */
-function defaultWOFShardPaths(): string[] {
+function defaultWOFShardPaths(dataRoot: string): string[] {
 	const raw = $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
@@ -161,7 +164,7 @@ function defaultWOFShardPaths(): string[] {
 			.filter(Boolean)
 	}
 
-	return wofShardPaths()
+	return wofShardPaths(dataRoot)
 }
 
 /**
@@ -184,6 +187,8 @@ async function readPOIManifest(path: string): Promise<{ name: string; version: s
  * The production seams — the real filesystem, env, weights resolver, and dynamic imports.
  */
 export function defaultDoctorDeps(): DoctorDeps {
+	const dataRoot = mailwomanDataRoot()
+
 	return {
 		existsSync,
 		fileSize: (path) => {
@@ -204,14 +209,11 @@ export function defaultDoctorDeps(): DoctorDeps {
 		},
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
-		dataRoot: () => ({ path: mailwomanDataRoot(), fromEnv: Boolean($public.MAILWOMAN_DATA_ROOT) }),
-		// Mirror the tools EXACTLY. `resolveCandidateDBPath` now reaches the convention path itself, so report the
-		// explicit/env hit ONLY when one is set — otherwise a convention-path candidate.db would be labelled as coming
-		// from an env var nobody exported, and `conventionCandidatePath` below would never be consulted.
-		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath() : undefined),
-		conventionCandidatePath: defaultConventionCandidatePath,
-		wofShardPaths: defaultWOFShardPaths,
-		poiPath: () => dataRootPath("poi", "poi.db"),
+		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== defaultMailwomanPaths.data }),
+		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined),
+		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
+		wofShardPaths: () => defaultWOFShardPaths(dataRoot),
+		poiPath: () => resolvePath(dataRoot, "poi", "poi.db"),
 		readPOIManifest,
 		loadONNX: async () => {
 			await import("onnxruntime-node")
