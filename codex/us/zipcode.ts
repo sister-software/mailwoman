@@ -191,7 +191,7 @@ export interface PluckedStateZIPCodeResult {
 }
 
 /**
- * Given an address string like `"NY"`, `"CA 94016"`, attempts to match the state abbreviation and postal code, if
+ * Given an address string like `"NY"`, `"CA 94016"`, attempts to match the state abbreviation and postcode, if
  * applicable.
  *
  * @see {@linkcode isUSStateAbbreviation} to validate the state abbreviation.

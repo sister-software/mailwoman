@@ -35,7 +35,7 @@ needed (the national export is ~10K rows).
 | `Site Address`            | Split into `house_number` + `street`        |
 | `Site City`               | → `locality` component                      |
 | `Site State Abbreviation` | → `region` component (2-char USPS)          |
-| `Site Postal Code`        | → `postcode` component                      |
+| `Site Postcode`           | → `postcode` component                      |
 
 Any other column the HRSA export carries is ignored.
 
@@ -85,7 +85,7 @@ Rows are silently dropped when:
 - `Site Name` is empty (no venue means no adversarial training signal).
 - `Site Address` is empty.
 - `Site City` is empty.
-- `Site Postal Code` is empty.
+- `Site Postcode` is empty.
 - `Site State Abbreviation` is not a recognized USPS abbreviation (50
   states + DC + 5 primary territories).
 

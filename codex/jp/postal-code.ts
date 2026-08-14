@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Japanese postal codes (郵便番号, yūbin-bangō): the branded type, the shape, normalization, and the
+ *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, the shape, normalization, and the
  *   first-digit → coarse-region prior.
  *
  *   This file is the far end of a spectrum whose other end is `us/zipcode.ts`. A US address leans on
@@ -16,7 +16,7 @@
  *       navigate by named streets; you navigate by nested administrative areas and numbered
  *       blocks/lots (丁目 / 番地 / 号 — see `address-unit.ts`).
  *
- *   With no street name to anchor on and a reverse field order, the **postal code is the single most
+ *   With no street name to anchor on and a reverse field order, the **postcode is the single most
  *   reliable geographic anchor** for a Japanese address — it pins the chōme-level area directly,
  *   far tighter than a US ZIP pins a US address. So where the US parser treats the postcode as a
  *   tie-breaker behind the street, the Japan parser should treat it as the primary key.
@@ -25,9 +25,9 @@
 import type { Tagged } from "type-fest"
 
 /**
- * A Japanese postal code: three digits, a hyphen, then four digits (`100-0001`), conventionally written after the 〒
- * mark (`〒100-0001`). Branded so a normalized code is distinct from an arbitrary string — the 7-digit shape alone does
- * not prove a code is real, only well-formed.
+ * A Japanese postcode: three digits, a hyphen, then four digits (`100-0001`), conventionally written after the 〒 mark
+ * (`〒100-0001`). Branded so a normalized code is distinct from an arbitrary string — the 7-digit shape alone does not
+ * prove a code is real, only well-formed.
  *
  * @category Postal
  * @type string
@@ -57,17 +57,17 @@ export function normalizeJpPostalCode(raw: unknown): PostalCode | null {
 }
 
 /**
- * Type-predicate for a Japanese postal code (hyphen optional, `100-0001` or `1000001`).
+ * Type-predicate for a Japanese postcode (hyphen optional, `100-0001` or `1000001`).
  */
 export function isJpPostalCode(input: unknown): input is PostalCode {
 	return typeof input === "string" && JP_POSTAL_CODE_PATTERN.test(input)
 }
 
 /**
- * First digit of the postal code → a coarse region label. Japan Post's numbering grows roughly outward from Tokyo
- * (`1xx`) and is **approximate** at this granularity — a single leading digit spans large, irregular areas and the
- * boundaries are postal-routing, not administrative. Use it as a weak prior, never as a hard region assignment; the
- * full code is what actually anchors the address.
+ * First digit of the postcode → a coarse region label. Japan Post's numbering grows roughly outward from Tokyo (`1xx`)
+ * and is **approximate** at this granularity — a single leading digit spans large, irregular areas and the boundaries
+ * are postal-routing, not administrative. Use it as a weak prior, never as a hard region assignment; the full code is
+ * what actually anchors the address.
  *
  * Approximate — the labels below are illustrative routing regions, not precise prefecture sets.
  */
@@ -85,7 +85,7 @@ export const JP_FIRST_DIGIT_REGION: Record<string, string> = {
 }
 
 /**
- * The coarse region label for a postal code's first digit, or null if the input is not a Japanese postal code. A weak,
+ * The coarse region label for a postcode's first digit, or null if the input is not a Japanese postcode. A weak,
  * approximate prior (see {@link JP_FIRST_DIGIT_REGION}); the full code anchors the address.
  */
 export function firstDigitRegion(postalCode: unknown): string | null {

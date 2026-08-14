@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   French postal codes (code postal): the branded type, the shape, normalization, and the
+ *   French postcodes (code postal): the branded type, the shape, normalization, and the
  *   first-two-digits → département mapping — the cleanest postcode→admin prior of the three
  *   systems.
  *
@@ -30,7 +30,7 @@ import { departementInfo, type DepartementCode, type DepartementInfo } from "./d
 import { FR_REGIONS, type FrenchRegionInfo } from "./region.ts"
 
 /**
- * A French postal code: five digits (`75008`). Same shape as a US ZIP or a German PLZ — the shape alone does not
+ * A French postcode: five digits (`75008`). Same shape as a US ZIP or a German PLZ — the shape alone does not
  * disambiguate the country.
  *
  * @category Postal
@@ -63,14 +63,14 @@ export function normalizeCodePostal(raw: unknown): CodePostal | null {
 }
 
 /**
- * Type-predicate for a (normalized) French postal code.
+ * Type-predicate for a (normalized) French postcode.
  */
 export function isCodePostal(input: unknown): input is CodePostal {
 	return typeof input === "string" && CODE_POSTAL_PATTERN.test(input)
 }
 
 /**
- * The département code a postal code belongs to. The clean rule plus its two exceptions:
+ * The département code a postcode belongs to. The clean rule plus its two exceptions:
  *
  * - `20xxx` → Corsica. The split is by the rest of the code: roughly `20000`–`20199` → `2A` (Ajaccio side), `20200`+ →
  *   `2B` (Bastia side). Approximate at the boundary, exact for the bulk.
@@ -102,14 +102,14 @@ export function departementOfCodePostal(codePostal: unknown): DepartementCode | 
 }
 
 /**
- * The full département record a postal code resolves to (name + région), or null.
+ * The full département record a postcode resolves to (name + région), or null.
  */
 export function departementForCodePostal(codePostal: unknown): DepartementInfo | null {
 	return departementInfo(departementOfCodePostal(codePostal))
 }
 
 /**
- * The région a postal code resolves to, via its département; null if the code maps to no département.
+ * The région a postcode resolves to, via its département; null if the code maps to no département.
  */
 export function regionForCodePostal(codePostal: unknown): FrenchRegionInfo | null {
 	const dep = departementForCodePostal(codePostal)

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Italian postal codes (Codice di Avviamento Postale, CAP): the branded type and the shape.
+ *   Italian postcodes (Codice di Avviamento Postale, CAP): the branded type and the shape.
  *
  *   Five digits like the Spanish, French and German forms, but do NOT infer a province from the
  *   leading digits the way `es/codigo-postal.ts` documents for Spain. Italy's large cities are
@@ -15,7 +15,7 @@
 import type { Tagged } from "type-fest"
 
 /**
- * An Italian postal code: five digits (`00184` is Rome, Rione Monti).
+ * An Italian postcode: five digits (`00184` is Rome, Rione Monti).
  *
  * @category Postal
  * @type string

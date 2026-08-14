@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Spanish postal codes (código postal): the branded type, the shape, and the province prior.
+ *   Spanish postcodes (código postal): the branded type, the shape, and the province prior.
  *
  *   The contrast with a German PLZ is the informative part. A PLZ's leading digit maps to a Leitzone
  *   that deliberately CROSSES state borders, so it cannot tell you the Bundesland. A Spanish código
@@ -16,7 +16,7 @@
 import type { Tagged } from "type-fest"
 
 /**
- * A Spanish postal code: five digits, `PPNNN`, where `PP` is the province (`28001` is Madrid).
+ * A Spanish postcode: five digits, `PPNNN`, where `PP` is the province (`28001` is Madrid).
  *
  * @category Postal
  * @type string

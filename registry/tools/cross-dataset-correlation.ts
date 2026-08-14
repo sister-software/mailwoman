@@ -152,7 +152,7 @@ const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 				"Provider First Line Business Practice Location Address",
 				"Provider Business Practice Location Address City Name",
 				"Provider Business Practice Location Address State Name",
-				"Provider Business Practice Location Address Postal Code",
+				"Provider Business Practice Location Address Postcode",
 			],
 			phone: "Provider Business Practice Location Address Telephone Number",
 			source: "nppes",

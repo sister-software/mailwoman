@@ -152,7 +152,7 @@ export async function dedupCeiling(
 		if (!org) continue
 		const line1 = norm(r["Provider First Line Business Practice Location Address"])
 		const city = norm(r["Provider Business Practice Location Address City Name"])
-		const zip = norm(r["Provider Business Practice Location Address Postal Code"])
+		const zip = norm(r["Provider Business Practice Location Address Postcode"])
 
 		if (!line1) continue
 		const addrKey = addressFrequencyKey(`${line1}, ${city}, ${STATE} ${zip}`)

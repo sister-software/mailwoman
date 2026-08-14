@@ -18,7 +18,7 @@ This document defines the canonical `ComponentTag` union. It is the single sourc
 | `region`             | First-level admin (state, région)                       | `OR`, `Île-de-France`           |
 | `locality`           | City, town, commune                                     | `Portland`, `Paris`             |
 | `dependent_locality` | Sub-locality (neighborhood, arrondissement, ward)       | `Brooklyn`, `8e arrondissement` |
-| `postcode`           | Postal code                                             | `97215`, `75008`                |
+| `postcode`           | Postcode                                                | `97215`, `75008`                |
 | `subregion`          | Optional county-level admin between region and locality | `Multnomah County`              |
 
 ### Street-level (Phase 2)
@@ -196,6 +196,6 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 
 **Why expose `subregion` if it's optional?** Some US addresses include county (rare in display but common in government data). Modeling it explicitly is better than forcing it into `region` or `locality`.
 
-**Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction, not a postcode. Treating it as one corrupts FR postal code statistics.
+**Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction, not a postcode. Treating it as one corrupts FR postcode statistics.
 
 **Why were the JP tags listed years-of-phases before activation?** The declarations forced Phase-0 type design to handle them — and it worked: activation at CJK Phase 2 touched no core types, exactly as the schema-first principle intended.

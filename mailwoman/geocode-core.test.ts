@@ -315,7 +315,7 @@ describe("recognizeBarePostcode (#22)", () => {
 		expect(out.roots[0]?.metadata?.["bare_postcode_retag"]).toBe(true)
 	})
 
-	it("retags a CA postal code the same way", () => {
+	it("retags a CA postcode the same way", () => {
 		const out = recognizeBarePostcode(tree([node({ tag: "venue", value: "K2P 1L4" })], "K2P 1L4"))
 		expect(out.roots[0]?.tag).toBe("postcode")
 	})

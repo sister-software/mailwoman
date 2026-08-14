@@ -49,7 +49,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 		id: GEONAMES_POSTAL_ADAPTER_ID,
 		defaultLicense: GEONAMES_POSTAL_DEFAULT_LICENSE,
 		description:
-			"GeoNames postal codes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
+			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			// `header: false` — the GeoNames postal dump is headerless, and the spliterator would

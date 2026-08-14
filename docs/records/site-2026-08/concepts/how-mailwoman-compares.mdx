@@ -66,7 +66,7 @@ Cartes doesn't parse or resolve addresses itself. Its search box calls a self-ho
 [Photon](https://photon.komoot.io) instance, and for French addresses it merges in results from the
 national [BAN](https://adresse.data.gouv.fr) address API. The client does clever work before the geocoder
 ever sees the query: it detects raw coordinates in several formats, Open Location Codes ("plus codes"),
-five-digit French postal codes, and even a "de X à Y" itinerary phrasing. Those detectors are a good
+five-digit French postcodes, and even a "de X à Y" itinerary phrasing. Those detectors are a good
 idea, and we intend to borrow a few of them.
 
 What the client can't fix is the layer underneath. Photon doesn't parse addresses, so Cartes grafts BAN

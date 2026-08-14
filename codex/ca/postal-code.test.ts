@@ -43,7 +43,7 @@ describe("provinceOfPostalCode — the FSA-letter → province prior", () => {
 		expect(provinceOfPostalCode("X0A 0H0")).toEqual(["NT", "NU"])
 	})
 
-	it("returns null for an invalid postal code", () => {
+	it("returns null for an invalid postcode", () => {
 		expect(provinceOfPostalCode("D1A 0B1")).toBeNull()
 		expect(provinceOfPostalCode("nope")).toBeNull()
 	})

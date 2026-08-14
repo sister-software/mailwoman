@@ -327,7 +327,7 @@ async function writeShardMeta(db: DatabaseSync, input: ShardMetaInput): Promise<
 		["name", "mailwoman-postalcode-geonames-tail"],
 		[
 			"description",
-			"GeoNames postal codes as first-class WOF `postalcode` places for the countries without a whosonfirst-data-postalcode repo (#920)",
+			"GeoNames postcodes as first-class WOF `postalcode` places for the countries without a whosonfirst-data-postalcode repo (#920)",
 		],
 		["schema_version", "1"],
 		["built_at", input.now.toISOString()],

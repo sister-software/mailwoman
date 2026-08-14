@@ -21,7 +21,7 @@ const mapping = {
 	id: "NPI",
 	name: "Provider Name",
 	organization: "Provider Organization Name",
-	address: ["Address Line 1", "City", "State", "Postal Code"],
+	address: ["Address Line 1", "City", "State", "Postcode"],
 }
 
 for await (const record of normalizeCSV("nppes.csv", { mapping })) {

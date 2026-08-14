@@ -26,7 +26,7 @@ export const spec = {
 		in: { type: "string", description: "Cross-dataset links GeoJSON" },
 		"cross-agency-only": { type: "boolean", default: false, description: "Keep only cross-agency entities" },
 		lambda: { type: "number", description: "Illustrative prior lambda" },
-		state: { type: "string", description: "State postal code" },
+		state: { type: "string", description: "State Postcode" },
 		db: { type: "string", description: "Address-point database" },
 		"nad-mod": { type: "number", description: "NAD sampling modulus" },
 		"oa-mod": { type: "number", description: "OpenAddresses sampling modulus" },

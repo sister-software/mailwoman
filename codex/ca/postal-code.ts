@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Canadian postal codes: the branded type, the shape, normalization, and the FSA-letter →
+ *   Canadian postcodes: the branded type, the shape, normalization, and the FSA-letter →
  *   province/territory prior — the only ALPHANUMERIC postcode of the systems the codex models.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and
@@ -12,7 +12,7 @@
  *   - A US ZIP is numeric; its first digit maps to a loose BAND of states.
  *   - A German PLZ is numeric; its first digit maps to a Leitzone that CROSSES Bundesland borders.
  *   - A French code postal is numeric; its first TWO digits ARE the département.
- *   - A Canadian postal code is `A1A 1A1` — Letter Digit Letter, then Digit Letter Digit — and its
+ *   - A Canadian postcode is `A1A 1A1` — Letter Digit Letter, then Digit Letter Digit — and its
  *       first LETTER pins the province or territory directly (`M` → Ontario, `H` → Quebec, `V` →
  *       British Columbia). So like the French prefix it is a clean admin prior, but it does the job
  *       with a single ALPHA character rather than digits.
@@ -30,18 +30,18 @@ import type { Tagged } from "type-fest"
 import type { CanadianProvinceCode } from "./province.ts"
 
 /**
- * Characters in a Canadian postal code once spaces are stripped: `A1A1A1`.
+ * Characters in a Canadian postcode once spaces are stripped: `A1A1A1`.
  */
 const POSTAL_CODE_LENGTH = 6
 
 /**
- * A Canadian postal code: `A1A 1A1`. Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit
+ * A Canadian postcode: `A1A 1A1`. Six alphanumeric characters in a strict Letter-Digit-Letter-Digit-Letter-Digit
  * pattern, conventionally written with a single space after the third. Unlike the other systems' bare five digits, the
  * shape alone already says "Canada".
  *
  * @category Postal
  * @type string
- * @title Postal Code
+ * @title Postcode
  * @pattern ^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$
  */
 export type PostalCode = Tagged<string, "CaPostalCode">
@@ -56,7 +56,7 @@ export const CA_POSTAL_CODE_PATTERN = /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?
 /**
  * Normalize a postal-code surface form to canonical `A1A 1A1`: uppercase and ensure exactly one space between the FSA
  * (first three chars) and the LDU (last three) — `K1A0B1` → `K1A 0B1`, `k1a 0b1` → `K1A 0B1`. Returns null if the input
- * is not a valid Canadian postal code.
+ * is not a valid Canadian postcode.
  */
 export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 	if (typeof raw !== "string") return null
@@ -69,7 +69,7 @@ export function normalizeCaPostalCode(raw: unknown): PostalCode | null {
 }
 
 /**
- * Type-predicate for a Canadian postal code (accepts the spaced or unspaced surface form).
+ * Type-predicate for a Canadian postcode (accepts the spaced or unspaced surface form).
  */
 export function isCaPostalCode(input: unknown): input is PostalCode {
 	return typeof input === "string" && CA_POSTAL_CODE_PATTERN.test(input)
@@ -102,9 +102,9 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
 }
 
 /**
- * The province/territory a postal code belongs to, via its FSA first letter. Returns the single code for the clean
- * letters, the `["NT", "NU"]` pair for the shared `X`, and null if the input is not a valid Canadian postal code (or
- * its first letter has no province, which the pattern already forbids).
+ * The province/territory a postcode belongs to, via its FSA first letter. Returns the single code for the clean
+ * letters, the `["NT", "NU"]` pair for the shared `X`, and null if the input is not a valid Canadian postcode (or its
+ * first letter has no province, which the pattern already forbids).
  */
 export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode | CanadianProvinceCode[] | null {
 	const normalized = normalizeCaPostalCode(postalCode)
@@ -115,7 +115,7 @@ export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode 
 }
 
 /**
- * True when a postal code is RURAL: its SECOND character (the FSA's first digit) is `0`. Canada Post uses a `0` in that
+ * True when a postcode is RURAL: its SECOND character (the FSA's first digit) is `0`. Canada Post uses a `0` in that
  * position to mark the lower-density delivery zones (rural routes, small communities) — the contrast with the urban
  * `1`–`9` FSAs. Returns false for a non-code.
  */

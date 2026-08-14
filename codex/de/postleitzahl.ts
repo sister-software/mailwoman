@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   German postal codes (Postleitzahl, PLZ): the branded type, the shape, normalization, and the
+ *   German postcodes (Postleitzahl, PLZ): the branded type, the shape, normalization, and the
  *   first-digit → Leitzone geographic prior.
  *
  *   The US analog is `us/zipcode.ts`, and the contrast is the informative part. A US ZIP's first
@@ -18,7 +18,7 @@
 import type { Tagged } from "type-fest"
 
 /**
- * A German postal code: five digits since the 1993 reform (`12623`). A bare 5-digit string, same shape as a US ZIP or a
+ * A German postcode: five digits since the 1993 reform (`12623`). A bare 5-digit string, same shape as a US ZIP or a
  * French code postal — disambiguation is the parser's job, not the shape's.
  *
  * @category Postal
@@ -45,7 +45,7 @@ export function normalizePLZ(raw: unknown): Postleitzahl | null {
 }
 
 /**
- * Type-predicate for a (normalized) German postal code.
+ * Type-predicate for a (normalized) German postcode.
  */
 export function isPostleitzahl(input: unknown): input is Postleitzahl {
 	return typeof input === "string" && PLZ_PATTERN.test(input)

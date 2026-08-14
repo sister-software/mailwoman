@@ -23,7 +23,7 @@ const CSV_HEADER = [
 	"Provider Second Line Business Practice Location Address",
 	"Provider Business Practice Location Address City Name",
 	"Provider Business Practice Location Address State Name",
-	"Provider Business Practice Location Address Postal Code",
+	"Provider Business Practice Location Address Postcode",
 ].join(",")
 
 let scratch: string

@@ -139,7 +139,7 @@ export interface PostalDistrict {
 	 */
 	district: string
 	/**
-	 * 3-digit postal code (the admin-granularity key).
+	 * 3-digit postcode (the admin-granularity key).
 	 */
 	postcode: string
 	lat: number

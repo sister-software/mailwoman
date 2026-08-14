@@ -54,7 +54,7 @@ const GEONAMES_POSTAL_COLUMNS = 11
 export const GEONAMES_POSTAL_ID_BASE = 9_500_000_000_000
 
 /**
- * The #920 name law: reduce a postal code to the sanitized-query token shape — strip every non-letter/number — so the
+ * The #920 name law: reduce a postcode to the sanitized-query token shape — strip every non-letter/number — so the
  * stored name matches what `sanitizeFTSQuery` produces from the parsed postcode token. `"110 00"` → `"11000"`,
  * `"11-041"` → `"11041"`, `"AD500"` → `"AD500"`.
  */
@@ -132,7 +132,7 @@ export interface GeonamesPostalIngestResult {
 }
 
 /**
- * Fold GeoNames postal codes for `countries` into an open unified/postcode ingest DB: one `spr` row per distinct
+ * Fold GeoNames postcodes for `countries` into an open unified/postcode ingest DB: one `spr` row per distinct
  * normalized postcode (placetype `postalcode`, medoid centroid, degenerate bbox), the normalized form as `name`, and
  * the display form as an extra `names` row when it differs. The caller owns the FTS rebuild (rows ride the standard
  * freeze phase).

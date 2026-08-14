@@ -48,7 +48,7 @@ interface NPPESRow {
 	"Provider Second Line Business Practice Location Address": string
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
-	"Provider Business Practice Location Address Postal Code": string
+	"Provider Business Practice Location Address Postcode": string
 }
 
 function composeRaw(
@@ -100,7 +100,7 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 				const address2 = (record["Provider Second Line Business Practice Location Address"] ?? "").trim()
 				const city = (record["Provider Business Practice Location Address City Name"] ?? "").trim()
 				const stateRaw = (record["Provider Business Practice Location Address State Name"] ?? "").trim()
-				const postcode = (record["Provider Business Practice Location Address Postal Code"] ?? "").trim()
+				const postcode = (record["Provider Business Practice Location Address Postcode"] ?? "").trim()
 
 				if (!city || !postcode) continue
 

@@ -39,13 +39,13 @@ human-readable index of them.
 
 ### NPPES registry → `SourceRecord`
 
-| field          | column(s)                                                                             |
-| -------------- | ------------------------------------------------------------------------------------- |
-| `id`           | `NPI`                                                                                 |
-| `organization` | `Provider Organization Name (Legal Business Name)` (Entity Type Code `2`)             |
-| `name`         | `Provider First Name` + `Provider Last Name (Legal Name)` (Entity Type Code `1`)      |
-| `address`      | `Provider First Line Business Practice Location Address` + City + State + Postal Code |
-| `phone`        | `Provider Business Practice Location Address Telephone Number`                        |
+| field          | column(s)                                                                          |
+| -------------- | ---------------------------------------------------------------------------------- |
+| `id`           | `NPI`                                                                              |
+| `organization` | `Provider Organization Name (Legal Business Name)` (Entity Type Code `2`)          |
+| `name`         | `Provider First Name` + `Provider Last Name (Legal Name)` (Entity Type Code `1`)   |
+| `address`      | `Provider First Line Business Practice Location Address` + City + State + Postcode |
+| `phone`        | `Provider Business Practice Location Address Telephone Number`                     |
 
 The mailing-address columns (`Provider First Line Business Mailing Address` + …) give the address-variation
 records in the dedup benchmark. Practice-location secondary addresses live in the separate

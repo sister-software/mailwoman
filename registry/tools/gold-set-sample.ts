@@ -93,7 +93,7 @@ const C = {
 	pAddr: "Provider First Line Business Practice Location Address",
 	pCity: "Provider Business Practice Location Address City Name",
 	pState: "Provider Business Practice Location Address State Name",
-	pZip: "Provider Business Practice Location Address Postal Code",
+	pZip: "Provider Business Practice Location Address Postcode",
 	authLast: "Authorized Official Last Name",
 	authFirst: "Authorized Official First Name",
 	taxonomy: "Healthcare Provider Taxonomy Code_1",

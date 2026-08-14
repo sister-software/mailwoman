@@ -195,7 +195,7 @@ export const searchQueryParams = z.object({
 	county: tolerantParam.openapi({ type: "string", description: "Structured: county." }),
 	state: tolerantParam.openapi({ type: "string", description: "Structured: state." }),
 	country: tolerantParam.openapi({ type: "string", description: "Structured: country." }),
-	postalcode: tolerantParam.openapi({ type: "string", description: "Structured: postal code." }),
+	postalcode: tolerantParam.openapi({ type: "string", description: "Structured: postcode." }),
 	countrycodes: tolerantParam.openapi({
 		type: "string",
 		description: "Comma-separated ISO 3166-1 alpha-2 codes restricting results.",
