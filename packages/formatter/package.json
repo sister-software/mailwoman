@@ -1,0 +1,55 @@
+{
+	"name": "@mailwoman/formatter",
+	"version": "9.1.0",
+	"description": "The inverse of the parser: render Mailwoman `ComponentTag` components into an idiomatic, locale-aware address string — plus a canonical, normalized match key for record linkage. Consolidates the former core/formatter stub and corpus synthesis formatter behind one API.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/formatter"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./format": {
+			"node": "./format.ts",
+			"default": "./out/format.js",
+			"types": "./out/format.d.ts"
+		},
+		"./key": {
+			"node": "./key.ts",
+			"default": "./out/key.js",
+			"types": "./out/key.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@fragaria/address-formatter": "^7.0.0",
+		"@mailwoman/core": "workspace:*",
+		"spliterator": "^6.1.0"
+	},
+	"devDependencies": {
+		"@types/node": ">=26.1.2"
+	}
+}

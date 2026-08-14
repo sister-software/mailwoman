@@ -10,11 +10,10 @@ import { parseArgs } from "node:util"
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { classifySuffixBoundaryStreet } from "@mailwoman/corpus/shard-recipes/street-affix"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
-
-import { classifySuffixBoundaryStreet } from "../../corpus/src/shard-recipes/street-affix.ts"
 
 interface GoldenRow {
 	raw: string

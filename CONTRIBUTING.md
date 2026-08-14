@@ -127,16 +127,17 @@ produced and fetched. The published `@mailwoman/neural-weights-en-us` /
 
 ## Repository layout
 
-Mailwoman is a Yarn-4 monorepo. Source lives at **each workspace's root** (no
-`src/` nesting), with tests co-located as `*.test.ts`. The orientation table and
+Mailwoman is a Yarn-4 monorepo. Public workspaces live under `packages/`. Source lives at
+each workspace's root, except `packages/corpus/` and `docs/`, which use `src/`. Tests are
+co-located as `*.test.ts`. The orientation table and
 the architectural "why" live in [`AGENTS.md`](./AGENTS.md) — read it before
 changing anything structural. The short version:
 
-- `mailwoman/` — the CLI + the high-level pipeline (the user-facing entry).
-- `core/` — tokenization, classification, the solver/decoder, bundled
+- `packages/mailwoman/` — the CLI + the high-level pipeline (the user-facing entry).
+- `packages/core/` — tokenization, classification, the solver/decoder, bundled
   dictionaries.
-- `resolver*/`, `codex/`, `classifiers/`, `corpus/`, `neural*/`, `spatial/`,
-  `normalize/`, … — the supporting packages.
+- `packages/resolver*/`, `packages/codex/`, `packages/corpus/`, `packages/neural*/`,
+  `packages/spatial/`, `packages/normalize/`, … — the supporting packages.
 - `docs/` — the Docusaurus site published to https://mailwoman.sister.software.
 
 ## Building, testing, and type-checking
@@ -150,7 +151,7 @@ changing anything structural. The short version:
 | `yarn lint`                            | oxlint + oxfmt (Oxc toolchain)                                     |
 | `yarn workspace @mailwoman/docs start` | the docs site at http://localhost:7770                             |
 
-A vitest config in `core/` and `neural/` aliases sibling `@mailwoman/*` imports
+A vitest config in `packages/core/` and `packages/neural/` aliases sibling `@mailwoman/*` imports
 to source, so `yarn test` runs without a precompile step.
 
 **One gotcha worth knowing:** when a test file imports `@mailwoman/core` _both_
@@ -164,8 +165,8 @@ import cycle.
 After `yarn compile`:
 
 ```bash
-node mailwoman/out/cli.js parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
-node mailwoman/out/cli.js --help
+node packages/mailwoman/out/cli.js parse "1600 Amphitheatre Parkway, Mountain View, CA 94043"
+node packages/mailwoman/out/cli.js --help
 ```
 
 ## Commits and pull requests

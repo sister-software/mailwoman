@@ -12,8 +12,7 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { externalArenas } from "../../mailwoman/eval-harness/external-arenas.ts"
+import { externalArenas } from "mailwoman/eval-harness/external-arenas"
 
 async function main(): Promise<void> {
 	// Flags replace the bash-era env contract (MODEL=… TOKENIZER=… → --model … --tokenizer …).

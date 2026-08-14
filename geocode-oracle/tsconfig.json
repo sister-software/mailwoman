@@ -9,12 +9,12 @@
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		// ---
-		{ "path": "../address-id" },
-		{ "path": "../codex" },
-		{ "path": "../core" },
-		{ "path": "../formatter" },
-		{ "path": "../record" },
-		{ "path": "../spatial" },
-		{ "path": "../tiger" }
+		{ "path": "../packages/address-id" },
+		{ "path": "../packages/codex" },
+		{ "path": "../packages/core" },
+		{ "path": "../packages/formatter" },
+		{ "path": "../packages/record" },
+		{ "path": "../packages/spatial" },
+		{ "path": "../packages/tiger" }
 	]
 }

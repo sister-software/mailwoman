@@ -57,7 +57,8 @@ const { values } = parseArgs({
 
 const version =
 	values.version ??
-	parseJSONStrict<{ version: string }>(readFileSync(join(repoRoot, "mailwoman", "package.json"), "utf8")).version
+	parseJSONStrict<{ version: string }>(readFileSync(join(repoRoot, "packages", "mailwoman", "package.json"), "utf8"))
+		.version
 
 const outDir = values.out ? resolve(values.out) : join(repoRoot, "docs", "static", "sbom")
 

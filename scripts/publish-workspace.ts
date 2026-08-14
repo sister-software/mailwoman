@@ -62,7 +62,7 @@ if (!workspacePath) {
 }
 
 const SKIP_WEIGHTS = !!$public.MAILWOMAN_SKIP_WEIGHTS
-const isWeightsWorkspace = workspacePath.startsWith("./neural-weights-")
+const isWeightsWorkspace = workspacePath.startsWith("./packages/neural-weights-")
 
 if (SKIP_WEIGHTS && isWeightsWorkspace) {
 	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)

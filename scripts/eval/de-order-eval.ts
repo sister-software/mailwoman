@@ -12,8 +12,7 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { deOrderEval } from "../../mailwoman/eval-harness/de-order-eval.ts"
+import { deOrderEval } from "mailwoman/eval-harness/de-order-eval"
 
 async function main(): Promise<void> {
 	// STRICT parseArgs — the original switch errored on unknown args; parity preserved.

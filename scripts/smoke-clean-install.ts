@@ -42,30 +42,30 @@ const repoRoot = repoRootPath()
  * source-coherent (new-vs-new).
  */
 const WORKSPACES: Record<string, string> = {
-	"@mailwoman/core": "core",
-	"@mailwoman/spatial": "spatial",
-	"@mailwoman/resolver": "resolver",
+	"@mailwoman/core": "packages/core",
+	"@mailwoman/spatial": "packages/spatial",
+	"@mailwoman/resolver": "packages/resolver",
 	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
 	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module
 	// load) resolves the LOCAL poi-lookup subpath instead of the registry's stale pre-poi.db 7.1.0
 	// (2026-07-18), which exports no './poi-lookup' at all — resolving there is an
 	// ERR_PACKAGE_PATH_NOT_EXPORTED the instant the CLI loads its command modules.
-	"@mailwoman/resolver-wof-sqlite": "resolver-wof-sqlite",
-	"@mailwoman/ban": "ban",
-	"@mailwoman/codex": "codex",
-	"@mailwoman/poi-taxonomy": "poi-taxonomy",
-	"@mailwoman/kind-classifier": "kind-classifier",
+	"@mailwoman/resolver-wof-sqlite": "packages/resolver-wof-sqlite",
+	"@mailwoman/ban": "packages/ban",
+	"@mailwoman/codex": "packages/codex",
+	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
+	"@mailwoman/kind-classifier": "packages/kind-classifier",
 	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
 	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
 	// auto-installed from the registry.
-	"@mailwoman/react": "react",
-	"@mailwoman/locale-gate": "locale-gate",
-	"@mailwoman/normalize": "normalize",
-	"@mailwoman/phrase-grouper": "phrase-grouper",
-	"@mailwoman/query-shape": "query-shape",
+	"@mailwoman/react": "packages/react",
+	"@mailwoman/locale-gate": "packages/locale-gate",
+	"@mailwoman/normalize": "packages/normalize",
+	"@mailwoman/phrase-grouper": "packages/phrase-grouper",
+	"@mailwoman/query-shape": "packages/query-shape",
 	// The tokenizer WASM core (task #26) — a hard dependency of @mailwoman/neural.
-	"@mailwoman/sentencepiece-wasm": "sentencepiece-wasm",
-	"@mailwoman/neural": "neural",
+	"@mailwoman/sentencepiece-wasm": "packages/sentencepiece-wasm",
+	"@mailwoman/neural": "packages/neural",
 	// The weights bundles — data-only, but real deps of photon/nominatim/fastify (all in this
 	// closure), so on a version-bumped release branch npm would otherwise chase the not-yet-published
 	// registry version (the v7.6.0 ETARGET chicken-and-egg). Packing them also makes the smoke test
@@ -73,53 +73,53 @@ const WORKSPACES: Record<string, string> = {
 	// class (a soft-feed sibling silently missing from a shipped tarball) is only visible this way.
 	// PREREQ: the binaries must be materialized first (test.yml's weights-cache/copy-weights step) —
 	// `yarn pack` quietly packs whatever subset of the `files` globs exists.
-	"@mailwoman/neural-weights-en-us": "neural-weights-en-us",
-	"@mailwoman/neural-weights-fr-fr": "neural-weights-fr-fr",
-	"@mailwoman/neural-weights-en-gb": "neural-weights-en-gb",
-	"@mailwoman/neural-weights-en-nz": "neural-weights-en-nz",
-	"@mailwoman/neural-weights-it-it": "neural-weights-it-it",
-	"@mailwoman/neural-weights-es-es": "neural-weights-es-es",
-	"@mailwoman/neural-weights-de-de": "neural-weights-de-de",
-	"@mailwoman/neural-weights-en-in": "neural-weights-en-in",
-	"@mailwoman/variant-aliases": "variant-aliases",
+	"@mailwoman/neural-weights-en-us": "packages/neural-weights-en-us",
+	"@mailwoman/neural-weights-fr-fr": "packages/neural-weights-fr-fr",
+	"@mailwoman/neural-weights-en-gb": "packages/neural-weights-en-gb",
+	"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",
+	"@mailwoman/neural-weights-it-it": "packages/neural-weights-it-it",
+	"@mailwoman/neural-weights-es-es": "packages/neural-weights-es-es",
+	"@mailwoman/neural-weights-de-de": "packages/neural-weights-de-de",
+	"@mailwoman/neural-weights-en-in": "packages/neural-weights-en-in",
+	"@mailwoman/variant-aliases": "packages/variant-aliases",
 	// mailwoman's OTHER optional peer (besides resolver-wof-sqlite above) — optional or not, npm
 	// still resolves its version spec, so an unpacked workspace dep ETARGETs on a release branch.
-	"@mailwoman/tiger": "tiger",
-	"@mailwoman/formatter": "formatter",
-	"@mailwoman/record": "record",
-	"@mailwoman/match": "match",
-	"@mailwoman/registry": "registry",
-	"@mailwoman/address-id": "address-id",
-	"@mailwoman/corpus": "corpus",
+	"@mailwoman/tiger": "packages/tiger",
+	"@mailwoman/formatter": "packages/formatter",
+	"@mailwoman/record": "packages/record",
+	"@mailwoman/match": "packages/match",
+	"@mailwoman/registry": "packages/registry",
+	"@mailwoman/address-id": "packages/address-id",
+	"@mailwoman/corpus": "packages/corpus",
 	// The map TUI — a runtime dep of mailwoman (the CLI's terminal map view); zero @mailwoman deps of
 	// its own, so the closure ends here.
-	"@mailwoman/map-tui": "map-tui",
-	mailwoman: "mailwoman",
+	"@mailwoman/map-tui": "packages/map-tui",
+	mailwoman: "packages/mailwoman",
 	// The annotations layer + drop-in API packages (the "replace Nominatim" surface).
-	"@mailwoman/annotations": "annotations",
-	"@mailwoman/timezone-lookup": "timezone-lookup",
-	"@mailwoman/un-locode-lookup": "un-locode-lookup",
-	"@mailwoman/nuts-lookup": "nuts-lookup",
-	"@mailwoman/api-kit": "api-kit",
-	"@mailwoman/api": "api",
-	"@mailwoman/libpostal": "libpostal",
-	"@mailwoman/photon": "photon",
-	"@mailwoman/nominatim": "nominatim",
+	"@mailwoman/annotations": "packages/annotations",
+	"@mailwoman/timezone-lookup": "packages/timezone-lookup",
+	"@mailwoman/un-locode-lookup": "packages/un-locode-lookup",
+	"@mailwoman/nuts-lookup": "packages/nuts-lookup",
+	"@mailwoman/api-kit": "packages/api-kit",
+	"@mailwoman/api": "packages/api",
+	"@mailwoman/libpostal": "packages/libpostal",
+	"@mailwoman/photon": "packages/photon",
+	"@mailwoman/nominatim": "packages/nominatim",
 	// The Fastify plugin. Its entrypoint's only eager runtime import is `fastify-plugin` (a declared dep) —
 	// `mailwoman`/`@mailwoman/core` are reached via dynamic import() on the first request, and `fastify` is a
 	// type-only (peer) import — so IMPORT_CHECK below loads it without fastify installed.
-	"@mailwoman/fastify": "fastify",
+	"@mailwoman/fastify": "packages/fastify",
 	// `@mailwoman/mcp`'s bin (`out/cli.js`, the `mailwoman-mcp` entry) connects an stdio transport at module
 	// scope, so IMPORT_CHECK below (which imports the package ENTRYPOINT — `index.ts`, i.e. server.ts +
 	// tools.ts only) never exercises cli.ts directly. The bin's OWN dep closure (its static imports:
 	// `mailwoman/geocode-core`, `mailwoman/poi-overpass`, the SDK's stdio transport) is now covered by the
 	// bin-exec leg (`checkMCPBin`, 2026-07-20) — a real JSON-RPC initialize + tools/list handshake against
 	// the installed bin — instead of only transitively via the closure-wide npm install.
-	"@mailwoman/mcp": "mcp",
+	"@mailwoman/mcp": "packages/mcp",
 	// BDC + filer (2026-07-31): runtime deps of mailwoman + @mailwoman/mcp — the closure guard
 	// flagged both missing on the first PR after their merge (pre-existing gap, not that PR's).
-	"@mailwoman/bdc": "bdc",
-	"@mailwoman/filer": "filer",
+	"@mailwoman/bdc": "packages/bdc",
+	"@mailwoman/filer": "packages/filer",
 }
 
 /**

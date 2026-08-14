@@ -219,7 +219,7 @@ const PAIR_INDEX_BY_COUNTRY: Record<string, PairIndexBuildInputs> = SOFT_FEED.pa
 /**
  * Weights workspaces to materialize, derived from the release config's locale list.
  */
-const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
+const TARGETS = config.locales.map((locale: string) => `packages/neural-weights-${locale}`)
 
 async function exists(path: PathLike) {
 	try {
@@ -279,7 +279,7 @@ async function main() {
  * no FST sibling and is skipped silently (byte-stable).
  */
 async function materializeFST(workspace: string, dir: string) {
-	const locale = workspace.replace(/^neural-weights-/, "")
+	const locale = workspace.replace(/^packages\/neural-weights-/, "")
 	const src = resolve(dataRoot, "wof", "fst-per-locale", `fst-${locale}.bin`)
 
 	if (!existsSync(src)) {
@@ -375,7 +375,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's
 	// region subtag (`en-us` → `us`) names both the binary and the postcodeDBByCountry source entry.
-	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
+	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const dbRel = SOFT_FEED.postcodeDBByCountry?.[country]
 
 	if (!dbRel) {
@@ -400,9 +400,9 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	await removeIfPresent(binDest)
 	// `.release-it.json` runs `yarn compile` before invoking `gazetteer postcode-binary`,
-	// script, so mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
+	// script, so packages/mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
 	// postcode-<cc>.bin directly where the `files` array expects it.
-	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+	const cli = resolve(repoRoot, "packages/mailwoman/out/cli.js")
 
 	const r = spawnSync(
 		process.execPath,
@@ -425,7 +425,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
  * `pairIndexByCountry` entry ships no pair-index sibling and is skipped silently (not every locale gets one).
  */
 async function materializePairIndex(workspace: string, dir: string) {
-	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
+	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const entry = PAIR_INDEX_BY_COUNTRY[country]
 
 	if (!entry) {
@@ -474,8 +474,8 @@ async function materializePairIndex(workspace: string, dir: string) {
 
 	await removeIfPresent(binDest)
 	// `.release-it.json` runs `yarn compile` before invoking `gazetteer pair-index`, so
-	// mailwoman/out/cli.js exists (same precondition as postcode-binary above).
-	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+	// packages/mailwoman/out/cli.js exists (same precondition as postcode-binary above).
+	const cli = resolve(repoRoot, "packages/mailwoman/out/cli.js")
 
 	const r = spawnSync(
 		process.execPath,

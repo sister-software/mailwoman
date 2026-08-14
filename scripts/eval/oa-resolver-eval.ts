@@ -9,8 +9,7 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { oaResolverEval } from "../../mailwoman/eval-harness/oa-resolver-eval.ts"
+import { oaResolverEval } from "mailwoman/eval-harness/oa-resolver-eval"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired local argv helpers: unknown flags tolerated.

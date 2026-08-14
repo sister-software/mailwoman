@@ -43,14 +43,14 @@ import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcod
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
-	"mailwoman/gazetteer-pipeline/borough-pairs.ts",
-	"mailwoman/gazetteer-pipeline/lieudit-pairs.ts",
-	"mailwoman/commands/gazetteer/pair-index.tsx",
-	"mailwoman/commands/gazetteer/postcode-binary.tsx",
-	"mailwoman/out/gazetteer-pipeline/borough-pairs.js",
-	"mailwoman/out/gazetteer-pipeline/lieudit-pairs.js",
-	"mailwoman/out/commands/gazetteer/pair-index.js",
-	"mailwoman/out/commands/gazetteer/postcode-binary.js",
+	"packages/mailwoman/gazetteer-pipeline/borough-pairs.ts",
+	"packages/mailwoman/gazetteer-pipeline/lieudit-pairs.ts",
+	"packages/mailwoman/commands/gazetteer/pair-index.tsx",
+	"packages/mailwoman/commands/gazetteer/postcode-binary.tsx",
+	"packages/mailwoman/out/gazetteer-pipeline/borough-pairs.js",
+	"packages/mailwoman/out/gazetteer-pipeline/lieudit-pairs.js",
+	"packages/mailwoman/out/commands/gazetteer/pair-index.js",
+	"packages/mailwoman/out/commands/gazetteer/postcode-binary.js",
 ]
 
 /**
@@ -77,8 +77,8 @@ function postcodePipelinePaths(): string[] {
 	const root = repoRootPath()
 
 	const dirs = [
-		resolve(root, "mailwoman/gazetteer-pipeline/postcode"),
-		resolve(root, "mailwoman/out/gazetteer-pipeline/postcode"),
+		resolve(root, "packages/mailwoman/gazetteer-pipeline/postcode"),
+		resolve(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
 	]
 
 	return dirs.flatMap((dir) => {

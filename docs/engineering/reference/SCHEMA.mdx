@@ -48,7 +48,7 @@ not two: `house_number: "6220"`, `street_prefix: "SE"`, `street: "Salmon"`,
 `street_suffix: "St"`. `street` never carries the type.
 
 The instrument is the USPS Publication 28 Appendix C table in
-[`codex/us/street-suffix.ts`](../../../codex/us/street-suffix.ts) — `matchTrailingSuffix` is the one
+[`packages/codex/us/street-suffix.ts`](../../../packages/codex/us/street-suffix.ts) — `matchTrailingSuffix` is the one
 implementation, and nothing re-types the table. That table is why the split is canonical rather than
 cosmetic: canonicalization (`Aven` / `Avenu` / `Avnue` all mean `AVENUE`), abbreviation preference
 (`AVE` is what the post office prints), and the formatter's need to re-render one from the other all

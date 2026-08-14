@@ -44,7 +44,7 @@
  *   Usage:
  *     node scripts/verify-release-metadata.ts
  *     node scripts/verify-release-metadata.ts \
- *       --card neural-weights-en-us/model-card.json \
+ *       --card packages/neural-weights-en-us/model-card.json \
  *       --ledger evals/scores-by-version.json \
  *       --releases docs/records/site-2026-08/releases.mdx \
  *       --status docs/articles/status.mdx
@@ -152,10 +152,10 @@ function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 		message:
 			`evals/scores-by-version.json has NO run with model_version === "${version}".\n` +
 			`      Append it (the promotion-gate PASS prints this line pre-filled — fill --out-dir/--run-id from that run):\n` +
-			`        node mailwoman/out/cli.js eval ledger-append \\\n` +
+			`        node packages/mailwoman/out/cli.js eval ledger-append \\\n` +
 			`          --out-dir <gate-out-dir> --model-version ${version} \\\n` +
 			`          --run-id <label>-<yyyymmdd> \\\n` +
-			`          --model-path "@mailwoman/neural-weights-en-us@${version}" --card neural-weights-en-us/model-card.json`,
+			`          --model-path "@mailwoman/neural-weights-en-us@${version}" --card packages/neural-weights-en-us/model-card.json`,
 	}
 }
 
@@ -314,7 +314,7 @@ async function main() {
 	})
 
 	const options: VerifyOptions = {
-		cardPath: resolve(repoRoot, values.card ?? "neural-weights-en-us/model-card.json"),
+		cardPath: resolve(repoRoot, values.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolve(repoRoot, values.ledger ?? "evals/scores-by-version.json"),
 		releasesPath: resolve(repoRoot, values.releases ?? "docs/records/site-2026-08/releases.mdx"),
 		statusPath: resolve(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),

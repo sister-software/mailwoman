@@ -1,0 +1,74 @@
+{
+	"name": "@mailwoman/spatial",
+	"version": "9.1.0",
+	"description": "Spatial analysis, geocoding, and other geo-related utilities.",
+	"keywords": [
+		"geo",
+		"spatial"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/spatial"
+	},
+	"files": [
+		"out/",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!__snapshots__/"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		"./coordinate-bounds": {
+			"node": "./coordinate-bounds.ts",
+			"default": "./out/coordinate-bounds.js",
+			"types": "./out/coordinate-bounds.d.ts"
+		},
+		"./sdk": {
+			"node": "./sdk/index.ts",
+			"default": "./out/sdk/index.js",
+			"types": "./out/sdk/index.d.ts"
+		},
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"geo-coordinates-parser": "^1.7.4",
+		"h3-js": "^4.5.0",
+		"wkx": "^0.5.0"
+	},
+	"devDependencies": {
+		"@googlemaps/google-maps-services-js": "^3.4.2",
+		"@mailwoman/annotations": "workspace:*",
+		"@types/google.maps": "^3.65.3",
+		"type-fest": "^5.8.0"
+	},
+	"optionalDependencies": {
+		"@googlemaps/google-maps-services-js": "^3.4.2",
+		"@types/google.maps": "^3.65.3"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

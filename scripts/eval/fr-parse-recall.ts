@@ -19,8 +19,7 @@
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { frParseRecall } from "../../mailwoman/eval-harness/fr-parse-recall.ts"
+import { frParseRecall } from "mailwoman/eval-harness/fr-parse-recall"
 
 async function main(): Promise<void> {
 	const { values: args } = parseArgs({

@@ -8,7 +8,7 @@ import { existsSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
@@ -67,15 +67,15 @@ const SRC_COUNTRY = repoRootPath("data", "gazetteer", "country-surface-lexicon-v
 /**
  * Model card carrying the digests and training provenance this script verifies against.
  */
-const SRC_CARD = repoRootPath("neural-weights-en-us", "model-card.json")
+const SRC_CARD = workspacePath("neural-weights-en-us", "model-card.json")
 /**
  * Global confidence calibration emitted by the training run.
  */
-const SRC_CALIBRATION = repoRootPath("neural-weights-en-us", "calibration.json")
+const SRC_CALIBRATION = workspacePath("neural-weights-en-us", "calibration.json")
 /**
  * Per-locale confidence calibration, applied on top of the global one.
  */
-const SRC_CALIBRATION_PER_LOCALE = repoRootPath("neural-weights-en-us", "calibration-per-locale.json")
+const SRC_CALIBRATION_PER_LOCALE = workspacePath("neural-weights-en-us", "calibration-per-locale.json")
 
 for (const [src, name] of [
 	[SRC_GAZETTEER, "anchor-lexicon-v1.json"],

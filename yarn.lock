@@ -4479,9 +4479,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mailwoman/address-id@workspace:*, @mailwoman/address-id@workspace:address-id":
+"@mailwoman/address-id@workspace:*, @mailwoman/address-id@workspace:packages/address-id":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/address-id@workspace:address-id"
+  resolution: "@mailwoman/address-id@workspace:packages/address-id"
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -4491,15 +4491,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/annotations@workspace:*, @mailwoman/annotations@workspace:annotations":
+"@mailwoman/annotations@workspace:*, @mailwoman/annotations@workspace:packages/annotations":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/annotations@workspace:annotations"
+  resolution: "@mailwoman/annotations@workspace:packages/annotations"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/api-kit@workspace:*, @mailwoman/api-kit@workspace:api-kit":
+"@mailwoman/api-kit@workspace:*, @mailwoman/api-kit@workspace:packages/api-kit":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/api-kit@workspace:api-kit"
+  resolution: "@mailwoman/api-kit@workspace:packages/api-kit"
   dependencies:
     "@hono/node-server": "npm:^2.0.12"
     "@hono/zod-openapi": "npm:^1.5.1"
@@ -4508,9 +4508,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/api@workspace:*, @mailwoman/api@workspace:api":
+"@mailwoman/api@workspace:*, @mailwoman/api@workspace:packages/api":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/api@workspace:api"
+  resolution: "@mailwoman/api@workspace:packages/api"
   dependencies:
     "@hono/zod-openapi": "npm:^1.5.1"
     "@mailwoman/api-kit": "workspace:*"
@@ -4521,9 +4521,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/ban@workspace:*, @mailwoman/ban@workspace:ban":
+"@mailwoman/ban@workspace:*, @mailwoman/ban@workspace:packages/ban":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/ban@workspace:ban"
+  resolution: "@mailwoman/ban@workspace:packages/ban"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
@@ -4534,9 +4534,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/bdc@workspace:*, @mailwoman/bdc@workspace:bdc":
+"@mailwoman/bdc@workspace:*, @mailwoman/bdc@workspace:packages/bdc":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/bdc@workspace:bdc"
+  resolution: "@mailwoman/bdc@workspace:packages/bdc"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/filer": "workspace:*"
@@ -4551,9 +4551,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:cartographer":
+"@mailwoman/cartographer@workspace:*, @mailwoman/cartographer@workspace:packages/cartographer":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/cartographer@workspace:cartographer"
+  resolution: "@mailwoman/cartographer@workspace:packages/cartographer"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -4567,18 +4567,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/codex@workspace:*, @mailwoman/codex@workspace:codex":
+"@mailwoman/codex@workspace:*, @mailwoman/codex@workspace:packages/codex":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/codex@workspace:codex"
+  resolution: "@mailwoman/codex@workspace:packages/codex"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/core@workspace:*, @mailwoman/core@workspace:^, @mailwoman/core@workspace:core":
+"@mailwoman/core@workspace:*, @mailwoman/core@workspace:^, @mailwoman/core@workspace:packages/core":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/core@workspace:core"
+  resolution: "@mailwoman/core@workspace:packages/core"
   dependencies:
     "@duckdb/node-api": "npm:1.5.3-r.3"
     "@mailwoman/codex": "workspace:*"
@@ -4609,9 +4609,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/corpus@workspace:*, @mailwoman/corpus@workspace:corpus":
+"@mailwoman/corpus@workspace:*, @mailwoman/corpus@workspace:packages/corpus":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/corpus@workspace:corpus"
+  resolution: "@mailwoman/corpus@workspace:packages/corpus"
   dependencies:
     "@dsnp/parquetjs": "npm:1.8.9"
     "@mailwoman/ban": "workspace:*"
@@ -4683,9 +4683,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/fastify@workspace:fastify":
+"@mailwoman/fastify@workspace:packages/fastify":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/fastify@workspace:fastify"
+  resolution: "@mailwoman/fastify@workspace:packages/fastify"
   dependencies:
     "@mailwoman/core": "workspace:^"
     "@mailwoman/neural": "workspace:*"
@@ -4700,9 +4700,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/filer@workspace:*, @mailwoman/filer@workspace:filer":
+"@mailwoman/filer@workspace:*, @mailwoman/filer@workspace:packages/filer":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/filer@workspace:filer"
+  resolution: "@mailwoman/filer@workspace:packages/filer"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
@@ -4716,9 +4716,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:formatter":
+"@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:packages/formatter":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/formatter@workspace:formatter"
+  resolution: "@mailwoman/formatter@workspace:packages/formatter"
   dependencies:
     "@fragaria/address-formatter": "npm:^7.0.0"
     "@mailwoman/core": "workspace:*"
@@ -4742,18 +4742,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/kind-classifier@workspace:*, @mailwoman/kind-classifier@workspace:kind-classifier":
+"@mailwoman/kind-classifier@workspace:*, @mailwoman/kind-classifier@workspace:packages/kind-classifier":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/kind-classifier@workspace:kind-classifier"
+  resolution: "@mailwoman/kind-classifier@workspace:packages/kind-classifier"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/libpostal@workspace:libpostal":
+"@mailwoman/libpostal@workspace:packages/libpostal":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/libpostal@workspace:libpostal"
+  resolution: "@mailwoman/libpostal@workspace:packages/libpostal"
   dependencies:
     "@hono/zod-openapi": "npm:^1.5.1"
     "@mailwoman/api-kit": "workspace:*"
@@ -4769,17 +4769,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/locale-gate@workspace:*, @mailwoman/locale-gate@workspace:locale-gate":
+"@mailwoman/locale-gate@workspace:*, @mailwoman/locale-gate@workspace:packages/locale-gate":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/locale-gate@workspace:locale-gate"
+  resolution: "@mailwoman/locale-gate@workspace:packages/locale-gate"
   dependencies:
     "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/map-tui@workspace:*, @mailwoman/map-tui@workspace:map-tui":
+"@mailwoman/map-tui@workspace:*, @mailwoman/map-tui@workspace:packages/map-tui":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/map-tui@workspace:map-tui"
+  resolution: "@mailwoman/map-tui@workspace:packages/map-tui"
   dependencies:
     "@mapbox/vector-tile": "npm:^2.0.3"
     "@sister.software/asciify": "npm:^4.1.0"
@@ -4790,9 +4790,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/match@workspace:*, @mailwoman/match@workspace:match":
+"@mailwoman/match@workspace:*, @mailwoman/match@workspace:packages/match":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/match@workspace:match"
+  resolution: "@mailwoman/match@workspace:packages/match"
   dependencies:
     "@mailwoman/spatial": "workspace:*"
     "@types/node": "npm:>=26.1.2"
@@ -4800,9 +4800,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/mcp@workspace:mcp":
+"@mailwoman/mcp@workspace:packages/mcp":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/mcp@workspace:mcp"
+  resolution: "@mailwoman/mcp@workspace:packages/mcp"
   dependencies:
     "@mailwoman/bdc": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -4825,9 +4825,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-web@workspace:neural-web":
+"@mailwoman/neural-web@workspace:packages/neural-web":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-web@workspace:neural-web"
+  resolution: "@mailwoman/neural-web@workspace:packages/neural-web"
   dependencies:
     "@mailwoman/neural": "workspace:*"
   languageName: unknown
@@ -4841,11 +4841,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-de-de@workspace:neural-weights-de-de":
+"@mailwoman/neural-weights-de-de@workspace:packages/neural-weights-de-de":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-de-de@workspace:neural-weights-de-de"
+  resolution: "@mailwoman/neural-weights-de-de@workspace:packages/neural-weights-de-de"
   dependencies:
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -4858,68 +4859,75 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb":
+"@mailwoman/neural-weights-en-gb@workspace:packages/neural-weights-en-gb":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-en-gb@workspace:neural-weights-en-gb"
+  resolution: "@mailwoman/neural-weights-en-gb@workspace:packages/neural-weights-en-gb"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-en-in@workspace:neural-weights-en-in":
+"@mailwoman/neural-weights-en-in@workspace:packages/neural-weights-en-in":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-en-in@workspace:neural-weights-en-in"
+  resolution: "@mailwoman/neural-weights-en-in@workspace:packages/neural-weights-en-in"
   dependencies:
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-en-nz@workspace:neural-weights-en-nz":
+"@mailwoman/neural-weights-en-nz@workspace:packages/neural-weights-en-nz":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-en-nz@workspace:neural-weights-en-nz"
+  resolution: "@mailwoman/neural-weights-en-nz@workspace:packages/neural-weights-en-nz"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-en-us@workspace:*, @mailwoman/neural-weights-en-us@workspace:neural-weights-en-us":
+"@mailwoman/neural-weights-en-us@workspace:*, @mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-en-us@workspace:neural-weights-en-us"
+  resolution: "@mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-es-es@workspace:neural-weights-es-es":
+"@mailwoman/neural-weights-es-es@workspace:packages/neural-weights-es-es":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-es-es@workspace:neural-weights-es-es"
+  resolution: "@mailwoman/neural-weights-es-es@workspace:packages/neural-weights-es-es"
   dependencies:
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr":
+"@mailwoman/neural-weights-fr-fr@workspace:packages/neural-weights-fr-fr":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-fr-fr@workspace:neural-weights-fr-fr"
+  resolution: "@mailwoman/neural-weights-fr-fr@workspace:packages/neural-weights-fr-fr"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural-weights-it-it@workspace:neural-weights-it-it":
+"@mailwoman/neural-weights-it-it@workspace:packages/neural-weights-it-it":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural-weights-it-it@workspace:neural-weights-it-it"
+  resolution: "@mailwoman/neural-weights-it-it@workspace:packages/neural-weights-it-it"
   dependencies:
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/neural@workspace:*, @mailwoman/neural@workspace:neural":
+"@mailwoman/neural@workspace:*, @mailwoman/neural@workspace:packages/neural":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/neural@workspace:neural"
+  resolution: "@mailwoman/neural@workspace:packages/neural"
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -4940,9 +4948,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/nominatim@workspace:nominatim":
+"@mailwoman/nominatim@workspace:packages/nominatim":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/nominatim@workspace:nominatim"
+  resolution: "@mailwoman/nominatim@workspace:packages/nominatim"
   dependencies:
     "@hono/zod-openapi": "npm:^1.5.1"
     "@mailwoman/annotations": "workspace:*"
@@ -4966,15 +4974,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/normalize@workspace:*, @mailwoman/normalize@workspace:normalize":
+"@mailwoman/normalize@workspace:*, @mailwoman/normalize@workspace:packages/normalize":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/normalize@workspace:normalize"
+  resolution: "@mailwoman/normalize@workspace:packages/normalize"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/nuts-lookup@workspace:*, @mailwoman/nuts-lookup@workspace:nuts-lookup":
+"@mailwoman/nuts-lookup@workspace:*, @mailwoman/nuts-lookup@workspace:packages/nuts-lookup":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/nuts-lookup@workspace:nuts-lookup"
+  resolution: "@mailwoman/nuts-lookup@workspace:packages/nuts-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -4997,9 +5005,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/photon@workspace:photon":
+"@mailwoman/photon@workspace:packages/photon":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/photon@workspace:photon"
+  resolution: "@mailwoman/photon@workspace:packages/photon"
   dependencies:
     "@hono/zod-openapi": "npm:^1.5.1"
     "@mailwoman/annotations": "workspace:*"
@@ -5019,31 +5027,31 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/phrase-grouper@workspace:*, @mailwoman/phrase-grouper@workspace:phrase-grouper":
+"@mailwoman/phrase-grouper@workspace:*, @mailwoman/phrase-grouper@workspace:packages/phrase-grouper":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/phrase-grouper@workspace:phrase-grouper"
+  resolution: "@mailwoman/phrase-grouper@workspace:packages/phrase-grouper"
   dependencies:
     "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/poi-taxonomy@workspace:*, @mailwoman/poi-taxonomy@workspace:poi-taxonomy":
+"@mailwoman/poi-taxonomy@workspace:*, @mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/poi-taxonomy@workspace:poi-taxonomy"
+  resolution: "@mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy"
   dependencies:
     "@mailwoman/core": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/query-shape@workspace:*, @mailwoman/query-shape@workspace:query-shape":
+"@mailwoman/query-shape@workspace:*, @mailwoman/query-shape@workspace:packages/query-shape":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/query-shape@workspace:query-shape"
+  resolution: "@mailwoman/query-shape@workspace:packages/query-shape"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/react@workspace:^, @mailwoman/react@workspace:react":
+"@mailwoman/react@workspace:^, @mailwoman/react@workspace:packages/react":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/react@workspace:react"
+  resolution: "@mailwoman/react@workspace:packages/react"
   dependencies:
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
@@ -5077,18 +5085,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/record@workspace:*, @mailwoman/record@workspace:record":
+"@mailwoman/record@workspace:*, @mailwoman/record@workspace:packages/record":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/record@workspace:record"
+  resolution: "@mailwoman/record@workspace:packages/record"
   dependencies:
     "@mailwoman/formatter": "workspace:*"
     "@types/node": "npm:>=26.1.2"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/registry@workspace:*, @mailwoman/registry@workspace:registry":
+"@mailwoman/registry@workspace:*, @mailwoman/registry@workspace:packages/registry":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/registry@workspace:registry"
+  resolution: "@mailwoman/registry@workspace:packages/registry"
   dependencies:
     "@mailwoman/address-id": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -5103,9 +5111,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/resolver-wof-sqlite@workspace:*, @mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite":
+"@mailwoman/resolver-wof-sqlite@workspace:*, @mailwoman/resolver-wof-sqlite@workspace:packages/resolver-wof-sqlite":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/resolver-wof-sqlite@workspace:resolver-wof-sqlite"
+  resolution: "@mailwoman/resolver-wof-sqlite@workspace:packages/resolver-wof-sqlite"
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -5119,9 +5127,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/resolver-wof-wasm@workspace:*, @mailwoman/resolver-wof-wasm@workspace:resolver-wof-wasm":
+"@mailwoman/resolver-wof-wasm@workspace:*, @mailwoman/resolver-wof-wasm@workspace:packages/resolver-wof-wasm":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/resolver-wof-wasm@workspace:resolver-wof-wasm"
+  resolution: "@mailwoman/resolver-wof-wasm@workspace:packages/resolver-wof-wasm"
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -5131,9 +5139,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/resolver@workspace:*, @mailwoman/resolver@workspace:resolver":
+"@mailwoman/resolver@workspace:*, @mailwoman/resolver@workspace:packages/resolver":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/resolver@workspace:resolver"
+  resolution: "@mailwoman/resolver@workspace:packages/resolver"
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
@@ -5141,15 +5149,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/sentencepiece-wasm@workspace:*, @mailwoman/sentencepiece-wasm@workspace:sentencepiece-wasm":
+"@mailwoman/sentencepiece-wasm@workspace:*, @mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/sentencepiece-wasm@workspace:sentencepiece-wasm"
+  resolution: "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm"
   languageName: unknown
   linkType: soft
 
-"@mailwoman/spatial@workspace:*, @mailwoman/spatial@workspace:spatial":
+"@mailwoman/spatial@workspace:*, @mailwoman/spatial@workspace:packages/spatial":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/spatial@workspace:spatial"
+  resolution: "@mailwoman/spatial@workspace:packages/spatial"
   dependencies:
     "@googlemaps/google-maps-services-js": "npm:^3.4.2"
     "@mailwoman/annotations": "workspace:*"
@@ -5167,9 +5175,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/tiger@workspace:*, @mailwoman/tiger@workspace:tiger":
+"@mailwoman/tiger@workspace:*, @mailwoman/tiger@workspace:packages/tiger":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/tiger@workspace:tiger"
+  resolution: "@mailwoman/tiger@workspace:packages/tiger"
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -5195,9 +5203,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/timezone-lookup@workspace:*, @mailwoman/timezone-lookup@workspace:timezone-lookup":
+"@mailwoman/timezone-lookup@workspace:*, @mailwoman/timezone-lookup@workspace:packages/timezone-lookup":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/timezone-lookup@workspace:timezone-lookup"
+  resolution: "@mailwoman/timezone-lookup@workspace:packages/timezone-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
   bin:
@@ -5205,9 +5213,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/un-locode-lookup@workspace:*, @mailwoman/un-locode-lookup@workspace:un-locode-lookup":
+"@mailwoman/un-locode-lookup@workspace:*, @mailwoman/un-locode-lookup@workspace:packages/un-locode-lookup":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/un-locode-lookup@workspace:un-locode-lookup"
+  resolution: "@mailwoman/un-locode-lookup@workspace:packages/un-locode-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -5250,9 +5258,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/variant-aliases@workspace:*, @mailwoman/variant-aliases@workspace:variant-aliases":
+"@mailwoman/variant-aliases@workspace:*, @mailwoman/variant-aliases@workspace:packages/variant-aliases":
   version: 0.0.0-use.local
-  resolution: "@mailwoman/variant-aliases@workspace:variant-aliases"
+  resolution: "@mailwoman/variant-aliases@workspace:packages/variant-aliases"
   languageName: unknown
   linkType: soft
 
@@ -16488,9 +16496,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mailwoman@workspace:*, mailwoman@workspace:^, mailwoman@workspace:mailwoman":
+"mailwoman@workspace:*, mailwoman@workspace:^, mailwoman@workspace:packages/mailwoman":
   version: 0.0.0-use.local
-  resolution: "mailwoman@workspace:mailwoman"
+  resolution: "mailwoman@workspace:packages/mailwoman"
   dependencies:
     "@inkjs/ui": "npm:^2.0.0"
     "@isaacs/cliui": "npm:^9.0.0"

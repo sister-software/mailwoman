@@ -113,7 +113,7 @@ jobs:
 
       # Fail fast if the SHIPPED MODEL's metadata hasn't propagated to the human-facing surfaces
       # (ledger / releases.mdx / status.mdx — the 6.4.0 gap). Keys off the MODEL version in
-      # neural-weights-en-us/model-card.json, so a code-only release passes cleanly. Runs on dry
+      # packages/neural-weights-en-us/model-card.json, so a code-only release passes cleanly. Runs on dry
       # runs too — the dry run is the operator's last look before the real dispatch.
       - name: Verify release metadata is propagated
         run: node scripts/verify-release-metadata.ts
@@ -254,7 +254,7 @@ jobs:
       # <version> --postcodes postcode-us.bin,postcode-fr.bin --pair-indexes
       # pair-index-us.bin,pair-index-gb.bin,pair-index-nz.bin` before dispatching a real run; the gazetteer
       # lexicon is a checked-in repo file). NOTE: en-nz ships NO postcode binary — no WOF NZ
-      # postcode shard exists (see neural-weights-en-nz/model-card.json's no_postcode_bin
+      # postcode shard exists (see packages/neural-weights-en-nz/model-card.json's no_postcode_bin
       # follow-up). NOTE: postcode-gb.bin RETURNED 2026-08-06 (9.0.0, ROAD_TO_V9 A4) — the
       # v4.2.0 base trained the GB anchor slot, so the 2026-08-05 removal (#1467, untrained-slot
       # mitigation) is over. The bin is Code-Point-derived and card-gated: en-gb's card declares
@@ -286,14 +286,14 @@ jobs:
           fi
           if [ "$MISSING" = 1 ]; then
             echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
-            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes neural-weights-en-us/postcode-us.bin,neural-weights-fr-fr/postcode-fr.bin,neural-weights-en-gb/postcode-gb.bin --pair-indexes neural-weights-en-us/pair-index-us.bin,neural-weights-fr-fr/pair-index-fr.bin,neural-weights-de-de/pair-index-de.bin,neural-weights-en-in/pair-index-in.bin,neural-weights-es-es/pair-index-es.bin,neural-weights-it-it/pair-index-it.bin,neural-weights-en-gb/pair-index-gb.bin,neural-weights-en-nz/pair-index-nz.bin --fsts neural-weights-en-us/fst-en-us.bin,neural-weights-fr-fr/fst-fr-fr.bin,neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v7.json> --set-default   (RELEASING.md §3)"
+            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card packages/neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes packages/neural-weights-en-us/postcode-us.bin,packages/neural-weights-fr-fr/postcode-fr.bin,packages/neural-weights-en-gb/postcode-gb.bin --pair-indexes packages/neural-weights-en-us/pair-index-us.bin,packages/neural-weights-fr-fr/pair-index-fr.bin,packages/neural-weights-de-de/pair-index-de.bin,packages/neural-weights-en-in/pair-index-in.bin,packages/neural-weights-es-es/pair-index-es.bin,packages/neural-weights-it-it/pair-index-it.bin,packages/neural-weights-en-gb/pair-index-gb.bin,packages/neural-weights-en-nz/pair-index-nz.bin --fsts packages/neural-weights-en-us/fst-en-us.bin,packages/neural-weights-fr-fr/fst-fr-fr.bin,packages/neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v7.json> --set-default   (RELEASING.md §3)"
             exit 1
           fi
           echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
           # --retry-all-errors covers HF's transient 429 throttling of the public bucket on CI.
           CURL="curl -fSL --retry 6 --retry-delay 5 --retry-all-errors"
-          $CURL "${BASE}/model.onnx" -o neural-weights-en-us/model.onnx
-          $CURL "${BASE}/tokenizer.model" -o neural-weights-en-us/tokenizer.model
+          $CURL "${BASE}/model.onnx" -o packages/neural-weights-en-us/model.onnx
+          $CURL "${BASE}/tokenizer.model" -o packages/neural-weights-en-us/tokenizer.model
           # Soft-feed artifacts (#718/#720): the anchor channels loadFromWeights feeds by DEFAULT —
           # without them the published package warns + runs anchor-OFF (the #566/#685 OOD crater). The
           # per-country PCB1 postcode binaries are built from the WOF shard (not buildable on CI), so
@@ -302,9 +302,9 @@ jobs:
           # postcode-gb.bin returned 2026-08-06 (9.0.0): the v4.2.0 base trained the GB slot, the
           # en-gb card declares span_mode "shaped", and files[] names the bin again (the 2026-08-05
           # anchor-OFF mitigation is recorded in that card's gb_artifacts history).
-          $CURL "${BASE}/postcode-us.bin" -o neural-weights-en-us/postcode-us.bin
-          $CURL "${BASE}/postcode-fr.bin" -o neural-weights-fr-fr/postcode-fr.bin
-          $CURL "${BASE}/postcode-gb.bin" -o neural-weights-en-gb/postcode-gb.bin
+          $CURL "${BASE}/postcode-us.bin" -o packages/neural-weights-en-us/postcode-us.bin
+          $CURL "${BASE}/postcode-fr.bin" -o packages/neural-weights-fr-fr/postcode-fr.bin
+          $CURL "${BASE}/postcode-gb.bin" -o packages/neural-weights-en-gb/postcode-gb.bin
           # The placetype-pair-index binary (placetype-pair-prior arc, Task 8): built from the HM Land
           # Registry PPD tuples CSV (not buildable on CI, same story as the postcode binaries above),
           # so it rides the bucket too, via `mailwoman release hf <version> --pair-indexes
@@ -312,66 +312,66 @@ jobs:
           # fallback (unlike model.onnx/tokenizer.model below), so each overlay MUST have its own
           # copy staged. en-nz's is built from the LINZ-derived OpenAddresses countrywide CSV;
           # en-nz ships NO postcode binary (no WOF NZ shard — see its model-card follow-up).
-          $CURL "${BASE}/pair-index-us.bin" -o neural-weights-en-us/pair-index-us.bin
-          $CURL "${BASE}/pair-index-fr.bin" -o neural-weights-fr-fr/pair-index-fr.bin
-          $CURL "${BASE}/pair-index-de.bin" -o neural-weights-de-de/pair-index-de.bin
-          $CURL "${BASE}/pair-index-in.bin" -o neural-weights-en-in/pair-index-in.bin
-          $CURL "${BASE}/pair-index-es.bin" -o neural-weights-es-es/pair-index-es.bin
-          $CURL "${BASE}/pair-index-it.bin" -o neural-weights-it-it/pair-index-it.bin
-          $CURL "${BASE}/pair-index-gb.bin" -o neural-weights-en-gb/pair-index-gb.bin
-          $CURL "${BASE}/pair-index-nz.bin" -o neural-weights-en-nz/pair-index-nz.bin
+          $CURL "${BASE}/pair-index-us.bin" -o packages/neural-weights-en-us/pair-index-us.bin
+          $CURL "${BASE}/pair-index-fr.bin" -o packages/neural-weights-fr-fr/pair-index-fr.bin
+          $CURL "${BASE}/pair-index-de.bin" -o packages/neural-weights-de-de/pair-index-de.bin
+          $CURL "${BASE}/pair-index-in.bin" -o packages/neural-weights-en-in/pair-index-in.bin
+          $CURL "${BASE}/pair-index-es.bin" -o packages/neural-weights-es-es/pair-index-es.bin
+          $CURL "${BASE}/pair-index-it.bin" -o packages/neural-weights-it-it/pair-index-it.bin
+          $CURL "${BASE}/pair-index-gb.bin" -o packages/neural-weights-en-gb/pair-index-gb.bin
+          $CURL "${BASE}/pair-index-nz.bin" -o packages/neural-weights-en-nz/pair-index-nz.bin
           # Per-locale FST gazetteers (#1318 FST-distribution): each weights package declares its own
           # fst-<locale>.bin in files[]; copy-weights is SKIPPED on CI (MAILWOMAN_SKIP_WEIGHTS_COPY=1)
           # so — like the postcode/pair-index binaries — they ride the HF bucket and are fetched by
           # their LOWERCASE npm basename. Staged via `mailwoman release hf <version> --fsts …`. en-nz
           # ships no FST (no gazetteer bias for NZ — byte-stable).
-          $CURL "${BASE}/fst-en-us.bin" -o neural-weights-en-us/fst-en-us.bin
-          $CURL "${BASE}/fst-fr-fr.bin" -o neural-weights-fr-fr/fst-fr-fr.bin
-          $CURL "${BASE}/fst-en-gb.bin" -o neural-weights-en-gb/fst-en-gb.bin
+          $CURL "${BASE}/fst-en-us.bin" -o packages/neural-weights-en-us/fst-en-us.bin
+          $CURL "${BASE}/fst-fr-fr.bin" -o packages/neural-weights-fr-fr/fst-fr-fr.bin
+          $CURL "${BASE}/fst-en-gb.bin" -o packages/neural-weights-en-gb/fst-en-gb.bin
           # Street-morphology FST (locale-GENERAL, survey #1 2026-07-26): one artifact, copied into
           # every weights package that lists it in files[] (the loader resolves via baseWeights, but
           # each package ships its own copy so a standalone install carries the browser gate).
-          $CURL "${BASE}/fst-street-morphology.bin" -o neural-weights-en-us/fst-street-morphology.bin
-          cp neural-weights-en-us/fst-street-morphology.bin neural-weights-fr-fr/fst-street-morphology.bin
-          cp neural-weights-en-us/fst-street-morphology.bin neural-weights-en-gb/fst-street-morphology.bin
-          cp neural-weights-en-us/fst-street-morphology.bin neural-weights-en-nz/fst-street-morphology.bin
+          $CURL "${BASE}/fst-street-morphology.bin" -o packages/neural-weights-en-us/fst-street-morphology.bin
+          cp packages/neural-weights-en-us/fst-street-morphology.bin packages/neural-weights-fr-fr/fst-street-morphology.bin
+          cp packages/neural-weights-en-us/fst-street-morphology.bin packages/neural-weights-en-gb/fst-street-morphology.bin
+          cp packages/neural-weights-en-us/fst-street-morphology.bin packages/neural-weights-en-nz/fst-street-morphology.bin
           # Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type (repo-derived, small) +
           # locality-surface (data-root artifact, ~7 MB). Every locale package ships both — the shared
           # base model carries the channels, and the card's requires would fail closed on a missing
           # sibling. Staged via `mailwoman release hf <version> --street-type-lexicon … --locality-surface-lexicon …`.
-          $CURL "${BASE}/street-type-lexicon-v3.json" -o neural-weights-en-us/street-type-lexicon-v3.json
-          $CURL "${BASE}/locality-surface-lexicon-v7.json" -o neural-weights-en-us/locality-surface-lexicon-v7.json
+          $CURL "${BASE}/street-type-lexicon-v3.json" -o packages/neural-weights-en-us/street-type-lexicon-v3.json
+          $CURL "${BASE}/locality-surface-lexicon-v7.json" -o packages/neural-weights-en-us/locality-surface-lexicon-v7.json
           for ws in neural-weights-fr-fr neural-weights-en-gb neural-weights-en-nz; do
-            cp neural-weights-en-us/street-type-lexicon-v3.json "$ws/street-type-lexicon-v3.json"
-            cp neural-weights-en-us/locality-surface-lexicon-v7.json "$ws/locality-surface-lexicon-v7.json"
+            cp packages/neural-weights-en-us/street-type-lexicon-v3.json "$ws/street-type-lexicon-v3.json"
+            cp packages/neural-weights-en-us/locality-surface-lexicon-v7.json "$ws/locality-surface-lexicon-v7.json"
           done
           # fr-fr, en-gb, and en-nz share the en-us model for now (locale-specific weights are future work).
-          cp neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx
-          cp neural-weights-en-us/tokenizer.model neural-weights-fr-fr/tokenizer.model
-          cp neural-weights-en-us/model.onnx neural-weights-en-gb/model.onnx
-          cp neural-weights-en-us/tokenizer.model neural-weights-en-gb/tokenizer.model
-          cp neural-weights-en-us/model.onnx neural-weights-en-nz/model.onnx
-          cp neural-weights-en-us/tokenizer.model neural-weights-en-nz/tokenizer.model
+          cp packages/neural-weights-en-us/model.onnx packages/neural-weights-fr-fr/model.onnx
+          cp packages/neural-weights-en-us/tokenizer.model packages/neural-weights-fr-fr/tokenizer.model
+          cp packages/neural-weights-en-us/model.onnx packages/neural-weights-en-gb/model.onnx
+          cp packages/neural-weights-en-us/tokenizer.model packages/neural-weights-en-gb/tokenizer.model
+          cp packages/neural-weights-en-us/model.onnx packages/neural-weights-en-nz/model.onnx
+          cp packages/neural-weights-en-us/tokenizer.model packages/neural-weights-en-nz/tokenizer.model
           # The gazetteer-anchor lexicon is a checked-in repo artifact — copy it into every package
           # (no bucket dependency); matches release.config.json softFeed.gazetteerLexicon + copy-weights.
-          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-us/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-gb/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json neural-weights-en-nz/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-us/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-fr-fr/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-gb/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-nz/anchor-lexicon-v1.json
           # The country-surface lexicon (#1104) — same story: a checked-in repo artifact the country channel
           # feeds when the card carries requires.country. Copy into every package (matches softFeed.countryLexicon).
-          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-us/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-gb/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json neural-weights-en-nz/country-surface-lexicon-v1.json
-          for f in neural-weights-en-us/model.onnx neural-weights-fr-fr/model.onnx neural-weights-en-gb/model.onnx neural-weights-en-nz/model.onnx \
-                   neural-weights-en-us/postcode-us.bin neural-weights-fr-fr/postcode-fr.bin \
-                   neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-de-de/pair-index-de.bin neural-weights-en-in/pair-index-in.bin neural-weights-es-es/pair-index-es.bin neural-weights-it-it/pair-index-it.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin \
-                   neural-weights-en-us/anchor-lexicon-v1.json neural-weights-fr-fr/anchor-lexicon-v1.json neural-weights-en-gb/anchor-lexicon-v1.json neural-weights-en-nz/anchor-lexicon-v1.json \
-                   neural-weights-en-us/country-surface-lexicon-v1.json neural-weights-fr-fr/country-surface-lexicon-v1.json neural-weights-en-gb/country-surface-lexicon-v1.json neural-weights-en-nz/country-surface-lexicon-v1.json; do
+          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-us/country-surface-lexicon-v1.json
+          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-fr-fr/country-surface-lexicon-v1.json
+          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-gb/country-surface-lexicon-v1.json
+          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-nz/country-surface-lexicon-v1.json
+          for f in packages/neural-weights-en-us/model.onnx packages/neural-weights-fr-fr/model.onnx packages/neural-weights-en-gb/model.onnx packages/neural-weights-en-nz/model.onnx \
+                   packages/neural-weights-en-us/postcode-us.bin packages/neural-weights-fr-fr/postcode-fr.bin \
+                   packages/neural-weights-en-us/pair-index-us.bin packages/neural-weights-fr-fr/pair-index-fr.bin packages/neural-weights-de-de/pair-index-de.bin packages/neural-weights-en-in/pair-index-in.bin packages/neural-weights-es-es/pair-index-es.bin packages/neural-weights-it-it/pair-index-it.bin packages/neural-weights-en-gb/pair-index-gb.bin packages/neural-weights-en-nz/pair-index-nz.bin \
+                   packages/neural-weights-en-us/anchor-lexicon-v1.json packages/neural-weights-fr-fr/anchor-lexicon-v1.json packages/neural-weights-en-gb/anchor-lexicon-v1.json packages/neural-weights-en-nz/anchor-lexicon-v1.json \
+                   packages/neural-weights-en-us/country-surface-lexicon-v1.json packages/neural-weights-fr-fr/country-surface-lexicon-v1.json packages/neural-weights-en-gb/country-surface-lexicon-v1.json packages/neural-weights-en-nz/country-surface-lexicon-v1.json; do
               [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin --pair-indexes pair-index-us.bin,pair-index-fr.bin,pair-index-de.bin,pair-index-in.bin,pair-index-es.bin,pair-index-it.bin,pair-index-gb.bin,pair-index-nz.bin)?"; exit 1; }
           done
-          ls -lh neural-weights-en-us/model.onnx neural-weights-en-us/postcode-us.bin neural-weights-en-us/pair-index-us.bin neural-weights-fr-fr/pair-index-fr.bin neural-weights-de-de/pair-index-de.bin neural-weights-en-in/pair-index-in.bin neural-weights-es-es/pair-index-es.bin neural-weights-it-it/pair-index-it.bin neural-weights-en-gb/pair-index-gb.bin neural-weights-en-nz/pair-index-nz.bin
+          ls -lh packages/neural-weights-en-us/model.onnx packages/neural-weights-en-us/postcode-us.bin packages/neural-weights-en-us/pair-index-us.bin packages/neural-weights-fr-fr/pair-index-fr.bin packages/neural-weights-de-de/pair-index-de.bin packages/neural-weights-en-in/pair-index-in.bin packages/neural-weights-es-es/pair-index-es.bin packages/neural-weights-it-it/pair-index-it.bin packages/neural-weights-en-gb/pair-index-gb.bin packages/neural-weights-en-nz/pair-index-nz.bin
 
       # The FETCHED pair indexes must agree with the model cards that describe them. The step above proves each file
       # EXISTS and is non-empty; this one proves it is the RIGHT one. Both are needed: a stale artifact left on the

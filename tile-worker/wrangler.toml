@@ -15,7 +15,7 @@ PMTILES_PATH = "tiles"
 routes = [{ pattern = "tiles.sister.software", custom_domain = true }]
 
 [alias]
-"@mailwoman/cartographer" = "../cartographer/index.ts"
-"@mailwoman/cartographer/tiles/coords" = "../cartographer/tiles/coords.ts"
-"@mailwoman/spatial" = "../spatial/index.ts"
-"@mailwoman/tiger" = "../tiger/index.ts"
+"@mailwoman/cartographer" = "../packages/cartographer/index.ts"
+"@mailwoman/cartographer/tiles/coords" = "../packages/cartographer/tiles/coords.ts"
+"@mailwoman/spatial" = "../packages/spatial/index.ts"
+"@mailwoman/tiger" = "../packages/tiger/index.ts"

@@ -9,5 +9,5 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../api" }, { "path": "../mailwoman" }]
+	"references": [{ "path": "../packages/api" }, { "path": "../packages/mailwoman" }]
 }

@@ -34,15 +34,15 @@ on:
     branches: [main]
     paths:
       - "docs/**"
-      - "neural-web/**"
+      - "packages/neural-web/**"
       # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
-      - "neural/**"
-      - "resolver-wof-wasm/**"
-      - "resolver-wof-sqlite/**"
-      - "resolver/**"
-      - "core/**"
-      - "spatial/**"
-      - "codex/**"
+      - "packages/neural/**"
+      - "packages/resolver-wof-wasm/**"
+      - "packages/resolver-wof-sqlite/**"
+      - "packages/resolver/**"
+      - "packages/core/**"
+      - "packages/spatial/**"
+      - "packages/codex/**"
       - "*.md"
 
 permissions:
@@ -95,15 +95,15 @@ jobs:
           filters: |
             docs:
               - "docs/**"
-              - "neural-web/**"
+              - "packages/neural-web/**"
               # the docs webpack alias compiles neural/*.ts source inline (traceParse on /trace)
-              - "neural/**"
-              - "resolver-wof-wasm/**"
-              - "resolver-wof-sqlite/**"
-              - "resolver/**"
-              - "core/**"
-              - "spatial/**"
-              - "codex/**"
+              - "packages/neural/**"
+              - "packages/resolver-wof-wasm/**"
+              - "packages/resolver-wof-sqlite/**"
+              - "packages/resolver/**"
+              - "packages/core/**"
+              - "packages/spatial/**"
+              - "packages/codex/**"
               - "*.md"
 
       - name: Setup Node

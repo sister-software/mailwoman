@@ -190,7 +190,7 @@ jobs:
       #   compile after restore   15.9s
       #
       # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
       # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
@@ -210,6 +210,7 @@ jobs:
         with:
           path: |
             */out
+            packages/*/out
           key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
 
       - name: Setup Node
@@ -308,7 +309,7 @@ jobs:
       #   compile after restore   15.9s
       #
       # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
       # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
@@ -328,6 +329,7 @@ jobs:
         with:
           path: |
             */out
+            packages/*/out
           key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
 
       - name: Setup Node
@@ -387,7 +389,7 @@ jobs:
       #   compile after restore   15.9s
       #
       # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
       # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
@@ -407,6 +409,7 @@ jobs:
         with:
           path: |
             */out
+            packages/*/out
           key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
 
       - name: Setup Node
@@ -468,10 +471,10 @@ jobs:
         with:
           filters: |
             lexicon:
-              - 'mailwoman/gazetteer-pipeline/**'
+              - 'packages/mailwoman/gazetteer-pipeline/**'
               - 'data/gazetteer/**'
-              - 'core/data/libpostal/**'
-              - 'codex/**'
+              - 'packages/core/data/libpostal/**'
+              - 'packages/codex/**'
 
       # A gate that silently means less while reporting the same is worse than one that is honestly
       # unavailable — the rule the data-fleet skip path already follows. When this holds the build
@@ -538,7 +541,7 @@ jobs:
       #   compile after restore   15.9s
       #
       # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
       # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
@@ -558,6 +561,7 @@ jobs:
         with:
           path: |
             */out
+            packages/*/out
           key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -598,7 +602,7 @@ jobs:
       #   compile after restore   15.9s
       #
       # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
       # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
@@ -618,6 +622,7 @@ jobs:
         with:
           path: |
             */out
+            packages/*/out
           key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
 
       - name: Setup Node
@@ -686,47 +691,47 @@ jobs:
           filters: |
             smoke:
               # --- Published workspace source (WORKSPACES dict in smoke-clean-install.ts) ---
-              - 'core/**'
-              - 'spatial/**'
-              - 'resolver/**'
-              - 'resolver-wof-sqlite/**'
-              - 'ban/**'
-              - 'codex/**'
-              - 'poi-taxonomy/**'
-              - 'kind-classifier/**'
-              - 'react/**'
-              - 'locale-gate/**'
-              - 'normalize/**'
-              - 'phrase-grouper/**'
-              - 'query-shape/**'
-              - 'sentencepiece-wasm/**'
-              - 'neural/**'
-              - 'neural-weights-en-us/**'
-              - 'neural-weights-fr-fr/**'
-              - 'neural-weights-en-gb/**'
-              - 'neural-weights-en-nz/**'
-              - 'variant-aliases/**'
-              - 'tiger/**'
-              - 'formatter/**'
-              - 'record/**'
-              - 'match/**'
-              - 'registry/**'
-              - 'address-id/**'
-              - 'corpus/**'
-              - 'mailwoman/**'
-              - 'annotations/**'
-              - 'timezone-lookup/**'
-              - 'un-locode-lookup/**'
-              - 'nuts-lookup/**'
-              - 'api-kit/**'
-              - 'api/**'
-              - 'libpostal/**'
-              - 'photon/**'
-              - 'nominatim/**'
-              - 'fastify/**'
-              - 'mcp/**'
-              - 'bdc/**'
-              - 'filer/**'
+              - 'packages/core/**'
+              - 'packages/spatial/**'
+              - 'packages/resolver/**'
+              - 'packages/resolver-wof-sqlite/**'
+              - 'packages/ban/**'
+              - 'packages/codex/**'
+              - 'packages/poi-taxonomy/**'
+              - 'packages/kind-classifier/**'
+              - 'packages/react/**'
+              - 'packages/locale-gate/**'
+              - 'packages/normalize/**'
+              - 'packages/phrase-grouper/**'
+              - 'packages/query-shape/**'
+              - 'packages/sentencepiece-wasm/**'
+              - 'packages/neural/**'
+              - 'packages/neural-weights-en-us/**'
+              - 'packages/neural-weights-fr-fr/**'
+              - 'packages/neural-weights-en-gb/**'
+              - 'packages/neural-weights-en-nz/**'
+              - 'packages/variant-aliases/**'
+              - 'packages/tiger/**'
+              - 'packages/formatter/**'
+              - 'packages/record/**'
+              - 'packages/match/**'
+              - 'packages/registry/**'
+              - 'packages/address-id/**'
+              - 'packages/corpus/**'
+              - 'packages/mailwoman/**'
+              - 'packages/annotations/**'
+              - 'packages/timezone-lookup/**'
+              - 'packages/un-locode-lookup/**'
+              - 'packages/nuts-lookup/**'
+              - 'packages/api-kit/**'
+              - 'packages/api/**'
+              - 'packages/libpostal/**'
+              - 'packages/photon/**'
+              - 'packages/nominatim/**'
+              - 'packages/fastify/**'
+              - 'packages/mcp/**'
+              - 'packages/bdc/**'
+              - 'packages/filer/**'
               # --- Smoke script + packaging pipeline ---
               - 'scripts/smoke-clean-install.ts'
               - 'scripts/pack-workspace.ts'
@@ -749,7 +754,7 @@ jobs:
       #   compile after restore   15.9s
       #
       # So ~31s a leg. It does NOT go to zero: `tsc -b` still stats the whole project graph. The
-      # .tsbuildinfo files live INSIDE out/, so `*/out` is the whole payload.
+      # .tsbuildinfo files live INSIDE out/, so `*/out` plus `packages/*/out` is the whole payload.
       #
       # NO restore-keys, deliberately. A partial restore would leave a stale out/ that `tsc -b` may
       # accept as current — the stale-artifact shape this repo has been bitten by before (the
@@ -770,6 +775,7 @@ jobs:
         with:
           path: |
             */out
+            packages/*/out
           key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
 
       # Change detection replaces a trigger-level `paths:` filter (the docs-build precedent).

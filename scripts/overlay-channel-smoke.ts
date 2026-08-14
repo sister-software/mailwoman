@@ -25,14 +25,13 @@
 import { parseArgs } from "node:util"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
-import { resolveWeights } from "@mailwoman/neural/weights"
-
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
 // CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
 // that must not drift, so this repo-local diagnostic imports the module directly (same posture as
 // `scripts/probe-gb-anchor-fire.ts`).
-import { normalizeInputCase } from "../neural/case-normalize.ts"
+import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
+import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
+import { resolveWeights } from "@mailwoman/neural/weights"
 
 const { values } = parseArgs({
 	options: {

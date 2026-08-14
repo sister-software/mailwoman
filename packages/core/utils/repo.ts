@@ -1,0 +1,155 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { basename, dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
+import { createPathBuilderResolver, createPathResolver, type Join, type PathBuilder } from "path-ts"
+
+/**
+ * Aliased path to the root of the repository.
+ *
+ * @typedef {"mailwoman"} RepoRootAlias
+ */
+
+/**
+ * Compiled directory name for TS output files.
+ */
+export const OutDirectoryName = "out"
+
+export type OutDirectoryName = typeof OutDirectoryName
+
+const RepoRootAlias = "mailwoman" as const
+
+type RepoRootAlias = typeof RepoRootAlias
+
+const PathReflection = ["packages", "core", "out", "utils"] as const
+
+type PathReflection = typeof PathReflection
+
+/**
+ * The directory path of the current file, post-compilation.
+ */
+const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias, ...PathReflection], "/">
+
+/**
+ * The absolute path to the root of the repository.
+ *
+ * In compiled mode this file lives at `core/out/utils/repo.js` (so the PARENT of `utils` is `out/`) and in source mode
+ * at `core/utils/repo.ts` (the parent is `core/`). Detect the mode by checking whether the parent directory
+ * (`resolve("..")`) is `out/` — uses `basename` on the resolved path rather than a substring match on `__dirname`, so
+ * it survives symlinks and output-directory renames.
+ *
+ * (Earlier this checked `resolve("..", "..")`, which overshoots `out/` to `core/` and so was always false — the
+ * compiled tree then resolved `CorePackageAbsolutePath` to `core/out` instead of `core/`, landing dictionary reads at
+ * the nonexistent `core/out/data` and requiring an external symlink bridge to find `core/data`. #481.)
+ *
+ * WHY NOT NATIVE RESOLUTION (2026-08-05 triage). `node:module`'s `findPackageJSON` looks like it retires this
+ * arithmetic, and for HALF of it, it would: measured, `dirname(findPackageJSON(import.meta.url))` yields `core/` from
+ * BOTH `core/utils/repo.ts` and `core/out/utils/repo.js` (tsc emits no `core/out/package.json`, so the upward walk
+ * lands in the same place from either depth) — i.e. it computes {@link CorePackageAbsolutePath} with no
+ * `__isCompiledTree` at all. Two things stop it.
+ *
+ * First, it only covers that half. {@link RepoRootAbsolutePath} is the MONOREPO root, which is not a package on any
+ * resolution path from here — no native resolver can name it — so the flag survives for `__upCount` regardless. The
+ * arithmetic does not go away; it stops being shared by two consumers, which is worse, not better.
+ *
+ * Second, this module is reachable from a BUNDLED graph — `core/resources/libpostal.ts` imports it and
+ * `@mailwoman/core/resources` is a webpack alias in the demo — and that build resolves every `node:` specifier to an
+ * empty shim (`docs/plugins/demo-assets/plugin.ts`: a `NormalModuleReplacementPlugin(/^node:/)` plus a `fallback` map
+ * that lists `node:module` right beside `node:path` and `node:url`). A shimmed builtin fails SILENTLY — the import
+ * succeeds and the binding is `undefined` — so anything new taken from `node:` here would be an undefined call at
+ * module top level rather than a resolution error someone sees. The current code takes only what already survives that
+ * treatment. Keep the string arithmetic.
+ */
+const __isCompiledTree = basename(resolve(__dirname, "..")) === OutDirectoryName
+const __upCount = __isCompiledTree ? PathReflection.length : PathReflection.length - 1
+const RepoRootAbsolutePath = resolve(__dirname, ...Array.from({ length: __upCount }, () => ".."))
+const PackagesAbsolutePath = resolve(RepoRootAbsolutePath, "packages")
+
+type RepoRootAbsolutePath = RepoRootAlias
+
+/**
+ * Path builder relative to the repo root.
+ */
+export const repoRootPathBuilder = createPathBuilderResolver<RepoRootAlias>(RepoRootAbsolutePath)
+
+/**
+ * Absolute-path-string resolver relative to the repo root — the string-returning sibling of {@link repoRootPathBuilder},
+ * for handing paths straight to `node:fs` and other string APIs without a `.toString()`.
+ */
+export const repoRootPath = createPathResolver<RepoRootAlias>(RepoRootAbsolutePath)
+
+/**
+ * Path builder relative to the directory containing the public workspaces.
+ */
+export const workspacePathBuilder = createPathBuilderResolver<RepoRootAlias>(PackagesAbsolutePath)
+
+/**
+ * Absolute-path-string resolver relative to the directory containing the public workspaces.
+ */
+export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsolutePath)
+
+/**
+ * Path builder relative to the `@mailwoman/core` workspace root (the directory containing `package.json` for this
+ * package).
+ *
+ * In compiled mode this resolves to `core/` (one level above `core/out/utils/repo.js`'s `out/`). In source mode it's
+ * the same `core/` directly above `core/utils/repo.ts`. Used to locate package-bundled assets (dictionary data) that
+ * live under the workspace root, NOT the repo root — so that `npm install @mailwoman/core` ships those assets alongside
+ * the JS without any post-install copy step.
+ */
+const CorePackageAbsolutePath = resolve(__dirname, "..", __isCompiledTree ? ".." : "")
+/**
+ * Path builder rooted at `@mailwoman/core`, so data under `core/data/` resolves the same in source and compiled trees.
+ * See the `__isCompiledTree` note in this file before reaching across that boundary.
+ */
+export const corePackagePathBuilder = createPathBuilderResolver<RepoRootAlias>(CorePackageAbsolutePath)
+
+/**
+ * Absolute-path-string resolver relative to the `@mailwoman/core` workspace root — the string-returning sibling of
+ * {@link corePackagePathBuilder}.
+ */
+export const corePackagePath = createPathResolver<RepoRootAlias>(CorePackageAbsolutePath)
+
+/**
+ * Path builder relative to a specific package's output directory.
+ */
+export function tsOutPathBuilder<S extends string[]>(
+	...pathSegments: S
+): PathBuilder<Join<[RepoRootAlias, OutDirectoryName, ...S], "/">> {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return repoRootPathBuilder(OutDirectoryName, ...pathSegments) as any
+}
+
+export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal" | "whosonfirst"
+
+/**
+ * Path builder relative to a address resource dictionary directory.
+ *
+ * Data lives at `core/data/<resource>/dictionaries/...` so the @mailwoman/core npm package ships dictionaries via its
+ * `files` glob. Use {@link corePackagePathBuilder} directly for non- dictionary assets (e.g. chromium-i18n/ssl-address)
+ * that don't have the `dictionaries/` subdir.
+ */
+export function resourceDictionaryPathBuilder<A extends AddressResource, S extends string[]>(
+	resource: A,
+	...pathSegments: S
+) {
+	return corePackagePathBuilder("data", resource, "dictionaries", ...pathSegments)
+}
+
+/**
+ * Absolute-path-string resolver for an address resource dictionary directory — the string-returning sibling of
+ * {@link resourceDictionaryPathBuilder}.
+ */
+export function resourceDictionaryPath<A extends AddressResource, S extends string[]>(resource: A, ...pathSegments: S) {
+	return corePackagePath("data", resource, "dictionaries", ...pathSegments)
+}
+
+/**
+ * Absolute path to the test directory.
+ */
+export const functionTestsDirectory = repoRootPathBuilder("test")
