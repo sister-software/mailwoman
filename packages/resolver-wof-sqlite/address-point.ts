@@ -23,7 +23,7 @@ import type { AddressPointTable } from "./address-point-schema.ts"
 import { hasTable } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
-	normalizeStreetForKeyLocale,
+	streetKeyVariants,
 	stripArrondissement,
 	type StreetLocale,
 } from "./street-normalize.ts"
@@ -84,11 +84,48 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 	}): AddressPointHit | null {
 		if (!this.#byPostcode || !this.#byLocality || !this.#byBbox) return null
-		const streetNorm = normalizeStreetForKeyLocale(query.street, this.#locale)
 		const number = query.number.trim().toLowerCase()
 
-		if (!streetNorm || !number) return null
+		if (!number) return null
 
+		// Key-variant ladder (see `streetKeyVariants`): the literal key first, then the doubled-type
+		// collapse and the saint↔st register swap — each variant runs the FULL number ladder below, and
+		// the first variant to answer wins, so an attested literal key is never second-guessed.
+		let row: AddressPointRow | undefined
+
+		for (const streetNorm of streetKeyVariants(query.street, this.#locale)) {
+			row = this.#findForKey(streetNorm, number, query)
+
+			if (row) break
+		}
+
+		if (!row) return null
+
+		return {
+			lat: row.lat,
+			lon: row.lon,
+			source: row.source,
+			release: row.release,
+			...(row.locality_norm ? { localityNorm: row.locality_norm } : {}),
+			...(row.postcode ? { postcode: row.postcode } : {}),
+		}
+	}
+
+	/**
+	 * The full number ladder for ONE normalized street key: exact, then the range low-end, then letter-suffix spacing
+	 * with the base-number fall — see each rung's note in place.
+	 */
+	#findForKey(
+		streetNorm: string,
+		number: string,
+		query: {
+			street: string
+			number: string
+			postcode?: string
+			locality?: string
+			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+		}
+	) {
 		let row = this.#probe(streetNorm, number, query)
 
 		// Range-surface fallback: every register this reader serves stores ONE number per point
@@ -120,16 +157,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 			}
 		}
 
-		if (!row) return null
-
-		return {
-			lat: row.lat,
-			lon: row.lon,
-			source: row.source,
-			release: row.release,
-			...(row.locality_norm ? { localityNorm: row.locality_norm } : {}),
-			...(row.postcode ? { postcode: row.postcode } : {}),
-		}
+		return row
 	}
 
 	/**

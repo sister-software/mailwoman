@@ -176,6 +176,7 @@ export function applyInterpolation(
 	let houseNumber: AddressNode | undefined
 	let directionalUnit: AddressNode | undefined
 	let postcode: string | undefined
+	let localityCoord: { lat: number; lon: number } | undefined
 	const stack = [...roots]
 
 	while (stack.length) {
@@ -197,6 +198,13 @@ export function applyInterpolation(
 			postcode = n.value.trim()
 		}
 
+		// The resolved locality's coordinate — the `near` tie-breaker the interpolator may consult when
+		// the query carries no postcode and the covering ranges span several ZIPs (the borough-namesake
+		// class). Only a RESOLVED locality qualifies; an unresolved one contributes nothing.
+		if (n.tag === "locality" && !localityCoord && n.lat != null && n.lon != null) {
+			localityCoord = { lat: n.lat, lon: n.lon }
+		}
+
 		stack.push(...n.children)
 	}
 
@@ -204,7 +212,15 @@ export function applyInterpolation(
 
 	// The fall-through gate: an exact situs point already won — never override it with an estimate.
 	if (street.metadata?.["resolution_tier"] === "address_point") return
-	const hit = lookup.find({ street: assembleStreetValue(street, directionalUnit), number: houseNumber.value, postcode })
+
+	const near = postcode ? undefined : localityCoord
+
+	const hit = lookup.find({
+		street: assembleStreetValue(street, directionalUnit),
+		number: houseNumber.value,
+		postcode,
+		...(near ? { near } : {}),
+	})
 
 	if (!hit) return
 	// Conformal-calibrated radius (#374): the raw half-segment heuristic underestimates the true spread
