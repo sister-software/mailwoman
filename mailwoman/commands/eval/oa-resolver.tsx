@@ -90,8 +90,8 @@ interface Options {
 	interpolation?: string
 	cascade: boolean
 	dataRoot?: string
-	candidateDb?: string
-	postalCityAliasDb?: string
+	candidateDB?: string
+	postalCityAliasDB?: string
 	assembled: boolean
 	adminFst?: string
 	placeCountry: boolean

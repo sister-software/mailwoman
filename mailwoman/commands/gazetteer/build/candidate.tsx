@@ -57,7 +57,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			buildCandidate,
 			DEFAULT_ADMIN_DB,
 			foldGeonamesIntoAdmin,
-			resolveImportanceDb,
+			resolveImportanceDB,
 			resolvePostcodeShards,
 			wofDir,
 		} = await import("mailwoman/gazetteer-pipeline")
@@ -73,7 +73,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 					.filter(Boolean)
 			: DEFAULT_FOLD_COUNTRIES
 
-		let adminDb = adminIn
+		let adminDB = adminIn
 
 		if (options.fold) {
 			const foldOut = options.foldOut ?? adminIn.replace(/\.db$/, "-geonames.db")
@@ -95,16 +95,16 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 				`  folded ${f.ingested.toLocaleString()} places; place_search ${f.placeSearchRows.toLocaleString()} rows`
 			)
 
-			adminDb = foldOut
+			adminDB = foldOut
 		}
 
 		const shards = resolvePostcodeShards(undefined, root)
-		const importanceDb = options.skipImportance ? false : (options.importance ?? resolveImportanceDb(undefined, root))
+		const importanceDB = options.skipImportance ? false : (options.importance ?? resolveImportanceDB(undefined, root))
 
-		console.error(`▸ candidate build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+		console.error(`▸ candidate build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
 
-		if (importanceDb) {
-			console.error(`  importance ← ${importanceDb}`)
+		if (importanceDB) {
+			console.error(`  importance ← ${importanceDB}`)
 		} else {
 			// Say which of the two absences this is. "No importance column" from a missing artifact and
 			// from `--skip-importance` produce the same DB and want different follow-ups.
@@ -116,10 +116,10 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		const r = await buildCandidate({
-			adminDb,
+			adminDB,
 			out,
 			postcodeShards: shards,
-			importanceDb,
+			importanceDB,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 

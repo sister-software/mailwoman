@@ -32,10 +32,10 @@ const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args 
 		const { promoteCandidate, wofDir } = await import("mailwoman/gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
-		const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
-		const linkPath = promoteCandidate(candidateDb, root)
+		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const linkPath = promoteCandidate(candidateDB, root)
 
-		return { from: linkPath, to: candidateDb }
+		return { from: linkPath, to: candidateDB }
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

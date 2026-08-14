@@ -79,12 +79,12 @@ function isoSeconds(): string {
 
 export interface PostcodeLocalityKROptions {
 	geonames: string
-	adminDb: string
+	adminDB: string
 	output: string
 }
 
 export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): Promise<void> {
-	const admin = new DatabaseSync(args.adminDb)
+	const admin = new DatabaseSync(args.adminDB)
 
 	// Locality point index + id->name (romanized spr.name, for the human-readable row label).
 	const loc = admin

@@ -266,7 +266,7 @@ export interface ShardRecipeOpts {
 	 * `sub-venue`: the `poi.db` spatial layer, read for the en-US and fr-FR venue + confound pools (the two of poi.db's
 	 * four countries this shard has legs for). Default `$MAILWOMAN_DATA_ROOT/poi/poi.db`.
 	 */
-	poiDb?: string
+	poiDB?: string
 	/**
 	 * `sub-venue`: GB/US/FR address-context tuples JSONL. Default the house-venue v3 tuples
 	 * (`$MAILWOMAN_DATA_ROOT/corpus/intermediate/house-venue-tuples-v3.jsonl`); DE and ES read OpenAddresses directly.

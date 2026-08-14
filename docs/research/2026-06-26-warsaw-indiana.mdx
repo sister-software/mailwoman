@@ -29,7 +29,7 @@ If you've read [Which Berlin?](./2026-06-07-which-berlin.mdx), you know we've me
 Here's the line. When we wire the geocoder, there's a country fallback:
 
 ```ts
-const defaultCountry = resolveCandidateDbPath() ? undefined : "US"
+const defaultCountry = resolveCandidateDBPath() ? undefined : "US"
 ```
 
 It reads as harmless. "If you don't have the big ranking database loaded, assume the United States." And once upon a time it was harmless, because the model couldn't route countries on its own, so anchoring to the US was the least-bad guess for a US-centric demo.
@@ -56,7 +56,7 @@ And the measurement lied to us, the way they do when you forget to check what th
 
 The first sign was a contradiction we'd written down ourselves. The breakdown classified Poland as _coverage-absence_ — no record at all, the gazetteer doesn't have it. But two hours earlier, chasing the exonym, we'd proven the opposite by hand: `Warszawa, Poland` resolves to 52.2, 21.0, dead on. The record exists. We had a report saying "no Warsaw" sitting next to a transcript saying "here is Warsaw."
 
-Both can't be true, so one of them was measuring the wrong thing. The report was. The whole sweep had run with the candidate ranking database switched off — the same `resolveCandidateDbPath() ? … : "US"` branch from the top of this post, except this time the missing database didn't just change a fallback, it changed which resolver answered every non-US query. We'd measured the world on an engine that was never meant to answer for it, and then written the numbers down as if they were the verdict.
+Both can't be true, so one of them was measuring the wrong thing. The report was. The whole sweep had run with the candidate ranking database switched off — the same `resolveCandidateDBPath() ? … : "US"` branch from the top of this post, except this time the missing database didn't just change a fallback, it changed which resolver answered every non-US query. We'd measured the world on an engine that was never meant to answer for it, and then written the numbers down as if they were the verdict.
 
 Switch the database on and the picture moves under your feet. London, which the sweep had called a coverage gap, resolves two kilometers from the truth. So does Beijing. They were never missing; they were waiting for the index we hadn't loaded.
 

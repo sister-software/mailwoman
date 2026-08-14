@@ -159,7 +159,7 @@ export interface AblationRung {
 	placeID: number | null
 	lat: number
 	lon: number
-	radiusKm: number
+	radiusKM: number
 	radiusSource: RungRadiusSource
 }
 
@@ -375,17 +375,17 @@ export function bboxRadiusKm(place: Pick<AblationPlace, "lat" | "lon" | "bbox">)
  * The radius for one ancestry rung, and where it came from. `null` = this place cannot carry a rung (no usable bbox AND
  * no floor for its placetype) — the caller records the gap instead of inventing a number.
  */
-export function rungRadiusKm(place: AblationPlace): { radiusKm: number; radiusSource: RungRadiusSource } | null {
+export function rungRadiusKm(place: AblationPlace): { radiusKM: number; radiusSource: RungRadiusSource } | null {
 	const measured = bboxRadiusKm(place)
 	const floor = RUNG_RADIUS_FLOOR_KM[place.placetype]
 
 	if (measured != null && (floor === undefined || measured >= floor)) {
-		return { radiusKm: measured, radiusSource: "bbox" }
+		return { radiusKM: measured, radiusSource: "bbox" }
 	}
 
 	if (floor === undefined) return null
 
-	return { radiusKm: floor, radiusSource: "placetype-floor" }
+	return { radiusKM: floor, radiusSource: "placetype-floor" }
 }
 
 /**
@@ -413,7 +413,7 @@ export function ablationLadderFromChain(
 			placeID: null,
 			lat: anchor.lat,
 			lon: anchor.lon,
-			radiusKm: toleranceKm,
+			radiusKM: toleranceKm,
 			radiusSource: "row-tolerance",
 		},
 	]
@@ -434,7 +434,7 @@ export function ablationLadderFromChain(
 			continue
 		}
 
-		runningMax = Math.max(runningMax, radius.radiusKm)
+		runningMax = Math.max(runningMax, radius.radiusKM)
 
 		rungs.push({
 			depth: rungs.length,
@@ -443,7 +443,7 @@ export function ablationLadderFromChain(
 			placeID: place.id,
 			lat: place.lat,
 			lon: place.lon,
-			radiusKm: runningMax,
+			radiusKM: runningMax,
 			radiusSource: radius.radiusSource,
 		})
 	}
@@ -566,7 +566,7 @@ export function deriveExpectedRung(
 	// A surviving REGION narrows the namesake field, and it has to do so by RADIUS rather than by bbox: 39.3% of WOF
 	// regions carry a degenerate bbox, so a bbox filter would quietly stop constraining on two regions in five. The
 	// radius is the region's own rung radius — the same measured floor the ladder is built from.
-	const regionRadiusKm = regionPlace ? (rungRadiusKm(regionPlace)?.radiusKm ?? null) : null
+	const regionRadiusKm = regionPlace ? (rungRadiusKm(regionPlace)?.radiusKM ?? null) : null
 
 	const withinRegion = (places: readonly AblationPlace[]): AblationPlace[] =>
 		regionPlace && regionRadiusKm != null
@@ -754,7 +754,7 @@ export function matchRung(pinned: AblationPlace, ladder: AblationLadder): Ablati
 
 		if (containmentDepth(rung.kind) > pinDepth) continue
 
-		if (haversineKm(rung.lat, rung.lon, pinned.lat, pinned.lon) <= rung.radiusKm) return rung
+		if (haversineKm(rung.lat, rung.lon, pinned.lat, pinned.lon) <= rung.radiusKM) return rung
 	}
 
 	return null
@@ -766,7 +766,7 @@ export function matchRung(pinned: AblationPlace, ladder: AblationLadder): Ablati
  */
 export function achievedRung(lat: number, lon: number, ladder: AblationLadder): AblationRung | null {
 	for (const rung of ladder.rungs) {
-		if (haversineKm(rung.lat, rung.lon, lat, lon) <= rung.radiusKm) return rung
+		if (haversineKm(rung.lat, rung.lon, lat, lon) <= rung.radiusKM) return rung
 	}
 
 	return null
@@ -1071,7 +1071,7 @@ function describeExpected(
  * Render a ladder for the artifact — one line per rung, plus its radius and where the radius came from.
  */
 export function describeLadder(ladder: AblationLadder): string[] {
-	return ladder.rungs.map((r) => `${r.depth}:${r.kind} ${r.name} ±${r.radiusKm.toFixed(2)}km (${r.radiusSource})`)
+	return ladder.rungs.map((r) => `${r.depth}:${r.kind} ${r.name} ±${r.radiusKM.toFixed(2)}km (${r.radiusSource})`)
 }
 
 /**

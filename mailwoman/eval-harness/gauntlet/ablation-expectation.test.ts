@@ -150,12 +150,12 @@ describe("rungRadiusKm — no rung without a radius", () => {
 		})
 
 		expect(rungRadiusKm(wide)).toMatchObject({ radiusSource: "bbox" })
-		expect(rungRadiusKm(wide)!.radiusKm).toBeGreaterThan(RUNG_RADIUS_FLOOR_KM["region"]!)
+		expect(rungRadiusKm(wide)!.radiusKM).toBeGreaterThan(RUNG_RADIUS_FLOOR_KM["region"]!)
 	})
 
 	it("falls back to the measured placetype floor when the bbox is absent", () => {
 		expect(rungRadiusKm(SPRINGFIELD_IL)).toEqual({
-			radiusKm: RUNG_RADIUS_FLOOR_KM["locality"],
+			radiusKM: RUNG_RADIUS_FLOOR_KM["locality"],
 			radiusSource: "placetype-floor",
 		})
 	})
@@ -168,7 +168,7 @@ describe("rungRadiusKm — no rung without a radius", () => {
 
 describe("ablationLadderFromChain", () => {
 	it("puts the row's own answer at depth 0 with the row's own tolerance", () => {
-		expect(LADDER.rungs[0]).toMatchObject({ depth: 0, kind: "base", radiusKm: 0.5, radiusSource: "row-tolerance" })
+		expect(LADDER.rungs[0]).toMatchObject({ depth: 0, kind: "base", radiusKM: 0.5, radiusSource: "row-tolerance" })
 	})
 
 	it("walks outward, deepest first", () => {
@@ -178,7 +178,7 @@ describe("ablationLadderFromChain", () => {
 	// A gazetteer bbox that makes an ancestor TIGHTER than its child would pass the child and fail the parent for the
 	// same point, which is not a ladder.
 	it("keeps radii non-decreasing going up", () => {
-		const radii = LADDER.rungs.map((r) => r.radiusKm)
+		const radii = LADDER.rungs.map((r) => r.radiusKM)
 
 		expect(radii).toEqual(radii.toSorted((a, b) => a - b))
 	})

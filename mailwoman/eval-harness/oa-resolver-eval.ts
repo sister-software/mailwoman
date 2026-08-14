@@ -132,7 +132,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Swap the FTS backend for the byte-range candidate-table lookup (demo parity).
 	 */
-	candidateDb?: string
+	candidateDB?: string
 	/**
 	 * #718 situs-eval: grade the production coordinate cascade (per-state shards).
 	 */
@@ -227,7 +227,7 @@ export interface OAResolverEvalOptions {
 	/**
 	 * #475 opt-in postal-city alias scorer on the FTS path.
 	 */
-	postalCityAliasDb?: string
+	postalCityAliasDB?: string
 	/**
 	 * Add the `neural+anchor` row (coordinate from the postcode anchor centroid).
 	 */
@@ -521,8 +521,8 @@ function buildLocalityMatcher(adminShardPath: string) {
 	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
 	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
 	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
-	const adminDb = new DatabaseSync(adminShardPath, { readOnly: true })
-	const namesStmt = adminDb.prepare("SELECT name FROM names WHERE id = ?")
+	const adminDB = new DatabaseSync(adminShardPath, { readOnly: true })
+	const namesStmt = adminDB.prepare("SELECT name FROM names WHERE id = ?")
 	const altCache = new Map<number, Set<string>>()
 
 	const altNamesFor = (id: number): Set<string> => {
@@ -553,7 +553,7 @@ function buildLocalityMatcher(adminShardPath: string) {
 	// `Sachs`→region `Sachsen`. List-free and non-gameable — a genuinely wrong place won't carry the
 	// gold's qualifier among its ancestors. `und`/non-latin ancestor names normalize to empty under
 	// normName (Cyrillic/CJK are stripped), so the token set is latin-only without a language filter.
-	const ancestorNamesStmt = adminDb.prepare(
+	const ancestorNamesStmt = adminDB.prepare(
 		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
 			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
 	)
@@ -648,12 +648,12 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// `--address-points <db>` (#476): the street-level exact-point tier. Adds `addressPoints` to
 	// resolveOpts; the `neural+addrpt` row keeps neural's admin flags but takes the COORDINATE from
 	// the address-point hit when present (the tier's whole contribution is "where", street-level).
-	const addressPointsDb = options.addressPoints || ""
+	const addressPointsDB = options.addressPoints || ""
 	let addressPoints: AddressPointLookup | null = null
 
-	if (addressPointsDb) {
+	if (addressPointsDB) {
 		const { AddressPointSqliteLookup } = await import("@mailwoman/resolver-wof-sqlite")
-		addressPoints = new AddressPointSqliteLookup(addressPointsDb)
+		addressPoints = new AddressPointSqliteLookup(addressPointsDB)
 	}
 
 	// `--interpolation <segments-db>` (#483): the house-number interpolation tier (StreetInterpolator,
@@ -661,12 +661,12 @@ async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// from the exact point when present, else the interpolated estimate, else the admin centroid — the
 	// full street-level coordinate cascade. The delta vs `neural+addrpt` is interpolation's lift on the
 	// long tail of valid-but-unlisted numbers the exact tier misses.
-	const interpolationDb = options.interpolation || ""
+	const interpolationDB = options.interpolation || ""
 	let interpolation: InterpolationLookup | null = null
 
-	if (interpolationDb) {
+	if (interpolationDB) {
 		const { StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
-		interpolation = new StreetInterpolator({ dbPath: interpolationDb })
+		interpolation = new StreetInterpolator({ dbPath: interpolationDB })
 	}
 
 	// `--cascade` (#718 situs-eval): grade the PRODUCTION coordinate path (mailwoman/geocode-core.ts) —
@@ -809,11 +809,11 @@ export async function oaResolverEval(
 	// `--candidate-db <candidate.db>` swaps the FTS backend for the byte-range candidate-table lookup
 	// (the SAME backend + ranking the browser demo uses). This is the "CLI matches demo" gate: run the
 	// eval both ways and confirm US locality/coord don't regress before defaulting the CLI to it.
-	const candidateDb = options.candidateDb || ""
+	const candidateDB = options.candidateDB || ""
 	// `--postal-city-alias-db <db>` (#475) attaches the opt-in postal-city alias scorer on the FTS
 	// path: a user-typed postal city resolves to its geographic locality. Run the eval with and
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
-	const postalCityAliasDB = options.postalCityAliasDb || ""
+	const postalCityAliasDB = options.postalCityAliasDB || ""
 
 	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
@@ -822,15 +822,15 @@ export async function oaResolverEval(
 		? new WOFPostalCityAliasLookup({ databasePath: postalCityAliasDB })
 		: undefined
 
-	const backend = candidateDb
-		? new WOFCandidateTableLookup({ databasePath: candidateDb })
+	const backend = candidateDB
+		? new WOFCandidateTableLookup({ databasePath: candidateDB })
 		: new WOFSqlitePlaceLookup({
 				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
 				postalCityAliases,
 			})
 
-	if (candidateDb) {
-		reportError(`[backend] candidate-table lookup over ${candidateDb} (demo-parity ranking)`)
+	if (candidateDB) {
+		reportError(`[backend] candidate-table lookup over ${candidateDB} (demo-parity ranking)`)
 	}
 
 	if (postalCityAliases) {

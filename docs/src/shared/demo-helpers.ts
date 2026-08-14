@@ -41,7 +41,7 @@ export interface ReleaseInfo {
 	tokenizerVocab: number
 	steps: number
 	hasFST: boolean
-	hasWOFDb: boolean
+	hasWOFDB: boolean
 	hasAnchor?: boolean
 	hasPolygons?: boolean
 }
@@ -55,20 +55,20 @@ export interface ReleasesManifest {
 /**
  * The raw wire shape of one releases.json entry — either key generation may appear.
  */
-export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb"> {
+export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB"> {
 	hasFST?: boolean
-	hasWOFDb?: boolean
+	hasWOFDB?: boolean
 	/**
 	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
 	 *
-	 * @deprecated
+	 * @deprecated use `hasFST` instead
 	 */
 	// oxlint-disable-next-line sister-software/no-title-case-acronym
 	hasFst?: boolean
 	/**
 	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
 	 *
-	 * @deprecated
+	 * @deprecated use `hasWOFDB` instead
 	 */
 	// oxlint-disable-next-line sister-software/no-title-case-acronym
 	hasWofDb?: boolean
@@ -77,7 +77,7 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDb
 /**
  * Normalize a fetched releases.json into house-cased {@link ReleasesManifest} fields. ALL manifest consumption goes
  * through here — the wire tolerance lives in exactly one place, and everything past this boundary uses the acronym
- * convention (`hasFST` / `hasWOFDb`).
+ * convention (`hasFST` / `hasWOFDB`).
  *
  * Why the tolerance: the 2026-07-01 acronym sweep renamed the READS while the published R2 manifest kept the old keys —
  * every release read `undefined`, silently disabling the demo's WOF cascade AND the FST for three days (zero console
@@ -96,7 +96,7 @@ export function normalizeReleasesManifest(raw: {
 		releases: raw.releases.map((r) => ({
 			...r,
 			hasFST: r.hasFST ?? r.hasFst ?? false,
-			hasWOFDb: r.hasWOFDb ?? r.hasWofDb ?? false,
+			hasWOFDB: r.hasWOFDB ?? r.hasWofDb ?? false,
 		})),
 	}
 }

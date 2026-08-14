@@ -252,7 +252,7 @@ python3 scripts/publish-demo-assets-to-r2.py --src /tmp/stage --prefix mailwoman
 #    gone): mailwoman gazetteer polygons --admin <admin.db> [--countries US,DE,FR] --out wof-polygons.db
 ```
 
-`hasWofDb: true` stays in `releases.json` — the demo gates the admin tier on it, and it now means "this
+`hasWofDB: true` stays in `releases.json` — the demo gates the admin tier on it, and it now means "this
 version has admin resolution" (the version-independent candidate gazetteer always provides it). Validate
 with `cd docs && yarn build`, serve, and `MAILWOMAN_DEMO_URL=http://localhost:7770 yarn test:e2e
 test/browser/200-demo-resolve.spec.ts` (Chicago locality + ZIP-only marker must pass).

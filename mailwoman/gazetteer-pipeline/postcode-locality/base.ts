@@ -109,7 +109,7 @@ export interface PostcodeLocalityBaseOptions {
 	adminRepo?: string
 	postcodeDB?: string
 	output: string
-	radiusKm: number
+	radiusKM: number
 	maxCandidates: number
 	finalize: boolean
 }
@@ -216,7 +216,7 @@ function geojsonFiles(dir: string): string[] {
 }
 
 export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOptions): Promise<void> {
-	const { country, adminRepo, postcodeDB, output, radiusKm, maxCandidates } = args
+	const { country, adminRepo, postcodeDB, output, radiusKM, maxCandidates } = args
 
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
 
@@ -365,7 +365,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				for (const idx of grid.get(`${gx + dx}|${gy + dy}`) ?? []) {
 					const d = haversineKm(plat, plon, locs[idx]!.clat, locs[idx]!.clon)
 
-					if (d <= radiusKm) {
+					if (d <= radiusKM) {
 						cand.push({ d, idx })
 					}
 				}

@@ -40,7 +40,7 @@ export const spec = {
 } as const satisfies CommandSpec
 
 interface Options {
-	candidateDb: string
+	candidateDB: string
 	aliasDB?: string
 	postcodeLocalityDB?: string
 }
@@ -50,7 +50,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const candidateDb = options.candidateDb
+		const candidateDB = options.candidateDB
 
 		const aliasDB = options.aliasDB ?? dataRootPath("wof", "postal-city-alias-us.db")
 		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("wof", "postcode-locality-us.db")
@@ -60,7 +60,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
-		const db = new DatabaseSync(candidateDb)
+		const db = new DatabaseSync(candidateDB)
 
 		// postcode → containing locality_id (the geo-locality the postcode sits in).
 		console.error(`▸ loading postcode → locality from ${postcodeLocalityDB}`)
@@ -80,7 +80,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		pcl.close()
 
 		// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
-		console.error(`▸ loading candidate coordinates from ${candidateDb}`)
+		console.error(`▸ loading candidate coordinates from ${candidateDB}`)
 
 		const sprToPlace = new Map<number, { name: string; lat: number; lon: number }>()
 
@@ -151,7 +151,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		// closes the underlying `db` handle
 
 		const summary = [
-			`postal_city_candidate built → ${candidateDb}`,
+			`postal_city_candidate built → ${candidateDB}`,
 			`${inserted.toLocaleString()} edges inserted`,
 			`${noLocality.toLocaleString()} skipped — postcode has no containing locality in the postcode_locality shard`,
 			`${noCoord.toLocaleString()} skipped — locality not in candidate table`,

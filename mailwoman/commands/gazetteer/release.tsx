@@ -79,7 +79,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const lines: string[] = []
 
-		let adminDb = adminIn
+		let adminDB = adminIn
 
 		if (options.fold) {
 			const foldOut = adminIn.replace(/\.db$/, "-geonames.db")
@@ -96,15 +96,15 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			lines.push(`folded ${f.ingested.toLocaleString()} GeoNames places`)
-			adminDb = foldOut
+			adminDB = foldOut
 		}
 
 		const shards = resolvePostcodeShards(undefined, root)
 
-		console.error(`▸ build ← ${adminDb} (${shards.length} postcode shards; FTS baked in)`)
+		console.error(`▸ build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
 
 		const r = await buildCandidate({
-			adminDb,
+			adminDB,
 			out,
 			postcodeShards: shards,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
@@ -124,7 +124,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			console.error(`▸ publish → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`)
 
 			const p = publishGazetteer({
-				candidateDb: out,
+				candidateDB: out,
 				version,
 				uploadScript: String(repoRootPathBuilder("scripts", "publish-demo-assets-to-r2.py")),
 				resourcesFile: String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx")),

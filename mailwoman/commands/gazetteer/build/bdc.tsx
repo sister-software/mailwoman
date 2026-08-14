@@ -62,9 +62,9 @@ interface Options {
 	state: string
 	asOfDate?: string
 	out?: string
-	includeLocationIds: boolean
+	includeLocationIDs: boolean
 	providerListPath?: string
-	filerDbPath?: string
+	filerDBPath?: string
 }
 
 const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
@@ -93,7 +93,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		// starts. `populateBDCProviderTable` only runs after the availability ingest AND writeLayerManifest, so
 		// without this, a typo'd --provider-list-path would surface only at the very end of a full national
 		// build, discarding hours of work for a check that costs microseconds up front.
-		if (options.filerDbPath && !options.providerListPath) {
+		if (options.filerDBPath && !options.providerListPath) {
 			throw new Error(
 				"gazetteer build bdc: --filer-db-path was given without --provider-list-path — filer.db is only read " +
 					"to resolve a multi-FRN provider's primary FRN, so it has no effect without a provider list. Pass " +
@@ -101,17 +101,17 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		let filerDbPath: string | undefined
+		let filerDBPath: string | undefined
 
 		if (options.providerListPath) {
 			if (!existsSync(options.providerListPath)) {
 				throw new Error(`gazetteer build bdc: --provider-list-path not found: "${options.providerListPath}"`)
 			}
 
-			filerDbPath = options.filerDbPath ?? dataRootPath("filer", "filer.db")
+			filerDBPath = options.filerDBPath ?? dataRootPath("filer", "filer.db")
 
-			if (!existsSync(filerDbPath)) {
-				throw new Error(`gazetteer build bdc: filer.db not found at "${filerDbPath}" (--filer-db-path)`)
+			if (!existsSync(filerDBPath)) {
+				throw new Error(`gazetteer build bdc: filer.db not found at "${filerDBPath}" (--filer-db-path)`)
 			}
 		}
 
@@ -164,10 +164,10 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		// existsSync-validated above, so this can't ENOENT.
 		let filerDB: DatabaseClientHandle<FilerDatabase> | undefined
 
-		if (filerDbPath) {
-			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDbPath})`)
+		if (filerDBPath) {
+			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDBPath})`)
 
-			filerDB = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(filerDbPath, { readOnly: true }) })
+			filerDB = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(filerDBPath, { readOnly: true }) })
 		}
 
 		try {
@@ -176,7 +176,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 				out,
 				asOfDate,
 				buildSHA,
-				includeLocationIDs: options.includeLocationIds,
+				includeLocationIDs: options.includeLocationIDs,
 				blockCentroids: createTIGERBlockCentroidLookup(tigerDBPath),
 				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
 				filerDB,

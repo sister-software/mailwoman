@@ -42,7 +42,7 @@ export const spec = {
 interface Options {
 	wikidataDir?: string
 	extracts?: string
-	overtureDb?: string
+	overtureDB?: string
 	out: string
 }
 
@@ -70,15 +70,15 @@ const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => 
 		const { generateSubVenueLexicon, readOvertureLayerVintage, readOvertureSubVenues } =
 			await import("@mailwoman/corpus/tools")
 
-		const overtureRows = options.overtureDb
-			? await readOvertureSubVenues({ databasePath: options.overtureDb })
+		const overtureRows = options.overtureDB
+			? await readOvertureSubVenues({ databasePath: options.overtureDB })
 			: undefined
 
 		return generateSubVenueLexicon({
 			wikidataDir: options.wikidataDir,
 			extracts: parseExtracts(options.extracts),
 			overtureRows,
-			overtureVintage: options.overtureDb ? await readOvertureLayerVintage(options.overtureDb) : undefined,
+			overtureVintage: options.overtureDB ? await readOvertureLayerVintage(options.overtureDB) : undefined,
 			outPath: options.out,
 		})
 	})

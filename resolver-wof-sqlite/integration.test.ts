@@ -29,11 +29,11 @@ import { WOFSqlitePlaceLookup } from "./lookup.ts"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDb = existsSync(wofPath)
+const hasWOFDB = existsSync(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
-const describeIfWOF = describe.skipIf(!hasWOFDb)
+const describeIfWOF = describe.skipIf(!hasWOFDB)
 
 describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
 	let lookup: WOFSqlitePlaceLookup

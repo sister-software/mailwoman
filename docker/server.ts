@@ -34,6 +34,7 @@
 import { existsSync } from "node:fs"
 
 import { createMailwomanAPI } from "@mailwoman/api"
+import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { $public } from "@mailwoman/core/env"
@@ -68,10 +69,11 @@ function wofPaths() {
 	return wofShardPaths().filter((p) => existsSync(p))
 }
 
-/** Build the wired engine. `parse` + `health` always; `geocode` + `batch` only when a gazetteer resolves. */
-async function buildEngine() {
-	/** @type {import("@mailwoman/api").MailwomanAPIEngine} */
-	const engine = {
+/**
+ * Build the wired engine. `parse` + `health` always; `geocode` + `batch` only when a gazetteer resolves.
+ */
+async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() {
+	const engine: MailwomanAPIEngine<T> = {
 		health: () => ({
 			data: {
 				data_root: DATA_ROOT,
@@ -81,44 +83,45 @@ async function buildEngine() {
 
 	// Parse needs only the model weights (baked in via @mailwoman/neural-weights-en-us). Load them in
 	// their OWN try so a later gazetteer failure can never disable /v1/parse — the two are independent.
-	let classifier
+	const classifier: NeuralAddressClassifier | null = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		.then((c) => {
+			engine.parse = (address, opts) =>
+				c.parse(address, { postcodeRepair: true }).then((tree) => {
+					return {
+						input: address,
+						components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
+						tree,
+						debug: opts.debug ? decodeAsXML(tree) : undefined,
+					}
+				})
 
-	try {
-		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+			return c
+		})
+		.catch((error) => {
+			// Weights unresolvable — leave parse undefined; /v1/parse answers 501 with its existing guard.
+			console.error(`[mailwoman] neural weights not found — /v1/parse disabled (501): ${error}`)
 
-		engine.parse = async (address, opts) => {
-			const tree = await classifier.parse(address, { postcodeRepair: true })
-
-			return {
-				input: address,
-				components: decodeAsTuples(tree).map(([tag, value]) => ({ tag, value })),
-				tree,
-				debug: opts.debug ? decodeAsXML(tree) : undefined,
-			}
-		}
-	} catch (error) {
-		// Weights unresolvable — leave parse undefined; /v1/parse answers 501 with its existing guard.
-		console.error(`[mailwoman] neural weights not found — /v1/parse disabled (501): ${error}`)
-	}
+			return null
+		})
 
 	// Geocode/batch need both the weights (for the parse step) AND a gazetteer. A missing/unopenable
 	// gazetteer leaves these methods undefined so @mailwoman/api answers 503 (the clean degrade) — and,
 	// in its own try, never takes parse down with it.
 	if (classifier) {
-		const candidateDb = resolveCandidateDBPath()
+		const candidateDB = resolveCandidateDBPath()
 		const paths = wofPaths()
 
-		if (candidateDb || paths.length) {
+		if (candidateDB || paths.length) {
 			try {
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 				const backend = createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
 				const shards = new ShardProvider(resolverMod, DATA_ROOT)
 				// Candidate backend → country-agnostic (population-first, demo parity); FTS backend keeps US.
-				const defaultCountry = candidateDb ? undefined : "US"
+				const defaultCountry = candidateDB ? undefined : "US"
 
-				const oneGeocode = (address) =>
-					geocodeAddress(address, { classifier, resolver, shards: shards.for, defaultCountry })
+				const oneGeocode: GeocodeCallback<T> = (address: string) =>
+					geocodeAddress(address, { classifier, resolver, shards: shards.for, defaultCountry }) as Promise<T>
 
 				engine.geocode = async (address) => oneGeocode(address)
 
@@ -127,7 +130,7 @@ async function buildEngine() {
 					const results = new Array(inputs.length)
 
 					for (let i = 0; i < inputs.length; i++) {
-						const input = inputs[i]
+						const input = inputs[i]!
 
 						try {
 							results[i] = await oneGeocode(input)

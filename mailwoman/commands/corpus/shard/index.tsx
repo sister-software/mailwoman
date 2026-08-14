@@ -89,7 +89,7 @@ interface Options {
 	multilocaleCount?: string
 	lexicon?: string
 	extractsDir?: string
-	poiDb?: string
+	poiDB?: string
 	subVenueTuples?: string
 	negativeFraction?: string
 }
@@ -150,7 +150,7 @@ const CorpusShard: ParsedCommandComponent<Options> = ({ options, args }) => {
 			multilocaleCount: num(options.multilocaleCount),
 			lexicon: options.lexicon,
 			extractsDir: options.extractsDir,
-			poiDb: options.poiDb,
+			poiDB: options.poiDB,
 			subVenueTuples: options.subVenueTuples,
 			negativeFraction: num(options.negativeFraction),
 		}

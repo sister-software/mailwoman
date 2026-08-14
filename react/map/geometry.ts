@@ -56,16 +56,16 @@ function kmPerDegLon(lat: number): number {
 }
 
 /**
- * A closed 64-segment (65-point) GeoJSON ring of `radiusKm` around `[lon, lat]`, with latitude correction.
+ * A closed 64-segment (65-point) GeoJSON ring of `radiusKM` around `[lon, lat]`, with latitude correction.
  */
-function circleRing(lat: number, lon: number, radiusKm: number): number[][] {
+function circleRing(lat: number, lon: number, radiusKM: number): number[][] {
 	const perLon = kmPerDegLon(lat)
 	const ring: number[][] = []
 
 	for (let i = 0; i <= CIRCLE_SEGMENTS; i++) {
 		const theta = (2 * Math.PI * i) / 64
 
-		ring.push([lon + (radiusKm * Math.cos(theta)) / perLon, lat + (radiusKm * Math.sin(theta)) / KM_PER_DEG_LAT])
+		ring.push([lon + (radiusKM * Math.cos(theta)) / perLon, lat + (radiusKM * Math.sin(theta)) / KM_PER_DEG_LAT])
 	}
 
 	return ring
@@ -81,9 +81,9 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
 		? Math.hypot((bbox.maxLat - bbox.minLat) * KM_PER_DEG_LAT, (bbox.maxLon - bbox.minLon) * kmPerDegLon(lat)) / 2
 		: 3
 
-	const radiusKm = Math.min(50, Math.max(0.5, halfDiagKm))
+	const radiusKM = Math.min(50, Math.max(0.5, halfDiagKm))
 
-	return { type: "Polygon", coordinates: [circleRing(lat, lon, radiusKm)] }
+	return { type: "Polygon", coordinates: [circleRing(lat, lon, radiusKM)] }
 }
 
 /**
@@ -92,9 +92,9 @@ export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox)
  * honors small radii so an exact building reads as a tight dot (an ~8 m floor keeps a 10 m situs circle visible).
  */
 export function radiusCircleGeometry(lat: number, lon: number, radiusM: number): PlaceGeometry {
-	const radiusKm = Math.max(0.008, radiusM / 1000)
+	const radiusKM = Math.max(0.008, radiusM / 1000)
 
-	return { type: "Polygon", coordinates: [circleRing(lat, lon, radiusKm)] }
+	return { type: "Polygon", coordinates: [circleRing(lat, lon, radiusKM)] }
 }
 
 /**

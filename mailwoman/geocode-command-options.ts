@@ -11,11 +11,11 @@ export interface GeocodeCommandOptions {
 	bias?: string
 	defaultCountry?: string
 	countryScope: "auto" | "locale" | "none"
-	resolveDb?: string
-	candidateDb?: string
+	resolveDB?: string
+	candidateDB?: string
 	dataRoot: string
-	addressPointsDb?: string
-	interpolationDb?: string
+	addressPointsDB?: string
+	interpolationDB?: string
 	interpCalibration?: number
 	localeCountryPrior: boolean
 	placeCountry: boolean

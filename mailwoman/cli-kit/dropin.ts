@@ -99,7 +99,7 @@ export interface GazetteerPaths {
 	/**
 	 * The candidate gazetteer (worldwide resolution), when one was found.
 	 */
-	candidateDb: string | undefined
+	candidateDB: string | undefined
 	/**
 	 * The WOF admin FTS shards that exist on disk.
 	 */
@@ -127,13 +127,13 @@ export function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Gaz
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
 	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention
 	// path. Absent → the admin FTS shards.
-	const candidateDb = resolveCandidateDBPath(candidateDBFlag)
+	const candidateDB = resolveCandidateDBPath(candidateDBFlag)
 
-	if (!candidateDb && !wofPaths.length) {
+	if (!candidateDB && !wofPaths.length) {
 		fail(buildNoGazetteerMessage({ dataRoot: mailwomanDataRoot(), docsPath: GAZETTEER_DOCS_PATH }))
 	}
 
-	return { adminDBPath: wofPaths[0], candidateDb, wofPaths }
+	return { adminDBPath: wofPaths[0], candidateDB, wofPaths }
 }
 
 /**
@@ -147,11 +147,11 @@ export function corsBannerLine(cors: boolean): string {
  * The `wof:` + `resolver:` lines of a geocoding drop-in's startup banner — which gazetteer the process actually opened,
  * and (when it fell back to admin-only) the flag that widens it.
  */
-export function gazetteerBannerLines({ adminDBPath, candidateDb }: GazetteerPaths): string[] {
+export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPaths): string[] {
 	return [
 		`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`,
-		candidateDb
-			? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`
+		candidateDB
+			? `  resolver: candidate gazetteer (worldwide) — ${candidateDB}`
 			: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`,
 	]
 }

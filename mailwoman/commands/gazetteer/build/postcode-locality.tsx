@@ -48,13 +48,13 @@ interface Options {
 	output: string
 	country?: string
 	adminRepo?: string
-	postcodeDb?: string
-	radiusKm?: number
+	postcodeDB?: string
+	radiusKM?: number
 	maxCandidates?: number
 	finalize: boolean
 	postalNames?: string
 	geonames?: string
-	adminDb?: string
+	adminDB?: string
 	postalXML?: string
 	divisions?: string
 }
@@ -81,9 +81,9 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 				await buildPostcodeLocalityBase({
 					country: need("country", options.country),
 					adminRepo: need("admin-repo", options.adminRepo),
-					postcodeDB: need("postcode-db", options.postcodeDb),
+					postcodeDB: need("postcode-db", options.postcodeDB),
 					output: options.output,
-					radiusKm: options.radiusKm ?? 10,
+					radiusKM: options.radiusKM ?? 10,
 					maxCandidates: options.maxCandidates ?? 4,
 					finalize: false,
 				})
@@ -97,7 +97,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 					country: options.country ?? "JP",
 					postalNames: need("postal-names", options.postalNames),
 					geonames: need("geonames", options.geonames),
-					adminDb: need("admin-db", options.adminDb),
+					adminDB: need("admin-db", options.adminDB),
 					output: options.output,
 				})
 
@@ -108,7 +108,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 
 				await buildPostcodeLocalityKR({
 					geonames: need("geonames", options.geonames),
-					adminDb: need("admin-db", options.adminDb),
+					adminDB: need("admin-db", options.adminDB),
 					output: options.output,
 				})
 
@@ -120,7 +120,7 @@ const GazetteerBuildPostcodeLocality: ParsedCommandComponent<Options> = ({ optio
 				await buildPostcodeLocalityTW({
 					postalXML: need("postal-xml", options.postalXML),
 					divisions: need("divisions", options.divisions),
-					adminDb: need("admin-db", options.adminDb),
+					adminDB: need("admin-db", options.adminDB),
 					output: options.output,
 				})
 

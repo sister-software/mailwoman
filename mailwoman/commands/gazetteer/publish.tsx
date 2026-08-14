@@ -52,7 +52,7 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("mailwoman/gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
-		const candidateDb = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
 		const uploadScript = String(repoRootPathBuilder("scripts", "publish-demo-assets-to-r2.py"))
 
@@ -63,11 +63,11 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 		const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
 
 		console.error(
-			`▸ publish ${candidateDb} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
+			`▸ publish ${candidateDB} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
 		)
 
 		const r = publishGazetteer({
-			candidateDb,
+			candidateDB,
 			version,
 			uploadScript,
 			resourcesFile,

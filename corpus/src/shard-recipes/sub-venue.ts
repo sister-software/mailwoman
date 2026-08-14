@@ -826,13 +826,13 @@ function buildLegPools(
 	leg: SubVenueLeg,
 	query: PoolQuery,
 	contextByCountry: ReadonlyMap<string, LocaleBaseTuple[]>,
-	paths: { extractsDir: string; poiDb: string }
+	paths: { extractsDir: string; poiDB: string }
 ): LegPools {
 	const extractPools = leg.extract ? readExtractPools(`${paths.extractsDir}/${leg.extract}`, query) : EMPTY_NAME_POOLS
 
 	// poi.db holds four countries; only these two legs are inside it.
 	const poiPools =
-		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDb, leg.country, query) : EMPTY_NAME_POOLS
+		leg.country === "US" || leg.country === "FR" ? readPOIPools(paths.poiDB, leg.country, query) : EMPTY_NAME_POOLS
 
 	const names = mergeNamePools(extractPools, poiPools)
 	let context = contextByCountry.get(leg.country) ?? []
@@ -906,7 +906,7 @@ export const subVenueRecipe: ShardRecipe = {
 		const count = opts.count
 		const negativeFraction = opts.negativeFraction ?? DEFAULT_NEGATIVE_FRACTION
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
-		const poiDb = opts.poiDb ?? dataRootPath("poi", "poi.db")
+		const poiDB = opts.poiDB ?? dataRootPath("poi", "poi.db")
 		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
 		const lexicon: SubVenueLexiconTable = readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
@@ -937,7 +937,7 @@ export const subVenueRecipe: ShardRecipe = {
 				english: leg.english,
 			}
 
-			const pools = buildLegPools(leg, query, contextByCountry, { extractsDir, poiDb })
+			const pools = buildLegPools(leg, query, contextByCountry, { extractsDir, poiDB })
 
 			legPromoted.set(leg.locale, promoted)
 			legPools.set(leg.locale, pools)

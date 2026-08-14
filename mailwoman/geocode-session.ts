@@ -75,11 +75,11 @@ export interface GeocodeSessionOptions {
 	bias?: string
 	defaultCountry?: string
 	countryScope: "auto" | "locale" | "none"
-	resolveDb?: string
-	candidateDb?: string
+	resolveDB?: string
+	candidateDB?: string
 	dataRoot: string
-	addressPointsDb?: string
-	interpolationDb?: string
+	addressPointsDB?: string
+	interpolationDB?: string
 	interpCalibration?: number
 	localeCountryPrior: boolean
 	placeCountry: boolean
@@ -173,11 +173,11 @@ export interface GeocodeSession {
 
 //#region Path + flag helpers
 
-function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDb">): string[] {
+function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): string[] {
 	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
 	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
 	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
-	const raw = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+	const raw = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
 	const paths = (
 		raw
@@ -267,8 +267,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
-	const candidateDb = resolveCandidateDBPath(options.candidateDb, options.dataRoot)
-	const wofPath = candidateDb ? [] : resolveWOFPath(options)
+	const candidateDB = resolveCandidateDBPath(options.candidateDB, options.dataRoot)
+	const wofPath = candidateDB ? [] : resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
 	// Load the neural classifier (required for street-level; weights must be present).
@@ -302,7 +302,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, { candidateDb, dataRoot: options.dataRoot, wofPaths: wofPath })
+	const lookup = createResolverBackend(mod, { candidateDB, dataRoot: options.dataRoot, wofPaths: wofPath })
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
@@ -310,12 +310,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// normalizer, and a "us"-keyed probe against an FR shard silently misses wherever the rules diverge.
 	const explicitApLocale = options.locale.split("-")[1]?.toLowerCase() === "fr" ? ("fr" as const) : ("us" as const)
 
-	const explicitAp = options.addressPointsDb
-		? new mod.AddressPointSqliteLookup(options.addressPointsDb, { streetLocale: explicitApLocale })
+	const explicitAp = options.addressPointsDB
+		? new mod.AddressPointSqliteLookup(options.addressPointsDB, { streetLocale: explicitApLocale })
 		: undefined
 
-	const explicitIp = options.interpolationDb
-		? new mod.StreetInterpolator({ dbPath: options.interpolationDb })
+	const explicitIp = options.interpolationDB
+		? new mod.StreetInterpolator({ dbPath: options.interpolationDB })
 		: undefined
 
 	const shards: ShardResolver =
@@ -476,7 +476,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// (countriesFromPostcodeFormat returns []) so the 75008 locale-prior contract is untouched.
 		const barePostcodeFormatConflict = (): boolean => {
 			if (!isBarePostcodeTree(parsedTree)) return false
-			const inferred = resolverDefaultCountry(options, !!candidateDb)
+			const inferred = resolverDefaultCountry(options, !!candidateDB)
 
 			if (!inferred) return false
 			let postcodeValue: string | undefined
@@ -505,7 +505,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		// country and chose not to scope by it", so this is the one place that knows the value was
 		// dropped rather than never derived. Handed on as a soft prior (never a filter) when the operator
 		// opts in with --locale-country-prior; the resolver additionally ignores it under any hard scope.
-		const withheldCountry = inferredScopeOK ? undefined : resolverDefaultCountry(options, !!candidateDb)
+		const withheldCountry = inferredScopeOK ? undefined : resolverDefaultCountry(options, !!candidateDB)
 
 		const result = await geocodeAddress(input, {
 			classifier,
@@ -515,15 +515,15 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(osmProvider ? { osmShards: osmProvider.for } : {}),
 			parsedTree,
 			...(bias.length ? { bias } : {}),
-			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDb)) || undefined,
+			defaultCountry: (inferredScopeOK && resolverDefaultCountry(options, !!candidateDB)) || undefined,
 			// The street-miss fallback's #912 posture switch: explicit --default-country stays supreme
 			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
 			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
-			...(resolverDefaultCountry(options, !!candidateDb)
-				? { fuzzyCountryScope: resolverDefaultCountry(options, !!candidateDb) || undefined }
+			...(resolverDefaultCountry(options, !!candidateDB)
+				? { fuzzyCountryScope: resolverDefaultCountry(options, !!candidateDB) || undefined }
 				: {}),
 			// #42: default-ON since 2026-08-05, so only the explicit --no-postcode-country-coherence opt-out needs
 			// threading (an unset dep already reads as ON downstream).

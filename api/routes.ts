@@ -24,6 +24,7 @@ import { apiError, metricsSnapshot, recordTimed } from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
+import type { GeocodeResult } from "mailwoman/geocode-core"
 
 import type { MailwomanAPIEngine } from "./engine.ts"
 import {
@@ -39,6 +40,7 @@ import {
 	ParseRequestSchema,
 	ResolveRequestSchema,
 	ResolveResponseSchema,
+	type GeocodeOutcome,
 } from "./schema.ts"
 
 /**
@@ -261,9 +263,9 @@ function toComponentDict(components: Record<string, string | string[]>): Compone
 /**
  * Register the native `/v1` routes + `/health` + `/metrics` against an injected engine.
  */
-export function registerMailwomanAPIRoutes(
+export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = GeocodeOutcome>(
 	app: OpenAPIHono,
-	engine: MailwomanAPIEngine,
+	engine: MailwomanAPIEngine<T>,
 	options: RegisterMailwomanAPIRoutesOptions = {}
 ): void {
 	const batchMax = options.batchMax ?? DEFAULT_BATCH_MAX
@@ -284,11 +286,17 @@ export function registerMailwomanAPIRoutes(
 	app.openapi(
 		parsePostRoute,
 		async (c) => {
-			if (!engine.parse) return c.json({ error: "parse not implemented" }, 501)
+			if (!engine.parse) {
+				return c.json({ error: "parse not implemented" }, 501)
+			}
+
 			const { address, debug, input_mode } = c.req.valid("json")
 			const trimmed = address.trim()
 
-			if (!trimmed) return c.json({ error: "address is required" }, 400)
+			if (!trimmed) {
+				return c.json({ error: "address is required" }, 400)
+			}
+
 			const outcome = await engine.parse(trimmed, { debug: debug ?? false, inputMode: input_mode })
 
 			return c.json(outcome, 200)
@@ -303,29 +311,33 @@ export function registerMailwomanAPIRoutes(
 	app.openapi(
 		geocodeRoute,
 		async (c) => {
-			if (!engine.geocode) return apiError(c, 503, "geocoder not available", GEOCODER_UNAVAILABLE_DETAIL)
+			if (!engine.geocode) {
+				return apiError(c, 503, "geocoder not available", GEOCODER_UNAVAILABLE_DETAIL)
+			}
+
 			const { address, input_mode } = c.req.valid("json")
 			const trimmed = address.trim()
 
 			if (!trimmed) return c.json({ error: "address is required" }, 400)
 			const t0 = performance.now()
 
-			try {
-				const outcome = await engine.geocode(trimmed, { inputMode: input_mode })
-				recordTimed(performance.now() - t0, String(outcome["resolution_tier"] ?? "admin"))
+			return engine
+				.geocode(trimmed, { inputMode: input_mode })
+				.then((outcome) => {
+					recordTimed(performance.now() - t0, String(outcome.resolution_tier ?? "admin"))
 
-				// `GeocodeOutcome` (the engine contract) is a deliberate `Record<string, unknown>` passthrough —
-				// `GeocodeOutcomeSchema` is now a REAL typed shape (doc-accuracy only, per its own docstring), so a
-				// local cast at this wire boundary is needed, matching the established idiom below (`/v1/resolve`'s
-				// `tree as unknown as AddressTree`) for "documented wire shape looser than the domain type".
-				return c.json(outcome as unknown as z.infer<typeof GeocodeOutcomeSchema>, 200)
-			} catch (error) {
-				recordTimed(performance.now() - t0, "error")
-				throw error
-			}
+					return c.json(outcome as unknown as GeocodeOutcome, 200)
+				})
+				.catch((error) => {
+					recordTimed(performance.now() - t0, "error")
+
+					throw error
+				})
 		},
 		(result, c) => {
-			if (!result.success) return c.json({ error: "address is required" }, 400)
+			if (!result.success) {
+				return c.json({ error: "address is required" }, 400)
+			}
 
 			return undefined
 		}

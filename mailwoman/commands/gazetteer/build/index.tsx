@@ -52,7 +52,7 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		const shards = resolvePostcodeShards()
 
 		const candidate = await buildCandidate({
-			adminDb: admin.out,
+			adminDB: admin.out,
 			out: candidateOut,
 			postcodeShards: shards,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),

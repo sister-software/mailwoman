@@ -82,10 +82,10 @@ async function serve(): Promise<void> {
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
-	const { adminDBPath, candidateDb, wofPaths } = gazetteer
+	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
-	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
+	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	const postcodeOfLocality = createLocalityPostcodeLookup()

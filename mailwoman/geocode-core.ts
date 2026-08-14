@@ -24,6 +24,7 @@
 
 import { existsSync } from "node:fs"
 
+import type { GeocodeOutcome, GeocodeOutcomeLike } from "@mailwoman/api"
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -77,6 +78,9 @@ export {
  */
 export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue"
 
+/**
+ * The geocode-core result shape — the engine returns this verbatim (passthrough) to `/v1/geocode` and `/v1/batch`.
+ */
 export interface GeocodeResult {
 	input: string
 	/**
@@ -788,14 +792,14 @@ export async function parseForGeocode(
  * (admin tier even with no coordinate shards). Throws only on a fatal parse/resolve error — callers doing batch work
  * should catch per-row.
  */
-export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
+export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
 	const result = await geocodeAddressOnce(input, deps)
 
 	// Decision-A retry rider: a ZERO-HIT (no coordinate, no candidates) in a DERIVED register earns one
 	// attempt in the alternative register — a misrouted fragment/record can resolve on the flip; a
 	// second miss returns the original result. Explicit registers and caller-supplied trees are never
 	// second-guessed; the retry itself passes an explicit mode, so it cannot recurse.
-	const zeroHit = result.lat == null && result.candidates.length === 0
+	const zeroHit = result.lat == null && (!result.candidates || result.candidates.length === 0)
 
 	if (
 		zeroHit &&
@@ -810,13 +814,15 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		const flipped: InputMode = used === "formatted" ? "fragmented" : "formatted"
 		const retried = await geocodeAddressOnce(input, { ...deps, inputMode: flipped })
 
-		if (retried.lat != null || retried.candidates.length) return retried
+		if (retried.lat != null || (retried.candidates && retried.candidates.length)) {
+			return retried
+		}
 	}
 
 	return result
 }
 
-async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeResult> {
+async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
 	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
 	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
@@ -1178,7 +1184,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
  * withheld too, an explicit one supreme.
  */
 async function applyStreetMissFallback(
-	result: GeocodeResult,
+	result: GeocodeOutcomeLike,
 	ctx: {
 		tree: AddressTree
 		opts: ResolveOpts
@@ -1186,7 +1192,7 @@ async function applyStreetMissFallback(
 		input: string
 		forkDeclared: boolean
 	}
-): Promise<GeocodeResult> {
+): Promise<GeocodeOutcomeLike> {
 	const { tree, opts, deps, input, forkDeclared } = ctx
 
 	if (result.lat !== null || !deps.resolver || forkDeclared) return result
@@ -1279,7 +1285,7 @@ function assembleStreetName(streetNode: AddressNode): string {
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
-export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeResult {
+export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
 	const components = decodeAsJSON(tree)
 	const allNodes: AddressNode[] = []
 
@@ -1498,7 +1504,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		}
 	}
 
-	return {
+	const extractedOutcome: GeocodeOutcomeLike = {
 		input,
 		components,
 		lat,
@@ -1522,4 +1528,6 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeR
 		// the empty case. `geocodeAddressOnce` is the caller that classifies and fills this in.
 		intent_markers: [],
 	}
+
+	return extractedOutcome
 }

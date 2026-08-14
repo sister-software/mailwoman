@@ -51,7 +51,7 @@ function altRow(gid: string, lang: string, name: string, flags: Partial<Record<4
 	return f.join("\t")
 }
 
-function freshDb(): DatabaseSync {
+function freshDB(): DatabaseSync {
 	const db = new DatabaseSync(":memory:")
 
 	db.exec(
@@ -114,7 +114,7 @@ afterAll(() => {
 })
 
 test("V2 tags mark the official-language preferred name; transliterations and historic forms stay 0", async () => {
-	const db = freshDb()
+	const db = freshDB()
 
 	await ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: altDir })
 
@@ -134,7 +134,7 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 })
 
 test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
-	const db = freshDb()
+	const db = freshDB()
 
 	await ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: join(altDir, "nope") })
 

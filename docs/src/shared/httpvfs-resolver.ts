@@ -140,6 +140,10 @@ export interface HTTPSVFSOptions {
 	requestChunkSize?: number
 }
 
+export interface DBWorkerFactory {
+	createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS>
+}
+
 /**
  * Load the sql.js-httpvfs UMD (once) and open a DB over byte-range fetches from `dbURL`. `sqljsBaseURL` is where the
  * plugin staged the worker + wasm (e.g. "/mailwoman/sqljs").
@@ -149,19 +153,23 @@ export async function loadHTTPVFSDatabase(
 	sqljsBaseURL: string,
 	options: HTTPSVFSOptions = {}
 ): Promise<HTTPVFSWorker> {
-	const w = globalThis as unknown as { createDbWorker?: (...args: unknown[]) => Promise<RawWorkerHTTPVFS> }
+	const w = globalThis as DBWorkerFactory
 
 	if (typeof w.createDbWorker !== "function") {
 		await new Promise<void>((res, rej) => {
 			const s = document.createElement("script")
+
 			s.src = `${sqljsBaseURL}/index.js`
 			s.onload = () => res()
 			s.onerror = () => rej(new Error("sql.js-httpvfs UMD failed to load"))
+
 			document.head.appendChild(s)
 		})
 	}
 
-	if (typeof w.createDbWorker !== "function") throw new Error("createDbWorker missing after UMD load")
+	if (typeof w.createDbWorker !== "function") {
+		throw new TypeError("createDbWorker missing after UMD load")
+	}
 
 	// Open over byte-range fetches, then force the header + schema pages through SQLite with a
 	// cheap read. On mobile Safari the HTTP cache can hand sql.js-httpvfs a torn 64 KB range chunk,

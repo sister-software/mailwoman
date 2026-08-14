@@ -116,7 +116,7 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 		const wofPaths = wofShardPaths().filter(existsSync)
-		const candidateDb = resolveCandidateDBPath()
+		const candidateDB = resolveCandidateDBPath()
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
 		// `isError` tool result carrying `error.message`, so the message an agent reads IS whatever is thrown
@@ -126,7 +126,7 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 		// discovery: #1444 moved the `<data-root>/wof/candidate.db` convention fallback INTO
 		// `resolveCandidateDBPath`, so this bare call picks a pulled gazetteer up with nothing exported. The
 		// `MAILWOMAN_DATA_ROOT` in the client's `env` block is enough on its own.
-		if (!candidateDb && !wofPaths.length) {
+		if (!candidateDB && !wofPaths.length) {
 			throw new Error(
 				`${buildNoGazetteerMessage({
 					dataRoot: mailwomanDataRoot(),
@@ -135,7 +135,7 @@ function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Re
 			)
 		}
 
-		const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
+		const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
 		const resolver = createWOFResolver(backend)
 
 		// Same discipline for the model weights. `@mailwoman/neural-weights-en-us` is a declared dependency of

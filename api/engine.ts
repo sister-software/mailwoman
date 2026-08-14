@@ -10,6 +10,8 @@
 
 import type { AddressTree } from "@mailwoman/core"
 
+import type { GeocodeOutcomeLike } from "./schema.ts"
+
 /**
  * One parsed component in reading order (a `ComponentTag` + the covered text).
  */
@@ -21,22 +23,22 @@ export interface ParseComponent {
 /**
  * One parse outcome: ordered components + the full decoded tree (the same language `/v1/resolve` speaks).
  */
-export interface ParseOutcome {
+export interface ParsedAddressResult {
 	input: string
 	components: ParseComponent[]
 	tree: AddressTree
 	debug?: string
 }
 
-/**
- * A geocode outcome — the engine returns the geocode-core `GeocodeResult` shape verbatim (passthrough).
- */
-export type GeocodeOutcome = Record<string, unknown>
+export interface BatchResultFailure {
+	input: string
+	error: string
+}
 
 /**
- * A batch row: a GeocodeOutcome, or an `{ input, error }` slot (per-row isolation).
+ * A batch row slot (per-row isolation).
  */
-export type BatchRow = GeocodeOutcome | { input: string; error: string }
+export type BatchResultEntry<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike> = T | BatchResultFailure
 
 export interface ResolveTreeOutcome {
 	tree: AddressTree
@@ -53,10 +55,20 @@ export type HealthData = Record<string, unknown>
  */
 export type WireInputMode = "fragmented" | "formatted"
 
-export interface MailwomanAPIEngine {
-	parse?(address: string, opts: { debug: boolean; inputMode?: WireInputMode }): Promise<ParseOutcome>
-	geocode?(address: string, opts?: { inputMode?: WireInputMode }): Promise<GeocodeOutcome>
-	batch?(addresses: string[], opts?: { inputMode?: WireInputMode }): Promise<{ results: BatchRow[] }>
+export interface ParseInit {
+	inputMode?: WireInputMode
+	debug?: boolean
+}
+
+export type GeocodeCallback<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike> = (
+	address: string,
+	opts?: ParseInit
+) => Promise<T>
+
+export interface MailwomanAPIEngine<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike> {
+	parse?(address: string, opts: ParseInit): Promise<ParsedAddressResult>
+	geocode?: GeocodeCallback<T>
+	batch?(addresses: string[], opts?: ParseInit): Promise<{ results: BatchResultEntry<T>[] }>
 	resolveTree?(tree: AddressTree, opts: Record<string, unknown>): Promise<ResolveTreeOutcome>
 	reload?(): Promise<{ reloaded: boolean; versions: unknown }>
 	health?(): HealthData

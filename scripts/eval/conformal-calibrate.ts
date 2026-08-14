@@ -214,8 +214,8 @@ async function buildCascade(paths: {
 	tokenizerPath: string
 	modelCardPath: string
 	wofPaths: string[]
-	addressPointsDb: string
-	interpolationDb: string
+	addressPointsDB: string
+	interpolationDB: string
 }) {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
@@ -239,15 +239,15 @@ async function buildCascade(paths: {
 	return {
 		neural,
 		resolver: createWOFResolver(backend as never),
-		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDb),
-		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDb }),
+		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDB),
+		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDB }),
 	}
 }
 
 async function main(): Promise<void> {
 	const holdoutPath = values["holdout"] || tempRootPath("ood-truth.jsonl")
-	const addressPointsDb = values["address-points"] || tempRootPath("tx-situs.db")
-	const interpolationDb = values["interpolation"] || tempRootPath("tx-metro-interp.db")
+	const addressPointsDB = values["address-points"] || tempRootPath("tx-situs.db")
+	const interpolationDB = values["interpolation"] || tempRootPath("tx-metro-interp.db")
 	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
 	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
 	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
@@ -267,7 +267,7 @@ async function main(): Promise<void> {
 	const rows: HoldoutRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath))
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
-	console.error(`[conformal-calibrate] situs: ${addressPointsDb}  interp: ${interpolationDb}`)
+	console.error(`[conformal-calibrate] situs: ${addressPointsDB}  interp: ${interpolationDB}`)
 	console.error(`[conformal-calibrate] model: ${modelPath}`)
 
 	const { neural, resolver, addressPoints, interpolation } = await buildCascade({
@@ -275,8 +275,8 @@ async function main(): Promise<void> {
 		tokenizerPath,
 		modelCardPath,
 		wofPaths,
-		addressPointsDb,
-		interpolationDb,
+		addressPointsDB,
+		interpolationDB,
 	})
 
 	// --- run the cascade ---

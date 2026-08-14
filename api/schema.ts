@@ -196,56 +196,69 @@ const QueryIntentMarkerSchema = z
  * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
  * catches this shape drifting from the real `GeocodeResult` interface.
  */
-export const GeocodeOutcomeSchema = z
-	.object({
-		input: z.string(),
-		components: GeocodeComponentsSchema,
-		lat: z.number().nullable(),
-		lon: z.number().nullable(),
-		resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue"]),
-		// The fork→entity probe's answer (#1585) — present only on the `venue` tier; see geocode-core's
-		// GeocodeResult.entity.
-		entity: z
-			.object({
-				name: z.string(),
-				categoryID: z.string().nullable(),
-				confidence: z.number(),
-				country: z.string(),
-			})
-			.optional(),
-		uncertainty_m: z.number().nullable(),
-		locality: z.string().nullable(),
-		region: z.string().nullable(),
-		postcode: z.string().nullable(),
-		house_number: z.string().nullable(),
-		street: z.string().nullable(),
-		// The parsed venue span (#1041 posture; surfaced 2026-08-01 for the hierarchy-evidence campaign R1).
-		venue: z.string().nullable(),
-		// The parsed dependent-locality span (parse view; `hierarchy` is the resolved view).
-		dependent_locality: z.string().nullable(),
-		// The parsed unit / sub-venue span (parse view) — "Terminal 5", "Suite 300".
-		unit: z.string().nullable(),
-		countryCode: z.string().nullable(),
-		hierarchy: z.array(GeocodeHierarchyEntrySchema),
-		candidates: z.array(GeocodeCandidateSchema),
-		// The register row's OWN scope tags when the address_point tier answered and its shard carries
-		// them (normalized locality key + postcode of the ROOFTOP) — see geocode-core's GeocodeResult.rooftop.
-		rooftop: z
-			.object({
-				localityNorm: z.string().optional(),
-				postcode: z.string().optional(),
-			})
-			.optional(),
-		// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when it
-		// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
-		// evidence bought the change instead of reading it as a bug.
-		postcode_country_scope: z.string().nullable(),
-		// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
-		// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
-		intent_markers: z.array(QueryIntentMarkerSchema),
-	})
-	.loose()
-	.openapi("GeocodeOutcome")
+export const GeocodeOutcomeLikeSchema = z.object({
+	input: z.string(),
+	components: GeocodeComponentsSchema,
+	lat: z.number().nullable(),
+	lon: z.number().nullable(),
+	resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue"]),
+	// The fork→entity probe's answer (#1585) — present only on the `venue` tier; see geocode-core's
+	// GeocodeResult.entity.
+	entity: z
+		.object({
+			name: z.string(),
+			categoryID: z.string().nullable(),
+			confidence: z.number(),
+			country: z.string(),
+		})
+		.optional(),
+	uncertainty_m: z.number().nullable(),
+	locality: z.string().nullable(),
+	region: z.string().nullable(),
+	postcode: z.string().nullable(),
+	house_number: z.string().nullable(),
+	street: z.string().nullable(),
+	// The parsed venue span (#1041 posture; surfaced 2026-08-01 for the hierarchy-evidence campaign R1).
+	venue: z.string().nullable(),
+	// The parsed dependent-locality span (parse view; `hierarchy` is the resolved view).
+	dependent_locality: z.string().nullable(),
+	// The parsed unit / sub-venue span (parse view) — "Terminal 5", "Suite 300".
+	unit: z.string().nullable(),
+	countryCode: z.string().nullable(),
+	hierarchy: z.array(GeocodeHierarchyEntrySchema),
+	candidates: z.array(GeocodeCandidateSchema),
+	// The register row's OWN scope tags when the address_point tier answered and its shard carries
+	// them (normalized locality key + postcode of the ROOFTOP) — see geocode-core's GeocodeResult.rooftop.
+	rooftop: z
+		.object({
+			localityNorm: z.string().optional(),
+			postcode: z.string().optional(),
+		})
+		.optional(),
+	// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null ONLY when it
+	// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
+	// evidence bought the change instead of reading it as a bug.
+	postcode_country_scope: z.string().nullable(),
+	// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
+	// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
+	intent_markers: z.array(QueryIntentMarkerSchema),
+})
+
+export type GeocodeOutcomeLike = z.infer<typeof GeocodeOutcomeLikeSchema>
+
+/**
+ * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
+ * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
+ * than being stripped or rejected. DOC-ACCURACY ONLY: the route passes `engine.geocode()`'s outcome through verbatim
+ * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
+ * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
+ * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
+ * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
+ * catches this shape drifting from the real `GeocodeResult` interface.
+ */
+export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.loose().openapi("GeocodeOutcome")
+
+export type GeocodeOutcome = z.infer<typeof GeocodeOutcomeSchema>
 
 /**
  * `POST /v1/batch` request body.

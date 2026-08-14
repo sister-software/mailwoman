@@ -139,7 +139,7 @@ interface PairIndexBuildInputs {
 	 * per-locale gate rather than an oversight.
 	 */
 	parentDelta?: number
-	boroughDb?: string
+	boroughDB?: string
 	pairsJsonl?: string
 	banDir?: string
 }
@@ -433,11 +433,11 @@ async function materializePairIndex(workspace: string, dir: string) {
 	}
 
 	// Inputs resolve against DIFFERENT roots, and conflating them is a real failure mode (it broke CI once):
-	// `source` and `boroughDb` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
+	// `source` and `boroughDB` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
 	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). Absolute paths pass through untouched either way.
 	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
-	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
+	const boroughDB = entry.boroughDB ? resolveFrom(dataRoot, entry.boroughDB) : undefined
 
 	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
@@ -457,7 +457,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 
 	for (const [label, path] of [
 		["source CSV", source],
-		["borough DB", boroughDb],
+		["borough DB", boroughDB],
 
 		["BAN dir", banDir],
 	] as const) {
@@ -492,7 +492,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 			...(source ? ["--source", source] : []),
 			...(entry.transitionBeta !== undefined ? ["--transition-beta", String(entry.transitionBeta)] : []),
 			...(entry.parentDelta !== undefined ? ["--parent-delta", String(entry.parentDelta)] : []),
-			...(boroughDb ? ["--borough-db", boroughDb] : []),
+			...(boroughDB ? ["--borough-db", boroughDB] : []),
 			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
 			...(banDir ? ["--ban-dir", banDir] : []),
 		],

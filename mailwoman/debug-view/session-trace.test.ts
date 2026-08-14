@@ -23,7 +23,7 @@ import { createGeocodeSession } from "../geocode-session.ts"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDb = existsSync(wofPath)
+const hasWOFDB = existsSync(wofPath)
 
 const hasWeights = (() => {
 	try {
@@ -38,7 +38,7 @@ const hasWeights = (() => {
 const ADDRESS = "3215 SE Clinton St, Portland OR"
 const TEST_TIMEOUT_MS = 120_000
 
-describe.skipIf(!(hasWOFDb && hasWeights))("geocode session tracing", () => {
+describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 	test(
 		"records the decode that produced the tree, and resolves the same answer as an untraced session",
 		async () => {

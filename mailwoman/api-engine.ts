@@ -28,7 +28,14 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
-import type { BatchRow, GeocodeOutcome, HealthData, MailwomanAPIEngine, ResolveTreeOutcome } from "@mailwoman/api"
+import type {
+	BatchResultEntry,
+	GeocodeCallback,
+	GeocodeOutcome,
+	HealthData,
+	MailwomanAPIEngine,
+	ResolveTreeOutcome,
+} from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -188,7 +195,7 @@ function oneGeocode(
 	deps: GeocodeDepsBundle,
 	address: string,
 	inputMode?: "fragmented" | "formatted"
-): Promise<GeocodeResult> {
+): Promise<GeocodeOutcome> {
 	return geocodeAddress(address, {
 		classifier: deps.classifier,
 		resolver: deps.resolver,
@@ -295,11 +302,11 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin shard) is a valid boot
 	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight gate below checks BOTH,
-	// mirroring the drop-ins' `!candidateDb && wofPaths.length === 0` gate rather than `GeocodeRouter`'s WOF-only check.
+	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` gate rather than `GeocodeRouter`'s WOF-only check.
 	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
-	const candidateDb = resolveCandidateDBPath()
+	const candidateDB = resolveCandidateDBPath()
 
-	if (!paths.length && !candidateDb) {
+	if (!paths.length && !candidateDB) {
 		console.error("createServeEngine: no WOF DBs found — set MAILWOMAN_WOF_DB or MAILWOMAN_CANDIDATE_DB")
 
 		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
@@ -308,13 +315,12 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	const backend = createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, DATA_ROOT)
-	const deps: GeocodeDepsBundle = { classifier, resolver, shards, defaultCountry: candidateDb ? undefined : "US" }
+	const deps: GeocodeDepsBundle = { classifier, resolver, shards, defaultCountry: candidateDB ? undefined : "US" }
 
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra
 	// here. Ported from `GeocodeRouter`'s `singleHandler`. The cast mirrors `@mailwoman/api/routes.ts`'s established
 	// "documented wire shape looser than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
-	const geocode: MailwomanAPIEngine["geocode"] = async (address, opts) =>
-		(await oneGeocode(deps, address, opts?.inputMode)) as unknown as GeocodeOutcome
+	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
 	// Sequential loop — results land in input order; a thrown row is isolated to its own
 	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
@@ -329,7 +335,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		// Decision A endpoint default: batch rows are the record register.
 		const inputMode = opts?.inputMode ?? "formatted"
 		const inputs = addresses.map((a) => a.trim())
-		const results: BatchRow[] = new Array<BatchRow>(inputs.length)
+		const results: BatchResultEntry[] = new Array<BatchResultEntry>(inputs.length)
 
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i]!
@@ -338,7 +344,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			try {
 				const result = await oneGeocode(deps, input, inputMode)
 				recordTimed(performance.now() - t0, result.resolution_tier)
-				results[i] = result as unknown as GeocodeOutcome
+				results[i] = result
 			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
 				results[i] = { input, error: error instanceof Error ? error.message : String(error) }

@@ -171,7 +171,7 @@ export function resolveLocalityShards(
  * artifact on the machine that derived them, and a deployment without the file must build a candidate DB with an empty
  * `importance` column rather than fail. Absent is UNMEASURED, which is what the consumer already handles.
  */
-export function resolveImportanceDb(
+export function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
 	dataRoot: string = mailwomanDataRoot()
 ): string | undefined {
@@ -322,7 +322,7 @@ export interface BuildOptions {
 	/**
 	 * Admin DB to build the candidate from (the folded one for the durable recipe).
 	 */
-	adminDb: string
+	adminDB: string
 	/**
 	 * Candidate-DB output path.
 	 */
@@ -337,10 +337,10 @@ export interface BuildOptions {
 	 */
 	localityShards?: readonly string[]
 	/**
-	 * Score source for the `importance` column (default {@link resolveImportanceDb}). Pass `false` to build the column
+	 * Score source for the `importance` column (default {@link resolveImportanceDB}). Pass `false` to build the column
 	 * empty on purpose.
 	 */
-	importanceDb?: string | false
+	importanceDB?: string | false
 	onProgress?: (phase: string, message: string) => void
 }
 
@@ -355,10 +355,10 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// `undefined` means "use the convention"; `false` means "the caller chose an empty column". Only the
 	// second may skip the resolve — collapsing them would make a missing artifact indistinguishable from a
 	// deliberate opt-out in the build log.
-	const importance = opts.importanceDb === false ? undefined : (opts.importanceDb ?? resolveImportanceDb())
+	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? resolveImportanceDB())
 
 	const result = await buildCandidateTable({
-		input: opts.adminDb,
+		input: opts.adminDB,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		localities: [...(opts.localityShards ?? resolveLocalityShards())],
@@ -378,11 +378,11 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 }
 
 /**
- * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDb` (a symlink — a POINTER swap, never
+ * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDB` (a symlink — a POINTER swap, never
  * a DB mutation). The nominatim/photon CLIs auto-use this path. Returns the link.
  */
-export function promoteCandidate(candidateDb: string, dataRoot: string = mailwomanDataRoot()): string {
-	if (!existsSync(candidateDb)) throw new Error(`candidate DB not found: ${candidateDb}`)
+export function promoteCandidate(candidateDB: string, dataRoot: string = mailwomanDataRoot()): string {
+	if (!existsSync(candidateDB)) throw new Error(`candidate DB not found: ${candidateDB}`)
 	const linkPath = join(wofDir(dataRoot), "candidate.db")
 
 	// Replace any existing pointer (symlink or stray file) — never the build it points at.
@@ -394,7 +394,7 @@ export function promoteCandidate(candidateDb: string, dataRoot: string = mailwom
 		// nothing there yet
 	}
 
-	symlinkSync(candidateDb, linkPath)
+	symlinkSync(candidateDB, linkPath)
 
 	return linkPath
 }
@@ -403,7 +403,7 @@ export interface PublishOptions {
 	/**
 	 * Candidate DB to publish.
 	 */
-	candidateDb: string
+	candidateDB: string
 	/**
 	 * Dated, immutable gazetteer version, e.g. `2026-06-27a` (see {@link defaultGazetteerVersion}).
 	 */
@@ -443,7 +443,7 @@ export interface PublishResult {
  * in the process env (source `.env` first).
  */
 export function publishGazetteer(opts: PublishOptions): PublishResult {
-	if (!existsSync(opts.candidateDb)) throw new Error(`candidate DB not found: ${opts.candidateDb}`)
+	if (!existsSync(opts.candidateDB)) throw new Error(`candidate DB not found: ${opts.candidateDB}`)
 
 	if (!existsSync(opts.uploadScript)) throw new Error(`upload script not found: ${opts.uploadScript}`)
 
@@ -458,7 +458,7 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 		// fresh
 	}
 
-	symlinkSync(opts.candidateDb, staged)
+	symlinkSync(opts.candidateDB, staged)
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)

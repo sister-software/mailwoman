@@ -42,8 +42,8 @@ interface Options {
 	weightsCache?: string
 	fixtures?: string
 	db?: string
-	resolveDb?: string
-	candidateDb?: string
+	resolveDB?: string
+	candidateDB?: string
 	json: boolean
 	enforce: boolean
 }
@@ -58,8 +58,8 @@ const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
 				weightsCacheRoot: options.weightsCache,
 				fixturesPath: options.fixtures,
 				db: options.db,
-				resolveDb: options.resolveDb,
-				candidateDb: options.candidateDb,
+				resolveDB: options.resolveDB,
+				candidateDB: options.candidateDB,
 				quiet: options.json,
 				enforce: options.enforce,
 			})

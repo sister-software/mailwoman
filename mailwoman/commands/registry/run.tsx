@@ -86,7 +86,7 @@ interface Options {
 	locale: string
 	defaultCountry?: string
 	placeCountry: boolean
-	resolveDb?: string
+	resolveDB?: string
 	dataRoot: string
 }
 
@@ -135,7 +135,7 @@ export function loadMapping(
 
 async function resolveWOFPath(options: Options): Promise<string> {
 	const { $public } = await import("@mailwoman/core/env")
-	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+	const path = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new CommandError("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")

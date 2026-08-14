@@ -67,8 +67,8 @@ interface Options {
 	db?: string
 	overpass: boolean
 	json: boolean
-	resolveDb?: string
-	candidateDb?: string
+	resolveDB?: string
+	candidateDB?: string
 }
 
 /**
@@ -93,15 +93,15 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  */
 async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; close: () => void } | undefined> {
 	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
-	const candidateDb = resolveCandidateDBPath(options.candidateDb)
+	const candidateDB = resolveCandidateDBPath(options.candidateDB)
 
-	const wofPaths = candidateDb
+	const wofPaths = candidateDB
 		? []
-		: (options.resolveDb ? options.resolveDb.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
+		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
 				existsSync(p)
 			)
 
-	if (!candidateDb && !wofPaths.length) {
+	if (!candidateDB && !wofPaths.length) {
 		console.error(
 			"note: no WOF resolver configured — anchor localities ('near Springfield IL') will not resolve to " +
 				"coordinates, so --db category/brand queries will abstain anchor_required. Set $MAILWOMAN_WOF_DB " +
@@ -116,7 +116,7 @@ async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; 
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const { createResolverBackend } = await import("../resolver-backend.ts")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
-		const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths })
+		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
 	} catch {

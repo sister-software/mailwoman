@@ -189,7 +189,7 @@ interface Options {
 	parentDelta?: number
 	holdoutFraction: number
 	pairsJsonl?: string
-	boroughDb?: string
+	boroughDB?: string
 	banDir?: string
 	holdoutSeed: number
 }
@@ -218,7 +218,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
 		}
 
-		if (!sourcePath && !options.boroughDb && !options.pairsJsonl && !options.banDir) {
+		if (!sourcePath && !options.boroughDB && !options.pairsJsonl && !options.banDir) {
 			throw new Error(
 				`pair-index: country "${country}" has no PPD default — pass --source, --borough-db, --pairs-jsonl or --ban-dir, ` +
 					`or the build would write an empty index.`
@@ -259,12 +259,12 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// as the CSV rows (boroughs project onto dependent_locality — plan/reference/placetype-evidence).
 		let boroughsAdded = 0
 
-		if (options.boroughDb) {
+		if (options.boroughDB) {
 			const before = builder.distinctCount
 
 			// `pair.parentTag` is the WOF parent ROW's placetype projection, not a per-source constant — a
 			// locality/localadmin parent is `locality`, a borough parent is `dependent_locality`.
-			for (const pair of extractBoroughPairs(options.boroughDb, country.toUpperCase())) {
+			for (const pair of extractBoroughPairs(options.boroughDB, country.toUpperCase())) {
 				builder.addRow(pair.child, pair.parent, pair.parentTag)
 			}
 
@@ -335,7 +335,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// CSV at all, so an unconditional single-element array would have claimed a source the artifact never read.
 		const sourceMD5s = [
 			...(sourcePath ? [await md5File(sourcePath)] : []),
-			...(options.boroughDb ? [await md5File(options.boroughDb)] : []),
+			...(options.boroughDB ? [await md5File(options.boroughDB)] : []),
 			...(await Promise.all(splitPathList(options.pairsJsonl).map((path) => md5File(path)))),
 		]
 

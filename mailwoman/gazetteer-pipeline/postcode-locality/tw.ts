@@ -270,7 +270,7 @@ export async function loadDistrictPolygons(path: string): Promise<DivisionPolygo
 export interface PostcodeLocalityTWOptions {
 	postalXML: string
 	divisions: string
-	adminDb: string
+	adminDB: string
 	output: string
 }
 
@@ -300,8 +300,8 @@ interface AdminPlace {
  *
  * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
  */
-function loadAdminIndexes(args: { adminDb: string }) {
-	const admin = new DatabaseSync(args.adminDb)
+function loadAdminIndexes(args: { adminDB: string }) {
+	const admin = new DatabaseSync(args.adminDB)
 	const ph = PLACETYPES.map(() => "?").join(",")
 	const places = new Map<number, AdminPlace>()
 
@@ -410,7 +410,7 @@ function loadAdminIndexes(args: { adminDb: string }) {
 		}
 	}
 
-	const nearby = (lat: number, lon: number, radiusKm: number): Array<{ d: number; place: AdminPlace }> => {
+	const nearby = (lat: number, lon: number, radiusKM: number): Array<{ d: number; place: AdminPlace }> => {
 		const cx = Math.round(lon * 2)
 		const cy = Math.round(lat * 2)
 		const out: Array<{ d: number; place: AdminPlace }> = []
@@ -420,7 +420,7 @@ function loadAdminIndexes(args: { adminDb: string }) {
 				for (const place of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
 					const d = haversineKm(lat, lon, place.la, place.lo)
 
-					if (d <= radiusKm) {
+					if (d <= radiusKM) {
 						out.push({ d, place })
 					}
 				}

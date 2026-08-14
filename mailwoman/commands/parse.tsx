@@ -124,7 +124,7 @@ interface ParseOptions {
 	tokenizer?: string
 	policy?: string[]
 	resolve: boolean
-	resolveDb?: string
+	resolveDB?: string
 	streetEvidenceRerank: boolean
 	candidates?: number
 	benchmark?: number
@@ -238,7 +238,7 @@ function ParseTask({
 
 async function resolveWOFPath(options: ParseOptions): Promise<string> {
 	const { $public } = await import("@mailwoman/core/env")
-	const path = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+	const path = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
 	if (!path) {
 		throw new CommandError(
@@ -253,7 +253,7 @@ async function resolveWOFPath(options: ParseOptions): Promise<string> {
 
 async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefined> {
 	const { $public } = await import("@mailwoman/core/env")
-	const dbPath = options.resolveDb ?? $public.MAILWOMAN_WOF_DB
+	const dbPath = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
 
 	if (!dbPath) return undefined
 

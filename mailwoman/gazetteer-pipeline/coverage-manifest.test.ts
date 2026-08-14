@@ -105,10 +105,10 @@ describe("byte-identity of the measured record vs the code constants (the fallba
 
 describe("emit → read round-trip through a real candidate build", () => {
 	test("the emitted manifest reads back with the derived safelist, rates, and bboxes intact", async () => {
-		const candidateDb = await buildFixtureCandidate()
-		await emitCoverageManifest({ dbPath: candidateDb })
+		const candidateDB = await buildFixtureCandidate()
+		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const db = new DatabaseSync(candidateDb, { readOnly: true })
+		const db = new DatabaseSync(candidateDB, { readOnly: true })
 
 		try {
 			const manifest = readGazetteerCoverageManifest(db)
@@ -138,10 +138,10 @@ describe("emit → read round-trip through a real candidate build", () => {
 	})
 
 	test("meaning-of-zero: measured-and-failed (FI) is present; never-measured (NZ) is absent", async () => {
-		const candidateDb = await buildFixtureCandidate()
-		await emitCoverageManifest({ dbPath: candidateDb })
+		const candidateDB = await buildFixtureCandidate()
+		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const db = new DatabaseSync(candidateDb, { readOnly: true })
+		const db = new DatabaseSync(candidateDB, { readOnly: true })
 
 		try {
 			const manifest = readGazetteerCoverageManifest(db)!
@@ -162,10 +162,10 @@ describe("emit → read round-trip through a real candidate build", () => {
 	})
 
 	test("WOFCandidateTableLookup exposes artifactCoverage after emission", async () => {
-		const candidateDb = await buildFixtureCandidate()
-		await emitCoverageManifest({ dbPath: candidateDb })
+		const candidateDB = await buildFixtureCandidate()
+		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDb })
+		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 
 		try {
 			expect(lookup.artifactCoverage).toBeDefined()
@@ -179,9 +179,9 @@ describe("emit → read round-trip through a real candidate build", () => {
 	})
 
 	test("a legacy candidate DB (no manifest tables) reads undefined — the constant-fallback signal", async () => {
-		const candidateDb = await buildFixtureCandidate()
+		const candidateDB = await buildFixtureCandidate()
 
-		const db = new DatabaseSync(candidateDb, { readOnly: true })
+		const db = new DatabaseSync(candidateDB, { readOnly: true })
 
 		try {
 			expect(readGazetteerCoverageManifest(db)).toBeUndefined()
@@ -189,7 +189,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 			db.close()
 		}
 
-		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDb })
+		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 
 		try {
 			expect(lookup.artifactCoverage).toBeUndefined()

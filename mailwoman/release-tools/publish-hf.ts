@@ -61,7 +61,7 @@ const REQUIRED_FILES: Array<{ option: RequiredFileOption; remoteName: string; de
 	// The slim wof-hot.db was RETIRED 2026-06-20: the demo's admin tier now byte-range-resolves
 	// against the global candidate table, hosted version-independently at
 	// mailwoman/gazetteer/<ver>/candidate.db (NOT a per-release asset — it's model-independent). See
-	// RELEASING.md + project-candidate-table-byte-range. `hasWOFDb` in releases.json stays true (it now
+	// RELEASING.md + project-candidate-table-byte-range. `hasWOFDB` in releases.json stays true (it now
 	// means "this version has admin resolution", which the version-independent gazetteer always provides).
 ]
 
@@ -307,7 +307,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
-	const polygonsDb = stageOptionalBinary(args.polygons, "polygon DB")
+	const polygonsDB = stageOptionalBinary(args.polygons, "polygon DB")
 
 	// Fisher consolidation artifacts (#1354): fisher-diag-v1-model-X.npz + its .json sidecar. The
 	// bundle-contract addition from the 7.0.0 base — "the weights bundle ships its Fisher" — so every
@@ -381,12 +381,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		run("hf", ["buckets", "cp", localitySurfaceLexicon, dst])
 	}
 
-	if (polygonsDb) {
+	if (polygonsDB) {
 		const dst = `${BUCKET_PATH}/${remoteBase}/wof-polygons.db`
 
 		console.error(`  → ${dst}`)
 
-		run("hf", ["buckets", "cp", polygonsDb, dst])
+		run("hf", ["buckets", "cp", polygonsDB, dst])
 	}
 
 	uploadFlatByBasename(fisherArtifacts, remoteBase)
@@ -441,12 +441,12 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		tokenizerVocab: 48_000,
 		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
-		hasWOFDb: true,
+		hasWOFDB: true,
 		// These artifacts usually ride the R2 staging rather than this script's flags, so derive the
 		// truth by PROBING the demo's serving path (the four-release hasPolygons:false rectangle bug,
 		// 2026-06-11). CLI args still count; either source sets the flag.
 		hasAnchor: postcodeBins.length > 0 || (await servedOnDemoPath("postcode-us.bin", args.locale, args.version)),
-		hasPolygons: !!polygonsDb || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
+		hasPolygons: !!polygonsDB || (await servedOnDemoPath("wof-polygons.db", args.locale, args.version)),
 	}
 
 	for (const flag of ["hasAnchor", "hasPolygons"]) {

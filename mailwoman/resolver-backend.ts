@@ -115,16 +115,16 @@ interface ResolverLookupModule {
 }
 
 /**
- * Build the resolver backend. `candidateDb` (explicit or env) → candidate-table lookup (demo-parity); otherwise the FTS
+ * Build the resolver backend. `candidateDB` (explicit or env) → candidate-table lookup (demo-parity); otherwise the FTS
  * lookup over `wofPaths` (single path or admin+postcode shard list). On the FTS path, a configured postal-city-alias db
  * (#475) is attached so a postal city resolves to its geographic locality — opt-in, default-off (unset env →
  * byte-identical FTS path).
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: { candidateDb?: string; dataRoot?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
+	opts: { candidateDB?: string; dataRoot?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
 ): PlaceLookup {
-	const candidate = resolveCandidateDBPath(opts.candidateDb, opts.dataRoot)
+	const candidate = resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)

@@ -247,12 +247,12 @@ export interface POIBoardOptions {
 	/**
 	 * WOF admin shard path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
 	 */
-	resolveDb?: string
+	resolveDB?: string
 	/**
 	 * Byte-range candidate.db for anchor resolution (demo-parity backend) — same semantics as `mailwoman poi
 	 * --candidate-db`.
 	 */
-	candidateDb?: string
+	candidateDB?: string
 	/**
 	 * Suppress the human-readable table (the CLI's `--json` mode prints the full report instead).
 	 */
@@ -269,13 +269,13 @@ export interface POIBoardOptions {
  * exactly like the CLI probe degrades). Caller owns closing the returned handle.
  */
 async function loadResolver(options: POIBoardOptions): Promise<{ resolver: Resolver; close: () => void } | undefined> {
-	const wofPaths = options.candidateDb
+	const wofPaths = options.candidateDB
 		? []
-		: (options.resolveDb ? options.resolveDb.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
+		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
 				existsSync(p)
 			)
 
-	if (!options.candidateDb && !wofPaths.length) {
+	if (!options.candidateDB && !wofPaths.length) {
 		console.error(
 			"note: no WOF resolver configured — anchor localities will not resolve to coordinates, so anchored " +
 				"category/brand cases will abstain anchor_required. Set --resolve-db/--candidate-db to fix."
@@ -286,7 +286,7 @@ async function loadResolver(options: POIBoardOptions): Promise<{ resolver: Resol
 
 	try {
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = createResolverBackend(mod, { candidateDb: options.candidateDb, wofPaths })
+		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
 	} catch {

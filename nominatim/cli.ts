@@ -124,10 +124,10 @@ async function serve(): Promise<void> {
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
-	const { adminDBPath, candidateDb, wofPaths } = gazetteer
+	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
-	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDb })
+	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
@@ -141,7 +141,7 @@ async function serve(): Promise<void> {
 	// when the resolved hierarchy omits the country tag — which on US-centric data (no candidate DB)
 	// happens for US results, where "US" is the right guess. Non-US results carry the country tag, so
 	// the fallback never mislabels them.
-	const annotationCountryFallback = candidateDb ? undefined : "US"
+	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDBPath = dataRootPath("timezone", "timezone.db")

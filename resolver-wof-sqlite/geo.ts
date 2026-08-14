@@ -33,7 +33,7 @@ function toRad(deg: number): number {
 }
 
 /**
- * Approximate bbox around a point — `radiusKm` in each direction. Used to translate a `near: {lat, lon}` +
+ * Approximate bbox around a point — `radiusKM` in each direction. Used to translate a `near: {lat, lon}` +
  * `maxDistanceKm` filter into an R*Tree bbox query.
  *
  * The math is the spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally, 1° longitude ≈ 111 km ×
@@ -46,11 +46,11 @@ export interface Bbox {
 	maxLon: number
 }
 
-export function bboxAround(lat: number, lon: number, radiusKm: number): Bbox {
-	const latDelta = radiusKm / 111
+export function bboxAround(lat: number, lon: number, radiusKM: number): Bbox {
+	const latDelta = radiusKM / 111
 	// Guard against cos(±90°) = 0 (and tiny values near the poles) by clamping to a minimum.
 	const cosLat = Math.max(Math.cos(toRad(lat)), 1e-6)
-	const lonDelta = radiusKm / (111 * cosLat)
+	const lonDelta = radiusKM / (111 * cosLat)
 
 	return {
 		minLat: lat - latDelta,

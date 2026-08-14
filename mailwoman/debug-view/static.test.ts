@@ -6,7 +6,7 @@
  *   Smoke test for the `--debug` non-TTY path ({@link runStaticDebug} in `command.tsx`). Runs IN PROCESS — no CLI
  *   spawn — so it needs both prerequisites the compiled CLI would otherwise hide behind a subprocess: the neural
  *   weights ({@link resolveWeights}, same probe `mailwoman doctor` and `geocode-session.ts` use) AND a WOF admin
- *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDb` predicate exactly (same env var,
+ *   SQLite distribution. Guard mirrors `commands/geocode.test.ts`'s `hasWOFDB` predicate exactly (same env var,
  *   same convention path) so the two suites skip and run together rather than disagreeing about the environment.
  *
  *   The `--debug-size` floor, empty-input, and `--debug` format-guard tests below all run UNCONDITIONALLY (no guard):
@@ -27,10 +27,10 @@ import { mapPaneCellSize } from "./DebugFrame.tsx"
 
 // MARK: Environment guard
 
-// Same predicate as commands/geocode.test.ts's `hasWOFDb`.
+// Same predicate as commands/geocode.test.ts's `hasWOFDB`.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDb = existsSync(wofPath)
+const hasWOFDB = existsSync(wofPath)
 
 const hasWeights = (() => {
 	try {
@@ -45,14 +45,14 @@ const hasWeights = (() => {
 const TILES_PATH = String(repoRootPath("map-tui", "test", "fixtures", "portland.pmtiles"))
 const hasTiles = existsSync(TILES_PATH)
 
-const canRun = hasWOFDb && hasWeights && hasTiles
+const canRun = hasWOFDB && hasWeights && hasTiles
 
 if (!canRun) {
 	console.warn(
 		"Skipping mailwoman geocode --debug static smoke: " +
 			[
 				!hasWeights && "no resolvable neural weights (@mailwoman/neural-weights-en-us)",
-				!hasWOFDb && `no WOF admin SQLite at ${wofPath} (set $MAILWOMAN_WOF_DB)`,
+				!hasWOFDB && `no WOF admin SQLite at ${wofPath} (set $MAILWOMAN_WOF_DB)`,
 				!hasTiles && `no fixture PMTiles archive at ${TILES_PATH}`,
 			]
 				.filter(Boolean)

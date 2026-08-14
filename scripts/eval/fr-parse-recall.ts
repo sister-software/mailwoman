@@ -42,7 +42,7 @@ async function main(): Promise<void> {
 		modelCard: args["model-card"],
 		label: args.label,
 		fixture: args.fixture,
-		fromDb: args["from-db"],
+		fromDB: args["from-db"],
 		json: args.json,
 		floor: args.floor,
 	})

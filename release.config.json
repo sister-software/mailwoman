@@ -30,7 +30,7 @@
 				"delta": 10,
 				"transitionBeta": 5,
 				"parentDelta": 5,
-				"boroughDb": "wof/admin-global-priority.db",
+				"boroughDB": "wof/admin-global-priority.db",
 				"pairsJsonl": "data/gazetteer/london-pairs-v2.jsonl,data/gazetteer/ni-pairs-v1.jsonl,data/gazetteer/gb-regions-v1.jsonl"
 			},
 			"fr": {
@@ -44,32 +44,32 @@
 				"$comment": "Hierarchy campaign R10 (2026-08-02). WOF-sourced (area, city) pairs with parent-alias expansion — India Post carries an area line on essentially every address, and WOF's city names lag official renames.",
 				"delta": 10,
 				"transitionBeta": 5,
-				"boroughDb": "wof/admin-global-priority.db"
+				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"es": {
 				"$comment": "Hierarchy campaign R11 (2026-08-02). WOF-sourced pairs with parent-alias expansion; leading-postcode locale.",
 				"delta": 10,
 				"transitionBeta": 5,
-				"boroughDb": "wof/admin-global-priority.db"
+				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"it": {
 				"$comment": "Hierarchy campaign R11 (2026-08-02). WOF-sourced pairs with parent-alias expansion; leading-postcode locale.",
 				"delta": 10,
 				"transitionBeta": 5,
-				"boroughDb": "wof/admin-global-priority.db"
+				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"de": {
 				"$comment": "Hierarchy campaign R9 (2026-08-02). WOF-sourced (Ortsteil, Gemeinde) pairs — Deutsche Post routes 'PLZ Stadt' and carries no Ortsteil field, so there is no postal register to harvest.",
 				"delta": 10,
 				"transitionBeta": 5,
-				"boroughDb": "wof/admin-global-priority.db"
+				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"us": {
 				"$comment": "Hierarchy campaign R5 (2026-08-01). No `source`: the US has no postal register carrying dependent localities (USPS routes city/state/ZIP), so every pair is WOF-sourced via --borough-db. Same delta/beta as GB — that is the pair the R5 bars were measured with.",
 				"delta": 10,
 				"transitionBeta": 5,
 				"parentDelta": 5,
-				"boroughDb": "wof/admin-global-priority.db"
+				"boroughDB": "wof/admin-global-priority.db"
 			},
 			"nz": {
 				"source": "openaddresses/extracted/nz/countrywide.csv",

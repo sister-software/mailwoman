@@ -170,11 +170,11 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		...(stringValue(values, "bias") ? { bias: stringValue(values, "bias") } : {}),
 		...(stringValue(values, "default-country") ? { defaultCountry: stringValue(values, "default-country") } : {}),
 		countryScope: stringValue(values, "country-scope") as GeocodeOptions["countryScope"],
-		...(stringValue(values, "resolve-db") ? { resolveDb: stringValue(values, "resolve-db") } : {}),
-		...(stringValue(values, "candidate-db") ? { candidateDb: stringValue(values, "candidate-db") } : {}),
+		...(stringValue(values, "resolve-db") ? { resolveDB: stringValue(values, "resolve-db") } : {}),
+		...(stringValue(values, "candidate-db") ? { candidateDB: stringValue(values, "candidate-db") } : {}),
 		dataRoot,
-		...(stringValue(values, "address-points-db") ? { addressPointsDb: stringValue(values, "address-points-db") } : {}),
-		...(stringValue(values, "interpolation-db") ? { interpolationDb: stringValue(values, "interpolation-db") } : {}),
+		...(stringValue(values, "address-points-db") ? { addressPointsDB: stringValue(values, "address-points-db") } : {}),
+		...(stringValue(values, "interpolation-db") ? { interpolationDB: stringValue(values, "interpolation-db") } : {}),
 		...(numberValue(values, "interp-calibration") !== undefined
 			? { interpCalibration: numberValue(values, "interp-calibration") }
 			: {}),

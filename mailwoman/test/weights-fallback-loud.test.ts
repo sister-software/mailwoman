@@ -201,9 +201,9 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
-const hasWOFDb = existsSync(wofPath)
+const hasWOFDB = existsSync(wofPath)
 
-describe.skipIf(!hasWOFDb)("#1108 loud weights fallback — --resolve degraded end-to-end (WOF DB present)", () => {
+describe.skipIf(!hasWOFDB)("#1108 loud weights fallback — --resolve degraded end-to-end (WOF DB present)", () => {
 	test("missing weights + --resolve: warns on stderr, resolver-decorated output on stdout, exit 0", async () => {
 		const { stdout, stderr, code } = await runCLI(
 			["parse", "--locale", ABSENT_LOCALE, "--resolve", "--resolve-db", wofPath, ADDRESS],

@@ -8,7 +8,7 @@
  *   CLI wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures.
  */
 
-import { OpenAPIHono } from "@hono/zod-openapi"
+import { OpenAPIHono, type z } from "@hono/zod-openapi"
 import { apiError, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import packageJson from "@mailwoman/api/package.json" with { type: "json" }
 import { bodyLimit } from "hono/body-limit"
@@ -16,6 +16,7 @@ import { cors } from "hono/cors"
 
 import type { MailwomanAPIEngine } from "./engine.ts"
 import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "./routes.ts"
+import type { GeocodeOutcomeLike } from "./schema.ts"
 
 /**
  * 2 MiB — carried from the express server's `express.json({ limit: "2mb" })` (`mailwoman/server/index.ts`).
@@ -83,7 +84,10 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 /**
  * Build the native Mailwoman app around an injected {@link MailwomanAPIEngine}.
  */
-export function createMailwomanAPI(engine: MailwomanAPIEngine, options: MailwomanAPIOptions = {}): OpenAPIHono {
+export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = GeocodeOutcomeLike>(
+	engine: MailwomanAPIEngine<T>,
+	options: MailwomanAPIOptions = {}
+): OpenAPIHono {
 	const app = new OpenAPIHono({
 		// This surface is ours (no vendor contract to preserve): every declared body/query schema is
 		// validator-enforced, and a failure maps through the shared api-kit envelope — never the raw zod

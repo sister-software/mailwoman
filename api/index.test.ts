@@ -7,8 +7,8 @@
 import { metricsSnapshot, resetMetricsForTest } from "@mailwoman/api-kit"
 import { beforeEach, expect, test } from "vitest"
 
-import { createMailwomanAPI, type MailwomanAPIEngine, type ParseOutcome } from "./index.ts"
-import { MAX_ADDRESS_LENGTH } from "./schema.ts"
+import { createMailwomanAPI, type MailwomanAPIEngine, type ParsedAddressResult } from "./index.ts"
+import { type GeocodeOutcomeLike, MAX_ADDRESS_LENGTH } from "./schema.ts"
 
 beforeEach(() => {
 	resetMetricsForTest()
@@ -20,7 +20,7 @@ beforeEach(() => {
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
-function fixtureParseOutcome(address: string, debug: boolean): ParseOutcome {
+function fixtureParseOutcome(address: string, debug?: boolean): ParsedAddressResult {
 	return {
 		input: address,
 		components: [
@@ -32,14 +32,18 @@ function fixtureParseOutcome(address: string, debug: boolean): ParseOutcome {
 	}
 }
 
-function fixtureGeocodeOutcome(address: string) {
+interface GeocodeResultWithAddress extends Pick<GeocodeOutcomeLike, "lat" | "lon" | "resolution_tier"> {
+	address: string
+}
+
+function fixtureGeocodeOutcome(address: string): GeocodeResultWithAddress {
 	return { address, lat: 38.8977, lon: -77.0365, resolution_tier: "address_point" }
 }
 
 /**
  * A fully-wired fixture engine — every method present, exercising every 200 happy path.
  */
-const fullEngine: MailwomanAPIEngine = {
+const fullEngine: MailwomanAPIEngine<GeocodeResultWithAddress> = {
 	parse: async (address, opts) => fixtureParseOutcome(address, opts.debug),
 	geocode: async (address) => fixtureGeocodeOutcome(address),
 	batch: async (addresses) => ({
@@ -62,7 +66,7 @@ test("POST /v1/parse: happy path returns the components + decoded tree", async (
 	})
 
 	expect(res.status).toBe(200)
-	const body = (await res.json()) as ParseOutcome
+	const body = (await res.json()) as ParsedAddressResult
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.components).toHaveLength(2)
 	expect(body.tree.roots).toEqual([])
@@ -78,7 +82,7 @@ test("POST /v1/parse: debug:true reaches the engine and rides back in the respon
 		body: JSON.stringify({ address: "1600 Pennsylvania Ave NW", debug: true }),
 	})
 
-	const body = (await res.json()) as ParseOutcome
+	const body = (await res.json()) as ParsedAddressResult
 	expect(body.debug).toBe("diagnostic report")
 })
 
@@ -87,7 +91,7 @@ test("GET /v1/parse?address=&debug=: happy path, first-value query reads", async
 
 	const res = await app.request("/v1/parse?address=1600+Pennsylvania+Ave+NW&debug=true")
 	expect(res.status).toBe(200)
-	const body = (await res.json()) as ParseOutcome
+	const body = (await res.json()) as ParsedAddressResult
 	expect(body.input).toBe("1600 Pennsylvania Ave NW")
 	expect(body.debug).toBe("diagnostic report")
 })

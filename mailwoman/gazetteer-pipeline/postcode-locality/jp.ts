@@ -133,7 +133,7 @@ export interface PostcodeLocalityJPOptions {
 	country: string
 	postalNames: string
 	geonames: string
-	adminDb: string
+	adminDB: string
 	output: string
 }
 
@@ -148,7 +148,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	const points = await loadGeonamesPoints(args.geonames)
 
-	const admin = new DatabaseSync(args.adminDb)
+	const admin = new DatabaseSync(args.adminDB)
 	const ph = PLACETYPES.map(() => "?").join(",")
 
 	const places = admin

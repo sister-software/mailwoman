@@ -69,7 +69,7 @@ export interface FRParseRecallOptions {
 	 * Re-derive from the live OSM shard instead of the fixture — the ONLY way the fixture should ever change, and it must
 	 * be committed deliberately (the "pin the golden" discipline; a moving sample is a flaky floor).
 	 */
-	fromDb?: boolean
+	fromDB?: boolean
 	/**
 	 * Emit machine-readable rates to this path for the promotion gate.
 	 */
@@ -140,14 +140,14 @@ export async function frParseRecall(
 		modelCard: options.modelCard ?? "neural-weights-en-us/model-card.json",
 		label: options.label ?? "",
 		fixture: options.fixture ?? "scripts/eval/fixtures/fr-bare-street-40.jsonl",
-		fromDb: options.fromDb ?? false,
+		fromDB: options.fromDB ?? false,
 		model: options.model,
 		tokenizer: options.tokenizer,
 		json: options.json,
 		floor: options.floor,
 	}
 
-	const rows: FRRow[] = args.fromDb
+	const rows: FRRow[] = args.fromDB
 		? (() => {
 				const db = new DatabaseSync(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, { readOnly: true })
 
@@ -236,7 +236,7 @@ export async function frParseRecall(
 
 	const bareRate = (bareOk / rows.length) * 100
 	const anchoredRate = (anchoredOk / rows.length) * 100
-	const source = args.fromDb ? "live-shard" : args.fixture
+	const source = args.fromDB ? "live-shard" : args.fixture
 
 	if (args.json) {
 		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a contract with
