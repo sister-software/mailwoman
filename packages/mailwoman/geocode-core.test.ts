@@ -604,6 +604,61 @@ describe("the Decision-A retry rider (retryAlternateRegister)", () => {
 		expect(parses).toHaveLength(1)
 	})
 
+	/**
+	 * Builds a rider whose FIRST parse reads the input as the given components and resolves nothing.
+	 */
+	function streetReadingDeps(
+		parses: Array<{ inputMode?: string }>,
+		roots: AddressNode[]
+	): Pick<GeocodeDeps, "classifier" | "resolver"> {
+		const classifier: GeocodeClassifier = {
+			parse: async (text, opts) => {
+				parses.push({ inputMode: opts?.inputMode })
+
+				return { raw: text, roots }
+			},
+		}
+
+		const resolver: Resolver = {
+			resolveTree: async (tree) => ({ raw: tree.raw, roots: tree.roots }),
+		}
+
+		return { classifier, resolver }
+	}
+
+	it("a parse that read the whole input as a street name earns no retry", async () => {
+		// "Sultan Qaboos Street" parses correctly and resolves nothing (no OM street coverage). The flip used to
+		// hand the result to a homonym INSIDE the name — Sultan, Washington — and clip `street` to "Qaboos".
+		const parses: Array<{ inputMode?: string }> = []
+
+		const result = await geocodeAddress(
+			"Sultan Qaboos Street",
+			streetReadingDeps(parses, [
+				node({ tag: "street", value: "Sultan Qaboos" }),
+				node({ tag: "street_suffix", value: "Street" }),
+			])
+		)
+
+		expect(parses).toHaveLength(1)
+		expect(result.components.street).toBe("Sultan Qaboos")
+	})
+
+	it("still retries when the parse carries more than a street name", async () => {
+		// The guard is about a WHOLE-input street reading. A street beside a locality is an ordinary address that
+		// simply failed to resolve, which is exactly what the rider exists for.
+		const parses: Array<{ inputMode?: string }> = []
+
+		await geocodeAddress(
+			"Main Street, Fragmentville",
+			streetReadingDeps(parses, [
+				node({ tag: "street", value: "Main Street" }),
+				node({ tag: "locality", value: "Fragmentville" }),
+			])
+		)
+
+		expect(parses).toHaveLength(2)
+	})
+
 	it("retryAlternateRegister: false pins single-pass", async () => {
 		const parses: Array<{ inputMode?: string }> = []
 
