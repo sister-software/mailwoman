@@ -895,6 +895,27 @@ export interface ResolveOpts {
 	 * or the backend lacks `ancestors`. Pass `false` to opt out.
 	 */
 	adminCoherence?: boolean
+	/**
+	 * Dual-role completion (#387, generalized by #405). Some places are two things at once — Singapore is a country AND a
+	 * city, Washington DC a region AND a locality — but the address writes one span, so the tree resolves a region and
+	 * carries no locality node even though the place genuinely is one.
+	 *
+	 * When a region resolved and no locality span is present, this asks the gazetteer's `coincident_roles` relation
+	 * (#403, via {@link ResolverBackend.coincidentLocalitiesFor}) whether that region also functions as a locality, and
+	 * ATTACHES a second reading to the same node. The region answer is untouched; the locality reading rides alongside it
+	 * in `interpretations`, stamped `resolver_completed` so a consumer can tell it was inferred rather than parsed.
+	 *
+	 * **Default-ON, and on the shipped default backend it currently does nothing.** `WOFCandidateTableLookup` implements
+	 * neither `coincidentLocalitiesFor` nor `ancestors` — `candidate.db` carries no such table — so the guard returns and
+	 * no interpretation is attached. `Resolver.capabilityGaps` reports that at construction rather than leaving it
+	 * silent.
+	 *
+	 * Measured 2026-08-15 on the FTS backend, which DOES implement both: toggling this flag changed **0 of 837** board
+	 * inputs. The capability is real and its measured value on everything we currently test is zero, which is why
+	 * `candidate.db` was not grown to support it (#1667, closed not-planned). Reopen on a consumer that needs it.
+	 *
+	 * `false` opts out; byte-stable either way on any backend lacking the relation.
+	 */
 	hierarchyCompletion?: boolean
 	/**
 	 * @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored.
