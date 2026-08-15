@@ -1,7 +1,7 @@
 {
 	"name": "@mailwoman/neural-weights-en-gb",
 	"version": "9.1.0",
-	"description": "Mailwoman neural-classifier weights for locale 'en-gb'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the gb-specific data siblings. Ships NO postcode-gb.bin: the encoder's GB anchor slot is untrained, so the anchor channel is deliberately OFF for en-gb (see model-card.json's gb_artifacts.no_postcode_bin). Loaded by @mailwoman/neural at runtime.",
+	"description": "Mailwoman neural-classifier weights for locale 'en-gb'. Data-only overlay — shares the base model.onnx + tokenizer.model from @mailwoman/neural-weights-en-us (they are byte-identical); ships only the gb-specific data siblings — pair-index-gb.bin and postcode-gb.bin, the latter feeding a trained GB anchor slot (see model-card.json's gb_artifacts). Loaded by @mailwoman/neural at runtime.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
 		"type": "git",
