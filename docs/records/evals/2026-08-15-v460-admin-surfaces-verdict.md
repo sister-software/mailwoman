@@ -5,7 +5,43 @@ collapse of the bare-toponym class — 21 net new gated board failures, several 
 thousands of kilometres out. The cause is identified and the shard is worth rebuilding, but this
 artifact should not ship in any posture.**
 
-Promote is the operator's call. This document is the evidence.
+**DECIDED 2026-08-15: NOT PROMOTED.** The operator accepted the recommendation. v4.4.0 remains the
+shipped model; nothing in `release.config.json`, the weights cards or the demo moves.
+
+This document is the evidence behind that call. The artifacts are retained — fp32
+`f2dbf4a85f845068234a1a565c323682`, int8 `afb8ca11bc1e2952b049d437bba611ef`, both on the Modal
+volume — because the next attempt is a re-dose and re-cut of the same recipe, not a fresh design, and
+the comparison arm is worth keeping.
+
+## What a retry needs before it is worth GPU time
+
+Both, together. Either alone fails for the reason the other one causes.
+
+1. **#1677 — re-dose `synth-bare-country-v23`.** Weight 1.0 gave its 277 rows **165 repetitions each**
+   against 5× for the 53,078-row Spanish shard weighted six times higher. 0.030 puts it at parity.
+   The sampler allocates by weight normalised across sources and ignores row count, so weight is not
+   dose and nothing in the config or launch output displays the number anyone reasons in.
+2. **#1673 — re-cut the ES shard on official-language names.** It teaches English exonyms:
+   461 `Balearic Islands` rows against **4** containing `Illes`, and zero `Portopetro`. `spr.name` is
+   the wrong column for any non-English locale.
+
+And a discipline this run did without: **pre-register a watch on the adjacent class.** #513 already
+records that relabelling one boundary loosens its neighbours, and bare-country/bare-locality are as
+adjacent as two classes get. The bare-toponym board rows — `bz-cs-belize-city`, `kh-cs-phnom-penh`,
+`tt-cs-port-of-spain`, `bn-cs-bandar-seri-begawan`, `il-cs-tel-aviv-yafo`, `my-cs-petaling-jaya` and
+the `*-street-name-*` family — go on the watch list before the run, not after.
+
+## What shipped instead, on the same day
+
+The class this run was built to fix had a cheaper answer. `Intl.DisplayNames` supplies ~5,244 country
+surfaces across 280 regions from the runtime's own ICU; folding them into the candidate gazetteer
+(#1687) fixed every non-Latin bare-country query — 格鲁吉亚, 沙特阿拉伯, 巴布亚新几内亚, 多米尼加共和国,
+布基纳法索 — at **zero** board regressions and no training at all.
+
+That is the retrieval-over-memorisation principle with a receipt: a fact the atlas can hold should be
+retrieved, not memorised into weights.
+
+Promote was the operator's call. This document is the evidence.
 
 ## The run
 
