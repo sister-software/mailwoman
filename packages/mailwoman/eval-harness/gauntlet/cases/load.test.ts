@@ -127,8 +127,13 @@ const CORPUS_SIZE = 558
  * vs auckley 0.868), the board-flagged newly-passing `gb-street-name-savile-row` promotes to pass, and the Savile Row
  * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
  * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
+ *
+ * Moved again by the bare-street-name retry guard: `us-street-name-ocean-parkway-south` and
+ * `fr-street-name-rue-du-faubourg-saint-honore` flip improvement_target → pass once a parse that read its whole input
+ * as a street name stops earning an alternate-register retry. Two status flips and no new rows, so CORPUS_SIZE and the
+ * board id both hold — which is the content-addressing working as intended.
  */
-const CORPUS_HASH = "29868fcfe189f1e07e2a98def43b1aaf93b752e57f67c7a99027196ed990e191"
+const CORPUS_HASH = "c01d04fdbddc9021f8ece720a04c804ace1baed917c2c12a06379bb82495b0c8"
 
 /**
  * `ablationBoardID` of the corpus.

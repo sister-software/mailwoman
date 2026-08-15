@@ -65,6 +65,7 @@ import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
 import { applyStreetMissFallback } from "./street-miss-fallback.ts"
+import { isStreetNameQuery } from "./street-name-query.ts"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 
@@ -882,7 +883,8 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		zeroHit &&
 		deps.retryAlternateRegister !== false &&
 		deps.inputMode === undefined &&
-		deps.parsedTree === undefined
+		deps.parsedTree === undefined &&
+		!isStreetNameQuery(result.components)
 	) {
 		const parseInput =
 			deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
