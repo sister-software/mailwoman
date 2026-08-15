@@ -57,10 +57,12 @@ import type {
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { probeForkEntity } from "./fork-entity.ts"
+import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
+import { applyStreetMissFallback } from "./street-miss-fallback.ts"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 
@@ -251,6 +253,17 @@ export interface GeocodeDeps {
 	 * inferred scope withheld — while an EXPLICIT scope stays supreme. Only the caller knows which; the CLI threads it.
 	 */
 	defaultCountryIsInferred?: boolean
+	/**
+	 * Lexicon-aware kind classifier (#1649) — `createKindClassifier({ poiLexicon })` from `@mailwoman/kind-classifier`.
+	 * When present it gets first refusal on the query: a top-slot POI/category/near-me verdict ABSTAINS from the address
+	 * lanes with the intent markers attached, instead of manufacturing a confident wrong answer from a thing-query.
+	 * Absent → byte-identical geocoding (the sync register derivation is untouched either way — the kind-intent
+	 * invariance receipt covers both classifiers).
+	 */
+	classifyKind?: (
+		input: { raw: string; normalized: string },
+		shape: ReturnType<typeof computeQueryShape>
+	) => Promise<QueryKindResult>
 	classifier: GeocodeClassifier
 	resolver: Resolver
 	/**
@@ -812,6 +825,23 @@ export async function parseForGeocode(
  * should catch per-row.
  */
 export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
+	// #1649 first refusal — BEFORE the resolve and before the register-flip retry rider, so a refused
+	// thing-query can neither resolve nor be retried into nonsense. See intent-refusal.ts.
+	if (deps.classifyKind && !deps.inputMode) {
+		const parseInput =
+			deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+
+		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
+
+		if (refusal) {
+			const abstained = extractGeocodeResult(input, { raw: input, roots: [] })
+
+			abstained.intent_markers = refusal
+
+			return abstained
+		}
+	}
+
 	const result = await geocodeAddressOnce(input, deps)
 
 	// Decision-A retry rider: a ZERO-HIT (no coordinate, no candidates) in a DERIVED register earns one
@@ -1143,7 +1173,15 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, computeQueryShape(parseInput))
 	const forkDeclared = (verdict.intentMarkers ?? []).some((m) => m.code === "declared_fork")
 
-	result = await applyStreetMissFallback(result, { tree, opts, deps, input, forkDeclared })
+	result = await applyStreetMissFallback(result, {
+		tree,
+		opts,
+		deps,
+		input,
+		forkDeclared,
+		extract: extractGeocodeResult,
+	})
+
 	applyPlusCodeOverride(result, input, resolved)
 
 	// ROAD_TO_V9 §4 marker assembly — the verdict itself is computed above the street-miss fallback.
@@ -1191,65 +1229,6 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	result.intent_markers = markers
 
 	return result
-}
-
-/**
- * The bare-toponym STREET-MISS fallback (the Moscow/Wellington/Antwerpen class): the model tags a lone bare token
- * `street`, the street tier finds no such street, and the result is null — while the resolver walk, handed the same
- * span as a locality, answers directly. Four gates: null-only (the D-rule geometry the fork wire established); a lone
- * SINGLE-TOKEN street-tagged span (a multi-token retry re-enters the qualifier-strip scrape class — measured: the
- * unguarded retry stripped 'COMER parís.méxico' to Comer, Georgia); never on a declared fork (those belong to the
- * entity probe); and the retry runs under the #912 bare-locality posture — placer anchor/hard filter always withheld
- * (measured: keeping them handed bare 'Wellington' to the GB namesake, 18,726 km out), an INFERRED default country
- * withheld too, an explicit one supreme.
- */
-async function applyStreetMissFallback(
-	result: GeocodeOutcomeLike,
-	ctx: {
-		tree: AddressTree
-		opts: ResolveOpts
-		deps: GeocodeDeps
-		input: string
-		forkDeclared: boolean
-	}
-): Promise<GeocodeOutcomeLike> {
-	const { tree, opts, deps, input, forkDeclared } = ctx
-
-	if (result.lat !== null || !deps.resolver || forkDeclared) return result
-	const bare = loneBareStreetSpan(tree)
-
-	if (bare === null || /\s/.test(bare.trim())) return result
-
-	const localityTree: AddressTree = {
-		raw: tree.raw,
-		roots: [{ tag: "locality", value: bare, start: 0, end: bare.length, confidence: 1, children: [] }],
-	}
-
-	const retryOpts = {
-		...opts,
-		hardCountry: undefined,
-		anchorPosterior: undefined,
-		...(deps.defaultCountryIsInferred === true ? { defaultCountry: undefined } : {}),
-	}
-
-	const reresolved = await deps.resolver.resolveTree(localityTree, retryOpts)
-	const retried = extractGeocodeResult(input, reresolved)
-
-	if (retried.lat === null) return result
-	retried.components = { ...result.components }
-
-	return retried
-}
-
-/**
- * The lone bare street span the street-miss fallback retries as a locality, or `null` when the tree is anything richer:
- * the gate is EXACTLY one value-bearing node, tagged `street`, no prefix/suffix siblings — the single-token shape the
- * model mis-tags on unfamiliar capitals.
- */
-function loneBareStreetSpan(tree: AddressTree): string | null {
-	const lone = loneValueBearingNode(tree)
-
-	return lone?.tag === "street" ? lone.value : null
 }
 
 /**

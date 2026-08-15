@@ -15,11 +15,13 @@ import { resolve } from "node:path"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import { type GeocodeResult, geocodeAddress, ShardProvider, type GeocodeDeps } from "../../geocode-core.ts"
+import { poiTaxonomyLookup } from "../../poi-intent.ts"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 
 export interface GauntletDeps {
@@ -335,6 +337,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		}
 	}
 
+	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
+
+	// en-US is the CLI's default locale — the harness grades the production-default arm.
+	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
+		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
+
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
@@ -383,6 +391,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 			return geocodeAddress(input, {
 				classifier: await classifierFor(caseCountry),
+				// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
+				classifyKind: poiKindClassifier,
 				resolver,
 				shards: shardProvider.for,
 				nationalShards: banProvider.for,
