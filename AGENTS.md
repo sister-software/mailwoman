@@ -2,7 +2,7 @@
 
 Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **54 scoped `@mailwoman/*` workspaces** — **55 entries in the root `workspaces` array**, which is the list to trust. The repo root is the private orchestration package `@mailwoman/universe` (not published).
 
-**49 of the 55 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: four workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending, see `packages/osm/README.md`. That is five, and 55 − 49 = **six**. The sixth is `neural-weights-en-au`, which is public, already on npm, and out of the list by accident rather than decision — see the release-list pitfall below before you "fix" the count by editing this sentence. Trust the subtraction over the story: when it stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
+**50 of the 55 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: four workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending, see `packages/osm/README.md`. That is five, and 55 − 50 = **five**, so every absence currently has a reason someone can state. Trust the subtraction over the story: run the check in the release-list pitfall below whenever you add or move a workspace, and when the number stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
 
 | Workspace                                                                    | npm package                                     | Purpose                                                                                                                                                                                                                                                |
 | ---------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -155,15 +155,17 @@ merely unpublished: release-it never rewrites its `version` either, so it holds 
 when it dropped out — in the repo and on npm — while every sibling moves on. Nothing fails. `yarn
 release` reports success, because from its side there was nothing to do.
 
-`@mailwoman/neural-weights-en-au` is the worked example: public, on npm, absent from the list. Siblings
-are at 9.1.0; en-au reads 9.0.0 in `package.json` and `latest` on npm is 9.0.0. The cost is not the one
-it looks like, and the difference is worth measuring rather than reasoning out — `npm view
-@mailwoman/neural-weights-en-au@9.0.0 dependencies` answers `{"@mailwoman/neural-weights-en-us":
+`@mailwoman/neural-weights-en-au` was the worked example, and it is now IN the list — so read this for
+the mechanism, not for a live defect. It sat outside the list while public and already on npm: siblings
+reached 9.1.0, en-au held 9.0.0 in `package.json` and on npm, and nothing failed. The cost was not the
+one it looks like, and the difference was worth measuring rather than reasoning out — `npm view
+@mailwoman/neural-weights-en-au@9.0.0 dependencies` answered `{"@mailwoman/neural-weights-en-us":
 "9.1.0"}`, the CORRECT base, because `yarn pack` freezes `workspace:*` to whatever the sibling reads AT
-PACK TIME and the hand-publish happened after the 9.1.0 bump. So what it actually costs is a version
-number that no longer means anything (9.0.0 shipping against a 9.1.0 base) and a workspace that ships
-only when someone remembers it by hand. The latent hazard is ordering: pack the same package BEFORE a
-release bump and that mechanism pins a base the overlay is genuinely behind.
+PACK TIME and the hand-publish happened after the 9.1.0 bump. So what it actually cost was a version
+number that no longer meant anything (9.0.0 shipping against a 9.1.0 base) and a workspace that shipped
+only when someone remembered it by hand. The latent hazard is ordering, and it outlives this instance:
+pack a package BEFORE a release bump and that same mechanism pins a base the overlay is genuinely
+behind.
 
 A `private: true` flag is checkable; membership in a JSON array is not, so check the arithmetic
 whenever you add or move a workspace:
