@@ -41,6 +41,7 @@ import {
 	type QueryIntentMarker,
 	type QueryKindResult,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
+	streetContextGateFor,
 } from "@mailwoman/core/pipeline"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
@@ -233,6 +234,15 @@ export interface GeocodeClassifier {
 			queryShape?: QueryShape
 			inputMode?: InputMode
 			enforceWordConsistency?: ClassifierOpts["enforceWordConsistency"]
+			/**
+			 * The gazetteer FST prior. The classifier reads this from `opts` ONLY — there is no config fallback, unlike
+			 * `placetypePair` — so a path that cannot express the field does not merely weaken the prior, it never constructs
+			 * it (#1497). Absent = byte-identical to the pre-#1497 decode.
+			 */
+			fst?: ClassifierOpts["fst"]
+			fstStreetMorphology?: ClassifierOpts["fstStreetMorphology"]
+			fstStreetMorphologyOpts?: ClassifierOpts["fstStreetMorphologyOpts"]
+			fstStreetContextPositiveScale?: number
 		}
 	): Promise<AddressTree>
 }
@@ -248,6 +258,17 @@ export interface GeocodeDeps {
 	 * ungated probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the guard.
 	 */
 	isStreetGeneric?: (token: string) => boolean
+	/**
+	 * The gazetteer FST prior (#1497). Absent = the prior is never constructed and the decode is byte-identical to the
+	 * pre-#1497 geocode path — which is what every caller got, because this field did not exist and `classifier.parse`
+	 * has no config fallback for it.
+	 */
+	fst?: import("@mailwoman/core/pipeline").FSTMatcherLike
+	/**
+	 * Street-morphology matcher, consumed ONLY as the street-context gate's signal source with the emission prior zeroed
+	 * (`streetContextGateFor`). Inert without {@link GeocodeDeps.fst}.
+	 */
+	streetMorphology?: import("@mailwoman/core/pipeline").FSTMatcherLike
 	/**
 	 * True when {@link defaultCountry} was INFERRED from the locale rather than user-declared. The street-miss fallback
 	 * retries a mis-tagged bare toponym as a locality, and a bare-locality retry must run under the #912 posture — the
@@ -747,7 +768,7 @@ export interface GeocodeParseInputs {
 
 export function geocodeParseInputs(
 	input: string,
-	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode">
+	deps: Pick<GeocodeDeps, "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
 ): GeocodeParseInputs {
 	// #1002: expandAbbreviations with the locale-UNKNOWN safe set (Bd/Bvd/Av/Imp → the expanded street
 	// type). The model mis-parses undertrained FR abbreviations ("2 Bd du Palais" → house_number "2 Bd",
@@ -791,6 +812,18 @@ export function geocodeParseInputs(
 			inputMode,
 			// Word-consistency heal on by default (2026-07-15) — semantics in neural/word-consistency.ts.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
+			// #1497: the gazetteer prior. `classifier.parse` reads `fst` from opts ONLY, with no config
+			// fallback, so a path that never passes it never CONSTRUCTS the prior — it is not a weaker
+			// decode, it is a different one. Absent `deps.fst` this spread is empty and the decode is
+			// byte-identical to before.
+			...(deps.fst ? { fst: deps.fst } : {}),
+			// The street-context gate pair, from the SAME helper runPipeline calls. Transcribing it here
+			// would recreate exactly the drift #1669 catalogued: two copies agreeing on every constant
+			// while the code around them diverges.
+			...streetContextGateFor({
+				...(deps.fst ? { fst: deps.fst } : {}),
+				...(deps.streetMorphology ? { streetMorphology: deps.streetMorphology } : {}),
+			}),
 		},
 	}
 }
@@ -805,7 +838,7 @@ export function geocodeParseInputs(
  */
 export async function parseForGeocode(
 	input: string,
-	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode">
+	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
 ): Promise<AddressTree> {
 	const { parseInput, opts } = geocodeParseInputs(input, deps)
 

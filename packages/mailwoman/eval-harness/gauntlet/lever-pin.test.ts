@@ -142,3 +142,22 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 		expect(resolverLeverDeps(layerDepsOptions(runLayerOptions({})).levers)).toEqual({})
 	})
 })
+
+describe("gazetteerPrior lever (#1497)", () => {
+	// The pin carries an artifact, so `resolverLeverDeps` — which is pure — cannot see it. That is exactly how a pinned
+	// run printed as "production defaults" on its first outing while quietly changing the board by one case.
+	it("is announced even though resolverLeverDeps cannot carry it", () => {
+		expect(describeResolverLevers({ gazetteerPrior: true })).toContain("gazetteerPrior=ON")
+	})
+
+	it("still reports production defaults when nothing is pinned", () => {
+		expect(describeResolverLevers(undefined)).toContain("none pinned")
+	})
+
+	it("announces alongside a boolean pin rather than replacing it", () => {
+		const described = describeResolverLevers({ gazetteerPrior: true, postcodeCountryCoherence: false })
+
+		expect(described).toContain("gazetteerPrior=ON")
+		expect(described).toContain("postcodeCountryCoherence=OFF")
+	})
+})

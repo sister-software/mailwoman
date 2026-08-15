@@ -94,6 +94,11 @@ export interface GauntletRunOptions {
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
+	 * RESOLVER-side lever pin (#1497): feed the gazetteer FST prior to the parse. One-sided — the prior is OFF on this
+	 * path today, so there is no production default to preserve and `undefined` means the incumbent behaviour.
+	 */
+	gazetteerPrior?: boolean
+	/**
 	 * Ablation: where the map artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>`.
 	 */
 	out?: string
@@ -127,9 +132,16 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
  * prevent.
  */
 export function runResolverLevers(options: GauntletRunOptions): GauntletResolverLevers | undefined {
-	return options.postcodeCountryCoherence !== undefined
-		? { postcodeCountryCoherence: options.postcodeCountryCoherence }
-		: undefined
+	const levers: GauntletResolverLevers = {
+		...(options.postcodeCountryCoherence === undefined
+			? {}
+			: { postcodeCountryCoherence: options.postcodeCountryCoherence }),
+		...(options.gazetteerPrior ? { gazetteerPrior: true } : {}),
+	}
+
+	// Absent, not empty: `undefined` is what `describeResolverLevers` prints as "production defaults", and an empty
+	// object would read as "pinned to nothing".
+	return Object.keys(levers).length ? levers : undefined
 }
 
 /**

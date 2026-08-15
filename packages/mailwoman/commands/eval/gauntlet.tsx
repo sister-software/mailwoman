@@ -47,6 +47,7 @@ export const spec = {
 		limit: { type: "number", description: "Case limit" },
 		"postcode-country-coherence": { type: "boolean", default: false, description: "Force coherence on" },
 		"postcode-country-coherence-off": { type: "boolean", default: false, description: "Force coherence off" },
+		"gazetteer-prior": { type: "boolean", default: false, description: "Feed the gazetteer FST prior (#1497)" },
 	},
 } as const satisfies CommandSpec
 
@@ -63,6 +64,7 @@ interface Options {
 	limit?: number
 	postcodeCountryCoherence: boolean
 	postcodeCountryCoherenceOff: boolean
+	gazetteerPrior: boolean
 }
 
 const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
@@ -98,6 +100,10 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 						: postcodeCountryCoherenceOff
 							? false
 							: undefined,
+					// #1497: one-sided on purpose. The prior is OFF on this path today — `classifier.parse` reads `fst`
+					// from opts only and the geocode path passed none — so there is no production default to preserve
+					// and no OFF half to spell.
+					...(options.gazetteerPrior ? { gazetteerPrior: true } : {}),
 				})
 			).exitCode
 		},

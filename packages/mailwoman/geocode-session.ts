@@ -26,7 +26,7 @@
  *   imports React, Ink, or the parse command.
  */
 
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -37,6 +37,7 @@ import {
 	type InputMode,
 	type PipelineTiming,
 	type QueryKindResult,
+	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
@@ -73,6 +74,12 @@ import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "./
  * superset. Fields with CLI defaults are required here.
  */
 export interface GeocodeSessionOptions {
+	/**
+	 * Feed the gazetteer FST prior to the parse (#1497). OFF by default: this path has never constructed the prior —
+	 * `classifier.parse` reads `fst` from opts only and this path passed none — so turning it on is a decode change, not
+	 * a repair, and it stays opt-in until measured on the board.
+	 */
+	gazetteerPrior?: boolean
 	locale: string
 	bias?: string
 	defaultCountry?: string
@@ -284,6 +291,40 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		throw new CommandError(
 			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
 		)
+	}
+
+	// #1497: the prior the geocode path has never had. Loaded from the classifier's own weights-package sibling, the
+	// same artifact `runPipeline` auto-loads — one source, not a second resolution ladder. A failure degrades to
+	// `undefined`, which is exactly the pre-#1497 behaviour.
+	let fst: FSTMatcherLike | undefined
+	let streetMorphology: FSTMatcherLike | undefined
+
+	if (options.gazetteerPrior) {
+		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
+			import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
+			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+		])
+
+		const fstPath = classifier.fstPath
+
+		if (fstPath) {
+			try {
+				fst = deserializeFST(readFileSync(fstPath))
+			} catch (error) {
+				console.warn(`[mailwoman] failed to load the gazetteer FST at ${fstPath}: ${(error as Error).message}`)
+			}
+		}
+
+		if (fst) {
+			try {
+				streetMorphology = loadStreetMorphologyFST({
+					...(classifier.streetMorphologyPath ? { artifactPath: classifier.streetMorphologyPath } : {}),
+					onWarn: (message) => console.warn(`[mailwoman] ${message}`),
+				}).matcher
+			} catch (error) {
+				console.warn(`[mailwoman] street-morphology FST unavailable: ${(error as Error).message} — gate off`)
+			}
+		}
 	}
 
 	const weightsLoadedAt = performance.now()
@@ -526,6 +567,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const result = await geocodeAddress(input, {
 			classifier,
+			...(fst ? { fst } : {}),
+			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,
 			shards,
 			...(nationalShards ? { nationalShards } : {}),
