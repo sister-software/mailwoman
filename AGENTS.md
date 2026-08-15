@@ -136,9 +136,9 @@ docstring says so. Membership is earned by a codex postcode shape plus a confoun
 
 To make publish robust regardless of repo state, `scripts/publish-workspace.ts` walks the workspace's `package.json` `files` array right before publishing and dereferences any symlinks (`readlink` → `unlink` → `copyFile`). **Do not remove this safety net** — it closes the window between `copy-weights.ts` (one-shot, at `before:init`) and the actual publish.
 
-### Pitfall: provenance attestation on a private repo
+### Pitfall: provenance attestation needs the CI identity, not just a public repo
 
-`scripts/publish-workspace.ts` only adds `--provenance` to `npm publish` when `MAILWOMAN_NPM_PROVENANCE=1` is set. npm rejects provenance signatures from private source repositories (the sigstore attestation would be unverifiable by third parties). Trusted Publishing itself works fine on private repos — it's only the attestation that needs a public source. Flip the env on once `sister-software/mailwoman` is public.
+`scripts/publish-workspace.ts` adds `--provenance` to `npm publish` when `GITHUB_ACTIONS` is set and `MAILWOMAN_NPM_PROVENANCE` is not `0`. Two things gate it and they are easy to conflate. The repo must be PUBLIC, because a sigstore attestation links to source third parties have to be able to verify — that half is satisfied. The publish must also run on a CI provider npm supports, because the attestation is signed against an OIDC identity: a local `yarn release` passing `--provenance` fails outright, which is why the predicate is `GITHUB_ACTIONS` and not the generic `CI`. Trusted Publishing works either way; only the attestation needs the CI identity. Set `MAILWOMAN_NPM_PROVENANCE=0` to publish without one when sigstore or the registry is down.
 
 ### Pitfall: `workspace:*` doesn't survive `npm publish`
 
