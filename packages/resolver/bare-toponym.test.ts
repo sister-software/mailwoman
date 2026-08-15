@@ -506,6 +506,27 @@ describe("bare-country class", () => {
 		expect(out.roots[0]?.metadata?.["bare_country_repick"]).toBe(true)
 	})
 
+	// #1678 thread 2 — the parse half. The race finds the right PLACE; before this the node kept the wrong
+	// TAG, so a bare country answered with a correct coordinate under `{"locality": …}`. That label misleads
+	// the moment the same toponym sits inside a longer address rather than alone.
+	it("retags a country repick to `country`", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Japan"))
+
+		expect(out.roots[0]?.tag).toBe("country")
+	})
+
+	it("retags the no-locality-namesake path too (Nigeria, via the empty-candidates hook)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Nigeria"))
+
+		expect(out.roots[0]?.tag).toBe("country")
+	})
+
+	it("leaves an ordinary locality alone — only the race's own picks are retagged", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Paris"))
+
+		expect(out.roots[0]?.tag).toBe("locality")
+	})
+
 	it("never fires without a country namesake — bare 'Paris' is byte-stable", async () => {
 		const out = await createWOFResolver(backend()).resolveTree(bareTree("locality", "Paris"))
 		const root = out.roots[0]!
