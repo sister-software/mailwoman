@@ -41,6 +41,11 @@
 			"default": "./out/primary-preference.js",
 			"types": "./out/primary-preference.d.ts"
 		},
+		"./proximity-rerank": {
+			"node": "./proximity-rerank.ts",
+			"default": "./out/proximity-rerank.js",
+			"types": "./out/proximity-rerank.d.ts"
+		},
 		"./build-slim": {
 			"node": "./build-slim.ts",
 			"default": "./out/build-slim.js",

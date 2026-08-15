@@ -35,6 +35,7 @@ import { haversineKm } from "./geo.ts"
 import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
 import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary-preference.ts"
+import { applyProximityRerank } from "./proximity-rerank.ts"
 import { hasColumn, hasTable } from "./sqlite-utils.ts"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
@@ -600,59 +601,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			}
 		})
 
-		// Proximity re-rank (#938): with bias hints (the demo's map viewport / user location), re-sort the
-		// exact-match candidates by the SAME prominence the FTS server uses (lookup.ts) — population and
-		// nearness in one additive scale — so an in-view namesake wins a tie without a hard filter. Byte-
-		// identical to the plain population order when no bias is passed. `score` here is -neg_rank =
-		// log10(population + 1), so popTerm is the server formula read straight off it. Constants MIRROR
-		// lookup.ts's DEFAULT_WEIGHTS (biasBoost 4, populationBoost 4, populationScaleLog10 6,
-		// proximityScaleKm 100) — the #861 server↔demo parity contract; keep them in lockstep.
+		// Proximity re-rank (#938) — the shared implementation, so the browser byte-range twin runs the same
+		// code rather than the same constants. See proximity-rerank.ts for why that distinction mattered.
 		if (query.bias && query.bias.length) {
-			const BIAS_BOOST = 4
-			const POP_BOOST = 4
-			const POP_SCALE_LOG10 = 6
-			// SHARPER than lookup.ts's 100 km on purpose: this backend's `score` is log-population ALONE
-			// (no bm25 document term), so the population signal is weaker relative to the bias and the
-			// gentle 100 km decay let a 230 km-distant alias-exact township ("Paris Township", OH) edge
-			// out a global city ("Paris", FR) from a nearby view. A ~30 km scale keeps the boost to
-			// candidates the user is actually LOOKING at — an in-view namesake still wins (Dublin, OH from
-			// an Ohio view), a distant one no longer does (Paris stays FR from a Michigan view).
-			const PROX_SCALE_KM = 30
-
-			const combinedProminence = (c: PlaceCandidate): number => {
-				// Population base is the PENALIZED `prominence` (set above = -effectiveNegRank), not raw `score`, so
-				// the cross-country primary preference carries into the bias-weighted order too — a coincidental
-				// foreign alias doesn't ride population back over a primary just because a viewport hint is present.
-				const popBase = c.prominence ?? c.score
-				const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
-				let proxTerm = 0
-
-				if (!(c.lat === 0 && c.lon === 0)) {
-					for (const b of query.bias!) {
-						const d = haversineKm(b.lat, b.lon, c.lat, c.lon)
-						const term = (BIAS_BOOST * (b.weight ?? 1)) / (1 + d / PROX_SCALE_KM)
-
-						if (term > proxTerm) {
-							proxTerm = term
-						}
-					}
-				}
-
-				return popTerm + proxTerm
-			}
-
-			// Persist the combined value into `prominence` so the resolver walk's `prominence ?? score` sort (and any
-			// other node consumer) honors the bias order — then sort. Stable within equal prominence (preserves the
-			// population order the B-tree already gave).
-			candidates
-				.map((c, i) => {
-					c.prominence = combinedProminence(c)
-
-					return { c, i, p: c.prominence }
-				})
-				// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
-				.sort((a, b) => b.p - a.p || a.i - b.i)
-				.forEach((x, j) => (candidates[j] = x.c))
+			applyProximityRerank(candidates, query.bias)
 		}
 
 		return candidates
