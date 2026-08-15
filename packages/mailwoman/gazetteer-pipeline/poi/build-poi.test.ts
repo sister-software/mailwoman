@@ -22,7 +22,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
@@ -332,7 +332,12 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
 		const readBack = await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, zeroCell.h3Cell)
 
-		expect(readBack).toEqual({ h3Cell: zeroCell.h3Cell, completeness: 1, observedRows: 0 })
+		expect(readBack).toEqual({
+			h3Cell: zeroCell.h3Cell,
+			completeness: 1,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 0,
+		})
 
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 
@@ -447,6 +452,11 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		// the default branch actually wrote coverage under — reverting the `bboxCoverageCells` fix makes
 		// `overrideCell.h3Cell` the old buggy direct-res-6 cell, which the default branch never writes to, so
 		// this read comes back `undefined` and the assertion below fails.
-		expect(builderWrittenCoverage).toEqual({ h3Cell: overrideCell.h3Cell, completeness: 1, observedRows: 1 })
+		expect(builderWrittenCoverage).toEqual({
+			h3Cell: overrideCell.h3Cell,
+			completeness: 1,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 1,
+		})
 	})
 })
