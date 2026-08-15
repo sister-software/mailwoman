@@ -11,7 +11,7 @@
 import type { Kysely } from "kysely"
 
 import { parseJSONStrict } from "../objects.ts"
-import { LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
+import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
 
 /**
  * Which spine columns a layer carries. At least one key is required.
@@ -50,7 +50,24 @@ export interface LayerManifest {
 export interface CoverageCell {
 	h3Cell: number
 	completeness: number
+	/**
+	 * What `completeness` rests on. A writer that omits it is declaring {@link CoverageBasis.SourcePresent} — the weakest
+	 * reading — because a builder that has not thought about basis is recording source presence whether or not it says
+	 * so.
+	 */
+	basis?: CoverageBasis
 	observedRows: number
+}
+
+/**
+ * Whether a coverage reading can support an EXCLUSION — a claim that the thing asked for is not there.
+ *
+ * Presence is supportable from any basis. Absence is not: `source_present` records that the source returned rows, which
+ * says nothing about what it missed. Callers building negative evidence must gate on this rather than on `completeness`
+ * alone, or an exclusion fires identically on a genuinely empty cell and on one we simply never surveyed.
+ */
+export function supportsExclusion(cell: Pick<CoverageCell, "basis">): boolean {
+	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed
 }
 
 const TIERS = new Set<string>(Object.values(LayerTier))
@@ -130,7 +147,7 @@ export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Prom
 }
 
 /**
- * Rows per INSERT statement (3 bound params/row = 15,000 params/statement), kept safely under SQLite's default 32,766
+ * Rows per INSERT statement (4 bound params/row = 16,000 params/statement), kept safely under SQLite's default 32,766
  * bound-variable ceiling — a continental-scale build's res-6 coverage cell count blows past that limit in a single
  * `.values()` call (found 2026-07-19).
  */
@@ -148,7 +165,14 @@ export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cell
 
 		await db
 			.insertInto("layer_coverage")
-			.values(batch.map((c) => ({ h3_cell: c.h3Cell, completeness: c.completeness, observed_rows: c.observedRows })))
+			.values(
+				batch.map((c) => ({
+					h3_cell: c.h3Cell,
+					completeness: c.completeness,
+					basis: c.basis ?? CoverageBasis.SourcePresent,
+					observed_rows: c.observedRows,
+				}))
+			)
 			.execute()
 	}
 }
@@ -165,5 +189,12 @@ export async function readLayerCoverage(
 
 	if (!row) return undefined
 
-	return { h3Cell: row.h3_cell, completeness: row.completeness, observedRows: row.observed_rows }
+	return {
+		h3Cell: row.h3_cell,
+		completeness: row.completeness,
+		// A NULL basis is an artifact built before the column existed. It was recording source presence,
+		// so that is what it reads back as — never a stronger basis than the builder actually had.
+		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
+		observedRows: row.observed_rows,
+	}
 }

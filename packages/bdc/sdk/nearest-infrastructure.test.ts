@@ -39,6 +39,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
+	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	readLayerCoverage,
@@ -308,6 +309,9 @@ describe("nearestInfrastructure", () => {
 			expect(hit.coverage).toEqual({
 				h3Cell: res9ShortCellToRes6Parent(hit.h3Cell),
 				completeness: 0.75,
+				// The fixture writes no basis, so it reads back as the weakest one — which is also the
+				// reason a 0.75 here cannot license an exclusion on its own.
+				basis: CoverageBasis.SourcePresent,
 				observedRows: 42,
 			})
 

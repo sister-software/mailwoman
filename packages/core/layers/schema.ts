@@ -85,6 +85,35 @@ export interface LayerManifestTable {
 /**
  * Per-cell survey completeness. Missing row = unknown, NOT zero.
  */
+/**
+ * What a `completeness` value RESTS ON. The magnitude alone cannot be acted on: a cell recorded at `1.0` because an
+ * authority designates the set complete, and a cell recorded at `1.0` because the source happened to return rows there,
+ * license entirely different conclusions.
+ *
+ * Only {@link CoverageBasis.Designated} and {@link CoverageBasis.Surveyed} can support an EXCLUSION — "the thing you
+ * asked for is not here". {@link CoverageBasis.SourcePresent} supports presence and nothing else: the source looked,
+ * which is not the same as the source found everything.
+ */
+export const CoverageBasis = {
+	/**
+	 * An authority declares the set complete for this cell — BAN holding every address in a commune. A miss inside a
+	 * designated cell IS evidence of absence.
+	 */
+	Designated: "designated",
+	/**
+	 * We measured completeness ourselves against an independent reference, and `completeness` carries that measurement. A
+	 * miss is evidence of absence in proportion to the value.
+	 */
+	Surveyed: "surveyed",
+	/**
+	 * The source returned rows in this cell and we recorded that. Says nothing about what the source missed. A miss here
+	 * is UNKNOWN, never absence.
+	 */
+	SourcePresent: "source_present",
+} as const
+
+export type CoverageBasis = (typeof CoverageBasis)[keyof typeof CoverageBasis]
+
 export interface LayerCoverageTable {
 	/**
 	 * 48-bit short H3 cell at the resolution declared by the manifest's spine keys.
@@ -92,8 +121,17 @@ export interface LayerCoverageTable {
 	h3_cell: number
 	/**
 	 * Estimated completeness of the source survey in this cell, 0..1.
+	 *
+	 * Never read this without reading {@link LayerCoverageTable.basis} — see {@link CoverageBasis}.
 	 */
 	completeness: number
+	/**
+	 * What the `completeness` value rests on. One of {@link CoverageBasis}.
+	 *
+	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent} — the weakest
+	 * reading, because that is what every layer built before the column was writing.
+	 */
+	basis: CoverageBasis | null
 	/**
 	 * Rows this layer actually holds in the cell.
 	 */
@@ -138,6 +176,9 @@ export async function createLayerCoverageTable(db: Kysely<LayerContractDatabase>
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
 		.addColumn("completeness", "real", (c) => c.notNull())
+		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which
+		// `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
+		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
 		// `WITHOUT ROWID` has no first-class builder; the raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)

@@ -17,7 +17,12 @@ import {
 	writeLayerManifest,
 	type LayerManifest,
 } from "./manifest.ts"
-import { createLayerCoverageTable, createLayerManifestTable, type LayerContractDatabase } from "./schema.ts"
+import {
+	CoverageBasis,
+	createLayerCoverageTable,
+	createLayerManifestTable,
+	type LayerContractDatabase,
+} from "./schema.ts"
 
 const MANIFEST: LayerManifest = {
 	name: "poi",
@@ -85,7 +90,13 @@ describe("layer coverage IO", () => {
 			{ h3Cell: 1002, completeness: 0.1, observedRows: 3 },
 		])
 
-		expect(await readLayerCoverage(db, 1001)).toEqual({ h3Cell: 1001, completeness: 0.9, observedRows: 240 })
+		expect(await readLayerCoverage(db, 1001)).toEqual({
+			h3Cell: 1001,
+			completeness: 0.9,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 240,
+		})
+
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN (undefined), never a zero-completeness record.
 		expect(await readLayerCoverage(db, 9999)).toBeUndefined()
 	})
@@ -93,7 +104,13 @@ describe("layer coverage IO", () => {
 	it("distinguishes a surveyed-and-empty cell from an unsurveyed one", async () => {
 		using db = await openContractDB()
 		await writeLayerCoverage(db, [{ h3Cell: 1003, completeness: 0, observedRows: 0 }])
-		expect(await readLayerCoverage(db, 1003)).toEqual({ h3Cell: 1003, completeness: 0, observedRows: 0 })
+
+		expect(await readLayerCoverage(db, 1003)).toEqual({
+			h3Cell: 1003,
+			completeness: 0,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 0,
+		})
 	})
 
 	it("chunks inserts past a single statement's bound-variable limit", async () => {
@@ -110,13 +127,20 @@ describe("layer coverage IO", () => {
 		await writeLayerCoverage(db, cells)
 
 		// First cell.
-		expect(await readLayerCoverage(db, 0)).toEqual({ h3Cell: 0, completeness: 0, observedRows: 0 })
+		expect(await readLayerCoverage(db, 0)).toEqual({
+			h3Cell: 0,
+			completeness: 0,
+			basis: CoverageBasis.SourcePresent,
+			observedRows: 0,
+		})
+
 		// Mid-second-batch cell.
 		const midSecondBatch = COVERAGE_INSERT_BATCH + Math.floor(COVERAGE_INSERT_BATCH / 2)
 
 		expect(await readLayerCoverage(db, midSecondBatch)).toEqual({
 			h3Cell: midSecondBatch,
 			completeness: midSecondBatch / cellCount,
+			basis: CoverageBasis.SourcePresent,
 			observedRows: midSecondBatch,
 		})
 
@@ -126,6 +150,7 @@ describe("layer coverage IO", () => {
 		expect(await readLayerCoverage(db, lastCell)).toEqual({
 			h3Cell: lastCell,
 			completeness: lastCell / cellCount,
+			basis: CoverageBasis.SourcePresent,
 			observedRows: lastCell,
 		})
 
