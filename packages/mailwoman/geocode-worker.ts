@@ -18,6 +18,7 @@ import { createWOFResolver } from "@mailwoman/resolver"
 
 import { geocodeAddress, parseForGeocode, ShardProvider } from "./geocode-core.ts"
 import type { GeocodeStreamConfig } from "./geocode-stream.ts"
+import { createResolverBackend } from "./resolver-backend.ts"
 
 const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 	mapping: ColumnMapping
@@ -26,7 +27,9 @@ const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: cfg.locale })
 const wof = await import("@mailwoman/resolver-wof-sqlite")
-const lookup = new wof.WOFSqlitePlaceLookup({ databasePath: cfg.wofDBPath })
+// Through the selector, not a direct FTS construction: a batch worker must resolve the same way the CLI and the
+// drop-in servers do, or a row geocoded in bulk answers differently from the same row geocoded singly.
+const lookup = createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup)
 const shards = new ShardProvider(wof, cfg.dataRoot)
 

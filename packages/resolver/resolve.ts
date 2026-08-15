@@ -18,6 +18,7 @@ import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@ma
 import { loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
 	type AddressPointLookup,
+	type BackendCapabilityGap,
 	type CoincidentLocality,
 	compareReferential,
 	DEFAULT_PLACETYPE_MAP,
@@ -35,6 +36,7 @@ import {
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { describeCapabilityGaps, reportCapabilityGaps } from "./backend-capabilities.ts"
 import {
 	BARE_REGION_DOMINANCE_LOG10,
 	bareCountryCandidate,
@@ -835,10 +837,18 @@ class WOFResolver implements Resolver {
 	 * read them from the resolver handle they already hold. Absent on artifacts predating the coverage manifest.
 	 */
 	readonly artifactCoverage: Resolver["artifactCoverage"]
+	/**
+	 * Optional backend methods this backend omits, each naming the default-ON option it silently disables. Computed once
+	 * here rather than at each guard site so a caller can read the gap before running a query that would quietly skip the
+	 * feature. See `backend-capabilities.ts`.
+	 */
+	readonly capabilityGaps: readonly BackendCapabilityGap[]
 
 	constructor(backend: ResolverBackend) {
 		this.#backend = backend
 		this.artifactCoverage = backend.artifactCoverage
+		this.capabilityGaps = describeCapabilityGaps(backend)
+		reportCapabilityGaps(this.capabilityGaps)
 	}
 
 	async resolveTree(tree: AddressTree, opts: ResolveOpts = {}): Promise<AddressTree> {

@@ -35,6 +35,7 @@ export type {
 	AddressPointHit,
 	AddressPointLookup,
 	Ancestor,
+	BackendCapabilityGap,
 	CoincidentLocality,
 	CountryBBoxFact,
 	CountryCoverageFact,
