@@ -124,10 +124,15 @@ async function serve(): Promise<void> {
 			// Photon clients don't TypeError. The candidate backend fills only the locality (no ancestors() table),
 			// so state/county come through only on an ancestry-capable backend — country still lands from the code.
 			const country = matchCountry(result.countryCode)
+
 			// #1041: a rooftop (`address_point`) or house-number-estimate (`interpolated`) tier is HOUSE-GRADE — carry the
 			// parsed housenumber + street so photonForwardProperties decorates it `type: house` (matching upstream Photon)
 			// instead of inheriting the admin locality's `type: city`. The admin tier (a locality centroid) never does.
-			const houseGrade = result.resolution_tier === "address_point" || result.resolution_tier === "interpolated"
+			const houseGrade =
+				result.resolution_tier === "address_point" ||
+				result.resolution_tier === "interpolated" ||
+				result.resolution_tier === "plus_code"
+
 			// #1050: the street-centroid tier is STREET-GRADE — full assembled street name in `name`,
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"

@@ -193,7 +193,11 @@ async function serve(): Promise<void> {
 			// result `class: place` / `type: house` (upstream Nominatim's own class/type for a house), so a client that
 			// keys on `class`/`type`/`addresstype` treats it as a building, not an untyped admin hit. The admin tier
 			// (a locality centroid) carries no class/type here, as before.
-			if (result.resolution_tier === "address_point" || result.resolution_tier === "interpolated") {
+			if (
+				result.resolution_tier === "address_point" ||
+				result.resolution_tier === "interpolated" ||
+				result.resolution_tier === "plus_code"
+			) {
 				resolved.category = "place"
 				resolved.type = "house"
 			}

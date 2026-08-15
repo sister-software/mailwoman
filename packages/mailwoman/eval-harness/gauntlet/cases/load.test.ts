@@ -128,7 +128,7 @@ const CORPUS_SIZE = 549
  * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
  * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
  */
-const CORPUS_HASH = "828ee3a9e6e764dfc546208f1d6fef2315628ff6850d81b881ab4f01a57219b6"
+const CORPUS_HASH = "a9eb24cf52a643cd1c8d304d715e1e331aabbb132c64b47e6fa76132fc9d8ff9"
 
 /**
  * `ablationBoardID` of the corpus.

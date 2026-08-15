@@ -33,7 +33,7 @@ export interface GeoCoordinate {
  * `GeocodeResult.resolution_tier` maps in directly. (`street` = a street centroid for a street-only query, #1042 —
  * coarser than a house-number estimate, finer than an admin centroid.)
  */
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
  * One resolved admin-hierarchy ancestor (most specific first), for spelling-invariant blocking.

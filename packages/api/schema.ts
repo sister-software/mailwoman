@@ -201,7 +201,7 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	components: GeocodeComponentsSchema,
 	lat: z.number().nullable(),
 	lon: z.number().nullable(),
-	resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue"]),
+	resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue", "plus_code"]),
 	// The fork→entity probe's answer (#1585) — present only on the `venue` tier; see geocode-core's
 	// GeocodeResult.entity.
 	entity: z
