@@ -376,7 +376,13 @@ export async function findRescoreCandidate(
 		const key = norm(sp.text)
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
-		const bare = softCountryEligible && sp.start === wholeInput!.start && sp.end === wholeInput!.end
+		// Whole-input coverage and the soft-country prior are SEPARATE gates. `bare` (the prior) also
+		// needs an unqualified tree + a caller country; `wholeSpan` alone decides the alias tier below —
+		// a scope-less bare "Riyadh"/"Frankfurt" is still a NAMING (their Latin surfaces live in alias
+		// rows: الرياض / Frankfurt am Main), and conflating the two gates cost exactly those rows on the
+		// 2026-08-15 board before this line split them.
+		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
+		const bare = softCountryEligible && wholeSpan
 
 		const hits = bare
 			? rankByCountryPrior(
@@ -384,7 +390,18 @@ export async function findRescoreCandidate(
 					country,
 					countryWeight
 				)
-			: await backend.findPlace({ text: sp.text, country, postcode, placetype: "locality", limit: 5 })
+			: // A SUB-span probe is a RE-READING of a token the parse classified into a longer span — it
+				// never NAMED an alias, so alias-keyed rows are off for it (`primaryOnly`, the #1632
+				// Savile→Rhu door). A whole-input span keeps the alias tier regardless of scope (the
+				// Москва/Riyadh-class exonym recall, #1546).
+				await backend.findPlace({
+					text: sp.text,
+					country,
+					postcode,
+					placetype: "locality",
+					limit: 5,
+					...(wholeSpan ? {} : { primaryOnly: true }),
+				})
 
 		// #1546: NO primary-name re-check here — the backend's `exactMatch` IS the name-OR-alias surface
 		// equality (the names table / alt_names bag), so a query matches a place when ANY stored name
