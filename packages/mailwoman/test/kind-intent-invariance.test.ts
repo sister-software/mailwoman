@@ -41,6 +41,7 @@
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import {
 	classifyKindSync,
+	createKindClassifier,
 	scoreIntersection,
 	scoreLandmark,
 	scoreLocalityOnly,
@@ -55,6 +56,7 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { beforeAll, describe, expect, test } from "vitest"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
+import { poiTaxonomyLookup } from "../poi-intent.ts"
 
 /**
  * The scorer set as it stood BEFORE ROAD_TO_V9 §4 — a verbatim replay of `classify.ts`'s list at commit `4ebd955`,
@@ -97,16 +99,18 @@ function routingKey(text: string, classify: (i: NormalizedInputLite, s: QuerySha
 }
 
 let corpus: string[] = []
+let CATEGORY_QUERY_INPUTS = new Set<string>()
 
 beforeAll(async () => {
 	const cases = await loadRegressionCases()
 
 	corpus = cases.map((c) => c.input)
+	CATEGORY_QUERY_INPUTS = new Set(cases.filter((c) => c.id.includes("-cat-")).map((c) => c.input))
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 551-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 558-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(551)
+		expect(corpus).toHaveLength(558)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
@@ -115,6 +119,9 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 551-case corpus", ()
 			const drift: Array<{ input: string; before: string; after: string }> = []
 
 			for (const raw of corpus) {
+				// The #1649 category-query rows are THING-queries — reclassifying is their entire point,
+				// and the address-shaped zero-reclassification claim never covered them.
+				if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 				const text = register === "lowercase" ? raw.toLowerCase() : raw
 				const before = routingKey(text, classifyPreIntent)
 				const after = routingKey(text, classifyKindSync)
@@ -128,11 +135,40 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 551-case corpus", ()
 		}
 	)
 
+	test("the LEXICON-WIRED classifier's top slot is byte-identical on every corpus row (#1649)", async () => {
+		// The geocode path now injects createKindClassifier({ poiLexicon }) for first refusal; an
+		// ADDRESS-shaped row whose top kind flips to a poi kind would silently abstain from geocoding.
+		// The category-query rows themselves are excluded — they are THING-queries and flipping is
+		// their entire point (each one's id carries the -cat- infix).
+		const classify = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
+		const flipped: Array<{ input: string; sync: string; wired: string }> = []
+
+		for (const raw of corpus) {
+			for (const text of [raw, raw.toLowerCase()]) {
+				const input = { raw: text, normalized: text }
+				const shape = computeQueryShape(text)
+				const sync = classifyKindSync(input, shape).kind
+
+				const wired = (
+					await classify(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
+				).kind
+
+				if (sync !== wired && !CATEGORY_QUERY_INPUTS.has(raw)) {
+					flipped.push({ input: text, sync, wired })
+				}
+			}
+		}
+
+		expect(flipped, `${flipped.length} corpus rows reclassified by the lexicon`).toEqual([])
+	})
+
 	test("no intent kind ever takes the top slot on a corpus row, in either register", () => {
 		const INTENT_KINDS = new Set<QueryKind>(["bare_toponym", "route_pair", "near_me", "poi_category"])
 		const claimed: Array<{ input: string; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
+			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
+
 			for (const text of [raw, raw.toLowerCase()]) {
 				const verdict = classifyKindSync({ raw: text, normalized: text }, computeQueryShape(text))
 
@@ -196,6 +232,10 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the 551-case corpus", ()
 		const marked: Array<{ input: string; codes: string[]; kind: QueryKind }> = []
 
 		for (const raw of corpus) {
+			// The #1649 category-query rows carry intent markers by DESIGN — they are the thing-query
+			// board, not the irreducible address-shaped fork this exhaustive list pins.
+			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
+
 			for (const text of [raw, raw.toLowerCase()]) {
 				const verdict = classifyKindSync({ raw: text, normalized: text }, computeQueryShape(text))
 

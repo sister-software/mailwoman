@@ -39,6 +39,7 @@ import {
 	type QueryKindResult,
 } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
+import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -59,6 +60,7 @@ import {
 	type StateShards,
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
+import { poiTaxonomyLookup } from "./poi-intent.ts"
 import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
 
 //#region Contract
@@ -384,6 +386,21 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let bias: NonNullable<GeocodeDeps["bias"]>
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 
+	// #1649: the lexicon-aware kind classifier — same construction as the runtime pipeline's default-ON
+	// POI arc, so a thing-query ("Statue of Liberty", "Pharmacy near me") abstains with intent markers
+	// instead of the address lanes manufacturing a confident wrong answer.
+	const kindClassifierWithLexicon = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
+
+	// The locale rides in the closure: category synonyms are locale-gated ("mailbox" is the en-US
+	// register of post_box), and the geocode-core dep signature stays two-argument.
+	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
+		kindClassifierWithLexicon(input, shape, {
+			locale: options.locale ?? "en-US",
+			confidence: 1,
+			alternatives: [],
+			source: "caller",
+		})
+
 	try {
 		progress("Loading geographic priors…")
 
@@ -535,6 +552,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
 			placeCountry: placer ? (t: string) => placer.predict(t) : false,
+			// #1649: the lexicon-aware kind classifier — a thing-query abstains instead of resolving nonsense.
+			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
 		})
 
