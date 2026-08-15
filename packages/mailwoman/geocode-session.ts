@@ -486,8 +486,20 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	 * every field on it (`normalizeInput`, `normalizeCase`, `inputMode`) changes what the classifier is given, so two
 	 * separately-built dep objects are two decodes that can silently diverge — which is the exact failure the shared
 	 * derivation exists to prevent.
+	 *
+	 * `fst` and `streetMorphology` belong here for a reason the type alone does not show. This path parses ONCE up front
+	 * and hands the tree to `geocodeAddress` as `parsedTree`, so `geocodeAddress` never re-parses — which means the
+	 * copies it receives are dead and THIS is the only parse the prior can reach. Omitting them here made
+	 * `--gazetteer-prior` construct the FST, pass it on, and change nothing: bare `Moscow` stayed `street` in both arms.
 	 */
-	const parseDeps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode"> = { classifier }
+	const parseDeps: Pick<
+		GeocodeDeps,
+		"classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology"
+	> = {
+		classifier,
+		...(fst ? { fst } : {}),
+		...(streetMorphology ? { streetMorphology } : {}),
+	}
 
 	/**
 	 * The debug evidence for one input, or undefined when tracing is off. Runs `traceParse` under the SAME opts

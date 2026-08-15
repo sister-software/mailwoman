@@ -492,8 +492,18 @@ export interface GauntletResult {
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
-	const g = await deps.geocode(input, opts)
+	return toGauntletResult(await deps.geocode(input, opts))
+}
 
+/**
+ * Project an assembled geocode into the slice the graders assert on.
+ *
+ * Separate from {@linkcode runOne} so a caller holding its own warm session — `@mailwoman/dev-mcp` does — grades through
+ * THIS mapping rather than a second copy of it. The projection is the part that must not drift: a field renamed here
+ * and not there would make two graders disagree about the same run, and the disagreement would look like a model
+ * difference.
+ */
+export function toGauntletResult(g: GeocodeResult): GauntletResult {
 	return {
 		components: g.components,
 		lat: g.lat,
