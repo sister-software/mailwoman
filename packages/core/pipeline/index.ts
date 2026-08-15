@@ -19,6 +19,7 @@ export type {
 } from "./reconcile.ts"
 
 export {
+	COARSE_PLACER_ANCHOR_WEIGHT,
 	HARD_PLACE_COUNTRY_SAFELIST,
 	hardCountryFor,
 	isBareLocalityTree,

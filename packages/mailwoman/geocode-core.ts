@@ -31,6 +31,7 @@ import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
+	COARSE_PLACER_ANCHOR_WEIGHT,
 	deriveInputMode,
 	type InputMode,
 	type ClassifierOpts,
@@ -452,12 +453,6 @@ export interface GeocodeDeps {
 	 */
 	postcodePrefixIndex?: PostcodePrefixIndexLike
 }
-
-/**
- * Anchor weight for the coarse-placer's country prior. Matches the runtime-pipeline default — a whole-string country
- * guess is broader/softer than a postcode anchor (2.0), so it blends gently.
- */
-const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
 /**
  * The first `postcode` node's value in a parsed tree, or undefined.
