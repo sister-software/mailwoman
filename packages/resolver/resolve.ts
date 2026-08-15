@@ -35,6 +35,14 @@ import {
 } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
+import {
+	BARE_REGION_DOMINANCE_LOG10,
+	bareCountryCandidate,
+	bareRegionCandidate,
+	logPopulation,
+	loneBareLocalityNode,
+	pickLargerAdmin,
+} from "./bare-toponym-race.ts"
 import { foldName } from "./fold-name.ts"
 import {
 	findPostcodeCountryScope,
@@ -200,21 +208,6 @@ function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	}
 
 	return undefined
-}
-
-/**
- * The tree's single value-bearing node when it is locality-tagged, else null — the bare-toponym shape whose
- * country-placetype sibling race `#lookupAndPick` runs. A bare name the parser tagged `locality` can name a country
- * ("Japan", "China" — single country names are out of the parser's training distribution), and the locality placetype
- * filter makes the country row unreachable regardless of how the ranking would order it. Any second value-bearing node
- * makes the input address-shaped and the race stays off; `dependent_locality` maps to the same placetype but is an
- * address-interior tag, so only a literal `locality` qualifies.
- */
-function loneBareLocalityNode(tree: AddressTree, placetypeMap: PlacetypeMap): AddressNode | null {
-	if (placetypeMap["locality" as ComponentTag] !== "locality") return null
-	const lone = loneValueBearingNode(tree)
-
-	return lone?.tag === "locality" ? lone : null
 }
 
 /**
@@ -1276,14 +1269,21 @@ class WOFResolver implements Resolver {
 		// unreachable at any rank. Runs ONLY for the tree's single value-bearing node, so every
 		// address-shaped input is byte-stable. The locality winner's prominence arbitrates below;
 		// with no locality candidates at all, a country hit resolves the span outright.
-		const bareCountry =
-			placetype === "locality" && node === state.bareLocalityNode
-				? await this.#bareCountryCandidate(node.value, query.country)
-				: null
+		const isBareRace = placetype === "locality" && node === state.bareLocalityNode
+		const bareCountry = isBareRace ? await bareCountryCandidate(this.#backend, node.value, query.country) : null
+		const bareRegion = isBareRace ? await bareRegionCandidate(this.#backend, node.value, query.country) : null
 
 		if (!candidates.length) {
-			if (bareCountry) {
-				return { top: bareCountry, alternatives: [], metadata: { bare_country_repick: true } }
+			// With no locality candidates at all, the admin namesake with the larger population answers
+			// outright (the same precedence the dominance rule below applies).
+			const admin = pickLargerAdmin(bareCountry, bareRegion)
+
+			if (admin) {
+				return {
+					top: admin,
+					alternatives: [],
+					metadata: admin === bareRegion ? { bare_region_repick: true } : { bare_country_repick: true },
+				}
 			}
 
 			return null
@@ -1394,13 +1394,20 @@ class WOFResolver implements Resolver {
 
 		if (top.score < state.minWinningScore) return null
 
-		// The country side of the bare-toponym race: the country row wins only when its prominence
-		// strictly exceeds the locality winner's — Japan-the-country (pop 126M) over Japan,
-		// Pennsylvania (pop 0), while a bare name with no country namesake ("Paris", "Springfield")
-		// never reaches this line. The displaced locality stays first among the alternatives, so the
-		// declared-ambiguity marker and any disambiguation UI still see it.
+		// The admin side of the bare-toponym race. The COUNTRY row wins on prominence alone —
+		// Japan-the-country (pop 126M) over Japan, Pennsylvania (pop 0) — while the REGION row must
+		// DOMINATE the locality winner by {@link BARE_REGION_DOMINANCE_LOG10} in log-population:
+		// prominence saturates at the backend's populationBoost cap, so the margin is measured on the
+		// raw populations, and the margin is what keeps bare "New York" on the city (state 19.6M vs
+		// city 8.8M = 0.35, under the cut) while bare "Georgia" promotes to the 11M state over the
+		// Vermont hamlet (margin 3.4). A bare name with no admin namesake never reaches these lines,
+		// and the displaced locality stays first among the alternatives either way.
 		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
 			return { top: bareCountry, alternatives: ranked, metadata: { bare_country_repick: true } }
+		}
+
+		if (bareRegion && logPopulation(bareRegion) >= logPopulation(top) + BARE_REGION_DOMINANCE_LOG10) {
+			return { top: bareRegion, alternatives: ranked, metadata: { bare_region_repick: true } }
 		}
 
 		// Fallback-observability (#718): if the winner is a macro-type AND no exact-type candidate
@@ -1411,34 +1418,6 @@ class WOFResolver implements Resolver {
 		}
 
 		return { top, alternatives: ranked.slice(1) }
-	}
-
-	/**
-	 * The best `country`-placetype row for a bare toponym span, or null. `scopedCountry` is the same hard filter the
-	 * locality query ran under — an EXPLICIT caller scope therefore bounds this race too (a foreign country row cannot
-	 * outrank inside an explicit scope), while the bare-locality posture's withheld scope leaves it worldwide. Exact
-	 * matches only: the fuzzy tier exists for typo recovery on address spans, and a fuzzy country is a guess this race
-	 * must never promote.
-	 */
-	async #bareCountryCandidate(text: string, scopedCountry: string | undefined): Promise<ResolvedPlace | null> {
-		try {
-			const hits = await this.#backend.findPlace({
-				text,
-				placetype: "country",
-				limit: 1,
-				...(scopedCountry ? { country: scopedCountry } : {}),
-			})
-
-			const top = hits[0]
-
-			// The placetype check is load-bearing, not paranoia: a backend that ignores the filter
-			// (several test stubs, and any future partial implementation) would otherwise hand this
-			// race a LOCALITY row wearing a country costume, and the repick would demote the real pick.
-			return top && top.placetype === "country" && top.exactMatch !== false ? top : null
-		} catch {
-			// A failed side race must never abort the primary lookup — the locality answer stands.
-			return null
-		}
 	}
 }
 

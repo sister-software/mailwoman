@@ -568,3 +568,91 @@ describe("bare-country class", () => {
 		expect(race?.country).toBeUndefined()
 	})
 })
+
+describe("bare-region dominance (#1650)", () => {
+	const US_STATES: ResolvedPlace[] = [
+		{
+			id: 20,
+			name: "Georgia",
+			placetype: "region",
+			country: "US",
+			lat: 32.6781,
+			lon: -83.2229,
+			score: 7.0425,
+			prominence: 4,
+			population: 11_029_227,
+			exactMatch: true,
+		},
+		{
+			id: 21,
+			name: "Georgia",
+			placetype: "locality",
+			country: "US",
+			lat: 44.7282,
+			lon: -73.1276,
+			score: 3.672,
+			prominence: 3.672,
+			population: 4697,
+			exactMatch: true,
+		},
+		{
+			id: 22,
+			name: "New York",
+			placetype: "region",
+			country: "US",
+			lat: 42.9,
+			lon: -75.6,
+			score: 7.2917,
+			prominence: 4,
+			population: 19_571_216,
+			exactMatch: true,
+		},
+		{
+			id: 23,
+			name: "New York",
+			placetype: "locality",
+			country: "US",
+			lat: 40.7127,
+			lon: -74.006,
+			score: 6.9465,
+			prominence: 4,
+			population: 8_840_134,
+			exactMatch: true,
+		},
+	]
+
+	const backend = (): ResolverBackend => ({
+		async findPlace(query) {
+			const key = norm(query.text)
+			const want = Array.isArray(query.placetype) ? query.placetype : query.placetype ? [query.placetype] : null
+
+			return US_STATES.filter(
+				(p) =>
+					norm(p.name) === key &&
+					(!want || want.includes(p.placetype) || (want.includes("locality") && p.placetype === "locality"))
+			).map((p) => ({ ...p }))
+		},
+	})
+
+	const bare = (value: string) => ({
+		raw: value,
+		roots: [node({ tag: "locality", value, start: 0, end: value.length, confidence: 0.9 })],
+	})
+
+	it("promotes a DOMINANT region namesake over a hamlet (bare Georgia → the 11M state)", async () => {
+		const out = await createWOFResolver(backend()).resolveTree(bare("Georgia"))
+		const root = out.roots[0]!
+
+		expect(root.metadata?.["bare_region_repick"]).toBe(true)
+		expect(root.lat).toBeCloseTo(32.6781, 3)
+	})
+
+	it("does NOT promote under the dominance margin (bare New York stays the city)", async () => {
+		// State 19.57M vs city 8.84M: log-margin 0.345, under the 0.5 cut — the famous city holds.
+		const out = await createWOFResolver(backend()).resolveTree(bare("New York"))
+		const root = out.roots[0]!
+
+		expect(root.metadata?.["bare_region_repick"]).toBeUndefined()
+		expect(root.lat).toBeCloseTo(40.7127, 3)
+	})
+})

@@ -66,6 +66,12 @@ export interface ResolvedPlace {
 	 */
 	prominence?: number
 	/**
+	 * Raw population from the backend's record, when carried (`PlaceCandidate.population` mirrors it). Absent means
+	 * UNKNOWN, never zero — the meaning-of-zero rule. The bare-toponym race's region-dominance rule reads this because
+	 * {@link ResolvedPlace.prominence} saturates at the backend's population cap and erases the margins it needs.
+	 */
+	population?: number
+	/**
 	 * REFERENTIAL likelihood in [0, 1] — population-anchored, the named form of the key namesake ranking has always used
 	 * (ROAD_TO_V9 §2, ratified 2026-08-06: "the importance of a knowledge-base article is not the probability that this
 	 * is the place the user means"). Absent when the backend has no population for the place.
