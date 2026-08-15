@@ -47,7 +47,20 @@
 		"bridge": {
 			"required": false
 		},
-		"suppress_gazetteer_near_postcode": true
+		"suppress_gazetteer_near_postcode": true,
+		"locality_surface": {
+			"required": true,
+			"feature_dim": 2,
+			"slots": ["locality", "locality_homograph"],
+			"lexicon": "locality-surface-lexicon-v7.json",
+			"$comment": "Copied VERBATIM from the base card: every overlay shares the base model.onnx byte-for-byte, so the trained ship-config is the base's and this block must be a superset of it. Declaring the `lexicon` name is also what ARMS the #1510 mismatch guard — resolveEvidenceLexicon only compares generations on the declared branch, so an undeclared channel falls back to a legacy filename with no guard at all."
+		},
+		"street_type": {
+			"required": true,
+			"feature_dim": 1,
+			"slots": ["street_type"],
+			"lexicon": "street-type-lexicon-v3.json"
+		}
 	},
 	"labels": [
 		"O",
