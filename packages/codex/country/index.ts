@@ -8,6 +8,7 @@
 
 export * from "./codes.ts"
 export * from "./country.ts"
+export * from "./display-names.ts"
 export * from "./names.ts"
 export * from "./official-languages.ts"
 export * from "./reference-data.ts"

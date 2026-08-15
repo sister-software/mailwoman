@@ -25,7 +25,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-import { buildCandidateTable } from "./build-candidate.ts"
+import { buildCandidateTable, type PlaceAttrs, stageCountryDisplayNames } from "./build-candidate.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 const ALIAS_SEP = "\u{E000}"
@@ -494,5 +494,89 @@ describe("buildCandidateTable", () => {
 				db.close()
 			}
 		})
+	})
+})
+
+describe("stageCountryDisplayNames (#1678 thread 1)", () => {
+	const GEORGIA_SID = 9_000_000_249_733
+	const GE_CID = 7
+
+	function attrsFor(overrides: Partial<PlaceAttrs> = {}): PlaceAttrs {
+		return {
+			cid: GE_CID,
+			rid: 0,
+			ptid: 1,
+			name: "Georgia",
+			lat: 42,
+			lon: 43.5,
+			mnLat: 41,
+			mnLon: 40,
+			mxLat: 43.6,
+			mxLon: 46.7,
+			pop: 3_700_000,
+			neg: -Math.log10(3_700_001),
+			pkey: "georgia",
+			imp: null,
+			...overrides,
+		} as PlaceAttrs
+	}
+
+	function run(attrs: Map<number, PlaceAttrs>) {
+		const staged: Array<{ key: string; sid: number; isPrimary: number; name: string }> = []
+
+		const count = stageCountryDisplayNames({
+			attrs,
+			iso2ByID: new Map([[GE_CID, "GE"]]),
+			countryPtID: 1,
+			stageRow: (key, a, sid, isPrimary) => staged.push({ key, sid, isPrimary, name: a.name }),
+			tx: { exec: () => {} },
+		})
+
+		return { count, staged }
+	}
+
+	test("stages the non-Latin surfaces the bare-toponym probe could not resolve", () => {
+		const { staged } = run(new Map([[GEORGIA_SID, attrsFor()]]))
+		const keys = staged.map((r) => r.key)
+
+		// The exact strings that returned nothing on 2026-08-15.
+		expect(keys).toContain("格鲁吉亚")
+		expect(keys).toContain("喬治亞")
+	})
+
+	test("keeps the country's display name — a surface resolves TO Georgia, it does not rename it", () => {
+		const { staged } = run(new Map([[GEORGIA_SID, attrsFor()]]))
+
+		expect(staged.every((r) => r.name === "Georgia")).toBe(true)
+		expect(staged.every((r) => r.sid === GEORGIA_SID)).toBe(true)
+	})
+
+	test("stages every surface as an alias, never a primary", () => {
+		const { staged } = run(new Map([[GEORGIA_SID, attrsFor()]]))
+
+		expect(staged.every((r) => r.isPrimary === 0)).toBe(true)
+	})
+
+	test("skips the self-alias so the primary key is not restaged", () => {
+		const { staged } = run(new Map([[GEORGIA_SID, attrsFor()]]))
+
+		expect(staged.map((r) => r.key)).not.toContain("georgia")
+	})
+
+	test("ignores non-country rows — a region carrying the same country code is not a target", () => {
+		const { count } = run(new Map([[1, attrsFor({ ptid: 99, name: "Tbilisi" })]]))
+
+		expect(count).toBe(0)
+	})
+
+	test("prefers the most populous row when a code has several", () => {
+		const { staged } = run(
+			new Map([
+				[GEORGIA_SID, attrsFor({ pop: 3_700_000 })],
+				[1, attrsFor({ pop: 12, name: "Georgia (historic)" })],
+			])
+		)
+
+		expect(staged.every((r) => r.sid === GEORGIA_SID)).toBe(true)
 	})
 })
