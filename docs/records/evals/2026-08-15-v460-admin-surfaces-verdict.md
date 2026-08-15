@@ -1,7 +1,9 @@
 # v4.6.0-admin-surfaces — grade verdict
 
-**Recommendation: DO NOT PROMOTE as the default. The run is a qualified success with one true
-regression and one unmet acceptance test, and both have identified, fixable causes.**
+**Recommendation: DO NOT PROMOTE. The run trades a real +11.0 pp gain on US `country` for the
+collapse of the bare-toponym class — 21 net new gated board failures, several placing the answer
+thousands of kilometres out. The cause is identified and the shard is worth rebuilding, but this
+artifact should not ship in any posture.**
 
 Promote is the operator's call. This document is the evidence.
 
@@ -75,21 +77,53 @@ directional-bearing street names — `george-street-north`, `bloor-street-west`,
 treats directionals: better on trailing ones attached to a full street name, worse on a leading one
 with nothing after the name.
 
-## Board: +15 rows, zero regressions
+## Board: 329/352 gated vs the shipped model's 350/352 — **21 NET NEW FAILURES**
 
-`mw eval gauntlet --layer regression`, candidate weights cache.
+**This section replaces an earlier reading of mine that was wrong, and wrong in the direction that
+would have mattered most.** I first reported "+15 rows, zero regressions" after reading only the
+tail of the board output, where the promote-flag block sits. The gated pass/fail header is printed
+ABOVE that block and I truncated it away. Both halves are true and only one of them is decisive.
 
-|                          | shipped | v4.6.0 |
-| ------------------------ | ------: | -----: |
-| tracked rows now passing |       3 | **18** |
-| cases regressed          |       0 |  **0** |
+|                                   | shipped v4.4.0 |      v4.6.0 |
+| --------------------------------- | -------------: | ----------: |
+| gated cases passing               |    **350/352** | **329/352** |
+| gated failures                    |              2 |      **23** |
+| improvement_targets newly passing |              3 |          18 |
 
-Fifteen rows newly pass, including **#1039's `venue-bar-1802-pascal`**, and the street-name family
-above across AU, BR, CA, FR, PT and US, plus `as-cs-pago-pago`, `pr-op3-playa-sardinas-culebra`,
-`vg-op3-road-town`, `us-op3-island-lake-duplicate-degenerate`.
+v4.6.0 flips fifteen tracked rows to passing **and breaks twenty-one gated ones.** The trade is
+badly negative.
 
-The verdict prints FAIL in both arms for the same reason as always — the anti-rot promote flag. No
-case regressed in either.
+### The regression has one shape: bare toponyms lose their span
+
+**Bare street names return `street: null`** — `Avenida Alvear` (AR), `Rua Augusta` (BR _and_ PT),
+`King Street East` and `King Street West` (CA), `Madison Square West` (US).
+
+**Bare city names drop or truncate**, and the coordinate follows them off the planet:
+
+| case                        | v4.6.0                 |      error |
+| --------------------------- | ---------------------- | ---------: |
+| `bn-cs-bandar-seri-begawan` | locality `Bandar Seri` |   4,871 km |
+| `bz-cs-belize-city`         | locality `null`        |      65 km |
+| `il-cs-tel-aviv-yafo`       | locality `Tel`         |   2,586 km |
+| `kh-cs-phnom-penh`          | locality `null`        | unresolved |
+| `my-cs-petaling-jaya`       | locality `null`        | unresolved |
+| `tt-cs-port-of-spain`       | locality `null`        |   6,535 km |
+| `intl-beirut-lebanon`       | —                      |   9,211 km |
+| `bare-region-georgia`       | —                      |  10,089 km |
+
+### The likely cause is the shard that produced the headline win
+
+`synth-bare-country-v23` is 277 rows at dose 1.0, and the sampler allocates draw share **by weight
+normalised over sources, not by rows × weight** — so those 277 surfaces repeat roughly twenty times
+an epoch. The shard teaches exactly one lesson: _a bare capitalised name is a `country`._
+
+US `country` +11.0 pp and the collapse of the bare-locality and bare-street classes are the same
+event seen from two sides. The model learned the lesson too well and generalised it over every bare
+toponym. `bare-region-georgia` landing 10,089 km out is the tell — the row the bare-country work was
+supposed to help.
+
+This is the base-consistency lesson (#511) in a new costume: a small shard at high effective dose
+outvoting a much larger base, and the visible win arriving with an invisible bill.
 
 ## What the corpus additions bought
 
@@ -141,15 +175,21 @@ failed hypothesis about the trailing-region shard.
 
 ## Recommendation
 
-1. **Do not promote as default.** `us.street_prefix` is a known tier-1 regression and the D-rule
-   binds: fix, per-locale-gate, or opt-in.
+1. **Do not promote, in any posture.** This is not a D-rule gating question. 21 gated board
+   failures with multi-thousand-kilometre coordinate errors on bare city names is not a regression
+   to gate behind a flag; it is an artifact to rebuild.
 2. **Fix #1673 and re-cut the ES shard on official-language names**, then rerun. The acceptance row
    is one surface away, and the mechanism is understood.
 3. **File the `arena.perturb` floor for its own gate revision.** It fails the shipped model; leaving
    it stale means every future candidate carries a phantom failure.
-4. **The bare-country half is worth keeping regardless** — +11.0 pp US country, +15 board rows, zero
-   board regressions. Whatever happens to the ES half, this run demonstrated the shard mechanism
-   works.
+4. **Re-dose `synth-bare-country-v23` before the next run.** 277 rows at dose 1.0 repeat ~20× an
+   epoch under the per-source sampler, and they taught "bare capitalised name → country" strongly
+   enough to erase the bare-locality and bare-street classes. The mechanism works — that is what
+   +11.0 pp shows — but the dose is the lever, and the next attempt should carry a pre-registered
+   watch on the bare-toponym board rows, per the #513 adjacent-class rule.
+5. **The measurement lesson.** The board's gated pass/fail header prints ABOVE the promote-flag
+   block. Reading the tail alone shows the flips and hides the breakage. Read `gated cases pass`
+   first, every time.
 
 ## Standing caveat
 
