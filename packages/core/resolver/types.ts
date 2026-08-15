@@ -292,6 +292,36 @@ export interface ResolverBackend {
 }
 
 /**
+ * An optional {@link ResolverBackend} method the loaded backend does not implement, and what that costs.
+ *
+ * Optional methods let a backend be valid while omitting a capability — but the options they serve can still default to
+ * ON, in which case the feature reports success and does nothing. This type carries the absence as data so a caller can
+ * read it instead of inferring it from a result that looks complete.
+ */
+export interface BackendCapabilityGap {
+	/**
+	 * The absent method, named as it appears on {@link ResolverBackend}.
+	 */
+	capability: "ancestors" | "coincidentLocalitiesFor"
+	/**
+	 * The {@link ResolveOpts} field whose behavior the absence removes.
+	 */
+	gates: keyof ResolveOpts
+	/**
+	 * Whether `gates` is on unless a caller turns it off — the difference between a silent loss and a chosen one.
+	 */
+	defaultOn: boolean
+	/**
+	 * What stops working, in terms of the answer rather than the call.
+	 */
+	degrades: string
+	/**
+	 * The backend's class name, so a log line identifies which artifact is loaded.
+	 */
+	backend: string
+}
+
+/**
  * One link in a resolved place's containment lineage ({@link ResolverBackend.ancestors}, #404).
  */
 export interface Ancestor {
@@ -1010,4 +1040,10 @@ export interface Resolver {
 	 * already hold. Absent = artifact predates the manifest → code-constant fallback.
 	 */
 	artifactCoverage?: GazetteerArtifactCoverage
+	/**
+	 * Optional backend methods this resolver's backend does not implement, each naming the default-ON option it silently
+	 * disables. Empty means every default-ON option has the support it needs; absent means the resolver predates the
+	 * check. See {@link BackendCapabilityGap}.
+	 */
+	capabilityGaps?: readonly BackendCapabilityGap[]
 }
