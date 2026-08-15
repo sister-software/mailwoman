@@ -79,6 +79,16 @@
 			"default": "./out/geocode-core.js",
 			"types": "./out/geocode-core.d.ts"
 		},
+		"./geocode-session": {
+			"node": "./geocode-session.ts",
+			"default": "./out/geocode-session.js",
+			"types": "./out/geocode-session.d.ts"
+		},
+		"./debug-view/*": {
+			"node": "./debug-view/*.ts",
+			"default": "./out/debug-view/*.js",
+			"types": "./out/debug-view/*.d.ts"
+		},
 		"./geocode-stream": {
 			"node": "./geocode-stream.ts",
 			"default": "./out/geocode-stream.js",

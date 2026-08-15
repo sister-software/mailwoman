@@ -1,0 +1,18 @@
+{
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"outDir": "./out",
+		"emitDeclarationOnly": false,
+		"rewriteRelativeImportExtensions": true,
+		"erasableSyntaxOnly": true
+	},
+	"include": ["./**/*"],
+	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../neural" },
+		{ "path": "../resolver" },
+		{ "path": "../resolver-wof-sqlite" },
+		{ "path": "../mailwoman" }
+	]
+}

@@ -69,7 +69,8 @@
 		"packages/tile-worker",
 		"packages/map-tui",
 		"docs",
-		"packages/neural-weights-base-latn"
+		"packages/neural-weights-base-latn",
+		"packages/dev-mcp"
 	],
 	"type": "module",
 	"scripts": {
