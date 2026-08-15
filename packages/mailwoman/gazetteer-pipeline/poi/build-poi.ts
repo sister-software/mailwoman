@@ -39,6 +39,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
+	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerTier,
@@ -660,9 +661,22 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	// `coverageCellsOverride` (decision 5, the `--source osm` branch) REPLACES this rows-derived set
 	// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) — see
 	// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
+	// `basis: source_present` states in the artifact what the paragraph above states in prose: the 1.0 is
+	// "Overture returned rows here", not "everything here is known". A consumer building an exclusion
+	// reads the basis and refuses; one reading `completeness` alone would have concluded the opposite.
 	const coverageCells = opts.coverageCellsOverride
-		? [...opts.coverageCellsOverride].map((c) => ({ h3Cell: c.h3Cell, completeness: 1, observedRows: c.observedRows }))
-		: [...coverage.entries()].map(([h3Cell, observedRows]) => ({ h3Cell, completeness: 1, observedRows }))
+		? [...opts.coverageCellsOverride].map((c) => ({
+				h3Cell: c.h3Cell,
+				completeness: 1,
+				basis: CoverageBasis.SourcePresent,
+				observedRows: c.observedRows,
+			}))
+		: [...coverage.entries()].map(([h3Cell, observedRows]) => ({
+				h3Cell,
+				completeness: 1,
+				basis: CoverageBasis.SourcePresent,
+				observedRows,
+			}))
 
 	await writeLayerCoverage(asContractDB(kdb), coverageCells)
 

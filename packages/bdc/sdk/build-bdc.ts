@@ -58,6 +58,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
+	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -783,6 +784,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		const coverageCells = [...coverage.entries()].map(([h3Cell, observedRows]) => ({
 			h3Cell,
 			completeness: 1,
+			basis: CoverageBasis.SourcePresent,
 			observedRows,
 		}))
 
