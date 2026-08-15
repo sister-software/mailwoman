@@ -96,7 +96,16 @@ export const PublicEnvSchema = z.object({
 
 	// Release-it publish flow (`scripts/publish-workspace.ts`). The OTP is a secret — see `$private`.
 	MAILWOMAN_SKIP_WEIGHTS: z.string().optional(),
+	/**
+	 * Set to `0` to publish WITHOUT a sigstore provenance attestation. Provenance is otherwise on by default under GitHub
+	 * Actions — this exists so a release blocked by a sigstore or registry outage can still ship.
+	 */
 	MAILWOMAN_NPM_PROVENANCE: z.string().optional(),
+	/**
+	 * Set by GitHub Actions itself. npm can only mint a provenance attestation from a CI provider it supports, so this is
+	 * the predicate for `--provenance` rather than the generic {@link CI} flag.
+	 */
+	GITHUB_ACTIONS: z.coerce.boolean().default(false),
 	RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE: z.string().optional(),
 	RELEASE_IT_WORKSPACES_TAG: z.string().optional(),
 	RELEASE_IT_WORKSPACES_ACCESS: z.string().optional(),

@@ -115,12 +115,12 @@ try {
 		publishArgs.push("--otp", otp)
 	}
 
-	// --provenance is opt-in via MAILWOMAN_NPM_PROVENANCE=1. The npm registry
-	// rejects --provenance on private source repositories with E422 because
-	// sigstore attestations link to source code that third parties can't
-	// verify. Trusted Publishing itself works fine without --provenance; flip
-	// the env var on once the repo goes public.
-	if ($public.MAILWOMAN_NPM_PROVENANCE === "1") {
+	// npm can only mint a provenance attestation from a CI provider it supports, so this is gated on GitHub Actions
+	// rather than on CI generally: a local `yarn release` passing --provenance fails outright, with no OIDC token to
+	// sign against. Trusted Publishing works either way — the attestation is the part that needs the CI identity.
+	//
+	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
+	if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
 		publishArgs.push("--provenance")
 	}
 
