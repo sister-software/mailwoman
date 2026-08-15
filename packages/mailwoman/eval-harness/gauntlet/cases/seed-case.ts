@@ -142,7 +142,7 @@ export const SeedCaseSchema = zod.strictObject({
 	expectLat: zod.number().optional(),
 	expectLon: zod.number().optional(),
 	expectToleranceM: zod.number().optional(),
-	expectTier: zod.enum(["address_point", "interpolated", "street", "admin", "venue"]).optional(),
+	expectTier: zod.enum(["address_point", "interpolated", "street", "admin", "venue", "plus_code"]).optional(),
 	expectAbstain: zod.boolean().optional(),
 	addedAt: zod.string().min(1),
 	bugRef: zod.string().optional(),

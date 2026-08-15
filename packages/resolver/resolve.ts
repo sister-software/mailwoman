@@ -637,13 +637,18 @@ function revertResolverDecoration(node: AddressNode): void {
 async function applyExplicitCountryCoherence(roots: readonly AddressNode[], backend: ResolverBackend): Promise<void> {
 	const visit = async (node: AddressNode, countryToken: AddressNode | null, regionAbove: boolean): Promise<void> => {
 		const countryHere = node.tag === "country" && node.value.trim().length ? node : countryToken
-		const regionHere = regionAbove || node.tag === "region" || node.tag === "subregion"
 
-		// Fire only when the explicit country is the locality's NEAREST admin context (no region/subregion between).
-		// When a region IS present, applyAdminCoherence + the region's `parentID` scope already disambiguate the
-		// locality — applying the coarse country filter there would wrongly re-pick "Springfield, IL" to the most
-		// populous US "Springfield". Fires regardless of the locality's resolution state, so it PRE-EMPTS the
-		// span-rescore tier (which would otherwise back-fill the unresolved locality with the US namesake).
+		// A region suppresses the country re-pick only when it RESOLVED: the suppression's rationale is
+		// that applyAdminCoherence + the region's `parentID` scope already disambiguate the locality
+		// ("Springfield, IL" must not re-pick to the most populous US Springfield), and an UNRESOLVED
+		// region disambiguates nothing — 'NIC-38' (an ISO-3166-2 code the gazetteer holds no node for)
+		// silently swallowed the explicit 'Nicaragua', and El Sauce resolved a US namesake. This pass
+		// runs post-walk, so resolution state is known.
+		const regionHere = regionAbove || ((node.tag === "region" || node.tag === "subregion") && isResolvedWithCoord(node))
+
+		// Fire only when the explicit country is the locality's NEAREST RESOLVED admin context.
+		// Fires regardless of the locality's resolution state, so it PRE-EMPTS the span-rescore tier
+		// (which would otherwise back-fill the unresolved locality with the US namesake).
 		if (countryHere && !regionHere && (node.tag === "locality" || node.tag === "dependent_locality")) {
 			await reconcileExplicitCountry(countryHere, node, backend)
 		}

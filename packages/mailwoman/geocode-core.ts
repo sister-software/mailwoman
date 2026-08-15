@@ -58,6 +58,7 @@ import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from 
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { probeForkEntity } from "./fork-entity.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
+import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
 
@@ -77,7 +78,7 @@ export {
  * - `street` — street centroid for a street-only query (#1042); uncertainty_m is half the street's bbox diagonal
  * - `admin` — admin centroid; uncertainty_m is null (no sub-locality estimate available)
  */
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
  * The geocode-core result shape — the engine returns this verbatim (passthrough) to `/v1/geocode` and `/v1/batch`.
@@ -1143,6 +1144,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	const forkDeclared = (verdict.intentMarkers ?? []).some((m) => m.code === "declared_fork")
 
 	result = await applyStreetMissFallback(result, { tree, opts, deps, input, forkDeclared })
+	applyPlusCodeOverride(result, input, resolved)
 
 	// ROAD_TO_V9 §4 marker assembly — the verdict itself is computed above the street-miss fallback.
 	const markers = [...(verdict.intentMarkers ?? [])]

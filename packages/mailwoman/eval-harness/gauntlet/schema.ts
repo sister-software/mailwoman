@@ -29,7 +29,7 @@ export type AddressKind = string
  */
 export type CaseStatus = "pass" | "known_fail" | "improvement_target"
 
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue"
+export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
  * One Gauntlet case: a raw input and its expected ASSEMBLED output (parse + place + coordinate + tier).
