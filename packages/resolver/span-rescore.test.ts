@@ -450,3 +450,57 @@ describe("resolveTree + spanRescore", () => {
 		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(1)
 	})
 })
+
+describe("multi-token name interiors (#1678 thread 3)", () => {
+	/**
+	 * `Papua New Guinea` is absent from the gazetteer, so the tree resolves nothing and the rescore tier runs. Before
+	 * this guard it enumerated raw token spans, matched the interior `New` against a real US place, and pinned the
+	 * address to Kentucky — a confident answer to a question nobody asked. The parse was correct throughout.
+	 */
+	it("refuses a sub-span interior to a multi-token country name", async () => {
+		const raw = "Papua New Guinea"
+
+		const roots: AddressNode[] = [
+			{ tag: "country", value: raw, start: 0, end: raw.length, confidence: 0.68, children: [] } as AddressNode,
+		]
+
+		const probed: string[] = []
+
+		const backend = {
+			async findPlace({ text }: { text: string }) {
+				probed.push(text)
+
+				return []
+			},
+		} as unknown as ResolverBackend
+
+		await findRescoreCandidate(raw, roots, backend, {})
+
+		// The whole span may be probed; its interior tokens may not.
+		expect(probed).not.toContain("New")
+		expect(probed).not.toContain("Papua")
+		expect(probed).not.toContain("Guinea")
+	})
+
+	it("leaves a single-token country span probeable — there is no interior to protect", async () => {
+		const raw = "Japan"
+
+		const roots: AddressNode[] = [
+			{ tag: "country", value: raw, start: 0, end: raw.length, confidence: 0.9, children: [] } as AddressNode,
+		]
+
+		const probed: string[] = []
+
+		const backend = {
+			async findPlace({ text }: { text: string }) {
+				probed.push(text)
+
+				return []
+			},
+		} as unknown as ResolverBackend
+
+		await findRescoreCandidate(raw, roots, backend, {})
+
+		expect(probed).toContain("Japan")
+	})
+})

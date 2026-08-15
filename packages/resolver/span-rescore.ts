@@ -228,6 +228,41 @@ export function hasResolvedPlace(roots: readonly AddressNode[]): boolean {
  * NY" is a street suffix, not a locality, and without this guard the recovery exact-matches it against a same-named
  * place ("Ave", France) and injects a bogus locality.
  */
+/**
+ * Ranges of MULTI-TOKEN `country` / `region` spans, used to block their INTERIOR tokens from being re-read as
+ * standalone places. The whole span itself stays probeable — only proper sub-spans are refused.
+ *
+ * The parse grouping is the claim: when the model binds `Papua`, `New` and `Guinea` into one country span, `New` is a
+ * modifier inside a name, not a name. Probing it anyway matches a real US place (`New`, wof:1276997945) and pins the
+ * address to Kentucky — an answer strictly worse than none, because it is confident and wrong.
+ *
+ * Deliberately NOT confidence-gated, unlike {@link confidentRanges}. The country node in that case carries 0.68, under
+ * the 0.7 bar, and a low-confidence GROUPING is still a grouping: the tokens were read as one name either way, and the
+ * interior of a name the parse doubts is not thereby a better standalone candidate. Single-token spans are excluded —
+ * there is no interior to protect.
+ */
+function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
+	const out: Array<[number, number]> = []
+	const stack: AddressNode[] = [...roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (
+			(n.tag === "country" || n.tag === "region") &&
+			Number.isFinite(n.start) &&
+			Number.isFinite(n.end) &&
+			tokenizeRaw(raw.slice(n.start, n.end)).length > 1
+		) {
+			out.push([n.start, n.end])
+		}
+
+		stack.push(...n.children)
+	}
+
+	return out
+}
+
 function confidentRanges(
 	roots: readonly AddressNode[],
 	threshold: number,
@@ -323,6 +358,11 @@ export async function findRescoreCandidate(
 	const toks = tokenizeRaw(raw)
 	const avoid = confidentRanges(roots, threshold, raw, opts.postalCompoundRecovery ?? false)
 	const overlapsAvoid = (s: number, e: number) => avoid.some(([as, ae]) => s < ae && as < e)
+	// Proper sub-spans of a multi-token country/region name are refused; the whole span is not.
+	const nameInteriors = multiTokenNameInteriors(roots, raw)
+
+	const isNameInterior = (s: number, e: number) =>
+		nameInteriors.some(([ns, ne]) => s >= ns && e <= ne && !(s === ns && e === ne))
 
 	// Enumerate contiguous spans, LONGEST first — the gold locality is usually the more-specific
 	// (longer) name; longest-wins lets it beat its own ambiguous prefix.
@@ -341,6 +381,8 @@ export async function findRescoreCandidate(
 			const end = toks[i + len - 1]!.end
 
 			if (overlapsAvoid(start, end)) continue
+
+			if (isNameInterior(start, end)) continue
 			spans.push({ text: raw.slice(start, end), start, end, len })
 		}
 	}
