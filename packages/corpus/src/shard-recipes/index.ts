@@ -9,6 +9,7 @@
  */
 
 import { anchorAbsorptionRecipe } from "./anchor-absorption.ts"
+import { bareCountryRecipe } from "./bare-country.ts"
 import { boundaryStressRecipe } from "./boundary-stress.ts"
 import { countryBalancedRecipe } from "./country-balanced.ts"
 import { czPcFirstPrepositionRecipe } from "./cz-pcfirst-preposition.ts"
@@ -33,6 +34,7 @@ import { streetAffixRecipe, suffixBoundaryRecipe } from "./street-affix.ts"
 import { streetBareRecipe } from "./street-bare.ts"
 import { streetRecipe } from "./street.ts"
 import { subVenueRecipe } from "./sub-venue.ts"
+import { trailingRegionRecipe } from "./trailing-region.ts"
 import { unitRecipe } from "./unit.ts"
 
 export * from "./scaffold.ts"
@@ -41,6 +43,8 @@ export * from "./scaffold.ts"
  * Every registered recipe, in display order.
  */
 const RECIPES: readonly ShardRecipe[] = [
+	bareCountryRecipe,
+	trailingRegionRecipe,
 	streetRecipe,
 	streetBareRecipe,
 	streetAffixRecipe,

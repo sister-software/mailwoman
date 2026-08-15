@@ -4388,6 +4388,68 @@ def sync_v452():
         raise RuntimeError(f"v4.5.2 sync verification failed: {', '.join(missing)}")
 
 
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
+def sync_v460():
+    """Sync the v4.6.0 admin-surfaces BASE-run inputs from R2.
+
+    Corpus v0.23.0-admin-surfaces (the v0.22 overlay VERBATIM + bare-country v23 + the two
+    trailing-region v23 shards) + the training code + config. From scratch — no init checkpoint or
+    Fisher to verify (that is the whole point after the v4.5.x fine-tune falsification). Every input
+    verified before a dollar of GPU.
+    """
+    import shutil
+    import subprocess
+
+    print("Syncing v4.6.0 inputs from R2 (container-side)...")
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+    cmds = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.23.0-admin-surfaces/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.23.0-admin-surfaces/corpus-v0.23.0-admin-surfaces/ {retry}",
+    ]
+    for cmd in cmds:
+        print(f"  {cmd[:110]}...")
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed: {result.stderr[:200]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    print("\nv4.6.0 sync complete. Volume committed.")
+
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.23.0-admin-surfaces/corpus-v0.23.0-admin-surfaces"
+    v22 = f"{VOL_MOUNT}/corpus/versioned/v0.22.0-psc-frsurfaces-v3/corpus-v0.22.0-psc-frsurfaces-v3"
+    checks = {
+        "v4.6.0 base config": os.path.isfile(f"{package}/configs/v4.6.0-admin-surfaces-base-60k.yaml"),
+        "overlay MANIFEST": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "bare-country v23 parquet": os.path.isfile(f"{corpus}/train/part-bare-country-v23.parquet"),
+        "trailing-region es v23 parquet": os.path.isfile(f"{corpus}/train/part-trailing-region-es-v23.parquet"),
+        "trailing-region gb v23 parquet": os.path.isfile(f"{corpus}/train/part-trailing-region-gb-v23.parquet"),
+        "v22 fr parquet reachable": os.path.isfile(f"{v22}/train/part-fr-bare-street-v22.parquet"),
+        "v22 cz parquet reachable": os.path.isfile(f"{v22}/train/part-cz-pcfirst-v21.parquet"),
+        "base shard reachable": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.17.0-batch/corpus-v0.17.0-batch/train/part-sub-venue.parquet"
+        ),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v4.6.0 sync verification failed: {', '.join(missing)}")
+
+
 def _file_contains(path: str, needle: str) -> bool:
     with open(path, encoding="utf-8") as fh:
         return needle in fh.read()
