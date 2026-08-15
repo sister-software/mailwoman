@@ -84,7 +84,7 @@
 			"required": true,
 			"feature_dim": 2,
 			"slots": ["locality", "locality_homograph"],
-			"lexicon": "locality-surface-lexicon-v6.json",
+			"lexicon": "locality-surface-lexicon-v7.json",
 			"$comment_1511": "RESTORED 2026-08-06. Both evidence channels were MISSING from this block for the whole life of the overlay, while the block's own header claimed to be a verbatim copy of the base card's — so en-gb ran the Option-A bundle OFF on a model trained WITH it (#1511). `lexicon` names the generation each channel resolves (#1510): resolveWeights and neural-weights-en-gb/scripts/link-dev-weights.ts both read these fields rather than a hard-coded filename, so a card bump moves the artifact. Keep in lockstep with neural-weights-en-us/model-card.json on every base ship."
 		}
 	},
