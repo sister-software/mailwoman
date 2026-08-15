@@ -262,10 +262,10 @@ describe("resolveTree", () => {
 
 		// The FI Pori wins despite the US one's higher score — the hard country filter excludes it.
 		expect(result.roots[0]).toMatchObject({ placeID: "wof:1", lat: 61.48 })
-		// Two lookups since the bare-country race: the FI-scoped locality query plus the FI-scoped
-		// `country`-placetype side race (which finds nothing here). What the #194 contract forbids is
-		// an UNSCOPED retry — every call must still carry the FI filter.
-		expect(backend.calls).toHaveLength(2)
+		// Three lookups since the bare-toponym races: the FI-scoped locality query plus the FI-scoped
+		// `country` and `region` side races (which find nothing here). What the #194 contract forbids
+		// is an UNSCOPED retry — every call must still carry the FI filter.
+		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
 	})
 
@@ -287,9 +287,9 @@ describe("resolveTree", () => {
 		expect(result.roots[0]?.placeID).toBeUndefined()
 		expect(result.roots[0]?.lat).toBeUndefined()
 		expect(result.roots[0]?.source).toBe("neural")
-		// Two lookups since the bare-country race (locality + the `country`-placetype side race), and
-		// BOTH carried the FI filter — there is still no country-less retry anywhere.
-		expect(backend.calls).toHaveLength(2)
+		// Three lookups since the bare-toponym races (locality + the `country` and `region` side
+		// races), and ALL carried the FI filter — there is still no country-less retry anywhere.
+		expect(backend.calls).toHaveLength(3)
 		expect(backend.calls.every((c) => c.country === "FI")).toBe(true)
 	})
 
