@@ -74,6 +74,13 @@ export interface GauntletResolverLevers {
 	 * it there); the `false` pin now grades the pre-promotion configuration.
 	 */
 	postcodeCountryCoherence?: boolean
+	/**
+	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an ARTIFACT, so
+	 * the harness loads it rather than `resolverLeverDeps` (which stays pure). Library default is OFF on this path,
+	 * because `classifier.parse` reads `fst` from opts only and the geocode path passed none, so the prior was never
+	 * constructed here at all — the board has always graded without it.
+	 */
+	gazetteerPrior?: boolean
 }
 
 /**
@@ -96,12 +103,18 @@ export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
  * indistinguishable is not evidence about the lever.
  */
 export function describeResolverLevers(levers: GauntletResolverLevers | undefined): string {
-	const deps = resolverLeverDeps(levers)
-	const entries = Object.entries(deps)
+	// `resolverLeverDeps` is pure and so cannot see the artifact-carrying pins; describing only what it returns is how
+	// a pinned run prints as "production defaults" and two different configurations produce identical gate logs. That
+	// is precisely the failure this surface exists to prevent, so every lever is named here, not just the boolean ones.
+	const entries: string[] = Object.entries(resolverLeverDeps(levers)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
+
+	if (levers?.gazetteerPrior) {
+		entries.push("gazetteerPrior=ON")
+	}
 
 	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
 
-	return `resolver levers: ${entries.map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`).join(", ")}`
+	return `resolver levers: ${entries.join(", ")}`
 }
 
 /**
@@ -362,6 +375,31 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const leverDeps = resolverLeverDeps(opts.levers)
 
+	// #1497's lever carries an artifact rather than a boolean. Loaded from the classifier's own weights-package
+	// sibling — the same one `runPipeline` auto-loads — so the board grades the prior production would use. A missing
+	// or unreadable artifact degrades to no prior, which is the incumbent behaviour.
+	let priorDeps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
+
+	if (opts.levers?.gazetteerPrior) {
+		const [{ deserializeFST }, { loadStreetMorphologyFST: loadMorph }] = await Promise.all([
+			import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
+			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
+		])
+
+		const fstPath = (classifier as { fstPath?: string }).fstPath
+
+		try {
+			if (fstPath) {
+				priorDeps = {
+					fst: deserializeFST(readFileSync(fstPath)),
+					streetMorphology: loadMorph().matcher,
+				}
+			}
+		} catch (error) {
+			console.error(`[gauntlet] gazetteer prior unavailable: ${(error as Error).message} — grading without it`)
+		}
+	}
+
 	console.error(`[gauntlet] ${describeResolverLevers(opts.levers)}`)
 
 	// The fork→entity probe's two signals — both or neither, tolerate-and-degrade like every optional
@@ -398,6 +436,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
+				...priorDeps,
 				...forkEntityDeps,
 				...forwarded,
 			})

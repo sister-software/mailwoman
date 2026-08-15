@@ -712,7 +712,7 @@ async function safeClassify(
  * fragment-positive) without the emission prior (measured US-golden −48). Absent either matcher, the spread is `{}` and
  * the decode is byte-stable.
  */
-const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
+export const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as const
 
 /**
  * D2 remediation (#1320, ROAD_TO_MAILWOMAN_V8_1_0 §5.2): the pipeline ships the gate at FULL suppression (0.0), not the
@@ -721,9 +721,9 @@ const ZEROED_MORPHOLOGY_OPTS = { biasScale: 0, dependentLocalityPenalty: 0 } as 
  * fragment class byte-identical to 0.25 — the "some admin mass for the semi-markov decoder" rationale for 0.25 carried
  * no measured benefit at the pipeline level. Satisfies the D-rule (iron rule 6) ≥P0 clause for #1318.
  */
-const STREET_CONTEXT_POSITIVE_SCALE = 0
+export const STREET_CONTEXT_POSITIVE_SCALE = 0
 
-function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
+export function streetContextGateFor(stages: { fst?: FSTMatcherLike; streetMorphology?: FSTMatcherLike }): {
 	fstStreetMorphology?: FSTMatcherLike
 	fstStreetMorphologyOpts?: { biasScale: number; dependentLocalityPenalty: number }
 	fstStreetContextPositiveScale?: number
