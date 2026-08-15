@@ -7,6 +7,8 @@
  */
 
 export { EngineRegistry, resolveConfig, engineID, type EngineConfig, type Engine } from "./engine-registry.ts"
+export { checkConfounds, Attribution, assertComparableField, type ConfoundReading } from "./confound.ts"
+export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "./grade.ts"
 export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
 export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "./power.ts"
 export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
