@@ -1,0 +1,33 @@
+{
+	"name": "@mailwoman/dev-mcp",
+	"version": "9.1.0",
+	"private": true,
+	"description": "Maintainer-only MCP server — a warm geocoder and well-powered measurement, so an agent reaches for the board instead of a probe script.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/dev-mcp"
+	},
+	"bin": {
+		"mwdev-mcp": "./cli.ts"
+	},
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/resolver": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@modelcontextprotocol/sdk": "^1.30.0",
+		"mailwoman": "workspace:*",
+		"zod": "^4.4.3"
+	}
+}
