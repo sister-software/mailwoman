@@ -218,6 +218,18 @@ If a release fails partway through publishing:
 
   Two leaf packages deliberately keep local copies rather than take a dependency: `nuts-lookup` and `timezone-lookup` re-implement the ray cast because reaching `@mailwoman/spatial` would pull `@mailwoman/core`'s ~11 MB of shipped data behind it, and `packages/match/gbt.test.ts` keeps an LCG for the same reason. Each says so in place. When you find a duplicate, price the dependency before moving it — the answer is sometimes "leave it, and write down why".
 
+  **When two copies must agree, share the FUNCTION — sharing the constants proves nothing.** The
+  #861 server↔demo parity contract was held by four matching literals and a "keep them in lockstep"
+  comment in both files. The literals stayed matched for the contract's whole life. The code diverged
+  anyway, at the two points a constant cannot express: which field the population term reads
+  (`prominence ?? score` on the server, raw `score` in the browser, so the demo let a demoted
+  cross-country alias ride population back over a primary), and whether the combined value is written
+  back into `prominence` (the server did, the browser did not, so the resolver walk's own
+  `prominence ?? score` sort discarded the demo's ordering). A reviewer comparing the constants — the
+  thing the comments told them to check — would have found them identical every time. Extract the
+  function into a platform-free module and have both sides call it; `primary-preference.ts` and
+  `proximity-rerank.ts` are the two that now are.
+
   **A duplicate is often a bug report about the shared tool.** The seven copies of a hand-rolled CSV splitter in `packages/corpus/src/shard-recipes/` were the worked example: `CSVSpliterator` was ALREADY a dependency of every one of those workspaces, so nobody had failed to find it. They found it, hit 207 seconds on a whole-buffer parse, and wrote something fast that could not see quotes. The duplication was a rational local response to a real upstream defect (a quadratic `searchMatches`, fixed in spliterator 5.0.0), and seven independent authors routed around the same pothole without filing it. So when you meet a duplicate, the useful question is not "why didn't they know" — it's **"what was wrong with the shared thing?"** Sometimes nothing. Often: too slow, async against a sync caller, or shaped for a different call site. Fix that and the duplicates collapse on their own; delete them without fixing it and they grow back.
 
 - **A pty test must force Ink interactive.** `render()` resolves `interactive` from `is-in-ci` and `stdout.isTTY` (`resolveInteractiveOption`), and CI detection wins over a real TTY — so under GitHub Actions a probe driven through `script` renders NON-interactively, and a non-interactive Ink writes only the final frame at unmount (its own `RenderOptions` doc says so). A test that reads a component's edit history out of the pty capture then finds exactly one frame: the last one, with the correct value, which is why the failure reads as a mystery rather than a config problem. Pass `render(node, { interactive: true })` in the probe — `packages/mailwoman/debug-view/test/input-probe.ts` is the worked example. The suppression costs wall-clock too: with nothing written before unmount, the harness's `READY` wait burned its full 20s timeout on every case (`input.pty.test.ts`, 42s → 2.8s once forced).
