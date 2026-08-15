@@ -110,12 +110,15 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 		if (hasComponents) {
 			components++
 		}
+
 		if (hasCoordinates) {
 			coordinates++
 		}
+
 		if (hasTier) {
 			tier++
 		}
+
 		if (!hasComponents && !hasCoordinates && !hasTier) {
 			none++
 		}
@@ -182,6 +185,7 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 		if (droppedCountries.length) {
 			notCovered.push(`countries excluded: ${droppedCountries.toSorted().join(", ")}`)
 		}
+
 		if (droppedKinds.length) {
 			notCovered.push(`address kinds excluded: ${droppedKinds.toSorted().join(", ")}`)
 		}

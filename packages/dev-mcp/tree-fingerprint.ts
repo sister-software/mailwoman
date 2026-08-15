@@ -158,6 +158,9 @@ export function computeTreeFingerprint(repoRoot: string): TreeFingerprint {
 
 	const gitHead = git(repoRoot, ["rev-parse", "HEAD"])
 	const status = git(repoRoot, ["status", "--porcelain"])
+	// `git status --porcelain` over one checkout, already fully buffered by execFileSync above: there is no stream to
+	// consume lazily, and the bound is the number of changed files in a working tree.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, already in memory
 	const dirtyFiles = status ? status.split("\n").map((line) => line.slice(3).trim()) : []
 
 	const digest = createHash("sha256")
