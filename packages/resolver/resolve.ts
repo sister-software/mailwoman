@@ -893,6 +893,10 @@ class WOFResolver implements Resolver {
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
 			// a gazetteer without `coincident_roles`). Pass `hierarchyCompletion: false` to opt out.
+			//
+			// Default-ON is nominal on the SHIPPED backend: `WOFCandidateTableLookup` implements no
+			// `coincidentLocalitiesFor`, so this attaches nothing there. Measured 2026-08-15 on FTS, which
+			// does implement it, the flag changed 0 of 837 board inputs — see ResolveOpts.hierarchyCompletion.
 			hierarchyCompletion: opts.hierarchyCompletion ?? true,
 			includeAncestors: opts.includeAncestors ?? false,
 			localityNodePresent: false,
