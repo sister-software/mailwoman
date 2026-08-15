@@ -178,6 +178,15 @@ node -e "const w=require('./package.json').workspaces,r=require('./.release-it.j
 Every name it prints needs a reason you can state. `scripts/scaffold-weights-overlay.ts` registers a
 new overlay in both lists for exactly this reason — a locale added by hand skips that step.
 
+A new workspace joins FOUR registers, and only the first one fails loudly. The root `workspaces` array is
+what `yarn install` reads, so missing it breaks immediately. The other three do not: the release list
+above (or a reason it is absent), and BOTH root `tsconfig.json` reference entries — `./packages/<name>`
+and `./packages/<name>/tsconfig.test.json`. Skip the tsconfig pair and `tsc -b` never builds the
+workspace at all, so `out/` stays empty and every test-project reference to it fails with `TS6305:
+Output file has not been built from source file` — which reads as a broken test rather than an
+unregistered project, and which a local run hides completely if you happened to build that workspace
+by hand.
+
 ### Recovering from a partial release
 
 If a release fails partway through publishing:
