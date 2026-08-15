@@ -1082,6 +1082,23 @@ class WOFResolver implements Resolver {
 					decorated.metadata = { ...decorated.metadata, ...picked.metadata }
 				}
 
+				// #1678 thread 2 — the parse half, resolved from the atlas rather than trained in.
+				//
+				// The bare-toponym race exists because the model reads a lone country or region name as a
+				// `locality`; the race finds the right PLACE and the node keeps the wrong TAG. So
+				// `mw geocode 格鲁吉亚` lands on Georgia the country and reports `{"locality": "格鲁吉亚"}`,
+				// which is a correct coordinate under a label that will mislead the moment the same toponym
+				// appears inside a longer address.
+				//
+				// The repick metadata already marks exactly these nodes, so the correction is free: retrieval
+				// established the placetype, and the tag follows it. Only the race's own picks are retagged —
+				// an ordinary locality that resolved to a locality is untouched.
+				if (decorated.metadata?.["bare_country_repick"]) {
+					decorated.tag = "country"
+				} else if (decorated.metadata?.["bare_region_repick"]) {
+					decorated.tag = "region"
+				}
+
 				// Lineage attachment (#404): stamp the resolved place's ancestor chain onto metadata. Opt-in
 				// + only when the backend supplies it, so the default stays byte-identical (no extra query).
 				if (state.includeAncestors && this.#backend.ancestors) {
