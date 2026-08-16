@@ -11,6 +11,7 @@
 	"references": [
 		{ "path": "../codex" },
 		{ "path": "../core" },
+		{ "path": "../geocode-oracle" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },

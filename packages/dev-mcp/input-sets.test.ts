@@ -21,6 +21,11 @@ import { resolveInputSet } from "./input-sets.ts"
  */
 const havePanel = existsSync(String(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl")))
 const haveGolden = existsSync(String(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl")))
+/**
+ * The `us` holdout source only. `fr` is a 5.06 GB CSV that a reservoir draw reads end to end — measured at 45.5 s
+ * against `us`'s 113 ms — so exercising it in a unit suite would cost more than every other test here combined.
+ */
+const haveHoldoutUS = existsSync(String(dataRootPath("corpus", "staging", "fdic-us.csv")))
 
 describe("resolveInputSet — board", () => {
 	it("defaults to the whole board and reports its live corpus hash", async () => {
@@ -142,5 +147,54 @@ describe.skipIf(!haveGolden)("a corpus that cannot be read", () => {
 		await expect(resolveInputSet({ kind: "golden", version: "v9.9.9-nonexistent" })).rejects.toThrow(
 			/resolved no rows|not found/
 		)
+	})
+})
+
+describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
+	it("draws the requested size and reports what it drew from", async () => {
+		const set = await resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 })
+
+		expect(set.n).toBe(25)
+		expect(set.populationN).toBeGreaterThan(70_000)
+		expect(set.selection).toBe("random-draw")
+	})
+
+	it("is a random draw, not a declared slice — the two support opposite claims", async () => {
+		// A slice is chosen by a predicate and generalizes to nothing beyond it. This is the one subset in this file
+		// whose rate estimates the population's, and the sentence a caller relays has to say so.
+		const set = await resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 })
+
+		expect(set.selection).not.toBe("slice")
+		expect(set.hasTruth.coordinates).toBe(25)
+	})
+
+	it("reproduces the same rows for the same seed", async () => {
+		const [first, second] = await Promise.all([
+			resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 }),
+			resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 }),
+		])
+
+		expect(second.sha256).toBe(first.sha256)
+	})
+
+	it("draws different rows for a different seed", async () => {
+		const [a, b] = await Promise.all([
+			resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 7 }),
+			resolveInputSet({ kind: "holdout", source: "us", n: 25, seed: 8 }),
+		])
+
+		expect(b.sha256).not.toBe(a.sha256)
+	})
+
+	it("says in the result whether the draw was seeded, because that decides what it may be used for", async () => {
+		const seeded = await resolveInputSet({ kind: "holdout", source: "us", n: 10, seed: 1 })
+		const fresh = await resolveInputSet({ kind: "holdout", source: "us", n: 10 })
+
+		expect(seeded.notes.join(" ")).toContain("Seeded with 1")
+		expect(fresh.notes.join(" ")).toContain("UNSEEDED")
+	})
+
+	it("refuses an unknown source rather than resolving to an empty set", async () => {
+		await expect(resolveInputSet({ kind: "holdout", source: "de" as never })).rejects.toThrow(/unknown holdout source/)
 	})
 })

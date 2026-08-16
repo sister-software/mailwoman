@@ -17,11 +17,15 @@
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
 
+import { randomUUID } from "node:crypto"
+
 import { formatPercent } from "@mailwoman/core/utils"
+import { haversineKm } from "@mailwoman/spatial"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
+import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 
-import { armLabel, type ArmSpec, type ExternalArm, normalizeArmSpec } from "./arms.ts"
+import { armLabel, type ArmSpec, type ExternalArm, normalizeArmSpec, type OracleArm, type RecordedArm } from "./arms.ts"
 import { checkConfounds, crossEngineReading, type ConfoundReading } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
@@ -37,7 +41,27 @@ import {
 } from "./geo-grade.ts"
 import { gradeRow, significance } from "./grade.ts"
 import { resolveInputSet, type InputSetRef, type ResolvedInput, type ResolvedInputSet } from "./input-sets.ts"
+import {
+	answerFromOracle,
+	createOracleClient,
+	OracleMeter,
+	type OracleArmIdentity,
+	type OracleGeocoderLike,
+	ORACLE_GRADE_MODE,
+	ORACLE_VERDICT_NOTE,
+	OracleProviderName,
+} from "./oracle-arm.ts"
 import { describeObservedRate } from "./power.ts"
+import {
+	getRun,
+	replayIndex,
+	RETENTION_DAYS,
+	RETENTION_MAX_RUNS,
+	RUN_STORE_DIR,
+	tryPutRun,
+	type RecordedAnswer,
+	type StoredRun,
+} from "./run-store.ts"
 import {
 	bucketRows,
 	type ComparedRow,
@@ -93,6 +117,26 @@ export interface CompareDeps {
 	 * be asserting its own hypothesis about the protocol.
 	 */
 	createExternalClient?: (arm: ExternalArm) => ExternalGeocoderClient
+	/**
+	 * How an oracle arm's client is built. The same seam, for the same reason.
+	 */
+	createOracleClient?: (provider: OracleProviderName) => OracleGeocoderLike
+	/**
+	 * The spend meter, shared across a daemon's lifetime. A fresh one per call would make the cap per-call, which is not
+	 * a cap.
+	 */
+	oracleMeter?: OracleMeter
+	/**
+	 * Where completed runs are written, and what to stamp them with. Injected so a test does not write into the
+	 * operator's store, and because `Date`/`randomUUID` are exactly what a deterministic replay cannot call.
+	 */
+	runStoreDir?: string
+	now?: () => Date
+	newRunID?: () => string
+}
+
+function now(deps: CompareDeps): Date {
+	return deps.now ? deps.now() : new Date()
 }
 
 /**
@@ -118,7 +162,7 @@ export async function runCompare(
 	const set = await resolveInputSet(options.inputs ?? { kind: "board" })
 
 	if (armA.kind === "mailwoman" && armB.kind === "mailwoman") {
-		return compareMailwomanArms(registry, set, armA.config, armB.config, options)
+		return compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
 	}
 
 	return compareAcrossEngines(registry, set, armA, armB, options, deps)
@@ -132,7 +176,8 @@ async function compareMailwomanArms(
 	set: ResolvedInputSet,
 	configA: EngineConfig,
 	configB: EngineConfig,
-	options: CompareOptions
+	options: CompareOptions,
+	deps: CompareDeps
 ): Promise<unknown> {
 	// Both arms are acquired BEFORE either runs, so a source edit between them cannot go unnoticed. §3.4(d):
 	// a single run may transparently rebuild, but two arms under different trees are not a comparison.
@@ -154,6 +199,9 @@ async function compareMailwomanArms(
 
 	const rows: ComparedRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
+	// Kept alongside `rows` rather than derived from it afterwards: `ComparedRow.a` is `unknown`, and recovering the
+	// type with a cast would let a future change to that field pass the compiler and produce a store full of nulls.
+	const recorded: Record<"a" | "b", RecordedAnswer[]> = { a: [], b: [] }
 
 	for (const item of set.inputs) {
 		let a
@@ -176,6 +224,9 @@ async function compareMailwomanArms(
 		}
 
 		const { grade, issuesA, issuesB } = gradeRow(item.seed, a, b, checkCase)
+
+		recorded.a.push({ id: item.id, input: item.input, ...answerFromGauntletResult(a) })
+		recorded.b.push({ id: item.id, input: item.input, ...answerFromGauntletResult(b) })
 
 		rows.push({
 			id: item.id,
@@ -245,7 +296,30 @@ async function compareMailwomanArms(
 		.filter(Boolean)
 		.join(" ")
 
+	// Both arms are recorded under distinct labels: they are two configurations of the same engine, so `mailwoman` alone
+	// would name whichever one was written last and a recorded arm would replay a config nobody asked for.
+	const run: StoredRun = {
+		run_id: (deps.newRunID ?? randomUUID)(),
+		tool: "mwdev_compare",
+		created_at: now(deps).toISOString(),
+		tree_fingerprint: engineA.fingerprint.digest,
+		engine_id: engineA.engineID,
+		input_set_id: set.setID,
+		answers: { "mailwoman:a": recorded.a, "mailwoman:b": recorded.b },
+		payload: null,
+	}
+
+	const storeWarning = tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
+
+	if (storeWarning) {
+		confounds.warnings.push(storeWarning)
+	}
+
 	return {
+		run_id: run.run_id,
+		run_id_note:
+			`Stored for ${RETENTION_DAYS} days. Replay either side as an arm with ` +
+			`{kind:"recorded", run_id:"${run.run_id}", arm:"mailwoman:a"}.`,
 		provenance_a: provenanceFor(engineA, set),
 		provenance_b: provenanceFor(engineB, set),
 		summary,
@@ -305,16 +379,144 @@ async function mailwomanRunner(
 		label: "mailwoman",
 		provenance: provenanceFor(engine, set) as unknown as Record<string, unknown>,
 		warnings: [],
-		answer: async (input) => {
-			const { result } = await engine.session.geocode(input)
+		answer: async (input) => answerFromGauntletResult(toGauntletResult((await engine.session.geocode(input)).result)),
+	}
+}
 
-			return {
-				lat: result.lat,
-				lon: result.lon,
-				label: result.locality ?? result.region ?? null,
-				resultType: result.resolution_tier,
-				noResultReason: result.lat === null ? "the pipeline resolved no coordinate" : null,
+/**
+ * A mailwoman result as an arm answer.
+ *
+ * Reads the GAUNTLET projection rather than the raw `GeocodeResult`, so the two-mailwoman path — which already holds
+ * `GauntletResult`s — and the cross-engine path answer through one function. Two projections of the same run is how a
+ * recorded arm and the live arm it was recorded from stop agreeing.
+ */
+function answerFromGauntletResult(result: GauntletResult): ExternalAnswer {
+	return {
+		lat: result.lat,
+		lon: result.lon,
+		label: result.locality ?? result.region ?? null,
+		resultType: result.tier,
+		noResultReason: result.lat === null ? "the pipeline resolved no coordinate" : null,
+	}
+}
+
+/**
+ * A reference geocoder as a runner, admitted through the meter before a single query is issued.
+ *
+ * @throws When the meter refuses. Refusing here rather than per row is what keeps a half-spent run from existing: the
+ *   caller is told it cannot afford the set before any of it is billed.
+ */
+function oracleRunner(
+	spec: OracleArm,
+	set: ResolvedInputSet,
+	meter: OracleMeter,
+	deps: CompareDeps
+): { runner: ArmRunner; identity: OracleArmIdentity; client: OracleGeocoderLike } {
+	const admission = meter.admit(spec.provider, set.inputs.length)
+
+	if (!admission.allowed) throw new Error(admission.reason)
+
+	const client = deps.createOracleClient ? deps.createOracleClient(spec.provider) : createOracleClient(spec.provider)
+
+	const identity: OracleArmIdentity = {
+		arm: "oracle",
+		provider: spec.provider,
+		grade_mode: ORACLE_GRADE_MODE,
+		calls_admitted: set.inputs.length,
+		calls_remaining: admission.callsRemaining,
+		admission_reason: admission.reason,
+		warnings: [ORACLE_VERDICT_NOTE],
+	}
+
+	return {
+		client,
+		identity,
+		runner: {
+			label: `oracle:${spec.provider}`,
+			provenance: { ...identity, input_set: inputSetProvenance(set) },
+			warnings: identity.warnings,
+			answer: async (input) => {
+				const answer = await answerFromOracle(client, input)
+
+				if (spec.provider === OracleProviderName.Google) {
+					meter.recordGoogleCalls(1)
+				}
+
+				return answer
+			},
+		},
+	}
+}
+
+/**
+ * A stored run replayed row by row.
+ *
+ * MATCHED BY INPUT STRING, not by row id. A row id is only meaningful inside the corpus that minted it, and a recorded
+ * arm exists to compare across time — the board may have gained rows, or the comparison may be against a different set
+ * entirely. The input string is the one key that means the same thing in both runs.
+ *
+ * A row the stored run does not carry is a no-result with that reason rather than a throw, so a set that grew by three
+ * rows is still readable on the rest. How many were missing is counted BEFORE the run and warned about, not discovered
+ * from the miss rate afterwards.
+ */
+function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): ArmRunner {
+	const run = getRun(spec.runID, dir)
+
+	if (!run) {
+		throw new Error(
+			`Arm: no stored run ${JSON.stringify(spec.runID)}. It was pruned or never existed — the store keeps runs for ` +
+				`${RETENTION_DAYS} days and at most ${RETENTION_MAX_RUNS} of them. Those two are indistinguishable after ` +
+				"the fact, so re-measure. mwdev_runs lists what is still there."
+		)
+	}
+
+	const byInput = new Map([...replayIndex(run, spec.arm).values()].map((answer) => [answer.input, answer]))
+	const missing = set.inputs.filter((item) => !byInput.has(item.input)).length
+
+	// The confound guard is not relaxed for a recorded arm: comparing across a tree change IS comparing across a tree
+	// change, and `tree_fingerprint` has to be a declared variable for the attribution to read `clean`.
+	const warnings = [
+		`This arm is a replay of run ${run.run_id}, recorded at ${run.created_at} against tree ` +
+			`${run.tree_fingerprint.slice(0, 12)}. Declare tree_fingerprint as a variable — everything that changed ` +
+			"between the two trees is inside this comparison, not only what you changed on purpose.",
+	]
+
+	if (missing) {
+		warnings.push(
+			`${missing} of ${set.inputs.length} rows in this set are not in run ${run.run_id}, so this arm scores them as ` +
+				"no-results. They are inside every rate below. Re-run both arms live if that share is material."
+		)
+	}
+
+	return {
+		label: `recorded:${spec.arm}`,
+		provenance: {
+			arm: "recorded",
+			run_id: run.run_id,
+			replayed_arm: spec.arm,
+			recorded_at: run.created_at,
+			recorded_tree_fingerprint: run.tree_fingerprint,
+			recorded_engine_id: run.engine_id,
+			recorded_input_set_id: run.input_set_id,
+			rows_replayed: set.inputs.length - missing,
+			rows_absent_from_run: missing,
+			input_set: inputSetProvenance(set),
+		},
+		warnings,
+		answer: async (input) => {
+			const hit = byInput.get(input)
+
+			if (!hit) {
+				return {
+					lat: null,
+					lon: null,
+					label: null,
+					resultType: null,
+					noResultReason: `run ${run.run_id} carries no answer for this input`,
+				}
 			}
+
+			return { lat: hit.lat, lon: hit.lon, label: hit.label, resultType: hit.resultType, noResultReason: null }
 		},
 	}
 }
@@ -372,11 +574,24 @@ async function compareAcrossEngines(
 	options: CompareOptions,
 	deps: CompareDeps
 ): Promise<unknown> {
-	const clients: ExternalGeocoderClient[] = []
-	const identities: Record<string, ExternalArmIdentity> = {}
+	const clients: AsyncDisposable[] = []
+	const identities: Record<string, ExternalArmIdentity | OracleArmIdentity> = {}
+	const meter = deps.oracleMeter ?? new OracleMeter()
 
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
+
+		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
+
+		if (arm.kind === "oracle") {
+			const { runner, identity, client } = oracleRunner(arm, set, meter, deps)
+
+			clients.push(client)
+
+			identities[side] = identity
+
+			return runner
+		}
 
 		const { runner, identity, client } = await externalRunner(arm, set, deps)
 
@@ -393,7 +608,7 @@ async function compareAcrossEngines(
 	const runnerB = await build(armB, "b")
 
 	try {
-		return await scoreGeoRows(set, armA, armB, runnerA, runnerB, identities, options)
+		return await scoreGeoRows({ registry, set, armA, armB, runnerA, runnerB, identities, options, deps })
 	} finally {
 		for (const client of clients) {
 			await client[Symbol.asyncDispose]()
@@ -401,15 +616,24 @@ async function compareAcrossEngines(
 	}
 }
 
-async function scoreGeoRows(
-	set: ResolvedInputSet,
-	armA: ArmSpec,
-	armB: ArmSpec,
-	runnerA: ArmRunner,
-	runnerB: ArmRunner,
-	identities: Record<string, ExternalArmIdentity>,
+/**
+ * Everything one cross-engine scoring pass needs. A single object rather than nine positional parameters — at that
+ * count a transposed pair of same-typed arguments (`runnerA`, `runnerB`) compiles and silently swaps the arms.
+ */
+interface GeoScoringContext {
+	registry: EngineRegistry
+	set: ResolvedInputSet
+	armA: ArmSpec
+	armB: ArmSpec
+	runnerA: ArmRunner
+	runnerB: ArmRunner
+	identities: Record<string, ExternalArmIdentity | OracleArmIdentity>
 	options: CompareOptions
-): Promise<unknown> {
+	deps: CompareDeps
+}
+
+async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
+	const { registry, set, armA, armB, runnerA, runnerB, identities, options, deps } = context
 	const rows: GeoRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
 	const consecutive = { a: 0, b: 0 }
@@ -443,6 +667,10 @@ async function scoreGeoRows(
 		}
 	}
 
+	// Decided before the loop, because it changes what a row's `grade` may be. An oracle is never a grading truth
+	// (`oracle-arm.ts`), so a row in an oracle comparison is ungradeable however much truth the set carries.
+	const hasOracle = armA.kind === "oracle" || armB.kind === "oracle"
+
 	for (const item of set.inputs) {
 		const a = await ask(runnerA, "a", item)
 		const b = await ask(runnerB, "b", item)
@@ -460,11 +688,8 @@ async function scoreGeoRows(
 			country: item.country,
 			address_kind: item.addressKind,
 			status: item.status,
-			// Across engines the coordinates essentially always differ, so a raw value diff would report 100% and mean
-			// nothing. What differs usefully is the VERDICT: whether the two arms land on the same side of the
-			// thresholds. Two hits 900 m apart are the same finding; a hit and a miss are not.
-			differed: DISTANCE_THRESHOLDS_KM.some((threshold) => hitAt(distanceA, threshold) !== hitAt(distanceB, threshold)),
-			grade: hasTruth ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
+			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth),
+			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,
 			truth_lat: truthLat,
@@ -478,7 +703,12 @@ async function scoreGeoRows(
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
-	const mode = resolveGradeMode(options.grade, graded.length > 0, "no row in this set carries a truth coordinate")
+	const withTruth = rows.filter((row) => row.truth_lat !== null).length
+
+	const mode = hasOracle
+		? ORACLE_GRADE_MODE
+		: resolveGradeMode(options.grade, graded.length > 0, "no row in this set carries a truth coordinate")
+
 	const distances = graded.map((row) => ({ distanceKmA: row.distance_km_a, distanceKmB: row.distance_km_b }))
 	const thresholds = thresholdTable(distances)
 	const gradeKey = thresholdKey(options.gradeThresholdKm)
@@ -520,8 +750,13 @@ async function scoreGeoRows(
 				`coordinate. At ${gradeKey}: ${gradedHits.a} (${formatPercent(gradedHits.a, graded.length)}) for ` +
 				`${runnerA.label}, ${gradedHits.b} (${formatPercent(gradedHits.b, graded.length)}) for ${runnerB.label}. ` +
 				`${test.sentence} ${equivalence.sentence}`
-			: `${runnerA.label} vs ${runnerB.label} over ${rows.length} rows, none of which carries a truth coordinate — ` +
-				"so this describes where the two arms disagree and grades nothing.",
+			: // The two reasons for withholding a grade are not the same fact and must not share a sentence. "No truth
+				// here" is about the set; "an oracle is present" is a refusal that holds even when the set has truth for
+				// every row, and a reader told the wrong one will go looking for a corpus that already exists.
+				hasOracle
+				? `${runnerA.label} vs ${runnerB.label} over ${rows.length} rows. ${ORACLE_VERDICT_NOTE}`
+				: `${runnerA.label} vs ${runnerB.label} over ${rows.length} rows, none of which carries a truth coordinate — ` +
+					"so this describes where the two arms disagree and grades nothing.",
 		changeReading.sentence,
 		`Neither arm answered on ${noResult.a} (${runnerA.label}) and ${noResult.b} (${runnerB.label}) rows respectively` +
 			(errored.a + errored.b
@@ -533,15 +768,41 @@ async function scoreGeoRows(
 		.filter(Boolean)
 		.join(" ")
 
+	const run: StoredRun = {
+		run_id: (deps.newRunID ?? randomUUID)(),
+		tool: "mwdev_compare",
+		created_at: now(deps).toISOString(),
+		tree_fingerprint: registry.fingerprint().digest,
+		engine_id: null,
+		input_set_id: set.setID,
+		answers: {
+			[runnerA.label]: recordAnswers(rows, "a"),
+			[runnerB.label]: recordAnswers(rows, "b"),
+		},
+		payload: null,
+	}
+
+	const storeWarning = tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
+
+	if (storeWarning) {
+		warnings.push(storeWarning)
+	}
+
 	return {
+		run_id: run.run_id,
+		run_id_note:
+			`Stored for ${RETENTION_DAYS} days. Pass {kind:"recorded", run_id:"${run.run_id}"} as an arm to compare a ` +
+			"later run against this one without re-running it.",
 		provenance_a: runnerA.provenance,
 		provenance_b: runnerB.provenance,
 		summary,
 		grade_mode: mode,
 		...withheldVerdict(
 			mode,
-			"no truth coordinate for this input set; a cross-engine comparison has no other grading axis, so the " +
-				"differences are described rather than graded."
+			hasOracle
+				? ORACLE_VERDICT_NOTE
+				: "no truth coordinate for this input set; a cross-engine comparison has no other grading axis, so the " +
+						"differences are described rather than graded."
 		),
 		protocol: {
 			source: "docs/superpowers/plans/2026-08-06-local-pelias-benchmark-rig.md §4, spec §2.4",
@@ -563,9 +824,14 @@ async function scoreGeoRows(
 		n_errored_b: errored.b,
 		errors,
 		arms_differed_on: { n: differed.length, of: rows.length },
+		differed_basis: withTruth === rows.length ? "threshold-crossing-vs-truth" : "arm-separation",
 		arms_differed_on_note:
-			"A row counts as differed when the arms land on opposite sides of at least one threshold. Two results 900m " +
-			"apart that are both hits at 1km do NOT count — across engines, the raw coordinates always differ.",
+			withTruth === rows.length
+				? "A row counts as differed when the arms land on opposite sides of at least one threshold. Two results 900m " +
+					"apart that are both hits at 1km do NOT count — across engines, the raw coordinates always differ."
+				: `${rows.length - withTruth} of ${rows.length} rows carry no truth coordinate, so there is no verdict for ` +
+					`the arms to land on opposite sides of. Those rows count as differed when exactly one arm answered, or ` +
+					`when both answered more than ${ARM_SEPARATION_THRESHOLD_KM}km apart.`,
 		// No mechanism inside another geocoder reports whether it fired, and inventing a signal for it would be worse
 		// than the null §5.4 asks for.
 		mechanism_fired_on: null,
@@ -576,8 +842,16 @@ async function scoreGeoRows(
 			ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
 		},
 		thresholds,
-		significance: test,
-		equivalence,
+		// A significance test and an equivalence claim are both VERDICTS, so a diff-only result carries neither. Emitting
+		// them over an empty graded set would print a test at n = 0, which reads as a test that was run.
+		significance: mode === "truth" ? test : null,
+		equivalence: mode === "truth" ? equivalence : null,
+		significance_withheld_reason:
+			mode === "truth"
+				? undefined
+				: hasOracle
+					? ORACLE_VERDICT_NOTE
+					: "nothing in this set is graded, so there are no two proportions to test.",
 		power: changeReading,
 		truth_precision_m: truthPrecision(graded),
 		...(identities["a"] ? { arm_a_identity: identities["a"] } : {}),
@@ -587,6 +861,72 @@ async function scoreGeoRows(
 		warnings,
 	}
 }
+
+/**
+ * One arm's answers, in the shape a later run replays them from.
+ *
+ * Every row is recorded, including the no-results. A store that kept only the answered rows would replay as a set that
+ * had never been asked about the rest, and "this arm did not answer here" is the finding on exactly the rows a
+ * comparison is usually chasing.
+ */
+function recordAnswers(rows: GeoRow[], side: "a" | "b"): RecordedAnswer[] {
+	return rows.map((row) => ({
+		id: row.id,
+		input: row.input,
+		lat: row[side].lat,
+		lon: row[side].lon,
+		label: row[side].label,
+		resultType: row[side].resultType,
+		noResultReason: row[side].noResultReason,
+	}))
+}
+
+/**
+ * Whether two arms disagreed on one row.
+ *
+ * TWO RULES, because the good one needs truth and not every set has it.
+ *
+ * With truth, the useful difference is the VERDICT: whether the arms land on the same side of the thresholds. Two hits
+ * 900 m apart are the same finding; a hit and a miss are not. A raw coordinate diff would report 100% and mean nothing,
+ * because across engines the coordinates always differ.
+ *
+ * Without truth there is no verdict to cross, and the threshold rule silently answers "identical" for every row — both
+ * distances are null, `hitAt(null, …)` is false on both sides, and the comparison reports `0 of N differed` however far
+ * apart the two arms landed. Read through `describeObservedRate` that becomes "tight enough to read as a real absence",
+ * which is a fabricated claim of no difference. So the truthless rule is arm SEPARATION: they differ when exactly one
+ * of them answered, or when they answered more than {@link ARM_SEPARATION_THRESHOLD_KM} apart.
+ *
+ * Which rule ran is reported as `differed_basis` — the two are not the same measurement and a reader comparing across
+ * two results needs to know which one produced each number.
+ */
+function armsDiffered(
+	a: ExternalAnswer,
+	b: ExternalAnswer,
+	distanceA: number | null,
+	distanceB: number | null,
+	hasTruth: boolean
+): boolean {
+	if (hasTruth) {
+		return DISTANCE_THRESHOLDS_KM.some((threshold) => hitAt(distanceA, threshold) !== hitAt(distanceB, threshold))
+	}
+
+	const answeredA = a.lat !== null && a.lon !== null
+	const answeredB = b.lat !== null && b.lon !== null
+
+	if (answeredA !== answeredB) return true
+
+	if (!answeredA) return false
+
+	return haversineKm(a.lat!, a.lon!, b.lat!, b.lon!) > ARM_SEPARATION_THRESHOLD_KM
+}
+
+/**
+ * How far apart two arms may land before they count as disagreeing, when there is no truth to grade against.
+ *
+ * The tightest of the pre-registered thresholds rather than a fourth number: a separation inside it is a separation
+ * that could not change a verdict at any threshold the protocol reports.
+ */
+const ARM_SEPARATION_THRESHOLD_KM = DISTANCE_THRESHOLDS_KM[0]!
 
 /**
  * How precise the truth itself is, as a histogram of the rows' own declared tolerances.

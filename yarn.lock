@@ -4633,6 +4633,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/geocode-oracle": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -4745,7 +4746,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/geocode-oracle@workspace:packages/geocode-oracle":
+"@mailwoman/geocode-oracle@workspace:*, @mailwoman/geocode-oracle@workspace:packages/geocode-oracle":
   version: 0.0.0-use.local
   resolution: "@mailwoman/geocode-oracle@workspace:packages/geocode-oracle"
   dependencies:

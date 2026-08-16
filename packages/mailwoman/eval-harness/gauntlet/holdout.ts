@@ -75,7 +75,10 @@ const TOLS = [0.1, 0.5, 5] as const
  */
 const GATE_TOL = 5
 
-interface Sample {
+/**
+ * One drawn row — a bare-form query and the truth coordinate it came with.
+ */
+export interface Sample {
 	query: string
 	lat: number
 	lon: number
@@ -87,13 +90,13 @@ interface Sample {
  * coord. FR/BAN streams the 5 GB file; the smaller pools (US/FDIC, ~77k) are the fast draw. Add a source by dropping a
  * staging file + a parser here.
  */
-interface SourceDef {
+export interface SourceDef {
 	file: string
 	label: string
 	parse(cols: string[]): Sample | null
 }
 
-function holdoutSources(): Record<string, SourceDef> {
+export function holdoutSources(): Record<string, SourceDef> {
 	return {
 		fr: {
 			file: String(dataRootPath("corpus", "staging", "ban-france.csv")),
@@ -133,8 +136,17 @@ function holdoutSources(): Record<string, SourceDef> {
 
 /**
  * Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run.
+ *
+ * `random` is injectable so a caller that must be able to re-draw the SAME sample can seed it. The layer itself never
+ * passes one: an unseeded draw is what makes this the only gate the model cannot have memorized, and a seeded default
+ * would quietly turn the generalization measure into a fixed set. It also returns `drawnFrom`, the count of parseable
+ * rows the reservoir saw, because the sample size alone does not say what it was drawn out of.
  */
-async function draw(src: SourceDef, n: number): Promise<Sample[]> {
+export async function drawHoldoutSample(
+	src: SourceDef,
+	n: number,
+	random: () => number = Math.random
+): Promise<{ sample: Sample[]; drawnFrom: number }> {
 	const res: Sample[] = []
 	let seen = 0
 	let line = 0
@@ -153,7 +165,7 @@ async function draw(src: SourceDef, n: number): Promise<Sample[]> {
 		if (res.length < n) {
 			res.push(s)
 		} else {
-			const j = Math.floor(Math.random() * seen)
+			const j = Math.floor(random() * seen)
 
 			if (j < n) {
 				res[j] = s
@@ -161,7 +173,7 @@ async function draw(src: SourceDef, n: number): Promise<Sample[]> {
 		}
 	}
 
-	return res
+	return { sample: res, drawnFrom: seen }
 }
 
 async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: number[]; resolved: number }> {
@@ -229,7 +241,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 
 	console.error(`[gauntlet/holdout] drawing ${N} fresh ${src.label} addresses…`)
 
-	const sample = await draw(src, N)
+	const { sample } = await drawHoldoutSample(src, N)
 
 	console.error(`[gauntlet/holdout] scoring production vs candidate on the SAME ${sample.length} addresses…`)
 

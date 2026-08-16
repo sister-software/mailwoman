@@ -18,9 +18,10 @@ import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
+import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
 
 import type { Selection } from "./power.ts"
 
@@ -39,7 +40,22 @@ export type InputSetRef =
 	| { kind: "panel"; version?: PanelVersion; country?: string; truth_type?: string }
 	| { kind: "golden"; version?: string; split?: GoldenSplit }
 	| { kind: "parity"; country?: string }
+	| { kind: "holdout"; source?: HoldoutSource; n?: number; seed?: number }
 	| { kind: "literal"; inputs: string[]; why: string }
+
+/**
+ * Held-out truth sources. `fr` is BAN, `us` is FDIC — the two `gauntlet/holdout.ts` defines, named here so a caller
+ * gets a closed set rather than a string that fails at read time.
+ */
+export const HOLDOUT_SOURCES = ["fr", "us"] as const
+
+export type HoldoutSource = (typeof HOLDOUT_SOURCES)[number]
+
+/**
+ * Default holdout draw size. Matches `runHoldoutLayer`'s own default, so a set drawn here is the size the gate is
+ * calibrated on.
+ */
+export const HOLDOUT_DEFAULT_N = 300
 
 /**
  * Benchmark panels, by version. Each is a fixed file under `$MAILWOMAN_DATA_ROOT/pelias-rig/panel/`; v2 is the 420-row
@@ -204,6 +220,84 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 			return resolveGolden(ref)
 		case "parity":
 			return resolveParity(ref)
+		case "holdout":
+			return resolveHoldout(ref)
+	}
+}
+
+/**
+ * A fresh draw from a held-out truth source — the only set here the model cannot have memorized.
+ *
+ * REPRODUCIBILITY IS OPT-IN, and the default is the unseeded draw. A seeded default would be the more convenient choice
+ * and it would quietly convert the one generalization measure in this file into a fixed corpus that the next training
+ * run can absorb. `seed` is there for the case that genuinely needs it — re-running one arm later, or a
+ * `{kind:"recorded"}` comparison, both of which require the two runs to see the same rows — and the result says which
+ * of the two happened.
+ *
+ * COST, measured 2026-08-16 on this box, because a reservoir draw reads the entire source: **`us` 113 ms over 77,442
+ * parseable rows; `fr` 45.5 s over 26,721,353 rows** (BAN is a 5.06 GB CSV). The FR draw is therefore a per-call cost
+ * on the order of a minute, not a cached one — there is nowhere to cache it that would not defeat the freshness the set
+ * exists for.
+ */
+async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): Promise<ResolvedInputSet> {
+	const source = ref.source ?? "fr"
+	const n = ref.n ?? HOLDOUT_DEFAULT_N
+	const definition = holdoutSources()[source]
+
+	if (!definition) {
+		throw new Error(
+			`input set: unknown holdout source ${JSON.stringify(source)}. Known: ${HOLDOUT_SOURCES.join(", ")}.`
+		)
+	}
+
+	if (!existsSync(definition.file)) {
+		throw new Error(
+			`input set: the ${definition.label} staging file is not at ${definition.file}. Refusing rather than resolving ` +
+				"to an empty set — a run over zero rows reports zero differences, which reads as no effect."
+		)
+	}
+
+	const { sample, drawnFrom } = await drawHoldoutSample(
+		definition,
+		n,
+		ref.seed === undefined ? undefined : mulberry32(ref.seed)
+	)
+
+	if (!sample.length) {
+		throw new Error(`input set: the ${definition.label} draw produced no rows from ${definition.file}.`)
+	}
+
+	const inputs: ResolvedInput[] = sample.map((row, index) => ({
+		id: `${source}-${index}`,
+		input: row.query,
+		country: source.toUpperCase(),
+		truthLat: row.lat,
+		truthLon: row.lon,
+		// Every row in both sources is a house-number address point from a national register, so the truth is a rooftop
+		// rather than a centroid. Stated per row so a stratified report reads the same way it does for a panel.
+		truthType: "rooftop",
+	}))
+
+	return {
+		setID: `holdout:${source}/${n}${ref.seed === undefined ? "" : `/seed-${ref.seed}`}`,
+		inputs,
+		n: inputs.length,
+		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		selection: "random-draw",
+		populationN: drawnFrom,
+		notCovered: [
+			"Everything the source itself excludes: both parsers keep only rows with a house number, a street and a " +
+				"locality, and drop the postcode to leave the bare form.",
+		],
+		hasTruth: coordinateTruthCounts(inputs),
+		notes: [
+			`${definition.label}, ${inputs.length} rows drawn from ${drawnFrom.toLocaleString("en-US")} parseable rows.`,
+			ref.seed === undefined
+				? "UNSEEDED — a genuinely fresh draw. Re-running this reference produces different rows, which is what makes " +
+					"it the one set the model cannot have memorized. Two arms inside a single call still see the same rows."
+				: `Seeded with ${ref.seed}, so this exact set is reproducible. That also means it can be iterated against, ` +
+					"which is how a held-out set stops being held out — use a seed to re-run a comparison, not to tune.",
+		],
 	}
 }
 
