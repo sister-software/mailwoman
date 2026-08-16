@@ -18,16 +18,21 @@
  *      value the pipeline did not produce.
  */
 
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
+import { listGateSpecs } from "mailwoman/eval-harness/promotion-gate"
 import type { GeocodeRun } from "mailwoman/geocode-session"
 import { z } from "zod"
 
 import { assertCompiledFresh } from "./compiled-tree.ts"
 import { checkConfounds } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
-import { parseGauntletReport, summarizeGauntletReport } from "./gauntlet-report.ts"
+import { missingWeightsCacheArtifacts, readGateReport, summarizeGateReport, type GateReport } from "./gate-report.ts"
+import { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
 import { gradeRow, significance, type RowGrade } from "./grade.ts"
 import { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
 import type { JobRegistry } from "./jobs.ts"
@@ -249,6 +254,35 @@ function stratify(rows: ComparedRow[], by: "country" | "address_kind" | "status"
 	}
 
 	return out
+}
+
+/**
+ * Where each gate job wrote its battery, keyed by job id.
+ *
+ * Kept beside the table rather than re-derived from the log afterwards: the out-dir is chosen when the job STARTS, so
+ * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing
+ * the directory matters most.
+ */
+const gateOutDirs = new Map<string, string>()
+
+/**
+ * One sentence for a job, whichever kind it is. A still-running gate gets no partial reading: its numbers live in
+ * `verdict.json`, which the assembler writes at the END, so anything read before then is not a partial answer — it is
+ * no answer.
+ */
+function summarizeJob(
+	state: string,
+	elapsedSeconds: number,
+	report: GauntletReport | GateReport,
+	isGate: boolean
+): string {
+	if (state === "running") {
+		return isGate
+			? `Still running (${elapsedSeconds}s). A gate writes verdict.json only at the end, so there is nothing to read yet.`
+			: `Still running (${elapsedSeconds}s). Parsed from the log SO FAR: ${summarizeGauntletReport(report as GauntletReport)}`
+	}
+
+	return isGate ? summarizeGateReport(report as GateReport) : summarizeGauntletReport(report as GauntletReport)
 }
 
 export function buildToolTable(deps: DevToolDeps): DevTool[] {
@@ -641,6 +675,106 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 		},
 
 		{
+			name: "mwdev_gate",
+			description:
+				"Run the promotion gate against a spec and return a job id. Reports every floor with its reading and its " +
+				"margin, names WHICH ARTIFACT was graded, and surfaces the pre-filled ledger command — which it never runs. " +
+				"Call with no `gate` to list the registered specs.",
+			inputSchema: z.object({
+				gate: z
+					.string()
+					.optional()
+					.describe("Gate-spec name or path. Omit to list the registered specs instead of running anything."),
+				weights_cache: z.string().optional().describe("Package-shaped candidate weights directory."),
+				int8_weights_cache: z.string().optional(),
+				model: z.string().optional().describe("Candidate fp32 ONNX."),
+				int8: z.string().optional(),
+				tokenizer: z.string().optional(),
+				card: z.string().optional(),
+				out_dir: z.string().optional().describe("Battery output dir. Defaults to a scratch dir."),
+			}),
+			handler: async (args) => {
+				const gate = args["gate"] as string | undefined
+
+				if (!gate) {
+					return {
+						registered_gate_specs: listGateSpecs(),
+						note: "Pass one of these as `gate`, or an absolute path to a spec JSON.",
+					}
+				}
+
+				if (!args["weights_cache"] && !args["model"]) {
+					throw new Error(
+						"mwdev_gate needs a candidate: `weights_cache` (a package-shaped directory) or `model` (a raw fp32 " +
+							"ONNX). They grade different things — a package cache's model.onnx is whatever the package ships, " +
+							"which is int8 in every shipped weights package."
+					)
+				}
+
+				const weightsCache = args["weights_cache"] as string | undefined
+
+				if (weightsCache) {
+					const cache = missingWeightsCacheArtifacts(weightsCache)
+
+					if (cache.kind === "wrong-shape") {
+						throw new Error(
+							"`weights_cache` must be a PACKAGE-SHAPED root — a directory containing " +
+								"node_modules/@mailwoman/neural-weights-<locale>/ — not the workspace directory itself. " +
+								`Missing under ${weightsCache}: ${cache.paths.join(", ")}. ` +
+								"Pass `model` instead to grade a raw fp32 ONNX."
+						)
+					}
+
+					if (cache.kind === "under-staged") {
+						throw new Error(
+							`This cache is shaped correctly but is missing artifacts its OWN model-card declares: ` +
+								`${cache.paths.join(", ")}. Grading it anyway would resolve those channels OFF and score several ` +
+								"cases lower with no signal of its own, which reads as a model regression — the #1516 failure. " +
+								"Stage the declared files, or grade a raw ONNX with `model`."
+						)
+					}
+				}
+
+				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
+				// JSON-RPC channel. The gate ALSO runs its own recompile-before-eval guard, stricter than this one and meant
+				// to fire — it is surfaced verbatim rather than pre-empted.
+				const freshness = assertCompiledFresh(registry.repoRoot)
+				const outDir = (args["out_dir"] as string | undefined) ?? join(tmpdir(), `mwdev-gate-${jobs.list().length}`)
+				const argv = ["packages/mailwoman/out/cli.js", "eval", "gate", "--gate", gate, "--out-dir", outDir]
+
+				for (const [flag, key] of [
+					["--weights-cache", "weights_cache"],
+					["--int8-weights-cache", "int8_weights_cache"],
+					["--model", "model"],
+					["--int8", "int8"],
+					["--tokenizer", "tokenizer"],
+					["--card", "card"],
+				] as const) {
+					const value = args[key]
+
+					if (value) {
+						argv.push(flag, String(value))
+					}
+				}
+
+				const job = jobs.start(`gate:${gate}`, process.execPath, argv, registry.repoRoot)
+
+				gateOutDirs.set(job.jobID, outDir)
+
+				return {
+					job_id: job.jobID,
+					gate,
+					out_dir: outDir,
+					command: [process.execPath, ...argv].join(" "),
+					compiled_tree: { newest_compiled: freshness.newestCompiled?.path ?? null },
+					note:
+						"Started. Poll with mwdev_job. The result reads verdict.json and provenance.txt from the out-dir " +
+						"directly — no number in it is parsed out of prose.",
+				}
+			},
+		},
+
+		{
 			name: "mwdev_job",
 			description: "Poll, read or cancel a background job started by another tool.",
 			inputSchema: z.object({
@@ -674,7 +808,13 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					return { ...summary, note: 'Still running. Call again, or use action "result" once it has finished.' }
 				}
 
-				const report = parseGauntletReport(job.stdout, job.stderr)
+				const gateOutDir = gateOutDirs.get(jobID)
+
+				// A gate job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
+				const report = gateOutDir
+					? readGateReport(gateOutDir, job.stdout, job.stderr)
+					: parseGauntletReport(job.stdout, job.stderr)
+
 				const tail = args["tail_lines"] as number | undefined
 				// oxlint-disable-next-line mailwoman/prefer-spliterator -- the log is already buffered and capped at 8 MB
 				const log = tail ? job.stdout.split("\n").slice(-tail).join("\n") : job.stdout
@@ -691,10 +831,7 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
 							}
 						: {}),
-					summary:
-						job.state === "running"
-							? `Still running (${summary.elapsed_s}s). Parsed from the log SO FAR: ${summarizeGauntletReport(report)}`
-							: summarizeGauntletReport(report),
+					summary: summarizeJob(job.state, summary.elapsed_s, report, Boolean(gateOutDir)),
 					report,
 					log,
 					stderr: job.stderr,

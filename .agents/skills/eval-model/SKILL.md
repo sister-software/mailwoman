@@ -32,7 +32,7 @@ for addr in \
   "400 Broad St, Seattle, WA 98109" \
   "90210"; do
   echo "=== NEURAL: $addr ==="
-  node mailwoman/out/cli.js parse "$addr" 2>/dev/null
+  node packages/mailwoman/out/cli.js parse "$addr" 2>/dev/null
 done
 
 # Full pipeline mode (XML shows source attribution)
@@ -44,7 +44,7 @@ for addr in \
   "400 Broad St, Seattle, WA 98109" \
   "90210"; do
   echo "=== PIPELINE: $addr ==="
-  node mailwoman/out/cli.js parse --format xml "$addr" 2>/dev/null
+  node packages/mailwoman/out/cli.js parse --format xml "$addr" 2>/dev/null
 done
 ```
 

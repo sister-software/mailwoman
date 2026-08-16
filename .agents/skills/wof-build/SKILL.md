@@ -21,7 +21,7 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 Only needed when GeoJSON repos have been updated. Skip if the existing unified DB is current.
 
 ```bash
-node mailwoman/out/cli.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
+node packages/mailwoman/out/cli.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
   --unified-db /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-unified.db
 ```
 
@@ -30,7 +30,7 @@ node mailwoman/out/cli.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
 Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
 
 ```bash
-node mailwoman/out/cli.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
+node packages/mailwoman/out/cli.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
 ```
 
 **This step must precede step 3, and as of 2026-08-05 it has never run against the live admin DB.**
@@ -47,7 +47,7 @@ surface-ambiguity scan once across all locales, and stamps the source DB's md5 i
 provenance trailer (see step 5).
 
 ```bash
-node mailwoman/out/cli.js gazetteer build fst \
+node packages/mailwoman/out/cli.js gazetteer build fst \
   --output $MAILWOMAN_DATA_ROOT/wof/fst-staging-$(date -u +%F)
 ```
 
@@ -76,7 +76,7 @@ database" — the question nothing could answer before 2026-08-05, which is how 
 swap left every FST pointing at a gazetteer that no longer existed:
 
 ```bash
-node mailwoman/out/cli.js gazetteer verify --no-reverse-panel
+node packages/mailwoman/out/cli.js gazetteer verify --no-reverse-panel
 ```
 
 It compares each artifact's stamped `sourceDBMD5` against the DB on disk. The section is ADVISORY —

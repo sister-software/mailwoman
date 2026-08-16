@@ -56,10 +56,10 @@ It grades the ASSEMBLED output (coordinate + tier), not per-tag F1 — the lesso
 
 ```bash
 # Self-check on the shipped default (regression + metamorphic):
-node mailwoman/out/cli.js eval gauntlet
+node packages/mailwoman/out/cli.js eval gauntlet
 
 # Promote gate for a candidate model (adds the held-out candidate-vs-prod z-test):
-node mailwoman/out/cli.js eval gauntlet --candidate ./out/<version>/model.onnx [--source us]
+node packages/mailwoman/out/cli.js eval gauntlet --candidate ./out/<version>/model.onnx [--source us]
 ```
 
 A non-zero exit blocks the ship. The three layers (`mailwoman/eval-harness/gauntlet/`): **regression** (the curated
@@ -135,7 +135,7 @@ the artifact (the #1015 reconstruct-from-artifact ordeal).
 
 ```bash
 yarn compile
-node mailwoman/out/cli.js gazetteer build admin        # ~10 min; builds to admin-global-priority.REBUILD.db
+node packages/mailwoman/out/cli.js gazetteer build admin        # ~10 min; builds to admin-global-priority.REBUILD.db
 ```
 
 One turnkey run: WOF ingest → Overture divisions (real `division_area` extents + country nodes, #1015) →
@@ -143,7 +143,7 @@ GeoNames folds → freeze (ancestors closure → `ancestors(id)` index → `wof:
 coincident_roles) → enrich (region abbrevs + `place_abbr` — the steps the 2026-07-07 rebuild missed) → FTS
 (`place_search` + `place_bbox`) → the **structural verify gate** → seal 0444 → build-log append.
 
-The verify gate (also standalone: `node mailwoman/out/cli.js gazetteer verify --db <path>`): per-country
+The verify gate (also standalone: `node packages/mailwoman/out/cli.js gazetteer verify --db <path>`): per-country
 node census vs the committed baseline (`gazetteer-pipeline/verify-baseline.ts` — the #1026 class, where
 count gates passed while 95 countries lost their country node), coverage floor, VT→Vermont abbrev
 spot-check, `place_abbr` presence, FTS/bbox coverage, degenerate-extent spot-check, and the reverse EU
@@ -157,7 +157,7 @@ old vs new DB — the two `**neural**` rows must match):
 ```bash
 PC=/mnt/playpen/mailwoman-data/wof/postalcode-us.db
 for db in admin-global-priority.db admin-global-priority.REBUILD.db; do
-  node mailwoman/out/cli.js eval oa-resolver \
+  node packages/mailwoman/out/cli.js eval oa-resolver \
     --eval data/eval/external/openaddresses-us-sample.jsonl --limit 2000 --default-country US \
     --model <v.onnx> --tokenizer <tok.model> --model-card neural-weights-en-us/model-card.json \
     --model-anchor-lookup <anchor.json> \
@@ -223,12 +223,12 @@ The manual recipe below is the same thing, step by step, for reference / one-off
 #    mailwoman/gazetteer-pipeline/admin/fold-geonames.ts, run by `mailwoman gazetteer build`).
 # (the standalone script is retired — the fold lives in the pipeline and `gazetteer build`
 #  runs it; for a fold-on-copy without a full rebuild, `mailwoman gazetteer build --help`.)
-node mailwoman/out/cli.js gazetteer build   # admin (fold included) → candidate, turnkey
+node packages/mailwoman/out/cli.js gazetteer build   # admin (fold included) → candidate, turnkey
 # 1. Build the candidate table from the FOLDED admin DB + the postcode shards. The FTS5-trigram fuzzy
 #    index (typo tolerance — Manchestr→Manchester) is baked in by build-candidate now; no separate step.
 #    --postcodes is repeatable: US + the WOF intl shard (NL/FR/DE/ES/IT) + the GeoNames intl shard (PT/AU)
 #    + Overture-derived postcode centroids (CA + the EU-coverage locales), each built with
-#      node mailwoman/out/cli.js eval es-postcode-centroids --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
+#      node packages/mailwoman/out/cli.js eval es-postcode-centroids --country <CC> --pc-len 0 --parquet <addresses-cc.parquet>
 #    (--pc-len 0 = no lpad, the Overture-to-Overture / non-numeric-format case). Each ZIP becomes a
 #    `postalcode` candidate row so findPlace(postalcode) resolves directly, and postcodes resolve ~100%
 #    at ~1-2km even where the locality misses (LT 0→100%, NO 75→100%, FI/SK 80→100%). The demo cascade
@@ -341,7 +341,7 @@ in `main`, before anything is staged:
 4. Regenerate the capabilities manifest (the fail-closed delta-gate reads it; the generator's `$comment` otherwise lies about which model it measured). The generator **refuses if a `capabilities` block already exists**, so rewrite the card WITHOUT that block first, then:
    ```bash
    yarn compile   # the generator imports COMPILED @mailwoman/neural/scorer from out/
-   node mailwoman/out/cli.js eval capability-manifest \
+   node packages/mailwoman/out/cli.js eval capability-manifest \
      --model /mnt/playpen/.../model-v<NNN>-step-<step>-int8.onnx \
      --tokenizer /mnt/playpen/.../tokenizer.model \
      --model-card neural-weights-en-us/model-card.json --write
@@ -371,7 +371,7 @@ Assemble a staging dir mirroring the R2 layout: `<src>/en-us/v<NEW>/{the 10 arti
 ### Step 3 — stage HF, then R2, then verify BOTH backends agree
 
 ```bash
-HF_TOKEN=$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v<NEW> \
+HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js release hf v<NEW> \
   --locale en-us --label "..." --description "..." \
   --model <src>/.../model.onnx --tokenizer ... --model-card ... --fst <src>/.../fst-en-US.bin \
   --wof-hot <src>/.../wof-hot.db --gazetteer-lexicon <src>/.../anchor-lexicon-v1.json \
@@ -650,7 +650,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 1. **Stage the model on HF first** (operator's host — needs only the HF token, no npm auth):
 
    ```bash
-   HF_TOKEN=$(cat ~/.cache/huggingface/token) node mailwoman/out/cli.js release hf v<version> \
+   HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js release hf v<version> \
      --locale en-us \
      --model <model.onnx> --tokenizer <tokenizer.model> --model-card neural-weights-en-us/model-card.json \
      --fst <fst-en-US.bin> --wof-hot <wof-hot.db> --set-default
@@ -773,7 +773,7 @@ to reach for first.
 
 ```bash
 yarn compile
-node mailwoman/out/cli.js clients generate
+node packages/mailwoman/out/cli.js clients generate
 ```
 
 Emits all 8 OpenAPI documents, generates the Python package and assembles the Rust crate, then verifies
