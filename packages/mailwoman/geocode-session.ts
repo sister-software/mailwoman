@@ -334,6 +334,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			}
 		}
 
+		if (!fst) {
+			// #1516's shape, one channel over: a requested prior that resolves no artifact leaves the channel OFF, scores
+			// several cases lower, and has NO signal of its own — so the operator reads a model regression. Five shipped
+			// overlays have no FST at all (#1705), which makes this the common case rather than the exotic one.
+			console.warn(
+				`[mailwoman] --gazetteer-prior was requested for locale ${options.locale} but no FST artifact resolved` +
+					`${classifier.fstPath ? ` at ${classifier.fstPath}` : " (the weights package ships none)"} — the gazetteer ` +
+					"channel is OFF for this run. Results are the base model's, not the prior's."
+			)
+		}
+
 		if (fst) {
 			try {
 				streetMorphology = loadStreetMorphologyFST({
