@@ -130,8 +130,11 @@ export interface SignificanceReading {
 /**
  * Normal CDF via the Abramowitz–Stegun 7.1.26 erf approximation. Max absolute error 1.5e-7, which is four orders of
  * magnitude tighter than any decision taken on it here.
+ *
+ * Exported for `geo-grade.ts`'s equivalence test rather than copied into it: two tests that must agree about what a
+ * p-value means should be reading the same function, not two transcriptions of the same polynomial.
  */
-function normalCDF(z: number): number {
+export function normalCDF(z: number): number {
 	const sign = z < 0 ? -1 : 1
 	const x = Math.abs(z) / Math.SQRT2
 	const t = 1 / (1 + 0.3275911 * x)

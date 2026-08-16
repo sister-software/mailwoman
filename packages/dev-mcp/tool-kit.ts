@@ -46,6 +46,28 @@ export interface Provenance {
 	}
 }
 
+/**
+ * The input-set half of a provenance block, on its own.
+ *
+ * An external arm has no engine, no tree fingerprint and no effective config, but it is measured over exactly the same
+ * rows — and the denominators, hash and selection kind are the half that must be identical across a comparison's two
+ * arms whatever either arm is.
+ */
+export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set"] {
+	return {
+		set_id: set.setID,
+		n: set.n,
+		sha256: set.sha256,
+		selection: set.selection,
+		...(set.populationN === undefined ? {} : { population_n: set.populationN }),
+		...(set.why === undefined ? {} : { why: set.why }),
+		not_covered: set.notCovered,
+		has_truth: set.hasTruth,
+		...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
+		notes: set.notes,
+	}
+}
+
 export function provenanceFor(
 	engine: {
 		engineID: string
@@ -65,18 +87,7 @@ export function provenanceFor(
 		config_effective: engine.effective as Record<string, unknown>,
 		engine_build_ms: engine.buildMs,
 		engine_was_warm: engine.uses > 1,
-		input_set: {
-			set_id: set.setID,
-			n: set.n,
-			sha256: set.sha256,
-			selection: set.selection,
-			...(set.populationN === undefined ? {} : { population_n: set.populationN }),
-			...(set.why === undefined ? {} : { why: set.why }),
-			not_covered: set.notCovered,
-			has_truth: set.hasTruth,
-			...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
-			notes: set.notes,
-		},
+		input_set: inputSetProvenance(set),
 	}
 }
 
@@ -218,17 +229,42 @@ export interface ComparedRow {
 }
 
 /**
+ * Which column a result is broken out by.
+ *
+ * `truth_tolerance_m` is meaningful only where rows are graded against a coordinate: it separates rows whose truth is a
+ * rooftop from rows whose truth is a 25 km area centroid, which is the difference between a sub-kilometre column that
+ * measures the arm and one that measures the corpus.
+ */
+export type StratumKey = "country" | "address_kind" | "status" | "truth_tolerance_m"
+
+/**
+ * Group rows by a key. One implementation so two stratifiers cannot drift on what an absent value is called.
+ */
+export function bucketRows<Row>(rows: Row[], key: (row: Row) => string): Map<string, Row[]> {
+	const buckets = new Map<string, Row[]>()
+
+	for (const row of rows) {
+		const bucket = buckets.get(key(row))
+
+		if (bucket) {
+			bucket.push(row)
+		} else {
+			buckets.set(key(row), [row])
+		}
+	}
+
+	return buckets
+}
+
+/**
  * Per-stratum counts. Reported rather than blended because the benchmark plan's own rule is that a headline number
  * "lives or dies on `truth_type`" — a blended figure hides an arm that won one stratum and lost another.
  */
-export function stratify(rows: ComparedRow[], by: "country" | "address_kind" | "status"): Record<string, unknown> {
-	const buckets = new Map<string, ComparedRow[]>()
-
-	for (const row of rows) {
-		const key = (by === "country" ? row.country : by === "address_kind" ? row.address_kind : row.status) ?? "unknown"
-
-		buckets.set(key, [...(buckets.get(key) ?? []), row])
-	}
+export function stratify(rows: ComparedRow[], by: StratumKey): Record<string, unknown> {
+	const buckets = bucketRows(
+		rows,
+		(row) => (by === "country" ? row.country : by === "address_kind" ? row.address_kind : row.status) ?? "unknown"
+	)
 
 	const out: Record<string, unknown> = {}
 

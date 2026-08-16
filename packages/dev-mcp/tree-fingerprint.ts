@@ -119,9 +119,17 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 	return { mtimeMs: newest, path: newestPath, count }
 }
 
+/**
+ * Run git and return its stdout with only the TRAILING newline removed.
+ *
+ * Leading whitespace is load-bearing for `--porcelain`, whose first two columns are the index and worktree status: an
+ * unstaged modification is `" M path"`, and a full trim eats column one of the FIRST line only — after which a
+ * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
+ * result.
+ */
 function git(repoRoot: string, args: string[]): string {
 	try {
-		return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).trim()
+		return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).replace(/\n+$/, "")
 	} catch {
 		return ""
 	}
@@ -156,7 +164,7 @@ export function computeTreeFingerprint(repoRoot: string): TreeFingerprint {
 		)
 	}
 
-	const gitHead = git(repoRoot, ["rev-parse", "HEAD"])
+	const gitHead = git(repoRoot, ["rev-parse", "HEAD"]).trim()
 	const status = git(repoRoot, ["status", "--porcelain"])
 	// `git status --porcelain` over one checkout, already fully buffered by execFileSync above: there is no stream to
 	// consume lazily, and the bound is the number of changed files in a working tree.
