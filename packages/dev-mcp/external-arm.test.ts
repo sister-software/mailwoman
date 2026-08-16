@@ -9,10 +9,16 @@
  *   documentation. A parser tested against its author's idea of the format is a parser tested against nothing.
  */
 
+import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import { describe, expect, it } from "vitest"
 
-import { assertScorableEndpoint, ExternalEngine, ExternalGeocoderClient } from "./external-arm.ts"
+import {
+	assertScorableEndpoint,
+	EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS,
+	ExternalEngine,
+	ExternalGeocoderClient,
+} from "./external-arm.ts"
 
 const ENDPOINT = "http://127.0.0.1:4000"
 
@@ -154,5 +160,35 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 		const { client: pelias } = client(ExternalEngine.Pelias, [dead])
 
 		await expect(pelias.probeIdentity()).rejects.toThrow(/does not start or stop external services/)
+	})
+})
+
+describe("ExternalGeocoderClient pacing", () => {
+	it("spaces dispatches at the configured interval, which is the gate that actually holds a rate", async () => {
+		// Asserted rather than assumed: `requestsPerMinute` alone does NOT deliver N requests per minute (AGENTS.md
+		// records 100/min measured against a budget of 10), so the claim that this client is paced rests entirely on
+		// the interval gate being the one configured.
+		const clock = createFakeClock()
+		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
+
+		const pelias = new ExternalGeocoderClient(ExternalEngine.Pelias, ENDPOINT, {
+			clock,
+			axios: transport.axios,
+		})
+
+		await pelias.search("one")
+
+		expect(clock.sleepCalls).toHaveLength(0)
+
+		await pelias.search("two")
+		await pelias.search("three")
+
+		expect(clock.sleepCalls).toEqual([EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS, EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS])
+
+		expect(transport.dispatchTimes).toEqual([
+			0,
+			EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS,
+			EXTERNAL_ARM_MIN_REQUEST_INTERVAL_MS * 2,
+		])
 	})
 })
