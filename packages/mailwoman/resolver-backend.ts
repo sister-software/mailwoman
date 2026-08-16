@@ -23,7 +23,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -58,6 +58,29 @@ export function resolveCandidateDBPath(explicit?: string, dataRoot: string = mai
 	const convention = conventionCandidateDBPath(dataRoot)
 
 	return existsSync(convention) ? convention : undefined
+}
+
+/**
+ * The WOF admin shard set a caller should probe: an explicit comma-separated list, then `$MAILWOMAN_WOF_DB` (the
+ * HealthRouter multi-shard convention), else {@link wofShardPaths}'s default set.
+ *
+ * Returned UNFILTERED — whether a missing path is a degradation or an error is the caller's contract, not this
+ * function's. `createGeocodeSession` filters with `existsSync` and throws when nothing survives; `mailwoman doctor`
+ * reports each absence; a probe wants to say which shard it could not open. Sharing the SELECTION is the point: a
+ * caller that reads only `wofShardPaths` silently probes different shards than the runtime on any box where the env is
+ * set, which is the exact class of wrong answer a data-source probe exists to rule out.
+ */
+export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailwomanDataRoot()): string[] {
+	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
+
+	if (raw) {
+		return raw
+			.split(",")
+			.map((path) => path.trim())
+			.filter(Boolean)
+	}
+
+	return [...wofShardPaths(dataRoot)]
 }
 
 /**

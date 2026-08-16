@@ -21,11 +21,11 @@ import { $public, defaultMailwomanPaths } from "@mailwoman/core/env"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
 import { resolvePath } from "path-ts"
 
-import { conventionCandidateDBPath, resolveCandidateDBPath } from "../resolver-backend.ts"
+import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "../resolver-backend.ts"
 import {
 	assembleReport,
 	checkPOI,
@@ -152,22 +152,6 @@ function defaultConventionCandidatePath(dataRoot: string): string | undefined {
 }
 
 /**
- * The WOF admin shard set to probe: `$MAILWOMAN_WOF_DB` (comma-split) when set, else the default shard list.
- */
-function defaultWOFShardPaths(dataRoot: string): string[] {
-	const raw = $public.MAILWOMAN_WOF_DB
-
-	if (raw) {
-		return raw
-			.split(",")
-			.map((p) => p.trim())
-			.filter(Boolean)
-	}
-
-	return wofShardPaths(dataRoot)
-}
-
-/**
  * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
@@ -212,7 +196,7 @@ export function defaultDoctorDeps(): DoctorDeps {
 		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== defaultMailwomanPaths.data }),
 		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined),
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
-		wofShardPaths: () => defaultWOFShardPaths(dataRoot),
+		wofShardPaths: () => resolveWOFShardPaths(undefined, dataRoot),
 		poiPath: () => resolvePath(dataRoot, "poi", "poi.db"),
 		readPOIManifest,
 		loadONNX: async () => {

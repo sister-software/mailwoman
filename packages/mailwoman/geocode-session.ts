@@ -30,7 +30,6 @@ import { existsSync, readFileSync } from "node:fs"
 
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { $public } from "@mailwoman/core/env"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -62,7 +61,7 @@ import {
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
-import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "./resolver-backend.ts"
+import { createResolverBackend, resolveCandidateDBPath, resolveWOFShardPaths } from "./resolver-backend.ts"
 
 //#region Contract
 
@@ -213,19 +212,11 @@ export interface GeocodeSession {
 //#region Path + flag helpers
 
 function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): string[] {
-	// Comma-separated multi-shard paths (the HealthRouter/$MAILWOMAN_WOF_DB convention), else the
-	// wofShardPaths default set filtered to what exists on disk — the same auto-attach the server
-	// and drop-ins use, so `mailwoman geocode` works out of the box on a standard data root.
-	const raw = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
-
-	const paths = (
-		raw
-			? raw
-					.split(",")
-					.map((p: string) => p.trim())
-					.filter(Boolean)
-			: wofShardPaths(options.dataRoot)
-	).filter((p: string) => existsSync(p))
+	// The shared shard SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
+	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
+	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
+	// when nothing survives, which is part of the CLI's construction-order contract.
+	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => existsSync(p))
 
 	if (!paths.length) {
 		throw new CommandError(

@@ -4631,6 +4631,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/dev-mcp@workspace:packages/dev-mcp"
   dependencies:
+    "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver": "workspace:*"

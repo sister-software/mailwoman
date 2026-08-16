@@ -46,6 +46,11 @@
 			"default": "./out/postcode-repair.js",
 			"types": "./out/postcode-repair.d.ts"
 		},
+		"./anchor-inference": {
+			"node": "./anchor-inference.ts",
+			"default": "./out/anchor-inference.js",
+			"types": "./out/anchor-inference.d.ts"
+		},
 		"./case-normalize": {
 			"node": "./case-normalize.ts",
 			"default": "./out/case-normalize.js",
