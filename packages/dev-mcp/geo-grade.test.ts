@@ -90,11 +90,15 @@ describe("tostEquivalence", () => {
 		expect(reading.sentence).toContain("Equivalent at ±5pp")
 	})
 
-	it("reports a real gap as not equivalent", () => {
+	it("reports a real gap as not equivalent, WITHOUT denying that the arms differ", () => {
+		// The companion z-test reports a significant gap on the same rows. A boilerplate "this is not a claim that the
+		// arms differ" would contradict it in the same paragraph, so the wording turns on where the estimate fell.
 		const reading = tostEquivalence(250, 150, 400)
 
 		expect(reading.equivalent).toBe(false)
 		expect(reading.delta_pp).toBeCloseTo(-25, 5)
+		expect(reading.sentence).toContain("already outside the bound")
+		expect(reading.sentence).not.toContain("not a claim that the arms differ")
 	})
 
 	it("calls an empty set the absence of a measurement rather than a failure to be equivalent", () => {

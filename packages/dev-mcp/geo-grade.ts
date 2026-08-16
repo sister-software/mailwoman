@@ -168,6 +168,38 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
+ * The equivalence verdict as a sentence, which has THREE readings and not two.
+ *
+ * Failing an equivalence test does not mean the arms differ, and it does not mean nothing was learned — which of those
+ * it means depends on where the point estimate fell. A difference already outside the bound is a difference; a small
+ * difference with an interval too wide to place is an underpowered run. Wording both as "this is not a claim that the
+ * arms differ" would flatly contradict the two-proportion z-test printed beside it, which on a lopsided pair of arms
+ * reports a significant gap in the same paragraph.
+ */
+function equivalence(
+	deltaPP: number,
+	halfWidthPP: number,
+	boundPP: number,
+	thresholdKm: number,
+	n: number,
+	equivalent: boolean
+): string {
+	const at = `±${boundPP}pp @${thresholdKm}km`
+	const interval = `${deltaPP.toFixed(1)}pp, 90% interval ±${halfWidthPP.toFixed(1)}pp, n = ${n}`
+
+	if (equivalent) return `Equivalent at ${at}: the difference is ${interval}, entirely inside the bound.`
+
+	if (Math.abs(deltaPP) > boundPP) {
+		return `NOT equivalent at ${at}: the difference is ${interval}, and the estimate itself is already outside the bound.`
+	}
+
+	return (
+		`NOT equivalent at ${at}: the difference is ${interval}, which crosses the bound. This is not a claim that the ` +
+		"arms differ — it is that this run cannot claim they are the same."
+	)
+}
+
+/**
  * TOST for two proportions against the pre-registered bound.
  *
  * The standard error is the INDEPENDENT-samples one even though the rows are paired. That is the conservative direction
@@ -250,11 +282,6 @@ export function tostEquivalence(
 		p_lower: pLower,
 		p_upper: pUpper,
 		equivalent,
-		sentence: equivalent
-			? `Equivalent at ±${boundPP}pp @${thresholdKm}km: the ${deltaPP.toFixed(1)}pp difference sits inside the bound ` +
-				`with its whole 90% interval (±${halfWidthPP.toFixed(1)}pp, n = ${n}).`
-			: `NOT equivalent at ±${boundPP}pp @${thresholdKm}km: the ${deltaPP.toFixed(1)}pp difference has a 90% interval ` +
-				`of ±${halfWidthPP.toFixed(1)}pp (n = ${n}), which crosses the bound. This is not a claim that the arms ` +
-				"differ — it is that this run cannot claim they are the same.",
+		sentence: equivalence(deltaPP, halfWidthPP, boundPP, thresholdKm, n, equivalent),
 	}
 }
