@@ -307,7 +307,7 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					.positive()
 					.optional()
 					.describe("Cross-engine only: which distance threshold rows are graded at. Defaults to 25km."),
-				stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m"]).optional(),
+				stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]).optional(),
 			}),
 			handler: async (args) => runCompare(registry, args),
 		},

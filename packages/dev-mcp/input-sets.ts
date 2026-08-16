@@ -15,11 +15,20 @@
  */
 
 import { createHash } from "node:crypto"
+import { existsSync, readFileSync } from "node:fs"
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 
 import type { Selection } from "./power.ts"
+
+/**
+ * Repo-relative home of the triaged parity fixtures — the same literal `parity-corpus.ts` exports as
+ * `PARITY_FIXTURES_PATH`, kept here as a constant rather than an inline string so a move breaks one place.
+ */
+const PARITY_FIXTURES_RELATIVE_PATH = "packages/mailwoman/eval-harness/fixtures/parity-corpus.triaged.jsonl"
 
 /**
  * A reference to an input set. Discriminated so a caller cannot pass a bare array by accident — see the module
@@ -27,7 +36,26 @@ import type { Selection } from "./power.ts"
  */
 export type InputSetRef =
 	| { kind: "board"; country?: string; address_kind?: string; status?: string }
+	| { kind: "panel"; version?: PanelVersion; country?: string; truth_type?: string }
+	| { kind: "golden"; version?: string; split?: GoldenSplit }
+	| { kind: "parity"; country?: string }
 	| { kind: "literal"; inputs: string[]; why: string }
+
+/**
+ * Benchmark panels, by version. Each is a fixed file under `$MAILWOMAN_DATA_ROOT/pelias-rig/panel/`; v2 is the 420-row
+ * set the head-to-head protocol was pre-registered against.
+ */
+export const PANEL_VERSIONS = ["v1", "v2", "v3"] as const
+
+export type PanelVersion = (typeof PANEL_VERSIONS)[number]
+
+/**
+ * Golden splits. `dev` is the tuning half and the one an iterating change may look at; the top-level files are the
+ * held-back half, so reaching for them casually is how a held-out set stops being held out.
+ */
+export const GOLDEN_SPLITS = ["dev", "full"] as const
+
+export type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
 
 export interface ResolvedInput {
 	/**
@@ -43,6 +71,30 @@ export interface ResolvedInput {
 	 * truth attached and therefore cannot be graded — only observed.
 	 */
 	seed?: SeedCase
+	/**
+	 * Truth COORDINATE, when the row carries one — the only axis a cross-engine comparison has.
+	 *
+	 * Populated here for every corpus rather than read off `seed` by the caller, because only the board has a `SeedCase`
+	 * and a panel row does not. One field means `mwdev_compare` does not have to know which corpus a row came from, which
+	 * is what keeps a second truth path from appearing the first time a new set is added.
+	 */
+	truthLat?: number
+	truthLon?: number
+	/**
+	 * How the truth point was established — `rooftop`, `parcel`, `interpolated`, `centroid`. Panels carry it and the
+	 * benchmark plan is explicit that a headline "@1km lives or dies on `truth_type`", so it is stratifiable rather than
+	 * blended.
+	 */
+	truthType?: string
+	/**
+	 * Per-row distance tolerance in metres, when the corpus pins one. `undefined` means the caller's threshold applies.
+	 */
+	toleranceM?: number
+	/**
+	 * Component expectations for a corpus that has them but no `SeedCase` — golden and parity both do. Without this the
+	 * truth census reads them as carrying nothing, which is how a 4,255-row golden set reported `none: 4255`.
+	 */
+	expectComponents?: Record<string, string>
 }
 
 export interface ResolvedInputSet {
@@ -141,33 +193,55 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
  * `country: "gb"` is told which countries just left the measurement, in the same object that carries the result.
  */
 export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSet> {
-	if (ref.kind === "literal") {
-		if (!ref.inputs.length) throw new Error("input set: a literal set needs at least one input")
+	switch (ref.kind) {
+		case "literal":
+			return resolveLiteral(ref)
+		case "board":
+			return resolveBoard(ref)
+		case "panel":
+			return resolvePanel(ref)
+		case "golden":
+			return resolveGolden(ref)
+		case "parity":
+			return resolveParity(ref)
+	}
+}
 
-		if (!ref.why?.trim()) {
-			throw new Error(
-				"input set: a literal set requires `why`. A hand-picked panel is a claim about what is worth measuring, " +
-					"and the claim is recorded next to every number the set produces."
-			)
-		}
+/**
+ * A hand-picked list. See {@link INPUT_SET_SCHEMA} for why `why` is required.
+ */
+async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): Promise<ResolvedInputSet> {
+	if (!ref.inputs.length) throw new Error("input set: a literal set needs at least one input")
 
-		return {
-			setID: `literal:${sha256(ref.inputs).slice(0, 12)}`,
-			inputs: ref.inputs.map((input, index) => ({ id: String(index), input })),
-			n: ref.inputs.length,
-			sha256: sha256(ref.inputs),
-			selection: "hand-picked",
-			why: ref.why,
-			notCovered: [],
-			hasTruth: { components: 0, coordinates: 0, tier: 0, any: 0, none: ref.inputs.length },
-			notes: [
-				"Hand-picked inputs carry no expectations, so this set can be observed but not graded.",
-				"Results from this set report their confidence bound in the summary sentence — see power.ts.",
-			],
-		}
+	if (!ref.why?.trim()) {
+		throw new Error(
+			"input set: a literal set requires `why`. A hand-picked panel is a claim about what is worth measuring, " +
+				"and the claim is recorded next to every number the set produces."
+		)
 	}
 
+	return {
+		setID: `literal:${sha256(ref.inputs).slice(0, 12)}`,
+		inputs: ref.inputs.map((input, index) => ({ id: String(index), input })),
+		n: ref.inputs.length,
+		sha256: sha256(ref.inputs),
+		selection: "hand-picked",
+		why: ref.why,
+		notCovered: [],
+		hasTruth: { components: 0, coordinates: 0, tier: 0, any: 0, none: ref.inputs.length },
+		notes: [
+			"Hand-picked inputs carry no expectations, so this set can be observed but not graded.",
+			"Results from this set report their confidence bound in the summary sentence — see power.ts.",
+		],
+	}
+}
+
+/**
+ * The regression board, optionally sliced.
+ */
+async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promise<ResolvedInputSet> {
 	const all = await loadRegressionCases()
+
 	const corpusHash = regressionCorpusHash(all)
 
 	const filtered = all.filter((row) => {
@@ -209,6 +283,10 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 			addressKind: seed.addressKind,
 			status: seed.status,
 			seed,
+			...(typeof seed.expectLat === "number" && typeof seed.expectLon === "number"
+				? { truthLat: seed.expectLat, truthLon: seed.expectLon }
+				: {}),
+			...(seed.expectToleranceM === undefined ? {} : { toleranceM: seed.expectToleranceM }),
 		})),
 		n: filtered.length,
 		sha256: sha256(filtered.map((r) => `${r.id}\t${r.input}`)),
@@ -220,5 +298,230 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 		notes: isSlice
 			? [`Declared slice of the ${all.length}-row board.`]
 			: [`The full regression board, ${all.length} rows, corpus ${corpusHash.slice(0, 12)}.`],
+	}
+}
+
+/**
+ * One JSONL corpus row, read loosely because these files are operator artifacts rather than a schema this repo owns.
+ */
+interface CorpusRow {
+	id?: string
+	input?: string
+	raw?: string
+	country?: string
+	locale?: string
+	truth_lat?: number
+	truth_lon?: number
+	truth_type?: string
+	tolerance_m?: number | null
+	expect?: Record<string, string[] | string>
+	components?: Record<string, string>
+}
+
+/**
+ * Read a JSONL corpus, or say precisely which file was missing.
+ *
+ * A corpus that cannot be read must NOT resolve to an empty set: a measurement over zero rows reports zero differences,
+ * which reads as "no effect" rather than "nothing ran".
+ */
+function readCorpus(path: string, what: string): CorpusRow[] {
+	if (!existsSync(path)) {
+		throw new Error(
+			`${what} not found at ${path}. Refusing rather than resolving to an empty set — a run over zero rows reports ` +
+				"zero differences, which reads as no effect."
+		)
+	}
+
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a fixed operator artifact of a few hundred rows, read once
+	return readFileSync(path, "utf8")
+		.split("\n")
+		.filter(Boolean)
+		.map((line) => parseJSONStrict<CorpusRow>(line))
+}
+
+/**
+ * Truth census for a coordinate-bearing corpus, where `components` is the only non-coordinate expectation available.
+ */
+function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTruth"] {
+	let coordinates = 0
+	let components = 0
+	let any = 0
+	let none = 0
+
+	for (const row of rows) {
+		const hasCoordinates = typeof row.truthLat === "number" && typeof row.truthLon === "number"
+		const hasComponents = Boolean(row.seed?.expectComponents ?? row.expectComponents)
+
+		if (hasCoordinates) {
+			coordinates++
+		}
+
+		if (hasComponents) {
+			components++
+		}
+
+		if (hasCoordinates || hasComponents) {
+			any++
+		} else {
+			none++
+		}
+	}
+
+	return { components, coordinates, tier: 0, any, none }
+}
+
+/**
+ * A benchmark panel — the corpus the head-to-head protocol was pre-registered against.
+ *
+ * `truthType` is carried per row and NEVER blended away: the benchmark plan's own words are that a headline "@1km lives
+ * or dies on `truth_type`", so a caller that reports one number across rooftop and centroid rows has reported a number
+ * about its own row mix.
+ */
+async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promise<ResolvedInputSet> {
+	const version = ref.version ?? "v2"
+	const path = String(dataRootPath("pelias-rig", "panel", `panel-${version}.jsonl`))
+	const all = readCorpus(path, `panel ${version}`)
+
+	const filtered = all.filter((row) => {
+		if (ref.country && (row.country ?? "").toUpperCase() !== ref.country.toUpperCase()) return false
+
+		if (ref.truth_type && row.truth_type !== ref.truth_type) return false
+
+		return true
+	})
+
+	const inputs: ResolvedInput[] = filtered.map((row, index) => ({
+		id: row.id ?? String(index),
+		input: row.input ?? row.raw ?? "",
+		...(row.country ? { country: row.country } : {}),
+		...(typeof row.truth_lat === "number" && typeof row.truth_lon === "number"
+			? { truthLat: row.truth_lat, truthLon: row.truth_lon }
+			: {}),
+		...(row.truth_type ? { truthType: row.truth_type } : {}),
+		...(typeof row.tolerance_m === "number" ? { toleranceM: row.tolerance_m } : {}),
+	}))
+
+	const isSlice = filtered.length !== all.length
+	const notCovered: string[] = []
+
+	if (isSlice) {
+		const keptTypes = new Set(filtered.map((row) => row.truth_type))
+		const dropped = [...new Set(all.map((row) => row.truth_type))].filter((t) => t && !keptTypes.has(t))
+
+		if (dropped.length) {
+			notCovered.push(`truth types excluded: ${dropped.join(", ")}`)
+		}
+	}
+
+	const slug = [version, ref.country, ref.truth_type].filter(Boolean).join("/")
+
+	return {
+		setID: `panel:${slug}`,
+		inputs,
+		n: inputs.length,
+		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		selection: isSlice ? "slice" : "full",
+		...(isSlice ? { populationN: all.length } : {}),
+		notCovered,
+		hasTruth: coordinateTruthCounts(inputs),
+		notes: [
+			`Benchmark panel ${version}, ${all.length} rows${isSlice ? ` sliced to ${inputs.length}` : ""}.`,
+			"Carries truth_type — report stratified by it rather than blended.",
+		],
+	}
+}
+
+/**
+ * A golden set. `dev` is the tuning split; the top-level files are the held-back half.
+ */
+async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Promise<ResolvedInputSet> {
+	const version = ref.version ?? "v0.1.3"
+	const split = ref.split ?? "dev"
+	const base = String(dataRootPath("eval", "golden", version))
+	const dir = split === "dev" ? `${base}/dev` : base
+
+	const inputs: ResolvedInput[] = []
+
+	for (const locale of ["us", "fr", "adversarial"]) {
+		const path = `${dir}/${locale}.jsonl`
+
+		if (!existsSync(path)) continue
+
+		for (const [index, row] of readCorpus(path, `golden ${version}/${split}/${locale}`).entries()) {
+			inputs.push({
+				id: row.id ?? `${locale}-${index}`,
+				input: row.raw ?? row.input ?? "",
+				...(locale === "adversarial" ? {} : { country: locale.toUpperCase() }),
+				...(row.components ? { expectComponents: row.components } : {}),
+			})
+		}
+	}
+
+	if (!inputs.length) {
+		throw new Error(
+			`golden ${version}/${split} resolved no rows under ${dir}. Refusing rather than measuring an empty set.`
+		)
+	}
+
+	return {
+		setID: `golden:${version}/${split}`,
+		inputs,
+		n: inputs.length,
+		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		selection: "full",
+		notCovered: split === "dev" ? ['the held-back split — `split: "full"` reaches it, deliberately separately'] : [],
+		hasTruth: coordinateTruthCounts(inputs),
+		notes: [
+			`Golden ${version}, ${split} split, ${inputs.length} rows.`,
+			split === "dev"
+				? "The TUNING half. Iterating against it is fine; quoting it as held-out evidence is not."
+				: "The HELD-BACK half. Reading it repeatedly while iterating is how a held-out set stops being one.",
+		],
+	}
+}
+
+/**
+ * The triaged parse-parity fixtures — component expectations, no coordinates.
+ */
+async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Promise<ResolvedInputSet> {
+	const path = String(repoRootPath(PARITY_FIXTURES_RELATIVE_PATH))
+	const raw = readCorpus(path, "parity corpus")
+
+	// The SAME live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions plus 33 gold-triage
+	// tombstones are fixtures a neural parser must not be graded against. Feeding them in would quietly inflate the
+	// denominator with rows that cannot pass.
+	const all = raw.filter((row) => !(row as { dropped?: boolean }).dropped && row.expect)
+	const tombstones = raw.length - all.length
+
+	const filtered = ref.country
+		? all.filter((row) => (row.country ?? "").toUpperCase() === ref.country!.toUpperCase())
+		: all
+
+	const inputs: ResolvedInput[] = filtered.map((row, index) => ({
+		id: row.id ?? String(index),
+		input: row.input ?? row.raw ?? "",
+		...(row.country ? { country: row.country } : {}),
+		...(row.expect ? { expectComponents: row.expect as Record<string, string> } : {}),
+	}))
+
+	const isSlice = filtered.length !== all.length
+
+	return {
+		setID: ref.country ? `parity:${ref.country}` : "parity",
+		inputs,
+		n: inputs.length,
+		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		selection: isSlice ? "slice" : "full",
+		...(isSlice ? { populationN: all.length } : {}),
+		notCovered: isSlice
+			? [`countries excluded: ${[...new Set(all.map((r) => r.country))].filter((c) => c !== ref.country).join(", ")}`]
+			: [],
+		// Component expectations only. `coordinateTruthCounts` reports 0 coordinates, which is the honest reading: this
+		// corpus cannot support a distance claim however many rows it has.
+		hasTruth: { components: inputs.length, coordinates: 0, tier: 0, any: inputs.length, none: 0 },
+		notes: [
+			`Parity corpus, ${all.length} live fixtures (${tombstones} tombstones skipped)${isSlice ? `, sliced to ${inputs.length}` : ""}.`,
+			"Component expectations only — NO coordinates, so a cross-engine distance comparison cannot be graded on it.",
+		],
 	}
 }

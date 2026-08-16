@@ -107,6 +107,21 @@ export const INPUT_SET_SCHEMA = z
 			status: z.string().optional(),
 		}),
 		z.object({
+			kind: z.literal("panel"),
+			version: z.enum(["v1", "v2", "v3"]).optional(),
+			country: z.string().optional(),
+			truth_type: z.string().optional(),
+		}),
+		z.object({
+			kind: z.literal("golden"),
+			version: z.string().optional(),
+			split: z.enum(["dev", "full"]).optional(),
+		}),
+		z.object({
+			kind: z.literal("parity"),
+			country: z.string().optional(),
+		}),
+		z.object({
 			kind: z.literal("literal"),
 			inputs: z.array(z.string()).min(1),
 			why: z
@@ -235,7 +250,34 @@ export interface ComparedRow {
  * rooftop from rows whose truth is a 25 km area centroid, which is the difference between a sub-kilometre column that
  * measures the arm and one that measures the corpus.
  */
-export type StratumKey = "country" | "address_kind" | "status" | "truth_tolerance_m"
+export type StratumKey = "country" | "address_kind" | "status" | "truth_tolerance_m" | "truth_type"
+
+/**
+ * Every legal stratum, for a runtime check the type cannot give a caller that reached the handler directly.
+ *
+ * An unrecognised key used to bucket every row as `unknown` and report a single stratum — a table that LOOKS like a
+ * stratified result and is not one. Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
+ * `{"unknown": {n: 60}}` rather than saying the key did not exist.
+ */
+export const STRATUM_KEYS: readonly StratumKey[] = [
+	"country",
+	"address_kind",
+	"status",
+	"truth_tolerance_m",
+	"truth_type",
+]
+
+/**
+ * @throws When `by` is not a known stratum — silence here manufactures a fake one-bucket table.
+ */
+export function assertStratumKey(by: string): asserts by is StratumKey {
+	if (!STRATUM_KEYS.includes(by as StratumKey)) {
+		throw new Error(
+			`stratify_by ${JSON.stringify(by)} is not a stratum. Known: ${STRATUM_KEYS.join(", ")}. Bucketing an ` +
+				"unrecognised key would report one `unknown` bucket, which reads as a stratified result and is not one."
+		)
+	}
+}
 
 /**
  * Group rows by a key. One implementation so two stratifiers cannot drift on what an absent value is called.
