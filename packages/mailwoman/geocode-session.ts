@@ -96,6 +96,13 @@ export interface GeocodeSessionOptions {
 	forkEntity: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
+	/**
+	 * Whether a ZERO-HIT may be retried in the alternative input register (the Decision-A rider).
+	 *
+	 * Exposed so the lever is measurable: it changes answers on the default path, and a lever an A/B cannot reach is a
+	 * lever nobody can price. `undefined` keeps the production default, which is ON.
+	 */
+	retryAlternateRegister?: boolean
 	placeCountryThreshold: number
 	/**
 	 * Record a {@link GeocodeTrace} per input. OFF by default and NOT a command flag: the `--debug` surfaces opt in
@@ -591,6 +598,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const result = await geocodeAddress(input, {
 			classifier,
+			...(options.retryAlternateRegister === undefined
+				? {}
+				: { retryAlternateRegister: options.retryAlternateRegister }),
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,
