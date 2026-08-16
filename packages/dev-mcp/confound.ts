@@ -32,7 +32,7 @@ import { effectiveKeyFor } from "./engine-registry.ts"
  * through a mechanism. A `clean` here licenses the sentence "nothing else in the configuration moved" and nothing
  * stronger. Diagnosis needs the per-row interior, which this file does not have and `mwdev_trace` does.
  */
-export const Attribution = {
+export const VariableIsolation = {
 	/**
 	 * Exactly the declared keys differ. Nothing else in the configuration moved.
 	 */
@@ -53,10 +53,10 @@ export const Attribution = {
 	CrossEngine: "cross_engine",
 } as const
 
-export type Attribution = (typeof Attribution)[keyof typeof Attribution]
+export type VariableIsolation = (typeof VariableIsolation)[keyof typeof VariableIsolation]
 
 export interface ConfoundReading {
-	attribution: Attribution
+	variable_isolation: VariableIsolation
 	/**
 	 * Every key that actually differs, whether or not it was declared. This is the field to read; `variable` as passed is
 	 * the caller's claim, not a finding.
@@ -124,14 +124,14 @@ export function checkConfounds(
 		)
 	}
 
-	const attribution: Attribution = !moved.length
-		? Attribution.NoVariable
+	const isolation: VariableIsolation = !moved.length
+		? VariableIsolation.NoVariable
 		: movedButUndeclared.length
-			? Attribution.Ambiguous
-			: Attribution.Clean
+			? VariableIsolation.Ambiguous
+			: VariableIsolation.Clean
 
 	return {
-		attribution,
+		variable_isolation: isolation,
 		variable_effective: moved,
 		declared: [...declared].toSorted(),
 		declared_but_unmoved: declaredButUnmoved,
@@ -151,12 +151,12 @@ export function checkConfounds(
  * What is actually true is shorter and worse: the arms hold different indexes built from different sources at different
  * vintages, and no record either arm can produce says by how much. The panel comparator in the benchmark rig states the
  * same thing in its own header — "a behavioral comparison over deliberately different data footprints, not a claim that
- * the arms have equivalent indexes". So the attribution is fixed at {@link Attribution.CrossEngine} and the caller's
+ * the arms have equivalent indexes". So the reading is fixed at {@link VariableIsolation.CrossEngine} and the caller's
  * `variable` is echoed rather than checked: there is nothing to check it against.
  */
 export function crossEngineReading(armA: string, armB: string, declared: string[]): ConfoundReading {
 	return {
-		attribution: Attribution.CrossEngine,
+		variable_isolation: VariableIsolation.CrossEngine,
 		variable_effective: ["engine"],
 		declared: [...declared].toSorted(),
 		declared_but_unmoved: [],

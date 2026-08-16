@@ -211,7 +211,7 @@ describe("mwdev_compare", () => {
 		expect(result["verdict_withheld_reason"]).toContain("described, not graded")
 	})
 
-	it("marks attribution ambiguous when more moved than was declared", async () => {
+	it("marks isolation ambiguous when more moved than was declared", async () => {
 		const tools = tableWith([
 			stubEngine("a", { x: 1, y: 1 }, (input) => input),
 			stubEngine("b", { x: 2, y: 2 }, (input) => input),
@@ -223,9 +223,9 @@ describe("mwdev_compare", () => {
 			variable: ["x"],
 		})) as Record<string, unknown>
 
-		expect(result["attribution"]).toBe("ambiguous")
+		expect(result["variable_isolation"]).toBe("ambiguous")
 		expect(result["variable_effective"]).toEqual(["x", "y"])
-		expect(result["summary"]).toContain("ATTRIBUTION AMBIGUOUS")
+		expect(result["summary"]).toContain("VARIABLE ISOLATION AMBIGUOUS")
 	})
 
 	it("refuses arms built against different source trees", async () => {

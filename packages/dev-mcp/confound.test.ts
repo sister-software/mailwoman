@@ -6,17 +6,17 @@
 
 import { describe, expect, it } from "vitest"
 
-import { assertComparableField, Attribution, checkConfounds } from "./confound.ts"
+import { assertComparableField, VariableIsolation, checkConfounds } from "./confound.ts"
 
 describe("checkConfounds", () => {
-	it("reports clean attribution when exactly the declared key moved", () => {
+	it("reports clean isolation when exactly the declared key moved", () => {
 		const reading = checkConfounds(
 			{ locale: "en-US", gazetteerPrior: false },
 			{ locale: "en-US", gazetteerPrior: true },
 			["gazetteerPrior"]
 		)
 
-		expect(reading.attribution).toBe(Attribution.Clean)
+		expect(reading.variable_isolation).toBe(VariableIsolation.Clean)
 		expect(reading.variable_effective).toEqual(["gazetteerPrior"])
 		expect(reading.warnings).toHaveLength(0)
 	})
@@ -30,7 +30,7 @@ describe("checkConfounds", () => {
 			["backend"]
 		)
 
-		expect(reading.attribution).toBe(Attribution.Ambiguous)
+		expect(reading.variable_isolation).toBe(VariableIsolation.Ambiguous)
 		expect(reading.moved_but_undeclared).toEqual(["countryScope"])
 		expect(reading.warnings[0]).toContain("countryScope")
 	})
@@ -49,7 +49,7 @@ describe("checkConfounds", () => {
 	it("names identical arms as such rather than calling it clean", () => {
 		const reading = checkConfounds({ locale: "en-US" }, { locale: "en-US" }, ["locale"])
 
-		expect(reading.attribution).toBe(Attribution.NoVariable)
+		expect(reading.variable_isolation).toBe(VariableIsolation.NoVariable)
 		expect(reading.warnings.join(" ")).toContain("identical effective configurations")
 	})
 
@@ -81,7 +81,7 @@ describe("the declared vocabulary", () => {
 		// honest single-lever comparison reported ATTRIBUTION AMBIGUOUS.
 		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
 
-		expect(reading.attribution).toBe("clean")
+		expect(reading.variable_isolation).toBe("clean")
 		expect(reading.moved_but_undeclared).toEqual([])
 		expect(reading.declared_but_unmoved).toEqual([])
 	})
@@ -101,7 +101,7 @@ describe("the declared vocabulary", () => {
 			["place_country"]
 		)
 
-		expect(reading.attribution).toBe("ambiguous")
+		expect(reading.variable_isolation).toBe("ambiguous")
 		expect(reading.moved_but_undeclared).toEqual(["countryScope"])
 	})
 })

@@ -290,7 +290,7 @@ async function compareMailwomanArms(
 			? `Of those, ${graded.improved} improved and ${graded.regressed} regressed against truth; ${graded.ungradeable} rows carry no expectations and were not graded. ${test.sentence}`
 			: `No row in this set carries expectations, so nothing here is graded — these are described changes, not improvements.`,
 		zeroDifferenceCaveat,
-		attributionSentence(confounds, zeroDifferenceCaveat),
+		isolationSentence(confounds, zeroDifferenceCaveat),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
 		.filter(Boolean)
@@ -328,7 +328,7 @@ async function compareMailwomanArms(
 			mode,
 			'no truth for this input set; changes are described, not graded. Run against {kind:"board"} to grade.'
 		),
-		attribution: confounds.attribution,
+		variable_isolation: confounds.variable_isolation,
 		variable_declared: confounds.declared,
 		variable_effective: confounds.variable_effective,
 		n_requested: set.n,
@@ -474,7 +474,7 @@ function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): 
 	const missing = set.inputs.filter((item) => !byInput.has(item.input)).length
 
 	// The confound guard is not relaxed for a recorded arm: comparing across a tree change IS comparing across a tree
-	// change, and `tree_fingerprint` has to be a declared variable for the attribution to read `clean`.
+	// change, and `tree_fingerprint` has to be a declared variable for the isolation reading to be `clean`.
 	const warnings = [
 		`This arm is a replay of run ${run.run_id}, recorded at ${run.created_at} against tree ` +
 			`${run.tree_fingerprint.slice(0, 12)}. Declare tree_fingerprint as a variable — everything that changed ` +
@@ -812,7 +812,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			no_result_is_a_miss: true,
 			per_arm_normalization: "none — the same raw query string reaches both arms",
 		},
-		attribution: confounds.attribution,
+		variable_isolation: confounds.variable_isolation,
 		variable_declared: confounds.declared,
 		variable_effective: confounds.variable_effective,
 		n_requested: set.n,
@@ -1043,10 +1043,10 @@ function withheldVerdict(mode: "truth" | "diff-only", reason: string): Record<st
 	return mode === "diff-only" ? { verdict: null, verdict_withheld_reason: reason } : {}
 }
 
-function attributionSentence(confounds: ConfoundReading, exclude: string): string {
-	if (confounds.attribution === "clean") return ""
+function isolationSentence(confounds: ConfoundReading, exclude: string): string {
+	if (confounds.variable_isolation === "clean") return ""
 
-	return `ATTRIBUTION ${confounds.attribution.toUpperCase()}: ${confounds.warnings.filter((warning) => warning !== exclude).join(" ")}`
+	return `VARIABLE ISOLATION ${confounds.variable_isolation.toUpperCase()}: ${confounds.warnings.filter((warning) => warning !== exclude).join(" ")}`
 }
 
 /**

@@ -176,7 +176,7 @@ describe("mwdev_compare — external arm", () => {
 			{ body: peliasBody(ANDORRA_LA_VELLA) },
 		])
 
-		expect(result["attribution"]).toBe("cross_engine")
+		expect(result["variable_isolation"]).toBe("cross_engine")
 		expect((result["warnings"] as string[]).join(" ")).toContain("different indexes")
 		expect(result["mechanism_fired_on"]).toBeNull()
 	})
