@@ -18,7 +18,7 @@
  *   case normalization is absent and the register legs see different text.
  *
  *   Usage:
- *     node mailwoman/dev-tools/probe-comma-free-locality.run.ts --cache-root <dir> --label cand --country FR
+ *     node packages/mailwoman/dev-tools/probe-comma-free-locality.run.ts --cache-root <dir> --label cand --country FR
  */
 
 import { parseArgs } from "node:util"

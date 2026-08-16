@@ -66,10 +66,14 @@ export interface ResolvedInputSet {
 	 */
 	notCovered: string[]
 	/**
-	 * How many rows carry each kind of truth. A set with no coordinate truth cannot be graded on distance however many
-	 * rows it has, and saying so is cheaper than discovering it in a table of nulls.
+	 * How many rows carry each kind of truth.
+	 *
+	 * The per-kind counts OVERLAP — a row can pin components and a coordinate and a tier — so they must never be summed.
+	 * `any` is the distinct row count and `none` its complement; those two are what add up to `n`. An earlier draft
+	 * summed the three and reported 839 rows carrying truth on a 558-row board, which is the shape of every
+	 * double-counted denominator.
 	 */
-	hasTruth: { components: number; coordinates: number; tier: number; none: number }
+	hasTruth: { components: number; coordinates: number; tier: number; any: number; none: number }
 	/**
 	 * The live corpus hash, for a board-derived set. Recomputed on every resolve and never cached: a cached stamp verdict
 	 * is the 2026-08-06 failure with extra steps.
@@ -100,6 +104,7 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 	let components = 0
 	let coordinates = 0
 	let tier = 0
+	let any = 0
 	let none = 0
 
 	for (const row of cases) {
@@ -119,12 +124,14 @@ function truthCounts(cases: SeedCase[]): ResolvedInputSet["hasTruth"] {
 			tier++
 		}
 
-		if (!hasComponents && !hasCoordinates && !hasTier) {
+		if (hasComponents || hasCoordinates || hasTier) {
+			any++
+		} else {
 			none++
 		}
 	}
 
-	return { components, coordinates, tier, none }
+	return { components, coordinates, tier, any, none }
 }
 
 /**
@@ -152,7 +159,7 @@ export async function resolveInputSet(ref: InputSetRef): Promise<ResolvedInputSe
 			selection: "hand-picked",
 			why: ref.why,
 			notCovered: [],
-			hasTruth: { components: 0, coordinates: 0, tier: 0, none: ref.inputs.length },
+			hasTruth: { components: 0, coordinates: 0, tier: 0, any: 0, none: ref.inputs.length },
 			notes: [
 				"Hand-picked inputs carry no expectations, so this set can be observed but not graded.",
 				"Results from this set report their confidence bound in the summary sentence — see power.ts.",

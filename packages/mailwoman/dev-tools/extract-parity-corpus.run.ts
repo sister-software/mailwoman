@@ -5,7 +5,7 @@
  *
  *   Phase-0 entry: walk the v1 parity suite, extract every `assert()` case, write
  *   `mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl`. Run from the repo root:
- *   `node mailwoman/dev-tools/extract-parity-corpus.run.ts`
+ *   `node packages/mailwoman/dev-tools/extract-parity-corpus.run.ts`
  */
 
 import { readdirSync, readFileSync } from "node:fs"

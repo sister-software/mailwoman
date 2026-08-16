@@ -13,7 +13,7 @@
  * model's head vocabulary and the Latin model never emits them, so those assertions are unreachable by construction and
  * the report should show it.
  *
- * Usage: node mailwoman/dev-tools/score-world-structures.run.ts
+ * Usage: node packages/mailwoman/dev-tools/score-world-structures.run.ts
  */
 
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"

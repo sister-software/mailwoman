@@ -19,7 +19,7 @@
  *   `gauntlet/cases/<cc>/regression.jsonl` — same input, same coordinate, same tolerance — so the board and
  *   the corpus cannot drift apart on a row they share.
  *
- *   Run: node mailwoman/dev-tools/build-hard-slice-board.run.ts [--out <path>]
+ *   Run: node packages/mailwoman/dev-tools/build-hard-slice-board.run.ts [--out <path>]
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
@@ -27,6 +27,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { JSONSpliterator } from "spliterator"
@@ -47,17 +48,6 @@ const ADDED_AT = "2026-08-06"
 const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-global-priority-importance.db"))
 const POP_FST_DIR = String(dataRootPath("wof", "fst-per-locale"))
 const IMP_FST_DIR = String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix"))
-
-/**
- * The ONLY placetypes that reach a BIO label — `neural/fst-prior.ts`'s `PLACETYPE_TO_BIO`. Mirrored here because a bias
- * measured over placetypes the decoder cannot see would overstate every delta on the board.
- */
-const PLACETYPE_TO_BIO = new Map([
-	["country", "country"],
-	["region", "region"],
-	["locality", "locality"],
-	["postalcode", "postcode"],
-])
 
 const db = new DatabaseSync(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
@@ -109,16 +99,9 @@ function biasOf(matcher: unknown, surface: string): Map<string, number> {
 		walk.stateID
 	)
 
-	const byTag = new Map<string, number>()
-
-	for (const entry of entries) {
-		const tag = PLACETYPE_TO_BIO.get(entry.placetype)
-
-		if (!tag) continue
-		byTag.set(tag, Math.max(byTag.get(tag) ?? 0, entry.importance))
-	}
-
-	return byTag
+	// Collapsed by the decoder's OWN function: a bias measured over placetypes the decoder cannot see would overstate
+	// every delta on this board.
+	return collapseFSTBias(entries)
 }
 
 const round4 = (n: number): number => Math.round(n * 1e4) / 1e4

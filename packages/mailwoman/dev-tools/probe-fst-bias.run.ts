@@ -20,13 +20,14 @@
  *   ABSENCE and not a zero bias. A printed `0` means the FST DOES know the surface and scores it zero.
  *   The two are different facts and the output keeps them apart.
  *
- *   Usage: node mailwoman/dev-tools/probe-fst-bias.run.ts [--locale en-us] [--raw] <surface>...
+ *   Usage: node packages/mailwoman/dev-tools/probe-fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
 import { existsSync, readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
@@ -50,13 +51,6 @@ const ARMS: Record<string, string> = {
 	pop: String(dataRootPath("wof", "fst-per-locale")),
 	imp: String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix")),
 }
-
-const PLACETYPE_TO_BIO = new Map([
-	["country", "country"],
-	["region", "region"],
-	["locality", "locality"],
-	["postalcode", "postcode"],
-])
 
 const matchers = new Map<string, unknown>()
 
@@ -98,14 +92,7 @@ for (const surface of positionals) {
 			continue
 		}
 
-		const byTag = new Map<string, number>()
-
-		for (const e of entries) {
-			const tag = PLACETYPE_TO_BIO.get(e.placetype)
-
-			if (!tag) continue
-			byTag.set(tag, Math.max(byTag.get(tag) ?? 0, e.importance))
-		}
+		const byTag = collapseFSTBias(entries)
 
 		cells.push(
 			byTag.size

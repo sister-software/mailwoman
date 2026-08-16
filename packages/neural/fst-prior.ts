@@ -91,12 +91,56 @@ export interface FSTMatcherLike {
 
 //#region Placetype → BIO label mapping
 
-const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
+/**
+ * The only placetypes that reach a BIO tag.
+ *
+ * Exported because a probe that reports "what bias would the decoder get for this surface" has to collapse the FST's
+ * accepting entries the SAME way {@link applyBias} does, and a second copy of this map makes the probe answer a question
+ * about a decoder that does not exist. A `localadmin`, `county`, `borough` or `neighbourhood` entry is walked, deduped,
+ * and dropped without ever touching the emission matrix.
+ */
+export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
 	["region", "region"],
 	["locality", "locality"],
 	["postalcode", "postcode"],
 ])
+
+/**
+ * An FST entry as both the decoder and the probes read it.
+ */
+export interface FSTEntryLike {
+	placetype: string
+	/**
+	 * The referential/importance score. Named loosely because the two probes and the prior reach it under different field
+	 * names on their own record types.
+	 */
+	importance: number
+}
+
+/**
+ * Collapse accepting entries to `max(importance)` PER BIO TAG — the only shape {@link applyBias} acts on.
+ *
+ * The per-place ranking INSIDE a name is invisible to the decoder; only the per-tag max is not. A caller reporting
+ * anything finer would overstate what an importance change can do.
+ *
+ * An EMPTY result is not a zero bias: it means the surface was accepted but carries no BIO-mapped placetype, so the
+ * decoder sees nothing. A caller must keep that apart from "the FST does not accept this surface at all", which is
+ * absence, and from a tag present with value `0`, which is a measured zero.
+ */
+export function collapseFSTBias(entries: ReadonlyArray<FSTEntryLike>): Map<string, number> {
+	const byTag = new Map<string, number>()
+
+	for (const entry of entries) {
+		const tag = PLACETYPE_TO_BIO.get(entry.placetype)
+
+		if (!tag) continue
+
+		byTag.set(tag, Math.max(byTag.get(tag) ?? 0, entry.importance))
+	}
+
+	return byTag
+}
 
 //#endregion
 

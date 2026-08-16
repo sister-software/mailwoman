@@ -19,7 +19,7 @@
  *   so a country with no codex slice can never be proposed however many rows it has. The probe therefore walks exactly
  *   those eight.
  *
- *   Run from the repo root: `node mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`
+ *   Run from the repo root: `node packages/mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`
  */
 
 import { existsSync } from "node:fs"

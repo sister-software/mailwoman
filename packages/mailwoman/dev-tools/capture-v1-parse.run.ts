@@ -7,7 +7,7 @@
  *   the engine layer (`createServeEngine().engine.parse`) — the semantic content of the endpoint.
  *   The route/wire wrapper is exercised by `@mailwoman/api`'s own tests, and the v7 swap changes
  *   the wire shape by design, so the gate built on this artifact compares components, not bytes.
- *   Run from the repo root: `node mailwoman/dev-tools/capture-v1-parse.run.ts`
+ *   Run from the repo root: `node packages/mailwoman/dev-tools/capture-v1-parse.run.ts`
  */
 
 import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterator"

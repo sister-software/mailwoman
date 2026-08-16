@@ -32,7 +32,7 @@
  *   digit-initial, every numeric system's keys are digits only), unit centroids verbatim, outward
  *   centroids the same mean — up to the format's i16 centroid quantization (~300 m).
  *
- *   Usage: node mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
+ *   Usage: node packages/mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
  */
 
 import { writeFileSync } from "node:fs"

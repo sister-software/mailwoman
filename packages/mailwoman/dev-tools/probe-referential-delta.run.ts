@@ -29,7 +29,7 @@
  *      `findPlace`, with the returned candidate list re-sorted under BOTH the pre-split key and
  *      `compareReferential`. Any row whose id sequence differs is a real resolver delta and is printed.
  *
- *   Usage: node mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
+ *   Usage: node packages/mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
 import { existsSync } from "node:fs"

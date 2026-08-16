@@ -25,7 +25,7 @@
  *   Rows whose fragment does not classify as `fragmented` are SKIPPED and counted, not silently graded
  *   in the wrong register — the mistake this file exists to correct.
  *
- *   Usage: node mailwoman/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
+ *   Usage: node packages/mailwoman/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
  */
 
 import { createHash } from "node:crypto"

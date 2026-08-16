@@ -45,7 +45,7 @@
  *        gauntlet stores these and never checks them; this board checks them, so a right-coordinate /
  *        wrong-place answer (a namesake landing inside a metro tolerance) is visible rather than credited.
  *
- *   Usage: node mailwoman/dev-tools/score-hard-slice-board.run.ts [--arms none,pop,imp] [--out-json <p>]
+ *   Usage: node packages/mailwoman/dev-tools/score-hard-slice-board.run.ts [--arms none,pop,imp] [--out-json <p>]
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
