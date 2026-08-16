@@ -61,7 +61,7 @@ export const HOLDOUT_DEFAULT_N = 300
  * Benchmark panels, by version. Each is a fixed file under `$MAILWOMAN_DATA_ROOT/pelias-rig/panel/`; v2 is the 420-row
  * set the head-to-head protocol was pre-registered against.
  */
-export const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3"] as const
+export const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3", "v3.1"] as const
 
 export type PanelVersion = (typeof PANEL_VERSIONS)[number]
 

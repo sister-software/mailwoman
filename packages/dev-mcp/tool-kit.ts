@@ -108,7 +108,7 @@ export const INPUT_SET_SCHEMA = z
 		}),
 		z.object({
 			kind: z.literal("panel"),
-			version: z.enum(["v1", "v2", "v2.1", "v3"]).optional(),
+			version: z.enum(["v1", "v2", "v2.1", "v3", "v3.1"]).optional(),
 			country: z.string().optional(),
 			truth_type: z.string().optional(),
 		}),
