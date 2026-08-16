@@ -4,9 +4,23 @@
  * @author Teffen Ellis, et al.
  */
 
+import { existsSync } from "node:fs"
+
+import { dataRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
 import { resolveInputSet } from "./input-sets.ts"
+
+/**
+ * The board and parity corpora are COMMITTED, so they grade everywhere. The panel and golden sets live under
+ * `$MAILWOMAN_DATA_ROOT` and are absent in CI, so their suites are presence-gated the way `weights.test.ts` gates on
+ * the dev model.
+ *
+ * A skipped suite is not a passing one: these assertions hold only on a machine carrying the artifacts, and CI's green
+ * tick says nothing about them.
+ */
+const havePanel = existsSync(String(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl")))
+const haveGolden = existsSync(String(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl")))
 
 describe("resolveInputSet — board", () => {
 	it("defaults to the whole board and reports its live corpus hash", async () => {
@@ -60,7 +74,7 @@ describe("resolveInputSet — literal", () => {
 	})
 })
 
-describe("resolveInputSet — panel", () => {
+describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 	it("resolves the pre-registered v2 panel with a coordinate on every row", async () => {
 		const set = await resolveInputSet({ kind: "panel", version: "v2" })
 
@@ -87,7 +101,7 @@ describe("resolveInputSet — panel", () => {
 	})
 })
 
-describe("resolveInputSet — golden", () => {
+describe.skipIf(!haveGolden)("resolveInputSet — golden", () => {
 	it("counts component expectations rather than reporting them as nothing", async () => {
 		// First run of this resolver reported `none: 4255` on a 4,255-row set, because the census only knew how to read
 		// a SeedCase and golden rows carry `components` instead.
@@ -122,7 +136,7 @@ describe("resolveInputSet — parity", () => {
 	})
 })
 
-describe("a corpus that cannot be read", () => {
+describe.skipIf(!haveGolden)("a corpus that cannot be read", () => {
 	it("refuses rather than resolving to an empty set", async () => {
 		// An empty set measures zero differences, which reads as "no effect" rather than "nothing ran".
 		await expect(resolveInputSet({ kind: "golden", version: "v9.9.9-nonexistent" })).rejects.toThrow(
