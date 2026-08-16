@@ -36,6 +36,11 @@
 			"default": "./out/fts.js",
 			"types": "./out/fts.d.ts"
 		},
+		"./fts-query": {
+			"node": "./fts-query.ts",
+			"default": "./out/fts-query.js",
+			"types": "./out/fts-query.d.ts"
+		},
 		"./primary-preference": {
 			"node": "./primary-preference.ts",
 			"default": "./out/primary-preference.js",

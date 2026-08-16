@@ -18,8 +18,6 @@
  *      value the pipeline did not produce.
  */
 
-import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { z } from "zod"
 
 import { ARM_SPEC_SCHEMA } from "./arms.ts"
@@ -27,7 +25,8 @@ import { assembleBench, summarizeLatency } from "./bench.ts"
 import { runCompare } from "./compare.ts"
 import type { EngineConfig } from "./engine-registry.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
-import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology, LookupSource } from "./lookup.ts"
+import { runLookup } from "./lookup-tool.ts"
+import { LookupSource } from "./lookup.ts"
 import { describeObservedRate } from "./power.ts"
 import { buildSpawnTools } from "./spawn-tools.ts"
 import {
@@ -155,72 +154,51 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 			name: "mwdev_lookup",
 			description:
 				"Ask a data source directly whether it knows a string. Keeps ABSENCE (the source has no entry) apart from " +
-				"a MEASURED ZERO (it has one, scored zero) — the distinction most resolve failures turn on.",
+				"a MEASURED ZERO (it has one, scored zero) and from a hit that carries nothing actionable — the " +
+				"distinction most resolve failures turn on. Every gazetteer source keys on a NORMALIZED form, not the " +
+				"string you type, and reports the key it used beside what it found.",
 			inputSchema: z.object({
-				source: z.enum(["fst", "street_morphology", "normalize"]),
+				source: z.enum([
+					LookupSource.FST,
+					LookupSource.StreetMorphology,
+					LookupSource.Normalize,
+					LookupSource.Candidate,
+					LookupSource.WOF,
+					LookupSource.POI,
+					LookupSource.Codex,
+					LookupSource.Postcode,
+				]),
 				queries: z.array(z.string()).min(1).max(50),
-				locale: z.string().optional().describe("Normalization locale; defaults to `und`."),
+				locale: z
+					.string()
+					.optional()
+					.describe(
+						"`normalize`: the normalization locale, default `und`. `postcode`: which weights package's anchor " +
+							"artifact to read, default `en-us`. Ignored elsewhere."
+					),
+				country: z
+					.string()
+					.optional()
+					.describe(
+						"ISO alpha-2 filter for `candidate` and `poi`. A key that exists but has no row in this country is " +
+							"reported as a FILTER miss, never as an absence."
+					),
+				limit: z.number().int().positive().max(100).optional().describe("Rows per query; the count is always exact."),
 				config: ENGINE_CONFIG_SCHEMA.optional().describe(
-					"Only selects WHICH weights package to read the artifact from; `gazetteer_prior` is forced on regardless, since\n\t\t\t\t\ta session resolves the FST path only when it would feed the prior."
+					"Selects WHICH artifacts to read — `candidate_db`, `resolve_db`, `data_root`, and for the FST sources the " +
+						"weights package. `gazetteer_prior` is forced on for those two, since a session resolves the FST path " +
+						"only when it would feed the prior."
 				),
 			}),
-			handler: async (args) => {
-				const source = args["source"] as LookupSource
-				const queries = args["queries"] as string[]
-
-				if (source === LookupSource.Normalize) {
-					return {
-						source,
-						rows: lookupNormalize(queries, (args["locale"] as string | undefined) ?? "und"),
-						notes: [
-							"Normalization always answers, so every row is a hit. The useful column is `changed`: a query whose " +
-								"normalized form differs is the usual reason a lookup against another source misses.",
-						],
-					}
-				}
-
-				// `gazetteer_prior: true` is forced. The session resolves the FST paths only when it will actually feed the
-				// prior, and it is right to: `artifacts` reports what a session READ, not what it could have. A lookup
-				// wants the artifact the decoder would consult, so it asks for an engine that loads one — resolving the
-				// path any other way would answer about an FST no runtime configuration reads.
-				const engine = await registry.acquire({
-					...(args["config"] as EngineConfig | undefined),
-					gazetteer_prior: true,
-				})
-
-				const path =
-					source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
-
-				const loaded = loadFSTArtifact(path, deserializeFST as never)
-
-				if ("unavailable" in loaded) {
-					return {
-						source,
-						rows: [],
-						unavailable_reason: loaded.unavailable,
-						notes: [
-							"No row is reported, because a source whose artifact is missing answers 'no' to everything — which " +
-								"would read as absence for every query rather than as an unavailable source.",
-						],
-					}
-				}
-
-				return {
-					source,
-					provenance: { engine_id: engine.engineID, artifact: path },
-					rows:
-						source === LookupSource.FST
-							? lookupFST(loaded.fst, normalizeTokens, queries)
-							: lookupStreetMorphology(loaded.fst, queries),
-					notes:
-						source === LookupSource.FST
-							? [
-									"Entries are the per-BIO-tag MAX, which is all the emission prior reads. A surface accepted with no " +
-										"BIO-mapped placetype gives the decoder nothing — different from a zero.",
-								]
-							: [],
-				}
-			},
+			handler: async (args) =>
+				runLookup(registry, {
+					source: args["source"] as LookupSource,
+					queries: args["queries"] as string[],
+					...(args["locale"] === undefined ? {} : { locale: args["locale"] as string }),
+					...(args["country"] === undefined ? {} : { country: args["country"] as string }),
+					...(args["limit"] === undefined ? {} : { limit: args["limit"] as number }),
+					...(args["config"] === undefined ? {} : { config: args["config"] as EngineConfig }),
+				}),
 		},
 
 		{

@@ -21,6 +21,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs"
+import { DatabaseSync } from "node:sqlite"
 
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalize } from "@mailwoman/normalize"
@@ -42,6 +43,28 @@ export const LookupSource = {
 	 * Stage-1 deterministic preprocessing. Answers what the model is actually FED, which is not what the user typed.
 	 */
 	Normalize: "normalize",
+	/**
+	 * The candidate gazetteer (`candidate.db`) — the default resolver backend. Keyed on `name_key`, never `name`.
+	 */
+	Candidate: "candidate",
+	/**
+	 * The WOF admin + postcode shards behind the FTS backend. Answers what the SOURCE data holds, including the
+	 * deprecated records the resolver's own query filters out.
+	 */
+	WOF: "wof",
+	/**
+	 * `poi.db` — the POI layer the fork→entity probe reads. Keyed on `name_key` like the candidate table.
+	 */
+	POI: "poi",
+	/**
+	 * `@mailwoman/codex` — the pure postal reference tables. Postcode SHAPES, USPS suffixes, unit designators,
+	 * directionals, US states. No artifact, so it can never be unavailable.
+	 */
+	Codex: "codex",
+	/**
+	 * The postcode→anchor artifact in the resolved weights package — the channel the MODEL is fed, not a gazetteer.
+	 */
+	Postcode: "postcode",
 } as const
 
 export type LookupSource = (typeof LookupSource)[keyof typeof LookupSource]
@@ -66,6 +89,12 @@ export interface LookupRow {
 export interface LookupResult {
 	source: LookupSource
 	rows: LookupRow[]
+	/**
+	 * WHICH artifact answered — the resolved path, plus whatever else decides the reading (the locale and declared span
+	 * mode for the anchor, the engine for the FST). Absent when there was no artifact to name: the unavailable envelope
+	 * says why in `unavailable_reason`, and `codex`/`normalize` read no file at all.
+	 */
+	provenance?: Record<string, unknown>
 	/**
 	 * Absent when the source's artifact could not be opened. Reported rather than degraded, because a lookup that
 	 * silently answers "no" for every query because a file is missing is the worst possible answer.
@@ -159,6 +188,26 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
 				: { note: `Normalization changed the input — downstream sources see ${JSON.stringify(normalized)}.` }),
 		}
 	})
+}
+
+/**
+ * Open a sealed SQLite artifact READ-ONLY, reporting a missing or unopenable file as unavailable rather than as a
+ * source that knows nothing.
+ *
+ * `readOnly: true` is not a precaution here, it is the contract: every built database in this repo is sealed 0444 and
+ * is never modified after creation, so a read-write open would fail on a correctly-sealed artifact and succeed — with a
+ * journal file beside it — on one that was not.
+ */
+export function openSealedArtifact(path: string | undefined): { db: DatabaseSync } | { unavailable: string } {
+	if (!path) return { unavailable: "No artifact path was resolved for this source." }
+
+	if (!existsSync(path)) return { unavailable: `Artifact not found at ${path}.` }
+
+	try {
+		return { db: new DatabaseSync(path, { readOnly: true }) }
+	} catch (error) {
+		return { unavailable: `Artifact at ${path} could not be opened read-only: ${(error as Error).message}` }
+	}
 }
 
 /**
