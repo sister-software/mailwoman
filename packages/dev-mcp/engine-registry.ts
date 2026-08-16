@@ -73,6 +73,50 @@ export interface EngineConfig {
  * (`docs/engineering/reference/resolver-backends.mdx`), so switching backend also switches country scoping. A
  * comparison that reads stated configs cannot see that; one that reads effective configs can.
  */
+/**
+ * Which `GeocodeSessionOptions` key each `EngineConfig` key becomes.
+ *
+ * The two vocabularies differ by design — a caller writes the CLI's snake_case, a session reads camelCase — and
+ * {@link resolveConfig} performs the translation inline, where it is invisible to anyone else who needs it. This map is
+ * the same translation, named, because `confound.ts` compares a caller's DECLARED keys against the keys that actually
+ * differ between two resolved configs. Without it, declaring `["place_country"]` and having `placeCountry` move reads
+ * as two separate facts — one lever declared and unmoved, one moved and undeclared — and every correctly-declared
+ * comparison grades itself ambiguous.
+ *
+ * `configKeyMapping.test.ts` asserts this stays in step with `resolveConfig`, which is the only thing that can: a lever
+ * added to one and not the other is a silent regression to exactly the behaviour above.
+ */
+export const EFFECTIVE_KEY_FOR = {
+	locale: "locale",
+	country_scope: "countryScope",
+	default_country: "defaultCountry",
+	bias: "bias",
+	candidate_db: "candidateDB",
+	resolve_db: "resolveDB",
+	data_root: "dataRoot",
+	gazetteer_prior: "gazetteerPrior",
+	place_country: "placeCountry",
+	place_country_threshold: "placeCountryThreshold",
+	postcode_country_coherence: "postcodeCountryCoherence",
+	fork_entity: "forkEntity",
+	locale_country_prior: "localeCountryPrior",
+	postcode_shape_coherence: "postcodeShapeCoherence",
+	postcode_containment_coherence: "postcodeContainmentCoherence",
+	retry_alternate_register: "retryAlternateRegister",
+	trace: "trace",
+} as const satisfies Record<keyof EngineConfig, string>
+
+/**
+ * Translate a caller's declared key into the effective key it becomes, or return it unchanged.
+ *
+ * Unchanged rather than rejected: a caller may legitimately declare something that is not an `EngineConfig` key at all
+ * — `["engine"]` across two geocoders is the common one — and turning that into an error would refuse the correct
+ * declaration for the one comparison where no config key can express the variable.
+ */
+export function effectiveKeyFor(declared: string): string {
+	return (EFFECTIVE_KEY_FOR as Record<string, string>)[declared] ?? declared
+}
+
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	return {
 		locale: config.locale ?? "en-US",

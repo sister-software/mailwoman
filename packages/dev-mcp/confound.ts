@@ -22,16 +22,23 @@
  *   survives the relay; a refusal only helps if the agent stays inside the tool.
  */
 
+import { effectiveKeyFor } from "./engine-registry.ts"
+
 /**
- * How confidently a delta can be assigned to the declared variable.
+ * Whether the comparison's SETUP was clean — did exactly the declared keys differ between the two resolved configs.
+ *
+ * Read this as a hygiene check on the experiment, never as a causal finding. It compares two config objects; it has no
+ * access to why any individual row moved, and a delta is a property of an aggregate while causation happens per row
+ * through a mechanism. A `clean` here licenses the sentence "nothing else in the configuration moved" and nothing
+ * stronger. Diagnosis needs the per-row interior, which this file does not have and `mwdev_trace` does.
  */
 export const Attribution = {
 	/**
-	 * Exactly the declared keys differ. The delta belongs to the variable.
+	 * Exactly the declared keys differ. Nothing else in the configuration moved.
 	 */
 	Clean: "clean",
 	/**
-	 * More keys moved than were declared, so the delta belongs to some combination of them.
+	 * More keys moved than were declared, so the configuration cannot isolate the declared one.
 	 */
 	Ambiguous: "ambiguous",
 	/**
@@ -41,7 +48,7 @@ export const Attribution = {
 	NoVariable: "no_variable",
 	/**
 	 * The arms are different geocoders. No configuration record can express what differs, because the dominant variable
-	 * is the INDEX each one holds — and a delta here is never attributable to a lever, however carefully declared.
+	 * is the INDEX each one holds — and no configuration record can isolate a lever here, however carefully declared.
 	 */
 	CrossEngine: "cross_engine",
 } as const
@@ -83,11 +90,16 @@ export function checkConfounds(
 	declared: string[]
 ): ConfoundReading {
 	const moved = differingKeys(effectiveA, effectiveB)
-	const declaredSet = new Set(declared)
+	// Declared keys arrive in the CLI's snake_case (the vocabulary the tool schema documents); `effective*` keys are
+	// camelCase. Compared raw, one correctly-declared lever reads as TWO findings — declared-but-unmoved under one
+	// spelling, moved-but-undeclared under the other — and every honest single-lever comparison grades itself ambiguous.
+	const declaredSet = new Set(declared.map(effectiveKeyFor))
 	const movedSet = new Set(moved)
 
 	const movedButUndeclared = moved.filter((key) => !declaredSet.has(key))
-	const declaredButUnmoved = declared.filter((key) => !movedSet.has(key)).toSorted()
+	// Filtered on the translated key, reported in the caller's own spelling — they typed `place_country`, and telling
+	// them `placeCountry` is unmoved names a key they never wrote.
+	const declaredButUnmoved = declared.filter((key) => !movedSet.has(effectiveKeyFor(key))).toSorted()
 	const warnings: string[] = []
 
 	if (movedButUndeclared.length) {
