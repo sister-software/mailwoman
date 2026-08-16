@@ -8,6 +8,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { missingWeightsCacheArtifacts, readGateReport, summarizeGateReport } from "./gate-report.ts"
@@ -173,7 +174,7 @@ describe("missingWeightsCacheArtifacts", () => {
 
 		dirs.push(root)
 
-		const packageDir = join(root, "node_modules", "@mailwoman", "neural-weights-en-us")
+		const packageDir = weightsCachePackageDir(root, "en-us")
 
 		mkdirSync(packageDir, { recursive: true })
 		writeFileSync(join(packageDir, "model.onnx"), "x")
@@ -196,7 +197,7 @@ describe("missingWeightsCacheArtifacts", () => {
 
 		dirs.push(root)
 
-		const packageDir = join(root, "node_modules", "@mailwoman", "neural-weights-en-us")
+		const packageDir = weightsCachePackageDir(root, "en-us")
 
 		mkdirSync(packageDir, { recursive: true })
 
@@ -214,7 +215,7 @@ describe("missingWeightsCacheArtifacts", () => {
 
 		dirs.push(root)
 
-		const packageDir = join(root, "node_modules", "@mailwoman", "neural-weights-en-us")
+		const packageDir = weightsCachePackageDir(root, "en-us")
 
 		mkdirSync(packageDir, { recursive: true })
 
