@@ -5,7 +5,7 @@
  *
  *   Parity-campaign probe: where does the kind-classifier route fragment-class inputs? Classes are
  *   derived from the parity fixtures own gold tags (no synthesis bias). Run from the repo root:
- *   `node mailwoman/dev-tools/router-kind-probe.run.ts`
+ *   `node packages/mailwoman/dev-tools/router-kind-probe.run.ts`
  */
 import { classifyKind } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"

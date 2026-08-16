@@ -30,7 +30,7 @@
  *
  *   Run from the repo root:
  *
- *     node mailwoman/dev-tools/postcode-coherence-scale.run.ts <panel> <backend> [limit]
+ *     node packages/mailwoman/dev-tools/postcode-coherence-scale.run.ts <panel> <backend> [limit]
  *
  *     panel    us | fr | gb
  *     backend  fts | candidate

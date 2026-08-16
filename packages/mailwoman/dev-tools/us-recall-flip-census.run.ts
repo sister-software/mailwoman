@@ -6,7 +6,7 @@
  *   #1102 diagnostic: class the US region/locality recall flips between the SHIPPED weights and a
  *   candidate (package-shaped cache dir). A "flip" = baseline extracted the gold value, candidate
  *   did not. Buckets name the mechanism so the counterweight lever is one variable.
- *   Run from the repo root: `node mailwoman/dev-tools/us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
+ *   Run from the repo root: `node packages/mailwoman/dev-tools/us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"

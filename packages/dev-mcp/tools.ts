@@ -21,6 +21,8 @@
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
@@ -36,225 +38,23 @@ import { parseGauntletReport, summarizeGauntletReport, type GauntletReport } fro
 import { gradeRow, significance, type RowGrade } from "./grade.ts"
 import { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
 import type { JobRegistry } from "./jobs.ts"
+import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology, LookupSource } from "./lookup.ts"
 import { describeObservedRate } from "./power.ts"
+import {
+	ENGINE_CONFIG_SCHEMA,
+	INPUT_SET_SCHEMA,
+	componentsOf,
+	firingSignals,
+	provenanceFor,
+	renderTrace,
+	stratify,
+	summarizeJob,
+	type ComparedRow,
+	type DevTool,
+	type DevToolDeps,
+} from "./tool-kit.ts"
 
-//#region Provenance
-
-/**
- * On every result of every tool. What produced this number, under what source, with what actually fed.
- */
-export interface Provenance {
-	engine_id: string
-	tree_fingerprint: string
-	git_head: string
-	dirty: boolean
-	dirty_files: string[]
-	config_effective: Record<string, unknown>
-	engine_build_ms: number
-	engine_was_warm: boolean
-	input_set: {
-		set_id: string
-		n: number
-		sha256: string
-		selection: string
-		population_n?: number
-		why?: string
-		not_covered: string[]
-		has_truth: ResolvedInputSet["hasTruth"]
-		corpus_hash?: string
-		notes: string[]
-	}
-}
-
-function provenanceFor(
-	engine: {
-		engineID: string
-		effective: unknown
-		fingerprint: { digest: string; gitHead: string; dirtyFiles: string[] }
-		buildMs: number
-		uses: number
-	},
-	set: ResolvedInputSet
-): Provenance {
-	return {
-		engine_id: engine.engineID,
-		tree_fingerprint: engine.fingerprint.digest,
-		git_head: engine.fingerprint.gitHead,
-		dirty: engine.fingerprint.dirtyFiles.length > 0,
-		dirty_files: engine.fingerprint.dirtyFiles,
-		config_effective: engine.effective as Record<string, unknown>,
-		engine_build_ms: engine.buildMs,
-		engine_was_warm: engine.uses > 1,
-		input_set: {
-			set_id: set.setID,
-			n: set.n,
-			sha256: set.sha256,
-			selection: set.selection,
-			...(set.populationN === undefined ? {} : { population_n: set.populationN }),
-			...(set.why === undefined ? {} : { why: set.why }),
-			not_covered: set.notCovered,
-			has_truth: set.hasTruth,
-			...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
-			notes: set.notes,
-		},
-	}
-}
-
-//#endregion
-
-//#region Schemas
-
-const INPUT_SET_SCHEMA = z
-	.union([
-		z.object({
-			kind: z.literal("board"),
-			country: z.string().optional(),
-			address_kind: z.string().optional(),
-			status: z.string().optional(),
-		}),
-		z.object({
-			kind: z.literal("literal"),
-			inputs: z.array(z.string()).min(1),
-			why: z
-				.string()
-				.min(1)
-				.describe("Why these inputs and not the board. Echoed into every result derived from this set."),
-		}),
-	])
-	.describe('Which inputs to measure. `{"kind":"board"}` is the full 558-row regression board and is the default.')
-
-const ENGINE_CONFIG_SCHEMA = z
-	.object({
-		locale: z.string().optional(),
-		country_scope: z.enum(["auto", "locale", "none"]).optional(),
-		default_country: z.string().optional(),
-		bias: z.string().optional(),
-		candidate_db: z.string().optional(),
-		resolve_db: z.string().optional(),
-		data_root: z.string().optional(),
-		gazetteer_prior: z.boolean().optional(),
-		place_country: z.boolean().optional(),
-		place_country_threshold: z.number().optional(),
-		postcode_country_coherence: z.boolean().optional(),
-		fork_entity: z.boolean().optional(),
-		locale_country_prior: z.boolean().optional(),
-		postcode_shape_coherence: z.boolean().optional(),
-		postcode_containment_coherence: z.boolean().optional(),
-	})
-	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
-
-//#endregion
-
-export interface DevToolDeps {
-	registry: EngineRegistry
-	jobs: JobRegistry
-	startedAt: number
-}
-
-export interface DevTool {
-	name: string
-	description: string
-	inputSchema: z.ZodObject<z.ZodRawShape>
-	handler: (args: Record<string, unknown>) => Promise<unknown>
-}
-
-function componentsOf(run: GeocodeRun): Record<string, string> {
-	return run.result.components as Record<string, string>
-}
-
-/**
- * The rendered evidence rows for one run, or a stated absence.
- *
- * `trace-rows` is pure and Ink-free by its own design, so the same strings the `--debug` pane shows are returnable
- * here. Both forms go back: the structured trace is what makes evidence diffable across arms, and the rendered rows are
- * what let a human read it in a transcript without an agent paraphrasing — which is where detail goes missing.
- */
-function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
-	if (!run.trace) {
-		return {
-			rendered: [],
-			absent_reason:
-				"No trace was recorded. Either the session was opened without `trace`, or the loaded bundle's classifier " +
-				"cannot produce one — a property of the bundle, not a zero.",
-		}
-	}
-
-	return {
-		rendered: [
-			systemRow(run.trace),
-			tokensRow(run.trace),
-			channelsRow(run.trace),
-			localeHeadRow(run.trace),
-			decodeRow(run.trace),
-		],
-	}
-}
-
-/**
- * Firing signals a {@link GauntletResult} carries for free — a mechanism reporting that it SPOKE, separately from
- * whether the outcome moved.
- *
- * `postcode_country_scope` is the worked example and the harness's own reason for carrying it (`harness.ts`): it is
- * "the FIRING COUNT, so a lever-pinned run can say how many rows the mechanism actually spoke on rather than leaving an
- * unchanged verdict to mean either 'harmless' or 'never ran'."
- */
-function firingSignals(rows: ComparedRow[]): Record<string, { a: number; b: number }> {
-	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
-		Boolean((row[arm] as { postcode_country_scope?: string | null }).postcode_country_scope)
-
-	return {
-		postcode_country_scope: {
-			a: rows.filter((row) => scoped(row, "a")).length,
-			b: rows.filter((row) => scoped(row, "b")).length,
-		},
-	}
-}
-
-/**
- * One input under both arms. `differed` and `grade` answer different questions and are reported separately, because an
- * unchanged verdict from a mechanism that never ran proves nothing (`run.ts:32`).
- */
-interface ComparedRow {
-	id: string
-	input: string
-	country?: string
-	address_kind?: string
-	status?: string
-	differed: boolean
-	grade: RowGrade
-	a: unknown
-	b: unknown
-	issues_a: string[]
-	issues_b: string[]
-}
-
-/**
- * Per-stratum counts. Reported rather than blended because the benchmark plan's own rule is that a headline number
- * "lives or dies on `truth_type`" — a blended figure hides an arm that won one stratum and lost another.
- */
-function stratify(rows: ComparedRow[], by: "country" | "address_kind" | "status"): Record<string, unknown> {
-	const buckets = new Map<string, ComparedRow[]>()
-
-	for (const row of rows) {
-		const key = (by === "country" ? row.country : by === "address_kind" ? row.address_kind : row.status) ?? "unknown"
-
-		buckets.set(key, [...(buckets.get(key) ?? []), row])
-	}
-
-	const out: Record<string, unknown> = {}
-
-	for (const [key, bucket] of [...buckets.entries()].toSorted(([a], [b]) => a.localeCompare(b))) {
-		out[key] = {
-			n: bucket.length,
-			differed: bucket.filter((row) => row.differed).length,
-			improved: bucket.filter((row) => row.grade === "improved").length,
-			regressed: bucket.filter((row) => row.grade === "regressed").length,
-			ungradeable: bucket.filter((row) => row.grade === "ungradeable").length,
-		}
-	}
-
-	return out
-}
+export type { DevTool, DevToolDeps, Provenance } from "./tool-kit.ts"
 
 /**
  * Where each gate job wrote its battery, keyed by job id.
@@ -264,26 +64,6 @@ function stratify(rows: ComparedRow[], by: "country" | "address_kind" | "status"
  * the directory matters most.
  */
 const gateOutDirs = new Map<string, string>()
-
-/**
- * One sentence for a job, whichever kind it is. A still-running gate gets no partial reading: its numbers live in
- * `verdict.json`, which the assembler writes at the END, so anything read before then is not a partial answer — it is
- * no answer.
- */
-function summarizeJob(
-	state: string,
-	elapsedSeconds: number,
-	report: GauntletReport | GateReport,
-	isGate: boolean
-): string {
-	if (state === "running") {
-		return isGate
-			? `Still running (${elapsedSeconds}s). A gate writes verdict.json only at the end, so there is nothing to read yet.`
-			: `Still running (${elapsedSeconds}s). Parsed from the log SO FAR: ${summarizeGauntletReport(report as GauntletReport)}`
-	}
-
-	return isGate ? summarizeGateReport(report as GateReport) : summarizeGauntletReport(report as GauntletReport)
-}
 
 export function buildToolTable(deps: DevToolDeps): DevTool[] {
 	const { registry, jobs } = deps
@@ -336,6 +116,132 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					source_files_walked: fingerprint.filesWalked,
 					engines: registry.summaries(),
 					max_resident: registry.maxResident,
+				}
+			},
+		},
+
+		{
+			name: "mwdev_inputs",
+			description:
+				"Describe an input set BEFORE measuring it: how many rows, which strata, what kind of truth it carries, " +
+				"and — for a slice — what it excluded. Cheap and idempotent; call it first.",
+			inputSchema: z.object({
+				inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the full board."),
+			}),
+			handler: async (args) => {
+				const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
+				const byCountry: Record<string, number> = {}
+				const byAddressKind: Record<string, number> = {}
+				const byStatus: Record<string, number> = {}
+
+				for (const row of set.inputs) {
+					if (row.country) {
+						byCountry[row.country] = (byCountry[row.country] ?? 0) + 1
+					}
+
+					if (row.addressKind) {
+						byAddressKind[row.addressKind] = (byAddressKind[row.addressKind] ?? 0) + 1
+					}
+
+					if (row.status) {
+						byStatus[row.status] = (byStatus[row.status] ?? 0) + 1
+					}
+				}
+
+				// `any`, never the sum: the per-kind counts overlap, and summing them produced 839 of 558 on the first run.
+				const gradeable = set.hasTruth.any
+
+				return {
+					set_id: set.setID,
+					n: set.n,
+					sha256: set.sha256,
+					selection: set.selection,
+					...(set.populationN === undefined ? {} : { population_n: set.populationN }),
+					...(set.why === undefined ? {} : { why: set.why }),
+					...(set.corpusHash === undefined ? {} : { corpus_hash: set.corpusHash }),
+					strata: { by_country: byCountry, by_address_kind: byAddressKind, by_status: byStatus },
+					has_truth: set.hasTruth,
+					not_covered: set.notCovered,
+					summary:
+						`${set.setID}: ${set.n} rows, selection ${set.selection}` +
+						(set.populationN ? ` drawn from ${set.populationN}` : "") +
+						`. ${gradeable ? `${gradeable} of them carry some expectation` : "NO row carries an expectation, so this set can be observed but not graded"}` +
+						`, ${set.hasTruth.none} carry none` +
+						` (by kind, overlapping: ${set.hasTruth.components} components, ${set.hasTruth.coordinates} coordinates, ${set.hasTruth.tier} tier).` +
+						(set.notCovered.length ? ` Excluded — ${set.notCovered.join("; ")}.` : ""),
+					notes: set.notes,
+				}
+			},
+		},
+
+		{
+			name: "mwdev_lookup",
+			description:
+				"Ask a data source directly whether it knows a string. Keeps ABSENCE (the source has no entry) apart from " +
+				"a MEASURED ZERO (it has one, scored zero) — the distinction most resolve failures turn on.",
+			inputSchema: z.object({
+				source: z.enum(["fst", "street_morphology", "normalize"]),
+				queries: z.array(z.string()).min(1).max(50),
+				locale: z.string().optional().describe("Normalization locale; defaults to `und`."),
+				config: ENGINE_CONFIG_SCHEMA.optional().describe(
+					"Only selects WHICH weights package to read the artifact from; `gazetteer_prior` is forced on regardless, since\n\t\t\t\t\ta session resolves the FST path only when it would feed the prior."
+				),
+			}),
+			handler: async (args) => {
+				const source = args["source"] as LookupSource
+				const queries = args["queries"] as string[]
+
+				if (source === LookupSource.Normalize) {
+					return {
+						source,
+						rows: lookupNormalize(queries, (args["locale"] as string | undefined) ?? "und"),
+						notes: [
+							"Normalization always answers, so every row is a hit. The useful column is `changed`: a query whose " +
+								"normalized form differs is the usual reason a lookup against another source misses.",
+						],
+					}
+				}
+
+				// `gazetteer_prior: true` is forced. The session resolves the FST paths only when it will actually feed the
+				// prior, and it is right to: `artifacts` reports what a session READ, not what it could have. A lookup
+				// wants the artifact the decoder would consult, so it asks for an engine that loads one — resolving the
+				// path any other way would answer about an FST no runtime configuration reads.
+				const engine = await registry.acquire({
+					...(args["config"] as EngineConfig | undefined),
+					gazetteer_prior: true,
+				})
+
+				const path =
+					source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
+
+				const loaded = loadFSTArtifact(path, deserializeFST as never)
+
+				if ("unavailable" in loaded) {
+					return {
+						source,
+						rows: [],
+						unavailable_reason: loaded.unavailable,
+						notes: [
+							"No row is reported, because a source whose artifact is missing answers 'no' to everything — which " +
+								"would read as absence for every query rather than as an unavailable source.",
+						],
+					}
+				}
+
+				return {
+					source,
+					provenance: { engine_id: engine.engineID, artifact: path },
+					rows:
+						source === LookupSource.FST
+							? lookupFST(loaded.fst, normalizeTokens, queries)
+							: lookupStreetMorphology(loaded.fst, queries),
+					notes:
+						source === LookupSource.FST
+							? [
+									"Entries are the per-BIO-tag MAX, which is all the emission prior reads. A surface accepted with no " +
+										"BIO-mapped placetype gives the decoder nothing — different from a zero.",
+								]
+							: [],
 				}
 			},
 		},

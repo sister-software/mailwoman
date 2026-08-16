@@ -29,7 +29,7 @@
  *   `parity-corpus.ts` documents, and the ONLY way to grade a candidate with its sibling channels fed.
  *   Omit it to grade the installed workspace package.
  *
- *   Usage: node mailwoman/dev-tools/score-anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <dir>
+ *   Usage: node packages/mailwoman/dev-tools/score-anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <dir>
  */
 
 import { createHash } from "node:crypto"

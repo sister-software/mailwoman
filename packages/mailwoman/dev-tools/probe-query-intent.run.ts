@@ -18,8 +18,8 @@
  *   Usage:
  *
  *   ```bash
- *   node mailwoman/dev-tools/probe-query-intent.run.ts            # the built-in board
- *   node mailwoman/dev-tools/probe-query-intent.run.ts Richmond Cambridge   # ad-hoc queries
+ *   node packages/mailwoman/dev-tools/probe-query-intent.run.ts            # the built-in board
+ *   node packages/mailwoman/dev-tools/probe-query-intent.run.ts Richmond Cambridge   # ad-hoc queries
  *   ```
  *
  *   Measured 2026-08-06 on the shipped candidate backend, 21 bare toponyms + 3 controls:

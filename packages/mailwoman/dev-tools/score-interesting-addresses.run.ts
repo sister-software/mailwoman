@@ -3,8 +3,9 @@
  * answer key. Exact component-span recall for venue-heavy GB addresses and a bilingual JP pair; reviewed Google
  * normalization lives on each gauntlet row's source/coordinate/note and is not treated as parser gold.
  *
- * Usage: node mailwoman/dev-tools/score-interesting-addresses.run.ts --country GB --label shipped node
- * mailwoman/dev-tools/score-interesting-addresses.run.ts --country GB --cache-root <candidate> --label candidate
+ * Usage: node packages/mailwoman/dev-tools/score-interesting-addresses.run.ts --country GB --label shipped node
+ * packages/mailwoman/dev-tools/score-interesting-addresses.run.ts --country GB --cache-root <candidate> --label
+ * candidate
  */
 
 import { parseArgs } from "node:util"

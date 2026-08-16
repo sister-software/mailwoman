@@ -14,7 +14,7 @@
  *   backtick-wrapped + pipe/backtick-escaped, so an address can't break the table or trip the angle-lint).
  *
  *   Usage (label=cacheRoot pairs; label=shipped uses the installed default):
- *     node mailwoman/dev-tools/failure-report.run.ts \
+ *     node packages/mailwoman/dev-tools/failure-report.run.ts \
  *       [corpus=golden:<dir>[:N]] [out=docs/articles/evals/competitive-parity/<file>.mdx] [date=YYYY-MM-DD] \
  *       shipped=shipped v257=/abs/scratchpad/v257-cache v261=/abs/scratchpad/v261-cache
  *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) + scratchpad/failure-report.json.

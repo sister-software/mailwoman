@@ -9,7 +9,7 @@
  *   alternatives were rules-ranking artifacts); cases whose gold carries an unmapped legacy tag
  *   (given_name, surname, personal_title, …) or no expectation at all become TOMBSTONES — kept in
  *   the fixture file with a `dropped` reason so provenance survives, skipped by the runner.
- *   Run from the repo root: `node mailwoman/dev-tools/convert-parity-fixtures.run.ts`
+ *   Run from the repo root: `node packages/mailwoman/dev-tools/convert-parity-fixtures.run.ts`
  */
 
 import { mkdirSync } from "node:fs"

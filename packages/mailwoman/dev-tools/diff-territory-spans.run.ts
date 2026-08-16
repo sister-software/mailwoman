@@ -12,7 +12,7 @@
  *   #690 case-normalization work made load-bearing: `asis` / `lower` / `upper` / `comma-drop`.
  *
  *   Usage:
- *     node mailwoman/dev-tools/diff-territory-spans.run.ts --rows <file.txt> --cache-root <dir> --label cand-on
+ *     node packages/mailwoman/dev-tools/diff-territory-spans.run.ts --rows <file.txt> --cache-root <dir> --label cand-on
  *
  *   `--rows` is a plain text file of `id<TAB>input` lines (blank lines and `#` comments skipped).
  */

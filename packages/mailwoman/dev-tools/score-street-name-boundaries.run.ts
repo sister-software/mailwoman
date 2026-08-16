@@ -3,7 +3,7 @@
  * the assembled street as its contract; this report also prints the internal street-family decomposition so an intact
  * assembled value cannot hide a bad `street`/`street_suffix` boundary.
  *
- * Usage: node mailwoman/dev-tools/score-street-name-boundaries.run.ts
+ * Usage: node packages/mailwoman/dev-tools/score-street-name-boundaries.run.ts
  */
 
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"

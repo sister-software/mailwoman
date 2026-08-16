@@ -174,6 +174,18 @@ export interface GeocodeSession {
 	 * One-time session construction phases, in wall-clock milliseconds.
 	 */
 	initTiming: PipelineTiming
+	/**
+	 * The artifact paths this session RESOLVED, as opposed to the ones a caller asked for.
+	 *
+	 * Resolution walks several rungs and a missing artifact degrades silently by design, so "which file did you actually
+	 * open" is not answerable from the options object. A probe reporting what the gazetteer knows has to read the same
+	 * FST the decoder read, or it is describing a different system; `undefined` here means the session resolved none,
+	 * which is absence and not an empty artifact.
+	 */
+	artifacts: {
+		fstPath?: string
+		streetMorphologyPath?: string
+	}
 	geocode(input: string): Promise<GeocodeRun>
 	close(): void
 }
@@ -631,7 +643,18 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		}
 	}
 
-	return { initTiming, geocode, close }
+	return {
+		initTiming,
+		// The paths the FST block above actually opened, not the ones it was asked for — see `GeocodeSession.artifacts`.
+		artifacts: {
+			...(fst && classifier.fstPath ? { fstPath: classifier.fstPath } : {}),
+			...(streetMorphology && classifier.streetMorphologyPath
+				? { streetMorphologyPath: classifier.streetMorphologyPath }
+				: {}),
+		},
+		geocode,
+		close,
+	}
 }
 
 //#endregion
