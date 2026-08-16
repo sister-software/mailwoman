@@ -65,12 +65,23 @@ export interface GauntletReport {
 	unparsed: string[]
 }
 
+/**
+ * Only patterns whose quantifiers cannot overlap live here.
+ *
+ * The lines this file recognises by shape rather than by regex — the levers line, the promote line — are matched with
+ * `startsWith` / `indexOf` instead. Both wanted an ambiguous quantifier to express (`(.*levers.*|.*=.*)$` and
+ * `(.*?)\s+now PASSES`), which backtracks quadratically on a long non-matching line and which CodeQL flags as
+ * polynomial ReDoS. A gauntlet log is our own output rather than hostile input, so the practical exposure was small —
+ * but the string version is both shorter and unconditionally linear, so there was nothing to trade away.
+ */
 const HEADER = /^=== Gauntlet · (\S+) \((\d+)\/(\d+) gated cases pass(?:, (\d+) tracked)?\)/
 const VERDICT = /^verdict: (PASS|FAIL)/
-const LEVERS = /^\[gauntlet\] (.*levers.*|.*=.*)$/i
 const FIRING = /^postcode-country coherence fired on (\d+)\/(\d+) cases/
-const GATED_FAILURE = /^\s*✗\s+(.*)$/
-const NOW_PASSING = /^\s*\+\s+(.*?)\s+now PASSES/
+
+const LEVERS_PREFIX = "[gauntlet] "
+const GATED_FAILURE_MARK = "✗"
+const NOW_PASSING_MARK = " now PASSES"
+const NOW_PASSING_PREFIX = "+"
 
 /**
  * Parse a gauntlet run's combined output.
@@ -122,24 +133,34 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
 			continue
 		}
 
-		const failure = GATED_FAILURE.exec(line)
+		const trimmed = line.trim()
 
-		if (failure) {
-			report.gated_failures.push(failure[1]!.trim())
-
-			continue
-		}
-
-		const passing = NOW_PASSING.exec(line)
-
-		if (passing) {
-			report.now_passing.push(passing[1]!.trim())
+		if (trimmed.startsWith(GATED_FAILURE_MARK)) {
+			report.gated_failures.push(trimmed.slice(GATED_FAILURE_MARK.length).trim())
 
 			continue
 		}
 
-		if (!report.levers && LEVERS.test(line)) {
-			report.levers = line.replace(/^\[gauntlet\] /, "").trim()
+		// `+ <id> now PASSES — promote to status=pass`. Located by index rather than matched by pattern: the id can
+		// contain anything, and expressing "everything up to the marker" as a regex needs a lazy quantifier followed by
+		// `\s+`, which is the quadratic shape.
+		if (trimmed.startsWith(NOW_PASSING_PREFIX)) {
+			const marker = trimmed.indexOf(NOW_PASSING_MARK)
+
+			if (marker > 0) {
+				report.now_passing.push(trimmed.slice(NOW_PASSING_PREFIX.length, marker).trim())
+
+				continue
+			}
+		}
+
+		if (!report.levers && line.startsWith(LEVERS_PREFIX)) {
+			const rest = line.slice(LEVERS_PREFIX.length).trim()
+
+			// The levers line is the one that names a configuration — either by saying so or by carrying an assignment.
+			if (rest.toLowerCase().includes("levers") || rest.includes("=")) {
+				report.levers = rest
+			}
 		}
 	}
 
