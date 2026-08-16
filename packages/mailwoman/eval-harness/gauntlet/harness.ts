@@ -375,29 +375,52 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const leverDeps = resolverLeverDeps(opts.levers)
 
-	// #1497's lever carries an artifact rather than a boolean. Loaded from the classifier's own weights-package
-	// sibling — the same one `runPipeline` auto-loads — so the board grades the prior production would use. A missing
-	// or unreadable artifact degrades to no prior, which is the incumbent behaviour.
-	let priorDeps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
+	// #1497's lever carries an artifact rather than a boolean, and the artifact is PER CLASSIFIER.
+	//
+	// The FST ships beside the weights, so the en-GB package carries `fst-en-gb.bin` and the base carries
+	// `fst-en-us.bin`, and they hold different places: `st margarets hope` is in the GB one and absent from the US one.
+	// Reading the path off the BASE classifier therefore fed every overlay case a gazetteer for the wrong country —
+	// a GB row graded with en-GB weights and a US FST, which is a pairing production never runs, since
+	// `createGeocodeSession` loads the FST from the classifier IT loaded.
+	//
+	// Measured 2026-08-16: `gb-op2-st-margarets-hope` parses `street` under en-GB with no prior and `locality` with the
+	// GB FST fed — so the base-FST wiring hid a row the lever fixes. Cached per resolved path, because the overlay
+	// classifiers are themselves cached and several countries share one.
+	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology">>()
 
-	if (opts.levers?.gazetteerPrior) {
+	async function priorDepsFor(
+		forClassifier: typeof classifier
+	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
+		if (!opts.levers?.gazetteerPrior) return {}
+
+		const fstPath = (forClassifier as { fstPath?: string }).fstPath
+
+		if (!fstPath) return {}
+
+		const cached = priorDepsByPath.get(fstPath)
+
+		if (cached) return cached
+
 		const [{ deserializeFST }, { loadStreetMorphologyFST: loadMorph }] = await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
 			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
 		])
 
-		const fstPath = (classifier as { fstPath?: string }).fstPath
+		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
 
 		try {
-			if (fstPath) {
-				priorDeps = {
-					fst: deserializeFST(readFileSync(fstPath)),
-					streetMorphology: loadMorph().matcher,
-				}
-			}
+			deps = { fst: deserializeFST(readFileSync(fstPath)), streetMorphology: loadMorph().matcher }
 		} catch (error) {
-			console.error(`[gauntlet] gazetteer prior unavailable: ${(error as Error).message} — grading without it`)
+			// A missing or unreadable artifact degrades to no prior, which is the incumbent behaviour — but it is named,
+			// because a silently absent prior scores lower and reads as a model difference.
+			console.error(
+				`[gauntlet] gazetteer prior unavailable at ${fstPath}: ${(error as Error).message} — grading without it`
+			)
 		}
+
+		priorDepsByPath.set(fstPath, deps)
+
+		return deps
 	}
 
 	console.error(`[gauntlet] ${describeResolverLevers(opts.levers)}`)
@@ -426,9 +449,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	return {
 		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry, ...forwarded } = geoOpts ?? {}
+			const caseClassifier = await classifierFor(caseCountry)
 
 			return geocodeAddress(input, {
-				classifier: await classifierFor(caseCountry),
+				classifier: caseClassifier,
 				// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
 				classifyKind: poiKindClassifier,
 				resolver,
@@ -436,7 +460,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
-				...priorDeps,
+				...(await priorDepsFor(caseClassifier)),
 				...forkEntityDeps,
 				...forwarded,
 			})
