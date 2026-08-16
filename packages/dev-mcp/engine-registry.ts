@@ -57,6 +57,7 @@ export interface EngineConfig {
 	locale_country_prior?: boolean
 	postcode_shape_coherence?: boolean
 	postcode_containment_coherence?: boolean
+	retry_alternate_register?: boolean
 	/**
 	 * Record the decode-path evidence on every run. OFF by default and left off by the measuring tools: the trace is kept
 	 * per run, so it is a per-row cost paid only where the evidence is the answer.
@@ -85,6 +86,9 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		postcodeContainmentCoherence: config.postcode_containment_coherence ?? true,
 		placeCountryThreshold: config.place_country_threshold ?? 0.5,
 		...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
+		...(config.retry_alternate_register === undefined
+			? {}
+			: { retryAlternateRegister: config.retry_alternate_register }),
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
