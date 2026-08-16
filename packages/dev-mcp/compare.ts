@@ -344,7 +344,9 @@ async function externalRunner(
 /**
  * One row of a cross-engine comparison.
  */
-interface GeoRow extends Omit<ComparedRow, "a" | "b"> {
+// `issues_a` / `issues_b` are dropped rather than carried empty: they are `checkCase`'s output, and an empty issue
+// list on a row nothing graded reads as a row that graded clean.
+interface GeoRow extends Omit<ComparedRow, "a" | "b" | "issues_a" | "issues_b"> {
 	a: ExternalAnswer
 	b: ExternalAnswer
 	truth_lat: number | null
@@ -352,8 +354,6 @@ interface GeoRow extends Omit<ComparedRow, "a" | "b"> {
 	truth_tolerance_m: number | null
 	distance_km_a: number | null
 	distance_km_b: number | null
-	error_a: string | null
-	error_b: string | null
 }
 
 /**
@@ -463,15 +463,11 @@ async function scoreGeoRows(
 			grade: hasTruth ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,
-			issues_a: [],
-			issues_b: [],
 			truth_lat: truthLat,
 			truth_lon: truthLon,
 			truth_tolerance_m: item.seed?.expectToleranceM ?? null,
 			distance_km_a: distanceA,
 			distance_km_b: distanceB,
-			error_a: null,
-			error_b: null,
 		})
 	}
 
