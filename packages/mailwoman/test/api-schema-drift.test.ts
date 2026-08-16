@@ -132,6 +132,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	rooftop: true,
 	postcode_country_scope: true,
 	intent_markers: true,
+	admin_coherence: true,
 } satisfies Record<keyof GeocodeResult, true>
 
 test("GeocodeOutcomeSchema field set matches GeocodeResult (runtime backstop — the compile-time pin above, via `yarn compile`, is the primary alarm; see file header)", () => {
