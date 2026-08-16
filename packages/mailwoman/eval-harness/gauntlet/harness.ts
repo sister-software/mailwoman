@@ -20,6 +20,7 @@ import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
+import type { AdminCoherenceReport } from "../../admin-coherence.ts"
 import { type GeocodeResult, geocodeAddress, ShardProvider, type GeocodeDeps } from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
@@ -531,6 +532,12 @@ export interface GauntletResult {
 	 * decorated appear here, so an empty array means the run resolved nothing admin-grade — absence, not a flat world.
 	 */
 	hierarchy: Array<{ tag: string; name: string; placeID?: string; lat?: number; lon?: number }>
+	/**
+	 * The #1717 stage-1 admin-coherence verdicts, verbatim from {@linkcode GeocodeResult.admin_coherence}. Not asserted
+	 * by any case — flag-only measurement, carried so a dev-mcp row can count confirmed/contradicted/unstated/
+	 * unverifiable per component across a board run. Absent when the geocode resolved no winner to check against.
+	 */
+	admin_coherence?: AdminCoherenceReport
 }
 
 export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletGeocodeOpts): Promise<GauntletResult> {
@@ -561,6 +568,7 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
+		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,
 			name: h.name,

@@ -56,6 +56,7 @@ import type {
 	StreetCentroidLookup,
 } from "@mailwoman/resolver"
 
+import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { probeForkEntity } from "./fork-entity.ts"
@@ -65,6 +66,7 @@ import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
 import { applyStreetMissFallback } from "./street-miss-fallback.ts"
+import { assembleStreetName } from "./street-name-assembly.ts"
 import { isStreetNameQuery } from "./street-name-query.ts"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
@@ -201,6 +203,15 @@ export interface GeocodeResult {
 	 * second opinion about the result.
 	 */
 	intent_markers: QueryIntentMarker[]
+	/**
+	 * Admin-coherence verdicts (#1717 stage 1) — did the winning candidate's resolved ancestry confirm, contradict, or
+	 * fail to speak to the PARSED `region` / `country` qualifiers? Flag-only measurement in the same posture as
+	 * {@link intent_markers}: nothing reads these to rank or gate, and the field is additive. Present whenever a winner
+	 * resolved (both members always populated — `unstated` is the explicit no-qualifier claim); absent when the geocode
+	 * produced no resolved winner to check against. See `admin-coherence.ts` for the verdict contract and the stated v1
+	 * fold-equality bounds.
+	 */
+	admin_coherence?: AdminCoherenceReport
 }
 
 /**
@@ -1282,35 +1293,6 @@ function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * Street-name component tags — the name-bearing subtree of a `street` node (`street.value` alone is the bare base:
- * "Sheldon" for "East Sheldon Rd"). Mirrors the resolver's `assembleStreetValue`; used to surface the FULL parsed
- * street on the result so a house-grade forward consumer renders "Boulevard du Palais", not just "Palais". #1041.
- */
-const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
-
-/**
- * Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041.
- */
-function assembleStreetName(streetNode: AddressNode): string {
-	const parts: AddressNode[] = []
-	const stack = [streetNode]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
-			parts.push(n)
-		}
-
-		stack.push(...n.children)
-	}
-
-	parts.sort((a, b) => a.start - b.start)
-
-	return parts.map((n) => n.value.trim()).join(" ")
-}
-
-/**
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
@@ -1335,6 +1317,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	let uncertaintyM: number | null = null
 
 	let rooftop: { localityNorm?: string; postcode?: string } | undefined
+
+	// The admin-ladder node whose coordinate won (#1717) — captured where the ladder picks it, because
+	// the primary-node probe below requires a `resolver_name` and a postcode-lookup winner may lack one.
+	let adminWinnerNode: AddressNode | undefined
 
 	if (streetNode?.metadata?.["resolution_tier"] === "address_point") {
 		const ap = streetNode.metadata["address_point"] as
@@ -1413,6 +1399,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 			if (node) {
 				lat = node.lat!
 				lon = node.lon!
+				adminWinnerNode = node
 
 				break
 			}
@@ -1552,6 +1539,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		hierarchy,
 		candidates,
 		...(rooftop ? { rooftop } : {}),
+		// #1717 stage 1: flag-only admin-coherence verdicts for the parsed region/country qualifiers, checked against
+		// the winning candidate — the admin-ladder pick when the admin tier answered, else `primaryNode` (the first
+		// resolved admin node — the resolution context the coordinate was scoped by). No winner → the field is absent.
+		...adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
 		// `extractGeocodeResult` is a pure tree->result projection and has no access to the kind verdict, so it states
 		// the empty case. `geocodeAddressOnce` is the caller that classifies and fills this in.
