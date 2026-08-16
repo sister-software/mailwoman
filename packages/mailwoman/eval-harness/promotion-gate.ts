@@ -11,7 +11,7 @@
  *   Usage: mailwoman eval gate\
  *   --model <fp32.onnx> [--int8 <int8.onnx>]\
  *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
- *   --gate mailwoman/eval-harness/gates/<spec>.json\
+ *   --gate packages/mailwoman/eval-harness/gates/<spec>.json\
  *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
  *   [--gazetteer-lexicon <lexicon.json>] [--out-dir /tmp/gate-<label>]
  *
@@ -174,9 +174,9 @@ export interface PromotionGateOptions {
 /**
  * Resolve a `--gate` value to a real file. A path that exists wins verbatim; otherwise the basename is looked up in the
  * `gates/` dir shipped beside this module — `new URL`-relative for the source tree, with a compiled-tree fallback (tsc
- * does not emit readFileSync'd JSON into `out/`, so `mailwoman/out/eval-harness/` reads the source-tree copy at
- * `mailwoman/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/gates/<spec>.json` invocations
- * therefore keep working by basename.
+ * does not emit readFileSync'd JSON into `out/`, so `packages/mailwoman/out/eval-harness/` reads the source-tree copy
+ * at `packages/mailwoman/eval-harness/gates/`; the lint-rules.json pattern). Old `scripts/eval/gates/<spec>.json`
+ * invocations therefore keep working by basename.
  *
  * The `.json` suffix is optional, because the help has always advertised "a spec name" and a spec name is what people
  * type. Before that was true, `--gate v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
@@ -923,7 +923,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 	console.log(
 		`\nledger (#885): on promote, append this run —\n` +
-			`  node mailwoman/out/cli.js eval ledger-append \\\n` +
+			`  node packages/mailwoman/out/cli.js eval ledger-append \\\n` +
 			`    --out-dir ${OUT_DIR} --model-version <npm-semver> \\\n` +
 			`    --run-id ${LABEL.replaceAll(/[^a-z0-9-]/g, "-")}-${shipDate.replaceAll("-", "")} \\\n` +
 			`    --model-path "@mailwoman/neural-weights-en-us@<npm-semver>" --card ${EFF_CARD}`
