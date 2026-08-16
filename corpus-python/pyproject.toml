@@ -11,7 +11,7 @@ dependencies = [
 	# PyArrow was dropped in Phase 1.5 (#18 §4) when corpus build moved to JS-native Parquet
 	# via @dsnp/parquetjs, then re-added in Phase 2 (issue #10) for the training data loader.
 	"sentencepiece==0.2.2", # PINNED, not floored — see corpus-python/modal/train_remote.py for the 0.2.1/0.2.2 tie-break divergence
-	"pyarrow>=25.0.0",
+	"pyarrow>=25.0.1",
 	"pyyaml>=6",
 	"numpy>=1.26,<3",
 ]
@@ -19,7 +19,7 @@ dependencies = [
 # Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities
 # can install without dragging PyTorch / Transformers / ONNX onto every machine.
 [project.optional-dependencies]
-dev = ["pytest>=9.1.1", "ruff==0.16.1"]
+dev = ["pytest>=9.1.1", "ruff==0.16.2"]
 train = [
 	# Pinned to the exact export/quant toolchain that produced the v4.1.0 ONNX artifact
 	# (2026-06-09). Unpinned `>=` drifted (transformers→5.x, onnx→1.21) and broke int8
