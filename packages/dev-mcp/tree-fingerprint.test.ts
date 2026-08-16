@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { execFileSync } from "node:child_process"
 import { mkdtempSync, mkdirSync, writeFileSync, utimesSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -104,5 +105,26 @@ describe("staleEngineMessage", () => {
 		// The remedy must not claim a reload that Node cannot perform.
 		expect(message).toContain("Restart")
 		expect(message).toContain("cannot evict an imported module")
+	})
+})
+
+describe("computeTreeFingerprint — dirty files", () => {
+	it("reports a modified path whole, including the first one", () => {
+		// `git status --porcelain` writes an unstaged modification as " M path". Trimming the whole output before
+		// splitting eats column one of the FIRST line only, and a fixed-width slice then takes the leading character of
+		// the path with it — so the field reports a file that does not exist, and only ever the first one.
+		const root = fakeCheckout()
+		const relative = join(FINGERPRINTED_WORKSPACES[0]!, "thing.ts")
+
+		execFileSync("git", ["init", "--quiet"], { cwd: root })
+		execFileSync("git", ["add", "."], { cwd: root })
+
+		execFileSync("git", ["-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "--quiet", "-m", "seed"], {
+			cwd: root,
+		})
+
+		writeFileSync(join(root, relative), "export const x = 2\n")
+
+		expect(computeTreeFingerprint(root).dirtyFiles).toEqual([relative])
 	})
 })

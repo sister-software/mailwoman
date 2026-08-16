@@ -39,6 +39,11 @@ export const Attribution = {
 	 * nondeterminism, external state — which is worth knowing before reading a delta as a finding.
 	 */
 	NoVariable: "no_variable",
+	/**
+	 * The arms are different geocoders. No configuration record can express what differs, because the dominant variable
+	 * is the INDEX each one holds — and a delta here is never attributable to a lever, however carefully declared.
+	 */
+	CrossEngine: "cross_engine",
 } as const
 
 export type Attribution = (typeof Attribution)[keyof typeof Attribution]
@@ -120,6 +125,35 @@ export function checkConfounds(
 		declared_but_unmoved: declaredButUnmoved,
 		moved_but_undeclared: movedButUndeclared,
 		warnings,
+	}
+}
+
+/**
+ * The reading for a comparison whose two arms are different geocoders.
+ *
+ * {@link checkConfounds} is the wrong instrument here and would be actively misleading if pointed at this case. Its
+ * question is "did more config keys move than the caller declared", and across engines the answer is a list of keys one
+ * arm does not have — every mailwoman lever against an endpoint and a version string. A reader would get a paragraph of
+ * true, useless warnings, and paragraphs of those train a reader to skip the field.
+ *
+ * What is actually true is shorter and worse: the arms hold different indexes built from different sources at different
+ * vintages, and no record either arm can produce says by how much. The panel comparator in the benchmark rig states the
+ * same thing in its own header — "a behavioral comparison over deliberately different data footprints, not a claim that
+ * the arms have equivalent indexes". So the attribution is fixed at {@link Attribution.CrossEngine} and the caller's
+ * `variable` is echoed rather than checked: there is nothing to check it against.
+ */
+export function crossEngineReading(armA: string, armB: string, declared: string[]): ConfoundReading {
+	return {
+		attribution: Attribution.CrossEngine,
+		variable_effective: ["engine"],
+		declared: [...declared].toSorted(),
+		declared_but_unmoved: [],
+		moved_but_undeclared: declared.includes("engine") ? [] : ["engine"],
+		warnings: [
+			`${armA} and ${armB} are different geocoders over different indexes. No delta here belongs to a lever: ` +
+				"coverage, source vintage and ranking all move together, and nothing in either arm's provenance says by " +
+				"how much. Read this as a behavioral comparison of two systems, never as an attribution.",
+		],
 	}
 }
 

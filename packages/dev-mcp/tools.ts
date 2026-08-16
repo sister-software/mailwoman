@@ -18,29 +18,15 @@
  *      value the pipeline did not produce.
  */
 
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
-import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mailwoman/debug-view/trace-rows"
-import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
-import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import { listGateSpecs } from "mailwoman/eval-harness/promotion-gate"
-import type { GeocodeRun } from "mailwoman/geocode-session"
 import { z } from "zod"
 
+import { ARM_SPEC_SCHEMA } from "./arms.ts"
 import { assembleBench, summarizeLatency } from "./bench.ts"
-import { checkCLIAllowlist } from "./cli-allowlist.ts"
-import { assertCompiledFresh } from "./compiled-tree.ts"
-import { checkConfounds } from "./confound.ts"
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
-import { missingWeightsCacheArtifacts, readGateReport, summarizeGateReport, type GateReport } from "./gate-report.ts"
-import { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
-import { gradeRow, significance, type RowGrade } from "./grade.ts"
-import { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
-import type { JobRegistry } from "./jobs.ts"
+import { runCompare } from "./compare.ts"
+import type { EngineConfig } from "./engine-registry.ts"
+import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { loadFSTArtifact, lookupFST, lookupNormalize, lookupStreetMorphology, LookupSource } from "./lookup.ts"
 import { describeObservedRate } from "./power.ts"
 import { buildSpawnTools } from "./spawn-tools.ts"
@@ -48,26 +34,13 @@ import {
 	ENGINE_CONFIG_SCHEMA,
 	INPUT_SET_SCHEMA,
 	componentsOf,
-	firingSignals,
 	provenanceFor,
 	renderTrace,
-	stratify,
-	summarizeJob,
-	type ComparedRow,
 	type DevTool,
 	type DevToolDeps,
 } from "./tool-kit.ts"
 
 export type { DevTool, DevToolDeps, Provenance } from "./tool-kit.ts"
-
-/**
- * Where each gate job wrote its battery, keyed by job id.
- *
- * Kept beside the table rather than re-derived from the log afterwards: the out-dir is chosen when the job STARTS, so
- * recovering it from printed output would fail exactly when the run died before printing any — the case where knowing
- * the directory matters most.
- */
-const gateOutDirs = new Map<string, string>()
 
 export function buildToolTable(deps: DevToolDeps): DevTool[] {
 	const { registry, jobs } = deps
@@ -326,180 +299,39 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 		{
 			name: "mwdev_compare",
 			description:
-				"Run one input set through two configurations and diff them. Reports what CHANGED separately from what " +
-				"IMPROVED, checks that only the declared lever moved, and states the smallest effect this many rows " +
-				"could have detected.",
+				"Run one input set through two arms and diff them. An arm is a mailwoman configuration or an ALREADY-RUNNING " +
+				"external geocoder (Pelias / Photon / Nominatim) — this server never starts one. Reports what CHANGED " +
+				"separately from what IMPROVED, checks that only the declared lever moved, and states the smallest effect this " +
+				"many rows could have detected. A cross-engine comparison is graded on the pre-registered distance protocol " +
+				"(top-1, 1/5/25km, a no-result a miss at every threshold) and claims parity only against the pre-registered " +
+				"±5pp equivalence bound.",
 			inputSchema: z.object({
 				inputs: INPUT_SET_SCHEMA.optional(),
-				arm_a: ENGINE_CONFIG_SCHEMA.optional().describe("Baseline. Omit for the production defaults."),
-				arm_b: ENGINE_CONFIG_SCHEMA.describe("The arm under test."),
+				arm_a: ARM_SPEC_SCHEMA.optional().describe("Baseline. Omit for the production mailwoman defaults."),
+				arm_b: ARM_SPEC_SCHEMA.describe("The arm under test."),
 				variable: z
 					.array(z.string())
 					.min(1)
 					.describe(
-						'Which config keys you intend to differ, in EngineConfig\'s vocabulary (e.g. ["gazetteer_prior"]). ' +
-							"Checked against what actually differs; a mismatch warns and marks the result ambiguous."
+						'Which keys you intend to differ, in EngineConfig\'s vocabulary (e.g. ["gazetteer_prior"]), or ' +
+							'["engine"] across geocoders. Checked against what actually differs; a mismatch warns and marks the ' +
+							"result ambiguous."
 					),
-				stratify_by: z.enum(["country", "address_kind", "status"]).optional(),
+				grade: z
+					.enum(["auto", "truth", "diff-only"])
+					.default("auto")
+					.describe(
+						'"auto" grades where the set carries truth. "truth" REFUSES where it does not, rather than quietly ' +
+							"describing differences instead."
+					),
+				grade_threshold_km: z
+					.number()
+					.positive()
+					.optional()
+					.describe("Cross-engine only: which distance threshold rows are graded at. Defaults to 25km."),
+				stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m"]).optional(),
 			}),
-			handler: async (args) => {
-				const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
-				const configA = (args["arm_a"] as EngineConfig | undefined) ?? {}
-				const configB = args["arm_b"] as EngineConfig
-				const declared = args["variable"] as string[]
-				const stratifyBy = args["stratify_by"] as "country" | "address_kind" | "status" | undefined
-
-				const set = await resolveInputSet(ref)
-
-				// Both arms are acquired BEFORE either runs, so a source edit between them cannot go unnoticed. §3.4(d):
-				// a single run may transparently rebuild, but two arms under different trees are not a comparison.
-				const engineA = await registry.acquire(configA)
-				const engineB = await registry.acquire(configB)
-
-				if (engineA.fingerprint.digest !== engineB.fingerprint.digest) {
-					throw new Error(
-						`Arms were built against different source trees (${engineA.fingerprint.digest} vs ` +
-							`${engineB.fingerprint.digest}). That is not a comparison. Restart the MCP server and re-run.`
-					)
-				}
-
-				const confounds = checkConfounds(
-					engineA.effective as unknown as Record<string, unknown>,
-					engineB.effective as unknown as Record<string, unknown>,
-					declared
-				)
-
-				const rows: ComparedRow[] = []
-				const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
-
-				for (const item of set.inputs) {
-					let a
-					let b
-
-					try {
-						a = toGauntletResult((await engineA.session.geocode(item.input)).result)
-					} catch (error) {
-						errors.push({ id: item.id, input: item.input, arm: "a", message: (error as Error).message })
-
-						continue
-					}
-
-					try {
-						b = toGauntletResult((await engineB.session.geocode(item.input)).result)
-					} catch (error) {
-						errors.push({ id: item.id, input: item.input, arm: "b", message: (error as Error).message })
-
-						continue
-					}
-
-					const { grade, issuesA, issuesB } = gradeRow(item.seed, a, b, checkCase)
-
-					rows.push({
-						id: item.id,
-						input: item.input,
-						country: item.country,
-						address_kind: item.addressKind,
-						status: item.status,
-						differed: JSON.stringify(a) !== JSON.stringify(b),
-						grade,
-						a,
-						b,
-						issues_a: issuesA,
-						issues_b: issuesB,
-					})
-				}
-
-				const gradeable = rows.filter((row) => row.grade !== "ungradeable")
-				const differed = rows.filter((row) => row.differed)
-
-				const graded = {
-					improved: rows.filter((row) => row.grade === "improved").length,
-					regressed: rows.filter((row) => row.grade === "regressed").length,
-					neutral: rows.filter((row) => row.grade === "neutral").length,
-					ungradeable: rows.filter((row) => row.grade === "ungradeable").length,
-				}
-
-				// A diff is not a verdict (§5.5). With no truth anywhere in the set, the change count is ALL this can say.
-				const mode = gradeable.length ? "truth" : "diff-only"
-
-				const test = significance(
-					gradeable.filter((row) => row.issues_a.length === 0).length,
-					gradeable.filter((row) => row.issues_b.length === 0).length,
-					gradeable.length
-				)
-
-				const changeReading = describeObservedRate({
-					events: differed.length,
-					n: rows.length,
-					selection: set.selection,
-					eventLabel: "differed between the arms",
-					...(set.populationN === undefined ? {} : { populationN: set.populationN }),
-				})
-
-				// §5.4, learned the hard way on 2026-08-16: this tool's first real run reported "0 of 558 differed —
-				// tight enough to read as a real absence" for a lever that was never reaching a decode at all
-				// (`geocode-session`'s parseDeps omitted `fst`, and the path parses once up front). A zero-difference
-				// result has TWO readings and the number cannot separate them, so it must not be relayed as one.
-				const zeroDifferenceCaveat = !differed.length
-					? "A zero here has two readings — the lever changed nothing, or the lever never ran. This comparison " +
-						"cannot separate them. Confirm participation with mwdev_trace on an input the lever should move " +
-						"before reporting this as no effect."
-					: ""
-
-				if (zeroDifferenceCaveat) {
-					confounds.warnings.push(zeroDifferenceCaveat)
-				}
-
-				const summary = [
-					changeReading.sentence,
-					mode === "truth"
-						? `Of those, ${graded.improved} improved and ${graded.regressed} regressed against truth; ${graded.ungradeable} rows carry no expectations and were not graded. ${test.sentence}`
-						: `No row in this set carries expectations, so nothing here is graded — these are described changes, not improvements.`,
-					zeroDifferenceCaveat,
-					confounds.attribution === "clean"
-						? ""
-						: `ATTRIBUTION ${confounds.attribution.toUpperCase()}: ${confounds.warnings.filter((w) => w !== zeroDifferenceCaveat).join(" ")}`,
-					set.why ? `Hand-picked because: ${set.why}` : "",
-				]
-					.filter(Boolean)
-					.join(" ")
-
-				return {
-					provenance_a: provenanceFor(engineA, set),
-					provenance_b: provenanceFor(engineB, set),
-					summary,
-					grade_mode: mode,
-					...(mode === "diff-only"
-						? {
-								verdict: null,
-								verdict_withheld_reason:
-									'no truth for this input set; changes are described, not graded. Run against {kind:"board"} to grade.',
-							}
-						: {}),
-					attribution: confounds.attribution,
-					variable_declared: confounds.declared,
-					variable_effective: confounds.variable_effective,
-					n_requested: set.n,
-					n_evaluated_both: rows.length,
-					n_errored: errors.length,
-					errors,
-					arms_differed_on: { n: differed.length, of: rows.length },
-					// Separate from arms_differed_on on purpose: a lever that fired on 400 rows and moved 0 outcomes is a
-					// different fact from a lever that never fired.
-					mechanism_fired_on: firingSignals(rows),
-					mechanism_fired_on_note:
-						"Only signals a GauntletResult carries for free are counted here. A lever with no signal of its own " +
-						"cannot be confirmed to have run from this result — use mwdev_trace.",
-					graded,
-					significance: test,
-					power: changeReading,
-					...(stratifyBy ? { strata: stratify(rows, stratifyBy) } : {}),
-					// Complete, never truncated. The 837-row FST run produced 24 changed rows; that is the evidence, and a
-					// "first 30" cap would have hidden the tail on a larger one.
-					rows_changed: differed,
-					warnings: confounds.warnings,
-				}
-			},
+			handler: async (args) => runCompare(registry, args),
 		},
 
 		{
