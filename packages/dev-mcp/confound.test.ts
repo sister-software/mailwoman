@@ -72,3 +72,36 @@ describe("assertComparableField", () => {
 		expect(() => assertComparableField("lat")).not.toThrow()
 	})
 })
+
+describe("the declared vocabulary", () => {
+	it("grades a correctly-declared single lever CLEAN, not ambiguous", () => {
+		// The defect this closes, found 2026-08-16 by running a real A/B: `variable: ["place_country"]` is the spelling
+		// the tool schema documents, and the effective configs differ at `placeCountry`. Compared raw, the same lever was
+		// counted twice under two spellings — once as declared-but-unmoved, once as moved-but-undeclared — so every
+		// honest single-lever comparison reported ATTRIBUTION AMBIGUOUS.
+		const reading = checkConfounds({ placeCountry: true }, { placeCountry: false }, ["place_country"])
+
+		expect(reading.attribution).toBe("clean")
+		expect(reading.moved_but_undeclared).toEqual([])
+		expect(reading.declared_but_unmoved).toEqual([])
+	})
+
+	it("still reports the caller's own spelling back to them", () => {
+		// Filtered on the translated key, reported in the spelling they typed — naming a key they never wrote is its own
+		// small confusion.
+		const reading = checkConfounds({ placeCountry: true }, { placeCountry: true }, ["place_country"])
+
+		expect(reading.declared_but_unmoved).toEqual(["place_country"])
+	})
+
+	it("still catches a genuine undeclared difference", () => {
+		const reading = checkConfounds(
+			{ placeCountry: true, countryScope: "auto" },
+			{ placeCountry: false, countryScope: "none" },
+			["place_country"]
+		)
+
+		expect(reading.attribution).toBe("ambiguous")
+		expect(reading.moved_but_undeclared).toEqual(["countryScope"])
+	})
+})
