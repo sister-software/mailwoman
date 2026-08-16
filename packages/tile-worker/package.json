@@ -18,11 +18,11 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@cloudflare/workers-types": "^5.20260730.1",
+		"@cloudflare/workers-types": "^5.20260813.1",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"pmtiles": "^4.4.1",
+		"pmtiles": "^4.5.0",
 		"type-fest": "^5.8.0"
 	},
 	"engines": {
