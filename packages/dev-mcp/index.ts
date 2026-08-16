@@ -7,6 +7,9 @@
  */
 
 export { EngineRegistry, resolveConfig, engineID, type EngineConfig, type Engine } from "./engine-registry.ts"
+export { assertCompiledFresh, checkCompiledFreshness, type CompiledFreshness } from "./compiled-tree.ts"
+export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
+export { JobRegistry, type Job, type JobSummary, type JobState } from "./jobs.ts"
 export { checkConfounds, Attribution, assertComparableField, type ConfoundReading } from "./confound.ts"
 export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "./grade.ts"
 export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"

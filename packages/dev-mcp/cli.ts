@@ -23,6 +23,7 @@ import { parseArgs } from "node:util"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { EngineRegistry } from "./engine-registry.ts"
+import { JobRegistry } from "./jobs.ts"
 import { createDevMCPServer } from "./server.ts"
 
 const { values } = parseArgs({
@@ -39,13 +40,15 @@ const repoRoot = values["repo-root"] ? resolve(values["repo-root"]) : defaultRep
 const maxResident = values["max-resident"] ? Number.parseInt(values["max-resident"], 10) : 2
 
 const registry = new EngineRegistry(repoRoot, maxResident)
-const server = createDevMCPServer({ registry, startedAt: Date.now() })
+const jobs = new JobRegistry()
+const server = createDevMCPServer({ registry, jobs, startedAt: Date.now() })
 
 // Sessions hold SQLite handles for as long as the agent lives; `packages/mcp` has no shutdown handler and that gap is
 // not inherited.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
 		registry.closeAll()
+		jobs.cancelAll()
 		process.exit(0)
 	})
 }
