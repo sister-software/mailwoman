@@ -387,15 +387,30 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// GB FST fed — so the base-FST wiring hid a row the lever fixes. Cached per resolved path, because the overlay
 	// classifiers are themselves cached and several countries share one.
 	const priorDepsByPath = new Map<string, Pick<GeocodeDeps, "fst" | "streetMorphology">>()
+	const warnedMissingPriorFST = new Set<string>()
 
 	async function priorDepsFor(
-		forClassifier: typeof classifier
+		forClassifier: typeof classifier,
+		label: string
 	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
 		if (!opts.levers?.gazetteerPrior) return {}
 
 		const fstPath = (forClassifier as { fstPath?: string }).fstPath
 
-		if (!fstPath) return {}
+		if (!fstPath) {
+			// Loud, once per locale. A prior-on run against an overlay with no FST grades the BASE model for those rows,
+			// and silently: the lever prints ON in the levers line while doing nothing (#1705).
+			if (!warnedMissingPriorFST.has(label)) {
+				warnedMissingPriorFST.add(label)
+
+				console.error(
+					`[gauntlet] ⚠ gazetteerPrior=ON but the ${label} weights package ships no FST — every ${label} row is ` +
+						"graded WITHOUT the prior. The levers line will still say ON; this is the only place that says otherwise."
+				)
+			}
+
+			return {}
+		}
 
 		const cached = priorDepsByPath.get(fstPath)
 
@@ -460,7 +475,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
-				...(await priorDepsFor(caseClassifier)),
+				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 				...forkEntityDeps,
 				...forwarded,
 			})

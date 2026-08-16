@@ -82,12 +82,19 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 
 /**
  * The shipped per-locale FST set (provenance-recovered country scoping; en-nz deliberately has none).
+ *
+ * An overlay ABSENT here ships with no FST, which makes `--gazetteer-prior` a silent no-op for it — the artifact
+ * resolves to `undefined` and the run degrades to the base model with extra steps. That is why membership is worth
+ * earning rather than assuming: `es-es` and `it-it` were added once a board row proved the cost. `en-au`, `en-in` and
+ * `en-nz` remain out because those overlays are country-scope-only today, so there is no measured case for them yet.
  */
 export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["en-us", ["US"]],
 	["fr-fr", ["FR"]],
 	["en-gb", ["GB"]],
 	["de-de", ["DE"]],
+	["es-es", ["ES"]],
+	["it-it", ["IT"]],
 ])
 
 /**
@@ -107,6 +114,8 @@ export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
 	"fst-per-locale/fst-fr-fr.bin",
 	"fst-per-locale/fst-en-gb.bin",
 	"fst-per-locale/fst-de-de.bin",
+	"fst-per-locale/fst-es-es.bin",
+	"fst-per-locale/fst-it-it.bin",
 	"fst-per-locale/fst-ja-jp.bin",
 	"fst-per-locale/fst-zh-cn.bin",
 	"fst-per-locale/fst-ko-kr.bin",
