@@ -94,8 +94,11 @@ export interface GauntletRunOptions {
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * RESOLVER-side lever pin (#1497): feed the gazetteer FST prior to the parse. One-sided — the prior is OFF on this
-	 * path today, so there is no production default to preserve and `undefined` means the incumbent behaviour.
+	 * RESOLVER-side lever pin (#1497): feed the gazetteer FST prior to the parse.
+	 *
+	 * TWO-SIDED since the 2026-08-16 default-on promotion. `undefined` means the production default, which is now ON;
+	 * `false` is a real pin that withholds it. Forwarding only the truthy half — as this did while the prior was opt-in —
+	 * would silently discard `--gazetteer-prior-off` and grade the default arm under an OFF label.
 	 */
 	gazetteerPrior?: boolean
 	/**
@@ -136,7 +139,7 @@ export function runResolverLevers(options: GauntletRunOptions): GauntletResolver
 		...(options.postcodeCountryCoherence === undefined
 			? {}
 			: { postcodeCountryCoherence: options.postcodeCountryCoherence }),
-		...(options.gazetteerPrior ? { gazetteerPrior: true } : {}),
+		...(options.gazetteerPrior === undefined ? {} : { gazetteerPrior: options.gazetteerPrior }),
 	}
 
 	// Absent, not empty: `undefined` is what `describeResolverLevers` prints as "production defaults", and an empty

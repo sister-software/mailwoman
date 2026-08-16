@@ -75,9 +75,20 @@ import { createResolverBackend, resolveCandidateDBPath, wofShardPaths } from "./
  */
 export interface GeocodeSessionOptions {
 	/**
-	 * Feed the gazetteer FST prior to the parse (#1497). OFF by default: this path has never constructed the prior —
-	 * `classifier.parse` reads `fst` from opts only and this path passed none — so turning it on is a decode change, not
-	 * a repair, and it stays opt-in until measured on the board.
+	 * Feed the gazetteer FST prior to the parse (#1497). **ON by default** since 2026-08-16; pass `false` to disable.
+	 *
+	 * Promoted on measured evidence in both arms of both batteries. Regression board 352/354 → 353/354 gated, with a
+	 * row-level diff over all 209 failing rows showing exactly one fixed and ZERO broken. Parity corpus (321 fixtures)
+	 * under en-US weights: every floor byte-identical, spurious `street` 13/54 → 10/54 (it stops `Perth`, `Dallas` and
+	 * `California` being tagged as streets), full agreement US 54/99 → 57/99 and AU 9/20 → 10/20.
+	 *
+	 * The effect lands entirely in the PRECISION half that `parity-corpus.ts` documents the floors cannot see, so a
+	 * floors-only reading reports "no change" — which is why the promotion rests on the full-agreement and spurious
+	 * columns rather than the floor table.
+	 *
+	 * Known residual, carried deliberately: under fr-FR weights the US bucket moves 54/99 → 53/99. Every floor is
+	 * identical there too, so that row moved on a NON-FLOOR tag. It is a US row parsed with FR weights — a pairing
+	 * production does not route — and the FR bucket itself is unchanged, so the D-rule's tier-1 test is met.
 	 */
 	gazetteerPrior?: boolean
 	locale: string
@@ -318,7 +329,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let fst: FSTMatcherLike | undefined
 	let streetMorphology: FSTMatcherLike | undefined
 
-	if (options.gazetteerPrior) {
+	// Default-on: only an explicit `false` disables it.
+	if (options.gazetteerPrior !== false) {
 		const [{ deserializeFST }, { loadStreetMorphologyFST }] = await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite/fst-serialize"),
 			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),

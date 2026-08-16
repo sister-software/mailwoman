@@ -58,7 +58,7 @@ interface Options {
 	fixtures?: string
 	weightsCache?: string
 	streetMorphology: boolean
-	gazetteerPrior: boolean
+	gazetteerPriorOff: boolean
 	wordConsistency: boolean
 	failing: number
 }
@@ -77,7 +77,7 @@ const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
 					fixturesPath: options.fixtures,
 					weightsCacheRoot: options.weightsCache,
 					streetMorphology: options.streetMorphology,
-					gazetteerPrior: options.gazetteerPrior,
+					gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
 					wordConsistency: options.wordConsistency,
 					failing: options.failing,
 				})

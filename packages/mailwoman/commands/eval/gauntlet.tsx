@@ -47,7 +47,8 @@ export const spec = {
 		limit: { type: "number", description: "Case limit" },
 		"postcode-country-coherence": { type: "boolean", default: false, description: "Force coherence on" },
 		"postcode-country-coherence-off": { type: "boolean", default: false, description: "Force coherence off" },
-		"gazetteer-prior": { type: "boolean", default: false, description: "Feed the gazetteer FST prior (#1497)" },
+		"gazetteer-prior": { type: "boolean", default: false, description: "Force the gazetteer FST prior on" },
+		"gazetteer-prior-off": { type: "boolean", default: false, description: "Force the gazetteer FST prior off" },
 	},
 } as const satisfies CommandSpec
 
@@ -65,12 +66,13 @@ interface Options {
 	postcodeCountryCoherence: boolean
 	postcodeCountryCoherenceOff: boolean
 	gazetteerPrior: boolean
+	gazetteerPriorOff: boolean
 }
 
 const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
-	// `postcodeCountryCoherenceOff` is a CLI-only spelling of the OFF half of one tri-state; it is destructured
-	// out so it never reaches `runGauntlet` as a field of its own.
-	const { postcodeCountryCoherenceOff, components, ...rest } = options
+	// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
+	// ever reaches `runGauntlet` as a field of its own.
+	const { postcodeCountryCoherenceOff, gazetteerPriorOff, components, ...rest } = options
 
 	const state = useCommandTask(
 		async () => {
@@ -100,10 +102,9 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 						: postcodeCountryCoherenceOff
 							? false
 							: undefined,
-					// #1497: one-sided on purpose. The prior is OFF on this path today — `classifier.parse` reads `fst`
-					// from opts only and the geocode path passed none — so there is no production default to preserve
-					// and no OFF half to spell.
-					...(options.gazetteerPrior ? { gazetteerPrior: true } : {}),
+					// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
+					// preserve now, so an unset flag must stay unset rather than pinning the lever either way.
+					gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
 				})
 			).exitCode
 		},

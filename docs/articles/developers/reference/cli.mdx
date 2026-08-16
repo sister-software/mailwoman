@@ -87,6 +87,7 @@ mailwoman geocode [options] [address...]
 | `--interpolation-db [interpolation-db]`               | string                       | —        | Explicit interpolation SQLite shard, bypassing region selection.                    |
 | `--interp-calibration [interp-calibration]`           | number                       | —        | Force one interpolation uncertainty calibration multiplier.                         |
 | `--locale-country-prior`                              | boolean                      | `false`  | Use a withheld locale country as a soft resolver ranking prior.                     |
+| `--no-gazetteer-prior`                                | boolean                      | `true`   | Feed the gazetteer FST prior to the parse; --no-gazetteer-prior disables it.        |
 | `--no-place-country`                                  | boolean                      | `true`   | Use the coarse-placer country prior; --no-place-country disables it.                |
 | `--no-postcode-country-coherence`                     | boolean                      | `true`   | Allow coherent postcode/locality evidence to override a wrong country scope.        |
 | `--no-fork-entity`                                    | boolean                      | `true`   | Probe POI data for exact entities when a fork parse does not resolve.               |

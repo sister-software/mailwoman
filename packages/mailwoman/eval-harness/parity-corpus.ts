@@ -118,7 +118,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 	let fstGazetteer: FSTMatcher | undefined
 
-	if (options.gazetteerPrior) {
+	if (options.gazetteerPrior !== false) {
 		// The classifier's OWN weights-package sibling — the same artifact the runtime loads, so this grades the prior
 		// production would use rather than one resolved by a second ladder.
 		const fstPath = (classifier as { fstPath?: string }).fstPath

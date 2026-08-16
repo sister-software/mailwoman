@@ -108,8 +108,10 @@ export function describeResolverLevers(levers: GauntletResolverLevers | undefine
 	// is precisely the failure this surface exists to prevent, so every lever is named here, not just the boolean ones.
 	const entries: string[] = Object.entries(resolverLeverDeps(levers)).map(([k, v]) => `${k}=${v ? "ON" : "OFF"}`)
 
-	if (levers?.gazetteerPrior) {
-		entries.push("gazetteerPrior=ON")
+	// Printed only when PINNED away from the production default (now ON). An unset lever prints nothing, which is what
+	// keeps "no flag" reading as "grade whatever production does".
+	if (levers?.gazetteerPrior !== undefined) {
+		entries.push(`gazetteerPrior=${levers.gazetteerPrior ? "ON" : "OFF"}`)
 	}
 
 	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
@@ -393,7 +395,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		forClassifier: typeof classifier,
 		label: string
 	): Promise<Pick<GeocodeDeps, "fst" | "streetMorphology">> {
-		if (!opts.levers?.gazetteerPrior) return {}
+		// Default-on since 2026-08-16: only an explicit `false` withholds the prior.
+		if (opts.levers?.gazetteerPrior === false) return {}
 
 		const fstPath = (forClassifier as { fstPath?: string }).fstPath
 

@@ -160,4 +160,32 @@ describe("gazetteerPrior lever (#1497)", () => {
 		expect(described).toContain("gazetteerPrior=ON")
 		expect(described).toContain("postcodeCountryCoherence=OFF")
 	})
+
+	it("announces an OFF pin, now that the production default is ON", () => {
+		// Promoted default-on 2026-08-16, which makes `false` a real pin rather than the incumbent behaviour.
+		expect(describeResolverLevers({ gazetteerPrior: false })).toContain("gazetteerPrior=OFF")
+	})
+
+	it("prints nothing for the lever when it is unset, so 'no flag' still reads as production", () => {
+		expect(describeResolverLevers({ postcodeCountryCoherence: false })).not.toContain("gazetteerPrior")
+	})
+})
+
+describe("runResolverLevers forwards BOTH halves of the prior tri-state", () => {
+	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy half
+	// (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`). After the default-on flip that silently
+	// discarded `--gazetteer-prior-off`, so the OFF arm graded the DEFAULT configuration while its log said
+	// `gazetteerPrior=OFF` — the exact "two gate logs that differ only in a flag someone typed" failure the levers
+	// line exists to prevent. Caught by running the off arm and reading the board, not by a test.
+	it("keeps an explicit false", () => {
+		expect(runResolverLevers({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
+	})
+
+	it("keeps an explicit true", () => {
+		expect(runResolverLevers({ gazetteerPrior: true })).toEqual({ gazetteerPrior: true })
+	})
+
+	it("leaves an unset lever absent, not pinned", () => {
+		expect(runResolverLevers({})).toBeUndefined()
+	})
 })

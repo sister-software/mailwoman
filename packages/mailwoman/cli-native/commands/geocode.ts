@@ -77,6 +77,11 @@ export const spec = {
 			default: false,
 			description: "Use a withheld locale country as a soft resolver ranking prior.",
 		},
+		"gazetteer-prior": {
+			type: "boolean",
+			default: true,
+			description: "Feed the gazetteer FST prior to the parse; --no-gazetteer-prior disables it.",
+		},
 		"place-country": {
 			type: "boolean",
 			default: true,
@@ -179,6 +184,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 			? { interpCalibration: numberValue(values, "interp-calibration") }
 			: {}),
 		localeCountryPrior: booleanValue(values, "locale-country-prior"),
+		gazetteerPrior: booleanValue(values, "gazetteer-prior"),
 		placeCountry: booleanValue(values, "place-country"),
 		postcodeCountryCoherence: booleanValue(values, "postcode-country-coherence"),
 		forkEntity: booleanValue(values, "fork-entity"),
