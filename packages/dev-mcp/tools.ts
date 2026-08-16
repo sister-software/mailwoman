@@ -22,8 +22,10 @@ import { z } from "zod"
 
 import { ARM_SPEC_SCHEMA } from "./arms.ts"
 import { assembleBench, summarizeLatency } from "./bench.ts"
+import { runCensus } from "./census.ts"
 import { runCompare } from "./compare.ts"
 import type { EngineConfig } from "./engine-registry.ts"
+import { evidenceCensus } from "./evidence.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { runLookup } from "./lookup-tool.ts"
 import { LookupSource } from "./lookup.ts"
@@ -347,6 +349,9 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 						lat: run.result.lat,
 						lon: run.result.lon,
 						tier: run.result.resolution_tier,
+						// The three-state channel reading (#1718): absent / silent / fired, plus the starvation flag. A
+						// human read past three all-zero channel rows in this very output once; a field does not skim.
+						evidence: run.trace?.parse ? evidenceCensus(run.trace.parse) : null,
 						query_shape: run.trace?.queryShape ?? null,
 						kind: run.trace?.kind ?? null,
 						input_mode: run.trace?.inputMode ?? null,
@@ -429,6 +434,21 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					n_inputs: selected.length,
 				}
 			},
+		},
+
+		{
+			name: "mwdev_census",
+			description:
+				"Activation-coverage census (#1719): one traced parse per input, aggregated per MECHANISM rather than per " +
+				"row. Answers the question outcome tests cannot — did each channel, prior and repair pass signal on ANY " +
+				"row — because soft mechanisms are designed to degrade silently, and an inert mechanism keeps every " +
+				"outcome green. A mechanism at zero L1 across the set is reported as INERT: every zero needs a row that " +
+				"activates it or an allowlisted reason. L2 (moved an outcome) is explicitly not measured here.",
+			inputSchema: z.object({
+				inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the full board."),
+				config: ENGINE_CONFIG_SCHEMA.optional(),
+			}),
+			handler: async (args) => runCensus(registry, args),
 		},
 
 		{
