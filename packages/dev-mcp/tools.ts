@@ -24,10 +24,13 @@ import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GeocodeRun } from "mailwoman/geocode-session"
 import { z } from "zod"
 
+import { assertCompiledFresh } from "./compiled-tree.ts"
 import { checkConfounds } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import { parseGauntletReport, summarizeGauntletReport } from "./gauntlet-report.ts"
 import { gradeRow, significance, type RowGrade } from "./grade.ts"
 import { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
+import type { JobRegistry } from "./jobs.ts"
 import { describeObservedRate } from "./power.ts"
 
 //#region Provenance
@@ -139,6 +142,7 @@ const ENGINE_CONFIG_SCHEMA = z
 
 export interface DevToolDeps {
 	registry: EngineRegistry
+	jobs: JobRegistry
 	startedAt: number
 }
 
@@ -248,7 +252,7 @@ function stratify(rows: ComparedRow[], by: "country" | "address_kind" | "status"
 }
 
 export function buildToolTable(deps: DevToolDeps): DevTool[] {
-	const { registry } = deps
+	const { registry, jobs } = deps
 
 	return [
 		{
@@ -550,6 +554,150 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					// "first 30" cap would have hidden the tail on a larger one.
 					rows_changed: differed,
 					warnings: confounds.warnings,
+				}
+			},
+		},
+
+		{
+			name: "mwdev_gauntlet",
+			description:
+				"Run a gauntlet layer and return a job id. The gauntlet is the release authority — this adds nothing to " +
+				"its grading, it only surfaces the gated header, the levers line and the firing count rather than leaving " +
+				"them in a log. Poll with mwdev_job.",
+			inputSchema: z.object({
+				layer: z
+					.enum(["regression", "metamorphic", "holdout", "ablation", "all"])
+					.default("regression")
+					.describe("`all` runs the multi-layer sequence and takes considerably longer."),
+				gazetteer_prior: z.boolean().optional(),
+				postcode_country_coherence: z.boolean().optional(),
+				candidate: z.string().optional().describe("Candidate ONNX path — required for the held-out layer."),
+				weights_cache: z.string().optional(),
+				tokenizer: z.string().optional(),
+				card: z.string().optional(),
+				source: z.enum(["fr", "us"]).optional(),
+				n: z.number().int().positive().optional(),
+			}),
+			handler: async (args) => {
+				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — so it is
+				// spawned rather than imported. That puts the COMPILED tree back on the path, which is what this guard is
+				// for: a stale out/ would grade replaced code and report a verdict rather than an error.
+				const freshness = assertCompiledFresh(registry.repoRoot)
+
+				const layer = (args["layer"] as string) ?? "regression"
+				const argv = ["packages/mailwoman/out/cli.js", "eval", "gauntlet"]
+
+				if (layer !== "all") {
+					argv.push("--layer", layer)
+				}
+
+				if (args["gazetteer_prior"]) {
+					argv.push("--gazetteer-prior")
+				}
+
+				// The CLI spells the two directions as separate flags rather than one boolean, and `undefined` must reach
+				// neither: unset means the production default, which is what the board grades.
+				if (args["postcode_country_coherence"] === true) {
+					argv.push("--postcode-country-coherence")
+				}
+
+				if (args["postcode_country_coherence"] === false) {
+					argv.push("--postcode-country-coherence-off")
+				}
+
+				for (const [flag, key] of [
+					["--candidate", "candidate"],
+					["--weights-cache", "weights_cache"],
+					["--tokenizer", "tokenizer"],
+					["--card", "card"],
+					["--source", "source"],
+				] as const) {
+					const value = args[key]
+
+					if (value) {
+						argv.push(flag, String(value))
+					}
+				}
+
+				if (args["n"]) {
+					argv.push("--limit", String(args["n"]))
+				}
+
+				const job = jobs.start(`gauntlet:${layer}`, process.execPath, argv, registry.repoRoot)
+
+				return {
+					job_id: job.jobID,
+					layer,
+					command: [process.execPath, ...argv].join(" "),
+					compiled_tree: {
+						newest_source: freshness.newestSource?.path ?? null,
+						newest_compiled: freshness.newestCompiled?.path ?? null,
+					},
+					note:
+						"Started. Poll with mwdev_job. The result carries the gated header, the levers line and the firing " +
+						"count parsed out of the log, plus the log itself — read the gated fraction, not the tail.",
+				}
+			},
+		},
+
+		{
+			name: "mwdev_job",
+			description: "Poll, read or cancel a background job started by another tool.",
+			inputSchema: z.object({
+				action: z.enum(["status", "result", "list", "cancel"]).default("status"),
+				job_id: z.string().optional(),
+				tail_lines: z
+					.number()
+					.int()
+					.positive()
+					.optional()
+					.describe("Return only the last N log lines. The parsed report is unaffected."),
+			}),
+			handler: async (args) => {
+				const action = (args["action"] as string) ?? "status"
+
+				if (action === "list") return { jobs: jobs.list() }
+
+				const jobID = args["job_id"] as string | undefined
+
+				if (!jobID) throw new Error('mwdev_job: this action needs a `job_id` (see action "list").')
+
+				const job = jobs.get(jobID)
+
+				if (!job) throw new Error(`mwdev_job: no job ${jobID}.`)
+
+				if (action === "cancel") return { job_id: jobID, cancelled: jobs.cancel(jobID) }
+
+				const summary = jobs.summarize(job)
+
+				if (action === "status" && job.state === "running") {
+					return { ...summary, note: 'Still running. Call again, or use action "result" once it has finished.' }
+				}
+
+				const report = parseGauntletReport(job.stdout, job.stderr)
+				const tail = args["tail_lines"] as number | undefined
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- the log is already buffered and capped at 8 MB
+				const log = tail ? job.stdout.split("\n").slice(-tail).join("\n") : job.stdout
+
+				return {
+					...summary,
+					// A running job still reports what it has produced so far, clearly marked — a partial log is useful and
+					// a silent "not ready" is not.
+					partial: job.state === "running",
+					// A graded FAIL exits 1, so `state: "failed"` is what a completed-and-failing gauntlet looks like. That
+					// reads as a crash, and the two need different responses — say which happened.
+					...(job.state === "failed" && report.verdict
+						? {
+								job_outcome: `The run COMPLETED and graded ${report.verdict}. The non-zero exit is the verdict, not a crash.`,
+							}
+						: {}),
+					summary:
+						job.state === "running"
+							? `Still running (${summary.elapsed_s}s). Parsed from the log SO FAR: ${summarizeGauntletReport(report)}`
+							: summarizeGauntletReport(report),
+					report,
+					log,
+					stderr: job.stderr,
 				}
 			},
 		},
