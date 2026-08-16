@@ -45,6 +45,7 @@ import {
 	inputSetProvenance,
 	provenanceFor,
 	stratify,
+	assertStratumKey,
 	type StratumKey,
 } from "./tool-kit.ts"
 
@@ -107,7 +108,7 @@ export async function runCompare(
 		armA: args["arm_a"],
 		armB: args["arm_b"],
 		declared: args["variable"] as string[],
-		...(args["stratify_by"] === undefined ? {} : { stratifyBy: args["stratify_by"] as StratumKey }),
+		...(args["stratify_by"] === undefined ? {} : { stratifyBy: assertedStratum(args["stratify_by"] as string) }),
 		grade: (args["grade"] as GradeRequest | undefined) ?? "auto",
 		gradeThresholdKm: (args["grade_threshold_km"] as number | undefined) ?? DEFAULT_GRADE_THRESHOLD_KM,
 	}
@@ -352,6 +353,7 @@ interface GeoRow extends Omit<ComparedRow, "a" | "b" | "issues_a" | "issues_b"> 
 	truth_lat: number | null
 	truth_lon: number | null
 	truth_tolerance_m: number | null
+	truth_type: string | null
 	distance_km_a: number | null
 	distance_km_b: number | null
 }
@@ -444,8 +446,10 @@ async function scoreGeoRows(
 	for (const item of set.inputs) {
 		const a = await ask(runnerA, "a", item)
 		const b = await ask(runnerB, "b", item)
-		const truthLat = item.seed?.expectLat ?? null
-		const truthLon = item.seed?.expectLon ?? null
+		// The unified field, not `seed.expectLat`: only the board has a SeedCase, and a panel row's truth would
+		// otherwise be invisible here. `input-sets.ts` populates it for every corpus that carries one.
+		const truthLat = item.truthLat ?? null
+		const truthLon = item.truthLon ?? null
 		const hasTruth = typeof truthLat === "number" && typeof truthLon === "number"
 		const distanceA = hasTruth ? distanceKm(a, truthLat, truthLon) : null
 		const distanceB = hasTruth ? distanceKm(b, truthLat, truthLon) : null
@@ -465,7 +469,8 @@ async function scoreGeoRows(
 			b,
 			truth_lat: truthLat,
 			truth_lon: truthLon,
-			truth_tolerance_m: item.seed?.expectToleranceM ?? null,
+			truth_tolerance_m: item.toleranceM ?? null,
+			truth_type: item.truthType ?? null,
 			distance_km_a: distanceA,
 			distance_km_b: distanceB,
 		})
@@ -662,6 +667,10 @@ function stratifyGeo(rows: GeoRow[], by: StratumKey): Record<string, unknown> {
 }
 
 function stratumValue(row: GeoRow, by: StratumKey): string {
+	// The benchmark plan names this one specifically — "@1km lives or dies on truth_type" — so a panel comparison that
+	// cannot split by it is reporting a number about its own row mix.
+	if (by === "truth_type") return row.truth_type ?? "unstated"
+
 	if (by === "truth_tolerance_m") return row.truth_tolerance_m === null ? "unstated" : `${row.truth_tolerance_m}m`
 
 	if (by === "country") return row.country ?? "unknown"
@@ -698,4 +707,14 @@ function attributionSentence(confounds: ConfoundReading, exclude: string): strin
 	if (confounds.attribution === "clean") return ""
 
 	return `ATTRIBUTION ${confounds.attribution.toUpperCase()}: ${confounds.warnings.filter((warning) => warning !== exclude).join(" ")}`
+}
+
+/**
+ * Validate a caller-supplied stratum. The zod enum catches this over MCP; a direct caller bypasses it, and an unchecked
+ * cast there produced a one-bucket `unknown` table that looked stratified.
+ */
+function assertedStratum(by: string): StratumKey {
+	assertStratumKey(by)
+
+	return by
 }
