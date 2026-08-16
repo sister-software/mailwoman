@@ -34,6 +34,11 @@ export const spec = {
 		fixtures: { type: "string", description: "Fixture JSONL override" },
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
+		"gazetteer-prior": {
+			type: "boolean",
+			default: false,
+			description: "Feed the gazetteer FST emission prior (#1497)",
+		},
 		"word-consistency": { type: "boolean", default: true, description: "Enable word-consistency healing" },
 		failing: {
 			type: "number",
@@ -53,6 +58,7 @@ interface Options {
 	fixtures?: string
 	weightsCache?: string
 	streetMorphology: boolean
+	gazetteerPriorOff: boolean
 	wordConsistency: boolean
 	failing: number
 }
@@ -71,6 +77,7 @@ const EvalParity: ParsedCommandComponent<Options> = ({ options }) => {
 					fixturesPath: options.fixtures,
 					weightsCacheRoot: options.weightsCache,
 					streetMorphology: options.streetMorphology,
+					gazetteerPrior: options.gazetteerPriorOff ? false : undefined,
 					wordConsistency: options.wordConsistency,
 					failing: options.failing,
 				})

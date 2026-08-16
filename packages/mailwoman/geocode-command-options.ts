@@ -18,6 +18,7 @@ export interface GeocodeCommandOptions {
 	interpolationDB?: string
 	interpCalibration?: number
 	localeCountryPrior: boolean
+	gazetteerPrior: boolean
 	placeCountry: boolean
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
@@ -41,6 +42,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		countryScope: "auto",
 		dataRoot: mailwomanDataRoot(),
 		localeCountryPrior: false,
+		gazetteerPrior: true,
 		placeCountry: true,
 		postcodeCountryCoherence: true,
 		forkEntity: true,
