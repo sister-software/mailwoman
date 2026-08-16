@@ -20,6 +20,7 @@ import { resolveInputSet } from "./input-sets.ts"
  * tick says nothing about them.
  */
 const havePanel = existsSync(String(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl")))
+const havePanel21 = existsSync(String(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl")))
 const haveGolden = existsSync(String(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl")))
 /**
  * The `us` holdout source only. `fr` is a 5.06 GB CSV that a reservoir draw reads end to end — measured at 45.5 s
@@ -103,6 +104,18 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 		expect(set.selection).toBe("slice")
 		expect(set.populationN).toBe(420)
 		expect(set.notCovered.join(" ")).toContain("truth types excluded")
+	})
+})
+
+describe.skipIf(!havePanel21)("resolveInputSet — panel v2.1", () => {
+	it("resolves the re-sourced v2.1 panel with a coordinate on every row", async () => {
+		// v2.1 = v2 with the 25 city-only rows whose truth was copied from hard-slice-board.jsonl (circular truth,
+		// #1725) re-sourced to independent Wikidata centroids. Same 420 rows, same order; v2 stays immutable.
+		const set = await resolveInputSet({ kind: "panel", version: "v2.1" })
+
+		expect(set.n).toBe(420)
+		expect(set.hasTruth.coordinates).toBe(420)
+		expect(set.hasTruth.none).toBe(0)
 	})
 })
 
