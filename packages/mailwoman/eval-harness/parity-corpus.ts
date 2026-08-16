@@ -73,6 +73,14 @@ export interface ParityEvalOptions {
 	 */
 	streetMorphology?: boolean
 	/**
+	 * Feed the gazetteer FST emission prior (#1497).
+	 *
+	 * Present because until it was, this eval could not SEE the lever: #1497's title is "FST decoder bias is invisible to
+	 * every live eval", and the gauntlet was the only exception. A default-on decision needs tier-1 per-tag evidence, and
+	 * that is what this corpus carries.
+	 */
+	gazetteerPrior?: boolean
+	/**
 	 * Ship-config word-consistency heal (default true since the 2026-07-15 gate revision — production parses heal, so the
 	 * gate grades the healed parse). Pass `false` to reproduce pre-heal baselines.
 	 */
@@ -107,6 +115,30 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		modelCardPath: options.modelCardPath,
 		cacheRoot: options.weightsCacheRoot,
 	})
+
+	let fstGazetteer: FSTMatcher | undefined
+
+	if (options.gazetteerPrior) {
+		// The classifier's OWN weights-package sibling — the same artifact the runtime loads, so this grades the prior
+		// production would use rather than one resolved by a second ladder.
+		const fstPath = (classifier as { fstPath?: string }).fstPath
+
+		if (fstPath) {
+			const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
+			const { readFileSync } = await import("node:fs")
+
+			fstGazetteer = deserializeFST(readFileSync(fstPath)) as unknown as FSTMatcher
+
+			console.log(`gazetteer prior ON (${fstPath})`)
+		} else {
+			// Loud, not silent. A requested prior that resolves nothing scores lower with no signal of its own, which
+			// reads as a model difference — #1516's shape, and the reason five overlays needed #1705.
+			console.warn(
+				"gazetteer prior REQUESTED but this weights package ships no FST — the channel is OFF and these numbers " +
+					"are the base model's. Do not compare them against a prior-on arm."
+			)
+		}
+	}
 
 	let fstStreetMorphology: FSTMatcher | undefined
 
@@ -150,6 +182,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				postcodeRepair: true,
 				queryShape: computeQueryShape(fixture.input),
 				fstStreetMorphology,
+				...(fstGazetteer ? { fst: fstGazetteer } : {}),
 				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
