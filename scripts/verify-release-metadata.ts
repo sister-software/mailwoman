@@ -13,7 +13,7 @@
  *
  *   - `evals/scores-by-version.json` — the per-model score ledger (`mailwoman eval ledger-append`
  *       exists but was manual, so it froze).
- *   - `docs/articles/releases.mdx` — the version matrix, stuck showing an OLD `(current)` row.
+ *   - `docs/records/site-2026-08/releases.mdx` — the version matrix, stuck showing an OLD `(current)` row.
  *   - `docs/articles/status.mdx` — the status info box, citing a superseded release.
  *
  *   THE MODEL-vs-npm DISTINCTION (see the "Two version series" intro of releases.mdx). Two version
@@ -29,7 +29,7 @@
  *   THE THREE CHECKS (keyed off the model-card version V):
  *
  *   1. `evals/scores-by-version.json` has a run whose `model_version === V`.
- *   2. `docs/articles/releases.mdx` has a matrix row for V, AND the `(current)` marker sits on V's
+ *   2. `docs/records/site-2026-08/releases.mdx` has a matrix row for V, AND the `(current)` marker sits on V's
  *      row — OR on a newer row when every release above V is a "model unchanged" (code-only) row.
  *   3. `docs/articles/status.mdx` cites V in its `:::info[Verified as of …]` box.
  *
@@ -43,9 +43,9 @@
  *   Usage:
  *     node scripts/verify-release-metadata.ts
  *     node scripts/verify-release-metadata.ts \
- *       --card neural-weights-en-us/model-card.json \
+ *       --card packages/neural-weights-en-us/model-card.json \
  *       --ledger evals/scores-by-version.json \
- *       --releases docs/articles/releases.mdx \
+ *       --releases docs/records/site-2026-08/releases.mdx \
  *       --status docs/articles/status.mdx
  *
  *   The path overrides exist so the surfaces can be pointed at doctored copies when exercising the
@@ -151,10 +151,10 @@ function checkLedger(version: string, ledgerPath: string): SurfaceResult {
 		message:
 			`evals/scores-by-version.json has NO run with model_version === "${version}".\n` +
 			`      Append it (the promotion-gate PASS prints this line pre-filled — fill --out-dir/--run-id from that run):\n` +
-			`        node mailwoman/out/cli.js eval ledger-append \\\n` +
+			`        node packages/mailwoman/out/cli.js eval ledger-append \\\n` +
 			`          --out-dir <gate-out-dir> --model-version ${version} \\\n` +
 			`          --run-id <label>-<yyyymmdd> \\\n` +
-			`          --model-path "@mailwoman/neural-weights-en-us@${version}" --card neural-weights-en-us/model-card.json`,
+			`          --model-path "@mailwoman/neural-weights-en-us@${version}" --card packages/neural-weights-en-us/model-card.json`,
 	}
 }
 
@@ -205,11 +205,15 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 	const currentIndex = rows.findIndex((row) => row.versionCell.includes("(current)"))
 
 	const rowFix =
-		`      Add a matrix row for ${version} under "## The matrix" in docs/articles/releases.mdx\n` +
+		`      Add a matrix row for ${version} under "## The matrix" in docs/records/site-2026-08/releases.mdx\n` +
 		`      (newest-first; first column \`**${version}** (current)\`, with date / model lineage / what-it-added / per-tag-truth).`
 
 	if (vIndex === -1) {
-		return { surface, ok: false, message: `docs/articles/releases.mdx has NO matrix row for ${version}.\n` + rowFix }
+		return {
+			surface,
+			ok: false,
+			message: `docs/records/site-2026-08/releases.mdx has NO matrix row for ${version}.\n` + rowFix,
+		}
 	}
 
 	if (currentIndex === -1) {
@@ -217,7 +221,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 			surface,
 			ok: false,
 			message:
-				`docs/articles/releases.mdx has no "(current)" marker in the matrix.\n` +
+				`docs/records/site-2026-08/releases.mdx has no "(current)" marker in the matrix.\n` +
 				`      Mark ${version}'s first column as \`**${version}** (current)\`.`,
 		}
 	}
@@ -247,7 +251,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 			surface,
 			ok: false,
 			message:
-				`docs/articles/releases.mdx marks "${versionCell}" as (current), but a newer row above model ${version} introduces a NEW model:\n` +
+				`docs/records/site-2026-08/releases.mdx marks "${versionCell}" as (current), but a newer row above model ${version} introduces a NEW model:\n` +
 				`        ${nonCodeOnly.map((row) => row.versionCell).join(", ")}\n` +
 				`      Either the model card was not bumped for that model release, or that row is mislabeled. Reconcile the card version with the matrix.`,
 		}
@@ -258,7 +262,7 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 		surface,
 		ok: false,
 		message:
-			`docs/articles/releases.mdx marks "${versionCell}" as (current), but the shipped model is ${version}.\n` +
+			`docs/records/site-2026-08/releases.mdx marks "${versionCell}" as (current), but the shipped model is ${version}.\n` +
 			`      Move the "(current)" marker to ${version}'s row (first column \`**${version}** (current)\`) and drop it from the stale row.`,
 	}
 }
@@ -309,7 +313,7 @@ async function main() {
 	})
 
 	const options: VerifyOptions = {
-		cardPath: resolve(repoRoot, values.card ?? "neural-weights-en-us/model-card.json"),
+		cardPath: resolve(repoRoot, values.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolve(repoRoot, values.ledger ?? "evals/scores-by-version.json"),
 		releasesPath: resolve(repoRoot, values.releases ?? "docs/records/site-2026-08/releases.mdx"),
 		statusPath: resolve(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),

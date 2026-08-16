@@ -114,27 +114,24 @@ Leave it running and open a second terminal.
 curl -s "http://127.0.0.1:2323/api?q=1600+pennsylvania+ave+nw+washington+dc+20500&limit=1" | jq '.features[0]'
 ```
 
-```
+```json
 {
-  "type": "Feature",
-  "geometry": {
-    "type": "Point",
-    "coordinates": [
-      -77.016216,
-      38.904831
-    ]
-  },
-  "properties": {
-    "osm_key": "place",
-    "osm_value": "city",
-    "type": "city",
-    "name": "Washington",
-    "city": "Washington",
-    "state": "District of Columbia",
-    "postcode": "20500",
-    "country": "United States",
-    "countrycode": "us"
-  }
+	"type": "Feature",
+	"geometry": {
+		"type": "Point",
+		"coordinates": [-77.016216, 38.904831]
+	},
+	"properties": {
+		"osm_key": "place",
+		"osm_value": "city",
+		"type": "city",
+		"name": "Washington",
+		"city": "Washington",
+		"state": "District of Columbia",
+		"postcode": "20500",
+		"country": "United States",
+		"countrycode": "us"
+	}
 }
 ```
 
@@ -166,8 +163,8 @@ Now the endpoint from the prerequisites:
 curl -s "http://127.0.0.1:2323/reverse?lat=52.52&lon=13.405" | jq -c
 ```
 
-```
-{"type":"FeatureCollection","features":[]}
+```json
+{ "type": "FeatureCollection", "features": [] }
 ```
 
 An empty collection, not an error. That is the `wof: (none found)` line from step 2 showing through:
@@ -229,8 +226,8 @@ npx @mailwoman/nominatim serve --port 8088
 curl -s http://127.0.0.1:8088/status
 ```
 
-```
-{"status":0,"message":"OK"}
+```json
+{ "status": 0, "message": "OK" }
 ```
 
 `/search` takes free text or the structured parameters, and `addressdetails=1` adds the `address`
@@ -240,41 +237,41 @@ block:
 curl -s "http://127.0.0.1:8088/search?q=10+Downing+Street,+London+SW1A+2AA&addressdetails=1" | jq '.[0]'
 ```
 
-```
+```json
 {
-  "place_id": 1178923677,
-  "licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER",
-  "lat": "51.500525578898",
-  "lon": "-0.109400835283853",
-  "display_name": "10, Downing Street, London, SW1A 2AA",
-  "address": {
-    "city": "London",
-    "postcode": "SW1A 2AA",
-    "house_number": "10",
-    "road": "Downing Street"
-  },
-  "annotations": {
-    "DMS": {
-      "lat": "51° 30′ 1.89″ N",
-      "lng": "0° 6′ 33.84″ W"
-    },
-    "MGRS": "30UYC0062309449",
-    "Maidenhead": "IO91wm",
-    "Mercator": {
-      "x": -12178.445276157312,
-      "y": 6710313.068983022
-    },
-    "geohash": "gcpuvx2k6",
-    "qibla": 119.00112658398905,
-    "sun": {
-      "rise": {
-        "apparent": 1785731284
-      },
-      "set": {
-        "apparent": 1785786464
-      }
-    }
-  }
+	"place_id": 1178923677,
+	"licence": "Data © Who's On First, Overture Maps, OpenAddresses, US Census TIGER",
+	"lat": "51.500525578898",
+	"lon": "-0.109400835283853",
+	"display_name": "10, Downing Street, London, SW1A 2AA",
+	"address": {
+		"city": "London",
+		"postcode": "SW1A 2AA",
+		"house_number": "10",
+		"road": "Downing Street"
+	},
+	"annotations": {
+		"DMS": {
+			"lat": "51° 30′ 1.89″ N",
+			"lng": "0° 6′ 33.84″ W"
+		},
+		"MGRS": "30UYC0062309449",
+		"Maidenhead": "IO91wm",
+		"Mercator": {
+			"x": -12178.445276157312,
+			"y": 6710313.068983022
+		},
+		"geohash": "gcpuvx2k6",
+		"qibla": 119.00112658398905,
+		"sun": {
+			"rise": {
+				"apparent": 1785731284
+			},
+			"set": {
+				"apparent": 1785786464
+			}
+		}
+	}
 }
 ```
 
@@ -352,8 +349,8 @@ curl -s -X POST http://127.0.0.1:8081/parse -H 'content-type: application/json' 
 curl -s "http://127.0.0.1:8081/expand?address=1600%20Pennsylvania%20Ave%20NW"
 ```
 
-```
-{"expansions":["1600 Pennsylvania Ave NW","1600 Pennsylvania Avenue Northwest"]}
+```json
+{ "expansions": ["1600 Pennsylvania Ave NW", "1600 Pennsylvania Avenue Northwest"] }
 ```
 
 The route builds three strings — the input, its normalized form, and its abbreviation-expanded form —

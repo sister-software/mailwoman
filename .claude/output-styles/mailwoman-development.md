@@ -223,6 +223,10 @@ the reason that an obvious implementation is unsafe.
 Do not write comments that narrate the patch. Put change history in the commit message, pull request,
 or receipt.
 
+A date, a version number, or a list of affected packages inside a comment is the tell. Strike it and
+re-read the sentence. If the sentence no longer stands, it was history — move it. A measured number
+that still constrains the code is not history. Keep that.
+
 Before you add a comment, ask this question:
 
 > Will this comment help a reader who never saw the current diff?

@@ -87,7 +87,7 @@ console.log(decodeAsJson(tree))
 
 The full library surface — confidence, the per-stage pipeline result, resolution, browser
 loading, and configuration — is documented in the [`mailwoman` package
-README](./mailwoman/README.md) and in [Getting
+README](./packages/mailwoman/README.md) and in [Getting
 started](https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse).
 
 ## Drop-in servers
@@ -95,11 +95,11 @@ started](https://mailwoman.sister.software/docs/developers/get-started/install-a
 Already running a geocoding stack? Three HTTP servers speak the wire formats your clients
 use today — no PostgreSQL, no Elasticsearch, no `osm2pgsql` import:
 
-| Package                               | Speaks                                                | Start it                         |
-| ------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| [`@mailwoman/nominatim`](./nominatim) | Nominatim — `/search`, `/reverse`, `/status`          | `npx @mailwoman/nominatim serve` |
-| [`@mailwoman/photon`](./photon)       | Photon autocomplete — `/api`, `/reverse` (GeoJSON)    | `npx @mailwoman/photon serve`    |
-| [`@mailwoman/libpostal`](./libpostal) | libpostal — `/parse`, `/expand` (no gazetteer needed) | `npx @mailwoman/libpostal serve` |
+| Package                                        | Speaks                                                | Start it                         |
+| ---------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| [`@mailwoman/nominatim`](./packages/nominatim) | Nominatim — `/search`, `/reverse`, `/status`          | `npx @mailwoman/nominatim serve` |
+| [`@mailwoman/photon`](./packages/photon)       | Photon autocomplete — `/api`, `/reverse` (GeoJSON)    | `npx @mailwoman/photon serve`    |
+| [`@mailwoman/libpostal`](./packages/libpostal) | libpostal — `/parse`, `/expand` (no gazetteer needed) | `npx @mailwoman/libpostal serve` |
 
 Point geopy's `Nominatim(domain="localhost:8080")` at the first one and forward + reverse
 geocoding keep working. Every result carries an OpenCage-style `annotations` block —

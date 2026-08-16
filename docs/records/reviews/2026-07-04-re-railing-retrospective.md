@@ -75,7 +75,7 @@ session) skipped its releases.mdx row and left release.config.json stale — and
 
 **R6 — breaking sweeps mid-campaign: HELD.** No breaking cosmetic batch landed mid-campaign;
 #875 stays parked for the next major. The tax of the earlier sweep kept surfacing as key-rot
-(`postcodeDbByCountry` silently skipping postcode binaries at 5.1.0 prep) — each instance
+(`postcodeDBByCountry` silently skipping postcode binaries at 5.1.0 prep) — each instance
 repaired on contact, reinforcing the ship-whole-or-wait rule.
 
 ---
@@ -197,7 +197,7 @@ had been silently degraded since July 1** — three stacked failures, each maski
 1. The street tier was dead (#955): the acronym sweep renamed the _external_
    `window.createDbWorker`, sql.js-httpvfs's own export.
 2. The WOF cascade and the FST were dead (#957/#958): the sweep capitalized the `releases.json`
-   reads (`hasFST`/`hasWOFDb`) while the published manifest kept the old keys — every release
+   reads (`hasFST`/`hasWOFDB`) while the published manifest kept the old keys — every release
    read `undefined`, and both features switched off with zero console errors.
 3. Deepest: **#861's shared cascade had never executed in production at all** (#959). Its
    `createWOFResolver` import hit a deliberate webpack barrel-bypass alias whose comment still

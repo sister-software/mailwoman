@@ -1,0 +1,46 @@
+{
+	"name": "@mailwoman/address-id",
+	"version": "9.1.0",
+	"description": "Turn a canonicalized + geocoded address into a stable, parseable primary key (`<state>.<H3-cell>.<hash>`) for deterministic record joins / dedup — the exact-match complement to the fuzzy matcher.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/address-id"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/normalize": "workspace:*",
+		"h3-js": "^4.5.0"
+	},
+	"devDependencies": {
+		"@types/node": ">=26.1.2"
+	}
+}

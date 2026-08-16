@@ -48,7 +48,7 @@ Misreading handwritten postcodes is a common failure mode. A human writes `SW1A 
 
 ### "Every address has a postcode."
 
-Ireland did not have postcodes until Eircode launched in 2015. Hong Kong does not use postcodes for domestic mail. Rural addresses in many countries use descriptive directions instead of postal codes. Military addresses use APO/FPO codes that route through military postal hubs, not geographic locations.
+Ireland did not have postcodes until Eircode launched in 2015. Hong Kong does not use postcodes for domestic mail. Rural addresses in many countries use descriptive directions instead of postcodes. Military addresses use APO/FPO codes that route through military postal hubs, not geographic locations.
 
 Some countries have postcodes for parts of the country but not others. Some have postcodes that are assigned to delivery routes rather than geographic areas and are not published.
 
@@ -64,7 +64,7 @@ Douglas Perreault's condo in Florida changed ZIP codes twice in a few years: `33
 
 **Pelias** uses a similarly regex-based approach with per-country postcode patterns in its `postalcode` classifier. Pelias also uses the postcode to bias the resolver: if the postcode matches a known administrative area, the resolver weights candidates within that area higher. This is the right approach — the postcode is supplementary evidence, not a primary locator — but it requires maintaining a postcode-to-place mapping that drifts with postal service updates.
 
-**Google's API** handles postcodes as part of its integrated geocoding model. The API returns address components including postal code and uses the postal code as a search-space constraint. Google's coverage of international postcode formats is comprehensive, but the user cannot inspect or correct the postcode-to-place mapping.
+**Google's API** handles postcodes as part of its integrated geocoding model. The API returns address components including postcode and uses the postcode as a search-space constraint. Google's coverage of international postcode formats is comprehensive, but the user cannot inspect or correct the postcode-to-place mapping.
 
 ## What the neural approach changes
 

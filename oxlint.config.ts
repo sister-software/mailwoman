@@ -27,7 +27,7 @@ const config = createOxlintConfig({
 	// more than the missing comment did. Public surface is where a reader has no other context.
 	constantDocs: {
 		scope: "exported",
-		// Pastel command modules must export these, and the framework gives each its meaning — the
+		// Command modules export these as framework metadata; the
 		// `description` string IS the `--help` text. A JSDoc block above them can only restate it.
 		ignoreNames: ["description", "args", "options", "alias", "isDefault"],
 	},
@@ -62,7 +62,7 @@ const config = createOxlintConfig({
 			"SqliteDialect",
 			"SqliteDialectConfig",
 			"SqliteDriver",
-			// `LedgerAppendOptions` receives the Pastel option bag verbatim — its fields ARE the
+			// `LedgerAppendOptions` receives the CLI option bag verbatim — its fields ARE the
 			// `--run-id` flag names, and the house form is derived at the boundary.
 			"runId",
 		],
@@ -77,7 +77,7 @@ const config = createOxlintConfig({
 		"**/.venv/**",
 		"**/*.egg-info/**",
 		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
-		"sentencepiece-wasm/sentencepiece.mjs",
+		"packages/sentencepiece-wasm/sentencepiece.mjs",
 	],
 })
 
@@ -95,19 +95,19 @@ const config = createOxlintConfig({
  * No node-side check catches a violation: `yarn compile`, the test legs and the gauntlet never bundle. Only the
  * separate docs-build workflow does, which is minutes later and in another run.
  */
-const BROWSER_REACHABLE_NEURAL_FILES = ["neural/*.ts"]
+const BROWSER_REACHABLE_NEURAL_FILES = ["packages/neural/*.ts"]
 
 /**
  * The Node tier, exempt from the rule below. `index.ts` is the Node entry and re-exports the other three as values;
  * `test/**` and the nested directories fall outside the single-segment glob above on their own.
  */
 const NODE_TIER_NEURAL_FILES = [
-	"neural/index.ts",
-	"neural/onnx-runner.ts",
-	"neural/scorer.ts",
-	"neural/weights.ts",
-	"neural/*.test.ts",
-	"neural/vitest.config.ts",
+	"packages/neural/index.ts",
+	"packages/neural/onnx-runner.ts",
+	"packages/neural/scorer.ts",
+	"packages/neural/weights.ts",
+	"packages/neural/*.test.ts",
+	"packages/neural/vitest.config.ts",
 ]
 
 /**

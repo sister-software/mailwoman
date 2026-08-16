@@ -35,7 +35,7 @@
 
 import { spawnSync } from "node:child_process"
 import type { PathLike } from "node:fs"
-import { copyFileSync, existsSync, mkdirSync, readFileSync, unlinkSync } from "node:fs"
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, unlinkSync } from "node:fs"
 import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
 import { resolve } from "node:path"
 
@@ -44,7 +44,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 
-import { derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
+import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
 
 const repoRoot = repoRootPath()
 
@@ -67,6 +67,17 @@ function serveFromDerivedStore(dir: string, filename: string): boolean {
 	const cached = resolve(derivedStore, filename)
 
 	if (!existsSync(cached)) return false
+
+	// A poisoned entry is worse than a miss: it reports HIT while feeding a channel nothing (#1528's
+	// empty postcode-gb.bin). Refuse, evict, rebuild.
+	const violation = derivedStoreServeViolation(filename, cached)
+
+	if (violation) {
+		process.stderr.write(`derived store POISONED entry evicted → ${filename}: ${violation}\n`)
+		rmSync(cached, { force: true })
+
+		return false
+	}
 
 	const dest = resolve(dir, filename)
 
@@ -93,6 +104,17 @@ function serveFromDerivedStore(dir: string, filename: string): boolean {
  * next run five minutes and nothing else.
  */
 function stashDerived(dir: string, filename: string): void {
+	// Never poison the store: a below-floor build must not become the artifact every future run
+	// receives as a HIT. The build-time floors are the primary gate; this holds when they are
+	// bypassed (a stale-compiled builder predating them was #1528's exact shape).
+	const violation = derivedStoreServeViolation(filename, resolve(dir, filename))
+
+	if (violation) {
+		process.stderr.write(`derived store stash REFUSED for ${filename}: ${violation}\n`)
+
+		return
+	}
+
 	try {
 		mkdirSync(derivedStore, { recursive: true })
 		copyFileSync(resolve(dir, filename), resolve(derivedStore, filename))
@@ -116,7 +138,7 @@ interface PairIndexBuildInputs {
 	 * per-locale gate rather than an oversight.
 	 */
 	parentDelta?: number
-	boroughDb?: string
+	boroughDB?: string
 	pairsJsonl?: string
 	banDir?: string
 }
@@ -196,7 +218,7 @@ const PAIR_INDEX_BY_COUNTRY: Record<string, PairIndexBuildInputs> = SOFT_FEED.pa
 /**
  * Weights workspaces to materialize, derived from the release config's locale list.
  */
-const TARGETS = config.locales.map((locale: string) => `neural-weights-${locale}`)
+const TARGETS = config.locales.map((locale: string) => `packages/neural-weights-${locale}`)
 
 async function exists(path: PathLike) {
 	try {
@@ -256,7 +278,7 @@ async function main() {
  * no FST sibling and is skipped silently (byte-stable).
  */
 async function materializeFST(workspace: string, dir: string) {
-	const locale = workspace.replace(/^neural-weights-/, "")
+	const locale = workspace.replace(/^packages\/neural-weights-/, "")
 	const src = resolve(dataRoot, "wof", "fst-per-locale", `fst-${locale}.bin`)
 
 	if (!existsSync(src)) {
@@ -352,7 +374,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's
 	// region subtag (`en-us` → `us`) names both the binary and the postcodeDBByCountry source entry.
-	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
+	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const dbRel = SOFT_FEED.postcodeDBByCountry?.[country]
 
 	if (!dbRel) {
@@ -376,11 +398,10 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 	if (serveFromDerivedStore(dir, `postcode-${country}.bin`)) return
 
 	await removeIfPresent(binDest)
-	// `gazetteer postcode-binary` is the compiled Pastel command (ported from the old
-	// scripts/build-postcode-binary.ts). `.release-it.json` runs `yarn compile` right before this
-	// script, so mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
+	// `.release-it.json` runs `yarn compile` before invoking `gazetteer postcode-binary`,
+	// script, so packages/mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
 	// postcode-<cc>.bin directly where the `files` array expects it.
-	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+	const cli = resolve(repoRoot, "packages/mailwoman/out/cli.js")
 
 	const r = spawnSync(
 		process.execPath,
@@ -403,7 +424,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
  * `pairIndexByCountry` entry ships no pair-index sibling and is skipped silently (not every locale gets one).
  */
 async function materializePairIndex(workspace: string, dir: string) {
-	const country = workspace.replace(/^neural-weights-[a-z]+-/, "")
+	const country = workspace.replace(/^packages\/neural-weights-[a-z]+-/, "")
 	const entry = PAIR_INDEX_BY_COUNTRY[country]
 
 	if (!entry) {
@@ -411,11 +432,11 @@ async function materializePairIndex(workspace: string, dir: string) {
 	}
 
 	// Inputs resolve against DIFFERENT roots, and conflating them is a real failure mode (it broke CI once):
-	// `source` and `boroughDb` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
+	// `source` and `boroughDB` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
 	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). Absolute paths pass through untouched either way.
 	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolve(root, value))
 	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
-	const boroughDb = entry.boroughDb ? resolveFrom(dataRoot, entry.boroughDb) : undefined
+	const boroughDB = entry.boroughDB ? resolveFrom(dataRoot, entry.boroughDB) : undefined
 
 	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
@@ -435,7 +456,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 
 	for (const [label, path] of [
 		["source CSV", source],
-		["borough DB", boroughDb],
+		["borough DB", boroughDB],
 
 		["BAN dir", banDir],
 	] as const) {
@@ -451,9 +472,9 @@ async function materializePairIndex(workspace: string, dir: string) {
 	if (serveFromDerivedStore(dir, `pair-index-${country}.bin`)) return
 
 	await removeIfPresent(binDest)
-	// `gazetteer pair-index` is the compiled Pastel command; `.release-it.json` runs `yarn compile` right
-	// before this script, so mailwoman/out/cli.js exists (same precondition as postcode-binary above).
-	const cli = resolve(repoRoot, "mailwoman/out/cli.js")
+	// `.release-it.json` runs `yarn compile` before invoking `gazetteer pair-index`, so
+	// packages/mailwoman/out/cli.js exists (same precondition as postcode-binary above).
+	const cli = resolve(repoRoot, "packages/mailwoman/out/cli.js")
 
 	const r = spawnSync(
 		process.execPath,
@@ -470,7 +491,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 			...(source ? ["--source", source] : []),
 			...(entry.transitionBeta !== undefined ? ["--transition-beta", String(entry.transitionBeta)] : []),
 			...(entry.parentDelta !== undefined ? ["--parent-delta", String(entry.parentDelta)] : []),
-			...(boroughDb ? ["--borough-db", boroughDb] : []),
+			...(boroughDB ? ["--borough-db", boroughDB] : []),
 			...(pairsJsonl ? ["--pairs-jsonl", pairsJsonl] : []),
 			...(banDir ? ["--ban-dir", banDir] : []),
 		],

@@ -45,7 +45,7 @@ runs:
 
     - name: Generate + verify API clients
       shell: bash
-      run: node mailwoman/out/cli.js clients generate
+      run: node packages/mailwoman/out/cli.js clients generate
 
     # `actions/upload-artifact` can't glob a directory tree into one file, so the Rust crate
     # (Cargo.toml, src/, vendored openapi/*.json, examples/, license texts) is tarred here for the

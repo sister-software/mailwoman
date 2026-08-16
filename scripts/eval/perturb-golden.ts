@@ -24,6 +24,7 @@ import { dirname, join } from "node:path"
 import { parseArgs } from "node:util"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { tempRootPath } from "@mailwoman/core/utils"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -35,7 +36,7 @@ const { values: rawValues } = parseArgs({
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { golden?: string; out?: string; "per-file"?: string }
 const GOLDEN = values["golden"] || "data/eval/golden/v0.1.2"
-const OUT = values["out"] || "/tmp/perturb-eval/perturbed.jsonl"
+const OUT = values["out"] || tempRootPath("perturb-eval", "perturbed.jsonl")
 const PER_FILE = Number(values["per-file"] || "60")
 
 interface GoldenRow {

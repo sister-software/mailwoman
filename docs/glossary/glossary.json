@@ -1614,7 +1614,7 @@
 		},
 		{
 			"term": "postcode",
-			"definition": "The country-specific postal code (US ZIP, French code postal, etc.). Mailwoman handles postcode parsing entirely by rule classifier — a regex problem, not an ML one.",
+			"definition": "The country-specific postcode (US ZIP, French code postal, etc.). Mailwoman handles postcode parsing entirely by rule classifier — a regex problem, not an ML one.",
 			"tags": ["postcode"],
 			"relatedTerms": ["component tag", "rule-based classifier", "anchor inference"]
 		},

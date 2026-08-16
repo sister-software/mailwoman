@@ -621,7 +621,7 @@ export function useDemoMapRuntime({
 
 	const parseStageLabels = useMemo(
 		() =>
-			rt.selectedRelease?.hasWOFDb
+			rt.selectedRelease?.hasWOFDB
 				? ["Analyzing input shape…", "Running neural classifier…", "Resolving in gazetteer…"]
 				: ["Analyzing input shape…", "Running neural classifier…"],
 		[rt.selectedRelease]

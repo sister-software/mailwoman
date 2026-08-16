@@ -1,0 +1,93 @@
+{
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"properties": { "name": "12th Ave", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.65, 45.47],
+					[-122.65, 45.55]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "SE Cesar Chavez Blvd", "kind": "major_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.62, 45.47],
+					[-122.62, 45.55]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "34th Ave", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.59, 45.47],
+					[-122.59, 45.55]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "40th Ave", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.56, 45.47],
+					[-122.56, 45.55]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "SE Division St", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.68, 45.49],
+					[-122.55, 45.49]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "SE Clinton St", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.68, 45.5034],
+					[-122.55, 45.5034]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "SE Hawthorne Blvd", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.68, 45.51],
+					[-122.55, 45.51]
+				]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "SE Burnside St", "kind": "minor_road" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.68, 45.53],
+					[-122.55, 45.53]
+				]
+			}
+		}
+	]
+}

@@ -50,7 +50,7 @@ Each individual classification is **correct in isolation**. The error is in the 
 
 The solver receives:
 
-```
+```json
 {street_prefix: "Saint", confidence: 0.9}
 {locality: "Petersburg", confidence: 0.8}
 {region: "FL", confidence: 1.0}
@@ -89,7 +89,7 @@ Traditional parsers report high confidence on dict hits even when the overall pa
 
 The output:
 
-```
+```json
 {street_prefix: "Saint", confidence: 0.9}
 {locality: "Petersburg", confidence: 0.85}
 {region: "FL", confidence: 1.0}

@@ -24,7 +24,7 @@ That's it. Three steps, each deterministic, each trivially updateable when a new
 ## When it works
 
 - **You need rough geographic distribution.** A marketing campaign targeting "customers in 90210." A delivery zone analysis. A regional sales territory assignment. Postcode-level accuracy is sufficient for statistical aggregation and regional routing.
-- **You're in a country with precise postcodes.** UK postcodes cover ~15 addresses on average. Irish Eircodes are unique per delivery point. Canadian postal codes cover one side of one block face. In these countries, postcode-only geocoding is nearly building-level.
+- **You're in a country with precise postcodes.** UK postcodes cover ~15 addresses on average. Irish Eircodes are unique per delivery point. Canadian postcodes cover one side of one block face. In these countries, postcode-only geocoding is nearly building-level.
 - **You're in the US and your use case is regional.** ZIP-level geocoding in Manhattan is off by a few blocks. ZIP-level geocoding in rural Montana is off by 10-15 miles. If your application needs "which state/county is this in?" not "which building is this at?", ZIP centroids work.
 - **You have the rest of the address for non-geographic use.** The street and building number are for printing shipping labels, not for geocoding. The geocoder only needs to answer "which delivery zone?" and the postcode answers that.
 - **You need speed.** A regex extraction + hash table lookup is microseconds per address. You can geocode millions of addresses on a laptop.

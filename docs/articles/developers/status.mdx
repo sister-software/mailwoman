@@ -105,6 +105,13 @@ path.
 
 ## Limits
 
+Cross-locale input is part of the current parser and resolver work, with a precise boundary. The
+parser preserves and labels the text it receives; the gazetteer can connect multilingual aliases and
+established transliterations to one place identity. Mailwoman does not currently translate arbitrary
+address strings. See [Cross-locale queries](./knowledge-base/localization/cross-locale-queries.mdx) for
+the behavior of English-written Japanese addresses, kana-written US addresses, and unsupported
+scripts.
+
 Each row states the limit and the next step. Where a limit is a default rather than an absence, the
 next step turns it on.
 
@@ -116,6 +123,7 @@ next step turns it on.
 | One classifier instance loads one locale.                                                  | Construct one `NeuralAddressClassifier` per locale you serve.                                                      |
 | Korean addresses have no parser claim, and no open data path has been adopted.             | None today. The constraint is data licensing, not engineering.                                                     |
 | CJK scripts route through a character-level path that is scaffolded and deferred.          | Use the resolver route for JP postcodes; do not rely on a parse claim.                                             |
+| Cross-language resolution requires a recorded gazetteer alias or transliteration.          | Supply the expected locale and keep unresolved results visible; arbitrary translation is not performed.            |
 | Published packages carry no sigstore provenance attestation.                               | Verify with the published SBOMs instead. See [Security and compliance](../about/security-and-compliance.mdx).      |
 
 ## Rationale

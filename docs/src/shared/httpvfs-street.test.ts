@@ -20,11 +20,11 @@ import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "./httpvfs-street
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
  */
-function stubWorker(innerDb: DatabaseSync) {
+function stubWorker(innerDB: DatabaseSync) {
 	return {
 		db: {
 			async exec(sql: string) {
-				const rows = innerDb.prepare(sql).all() as Record<string, unknown>[]
+				const rows = innerDB.prepare(sql).all() as Record<string, unknown>[]
 
 				if (!rows.length) return []
 				const columns = Object.keys(rows[0]!)
@@ -35,19 +35,19 @@ function stubWorker(innerDb: DatabaseSync) {
 	}
 }
 
-const openDbs: DatabaseSync[] = []
+const openDatabases: DatabaseSync[] = []
 
 function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
 	setup(d)
-	openDbs.push(d)
+	openDatabases.push(d)
 
 	return d
 }
 
 afterEach(() => {
-	while (openDbs.length) {
-		openDbs.pop()!.close()
+	while (openDatabases.length) {
+		openDatabases.pop()!.close()
 	}
 })
 

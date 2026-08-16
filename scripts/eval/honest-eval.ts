@@ -33,7 +33,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
@@ -41,14 +41,14 @@ async function main() {
 	// zx: capture output ourselves and slice/parse in JS the way the bash awk/jq/grep pipes did.
 	$.verbose = false
 
-	let MODEL = "neural-weights-en-us/model.onnx"
-	let CARD = "neural-weights-en-us/model-card.json"
-	let TOK = "neural-weights-en-us/tokenizer.model"
+	let MODEL = "packages/neural-weights-en-us/model.onnx"
+	let CARD = "packages/neural-weights-en-us/model-card.json"
+	let TOK = "packages/neural-weights-en-us/tokenizer.model"
 	const WOF_DEFAULT = `${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
 	let WOF = WOF_DEFAULT
 	let LABEL = "run"
 	let OUT = ""
-	let TMP = "/tmp/honest"
+	let TMP = tempRootPath("honest")
 
 	// STRICT parseArgs — the original switch errored on unknown args; parity preserved.
 	let cliValues: Record<string, string | boolean | undefined>

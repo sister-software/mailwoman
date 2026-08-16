@@ -34,7 +34,7 @@ function stubWorker(db: DatabaseSync) {
 	}
 }
 
-const openDbs: DatabaseSync[] = []
+const openDatabases: DatabaseSync[] = []
 
 function makeDB(withSideIndex: boolean): DatabaseSync {
 	const d = new DatabaseSync(":memory:")
@@ -65,14 +65,14 @@ function makeDB(withSideIndex: boolean): DatabaseSync {
 		`)
 	}
 
-	openDbs.push(d)
+	openDatabases.push(d)
 
 	return d
 }
 
 afterEach(() => {
-	while (openDbs.length) {
-		openDbs.pop()!.close()
+	while (openDatabases.length) {
+		openDatabases.pop()!.close()
 	}
 })
 

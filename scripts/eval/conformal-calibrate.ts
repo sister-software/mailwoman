@@ -52,7 +52,7 @@ import { parseArgs } from "node:util"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath, median } from "@mailwoman/core/utils"
+import { dataRootPath, median, tempRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -213,8 +213,8 @@ async function buildCascade(paths: {
 	tokenizerPath: string
 	modelCardPath: string
 	wofPaths: string[]
-	addressPointsDb: string
-	interpolationDb: string
+	addressPointsDB: string
+	interpolationDB: string
 }) {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
@@ -238,18 +238,18 @@ async function buildCascade(paths: {
 	return {
 		neural,
 		resolver: createWOFResolver(backend as never),
-		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDb),
-		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDb }),
+		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDB),
+		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDB }),
 	}
 }
 
 async function main(): Promise<void> {
-	const holdoutPath = values["holdout"] || "/tmp/ood-truth.jsonl"
-	const addressPointsDb = values["address-points"] || "/tmp/tx-situs.db"
-	const interpolationDb = values["interpolation"] || "/tmp/tx-metro-interp.db"
-	const modelPath = values["model"] || "neural-weights-en-us/model.onnx"
-	const tokenizerPath = values["tokenizer"] || "neural-weights-en-us/tokenizer.model"
-	const modelCardPath = values["model-card"] || "neural-weights-en-us/model-card.json"
+	const holdoutPath = values["holdout"] || tempRootPath("ood-truth.jsonl")
+	const addressPointsDB = values["address-points"] || tempRootPath("tx-situs.db")
+	const interpolationDB = values["interpolation"] || tempRootPath("tx-metro-interp.db")
+	const modelPath = values["model"] || "packages/neural-weights-en-us/model.onnx"
+	const tokenizerPath = values["tokenizer"] || "packages/neural-weights-en-us/tokenizer.model"
+	const modelCardPath = values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 
 	const wofPaths = (
 		values["wof"] ||
@@ -266,7 +266,7 @@ async function main(): Promise<void> {
 	const rows: HoldoutRow[] = await Array.fromAsync(JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath))
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
-	console.error(`[conformal-calibrate] situs: ${addressPointsDb}  interp: ${interpolationDb}`)
+	console.error(`[conformal-calibrate] situs: ${addressPointsDB}  interp: ${interpolationDB}`)
 	console.error(`[conformal-calibrate] model: ${modelPath}`)
 
 	const { neural, resolver, addressPoints, interpolation } = await buildCascade({
@@ -274,8 +274,8 @@ async function main(): Promise<void> {
 		tokenizerPath,
 		modelCardPath,
 		wofPaths,
-		addressPointsDb,
-		interpolationDb,
+		addressPointsDB,
+		interpolationDB,
 	})
 
 	// --- run the cascade ---

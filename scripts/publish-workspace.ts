@@ -61,7 +61,7 @@ if (!workspacePath) {
 }
 
 const SKIP_WEIGHTS = !!$public.MAILWOMAN_SKIP_WEIGHTS
-const isWeightsWorkspace = workspacePath.startsWith("./neural-weights-")
+const isWeightsWorkspace = workspacePath.startsWith("./packages/neural-weights-")
 
 if (SKIP_WEIGHTS && isWeightsWorkspace) {
 	console.error(`publish-workspace: MAILWOMAN_SKIP_WEIGHTS set — skipping ${workspacePath}`)
@@ -87,14 +87,14 @@ try {
 
 	packWorkspaceForPublish(cwd, tarballPath)
 
-	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target
-	// AND every literal `files` entry (see verify-tarball.ts for the en-in incident this second
-	// guard exists for).
+	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target,
+	// every literal `files` entry (see verify-tarball.ts for the en-in incident that guard exists for),
+	// and every `bin` target.
 	try {
 		const audit = verifyTarball(tarballPath)
 
 		console.error(
-			`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files)`
+			`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files, ${audit.binTargets} bin targets)`
 		)
 	} catch (error) {
 		console.error(error instanceof Error ? error.message : error)
@@ -114,12 +114,12 @@ try {
 		publishArgs.push("--otp", otp)
 	}
 
-	// --provenance is opt-in via MAILWOMAN_NPM_PROVENANCE=1. The npm registry
-	// rejects --provenance on private source repositories with E422 because
-	// sigstore attestations link to source code that third parties can't
-	// verify. Trusted Publishing itself works fine without --provenance; flip
-	// the env var on once the repo goes public.
-	if ($public.MAILWOMAN_NPM_PROVENANCE === "1") {
+	// npm can only mint a provenance attestation from a CI provider it supports, so this is gated on GitHub Actions
+	// rather than on CI generally: a local `yarn release` passing --provenance fails outright, with no OIDC token to
+	// sign against. Trusted Publishing works either way — the attestation is the part that needs the CI identity.
+	//
+	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
+	if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
 		publishArgs.push("--provenance")
 	}
 

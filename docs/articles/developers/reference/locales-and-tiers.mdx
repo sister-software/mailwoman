@@ -17,6 +17,12 @@ Read the two lists as answering different questions. The tier table answers "how
 measured". The shipping table answers "what will `npm install` and `mailwoman data pull` give me".
 They do not line up, and the mismatch is the point.
 
+A locale also does not have to match the country named by the address. Mailwoman treats the request
+locale, the input's script and postal evidence, and the gazetteer's multilingual names as separate
+signals. [Cross-locale queries](../knowledge-base/localization/cross-locale-queries.mdx) explains what
+happens when an address is written in another language or script, and where translation falls outside
+the current pipeline.
+
 Tiers are maintained in the scope declaration at
 [`SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) and
 reproduced here. The table below is the declaration of 2026-07-02; several packages listed under
@@ -148,5 +154,7 @@ counsel rather than by a training run.
 - [Packages](./packages.mdx) — installing a locale overlay.
 - [Footprints](./footprints.mdx) — what each of these downloads costs.
 - [What ships today](../status.mdx) — the release these tables describe.
+- [Cross-locale queries](../knowledge-base/localization/cross-locale-queries.mdx) — parsing, aliases,
+  transliteration, and translation are separate capabilities.
 - [Keep data fresh](../how-to/keep-data-fresh.mdx) — when a bundle is superseded.
 - [`SCOPE.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/SCOPE.mdx) — where the tiers are maintained.

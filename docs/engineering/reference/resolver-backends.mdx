@@ -126,6 +126,39 @@ mailwoman eval oa-resolver \
   [--candidate-db <path>]
 ```
 
+## What the candidate backend does not implement
+
+`ResolverBackend` marks `ancestors()` and `coincidentLocalitiesFor()` optional, and
+`WOFCandidateTableLookup` implements neither — its public surface is `findPlace` and `close`.
+`candidate.db` has no `ancestors` table for them to read, so this is a missing build output rather
+than a missing method.
+
+The resolver guards both with a plain return, and the option they serve — `hierarchyCompletion` —
+**defaults to ON**. So on the default backend a caller who never touched the option gets a feature
+that reports success and does nothing:
+
+| Absent method               | What stops working                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ancestors()`               | a parse that drops the locality of a city-state or dependent locality keeps the gap; `metadata.ancestors` — the containment lineage the Nominatim and Photon drop-ins expose — is never populated |
+| `coincidentLocalitiesFor()` | the dual-role pass never runs, so a region that is also a locality under the same name resolves to one role only                                                                                  |
+
+`Resolver.capabilityGaps` carries this as data and the resolver states each gap once on stderr, so
+the absence is legible rather than inferred. Reading it is not a substitute for closing it.
+
+**Before FTS can retire**, in order:
+
+1. Build an `ancestors` table into `candidate.db` (`build-candidate.ts`) and implement both methods
+   on `WOFCandidateTableLookup`. Until then the candidate backend cannot serve `hierarchyCompletion`,
+   and the drop-ins cannot serve ancestry.
+2. Port the remaining FTS-only paths: the NL postcode retry ladder, the `near`/`maxDistanceKm` hard
+   filters, and the Geographic Rule Engine conventions.
+3. Retire the last hard pin. `commands/registry/run.tsx` constructs `WOFSqlitePlaceLookup` directly
+   on purpose, so that migrated evals reproduce the retired scripts' numbers; it needs an explicit
+   flag before the class disappears.
+
+Removing FTS ahead of that list breaks the pin, ~16 test suites, and every `MAILWOMAN_CANDIDATE_DB=none`
+caller — who would lose all resolution rather than fall back.
+
 ## Scores are not comparable across backends
 
 `node.metadata.resolver_score` is bm25-derived on FTS (≈19–41) and population/`neg_rank`-derived on

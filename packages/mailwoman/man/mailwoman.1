@@ -1,0 +1,225 @@
+.TH MAILWOMAN 1 "" "mailwoman 9.1.0" "User Commands"
+.SH NAME
+mailwoman \- calibrated, retrieval\-augmented postal\-address parser and geocoder
+.SH SYNOPSIS
+.B mailwoman
+[command] [options]
+.br
+.B mw
+[command] [options]
+.SH DESCRIPTION
+Parse postal addresses into labeled components, geocode them against local sealed
+data artifacts, and manage the reference databases those lookups read. The
+.B mw
+binary is an alias for
+.BR mailwoman .
+Every command answers
+.B \-\-help
+with more detail than this page; the sections below cover the commands an installer
+runs directly. Maintainer surfaces (corpus, eval, gazetteer, release) are documented
+in the repository.
+.SH COMMANDS
+.nf
+Usage: mw <command> [options]
+
+Commands:
+  autocomplete      Complete a place\-name prefix from the FST gazetteer.
+  clients
+  corpus
+  coverage
+  data
+  dev
+  doctor            Check runtime, model, and optional data readiness.
+  eval
+  filer
+  gazetteer
+  geocode           Turn an address into a coordinate.
+  gnaf
+  openapi           Emit the native API OpenAPI document.
+  parse
+  placer
+  poi
+  registry
+  release
+  reverse           Resolve a coordinate to its administrative hierarchy.
+  serve
+  situs
+  skill
+  tiger
+  tiles
+  wof
+
+Options:
+  \-h, \-\-help        Show help.
+  \-v, \-\-version     Show version.
+.fi
+.SH PARSE
+.nf
+Usage: mw parse <address...> [options]
+
+Label the parts of an address — house number, street, locality, postcode — without looking anything
+up: the output is your input, segmented and tagged. `mailwoman geocode` runs this same parse, then
+resolves those parts against the gazetteer to produce a coordinate.
+
+Arguments:
+  address                   Formatted postal address
+
+Options:
+  \-h, \-\-help                      Show command help.
+  \-\-debug                                     Enable verbose output (default: false)
+  \-\-input\-mode <string>                       Input register
+  \-\-locale <string>                           BCP\-47 locale (default: en\-US)
+  \-\-default\-country <string>                  Resolver country scope
+  \-\-country\-scope <string>                    Locale country\-scoping policy (default: auto)
+  \-\-[no\-]admin\-coherence                      Joint admin consistency (default: true)
+  \-\-[no\-]postcode\-country\-coherence           Postcode country consistency (default: true)
+  \-\-postcode\-shape\-coherence                  Postcode shape consistency (default: false)
+  \-\-postcode\-containment\-coherence            Postcode containment reranking (default: false)
+  \-\-neural                                    Use neural\-only path (default: false)
+  \-\-[no\-]poi                                  Enable POI query detection (default: true)
+  \-\-download\-weights                          Download missing weights (default: false)
+  \-\-degraded                                  Run structural stages only (default: false)
+  \-\-format <string>                           Output projection (default: json)
+  \-\-model <string>                            Explicit model path
+  \-\-tokenizer <string>                        Explicit tokenizer path
+  \-\-policy <string>                           Repeatable component policy override
+  \-\-resolve                                   Resolve parsed nodes against WOF (default: false)
+  \-\-resolve\-db <string>                       WOF SQLite distribution
+  \-\-[no\-]street\-evidence\-rerank               Rerank street from atlas evidence (default: true)
+  \-\-candidates <number>                       Alternative resolutions per node
+  \-\-benchmark <number>                        Benchmark iteration count
+.fi
+.SH GEOCODE
+.nf
+Usage: mw geocode [address...] [options]
+
+Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and
+rooftop/interpolation shards.
+
+Arguments:
+  address                   A formatted postal address to geocode. Omit when using \-\-stdin.
+
+Options:
+  \-h, \-\-help                      Show command help.
+  \-\-locale <locale>                           Locale tag matching a weights package, such as en\-US
+                                              or fr\-FR. (default: en\-US)
+  \-\-bias <points>                             Soft proximity\-bias points: lat,lon[:weight];lat,lon.
+  \-\-default\-country <country>                 ISO\-3166 resolver country scope; pass none to disable
+                                              it.
+  \-\-country\-scope <string>                    Apply the locale\-inferred resolver scope
+                                              automatically, always, or never. (default: auto)
+  \-\-resolve\-db <path>                         WOF admin SQLite distribution.
+  \-\-candidate\-db <path>                       Demo\-parity byte\-range candidate database.
+  \-\-data\-root <path>                          Root containing address\-point, interpolation, WOF,
+                                              POI, and other data shards.
+  \-\-address\-points\-db <path>                  Explicit address\-point SQLite shard, bypassing region
+                                              selection.
+  \-\-interpolation\-db <path>                   Explicit interpolation SQLite shard, bypassing region
+                                              selection.
+  \-\-interp\-calibration <multiplier>           Force one interpolation uncertainty calibration
+                                              multiplier.
+  \-\-locale\-country\-prior                      Use a withheld locale country as a soft resolver
+                                              ranking prior. (default: false)
+  \-\-[no\-]gazetteer\-prior                      Feed the gazetteer FST prior to the parse;
+                                              \-\-no\-gazetteer\-prior disables it. (default: true)
+  \-\-[no\-]place\-country                        Use the coarse\-placer country prior;
+                                              \-\-no\-place\-country disables it. (default: true)
+  \-\-[no\-]postcode\-country\-coherence           Allow coherent postcode/locality evidence to override
+                                              a wrong country scope. (default: true)
+  \-\-[no\-]fork\-entity                          Probe POI data for exact entities when a fork parse
+                                              does not resolve. (default: true)
+  \-\-postcode\-shape\-coherence                  Opt into postcode shape exclusion/demotion. (default:
+                                              false)
+  \-\-postcode\-containment\-coherence            Opt into postcode\-centroid locality reranking.
+                                              (default: false)
+  \-\-place\-country\-threshold <probability>     Coarse\-placer abstention threshold. (default: 0.9)
+  \-\-format <string>                           Output format. (default: json)
+  \-\-json                                      Shorthand for \-\-format json. (default: false)
+  \-\-text                                      Shorthand for \-\-format text. (default: false)
+  \-\-jsonld                                    Shorthand for \-\-format jsonld. (default: false)
+  \-\-debug                                     Open the interactive parse/resolution/map view.
+                                              (default: false)
+  \-\-debug\-size <COLSxROWS>                    Frame size for non\-TTY debug rendering. (default:
+                                              120x36)
+  \-\-stdin                                     Read one address per line and emit one JSON object per
+                                              line using one warm session. (default: false)
+  \-\-timing                                    Write startup, initialization, and per\-address phase
+                                              timings to stderr. (default: false)
+  \-\-tiles <path>                              PMTiles archive for the debug map pane.
+.fi
+.SH AUTOCOMPLETE
+.nf
+Usage: mw autocomplete [prefix...] [options]
+
+Return ranked place\-name completions for a prefix from the FST gazetteer.
+
+Arguments:
+  prefix                    Prefix string to complete.
+
+Options:
+  \-h, \-\-help                      Show command help.
+  \-\-limit <number>                            Maximum number of completions. (default: 10)
+  \-\-fst <path>                                FST binary; defaults from $MAILWOMAN_FST_BIN.
+  \-\-json                                      Emit a JSON array instead of formatted text. (default:
+                                              false)
+.fi
+.SH DOCTOR
+.nf
+Usage: mw doctor [options]
+
+Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node,
+ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is
+reported, never fatal, and every failing line carries the one command that closes it.
+
+
+Options:
+  \-h, \-\-help                      Show command help.
+  \-\-json                                      Emit the report as JSON instead of a checklist: {
+                                              checks: [{ id, label, status, detail, consequence?,
+                                              fix?, core }], exitCode } — a superset of { id,
+                                              status, detail, fix? } (label + core + consequence aid
+                                              machine consumers). With \-\-verbose, an `environment`
+                                              array of { key, value, source } is added. (default:
+                                              false)
+  \-\-verbose                                   Also print every path and environment variable the
+                                              checks resolved (data root, candidate.db, WOF shards,
+                                              weights) so a surprising verdict can be traced to the
+                                              setting that caused it. No \-v short form: the root
+                                              program owns \-v for \-\-version. (default: false)
+.fi
+.SH DATA
+.nf
+Usage: mw data [options]
+
+Fetch the reference databases geocoding needs — far too large to ship inside the npm package. `data
+\-\-list` shows what exists, `data pull <bundle>` downloads one, `data status` reports what is already
+on disk, and `mailwoman doctor` names the one you are missing.
+
+
+Options:
+  \-h, \-\-help                      Show command help.
+  \-\-list                                      List every downloadable bundle (default: false)
+.fi
+.SH SERVE
+.nf
+Usage: mw serve [options]
+
+Run the Mailwoman HTTP server
+
+
+Options:
+  \-h, \-\-help                      Show command help.
+  \-\-port <number>                             Port to listen on (default: 3000)
+  \-\-host <string>                             Network interface to bind (default: 0.0.0.0)
+  \-\-cpus <number>                             Worker processes. Default: every available core
+.fi
+.SH ENVIRONMENT
+.TP
+.B MAILWOMAN_DATA_ROOT
+Root directory for the reference data artifacts (candidate gazetteer, POI layer,
+street shards). Defaults to a platform data directory; `mailwoman doctor \-\-verbose`
+prints every resolved path.
+.SH SEE ALSO
+Project documentation: https://mailwoman.sister.software
+.br
+Issues: https://github.com/sister-software/mailwoman

@@ -136,3 +136,45 @@ Two traps, both of which produced a wrong answer during the original sweep:
 
 The probes live in `scratchpad/` on the branch that produced this page: `batch-export-probe.py`,
 `ort-threads-probe.mjs`, `parse-profile.run.ts`, `parse-concurrency.run.ts`, `parse-cpu.run.ts`.
+
+## CLI cold start versus a warm stream
+
+Measure the installed executable directly when profiling Mailwoman; `npx` adds package-runner startup that is not part
+of `mw` itself. `hyperfine` repeats whole-process launches (process-cold, normally filesystem-cache-warm):
+
+```bash
+hyperfine --warmup 0 --runs 10 \
+  './node_modules/.bin/mw geocode "3215 SE Clinton St. Portland OR" >/dev/null'
+```
+
+Add `--timing` to attribute the wall time. Diagnostics go to stderr, leaving the result on stdout valid JSON:
+
+```bash
+./node_modules/.bin/mw geocode --timing \
+  "3215 SE Clinton St. Portland OR" >/dev/null
+```
+
+The report separates the launcher/CLI import graph, session import, one-time session initialization (weights, resolver,
+backends, optional providers, priors), and the warm parse/resolve phases. For persistent sequential throughput, feed one
+address per line. The command initializes once and emits one compact JSON object per line:
+
+The launcher and router import only the selected command. Root and group help enumerate command paths without importing
+their implementations; detailed command help imports only that command and the help renderer. A large CLI-import bucket
+therefore points to the selected command's static dependency graph rather than unrelated commands.
+
+```bash
+/usr/bin/time -v sh -c \
+  './node_modules/.bin/mw geocode --stdin < addresses.txt > /dev/null'
+
+pv -l addresses.txt | ./node_modules/.bin/mw geocode --stdin | pv -l >/dev/null
+```
+
+For an apples-to-apples comparison, repeated processes include cold start for every address while stdin pays it once:
+
+```bash
+hyperfine --runs 5 \
+  'while IFS= read -r address; do ./node_modules/.bin/mw geocode "$address"; done < addresses.txt >/dev/null' \
+  './node_modules/.bin/mw geocode --stdin < addresses.txt >/dev/null'
+```
+
+`xargs -P` is a separate capacity/concurrency measurement, not warm sequential throughput.

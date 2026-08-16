@@ -8,7 +8,7 @@
 
 1. **Scope:** corpus/scripts, codegen/lint (`mailwoman dev`), registry/tiger/coarse-placer tools, AND the eval harness. Release-it hook scripts stay plain (release-it invokes them headless; a compile step in the release path buys nothing).
 2. **Logic home:** the owning workspace (`corpus/tools/`, `registry/tools/`, …). Command `.tsx` files are thin wrappers in `mailwoman/commands/` (Pastel file-routing requires they live there).
-3. **WOF bins:** absorb into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated — verified:** the demo runtime's `hasWOFDb` branch loads the version-independent candidate table via httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`); `wof-hot.db` is never fetched. `buildSlimWOFDatabase` (the module) survives solely as the resolver-wof-wasm test-fixture builder. **Bellwether: the demo production smoke stays green.**
+3. **WOF bins:** absorb into `mailwoman gazetteer` and delete all four `resolver-wof-sqlite` bins. **Slim is deprecated — verified:** the demo runtime's `hasWOFDB` branch loads the version-independent candidate table via httpvfs (`docs/src/pages/demo/_app.tsx:431` → `WOFCandidateTableLookup`); `wof-hot.db` is never fetched. `buildSlimWOFDatabase` (the module) survives solely as the resolver-wof-wasm test-fixture builder. **Bellwether: the demo production smoke stays green.**
 4. **Lookup bins (timezone/nuts/un-locode):** stay lean `parseArgs` — the sanctioned exception (consumer-facing micro-packages; ink+react+zod+commander dep weight is hostile there). Documented below as policy.
 5. **Duplicated helpers** get folded into `@mailwoman/core` or the owning package as part of each phase (operator: "move them to core or their respective packages").
 6. **`sdk/` naming:** `sdk` submodules mean _data acquisition_ (`ban/sdk`, `osm/sdk`, `tiger/sdk` fit; `spatial/sdk` is a borderline data-format case, left alone). `mailwoman/sdk` violates this — it holds CLI helper types + the parser test harness. Both move out (§4).
@@ -162,7 +162,7 @@ Phase 5 last because the gates guard releases — nothing else may wobble while 
 - **Gate parity is the hard contract:** `eval gate`/`eval gauntlet` must reproduce the old scripts' exit codes, stdout verdict lines consumed by the operator, and artifact paths (ledger append command printed on PASS). Run both on the same model before deleting.
 - **Reference repoints** (enumerated during each phase's plan): RELEASING.md, `.agents/skills/{mailwoman-release,wof-build,night-shift,eval-model}`, `.pi/prompts/release-check.md`, root `package.json` scripts (`ci:smoke` untouched), workflows.
 - **Published-surface changes:** resolver-wof-sqlite loses 4 bins (breaking, accepted); `mailwoman` `./sdk/*` shimmed not removed; `mailwoman` gains `@mailwoman/tiger` (+ possibly resolver-wof-sqlite) deps — check publish weight impact is nil (deps already in the workspace tree).
-- **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDb`) — schema keys must match Pastel's derivation; keep the existing exception note.
+- **Pastel flag-prop caveat** (AGENTS.md): kebab flags bind lowercase-acronym props (`--resolve-db` → `resolveDB`) — schema keys must match Pastel's derivation; keep the existing exception note.
 - **Compile requirement:** new commands only run via the compiled CLI (`node mailwoman/out/cli.js`) — dev loop for tool logic stays plain-node via the tool modules.
 
 ## 7. Success metrics

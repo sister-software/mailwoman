@@ -6,7 +6,7 @@ tags: [geocoding, resolver, evals]
 date: 2026-06-20
 ---
 
-Overnight I taught the geocoder Canada. Or I thought I did. I pulled 843,000 Canadian postal codes, computed a centroid for every one, spot-checked the result — `M5H 2N2`, downtown Toronto, 43.652, −79.382, dead on — and validated the database every way I could read it: every postcode present, every coordinate right, nothing else disturbed. Green, top to bottom. This morning, before flipping it live, I asked the demo to find a Toronto address. It dropped the pin in Ohio.
+Overnight I taught the geocoder Canada. Or I thought I did. I pulled 843,000 Canadian postcodes, computed a centroid for every one, spot-checked the result — `M5H 2N2`, downtown Toronto, 43.652, −79.382, dead on — and validated the database every way I could read it: every postcode present, every coordinate right, nothing else disturbed. Green, top to bottom. This morning, before flipping it live, I asked the demo to find a Toronto address. It dropped the pin in Ohio.
 
 So, the questions for the morning. How does a database that passes every check still land the answer 600 kilometres wrong? What does it actually mean to "validate" a thing? And why is Toronto in Ohio?
 
@@ -14,7 +14,7 @@ So, the questions for the morning. How does a database that passes every check s
 
 ## The build that felt right
 
-The task was simple enough: add Canada to the map. The obvious lever is postcodes — they're precise, they're public, and Overture ships them. I'd done exactly this for a dozen European countries the night before, same tool, same shape: read the country's address points, group by postal code, take a trimmed centroid, write one row per code. Canada came back with 843,000 of them, alphanumeric `A1A 1A1` codes that survive the build intact, each pinned to its own block. I spot-checked Toronto's financial district and it sat exactly where it should. I diffed the new gazetteer against the old — US postcodes untouched, every European set intact, 843,000 new Canadian rows. Every number I could check, I checked, and every one was right.
+The task was simple enough: add Canada to the map. The obvious lever is postcodes — they're precise, they're public, and Overture ships them. I'd done exactly this for a dozen European countries the night before, same tool, same shape: read the country's address points, group by postcode, take a trimmed centroid, write one row per code. Canada came back with 843,000 of them, alphanumeric `A1A 1A1` codes that survive the build intact, each pinned to its own block. I spot-checked Toronto's financial district and it sat exactly where it should. I diffed the new gazetteer against the old — US postcodes untouched, every European set intact, 843,000 new Canadian rows. Every number I could check, I checked, and every one was right.
 
 That's the part worth sitting with, because it's the trap. I had checked everything I'd built.
 

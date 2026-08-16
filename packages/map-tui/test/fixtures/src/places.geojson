@@ -1,0 +1,21 @@
+{
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"properties": { "name": "Portland", "kind": "locality" },
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.6, 45.52]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { "name": "Clinton", "kind": "neighbourhood" },
+			"geometry": {
+				"type": "Point",
+				"coordinates": [-122.6023, 45.5034]
+			}
+		}
+	]
+}

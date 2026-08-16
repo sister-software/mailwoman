@@ -32,7 +32,7 @@ for addr in \
   "400 Broad St, Seattle, WA 98109" \
   "90210"; do
   echo "=== NEURAL: $addr ==="
-  node mailwoman/out/cli.js parse "$addr" 2>/dev/null
+  node packages/mailwoman/out/cli.js parse "$addr" 2>/dev/null
 done
 
 # Full pipeline mode (XML shows source attribution)
@@ -44,7 +44,7 @@ for addr in \
   "400 Broad St, Seattle, WA 98109" \
   "90210"; do
   echo "=== PIPELINE: $addr ==="
-  node mailwoman/out/cli.js parse --format xml "$addr" 2>/dev/null
+  node packages/mailwoman/out/cli.js parse --format xml "$addr" 2>/dev/null
 done
 ```
 
@@ -74,6 +74,6 @@ done
 
 ## Related
 
-- `docs/articles/evals/2026-05-27-v0.5.3-diagnostic-training-review.md` — the eval that drove this skill
+- `docs/records/evals/model-versions/2026-05-27-v0.5.3-diagnostic-training-review.mdx` — the eval that drove this skill
 - `corpus-python/src/mailwoman_train/train.py` — per-tag F1 now logged in CSV
 - `core/pipeline/grouper-audit.test.ts` — audit no-op test for v0.5.3 pattern

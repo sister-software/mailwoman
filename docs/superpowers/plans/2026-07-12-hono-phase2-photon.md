@@ -702,8 +702,8 @@ serveNode({
 		console.error(`[@mailwoman/photon] listening on http://${host}:${port}`)
 		console.error(`  wof: ${adminDBPath ?? "(none found — set MAILWOMAN_WOF_DB)"}`)
 		console.error(
-			candidateDb
-				? `  resolver: candidate gazetteer (worldwide) — ${candidateDb}`
+			candidateDB
+				? `  resolver: candidate gazetteer (worldwide) — ${candidateDB}`
 				: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`
 		)
 		console.error(`  cors: ${values.cors ? "enabled (Access-Control-Allow-Origin: *)" : "disabled (--no-cors)"}`)

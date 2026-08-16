@@ -76,14 +76,14 @@ The green half is ready now. Follow
 npx mailwoman parse "350 5th Ave, New York, NY 10118"
 ```
 
-```
+```json
 {
-  "region": "NY",
-  "locality": "New York",
-  "street": "5th",
-  "house_number": "350",
-  "street_suffix": "Ave",
-  "postcode": "10118"
+	"region": "NY",
+	"locality": "New York",
+	"street": "5th",
+	"house_number": "350",
+	"street_suffix": "Ave",
+	"postcode": "10118"
 }
 ```
 
@@ -139,49 +139,49 @@ Geocode a US address:
 npx mailwoman geocode "350 5th Ave, New York, NY 10118"
 ```
 
-```
+```json
 {
-  "input": "350 5th Ave, New York, NY 10118",
-  "lat": 40.694457,
-  "lon": -73.93045,
-  "resolution_tier": "admin",
-  "uncertainty_m": null,
-  "locality": "New York",
-  "region": "NY",
-  "postcode": "10118",
-  "house_number": "350",
-  "street": "5th Ave",
-  "venue": null,
-  "dependent_locality": null,
-  "countryCode": "US",
-  "hierarchy": [
-    {
-      "tag": "locality",
-      "value": "New York",
-      "name": "New York",
-      "lat": 40.694457,
-      "lon": -73.93045,
-      "placeID": "wof:85977539"
-    },
-    {
-      "tag": "region",
-      "value": "NY",
-      "name": "New York",
-      "lat": 42.921227,
-      "lon": -75.596537,
-      "placeID": "wof:85688543"
-    }
-  ],
-  "candidates": [
-    {
-      "name": "New York",
-      "tag": "locality",
-      "lat": 40.694457,
-      "lon": -73.93045,
-      "countryCode": "US",
-      "placeID": "wof:85977539"
-    }
-  ]
+	"input": "350 5th Ave, New York, NY 10118",
+	"lat": 40.694457,
+	"lon": -73.93045,
+	"resolution_tier": "admin",
+	"uncertainty_m": null,
+	"locality": "New York",
+	"region": "NY",
+	"postcode": "10118",
+	"house_number": "350",
+	"street": "5th Ave",
+	"venue": null,
+	"dependent_locality": null,
+	"countryCode": "US",
+	"hierarchy": [
+		{
+			"tag": "locality",
+			"value": "New York",
+			"name": "New York",
+			"lat": 40.694457,
+			"lon": -73.93045,
+			"placeID": "wof:85977539"
+		},
+		{
+			"tag": "region",
+			"value": "NY",
+			"name": "New York",
+			"lat": 42.921227,
+			"lon": -75.596537,
+			"placeID": "wof:85688543"
+		}
+	],
+	"candidates": [
+		{
+			"name": "New York",
+			"tag": "locality",
+			"lat": 40.694457,
+			"lon": -73.93045,
+			"countryCode": "US",
+			"placeID": "wof:85977539"
+		}
+	]
 }
 ```
 
@@ -196,49 +196,49 @@ Now a French address, no other change:
 npx mailwoman geocode "12 Rue de Rivoli, 75001 Paris"
 ```
 
-```
+```json
 {
-  "input": "12 Rue de Rivoli, 75001 Paris",
-  "lat": 48.856599,
-  "lon": 2.342841,
-  "resolution_tier": "admin",
-  "uncertainty_m": null,
-  "locality": "Paris",
-  "region": null,
-  "postcode": "75001",
-  "house_number": "12",
-  "street": "Rue de Rivoli",
-  "venue": null,
-  "dependent_locality": null,
-  "countryCode": "FR",
-  "hierarchy": [
-    {
-      "tag": "locality",
-      "value": "Paris",
-      "name": "Paris",
-      "lat": 48.856599,
-      "lon": 2.342841,
-      "placeID": "wof:1159322569"
-    }
-  ],
-  "candidates": [
-    {
-      "name": "Paris",
-      "tag": "locality",
-      "lat": 48.856599,
-      "lon": 2.342841,
-      "countryCode": "FR",
-      "placeID": "wof:1159322569"
-    },
-    {
-      "name": "Les Paris",
-      "tag": "locality",
-      "lat": 45.63972,
-      "lon": 5.73742,
-      "countryCode": "FR",
-      "placeID": "wof:1327276209"
-    }
-  ]
+	"input": "12 Rue de Rivoli, 75001 Paris",
+	"lat": 48.856599,
+	"lon": 2.342841,
+	"resolution_tier": "admin",
+	"uncertainty_m": null,
+	"locality": "Paris",
+	"region": null,
+	"postcode": "75001",
+	"house_number": "12",
+	"street": "Rue de Rivoli",
+	"venue": null,
+	"dependent_locality": null,
+	"countryCode": "FR",
+	"hierarchy": [
+		{
+			"tag": "locality",
+			"value": "Paris",
+			"name": "Paris",
+			"lat": 48.856599,
+			"lon": 2.342841,
+			"placeID": "wof:1159322569"
+		}
+	],
+	"candidates": [
+		{
+			"name": "Paris",
+			"tag": "locality",
+			"lat": 48.856599,
+			"lon": 2.342841,
+			"countryCode": "FR",
+			"placeID": "wof:1159322569"
+		},
+		{
+			"name": "Les Paris",
+			"tag": "locality",
+			"lat": 45.63972,
+			"lon": 5.73742,
+			"countryCode": "FR",
+			"placeID": "wof:1327276209"
+		}
+	]
 }
 ```
 
@@ -250,12 +250,12 @@ You can still run the older path. `--candidate-db none` pins it, and it needs a 
 a separate, locally-built file `data pull` does not publish, so this is a comparison you read here
 rather than reproduce. Same input, same machine:
 
-```
+```json
 {
-  "lat": 33.668553,
-  "lon": -95.54435,
-  "countryCode": "US",
-  "placeID": "wof:101725293"
+	"lat": 33.668553,
+	"lon": -95.54435,
+	"countryCode": "US",
+	"placeID": "wof:101725293"
 }
 ```
 

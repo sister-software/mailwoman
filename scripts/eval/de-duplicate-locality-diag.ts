@@ -25,7 +25,7 @@ import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
@@ -109,7 +109,7 @@ async function main(): Promise<void> {
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
 	const modelCard = parseJSONStrict<{ labels: string[] }>(
-		readFileSync(values["model-card"] || "neural-weights-en-us/model-card.json", "utf8")
+		readFileSync(values["model-card"] || "packages/neural-weights-en-us/model-card.json", "utf8")
 	)
 
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
@@ -122,7 +122,7 @@ async function main(): Promise<void> {
 		MailwomanTokenizer.loadFromFile(
 			values["tokenizer"] || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 		),
-		ONNXRunner.create(values["model"] || "/tmp/v093-eval/model.onnx"),
+		ONNXRunner.create(values["model"] || tempRootPath("v093-eval", "model.onnx")),
 	])
 
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels, postcodeAnchorLookup })

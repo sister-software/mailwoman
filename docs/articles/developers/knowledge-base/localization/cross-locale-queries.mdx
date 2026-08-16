@@ -1,0 +1,123 @@
+---
+title: Cross-locale queries
+description: How Mailwoman separates multilingual parsing, alternate-name resolution, transliteration, and translation.
+role: explanation
+---
+
+# Cross-locale queries
+
+## The question
+
+What happens when the language, script, and country of an address do not line up?
+
+An American might type a Japanese address in English. A Japanese user might write a United States
+place name in kana. Someone in India might enter a Japanese address in Devanagari. These look like
+one localization problem from the search box, but they ask the system to do three different jobs:
+
+1. Read the structure of the string the user supplied.
+2. Connect a written place name to an entity in the gazetteer.
+3. Translate or transliterate one writing into another.
+
+Mailwoman does the first two where its model and atlas have coverage. It does not currently translate
+arbitrary address text.
+
+## Parsing keeps the original text
+
+The parser labels spans. It might decide that `Tokyo` is a locality and `1-1 Marunouchi` contains a
+house number and street-like material, but it does not rewrite either span as `東京` or `丸の内`.
+The output retains the user's text and character offsets into that text.
+
+This matters because a decoder is answering a structural question: which part of the input plays
+which postal role? Translation would be a second prediction with its own uncertainty, and replacing
+the original surface would hide that uncertainty from the caller.
+
+Training contributes to this structural competence. The corpus contains locale-specific component
+orders, Unicode scripts, mixed-script examples, and transliteration-shaped examples where we have
+defensible labels. The tokenizer can represent arbitrary Unicode through byte fallback. Representation
+alone is not comprehension, though: a script absent from training can still produce a well-formed but
+wrong parse.
+
+## The atlas supplies the bridge between names
+
+After parsing, the resolver searches a gazetteer. One place record may carry a local name, an English
+name, other language names, abbreviations, colloquial forms, and established transliterations:
+
+```text
+Tokyo ─┐
+東京  ──┼──> one place identity ──> coordinates and hierarchy
+Tōkyō ─┘
+```
+
+When those surfaces are indexed, differently written queries can converge on the same stable place
+identifier. Mailwoman has not translated the query in this case. It has retrieved an entity through
+one of that entity's recorded names.
+
+Coverage follows the source data. Administrative places have much better multilingual alias coverage
+than streets and individual addresses. A gazetteer may know `ニューヨーク` as a name for New York while
+having no kana alias for a particular street in Ohio. The first can resolve and the second can fail,
+even though the parser successfully labels both strings.
+
+## What the three examples do today
+
+### A Japanese address typed in English
+
+The Latin-script input can be parsed as written, and established English names or romanizations can
+resolve when the gazetteer contains them. Japanese support is currently resolver-route only, with no
+general parser claim, so a successful administrative-name or postcode lookup should not be read as
+full Japanese street-address coverage.
+
+### A United States address typed in kana
+
+The tokenizer accepts the text and the model may recover some structure. Resolution then depends on
+the atlas containing the kana surface. Most United States streets do not carry kana aliases, and
+Mailwoman does not silently turn the query into English. An absent alias therefore remains an
+unresolved query.
+
+### A Japanese address typed in an Indian script
+
+The same boundary applies. A recorded Devanagari name or transliteration can reach the entity; an
+unrecorded rendering cannot. The coarse country model has explicit outlier exposure for unsupported
+scripts so it can abstain instead of confidently assigning them to a country it knows.
+
+## Locale is a preference, not the address's nationality
+
+The request locale tells Mailwoman how the user is likely to write and interpret ambiguous terms. It
+does not assert that the address is in that locale. Input evidence such as script, postcode shape,
+place relationships, and resolver candidates may point elsewhere.
+
+When no request locale is supplied, the runtime can use `MW_LOCALE` or the machine's `Intl` locale as
+low-priority preference evidence. It keeps the machine timezone separate and reports both in the
+`LocaleHint` provenance. A server can disable host inference with `machinePreferences: false`, because
+a container's locale describes the container rather than the person making the request.
+
+## If translation is added later
+
+A translation or transliteration service should propose additional lookup surfaces while preserving
+the input:
+
+```json
+{
+	"original": "ニューヨーク",
+	"candidate": "New York",
+	"mechanism": "transliteration",
+	"provider": "example-provider"
+}
+```
+
+The resolver could score that candidate beside recorded aliases. The result should expose how the
+candidate was produced, and failure should remain visible. That is especially important for street
+names, personal names, homophones, and languages with several competing romanization systems.
+
+## The current boundary
+
+Mailwoman can parse multiple scripts and resolve cross-language names when its atlas contains the
+corresponding aliases or transliterations. It does not translate arbitrary addresses. Unsupported
+cross-script queries may still tokenize, but they should fail or abstain rather than acquire an
+invented mapping.
+
+## Related
+
+- [Locales and tiers](../../reference/locales-and-tiers.mdx) — measured parser and resolver coverage.
+- [Gazetteers](../geocoding/gazetteers.mdx) — where multilingual place names live.
+- [Training and the corpus](../address-intelligence/training-and-the-corpus.mdx) — what the model learns from data.
+- [What the model cannot do](../address-intelligence/what-the-model-cannot-do.mdx) — script and tokenizer limits.

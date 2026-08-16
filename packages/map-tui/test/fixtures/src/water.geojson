@@ -1,0 +1,24 @@
+{
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"properties": { "name": "Willamette River", "kind": "river" },
+			"geometry": {
+				"type": "Polygon",
+				"coordinates": [
+					[
+						[-122.68, 45.47],
+						[-122.672, 45.47],
+						[-122.665, 45.49],
+						[-122.673, 45.51],
+						[-122.664, 45.53],
+						[-122.671, 45.55],
+						[-122.68, 45.55],
+						[-122.68, 45.47]
+					]
+				]
+			}
+		}
+	]
+}

@@ -1,0 +1,21 @@
+{
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"properties": { "kind": "land" },
+			"geometry": {
+				"type": "Polygon",
+				"coordinates": [
+					[
+						[-122.68, 45.47],
+						[-122.55, 45.47],
+						[-122.55, 45.55],
+						[-122.68, 45.55],
+						[-122.68, 45.47]
+					]
+				]
+			}
+		}
+	]
+}

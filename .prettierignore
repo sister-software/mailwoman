@@ -18,6 +18,8 @@ docs/static/benchmarks/*-results.json
 docs/build
 docs/.docusaurus
 coverage
+!packages/mailwoman/commands/coverage/**
+!packages/cartographer/coverage/**
 dist
 out
 
@@ -44,9 +46,9 @@ node_modules
 .playpen/**/*.md
 
 ## Corpus fixtures: line-delimited GeoJSON is one Feature per line, not a single JSON document
-corpus/fixtures/**/*.geojson
-corpus/fixtures/**/*.geojsonl
-corpus/fixtures/**/*.ndgeojson
+packages/corpus/fixtures/**/*.geojson
+packages/corpus/fixtures/**/*.geojsonl
+packages/corpus/fixtures/**/*.ndgeojson
 
 ## Append-only narrative logs — prettier's markdown formatter mangles bare `_` / `*`
 ## inside one-line entries (e.g. `node_modules` → `node*modules`, `synth_*` → `synth*\*`),
@@ -60,7 +62,7 @@ review.jsonl
 
 ## Generated parse-trace artifacts (scripts/generate-trace-fixture.ts + vitest file snapshots)
 ## Scoped to the two generator-owned dirs — hand-written *.snap.json/*.trace.json elsewhere stay format-checked.
-neural/test/fixtures/*.snap.json
+packages/neural/test/fixtures/*.snap.json
 docs/src/components/ModelVisualizer/fixtures/*.trace.json
 
 ## Generated golden-relabel review decks (`mailwoman corpus golden-relabel`) — one table row per
@@ -72,17 +74,17 @@ data/eval/golden/*/REVIEW-DECK.md
 ## per release; the generator's serialization is the source of truth, not oxfmt's.
 docs/static/sbom/*.json
 # Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
-sentencepiece-wasm/sentencepiece.mjs
+packages/sentencepiece-wasm/sentencepiece.mjs
 
 ## Vendored SEC EDGAR filings (filer/test-fixtures/edgar/manifest.json records each source URL).
 ## These are third-party documents kept byte-for-byte so a reviewer can refetch and diff them —
 ## reformatting would make that check impossible, and the parser under test reads their raw markup.
-filer/test-fixtures/edgar/*.htm
-filer/test-fixtures/edgar/*.html
+packages/filer/test-fixtures/edgar/*.htm
+packages/filer/test-fixtures/edgar/*.html
 
 ## Vendored FCC CORES registration pages (filer/test-fixtures/cores) — third-party documents kept
 ## byte-for-byte so a reviewer can refetch and diff; the parser under test reads their raw markup.
-filer/test-fixtures/cores/*.html
+packages/filer/test-fixtures/cores/*.html
 
 ## Vendored FCC Form 499 workbook sample (binary XLSX).
-filer/test-fixtures/form499/*.xlsx
+packages/filer/test-fixtures/form499/*.xlsx

@@ -203,7 +203,7 @@ nothing.
 | Coordinate to address, the process       | `reverse geocoding`  | `coordinate lookup`             |
 | A styled, queryable data source on a map | `data layer`         | `datalayer`, `data-layer`       |
 | US five-digit postal identifier          | `ZIP Code`           | `zip code`, `zipcode`           |
-| Non-US postal identifier                 | `postcode`           | `postal code`                   |
+| Non-US postal identifier                 | `postcode`           | `postcode`                      |
 | Gazetteer project                        | `Who's On First`     | `whos on first`                 |
 | Address to coordinate, the verb          | `geocode`            | `geo-code`                      |
 | Coordinate pair                          | `latitude/longitude` | `lat/long`, `lat-long`          |

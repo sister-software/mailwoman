@@ -12,7 +12,7 @@ autonomous session cleanly, then KICKOFF starts the day's collaborative work.
 
 - Operator returns with any of: "I have returned", "good morning", "let's wrap up the shift", "we're starting a new shift to close off the previous", "what have you been doing".
 - A scheduled night-shift cron is still running and needs to be stopped.
-- A night-shift postmortem exists at `docs/articles/evals/YYYY-MM-DD-night-N-postmortem.md` and the operator hasn't merged the PRs yet.
+- A night-shift postmortem exists at `docs/records/evals/YYYY-MM-DD-night-N-postmortem.md` and the operator hasn't merged the PRs yet.
 - Day's work is about to start — task list needs to flip from "produce while you sleep" to "collaborate while you're at the keyboard."
 
 ## When NOT to use
@@ -84,7 +84,7 @@ shorthand:
 **Numbers (one line):**
 ~$X of $20 Modal, N models trained, 0 NaN, 0 CI failures, 0 regressions shipped.
 
-**Detail:** docs/articles/evals/YYYY-MM-DD-night-N-postmortem.md
+**Detail:** docs/records/evals/YYYY-MM-DD-night-N-postmortem.md
 ```
 
 Three habits that make this land:
@@ -164,7 +164,7 @@ flag it** — don't keep merging the rest in the hope they'll fix it.
 Before launching today's work, read three things in this order:
 
 1. **The chat morning summary you just sent** — these are the decisions on the table.
-2. **`docs/articles/evals/YYYY-MM-DD-night-N-postmortem.md`** — the "What could've gone better" section. These are the patterns today should avoid.
+2. **`docs/records/evals/YYYY-MM-DD-night-N-postmortem.md`** — the "What could've gone better" section. These are the patterns today should avoid.
 3. **`/home/lab/.claude/projects/-home-lab-Projects-mailwoman/memory/MEMORY.md`** top entries — these are the live constraints (treadmill stops, ship/hold decisions, gate states).
 
 If any of those three contradicts what the operator just asked for, **surface
@@ -228,7 +228,7 @@ itself a context shift that wants their input.
 
 ### Multiple postmortems exist for "last night"
 
-If `docs/articles/evals/` has two postmortems with the same date (e.g. one was
+If `docs/records/evals/` has two postmortems with the same date (e.g. one was
 amended after a restart), the most recently-touched one is canonical. The
 earlier file should be marked superseded in its own header; if it isn't, do
 that as part of WRAP step 4.

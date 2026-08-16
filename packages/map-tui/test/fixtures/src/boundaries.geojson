@@ -1,0 +1,16 @@
+{
+	"type": "FeatureCollection",
+	"features": [
+		{
+			"type": "Feature",
+			"properties": { "kind": "district_boundary" },
+			"geometry": {
+				"type": "LineString",
+				"coordinates": [
+					[-122.68, 45.47],
+					[-122.55, 45.55]
+				]
+			}
+		}
+	]
+}
