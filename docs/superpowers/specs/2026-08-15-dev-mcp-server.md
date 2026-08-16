@@ -977,17 +977,36 @@ These need a decision from the operator; each is a real fork, not a detail.
    `private: true`.** It imports non-published internals, so outside means a path dependency on a
    sibling checkout. See §7.4.
 
-6. **Google oracle: allowed at all, and on whose budget?** §7.3 proposes opt-in with a call cap. The
-   alternative is to exclude the Google arm entirely and keep only Census, which is free but US-only —
-   and the panels are deliberately multi-country.
+6. **Google oracle: allowed at all, and on whose budget? RESOLVED 2026-08-16 — allowed, opt-in, capped,
+   and never a grading truth.** §7.3's proposal was taken rather than the exclude-Google alternative: the
+   panels are multi-country and a US-only oracle cannot speak to most of them. Three properties make the
+   permission safe to hold. The opt-in lives in `$MAILWOMAN_DATA_ROOT/dev-mcp/oracle-config.json` and
+   deliberately **not** on a tool argument — a tool argument is set by whoever is driving the agent, which
+   for a spend decision is the wrong signature, so an agent cannot talk its way into spending money. The
+   cap is checked for the WHOLE run before the first query, so a set the caller cannot afford costs zero
+   calls rather than a partial arm that can still be graded as a whole one. And the meter counts queries
+   rather than issued requests, so a warm cache over-counts — the direction whose failure is refusing an
+   affordable run. See `oracle-arm.ts`.
 
-7. **Who runs the external arms?** The Pelias and Photon rigs exist as podman containers with lifecycle
-   scripts in `scratchpad/`. Does the daemon get to start and stop them (convenient, and a large step
-   past "gather evidence"), or does it refuse to run an external comparison unless the endpoint is
-   already up?
+7. **Who runs the external arms? RESOLVED 2026-08-16 — the operator does; the daemon refuses.** The
+   conservative branch, on §7.1's boundary: this surface gathers evidence and changes no state anything
+   else reads. The deciding argument is what the two options do to a reader. "The benchmark rig was down"
+   is a fact about the box that must reach them; a daemon that starts the rig turns that fact into an arm
+   that lost, and one that scores rows against a service it just booted cannot say what vintage answered.
+   An endpoint that is not already up is a refusal with the reason. See `external-arm.ts`, which also
+   refuses the shared public instances outright.
 
-8. **Retention.** The run store makes `{kind:"recorded"}` arms possible and will accumulate hundreds of
-   megabytes of JSON. How long, and pruned by what rule?
+8. **Retention. RESOLVED 2026-08-16 — 14 days, 200 runs, newest first.** Two rules rather than one,
+   because neither bounds the store alone: a stored run only describes the tree that produced it, so after
+   a fortnight of commits it documents a system that no longer exists (age); and the age rule by itself
+   permits an unbounded number of runs inside the window, which a busy day reaches (count). Two smaller
+   decisions fell out of implementing it. An **unparseable `created_at` is treated as OLD** — a run that
+   cannot say when it happened cannot be trusted to describe a current tree, and keeping it forever is the
+   worse failure. A run whose `tree_fingerprint` no longer matches is **not** pruned: it is still evidence
+   about that tree, `{kind:"recorded"}` names both fingerprints and requires `tree_fingerprint` as a
+   declared variable, and deleting it silently would cost more than it saves. See `run-store.ts`; the store
+   is reported by `mwdev_runs`, which exists because inferring "pruned" from a failed recorded arm is the
+   guessing this surface exists to remove.
 
 9. **Does `mwdev_compare` earn the right to write a board case?** The natural end of an investigation is
    "this row now resolves correctly — pin it." That is a repo write, and it is the single highest-value
@@ -1092,6 +1111,13 @@ different cost, not a larger `n` on this one.
 ---
 
 ## 11. First slice
+
+> **Status, 2026-08-16.** This section is the plan of record and is kept as written. The slice shipped
+> (#1698), and the prediction it tests held, so the deferrals below were taken in order rather than
+> abandoned: every tool named here as waiting now exists, plus `mwdev_runs`. All four `ArmSpec` members
+> are built. Of the §9 questions this section listed as downstream, oracle billing (§9.6), who starts
+> Pelias (§9.7) and retention (§9.8) are resolved above; board-case writes (§9.9) and `run_id` tracing
+> (§9.10) are still open. Read what follows for why the order was chosen, not for what is built.
 
 The spec describes eleven tools, three process roles, an engine registry, a run store and external-arm
 orchestration. That is a platform, and a platform specified in one pass is a platform that does not get

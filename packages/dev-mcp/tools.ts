@@ -5,10 +5,10 @@
  *
  *   The tool table — the tested contract. `server.ts` only adapts it to the SDK's envelope.
  *
- *   Three tools, deliberately, out of the eleven the spec describes (§11). These three carry the whole argument: a warm
- *   engine, the board as the default input set, and per-stage evidence returned in a form an agent can diff. The other
- *   eight are elaborations of a fix that has not been shown to work yet, and specifying a platform in one pass is how a
- *   platform fails to get built.
+ *   The eleven tools spec §11 describes, plus `mwdev_runs`. That last one is not in the spec because the spec left
+ *   retention as an open question (§9.8): once the run store had a rule, an agent needed a way to see what was in it and
+ *   what had already aged out, and inferring "pruned" from a failed `{kind:"recorded"}` arm is exactly the guessing this
+ *   surface exists to remove. Four of the twelve — the ones that spawn the compiled CLI — live in `spawn-tools.ts`.
  *
  *   Two rules bind every result here:
  *
@@ -28,6 +28,7 @@ import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { runLookup } from "./lookup-tool.ts"
 import { LookupSource } from "./lookup.ts"
 import { describeObservedRate } from "./power.ts"
+import { getRun, listRuns, RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR } from "./run-store.ts"
 import { buildSpawnTools } from "./spawn-tools.ts"
 import {
 	ENGINE_CONFIG_SCHEMA,
@@ -277,12 +278,13 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 		{
 			name: "mwdev_compare",
 			description:
-				"Run one input set through two arms and diff them. An arm is a mailwoman configuration or an ALREADY-RUNNING " +
-				"external geocoder (Pelias / Photon / Nominatim) — this server never starts one. Reports what CHANGED " +
+				"Run one input set through two arms and diff them. An arm is a mailwoman configuration, an ALREADY-RUNNING " +
+				"external geocoder (Pelias / Photon / Nominatim — this server never starts one), a reference geocoder " +
+				"(Census free, Google billed and opt-in only), or a stored past run replayed by run_id. Reports what CHANGED " +
 				"separately from what IMPROVED, checks that only the declared lever moved, and states the smallest effect this " +
 				"many rows could have detected. A cross-engine comparison is graded on the pre-registered distance protocol " +
 				"(top-1, 1/5/25km, a no-result a miss at every threshold) and claims parity only against the pre-registered " +
-				"±5pp equivalence bound.",
+				"±5pp equivalence bound. An oracle arm is NEVER graded — a reference geocoder is not truth here.",
 			inputSchema: z.object({
 				inputs: INPUT_SET_SCHEMA.optional(),
 				arm_a: ARM_SPEC_SCHEMA.optional().describe("Baseline. Omit for the production mailwoman defaults."),
@@ -425,6 +427,63 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					...reading,
 					repetitions,
 					n_inputs: selected.length,
+				}
+			},
+		},
+
+		{
+			name: "mwdev_runs",
+			description:
+				'What is in the run store — the past comparisons a {kind:"recorded"} arm can replay. Newest first. A run ' +
+				`is kept for ${RETENTION_DAYS} days and at most ${RETENTION_MAX_RUNS} are kept at once, so a run_id that is ` +
+				"absent was pruned or never existed; those two are indistinguishable, and the answer to both is to " +
+				"re-measure. This is a CACHE, not a record — evals/scores-by-version.json and docs/records/evals/ are the " +
+				"record.",
+			inputSchema: z.object({
+				action: z.enum(["list", "get"]).default("list"),
+				run_id: z.string().optional().describe('Required for "get".'),
+				limit: z.number().int().positive().max(200).default(25),
+			}),
+			handler: async (args) => {
+				const fingerprint = registry.fingerprint().digest
+
+				if (args["action"] === "get") {
+					const runID = args["run_id"] as string | undefined
+
+					if (!runID) throw new Error('mwdev_runs: action "get" needs a run_id. Call it with "list" first.')
+
+					const run = getRun(runID)
+
+					if (!run) {
+						throw new Error(
+							`No stored run ${JSON.stringify(runID)}. It was pruned or never existed — those are not ` +
+								"distinguishable after the fact, so re-measure."
+						)
+					}
+
+					return {
+						...run,
+						fingerprint_matches_now: run.tree_fingerprint === fingerprint,
+						replayable_arms: Object.keys(run.answers ?? {}),
+					}
+				}
+
+				const all = listRuns(RUN_STORE_DIR, fingerprint)
+				const limit = (args["limit"] as number | undefined) ?? 25
+				const shown = all.slice(0, limit)
+				const sameTree = all.filter((run) => run.fingerprint_matches_now).length
+
+				return {
+					// Named rather than left as a bare truncation: a listing that silently showed the newest 25 of 200 reads
+					// as a store holding 25.
+					summary:
+						`${all.length} stored run${all.length === 1 ? "" : "s"}, ${sameTree} against the current tree ` +
+						`(${fingerprint.slice(0, 12)})${all.length > shown.length ? `. Showing the newest ${shown.length}` : ""}.`,
+					n_stored: all.length,
+					n_shown: shown.length,
+					n_matching_current_tree: sameTree,
+					retention: { days: RETENTION_DAYS, max_runs: RETENTION_MAX_RUNS, directory: RUN_STORE_DIR },
+					runs: shown,
 				}
 			},
 		},

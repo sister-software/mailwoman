@@ -17,7 +17,7 @@ import type { GateReport } from "./gate-report.ts"
 import { summarizeGateReport } from "./gate-report.ts"
 import { summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
 import type { RowGrade } from "./grade.ts"
-import type { ResolvedInputSet } from "./input-sets.ts"
+import { HOLDOUT_DEFAULT_N, HOLDOUT_SOURCES, type ResolvedInputSet } from "./input-sets.ts"
 import type { JobRegistry } from "./jobs.ts"
 
 /**
@@ -120,6 +120,20 @@ export const INPUT_SET_SCHEMA = z
 		z.object({
 			kind: z.literal("parity"),
 			country: z.string().optional(),
+		}),
+		z.object({
+			kind: z.literal("holdout"),
+			source: z.enum(HOLDOUT_SOURCES).optional().describe("fr = BAN, us = FDIC. Default fr."),
+			n: z.number().int().positive().optional().describe(`Draw size. Default ${HOLDOUT_DEFAULT_N}.`),
+			seed: z
+				.number()
+				.int()
+				.optional()
+				.describe(
+					"Omit for a genuinely fresh draw — the property that makes this the one set the model cannot have " +
+						"memorized. Pass a seed only to REPRODUCE a draw (re-running one arm later, or a recorded-arm " +
+						"comparison); a seeded set can be iterated against, which is how a held-out set stops being one."
+				),
 		}),
 		z.object({
 			kind: z.literal("literal"),

@@ -10,13 +10,27 @@
  *   checked by hand against the two answers the stubs give.
  */
 
+import { mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
 import { stubTransport } from "@mailwoman/core/api/test-transport"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
 import type { ExternalArm } from "./arms.ts"
 import { runCompare } from "./compare.ts"
 import type { EngineRegistry } from "./engine-registry.ts"
 import { ExternalGeocoderClient } from "./external-arm.ts"
+
+/**
+ * Every comparison writes its answers to the run store. Redirected here so a test run never touches the operator's
+ * store under `$MAILWOMAN_DATA_ROOT`, and so the retention sweep each write triggers has nothing real to prune.
+ */
+const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-compare-runs-"))
+
+afterAll(() => {
+	rmSync(RUN_STORE, { recursive: true, force: true })
+})
 
 /**
  * Andorra la Vella and Les Escaldes, the two `AD` board rows, and their truth coordinates.
@@ -45,6 +59,10 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					resolution_tier: point.lat === null ? "none" : "admin",
 					locality: "stub",
 					region: null,
+					// Required on `GeocodeResult`, and the mailwoman arm reads its answer through the gauntlet projection —
+					// which walks it. A double missing it throws inside the arm, and every row then scores as a query
+					// failure, which reads as an arm that lost.
+					hierarchy: [],
 				},
 				timing: { total: 1 },
 			}),
@@ -114,6 +132,7 @@ function comparison(
 		{
 			createExternalClient: (arm: ExternalArm) =>
 				new ExternalGeocoderClient(arm.engine, arm.endpoint, { axios: transport.axios }),
+			runStoreDir: RUN_STORE,
 		}
 	) as Promise<Record<string, unknown>>
 }
@@ -240,6 +259,7 @@ describe("mwdev_compare — an external arm that stops answering", () => {
 				{
 					createExternalClient: (arm: ExternalArm) =>
 						new ExternalGeocoderClient(arm.engine, arm.endpoint, { axios: transport.axios, retry: false }),
+					runStoreDir: RUN_STORE,
 				}
 			)
 		).rejects.toThrow(/failed 5 queries in a row/)

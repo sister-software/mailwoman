@@ -33,21 +33,43 @@ describe("normalizeArmSpec", () => {
 		)
 	})
 
-	it("refuses the deferred kinds by name rather than running the default configuration", () => {
+	it("takes an oracle arm by provider", () => {
+		expect(normalizeArmSpec({ kind: "oracle", provider: "census" }, "b")).toEqual({
+			kind: "oracle",
+			provider: "census",
+		})
+	})
+
+	it("refuses an unknown oracle provider rather than reaching for a default one", () => {
+		expect(() => normalizeArmSpec({ kind: "oracle", provider: "here" }, "b")).toThrow(/must be one of/)
+	})
+
+	it("takes a recorded arm and defaults which side it replays", () => {
+		expect(normalizeArmSpec({ kind: "recorded", run_id: "abc" }, "b")).toEqual({
+			kind: "recorded",
+			runID: "abc",
+			arm: "mailwoman",
+		})
+	})
+
+	it("refuses a recorded arm with no run_id", () => {
+		expect(() => normalizeArmSpec({ kind: "recorded" }, "b")).toThrow(/needs a `run_id`/)
+	})
+
+	it("refuses an unknown kind rather than running the default configuration", () => {
 		// The hazard this closes: with the bare-config shorthand in the union, an unhandled `kind` parses as an EMPTY
 		// mailwoman config. The caller would get a full comparison against the production defaults and no signal at all
-		// that the oracle they asked for was never consulted.
-		expect(() => normalizeArmSpec({ kind: "oracle", provider: "google" }, "b")).toThrow(/oracle arms are not/)
-		expect(() => normalizeArmSpec({ kind: "recorded", run_id: "abc" }, "b")).toThrow(/run store/)
+		// that the arm they asked for was never consulted.
 		expect(() => normalizeArmSpec({ kind: "whatever" }, "b")).toThrow(/unknown kind/)
 	})
 })
 
 describe("ARM_SPEC_SCHEMA", () => {
-	it("keeps a deferred kind's discriminator intact, so the refusal can see it", () => {
+	it("keeps each kind's discriminator intact rather than letting the shorthand swallow it", () => {
 		// Order-dependent: the bare-config branch accepts any object and strips unknown keys, so if it matched first
-		// this would parse to `{}` and the refusal above would never fire.
+		// these would parse to `{}` and the caller would silently get the production defaults on both sides.
 		expect(ARM_SPEC_SCHEMA.parse({ kind: "oracle", provider: "census" })).toMatchObject({ kind: "oracle" })
+		expect(ARM_SPEC_SCHEMA.parse({ kind: "recorded", run_id: "abc" })).toMatchObject({ kind: "recorded" })
 	})
 
 	it("still accepts a bare config", () => {
@@ -56,8 +78,10 @@ describe("ARM_SPEC_SCHEMA", () => {
 })
 
 describe("armLabel", () => {
-	it("names the engine for an external arm and mailwoman for ours", () => {
+	it("names what each arm actually is, so two labels in one result cannot collide", () => {
 		expect(armLabel({ kind: "mailwoman", config: {} })).toBe("mailwoman")
 		expect(armLabel({ kind: "external", engine: "photon", endpoint: "http://127.0.0.1:2323" })).toBe("photon")
+		expect(armLabel({ kind: "oracle", provider: "google" })).toBe("oracle:google")
+		expect(armLabel({ kind: "recorded", runID: "abc", arm: "mailwoman" })).toBe("recorded:abc/mailwoman")
 	})
 })
