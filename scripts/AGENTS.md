@@ -35,7 +35,14 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.
 
-One flat file is shared on purpose: `weights-overlay-linker.ts` holds the pair-index build that every `neural-weights-<locale>` overlay's `scripts/link-dev-weights.ts` calls, and `scaffold-weights-overlay.ts` — already a resident here — emits those callers. It is the shared half of an existing resident, not a new `lib/` drawer, and it lives here rather than in a workspace because its callers are excluded from their tarballs (`!scripts/**`) and can therefore import it by relative path. If a second file wants to join it, that is the signal to reconsider the drawer, not to add a third.
+Two flat files are shared on purpose, and one of them used to be a third:
+
+- `weights-recipe.ts` reads `release.config.json`'s `weights` + `softFeed` blocks and resolves them to absolute paths. Shared by `copy-weights.ts` (release) and `link-weights-overlay.ts` (dev), which is the point: the recipe previously had a third home in ten hardcoded `DEFAULT_MODEL` constants, and the 9.0.0 cut moved only one of the three. It lives here rather than in a workspace because `release.config.json` is repo-only and a package cannot reach outside its `rootDir` to read it (`TS6059`).
+- `link-weights-overlay.ts` populates `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from that recipe, for the overlay rung in `@mailwoman/neural`'s `resolveWeights`.
+
+`weights-overlay-linker.ts` is NOT here. It moved to `@mailwoman/resolver-wof-sqlite/weights-overlay-linker` in the workspace regroup and each overlay's `scripts/link-dev-weights.ts` imports it by package subpath — this file described it as a `scripts/` resident for some time after it left, which is the quoted-literal drift the root `AGENTS.md` warns about after a move.
+
+These are shared halves of existing residents, not a `lib/` drawer. A third wanting to join is the signal to reconsider the drawer, not to add a fourth.
 
 ## Zero raw `process.env` / `process.argv` (enforced)
 
