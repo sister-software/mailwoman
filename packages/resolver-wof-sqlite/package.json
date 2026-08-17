@@ -146,6 +146,11 @@
 			"default": "./out/build-candidate.js",
 			"types": "./out/build-candidate.d.ts"
 		},
+		"./candidate-ancestors-schema": {
+			"node": "./candidate-ancestors-schema.ts",
+			"default": "./out/candidate-ancestors-schema.js",
+			"types": "./out/candidate-ancestors-schema.d.ts"
+		},
 		"./candidate-schema": {
 			"node": "./candidate-schema.ts",
 			"default": "./out/candidate-schema.js",

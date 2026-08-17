@@ -126,6 +126,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		return [
 			`gazetteer: ${out}`,
 			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode + ${r.postcodeAliases.toLocaleString()} postcode-alias (from ${r.places.toLocaleString()} places)`,
+			`ancestors: ${r.ancestorRows.toLocaleString()} closure rows across ${r.ancestorPlaces.toLocaleString()} places; ${r.intervalPlaces.toLocaleString()} interval labels`,
 			r.importanceScored === undefined
 				? "importance: not joined (no score source) — the column is empty"
 				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceGated?.toLocaleString() ?? 0} refused as a different same-name place`,

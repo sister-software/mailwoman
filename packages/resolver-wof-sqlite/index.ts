@@ -21,6 +21,23 @@ export type {
 
 export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpts } from "./lookup.ts"
 
+export {
+	CANDIDATE_ANCESTOR_COLUMNS,
+	CANDIDATE_ANCESTOR_TABLE,
+	CANDIDATE_INTERVAL_TABLE,
+	createCandidateAncestorTable,
+	createCandidateIntervalTable,
+	intervalContains,
+	MAX_ANCESTOR_DEPTH,
+} from "./candidate-ancestors-schema.ts"
+
+export type {
+	CandidateAncestorsDatabase,
+	CandidateAncestorTable,
+	CandidateIntervalTable,
+	IntervalLabel,
+} from "./candidate-ancestors-schema.ts"
+
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
 
 export {

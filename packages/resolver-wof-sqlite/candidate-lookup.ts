@@ -26,8 +26,9 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
-import { expandPlacetypeFilter, type GazetteerArtifactCoverage } from "@mailwoman/resolver"
+import { expandPlacetypeFilter, type Ancestor, type GazetteerArtifactCoverage } from "@mailwoman/resolver"
 
+import { CANDIDATE_ANCESTOR_TABLE, type CandidateAncestorTable } from "./candidate-ancestors-schema.ts"
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
@@ -175,6 +176,23 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * into `no such column` on the first keystroke rather than into "no fame signal", which is what it is.
 	 */
 	readonly #importanceSelect: string
+	/**
+	 * Prepared chain probe over the `candidate_ancestor` sidecar — `undefined` when the artifact predates it.
+	 */
+	readonly #ancestorsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #ancestorsCache = new Map<number, Ancestor[]>()
+	/**
+	 * The ancestor lineage of a resolved place — nearest-first (locality-tier → county → region → … → country), the same
+	 * order the FTS backend's `ancestorLineage` serves, read from the `candidate_ancestor` sidecar in one clustered
+	 * probe. Backs `ResolveOpts.includeAncestors` (#404) on this backend, which is what puts region-class ancestry in
+	 * front of the admin-coherence check (#1717).
+	 *
+	 * A PROPERTY, not a method, and assigned only when the artifact carries the sidecar: capability probes (`typeof
+	 * backend.ancestors === "function"` — the resolver's gap report) then read the ARTIFACT truthfully. A candidate.db
+	 * built before the sidecar reports the capability absent instead of presenting a method that answers `[]` for every
+	 * place, which would be an absence dressed as a negative answer.
+	 */
+	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
@@ -223,10 +241,51 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// #28 fame column: probed ONCE here (it runs a PRAGMA, and `findPlace` is per-keystroke hot).
 		this.#importanceSelect = hasColumn(this.#db, "candidate", "importance") ? ", importance" : ""
 
+		// Ancestors sidecar (#1717): existence-gated like the probes above, and the CAPABILITY gates with
+		// it — see the `ancestors` property doc for why an older artifact must read as "no ancestors()"
+		// rather than as a method that answers [] everywhere.
+		if (hasTable(this.#db, CANDIDATE_ANCESTOR_TABLE)) {
+			this.#ancestorsProbe = this.#db.prepare(
+				`SELECT parent_spr_id, parent_placetype_id, parent_name FROM ${CANDIDATE_ANCESTOR_TABLE}` +
+					" WHERE spr_id = ? ORDER BY depth ASC"
+			)
+
+			this.ancestors = (id) => this.#ancestorLineage(id)
+		}
+
 		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-gated like
 		// the probes above — a candidate.db built before the manifest reads `undefined` and consumers keep
 		// their code-constant fallbacks byte-identically.
 		this.artifactCoverage = readGazetteerCoverageManifest(this.#db)
+	}
+
+	/**
+	 * The memoized chain read behind {@link ancestors}. Sync raw `.prepare()` on purpose — the backend contract's
+	 * `ancestors()` is synchronous (the sync-by-interface resolver-reader rule), and the sidecar row already carries the
+	 * parent's name and placetype, so this is one clustered probe with no join.
+	 */
+	#ancestorLineage(id: number | string): Ancestor[] {
+		const pid = typeof id === "number" ? id : Number(id)
+
+		if (!Number.isFinite(pid) || !this.#ancestorsProbe) return []
+
+		const cached = this.#ancestorsCache.get(pid)
+
+		if (cached) return cached
+
+		const rows = this.#ancestorsProbe.all(pid) as unknown as Array<
+			Pick<CandidateAncestorTable, "parent_spr_id" | "parent_placetype_id" | "parent_name">
+		>
+
+		const lineage: Ancestor[] = rows.map((r) => ({
+			id: Number(r.parent_spr_id),
+			placetype: this.#idToPlacetype.get(Number(r.parent_placetype_id)) ?? "",
+			name: String(r.parent_name ?? ""),
+		}))
+
+		this.#ancestorsCache.set(pid, lineage)
+
+		return lineage
 	}
 
 	/**
