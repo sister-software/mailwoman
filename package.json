@@ -70,7 +70,8 @@
 		"packages/map-tui",
 		"docs",
 		"packages/neural-weights-base-latn",
-		"packages/dev-mcp"
+		"packages/dev-mcp",
+		"packages/ancestrie"
 	],
 	"type": "module",
 	"scripts": {
