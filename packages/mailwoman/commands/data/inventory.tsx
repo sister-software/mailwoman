@@ -41,7 +41,7 @@ export const spec = {
 	options: {
 		"data-root": { type: "string", description: "Override the data root" },
 		depth: { type: "string", description: "Directory levels to walk. Default 2" },
-		all: { type: "boolean", default: false, description: "List every artifact, not just the summary" },
+		all: { type: "boolean", default: false, description: "List every artifact; the default shows only the summary" },
 		json: { type: "boolean", default: false, description: "Emit the report as JSON" },
 	},
 } as const satisfies CommandSpec
