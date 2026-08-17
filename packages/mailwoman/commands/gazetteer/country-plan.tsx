@@ -40,6 +40,7 @@ import {
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 } from "../../gazetteer-pipeline/defaults.ts"
+import { auditReposRoot, clonedCountries, reposSentence } from "../../gazetteer-pipeline/repos-audit.ts"
 
 export const description =
 	"Report which source serves a country's admin coverage today, and every edit moving it would require. " +
@@ -84,9 +85,65 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 				geonamesCountries: DEFAULT_GEONAMES_COUNTRIES as readonly string[],
 			}
 
+			// The repos root is checked against the DECLARED wof list rather than substituted for it. The WOF leg
+			// is presence-driven, so a clone nobody declared becomes coverage on the next build and a declaration
+			// nobody cloned silently does not — and only comparing the two can tell those apart.
+			const reposRoot = String(resolvePath(mailwomanDataRoot(), "wof", "repos"))
+			const audit = auditReposRoot(reposRoot)
+			const cloned = clonedCountries(audit)
+
 			const sources = countrySourceMap(lists)
 			const conflicts = sourceConflicts(sources)
-			const lines: string[] = ["mailwoman gazetteer country-plan", "", sourceSentence(sources, conflicts)]
+
+			const lines: string[] = [
+				"mailwoman gazetteer country-plan",
+				"",
+				sourceSentence(sources, conflicts),
+				reposSentence(audit),
+			]
+
+			const declaredNotCloned = lists.wofCountries.filter((cc) => !cloned.includes(cc.toUpperCase()))
+			const clonedNotDeclared = cloned.filter((cc) => !lists.wofCountries.some((d) => d.toUpperCase() === cc))
+
+			if (declaredNotCloned.length || clonedNotDeclared.length) {
+				lines.push("", "the WOF list and the repos root disagree:")
+
+				if (declaredNotCloned.length) {
+					lines.push(
+						`  declared, NOT cloned: ${declaredNotCloned.join(", ")}`,
+						"      the ingest globs the repos root, so these contribute nothing until they are synced"
+					)
+				}
+
+				if (clonedNotDeclared.length) {
+					lines.push(
+						`  cloned, NOT declared: ${clonedNotDeclared.join(", ")}`,
+						"      the ingest reads no list, so these become coverage on the next build regardless"
+					)
+				}
+			}
+
+			if (audit.duplicated.length) {
+				lines.push("", "checked out TWICE — two independent copies, which can diverge:")
+
+				for (const repo of audit.duplicated) {
+					const commits = Object.entries(repo.commits)
+						.map(([layout, head]) => `${layout}=${head}`)
+						.join(" ")
+
+					lines.push(`  ${audit.diverged.includes(repo) ? "✗" : "·"} ${repo.name}  ${commits}`)
+				}
+			}
+
+			if (audit.aliased.length) {
+				// Read twice by the ingest all the same — `ingest-wof` passes no `followSymbolicLinks` and
+				// fast-glob defaults it to true — but one directory cannot diverge from itself.
+				lines.push("", "symlinked into the other layout — one copy, read twice, cannot diverge:")
+
+				for (const repo of audit.aliased) {
+					lines.push(`  · ${repo.name}`)
+				}
+			}
 
 			if (conflicts.length) {
 				lines.push("", "UNRECORDED multi-source countries:")
