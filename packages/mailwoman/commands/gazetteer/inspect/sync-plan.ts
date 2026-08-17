@@ -9,12 +9,13 @@
  *   as a message rather than as a directory full of unwanted clones.
  */
 
+import { WOF_DATA_OWNER, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
 /**
  * The GitHub organization holding the country data repositories.
  */
-export const WOF_REPO_OWNER = "whosonfirst-data"
+export const WOF_REPO_OWNER = WOF_DATA_OWNER
 
 /**
  * A repository as `gh repo list` reports it.
@@ -71,11 +72,7 @@ export function assertDestinationNotARepoName(destination: string): void {
  * roughly double the transfer for data no build on the parse path consumes.
  */
 export function countryRepoNames(raw: string | undefined): string[] {
-	return splitList(raw).flatMap((code) => {
-		const cc = code.toLowerCase()
-
-		return [`${WOF_REPO_OWNER}-admin-${cc}`, `${WOF_REPO_OWNER}-postalcode-${cc}`]
-	})
+	return splitList(raw).flatMap((code) => [wofRepoName("admin", code), wofRepoName("postalcode", code)])
 }
 
 export interface SelectReposOptions {

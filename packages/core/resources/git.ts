@@ -37,29 +37,6 @@ export async function prepareRepositoryDirectories(
 }
 
 /**
- * Find a cloned repository under a repository root, whichever layout it was cloned in.
- *
- * Two layouts are in use and both are legitimate. {@link synchronizeRepo} writes `<root>/<owner>/<name>`, which is what
- * the admin gazetteer's depth-agnostic GeoJSON glob reads. The postcode shards were built from repositories cloned by
- * hand as `<root>/<name>`, and a reader that knows only one layout reports a repository that is present as missing.
- *
- * Answers `null` rather than throwing so the caller owns the message — it knows which country was asked for.
- */
-export async function resolveRepoDirectory(
-	localRepoDirectory: PathBuilderLike,
-	name: string,
-	owner = "whosonfirst-data"
-): Promise<string | null> {
-	const root = PathBuilder.from(localRepoDirectory)
-
-	for (const candidate of [root(owner, name), root(name)]) {
-		if (await tryStat(candidate)) return candidate.toString()
-	}
-
-	return null
-}
-
-/**
  * What a synchronization did, so a caller can report it.
  *
  * A clone and a pull differ by orders of magnitude in both time and bytes — reporting them as one "synchronized" makes

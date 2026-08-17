@@ -24,7 +24,7 @@ import { existsSync, readFileSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { PathBuilder } from "path-ts"
@@ -286,7 +286,20 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string, combinedPath:
  * the GeoJSON hierarchy. County is preferred over region for tighter placement.
  */
 function ancestorFallback(db: DatabaseSync, reposDir: string): number {
-	const repos = PathBuilder.from(reposDir)
+	// Resolved once per country rather than composed per row: the answer depends on which layout the repository was
+	// cloned in, and a row-rate stat over an unplaced set is wasted work.
+	const dataDirByCountry = new Map<string, string | null>()
+
+	const dataDirFor = (country: string): string | null => {
+		let dataDir = dataDirByCountry.get(country)
+
+		if (dataDir === undefined) {
+			dataDir = resolveWOFDataDir(reposDir, "postalcode", country)
+			dataDirByCountry.set(country, dataDir)
+		}
+
+		return dataDir
+	}
 
 	const unplaced = db
 		.prepare(`SELECT id, country FROM spr WHERE placetype='postalcode' AND is_current!=0 AND latitude=0 AND id>0`)
@@ -304,7 +317,10 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
 	db.exec("BEGIN")
 
 	for (const row of unplaced) {
-		const dataDir = repos(`whosonfirst-data-postalcode-${row.country.toLowerCase()}`, "data").toString()
+		const dataDir = dataDirFor(row.country)
+
+		if (!dataDir) continue
+
 		let hierarchy: Record<string, number> | undefined
 
 		try {

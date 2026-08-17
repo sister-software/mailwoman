@@ -30,9 +30,11 @@
 import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { resolvePath } from "path-ts"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -92,13 +94,13 @@ interface RawGeometry {
 }
 
 /**
- * WOF shard path: id split into 3-char chunks, then the full id.
+ * Where a country's admin record sits under a repositories root.
+ *
+ * `--repos` defaults to the OWNER directory (`<data-root>/wof/repos/whosonfirst-data`), so the repository name is
+ * appended flat to whatever root the caller gave. The id-to-path rule itself belongs to `wofIDPathSegments`.
  */
 function geojsonPath(repos: string, country: string, id: number): string {
-	const s = String(id)
-	const shard = s.match(/.{1,3}/g)!.join("/")
-
-	return `${repos}/whosonfirst-data-admin-${country.toLowerCase()}/data/${shard}/${s}.geojson`
+	return resolvePath(repos, wofRepoName("admin", country), "data", ...wofIDPathSegments(id)).toString()
 }
 
 /**
