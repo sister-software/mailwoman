@@ -14,10 +14,13 @@
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
+import { execFileSync } from "node:child_process"
 import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { createLayerManifestTable, writeLayerManifest } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 
@@ -36,6 +39,7 @@ import { foldGeonames } from "./fold-geonames.ts"
 import { ingestOvertureDivisions } from "./fold-overture.ts"
 import { freezeAdmin } from "./freeze.ts"
 import { ingestWOF } from "./ingest-wof.ts"
+import { adminLayerManifest } from "./manifest.ts"
 
 export interface BuildAdminOptions {
 	/**
@@ -78,6 +82,25 @@ export interface BuildAdminResult {
 /**
  * Run the full admin-gazetteer build. See the module docstring for the phase order and why it's fixed.
  */
+/**
+ * The tree that ran the build, for `layer_manifest.build_sha`.
+ *
+ * Degrades to `unknown` rather than throwing: a build run outside a checkout (a container, an unpacked tarball) is a
+ * legitimate build, and refusing to stamp a manifest over a missing git binary would leave the artifact with no
+ * provenance at all — which is the state this whole phase exists to reduce.
+ */
+function gitSHA(): string {
+	try {
+		return execFileSync("git", ["rev-parse", "--short", "HEAD"], {
+			cwd: String(repoRootPath()),
+			encoding: "utf8",
+			stdio: "pipe",
+		}).trim()
+	} catch {
+		return "unknown"
+	}
+}
+
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
@@ -190,6 +213,40 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			)
 		}
 	}
+
+	// BEFORE the seal, because a sealed artifact is 0444 and a manifest written afterwards would need the
+	// database reopened read-write — the one thing `openBuiltDatabase` exists to refuse.
+	phase("manifest")
+	const manifestDB = new DatabaseSync(out)
+
+	const manifestKDB = new DatabaseClient<never>({ database: manifestDB }) as unknown as Parameters<
+		typeof writeLayerManifest
+	>[0]
+
+	try {
+		await createLayerManifestTable(manifestKDB)
+
+		await writeLayerManifest(
+			manifestKDB,
+			adminLayerManifest({
+				// The counts the build actually produced, not the lists it was given. A fold that ingested
+				// nothing must not appear as a source — see manifest.ts.
+				counts: {
+					wof: ingest.placesIngested,
+					overture: overtureIngested,
+					geonames: folded.placesIngested,
+				},
+				buildSHA: gitSHA(),
+				vintages: { overture: overtureRelease },
+				version: new Date().toISOString().slice(0, 10),
+				createdAt: new Date().toISOString(),
+			})
+		)
+	} finally {
+		await manifestKDB.destroy()
+	}
+
+	phase("manifest", "layer_manifest written")
 
 	phase("seal")
 	sealDatabase(out)
