@@ -80,6 +80,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { resolveWeights } from "@mailwoman/neural/weights"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
@@ -143,7 +144,12 @@ const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 function weightsPresent(): boolean {
 	try {
-		return existsSync(realpathSync("packages/neural-weights-en-us/model.onnx"))
+		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
+		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
+		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
+		// paid for this once: the workspace regroup left this literal behind and both this suite and
+		// `api-engine.test.ts` went quiet until someone counted the skips.
+		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}

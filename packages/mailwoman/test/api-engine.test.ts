@@ -33,6 +33,7 @@ import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode, type ServerHandle } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
 import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { resolveWeights } from "@mailwoman/neural/weights"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
 import { createServeEngine } from "../api-engine.ts"
@@ -48,7 +49,12 @@ const describeIfStack = describe.skipIf(!hasStack)
  */
 function weightsPresent(): boolean {
 	try {
-		return existsSync(realpathSync("packages/neural-weights-en-us/model.onnx"))
+		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
+		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
+		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
+		// paid for this once: the workspace regroup left this literal behind and both this suite and
+		// `api-engine.test.ts` went quiet until someone counted the skips.
+		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}

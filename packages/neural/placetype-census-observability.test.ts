@@ -38,6 +38,7 @@ import {
 	type PlacetypeCensusNode,
 } from "./placetype-census.ts"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "./placetype-pair-prior.ts"
+import { resolveWeights } from "./weights.ts"
 
 const LABELS = STAGE2_BIO_LABELS
 
@@ -210,8 +211,20 @@ describe("census observability — what lands on the trace", () => {
 // load-bearing here: without it the prior never runs and there is no parent candidate to probe
 // alongside. The census artifact is BUILT into a temp dir rather than resolved from the data root,
 // which is read-only on the lab host; a fixture census is enough to prove the wiring.
-const WEIGHTS_DIR = workspacePath("neural-weights-en-us")
-const havePackage = existsSync(join(WEIGHTS_DIR, "model.onnx")) && existsSync(join(WEIGHTS_DIR, "pair-index-us.bin"))
+// Resolved rather than probed in the workspace: the binaries are not in git, so where they live is the
+// resolver's answer (package, data-root overlay, or user cache) and not a directory this file can name. A
+// skip-guard keyed on the wrong directory does not fail — it SKIPS, and the suite reports success while
+// testing nothing.
+const resolved = (() => {
+	try {
+		return resolveWeights({ locale: "en-us" })
+	} catch {
+		return undefined
+	}
+})()
+
+const havePackage =
+	resolved !== undefined && resolved.artifacts.some((a) => a.name === "pair-index-us.bin" && a.path !== null)
 
 describe("census observability — end-to-end through loadFromWeights", () => {
 	test.skipIf(!havePackage)(
