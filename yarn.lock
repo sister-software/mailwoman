@@ -4491,6 +4491,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/ancestrie@workspace:packages/ancestrie":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/ancestrie@workspace:packages/ancestrie"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/annotations@workspace:*, @mailwoman/annotations@workspace:packages/annotations":
   version: 0.0.0-use.local
   resolution: "@mailwoman/annotations@workspace:packages/annotations"
