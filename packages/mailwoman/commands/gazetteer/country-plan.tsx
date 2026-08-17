@@ -17,7 +17,9 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { readFileSync, writeFileSync } from "node:fs"
+
+import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
@@ -40,6 +42,7 @@ import {
 	DEFAULT_OVERTURE_COUNTRIES,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 } from "../../gazetteer-pipeline/defaults.ts"
+import { addCountry, removeCountry } from "../../gazetteer-pipeline/recipe-edit.ts"
 import { auditReposRoot, clonedCountries, reposSentence } from "../../gazetteer-pipeline/repos-audit.ts"
 
 export const description =
@@ -56,12 +59,18 @@ export const spec = {
 	options: {
 		target: { type: "string", description: `Source to move to: ${Object.values(AdminSource).join(", ")}. Default wof` },
 		"admin-db": { type: "string", description: "Override the admin gazetteer path" },
+		write: {
+			type: "boolean",
+			default: false,
+			description: "Apply the recipe edits to defaults.ts (leaves them UNSTAGED for review)",
+		},
 	},
 } as const satisfies CommandSpec
 
 interface Options {
 	target?: string
 	adminDB?: string
+	write: boolean
 }
 
 /**
@@ -224,9 +233,52 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 				}
 			}
 
+			let writeFailures = 0
+
+			// `--write` edits the working tree and stops there. It does not stage, commit or build: the value
+			// this command adds is that BOTH halves of a move are written or neither, and a diff a person reads
+			// is what keeps that reviewable. A commit would move the review to after the fact.
+			if (options.write && plan.edits.length && !plan.blockers.length) {
+				const defaultsPath = String(repoRootPath("packages", "mailwoman", "gazetteer-pipeline", "defaults.ts"))
+				let source = readFileSync(defaultsPath, "utf8")
+				const applied: string[] = []
+
+				for (const edit of plan.edits) {
+					const result =
+						edit.action === "add"
+							? addCountry(source, edit.list, edit.country)
+							: removeCountry(source, edit.list, edit.country)
+
+					if (!result.ok) {
+						writeFailures++
+						applied.push(`  ✗ ${edit.action} ${edit.list}: ${result.reason}`)
+
+						for (const line of result.comment ?? []) {
+							applied.push(`      ${line.trim()}`)
+						}
+
+						continue
+					}
+
+					source = result.source
+					applied.push(`  ${result.changed ? "✓" : "·"} ${result.note}`)
+				}
+
+				// All or nothing. A half-applied move is the exact state the #267 warning describes, and writing
+				// one edit while refusing the other would manufacture it.
+				if (writeFailures) {
+					lines.push("", "NOT WRITTEN — every edit must apply or none do:", ...applied)
+				} else {
+					writeFileSync(defaultsPath, source)
+					lines.push("", `wrote ${defaultsPath}:`, ...applied, "", "  Review with `git diff`, then commit.")
+				}
+			} else if (plan.edits.length && !plan.blockers.length) {
+				lines.push("", "Pass --write to apply these edits to defaults.ts (unstaged, for review).")
+			}
+
 			writeRawStdout(`${lines.join("\n")}\n`)
 
-			return { conflicts: conflicts.length + plan.blockers.length }
+			return { conflicts: conflicts.length + plan.blockers.length + writeFailures }
 		},
 		(result) => (result.conflicts > 0 ? 1 : 0)
 	)
