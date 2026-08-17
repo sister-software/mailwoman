@@ -583,8 +583,11 @@ Passthrough to `node packages/mailwoman/out/cli.js`, with three guards:
 
 1. **Subcommand allowlist.** Read-only verbs only: `parse`, `geocode`, `reverse`, `doctor`,
    `eval …`, `gazetteer stats`, `poi …`, `--help`. Everything else refuses with a message naming the
-   boundary. Explicitly denied: `data pull`, `gazetteer build`, `coverage build`, `tiles publish`,
-   `release …`, `corpus …` writes, `eval ledger-append`.
+   boundary. Explicitly denied: `data pull`, `gazetteer build`, `gazetteer inspect sync`,
+   `coverage build`, `tiles publish`, `release …`, `corpus …` writes, `eval ledger-append`. Two of those
+   are nested under a verb that is read-only elsewhere — `eval ledger-append` writes the score ledger, and
+   `gazetteer inspect sync` clones country repositories into the shared data root while its `inspect`
+   siblings (`tree`, `graph`, `mermaid`) only read.
 2. **Stale-tree refusal** (§3.4a).
 3. **No shell.** `args` is an array passed to `spawn` without a shell, so nothing composes a pipeline
    through this tool.

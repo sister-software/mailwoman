@@ -11,12 +11,64 @@
  *   parsed record has.
  */
 
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readFileSync, statSync } from "node:fs"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { resolvePath } from "path-ts"
 
 import type { WOFFeature } from "./placetypes/admin.ts"
+
+/**
+ * The GitHub organization holding the country data repositories.
+ */
+export const WOF_DATA_OWNER = "whosonfirst-data"
+
+/**
+ * The repository name for a country's data of one theme — `whosonfirst-data-admin-tr`.
+ *
+ * Four call sites used to build this string themselves, each with its own `toLowerCase()`, which is how a country code
+ * arriving uppercase became a directory that silently does not exist.
+ */
+export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: string): string {
+	return `${WOF_DATA_OWNER}-${theme}-${country.toLowerCase()}`
+}
+
+/**
+ * Find a cloned repository under a repositories root, in either layout.
+ *
+ * Two are in use and both are legitimate. `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
+ * admin ingest's depth-agnostic GeoJSON glob reads. The shipped postcode shards were built from repositories cloned by
+ * hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as MISSING, and every
+ * reader here treats missing as "no evidence" and continues — so the wrong layout is silent, not loud.
+ *
+ * Synchronous to match {@link readWOFFeature}: these readers run inside sync loops over database rows.
+ */
+export function resolveWOFRepo(reposRoot: string, name: string, owner = WOF_DATA_OWNER): string | null {
+	for (const candidate of [resolvePath(reposRoot, owner, name), resolvePath(reposRoot, name)]) {
+		try {
+			if (statSync(candidate).isDirectory()) return candidate.toString()
+		} catch {
+			// Absent, or unreadable — try the other layout, then answer null.
+		}
+	}
+
+	return null
+}
+
+/**
+ * The `data` directory of a country's repository, or `null` when the repository is not cloned.
+ *
+ * The pairing every reader needs: {@link readWOFFeature} takes roots that already point INTO `data`.
+ */
+export function resolveWOFDataDir(
+	reposRoot: string,
+	theme: "admin" | "postalcode" | "venue",
+	country: string
+): string | null {
+	const repo = resolveWOFRepo(reposRoot, wofRepoName(theme, country))
+
+	return repo && resolvePath(repo, "data").toString()
+}
 
 /**
  * Characters per directory level. A trailing group shorter than this is its own directory — `85977539` ends in `39`,

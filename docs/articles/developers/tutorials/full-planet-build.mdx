@@ -89,10 +89,11 @@ not to, because the build behind it is the heaviest thing in this repository, an
 it. What it involves, so you can price it:
 
 ```bash
-# 1. Clone the Who's On First data repositories. 823 non-archived repos in the org
-#    on 2026-08-03; `--repos` narrows it to the countries you need.
-npx mailwoman gazetteer inspect sync "$MAILWOMAN_DATA_ROOT/wof/repos" \
-  --repos whosonfirst-data-admin-fr,whosonfirst-data-postalcode-fr
+# 1. Clone the Who's On First data repositories into <data-root>/wof/repos.
+#    `--countries` takes ISO-2 codes and pulls each country's admin + postalcode
+#    repositories; `--repos` names them individually. One of the two is required —
+#    the org holds 823 non-archived repositories, several hundred GB checked out.
+npx mailwoman gazetteer inspect sync --countries fr
 
 # 2. Build the admin database. Reads the repos above, streams Overture divisions
 #    from S3, folds GeoNames dumps you have already downloaded.
@@ -113,9 +114,10 @@ measures 5,275,287,552 bytes; the published candidate database is 1,652,916,224 
 under a third of it.
 
 Two things about the sync command before you run it. It shells out to `gh repo list`, so the GitHub CLI
-has to be installed and authenticated. And its own source comment estimates "~100 whosonfirst-data repos
-… ~2.9 GB of git" — the organization holds 823 non-archived repositories today, so pass `--repos` and
-size against what you asked for.
+has to be installed and authenticated. And size the sync against what you asked for: GitHub reports 54.3
+GB for the 823 non-archived repositories, but that is their packed size, and these repositories unpack to
+millions of small GeoJSON files — 145 of them measured 65 GB checked out. The command refuses an
+unfiltered sync for that reason, so narrow it with `--countries` or `--repos` unless you pass `--all`.
 
 ## 2. Add a country with a national register
 

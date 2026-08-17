@@ -37,18 +37,31 @@ export async function prepareRepositoryDirectories(
 }
 
 /**
+ * What a synchronization did, so a caller can report it.
+ *
+ * A clone and a pull differ by orders of magnitude in both time and bytes — reporting them as one "synchronized" makes
+ * a first-time clone indistinguishable from a no-op refresh while it holds the progress display still.
+ */
+export type SynchronizeAction = "cloned" | "pulled" | "skipped"
+
+/**
  * Synchronize a repository source, i.e. clone or pull the repository.
  */
-export async function synchronizeRepo(source: RepositorySource, localRepoDirectory: PathBuilderLike): Promise<void> {
-	if (source.name.includes("deprecated")) return
+export async function synchronizeRepo(
+	source: RepositorySource,
+	localRepoDirectory: PathBuilderLike
+): Promise<SynchronizeAction> {
+	if (source.name.includes("deprecated")) return "skipped"
 
 	const { ownerDirectory, repoDirectory, exists } = await prepareRepositoryDirectories(source, localRepoDirectory)
 
 	if (exists) {
 		await execFileAsync("git", ["pull"], { cwd: repoDirectory.toString() })
 
-		return
+		return "pulled"
 	}
 
 	await execFileAsync("git", ["clone", "--depth=1", source.url], { cwd: ownerDirectory.toString() })
+
+	return "cloned"
 }

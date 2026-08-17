@@ -38,12 +38,27 @@ const ALLOWED_PREFIXES: readonly string[][] = [
 const DENIED_PREFIXES: readonly string[][] = [
 	["eval", "ledger-append"],
 	["gazetteer", "build"],
+	["gazetteer", "inspect", "sync"],
 	["coverage", "build"],
 	["tiles", "publish"],
 	["data", "pull"],
 	["release"],
 	["corpus"],
 ]
+
+/**
+ * The sentence that explains a specific refusal, where the generic one would leave a caller guessing.
+ */
+const DENIED_NOTES: Readonly<Record<string, string>> = {
+	"eval ledger-append":
+		"The gate reports this command pre-filled precisely so an operator runs it at promote time; running it here " +
+		"would route around that.",
+	"gazetteer inspect sync":
+		"It clones country repositories into the data root every engine reads — 145 of them measured at 65 GB — and no " +
+		"flag can narrow that here, because flags are ignored when matching. Its siblings `inspect tree`, `inspect " +
+		"graph` and `inspect mermaid` only read, so the day `gazetteer inspect` is allowed as a prefix, this entry is " +
+		"what keeps the clone out.",
+}
 
 function matchesPrefix(args: readonly string[], prefix: readonly string[]): boolean {
 	return prefix.every((part, index) => args[index] === part)
@@ -79,10 +94,7 @@ export function checkCLIAllowlist(args: readonly string[]): AllowlistVerdict {
 			allowed: false,
 			reason:
 				`\`${denied.join(" ")}\` changes state that something else reads, which is outside this server's boundary. ` +
-				(denied.join(" ") === "eval ledger-append"
-					? "The gate reports this command pre-filled precisely so an operator runs it at promote time; running it " +
-						"here would route around that."
-					: "Run it yourself if you mean to."),
+				(DENIED_NOTES[denied.join(" ")] ?? "Run it yourself if you mean to."),
 		}
 	}
 
