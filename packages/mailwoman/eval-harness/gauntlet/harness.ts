@@ -143,12 +143,15 @@ export interface GauntletGeocodeOpts {
 }
 
 /**
- * #1024 drift guard: the materialized `neural-weights-en-us/model.onnx` the gate is about to grade MUST match the
- * model-card's `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts
- * materializes from) drifted once and the superseded model shipped past a silent gate. Throws loudly on mismatch so the
- * release before:release step (RELEASING.md) blocks the ship. Only the shipped default is checked; a `--candidate` run
- * grades a different artifact by design. Soft-returns when the card / field is absent (a card-format problem is not
- * this guard's job) — the model file itself is always present here (the caller `existsSync`-gated it).
+ * #1024 drift guard: the materialized model the gate is about to grade MUST match the en-us model-card's
+ * `files_md5["model.onnx"]` — the card (source of truth) and `release.config.json` (what copy-weights.ts materializes
+ * from) drifted once and the superseded model shipped past a silent gate. Throws loudly on mismatch so the release
+ * before:release step (RELEASING.md) blocks the ship. Only the shipped default is checked; a `--candidate` run grades a
+ * different artifact by design. Soft-returns when the card / field is absent (a card-format problem is not this guard's
+ * job) — the model file itself is always present here (the caller `existsSync`-gated it).
+ *
+ * The md5 it receives is of the model `resolveWeights` returned, NOT of a path spelled out here: the guard must check
+ * the artifact the run will actually grade, or it checks nothing the run depends on.
  */
 function assertShippedModelMatchesCard(materializedMd5: string): void {
 	const cardPath = resolve("packages/neural-weights-en-us/model-card.json")
@@ -255,8 +258,16 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
 	// loadFromWeights symlink can point at an old training base, not the shipped model) is never silent.
-	const effModel =
-		cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolve("packages/neural-weights-en-us/model.onnx"))
+	//
+	// The default path ASKS THE RESOLVER rather than naming a directory. It used to read
+	// the en-us weights package's model path outright, which was the same file the loader below would pick only
+	// while the dev linker happened to materialize into that package — and the whole block was wrapped in
+	// `existsSync`, so the day the binaries live anywhere else (a data-root overlay, the user cache, a consumer's
+	// node_modules) the stamp goes quiet, `assertShippedModelMatchesCard` never runs, and the gate grades a model it
+	// never verified. That is #1024 exactly, re-created by a path literal: a guard that fails OPEN when its
+	// assumption stops holding. `resolveWeights` answers with the file `loadFromWeights` will actually open.
+	const resolvedModel = opts.modelPath ? undefined : resolveWeights({ locale: "en-us" }).modelPath
+	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolvedModel!)
 
 	if (existsSync(effModel)) {
 		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
@@ -278,7 +289,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: opts.weightsCacheRoot })
 		: opts.tokenizerPath
 			? await createScorer({
-					modelPath: resolve(opts.modelPath ?? "packages/neural-weights-en-us/model.onnx"),
+					// Same rule as the stamp above: when the caller overrides only the TOKENIZER, the model still comes
+					// from the resolver rather than a package literal. This branch would fail loudly rather than
+					// silently, but a second spelling of the same assumption is a second thing to move.
+					modelPath: opts.modelPath ? resolve(opts.modelPath) : resolveWeights({ locale: "en-us" }).modelPath,
 					tokenizerPath: resolve(opts.tokenizerPath),
 					modelCardPath: resolve(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
 					locale: "en-us",

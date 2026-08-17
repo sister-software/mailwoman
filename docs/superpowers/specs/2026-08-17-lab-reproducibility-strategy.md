@@ -91,21 +91,23 @@ the published package learns a directory convention and never the recipe.
 
 The design left three questions open. Resolving them here.
 
-1. **Layout: one shared `base/` plus per-locale directories, joined by symlinks.**
+1. **Layout: one per-locale directory, each artifact symlinked to its source.** _(Revised during implementation —
+   the original decision was a shared `base/` directory that the per-locale directories linked into.)_
 
    ```
    $MAILWOMAN_DATA_ROOT/weights/
-     base/     model.onnx, tokenizer.model          ← one physical copy
-     en-us/    model.onnx → ../base/model.onnx, model-card.json, lexicons, postcode-us.bin, fst-en-us.bin
-     en-gb/    model.onnx → ../base/model.onnx, postcode-gb.bin, pair-index-gb.bin, …
+     en-us/    model.onnx → <data-root>/models/quantized/<model>.onnx, model-card.json, lexicons, fst-en-us.bin, …
+     en-gb/    model.onnx → the SAME source file, postcode-gb.bin, pair-index-gb.bin, …
    ```
 
-   Every locale shares the base model byte-for-byte, so ten independent directories would hold ten copies of
-   ~40 MB. Symlinking rather than modelling the base relationship keeps `resolveFromPackageDir` untouched:
-   it sees an ordinary directory with every artifact present, `existsSync` follows the link, and the
-   overlay path needs no `mailwoman.baseWeights` logic of its own. Symlinks are safe _here_ precisely
-   because the publish hazard they cause (`YN0035`, a tarball refusing symlinks) applies to package
-   directories, and nothing tars the data root.
+   A `base/` directory would have held one copy and had every locale link into it. Linking straight to the recipe's
+   source holds one copy too — the source itself — with one fewer indirection and no second place for "which model is
+   this" to be answered. What `base/` would have bought is a self-contained overlay that survives the training output
+   being deleted; that is not worth a 40 MB copy while the recipe remains the authority and the writer is idempotent.
+
+   `resolveFromPackageDir` is untouched either way: it sees an ordinary directory with every artifact present, and
+   `existsSync` follows the link. Symlinks are safe _here_ precisely because the publish hazard they cause (`YN0035`,
+   a tarball refusing symlinks) applies to package directories, and nothing tars the data root.
 
 2. **`copy-weights.ts` keeps reading the data root directly.** Pointing it at the overlay would mean the
    release ships exactly the bytes dev ran, which is attractive and is not phase 0's job. Revisit at phase 3,
@@ -116,9 +118,14 @@ The design left three questions open. Resolving them here.
    pretend otherwise — that gap is the subject of phases 1–3, and a phase 0 that appeared to work on a fresh
    box would hide the very thing this strategy is for.
 
-**Acceptance:** a worktree of `HEAD` geocodes with no setup step; `link` is idempotent and says so; `yarn
-test` leaves tracked directories untouched; the sibling report distinguishes `package` / `base` / `overlay` /
-`cache` per artifact.
+**Acceptance**, with status as of 2026-08-17:
+
+| Criterion                                                                 |                                                                                                                                |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| A worktree of `HEAD` geocodes with no setup step                          | **met** — `source: overlay:en-us`, 13/13 artifact parity, coordinates identical to main                                        |
+| The sibling report distinguishes `package` / `base` / `overlay` / `cache` | **met**                                                                                                                        |
+| `link` is idempotent                                                      | **met**                                                                                                                        |
+| `yarn test` leaves tracked directories untouched                          | **NOT met** — needs the remaining six `link-dev-weights.ts` scripts to write to the overlay instead of their package directory |
 
 **Risk carried, not deferred:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
 `undefined` by design, so the new rung could turn a loud failure into a quiet one — a checkout that parses
