@@ -158,3 +158,24 @@ describe("layer coverage IO", () => {
 		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
 	})
 })
+
+describe("SpineKeys.street — the third layer shape", () => {
+	it("accepts a street spine as satisfying the at-least-one rule", async () => {
+		// The contract's first three keys describe the two shapes that existed when it was written: a cellular
+		// layer (poi.db, H3) and an id-joined one. The situs shards are a third — `address_point` and
+		// `street_segment` carry no H3 cell, no WOF id and no address-id, and are probed on
+		// (postcode | locality, street_norm, number). Before this key they could only be described by naming a
+		// column that does not exist, in the field a consumer uses to join.
+		const db = await openContractDB()
+
+		await expect(
+			writeLayerManifest(db, { ...MANIFEST, spineKeys: { street: { column: "street_norm" } } })
+		).resolves.toBeUndefined()
+	})
+
+	it("still refuses a manifest with NO spine at all", async () => {
+		const db = await openContractDB()
+
+		await expect(writeLayerManifest(db, { ...MANIFEST, spineKeys: {} })).rejects.toThrow(/spine/)
+	})
+})

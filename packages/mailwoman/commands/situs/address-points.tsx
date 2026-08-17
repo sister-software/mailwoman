@@ -306,6 +306,32 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		await kdb.destroy() // closes the underlying `db` handle
+
+		// Stamped on the TEMP file, before the swap, for the same reason the interpolation shard is: the swap
+		// is the moment the artifact becomes live.
+		const { buildSHA, stampLayerManifest } = await import("../../gazetteer-pipeline/stamp-manifest.ts")
+		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
+		const { repoRootPath } = await import("@mailwoman/core/utils")
+
+		await stampLayerManifest(tmpOut, {
+			name: `address-points-us-${STATE.toLowerCase()}`,
+			version: options.release,
+			schemaVersion: 1,
+			tier: LayerTier.BuildLocal,
+			// The dataset allow-list this build applied is the licence claim — a shard built with a different
+			// filter carries different terms, and the filter is reported in the build output but was recorded
+			// nowhere in the artifact.
+			license: "see attribution; per-dataset, filtered at build time",
+			attribution: `Overture addresses (${[...allowedDatasets].toSorted().join(", ")})`,
+			source: "overture-addresses",
+			sourceVintage: options.release,
+			buildCmd: "mailwoman situs address-points",
+			buildSHA: buildSHA(String(repoRootPath())),
+			freshnessPolicy: LayerFreshnessPolicy.Sealed,
+			spineKeys: { street: { column: "street_norm" } },
+			createdAt: new Date().toISOString(),
+		})
+
 		swapDatabaseIntoPlace(tmpOut, finalOut)
 
 		return lines

@@ -235,7 +235,11 @@ async function main(): Promise<void> {
 		attribution: "© OpenStreetMap contributors",
 		source,
 		sourceVintage: args.release,
-		buildCmd: "node osm/out/scripts/build-rooftop-shard.js",
+		// The path this recorded — `osm/out/scripts/build-rooftop-shard.js` — moved under `packages/` in the
+		// workspace regroup, and the literal survived INSIDE every shard built before then, where no lint can
+		// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
+		// "has a manifest" check and cannot be rebuilt from what they say.
+		buildCmd: "node packages/osm/out/scripts/build-rooftop-shard.js",
 		buildSHA: args.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },

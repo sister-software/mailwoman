@@ -32,7 +32,7 @@ import {
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { sealDatabase } from "@mailwoman/core/utils"
+import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -42,6 +42,7 @@ import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-
 import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
+import { candidateLayerManifest } from "./candidate-manifest.ts"
 import { emitCoverageManifest } from "./coverage-manifest.ts"
 import {
 	DEFAULT_CANDIDATE_OUT,
@@ -49,6 +50,7 @@ import {
 	DEFAULT_IMPORTANCE_DB,
 	geonamesAdminGapCountries,
 } from "./defaults.ts"
+import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
@@ -371,6 +373,28 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// falling back to the code constants. MUST run pre-seal (a shipped DB is never patched — rebuild).
 	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
 	await emitCoverageManifest({ dbPath: opts.out })
+
+	// The layer contract's manifest, alongside the coverage one and for the same reason: facts about the
+	// artifact live IN the artifact. It names its ANCESTOR rather than restating the ancestor's sources —
+	// see candidate-manifest.ts for why a derived layer's provenance has to be a chain.
+	opts.onProgress?.("layer-manifest", "stamping provenance")
+	const sha = buildSHA(String(repoRootPath()))
+
+	await stampLayerManifest(
+		opts.out,
+		candidateLayerManifest({
+			adminDBPath: opts.adminDB,
+			shardCounts: {
+				postcodes: (opts.postcodeShards ?? resolvePostcodeShards()).length,
+				localities: (opts.localityShards ?? resolveLocalityShards()).length,
+			},
+			importance: Boolean(importance),
+			buildSHA: sha,
+			version: new Date().toISOString().slice(0, 10),
+			createdAt: new Date().toISOString(),
+		})
+	)
+
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(opts.out)
 

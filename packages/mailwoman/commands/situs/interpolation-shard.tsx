@@ -28,10 +28,13 @@ import { globSync, mkdirSync, rmSync } from "node:fs"
 import { basename, dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
+import { dataRootPath, repoRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { buildSHA, stampLayerManifest } from "../../gazetteer-pipeline/stamp-manifest.ts"
 
 /**
  * Provenance tag for the baked `interp_calibration` row — the split-conformal multi-region recalibration this build
@@ -322,6 +325,27 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 			.get() as Record<string, number>
 
 		await kdb.destroy()
+
+		// Stamped on the TEMP file, before the swap: `swapDatabaseIntoPlace` is the moment the artifact
+		// becomes the live one, and a manifest written after it would be a write to a published file.
+		await stampLayerManifest(tmpOut, {
+			name: `interpolation-us-${STATE.toLowerCase()}`,
+			version: String(options.release),
+			schemaVersion: 1,
+			// US Census TIGER/Line is public domain, so unlike the ODbL layers this one COULD ship. It is
+			// build-local because nothing publishes it today, not because the licence forbids it.
+			tier: LayerTier.BuildLocal,
+			license: "public-domain",
+			attribution: "US Census Bureau TIGER/Line",
+			source: "tiger",
+			sourceVintage: String(options.release),
+			buildCmd: "mailwoman situs interpolation-shard",
+			buildSHA: buildSHA(String(repoRootPath())),
+			freshnessPolicy: LayerFreshnessPolicy.Sealed,
+			// No H3, no WOF id, no address-id — see `SpineKeys.street`. Every probe joins on `street_norm`.
+			spineKeys: { street: { column: "street_norm" } },
+			createdAt: new Date().toISOString(),
+		})
 
 		swapDatabaseIntoPlace(tmpOut, finalOut)
 
