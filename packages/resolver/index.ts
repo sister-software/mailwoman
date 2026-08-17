@@ -50,6 +50,7 @@ export {
 export type { PostcodeCountryScope, PostcodeCountryScopeOpts } from "./postcode-country-coherence.ts"
 export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
+export { adminContainmentVerdict, partitionByContainment } from "./admin-containment.ts"
 
 // The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.

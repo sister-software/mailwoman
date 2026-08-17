@@ -26,9 +26,20 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
-import { expandPlacetypeFilter, type Ancestor, type GazetteerArtifactCoverage } from "@mailwoman/resolver"
+import {
+	expandPlacetypeFilter,
+	partitionByContainment,
+	type Ancestor,
+	type GazetteerArtifactCoverage,
+} from "@mailwoman/resolver"
 
-import { CANDIDATE_ANCESTOR_TABLE, type CandidateAncestorTable } from "./candidate-ancestors-schema.ts"
+import {
+	CANDIDATE_ANCESTOR_TABLE,
+	CANDIDATE_INTERVAL_TABLE,
+	intervalContains,
+	type CandidateAncestorTable,
+	type IntervalLabel,
+} from "./candidate-ancestors-schema.ts"
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
@@ -37,6 +48,7 @@ import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
 import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary-preference.ts"
 import { applyProximityRerank } from "./proximity-rerank.ts"
+import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "./region-keys.ts"
 import { hasColumn, hasTable } from "./sqlite-utils.ts"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
@@ -182,6 +194,20 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	readonly #ancestorsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
+	 * Prepared interval-label probe over `candidate_interval` — `undefined` when the artifact predates the sidecar, which
+	 * is what makes the admin-containment re-rank (#1717 stage 2) capability-gated: without it,
+	 * `FindPlaceQuery.regionQualifier` is ignored, no candidate carries a `containedByQualifier` stamp, and the resolver
+	 * walk reports the lever `unavailable` instead of silently dead.
+	 */
+	readonly #intervalProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #intervalCache = new Map<number, IntervalLabel | null>()
+	/**
+	 * Prepared qualifier probe: the region-band rows (plus `country` — the region SLOT can hold a mislabeled country
+	 * name, "Moscow, Russia" parses region="Russia") for one folded qualifier key. `undefined` when the artifact lacks
+	 * the sidecar or the placetype dictionary lacks the band entirely.
+	 */
+	readonly #qualifierProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	/**
 	 * The ancestor lineage of a resolved place — nearest-first (locality-tier → county → region → … → country), the same
 	 * order the FTS backend's `ancestorLineage` serves, read from the `candidate_ancestor` sidecar in one clustered
 	 * probe. Backs `ResolveOpts.includeAncestors` (#404) on this backend, which is what puts region-class ancestry in
@@ -253,6 +279,23 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			this.ancestors = (id) => this.#ancestorLineage(id)
 		}
 
+		// Admin-containment re-rank (#1717 stage 2): gated on the interval half of the sidecar (built in
+		// the same pass as the closure rows; probed separately so a hand-degraded artifact degrades
+		// truthfully) AND on the placetype dictionary carrying the qualifier band at all.
+		if (this.#ancestorsProbe && hasTable(this.#db, CANDIDATE_INTERVAL_TABLE)) {
+			this.#intervalProbe = this.#db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
+
+			const bandIDs = [...REGION_CLASS_PLACETYPES, "country"]
+				.map((placetype) => this.#placetypeToID.get(placetype))
+				.filter((id): id is number => id !== undefined)
+
+			if (bandIDs.length) {
+				this.#qualifierProbe = this.#db.prepare(
+					`SELECT DISTINCT spr_id FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.join(",")}) LIMIT 8`
+				)
+			}
+		}
+
 		// Coverage manifest (survey candidate #2): the artifact's own coverage facts, existence-gated like
 		// the probes above — a candidate.db built before the manifest reads `undefined` and consumers keep
 		// their code-constant fallbacks byte-identically.
@@ -286,6 +329,160 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		this.#ancestorsCache.set(pid, lineage)
 
 		return lineage
+	}
+
+	/**
+	 * The interval label for one place, memoized. `null` is a real answer — the place has no recorded ancestry in the
+	 * source (absence semantics: UNVERIFIABLE, never a containment verdict) — and is cached as such.
+	 */
+	#intervalLabel(sprID: number): IntervalLabel | null {
+		if (!this.#intervalProbe) return null
+
+		const cached = this.#intervalCache.get(sprID)
+
+		if (cached !== undefined) return cached
+
+		const row = this.#intervalProbe.get(sprID) as { pre: number; post: number } | undefined
+		const label = row ? { pre: Number(row.pre), post: Number(row.post) } : null
+
+		this.#intervalCache.set(sprID, label)
+
+		return label
+	}
+
+	/**
+	 * The qualifier's own rows in the candidate table: every region-band (+ country) place whose `name_key` matches one
+	 * of the qualifier's {@link regionQualifierProbeKeys} expansions. Alias keys participate — `Thüringen` finds the row
+	 * stored as `Thuringia` through the artifact's own alias keying, which is precisely the variant-form bridge the
+	 * admin-coherence verdicts' fold-equality bound cannot offer (its stated v1 bound). Empty = the qualifier names
+	 * nothing the artifact knows; the caller then stamps `false` everywhere and reorders nothing.
+	 */
+	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
+		const ids = new Set<number>()
+
+		if (!this.#qualifierProbe) return ids
+
+		for (const key of regionQualifierProbeKeys(qualifier, country)) {
+			if (!key) continue
+
+			for (const row of this.#qualifierProbe.all(key) as unknown as Array<{ spr_id: number }>) {
+				ids.add(Number(row.spr_id))
+			}
+		}
+
+		return ids
+	}
+
+	/**
+	 * Is `sprID` contained by ANY of the qualifier's rows? Interval first — {@link intervalContains}, O(1), reflexive —
+	 * then the closure rows where intervals abstain: the interval forest encodes only the CANONICAL parent per place, so
+	 * a `false` there means "not contained along the canonical hierarchy", and the chain probe (one clustered read of
+	 * ≤{@link MAX_ANCESTOR_DEPTH} rows) is the complete record that settles it.
+	 */
+	#containedByQualifier(sprID: number, qualifierIDs: ReadonlySet<number>, qualifierLabels: IntervalLabel[]): boolean {
+		if (qualifierIDs.has(sprID)) return true
+
+		const label = this.#intervalLabel(sprID)
+
+		if (label && qualifierLabels.some((outer) => intervalContains(outer, label))) return true
+
+		return this.#ancestorLineage(sprID).some((ancestor) => qualifierIDs.has(Number(ancestor.id)))
+	}
+
+	/**
+	 * The #1717 stage-2 re-rank over one lookup's final row set. Three steps, each additive:
+	 *
+	 * 1. Resolve the qualifier to its region-band rows ({@link #qualifierRegionIDs}) and stamp every existing row's
+	 *    `containedByQualifier` — the stamp is the trace surface, written even when nothing reorders.
+	 * 2. INJECT contained same-key candidates the country scope hid: the deciding-site measurement (2026-08-18, the #1729
+	 *    lesson re-confirmed) showed `Weimar, Thüringen` under the en-US locale probes `country_id = US`, so the DE row
+	 *    is not IN the list and no reorder of the list can reach it. The injection probe runs the same exact fold (and,
+	 *    on a contained-miss, the qualifier-strip variant restricted to primary keys — the #1626 alias-scrape guard)
+	 *    under the SHAPE conds only, appends contained rows not already present, and never removes anything — recall can
+	 *    only widen. The typo-fuzzy tier is deliberately not probed: a qualifier cannot vouch for a name the gazetteer
+	 *    does not carry.
+	 * 3. Partition contained-first — the SHARED {@link partitionByContainment} (tier-safe, stable; the resolver walk runs
+	 *    the same function after its fame re-rank, one function at both deciding sites per the #861 rule) — then
+	 *    re-window to `limit`.
+	 *
+	 * A qualifier that matches nothing stamps `false` everywhere and reorders nothing — byte-identical answers, and the
+	 * walk's verdict reads `no_contained_candidate` rather than `unavailable` (the question WAS asked).
+	 */
+	#applyAdminContainment(
+		rows: Array<RankedRow<CandidateRow>>,
+		qualifier: string,
+		country: string | undefined,
+		opts: {
+			nameKey: string
+			strippedKey: string
+			shapeFilters: string[]
+			shapeParams: Array<string | number>
+			limit: number
+		}
+	): Array<RankedRow<CandidateRow>> {
+		const qualifierIDs = this.#qualifierRegionIDs(qualifier, country)
+
+		if (!qualifierIDs.size) {
+			for (const row of rows) {
+				row.containedByQualifier = false
+			}
+
+			return rows
+		}
+
+		const qualifierLabels = [...qualifierIDs]
+			.map((id) => this.#intervalLabel(id))
+			.filter((label): label is IntervalLabel => label !== null)
+
+		const contained = (sprID: number): boolean => this.#containedByQualifier(sprID, qualifierIDs, qualifierLabels)
+
+		for (const row of rows) {
+			row.containedByQualifier = contained(Number(row.spr_id))
+		}
+
+		const present = new Set(rows.map((row) => Number(row.spr_id)))
+		const injected: Array<RankedRow<CandidateRow>> = []
+
+		const injectSQL = (primaryOnly: boolean): string =>
+			"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
+			`${this.#importanceSelect} FROM candidate WHERE ${["name_key = ?", ...opts.shapeFilters, ...(primaryOnly ? ["is_primary = 1"] : [])].join(" AND ")} ` +
+			"ORDER BY neg_rank ASC LIMIT ?"
+
+		const injectFrom = (key: string, primaryOnly: boolean): void => {
+			const fetched = this.#db
+				.prepare(injectSQL(primaryOnly))
+				.all(key, ...opts.shapeParams, RERANK_FETCH) as unknown as CandidateRow[]
+
+			for (const row of fetched) {
+				const sprID = Number(row.spr_id)
+
+				if (present.has(sprID) || !contained(sprID)) continue
+				present.add(sprID)
+
+				injected.push({ ...row, effectiveNegRank: row.neg_rank, demoted: false, containedByQualifier: true })
+			}
+		}
+
+		injectFrom(opts.nameKey, false)
+
+		// The strip variant mirrors the cascade's discipline: tried only when the exact fold vouched for
+		// nothing, and primary-keyed only (a stripped surface never named an alias — #1626).
+		if (
+			!injected.length &&
+			!rows.some((row) => row.containedByQualifier) &&
+			opts.strippedKey &&
+			opts.strippedKey !== opts.nameKey
+		) {
+			injectFrom(opts.strippedKey, true)
+		}
+
+		if (!injected.length && !rows.some((row) => row.containedByQualifier)) return rows
+
+		return partitionByContainment(
+			[...rows, ...injected],
+			(row) => row.containedByQualifier === true,
+			(row) => !row.demoted && !row.fuzzy
+		).slice(0, opts.limit)
 	}
 
 	/**
@@ -377,9 +574,15 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// Filter conds shared by the exact-key + strip-fallback probes (everything but name_key).
+		// Filter conds shared by the exact-key + strip-fallback probes (everything but name_key). The
+		// SHAPE subset (placetype/bbox/primary — everything but the country scope) is kept separately
+		// because the admin-containment injection probe (#1717 stage 2) runs under the shape conds
+		// WITHOUT the country: bypassing a locale-inferred country scope for a qualifier-vouched
+		// candidate is the lever's whole point, and it is the one filter injection may cross.
 		const filters: string[] = []
 		const filterParams: Array<string | number> = []
+		const shapeFilters: string[] = []
+		const shapeParams: Array<string | number> = []
 
 		if (query.country) {
 			const cid = this.#countryToID.get(query.country.toUpperCase())
@@ -399,14 +602,14 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				.filter((v): v is number => v !== undefined)
 
 			if (!ids.length) return []
-			filters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
-			filterParams.push(...ids)
+			shapeFilters.push(`placetype_id IN (${ids.map(() => "?").join(",")})`)
+			shapeParams.push(...ids)
 		}
 
 		if (query.bbox) {
 			const b = query.bbox
-			filters.push("latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?")
-			filterParams.push(b.minLat, b.maxLat, b.minLon, b.maxLon)
+			shapeFilters.push("latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?")
+			shapeParams.push(b.minLat, b.maxLat, b.minLon, b.maxLon)
 		}
 
 		// The re-reading guard (#1632, the #1626 rationale generalized to the caller): a probe whose surface
@@ -415,8 +618,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// historical-name alias key. Whole-input bare probes never set this, keeping the exonym recall the
 		// #1546 note protects (Москва's alias rows answer 'Moscow').
 		if (query.primaryOnly) {
-			filters.push("is_primary = 1")
+			shapeFilters.push("is_primary = 1")
 		}
+
+		// The main-probe conds are country-then-shape, exactly the order they have always been.
+		filters.push(...shapeFilters)
+		filterParams.push(...shapeParams)
 
 		// Region scope: when the cascade resolves a region and passes it down as `parentID` (the walk sets
 		// `query.parentID = parentResolved.id`), the candidate build stamps each place's region-tier ancestor
@@ -597,6 +804,21 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			}
 		}
 
+		// Admin-containment re-rank (#1717 stage 2): LAST, on the final row set — the qualifier is the
+		// address's outermost explicit statement, so its partition outranks the postcode-proximity order
+		// above (contained rows keep that order among themselves). Capability-gated on the sidecar
+		// (`#qualifierProbe`); when the artifact predates it, `regionQualifier` is ignored, no stamp is
+		// written, and the resolver walk reports the lever `unavailable`.
+		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
+			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country, {
+				nameKey,
+				strippedKey: normalizeLocalityForKey(stripLocalityQualifier(text)),
+				shapeFilters,
+				shapeParams,
+				limit,
+			})
+		}
+
 		const candidates = rows.map((row): PlaceCandidate => {
 			const hasBbox = row.min_lat != null && row.max_lat != null && row.min_lon != null && row.max_lon != null
 
@@ -625,6 +847,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				// EXCEPT a row the typo-corrector produced (`fuzzy`), which by definition answers a name the
 				// gazetteer does not carry (see `RankedRow.fuzzy`).
 				exactMatch: !row.demoted && !row.fuzzy,
+				// #1717 stage 2 — the containment stamp, tri-state: emitted ONLY when the question was
+				// asked (a `regionQualifier` query over a sidecar-bearing artifact); its absence is what
+				// the resolver walk reports as `unavailable` (meaning-of-zero).
+				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
 				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence this
 				// backend has always ordered by — `neg_rank` IS `-log10(population + 1)`, so the score and
 				// the sort key are two readings of the same number.

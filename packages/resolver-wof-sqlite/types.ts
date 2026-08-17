@@ -122,6 +122,14 @@ export interface PlaceCandidate {
 	 * the falsehood-detection differentiator.
 	 */
 	mismatch?: boolean
+	/**
+	 * Admin-containment stamp (#1717 stage 2) — TRI-STATE, mirroring `ResolvedPlace.containedByQualifier` in
+	 * `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
+	 * {@link FindPlaceQuery.regionQualifier}; `false` = evaluated and not vouched for; absent = never evaluated (no
+	 * qualifier on the query, or an artifact without the sidecar). Absence is load-bearing — the resolver walk reads it
+	 * as `unavailable`, never as "not contained".
+	 */
+	containedByQualifier?: boolean
 }
 
 /**
@@ -194,6 +202,14 @@ export interface FindPlaceQuery {
 	 * → the population-first order is untouched (byte-identical).
 	 */
 	postcodeContainmentCoherence?: boolean
+	/**
+	 * The tree's parsed REGION qualifier (#1717 stage 2) — set by the resolver on locality lookups when
+	 * `ResolveOpts.adminContainmentRerank` is on. See the `ResolverBackend` contract in `@mailwoman/core/resolver`: a
+	 * capable backend stamps `containedByQualifier`, ranks contained candidates first, and may ADD contained same-key
+	 * candidates a country scope hid — additive only, never a filter. Ignored on an artifact without the ancestors
+	 * sidecar (candidates then carry no stamp).
+	 */
+	regionQualifier?: string
 	/**
 	 * Proximity hint — candidates close to this point get a ranking boost.
 	 */

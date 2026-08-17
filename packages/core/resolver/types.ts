@@ -129,6 +129,15 @@ export interface ResolvedPlace {
 	 * Absent when the exact placetype matched (the normal case).
 	 */
 	resolutionQuality?: "fallback"
+	/**
+	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is load-bearing
+	 * (meaning-of-zero): `true` = the backend's ancestors sidecar vouches that this candidate sits UNDER the query's
+	 * parsed region qualifier; `false` = the backend evaluated containment and could not vouch for it; `undefined` = the
+	 * question was never asked — the lever is off, the query carried no qualifier, or the backend/artifact cannot answer
+	 * (no sidecar). Set only by backends implementing `FindPlaceQuery.regionQualifier`; consumed by the resolver walk's
+	 * `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
+	 */
+	containedByQualifier?: boolean
 }
 
 /**
@@ -268,6 +277,16 @@ export interface ResolverBackend {
 		 * ignore it.
 		 */
 		primaryOnly?: boolean
+		/**
+		 * The tree's parsed REGION qualifier, verbatim (#1717 stage 2) — set by the resolver on locality lookups when
+		 * `ResolveOpts.adminContainmentRerank` is on. A capable backend resolves the qualifier to its own region-class rows
+		 * and (a) stamps every returned candidate's `containedByQualifier`, (b) ranks contained candidates ahead of
+		 * uncontained ones, and (c) may ADD contained same-name candidates its other filters (a locale-inferred country
+		 * scope) would have hidden — additive only, never a filter, so a qualifier that matches nothing changes nothing.
+		 * Backends without a containment source ignore it (candidates then carry no stamp, which the walk reports as
+		 * `unavailable`).
+		 */
+		regionQualifier?: string
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
@@ -929,6 +948,36 @@ export interface ResolveOpts {
 	 * resolver actually resolved.
 	 */
 	includeAncestors?: boolean
+	/**
+	 * Admin-containment re-rank (#1717 stage 2) — make a parsed REGION qualifier participate in locality-candidate
+	 * selection. `Weimar, Thüringen` under the en-US locale resolves to Weimar, Texas: the locale-inferred
+	 * `defaultCountry` becomes a hard `country` filter on the locality lookup, so the candidate pool is all-US before any
+	 * comparator runs — the qualifier the parse got RIGHT never reaches the deciding site (the #1729 lesson, measured
+	 * again here: the DE row is simply not in the list). The coherence passes cannot reach this class either:
+	 * `applyAdminCoherence` needs the locality to have FAILED, `applyRegionCountryCoherence` expands only the codex US+CA
+	 * subdivision table, and there is no postcode for #42 to re-scope by.
+	 *
+	 * When on, the walk threads the tree's first region-tagged span onto every locality lookup
+	 * (`FindPlaceQuery.regionQualifier`); a capable backend answers containment from its ancestors sidecar — stamping
+	 * `ResolvedPlace.containedByQualifier` and ADDING contained same-name candidates a locale-inferred country scope hid
+	 * — and the walk finishes with a TIER-SAFE stable partition: contained candidates ahead of uncontained ones, within
+	 * the exact-match tier, preserving each group's relative order. The partition runs AFTER the fame/anchor re-ranks
+	 * because the qualifier is the address's OWN text — evidence, which outranks a prior (the same precedence
+	 * `anchorPosterior` holds over `rankByImportance`).
+	 *
+	 * Soft by construction: candidates are only ever added or reordered, never dropped, so a qualifier that matches
+	 * nothing (or contains no same-name candidate) leaves the answer byte-identical. Stands down under an EXPLICIT caller
+	 * `defaultCountry` (the #912 posture: only a locale-INFERRED scope is bypassable by the address's own evidence). Each
+	 * locality pick records `metadata.admin_containment`: `"contained"` (the sidecar vouched for at least one candidate),
+	 * `"no_contained_candidate"` (evaluated, none contained), or `"unavailable"` (the backend or artifact cannot answer —
+	 * a pre-sidecar candidate.db, the FTS/browser backends) — so an inert lever is visible in the trace rather than
+	 * silently dead (#1719's rule; the parse-side census cannot see resolver levers, so the stamp is the census surface
+	 * here).
+	 *
+	 * **Default OFF** (D-rule): opt in and measure; the promotion battery is the full board + gauntlet + parity ON/OFF
+	 * with one declared variable.
+	 */
+	adminContainmentRerank?: boolean
 }
 
 /**

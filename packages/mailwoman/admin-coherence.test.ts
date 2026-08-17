@@ -102,6 +102,59 @@ describe("assessAdminCoherence — region verdicts", () => {
 
 		expect(assessAdminCoherence({ region: "Thüringen" }, winner).region).toBe("confirmed")
 	})
+
+	it("the mislabel bridge: a COUNTRY name in the region slot confirms against country-class evidence", () => {
+		// "Batumi, Georgia" parses region="Georgia" and resolves Batumi GE — the region band (Adjara)
+		// cannot match, but the winner's country-class evidence can, and `contradicted` would be the
+		// wrong claim about the geography. The bridge runs through the SAME winnerCountryKeys the
+		// country verdict reads, so the two verdicts can never disagree about country evidence.
+		const batumi: AdminCoherenceWinner = {
+			tag: "locality",
+			countryCode: "GE",
+			ancestry: [
+				{ placetype: "region", name: "Adjara" },
+				{ placetype: "country", name: "Georgia" },
+			],
+		}
+
+		expect(assessAdminCoherence({ region: "Georgia" }, batumi).region).toBe("confirmed")
+
+		// The bridge inherits the module's pure-codex bound: "Moscow, Russia" resolves Москва RU, but
+		// codex's table holds only "Russian Federation" for RU (matchCountry("Russia") is null), so the
+		// bridge cannot vouch and the verdict stays contradicted rather than over-claiming — exactly
+		// the posture the country verdict itself takes on the same pair.
+		const moskva: AdminCoherenceWinner = {
+			tag: "locality",
+			countryCode: "RU",
+			ancestry: [
+				{ placetype: "region", name: "Москва" },
+				{ placetype: "country", name: "Россия" },
+			],
+		}
+
+		expect(assessAdminCoherence({ region: "Russia" }, moskva).region).toBe("contradicted")
+	})
+
+	it("the bridge is MONOTONE: a non-country region qualifier still reads exactly as before", () => {
+		// A genuine wrong-instance row must stay contradicted — the bridge only fires when the parsed
+		// region genuinely names the winner's own country.
+		const georgetownTexas: AdminCoherenceWinner = {
+			tag: "locality",
+			countryCode: "US",
+			ancestry: [
+				{ placetype: "region", name: "Texas" },
+				{ placetype: "country", name: "United States" },
+			],
+		}
+
+		expect(assessAdminCoherence({ region: "Penang" }, georgetownTexas).region).toBe("contradicted")
+
+		// And with NO region-class ancestry and no country match, the faithful verdict stays
+		// unverifiable — the bridge never converts an unanswerable question into a decided one.
+		const bare: AdminCoherenceWinner = { tag: "locality", countryCode: "US" }
+
+		expect(assessAdminCoherence({ region: "Thüringen" }, bare).region).toBe("unverifiable")
+	})
 })
 
 describe("assessAdminCoherence — country verdicts", () => {

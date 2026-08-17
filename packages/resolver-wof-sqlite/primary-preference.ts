@@ -86,6 +86,13 @@ export type RankedRow<R> = R & {
 	 * has always done and what every `exactMatch`-filtering consumer assumed.
 	 */
 	fuzzy?: boolean
+	/**
+	 * The admin-containment verdict (#1717 stage 2), stamped by `candidate-lookup.ts` when the query carried a
+	 * `regionQualifier` and the artifact carries the ancestors sidecar — the `fuzzy` precedent: a lookup-tier annotation
+	 * declared on the shared row shape. Tri-state like `ResolvedPlace.containedByQualifier`: absent means the question
+	 * was never asked, never "not contained".
+	 */
+	containedByQualifier?: boolean
 }
 
 /**

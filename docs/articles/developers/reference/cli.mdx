@@ -93,6 +93,7 @@ mailwoman geocode [options] [address...]
 | `--no-fork-entity`                                    | boolean                      | `true`   | Probe POI data for exact entities when a fork parse does not resolve.               |
 | `--postcode-shape-coherence`                          | boolean                      | `false`  | Opt into postcode shape exclusion/demotion.                                         |
 | `--postcode-containment-coherence`                    | boolean                      | `false`  | Opt into postcode-centroid locality reranking.                                      |
+| `--admin-containment-rerank`                          | boolean                      | `false`  | Opt into region-qualifier containment reranking of locality candidates.             |
 | `--place-country-threshold [place-country-threshold]` | number                       | `0.9`    | Coarse-placer abstention threshold.                                                 |
 | `--format [format]`                                   | `json` \| `text` \| `jsonld` | `json`   | Output format.                                                                      |
 | `--json`                                              | boolean                      | `false`  | Shorthand for --format json.                                                        |

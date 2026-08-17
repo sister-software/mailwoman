@@ -102,6 +102,12 @@ export interface GauntletRunOptions {
 	 */
 	gazetteerPrior?: boolean
 	/**
+	 * RESOLVER-side lever pin (#1717 stage 2): the admin-containment re-rank. Two-sided from day one (the #1706
+	 * one-sided-forwarding class): `undefined` grades the production default (OFF), `true` is the evidence pin, and
+	 * `false` pins the default explicitly so an OFF-labeled log really graded OFF.
+	 */
+	adminContainmentRerank?: boolean
+	/**
 	 * Ablation: where the map artifacts land. Defaults to `/tmp/ablation-<YYYYMMDD-HHmm>`.
 	 */
 	out?: string
@@ -140,6 +146,7 @@ export function runResolverLevers(options: GauntletRunOptions): GauntletResolver
 			? {}
 			: { postcodeCountryCoherence: options.postcodeCountryCoherence }),
 		...(options.gazetteerPrior === undefined ? {} : { gazetteerPrior: options.gazetteerPrior }),
+		...(options.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: options.adminContainmentRerank }),
 	}
 
 	// Absent, not empty: `undefined` is what `describeResolverLevers` prints as "production defaults", and an empty

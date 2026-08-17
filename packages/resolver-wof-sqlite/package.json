@@ -141,6 +141,11 @@
 			"default": "./out/street-normalize.js",
 			"types": "./out/street-normalize.d.ts"
 		},
+		"./region-keys": {
+			"node": "./region-keys.ts",
+			"default": "./out/region-keys.js",
+			"types": "./out/region-keys.d.ts"
+		},
 		"./build-candidate": {
 			"node": "./build-candidate.ts",
 			"default": "./out/build-candidate.js",

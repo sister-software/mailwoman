@@ -107,6 +107,11 @@ export const spec = {
 			default: false,
 			description: "Opt into postcode-centroid locality reranking.",
 		},
+		"admin-containment-rerank": {
+			type: "boolean",
+			default: false,
+			description: "Opt into region-qualifier containment reranking of locality candidates.",
+		},
 		"place-country-threshold": {
 			type: "number",
 			default: 0.9,
@@ -190,6 +195,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		forkEntity: booleanValue(values, "fork-entity"),
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
+		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),

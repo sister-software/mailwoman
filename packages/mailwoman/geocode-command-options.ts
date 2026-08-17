@@ -24,6 +24,10 @@ export interface GeocodeCommandOptions {
 	forkEntity: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
+	/**
+	 * Admin-containment re-rank (#1717 stage 2). Default OFF (D-rule) — `--admin-containment-rerank` opts in.
+	 */
+	adminContainmentRerank: boolean
 	placeCountryThreshold: number
 	format: "json" | "text" | "jsonld"
 	json: boolean
@@ -48,6 +52,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 		forkEntity: true,
 		postcodeShapeCoherence: false,
 		postcodeContainmentCoherence: false,
+		adminContainmentRerank: false,
 		placeCountryThreshold: 0.9,
 		format: "json",
 		json: false,

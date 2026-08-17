@@ -37,6 +37,13 @@
  *     `Illinois` and `Deutschland` against a DE winner, but an uncurated endonym (`Alemania`)
  *     against a DE winner reads `contradicted` — the module never silently over-claims a match it
  *     cannot derive.
+ *   - The region verdict additionally carries the MISLABEL BRIDGE: a region slot holding a COUNTRY
+ *     name ("Batumi, Georgia" parses region="Georgia") confirms against the winner's country-class
+ *     evidence, because containment holds and `contradicted` would misdescribe the geography. It
+ *     runs after the region band, is monotone (`contradicted`/`unverifiable` → `confirmed` is the
+ *     only movement it can cause), and inherits the pure-codex bound above — parsed "Russia"
+ *     against an RU winner still reads `contradicted`, because codex holds only "Russian
+ *     Federation" for RU and the module never over-claims.
  *
  *   The winner's checkable ancestry arrives as the resolver's `metadata.ancestors` stamp (#404 —
  *   the geocode path opts in by default, and both backends serve it when their artifact carries an
@@ -47,13 +54,8 @@
  *   out.
  */
 
-import {
-	countrySurfaceForms,
-	ISO2_TO_NAME,
-	matchCountry,
-	matchSubdivision,
-	matchSubdivisionIn,
-} from "@mailwoman/codex/country"
+import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
+import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
@@ -103,65 +105,15 @@ export interface AdminCoherenceWinner {
 }
 
 /**
- * The ancestry placetypes that answer for a parsed `region` qualifier — WOF's admin band between country and locality.
- * Deliberately the whole band: a qualifier stated at any grain ("Lancashire", a ceremonial county; "Thüringen", a Land)
- * may confirm against whichever level the backend stored, and `contradicted` requires the entire band to miss, so
- * widening the band only ever makes the check more conservative.
- */
-const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "macroregion", "county", "macrocounty"])
-
-/**
  * Fold both sides of every name comparison through the shared candidate.db `name_key` normalizer — one function, both
  * sides, so the check can never disagree with the index it's checking against.
+ *
+ * The region-side expansion ({@link regionKeys}) and the region band ({@link REGION_CLASS_PLACETYPES}) moved DOWN to
+ * `@mailwoman/resolver-wof-sqlite/region-keys` when the #1717 stage-2 containment re-rank became their second consumer
+ * — the dependency points that way, and the #861 rule wants one function, not a mirrored copy.
  */
 function foldKey(name: string): string {
 	return normalizeLocalityForKey(name)
-}
-
-/**
- * County-style qualifier prefixes stripped to produce a comparison VARIANT. Ireland writes `Co. Westmeath` where WOF
- * stores `Westmeath`, so the prefix defeats the fold and every Irish county qualifier read `contradicted` on the first
- * board census (2026-08-17, five rows). The stripped form is ADDED to the key set, never substituted — `County Durham`
- * is a real name whose stripped variant simply also matches, and a set union can only widen confirmation, so the
- * closure is monotone: `contradicted → confirmed` is the only movement it can cause.
- */
-const COUNTY_QUALIFIER_PREFIX = /^(?:co\.?|county)\s+/i
-
-/**
- * Trailing admin-qualifier words, the suffix sibling of the prefix above: `San José Province` (CR board row) folds
- * against stored `San José` only with the word removed. Same monotone rule — the stripped form joins the set, never
- * replaces the original.
- */
-const ADMIN_QUALIFIER_SUFFIX = /\s+(?:province|prov\.?)$/i
-
-/**
- * The comparable keys a region string expands to: its own fold; a county-prefix-stripped variant; the codex subdivision
- * expansions — the disjoint US+CA table always, plus the COUNTRY-SCOPED table when the caller knows the winner's
- * country (`WA` under AU is Western Australia; under US, Washington — the collision that keeps AU out of the unscoped
- * table). Every expansion lands the canonical name and code folds in the set, so `IL`/`Illinois` and `WA`/`Western
- * Australia` meet from either side.
- */
-function regionKeys(value: string, countryAlpha2?: string): Set<string> {
-	const keys = new Set([foldKey(value)])
-
-	for (const pattern of [COUNTY_QUALIFIER_PREFIX, ADMIN_QUALIFIER_SUFFIX]) {
-		const stripped = value.replace(pattern, "")
-
-		if (stripped !== value && stripped.trim()) {
-			keys.add(foldKey(stripped))
-		}
-	}
-
-	const expansions = [matchSubdivision(value), countryAlpha2 ? matchSubdivisionIn(countryAlpha2, value) : null]
-
-	for (const subdivision of expansions) {
-		if (subdivision) {
-			keys.add(foldKey(subdivision.name))
-			keys.add(foldKey(subdivision.code))
-		}
-	}
-
-	return keys
 }
 
 /**
@@ -196,40 +148,13 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 	return false
 }
 
-function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
-	const parsed = parsedRegion?.trim()
-
-	if (!parsed) return "unstated"
-
-	// The winner IS a region resolution — the qualifier is the thing that resolved, so containment
-	// degenerates to identity. The resolver's own binding (alias-aware, unlike the fold) is the
-	// match evidence here; re-checking it under fold-equality would misread every alias hit as a
-	// contradiction.
-	if (winner.tag === "region") return "confirmed"
-
-	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
-
-	if (!regionAncestors.length) return "unverifiable"
-
-	const iso = winner.countryCode?.trim().toUpperCase() || undefined
-	const parsedKeys = regionKeys(parsed, iso)
-
-	for (const ancestor of regionAncestors) {
-		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
-	}
-
-	return "contradicted"
-}
-
-function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
-	const parsed = parsedCountry?.trim()
-
-	if (!parsed) return "unstated"
-
-	if (winner.tag === "country") return "confirmed"
-
-	// Country-class evidence on the winner: the resolver-stamped alpha-2, expanded through the codex
-	// tables into every spelling the check can vouch for, plus any country-placetype ancestors.
+/**
+ * The winner's COUNTRY-class evidence keys: the resolver-stamped alpha-2 expanded through the codex tables into every
+ * spelling the check can vouch for, plus any country-placetype ancestors. One assembly, two consumers — the country
+ * verdict compares against it, and the region verdict's mislabel bridge (below) does too, so the two verdicts can never
+ * disagree about what counts as country-class evidence.
+ */
+function winnerCountryKeys(winner: AdminCoherenceWinner): Set<string> {
 	const winnerKeys = new Set<string>()
 	const iso = winner.countryCode?.trim().toUpperCase() || undefined
 
@@ -254,6 +179,48 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 			winnerKeys.add(key)
 		}
 	}
+
+	return winnerKeys
+}
+
+function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
+	const parsed = parsedRegion?.trim()
+
+	if (!parsed) return "unstated"
+
+	// The winner IS a region resolution — the qualifier is the thing that resolved, so containment
+	// degenerates to identity. The resolver's own binding (alias-aware, unlike the fold) is the
+	// match evidence here; re-checking it under fold-equality would misread every alias hit as a
+	// contradiction.
+	if (winner.tag === "region") return "confirmed"
+
+	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
+	const iso = winner.countryCode?.trim().toUpperCase() || undefined
+	const parsedKeys = regionKeys(parsed, iso)
+
+	for (const ancestor of regionAncestors) {
+		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
+	}
+
+	// The mislabel bridge: the region SLOT sometimes holds a COUNTRY name — "Moscow, Russia" parses
+	// region="Russia", "Batumi, Georgia" parses region="Georgia" (the shape the flag's own first
+	// triage counted at ~4 of 16 contradictions). Containment still holds when the winner's
+	// country-class evidence matches the qualifier, so `contradicted` would be the wrong claim about
+	// the geography. Checked AFTER the region band (a genuine region match never depends on it) and
+	// monotone by construction: it can only move `contradicted`/`unverifiable` → `confirmed`.
+	if (intersects(countryKeys(parsed), winnerCountryKeys(winner))) return "confirmed"
+
+	return regionAncestors.length ? "contradicted" : "unverifiable"
+}
+
+function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
+	const parsed = parsedCountry?.trim()
+
+	if (!parsed) return "unstated"
+
+	if (winner.tag === "country") return "confirmed"
+
+	const winnerKeys = winnerCountryKeys(winner)
 
 	if (!winnerKeys.size) return "unverifiable"
 
