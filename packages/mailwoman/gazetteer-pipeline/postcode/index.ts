@@ -15,6 +15,7 @@ import { existsSync, readFileSync, unlinkSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { resolveRepoDirectory } from "@mailwoman/core/resources"
 import { sealDatabase } from "@mailwoman/core/utils"
 
 import { dataRootPath } from "../../resolver-backend.ts"
@@ -73,11 +74,17 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	const cc = opts.country.toLowerCase()
 	const wofDir = dataRootPath("wof")
 	const reposDir = opts.reposDir ?? join(wofDir, "repos")
-	const repoDir = join(reposDir, `whosonfirst-data-postalcode-${cc}`)
+	const repoName = `whosonfirst-data-postalcode-${cc}`
+	// Either layout: `mailwoman gazetteer inspect sync` writes `<repos>/<owner>/<name>`, while the shipped shards were
+	// built from repositories cloned flat. Resolving one layout only reports a present repository as missing.
+	const repoDir = await resolveRepoDirectory(reposDir, repoName)
 	const out = opts.out ?? join(wofDir, `postalcode-${cc}.REBUILD.db`)
 
-	if (!existsSync(repoDir)) {
-		throw new Error(`buildPostcodeShard: no postcode repo at ${repoDir} — clone whosonfirst-data-postalcode-${cc}`)
+	if (!repoDir) {
+		throw new Error(
+			`buildPostcodeShard: no ${repoName} under ${reposDir} — ` +
+				`clone it with \`mailwoman gazetteer inspect sync --countries ${cc}\``
+		)
 	}
 
 	// resolver-wof-sqlite is an OPTIONAL peer — lazy import (the gazetteer-pipeline convention).
