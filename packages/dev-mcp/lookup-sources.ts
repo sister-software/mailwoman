@@ -32,10 +32,15 @@ import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import type { LookupRow } from "./lookup.ts"
+import { type PlaceIDProvenance, placeIDProvenance } from "./place-id-provenance.ts"
 
 /**
- * How many rows a probe returns per query before it stops. The COUNT behind it is always exact and always reported, so
- * a truncated list still carries its denominator.
+ * How many rows a probe returns per query before it stops.
+ *
+ * PER PROBE, not per query: a source that reads several shards on several routes binds this to each one, so a set of
+ * six shards on two routes can return up to twelve times this number. Every probe therefore reports `returned` beside
+ * `matched` — the count the source actually holds, measured by its own COUNT rather than inferred from the list —
+ * because a truncated list whose length is presented as a total reads as coverage it does not have.
  */
 const DEFAULT_ENTRY_LIMIT = 10
 
@@ -73,7 +78,7 @@ export interface CandidateLookupOptions {
 	limit?: number
 }
 
-interface CandidateEntry {
+interface CandidateEntry extends PlaceIDProvenance {
 	route: CandidateRoute
 	name_key: string
 	name: string | null
@@ -84,6 +89,11 @@ interface CandidateEntry {
 	population: number | null
 	is_primary: number | null
 	importance: number | null
+	/**
+	 * The place id this row points at, named for WOF's `spr` table (Standard Place Response) because that is the schema
+	 * it came from. It is a real WOF id only when {@link PlaceIDProvenance.wof_id} is non-null — roughly half the
+	 * gazetteer is Overture- or GeoNames-minted and carries an id in a reserved synthetic range that looks identical.
+	 */
 	spr_id: number
 }
 
@@ -254,7 +264,7 @@ export function lookupCandidate(
 			}
 		}
 
-		const entries: CandidateEntry[] = found.rows.map((row) => ({ route, ...row }))
+		const entries: CandidateEntry[] = found.rows.map((row) => ({ route, ...row, ...placeIDProvenance(row.spr_id) }))
 		const unmeasured = entries.filter((entry) => entry.importance === null).length
 		const unlocated = entries.filter((entry) => entry.latitude === 0 && entry.longitude === 0).length
 		const top = entries[0]!
@@ -319,7 +329,7 @@ export const WOFRoute = {
 
 export type WOFRoute = (typeof WOFRoute)[keyof typeof WOFRoute]
 
-interface WOFEntry {
+interface WOFEntry extends PlaceIDProvenance {
 	route: WOFRoute
 	shard: string
 	id: number
@@ -328,16 +338,50 @@ interface WOFEntry {
 	country: string
 	latitude: number
 	longitude: number
+	/**
+	 * The containing place's id, straight off `spr.parent_id`. Emitted because a same-name pair is only readable as a
+	 * DUPLICATE — a district and its seat — when the parent link is visible; without it the two rows look like two
+	 * unrelated places that happen to tie.
+	 */
+	parent_id: number
+	/**
+	 * `place_population.population`, or `null` when the place has NO row there.
+	 *
+	 * Null is absence and 0 is a recorded zero, and the resolver reads them differently: `referentialFromPopulation`
+	 * treats both as no evidence, but only one of them is a claim the source made. Emitted because population is what
+	 * `neg_rank` and `referential` are computed FROM, so a ranking question cannot be answered without it.
+	 */
+	population: number | null
 }
 
 const SPR_COLUMNS =
-	"spr.id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, spr.is_current, spr.is_deprecated"
+	"spr.id, spr.parent_id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, " +
+	"spr.is_current, spr.is_deprecated, pop.population AS population"
 
-const WOF_FTS_SELECT =
-	`SELECT ${SPR_COLUMNS} FROM place_search JOIN spr ON spr.id = place_search.wof_id ` +
-	"WHERE place_search MATCH ? ORDER BY bm25(place_search) LIMIT ?"
+/**
+ * LEFT, not INNER: a place with no `place_population` row must still appear, carrying `population: null`. An inner join
+ * would drop it and the miss would read as the shard not holding the place at all.
+ */
+const SPR_JOINS = "LEFT JOIN place_population pop ON pop.id = spr.id"
 
-const WOF_NAMES_SELECT = `SELECT ${SPR_COLUMNS} FROM names n JOIN spr ON spr.id = n.id WHERE n.name = ? LIMIT ?`
+const WOF_FTS_FROM = `FROM place_search JOIN spr ON spr.id = place_search.wof_id ${SPR_JOINS} WHERE place_search MATCH ?`
+const WOF_NAMES_FROM = `FROM names n JOIN spr ON spr.id = n.id ${SPR_JOINS} WHERE n.name = ?`
+
+/**
+ * Build the pair of statements for one route: the row SELECT and the COUNT that gives it a denominator.
+ *
+ * The country filter is appended to BOTH, so a scoped probe reports how many rows the key has in that country rather
+ * than how many it has anywhere — the difference between a filter miss and an absence, which is the distinction this
+ * whole tool exists to keep.
+ */
+function wofStatements(from: string, order: string, scoped: boolean): { rows: string; count: string } {
+	const where = scoped ? `${from} AND spr.country = ?` : from
+
+	return {
+		rows: `SELECT ${SPR_COLUMNS} ${where}${order} LIMIT ?`,
+		count: `SELECT COUNT(*) AS n ${where} AND spr.is_current != 0 AND spr.is_deprecated = 0`,
+	}
+}
 
 /**
  * Probe the WOF admin + postcode shards — the source data behind the FTS backend, and behind `candidate.db`'s build.
@@ -355,8 +399,17 @@ const WOF_NAMES_SELECT = `SELECT ${SPR_COLUMNS} FROM names n JOIN spr ON spr.id 
  * string; read the returned `name`. The `names` route is byte-exact under the index's binary collation, so case and
  * punctuation matter there — which is why a double miss says what was checked rather than "WOF does not have it".
  */
-export function lookupWOF(shards: WOFShard[], queries: string[], options: { limit?: number } = {}): LookupRow[] {
+export function lookupWOF(
+	shards: WOFShard[],
+	queries: string[],
+	options: { limit?: number; country?: string } = {}
+): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
+	const country = options.country?.trim().toUpperCase()
+	const scoped = Boolean(country)
+
+	const fts = wofStatements(WOF_FTS_FROM, " ORDER BY bm25(place_search)", scoped)
+	const names = wofStatements(WOF_NAMES_FROM, "", scoped)
 
 	return queries.map((query) => {
 		const match = sanitizeFTSQuery(query)
@@ -364,12 +417,23 @@ export function lookupWOF(shards: WOFShard[], queries: string[], options: { limi
 		const seen = new Set<number>()
 		const suppressed: string[] = []
 		const failed: string[] = []
+		// Summed across shards and routes, then de-duplicated below. The same place reached by BOTH routes is one
+		// record, so the raw sum overstates; `matched` reports the de-duplicated figure and `scanned` the sum.
+		let scanned = 0
 
-		const collect = (shard: WOFShard, route: WOFRoute, sql: string, bind: string): void => {
-			let rows: Array<Omit<WOFEntry, "route" | "shard"> & { is_current: number; is_deprecated: number }>
+		const collect = (shard: WOFShard, route: WOFRoute, statements: { rows: string; count: string }, bind: string) => {
+			const params = scoped ? [bind, country!] : [bind]
+
+			let rows: Array<
+				Omit<WOFEntry, "route" | "shard" | keyof PlaceIDProvenance> & {
+					is_current: number
+					is_deprecated: number
+				}
+			>
 
 			try {
-				rows = shard.db.prepare(sql).all(bind, limit) as unknown as typeof rows
+				rows = shard.db.prepare(statements.rows).all(...params, limit) as unknown as typeof rows
+				scanned += Number((shard.db.prepare(statements.count).get(...params) as { n: number } | undefined)?.n ?? 0)
 			} catch (error) {
 				failed.push(`${shard.name} (${route}): ${(error as Error).message}`)
 
@@ -382,7 +446,7 @@ export function lookupWOF(shards: WOFShard[], queries: string[], options: { limi
 				if (is_current !== 0 && is_deprecated === 0) {
 					if (seen.has(record.id)) continue
 					seen.add(record.id)
-					entries.push({ route, shard: shard.name, ...record })
+					entries.push({ route, shard: shard.name, ...record, ...placeIDProvenance(record.id) })
 				} else {
 					suppressed.push(
 						`${shard.name}#${record.id} ${JSON.stringify(record.name)}` +
@@ -394,13 +458,24 @@ export function lookupWOF(shards: WOFShard[], queries: string[], options: { limi
 
 		for (const shard of shards) {
 			if (match) {
-				collect(shard, WOFRoute.Fts, WOF_FTS_SELECT, match)
+				collect(shard, WOFRoute.Fts, fts, match)
 			}
 
-			collect(shard, WOFRoute.NamesExact, WOF_NAMES_SELECT, query.trim())
+			collect(shard, WOFRoute.NamesExact, names, query.trim())
 		}
 
 		const shardNote = failed.length ? ` ${failed.length} probe(s) failed: ${failed.join("; ")}.` : ""
+		const scopeNote = country ? ` Scoped to country ${country}: a key held only outside it reads as 0 here.` : ""
+
+		// `scanned` counts a place once per route that reaches it, so it is an upper bound on distinct records and
+		// `entries.length` is a lower one — exact when the list was not truncated. Reporting the pair beats reporting
+		// either alone, which is how the previous note's returned-count came to be read as a corpus total.
+		const truncated = entries.length < scanned
+
+		const denominator = truncated
+			? `Returned ${entries.length} of up to ${scanned} row-hits (a record reached by both routes is counted once ` +
+				`here and once per route there); raise \`limit\` — it binds PER SHARD PER ROUTE, not per query.`
+			: `Returned all ${entries.length}.`
 
 		const checked =
 			`Checked ${shards.length} shard(s) on two routes: the FTS5 index the resolver reads ` +
@@ -408,7 +483,7 @@ export function lookupWOF(shards: WOFShard[], queries: string[], options: { limi
 			" and a byte-exact probe on the indexed `names` table, which is case- and punctuation-sensitive."
 
 		if (!entries.length && !suppressed.length) {
-			return { query, hit: false, entries: null, note: `ABSENCE. ${checked}${shardNote}` }
+			return { query, hit: false, entries: null, note: `ABSENCE.${scopeNote} ${checked}${shardNote}` }
 		}
 
 		if (!entries.length) {
@@ -420,7 +495,7 @@ export function lookupWOF(shards: WOFShard[], queries: string[], options: { limi
 					`${suppressed.length} record(s) exist and EVERY one is deprecated or not current. The FTS5 content the ` +
 					"resolver queries is built with that filter already applied, so it receives NOTHING from this surface " +
 					`— known to WOF, invisible downstream, and different from absence. Suppressed: ${suppressed.join("; ")}. ` +
-					`${checked}${shardNote}`,
+					`${checked}${shardNote}${scopeNote}`,
 			}
 		}
 
@@ -429,11 +504,11 @@ export function lookupWOF(shards: WOFShard[], queries: string[], options: { limi
 			hit: true,
 			entries,
 			note:
-				`${entries.length} record(s) the resolver can see` +
+				`${denominator}` +
 				(suppressed.length
-					? `, plus ${suppressed.length} deprecated/not-current and therefore unindexed (${suppressed.join("; ")})`
+					? ` Plus ${suppressed.length} deprecated/not-current and therefore unindexed (${suppressed.join("; ")}).`
 					: "") +
-				`. ${checked}${shardNote}`,
+				`${scopeNote} ${checked}${shardNote}`,
 		}
 	})
 }

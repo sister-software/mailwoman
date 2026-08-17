@@ -183,14 +183,36 @@ export class EngineRegistry {
 	readonly #engines = new Map<string, Engine>()
 	readonly #maxResident: number
 	readonly #repoRoot: string
+	readonly #bootFingerprint: TreeFingerprint
 
 	constructor(repoRoot: string, maxResident = 2) {
 		this.#repoRoot = repoRoot
 		this.#maxResident = maxResident
+		// Captured once, at construction, because this is the tree the PROCESS imported — not the tree any
+		// individual engine was built from. Those differ after a reload, and the difference is load-bearing: a
+		// registry with no resident engine has nothing stale to compare against, so without this the first call
+		// after a reload builds happily and stamps the NEW fingerprint onto answers produced by the OLD modules.
+		this.#bootFingerprint = computeTreeFingerprint(repoRoot)
 	}
 
 	get repoRoot(): string {
 		return this.#repoRoot
+	}
+
+	/**
+	 * The tree this process imported its modules from. Equality with {@link fingerprint} is the only condition under which
+	 * any answer from this registry describes the source on disk.
+	 */
+	get bootFingerprint(): TreeFingerprint {
+		return this.#bootFingerprint
+	}
+
+	/**
+	 * Whether the working tree has moved since this process imported its modules. When true, every engine — resident or
+	 * not yet built — can only serve the old code, and no in-process action can change that.
+	 */
+	get sourceMoved(): boolean {
+		return this.fingerprint().digest !== this.#bootFingerprint.digest
 	}
 
 	fingerprint(): TreeFingerprint {
@@ -218,11 +240,13 @@ export class EngineRegistry {
 			return existing
 		}
 
-		// A resident engine under a DIFFERENT fingerprint means the tree moved since it was built. Its id can never
-		// match again, so it would simply leak; refuse loudly instead, and name both fingerprints.
-		const stale = [...this.#engines.values()].find((engine) => engine.fingerprint.digest !== current.digest)
-
-		if (stale) throw new Error(staleEngineMessage(stale.fingerprint, current))
+		// Refuse against the BOOT fingerprint, not merely against whatever is resident. A resident engine under a
+		// different digest is one symptom of a moved tree; an EMPTY registry under a moved tree is the other, and it
+		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
+		// cannot import the new source — so both refuse here.
+		if (current.digest !== this.#bootFingerprint.digest) {
+			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
+		}
 
 		const startedAt = Date.now()
 		const session = await createGeocodeSession(effective)
@@ -265,8 +289,10 @@ export class EngineRegistry {
 	}
 
 	/**
-	 * Close every engine. Named `reload` at the tool surface because that is what a caller wants; what it actually does
-	 * is drop the sessions so the next call rebuilds. It cannot re-import source — see the class docstring.
+	 * Close every engine so the next call rebuilds them.
+	 *
+	 * This frees MEMORY and re-reads ARTIFACTS. It cannot re-import source, so the tool surface refuses to call it a
+	 * reload once the tree has moved — see {@link sourceMoved} and the class docstring.
 	 */
 	closeAll(): number {
 		const count = this.#engines.size

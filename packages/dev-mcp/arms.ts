@@ -19,9 +19,23 @@
 import { z } from "zod"
 
 import type { EngineConfig } from "./engine-registry.ts"
-import { ExternalEngine } from "./external-arm.ts"
+import { type ExternalAnswer, ExternalEngine } from "./external-arm.ts"
 import { OracleProviderName } from "./oracle-arm.ts"
 import { ENGINE_CONFIG_SCHEMA } from "./tool-kit.ts"
+import { WORKING_TREE_REF } from "./worktree-arm.ts"
+
+/**
+ * How one arm answers one raw query string, whichever kind of arm it is.
+ *
+ * Lives beside the arm SPECS rather than inside the comparison, so a new arm kind can be implemented in its own module
+ * without that module importing the comparison — which would close a cycle, since the comparison must import it back.
+ */
+export interface ArmRunner {
+	label: string
+	provenance: Record<string, unknown>
+	answer: (input: string) => Promise<ExternalAnswer>
+	warnings: string[]
+}
 
 /**
  * A mailwoman arm — one warm engine under one configuration.
@@ -65,7 +79,23 @@ export interface RecordedArm {
 	arm: string
 }
 
-export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm
+/**
+ * A mailwoman arm running a DIFFERENT VERSION OF THE SOURCE, in its own process (see `worktree-arm.ts`).
+ *
+ * The kind a source change needs and the other four cannot express. A `mailwoman` arm runs whatever this process
+ * imported, so two of them can only differ by CONFIG; a `recorded` arm replays a past run but cannot produce a new one
+ * at an old ref. Neither answers "what does my edit do", which is the question most maintainer changes are.
+ */
+export interface WorktreeArm {
+	kind: "worktree"
+	/**
+	 * A git ref, or `WORKTREE` for the uncommitted working tree.
+	 */
+	ref: string
+	config: EngineConfig
+}
+
+export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm | WorktreeArm
 
 /**
  * Which side of a stored run a recorded arm replays when the caller does not say.
@@ -114,6 +144,18 @@ const RECORDED_ARM_SCHEMA = z.object({
 		.describe(`Which side of that run to replay. Default ${JSON.stringify(DEFAULT_RECORDED_ARM)}.`),
 })
 
+const WORKTREE_ARM_SCHEMA = z.object({
+	kind: z.literal("worktree"),
+	ref: z
+		.string()
+		.describe(
+			`A git ref to check out and run in its own process, or ${JSON.stringify(WORKING_TREE_REF)} for the ` +
+				"UNCOMMITTED working tree. This is the only arm that can measure a SOURCE change: one process cannot hold " +
+				"two versions of a module, so a second process is not an optimization here, it is the mechanism."
+		),
+	config: ENGINE_CONFIG_SCHEMA.optional(),
+})
+
 /**
  * One side of a comparison.
  *
@@ -121,11 +163,19 @@ const RECORDED_ARM_SCHEMA = z.object({
  * swallow every other branch.
  */
 export const ARM_SPEC_SCHEMA = z
-	.union([MAILWOMAN_ARM_SCHEMA, EXTERNAL_ARM_SCHEMA, ORACLE_ARM_SCHEMA, RECORDED_ARM_SCHEMA, ENGINE_CONFIG_SCHEMA])
+	.union([
+		MAILWOMAN_ARM_SCHEMA,
+		EXTERNAL_ARM_SCHEMA,
+		ORACLE_ARM_SCHEMA,
+		RECORDED_ARM_SCHEMA,
+		WORKTREE_ARM_SCHEMA,
+		ENGINE_CONFIG_SCHEMA,
+	])
 	.describe(
 		'A mailwoman configuration ({kind:"mailwoman", config}, or the bare config as shorthand), an external endpoint ' +
-			'({kind:"external", engine, endpoint}), a reference geocoder ({kind:"oracle", provider}) or a stored past run ' +
-			'({kind:"recorded", run_id}).'
+			'({kind:"external", engine, endpoint}), a reference geocoder ({kind:"oracle", provider}), a stored past run ' +
+			'({kind:"recorded", run_id}), or ANOTHER VERSION OF THE SOURCE run in its own process ' +
+			`({kind:"worktree", ref}) — ref ${JSON.stringify(WORKING_TREE_REF)} being your uncommitted edits.`
 	)
 
 /**
@@ -208,8 +258,24 @@ export function normalizeArmSpec(raw: unknown, label: string): ArmSpec {
 		}
 	}
 
+	if (kind === "worktree") {
+		const ref = record["ref"]
+
+		if (typeof ref !== "string" || !ref.trim()) {
+			throw new Error(
+				`Arm ${label}: a worktree arm needs a \`ref\` — a git ref to check out, or ` +
+					`${JSON.stringify(WORKING_TREE_REF)} for the uncommitted working tree. There is no default, because ` +
+					"the two plausible ones mean opposite things: HEAD would silently discard the edits a caller is trying " +
+					"to measure."
+			)
+		}
+
+		return { kind: "worktree", ref: ref.trim(), config: (record["config"] as EngineConfig | undefined) ?? {} }
+	}
+
 	throw new Error(
-		`Arm ${label}: unknown kind ${JSON.stringify(kind)}. Expected "mailwoman", "external", "oracle" or "recorded".`
+		`Arm ${label}: unknown kind ${JSON.stringify(kind)}. Expected "mailwoman", "external", "oracle", "recorded" ` +
+			'or "worktree".'
 	)
 }
 
@@ -222,6 +288,8 @@ export function armLabel(arm: ArmSpec): string {
 	if (arm.kind === "external") return arm.engine
 
 	if (arm.kind === "oracle") return `oracle:${arm.provider}`
+
+	if (arm.kind === "worktree") return `worktree:${arm.ref}`
 
 	return `recorded:${arm.runID}/${arm.arm}`
 }

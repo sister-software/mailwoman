@@ -180,18 +180,23 @@ export function computeTreeFingerprint(repoRoot: string): TreeFingerprint {
 }
 
 /**
- * The message a tool returns when its engine predates the current source.
+ * The message a tool returns when the process's imported modules predate the current source.
  *
- * The remedy is a restart rather than a reload because there is no reliable in-process reload: Node cannot drop a
- * module from its ESM cache, so an "already reloaded" claim would be false. Saying so plainly beats serving an answer
- * from code the operator has replaced.
+ * A RESTART is the only remedy, and this message must not offer another. It once ended by suggesting `mwdev_daemon`
+ * action `reload`, which drops sessions and rebuilds them around the SAME module graph: the rebuilt engine then
+ * reported the NEW fingerprint over the OLD code — a clean-looking success that is the exact failure this guard exists
+ * to prevent, and worse than the staleness because it is now invisible. Node cannot drop a module from its ESM cache,
+ * so any claim of an in-process reload is false.
+ *
+ * To A/B a SOURCE change, run each arm in its own process; one process cannot hold two versions of a module.
  */
 export function staleEngineMessage(engineFingerprint: TreeFingerprint, current: TreeFingerprint): string {
 	const changed = current.newestPath ? ` Newest source: ${current.newestPath}.` : ""
 
 	return (
-		`Engine was built against tree ${engineFingerprint.digest}; the working tree is now ${current.digest}.` +
-		`${changed} Node cannot evict an imported module, so this engine can only serve the old code. ` +
-		`Restart the MCP server (or call mwdev_daemon with action "reload") and re-run.`
+		`This process imported tree ${engineFingerprint.digest}; the working tree is now ${current.digest}.` +
+		`${changed} Node cannot evict an imported module, so this process can only serve the old code. ` +
+		"RESTART the MCP server and re-run — `reload` cannot help, because it rebuilds sessions around the same " +
+		"already-imported modules. To compare a source change, run each arm in a separate process."
 	)
 }

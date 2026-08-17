@@ -41,6 +41,19 @@ import {
 	type DevTool,
 	type DevToolDeps,
 } from "./tool-kit.ts"
+import { staleEngineMessage } from "./tree-fingerprint.ts"
+
+/**
+ * The per-row fields `mwdev_run` can emit, in emission order.
+ *
+ * A full board is 558 rows and its `components` map dominates the payload — the unprojected result measured 169,649
+ * characters, which overflows a tool reply and spills to a file, so the caller reads it back through `jq` instead of
+ * reading it. Everything an A/B diff needs is `id` plus `lat`/`lon`/`tier`. The list is ordered so a projected row
+ * keeps a stable key order regardless of the order the caller asked in.
+ */
+const RUN_ROW_FIELDS = ["id", "input", "components", "lat", "lon", "tier", "timing_ms"] as const
+
+type RunRowField = (typeof RUN_ROW_FIELDS)[number]
 
 export type { DevTool, DevToolDeps, Provenance } from "./tool-kit.ts"
 
@@ -52,7 +65,10 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 			name: "mwdev_daemon",
 			description:
 				"Status of the warm engine registry: what is resident, what it cost to build, and whether the working " +
-				"tree has moved since. `reload` drops every session so the next call rebuilds.",
+				"tree has moved since this process imported its modules. `reload` drops every session so the next call " +
+				"rebuilds them against the artifacts on disk — it CANNOT re-import source, and REFUSES once the tree has " +
+				"moved rather than reporting a reload it did not perform. A source edit needs a server restart; to A/B a " +
+				"source change, run each arm in its own process.",
 			inputSchema: z.object({
 				action: z.enum(["status", "reload", "evict"]).default("status"),
 				engine_id: z.string().optional(),
@@ -62,6 +78,14 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 				const fingerprint = registry.fingerprint()
 
 				if (action === "reload") {
+					// The refusal is the whole point. `reload` used to close the sessions, return the CURRENT digest and a
+					// note admitting it could not re-import — a success shape carrying its own contradiction, which a
+					// caller reading `engines_closed` and a fresh fingerprint reasonably takes for a completed reload. It
+					// then measures new-tree answers out of old-tree code with nothing left to flag it.
+					if (registry.sourceMoved) {
+						throw new Error(staleEngineMessage(registry.bootFingerprint, fingerprint))
+					}
+
 					const closed = registry.closeAll()
 
 					return {
@@ -69,8 +93,9 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 						engines_closed: closed,
 						tree_fingerprint: fingerprint.digest,
 						note:
-							"Sessions dropped; the next call rebuilds them. This does NOT re-import source — Node cannot evict a " +
-							"module from its ESM cache. If you edited source, restart the MCP server.",
+							"Sessions dropped; the next call rebuilds them against the artifacts on disk. The tree has NOT moved " +
+							"since this process imported its modules, so the rebuilt engines run the same source you are reading. " +
+							"This never re-imports source; had the tree moved, this call would have refused.",
 					}
 				}
 
@@ -88,6 +113,10 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					uptime_s: Math.round((Date.now() - deps.startedAt) / 1000),
 					repo_root: registry.repoRoot,
 					tree_fingerprint: fingerprint.digest,
+					// The pair, always, so "can this process still answer for the source on disk" is readable without
+					// comparing a digest against one remembered from an earlier call.
+					boot_tree_fingerprint: registry.bootFingerprint.digest,
+					source_moved_since_boot: registry.sourceMoved,
 					git_head: fingerprint.gitHead,
 					dirty_files: fingerprint.dirtyFiles,
 					newest_source: fingerprint.newestPath,
@@ -218,11 +247,22 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					.positive()
 					.optional()
 					.describe("Cap on rows evaluated. Never the default; reported against the set's real n."),
+				fields: z
+					.array(z.enum(RUN_ROW_FIELDS))
+					.min(1)
+					.optional()
+					.describe(
+						"Which per-row fields to emit. Omit for all of them. `components` is by far the largest — dropping " +
+							"it is the difference between a full board fitting in a reply and spilling to a file. `id` and " +
+							"`lat`/`lon`/`tier` are what an A/B diff needs."
+					),
 			}),
 			handler: async (args) => {
 				const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
 				const config = (args["config"] as EngineConfig | undefined) ?? {}
 				const limit = args["limit"] as number | undefined
+				const fields = args["fields"] as RunRowField[] | undefined
+				const keep = fields ? new Set<RunRowField>(fields) : undefined
 
 				const set = await resolveInputSet(ref)
 				const engine = await registry.acquire(config)
@@ -231,12 +271,15 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 				const startedAt = Date.now()
 				const rows: unknown[] = []
 				const errors: Array<{ id: string; input: string; message: string }> = []
+				// Counted as rows are produced. Reading it back off `rows` would make the headline number depend on
+				// whether the caller happened to project `lat` — a measurement quietly changing with a display option.
+				let resolved = 0
 
 				for (const item of selected) {
 					try {
 						const run = await engine.session.geocode(item.input)
 
-						rows.push({
+						const row: Record<RunRowField, unknown> = {
 							id: item.id,
 							input: item.input,
 							components: componentsOf(run),
@@ -244,13 +287,22 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 							lon: run.result.lon,
 							tier: run.result.resolution_tier,
 							timing_ms: run.timing,
-						})
+						}
+
+						// `lat` is read below for the resolved count, so projection cannot drop it from the value the
+						// handler reasons over — only from what is emitted. Filtering here rather than at return keeps
+						// that separation in one place.
+						rows.push(
+							keep ? Object.fromEntries(RUN_ROW_FIELDS.filter((f) => keep.has(f)).map((f) => [f, row[f]])) : row
+						)
+
+						resolved += run.result.lat === null ? 0 : 1
 					} catch (error) {
 						errors.push({ id: item.id, input: item.input, message: (error as Error).message })
 					}
 				}
 
-				const resolvedCount = rows.filter((row) => (row as { lat: number | null }).lat !== null).length
+				const resolvedCount = resolved
 
 				const power = describeObservedRate({
 					events: resolvedCount,
@@ -268,6 +320,7 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 						(set.why ? ` Hand-picked because: ${set.why}` : ""),
 					n_requested: selected.length,
 					n_evaluated: rows.length,
+					...(keep ? { fields_emitted: RUN_ROW_FIELDS.filter((f) => keep.has(f)) } : {}),
 					n_errored: errors.length,
 					errors,
 					power,
@@ -490,16 +543,46 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 
 				const all = listRuns(RUN_STORE_DIR, fingerprint)
 				const limit = (args["limit"] as number | undefined) ?? 25
-				const shown = all.slice(0, limit)
 				const sameTree = all.filter((run) => run.fingerprint_matches_now).length
+
+				// One measurement often writes several runs in the same second against the same tool, input set and
+				// tree — a burst of arms, not several comparisons. Listed row by row those fill the reply with rows
+				// that differ only in `run_id` and byte count, and push the older, genuinely different runs past the
+				// limit. Group them; the newest of each group is the one a {kind:"recorded"} arm would replay, and the
+				// rest are named by count and stay reachable through `get`.
+				const groups = new Map<string, typeof all>()
+
+				for (const run of all) {
+					const key = `${run.tool}\u0000${run.input_set_id}\u0000${run.tree_fingerprint}\u0000${run.engine_id ?? ""}`
+					const bucket = groups.get(key)
+
+					if (bucket) {
+						bucket.push(run)
+					} else {
+						groups.set(key, [run])
+					}
+				}
+
+				const collapsed = [...groups.values()].map((bucket) => {
+					const [newest, ...rest] = bucket
+
+					return rest.length
+						? { ...newest!, repeats_collapsed: rest.length, repeat_run_ids: rest.map((r) => r.run_id) }
+						: newest!
+				})
+
+				const shown = collapsed.slice(0, limit)
+				const hidden = collapsed.slice(limit).length
 
 				return {
 					// Named rather than left as a bare truncation: a listing that silently showed the newest 25 of 200 reads
 					// as a store holding 25.
 					summary:
-						`${all.length} stored run${all.length === 1 ? "" : "s"}, ${sameTree} against the current tree ` +
-						`(${fingerprint.slice(0, 12)})${all.length > shown.length ? `. Showing the newest ${shown.length}` : ""}.`,
+						`${all.length} stored run${all.length === 1 ? "" : "s"} in ${collapsed.length} group${collapsed.length === 1 ? "" : "s"} ` +
+						`(same tool + input set + tree + engine), ${sameTree} against the current tree ` +
+						`(${fingerprint.slice(0, 12)})${hidden ? `. Showing the newest ${shown.length} group(s)` : ""}.`,
 					n_stored: all.length,
+					n_groups: collapsed.length,
 					n_shown: shown.length,
 					n_matching_current_tree: sameTree,
 					retention: { days: RETENTION_DAYS, max_runs: RETENTION_MAX_RUNS, directory: RUN_STORE_DIR },

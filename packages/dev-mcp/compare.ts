@@ -25,7 +25,15 @@ import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 
-import { armLabel, type ArmSpec, type ExternalArm, normalizeArmSpec, type OracleArm, type RecordedArm } from "./arms.ts"
+import {
+	armLabel,
+	type ArmSpec,
+	type ExternalArm,
+	normalizeArmSpec,
+	type OracleArm,
+	type ArmRunner,
+	type RecordedArm,
+} from "./arms.ts"
 import { checkConfounds, crossEngineReading, type ConfoundReading } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
@@ -72,6 +80,7 @@ import {
 	assertStratumKey,
 	type StratumKey,
 } from "./tool-kit.ts"
+import { worktreeArmRunner } from "./worktree-runner.ts"
 
 /**
  * What the caller asked for on the grading axis. `auto` picks `truth` where the set has it — see spec §5.5: a diff is
@@ -354,16 +363,6 @@ async function compareMailwomanArms(
 }
 
 /**
- * How one arm answers one raw query string, whichever kind of arm it is.
- */
-interface ArmRunner {
-	label: string
-	provenance: Record<string, unknown>
-	answer: (input: string) => Promise<ExternalAnswer>
-	warnings: string[]
-}
-
-/**
  * A mailwoman arm projected onto the same answer shape an external one produces: a point, a label, a type, or a stated
  * absence. Everything else the pipeline knows is deliberately dropped here — the other arm cannot answer it, so
  * carrying it into a cross-engine row would invite a comparison that has no other side.
@@ -582,6 +581,8 @@ async function compareAcrossEngines(
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
 
 		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
+
+		if (arm.kind === "worktree") return worktreeArmRunner(registry, arm, set)
 
 		if (arm.kind === "oracle") {
 			const { runner, identity, client } = oracleRunner(arm, set, meter, deps)

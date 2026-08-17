@@ -49,6 +49,7 @@ import {
 	openSealedArtifact,
 	type LookupResult,
 } from "./lookup.ts"
+import { syntheticIDNote } from "./place-id-provenance.ts"
 
 /**
  * Everything a caller can pass, beyond the source and the queries.
@@ -98,20 +99,29 @@ export async function runLookup(registry: EngineRegistry, args: LookupArgs): Pro
 		}
 
 		case LookupSource.Candidate: {
-			return withArtifact(source, resolveCandidateDB(config, dataRoot), (db, path) => ({
-				source,
-				provenance: { artifact: path },
-				rows: lookupCandidate(db, queries, {
+			return withArtifact(source, resolveCandidateDB(config, dataRoot), (db, path) => {
+				const rows = lookupCandidate(db, queries, {
 					...(args.country ? { country: args.country } : {}),
 					...(args.limit ? { limit: args.limit } : {}),
-				}),
-				notes: [
-					"Keyed on `name_key` — the shared fold applied at build AND at query time. Every row reports the key " +
-						"that reached it beside the stored `name`, because those differ far more often than they agree.",
-					"`importance: null` is UNMEASURED (the score source had no row for that place), never an importance of " +
-						"zero. A (0, 0) centroid is the build's unlocated sentinel.",
-				],
-			}))
+				})
+
+				const idNote = syntheticIDNote(
+					rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { spr_id: number }).spr_id)))
+				)
+
+				return {
+					source,
+					provenance: { artifact: path },
+					rows,
+					notes: [
+						"Keyed on `name_key` — the shared fold applied at build AND at query time. Every row reports the key " +
+							"that reached it beside the stored `name`, because those differ far more often than they agree.",
+						"`importance: null` is UNMEASURED (the score source had no row for that place), never an importance of " +
+							"zero. A (0, 0) centroid is the build's unlocated sentinel.",
+						...(idNote ? [idNote] : []),
+					],
+				}
+			})
 		}
 
 		case LookupSource.POI: {
@@ -229,10 +239,19 @@ function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
 	}
 
 	try {
+		const rows = lookupWOF(shards, args.queries, {
+			...(args.country ? { country: args.country } : {}),
+			...(args.limit ? { limit: args.limit } : {}),
+		})
+
+		const idNote = syntheticIDNote(
+			rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { id: number }).id)))
+		)
+
 		return {
 			source: LookupSource.WOF,
 			provenance: { artifact: shards.map((shard) => shard.name).join(", ") },
-			rows: lookupWOF(shards, args.queries, args.limit ? { limit: args.limit } : {}),
+			rows,
 			notes: [
 				`Probed ${shards.length} of ${paths.length} shard(s) in the runtime's own set.`,
 				...(skipped.length ? [`Not opened: ${skipped.join(" ")}`] : []),
@@ -240,6 +259,7 @@ function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
 				"Deprecated and not-current records are named in the row note and kept OUT of `entries` — the FTS5 content " +
 					"the resolver reads is built with that filter already applied, so they exist in the shard and reach " +
 					"nothing downstream.",
+				...(idNote ? [idNote] : []),
 			],
 		}
 	} finally {
