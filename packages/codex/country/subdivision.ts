@@ -26,6 +26,7 @@
  *   re-keys those two existing tables into one subdivision→country view.
  */
 
+import { AU_STATE_ABBREVIATIONS } from "../au/state.ts"
 import { CA_PROVINCES } from "../ca/province.ts"
 import { foldName } from "../normalize.ts"
 import { US_STATE_BY_ABBREVIATION } from "../us/state.ts"
@@ -90,4 +91,62 @@ export function matchSubdivision(token: string | null | undefined): SubdivisionM
 	if (!token || typeof token !== "string") return null
 
 	return SUBDIVISION_LOOKUP.get(foldName(token)) ?? null
+}
+
+/**
+ * Per-country subdivision lookups for callers that already KNOW the country. Kept separate from
+ * {@link SUBDIVISION_LOOKUP} on purpose: the combined map is only unambiguous because the US and CA sets are disjoint,
+ * and Australia breaks that property twice — `WA` collides with Washington and `NT` with the Northwest Territories. A
+ * country-scoped caller (the admin-coherence check reads the winner's resolver-stamped country) dissolves the collision
+ * instead of arbitrating it.
+ */
+const SCOPED_SUBDIVISION_LOOKUP: ReadonlyMap<string, ReadonlyMap<string, SubdivisionMatch>> = (() => {
+	const byCountry = new Map<string, Map<string, SubdivisionMatch>>()
+
+	const put = (country: string, key: string, match: SubdivisionMatch): void => {
+		const folded = foldName(key)
+
+		if (!folded.length) return
+
+		const scoped = byCountry.get(country) ?? new Map<string, SubdivisionMatch>()
+
+		byCountry.set(country, scoped)
+
+		if (!scoped.has(folded)) {
+			scoped.set(folded, match)
+		}
+	}
+
+	for (const [code, name] of Object.entries(US_STATE_BY_ABBREVIATION)) {
+		const match: SubdivisionMatch = { code, name, country: "US" }
+		put("US", code, match)
+		put("US", name, match)
+	}
+
+	for (const info of Object.values(CA_PROVINCES)) {
+		const match: SubdivisionMatch = { code: info.code, name: info.name, country: "CA" }
+		put("CA", info.code, match)
+		put("CA", info.name, match)
+		put("CA", info.french, match)
+	}
+
+	for (const [code, name] of Object.entries(AU_STATE_ABBREVIATIONS)) {
+		const match: SubdivisionMatch = { code, name, country: "AU" }
+		put("AU", code, match)
+		put("AU", name, match)
+	}
+
+	return byCountry
+})()
+
+/**
+ * Resolve a subdivision surface form WITHIN one country. Same folding and return shape as {@link matchSubdivision}, but
+ * scoped: `WA` under `AU` is Western Australia, under `US` Washington, and under any other country null. Use this
+ * whenever the country is already established; the unscoped lookup exists for the address-line case where the
+ * subdivision itself is the country evidence.
+ */
+export function matchSubdivisionIn(countryAlpha2: string, token: string | null | undefined): SubdivisionMatch | null {
+	if (!token || typeof token !== "string") return null
+
+	return SCOPED_SUBDIVISION_LOOKUP.get(countryAlpha2.toUpperCase())?.get(foldName(token)) ?? null
 }

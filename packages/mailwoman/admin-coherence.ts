@@ -47,7 +47,13 @@
  *   out.
  */
 
-import { countrySurfaceForms, ISO2_TO_NAME, matchCountry, matchSubdivision } from "@mailwoman/codex/country"
+import {
+	countrySurfaceForms,
+	ISO2_TO_NAME,
+	matchCountry,
+	matchSubdivision,
+	matchSubdivisionIn,
+} from "@mailwoman/codex/country"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
@@ -113,17 +119,46 @@ function foldKey(name: string): string {
 }
 
 /**
- * The comparable keys a region string expands to: its own fold, plus — when the codex subdivision table recognizes it
- * (US states + CA provinces) — the folds of the canonical name and the ISO 3166-2 code, so `IL` and `Illinois` land in
- * the same key set from either side.
+ * County-style qualifier prefixes stripped to produce a comparison VARIANT. Ireland writes `Co. Westmeath` where WOF
+ * stores `Westmeath`, so the prefix defeats the fold and every Irish county qualifier read `contradicted` on the first
+ * board census (2026-08-17, five rows). The stripped form is ADDED to the key set, never substituted — `County Durham`
+ * is a real name whose stripped variant simply also matches, and a set union can only widen confirmation, so the
+ * closure is monotone: `contradicted → confirmed` is the only movement it can cause.
  */
-function regionKeys(value: string): Set<string> {
-	const keys = new Set([foldKey(value)])
-	const subdivision = matchSubdivision(value)
+const COUNTY_QUALIFIER_PREFIX = /^(?:co\.?|county)\s+/i
 
-	if (subdivision) {
-		keys.add(foldKey(subdivision.name))
-		keys.add(foldKey(subdivision.code))
+/**
+ * Trailing admin-qualifier words, the suffix sibling of the prefix above: `San José Province` (CR board row) folds
+ * against stored `San José` only with the word removed. Same monotone rule — the stripped form joins the set, never
+ * replaces the original.
+ */
+const ADMIN_QUALIFIER_SUFFIX = /\s+(?:province|prov\.?)$/i
+
+/**
+ * The comparable keys a region string expands to: its own fold; a county-prefix-stripped variant; the codex subdivision
+ * expansions — the disjoint US+CA table always, plus the COUNTRY-SCOPED table when the caller knows the winner's
+ * country (`WA` under AU is Western Australia; under US, Washington — the collision that keeps AU out of the unscoped
+ * table). Every expansion lands the canonical name and code folds in the set, so `IL`/`Illinois` and `WA`/`Western
+ * Australia` meet from either side.
+ */
+function regionKeys(value: string, countryAlpha2?: string): Set<string> {
+	const keys = new Set([foldKey(value)])
+
+	for (const pattern of [COUNTY_QUALIFIER_PREFIX, ADMIN_QUALIFIER_SUFFIX]) {
+		const stripped = value.replace(pattern, "")
+
+		if (stripped !== value && stripped.trim()) {
+			keys.add(foldKey(stripped))
+		}
+	}
+
+	const expansions = [matchSubdivision(value), countryAlpha2 ? matchSubdivisionIn(countryAlpha2, value) : null]
+
+	for (const subdivision of expansions) {
+		if (subdivision) {
+			keys.add(foldKey(subdivision.name))
+			keys.add(foldKey(subdivision.code))
+		}
 	}
 
 	return keys
@@ -176,10 +211,11 @@ function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceW
 
 	if (!regionAncestors.length) return "unverifiable"
 
-	const parsedKeys = regionKeys(parsed)
+	const iso = winner.countryCode?.trim().toUpperCase() || undefined
+	const parsedKeys = regionKeys(parsed, iso)
 
 	for (const ancestor of regionAncestors) {
-		if (intersects(parsedKeys, regionKeys(ancestor.name))) return "confirmed"
+		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
 	}
 
 	return "contradicted"

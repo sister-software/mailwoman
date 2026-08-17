@@ -191,3 +191,66 @@ describe("toGauntletResult threading (additive optional field)", () => {
 		expect("admin_coherence" in projected).toBe(false)
 	})
 })
+
+describe("regionVerdict — the fold-bound closures (2026-08-18)", () => {
+	it("confirms an Irish county qualifier through the Co. prefix", () => {
+		// Five Irish board rows read contradicted on the first census because `Co. Westmeath` folds with the prefix
+		// intact while WOF stores `Westmeath`.
+		const report = assessAdminCoherence(
+			{ region: "Co. Westmeath" },
+			{ tag: "locality", countryCode: "IE", ancestry: [{ placetype: "region", name: "Westmeath" }] }
+		)
+
+		expect(report.region).toBe("confirmed")
+	})
+
+	it("keeps County Durham matching itself — the stripped variant is added, never substituted", () => {
+		const report = assessAdminCoherence(
+			{ region: "County Durham" },
+			{ tag: "locality", countryCode: "GB", ancestry: [{ placetype: "county", name: "County Durham" }] }
+		)
+
+		expect(report.region).toBe("confirmed")
+	})
+
+	it("confirms an AU state code against its full ancestry name, scoped by the winner's country", () => {
+		const report = assessAdminCoherence(
+			{ region: "WA" },
+			{ tag: "locality", countryCode: "AU", ancestry: [{ placetype: "region", name: "Western Australia" }] }
+		)
+
+		expect(report.region).toBe("confirmed")
+	})
+
+	it("does not let the AU expansion leak into a US winner — WA stays Washington there", () => {
+		const report = assessAdminCoherence(
+			{ region: "WA" },
+			{ tag: "locality", countryCode: "US", ancestry: [{ placetype: "region", name: "Western Australia" }] }
+		)
+
+		// A US winner whose ancestry claims Western Australia is genuinely incoherent; the scoped table must not
+		// bridge it.
+		expect(report.region).toBe("contradicted")
+	})
+
+	it("still contradicts an honest mismatch — the closures only widen matching, never verdicts", () => {
+		const report = assessAdminCoherence(
+			{ region: "Co. Donegal" },
+			{ tag: "locality", countryCode: "US", ancestry: [{ placetype: "region", name: "Virginia" }] }
+		)
+
+		expect(report.region).toBe("contradicted")
+	})
+})
+
+describe("regionVerdict — trailing qualifier", () => {
+	it("confirms a Province-suffixed qualifier against the bare stored name", () => {
+		// The one genuine fold false-alarm in the 2026-08-18 sixteen-row triage: San José Province vs stored San José.
+		const report = assessAdminCoherence(
+			{ region: "San José Province" },
+			{ tag: "locality", countryCode: "CR", ancestry: [{ placetype: "region", name: "San José" }] }
+		)
+
+		expect(report.region).toBe("confirmed")
+	})
+})

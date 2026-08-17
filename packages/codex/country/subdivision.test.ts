@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { matchSubdivision } from "./subdivision.ts"
+import { matchSubdivision, matchSubdivisionIn } from "./subdivision.ts"
 
 describe("matchSubdivision", () => {
 	it("expands a CA province abbreviation to its name + country (the Montreal QC path)", () => {
@@ -43,5 +43,25 @@ describe("matchSubdivision", () => {
 		expect(matchSubdivision("")).toBeNull()
 		expect(matchSubdivision(null)).toBeNull()
 		expect(matchSubdivision(undefined)).toBeNull()
+	})
+})
+
+describe("matchSubdivisionIn — country-scoped", () => {
+	it("resolves the collisions the unscoped table cannot hold", () => {
+		// WA and NT are exactly why AU is not in the combined lookup: same code, different subdivision per country.
+		expect(matchSubdivisionIn("AU", "WA")).toEqual({ code: "WA", name: "Western Australia", country: "AU" })
+		expect(matchSubdivisionIn("US", "WA")).toEqual({ code: "WA", name: "Washington", country: "US" })
+		expect(matchSubdivisionIn("AU", "NT")).toEqual({ code: "NT", name: "Northern Territory", country: "AU" })
+		expect(matchSubdivisionIn("CA", "NT")).toEqual({ code: "NT", name: "Northwest Territories", country: "CA" })
+	})
+
+	it("matches names as well as codes, fold-insensitively", () => {
+		expect(matchSubdivisionIn("AU", "western australia")?.code).toBe("WA")
+		expect(matchSubdivisionIn("au", "Queensland")?.code).toBe("QLD")
+	})
+
+	it("answers null outside the named country rather than guessing", () => {
+		expect(matchSubdivisionIn("DE", "WA")).toBeNull()
+		expect(matchSubdivisionIn("AU", "Illinois")).toBeNull()
 	})
 })
