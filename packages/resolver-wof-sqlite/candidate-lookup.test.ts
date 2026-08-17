@@ -86,6 +86,17 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (721, 'Sansome', 'locality', 'US', 38.90, -77.04, 38.8, -77.2, 39.0, -76.9, -1, 0);
 		INSERT INTO spr VALUES (722, 'Sansome', 'locality', 'US', 37.76, -122.44, 37.7, -122.5, 37.8, -122.4, -1, 0);
 
+		-- The #1729 seat corridor: a locality/LOCALADMIN duplicate at the same population — the pair that
+		-- shares the locality filter group, so BOTH rows enter one locality probe. The localadmin is
+		-- stamped the LOWER region id (ancestors below) so the B-tree scan hands the district first and
+		-- the seat tiebreak has to hand back the town.
+		INSERT INTO spr VALUES (810, 'Seatley', 'locality', 'TR', 40.94, 40.26, 40.9, 40.2, 41.0, 40.3, -1, 0);
+		INSERT INTO spr VALUES (811, 'Seatley', 'localadmin', 'TR', 40.88, 40.27, 40.8, 40.2, 41.0, 40.3, -1, 0);
+		-- The Of-shape partition case: a locality/COUNTY duplicate at the same population. County is not a
+		-- locality-group peer, so a locality probe fetches exactly one row — the seat, by construction.
+		INSERT INTO spr VALUES (820, 'Ofton', 'locality', 'TR', 40.94, 40.26, 40.9, 40.2, 41.0, 40.3, -1, 0);
+		INSERT INTO spr VALUES (821, 'Ofton', 'county', 'TR', 40.88, 40.34, 40.8, 40.2, 41.0, 40.4, -1, 0);
+
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
 		INSERT INTO place_population VALUES (200, 2700000);
@@ -99,10 +110,17 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (720, 1000000);
 		INSERT INTO place_population VALUES (721, 100000);
 		INSERT INTO place_population VALUES (722, 10000);
+		INSERT INTO place_population VALUES (810, 44212);
+		INSERT INTO place_population VALUES (811, 44212);
+		INSERT INTO place_population VALUES (820, 44212);
+		INSERT INTO place_population VALUES (821, 44212);
 
 		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
 		INSERT INTO ancestors VALUES (310, 400, 'region');
 		INSERT INTO ancestors VALUES (311, 401, 'region');
+		-- The seat pair's scan order: the localadmin under the lower region id, so it is fetched first.
+		INSERT INTO ancestors VALUES (811, 400, 'region');
+		INSERT INTO ancestors VALUES (810, 401, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
@@ -969,5 +987,49 @@ describe("rankByPrimaryPreference — seat preference on a coincident same-name 
 
 	test("an unknown placetype id sorts behind the seat rather than throwing", () => {
 		expect(rankByPrimaryPreference([at(99), locality], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
+	})
+})
+
+describe("seat preference through findPlace — where the term can and cannot reach (#1729)", () => {
+	// The walk's probes always carry a placetype filter, so the seat term only meets a tie the filter
+	// group lets co-occur. These two fixtures pin both halves of that reach: the in-group pair the
+	// term decides, and the Of-shape pair the filter partitions before any ranking runs.
+
+	test("a locality/localadmin duplicate enters ONE locality probe and the seat wins it", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Seatley", placetype: "locality", limit: 5 })
+
+			// localadmin is a locality-group peer (PLACETYPE_FILTER_GROUPS), so BOTH rows are in the set…
+			expect(hits.map((h) => h.placetype).toSorted()).toEqual(["localadmin", "locality"])
+			// …and the seat tiebreak orders the town over its district even though the district is
+			// fetched first (its region id sorts lower in the clustered key). This ordering is the
+			// term's ONLY corridor to an end-to-end answer — the resolver's downstream sorts are
+			// stable on equal keys (toponym-prior.ts house rule 3) — so it is the mechanism's reach,
+			// not a cosmetic preference.
+			expect(hits[0]!.placetype).toBe("locality")
+			expect(hits[0]!.id).toBe(810)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("a locality/county duplicate is PARTITIONED before ranking — the locality probe fetches one row", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Ofton", placetype: "locality", limit: 5 })
+
+			// County is not a locality-group peer: the Of-shape seat/district pair never co-occurs in
+			// a walk probe, so the seat term cannot decide it end-to-end — the placetype filter
+			// selects the seat by construction, and only an UNFILTERED probe (the browser cascade's
+			// last resort, the dev lookup tools) ever presents this tie to the ranker.
+			expect(hits).toHaveLength(1)
+			expect(hits[0]!.id).toBe(820)
+			expect(hits[0]!.placetype).toBe("locality")
+		} finally {
+			lk.close()
+		}
 	})
 })

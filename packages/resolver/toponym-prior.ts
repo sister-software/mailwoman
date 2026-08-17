@@ -41,7 +41,10 @@
  *      rank population gave it while the scored rows reorder among themselves. On a candidate.db built
  *      before the #28 `importance` column, nothing is scored, so {@link rankByImportance} is
  *      byte-stable by construction.
- *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath.
+ *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath. That order
+ *      carries decisions only the backend can make — the candidate backend's seat tiebreak
+ *      (`resolver-wof-sqlite/primary-preference.ts`) reaches an end-to-end answer solely through this stability
+ *      (#1729), so equal-key stability here is load-bearing, not cosmetic.
  */
 
 import type { ResolvedPlace } from "@mailwoman/core/resolver"

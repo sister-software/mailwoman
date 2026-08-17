@@ -105,8 +105,19 @@ export type RankedRow<R> = R & {
  * (`referentialFromPopulation` is a pure function of population). Turkey's `Of` is the measured case — locality
  * 8114738869649 and its parent county 8837168432019 both hold population 44212 — and 358 locality/parent-county pairs
  * across 15 countries share the shape in `admin-global-priority.db` (TR 162, CA 77, US 47, HR 24, DO 14). Without the
- * term their order is whatever the scan hands the sorter, so which one a bare toponym resolves to is decided by storage
- * layout rather than by data.
+ * term their order is whatever the scan hands the sorter.
+ *
+ * WHERE THE TERM DECIDES, AND WHERE IT CANNOT (#1729). It binds inside `findPlace`, so it orders every row set that
+ * actually CONTAINS the tie — but the resolver walk's probes all carry a placetype filter, and
+ * `PLACETYPE_FILTER_GROUPS` (core/resolver) never mixes `locality` with `county`: the `Of`-shape locality/county pair
+ * is PARTITIONED before this ranker runs, the locality probe fetches one row, and the walk's own `locality` request
+ * selects the seat by construction — the same winner, decided upstream. The tie that reaches an end-to-end answer
+ * through this term is the IN-GROUP residue: a locality/localadmin (or borough) duplicate whose `importance` values
+ * also tie. Downstream the resolver re-sorts by importance (`resolver/toponym-prior.ts`) but is stable on equal keys,
+ * so the order stamped here is the order that answers — inverting this term moves bare `Pu-cheng-hsien` 1,100 km
+ * (locality Pucheng over the 浦城县 localadmin, identical population and importance). Where importance separates the pair,
+ * the fame prior overrides by design; a probe with NO placetype filter (the browser cascade's last resort, the dev
+ * lookup tools) presents the full tie and this term is all that breaks it.
  *
  * BOTH GATES ARE LOAD-BEARING, and a plain "finer placetype wins" measured wrong before this shape was settled: it
  * moved the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest

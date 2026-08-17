@@ -115,6 +115,23 @@ describe("rankByImportance", () => {
 		expect(rankByImportance(mixed).map((c) => c.id)).toEqual([3, 1, 2])
 	})
 
+	it("preserves incoming order on a same-country pair tied on BOTH importance and size (the seat corridor)", () => {
+		// A seat/district duplicate reaches this ranker as two same-country rows with identical
+		// population (equal prominence) and identical importance — the candidate backend already
+		// ordered them (the seat tiebreak, resolver-wof-sqlite/primary-preference.ts), and house
+		// rule 3 is what carries that order through to the answer: inverting the backend's term
+		// moves bare `Pu-cheng-hsien` 1,100 km end-to-end, which is only possible because this
+		// function does not permute the tied pair (#1729).
+		const seatFirst = [
+			place({ id: 1, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
+			place({ id: 2, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
+		]
+
+		expect(rankByImportance(seatFirst).map((c) => c.id)).toEqual([1, 2])
+		// The reversed input keeps ITS order too — this ranker carries the backend's decision either way.
+		expect(rankByImportance(seatFirst.toReversed()).map((c) => c.id)).toEqual([2, 1])
+	})
+
 	it("breaks an importance tie on prominence, then leaves the input order", () => {
 		const tied = [
 			place({ id: 1, name: "X", country: "A", prominence: 3, importance: 0.5 }),
