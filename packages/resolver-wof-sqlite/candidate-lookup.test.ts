@@ -909,3 +909,65 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		}
 	})
 })
+
+describe("rankByPrimaryPreference — seat preference on a coincident same-name duplicate", () => {
+	// A district and its identically-named seat town carry the SAME population, so `neg_rank` ties to the
+	// bit and the pair's order falls out of the SQL scan. Turkey's `Of` is the measured case: locality
+	// 8114738869649 and its parent county 8837168432019 both hold population 44212 in
+	// `admin-global-priority.db`; 358 locality/parent-county pairs across 15 countries share the shape.
+	const PLACETYPES: ReadonlyMap<number, string> = new Map([
+		[3, "region"],
+		[5, "county"],
+		[7, "locality"],
+		[10, "neighbourhood"],
+		[12, "postalcode"],
+	])
+
+	const POPULATION = 44_212
+	const NEG_RANK = -Math.log10(POPULATION + 1)
+
+	const at = (placetype_id: number, population = POPULATION) => ({
+		neg_rank: NEG_RANK,
+		is_primary: 1,
+		country_id: 1,
+		placetype_id,
+		population,
+	})
+
+	const county = at(5)
+	const locality = at(7)
+
+	test("the seat wins its district regardless of scan order (Of TR: the town, not the district)", () => {
+		expect(rankByPrimaryPreference([county, locality], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
+		expect(rankByPrimaryPreference([locality, county], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
+	})
+
+	test("without the placetype map the term is inert — scan order is preserved", () => {
+		expect(rankByPrimaryPreference([county, locality], 5)[0]!.placetype_id).toBe(5)
+		expect(rankByPrimaryPreference([locality, county], 5)[0]!.placetype_id).toBe(7)
+	})
+
+	test("population still outranks the seat preference — the term only fires on an exact tie", () => {
+		const biggerCounty = { ...county, neg_rank: NEG_RANK - 1 }
+		expect(rankByPrimaryPreference([locality, biggerCounty], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(5)
+	})
+
+	test("a population-0 tie is NO EVIDENCE, not equal evidence — the term stays off it", () => {
+		// 7,179 of the 11,377 top-slot moves an unguarded "finer wins" produced sat here. Scan order stands.
+		const zeroCounty = at(5, 0)
+		const zeroLocality = at(7, 0)
+		expect(rankByPrimaryPreference([zeroCounty, zeroLocality], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(5)
+	})
+
+	test("a contest between distinct places is left alone — only the seat tier is promoted", () => {
+		// The three transitions an unguarded specificity term moved most: region→county (2,973),
+		// locality→neighbourhood (2,885), postalcode→locality (2,662). None is a duplicate; all keep scan order.
+		expect(rankByPrimaryPreference([at(3), at(5)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(3)
+		expect(rankByPrimaryPreference([at(7), at(10)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
+		expect(rankByPrimaryPreference([at(10), at(7)], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
+	})
+
+	test("an unknown placetype id sorts behind the seat rather than throwing", () => {
+		expect(rankByPrimaryPreference([at(99), locality], 5, undefined, PLACETYPES)[0]!.placetype_id).toBe(7)
+	})
+})

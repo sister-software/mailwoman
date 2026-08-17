@@ -728,7 +728,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 
 			const fetched = rowsFromExec(await this.#worker.db.exec(sql)) as unknown as CandidateProbeRow[]
 
-			return rankByPrimaryPreference(fetched, limit)
+			return rankByPrimaryPreference(fetched, limit, undefined, idToPlacetype)
 		}
 
 		let rows = await probe(nameKey)

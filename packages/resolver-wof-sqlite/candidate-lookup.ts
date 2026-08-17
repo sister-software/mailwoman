@@ -402,7 +402,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 			const fetched = this.#db.prepare(sql).all(...params, Math.max(limit, RERANK_FETCH)) as unknown as CandidateRow[]
 
-			return rankByPrimaryPreference(fetched, limit)
+			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype)
 		}
 
 		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope. Region scoping

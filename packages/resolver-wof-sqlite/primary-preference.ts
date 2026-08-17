@@ -19,7 +19,7 @@ import type { CandidateTable } from "./candidate-schema.ts"
  * browser reader's vintage guard relies on.
  */
 export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id"> &
-	Partial<Pick<CandidateTable, "is_primary">>
+	Partial<Pick<CandidateTable, "is_primary" | "placetype_id" | "population">>
 
 /**
  * Bounded PRIMARY-NAME preference across a CROSS-COUNTRY name collision (the `is_primary` ranking signal).
@@ -43,6 +43,13 @@ export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id
  *    collision defers to the primary (Cancún over Changchun — gap 0.7).
  */
 export const PRIMARY_PREFERENCE_LOG10 = 1
+
+/**
+ * The placetype the seat preference promotes: the populated-place tier a district duplicate shares its name and its
+ * population with. Named rather than inlined because narrowing the term to this ONE tier is what keeps it off the
+ * region/county and locality/neighbourhood contests — see `rankByPrimaryPreference` for the measurement.
+ */
+const SEAT_PLACETYPE = "locality"
 
 /**
  * Over-fetch cap for {@link rankByPrimaryPreference}: the candidate rows for one `name_key` (all same-name places
@@ -87,11 +94,34 @@ export type RankedRow<R> = R & {
  * alias (`is_primary=0`) is pushed back by `delta` in log10-population units ONLY when the top-population primary
  * sharing the key is in a different country, and is `demoted` out of the exact tier when that penalty leaves it BEHIND
  * the primary. Returns the top `limit` after the re-rank, each annotated.
+ *
+ * `placetypes` (the artifact's own `placetype_codes` map) enables the LAST tiebreak, the SEAT preference: when
+ * `effectiveNegRank` and raw `neg_rank` both tie — two same-key rows population cannot separate at all — a
+ * {@link SEAT_PLACETYPE} row carrying a real population outranks every other placetype. Omit the map and every row
+ * scores 0, the term cancels, and the order is exactly the population-then-scan-order it was before.
+ *
+ * The tie it exists for is a DUPLICATE, not a contest. A district and its identically-named seat town are stored as two
+ * rows carrying the SAME population, so `neg_rank` is equal to the bit and `referential` follows it
+ * (`referentialFromPopulation` is a pure function of population). Turkey's `Of` is the measured case — locality
+ * 8114738869649 and its parent county 8837168432019 both hold population 44212 — and 358 locality/parent-county pairs
+ * across 15 countries share the shape in `admin-global-priority.db` (TR 162, CA 77, US 47, HR 24, DO 14). Without the
+ * term their order is whatever the scan hands the sorter, so which one a bare toponym resolves to is decided by storage
+ * layout rather than by data.
+ *
+ * BOTH GATES ARE LOAD-BEARING, and a plain "finer placetype wins" measured wrong before this shape was settled: it
+ * moved the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest
+ * were contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
+ * losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality` — and 7,179 of the 11,377 sat at
+ * population 0, where a tie means NO EVIDENCE rather than equal evidence. Requiring a real population keeps the term
+ * off every no-evidence tie; promoting the populated-place tier specifically, rather than whatever is finer, keeps it
+ * off the admin-tier and hood contests. It can never reach a pair population separates: it does not override a
+ * population gap, it replaces an undetermined order with a stated one.
  */
 export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	rows: readonly R[],
 	limit: number,
-	delta = PRIMARY_PREFERENCE_LOG10
+	delta = PRIMARY_PREFERENCE_LOG10,
+	placetypes?: ReadonlyMap<number, string>
 ): Array<RankedRow<R>> {
 	// The primary the alias actually competes with for the top slot: highest population (min neg_rank). Undefined
 	// when the set has no primary → nothing to prefer, penalty is 0, order stays population-first (today's behavior).
@@ -117,12 +147,32 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 		return { ...r, effectiveNegRank, demoted: penalized && effectiveNegRank > topPrimary!.neg_rank }
 	}
 
+	// 1 for a populated-place row that can BE a district's seat, 0 for everything else — no code map, no
+	// placetype on the row, an id the map does not carry, a placetype that is not the seat tier, or no
+	// recorded population. Every row scoring 0 cancels the term, leaving exactly the
+	// population-then-scan-order the sort had before it existed.
+	const seatPreference = (r: R): number =>
+		placetypes != null &&
+		typeof r.placetype_id === "number" &&
+		typeof r.population === "number" &&
+		r.population > 0 &&
+		placetypes.get(r.placetype_id) === SEAT_PLACETYPE
+			? 1
+			: 0
+
 	return (
 		rows
 			.map((r, i) => ({ row: annotate(r), i }))
-			// Effective rank ASC; ties keep population order, then original index (stable).
+			// Effective rank ASC; ties keep population order, then the seat preference DESC, then original
+			// index (stable).
 			// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array; toSorted would double-allocate on a hot path
-			.sort((a, b) => a.row.effectiveNegRank - b.row.effectiveNegRank || a.row.neg_rank - b.row.neg_rank || a.i - b.i)
+			.sort(
+				(a, b) =>
+					a.row.effectiveNegRank - b.row.effectiveNegRank ||
+					a.row.neg_rank - b.row.neg_rank ||
+					seatPreference(b.row) - seatPreference(a.row) ||
+					a.i - b.i
+			)
 			.slice(0, limit)
 			.map((x) => x.row)
 	)
