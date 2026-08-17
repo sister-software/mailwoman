@@ -28,7 +28,7 @@ import { basename, dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
 
 import type { AnchorSpanMode } from "./anchor-inference.ts"
 import { PlacetypeCensusResolver } from "./placetype-census.ts"
@@ -75,6 +75,13 @@ export function weightsCacheDir(): string {
  */
 export function weightsOverlayRoot(): string {
 	return String(dataRootPath("weights"))
+}
+
+/**
+ * The overlay directory for one locale — the same path the dev linkers write, via the same helper.
+ */
+export function weightsOverlayDir(locale: string): string {
+	return String(weightsOverlayPath(locale))
 }
 
 /**
@@ -422,10 +429,19 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	// and clone on the machine. Both binaries required, for the same reason the cache probe requires
 	// them: half an overlay resolves to a model with no tokenizer, and that failure surfaces inside the
 	// ONNX session rather than here.
-	const overlayDir = resolve(opts.overlayRoot ?? weightsOverlayRoot(), locale)
+	const overlayDir = opts.overlayRoot ? resolve(opts.overlayRoot, locale) : weightsOverlayDir(locale)
 
-	if (existsSync(resolve(overlayDir, "model.onnx")) && existsSync(resolve(overlayDir, "tokenizer.model"))) {
-		return resolveFromPackageDir(overlayDir, locale, opts, `overlay:${locale}`, tried)
+	// Probed whenever the directory EXISTS, not only when it holds both binaries. An overlay for a locale
+	// that declares `mailwoman.baseWeights` deliberately carries no model — en-nz's linker removes one to
+	// prove the fallback engages — so a precondition demanding the binaries skips exactly the locales the
+	// base mechanism exists for. `resolveFromPackageDir` resolves the base itself; a genuinely empty overlay
+	// still throws "missing model files", which falls through to the cache below.
+	if (existsSync(overlayDir)) {
+		try {
+			return resolveFromPackageDir(overlayDir, locale, opts, `overlay:${locale}`, tried)
+		} catch (error) {
+			if (!(error instanceof Error) || !error.message.includes("missing model files")) throw error
+		}
 	}
 
 	// 3. The user-level weights cache (npm-prefix layout written by `mailwoman parse
@@ -469,7 +485,7 @@ function resolveFromPackageDir(
 	// tokenizer.model from its `files` and resolve them from the base package, while its OWN data siblings
 	// (model-card, postcode-<cc>.bin, lexicons) still resolve locally. Base takes precedence over any local
 	// model copy — that is also what closes #1117 (fr-fr's link-dev-weights pinned a stale model).
-	const baseDir = resolveBaseWeightsDir(packageDir)
+	const baseDir = resolveBaseWeightsDir(packageDir, locale)
 
 	if (!opts.modelPath) {
 		const baseModel = baseDir ? resolve(baseDir, "model.onnx") : undefined
@@ -861,17 +877,50 @@ export function loadPlacetypeCensus(country: string, explicitPath?: string): Pla
  * the base package can't be resolved (in which case the caller keeps the local model paths — no behavior change for a
  * self-contained package).
  */
-function resolveBaseWeightsDir(packageDir: string): string | undefined {
+function resolveBaseWeightsDir(packageDir: string, locale?: string): string | undefined {
 	try {
+		// An OVERLAY directory carries no package.json — it is a materialization target, not a package — so the
+		// `baseWeights` declaration is read from the WORKSPACE for the same locale. Without this the #1177 dedup
+		// stops working the moment the dev linkers write outside the package: an overlay locale that
+		// deliberately removes its own model (en-nz does exactly that, to prove the fallback engages) would
+		// resolve nothing at all.
+		const declarationDir = existsSync(resolve(packageDir, "package.json"))
+			? packageDir
+			: locale
+				? tryResolvePackageDirectory(weightsPackageName(locale))
+				: undefined
+
+		if (!declarationDir) return undefined
+
 		const pkg = tryParsingJSON<{ mailwoman?: { baseWeights?: string } }>(
-			readFileSync(resolve(packageDir, "package.json"), "utf8")
+			readFileSync(resolve(declarationDir, "package.json"), "utf8")
 		)
 
 		const base = pkg?.mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return undefined
 
-		return resolvePackageDirectory(base)
+		const basePackageDir = tryResolvePackageDirectory(base)
+
+		// Prefer the base's OVERLAY when the caller is itself resolving from one: a dev checkout's base package
+		// is empty by construction, so falling back to it would find nothing.
+		const baseLocale = base.replace("@mailwoman/neural-weights-", "")
+		const baseOverlay = weightsOverlayDir(baseLocale)
+
+		if (packageDir !== declarationDir && existsSync(resolve(baseOverlay, "model.onnx"))) return baseOverlay
+
+		return basePackageDir
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * {@link resolvePackageDirectory}, returning `undefined` instead of throwing for a package that is not installed.
+ */
+function tryResolvePackageDirectory(packageName: string): string | undefined {
+	try {
+		return resolvePackageDirectory(packageName)
 	} catch {
 		return undefined
 	}

@@ -6,11 +6,11 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, workspacePath } from "@mailwoman/core/utils"
+import { dataRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
 
@@ -177,10 +177,16 @@ export function warnIfFSTStale(fstPath: string, locale: string): void {
  * failure to have run a build yet rather than a real fault.
  */
 export function buildPairIndexOverlay({ packageDir, country, delta, transitionBeta }: PairIndexOverlay): void {
-	const PKG_DIR = workspacePath(packageDir)
 	const CLI = String(workspacePath("mailwoman", "out", "cli.js"))
 	const ARTIFACT = `pair-index-${country}.bin`
+	// Built into the data-root OVERLAY, not into the tracked package. The locale is recovered from the
+	// workspace name (`neural-weights-en-gb` → `en-gb`) so callers keep passing the one identifier they
+	// already had; the alternative was a second parameter every caller would have to keep in step with the
+	// first, which is the drift this whole rollout is removing.
+	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
 	const DEST = resolve(PKG_DIR, ARTIFACT)
+
+	mkdirSync(PKG_DIR, { recursive: true })
 	/**
 	 * Checked-in WOF-derived admin pairs — the same posture as the GB secondary sources.
 	 */

@@ -59,7 +59,7 @@ import {
 	writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
@@ -230,7 +230,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us")
 
 			const r = resolveWeights({ locale: "en-us" })
-			expect(r.fstPath).toMatch(/neural-weights-en-us\/fst-en-us\.bin$/)
+			expect(r.fstPath).toMatch(/\/fst-en-us\.bin$/)
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
@@ -241,12 +241,16 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us")
 
 			const r = resolveWeights({ locale: "en-us" })
-			expect(r.source).toBe("package:@mailwoman/neural-weights-en-us")
-			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
-			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+			// WHICH RUNG answered is an environment fact, not the contract. The dev linkers materialize into
+			// $MAILWOMAN_DATA_ROOT/weights/<locale>/, so a checkout resolves `overlay:`; a consumer with the npm
+			// package installed resolves `package:`; a `--download-weights` install resolves `cache:`. Pinning one
+			// of them asserts how this machine happens to be set up.
+			expect(r.source).toMatch(/^(package|overlay|cache):/)
+			expect(r.modelPath).toMatch(/\/model\.onnx$/)
+			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
 			// v0.4.0: the resolver surfaces model-card.json so loadFromWeights can read
 			// the trained label vocabulary from it (issue #116 §5(a)).
-			expect(r.modelCardPath).toMatch(/neural-weights-en-us\/model-card\.json$/)
+			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 		},
 		LINK_SCRIPT_TIMEOUT_MS
 	)
@@ -275,17 +279,18 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
-			expect(r.source).toBe("package:@mailwoman/neural-weights-en-gb+base")
-			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
-			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+			// `+base` is exercised hermetically below; here the point is that en-gb RESOLVES.
+			expect(r.source).toMatch(/^(package|overlay):/)
+			expect(r.modelPath).toMatch(/\/model\.onnx$/)
+			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
 			expect(r.anchorLookupPath?.binary).toBe(true)
-			expect(r.anchorLookupPath?.path).toMatch(/neural-weights-en-gb\/postcode-gb\.bin$/)
+			expect(r.anchorLookupPath?.path).toMatch(/\/postcode-gb\.bin$/)
 			// Overlay-local card (6.7.0): en-gb ships its own model-card.json (a verbatim copy of the
 			// base's labels/requires apart from the deliberate conventions + anchor deviations — see that
 			// file's header comment), so `resolveFromPackageDir` resolves it LOCALLY instead of falling
 			// through to the en-us base card. The label vocab is byte-identical either way (STAGE3+, 33
 			// labels), so `assertEmissionWidth` never trips.
-			expect(r.modelCardPath).toMatch(/neural-weights-en-gb\/model-card\.json$/)
+			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 			const tree = await cls.parse("10 Downing Street, London SW1A 2AA")
@@ -335,15 +340,15 @@ describe("resolveWeights — package auto-resolve", () => {
 			ensureDevWeightsLinked("en-us", "en-nz")
 
 			const r = resolveWeights({ locale: "en-nz" })
-			expect(r.source).toBe("package:@mailwoman/neural-weights-en-nz+base")
-			expect(r.modelPath).toMatch(/neural-weights-en-us\/model\.onnx$/)
-			expect(r.tokenizerPath).toMatch(/neural-weights-en-us\/tokenizer\.model$/)
+			expect(r.source).toMatch(/^(package|overlay):/)
+			expect(r.modelPath).toMatch(/\/model\.onnx$/)
+			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
 			// The documented gap, pinned: no postcode-nz.bin ships, so the anchor sibling must NOT
 			// resolve (loadFromWeights then warns once and runs anchor-OFF — the tolerant-loader
 			// contract, not a crash).
 			expect(r.anchorLookupPath).toBeUndefined()
-			expect(r.modelCardPath).toMatch(/neural-weights-en-nz\/model-card\.json$/)
-			expect(r.pairIndexPath).toMatch(/neural-weights-en-nz\/pair-index-nz\.bin$/)
+			expect(r.modelCardPath).toMatch(/\/model-card\.json$/)
+			expect(r.pairIndexPath).toMatch(/\/pair-index-nz\.bin$/)
 
 			// Probe the built artifact directly: header country gates to nz, and a known identity pair
 			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x)) is
@@ -380,7 +385,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
-			expect(r.pairIndexPath).toMatch(/neural-weights-en-gb\/pair-index-gb\.bin$/)
+			expect(r.pairIndexPath).toMatch(/\/pair-index-gb\.bin$/)
 
 			// Probe the built artifact directly FIRST (per the brief) — establishes that
 			// ("fishburn", "stocktonontees") is genuinely a PROBE OK pair in THIS build before trusting
@@ -588,7 +593,11 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// into a temp cacheRoot layout via symlinks (cacheDir = <cacheRoot>/node_modules/<pkg>).
 			ensureDevWeightsLinked("en-us")
 
-			const packageDir = workspacePath("neural-weights-en-us")
+			// ASK THE RESOLVER where the artifacts are. This used to name the workspace directory, which held
+			// them only while the dev linkers materialized into the tracked package; they now land in the
+			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
+			// so the resolve under test silently answers from somewhere else and the gate never fires.
+			const packageDir = dirname(resolveWeights({ locale: "en-us" }).modelPath)
 			const cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-pair-gate-"))
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			mkdirSync(fakePackageDir, { recursive: true })

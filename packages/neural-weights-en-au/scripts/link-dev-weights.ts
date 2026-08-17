@@ -30,15 +30,25 @@
  *   checked-in repo files symlinked in place; there's nothing to go stale.
  */
 
-import { existsSync, lstatSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, lstatSync, mkdirSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { dataRootPath, repoRootPath, workspacePath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = workspacePath("neural-weights-en-au")
+/**
+ * Where the artifacts LAND — the data-root overlay, never this tracked package.
+ *
+ * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
+ * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`). PKG_DIR stays for
+ * what IS committed and must be read from the checkout.
+ */
+const DEST_DIR = String(weightsOverlayPath("en-au"))
+
+mkdirSync(DEST_DIR, { recursive: true })
 
 /**
  * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
@@ -71,8 +81,8 @@ function removeIfPresent(dest: string): void {
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
 }
 
-removeIfPresent(resolve(PKG_DIR, "model.onnx"))
-removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
+removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree country-OFF gap) -----.
@@ -81,9 +91,9 @@ removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
@@ -97,7 +107,7 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
  */
 
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)

@@ -75,12 +75,21 @@
 
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { existsSync, readFileSync, statSync, renameSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs"
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	statSync,
+	symlinkSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
@@ -96,6 +105,16 @@ const MD5_HEX_LENGTH = 32
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = workspacePath("neural-weights-en-gb")
+/**
+ * Where the artifacts LAND — the data-root overlay, never this tracked package.
+ *
+ * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
+ * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`). PKG_DIR stays for
+ * what IS committed and must be read from the checkout.
+ */
+const DEST_DIR = String(weightsOverlayPath("en-gb"))
+
+mkdirSync(DEST_DIR, { recursive: true })
 
 /**
  * In lockstep with en-us's DEFAULT_* (one multilingual artifact serves both) — keep this pair identical to
@@ -180,22 +199,20 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-linkForce(SRC_MODEL, resolve(PKG_DIR, "model.onnx"))
-linkForce(SRC_TOKENIZER, resolve(PKG_DIR, "tokenizer.model"))
+linkForce(SRC_MODEL, resolve(DEST_DIR, "model.onnx"))
+linkForce(SRC_TOKENIZER, resolve(DEST_DIR, "tokenizer.model"))
 
-console.log(`linked ${PKG_DIR}/{model.onnx,tokenizer.model}`)
+console.log(`linked ${DEST_DIR}/{model.onnx,tokenizer.model}`)
 
 // #397 guard, lockstep form: the en-gb artifact IS the en-us artifact, so verify the
 // linked default bytes against en-us's model-card `files_md5` (skipped under an
 // explicit MAILWOMAN_DEV_* override — deliberate experimentation).
 if (!$public.MAILWOMAN_DEV_MODEL || !$public.MAILWOMAN_DEV_TOKENIZER) {
-	const enUSCard = parseJSONStrict<{ files_md5?: Record<string, string> }>(
-		readFileSync(resolve(PKG_DIR, "..", "neural-weights-en-us", "model-card.json"), "utf8")
-	)
+	const enUSCard = parseJSONStrict<{ files_md5?: Record<string, string> }>(readFileSync(BASE_CARD_PATH, "utf8"))
 
 	const checks: Array<[string, string, string | undefined]> = [
-		["model", resolve(PKG_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
-		["tokenizer", resolve(PKG_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
+		["model", resolve(DEST_DIR, "model.onnx"), enUSCard.files_md5?.["model.onnx"]],
+		["tokenizer", resolve(DEST_DIR, "tokenizer.model"), enUSCard.files_md5?.["tokenizer.model"]],
 	]
 
 	for (const [label, path, expected] of checks) {
@@ -240,17 +257,17 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
@@ -293,9 +310,9 @@ for (const { channel, source } of EVIDENCE_LEXICONS) {
 	const src = source(declared)
 
 	if (existsSync(src)) {
-		linkForce(src, resolve(PKG_DIR, declared))
+		linkForce(src, resolve(DEST_DIR, declared))
 
-		console.log(`linked ${PKG_DIR}/${declared}`)
+		console.log(`linked ${DEST_DIR}/${declared}`)
 	} else {
 		console.error(`WARNING: missing ${src} — the ${channel} channel will resolve OFF in this worktree.`)
 	}
@@ -304,6 +321,12 @@ for (const { channel, source } of EVIDENCE_LEXICONS) {
 /**
  * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
  */
+/**
+ * The BASE package's card, read from the checkout because it is committed. Not from `DEST_DIR` — walking up from the
+ * overlay lands in the data root, which is where an earlier version of this migration pointed it.
+ */
+const BASE_CARD_PATH = resolve(String(workspacePath("neural-weights-en-us")), "model-card.json")
+
 const CLI = workspacePath("mailwoman", "out", "cli.js")
 
 // --- postcode-gb.bin: CARD-GATED, not unconditional -------------------------------------
@@ -332,7 +355,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the GB anchor binary lives when the card earns it.
  */
-const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-gb.bin")
+const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-gb.bin")
 
 /**
  * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
@@ -356,7 +379,7 @@ if (CARD.requires?.anchor?.span_mode === "shaped") {
 
 	const built = spawnSync(
 		process.execPath,
-		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `GB:${GB_POSTCODE_SHARD}`],
+		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `GB:${GB_POSTCODE_SHARD}`],
 		{ stdio: "inherit" }
 	)
 
@@ -389,7 +412,7 @@ const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 /**
  * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
  */
-const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-gb.bin")
+const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-gb.bin")
 /**
  * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
  * forces a loud rebuild rather than silently shipping a stale index.
@@ -510,7 +533,7 @@ if (pairIndexIsFresh) {
 			"gazetteer",
 			"pair-index",
 			"--out",
-			PKG_DIR,
+			DEST_DIR,
 			"--country",
 			"gb",
 			"--source",
@@ -550,7 +573,7 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-gb.bin")
 /**
  * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
  */
-const FST_DEST = resolve(PKG_DIR, "fst-en-gb.bin")
+const FST_DEST = resolve(DEST_DIR, "fst-en-gb.bin")
 
 if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
@@ -573,7 +596,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)

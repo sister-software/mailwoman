@@ -26,6 +26,22 @@ export function dataRootPath(...segments: string[]): string {
 }
 
 /**
+ * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
+ *
+ * ONE definition of the convention, because it is written by ten `link-dev-weights.ts` scripts and read by
+ * `@mailwoman/neural`'s `resolveWeights`, and a reader that disagreed with the writers about the directory would report
+ * the artifacts absent rather than misplaced — every sibling degrades `existsSync → undefined`.
+ *
+ * It lives OUTSIDE git deliberately. The binaries are not committed, so materializing them into the tracked package
+ * directory is what made a fresh worktree unable to geocode, made `yarn test` mutate tracked directories as a side
+ * effect, and put a symlink in a publish tarball (`YN0035`). The data root is shared across every checkout on the
+ * machine and is not packed by anything.
+ */
+export function weightsOverlayPath(locale: string, ...segments: string[]): string {
+	return dataRootPath("weights", locale.toLowerCase(), ...segments)
+}
+
+/**
  * The Mailwoman temporary-file root from the typed public environment.
  */
 export function mailwomanTempRoot(): string {

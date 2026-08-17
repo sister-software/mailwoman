@@ -41,12 +41,21 @@
 
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import { existsSync, readFileSync, renameSync, statSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs"
+import {
+	existsSync,
+	readFileSync,
+	renameSync,
+	statSync,
+	symlinkSync,
+	unlinkSync,
+	writeFileSync,
+	mkdirSync,
+} from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
@@ -74,6 +83,16 @@ const DEFAULT_TOKENIZER = dataRootPath("models", "tokenizer", "v0.9.0-multisplic
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = workspacePath("neural-weights-en-us")
+/**
+ * Where the artifacts LAND — the data-root overlay, never this tracked package.
+ *
+ * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
+ * mutate a tracked directory as a side effect of `weights.test.ts`, and put a symlink into a publish tarball
+ * (`YN0035`). PKG_DIR stays for the one thing that IS committed and must be read from the checkout: `model-card.json`.
+ */
+const DEST_DIR = String(weightsOverlayPath("en-us"))
+
+mkdirSync(DEST_DIR, { recursive: true })
 
 /**
  * The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4 re-verifies against the
@@ -154,11 +173,11 @@ function linkForce(src: string, dest: string): void {
 /**
  * Where `model.onnx` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const MODEL_DEST = resolve(PKG_DIR, "model.onnx")
+const MODEL_DEST = resolve(DEST_DIR, "model.onnx")
 /**
  * Where `tokenizer.model` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const TOKENIZER_DEST = resolve(PKG_DIR, "tokenizer.model")
+const TOKENIZER_DEST = resolve(DEST_DIR, "tokenizer.model")
 
 linkForce(SRC_MODEL, MODEL_DEST)
 linkForce(SRC_TOKENIZER, TOKENIZER_DEST)
@@ -215,17 +234,17 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
@@ -238,17 +257,17 @@ const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-l
 const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")
 
 if (existsSync(SRC_STREET_TYPE_LEXICON)) {
-	linkForce(SRC_STREET_TYPE_LEXICON, resolve(PKG_DIR, "street-type-lexicon-v3.json"))
+	linkForce(SRC_STREET_TYPE_LEXICON, resolve(DEST_DIR, "street-type-lexicon-v3.json"))
 
-	console.log(`linked ${PKG_DIR}/street-type-lexicon-v3.json`)
+	console.log(`linked ${DEST_DIR}/street-type-lexicon-v3.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_STREET_TYPE_LEXICON} — street_type channel will resolve OFF in this worktree.`)
 }
 
 if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
-	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(PKG_DIR, "locality-surface-lexicon-v7.json"))
+	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(DEST_DIR, "locality-surface-lexicon-v7.json"))
 
-	console.log(`linked ${PKG_DIR}/locality-surface-lexicon-v7.json`)
+	console.log(`linked ${DEST_DIR}/locality-surface-lexicon-v7.json`)
 } else {
 	console.error(
 		`WARNING: missing ${SRC_LOCALITY_SURFACE_LEXICON} — locality_surface channel will resolve OFF in this worktree.`
@@ -266,7 +285,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
  */
-const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-us.bin")
+const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-us.bin")
 
 if (existsSync(POSTCODE_BIN_DEST)) {
 	console.log(`skipped postcode-us.bin build — ${POSTCODE_BIN_DEST} already present`)
@@ -281,7 +300,7 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 } else {
 	const result = spawnSync(
 		process.execPath,
-		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `US:${US_WOF_DB}`],
+		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `US:${US_WOF_DB}`],
 		{ stdio: "inherit" }
 	)
 
@@ -304,7 +323,7 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
 /**
  * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
  */
-const FST_DEST = resolve(PKG_DIR, "fst-en-us.bin")
+const FST_DEST = resolve(DEST_DIR, "fst-en-us.bin")
 
 if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
@@ -327,7 +346,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
@@ -355,7 +374,7 @@ if (existsSync(MORPHOLOGY_SRC)) {
  * bump. The md5 half stays here: only this script knows which sources it passes. An ABSENT optional magnitude reads
  * `undefined` and forces the rebuild that stamps it in.
  */
-const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-us.bin")
+const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-us.bin")
 /**
  * Calibrated soft-prior magnitudes — the SAME set the R5 bars were measured with (gauntlet unchanged, 0/60
  * venue-confound false positives, 60/60 tag-correct). Changing any of these numbers invalidates those receipts.
@@ -470,7 +489,7 @@ if (!existsSync(CLI)) {
 				"gazetteer",
 				"pair-index",
 				"--out",
-				PKG_DIR,
+				DEST_DIR,
 				"--country",
 				"us",
 				"--delta",

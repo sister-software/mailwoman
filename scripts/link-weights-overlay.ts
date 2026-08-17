@@ -21,7 +21,7 @@
  *   ```
  */
 
-import { existsSync, lstatSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs"
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs"
 import { relative, resolve } from "node:path"
 import { parseArgs } from "node:util"
 
@@ -104,9 +104,17 @@ for (const locale of locales) {
 	// overlay to the checkout that wrote it; the writer is idempotent, so re-running from another checkout re-points it.
 	const cardSource = resolve(String(workspacePath(`neural-weights-${locale}`)), "model-card.json")
 
-	const artifacts = existsSync(cardSource)
-		? [{ shippedName: "model-card.json", sourcePath: cardSource }, ...recipe.linkableFor(locale)]
-		: recipe.linkableFor(locale)
+	// COPIED, not linked. Every other overlay entry points at the data root, which outlives any checkout; a
+	// symlink to the card would make the whole overlay depend on one working tree still existing at that
+	// path — and a worktree removed after linking would leave the overlay resolving a dangling card, which
+	// degrades to STAGE2_BIO_LABELS against a 33-logit model rather than to an error.
+	if (existsSync(cardSource) && !values.plan) {
+		mkdirSync(dir, { recursive: true })
+		rmSync(resolve(dir, "model-card.json"), { force: true })
+		copyFileSync(cardSource, resolve(dir, "model-card.json"))
+	}
+
+	const artifacts = recipe.linkableFor(locale)
 
 	for (const { shippedName, sourcePath } of artifacts) {
 		if (!existsSync(sourcePath)) {
@@ -145,27 +153,19 @@ for (const locale of locales) {
 	// Reported, never silently skipped. These are the channels the overlay will LACK, and every one of them
 	// degrades to `undefined` at resolve time rather than failing — so absence here is only visible if it is
 	// said here.
+	// REPORTED, never linked. An earlier version symlinked a build output from the workspace into the
+	// overlay, and that inverted the whole point: the per-locale linkers then wrote THROUGH the symlink and
+	// their artifacts landed back in the tracked package. It is the `fs.copyFile`-follows-a-symlink hazard
+	// AGENTS.md documents for the publish path, reappearing one directory over. The per-locale
+	// `link-dev-weights.ts` scripts build these into the overlay directly; this only says whether they have.
 	for (const { shippedName, buildCommand, inputPath } of recipe.buildableFor(locale)) {
-		// A build OUTPUT already sitting in the workspace is linkable even though its recipe entry is not: the
-		// artifact exists, and re-running the build to produce bytes we already have would be ceremony. Preferring
-		// it is also what closes the overlay to parity with a linked checkout — without this the overlay resolves
-		// two fewer channels than the package it replaces, silently, because both degrade to `undefined`.
-		const built = resolve(String(workspacePath(`neural-weights-${locale}`)), shippedName)
-
-		if (existsSync(built)) {
-			if (!values.plan) {
-				linkForce(built, resolve(dir, shippedName))
-			}
-
-			linked++
-			process.stdout.write(`  ${values.plan ? "·" : "✓"} ${shippedName}  (build output, from the workspace)\n`)
-
-			continue
-		}
+		const present = existsSync(resolve(dir, shippedName))
 
 		process.stdout.write(
-			`  — ${shippedName}  NOT built (${buildCommand})` +
-				`${inputPath ? `; input ${existsSync(inputPath) ? "present" : "MISSING"}` : ""}\n`
+			present
+				? `  ✓ ${shippedName}  already built\n`
+				: `  — ${shippedName}  NOT built (${buildCommand}` +
+						`${inputPath ? `; input ${existsSync(inputPath) ? "present" : "MISSING"}` : ""})\n`
 		)
 	}
 }
