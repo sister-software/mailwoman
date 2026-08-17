@@ -73,3 +73,16 @@ describe("checkCLIAllowlist", () => {
 		expect(checkCLIAllowlist(["parse", "x"]).reason).toContain("read-only allowlist")
 	})
 })
+
+describe("checkCLIAllowlist — the sync carve-out", () => {
+	it("refuses the repository sync even though its inspect siblings only read", () => {
+		const verdict = checkCLIAllowlist(["gazetteer", "inspect", "sync", "--countries", "tr"])
+
+		expect(verdict.allowed).toBe(false)
+		expect(verdict.reason).toContain("65 GB")
+	})
+
+	it("refuses it with a flag in front, since flags never identify the verb", () => {
+		expect(checkCLIAllowlist(["--dry-run", "gazetteer", "inspect", "sync"]).allowed).toBe(false)
+	})
+})
