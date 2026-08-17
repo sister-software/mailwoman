@@ -75,7 +75,7 @@ is the reason phase 0 exists — it was blocked by exactly the empty-worktree fa
 provenance** is the pattern the manifests generalise: an id or an artifact that states its own source, so a
 reader never has to infer one.
 
-## Phase 0 — dev weights resolution
+## Phase 0 — dev weights resolution — DONE
 
 Full design: `2026-08-17-dev-weights-resolution-design.md`. Summary: delete the third register.
 
@@ -120,12 +120,12 @@ The design left three questions open. Resolving them here.
 
 **Acceptance**, with status as of 2026-08-17:
 
-| Criterion                                                                 |                                                                                                                                |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| A worktree of `HEAD` geocodes with no setup step                          | **met** — `source: overlay:en-us`, 13/13 artifact parity, coordinates identical to main                                        |
-| The sibling report distinguishes `package` / `base` / `overlay` / `cache` | **met**                                                                                                                        |
-| `link` is idempotent                                                      | **met**                                                                                                                        |
-| `yarn test` leaves tracked directories untouched                          | **NOT met** — needs the remaining six `link-dev-weights.ts` scripts to write to the overlay instead of their package directory |
+| Criterion                                                                 |                                                                                                                                          |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| A worktree of `HEAD` geocodes with no setup step                          | **met** — `source: overlay:en-us`, 13/13 artifact parity, coordinates identical to main                                                  |
+| The sibling report distinguishes `package` / `base` / `overlay` / `cache` | **met**                                                                                                                                  |
+| `link` is idempotent                                                      | **met**                                                                                                                                  |
+| `yarn test` leaves tracked directories untouched                          | **met** — all ten linkers and `buildPairIndexOverlay` write to the overlay; every tracked package stays empty across a full linker sweep |
 
 **Risk carried, not deferred:** only `model` and `tokenizer` throw. The other ~11 siblings degrade to
 `undefined` by design, so the new rung could turn a loud failure into a quiet one — a checkout that parses
