@@ -88,6 +88,19 @@ These are the disciplines the trajectory review said not to change, plus the two
    [runtime-flag register](./reference/runtime-flags.mdx) — a flag with no register row is a
    smell.
 
+6. **Geometry is converted into structure at build time; runtime queries structure**
+   (operator-declared 2026-08-17). Spatial engines — SpatiaLite, PostGIS, DuckDB spatial, GDAL —
+   are build-and-validation tooling and never a serve dependency. Spatial _math_ (haversine, a
+   ray-cast over precomputed bboxes) is permitted at the runtime edges that are irreducibly
+   geometric: reverse geocoding, street interpolation, proximity bias. Spatial _structure_ — H3
+   cells, admin containment, ancestry chains and interval labels — is the core query algebra, on
+   the observation that proximity between places is usually coincidence while containment is
+   structure. Geometry's standing runtime-adjacent job is as the independent witness AGAINST the
+   hierarchy data at build time: a point-in-polygon pass over claimed ancestry catches what the
+   graph alone cannot ([#1716](https://github.com/sister-software/mailwoman/issues/1716)'s
+   echo-chamber guard, applied to our own artifacts). The test for a new feature that seems to
+   need a spatial query: is it really a containment question that build time can precompute?
+
 ## Where the live roadmap lives
 
 - **The queue:** [project board (epic #488)](https://github.com/sister-software/mailwoman/issues/488)
