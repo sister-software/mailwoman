@@ -199,6 +199,12 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
+/**
+ * The BASE package's card, read from the checkout because it is committed. Not from `DEST_DIR` — walking up from the
+ * overlay lands in the data root, which is where an earlier version of this migration pointed it.
+ */
+const BASE_CARD_PATH = resolve(String(workspacePath("neural-weights-en-us")), "model-card.json")
+
 linkForce(SRC_MODEL, resolve(DEST_DIR, "model.onnx"))
 linkForce(SRC_TOKENIZER, resolve(DEST_DIR, "tokenizer.model"))
 
@@ -321,12 +327,6 @@ for (const { channel, source } of EVIDENCE_LEXICONS) {
 /**
  * Compiled CLI used to run the build steps below. Requires `yarn compile` to have run.
  */
-/**
- * The BASE package's card, read from the checkout because it is committed. Not from `DEST_DIR` — walking up from the
- * overlay lands in the data root, which is where an earlier version of this migration pointed it.
- */
-const BASE_CARD_PATH = resolve(String(workspacePath("neural-weights-en-us")), "model-card.json")
-
 const CLI = workspacePath("mailwoman", "out", "cli.js")
 
 // --- postcode-gb.bin: CARD-GATED, not unconditional -------------------------------------
