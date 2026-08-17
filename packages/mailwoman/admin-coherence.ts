@@ -8,8 +8,7 @@
  *   says, and report a per-component verdict. FLAG-ONLY: nothing reads these verdicts to rank,
  *   re-pick, or gate — they exist so a board run can count how often the resolver's answer ignores a
  *   qualifier the parse got right (`Weimar, Thüringen` → Weimar TX), and how often the winner
- *   carries no ancestry to check at all (the `unverifiable` count, which sizes the candidate.db
- *   ancestors-table work).
+ *   carries no ancestry to check at all (the `unverifiable` count).
  *
  *   Per-component verdicts, never one scalar (the Google-confirmation-levels / USPS-DPV pattern):
  *
@@ -39,11 +38,13 @@
  *     against a DE winner reads `contradicted` — the module never silently over-claims a match it
  *     cannot derive.
  *
- *   The winner's checkable ancestry at the assembly seam is thin today, on purpose reported rather
- *   than papered over: the candidate backend has no `ancestors()` table, so region-class ancestry
- *   exists only when the resolver stamped `metadata.ancestors` (WOF backend, opt-in #404), while
- *   country-class ancestry is nearly always available via the `resolver_country` stamp. Expect
- *   `region: unverifiable` to dominate on the candidate tier — that count is the finding.
+ *   The winner's checkable ancestry arrives as the resolver's `metadata.ancestors` stamp (#404 —
+ *   the geocode path opts in by default, and both backends serve it when their artifact carries an
+ *   ancestors table: the FTS shard's `ancestors`, candidate.db's `candidate_ancestor` sidecar),
+ *   while country-class ancestry is nearly always available via the `resolver_country` stamp.
+ *   `unverifiable` remains the faithful verdict wherever the stamp is absent — an artifact
+ *   predating the sidecar, a shard-fed winner with no recorded ancestry, or a caller that opted
+ *   out.
  */
 
 import { countrySurfaceForms, ISO2_TO_NAME, matchCountry, matchSubdivision } from "@mailwoman/codex/country"
@@ -273,8 +274,9 @@ export function adminCoherenceField(
 		{
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			// Stamped only on the #404 opt-in path (WOF backend); the candidate backend has no ancestors
-			// table, so this is usually absent — which the verdicts report as `unverifiable`.
+			// The resolver's #404 stamp — present when the geocode path opted in AND the backend's
+			// artifact carries an ancestors table; its absence is what the verdicts report as
+			// `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}
 	)

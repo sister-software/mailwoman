@@ -13,7 +13,7 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 import { describe, expect, it } from "vitest"
 
 import {
@@ -552,6 +552,41 @@ describe("parseForGeocode — query-shape emission prior (#981)", () => {
 
 		expect(calls[0]!.text).toBe("Damrak 1, 1012 LG Amsterdam")
 		expect(calls[0]!.opts!.queryShape).toEqual(computeQueryShape("Damrak 1, 1012 LG Amsterdam"))
+	})
+})
+
+describe("the #404 lineage-attachment wiring (#1717)", () => {
+	function capturingDeps(captured: Array<ResolveOpts | undefined>): GeocodeDeps {
+		const classifier: GeocodeClassifier = {
+			parse: async (text) => ({ raw: text, roots: [node({ tag: "locality", value: "Weimar" })] }),
+		}
+
+		const resolver: Resolver = {
+			resolveTree: async (tree, opts) => {
+				captured.push(opts)
+
+				return {
+					raw: tree.raw,
+					roots: [node({ tag: "locality", value: "Weimar", lat: 1, lon: 2, placeID: "wof:1" })],
+				}
+			},
+		}
+
+		return { classifier, resolver, placeCountry: false }
+	}
+
+	it("opts into includeAncestors by default — the stamp the admin-coherence verdicts read", async () => {
+		const captured: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", capturingDeps(captured))
+
+		expect(captured[0]?.includeAncestors).toBe(true)
+	})
+
+	it("deps.includeAncestors: false is an effective opt-out", async () => {
+		const captured: Array<ResolveOpts | undefined> = []
+		await geocodeAddress("Weimar", { ...capturingDeps(captured), includeAncestors: false })
+
+		expect(captured[0]?.includeAncestors).toBe(false)
 	})
 })
 

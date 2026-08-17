@@ -17,6 +17,8 @@
 
 import { sql, type Kysely } from "kysely"
 
+import type { CandidateAncestorsDatabase } from "./candidate-ancestors-schema.ts"
+
 /**
  * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the
  * rest is denormalized so a resolve is one probe (no join to `spr`). Coordinates + bbox + name are nullable at the SQL
@@ -102,9 +104,11 @@ export interface PlacetypeCodeTable {
 }
 
 /**
- * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`.
+ * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`. Extends the ancestors sidecar
+ * (`candidate_ancestor` + `candidate_interval` — see candidate-ancestors-schema.ts for the encoding decision), so the
+ * builder's one typed client covers every table in the artifact.
  */
-export interface CandidateDatabase {
+export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	/**
 	 * The clustered `WITHOUT ROWID` lookup table the reader probes.
 	 */

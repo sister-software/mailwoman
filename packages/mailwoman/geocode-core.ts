@@ -445,6 +445,14 @@ export interface GeocodeDeps {
 	 */
 	adminCoherence?: boolean
 	/**
+	 * Lineage attachment (#404, `ResolveOpts.includeAncestors`) — stamp each resolved node's containment chain onto
+	 * `metadata.ancestors`, which is what puts region-class ancestry in front of the admin-coherence verdicts (#1717):
+	 * without it `region` reads `unverifiable` on every winner. **Default-on** for the geocode path — the stamp is
+	 * flag-only metadata (no ranking or re-pick reads it) served from a per-id memoized backend probe, and it no-ops on a
+	 * backend/artifact without `ancestors()`. Pass `false` to opt out.
+	 */
+	includeAncestors?: boolean
+	/**
 	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
 	 * geographically consistent in exactly ONE country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
 	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal shards attached in Addison. **Default
@@ -933,6 +941,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		// otherwise re-default ON downstream). Fixes the "Portland, ME → Messina IT" class structurally,
 		// without a prior or safelist.
 		adminCoherence: deps.adminCoherence !== false,
+		// Lineage attachment (#404) — default-ON here so the admin-coherence verdicts (#1717) check the
+		// winner's REAL ancestry instead of reporting `unverifiable` wholesale. Explicit propagation for
+		// the same reason as `adminCoherence` above. The resolver still guards on the backend actually
+		// serving `ancestors()`, so an artifact predating the sidecar stays byte-identical.
+		includeAncestors: deps.includeAncestors !== false,
 	}
 
 	if (deps.defaultCountry) {
