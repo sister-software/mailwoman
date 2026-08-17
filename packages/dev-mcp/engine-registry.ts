@@ -57,6 +57,7 @@ export interface EngineConfig {
 	locale_country_prior?: boolean
 	postcode_shape_coherence?: boolean
 	postcode_containment_coherence?: boolean
+	admin_containment_rerank?: boolean
 	retry_alternate_register?: boolean
 	/**
 	 * Record the decode-path evidence on every run. OFF by default and left off by the measuring tools: the trace is kept
@@ -102,6 +103,7 @@ export const EFFECTIVE_KEY_FOR = {
 	locale_country_prior: "localeCountryPrior",
 	postcode_shape_coherence: "postcodeShapeCoherence",
 	postcode_containment_coherence: "postcodeContainmentCoherence",
+	admin_containment_rerank: "adminContainmentRerank",
 	retry_alternate_register: "retryAlternateRegister",
 	trace: "trace",
 } as const satisfies Record<keyof EngineConfig, string>
@@ -130,6 +132,9 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		postcodeContainmentCoherence: config.postcode_containment_coherence ?? true,
 		placeCountryThreshold: config.place_country_threshold ?? 0.5,
 		...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
+		...(config.admin_containment_rerank === undefined
+			? {}
+			: { adminContainmentRerank: config.admin_containment_rerank }),
 		...(config.retry_alternate_register === undefined
 			? {}
 			: { retryAlternateRegister: config.retry_alternate_register }),

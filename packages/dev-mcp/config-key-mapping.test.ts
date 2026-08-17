@@ -44,6 +44,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 			locale_country_prior: true,
 			postcode_shape_coherence: false,
 			postcode_containment_coherence: false,
+			admin_containment_rerank: true,
 			retry_alternate_register: true,
 			trace: true,
 		})

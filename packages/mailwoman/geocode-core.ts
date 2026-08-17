@@ -482,6 +482,13 @@ export interface GeocodeDeps {
 	 */
 	postcodeContainmentCoherence?: boolean
 	/**
+	 * Admin-containment re-rank (#1717 stage 2, `ResolveOpts.adminContainmentRerank`) — a parsed region qualifier
+	 * participates in locality-candidate selection: candidates the ancestors sidecar vouches sit UNDER the qualifier rank
+	 * ahead of (and can be surfaced past a locale-inferred country scope over) the ones it cannot vouch for. **Default
+	 * OFF** (D-rule); pass `true` to opt in.
+	 */
+	adminContainmentRerank?: boolean
+	/**
 	 * Postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` + `.postcodePrefixIndex`) — on a
 	 * `postalcode` miss, resolve the code's PREFIX from the injected PFX1 index (GB outward / US section) so an
 	 * ungazetted unit still contributes its district + centroid. **Default OFF** (the PCN1 posture — data + loader +
@@ -1180,6 +1187,12 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	if (deps.postcodeContainmentCoherence === true) {
 		opts.postcodeContainmentCoherence = true
+	}
+
+	// #1717 stage 2 — the admin-containment lever rides the same opt-in discipline: only an explicit
+	// `true` sets the field, so the resolver's byte-stable default holds everywhere else.
+	if (deps.adminContainmentRerank === true) {
+		opts.adminContainmentRerank = true
 	}
 
 	if (deps.postcodePrefixPrior === true) {

@@ -82,20 +82,32 @@ export interface GauntletResolverLevers {
 	 * constructed here at all — the board has always graded without it.
 	 */
 	gazetteerPrior?: boolean
+	/**
+	 * #1717 stage 2 — the admin-containment re-rank: a parsed region qualifier participates in locality-candidate
+	 * selection through the candidate gazetteer's ancestors sidecar. Library default OFF (D-rule), so the `true` pin is
+	 * the one that carries evidence today; the `false` pin grades the production default explicitly.
+	 */
+	adminContainmentRerank?: boolean
 }
 
 /**
  * The geocode deps a lever set turns into — spread into every {@linkcode geocodeAddress} call the run makes. Pure and
  * exported so the "the pin reaches the pipeline" contract is testable without building the ~9 GB shard set.
  */
-export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): { postcodeCountryCoherence?: boolean } {
+export function resolverLeverDeps(levers: GauntletResolverLevers | undefined): {
+	postcodeCountryCoherence?: boolean
+	adminContainmentRerank?: boolean
+} {
 	if (!levers) return {}
 
 	// A key is emitted only when the runner SET it — an `undefined` value would still be an own property, and
 	// `{postcodeCountryCoherence: undefined}` spread into the geocode deps reads as an explicit pin to a reader.
-	return levers.postcodeCountryCoherence === undefined
-		? {}
-		: { postcodeCountryCoherence: levers.postcodeCountryCoherence }
+	return {
+		...(levers.postcodeCountryCoherence === undefined
+			? {}
+			: { postcodeCountryCoherence: levers.postcodeCountryCoherence }),
+		...(levers.adminContainmentRerank === undefined ? {} : { adminContainmentRerank: levers.adminContainmentRerank }),
+	}
 }
 
 /**

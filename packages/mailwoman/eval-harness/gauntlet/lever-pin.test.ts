@@ -189,3 +189,41 @@ describe("runResolverLevers forwards BOTH halves of the prior tri-state", () => 
 		expect(runResolverLevers({})).toBeUndefined()
 	})
 })
+
+describe("adminContainmentRerank lever (#1717 stage 2)", () => {
+	// Two-sided from day one — the #1706 class: a one-sided forwarding compiles, passes every other test, and
+	// produces an OFF-labelled log that graded the default arm.
+	it("maps the ON pin onto the geocode dep of the same name", () => {
+		expect(resolverLeverDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
+	})
+
+	it("maps the explicit OFF pin — grading the production default under an OFF label must be true", () => {
+		expect(resolverLeverDeps({ adminContainmentRerank: false })).toEqual({ adminContainmentRerank: false })
+	})
+
+	it("is announced in the run banner, both ways", () => {
+		expect(describeResolverLevers({ adminContainmentRerank: true })).toContain("adminContainmentRerank=ON")
+		expect(describeResolverLevers({ adminContainmentRerank: false })).toContain("adminContainmentRerank=OFF")
+	})
+
+	it("prints nothing when unset, so 'no flag' still reads as production", () => {
+		expect(describeResolverLevers({ postcodeCountryCoherence: false })).not.toContain("adminContainmentRerank")
+	})
+
+	it("survives every hop from run options to the resolve, both directions", () => {
+		expect(resolverLeverDeps(layerDepsOptions(runLayerOptions({ adminContainmentRerank: true })).levers)).toEqual({
+			adminContainmentRerank: true,
+		})
+
+		expect(resolverLeverDeps(layerDepsOptions(runLayerOptions({ adminContainmentRerank: false })).levers)).toEqual({
+			adminContainmentRerank: false,
+		})
+	})
+
+	it("composes with a sibling pin rather than replacing it", () => {
+		expect(resolverLeverDeps({ adminContainmentRerank: true, postcodeCountryCoherence: false })).toEqual({
+			adminContainmentRerank: true,
+			postcodeCountryCoherence: false,
+		})
+	})
+})

@@ -107,6 +107,11 @@ export interface GeocodeSessionOptions {
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
+	 * Admin-containment re-rank (#1717 stage 2) — a parsed region qualifier participates in locality-candidate selection
+	 * via the candidate gazetteer's ancestors sidecar. Default OFF (D-rule); `undefined` keeps the production default.
+	 */
+	adminContainmentRerank?: boolean
+	/**
 	 * Whether a ZERO-HIT may be retried in the alternative input register (the Decision-A rider).
 	 *
 	 * Exposed so the lever is measurable: it changes answers on the default path, and a lever an A/B cannot reach is a
@@ -639,6 +644,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
 			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
 			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
+			// #1717 stage 2: same opt-in discipline — default-OFF downstream.
+			...(options.adminContainmentRerank === true ? { adminContainmentRerank: true } : {}),
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).

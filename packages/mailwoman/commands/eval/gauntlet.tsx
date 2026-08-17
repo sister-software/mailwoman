@@ -49,6 +49,12 @@ export const spec = {
 		"postcode-country-coherence-off": { type: "boolean", default: false, description: "Force coherence off" },
 		"gazetteer-prior": { type: "boolean", default: false, description: "Force the gazetteer FST prior on" },
 		"gazetteer-prior-off": { type: "boolean", default: false, description: "Force the gazetteer FST prior off" },
+		"admin-containment-rerank": { type: "boolean", default: false, description: "Force the containment rerank on" },
+		"admin-containment-rerank-off": {
+			type: "boolean",
+			default: false,
+			description: "Force the containment rerank off",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -67,12 +73,14 @@ interface Options {
 	postcodeCountryCoherenceOff: boolean
 	gazetteerPrior: boolean
 	gazetteerPriorOff: boolean
+	adminContainmentRerank: boolean
+	adminContainmentRerankOff: boolean
 }
 
 const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 	// The `*Off` names are CLI-only spellings of the OFF half of a tri-state; they are destructured out so neither
 	// ever reaches `runGauntlet` as a field of its own.
-	const { postcodeCountryCoherenceOff, gazetteerPriorOff, components, ...rest } = options
+	const { postcodeCountryCoherenceOff, gazetteerPriorOff, adminContainmentRerankOff, components, ...rest } = options
 
 	const state = useCommandTask(
 		async () => {
@@ -105,6 +113,9 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 					// #1497: two-sided since the 2026-08-16 default-on promotion. There IS a production default to
 					// preserve now, so an unset flag must stay unset rather than pinning the lever either way.
 					gazetteerPrior: options.gazetteerPrior ? true : gazetteerPriorOff ? false : undefined,
+					// #1717 stage 2: two-sided from day one (the #1706 one-sided-forwarding class) — the OFF pin
+					// grades the production default explicitly, and no flag stays "grade whatever production does".
+					adminContainmentRerank: options.adminContainmentRerank ? true : adminContainmentRerankOff ? false : undefined,
 				})
 			).exitCode
 		},

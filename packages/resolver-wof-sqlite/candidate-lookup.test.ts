@@ -97,6 +97,31 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (820, 'Ofton', 'locality', 'TR', 40.94, 40.26, 40.9, 40.2, 41.0, 40.3, -1, 0);
 		INSERT INTO spr VALUES (821, 'Ofton', 'county', 'TR', 40.88, 40.34, 40.8, 40.2, 41.0, 40.4, -1, 0);
 
+		-- The #1717 stage-2 containment board, the Weimar shape: 'Marwei' DE (60 k, under region Thuria)
+		-- vs a MORE-populous US namesake (2.0 M, under region Texia). Population-first answers the US one
+		-- and a hard country=US filter hides the DE one entirely; the containment lever must answer the
+		-- DE one in BOTH postures (reorder worldwide, inject under the scope).
+		INSERT INTO spr VALUES (900, 'Thuria', 'region', 'DE', 50.9, 11.0, 50.0, 10.0, 51.5, 12.0, -1, 0);
+		INSERT INTO spr VALUES (901, 'Marwei', 'locality', 'DE', 50.98, 11.32, 50.9, 11.2, 51.1, 11.4, -1, 0);
+		INSERT INTO spr VALUES (902, 'Marwei', 'locality', 'US', 29.70, -96.77, 29.6, -96.9, 29.8, -96.6, -1, 0);
+		INSERT INTO spr VALUES (903, 'Texia', 'region', 'US', 31.0, -99.0, 25.8, -106.6, 36.5, -93.5, -1, 0);
+		-- The DAG-degraded leg: 'Deggton' DE's CANONICAL (finest) parent is county 906, which carries no
+		-- ancestry of its own — so the interval forest roots at 906 and cannot see Thuria above it. The
+		-- region edge lives only in the closure rows; containment must fall through to the chain probe.
+		INSERT INTO spr VALUES (905, 'Deggton', 'locality', 'DE', 50.99, 11.30, 50.9, 11.2, 51.1, 11.4, -1, 0);
+		INSERT INTO spr VALUES (906, 'Countia', 'county', 'DE', 50.95, 11.25, 50.9, 11.2, 51.0, 11.3, -1, 0);
+		INSERT INTO spr VALUES (907, 'Deggton', 'locality', 'US', 40.0, -100.0, 39.9, -100.1, 40.1, -99.9, -1, 0);
+		-- The country-in-region-slot leg ('Moscow, Russia' parses region="Russia"): a COUNTRY bearer of
+		-- the qualifier plus a contained namesake — the qualifier band includes the country placetype.
+		INSERT INTO spr VALUES (950, 'Ruslandia', 'country', 'RU', 55.0, 37.0, 41.0, 19.0, 82.0, 179.0, -1, 0);
+		INSERT INTO spr VALUES (951, 'Mosgrad', 'locality', 'RU', 55.75, 37.62, 55.5, 37.3, 56.0, 37.9, -1, 0);
+		INSERT INTO spr VALUES (952, 'Mosgrad', 'locality', 'US', 46.73, -117.0, 46.6, -117.2, 46.8, -116.8, -1, 0);
+		-- The Donegal-class stored form: an Irish county stored 'County Dundo' (name_key 'county dundo',
+		-- no bare 'dundo' key), addressed as 'Co. Dundo' — the probe-side county-prefix variant's board.
+		INSERT INTO spr VALUES (960, 'County Dundo', 'region', 'IE', 54.9, -8.0, 54.0, -8.9, 55.4, -7.2, -1, 0);
+		INSERT INTO spr VALUES (961, 'Kennytown', 'locality', 'IE', 54.95, -7.72, 54.9, -7.8, 55.0, -7.6, -1, 0);
+		INSERT INTO spr VALUES (962, 'Kennytown', 'locality', 'US', 40.0, -77.7, 39.9, -77.8, 40.1, -77.6, -1, 0);
+
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
 		INSERT INTO place_population VALUES (200, 2700000);
@@ -114,6 +139,16 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (811, 44212);
 		INSERT INTO place_population VALUES (820, 44212);
 		INSERT INTO place_population VALUES (821, 44212);
+		INSERT INTO place_population VALUES (901, 60000);
+		INSERT INTO place_population VALUES (902, 2000000);
+		INSERT INTO place_population VALUES (905, 5000);
+		INSERT INTO place_population VALUES (906, 5000);
+		INSERT INTO place_population VALUES (907, 800000);
+		INSERT INTO place_population VALUES (950, 140000000);
+		INSERT INTO place_population VALUES (951, 1000000);
+		INSERT INTO place_population VALUES (952, 25000);
+		INSERT INTO place_population VALUES (961, 22000);
+		INSERT INTO place_population VALUES (962, 250000);
 
 		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
 		INSERT INTO ancestors VALUES (310, 400, 'region');
@@ -122,12 +157,25 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (811, 400, 'region');
 		INSERT INTO ancestors VALUES (810, 401, 'region');
 
+		-- The containment board's ancestry (the sidecar source). Deggton's TWO parents make the DAG
+		-- case: canonical = county 906 (finest tier), region 900 reachable only via the closure rows.
+		INSERT INTO ancestors VALUES (901, 900, 'region');
+		INSERT INTO ancestors VALUES (902, 903, 'region');
+		INSERT INTO ancestors VALUES (905, 906, 'county');
+		INSERT INTO ancestors VALUES (905, 900, 'region');
+		INSERT INTO ancestors VALUES (951, 950, 'country');
+		INSERT INTO ancestors VALUES (961, 960, 'region');
+
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
 		-- The colliding exonym: Farland CN carries an alt-name that normalizes to "zedton" (the Çançun→cancun class).
 		INSERT INTO place_search VALUES (601, 'Zedton');
 		-- The dominant alt-name: Wyemetro US is aliased to "Wyeburg" (the LA→Los Angeles class).
 		INSERT INTO place_search VALUES (603, 'Wyeburg');
+		-- The variant-form bridge: the Thuria row also answers the alias key 'Thueria' — the
+		-- Thüringen→Thuringia class the fold-equality verdicts declare out of scope, bridged here by
+		-- the artifact's own alias keying.
+		INSERT INTO place_search VALUES (900, 'Thueria');
 	`)
 
 	db.close()
@@ -1028,6 +1076,206 @@ describe("seat preference through findPlace — where the term can and cannot re
 			expect(hits).toHaveLength(1)
 			expect(hits[0]!.id).toBe(820)
 			expect(hits[0]!.placetype).toBe("locality")
+		} finally {
+			lk.close()
+		}
+	})
+})
+
+describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
+	// The fixture is the Weimar shape: 'Marwei' DE (60 k, under region Thuria) vs a MORE-populous US
+	// namesake (2.0 M). Population-first answers the US one; a country=US scope hides the DE one; the
+	// qualifier must answer the DE one in both postures. The board-measured mechanism (2026-08-18):
+	// the locale-inferred hard filter partitions the true instance out of the list BEFORE any
+	// comparator, so a reorder-only lever would be inert — the #1729 class, which is why these
+	// fixtures pin INJECTION, not just ordering.
+
+	test("REORDERS the worldwide set: the contained namesake beats the more-populous one", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
+
+			expect(hits.map((h) => h.id)).toEqual([901, 902])
+			expect(hits[0]!.country).toBe("DE")
+			expect(hits[0]!.containedByQualifier).toBe(true)
+			expect(hits[1]!.containedByQualifier).toBe(false)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("INJECTS past a country scope: the contained instance the hard filter hid re-enters the list", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// Without the qualifier, the US scope makes the DE row unreachable at any rank.
+			const scoped = await lk.findPlace({ text: "Marwei", placetype: "locality", country: "US", limit: 5 })
+
+			expect(scoped.map((h) => h.id)).toEqual([902])
+
+			// With it, the sidecar-vouched instance is ADDED and ranked first — the scoped row survives
+			// as the runner-up (additive, never a filter).
+			const hits = await lk.findPlace({
+				text: "Marwei",
+				placetype: "locality",
+				country: "US",
+				regionQualifier: "Thuria",
+				limit: 5,
+			})
+
+			expect(hits.map((h) => h.id)).toEqual([901, 902])
+			expect(hits[0]!.country).toBe("DE")
+			expect(hits[0]!.exactMatch).toBe(true)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("bridges a variant-form qualifier through the artifact's own alias keys", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// 'Thueria' is an alias key of the Thuria region row — the Thüringen→Thuringia class the
+			// fold-equality verdicts (their stated v1 bound) cannot bridge; the qualifier probe can.
+			const hits = await lk.findPlace({
+				text: "Marwei",
+				placetype: "locality",
+				country: "US",
+				regionQualifier: "Thueria",
+				limit: 5,
+			})
+
+			expect(hits[0]!.id).toBe(901)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("falls through to the CLOSURE rows where the interval forest cannot see the qualifier (DAG)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// Deggton DE's canonical parent is the ancestry-less county, so its interval label sits in a
+			// different tree than Thuria's — the interval verdict is 'not contained along the canonical
+			// hierarchy', and only the closure chain knows better.
+			const hits = await lk.findPlace({ text: "Deggton", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
+
+			expect(hits.map((h) => h.id)).toEqual([905, 907])
+			expect(hits[0]!.country).toBe("DE")
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("meets a 'County X' stored form addressed as 'Co. X' — the probe-side prefix variant", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// The stored fold is 'county dundo' with no bare 'dundo' key; the qualifier's own strip goes
+			// the OTHER way ('Co. Dundo' → 'dundo'), so a one-sided probe would miss what the verdicts'
+			// two-sided set intersection meets — the exact reason `regionQualifierProbeKeys` exists.
+			const hits = await lk.findPlace({
+				text: "Kennytown",
+				placetype: "locality",
+				regionQualifier: "Co. Dundo",
+				limit: 5,
+			})
+
+			expect(hits.map((h) => h.id)).toEqual([961, 962])
+			expect(hits[0]!.country).toBe("IE")
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("answers a COUNTRY name in the region slot — the parse-mislabel class ('Moscow, Russia')", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({
+				text: "Mosgrad",
+				placetype: "locality",
+				country: "US",
+				regionQualifier: "Ruslandia",
+				limit: 5,
+			})
+
+			expect(hits.map((h) => h.id)).toEqual([951, 952])
+			expect(hits[0]!.country).toBe("RU")
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("SOFT, never a filter: a qualifier that matches nothing changes nothing (and says it was asked)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const plain = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
+
+			const hits = await lk.findPlace({
+				text: "Marwei",
+				placetype: "locality",
+				regionQualifier: "Nowhereshire",
+				limit: 5,
+			})
+
+			expect(hits.map((h) => h.id)).toEqual(plain.map((h) => h.id))
+			// Evaluated, not silently skipped: the stamps are present and false, so the walk's verdict
+			// reads no_contained_candidate rather than unavailable.
+			expect(hits.every((h) => h.containedByQualifier === false)).toBe(true)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("an uncontained qualifier (wrong region) leaves the population order untouched", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// 'Texia' contains the US namesake, which already leads on population — stamped, unmoved.
+			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Texia", limit: 5 })
+
+			expect(hits.map((h) => h.id)).toEqual([902, 901])
+			expect(hits[0]!.containedByQualifier).toBe(true)
+			expect(hits[1]!.containedByQualifier).toBe(false)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("CAPABILITY-GATED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
+		// Reproduce a pre-sidecar candidate.db by dropping the tables from a real build — the same
+		// vintage discipline as the pre-#28 importance-column test above.
+		const preSidecarPath = join(scratch, "candidate-pre-sidecar.db")
+		await copyFile(candidatePath, preSidecarPath)
+		const rw = new DatabaseSync(preSidecarPath)
+		rw.exec("DROP TABLE candidate_ancestor; DROP TABLE candidate_interval;")
+		rw.close()
+
+		const lk = new WOFCandidateTableLookup({ databasePath: preSidecarPath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
+
+			// Population-first, unmoved — and NO stamp, so the walk reports the lever `unavailable`
+			// rather than reading the absence as "not contained" (meaning-of-zero).
+			expect(hits.map((h) => h.id)).toEqual([902, 901])
+			expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("no qualifier on the query → no stamps, byte-identical to the incumbent path", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
+
+			expect(hits.map((h) => h.id)).toEqual([902, 901])
+			expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
 		} finally {
 			lk.close()
 		}
