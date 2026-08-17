@@ -132,7 +132,7 @@ The design left three questions open. Resolving them here.
 with no lexicons, no FST, no pair index, scoring worse and saying nothing. Sibling reporting ships with the
 rung, not after it.
 
-## Phase 1 — `mw data inventory`
+## Phase 1 — `mw data inventory` — DONE
 
 Read-only walk of the data root. Per artifact: size, kind, its manifest if it has one, and
 **"no provenance — unreproducible"** where it does not.
@@ -145,7 +145,7 @@ report the two facts above honestly: that `pelias-rig` is a third of the disk an
 **Acceptance:** the command names every artifact, classifies each as provenanced / unprovenanced /
 not-ours, and prints one number. Running it twice on an unchanged root prints the same number.
 
-## Phase 2 — `mw data pull country <cc>`
+## Phase 2 — `country-plan` — DONE
 
 `add-a-country-runbook.md` Addendum B, generalised past WOF to OpenAddresses and Overture, in the
 two-command shape that document recommends: `--plan` (read-only, prerequisites, current source, size,
@@ -172,17 +172,38 @@ globs both; `spr` is `INSERT OR REPLACE`, so it is idempotent and harmless today
 moment the copies diverge, at which point the ingested value is last-writer-wins over FastGlob's enumeration
 order. Deduplicating the repos root and naming one layout canonical belongs here.
 
-## Phase 3 — manifest retrofit
+## Phase 3 — manifest retrofit — DONE for the artifacts a geocode reads
 
-Extend `layer_manifest` to the builders phase 1 reports and phase 2 has not already covered, prioritised by
-what is actually load-bearing: the candidate gazetteer and the admin gazetteer first, since every geocode
-reads them.
+Four builders stamp a `layer_manifest`, through one shared `stampLayerManifest` that also owns the ordering
+(before the seal, or before the swap — a sealed artifact is `0444` and a swapped one is already live):
 
-Builders emit manifests going forward; the inventory reports which artifacts predate the contract. Nothing is
-retrofitted by hand into an existing database — **artifacts are rebuilt, never patched.**
+| Builder                     | Artifact                   | Notes                                                                  |
+| --------------------------- | -------------------------- | ---------------------------------------------------------------------- |
+| `gazetteer build admin`     | `admin-global-priority.db` | licence is a CONJUNCTION of the folds that actually contributed        |
+| `gazetteer build candidate` | `candidate-*.db`           | provenance is a CHAIN — names its ancestor, not the ancestor's sources |
+| `situs interpolation-shard` | `interpolation/*` (52)     | TIGER, public domain                                                   |
+| `situs address-points`      | `address-points/*` (53)    | records the dataset allow-list the build applied                       |
 
-**Acceptance:** the phase 1 number reaches the artifacts a geocode depends on. Not 60/60 — some of that 60
-is scratch and some is not ours.
+Plus a fix to the OSM rooftop builder, whose `build_cmd` recorded a path the workspace regroup moved — the
+defect phase 1 surfaced.
+
+**The contract gained a third spine shape.** `SpineKeys` offered `h3`, `wofID` and `addressID` — the two
+layer shapes that existed when it was written, a cellular one and an id-joined one. `address_point` and
+`street_segment` carry none of the three; they are probed on `(postcode | locality, street_norm, number)`.
+A first draft declared `addressID: "address_id"`, a column that does not exist, caught by reading the table
+rather than the schema module. `street` is additive; existing layers are unaffected.
+
+**The number does not move until each artifact is rebuilt.** Artifacts are rebuilt, never patched, so the
+shipped databases stay unprovenanced and `data inventory` will keep reporting them as such. That is the
+discipline working, not a gap.
+
+### What phase 3 did NOT cover, and why
+
+The `wof/` family is 79 databases and four of its sub-families are still unstamped: the 24 `postcode-*`
+shards, the 13 `postalcode-*` WOF ingests, the 2 `wof-polygons`, and assorted one-offs. None is on the
+resolution path a geocode takes — the resolver reads `candidate.db`, and the postcode shards are INPUTS to
+the candidate build rather than things it reads at query time. They are worth stamping and they are not
+what the acceptance criterion asked for.
 
 ## Standing invariants
 
