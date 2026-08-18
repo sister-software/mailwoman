@@ -4491,7 +4491,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/ancestrie@workspace:packages/ancestrie":
+"@mailwoman/ancestrie@workspace:*, @mailwoman/ancestrie@workspace:packages/ancestrie":
   version: 0.0.0-use.local
   resolution: "@mailwoman/ancestrie@workspace:packages/ancestrie"
   languageName: unknown
@@ -5140,6 +5140,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/resolver-wof-sqlite@workspace:packages/resolver-wof-sqlite"
   dependencies:
+    "@mailwoman/ancestrie": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"

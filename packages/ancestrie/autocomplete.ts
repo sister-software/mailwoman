@@ -21,8 +21,14 @@
  *   letting a successful walk short-circuit silently drops every longer completion.
  */
 
-import type { Ancestrie } from "./reader.ts"
-import type { AncestrieRecord, AncestrieSuggestion, AutocompleteOptions, AutocompleteResult } from "./types.ts"
+import type {
+	AncestrieReaderLike,
+	AncestrieRecord,
+	AncestrieSuggestion,
+	AutocompleteOptions,
+	AutocompleteResult,
+	JSONValue,
+} from "./types.ts"
 
 /**
  * Default cap on returned suggestions.
@@ -61,13 +67,15 @@ interface BFSItem {
 
 /**
  * Autocomplete from the current token prefix. Returns suggestions ranked rank-descending, each with its full token path
- * and its ancestor chain.
+ * and its ancestor chain. Takes any {@link AncestrieReaderLike} — a sealed {@link import("./reader.ts").Ancestrie} or a
+ * consumer's adapter over its own storage; the order contracts the algorithm relies on are documented on the
+ * interface.
  */
-export function autocomplete(
-	trie: Ancestrie,
+export function autocomplete<TPayload = Uint8Array | JSONValue>(
+	trie: AncestrieReaderLike<TPayload>,
 	tokens: readonly string[],
-	options: AutocompleteOptions = {}
-): AutocompleteResult {
+	options: AutocompleteOptions<TPayload> = {}
+): AutocompleteResult<TPayload> {
 	const maxSuggestions = options.maxSuggestions ?? DEFAULT_MAX_SUGGESTIONS
 	const maxExpansionDepth = options.maxExpansionDepth ?? DEFAULT_MAX_EXPANSION_DEPTH
 	const perBranchLimit = options.perBranchLimit ?? DEFAULT_PER_BRANCH_LIMIT
@@ -80,7 +88,7 @@ export function autocomplete(
 		return { tokens: [], depth: 0, suggestions: [] }
 	}
 
-	const seen = new Map<number, AncestrieSuggestion>()
+	const seen = new Map<number, AncestrieSuggestion<TPayload>>()
 	const queue: BFSItem[] = []
 
 	const match = trie.walk(normalized)
@@ -162,14 +170,14 @@ export function autocomplete(
  * with a token boundary. Distinct entries at the same lexical surface (a city and a county sharing a name) collapse to
  * the highest-ranked one.
  */
-function joinedPathKey(suggestion: AncestrieSuggestion): string {
+function joinedPathKey(suggestion: AncestrieSuggestion<unknown>): string {
 	return suggestion.tokens.join("\u0000")
 }
 
-function addSuggestion(
-	trie: Ancestrie,
-	seen: Map<number, AncestrieSuggestion>,
-	record: AncestrieRecord,
+function addSuggestion<TPayload>(
+	trie: AncestrieReaderLike<TPayload>,
+	seen: Map<number, AncestrieSuggestion<TPayload>>,
+	record: AncestrieRecord<TPayload>,
 	matchDepth: number,
 	inputTokens: readonly string[],
 	completionTokens: string[]
@@ -196,12 +204,12 @@ function addSuggestion(
  * Keep one suggestion per key — the highest-ranked. Input is already rank-sorted, so the first occurrence per key wins;
  * order is preserved.
  */
-function dedupe(
-	suggestions: AncestrieSuggestion[],
-	key: (suggestion: AncestrieSuggestion) => string
-): AncestrieSuggestion[] {
+function dedupe<TPayload>(
+	suggestions: AncestrieSuggestion<TPayload>[],
+	key: (suggestion: AncestrieSuggestion<TPayload>) => string
+): AncestrieSuggestion<TPayload>[] {
 	const seenKeys = new Set<string>()
-	const out: AncestrieSuggestion[] = []
+	const out: AncestrieSuggestion<TPayload>[] = []
 
 	for (const suggestion of suggestions) {
 		const k = key(suggestion)

@@ -3,19 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   FST-based autocomplete. Prefix walk + BFS expansion to collect ranked place suggestions. O(depth
- *   × branching) — the FST IS the autocomplete index.
+ *   FST-based autocomplete — mailwoman vocabulary over `@mailwoman/ancestrie`'s generic algorithm
+ *   (#1728 phase 2). The #587 behavior — prefix walk + BFS expansion, partial-last-token completion,
+ *   per-branch capping, dedupe — lives in ancestrie's `autocomplete`; this module contributes only
+ *   the storage adapter ({@link FSTMatcher} → `AncestrieReaderLike`) and the mapping back to
+ *   mailwoman's suggestion shape (name, placetype, referential/encyclopedic, WOF ids).
  *
- *   Two query shapes are handled (the FST is a trie over normalized WORD tokens):
- *
- *   - COMPLETE tokens ("new york") — `walk` lands on a state; collect its accepting entries + BFS a
- *       couple tokens past it for nearby completions. This is the CLI's "complete a place word"
- *       path.
- *   - A PARTIAL last token ("new yor", "chic") — `walk` fails (there is no "yor" edge, only "york"). So
- *       walk the complete prefix, then complete the partial token by prefix-filtering the
- *       continuation edges (`token.startsWith(partial)`). This is what a char-level typeahead
- *       needs; without it "new yor" returns nothing useful. (#587)
+ *   THE BYTES DO NOT MIGRATE. The shipped artifacts are `FST\0` v1–v5 (`fst-serialize.ts`), not
+ *   ancestrie's `ANCT`: ancestrie entries are id-keyed with one record per id, while an FST place row
+ *   is per-(surface, place) — `crossCountryBranches` is a property of the SURFACE, so the same wofID
+ *   legitimately carries different values under different aliases and cannot be represented id-keyed.
+ *   The matcher, both deserializers, and the serializer therefore stay here; what migrated is the
+ *   ALGORITHM, which is the half that drifts (the #861 share-the-function rule).
  */
+
+import type {
+	AncestrieContinuation,
+	AncestrieMatch,
+	AncestrieReaderLike,
+	AncestrieRecord,
+	AncestrieSuggestion,
+} from "@mailwoman/ancestrie"
+import { autocomplete as ancestrieAutocomplete } from "@mailwoman/ancestrie"
 
 import type { FSTMatcher } from "./fst-matcher.ts"
 import { normalizeTokens } from "./fst-matcher.ts"
@@ -59,25 +68,15 @@ export interface AutocompleteOpts {
 	dedupeByName?: boolean
 }
 
-interface BfsItem {
-	stateID: number
-	depth: number
-	tokens: string[]
-	/**
-	 * Absolute token depth of the state this item's expansion STARTED from. The two seeding interpretations start one
-	 * token apart (the complete-token walk sits at N, the partial-token prefix at N−1), so a shared outer base would
-	 * mislabel one branch's depths.
-	 */
-	base: number
-}
-
 /**
  * Max accepting entries collected per BFS branch — keeps one dense branch from starving the search.
  */
 const PER_BRANCH = 4
 
 /**
- * The top-`k` entries by REFERENTIAL likelihood (descending). Avoids sorting/allocating when `entries` is small.
+ * The top-`k` entries by REFERENTIAL likelihood (descending). Avoids sorting/allocating when `entries` is small — and
+ * that shortcut is part of the observable contract: at or under `k` the INSERTION order is served, which decides
+ * suggestion order among referential ties.
  */
 function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
@@ -86,135 +85,92 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 }
 
 /**
- * Autocomplete from the current prefix. Returns suggestions ranked referential-descending.
+ * {@link FSTMatcher} presented through ancestrie's storage seam. Records carry the {@link PlaceEntry} itself as the
+ * payload, so the entry that WINS the algorithm's shallowest-depth rule is the entry whose fields the suggestion
+ * reports — a side lookup keyed on id could pick a different surface's row (`crossCountryBranches` differs per
+ * surface).
  */
-export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
-	const maxSuggestions = opts.maxSuggestions ?? 10
-	const maxExpansionDepth = opts.maxExpansionDepth ?? 2
-	const normalizedTokens = normalizeTokens(query)
+class FSTReader implements AncestrieReaderLike<PlaceEntry> {
+	readonly #fst: FSTMatcher
 
-	if (!normalizedTokens.length) {
-		return { query, normalizedTokens: [], depth: 0, suggestions: [] }
+	/**
+	 * Parent chains of the entries this reader has served, id-keyed. A place's chain is identical across its surfaces (it
+	 * is place-row data), so last-write-wins is safe. The algorithm asks {@link FSTReader.ancestorsOf} only for ids it
+	 * just received from {@link FSTReader.entriesAt}, so serving from this memo answers every real call without an
+	 * artifact-wide id index.
+	 */
+	readonly #chains = new Map<number, number[]>()
+
+	constructor(fst: FSTMatcher) {
+		this.#fst = fst
 	}
 
-	const seen = new Map<number, AutocompleteSuggestion>()
-	const queue: BfsItem[] = []
-
-	const match = fst.walk(normalizedTokens)
-	// Both interpretations of the last token run, ALWAYS: it can be a complete edge AND a partial of
-	// longer edges at once — the live en-us artifact holds a place literally named "Chic", and
-	// letting its successful walk short-circuit silently dropped "Chicago" and every other longer
-	// completion from the typeahead.
-	const complete = normalizedTokens.slice(0, -1)
-	const partial = normalizedTokens.at(-1)!
-	const prefixState = !complete.length ? 0 : (fst.walk(complete)?.stateID ?? undefined)
-
-	if (!match && prefixState === undefined) {
-		return { query, normalizedTokens, depth: 0, suggestions: [] }
+	walk(tokens: readonly string[]): AncestrieMatch | null {
+		return this.#fst.walk([...tokens])
 	}
 
-	const depth = match?.depth ?? complete.length
-
-	if (match) {
-		// COMPLETE-token interpretation: the typed tokens land on a state. Seed its accepting entries
-		// and its continuations.
-		for (const entry of fst.accepting(match.stateID)) {
-			addSuggestion(seen, entry, match.depth, [])
-		}
-
-		for (const cont of fst.continuations(match.stateID)) {
-			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token], base: match.depth })
-		}
+	continuations(stateID: number): AncestrieContinuation[] {
+		// Insertion order, verbatim — BFS visit order under the suggestion budget depends on it.
+		return this.#fst.continuations(stateID).map((c) => ({
+			token: c.token,
+			targetState: c.targetState,
+			entryCount: c.acceptingCount,
+		}))
 	}
 
-	if (prefixState !== undefined) {
-		// PARTIAL-token interpretation: complete the last token by prefix-filtering the continuation
-		// edges. The exact edge is skipped — when it exists, the complete-token seeding above already
-		// covered that state.
-		for (const cont of fst.continuations(prefixState)) {
-			if (cont.token === partial || !cont.token.startsWith(partial)) continue
+	entriesAt(stateID: number, limit?: number): AncestrieRecord<PlaceEntry>[] {
+		const places = this.#fst.accepting(stateID)
+		const selected = limit === undefined ? places : topByReferential(places, limit)
 
-			// This edge completes the typed partial token — its target is a real match at depth+1.
-			for (const entry of topByReferential(fst.accepting(cont.targetState), PER_BRANCH)) {
-				addSuggestion(seen, entry, complete.length + 1, [cont.token])
+		return selected.map((entry) => {
+			this.#chains.set(entry.wofID, entry.parentChain)
+
+			return {
+				id: entry.wofID,
+				rank: entry.referential,
+				parentIDs: entry.parentChain,
+				payload: entry,
 			}
-
-			// BFS a little past it too (multi-token completions: "new yor" → "New York Mills").
-			queue.push({ stateID: cont.targetState, depth: 1, tokens: [cont.token], base: complete.length })
-		}
+		})
 	}
 
-	// BFS expansion (shared by both paths) — find nearby completions up to maxExpansionDepth. Each
-	// branch contributes only its top PER_BRANCH places: a state like "new london" has dozens of
-	// accepting entries and would otherwise blow the budget before the BFS ever reaches "new york"
-	// (the "new" state has 311 continuations). Per-branch capping keeps the search broad. (#587)
-	while (queue.length && seen.size < maxSuggestions * 4) {
-		const item = queue.shift()!
-
-		if (item.depth > maxExpansionDepth) continue
-
-		for (const entry of topByReferential(fst.accepting(item.stateID), PER_BRANCH)) {
-			addSuggestion(seen, entry, item.base + item.depth, item.tokens)
-		}
-
-		if (item.depth < maxExpansionDepth) {
-			for (const cont of fst.continuations(item.stateID)) {
-				queue.push({
-					stateID: cont.targetState,
-					depth: item.depth + 1,
-					tokens: [...item.tokens, cont.token],
-					base: item.base,
-				})
-			}
-		}
+	ancestorsOf(id: number): number[] {
+		return this.#chains.get(id) ?? []
 	}
-
-	let suggestions = [...seen.values()].toSorted((a, b) => b.referential - a.referential)
-
-	if (opts.dedupeByName) {
-		suggestions = dedupeByName(suggestions)
-	}
-
-	return { query, normalizedTokens, depth, suggestions: suggestions.slice(0, maxSuggestions) }
-}
-
-function addSuggestion(
-	seen: Map<number, AutocompleteSuggestion>,
-	entry: PlaceEntry,
-	matchDepth: number,
-	completionTokens: string[]
-): void {
-	const existing = seen.get(entry.wofID)
-
-	if (existing && existing.matchDepth <= matchDepth) return
-
-	seen.set(entry.wofID, {
-		name: entry.name,
-		placetype: entry.placetype,
-		referential: entry.referential,
-		...(entry.encyclopedic === undefined ? {} : { encyclopedic: entry.encyclopedic }),
-		wofID: entry.wofID,
-		parentChain: entry.parentChain,
-		matchDepth,
-		completionTokens: [...completionTokens],
-	})
 }
 
 /**
- * Keep one suggestion per name — the highest-referential. Input is already referential-sorted, so the first occurrence
- * per name wins; order is preserved.
+ * Autocomplete from the current prefix. Returns suggestions ranked referential-descending.
  */
-function dedupeByName(suggestions: AutocompleteSuggestion[]): AutocompleteSuggestion[] {
-	const seenNames = new Set<string>()
-	const out: AutocompleteSuggestion[] = []
+export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
+	const normalizedTokens = normalizeTokens(query)
 
-	for (const s of suggestions) {
-		const key = s.name.toLowerCase()
+	const result = ancestrieAutocomplete<PlaceEntry>(new FSTReader(fst), normalizedTokens, {
+		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
+		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
+		perBranchLimit: PER_BRANCH,
+		// The dedupe key is the DISPLAY name, not the token path: two surfaces of one name must still collapse. (#587)
+		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),
+	})
 
-		if (seenNames.has(key)) continue
-		seenNames.add(key)
-		out.push(s)
+	return {
+		query,
+		normalizedTokens,
+		depth: result.depth,
+		suggestions: result.suggestions.map((s) => {
+			// Every record this adapter serves carries its entry; the assertion documents the invariant.
+			const entry = s.payload!
+
+			return {
+				name: entry.name,
+				placetype: entry.placetype,
+				referential: entry.referential,
+				...(entry.encyclopedic === undefined ? {} : { encyclopedic: entry.encyclopedic }),
+				wofID: s.id,
+				parentChain: s.parentIDs,
+				matchDepth: s.matchDepth,
+				completionTokens: s.completionTokens,
+			}
+		}),
 	}
-
-	return out
 }

@@ -59,9 +59,13 @@ export interface AncestrieEntry {
 }
 
 /**
- * A decoded entry as the reader returns it.
+ * A decoded entry as a reader returns it.
+ *
+ * `TPayload` is the consumer's cargo type. A sealed artifact answers with what the format can carry (`Uint8Array |
+ * JSONValue`, the default); an {@link AncestrieReaderLike} adapter over the consumer's own storage may answer with any
+ * in-memory value — the algorithm half of this package passes payloads through verbatim and never inspects them.
  */
-export interface AncestrieRecord {
+export interface AncestrieRecord<TPayload = Uint8Array | JSONValue> {
 	id: number
 	rank: number
 
@@ -69,7 +73,7 @@ export interface AncestrieRecord {
 	 * The full declared parent list, primary first — exactly as given at build time.
 	 */
 	parentIDs: number[]
-	payload?: Uint8Array | JSONValue
+	payload?: TPayload
 }
 
 /**
@@ -96,7 +100,7 @@ export interface AncestrieContinuation {
  * One autocomplete suggestion. Every suggestion carries its containment lineage — the point of the structure: one
  * prefix walk yields lexical continuations, ranks, and ancestry together.
  */
-export interface AncestrieSuggestion {
+export interface AncestrieSuggestion<TPayload = Uint8Array | JSONValue> {
 	id: number
 	rank: number
 
@@ -127,13 +131,13 @@ export interface AncestrieSuggestion {
 	 * The full declared parent list, primary first.
 	 */
 	parentIDs: number[]
-	payload?: Uint8Array | JSONValue
+	payload?: TPayload
 }
 
 /**
  * Options for {@link autocomplete}.
  */
-export interface AutocompleteOptions {
+export interface AutocompleteOptions<TPayload = Uint8Array | JSONValue> {
 	maxSuggestions?: number
 	maxExpansionDepth?: number
 
@@ -148,7 +152,7 @@ export interface AutocompleteOptions {
 	 * collapse to one); a function supplies the key itself. Off by default, so a caller surfacing distinct same-surface
 	 * entries sees them all.
 	 */
-	dedupe?: boolean | ((suggestion: AncestrieSuggestion) => string)
+	dedupe?: boolean | ((suggestion: AncestrieSuggestion<TPayload>) => string)
 
 	/**
 	 * Applied to each query token before walking. Must be the same function the builder was given — see
@@ -160,13 +164,37 @@ export interface AutocompleteOptions {
 /**
  * The result of one autocomplete call.
  */
-export interface AutocompleteResult {
+export interface AutocompleteResult<TPayload = Uint8Array | JSONValue> {
 	/**
 	 * The query tokens after normalization — what was actually walked.
 	 */
 	tokens: string[]
 	depth: number
-	suggestions: AncestrieSuggestion[]
+	suggestions: AncestrieSuggestion<TPayload>[]
+}
+
+/**
+ * The storage seam: what the algorithm half of this package ({@link autocomplete}) requires of a reader. The sealed
+ * {@link Ancestrie} class is the canonical implementation; a consumer whose entries live in its own structure — an
+ * in-memory trie, a different binary format — supplies an adapter instead of re-implementing the algorithm
+ * (`@mailwoman/resolver-wof-sqlite`'s FST gazetteer is the worked example: its `FST\0` artifacts predate this package
+ * and stay in their own format, so its `fst-autocomplete` wraps the matcher in this contract).
+ *
+ * Order contracts the algorithm observes:
+ *
+ * - `entriesAt(stateID)` with no limit answers EVERY accepting entry, in the reader's stored order.
+ * - `entriesAt(stateID, limit)` answers the top-`limit` entries by rank, descending. A sealed artifact serves a prefix of
+ *   its rank-sorted storage; an adapter over unsorted storage must select by rank itself. Order among rank TIES is the
+ *   reader's own, and is observable in suggestion order — two readers over the same entries may legitimately differ
+ *   there.
+ * - `ancestorsOf` decorates suggestions' `chain`. A reader that materializes lineage per entry may serve it from its
+ *   records rather than walking a graph.
+ */
+export interface AncestrieReaderLike<TPayload = Uint8Array | JSONValue> {
+	walk(tokens: readonly string[]): AncestrieMatch | null
+	continuations(stateID: number): AncestrieContinuation[]
+	entriesAt(stateID: number, limit?: number): AncestrieRecord<TPayload>[]
+	ancestorsOf(id: number): number[]
 }
 
 /**

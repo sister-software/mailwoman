@@ -31,11 +31,11 @@ import {
 	readHeader,
 	STATE_ENTRY_SIZE,
 } from "./format.ts"
-import type { AncestrieContinuation, AncestrieMatch, AncestrieRecord, JSONValue } from "./types.ts"
+import type { AncestrieContinuation, AncestrieMatch, AncestrieReaderLike, AncestrieRecord, JSONValue } from "./types.ts"
 
 const UTF8_DECODER = new TextDecoder()
 
-export class Ancestrie {
+export class Ancestrie implements AncestrieReaderLike {
 	private readonly bytes: Uint8Array
 	private readonly view: DataView
 	private readonly header: AncestrieHeader

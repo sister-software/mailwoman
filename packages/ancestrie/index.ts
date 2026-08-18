@@ -19,6 +19,7 @@ export type {
 	AncestrieContinuation,
 	AncestrieEntry,
 	AncestrieMatch,
+	AncestrieReaderLike,
 	AncestrieRecord,
 	AncestrieSuggestion,
 	AutocompleteOptions,
