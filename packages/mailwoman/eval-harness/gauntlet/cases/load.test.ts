@@ -151,12 +151,17 @@ const CORPUS_SIZE = 569
  * predicted "fix the explicit-country vs postcode-drag ordering and this row flips" — the #1735 explicit-country
  * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the gate grows 364 → 366.
  *
- * Moved again the same evening — → this — by the #1650 country-population candidate swap: `sm-cs-san-marino` (was San
- * Marino CA, 9,997 km) and `sx-cs-sint-maarten` (was a St. Martin in Ohio, 3,094 km) flip improvement_target → pass —
- * 147 of 237 country rows entered every prominence race at population 0, and the codex fallback ended that. Each passed
- * twice (the pre-swap A/B battery and the post-swap board). Status flips only again; the gate grows 366 → 368.
+ * Moved again the same evening — by the #1650 country-population candidate swap: `sm-cs-san-marino` (was San Marino CA,
+ * 9,997 km) and `sx-cs-sint-maarten` (was a St. Martin in Ohio, 3,094 km) flip improvement_target → pass — 147 of 237
+ * country rows entered every prominence race at population 0, and the codex fallback ended that. Each passed twice (the
+ * pre-swap A/B battery and the post-swap board). Status flips only again; the gate grows 366 → 368.
+ *
+ * Moved 2026-08-18 night — → this — by the #1730 role guard (39d219e8c): `bf-gloss-to-accent` flips improvement_target
+ * → pass with its note rewritten to the fix receipt (the bare-region race refuses abbr-stamped alias rows; `Tó` answers
+ * the primary-named Tô BF at 0 km, was Toledo ES at 3,171 km). Stable across the D-rule battery and two consecutive
+ * full-board runs. Status + note edit; the gate grows 368 → 369.
  */
-const CORPUS_HASH = "328d14173927a37228336a669eae7fded61dd3e884c05ba2b171ac9284521d1c"
+const CORPUS_HASH = "fcfa41767c435ddb42590b8680534494aab6bb9d1e504a1de3990ef1b80e8a1a"
 
 /**
  * `ablationBoardID` of the corpus.
