@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 558
+const CORPUS_SIZE = 569
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -132,8 +132,14 @@ const CORPUS_SIZE = 558
  * `fr-street-name-rue-du-faubourg-saint-honore` flip improvement_target → pass once a parse that read its whole input
  * as a street name stops earning an alternate-register retry. Two status flips and no new rows, so CORPUS_SIZE and the
  * board id both hold — which is the content-addressing working as intended.
+ *
+ * Moved 2026-08-18 — → this — by the 11-row `gloss_key` board (#1730): places primarily named by a common noun (Poisson
+ * FR, Pesce IT, Dimanche CF, Tó PT, Tô BF, Laç AL, Vogel CH) whose folded keys are shared with translation-gloss
+ * alt-name rows on unrelated US places. Ten rows pin the primary-preference rescue that holds today;
+ * `bf-gloss-to-accent` lands improvement_target for the live Toledo-as-region miss. 558 → 569, so the board id moves
+ * too.
  */
-const CORPUS_HASH = "c01d04fdbddc9021f8ece720a04c804ace1baed917c2c12a06379bb82495b0c8"
+const CORPUS_HASH = "3dcb8da9eb64450ae4d351dcbba81362927a2495502ce9debdd0a4e38ee24059"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -146,9 +152,9 @@ const CORPUS_HASH = "c01d04fdbddc9021f8ece720a04c804ace1baed917c2c12a06379bb8249
  * (`@522:da202fa6e714` → `@523:08b0b462cb23`), for the 7-row fuzzy-scope board (`@523:08b0b462cb23` →
  * `@534:ee145335c825`), for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`), and for the 2-row
  * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
- * (`@537:61edb19b8e64` → this).
+ * (`@537:61edb19b8e64` → `@558:e5279b66a119`), and for the 11-row gloss-key board (`@558:e5279b66a119` → this).
  */
-const BOARD_ID = "gauntlet-regression@558:e5279b66a119"
+const BOARD_ID = "gauntlet-regression@569:841ca85a6402"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
