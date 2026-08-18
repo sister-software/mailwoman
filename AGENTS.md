@@ -104,8 +104,8 @@ Local: `yarn release`. CI: GitHub Actions → `publish` workflow → manual disp
 
 The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `tokenizer.model`) that are **not** committed to git. Multiple pieces cooperate to get those files in place — be careful when changing any of them:
 
-- `<workspace>/scripts/link-dev-weights.ts` — symlinks the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the workspace so `@mailwoman/neural` can find them during local dev.
-- `packages/neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-creates the symlinks** in `packages/neural-weights-en-us/` as a side effect.
+- `<workspace>/scripts/link-dev-weights.ts` — materializes the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the **data-root overlay** (`$MAILWOMAN_DATA_ROOT/weights/<locale>/`), NOT into the tracked workspace — the workspace package stays bare on a dev checkout (writing into it caused the four hazards `scripts/link-weights-overlay.ts`'s header lists: empty worktrees, `yarn test` mutating tracked dirs, copy-through-symlink, `YN0035` tarballs). `resolveWeights`'s overlay rung is what reads it in local dev; a test asserting the consumer's package-carries-weights state must seed its own scratch overlay instead (`dropin-cold-start.test.ts`, #1733).
+- `packages/neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-populates the data-root overlay** as a side effect.
 - `scripts/copy-weights.ts` — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
 - `scripts/publish-workspace.ts` — invoked per workspace by release-it. Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
@@ -134,7 +134,7 @@ docstring says so. Membership is earned by a codex postcode shape plus a confoun
 `yarn npm publish` (and `npm publish`) refuse to upload tarballs containing symlinks — the registry returns HTTP 415 (`YN0035: Symbolic link is not allowed`). Two specific traps make this easy to hit:
 
 1. **`fs.copyFile` follows symlinks at the destination.** A naïve `fs.copyFile(SOURCE, dest)` where `dest` is a symlink writes through the symlink — the symlink stays in place. `scripts/copy-weights.ts` mitigates this by `unlink`ing each destination first. Any new script that materializes files into these workspaces **must do the same** (or use `cp --remove-destination` / `fs.cp` with equivalent semantics).
-2. **Tests re-create symlinks.** `weights.test.ts` calls `link-dev-weights.ts` on every run. Even if `copy-weights.ts` was already run, a subsequent `yarn test` (manual or otherwise) re-symlinks `packages/neural-weights-en-us/`.
+2. **Tests re-created symlinks — historically.** `weights.test.ts` calls `link-dev-weights.ts` on every run; while the linkers wrote into the tracked workspaces, any `yarn test` after `copy-weights.ts` re-symlinked `packages/neural-weights-en-us/`. The linkers now write to the data-root overlay instead, which closes that window by construction — but the safety net below stays, because it also covers a hand-made symlink or an old checkout.
 
 To make publish robust regardless of repo state, `scripts/publish-workspace.ts` walks the workspace's `package.json` `files` array right before publishing and dereferences any symlinks (`readlink` → `unlink` → `copyFile`). **Do not remove this safety net** — it closes the window between `copy-weights.ts` (one-shot, at `before:init`) and the actual publish.
 

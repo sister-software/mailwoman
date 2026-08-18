@@ -11,9 +11,13 @@
  *     within 30 s and its stderr must name the fix (`mailwoman data pull`) — never an unhandled-rejection
  *     stack trace. This was previously a bare, WAF-blocked `curl` line (measured 2026-08-03: an unranged GET
  *     against the public bucket 403s) — see `resolver-backend.ts`'s `buildNoGazetteerMessage`.
- *   - `libpostal` needs ONLY the model weights, resolved from `node_modules` independent of the data root — a
- *     bare temp root is a legitimate, complete cold start for it. `serve` must bind and answer `GET /` with 200,
- *     no data pull required at all (the "lowest-dependency drop-in" the README claims).
+ *   - `libpostal` needs ONLY the model weights — no gazetteer, no data pull; `serve` must bind and answer
+ *     `GET /` with 200 (the "lowest-dependency drop-in" the README claims). On a CONSUMER install the published
+ *     package ships the binaries, so a bare data root is the complete cold start; that half of the claim belongs
+ *     to the clean-install smoke. IN-REPO the workspace package is bare by design (#1733: `link-dev-weights`
+ *     populates the data-root overlay, never the tracked package), so the test seeds its scratch root's overlay
+ *     from whatever weights THIS environment resolves and proves the data-independence half; a box that resolves
+ *     no weights at all skips with the resolver's own message rather than failing on its environment.
  *   - `mcp` speaks JSON-RPC over stdio rather than HTTP, and loads its deps LAZILY, so its cold start fails
  *     inside a tool call rather than at boot: the server must still connect and list its tools with no data at
  *     all, and the first model-backed tool call must answer with the same `mailwoman data pull` fix as a tool
@@ -34,7 +38,7 @@
  */
 
 import { execFile, spawn, type ChildProcess } from "node:child_process"
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { promisify } from "node:util"
@@ -346,10 +350,38 @@ describe.skipIf(!hasNominatimCLI)("mailwoman-nominatim serve — cold start, no 
 describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zero data needed", () => {
 	test(
 		"binds and answers GET / with 200 from a bare data root, then shuts down clean on SIGTERM",
-		async () => {
+		async (ctx) => {
 			const dataRoot = freshDataRoot()
 
 			cleanupRoots.push(dataRoot)
+
+			// The claim under test is "weights ONLY, zero data artifacts" — not "the workspace package carries
+			// weights". A CONSUMER install satisfies the weights half natively (the published package ships the
+			// binaries; the clean-install smoke owns that claim). A dev checkout deliberately does not (#1733:
+			// `link-dev-weights` populates the DATA-ROOT overlay, never the tracked package — the YN0035/worktree
+			// hazards), so seed the scratch root's overlay from whatever THIS environment resolves; the child then
+			// proves the data-independence half on every box, through the same overlay rung a dev run uses.
+			const { resolveWeights } = await import("@mailwoman/neural/weights")
+
+			let seed: { modelPath: string; tokenizerPath: string; modelCardPath?: string | undefined }
+
+			try {
+				seed = await resolveWeights({ locale: "en-us" })
+			} catch (error) {
+				ctx.skip(true, `no en-us weights resolvable in this environment — ${(error as Error).message.split("\n")[0]}`)
+
+				return
+			}
+
+			const overlay = join(dataRoot, "weights", "en-us")
+
+			mkdirSync(overlay, { recursive: true })
+			symlinkSync(seed.modelPath, join(overlay, "model.onnx"))
+			symlinkSync(seed.tokenizerPath, join(overlay, "tokenizer.model"))
+
+			if (seed.modelCardPath) {
+				symlinkSync(seed.modelCardPath, join(overlay, "model-card.json"))
+			}
 
 			await withCLISpawnLockAsync(async () => {
 				const server = spawnServer(
