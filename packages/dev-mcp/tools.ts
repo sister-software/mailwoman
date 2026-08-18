@@ -52,7 +52,17 @@ import { staleEngineMessage } from "./tree-fingerprint.ts"
  * reading it. Everything an A/B diff needs is `id` plus `lat`/`lon`/`tier`. The list is ordered so a projected row
  * keeps a stable key order regardless of the order the caller asked in.
  */
-const RUN_ROW_FIELDS = ["id", "input", "components", "lat", "lon", "tier", "admin_coherence", "timing_ms"] as const
+const RUN_ROW_FIELDS = [
+	"id",
+	"input",
+	"components",
+	"lat",
+	"lon",
+	"tier",
+	"admin_coherence",
+	"hierarchy",
+	"timing_ms",
+] as const
 
 type RunRowField = (typeof RUN_ROW_FIELDS)[number]
 
@@ -300,6 +310,9 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 							lon: run.result.lon,
 							tier: run.result.resolution_tier,
 							admin_coherence: (run.result as unknown as Record<string, unknown>)["admin_coherence"] ?? null,
+							// The resolved winner identities (name + placeID per rung) — what the chimera triage (#1731)
+							// otherwise drops to the CLI for. Coordinate diffs alone cannot see a wrong-instance win.
+							hierarchy: (run.result as unknown as Record<string, unknown>)["hierarchy"] ?? null,
 							timing_ms: run.timing,
 						}
 
