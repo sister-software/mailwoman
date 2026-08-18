@@ -133,13 +133,18 @@ const CORPUS_SIZE = 569
  * as a street name stops earning an alternate-register retry. Two status flips and no new rows, so CORPUS_SIZE and the
  * board id both hold — which is the content-addressing working as intended.
  *
- * Moved 2026-08-18 — → this — by the 11-row `gloss_key` board (#1730): places primarily named by a common noun (Poisson
- * FR, Pesce IT, Dimanche CF, Tó PT, Tô BF, Laç AL, Vogel CH) whose folded keys are shared with translation-gloss
- * alt-name rows on unrelated US places. Ten rows pin the primary-preference rescue that holds today;
- * `bf-gloss-to-accent` lands improvement_target for the live Toledo-as-region miss. 558 → 569, so the board id moves
- * too.
+ * Moved 2026-08-18 — by the 11-row `gloss_key` board (#1730): places primarily named by a common noun (Poisson FR,
+ * Pesce IT, Dimanche CF, Tó PT, Tô BF, Laç AL, Vogel CH) whose folded keys are shared with translation-gloss alt-name
+ * rows on unrelated US places. Ten rows pin the primary-preference rescue that holds today; `bf-gloss-to-accent` lands
+ * improvement_target for the live Toledo-as-region miss. 558 → 569, so the board id moves too.
+ *
+ * Moved again the same day — → this — by the label-centroid swap (#1726): nine bare-country/region tolerances tighten
+ * to the label-point era (fr 700→100 km, jp 1000→50 km, de 500→100 km, cn 1500→600 km, tx/ca/ga), and
+ * `us-athens-ga-30601` re-pins its expectation to the Athens label centroid at city scale — the old expectation was the
+ * artifact's own math centroid, and no rooftop is coverable (the GA shard holds no `1 Broad St`). Tolerance and note
+ * edits only, so the board id holds — content-addressing working as intended.
  */
-const CORPUS_HASH = "3dcb8da9eb64450ae4d351dcbba81362927a2495502ce9debdd0a4e38ee24059"
+const CORPUS_HASH = "fa12cfd811ee658033648c68e25be7c2f809abe98b1e4d96db8f8b423186f5f5"
 
 /**
  * `ablationBoardID` of the corpus.
