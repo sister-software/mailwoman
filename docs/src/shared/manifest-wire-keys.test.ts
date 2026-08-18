@@ -82,4 +82,14 @@ describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 			expect(src).not.toContain("hasWofDb")
 		})
 	}
+
+	test("the LIVE 2026-08-11 wire spelling hasWOFDb (WOF caps, lowercase b) normalizes — the four-day demo outage's pin", () => {
+		const m = normalizeReleasesManifest({
+			locale: "en-us",
+			defaultVersion: "v9.1.0",
+			releases: [entry({ hasFST: true, hasWOFDb: true })],
+		})
+
+		expect(m.releases[0]!.hasWOFDB).toBe(true)
+	})
 })

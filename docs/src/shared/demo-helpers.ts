@@ -72,6 +72,11 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	 */
 	// oxlint-disable-next-line sister-software/no-title-case-acronym
 	hasWofDb?: boolean
+	/**
+	 * The spelling the LIVE 2026-08-11 manifest actually carries (WOF caps, lowercase b) — a wire key is a string
+	 * contract, and every spelling ever published must stay readable here.
+	 */
+	hasWOFDb?: boolean
 }
 
 /**
@@ -96,7 +101,10 @@ export function normalizeReleasesManifest(raw: {
 		releases: raw.releases.map((r) => ({
 			...r,
 			hasFST: r.hasFST ?? r.hasFst ?? false,
-			hasWOFDB: r.hasWOFDB ?? r.hasWofDb ?? false,
+			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes `hasWOFDb` — WOF caps,
+			// lowercase b. The 08-14 casing sweep renamed reader AND writer to `hasWOFDB` but missed this third
+			// live spelling, which turned the demo's whole WOF cascade off silently for four days.
+			hasWOFDB: r.hasWOFDB ?? r.hasWOFDb ?? r.hasWofDb ?? false,
 		})),
 	}
 }
