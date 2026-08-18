@@ -112,6 +112,7 @@ const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): NodeTraceRecorder {
 	const gates: string[] = []
 	const stageOrders: Array<[string, readonly ResolvedPlace[]]> = []
+
 	let ctx: {
 		node: AddressNode
 		placetype: string
@@ -991,6 +992,12 @@ class WOFResolver implements Resolver {
 			try {
 				candidates = await this.#backend.findPlace(query)
 				rec.stage("initial", candidates)
+
+				// #1731: the backend's interior region-scope fallback, surfaced as a gate — the resolver
+				// never sees the scoped probe miss, only the stamp the re-admitted rows carry.
+				if (candidates[0]?.regionScopeMiss) {
+					rec.gate("region_scope_miss")
+				}
 
 				// Parent soft-gating: `parentID` is a HARD descendant filter in the backend, which wrongly
 				// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete

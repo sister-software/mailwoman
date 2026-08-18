@@ -758,12 +758,17 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		}
 
 		let rows = cascade(regionParentID)
+		// #1731: whether the rows the caller receives came from the UNSCOPED fallback below — the backend's
+		// interior gate the resolver-side trace (#1721) cannot otherwise see. Stamped onto every returned
+		// place, because the re-admission path is exactly where a wrong-instance namesake enters.
+		let regionScopeMiss = false
 
 		// Region-scope fallback: if scoping to the parent region found nothing across the whole cascade, retry
 		// unscoped so a place with no in-region row (missing ancestry, or a country/non-region parent) still
 		// resolves exactly as it does today. Only when a region scope was actually applied.
 		if (!rows.length && regionParentID !== undefined) {
 			rows = cascade(undefined)
+			regionScopeMiss = rows.length > 0
 		}
 
 		// Postcode-containment coherence (#31, Mechanism 2): re-rank the rows by proximity to the postcode's
@@ -847,6 +852,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				// EXCEPT a row the typo-corrector produced (`fuzzy`), which by definition answers a name the
 				// gazetteer does not carry (see `RankedRow.fuzzy`).
 				exactMatch: !row.demoted && !row.fuzzy,
+				// #1731: emitted ONLY when a region scope was applied, missed, and the unscoped fallback
+				// produced this row — the re-admission path. Absence means the question never arose.
+				...(regionScopeMiss ? { regionScopeMiss: true } : {}),
 				// #1717 stage 2 — the containment stamp, tri-state: emitted ONLY when the question was
 				// asked (a `regionQualifier` query over a sidecar-bearing artifact); its absence is what
 				// the resolver walk reports as `unavailable` (meaning-of-zero).

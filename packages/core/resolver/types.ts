@@ -138,6 +138,14 @@ export interface ResolvedPlace {
 	 * `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
 	 */
 	containedByQualifier?: boolean
+	/**
+	 * #1731: `true` when a `parentID` region scope was applied, MISSED across the whole probe cascade, and the backend's
+	 * unscoped fallback produced this row — the re-admission path where a wrong-instance namesake enters (the Astoria
+	 * class: no locality-group row exists under the parent, so the fallback answers population-first from anywhere).
+	 * Absent when the question never arose (no parent scope, or the scoped probe answered). Backend-optional; the
+	 * resolver-interior trace (#1721) surfaces it as a gate.
+	 */
+	regionScopeMiss?: boolean
 }
 
 /**
