@@ -84,6 +84,11 @@
 			"default": "./out/geocode-session.js",
 			"types": "./out/geocode-session.d.ts"
 		},
+		"./geocode-command-options": {
+			"node": "./geocode-command-options.ts",
+			"default": "./out/geocode-command-options.js",
+			"types": "./out/geocode-command-options.d.ts"
+		},
 		"./debug-view/*": {
 			"node": "./debug-view/*.ts",
 			"default": "./out/debug-view/*.js",

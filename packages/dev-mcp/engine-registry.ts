@@ -29,7 +29,7 @@
 
 import { createHash } from "node:crypto"
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
@@ -120,21 +120,27 @@ export function effectiveKeyFor(declared: string): string {
 }
 
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
+	// THE production defaults, from the geocode command's own factory — never re-typed here (#1732).
+	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
+	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped
+	// false/false/0.9), so every unset-lever measurement graded a configuration production does not
+	// ship. Comparisons where both arms shared the drift stayed internally valid; absolute numbers
+	// did not. `resolve-config.test.ts` pins this function against the factory field by field.
+	const production = createGeocodeCommandOptions()
+
 	return {
-		locale: config.locale ?? "en-US",
-		countryScope: config.country_scope ?? "auto",
-		dataRoot: config.data_root ?? String(mailwomanDataRoot()),
-		localeCountryPrior: config.locale_country_prior ?? false,
-		placeCountry: config.place_country ?? true,
-		postcodeCountryCoherence: config.postcode_country_coherence ?? true,
-		forkEntity: config.fork_entity ?? true,
-		postcodeShapeCoherence: config.postcode_shape_coherence ?? true,
-		postcodeContainmentCoherence: config.postcode_containment_coherence ?? true,
-		placeCountryThreshold: config.place_country_threshold ?? 0.5,
-		...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
-		...(config.admin_containment_rerank === undefined
-			? {}
-			: { adminContainmentRerank: config.admin_containment_rerank }),
+		locale: config.locale ?? production.locale,
+		countryScope: config.country_scope ?? production.countryScope,
+		dataRoot: config.data_root ?? String(production.dataRoot),
+		localeCountryPrior: config.locale_country_prior ?? production.localeCountryPrior,
+		placeCountry: config.place_country ?? production.placeCountry,
+		postcodeCountryCoherence: config.postcode_country_coherence ?? production.postcodeCountryCoherence,
+		forkEntity: config.fork_entity ?? production.forkEntity,
+		postcodeShapeCoherence: config.postcode_shape_coherence ?? production.postcodeShapeCoherence,
+		postcodeContainmentCoherence: config.postcode_containment_coherence ?? production.postcodeContainmentCoherence,
+		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
+		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
+		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
 		...(config.retry_alternate_register === undefined
 			? {}
 			: { retryAlternateRegister: config.retry_alternate_register }),
