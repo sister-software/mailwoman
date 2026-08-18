@@ -96,8 +96,20 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 
 	const mzIsCurrent = props["mz:is_current"]
 
-	const lat = typeof props["geom:latitude"] === "number" ? props["geom:latitude"] : 0
-	const lon = typeof props["geom:longitude"] === "number" ? props["geom:longitude"] : 0
+	// Label centroid first, math centroid as the fallback — same preference the postcode-locality builder applies.
+	// The math centroid is wrong exactly where it matters most: a multipolygon spanning overseas territories pulls it
+	// off the mainland entirely (France's geom: point is in Spain; lbl: is metropolitan France). Both coordinates are
+	// taken from the SAME source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
+	// centroid.
+	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
+	const lat = hasLbl ? props["lbl:latitude"]! : typeof props["geom:latitude"] === "number" ? props["geom:latitude"] : 0
+
+	const lon = hasLbl
+		? props["lbl:longitude"]!
+		: typeof props["geom:longitude"] === "number"
+			? props["geom:longitude"]
+			: 0
+
 	// WOF `geom:bbox` is "minLon,minLat,maxLon,maxLat". Fall back to the centroid (a point bbox) when
 	// absent — still correct for point-in-box proximity, the resolver's main bbox use.
 	let [minLon, minLat, maxLon, maxLat] = [lon, lat, lon, lat]

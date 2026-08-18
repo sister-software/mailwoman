@@ -37,6 +37,14 @@ export interface WOFBaseProperties {
 	"geom:latitude"?: number
 	"geom:longitude"?: number
 	/**
+	 * The label centroid — where a human would drop the pin, distinct from the geometry's mathematical centroid. The
+	 * difference is territorial: France's `geom:` centroid sits in Spain (42.19, -2.74) because the multipolygon spans
+	 * the overseas territories, while `lbl:` is metropolitan France (46.71, 2.46). Prefer `lbl:` wherever a point stands
+	 * in for the place.
+	 */
+	"lbl:latitude"?: number
+	"lbl:longitude"?: number
+	/**
 	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string, not an array. Read by the gazetteer
 	 * ingest for the resolver's point-in-box proximity.
 	 */
