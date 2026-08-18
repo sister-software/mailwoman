@@ -42,7 +42,7 @@
 import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { enumerateCountryDisplayNames } from "@mailwoman/codex/country"
+import { COUNTRY_POPULATION, enumerateCountryDisplayNames } from "@mailwoman/codex/country"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 import { placetypeDepth } from "./ancestry.ts"
@@ -551,7 +551,12 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const cid = ccID(r.country as string | null)
 		const ptid = ptID(r.placetype as string | null)
 		const rid = regionOf.get(sid) ?? 0
-		const pop = Number(r.pop) || 0
+		// A zero population on a COUNTRY row is a WOF absence artifact, never a real zero — 147 of 237
+		// primary country records carried none (measured 2026-08-18, #1650), which ranked those nations
+		// below any namesake hamlet in every prominence race ("Georgia" → Georgia VT). The codex table is
+		// the secondary source; a country absent from it too stays at zero honestly.
+		const wofPop = Number(r.pop) || 0
+		const pop = wofPop === 0 && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? 0) : wofPop
 		const neg = -Math.log10(pop + 1)
 		const name = String(r.name ?? "")
 		const pkey = normalizeLocalityForKey(name)

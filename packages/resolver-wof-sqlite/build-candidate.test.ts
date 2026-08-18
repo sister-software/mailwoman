@@ -140,6 +140,7 @@ interface CandRow {
 	longitude: number
 	min_lat: number
 	is_primary: number
+	population: number
 }
 
 /**
@@ -149,7 +150,7 @@ function probe(db: DatabaseSync, key: string): CandRow[] {
 	return db
 		.prepare(
 			`SELECT c.name_key, c.name, cc.code AS country, pc.placetype AS placetype,
-				c.latitude, c.longitude, c.min_lat, c.is_primary
+				c.latitude, c.longitude, c.min_lat, c.is_primary, c.population
 			 FROM candidate c
 			 JOIN country_codes cc ON cc.id = c.country_id
 			 JOIN placetype_codes pc ON pc.id = c.placetype_id
@@ -192,6 +193,35 @@ describe("buildCandidateTable", () => {
 
 			// Deprecated row must not resolve.
 			expect(probe(db, normalizeLocalityForKey("Old Town"))).toHaveLength(0)
+		} finally {
+			db.close()
+		}
+	})
+
+	test("falls back to the codex population for a COUNTRY row WOF carries none for (#1650)", async () => {
+		const input = join(scratch, "admin.db")
+		const output = join(scratch, "candidate.db")
+		buildFixtureAdmin(input)
+
+		// Georgia the country, with NO place_population row — the measured state of 147 of 237 primary
+		// country records. Without the fallback it enters every prominence race at an asserted zero.
+		const src = new DatabaseSync(input)
+		src.exec(`INSERT INTO spr VALUES (300, 'Georgia', 'country', 'GE', 42.0, 43.5, 41.0, 40.0, 43.6, 46.7, -1, 0)`)
+		src.close()
+
+		await buildCandidateTable({ input, output })
+
+		const db = new DatabaseSync(output, { readOnly: true })
+
+		try {
+			const rows = probe(db, normalizeLocalityForKey("Georgia"))
+			const country = rows.find((r) => r.placetype === "country")
+
+			expect(country?.population).toBe(3_704_500)
+
+			// The fallback is COUNTRY-scoped: a locality with no population keeps its honest zero.
+			const [springfield] = probe(db, normalizeLocalityForKey("Springfield"))
+			expect(springfield?.population).toBe(114_000)
 		} finally {
 			db.close()
 		}

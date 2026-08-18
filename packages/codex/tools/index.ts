@@ -7,5 +7,6 @@
  *   argv, no `process.exit`: commands own parsing, rendering, and exit codes.
  */
 
+export * from "./generate-country-population.ts"
 export * from "./generate-country-reference.ts"
 export * from "./generate-official-languages.ts"
