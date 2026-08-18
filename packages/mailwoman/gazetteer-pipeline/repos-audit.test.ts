@@ -17,6 +17,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { auditReposRoot, CloneLayout, clonedCountries, parseRepoName, reposSentence } from "./repos-audit.ts"
@@ -39,15 +40,25 @@ function reposRoot(): string {
 
 /**
  * A clone with one commit, so the audit has a vintage to read.
+ *
+ * The commit DATES are pinned: a git commit hash covers author + committer timestamps, so two same-content clones only
+ * hash identically when both commits land in the same wall-clock second. Fast local runs always did; a loaded CI runner
+ * sometimes straddled the boundary, and the "duplicated" fixture read as DIVERGED — a flake that surfaced twice on
+ * 2026-08-18 before the mechanism was pinned. With the dates fixed, identical content ⇒ identical hash, always.
  */
 function clone(dir: string, marker: string): void {
+	const env = childEnv({
+		GIT_AUTHOR_DATE: "2026-01-01T00:00:00Z",
+		GIT_COMMITTER_DATE: "2026-01-01T00:00:00Z",
+	})
+
 	mkdirSync(dir, { recursive: true })
 	writeFileSync(join(dir, "README.md"), marker)
 	execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir })
 	execFileSync("git", ["config", "user.email", "t@example.com"], { cwd: dir })
 	execFileSync("git", ["config", "user.name", "T"], { cwd: dir })
 	execFileSync("git", ["add", "-A"], { cwd: dir })
-	execFileSync("git", ["commit", "-qm", marker], { cwd: dir })
+	execFileSync("git", ["commit", "-qm", marker], { cwd: dir, env })
 }
 
 describe("auditReposRoot — layouts", () => {
