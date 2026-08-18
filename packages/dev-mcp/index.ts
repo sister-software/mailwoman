@@ -26,6 +26,29 @@ export { readGateReport, summarizeGateReport, LEDGER_NOTE, type GateReport, type
 export { parseGauntletReport, summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
 export { JobRegistry, type Job, type JobSummary, type JobState } from "./jobs.ts"
 export { checkConfounds, VariableIsolation, assertComparableField, type ConfoundReading } from "./confound.ts"
+
+export {
+	aggregateByShape,
+	aggregateCounterfactuals,
+	assembleAccount,
+	matchShapes,
+	renderAccount,
+	runDiagnose,
+	DIAGNOSE_SHAPES,
+	SHAPE_PREDICATES,
+	type DiagnoseShape,
+	type RowAccount,
+} from "./diagnose.ts"
+
+export {
+	enumerateFlips,
+	measureMove,
+	runCounterfactuals,
+	COUNTERFACTUAL_LEVERS,
+	type CounterfactualLever,
+	type RowCounterfactuals,
+} from "./counterfactual.ts"
+
 export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrade } from "./grade.ts"
 export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
 export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "./power.ts"

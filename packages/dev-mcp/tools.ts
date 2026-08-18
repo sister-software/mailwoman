@@ -24,6 +24,7 @@ import { ARM_SPEC_SCHEMA } from "./arms.ts"
 import { assembleBench, summarizeLatency } from "./bench.ts"
 import { runCensus } from "./census.ts"
 import { runCompare } from "./compare.ts"
+import { COUNTERFACTUAL_FULL_RUN_MAX_ROWS, DIAGNOSE_SHAPES, runDiagnose } from "./diagnose.ts"
 import type { EngineConfig } from "./engine-registry.ts"
 import { evidenceCensus } from "./evidence.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
@@ -550,6 +551,38 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 				config: ENGINE_CONFIG_SCHEMA.optional(),
 			}),
 			handler: async (args) => runCensus(registry, args),
+		},
+
+		{
+			name: "mwdev_diagnose",
+			description:
+				"Per-row MECHANISM ACCOUNT (#1722): what the pipeline did, assembled from its own seams \u2014 kind verdict, " +
+				"known formats, priors, repairs and decode confidence; the three-state evidence channels; every backend " +
+				"lookup with its gates, candidate count and the rank the pick started at; admin coherence, lineage and " +
+				"tier \u2014 plus the smallest single-lever flip that moves the answer. Rows are classified into " +
+				`mechanism-state shapes (${DIAGNOSE_SHAPES.join(", ")}) by TRANSPARENT seam-fact predicates, and the ` +
+				"result says so: this is uncalibrated v1, every predicate ships beside its count, and a row that fails " +
+				"its expectation while matching no shape is reported `unclassified` rather than forced into the nearest " +
+				"one. Aggregation is BY SHAPE with each class's n, never by raw row count.",
+			inputSchema: z.object({
+				inputs: INPUT_SET_SCHEMA.optional(),
+				config: ENGINE_CONFIG_SCHEMA.optional(),
+				counterfactuals: z
+					.boolean()
+					.default(true)
+					.describe(
+						"Re-run each row under one flipped lever at a time and report the flips that moved the answer. " +
+							`Above ${COUNTERFACTUAL_FULL_RUN_MAX_ROWS} rows this narrows to rows that matched a non-clean ` +
+							"shape, and the result says so \u2014 a clean row's levers are then unmeasured, not inert."
+					),
+				limit: z
+					.number()
+					.int()
+					.positive()
+					.optional()
+					.describe("Cap on rows accounted for. Never the default; reported against the set's real n."),
+			}),
+			handler: async (args) => runDiagnose(registry, args),
 		},
 
 		{
