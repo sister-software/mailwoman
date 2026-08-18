@@ -66,15 +66,21 @@ into a different real postcode.
 | `, UK` suffixed      | 600 | 600      | 592/600               | 592/600 | 592/600 | 0.00      |
 | typo (252 phantom)   | 252 | —        | **252/252 abstained** |         |         |           |
 
-The eleven failures are one defect, named with receipts rather than averaged away: under the
-`en-US` default the model occasionally tags a GB postcode's outward code as `street` and its
+The eleven failures were one defect, named with receipts rather than averaged away: under the
+`en-US` default the model occasionally tagged a GB postcode's outward code as `street` and its
 inward code as `house_number` (`KT2 6AB` → street "KT2" + house_number "6AB") — **even though the
-query-shape stage detects `uk_postcode` at 0.9 confidence and the kind classifier says
-`postcode_only` at 1.0**. With no postcode span in the tree, the bare form resolves nothing
-(3/600: `KT2 6AB`, `L6 6AZ`, `RM10 8AB`); the `, UK` form resolves only the country token and
-answers the United Kingdom label centroid, 27–221 km off (8/600). The `en-GB` locale decodes all
-eleven correctly. Filed as a tracked defect: the kind/shape stages hold the correct hypothesis and
-the resolution path cannot yet use it to repair the parse.
+query-shape stage detected `uk_postcode` at 0.9 confidence and the kind classifier said
+`postcode_only` at 1.0**. With no postcode span in the tree, the bare form resolved nothing
+(3/600); the `, UK` form resolved only the country token and answered the United Kingdom label
+centroid, 27–221 km off (8/600). The `en-GB` locale decoded all eleven correctly.
+
+**Fixed the same day** (#1735, `dd74a3a73`) with two rungs — a parse-side repair that consumes the
+shape/tree contradiction, and an explicit-country pre-scope in the resolver walk (the suffixed
+failures were a sibling-scope gap: the country node resolved to GB while the postcode lookup ran
+under the locale-inferred US filter beside it). Post-fix, the production default matches `en-GB`:
+**600/600 on every leg**, phantom abstention unchanged at 252/252, and the full regression board
+shows three rows changed — all improvements — and zero regressions. The pre-fix table above is
+kept as the record of what the eval found; finding it was this record's purpose.
 
 ## Re-run
 
