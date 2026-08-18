@@ -35,19 +35,38 @@ afterAll(() => {
 })
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
-	it("fails weights resolution under a bogus dataRoot instead of silently reading the env root", async () => {
-		await expect(
-			createGeocodeSession(
-				// The production defaults factory, not a hand-built literal — the same lockstep seam the dev-mcp
-				// registry derives from, so this pin cannot drift from the shipped configuration.
-				createGeocodeCommandOptions({
-					locale: "en-US",
-					dataRoot: BOGUS_ROOT,
-					// A real candidate.db keeps the gazetteer check (resolved first, by contract) from masking the weights
-					// step — the whole point is to reach weights resolution with the bogus root still in force.
-					candidateDB: REAL_CANDIDATE_DB,
-				})
-			)
-		).rejects.toThrow(/neural weights/)
+	it("resolves nothing from the overlay under a bogus dataRoot", async () => {
+		// Weights resolution is a ladder, and only its OVERLAY rung is governed by `dataRoot` — a checkout whose
+		// workspace packages or weights cache carry binaries (CI, after weights.test.ts links them) constructs a
+		// session from those rungs, while a checkout without them rejects. Both are in-contract. The #1732 pin is the
+		// same in either environment: NOTHING resolves from the overlay when the root is bogus — before the fix,
+		// weights (and the per-locale FST inside them) resolved from the process env's data root regardless of the
+		// option, so `artifacts.fstPath` came back DEFINED from the env overlay.
+		const outcome = await createGeocodeSession(
+			// The production defaults factory, not a hand-built literal — the same lockstep seam the dev-mcp
+			// registry derives from, so this pin cannot drift from the shipped configuration.
+			createGeocodeCommandOptions({
+				locale: "en-US",
+				dataRoot: BOGUS_ROOT,
+				// A real candidate.db keeps the gazetteer check (resolved first, by contract) from masking the weights
+				// step — the whole point is to reach weights resolution with the bogus root still in force.
+				candidateDB: REAL_CANDIDATE_DB,
+			})
+		).then(
+			(session) => ({ session }),
+			(error: unknown) => ({ error })
+		)
+
+		if ("error" in outcome) {
+			expect(String(outcome.error)).toMatch(/neural weights/)
+
+			return
+		}
+
+		try {
+			expect(outcome.session.artifacts.fstPath).toBeUndefined()
+		} finally {
+			outcome.session.close()
+		}
 	}, 60_000)
 })
