@@ -121,6 +121,12 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (960, 'County Dundo', 'region', 'IE', 54.9, -8.0, 54.0, -8.9, 55.4, -7.2, -1, 0);
 		INSERT INTO spr VALUES (961, 'Kennytown', 'locality', 'IE', 54.95, -7.72, 54.9, -7.8, 55.0, -7.6, -1, 0);
 		INSERT INTO spr VALUES (962, 'Kennytown', 'locality', 'US', 40.0, -77.7, 39.9, -77.8, 40.1, -77.6, -1, 0);
+		-- The #1731 Astoria shape: the qualifier's TRUE instance is a NEIGHBOURHOOD — outside the locality
+		-- filter group, so no reorder can reach it — while a same-name wrong-instance LOCALITY sits under a
+		-- different region. The dependent-band injection must surface the contained neighbourhood.
+		INSERT INTO spr VALUES (970, 'Yorkia', 'region', 'US', 42.9, -75.6, 40.5, -79.8, 45.0, -71.8, -1, 0);
+		INSERT INTO spr VALUES (971, 'Astorington', 'neighbourhood', 'US', 40.77, -73.92, 40.75, -73.94, 40.79, -73.90, -1, 0);
+		INSERT INTO spr VALUES (972, 'Astorington', 'locality', 'US', 46.19, -123.81, 46.1, -123.9, 46.3, -123.7, -1, 0);
 
 		INSERT INTO place_population VALUES (300, 10400000);
 		INSERT INTO place_population VALUES (301, 26000);
@@ -149,6 +155,8 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (952, 25000);
 		INSERT INTO place_population VALUES (961, 22000);
 		INSERT INTO place_population VALUES (962, 250000);
+		INSERT INTO place_population VALUES (971, 78000);
+		INSERT INTO place_population VALUES (972, 10000);
 
 		-- Region ancestry: build-candidate reads WHERE ancestor_placetype='region' to stamp region_id.
 		INSERT INTO ancestors VALUES (310, 400, 'region');
@@ -165,6 +173,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (905, 900, 'region');
 		INSERT INTO ancestors VALUES (951, 950, 'country');
 		INSERT INTO ancestors VALUES (961, 960, 'region');
+		INSERT INTO ancestors VALUES (971, 970, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
@@ -1089,6 +1098,30 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	// the locale-inferred hard filter partitions the true instance out of the list BEFORE any
 	// comparator, so a reorder-only lever would be inert — the #1729 class, which is why these
 	// fixtures pin INJECTION, not just ordering.
+
+	test("#1731: a contained NEIGHBOURHOOD is injected past the locality filter group", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			const hits = await lk.findPlace({
+				text: "Astorington",
+				placetype: "locality",
+				regionQualifier: "Yorkia",
+				limit: 5,
+			})
+
+			// The locality-group pool holds only the wrong-instance locality (972, under no qualifier
+			// ancestry); the TRUE instance is a neighbourhood the filter group cannot reach. The
+			// dependent-band injection admits it on containment proof and the shared partition puts it
+			// first. Without the band, this query answers 972 — the Astoria chimera's first half.
+			expect(hits[0]!.id).toBe(971)
+			expect(hits[0]!.placetype).toBe("neighbourhood")
+			expect(hits[0]!.containedByQualifier).toBe(true)
+			expect(hits.map((h) => h.id)).toContain(972)
+		} finally {
+			lk.close()
+		}
+	})
 
 	test("REORDERS the worldwide set: the contained namesake beats the more-populous one", async () => {
 		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })

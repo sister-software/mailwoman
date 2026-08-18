@@ -465,6 +465,38 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 		injectFrom(opts.nameKey, false)
 
+		// #1731: the dependent-locality band. A locality query's filter group (locality/borough/localadmin)
+		// cannot reach a neighbourhood-tier namesake, so a CONTAINED one is structurally invisible no matter
+		// how the list reorders — the Astoria class: Queens' Astoria is a WOF neighbourhood, and the walk
+		// answered the Oregon locality under `qualifier="NY"` because nothing in the pool sat under NY. The
+		// widening is injection-only and triple-gated: the band is explicit (neighbourhood/macrohood/microhood
+		// — never region or country tiers), admission still requires the sidecar's containment proof, and only
+		// primary-keyed rows enter (an alias-keyed neighbourhood is the #1626 scrape class). Recall can only
+		// widen, and only toward rows the qualifier vouches for. `opts.shapeFilters`' bbox clause is
+		// deliberately not carried: containment is the stronger constraint, and the two co-occurring is not a
+		// measured shape.
+		const bandIDs = ["neighbourhood", "macrohood", "microhood"]
+			.map((placetype) => this.#placetypeToID.get(placetype))
+			.filter((id): id is number => id !== undefined)
+
+		if (bandIDs.length) {
+			const bandSQL =
+				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
+				`${this.#importanceSelect} FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.map(() => "?").join(",")}) AND is_primary = 1 ` +
+				"ORDER BY neg_rank ASC LIMIT ?"
+
+			const fetched = this.#db.prepare(bandSQL).all(opts.nameKey, ...bandIDs, RERANK_FETCH) as unknown as CandidateRow[]
+
+			for (const row of fetched) {
+				const sprID = Number(row.spr_id)
+
+				if (present.has(sprID) || !contained(sprID)) continue
+				present.add(sprID)
+
+				injected.push({ ...row, effectiveNegRank: row.neg_rank, demoted: false, containedByQualifier: true })
+			}
+		}
+
 		// The strip variant mirrors the cascade's discipline: tried only when the exact fold vouched for
 		// nothing, and primary-keyed only (a stripped surface never named an alias — #1626).
 		if (
