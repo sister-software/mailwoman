@@ -22,6 +22,7 @@ import { join } from "node:path"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { afterAll, describe, expect, it } from "vitest"
 
+import { createGeocodeCommandOptions } from "../geocode-command-options.ts"
 import { createGeocodeSession } from "../geocode-session.ts"
 
 const REAL_CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
@@ -36,13 +37,17 @@ afterAll(() => {
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
 	it("fails weights resolution under a bogus dataRoot instead of silently reading the env root", async () => {
 		await expect(
-			createGeocodeSession({
-				locale: "en-US",
-				dataRoot: BOGUS_ROOT,
-				// A real candidate.db keeps the gazetteer check (resolved first, by contract) from masking the weights
-				// step — the whole point is to reach weights resolution with the bogus root still in force.
-				candidateDB: REAL_CANDIDATE_DB,
-			})
+			createGeocodeSession(
+				// The production defaults factory, not a hand-built literal — the same lockstep seam the dev-mcp
+				// registry derives from, so this pin cannot drift from the shipped configuration.
+				createGeocodeCommandOptions({
+					locale: "en-US",
+					dataRoot: BOGUS_ROOT,
+					// A real candidate.db keeps the gazetteer check (resolved first, by contract) from masking the weights
+					// step — the whole point is to reach weights resolution with the bogus root still in force.
+					candidateDB: REAL_CANDIDATE_DB,
+				})
+			)
 		).rejects.toThrow(/neural weights/)
 	}, 60_000)
 })

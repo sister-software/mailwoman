@@ -32,6 +32,7 @@ import { LookupSource } from "./lookup.ts"
 import { describeObservedRate } from "./power.ts"
 import { getRun, listRuns, RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR } from "./run-store.ts"
 import { buildSpawnTools } from "./spawn-tools.ts"
+import { tallyPaths } from "./tally.ts"
 import {
 	ENGINE_CONFIG_SCHEMA,
 	INPUT_SET_SCHEMA,
@@ -51,7 +52,7 @@ import { staleEngineMessage } from "./tree-fingerprint.ts"
  * reading it. Everything an A/B diff needs is `id` plus `lat`/`lon`/`tier`. The list is ordered so a projected row
  * keeps a stable key order regardless of the order the caller asked in.
  */
-const RUN_ROW_FIELDS = ["id", "input", "components", "lat", "lon", "tier", "timing_ms"] as const
+const RUN_ROW_FIELDS = ["id", "input", "components", "lat", "lon", "tier", "admin_coherence", "timing_ms"] as const
 
 type RunRowField = (typeof RUN_ROW_FIELDS)[number]
 
@@ -256,6 +257,16 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 							"it is the difference between a full board fitting in a reply and spilling to a file. `id` and " +
 							"`lat`/`lon`/`tier` are what an A/B diff needs."
 					),
+				tally: z
+					.array(z.string().min(1))
+					.max(8)
+					.optional()
+					.describe(
+						'Dotted paths to COUNT distinct values of across all evaluated rows, e.g. ["admin_coherence.region", ' +
+							'"tier"]. Each tally sums to the evaluated row count; rows missing the path count under "~absent" ' +
+							'rather than being skipped. Pair with a narrow `fields` (or fields: ["id"]) to get a census ' +
+							"without a row dump — this replaces the hand-rolled recount scripts."
+					),
 			}),
 			handler: async (args) => {
 				const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
@@ -270,6 +281,8 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 
 				const startedAt = Date.now()
 				const rows: unknown[] = []
+				const fullRows: unknown[] = []
+				const tallyRequest = args["tally"] as string[] | undefined
 				const errors: Array<{ id: string; input: string; message: string }> = []
 				// Counted as rows are produced. Reading it back off `rows` would make the headline number depend on
 				// whether the caller happened to project `lat` — a measurement quietly changing with a display option.
@@ -286,12 +299,16 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 							lat: run.result.lat,
 							lon: run.result.lon,
 							tier: run.result.resolution_tier,
+							admin_coherence: (run.result as unknown as Record<string, unknown>)["admin_coherence"] ?? null,
 							timing_ms: run.timing,
 						}
 
 						// `lat` is read below for the resolved count, so projection cannot drop it from the value the
 						// handler reasons over — only from what is emitted. Filtering here rather than at return keeps
-						// that separation in one place.
+						// that separation in one place. Tallies count over `fullRows` for the same reason: a census must
+						// not change with a display option.
+						fullRows.push(row)
+
 						rows.push(
 							keep ? Object.fromEntries(RUN_ROW_FIELDS.filter((f) => keep.has(f)).map((f) => [f, row[f]])) : row
 						)
@@ -313,6 +330,14 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 				})
 
 				return {
+					...(tallyRequest?.length
+						? {
+								tallies: tallyPaths(fullRows, tallyRequest),
+								tallies_note:
+									"Each tally sums to n_evaluated; '~absent' counts rows where the path does not exist, and " +
+									"'null' is a value a row explicitly carried — different claims, never merged.",
+							}
+						: {}),
 					provenance: provenanceFor(engine, set),
 					summary:
 						power.sentence +
