@@ -581,6 +581,16 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 					.positive()
 					.optional()
 					.describe("Cap on rows accounted for. Never the default; reported against the set's real n."),
+				rows_cap: z
+					.number()
+					.int()
+					.positive()
+					.optional()
+					.describe(
+						"Cap on the PER-ROW accounts in the reply — the aggregates (by_shape, counterfactual_levers, summary) " +
+							"still cover every evaluated row. The emitted slice leads with non-clean rows and `rows_omitted` " +
+							"says what it left out. Use for large sets where the census is the point and the row dump is not."
+					),
 			}),
 			handler: async (args) => runDiagnose(registry, args),
 		},

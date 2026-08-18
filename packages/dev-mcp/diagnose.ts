@@ -790,6 +790,7 @@ export async function runDiagnose(registry: EngineRegistry, args: Record<string,
 	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
 	const limit = args["limit"] as number | undefined
+	const rowsCap = args["rows_cap"] as number | undefined
 	const wantCounterfactuals = args["counterfactuals"] !== false
 
 	const set = await resolveInputSet(ref)
@@ -841,6 +842,13 @@ export async function runDiagnose(registry: EngineRegistry, args: Record<string,
 	}
 
 	const rows: RowAccount[] = accounts.map((account) => ({ ...account, rendered: renderAccount(account) }))
+
+	// Stable partition, non-clean first — only the EMITTED order; every aggregate reads `rows` whole.
+	const emittedRows = [
+		...rows.filter((row) => !row.shapes.includes("clean")),
+		...rows.filter((row) => row.shapes.includes("clean")),
+	]
+
 	const byShape = aggregateByShape(rows)
 	const nonClean = rows.filter((row) => !row.shapes.includes("clean")).length
 
@@ -908,6 +916,9 @@ export async function runDiagnose(registry: EngineRegistry, args: Record<string,
 		counterfactuals_narrowed: narrowed,
 		counterfactual_errors: counterfactualErrors,
 		elapsed_ms: Date.now() - startedAt,
-		rows,
+		// Under a cap the emitted slice leads with non-clean rows — the ones every aggregate above points
+		// at — and says what it left out. The aggregates are computed over EVERY row regardless.
+		rows: rowsCap === undefined ? emittedRows : emittedRows.slice(0, rowsCap),
+		rows_omitted: rowsCap === undefined ? 0 : Math.max(0, emittedRows.length - rowsCap),
 	}
 }
