@@ -227,6 +227,67 @@ describe("buildCandidateTable", () => {
 		}
 	})
 
+	test("stamps name roles: the gloss anomaly core, prominence-rescued fame, and the abbr provenance signal (#1730)", async () => {
+		const input = join(scratch, "admin.db")
+		const output = join(scratch, "candidate.db")
+		buildFixtureAdmin(input)
+
+		const src = new DatabaseSync(input)
+
+		src.exec(`
+			-- The gloss shape: a common-noun-named locality, NO population, NO importance, key volume over threshold.
+			INSERT INTO spr VALUES (300, 'Poisson', 'locality', 'FR', 46.0, 4.0, 45.9, 3.9, 46.1, 4.1, -1, 0);
+			INSERT INTO place_search VALUES (300, 'Fish${ALIAS_SEP}Fisch${ALIAS_SEP}Pesce${ALIAS_SEP}Vis');
+			-- The rescue: same key volume, but MEASURED prominence (population) — a famous place's exonym set.
+			INSERT INTO spr VALUES (301, 'Grandville', 'locality', 'FR', 47.0, 5.0, 46.9, 4.9, 47.1, 5.1, -1, 0);
+			INSERT INTO place_population VALUES (301, 2100000);
+			INSERT INTO place_search VALUES (301, 'Bigtown${ALIAS_SEP}Grossstadt${ALIAS_SEP}Grancitta${ALIAS_SEP}Grootstad');
+			-- The abbr provenance signal: a variant name in the country's official language.
+			CREATE TABLE names (
+				id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+				country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+				privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+				lastmodified INTEGER NOT NULL DEFAULT 0
+			);
+			-- Chicago's variant in English (US official) — the stampable signal…
+			INSERT INTO names VALUES (200, 'Chi-Town', 'locality', 'US', 'eng', 'variant', 0, 0);
+			-- …a variant in a NON-official language stays unstamped…
+			INSERT INTO names VALUES (200, 'Windy City', 'locality', 'US', 'jpn', 'variant', 0, 0);
+			-- …and a preferred name never stamps, whatever its language.
+			INSERT INTO names VALUES (202, 'St Etienne', 'locality', 'FR', 'fra', 'preferred', 0, 0);
+		`)
+
+		src.close()
+
+		// Fixture-scale threshold: 5 staged keys (primary + 4 aliases) crosses it.
+		await buildCandidateTable({ input, output, glossKeyThreshold: 5 })
+
+		const db = new DatabaseSync(output, { readOnly: true })
+
+		const role = (key: string): Array<{ name: string; role: string | null; primary: number }> =>
+			db
+				.prepare(`SELECT name, name_role AS role, is_primary AS "primary" FROM candidate WHERE name_key = ?`)
+				.all(key) as never
+
+		try {
+			// Gloss core: every alias of the double-absent place stamps; its primary never does.
+			expect(role("fish")[0]).toMatchObject({ role: "gloss" })
+			expect(role("vis")[0]).toMatchObject({ role: "gloss" })
+			expect(role("poisson")[0]).toMatchObject({ role: null, primary: 1 })
+
+			// Prominence rescue: same key volume, measured population — no gloss stamp.
+			expect(role("bigtown")[0]).toMatchObject({ role: null })
+
+			// Abbr provenance: official-language variant stamps; non-official variant does not; the
+			// preferred-name alias does not.
+			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
+			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
+			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
+		} finally {
+			db.close()
+		}
+	})
+
 	test("keys diacritic names by their folded form — build/query parity by construction", async () => {
 		const input = join(scratch, "admin.db")
 		const output = join(scratch, "candidate.db")
