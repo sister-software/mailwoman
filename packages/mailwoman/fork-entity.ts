@@ -27,6 +27,11 @@
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
+import {
+	type AdminCoherenceReport,
+	type AdminCoherenceTreeNode,
+	forkedEntityCoherenceField,
+} from "./admin-coherence.ts"
 import type { POIExecutorLookup } from "./poi-executor.ts"
 
 /**
@@ -125,5 +130,49 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 		longitude: top.longitude,
 		country: top.country,
 		confidence: top.confidence,
+	}
+}
+
+/**
+ * The slice of the geocode outcome a forked answer writes — structural, so this module does not import the outcome type
+ * back out of `geocode-core` (which imports the probe from here).
+ */
+export interface ForkEntityAnswerTarget {
+	lat: number | null
+	lon: number | null
+	resolution_tier: string | null
+	countryCode: string | null
+	venue: string | null
+	entity?: { name: string; categoryID: string | null; confidence: number; country: string }
+	admin_coherence?: AdminCoherenceReport
+}
+
+/**
+ * Write a fork-to-entity answer onto the outcome: coordinate, venue tier, the entity block, and — like any other
+ * resolved answer — a coherence verdict (#1724). The entity offers a country and no ancestor chain, so a stated region
+ * grades `unverifiable` rather than going silently unchecked.
+ */
+export function applyForkEntityAnswer(
+	result: ForkEntityAnswerTarget,
+	entity: ForkEntityHit,
+	roots: readonly AdminCoherenceTreeNode[]
+): void {
+	result.lat = entity.latitude
+	result.lon = entity.longitude
+	result.resolution_tier = "venue"
+	result.countryCode = entity.country
+	result.venue = entity.name
+
+	result.entity = {
+		name: entity.name,
+		categoryID: entity.categoryID,
+		confidence: entity.confidence,
+		country: entity.country,
+	}
+
+	const coherence = forkedEntityCoherenceField(roots, entity)
+
+	if (coherence.admin_coherence) {
+		result.admin_coherence = coherence.admin_coherence
 	}
 }

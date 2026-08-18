@@ -286,3 +286,37 @@ export function adminCoherenceField(
 
 	return { admin_coherence: report }
 }
+
+/**
+ * A node tree shaped like the decoder's `AddressNode` — structural rather than imported, so this module stays free of
+ * the decoder dependency.
+ */
+export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
+	children: readonly AdminCoherenceTreeNode[]
+}
+
+/**
+ * Coherence for a fork-to-entity answer (#1724): a forked answer carries a verdict like any other resolved answer --
+ * absence means "nothing resolved to check", and something did. The entity offers a country and no ancestor chain, so a
+ * stated region grades `unverifiable` rather than going silently unchecked.
+ */
+export function forkedEntityCoherenceField(
+	roots: readonly AdminCoherenceTreeNode[],
+	entity: { name: string; country: string }
+): { admin_coherence?: AdminCoherenceReport } {
+	const nodes: AdminCoherenceSourceNode[] = []
+	const stack: AdminCoherenceTreeNode[] = [...roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		nodes.push({ tag: n.tag, value: n.value, metadata: n.metadata })
+		stack.push(...n.children)
+	}
+
+	return adminCoherenceField(
+		nodes,
+		{ tag: "venue", value: entity.name, metadata: { resolver_country: entity.country } },
+		undefined
+	)
+}

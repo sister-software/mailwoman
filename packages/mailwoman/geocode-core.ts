@@ -59,7 +59,7 @@ import type {
 import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
-import { probeForkEntity } from "./fork-entity.ts"
+import { applyForkEntityAnswer, probeForkEntity } from "./fork-entity.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
@@ -1279,18 +1279,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
 
 		if (entity) {
-			result.lat = entity.latitude
-			result.lon = entity.longitude
-			result.resolution_tier = "venue"
-			result.countryCode = entity.country
-			result.venue = entity.name
-
-			result.entity = {
-				name: entity.name,
-				categoryID: entity.categoryID,
-				confidence: entity.confidence,
-				country: entity.country,
-			}
+			applyForkEntityAnswer(result, entity, resolved.roots)
 		}
 	}
 

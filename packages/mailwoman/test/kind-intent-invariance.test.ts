@@ -108,9 +108,9 @@ beforeAll(async () => {
 	CATEGORY_QUERY_INPUTS = new Set(cases.filter((c) => c.id.includes("-cat-")).map((c) => c.input))
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 558-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 569-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(558)
+		expect(corpus).toHaveLength(569)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
