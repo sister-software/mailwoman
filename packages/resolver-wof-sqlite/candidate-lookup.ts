@@ -189,6 +189,11 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 */
 	readonly #importanceSelect: string
 	/**
+	 * Whether the artifact carries the #1730 `name_role` column — absent on pre-role builds, where the `excludeNameRoles`
+	 * filter degrades to a no-op rather than erroring on a missing column.
+	 */
+	readonly #hasNameRole: boolean
+	/**
 	 * Prepared chain probe over the `candidate_ancestor` sidecar — `undefined` when the artifact predates it.
 	 */
 	readonly #ancestorsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
@@ -266,6 +271,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 		// #28 fame column: probed ONCE here (it runs a PRAGMA, and `findPlace` is per-keystroke hot).
 		this.#importanceSelect = hasColumn(this.#db, "candidate", "importance") ? ", importance" : ""
+		this.#hasNameRole = hasColumn(this.#db, "candidate", "name_role")
 
 		// Ancestors sidecar (#1717): existence-gated like the probes above, and the CAPABILITY gates with
 		// it — see the `ancestors` property doc for why an older artifact must read as "no ancestors()"
@@ -651,6 +657,14 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// #1546 note protects (Москва's alias rows answer 'Moscow').
 		if (query.primaryOnly) {
 			shapeFilters.push("is_primary = 1")
+		}
+
+		// The role guard (#1730): a probe may refuse abbreviation/gloss alias rows while keeping the
+		// role-NULL exonym tier open — the distinction `primaryOnly` cannot express. Degrades to a no-op
+		// on an artifact without the column.
+		if (query.excludeNameRoles?.length && this.#hasNameRole) {
+			shapeFilters.push(`(name_role IS NULL OR name_role NOT IN (${query.excludeNameRoles.map(() => "?").join(",")}))`)
+			shapeParams.push(...query.excludeNameRoles)
 		}
 
 		// The main-probe conds are country-then-shape, exactly the order they have always been.

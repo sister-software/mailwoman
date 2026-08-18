@@ -286,6 +286,14 @@ export interface ResolverBackend {
 		 */
 		primaryOnly?: boolean
 		/**
+		 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — set by the bare-toponym side races with
+		 * `abbr`/`gloss`. A lone bare token matching only an abbreviation row ("Tó" folded onto Toledo's "TO") or a
+		 * translation-gloss row is a weak re-reading, not a naming; role-NULL alias rows (the exonym tier, the country
+		 * display names) stay fully open, which is what `primaryOnly` could never express. Backends without a role column
+		 * ignore it — an older artifact degrades to today's behavior.
+		 */
+		excludeNameRoles?: readonly string[]
+		/**
 		 * The tree's parsed REGION qualifier, verbatim (#1717 stage 2) — set by the resolver on locality lookups when
 		 * `ResolveOpts.adminContainmentRerank` is on. A capable backend resolves the qualifier to its own region-class rows
 		 * and (a) stamps every returned candidate's `containedByQualifier`, (b) ranks contained candidates ahead of

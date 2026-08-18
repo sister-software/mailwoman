@@ -57,11 +57,19 @@ export function pickLargerAdmin(country: ResolvedPlace | null, region: ResolvedP
 }
 
 /**
+ * Alias roles the side races refuse to answer through (#1730): a lone bare token that only reaches a place via an
+ * ABBREVIATION row ("Tó" folds onto Toledo's "TO") or a translation-gloss row did not name that place — while the
+ * role-NULL exonym tier stays open, which is what lets 格鲁吉亚 win the country race through its display-name alias. An
+ * artifact without the role column ignores the exclusion and the races behave as before.
+ */
+export const BARE_RACE_EXCLUDED_NAME_ROLES: readonly string[] = ["abbr", "gloss"]
+
+/**
  * The best `country`-placetype row for a bare toponym span, or null. `scopedCountry` is the same hard filter the
  * locality query ran under — an EXPLICIT caller scope therefore bounds this race too (a foreign country row cannot
  * outrank inside an explicit scope), while the bare-locality posture's withheld scope leaves it worldwide. Exact
  * matches only: the fuzzy tier exists for typo recovery on address spans, and a fuzzy country is a guess this race must
- * never promote.
+ * never promote. Abbreviation/gloss alias rows never enter ({@link BARE_RACE_EXCLUDED_NAME_ROLES}).
  */
 export async function bareCountryCandidate(
 	backend: ResolverBackend,
@@ -73,6 +81,7 @@ export async function bareCountryCandidate(
 			text,
 			placetype: "country",
 			limit: 1,
+			excludeNameRoles: BARE_RACE_EXCLUDED_NAME_ROLES,
 			...(scopedCountry ? { country: scopedCountry } : {}),
 		})
 
@@ -91,7 +100,9 @@ export async function bareCountryCandidate(
 /**
  * The best `region`-placetype row for a bare toponym span, or null — the sibling of {@link #bareCountryCandidate} for
  * the US-state class (bare "Georgia"/"Texas" the parser tags `locality`). Same contract: the locality query's own
- * country filter bounds it, exact primary matches only, and the placetype check guards partial backends.
+ * country filter bounds it, exact matches only with abbreviation/gloss rows excluded, and the placetype check guards
+ * partial backends. (The `place_abbr`-staged region abbreviations — bare "TX"/"CA" — are role-NULL primaries and stay
+ * fully reachable; the exclusion removes only the names-table abbreviation ALIASES like Toledo's "TO".)
  */
 export async function bareRegionCandidate(
 	backend: ResolverBackend,
@@ -103,6 +114,7 @@ export async function bareRegionCandidate(
 			text,
 			placetype: "region",
 			limit: 1,
+			excludeNameRoles: BARE_RACE_EXCLUDED_NAME_ROLES,
 			...(scopedCountry ? { country: scopedCountry } : {}),
 		})
 

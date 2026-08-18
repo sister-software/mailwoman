@@ -116,6 +116,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (950, 'Ruslandia', 'country', 'RU', 55.0, 37.0, 41.0, 19.0, 82.0, 179.0, -1, 0);
 		INSERT INTO spr VALUES (951, 'Mosgrad', 'locality', 'RU', 55.75, 37.62, 55.5, 37.3, 56.0, 37.9, -1, 0);
 		INSERT INTO spr VALUES (952, 'Mosgrad', 'locality', 'US', 46.73, -117.0, 46.6, -117.2, 46.8, -116.8, -1, 0);
+		INSERT INTO spr VALUES (990, 'Toledano', 'region', 'ES', 39.8, -4.0, 39.0, -5.0, 40.5, -3.0, -1, 0);
 		-- The Donegal-class stored form: an Irish county stored 'County Dundo' (name_key 'county dundo',
 		-- no bare 'dundo' key), addressed as 'Co. Dundo' — the probe-side county-prefix variant's board.
 		INSERT INTO spr VALUES (960, 'County Dundo', 'region', 'IE', 54.9, -8.0, 54.0, -8.9, 55.4, -7.2, -1, 0);
@@ -177,6 +178,9 @@ function buildFixtureAdmin(path: string): void {
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
 		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
+		-- The #1730 role shape (the Toledo 'TO' class): a region whose alias bag carries an ABBREVIATION,
+		-- marked by the names table's abbreviation KIND (language='abbr', empty privateuse).
+		INSERT INTO place_search VALUES (990, 'TD');
 		-- The colliding exonym: Farland CN carries an alt-name that normalizes to "zedton" (the Çançun→cancun class).
 		INSERT INTO place_search VALUES (601, 'Zedton');
 		-- The dominant alt-name: Wyemetro US is aliased to "Wyeburg" (the LA→Los Angeles class).
@@ -185,6 +189,16 @@ function buildFixtureAdmin(path: string): void {
 		-- Thüringen→Thuringia class the fold-equality verdicts declare out of scope, bridged here by
 		-- the artifact's own alias keying.
 		INSERT INTO place_search VALUES (900, 'Thueria');
+	`)
+
+	db.exec(`
+		CREATE TABLE names (
+			id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
+			country TEXT NOT NULL DEFAULT '', language TEXT NOT NULL DEFAULT '',
+			privateuse TEXT NOT NULL DEFAULT '', official INTEGER NOT NULL DEFAULT 0,
+			lastmodified INTEGER NOT NULL DEFAULT 0
+		);
+		INSERT INTO names VALUES (990, 'TD', 'region', 'ES', 'abbr', '', 0, 0);
 	`)
 
 	db.close()
@@ -309,6 +323,63 @@ describe("WOFCandidateTableLookup", () => {
 			expect(hit?.name).toBe("Moscow")
 			expect(hit?.country).toBe("RU")
 			expect(hit?.exactMatch).toBe(true) // every candidate row IS an exact normalized-name/alias match
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("excludeNameRoles refuses the abbreviation alias while the role-NULL alias tier stays open (#1730)", async () => {
+		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+
+		try {
+			// Without the exclusion the abbreviation alias answers — today's bare-race hazard.
+			const [open] = await lk.findPlace({ text: "TD", placetype: "region" })
+			expect(open?.name).toBe("Toledano")
+
+			// With it, the abbr-stamped row is refused…
+			const refused = await lk.findPlace({ text: "TD", placetype: "region", excludeNameRoles: ["abbr", "gloss"] })
+			expect(refused).toHaveLength(0)
+
+			// …while a role-NULL exonym alias still answers under the same exclusion (the 格鲁吉亚 contract).
+			const [exonym] = await lk.findPlace({
+				text: "Moskva",
+				placetype: "locality",
+				excludeNameRoles: ["abbr", "gloss"],
+			})
+
+			expect(exonym?.name).toBe("Moscow")
+		} finally {
+			lk.close()
+		}
+	})
+
+	test("excludeNameRoles degrades to a no-op on an artifact without the role column", async () => {
+		// A pre-#1730 candidate DB: same columns MINUS name_role. The option must be ignored, never error.
+		const legacyPath = join(scratch, "legacy-candidate.db")
+		const legacy = new DatabaseSync(legacyPath)
+
+		legacy.exec(`
+			CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT UNIQUE);
+			CREATE TABLE placetype_codes (id INTEGER PRIMARY KEY, placetype TEXT UNIQUE);
+			INSERT INTO country_codes VALUES (0, 'ES');
+			INSERT INTO placetype_codes VALUES (0, 'region');
+			CREATE TABLE candidate (
+				name_key TEXT NOT NULL, country_id INTEGER NOT NULL, region_id INTEGER NOT NULL,
+				placetype_id INTEGER NOT NULL, neg_rank REAL NOT NULL, spr_id INTEGER NOT NULL,
+				name TEXT, latitude REAL, longitude REAL, min_lat REAL, min_lon REAL, max_lat REAL, max_lon REAL,
+				population INTEGER, is_primary INTEGER, importance REAL,
+				PRIMARY KEY (name_key, country_id, region_id, placetype_id, neg_rank, spr_id)
+			) WITHOUT ROWID;
+			INSERT INTO candidate VALUES ('td', 0, 0, 0, -5.0, 970, 'Toledano', 39.8, -4.0, 39.0, -5.0, 40.5, -3.0, 700000, 0, NULL);
+		`)
+
+		legacy.close()
+
+		const lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
+
+		try {
+			const [hit] = await lk.findPlace({ text: "TD", placetype: "region", excludeNameRoles: ["abbr", "gloss"] })
+			expect(hit?.name).toBe("Toledano")
 		} finally {
 			lk.close()
 		}

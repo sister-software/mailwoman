@@ -185,6 +185,11 @@ export interface FindPlaceQuery {
 	 */
 	primaryOnly?: boolean
 	/**
+	 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — the bare-toponym side races pass `abbr`/`gloss`.
+	 * Role-NULL alias rows (the exonym tier) stay open; backends/artifacts without a role column ignore it.
+	 */
+	excludeNameRoles?: readonly string[]
+	/**
 	 * WOF place id — narrows to descendants of this place.
 	 */
 	parentID?: number
