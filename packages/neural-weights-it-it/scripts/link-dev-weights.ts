@@ -16,7 +16,7 @@
 
 import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
-buildPairIndexOverlay({
+await buildPairIndexOverlay({
 	packageDir: "neural-weights-it-it",
 	country: "it",
 	delta: 10,

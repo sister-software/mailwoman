@@ -17,7 +17,7 @@
 
 import { buildPairIndexOverlay } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
-buildPairIndexOverlay({
+await buildPairIndexOverlay({
 	packageDir: "neural-weights-de-de",
 	country: "de",
 	// The pair the R9 bars were measured at (0/70 confound FPs, 60/60 tag-correct).

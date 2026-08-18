@@ -29,7 +29,7 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, lstatSync, mkdirSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, lstatSync, mkdirSync, renameSync, statSync, symlinkSync, unlinkSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
@@ -246,8 +246,18 @@ if (!existsSync(CLI)) {
 				parentDelta: PAIR_INDEX_PARENT_DELTA,
 			})
 
+			// The BAN-derived index is ~6 MB; a pair-index built here from the WRONG source (the admin-DB borough
+			// recipe, whose FR neighbourhood tier is Paris quartiers) is ~1.9 kB and can carry matching magnitudes,
+			// which the header check then reads as current. Size is the one signal the header cannot fake.
+			const MINIMUM_PLAUSIBLE_BYTES = 1_000_000
+			const bytes = statSync(PAIR_INDEX_BIN_DEST).size
+
 			if (staleReason) {
 				console.log(`rebuilding pair-index-fr.bin — ${staleReason}`)
+			} else if (bytes < MINIMUM_PLAUSIBLE_BYTES) {
+				console.log(
+					`rebuilding pair-index-fr.bin — ${bytes.toLocaleString()} bytes is implausibly small for the BAN recipe (wrong-source clobber)`
+				)
 			} else {
 				needsRebuild = false
 			}
