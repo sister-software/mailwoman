@@ -59,6 +59,25 @@ export interface HierarchyEntry extends HierarchyLineageEntry {
 const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
 
 /**
+ * The MOST-SPECIFIC resolved admin node — the lineage anchor for tiers without an admin-ladder pick (#1731 follow-up).
+ *
+ * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result the fallback anchor was
+ * the FIRST resolved admin node in tree order — often the REGION — and an ancestor chain never contains its own
+ * descendants, so `1600 Pennsylvania Ave…` graded its correctly-resolved `Washington` locality `in_winner_lineage:
+ * false`. Anchoring at the deepest resolved entry grades ancestors (which its chain does contain) and can never
+ * false-flag a descendant.
+ */
+export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
+	for (const tag of HIERARCHY_TAGS) {
+		const node = nodes.find((n) => n.tag === tag && n.placeID)
+
+		if (node) return node
+	}
+
+	return undefined
+}
+
+/**
  * Assemble the result `hierarchy` from the resolved tree's admin nodes and annotate each entry's lineage standing
  * against `anchor` (see {@link annotateHierarchyLineage}).
  *

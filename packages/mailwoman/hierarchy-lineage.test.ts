@@ -9,6 +9,7 @@
 
 import { describe, expect, it } from "vitest"
 
+import * as HIERARCHY_LINEAGE from "./hierarchy-lineage.ts"
 import { annotateHierarchyLineage, type HierarchyLineageEntry } from "./hierarchy-lineage.ts"
 
 function entry(placeID?: string): HierarchyLineageEntry {
@@ -63,6 +64,29 @@ describe("annotateHierarchyLineage (#1731)", () => {
 
 		expect(a.in_winner_lineage).toBeUndefined()
 		expect(b.in_winner_lineage).toBeUndefined()
+	})
+
+	it("anchors at the DEEPEST resolved admin node — a descendant is never flagged by its ancestor's chain", () => {
+		const { lineageAnchorNode } = HIERARCHY_LINEAGE
+		// Tree order resolves the region first (the 1600-Pennsylvania shape); the locality must anchor.
+		const region = { tag: "region", value: "DC", placeID: "wof:85688741" }
+		const locality = { tag: "locality", value: "Washington", placeID: "wof:85931779" }
+
+		expect(lineageAnchorNode([region, locality])?.placeID).toBe("wof:85931779")
+
+		// With the locality anchoring, the region grades TRUE through the locality's own chain.
+		const entries = [
+			{ placeID: "wof:85931779" } as HierarchyLineageEntry,
+			{ placeID: "wof:85688741" } as HierarchyLineageEntry,
+		]
+
+		annotateHierarchyLineage(entries, {
+			placeID: "wof:85931779",
+			metadata: { ancestors: [{ id: 85_688_741 }, { id: 85_633_793 }] },
+		})
+
+		expect(entries[0]!.in_winner_lineage).toBe(true)
+		expect(entries[1]!.in_winner_lineage).toBe(true)
 	})
 
 	it("never grades a place-less entry (the street-register locality unshift)", () => {

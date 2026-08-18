@@ -60,7 +60,7 @@ import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherenc
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { applyForkEntityAnswer, probeForkEntity } from "./fork-entity.ts"
-import { assembleHierarchy, type HierarchyEntry } from "./hierarchy-lineage.ts"
+import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hierarchy-lineage.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
@@ -1489,8 +1489,10 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
 
-	// #1731: lineage-graded against the same anchor the admin-coherence verdicts use.
-	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? primaryNode)
+	// #1731: lineage-graded against the admin-ladder pick when the admin tier answered, else the DEEPEST
+	// resolved admin node — never the first-in-tree-order one, whose chain cannot contain its own
+	// descendants (the 1600-Pennsylvania false flag the first mwdev_diagnose run caught).
+	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? lineageAnchorNode(allNodes))
 
 	const candidates: GeocodeResult["candidates"] = []
 
