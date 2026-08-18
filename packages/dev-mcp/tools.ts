@@ -250,7 +250,10 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 			name: "mwdev_run",
 			description:
 				"Geocode an input set through a warm engine. Defaults to the FULL regression board — pass a literal set " +
-				"only with a reason, and the result will carry that reason and its confidence bound.",
+				"only with a reason, and the result will carry that reason and its confidence bound. PATH CAVEAT (#1669): " +
+				"engines here run ONE config (default locale en-US) — the out-of-the-box path; the gauntlet HARNESS " +
+				"additionally wires each row's country overlay, so a foreign row's verdict here can differ from the " +
+				"board's (they coincide on US rows).",
 			inputSchema: z.object({
 				inputs: INPUT_SET_SCHEMA.optional(),
 				config: ENGINE_CONFIG_SCHEMA.optional(),
@@ -373,7 +376,9 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 		{
 			name: "mwdev_compare",
 			description:
-				"Run one input set through two arms and diff them. An arm is a mailwoman configuration, an ALREADY-RUNNING " +
+				"Run one input set through two arms and diff them. PATH CAVEAT (#1669): a mailwoman arm runs ONE config — " +
+				"the out-of-the-box path, not the gauntlet harness's per-row country-overlay wiring; foreign-row grades " +
+				"can differ from the board's. An arm is a mailwoman configuration, an ALREADY-RUNNING " +
 				"external geocoder (Pelias / Photon / Nominatim — this server never starts one), a reference geocoder " +
 				"(Census free, Google billed and opt-in only), or a stored past run replayed by run_id. Reports what CHANGED " +
 				"separately from what IMPROVED, checks that only the declared lever moved, and states the smallest effect this " +
@@ -556,7 +561,8 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 		{
 			name: "mwdev_diagnose",
 			description:
-				"Per-row MECHANISM ACCOUNT (#1722): what the pipeline did, assembled from its own seams \u2014 kind verdict, " +
+				"Per-row MECHANISM ACCOUNT (#1722), measured on the ONE-config out-of-the-box path (the #1669 caveat on " +
+				"mwdev_run applies). What the pipeline did, assembled from its own seams \u2014 kind verdict, " +
 				"known formats, priors, repairs and decode confidence; the three-state evidence channels; every backend " +
 				"lookup with its gates, candidate count and the rank the pick started at; admin coherence, lineage and " +
 				"tier \u2014 plus the smallest single-lever flip that moves the answer. Rows are classified into " +
