@@ -109,8 +109,9 @@ export const spec = {
 		},
 		"admin-containment-rerank": {
 			type: "boolean",
-			default: false,
-			description: "Opt into region-qualifier containment reranking of locality candidates.",
+			default: true,
+			description:
+				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
 		},
 		"place-country-threshold": {
 			type: "number",

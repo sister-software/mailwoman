@@ -1189,9 +1189,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.postcodeContainmentCoherence = true
 	}
 
-	// #1717 stage 2 — the admin-containment lever rides the same opt-in discipline: only an explicit
-	// `true` sets the field, so the resolver's byte-stable default holds everywhere else.
-	if (deps.adminContainmentRerank === true) {
+	// #1717 stage 2, PROMOTED default-ON 2026-08-18: an explicit `false` is the only thing that
+	// withholds it. The resolver core keeps its byte-stable `=== true` read, so the default lives
+	// HERE (and in the session), at the same layer every other promoted lever defaults.
+	if (deps.adminContainmentRerank !== false) {
 		opts.adminContainmentRerank = true
 	}
 

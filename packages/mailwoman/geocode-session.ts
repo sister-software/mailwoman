@@ -644,8 +644,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
 			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
 			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
-			// #1717 stage 2: same opt-in discipline — default-OFF downstream.
-			...(options.adminContainmentRerank === true ? { adminContainmentRerank: true } : {}),
+			// #1717 stage 2, PROMOTED default-ON 2026-08-18 (evidence doc in docs/records/evals/). BOTH
+			// directions forwarded explicitly: the first draft's `!== false ? {true} : {}` dropped the
+			// opt-out on the floor, and geocode-core's own default-on resurrected it — the #1706
+			// one-sided-forwarding class, caught by the promotion's confirmation battery reading
+			// "0 of 558 differed" between the opt-out arm and the default.
+			adminContainmentRerank: options.adminContainmentRerank !== false,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
