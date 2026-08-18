@@ -12,6 +12,7 @@
  *   not the MA one.
  */
 
+import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
 import { loneValueBearingNode } from "@mailwoman/core/decoder"
@@ -71,6 +72,42 @@ import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } fr
  */
 export function createWOFResolver(backend: ResolverBackend): Resolver {
 	return new WOFResolver(backend)
+}
+
+/**
+ * #1735 (second half) — the tree's own country statement, when it is unambiguous.
+ *
+ * "SW1A 1AA, UK" under the en-US default parsed correctly and still failed: the walk resolved the country NODE to GB,
+ * but a sibling's resolution never scopes a sibling — the postcode lookup ran under the locale-inferred `country=US`
+ * hard filter and missed. An explicit country token is the address's OWN scope declaration, which outranks a locale
+ * inference the same way the #912 posture ranks explicit over inferred.
+ *
+ * Deterministically guarded: exactly ONE country-tagged node, whose value `matchCountry` maps to one ISO country, and
+ * whose value is NOT also a subdivision name — "Georgia" maps to GE _and_ names a US state, so it never pre-scopes (the
+ * existing coherence passes keep handling it). Returns the alpha-2 or null.
+ */
+function explicitCountryScope(roots: readonly AddressNode[]): string | null {
+	const countryNodes: AddressNode[] = []
+	const stack = [...roots]
+
+	while (stack.length) {
+		const node = stack.pop()!
+
+		if (node.tag === "country" && node.value.trim()) {
+			countryNodes.push(node)
+		}
+		stack.push(...node.children)
+	}
+
+	if (countryNodes.length !== 1) return null
+	const value = countryNodes[0]!.value.trim()
+	const matched = matchCountry(value)
+
+	if (!matched) return null
+
+	if (matchSubdivision(value)) return null
+
+	return matched.iso2
 }
 
 /**
@@ -636,6 +673,22 @@ class WOFResolver implements Resolver {
 		// CONSTRAIN an otherwise population-first walk — `Zabiče 8, 6250 Zabiče` picks the SI row
 		// coherent with the SI 6250 centroid instead of the more-populous Polish namesake. The
 		// browser cascade (which sets no default by design) is the consumer this exists for.
+		// #1735 second half: the address's own country statement scopes the walk BEFORE anything
+		// resolves — a sibling's resolution never reaches a sibling, so without this the postcode
+		// lookup in "RM10 8AB, UK" ran under the locale-inferred US filter while the country node
+		// resolved to GB beside it. Explicit-over-inferred, the #912 precedence, decided from the
+		// tree's own text; an EXPLICIT caller scope is never overridden.
+		let explicitScope: string | null = null
+
+		if (!state.defaultCountry || state.defaultCountryIsInferred) {
+			explicitScope = explicitCountryScope(tree.roots)
+
+			if (explicitScope) {
+				state.defaultCountry = explicitScope
+				state.defaultCountryIsInferred = false
+			}
+		}
+
 		if (opts.postcodeCountryCoherence !== false && state.postcode) {
 			postcodeScope = await findPostcodeCountryScope(tree.roots, this.#backend, {
 				postcode: state.postcode,
@@ -661,6 +714,20 @@ class WOFResolver implements Resolver {
 		// Attribution for the override, stamped on the two nodes that bought it. Additive metadata only.
 		if (postcodeScope) {
 			stampPostcodeCountryScope(newRoots, postcodeScope)
+		}
+
+		// The pre-scope's receipt (#1735): consumers that select country-scoped artifacts AFTER the walk
+		// (geocode-core's rooftop-shard second pass) key on a scope stamp. Without this, an address whose
+		// country was right FROM THE TREE never writes one — the #42 pass stays silent because the default
+		// is already coherent — and the FR rooftop shard silently stops loading for "…, France" inputs
+		// under a non-FR locale (six board venue rows dropped from rooftop to city centroid; the battery
+		// caught it).
+		if (explicitScope) {
+			for (const root of newRoots) {
+				if (root.tag === "country") {
+					root.metadata = { ...root.metadata, explicit_country_scope: explicitScope }
+				}
+			}
 		}
 
 		// Dual-role hierarchy completion (#405/#415). Only when enabled, a region resolved, and the parser

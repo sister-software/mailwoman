@@ -63,6 +63,7 @@ import { applyForkEntityAnswer, probeForkEntity } from "./fork-entity.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
+import { repairPostcodeContradiction } from "./postcode-repair.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
 import { applyStreetMissFallback } from "./street-miss-fallback.ts"
@@ -871,11 +872,19 @@ export async function parseForGeocode(
 	input: string,
 	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
 ): Promise<AddressTree> {
-	const { parseInput, opts } = geocodeParseInputs(input, deps)
+	const { parseInput, opts, queryShape } = geocodeParseInputs(input, deps)
 
 	// #22: a bare unambiguous postcode the model read as a street ("N7 0BT" → `{ street: … }`) is retagged
 	// before the resolve — see recognizeBarePostcode for why nothing downstream can recover it.
-	return recognizeBarePostcode(recognizeUSRegions(await deps.classifier.parse(parseInput, opts)))
+	const tree = recognizeBarePostcode(recognizeUSRegions(await deps.classifier.parse(parseInput, opts)))
+
+	// #1735: the multi-node generalization of #22 — a letter-digit postcode span the model SPLIT into
+	// street + house_number ("KT2 6AB") is repaired from the shape stage's own span. Runs HERE, before
+	// any caller derives scope from the tree: the session's bare-postcode guard must see the repaired
+	// tree, or a locale-inferred country filter starves the lookup the repair exists to enable.
+	repairPostcodeContradiction(tree, queryShape)
+
+	return tree
 }
 
 /**
@@ -940,6 +949,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
 
 	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+	const queryShape = computeQueryShape(parseInput)
 	const stateSlug = regionSlugFromTree(tree)
 	const usShards = deps.shards?.(stateSlug) ?? {}
 	let addressPoints = usShards.addressPoints
@@ -1243,7 +1253,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	// ROAD_TO_V9 §4. One `classifyKindSync` over the text the parse actually saw — computed BEFORE the
 	// street-miss fallback below because that fallback stands down on a declared fork (see there).
-	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, computeQueryShape(parseInput))
+	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)
 	const forkDeclared = (verdict.intentMarkers ?? []).some((m) => m.code === "declared_fork")
 
 	result = await applyStreetMissFallback(result, {
@@ -1303,7 +1313,10 @@ function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 
 	while (stack.length) {
 		const n = stack.pop()!
-		const scope = n.metadata?.["postcode_country_scope"]
+		// Either scope receipt re-triggers the shard-selection second pass: the #42 coherence override,
+		// or the #1735 explicit-country pre-scope (whose receipt exists precisely so a tree that was
+		// right from the start still gets its country's rooftop shard loaded).
+		const scope = n.metadata?.["postcode_country_scope"] ?? n.metadata?.["explicit_country_scope"]
 
 		if (typeof scope === "string" && scope.length) return scope
 
