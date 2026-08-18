@@ -51,6 +51,9 @@ const WORKSPACES: Record<string, string> = {
 	// (2026-07-18), which exports no './poi-lookup' at all — resolving there is an
 	// ERR_PACKAGE_PATH_NOT_EXPORTED the instant the CLI loads its command modules.
 	"@mailwoman/resolver-wof-sqlite": "packages/resolver-wof-sqlite",
+	// resolver-wof-sqlite's autocomplete delegates to ancestrie (#1728 phase 2) — a hard workspace dep,
+	// so the closure guard requires it here.
+	"@mailwoman/ancestrie": "packages/ancestrie",
 	"@mailwoman/ban": "packages/ban",
 	"@mailwoman/codex": "packages/codex",
 	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
