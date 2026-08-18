@@ -138,13 +138,20 @@ const CORPUS_SIZE = 569
  * rows on unrelated US places. Ten rows pin the primary-preference rescue that holds today; `bf-gloss-to-accent` lands
  * improvement_target for the live Toledo-as-region miss. 558 → 569, so the board id moves too.
  *
- * Moved again the same day — → this — by the label-centroid swap (#1726): nine bare-country/region tolerances tighten
- * to the label-point era (fr 700→100 km, jp 1000→50 km, de 500→100 km, cn 1500→600 km, tx/ca/ga), and
- * `us-athens-ga-30601` re-pins its expectation to the Athens label centroid at city scale — the old expectation was the
- * artifact's own math centroid, and no rooftop is coverable (the GA shard holds no `1 Broad St`). Tolerance and note
- * edits only, so the board id holds — content-addressing working as intended.
+ * Moved again the same day — by the label-centroid swap (#1726): nine bare-country/region tolerances tighten to the
+ * label-point era (fr 700→100 km, jp 1000→50 km, de 500→100 km, cn 1500→600 km, tx/ca/ga), and `us-athens-ga-30601`
+ * re-pins its expectation to the Athens label centroid at city scale — the old expectation was the artifact's own math
+ * centroid, and no rooftop is coverable (the GA shard holds no `1 Broad St`). Tolerance and note edits only, so the
+ * board id holds — content-addressing working as intended.
+ *
+ * Moved 2026-08-18 evening — → this — by the promotion sweep: the two board-flagged newly-passing rows promote to
+ * status=pass, each stable across two consecutive full-board runs. `ie-op2-letter-west` (the parse now holds region +
+ * country; the resolved dependent-locality identity stays marked by `in_winner_lineage: false`, and the pinned outcome
+ * is components-only per the outcomes-not-mechanisms rule) and `ni-ws-antiguo-cine-gonzalez-pluscode` (its own note
+ * predicted "fix the explicit-country vs postcode-drag ordering and this row flips" — the #1735 explicit-country
+ * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the gate grows 364 → 366.
  */
-const CORPUS_HASH = "fa12cfd811ee658033648c68e25be7c2f809abe98b1e4d96db8f8b423186f5f5"
+const CORPUS_HASH = "d6aed5814c2ea19b3660f032e68e34a5a1ccaba6e99e54cc807fcf3ba3591393"
 
 /**
  * `ablationBoardID` of the corpus.
