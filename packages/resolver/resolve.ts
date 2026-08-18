@@ -96,6 +96,7 @@ function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 		if (node.tag === "country" && node.value.trim()) {
 			countryNodes.push(node)
 		}
+
 		stack.push(...node.children)
 	}
 
@@ -420,7 +421,7 @@ async function applySpanRescore(
 	// 5 km area centroid. Same unresolved tree, so the #685 brake semantics hold.
 	if (!hit && opts.postalCompoundRecovery !== false) {
 		try {
-			await recoverPostcodeNode(roots, backend, opts.defaultCountry)
+			await recoverPostcodeNode(roots, backend, opts.defaultCountry, opts.traceSink)
 		} catch {
 			// degrade to no-recovery, never crash the resolve
 		}
@@ -450,6 +451,19 @@ async function applySpanRescore(
 	// (high-precision); false = ungated (no postcode→point coverage for this country, ~83%-precision).
 	node.metadata = { ...node.metadata, span_rescore: true, rescore_gated: hit.gated }
 	roots.push(node)
+
+	// #1721 follow-up: this tier answers OFF the walk, and it used to answer off the record too — the famous-name
+	// class ("Frankfurt") returned a coordinate beside an empty resolver trace, blinding every retrieval account.
+	// One record per rescue keeps the trace's promise: no resolved coordinate without a lookup record.
+	if (opts.traceSink) {
+		const rec = createNodeTraceRecorder(opts.traceSink)
+
+		rec.bind(node, "locality", opts.defaultCountry ? { country: opts.defaultCountry } : {}, 1)
+		rec.gate("span_rescore")
+		rec.gate(hit.gated ? "rescore_gated" : "rescore_ungated")
+		rec.stage("rescore", [hit.place, ...hit.alternatives])
+		rec.emit({ id: hit.place.id, name: hit.place.name, source: "span_rescore" })
+	}
 }
 
 /**
@@ -461,7 +475,8 @@ async function applySpanRescore(
 async function recoverPostcodeNode(
 	roots: AddressNode[],
 	backend: ResolverBackend,
-	country: string | undefined
+	country: string | undefined,
+	traceSink?: (record: ResolveNodeTrace) => void
 ): Promise<void> {
 	const stack: AddressNode[] = [...roots]
 
@@ -478,6 +493,16 @@ async function recoverPostcodeNode(
 			if (top) {
 				decorateNode(n, top, [])
 				n.metadata = { ...n.metadata, postal_compound_recovered: true }
+
+				// The same off-the-record hole the span-rescore record closes (#1721 follow-up).
+				if (traceSink) {
+					const rec = createNodeTraceRecorder(traceSink)
+
+					rec.bind(n, "postalcode", { ...(country ? { country } : {}), limit: 1 }, 1)
+					rec.gate("postal_compound_recovery")
+					rec.stage("recovery", hits)
+					rec.emit({ id: top.id, name: top.name, source: "postal_compound_recovery" })
+				}
 			}
 
 			return // first postcode node only — one recovery per tree

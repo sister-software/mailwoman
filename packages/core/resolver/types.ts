@@ -1026,12 +1026,13 @@ export interface ResolveCandidateTrace {
 }
 
 /**
- * One `ResolveNodeTrace` per backend lookup the walk performed (#1721). `gates` records mechanism events in execution
- * order, in the resolver's own vocabulary (`parent_fallback_retry`, `postcode_format_probe`, `postcode_prefix_prior`,
- * `bare_race`, `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`,
- * `placetype_fallback`). `picked: null` states the lookup resolved nothing — a claim, not an omission. The candidate
- * table is capped ({@link ResolveNodeTrace.candidatesTruncated} counts the tail) so a trace stays a record, not a
- * dump.
+ * One `ResolveNodeTrace` per backend lookup the walk performed (#1721) — and one per POST-WALK recovery that answers
+ * off the walk (`span_rescore`, `postal_compound_recovery`), so no resolved coordinate is off the record. `gates`
+ * records mechanism events in execution order, in the resolver's own vocabulary (`parent_fallback_retry`,
+ * `region_scope_miss`, `backend_error`, `postcode_format_probe`, `postcode_prefix_prior`, `bare_race`,
+ * `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`, `placetype_fallback`). `picked:
+ * null` states the lookup resolved nothing — a claim, not an omission. The candidate table is capped
+ * ({@link ResolveNodeTrace.candidatesTruncated} counts the tail) so a trace stays a record, not a dump.
  */
 export interface ResolveNodeTrace {
 	tag: string
@@ -1050,7 +1051,15 @@ export interface ResolveNodeTrace {
 	picked: {
 		id: string | number
 		name: string
-		source: "ranked" | "bare_country" | "bare_region" | "postcode_prefix" | "postcode_format_probe" | "empty_admin"
+		source:
+			| "ranked"
+			| "bare_country"
+			| "bare_region"
+			| "postcode_prefix"
+			| "postcode_format_probe"
+			| "empty_admin"
+			| "span_rescore"
+			| "postal_compound_recovery"
 	} | null
 }
 

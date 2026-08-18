@@ -120,6 +120,34 @@ describe("resolver-interior trace (#1721)", () => {
 		expect(localityRecord!.query.limit).toBeGreaterThan(0)
 	})
 
+	it("records the span-rescore rescue — the famous-name class no longer answers off the record", async () => {
+		// A STREET-tagged famous name never enters the walk (street is not in the placetype map), so the
+		// span-rescore tier is the only thing that resolves it — and before the #1721 follow-up it answered
+		// with an EMPTY trace beside a real coordinate.
+		const backend = new StubBackend(WHITBY_PLACES)
+		const records: ResolveNodeTrace[] = []
+
+		// Confidence UNDER the rescore threshold (0.7) — a confident street read is deliberately avoided
+		// by the span enumeration, and the famous-name class arrives exactly this unconfident.
+		const streetNode = { ...node("street", "Whitby", 0, 6), confidence: 0.4 }
+
+		const resolved = await createWOFResolver(backend as ResolverBackend).resolveTree(tree("Whitby", [streetNode]), {
+			traceSink: (record) => records.push(record),
+		})
+
+		// The rescue produced a resolved locality node…
+		const rescued = resolved.roots.find((n) => n.tag === "locality" && n.placeID)
+
+		expect(rescued?.metadata?.["span_rescore"]).toBe(true)
+
+		// …and a record for it: no resolved coordinate without a lookup record.
+		const record = records.find((r) => r.gates.includes("span_rescore"))
+
+		expect(record).toBeDefined()
+		expect(record!.picked).toMatchObject({ source: "span_rescore" })
+		expect(record!.candidates.length).toBeGreaterThan(0)
+	})
+
 	it("records picked: null with its gates when a lookup resolves nothing", async () => {
 		const backend = new StubBackend([])
 		const records: ResolveNodeTrace[] = []
