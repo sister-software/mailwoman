@@ -978,6 +978,64 @@ export interface ResolveOpts {
 	 * with one declared variable.
 	 */
 	adminContainmentRerank?: boolean
+	/**
+	 * Resolver-interior trace sink (#1721): when set, the walk emits one {@link ResolveNodeTrace} per candidate lookup —
+	 * the query as sent, the candidate table with per-stage ranks, every gate that fired, and the pick's provenance — so
+	 * "the right row was present at rank 3 and lost to the fame term" is a recorded fact instead of a spelunking result.
+	 * Absent (the default) the walk does ZERO trace bookkeeping and stays byte-identical; the sink is a hot-path opt-in
+	 * for debug surfaces, never a production default.
+	 */
+	traceSink?: (record: ResolveNodeTrace) => void
+}
+
+/**
+ * One candidate as the resolver's deciding site saw it — the fields the ranking stages actually read, plus a per-stage
+ * rank vector. `ranks` carries one entry per stage that RAN, in execution order (`initial` = the backend's own order;
+ * then whichever of `anchor`, `locale_prior`, `importance`, `containment`, `exact_type` were active); a stage a
+ * candidate set never went through is absent, never defaulted. The vector is what makes loss attributable: the stage
+ * whose entry moved a row down is the term it lost to.
+ */
+export interface ResolveCandidateTrace {
+	id: string | number
+	name: string
+	country: string
+	placetype: string
+	score: number
+	prominence?: number
+	importance?: number
+	population?: number
+	exactMatch?: boolean
+	containedByQualifier?: boolean
+	ranks: Record<string, number>
+}
+
+/**
+ * One `ResolveNodeTrace` per backend lookup the walk performed (#1721). `gates` records mechanism events in execution
+ * order, in the resolver's own vocabulary (`parent_fallback_retry`, `postcode_format_probe`, `postcode_prefix_prior`,
+ * `bare_race`, `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`,
+ * `placetype_fallback`). `picked: null` states the lookup resolved nothing — a claim, not an omission. The candidate
+ * table is capped ({@link ResolveNodeTrace.candidatesTruncated} counts the tail) so a trace stays a record, not a
+ * dump.
+ */
+export interface ResolveNodeTrace {
+	tag: string
+	value: string
+	placetype: string
+	query: {
+		country?: string
+		parentID?: string | number
+		postcode?: string
+		regionQualifier?: string
+		limit: number
+	}
+	gates: string[]
+	candidates: ResolveCandidateTrace[]
+	candidatesTruncated: number
+	picked: {
+		id: string | number
+		name: string
+		source: "ranked" | "bare_country" | "bare_region" | "postcode_prefix" | "postcode_format_probe" | "empty_admin"
+	} | null
 }
 
 /**

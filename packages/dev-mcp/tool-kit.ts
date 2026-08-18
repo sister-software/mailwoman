@@ -216,8 +216,65 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
+			...resolverRows(run.trace),
 		],
 	}
+}
+
+/**
+ * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the gates that fired, the pick,
+ * and the candidate table with each row's per-stage rank vector. `resolver: []` renders as its own claim (the walk
+ * performed no lookups) rather than nothing, because an absent line is indistinguishable from a section that predates
+ * the field.
+ */
+function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
+	const records = trace.resolver
+
+	if (!records) {
+		return ["resolver: (absent — this trace predates the resolver-interior records)"]
+	}
+
+	if (!records.length) {
+		return ["resolver: no lookups performed (nothing resolvable in the tree)"]
+	}
+
+	return records.map((record) => {
+		const query = [
+			record.placetype,
+			record.query.country ? `country=${record.query.country}` : null,
+			record.query.parentID !== undefined ? `parent=${record.query.parentID}` : null,
+			record.query.regionQualifier ? `qualifier=${JSON.stringify(record.query.regionQualifier)}` : null,
+			`limit=${record.query.limit}`,
+		]
+			.filter(Boolean)
+			.join(" ")
+
+		const rows = record.candidates.map((c) => {
+			const ranks = Object.entries(c.ranks)
+				.map(([stage, rank]) => `${stage}:${rank}`)
+				.join("→")
+
+			const picked = record.picked && record.picked.id === c.id ? " ◀ PICKED" : ""
+
+			return `    ${c.name} (${c.country} ${c.placetype} id=${c.id}) score=${c.score}${
+				c.prominence !== undefined ? ` prom=${c.prominence.toFixed(2)}` : ""
+			}${c.importance !== undefined ? ` imp=${c.importance.toFixed(2)}` : ""}${
+				c.population !== undefined ? ` pop=${c.population}` : ""
+			}${c.containedByQualifier !== undefined ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`
+		})
+
+		const head =
+			`resolver ${JSON.stringify(record.value)} → ${query}` +
+			(record.gates.length ? ` gates=[${record.gates.join(",")}]` : "") +
+			(record.picked
+				? record.picked.source === "ranked"
+					? ""
+					: ` picked-via=${record.picked.source}`
+				: " → NOTHING (picked: null)") +
+			(record.candidatesTruncated ? ` (+${record.candidatesTruncated} rows past the cap)` : "")
+
+		return [head, ...rows].join("\n")
+	})
 }
 
 /**

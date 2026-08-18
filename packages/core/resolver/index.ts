@@ -46,6 +46,8 @@ export type {
 	PostcodePrefixAncestor,
 	PostcodePrefixIndexLike,
 	PostcodePrefixNode,
+	ResolveCandidateTrace,
+	ResolveNodeTrace,
 	ResolveOpts,
 	ResolvedPlace,
 	Resolver,

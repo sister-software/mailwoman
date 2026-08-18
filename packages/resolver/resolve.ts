@@ -20,6 +20,8 @@ import {
 	type BackendCapabilityGap,
 	type CoincidentLocality,
 	compareReferential,
+	type ResolveCandidateTrace,
+	type ResolveNodeTrace,
 	DEFAULT_PLACETYPE_MAP,
 	type InterpolationLookup,
 	isPlacetypeFallback,
@@ -69,6 +71,116 @@ import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } fr
  */
 export function createWOFResolver(backend: ResolverBackend): Resolver {
 	return new WOFResolver(backend)
+}
+
+/**
+ * Cap on candidates recorded per {@link ResolveNodeTrace} — the trace is a record, not a dump. The count past the cap is
+ * reported in `candidatesTruncated`, so absence of a row is never silent.
+ */
+const TRACE_CANDIDATE_CAP = 10
+
+/**
+ * Per-lookup trace bookkeeping (#1721). `#lookupAndPick` talks to ONE of these unconditionally — a real recorder when
+ * `ResolveOpts.traceSink` is set, the frozen {@link NOOP_TRACE_RECORDER} otherwise — so the hot path carries no
+ * per-event branches and the no-sink walk costs a handful of empty calls per node.
+ */
+interface NodeTraceRecorder {
+	bind(
+		node: AddressNode,
+		placetype: string,
+		query: {
+			country?: string
+			parentID?: string | number
+			postcode?: string
+			regionQualifier?: string
+			limit?: number
+		},
+		defaultLimit: number
+	): void
+	gate(name: string): void
+	stage(name: string, order: readonly ResolvedPlace[]): void
+	emit(picked: NonNullable<ResolveNodeTrace["picked"]> | null): void
+}
+
+const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
+	bind() {},
+	gate() {},
+	stage() {},
+	emit() {},
+})
+
+function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): NodeTraceRecorder {
+	const gates: string[] = []
+	const stageOrders: Array<[string, readonly ResolvedPlace[]]> = []
+	let ctx: {
+		node: AddressNode
+		placetype: string
+		query: Parameters<NodeTraceRecorder["bind"]>[2]
+		defaultLimit: number
+	} | null = null
+
+	return {
+		bind(node, placetype, query, defaultLimit) {
+			ctx = { node, placetype, query, defaultLimit }
+		},
+		gate(name) {
+			gates.push(name)
+		},
+		stage(name, order) {
+			stageOrders.push([name, order])
+		},
+		emit(picked) {
+			if (!ctx) return
+
+			const rankMap = new Map<ResolvedPlace, Record<string, number>>()
+
+			for (const [stage, order] of stageOrders) {
+				order.forEach((candidate, index) => {
+					let ranks = rankMap.get(candidate)
+
+					if (!ranks) {
+						ranks = {}
+						rankMap.set(candidate, ranks)
+					}
+
+					ranks[stage] = index + 1
+				})
+			}
+
+			const finalOrder = stageOrders.at(-1)?.[1] ?? []
+
+			const rows: ResolveCandidateTrace[] = finalOrder.slice(0, TRACE_CANDIDATE_CAP).map((c) => ({
+				id: c.id,
+				name: c.name,
+				country: c.country,
+				placetype: c.placetype,
+				score: c.score,
+				...(c.prominence !== undefined ? { prominence: c.prominence } : {}),
+				...(c.importance !== undefined ? { importance: c.importance } : {}),
+				...(c.population !== undefined ? { population: c.population } : {}),
+				...(c.exactMatch !== undefined ? { exactMatch: c.exactMatch } : {}),
+				...(c.containedByQualifier !== undefined ? { containedByQualifier: c.containedByQualifier } : {}),
+				ranks: rankMap.get(c) ?? {},
+			}))
+
+			sink({
+				tag: ctx.node.tag,
+				value: ctx.node.value,
+				placetype: ctx.placetype,
+				query: {
+					...(ctx.query.country ? { country: ctx.query.country } : {}),
+					...(ctx.query.parentID !== undefined ? { parentID: ctx.query.parentID } : {}),
+					...(ctx.query.postcode ? { postcode: ctx.query.postcode } : {}),
+					...(ctx.query.regionQualifier ? { regionQualifier: ctx.query.regionQualifier } : {}),
+					limit: ctx.query.limit ?? ctx.defaultLimit,
+				},
+				gates,
+				candidates: rows,
+				candidatesTruncated: Math.max(0, finalOrder.length - TRACE_CANDIDATE_CAP),
+				picked,
+			})
+		},
+	}
 }
 
 interface ResolutionState {
@@ -133,6 +245,10 @@ interface ResolutionState {
 	 * Weight on the posterior in the locality re-rank. Only used when `anchorPosterior` is set.
 	 */
 	anchorWeight: number
+	/**
+	 * #1721 resolver-interior trace sink. Undefined (the default) = zero bookkeeping, byte-identical walk.
+	 */
+	traceSink?: (record: ResolveNodeTrace) => void
 	/**
 	 * #27 locale-country SOFT prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
 	 * byte-stable. See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
@@ -496,6 +612,7 @@ class WOFResolver implements Resolver {
 			// because region and locality are siblings the walk visits independently.
 			adminContainmentRerank: opts.adminContainmentRerank === true,
 			regionQualifier: firstRegionQualifier(tree.roots),
+			...(opts.traceSink ? { traceSink: opts.traceSink } : {}),
 			localityNodePresent: false,
 			resolvedRegion: null,
 			resolvedRegionNode: null,
@@ -827,6 +944,13 @@ class WOFResolver implements Resolver {
 			}
 		}
 
+		// #1721 resolver-interior trace. Stage orders hold the SAME candidate objects across re-ranks
+		// (every stage reorders, never clones), which is what lets emit assemble a per-stage rank
+		// vector per row. The no-sink walk talks to the frozen no-op recorder — zero per-event branches.
+		const rec = state.traceSink ? createNodeTraceRecorder(state.traceSink) : NOOP_TRACE_RECORDER
+
+		rec.bind(node, placetype, query, state.candidatesPerLookup)
+
 		let candidates: ResolvedPlace[]
 
 		// #1589: a `postalcode` whose FORMAT implies specific countries, with no surviving country
@@ -838,6 +962,7 @@ class WOFResolver implements Resolver {
 		// set — its index is country-scoped by construction, so it is not the fold this branch
 		// exists to avoid (the B3 tests hold that path).
 		if (placetype === "postalcode" && !query.country && state.postcodeFormatCountries?.length) {
+			rec.gate("postcode_format_probe")
 			let best: ResolvedPlace | undefined
 
 			for (const impliedCountry of state.postcodeFormatCountries) {
@@ -855,12 +980,17 @@ class WOFResolver implements Resolver {
 				}
 			}
 
-			if (best) return { top: best, alternatives: [] }
+			if (best) {
+				rec.emit({ id: best.id, name: best.name, source: "postcode_format_probe" })
+
+				return { top: best, alternatives: [] }
+			}
 
 			candidates = []
 		} else {
 			try {
 				candidates = await this.#backend.findPlace(query)
+				rec.stage("initial", candidates)
 
 				// Parent soft-gating: `parentID` is a HARD descendant filter in the backend, which wrongly
 				// zeroes the result when the parent resolved wrong OR the gazetteer hierarchy is incomplete
@@ -870,11 +1000,16 @@ class WOFResolver implements Resolver {
 				// this still can't wander to a foreign place. Same logical resolution → no extra budget.
 				if (!candidates.length && state.parentFallback && query.parentID !== undefined) {
 					delete query.parentID
+					rec.gate("parent_fallback_retry")
 					candidates = await this.#backend.findPlace(query)
+					rec.stage("parent_fallback", candidates)
 				}
 			} catch {
 				// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 				// its classifier attribution intact.
+				rec.gate("backend_error")
+				rec.emit(null)
+
 				return null
 			}
 		}
@@ -898,8 +1033,13 @@ class WOFResolver implements Resolver {
 						: {}),
 				}
 
+				rec.gate("postcode_prefix_prior")
+				const prefixPlace = postcodePrefixResolvedPlace(probe.prefix, probe.node, state.postcodePrefixIndex)
+
+				rec.emit({ id: prefixPlace.id, name: prefixPlace.name, source: "postcode_prefix" })
+
 				return {
-					top: postcodePrefixResolvedPlace(probe.prefix, probe.node, state.postcodePrefixIndex),
+					top: prefixPlace,
 					alternatives: [],
 					metadata,
 				}
@@ -913,6 +1053,11 @@ class WOFResolver implements Resolver {
 		// address-shaped input is byte-stable. The locality winner's prominence arbitrates below;
 		// with no locality candidates at all, a country hit resolves the span outright.
 		const isBareRace = placetype === "locality" && node === state.bareLocalityNode
+
+		if (isBareRace) {
+			rec.gate("bare_race")
+		}
+
 		const bareCountry = isBareRace ? await bareCountryCandidate(this.#backend, node.value, query.country) : null
 		const bareRegion = isBareRace ? await bareRegionCandidate(this.#backend, node.value, query.country) : null
 
@@ -922,12 +1067,17 @@ class WOFResolver implements Resolver {
 			const admin = pickLargerAdmin(bareCountry, bareRegion)
 
 			if (admin) {
+				rec.gate("empty_admin_pick")
+				rec.emit({ id: admin.id, name: admin.name, source: "empty_admin" })
+
 				return {
 					top: admin,
 					alternatives: [],
 					metadata: admin === bareRegion ? { bare_region_repick: true } : { bare_country_repick: true },
 				}
 			}
+
+			rec.emit(null)
 
 			return null
 		}
@@ -980,6 +1130,8 @@ class WOFResolver implements Resolver {
 
 				return bKey - aKey || b.score - a.score
 			})
+
+			rec.stage("anchor", ranked)
 		}
 
 		// Locale-country soft prior (#27) — the #912 lever's other half, at the tier that decides a bare
@@ -999,6 +1151,7 @@ class WOFResolver implements Resolver {
 		// wherever it has been measured, and it leaves an unscored candidate exactly where the prior put it.
 		if (state.localeCountryPrior && !state.defaultCountry && !state.anchorPosterior && anchorEligible) {
 			ranked = rankByCountryPrior(ranked, state.localeCountryPrior, state.localeCountryPriorWeight)
+			rec.stage("locale_prior", ranked)
 		}
 
 		// Importance-first (#17/#28). Before this key a bare famous name was decided on POPULATION
@@ -1014,6 +1167,7 @@ class WOFResolver implements Resolver {
 		// derived from the address's OWN postcode. Evidence outranks a prior. See `toponym-prior.ts`.
 		if (!state.anchorPosterior) {
 			ranked = rankByImportance(ranked)
+			rec.stage("importance", ranked)
 		}
 
 		// Admin-containment partition (#1717 stage 2): the LAST soft re-rank, after the anchor/fame keys
@@ -1030,6 +1184,8 @@ class WOFResolver implements Resolver {
 				(c) => c.containedByQualifier === true,
 				(c) => c.exactMatch === true
 			)
+
+			rec.stage("containment", ranked)
 		}
 
 		// Exact-type preference (#718): when the placetype-equivalence group let a broader admin tier
@@ -1047,11 +1203,18 @@ class WOFResolver implements Resolver {
 				...ranked.filter((c) => !isPlacetypeFallback(placetype, c.placetype)),
 				...ranked.filter((c) => isPlacetypeFallback(placetype, c.placetype)),
 			]
+
+			rec.stage("exact_type", ranked)
 		}
 
 		const top = ranked[0]!
 
-		if (top.score < state.minWinningScore) return null
+		if (top.score < state.minWinningScore) {
+			rec.gate("min_score_reject")
+			rec.emit(null)
+
+			return null
+		}
 
 		// The admin side of the bare-toponym race. The COUNTRY row wins on prominence alone —
 		// Japan-the-country (pop 126M) over Japan, Pennsylvania (pop 0) — while the REGION row must
@@ -1062,10 +1225,16 @@ class WOFResolver implements Resolver {
 		// Vermont hamlet (margin 3.4). A bare name with no admin namesake never reaches these lines,
 		// and the displaced locality stays first among the alternatives either way.
 		if (bareCountry && (bareCountry.prominence ?? bareCountry.score) > (top.prominence ?? top.score)) {
+			rec.gate("bare_country_repick")
+			rec.emit({ id: bareCountry.id, name: bareCountry.name, source: "bare_country" })
+
 			return { top: bareCountry, alternatives: ranked, metadata: { bare_country_repick: true } }
 		}
 
 		if (bareRegion && logPopulation(bareRegion) >= logPopulation(top) + BARE_REGION_DOMINANCE_LOG10) {
+			rec.gate("bare_region_repick")
+			rec.emit({ id: bareRegion.id, name: bareRegion.name, source: "bare_region" })
+
 			return { top: bareRegion, alternatives: ranked, metadata: { bare_region_repick: true } }
 		}
 
@@ -1074,7 +1243,10 @@ class WOFResolver implements Resolver {
 		// identity/coordinate are unchanged; only `metadata.resolution_quality` is stamped downstream.
 		if (isPlacetypeFallback(placetype, top.placetype)) {
 			top.resolutionQuality = "fallback"
+			rec.gate("placetype_fallback")
 		}
+
+		rec.emit({ id: top.id, name: top.name, source: "ranked" })
 
 		// The lever's trace stamp (#1717 stage 2 / #1719's rule): an opted-in mechanism that cannot fire
 		// — a pre-sidecar artifact, an incapable backend — must say so in the result, not degrade

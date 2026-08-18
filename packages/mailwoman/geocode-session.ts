@@ -38,7 +38,7 @@ import {
 	type QueryKindResult,
 	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/core/resolver"
+import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
@@ -163,6 +163,12 @@ export interface GeocodeTrace {
 	 * The session's `--locale`, for the surface that shows the head's verdict next to the operator's assertion.
 	 */
 	locale: string
+	/**
+	 * #1721 — the resolver's interior: one record per backend lookup the walk performed, carrying the query as sent, the
+	 * candidate table with per-stage ranks, the gates that fired, and the pick's provenance. An EMPTY array means the
+	 * walk performed no lookups (nothing resolvable in the tree); the field is absent only when tracing was off.
+	 */
+	resolver: ResolveNodeTrace[]
 }
 
 /**
@@ -551,7 +557,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	 * `parseForGeocode` just used ({@link geocodeParseInputs} is the shared derivation), so the record describes this
 	 * input's decode rather than a re-derived one.
 	 */
-	const traceOf = async (input: string): Promise<GeocodeTrace | undefined> => {
+	const traceOf = async (input: string): Promise<Omit<GeocodeTrace, "resolver"> | undefined> => {
 		if (!options.trace) return undefined
 
 		const inputs = geocodeParseInputs(input, parseDeps)
@@ -582,6 +588,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		const parsedAt = performance.now()
 		const trace = await traceOf(input)
 		const tracedAt = performance.now()
+		// #1721: the resolver-interior records for THIS call. A fresh array per call (the deps spread below
+		// carries it), so concurrent geocodes on one session never interleave their records.
+		const resolverTrace: ResolveNodeTrace[] = []
 
 		// #1589, the #912 guard's sibling: a bare POSTCODE whose format implies countries that exclude
 		// the locale-inferred one must not be hard-scoped by the locale. `SW1A 1AA` under the default
@@ -664,6 +673,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #1649: the lexicon-aware kind classifier — a thing-query abstains instead of resolving nonsense.
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
+			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 		})
 
 		const finishedAt = performance.now()
@@ -681,7 +691,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				resolve: finishedAt - tracedAt,
 				total: finishedAt - startedAt,
 			},
-			...(trace ? { trace } : {}),
+			...(trace ? { trace: { ...trace, resolver: resolverTrace } } : {}),
 		}
 	}
 

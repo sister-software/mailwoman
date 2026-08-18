@@ -445,6 +445,10 @@ export interface GeocodeDeps {
 	 */
 	adminCoherence?: boolean
 	/**
+	 * #1721 resolver-interior trace sink, forwarded verbatim to `ResolveOpts.traceSink`. Absent = zero bookkeeping.
+	 */
+	resolveTraceSink?: import("@mailwoman/core/resolver").ResolveOpts["traceSink"]
+	/**
 	 * Lineage attachment (#404, `ResolveOpts.includeAncestors`) — stamp each resolved node's containment chain onto
 	 * `metadata.ancestors`, which is what puts region-class ancestry in front of the admin-coherence verdicts (#1717):
 	 * without it `region` reads `unverifiable` on every winner. **Default-on** for the geocode path — the stamp is
@@ -953,6 +957,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		// the same reason as `adminCoherence` above. The resolver still guards on the backend actually
 		// serving `ancestors()`, so an artifact predating the sidecar stays byte-identical.
 		includeAncestors: deps.includeAncestors !== false,
+		...(deps.resolveTraceSink ? { traceSink: deps.resolveTraceSink } : {}),
 	}
 
 	if (deps.defaultCountry) {
