@@ -51,7 +51,7 @@ const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releas
  */
 const REPO_ROOT = resolve(import.meta.dirname, "..")
 const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "records", "site-2026-08", "releases.mdx")
-const MODEL_CARD_PATH = resolve(REPO_ROOT, "neural-weights-en-us", "model-card.json")
+const MODEL_CARD_PATH = resolve(REPO_ROOT, "packages", "neural-weights-en-us", "model-card.json")
 
 interface ParityCheck {
 	name: string
@@ -126,7 +126,7 @@ const checks: ParityCheck[] = []
 // the demo serves MODELS, so its `defaultVersion` carries the model-card lineage number (6.6.0),
 // not the npm package number — comparing it against npm latest went permanently red the moment a
 // code-only release shipped (daily failures 07-21→07-23 across v7.3–v7.5). The demo leg now
-// compares against the SHIPPED model identity: `neural-weights-en-us/model-card.json#version`
+// compares against the SHIPPED model identity: `packages/neural-weights-en-us/model-card.json#version`
 // (the same source verify-release-metadata keys off). The docs matrix row stays vs npm latest —
 // that surface documents package releases.
 const localCard = parseJSONStrict<{
