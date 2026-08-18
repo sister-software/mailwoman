@@ -1115,6 +1115,16 @@ different cost, not a larger `n` on this one.
 
 ## 11. First slice
 
+> **§3.1 update, 2026-08-18.** The supervisor/socket split was resolved by a different cut than the
+> one sketched here, driven by measured need: staleness (not warmth) was the binding cost — the
+> refusal-on-source-edit locked the tool developer out for most of two working days. The shipped
+> shape is a never-stale stdio SHIM (`cli.ts`, imports nothing from the repo runtime) forking a
+> restartable WORKER (`worker.ts`, the whole module graph) over IPC, with `mwdev_restart` as a
+> shim-owned tool emitting `tools/list_changed` after a swap. Matches the pattern the MCP ecosystem
+> converged on (mcp-reloader, reloaderoo, mcp-hmr); `process.execve` was evaluated and rejected —
+> it discards the initialized MCP session with the module graph. Warmth across restarts remains
+> deliberately unbuilt: engines are lazy and rebuild on first use, which the restart report states.
+
 > **Status, 2026-08-16.** This section is the plan of record and is kept as written. The slice shipped
 > (#1698), and the prediction it tests held, so the deferrals below were taken in order rather than
 > abandoned: every tool named here as waiting now exists, plus `mwdev_runs`. All four `ArmSpec` members

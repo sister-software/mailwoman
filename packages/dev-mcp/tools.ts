@@ -67,7 +67,7 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 				"Status of the warm engine registry: what is resident, what it cost to build, and whether the working " +
 				"tree has moved since this process imported its modules. `reload` drops every session so the next call " +
 				"rebuilds them against the artifacts on disk — it CANNOT re-import source, and REFUSES once the tree has " +
-				"moved rather than reporting a reload it did not perform. A source edit needs a server restart; to A/B a " +
+				"moved rather than reporting a reload it did not perform. A source edit needs `mwdev_restart`; to A/B a " +
 				"source change, run each arm in its own process.",
 			inputSchema: z.object({
 				action: z.enum(["status", "reload", "evict"]).default("status"),

@@ -196,7 +196,7 @@ async function compareMailwomanArms(
 	if (engineA.fingerprint.digest !== engineB.fingerprint.digest) {
 		throw new Error(
 			`Arms were built against different source trees (${engineA.fingerprint.digest} vs ` +
-				`${engineB.fingerprint.digest}). That is not a comparison. Restart the MCP server and re-run.`
+				`${engineB.fingerprint.digest}). That is not a comparison. Call mwdev_restart and re-run.`
 		)
 	}
 

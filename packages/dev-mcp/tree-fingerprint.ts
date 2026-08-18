@@ -196,7 +196,8 @@ export function staleEngineMessage(engineFingerprint: TreeFingerprint, current: 
 	return (
 		`This process imported tree ${engineFingerprint.digest}; the working tree is now ${current.digest}.` +
 		`${changed} Node cannot evict an imported module, so this process can only serve the old code. ` +
-		"RESTART the MCP server and re-run — `reload` cannot help, because it rebuilds sessions around the same " +
-		"already-imported modules. To compare a source change, run each arm in a separate process."
+		"Call `mwdev_restart` and re-run — it re-forks the worker with a fresh module graph; `reload` cannot help, " +
+		"because it rebuilds sessions around the same already-imported modules. To compare a source change, run each " +
+		"arm in a separate process."
 	)
 }
