@@ -71,3 +71,52 @@ export function detectAddressSystem(
 
 	return { system, country, confidence }
 }
+
+/**
+ * The locale head's confident COUNTRY verdict, or null — {@link detectAddressSystem} minus the system mapping, so the
+ * three head countries without a `SystemCode` (ES/IT/NL) still yield a verdict. Same threshold posture: below it the
+ * head abstains rather than acting on a coin flip. The head is a 9-way classifier — its verdict is evidence that the
+ * text is shaped like THAT country's addressing, never a resolved country (a Chinese address may read GB: right about
+ * "not the locale's country", wrong about which).
+ */
+export function confidentLocaleCountry(
+	localeLogits: readonly number[] | undefined,
+	threshold = 0.8
+): { country: (typeof LOCALE_COUNTRIES)[number]; confidence: number } | null {
+	if (!localeLogits || localeLogits.length !== LOCALE_COUNTRIES.length) return null
+	const probs = softmax(localeLogits as number[])
+	let best = 0
+
+	for (let i = 1; i < probs.length; i++)
+		if (probs[i]! > probs[best]!) {
+			best = i
+		}
+
+	const confidence = probs[best]!
+
+	if (confidence < threshold) return null
+
+	return { country: LOCALE_COUNTRIES[best]!, confidence }
+}
+
+/**
+ * Resolve which addressing system's conventions apply for one parse (#511 Tier A): a caller-pinned `SystemCode` wins;
+ * `"auto"` reads the locale head under {@link detectAddressSystem}'s confidence bar; `undefined` = conventions off —
+ * null system, no constraints, and the parse stays byte-identical to the pre-conventions path.
+ */
+export function resolveSystemVerdict(
+	conventionsOpt: SystemCode | "auto" | undefined,
+	localeLogits: readonly number[] | undefined
+): { detectedSystem: SystemCode | null; systemSource: "off" | "auto" | "pinned" } {
+	const detectedSystem =
+		conventionsOpt === undefined
+			? null
+			: conventionsOpt === "auto"
+				? (detectAddressSystem(localeLogits)?.system ?? null)
+				: conventionsOpt
+
+	return {
+		detectedSystem,
+		systemSource: conventionsOpt === undefined ? "off" : conventionsOpt === "auto" ? "auto" : "pinned",
+	}
+}

@@ -169,6 +169,14 @@ export interface AddressTree {
 	 * pre-classifier (Phase 6+) is the intended source of this value.
 	 */
 	system?: AddressSystem
+	/**
+	 * The parse-time locale-head verdict when it was CONFIDENT (softmax >= the action threshold): the model's own read of
+	 * which country's addressing this text is shaped like. Absent = under threshold or the head never ran — unknown,
+	 * never "domestic". Evidence about the TEXT, not a resolved country: the head is a 9-way classifier, so a Chinese
+	 * address may read GB — right about "not the locale's country", wrong about which. The scope gate this exists for
+	 * (#1684) therefore only ever DROPS an inferred scope on a mismatch; it never re-points one.
+	 */
+	localeCountry?: { country: string; confidence: number }
 }
 
 /**

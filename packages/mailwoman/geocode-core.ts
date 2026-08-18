@@ -61,6 +61,7 @@ import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from 
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { applyForkEntityAnswer, probeForkEntity } from "./fork-entity.ts"
 import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hierarchy-lineage.ts"
+import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
@@ -977,13 +978,23 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	}
 
 	if (deps.defaultCountry) {
-		opts.defaultCountry = deps.defaultCountry
+		// #1684 conditional scope: a locale-INFERRED scope yields to the model's own confident contrary
+		// read of the text (see shouldDropInferredScope). The scope is DROPPED, never re-pointed — the
+		// worldwide race with cross-country primary preference + fame decides, which is the behavior the
+		// graded scope=none arm measured on exactly this class ("Nanjing Road, Huangpu, Shanghai" was a
+		// West Virginia namesake under the inferred filter). An explicit caller scope never enters here.
+		if (shouldDropInferredScope(tree, deps.defaultCountry, deps.defaultCountryIsInferred === true)) {
+			// No hard scope; the postcode-format block below may still scope, which is the documented
+			// order (format evidence outranks a locale hint).
+		} else {
+			opts.defaultCountry = deps.defaultCountry
 
-		// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
-		// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
-		// default locale filters out the DE country row and falls to a US alias locality.
-		if (deps.defaultCountryIsInferred === true) {
-			opts.defaultCountryIsInferred = true
+			// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
+			// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
+			// default locale filters out the DE country row and falls to a US alias locality.
+			if (deps.defaultCountryIsInferred === true) {
+				opts.defaultCountryIsInferred = true
+			}
 		}
 	}
 
