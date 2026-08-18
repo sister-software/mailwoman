@@ -114,4 +114,21 @@ describe("the never-stale shim", () => {
 		},
 		BOOT_TIMEOUT_MS
 	)
+
+	it(
+		"rejects mis-shaped arguments at the schema, not deep inside the handler",
+		async () => {
+			// The split moved the SDK's validation out of the call path; the worker must re-impose it. A client holding
+			// a pre-restart schema sends exactly this shape — an array parameter as its JSON text — and the failure it
+			// gets back must name the arguments, not a TypeError from whatever the handler tried to do with the string.
+			const result = await client.callTool({
+				name: "mwdev_run",
+				arguments: { tally: '["tier"]' },
+			})
+
+			expect(result.isError).toBe(true)
+			expect(String((result.content as Array<{ text: string }>)[0]?.text)).toContain("invalid arguments")
+		},
+		BOOT_TIMEOUT_MS
+	)
 })

@@ -208,7 +208,9 @@ export class WorkerHost {
 	async restart(): Promise<RestartReport> {
 		const previousPID = this.pid
 		const previousFingerprint = this.bootFingerprint
-		const previousTools = JSON.stringify(this.tools.map((tool) => tool.name).toSorted())
+		// The FULL metas, not the names: a restart that adds a parameter changes what a client may send, and a
+		// name-only compare suppressed the tools/list_changed the client needed to drop its stale schema.
+		const previousTools = JSON.stringify(this.tools)
 
 		const aborted = this.#rejectPending(
 			new Error("The worker was restarted; this call died with the old module graph. Re-run it.")
@@ -226,7 +228,7 @@ export class WorkerHost {
 			previous_boot_fingerprint: previousFingerprint,
 			new_pid: this.pid!,
 			new_boot_fingerprint: this.bootFingerprint!,
-			tools_changed: JSON.stringify(this.tools.map((tool) => tool.name).toSorted()) !== previousTools,
+			tools_changed: JSON.stringify(this.tools) !== previousTools,
 			aborted_calls: aborted,
 		}
 	}

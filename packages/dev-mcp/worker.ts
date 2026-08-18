@@ -117,8 +117,27 @@ process.on("message", (message: WorkerInbound) => {
 			return
 		}
 
+		// Validate HERE, not in the shim: the split moved the SDK's schema enforcement out of the call path, and an
+		// unvalidated handler turns a stale-schema client's mis-shaped argument into a deep, misattributed TypeError
+		// (a tally array arriving as its JSON text reached `paths.map`). Parsing also applies the schema's defaults.
+		const parsed = tool.inputSchema.safeParse(message.args)
+
+		if (!parsed.success) {
+			send({
+				type: "result",
+				id: message.id,
+				ok: false,
+				error:
+					`${message.name}: invalid arguments — ${z.prettifyError(parsed.error)}. If your client's schema for ` +
+					"this tool predates a worker restart, refresh the tool list (the server announces schema changes " +
+					"via tools/list_changed).",
+			})
+
+			return
+		}
+
 		void tool
-			.handler(message.args)
+			.handler(parsed.data as Record<string, unknown>)
 			.then((value) => send({ type: "result", id: message.id, ok: true, value }))
 			.catch((error: unknown) =>
 				send({
