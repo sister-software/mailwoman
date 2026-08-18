@@ -39,6 +39,7 @@ import {
 	componentsOf,
 	provenanceFor,
 	renderTrace,
+	slimParseTrace,
 	type DevTool,
 	type DevToolDeps,
 } from "./tool-kit.ts"
@@ -415,10 +416,19 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 			inputSchema: z.object({
 				inputs: z.array(z.string()).min(1).max(20).describe("Up to 20 raw address strings."),
 				config: ENGINE_CONFIG_SCHEMA.optional(),
+				full_parse_trace: z
+					.boolean()
+					.default(false)
+					.describe(
+						"Include the raw logit/emission/feature matrices (thousands of floats). The default slim trace " +
+							"keeps every discrete diagnostic — tokens, labels, confidences, path, priors, channel " +
+							"confidence vectors — and is what a reader almost always wants."
+					),
 			}),
 			handler: async (args) => {
 				const inputs = args["inputs"] as string[]
 				const config = (args["config"] as EngineConfig | undefined) ?? {}
+				const fullParseTrace = args["full_parse_trace"] === true
 				// Tracing is the answer here, so it is forced on regardless of what the caller passed.
 				const engine = await registry.acquire({ ...config, trace: true })
 
@@ -446,7 +456,7 @@ export function buildToolTable(deps: DevToolDeps): DevTool[] {
 						query_shape: run.trace?.queryShape ?? null,
 						kind: run.trace?.kind ?? null,
 						input_mode: run.trace?.inputMode ?? null,
-						parse_trace: run.trace?.parse ?? null,
+						parse_trace: run.trace?.parse ? (fullParseTrace ? run.trace.parse : slimParseTrace(run.trace.parse)) : null,
 						rendered,
 						...(absent_reason ? { trace_absent_reason: absent_reason } : {}),
 						timing_ms: run.timing,

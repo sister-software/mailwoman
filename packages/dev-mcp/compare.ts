@@ -390,12 +390,15 @@ async function mailwomanRunner(
  * recorded arm and the live arm it was recorded from stop agreeing.
  */
 function answerFromGauntletResult(result: GauntletResult): ExternalAnswer {
+	const placeIDs = result.hierarchy.map((rung) => rung.placeID).filter((id): id is string => typeof id === "string")
+
 	return {
 		lat: result.lat,
 		lon: result.lon,
 		label: result.locality ?? result.region ?? null,
 		resultType: result.tier,
 		noResultReason: result.lat === null ? "the pipeline resolved no coordinate" : null,
+		...(placeIDs.length ? { place_ids: placeIDs } : {}),
 	}
 }
 
@@ -690,6 +693,11 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			address_kind: item.addressKind,
 			status: item.status,
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth),
+			// Tri-state, and separate from `differed` ON PURPOSE: identity comparison runs only when BOTH
+			// arms state a place-identity chain (absent = incomparable, never "same"), and it does not feed
+			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff contract keeps its
+			// meaning, while a wrong-instance swap under a stable coordinate becomes visible beside it.
+			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
 			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,
@@ -704,6 +712,9 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
+	// The emitted change list also carries identity-only rows (differed stays coordinate-level; the row's
+	// own identity_differed flag says which kind of change a reader is looking at).
+	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true)
 	const withTruth = rows.filter((row) => row.truth_lat !== null).length
 
 	const mode = hasOracle
@@ -825,6 +836,15 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		n_errored_b: errored.b,
 		errors,
 		arms_differed_on: { n: differed.length, of: rows.length },
+		identity_changed: {
+			n: rows.filter((row) => row.identity_differed === true).length,
+			of_comparable: rows.filter((row) => row.identity_differed !== undefined).length,
+			note:
+				"Rows where both arms stated a place-identity chain and the chains differ. Separate from " +
+				"arms_differed_on: a wrong-instance swap under a stable coordinate counts HERE and not there. " +
+				"of_comparable below the row count means at least one arm (an external engine, an oracle, or a run " +
+				'recorded before identity was stored) states no identity — incomparable, never "same".',
+		},
 		differed_basis: withTruth === rows.length ? "threshold-crossing-vs-truth" : "arm-separation",
 		arms_differed_on_note:
 			withTruth === rows.length
@@ -858,7 +878,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		...(identities["a"] ? { arm_a_identity: identities["a"] } : {}),
 		...(identities["b"] ? { arm_b_identity: identities["b"] } : {}),
 		...(options.stratifyBy ? { strata: stratifyGeo(rows, options.stratifyBy) } : {}),
-		rows_changed: differed,
+		rows_changed: changedRows,
 		warnings,
 	}
 }

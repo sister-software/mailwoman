@@ -62,7 +62,9 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 					// Required on `GeocodeResult`, and the mailwoman arm reads its answer through the gauntlet projection —
 					// which walks it. A double missing it throws inside the arm, and every row then scores as a query
 					// failure, which reads as an arm that lost.
-					hierarchy: [],
+					// A stated identity, so the tri-state pin below proves the ONE-SIDED case: the mailwoman
+					// arm carries place_ids and the external arm cannot — incomparable, never "same".
+					hierarchy: [{ tag: "locality", value: "stub", name: "stub", placeID: "wof:101" }],
 				},
 				timing: { total: 1 },
 			}),
@@ -204,6 +206,27 @@ describe("mwdev_compare — external arm", () => {
 
 		expect(result["truth_precision_m"]).toEqual({ "25000": 2 })
 		expect((result["warnings"] as string[]).join(" ")).toContain("truth tolerance coarser than 1km")
+	})
+
+	it('keeps identity tri-state: an external arm states none, so rows are incomparable — never "same"', async () => {
+		// The DIVERGED coordinates guarantee rows land in rows_changed, so the absence assertion below
+		// inspects real rows rather than an empty list. The stub mailwoman arm states place_ids
+		// (registryAt's hierarchy carries wof:101); Pelias structurally cannot.
+		const result = await comparison(registryAt(ANDORRA_LA_VELLA), [
+			{ body: peliasBody(LES_ESCALDES) },
+			{ body: peliasBody(ANDORRA_LA_VELLA) },
+		])
+
+		const rows = result["rows_changed"] as Array<{ identity_differed?: boolean }>
+
+		for (const row of rows) {
+			expect(row.identity_differed).toBeUndefined()
+		}
+
+		const identity = result["identity_changed"] as { n: number; of_comparable: number }
+
+		expect(identity.of_comparable).toBe(0)
+		expect(identity.n).toBe(0)
 	})
 
 	it("refuses to grade a set with no truth when grading was explicitly asked for", async () => {

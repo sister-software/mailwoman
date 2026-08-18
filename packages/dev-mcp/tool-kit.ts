@@ -199,6 +199,37 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * here. Both forms go back: the structured trace is what makes evidence diffable across arms, and the rendered rows are
  * what let a human read it in a transcript without an agent paraphrasing — which is where detail goes missing.
  */
+/**
+ * The parse trace without its matrices. The full `NeuralParseTrace` ships per-token logit and emission rows (33 floats
+ * × tokens, twice) plus per-channel feature matrices — thousands of numbers that no reader consumes inline and that
+ * crowd a context window the rendered rows already serve. The slim form keeps everything discrete and diagnostic
+ * (pieces, tokens with labels + confidences, the viterbi path, priors, locale head, repairs, per-channel CONFIDENCE
+ * vectors) and states what it dropped; `full_parse_trace: true` returns the raw object for the rare numeric dig.
+ */
+export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
+	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse as unknown as Record<string, unknown> & {
+		anchor?: { confidence?: unknown }
+		gazetteer?: { confidence?: unknown }
+		country?: { confidence?: unknown }
+	}
+
+	void logits
+	void emissions
+
+	const channel = (c: { confidence?: unknown } | undefined): unknown =>
+		c && typeof c === "object" ? { confidence: c.confidence } : c
+
+	return {
+		...rest,
+		anchor: channel(anchor),
+		gazetteer: channel(gazetteer),
+		country: channel(country),
+		matrices_omitted:
+			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
+			"full_parse_trace: true for the raw numbers.",
+	}
+}
+
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
 		return {
@@ -313,6 +344,12 @@ export interface ComparedRow {
 	b: unknown
 	issues_a: string[]
 	issues_b: string[]
+	/**
+	 * Whether the two arms' place-identity chains differ — PRESENT only when both arms stated one (see
+	 * `ExternalAnswer.place_ids`). Deliberately outside `differed`: the coordinate-level zero-diff contract batteries pin
+	 * on is unchanged, and identity is its own claim.
+	 */
+	identity_differed?: boolean
 }
 
 /**
