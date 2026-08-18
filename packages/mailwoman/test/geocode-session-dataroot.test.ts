@@ -19,7 +19,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { afterAll, describe, expect, it } from "vitest"
 
 import { createGeocodeCommandOptions } from "../geocode-command-options.ts"
@@ -35,13 +35,13 @@ afterAll(() => {
 })
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
-	it("resolves nothing from the overlay under a bogus dataRoot", async () => {
+	it("resolves nothing from the ENV overlay under a bogus dataRoot", async () => {
 		// Weights resolution is a ladder, and only its OVERLAY rung is governed by `dataRoot` — a checkout whose
-		// workspace packages or weights cache carry binaries (CI, after weights.test.ts links them) constructs a
-		// session from those rungs, while a checkout without them rejects. Both are in-contract. The #1732 pin is the
-		// same in either environment: NOTHING resolves from the overlay when the root is bogus — before the fix,
-		// weights (and the per-locale FST inside them) resolved from the process env's data root regardless of the
-		// option, so `artifacts.fstPath` came back DEFINED from the env overlay.
+		// workspace packages or weights cache carry binaries (CI links them into its checkout) resolves the FST from
+		// those rungs, while a checkout without them rejects outright. Both are in-contract, so this pin asserts the
+		// defect's own words instead: the #1732 bug was weights "silently reading the env root", so whatever the
+		// ladder answers, it must never be a path inside the PROCESS ENV data root's weights overlay when the
+		// session was given a different root. Pre-fix, `artifacts.fstPath` pointed exactly there.
 		const outcome = await createGeocodeSession(
 			// The production defaults factory, not a hand-built literal — the same lockstep seam the dev-mcp
 			// registry derives from, so this pin cannot drift from the shipped configuration.
@@ -64,7 +64,13 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 		}
 
 		try {
-			expect(outcome.session.artifacts.fstPath).toBeUndefined()
+			const fstPath = outcome.session.artifacts.fstPath
+
+			if (fstPath !== undefined) {
+				const envOverlay = join(String(mailwomanDataRoot()), "weights")
+
+				expect(fstPath.startsWith(envOverlay)).toBe(false)
+			}
 		} finally {
 			outcome.session.close()
 		}
