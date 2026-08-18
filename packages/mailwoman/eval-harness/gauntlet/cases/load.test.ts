@@ -144,14 +144,19 @@ const CORPUS_SIZE = 569
  * centroid, and no rooftop is coverable (the GA shard holds no `1 Broad St`). Tolerance and note edits only, so the
  * board id holds — content-addressing working as intended.
  *
- * Moved 2026-08-18 evening — → this — by the promotion sweep: the two board-flagged newly-passing rows promote to
- * status=pass, each stable across two consecutive full-board runs. `ie-op2-letter-west` (the parse now holds region +
- * country; the resolved dependent-locality identity stays marked by `in_winner_lineage: false`, and the pinned outcome
- * is components-only per the outcomes-not-mechanisms rule) and `ni-ws-antiguo-cine-gonzalez-pluscode` (its own note
+ * Moved 2026-08-18 evening — by the promotion sweep: the two board-flagged newly-passing rows promote to status=pass,
+ * each stable across two consecutive full-board runs. `ie-op2-letter-west` (the parse now holds region + country; the
+ * resolved dependent-locality identity stays marked by `in_winner_lineage: false`, and the pinned outcome is
+ * components-only per the outcomes-not-mechanisms rule) and `ni-ws-antiguo-cine-gonzalez-pluscode` (its own note
  * predicted "fix the explicit-country vs postcode-drag ordering and this row flips" — the #1735 explicit-country
  * pre-scope is that fix). Status flips only, so CORPUS_SIZE and the board id both hold; the gate grows 364 → 366.
+ *
+ * Moved again the same evening — → this — by the #1650 country-population candidate swap: `sm-cs-san-marino` (was San
+ * Marino CA, 9,997 km) and `sx-cs-sint-maarten` (was a St. Martin in Ohio, 3,094 km) flip improvement_target → pass —
+ * 147 of 237 country rows entered every prominence race at population 0, and the codex fallback ended that. Each passed
+ * twice (the pre-swap A/B battery and the post-swap board). Status flips only again; the gate grows 366 → 368.
  */
-const CORPUS_HASH = "d6aed5814c2ea19b3660f032e68e34a5a1ccaba6e99e54cc807fcf3ba3591393"
+const CORPUS_HASH = "328d14173927a37228336a669eae7fded61dd3e884c05ba2b171ac9284521d1c"
 
 /**
  * `ablationBoardID` of the corpus.
