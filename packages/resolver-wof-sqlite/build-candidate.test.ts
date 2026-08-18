@@ -242,6 +242,7 @@ describe("buildCandidateTable", () => {
 			INSERT INTO spr VALUES (301, 'Grandville', 'locality', 'FR', 47.0, 5.0, 46.9, 4.9, 47.1, 5.1, -1, 0);
 			INSERT INTO place_population VALUES (301, 2100000);
 			INSERT INTO place_search VALUES (301, 'Bigtown${ALIAS_SEP}Grossstadt${ALIAS_SEP}Grancitta${ALIAS_SEP}Grootstad');
+			INSERT INTO place_search VALUES (201, 'SPR');
 			-- The abbr provenance signal: a variant name in the country's official language.
 			CREATE TABLE names (
 				id INTEGER NOT NULL, name TEXT NOT NULL, placetype TEXT NOT NULL DEFAULT '',
@@ -253,8 +254,11 @@ describe("buildCandidateTable", () => {
 			INSERT INTO names VALUES (200, 'Chi-Town', 'locality', 'US', 'eng', 'variant', 0, 0);
 			-- …a variant in a NON-official language stays unstamped…
 			INSERT INTO names VALUES (200, 'Windy City', 'locality', 'US', 'jpn', 'variant', 0, 0);
-			-- …and a preferred name never stamps, whatever its language.
+			-- …and a preferred name never stamps, whatever its language…
 			INSERT INTO names VALUES (202, 'St Etienne', 'locality', 'FR', 'fra', 'preferred', 0, 0);
+			-- …while WOF's abbreviation KIND (language='abbr', empty privateuse — the Toledo 'TO' shape)
+			-- qualifies by kind alone. Staged via the alias bag below.
+			INSERT INTO names VALUES (201, 'SPR', 'locality', 'US', 'abbr', '', 0, 0);
 		`)
 
 		src.close()
@@ -283,6 +287,9 @@ describe("buildCandidateTable", () => {
 			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
 			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
+
+			// The abbreviation KIND stamps by kind alone — no official-language test.
+			expect(role("spr")[0]).toMatchObject({ role: "abbr", primary: 0 })
 		} finally {
 			db.close()
 		}

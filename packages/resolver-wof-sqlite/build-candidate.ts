@@ -234,14 +234,23 @@ function stampNameRoles(ctx: {
 	if (hasSourceNames) {
 		out.exec("BEGIN")
 
-		for (const r of src.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant'").iterate()) {
+		// Two provenance routes into the same stamp: WOF's abbreviation/short name KINDS arrive in the
+		// LANGUAGE column ('abbr'/'short' — 280 rows, measured 2026-08-18, Toledo's 'TO' among them) and
+		// qualify by kind alone; everything else qualifies as a variant in an official language.
+		for (const r of src
+			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
+			.iterate()) {
 			const a = attrs.get(Number(r.id))
 
 			if (!a) continue
 			const language = String(r.language ?? "")
-			const iso2 = iso2ByCID.get(a.cid) ?? "??"
 
-			if (language !== "eng" && !isOfficialLanguage(iso2, language)) continue
+			if (language !== "abbr" && language !== "short") {
+				const iso2 = iso2ByCID.get(a.cid) ?? "??"
+
+				if (language !== "eng" && !isOfficialLanguage(iso2, language)) continue
+			}
+
 			const k = normalizeLocalityForKey(String(r.name ?? ""))
 
 			if (!k || k === a.pkey) continue
