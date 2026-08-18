@@ -98,6 +98,9 @@ const GeocodeHierarchyEntrySchema = z
 		lat: z.number().optional(),
 		lon: z.number().optional(),
 		placeID: z.string().optional(),
+		// #1731 tri-state lineage provenance: true = the winner's ancestor chain vouches for this entry, false =
+		// resolved independently OUTSIDE the winner's lineage, absent = unverifiable. Absence is not false.
+		in_winner_lineage: z.boolean().optional(),
 	})
 	.openapi("GeocodeHierarchyEntry")
 

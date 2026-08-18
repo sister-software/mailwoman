@@ -60,6 +60,7 @@ import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherenc
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { applyForkEntityAnswer, probeForkEntity } from "./fork-entity.ts"
+import { assembleHierarchy, type HierarchyEntry } from "./hierarchy-lineage.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
@@ -165,8 +166,13 @@ export interface GeocodeResult {
 	/**
 	 * Admin hierarchy from the resolver, locality → country (most specific first). `name` is the resolved gazetteer name
 	 * (proper-cased canonical, #1014) — distinct from `value`, the raw parsed input span.
+	 *
+	 * Entries are INDEPENDENTLY resolved parse nodes, not one containment walk — so the chain can compose places no
+	 * containment holds (#1731). `in_winner_lineage` states each entry's standing against the winner's stamped ancestor
+	 * chain: `true` = vouched, `false` = resolved outside the winner's lineage (the chimera fragment), absent =
+	 * unverifiable (no sidecar, or no place identity). See `hierarchy-lineage.ts`.
 	 */
-	hierarchy: Array<{ tag: string; value: string; name: string; lat?: number; lon?: number; placeID?: string }>
+	hierarchy: HierarchyEntry[]
 	/**
 	 * Ranked candidate resolutions for the query's primary place — the winning place first, then the resolver's
 	 * same-query alternatives (Springfield MO, MA, IL, …), each with its own coordinate + country. #1016 — lets a
@@ -1461,28 +1467,6 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const houseNumber = allNodes.find((n) => n.tag === "house_number")?.value?.trim() || null
 	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
-	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
-
-	const hierarchy = allNodes
-		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
-		.toSorted((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
-		.map((n) => ({
-			tag: n.tag,
-			value: n.value.trim(),
-			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
-			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this, not `value`.
-			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
-			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeID ? { placeID: n.placeID } : {}),
-		}))
-
-	// #1058: the street tier's register commune fills the locality slot when no locality hierarchy entry
-	// exists (the span-rescored false locality was dropped, or the parse never emitted one) — a
-	// street-tier `city` must come from the register, not from the street's first token.
-	if (streetLocality && !hierarchy.some((h) => h.tag === "locality" || h.tag === "dependent_locality")) {
-		hierarchy.unshift({ tag: "locality", value: streetLocality, name: streetLocality })
-	}
-
 	// #1014: the resolved ISO-3166 alpha-2 country (`resolver_country`, stamped by decorateNode). Same for every
 	// resolved node of one address, so the first that carries it wins.
 	let countryCode: string | null = null
@@ -1504,6 +1488,9 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const primaryNode =
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
+
+	// #1731: lineage-graded against the same anchor the admin-coherence verdicts use.
+	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? primaryNode)
 
 	const candidates: GeocodeResult["candidates"] = []
 
