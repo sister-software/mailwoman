@@ -15,10 +15,6 @@
 import { isBareTreeOf } from "../decoder/tree-shape.ts"
 import type { AddressNode, AddressTree } from "../decoder/types.ts"
 import type { ComponentTag } from "../types/component.ts"
-import { prefetchReconcileLookups } from "./reconcile-lookups.ts"
-import type { ClassifierCandidate } from "./reconcile.ts"
-import { reconcileSpans } from "./reconcile.ts"
-import { aggregateSpanLogits } from "./span-logit-aggregation.ts"
 import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
 import type {
 	AddressClassifier,
@@ -476,104 +472,8 @@ export async function runPipeline(
 	}
 
 	let tree: AddressTree = { raw: normalized.normalized, roots: [] }
-	// Captured from the joint-reconcile path so the grouper-audit can defer to the classifier's
-	// per-span verdict on orphaned spans (see the assignment + grouperAudit below).
-	let auditClassifierTopK: ClassifierCandidate[] | undefined
 
-	// Joint-reconcile path: RETIRED AS DEFAULT 2026-06-14 (#427 promoted it; this de-promotes it).
-	// A reconcile-vs-raw-neural audit on two non-circular US holdouts (Travis E-911 + 7-state
-	// OpenAddresses) found it BREAKS the street+house_number geocode precondition on 77-84% of clean
-	// US addresses and fixes 0% — the phrase grouper bundles the house number into the STREET_PHRASE
-	// ("3075 Hill Street") and reconcileSpans then fuses the whole span into one node, leaving no
-	// separate `street`. Confirmed on golden v0.1.2 US+FR (n=4507, per-tag recall vs raw argmax):
-	// street -25.6pp, house_number -23.1pp, locality -2.3pp, venue -0.6pp, region/postcode/unit flat.
-	// It is worse-or-flat on EVERY tag — including venue, the thing #427 promoted it for. The #427
-	// re-gate's "DE +25pp / IT-ES +15pp" was loose street-STRING recall on OOD inputs (where raw
-	// neural mangles the street); it never measured the geocode precondition our evals grade on raw
-	// neural, so the regression was invisible. The destructive piece is the grouper HN-bundling (see
-	// the tracked issue); until that's fixed, argmax is the correct default. Set `jointReconcile: true`
-	// to opt back into reconcile (the A/B harnesses do). Report:
-	// docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
-	const jointEnabled = opts?.jointReconcile ?? false
-
-	const useJointReconcile =
-		jointEnabled && phraseProposals.length > 0 && stages.classifier && "parseWithLogits" in stages.classifier
-
-	if (useJointReconcile) {
-		const classifierWithLogits = stages.classifier as AddressClassifier & {
-			parseWithLogits: (
-				text: string,
-				opts?: ClassifierOpts
-			) => Promise<{ tree: AddressTree; logits: number[][]; pieces: Array<{ start: number; end: number }> }>
-		}
-
-		throwIfAborted(opts)
-		const tClassify = performance.now()
-
-		const {
-			tree: argmaxTree,
-			logits,
-			pieces,
-		} = await classifierWithLogits.parseWithLogits(normalized.normalized, {
-			queryShape,
-			fst: stages.fst,
-			...streetContextGateFor(stages),
-		})
-
-		timing["token-classify"] = performance.now() - tClassify
-
-		throwIfAborted(opts)
-		const tReconcile = performance.now()
-
-		// The classifier must expose its label vocabulary so the aggregation can strip BIO prefixes.
-		// NeuralAddressClassifier surfaces this as `cfg.labels` — extracted via structural typing here.
-		const labels: readonly string[] =
-			"labels" in classifierWithLogits ? (classifierWithLogits as unknown as { labels: readonly string[] }).labels : []
-
-		const classifierTopK = aggregateSpanLogits(
-			logits,
-			pieces,
-			phraseProposals.map((p) => ({ start: p.span.start, end: p.span.end })),
-			{ labels, text: normalized.normalized }
-		)
-
-		if (classifierTopK.length) {
-			// Concordance axes (#478): when the caller wires a backend, one bounded pre-fetch
-			// activates the resolver-candidate + parent-chain scoring the reconciler already
-			// implements. Absent backend = classifier-only reconcile (byte-stable).
-			// Country constraint from the locale gate's BCP-47 tag ("en-US" -> "US"); absent or
-			// und-like tags pass no constraint (ranking alone decides — matches resolveTree's default).
-			const localeCountry = locale.locale.split("-")[1]?.toUpperCase()
-
-			const lookups = stages.resolverBackend
-				? await prefetchReconcileLookups(
-						stages.resolverBackend,
-						normalized.normalized,
-						classifierTopK,
-						localeCountry && localeCountry.length === 2 ? { defaultCountry: localeCountry } : {}
-					)
-				: undefined
-
-			const result = reconcileSpans({
-				raw: normalized.normalized,
-				phraseProposals,
-				classifierTopK,
-				...(lookups ? { resolverCandidates: lookups.resolverCandidates, parentChain: lookups.parentChain } : {}),
-			})
-
-			tree = result.tree
-			// The reconciler can leave a span uncovered (e.g. it picked the single-token street
-			// `Trento` over `Via Trento`, orphaning `Via`). The grouper-audit below would then promote
-			// that orphan's LOCALITY_PHRASE proposal to a `locality` node — even though the classifier
-			// confidently typed it `street`. Hand the audit the classifier's per-span verdict so it
-			// respects that opinion instead of trusting the structural phrase kind (#425 re-gate).
-			auditClassifierTopK = classifierTopK
-		} else {
-			tree = argmaxTree
-		}
-
-		timing["reconcile"] = performance.now() - tReconcile
-	} else if (stages.classifier) {
+	if (stages.classifier) {
 		throwIfAborted(opts)
 		const tClassify = performance.now()
 
@@ -591,7 +491,7 @@ export async function runPipeline(
 
 	if (phraseProposals.length && tree.roots.length >= 0) {
 		const tAudit = performance.now()
-		tree = grouperAudit(tree, phraseProposals, normalized.normalized, auditClassifierTopK)
+		tree = grouperAudit(tree, phraseProposals, normalized.normalized)
 		timing["grouper-audit"] = performance.now() - tAudit
 	}
 
@@ -774,19 +674,12 @@ const PHRASE_KIND_TO_TAG: ReadonlyMap<string, ComponentTag> = new Map([
  * classifier output, inject a provisional node using the grouper's structural hypothesis. This rescues spans the neural
  * model couldn't type — primarily venue text.
  *
- * When `classifierTopK` is supplied (the joint-reconcile path), the audit defers to the classifier's own verdict for
- * the orphaned span: if the classifier confidently typed it as a DIFFERENT component than the phrase kind, we inject
- * the classifier's tag rather than the structural guess. Without this, a reconciler that leaves a street-prefix word
- * like `Via` orphaned (because it picked the single `Trento` street span) would see the audit promote `Via`'s
- * LOCALITY_PHRASE to a spurious `locality` node — burying the real trailing city. The classifier said `street:0.73` for
- * `Via`; trust it (#425).
+ * The audit once took a classifier top-k and deferred to it on an orphaned span, and once suppressed a duplicate
+ * singleton tag. Both existed for the joint-reconcile path, which fed the only top-k that ever reached here and was
+ * removed in #1749; on the surviving argmax path the parameter was always `undefined`, so neither branch could fire.
+ * Removed rather than left as unreachable code — the #425 reasoning they encoded is in the retirement report.
  */
-export function grouperAudit(
-	tree: AddressTree,
-	proposals: PhraseProposal[],
-	text: string,
-	classifierTopK?: ClassifierCandidate[]
-): AddressTree {
+export function grouperAudit(tree: AddressTree, proposals: PhraseProposal[], text: string): AddressTree {
 	if (!proposals.length) return tree
 
 	const roots = [...tree.roots]
@@ -805,44 +698,6 @@ export function grouperAudit(
 
 	collectNodes(roots)
 
-	// Index the classifier's single best tag per exact span (start:end) so the audit can defer to it.
-	const CLASSIFIER_OVERRIDE_MIN = 0.4
-	const bestTagBySpan = new Map<string, { tag: ComponentTag; score: number }>()
-
-	for (const c of classifierTopK ?? []) {
-		const k = `${c.span.start}:${c.span.end}`
-		const cur = bestTagBySpan.get(k)
-
-		if (!cur || c.score > cur.score) {
-			bestTagBySpan.set(k, { tag: c.tag, score: c.score })
-		}
-	}
-
-	// Tags that may appear AT MOST ONCE per address. On the joint path, the reconciler has already
-	// placed the confident locality/region/postcode; a SECOND one injected here is almost always a
-	// street-name word the OOD model mistyped ("Via Francesca Nord" → `Francesca`) or an area-line
-	// prefix ("LUGAR …" / "URBANIZACION …"). Suppressing the duplicate keeps the real trailing city
-	// from being shadowed by an earlier-positioned spurious node in `decodeAsJSON` (#425 residual tail).
-	const SINGLETON_TAGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>(["locality", "region", "postcode", "country"])
-	const presentSingletons = new Set<ComponentTag>()
-
-	const collectSingletons = (nodes: typeof roots): void => {
-		for (const n of nodes) {
-			if (SINGLETON_TAGS.has(n.tag)) {
-				presentSingletons.add(n.tag)
-			}
-
-			if (n.children) {
-				collectSingletons(n.children as typeof roots)
-			}
-		}
-	}
-
-	collectSingletons(roots)
-	const dedupeSingletons = classifierTopK !== undefined
-
-	// joint path only — argmax stays byte-stable
-
 	for (const proposal of proposals) {
 		const phraseTag = PHRASE_KIND_TO_TAG.get(proposal.kindHypothesis)
 
@@ -855,14 +710,7 @@ export function grouperAudit(
 
 		if (covered) continue
 
-		// Defer to the classifier when it confidently typed this exact span as something else.
-		const classifierVerdict = bestTagBySpan.get(`${proposal.span.start}:${proposal.span.end}`)
-
-		const tag =
-			classifierVerdict && classifierVerdict.score >= CLASSIFIER_OVERRIDE_MIN ? classifierVerdict.tag : phraseTag
-
-		// Don't inject a second singleton-tag node when the reconciler already produced one.
-		if (dedupeSingletons && SINGLETON_TAGS.has(tag) && presentSingletons.has(tag)) continue
+		const tag = phraseTag
 
 		const provisionalNode: AddressNode = {
 			tag,
@@ -876,10 +724,6 @@ export function grouperAudit(
 		}
 
 		roots.push(provisionalNode)
-
-		if (SINGLETON_TAGS.has(tag)) {
-			presentSingletons.add(tag)
-		}
 	}
 
 	roots.sort((a, b) => a.start - b.start)

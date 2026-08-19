@@ -57,13 +57,7 @@ function registerFlags(markdown: string): string[] {
  * Flags with no test, each with the reason it is allowed to have none. An entry here is a DEBT with a name, not an
  * exemption — the point of the list is that it is short enough to read and every line carries who owes what.
  */
-const UNCOVERED_ALLOWLIST: Record<string, string> = {
-	jointReconcile:
-		"#1749 — retired 2026-06-14 (#566), measured worse-or-flat on EVERY tag (street -25.6pp, " +
-		"house_number -23.1pp on golden v0.1.2 US+FR, n=4507) and opted into by nothing. Removing it is a " +
-		"public-API change: `reconcileSpans` is exported from @mailwoman/core/pipeline and the island is " +
-		"~1,850 lines. Tracked for removal rather than tested.",
-}
+const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 
 function testFilesUnder(directory: string, found: string[] = []): string[] {
 	if (!existsSync(directory)) return found

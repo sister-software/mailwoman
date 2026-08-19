@@ -60,19 +60,6 @@ export interface PipelineOpts {
 	 */
 	forceFullPipeline?: boolean
 	/**
-	 * The joint-reconcile path (Stage 5 beam search). Promoted to default by Route A Phase II (#427), then RETIRED AS
-	 * DEFAULT 2026-06-14: a reconcile-vs-raw-neural audit found it breaks the street+house_number geocode precondition on
-	 * 77-84% of clean US addresses (golden v0.1.2 US+FR, n=4507: street -25.6pp, house_number -23.1pp; worse-or-flat on
-	 * every tag, venue included). The phrase grouper bundles the house number into the STREET_PHRASE and reconcileSpans
-	 * fuses the span. The #427 "DE +25pp" gains were loose street-string recall on OOD inputs, not the geocode
-	 * precondition. Default (unset) is now `false` (argmax). It still requires a phrase grouper + a classifier exposing
-	 * `parseWithLogits`; when either is absent the pipeline uses argmax regardless.
-	 *
-	 * Set `jointReconcile: true` to opt back into reconcile (the A/B harnesses do). Report:
-	 * docs/articles/evals/experiments/2026-06-14-reconcile-retirement.md.
-	 */
-	jointReconcile?: boolean
-	/**
 	 * Hard cap on lookups the resolver may issue; passed through.
 	 */
 	resolveOpts?: ResolveOpts
