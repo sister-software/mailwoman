@@ -165,8 +165,13 @@ const CORPUS_SIZE = 570
  * the live Rochester-Kent → Rochester-Northumberland miss (the Kent alternative sits flagged `regionScopeMiss` — the
  * re-admission class), found when a live GB POI query over the Kent Rochester came back empty and read as a data gap.
  * 569 → 570, so the board id moves too.
+ *
+ * Moved again the same day — → this — by the dj-cs-djibouti re-pin: `expectPlaceName` moves to the canonical "Republic
+ * of Djibouti" (the #1650 country-population rebuild let the bare-country repick win, 9.9 km inside the 25 km bar; the
+ * coordinate gate already excludes the 65.9-km city row, so the country row is the only admissible answer and
+ * hierarchy[0].name carries its canonical resolver_name). Name + note edit only, so the board id holds.
  */
-const CORPUS_HASH = "ef895ae9fe2cb9da8c27606cb58a907ecf9970075f43b4b8d907932552f6a171"
+const CORPUS_HASH = "73981777b9b13587f33ea758aa626d70a694d90fb3904852705c72a6800e9750"
 
 /**
  * `ablationBoardID` of the corpus.
