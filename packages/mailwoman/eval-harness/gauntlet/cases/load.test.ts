@@ -195,7 +195,7 @@ const CORPUS_SIZE = 572
  * half was already cured by the #1738 guard (Cairo GEORGIA → Cairo EGYPT, 101 m). Pin + note edit; the board id holds.
  * The row then promoted the same day — byte-identical now-PASSES across two consecutive full-board runs.
  */
-const CORPUS_HASH = "aeb7c4e5a81d55bbb483016690ab98cc3fd9f4b017fbe6b99fab0fa8c51fb5da"
+const CORPUS_HASH = "800379a67b6714cad7b06e9d94ff0bcb502405af195294e57ef4ff3cb57f5f6d"
 
 /**
  * `ablationBoardID` of the corpus.
