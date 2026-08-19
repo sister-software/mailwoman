@@ -58,6 +58,6 @@ test("streetLocaleForCountry: maps the supported countries, throws otherwise", (
 	expect(streetLocaleForCountry("FR")).toBe("fr")
 	expect(streetLocaleForCountry("de")).toBe("de")
 	expect(streetLocaleForCountry("nl")).toBe("nl")
-	expect(supportedOSMCountries().toSorted()).toEqual(["au", "de", "fr", "gb", "nl", "nz"])
+	expect(supportedOSMCountries().toSorted()).toEqual(["au", "ca", "de", "fr", "gb", "nl", "nz"])
 	expect(() => streetLocaleForCountry("xx")).toThrow(/No street-normalization locale/)
 })

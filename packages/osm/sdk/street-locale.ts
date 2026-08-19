@@ -29,6 +29,12 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],
+	// CA keys with the `en` rules — right for anglophone Canada, and DELIBERATELY partial for Québec:
+	// French street surfaces ("rue", "boulevard") fold under the wrong rules there, so those rows key
+	// to surfaces no probe produces and simply never answer. Absence, not wrongness — the NI-OSM
+	// partial-shard posture. Per-row locale routing (fr rules for QC rows) is the finishing move; the
+	// anglo witness class ("92 Laurel Rd, Gander NL") does not wait on it.
+	["ca", "en"],
 ])
 
 /**
