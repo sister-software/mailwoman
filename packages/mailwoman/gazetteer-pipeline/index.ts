@@ -48,6 +48,7 @@ import {
 	DEFAULT_CANDIDATE_OUT,
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
+	DEFAULT_WOF_PRIORITY_COUNTRIES,
 	geonamesAdminGapCountries,
 } from "./defaults.ts"
 import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
@@ -343,6 +344,13 @@ export interface BuildOptions {
 	 * empty on purpose.
 	 */
 	importanceDB?: string | false
+	/**
+	 * Countries judged by the cross-source currency backfill (#1737 — deprecated-with-no-successor WOF localities
+	 * resurrected only under a GeoNames attestation; see `resurrectCurrencyHoles`). Default: the WOF-priority set — the
+	 * only countries whose admin comes from WOF repos, so the only ones that can carry this hole class. Countries without
+	 * a `<data-root>/geonames/<CC>.txt` dump are skipped loudly by the pass. Pass `false` to disable.
+	 */
+	currencyBackfillCountries?: readonly string[] | false
 	onProgress?: (phase: string, message: string) => void
 }
 
@@ -359,12 +367,18 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? resolveImportanceDB())
 
+	const backfillCountries =
+		opts.currencyBackfillCountries === false
+			? undefined
+			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
+
 	const result = await buildCandidateTable({
 		input: opts.adminDB,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		localities: [...(opts.localityShards ?? resolveLocalityShards())],
 		...(importance ? { importance } : {}),
+		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
 		onProgress: opts.onProgress,
 	})
 

@@ -678,3 +678,138 @@ describe("stageCountryDisplayNames (#1678 thread 1)", () => {
 		expect(staged.every((r) => r.sid === GEORGIA_SID)).toBe(true)
 	})
 })
+
+describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
+	/**
+	 * A GB admin fixture in the deprecated-no-successor shapes: the Rochester class (dead + distant live namesake), an
+	 * unattested blob, a near-live block, an under-floor hamlet, and a superseded record the pass must never judge.
+	 */
+	function buildFixtureCurrency(path: string): void {
+		const db = new DatabaseSync(path)
+
+		db.exec(`
+			CREATE TABLE spr (
+				id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
+				latitude REAL, longitude REAL,
+				min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
+				is_current INTEGER, is_deprecated INTEGER, is_superseded INTEGER NOT NULL DEFAULT 0
+			);
+			CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0);
+			CREATE TABLE place_search (wof_id INTEGER PRIMARY KEY, alt_names TEXT);
+			CREATE TABLE place_abbr (id INTEGER PRIMARY KEY, abbr TEXT);
+			CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT);
+
+			-- the Rochester class: dead Kent record + a LIVE namesake 474 km away that must not block
+			INSERT INTO spr VALUES (300, 'Rochester', 'locality', 'GB', 51.3668, 0.5060, 51.34, 0.48, 51.39, 0.52, 0, 1, 0);
+			INSERT INTO spr VALUES (301, 'Rochester', 'locality', 'GB', 55.3037, -2.3407, 55.29, -2.35, 55.31, -2.33, -1, 0, 0);
+
+			-- an unattested blob: dead, and GeoNames knows no such place
+			INSERT INTO spr VALUES (302, 'Oldblob', 'locality', 'GB', 52.0, -1.0, 51.9, -1.1, 52.1, -0.9, 0, 1, 0);
+
+			-- near-live block: the place is alive under another row 1 km away
+			INSERT INTO spr VALUES (303, 'Nearlive', 'locality', 'GB', 53.0, -1.5, 52.9, -1.6, 53.1, -1.4, 0, 1, 0);
+			INSERT INTO spr VALUES (304, 'Nearlive', 'localadmin', 'GB', 53.009, -1.5, 52.9, -1.6, 53.1, -1.4, -1, 0, 0);
+
+			-- attested but under the population floor
+			INSERT INTO spr VALUES (305, 'Tinyham', 'locality', 'GB', 54.0, -1.0, 53.9, -1.1, 54.1, -0.9, 0, 1, 0);
+
+			-- superseded: a successor exists, so the pass must never judge this one
+			INSERT INTO spr VALUES (306, 'Ghosttown', 'locality', 'GB', 55.0, -1.2, 54.9, -1.3, 55.1, -1.1, 0, 1, 1);
+
+			INSERT INTO place_population VALUES (301, 318);
+		`)
+
+		db.close()
+	}
+
+	/**
+	 * GeoNames dump lines: 19 tab-separated columns; the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
+	 * population.
+	 */
+	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
+		const f = new Array(19).fill("")
+
+		f[0] = String(id)
+		f[1] = name
+		f[2] = name
+		f[4] = String(lat)
+		f[5] = String(lon)
+		f[6] = fclass
+		f[7] = "PPL"
+		f[8] = "GB"
+		f[14] = String(pop)
+
+		return f.join("\t")
+	}
+
+	async function buildWithBackfill(withOption: boolean): Promise<DatabaseSync> {
+		const input = join(scratch, "admin-currency.db")
+		const output = join(scratch, "candidate-currency.db")
+		const geonamesDir = join(scratch, "geonames")
+
+		buildFixtureCurrency(input)
+		const { mkdir, writeFile } = await import("node:fs/promises")
+
+		await mkdir(geonamesDir, { recursive: true })
+
+		await writeFile(
+			join(geonamesDir, "GB.txt"),
+			[
+				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
+				geonamesLine(2, "Tinyham", 54.001, -1.001, "P", 300),
+				geonamesLine(3, "Ghosttown", 55.001, -1.201, "P", 5000),
+				// an S-class row must never attest
+				geonamesLine(4, "Oldblob", 52.001, -1.001, "S", 90_000),
+			].join("\n") + "\n"
+		)
+
+		await buildCandidateTable({
+			input,
+			output,
+			...(withOption ? { currencyBackfill: { geonamesDir, countries: ["GB"] } } : {}),
+		})
+
+		return new DatabaseSync(output, { readOnly: true })
+	}
+
+	test("resurrects the Rochester class: dead + attested + only a DISTANT namesake alive", async () => {
+		const db = buildWithBackfill(true)
+
+		const rows = (await db)
+			.prepare(`SELECT spr_id, population, is_primary FROM candidate WHERE name_key = 'rochester' ORDER BY spr_id`)
+			.all() as { spr_id: number; population: number; is_primary: number }[]
+
+		// Both the resurrected Kent record and the live namesake stand — namesakes are the race's business.
+		expect(rows.map((r) => r.spr_id)).toEqual([300, 301])
+
+		const kent = rows.find((r) => r.spr_id === 300)!
+
+		// The attestor's population, so the row can stand in prominence races (the dead record has none).
+		expect(kent.population).toBe(28_671)
+
+		expect(kent.is_primary).toBe(1)
+		;(await db).close()
+	})
+
+	test("keeps the gates: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
+		const db = await buildWithBackfill(true)
+
+		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
+			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
+
+			// `nearlive` keeps its LIVE localadmin row (304); the dead 303 must not join it. The others
+			// stage nothing at all.
+			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
+		}
+
+		db.close()
+	})
+
+	test("without the option the pass never runs and every hole stays dead", async () => {
+		const db = await buildWithBackfill(false)
+		const { n } = db.prepare(`SELECT COUNT(*) AS n FROM candidate WHERE spr_id = 300`).get() as { n: number }
+
+		expect(n).toBe(0)
+		db.close()
+	})
+})

@@ -62,6 +62,7 @@ import {
 	createCandidateTable,
 	type CandidateDatabase,
 } from "./candidate-schema.ts"
+import { resurrectCurrencyHoles } from "./currency-backfill.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /**
@@ -389,6 +390,18 @@ export interface BuildCandidateOptions {
 	 * population-derived stand-in written into a column that means fame.
 	 */
 	importance?: string
+	/**
+	 * Cross-source currency backfill (#1737). WOF carries deprecated-with-no-successor records for real, populated
+	 * settlements (Rochester Kent, Aldershot, Telford — 120 GB localities alone), and the currency filter correctly drops
+	 * them, leaving holes no ranking can fill. When this option is set, pass 1c resurrects a dead locality ONLY under
+	 * three gates, positive evidence throughout: no live same-name row of any placetype near the dead record (a distant
+	 * same-name row is a NAMESAKE and does not block — Rochester, Northumberland pop 318 must not veto Rochester, Kent);
+	 * an independent GeoNames P-class attestation of the same folded name within {@link CURRENCY_BACKFILL_RADIUS_KM}; and
+	 * the attestor at or above {@link CURRENCY_BACKFILL_POP_FLOOR}. The staged row keeps the real WOF id, name, centroid
+	 * and bbox — GeoNames only ATTESTS the place and supplies the population that lets it stand in prominence races.
+	 * `countries` are judged only where `<cc>.txt` exists under `geonamesDir`; absent dumps are skipped loudly.
+	 */
+	currencyBackfill?: { geonamesDir: string; countries: readonly string[] }
 	/**
 	 * Optional progress callback for CLI / test introspection.
 	 */
@@ -889,6 +902,30 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			tx: out,
 		}).toLocaleString()} country surfaces`
 	)
+
+	// --- pass 1c: cross-source currency backfill (#1737 — resurrectCurrencyHoles owns the gates). Runs BEFORE
+	// the alias pass so a resurrected place's alt names explode like any primary's. ---
+	if (opts.currencyBackfill) {
+		const nBackfill = await resurrectCurrencyHoles({
+			src,
+			tx: out,
+			geonamesDir: opts.currencyBackfill.geonamesDir,
+			countries: opts.currencyBackfill.countries,
+			attrs,
+			ccID,
+			ptID,
+			regionOf,
+			importance,
+			stageRow,
+			progress,
+		})
+
+		progress("currency-backfill", `${nBackfill.toLocaleString()} resurrections staged`)
+	} else {
+		// Never a silent absence: a build without the option leaves the deprecated-no-successor holes dead,
+		// and the log must say so rather than leave it inferable only from a missing row.
+		progress("currency-backfill", "not configured — deprecated-no-successor holes stay dead (#1737)")
+	}
 
 	// --- pass 2: distinct normalized aliases from place_search.alt_names (explodeAliasBags owns the loop) ---
 	progress("aliases", "exploding alias bags")
