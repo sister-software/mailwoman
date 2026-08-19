@@ -24,7 +24,7 @@
  *       `poi_category`.
  *
  *   A verdict whose top `kind` and `confidence` are unchanged cannot move any of the three. So the
- *   pin below is over `(kind, confidence, inputMode)` for all 514 committed corpus rows in BOTH
+ *   pin below is over `(kind, confidence, inputMode)` for EVERY committed corpus row (the size test pins the count) in BOTH
  *   registers, computed against a from-scratch replay of the PRE-§4 scorer set. That is a stronger
  *   receipt than a sample of parses would be — it is every row, it is exact rather than
  *   within-tolerance, and it needs no weights, so it runs in CI on every commit rather than on the
@@ -108,9 +108,9 @@ beforeAll(async () => {
 	CATEGORY_QUERY_INPUTS = new Set(cases.filter((c) => c.id.includes("-cat-")).map((c) => c.input))
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 569-case corpus", () => {
+describe("ROAD_TO_V9 §4 — zero reclassification over the 572-case corpus", () => {
 	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(569)
+		expect(corpus).toHaveLength(572)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
