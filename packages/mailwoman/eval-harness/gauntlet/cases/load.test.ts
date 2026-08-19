@@ -188,8 +188,13 @@ const CORPUS_SIZE = 572
  * (5,858 km → the attested rooftop at 0 m) and `za-cs-14-long-st-green` (the 12,748-km Green Point ghost's row,
  * finished by the guard after the per-value coherence rule opened the door) both flip improvement_target → pass,
  * byte-identical now-PASSES across two consecutive full-board runs. Status + note edits; the board id holds.
+ *
+ * Moved again the same day — → this — by the Cairo digit re-pin: `eg-cs-1-tahrir-square-downtown` expected the
+ * Arabic-Indic '١' for an input whose own text carries the Latin '1' — the oracle's canonical rendering leaked into the
+ * component pin (a dual-script assertion belongs in expectComponentRenderings with BOTH forms, #34). The coordinate
+ * half was already cured by the #1738 guard (Cairo GEORGIA → Cairo EGYPT, 101 m). Pin + note edit; the board id holds.
  */
-const CORPUS_HASH = "912aa685c822fccb7c66f08a1625b514da123751b4e6247dba0aeda284b1c6e3"
+const CORPUS_HASH = "d57293f2677ec7470abda7c12dc8886e453f94534373ba911539b715f6342cc2"
 
 /**
  * `ablationBoardID` of the corpus.
