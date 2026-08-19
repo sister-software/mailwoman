@@ -50,6 +50,18 @@ caps rows for smoke builds. `--skipIngest` reuses existing parquet.
   first rows the scan yields; the first 50k US rows in the 2026-05-20.0 release all landed
   in Hawaii. Fine for smoke verification, useless for coverage judgments. Never grade
   coverage or the query board on a limited build.
+- **`--limit` is also ~200× slower against S3, not faster.** DuckDB plans a LIMIT scan
+  serially — one S3 connection at ~10 KB/s on the 2026-08-19 measurement, zero bytes
+  written after 6 minutes — while an unbounded country scan runs 7–8 parallel connections
+  and finishes GB in ~23 minutes. Smoke against S3 with an unbounded single-country ingest,
+  not a LIMIT.
+- **Overture prunes old releases from the bucket** — the 2026-08-19 listing held exactly
+  one release; both prior pins were gone. Consequences: a stale `DEFAULT_RELEASE` fails
+  every default build outright, a sealed artifact from a pruned release can never be
+  rebuilt, and two releases never mix in one artifact — so extending an existing artifact
+  after a prune means re-ingesting EVERY country at the current release. Cost relief: the
+  first country's scan pays the cold cache (~25 min); each further country in the same
+  invocation rides warm at 30–50 s, so batch them.
 - `brand.names.primary` is deliberately NOT extracted — the QID (`brand.wikidata`) is the
   join key and the row's own `name` carries the display form. Re-adding it is a schema +
   builder change, not a flag.

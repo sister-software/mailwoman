@@ -18,8 +18,13 @@
  * `commands/**\/*.tsx` files are Ink presentation that require compiling (AGENTS.md) — pulling a value FROM a `.tsx`
  * file into this pipeline layer would invert that dependency direction. If the pins drift, `--release` overrides either
  * independently.
+ *
+ * Overture PRUNES old releases from the bucket — the 2026-08-19 listing held exactly one. A stale pin therefore fails
+ * every default build outright (the S3 listing finds nothing), and a sealed artifact built from a pruned release can
+ * never be rebuilt. Bump this pin when a build reports the release missing; treat the bump as a new-vintage decision
+ * (row deltas ride along), never a routine chore.
  */
-export const DEFAULT_RELEASE = "2026-05-20.0"
+export const DEFAULT_RELEASE = "2026-07-22.0"
 
 /**
  * `--min-rows` default — keeps the table to real chains, not one-off name collisions (~low-thousands of entries).

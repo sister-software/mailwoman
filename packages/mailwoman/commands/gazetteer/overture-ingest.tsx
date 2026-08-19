@@ -34,7 +34,10 @@ import * as path from "node:path"
 import { Box, Text } from "ink"
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
-const DEFAULT_RELEASE = "2026-05-20.0"
+// Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
+// pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
+// pin — see its docstring for why the two constants stay independent.
+const DEFAULT_RELEASE = "2026-07-22.0"
 
 const S3_GLOB = (release: string) =>
 	`s3://overturemaps-us-west-2/release/${release}/theme=addresses/type=address/*.parquet`
