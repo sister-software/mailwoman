@@ -77,9 +77,11 @@ export interface GauntletResolverLevers {
 	postcodeCountryCoherence?: boolean
 	/**
 	 * #1497 — feed the gazetteer FST prior to the parse. Unlike the boolean pins above this one carries an ARTIFACT, so
-	 * the harness loads it rather than `resolverLeverDeps` (which stays pure). Library default is OFF on this path,
-	 * because `classifier.parse` reads `fst` from opts only and the geocode path passed none, so the prior was never
-	 * constructed here at all — the board has always graded without it.
+	 * the harness loads it rather than `resolverLeverDeps` (which stays pure).
+	 *
+	 * DEFAULT-ON here since 2026-08-16, matching the library: only an explicit `false` withholds the prior, and that pin
+	 * now grades the pre-promotion configuration. The board therefore grades WITH the prior, and a reading that assumes
+	 * otherwise understates every absolute number it touches.
 	 */
 	gazetteerPrior?: boolean
 	/**
