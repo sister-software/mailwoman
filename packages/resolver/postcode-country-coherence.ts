@@ -76,8 +76,10 @@
  *      the whole gazetteer. See {@link PostcodeCountryScopeEvidence}.
  *
  *   The abstention doctrine is unchanged and is what bounds the new rungs: a two-country tie is a HARD
- *   abstention that never falls through to the single-sided rungs, and any corroboration at home — the
- *   address's own city or its own postcode existing in the default country — stops the pass dead.
+ *   abstention that never falls through to the single-sided rungs. Corroboration at home bounds them
+ *   asymmetrically: the address's own POSTCODE existing in the default country stops the pass dead,
+ *   while a LOCALITY value at home neutralizes that value as a foreign witness without silencing its
+ *   siblings (the per-value rule in the single-sided section below).
  *
  *   ## Evidence
  *
@@ -90,9 +92,9 @@
  *   below is the 25 km the scale run measured.
  *
  *   Cost: 2 lookups on the byte-stable path (postcode + locality under the default country), and at
- *   most `2 × |candidateSystems|` — bounded at 8, since a numeric shape matches at most `us`/`de`/`fr`
- *   — when the default is incoherent. Nothing runs at all unless a `defaultCountry` is in force AND
- *   the tree carries both a postcode and a locality.
+ *   most `2 × |candidateSystems| × |localityValues|` — candidates bounded at 12, locality values at 3,
+ *   and the common tree carries exactly one — when the default is incoherent. Nothing runs at all
+ *   unless the tree carries both a postcode and a locality.
  *
  *   **Default-ON** since the operator promotion of 2026-08-05 (#1477) — the resolver gauntlet, pinned
  *   both ways, returned zero newly-failing gated cases, and 56,000 pair evaluations across both
@@ -202,23 +204,60 @@ function hasCoord(p: ResolvedPlace): boolean {
 }
 
 /**
- * The address's locality string: the first `locality` node anywhere in the tree, else the first `dependent_locality`.
- * Two passes so a real locality always beats a dependent one regardless of tree order.
+ * Upper bound on locality values the pass will consider. A parse rarely tags more than two; the cap keeps a
+ * pathological tree from multiplying the pair sweep.
  */
-export function firstLocalityValue(roots: readonly AddressNode[]): string | undefined {
+const MAX_LOCALITY_VALUES = 3
+
+/**
+ * The address's locality strings in DOCUMENT ORDER — every `locality` value first, then every `dependent_locality`,
+ * case-insensitively deduplicated. Two passes so a real locality always beats a dependent one regardless of tree
+ * order.
+ *
+ * Document order is load-bearing, not cosmetic. The original stack-pop traversal visited the LAST node first, so on `92
+ * Laurell Road, Gander, NL A1V 0A9` — where the model tags both `Gander` and the province abbreviation `NL` as
+ * localities — the pass keyed its whole country verdict on "NL", whose only exact locality-band bearer is an alias of
+ * Nal, Afghanistan, and the walk resolved a Newfoundland street 10,000 km away. The FIRST-written locality is the one
+ * the address is about.
+ *
+ * ALL values matter, not just the first. On `Calle Mayor 12, Aravaca, 28023 Madrid` the model tags both `Aravaca` and
+ * `Madrid` as localities; `Aravaca` is a neighbourhood the locality band cannot see, while `Madrid` carries the ES pair
+ * verdict (the ES 28023 row sits 9.6 km from the Madrid locality row). A pass keyed on a single value bets the whole
+ * country verdict on whichever one a traversal order happens to pick — first-only re-scoped that address to the US ZIP
+ * 28023 centroid in North Carolina. So the verdict rungs try each value in order until one produces evidence.
+ */
+export function localityValuesInDocumentOrder(roots: readonly AddressNode[]): string[] {
+	const out: string[] = []
+	const seen = new Set<string>()
+
 	for (const tag of ["locality", "dependent_locality"] as const) {
-		const stack = [...roots]
-
-		while (stack.length) {
-			const n = stack.pop()!
-
-			if (n.tag === tag && n.value.trim().length) return n.value.trim()
-
-			stack.push(...n.children)
-		}
+		collectInDocumentOrder(roots, tag, out, seen)
 	}
 
-	return undefined
+	return out.slice(0, MAX_LOCALITY_VALUES)
+}
+
+/**
+ * The first of {@link localityValuesInDocumentOrder} — the locality the address is about.
+ */
+export function firstLocalityValue(roots: readonly AddressNode[]): string | undefined {
+	return localityValuesInDocumentOrder(roots)[0]
+}
+
+function collectInDocumentOrder(nodes: readonly AddressNode[], tag: string, out: string[], seen: Set<string>): void {
+	for (const n of nodes) {
+		if (n.tag === tag && n.value.trim().length) {
+			const value = n.value.trim()
+			const key = value.toLowerCase()
+
+			if (!seen.has(key)) {
+				seen.add(key)
+				out.push(value)
+			}
+		}
+
+		collectInDocumentOrder(n.children, tag, out, seen)
+	}
 }
 
 /**
@@ -258,14 +297,15 @@ async function countriesHolding(
 	backend: ResolverBackend,
 	text: string,
 	placetype: "postalcode" | "locality",
-	limit: number
+	limit: number,
+	opts?: { primaryOnly?: boolean }
 ): Promise<Map<string, ResolvedPlace>> {
 	const out = new Map<string, ResolvedPlace>()
 
 	let hits: ResolvedPlace[]
 
 	try {
-		hits = await backend.findPlace({ text, placetype, limit })
+		hits = await backend.findPlace({ text, placetype, limit, ...(opts?.primaryOnly ? { primaryOnly: true } : {}) })
 	} catch {
 		return out // a backend hiccup degrades to "no evidence", never to a crashed resolve
 	}
@@ -364,19 +404,24 @@ export async function findPostcodeCountryScope(
 
 	if (!postcode) return null
 
-	const locality = firstLocalityValue(roots)
+	const localities = localityValuesInDocumentOrder(roots)
 
 	// Both halves of the pair are required. A postcode with no locality has nothing to be coherent WITH, which is what
 	// keeps this pass inert on "Springfield, IL 62701" (the parser tags Springfield as a `street` — a separate defect)
 	// and on every bare-postcode query.
-	if (!locality) return null
+	if (!localities.length) return null
 
 	const gateKm = opts.gateKm ?? POSTCODE_COUNTRY_COHERENCE_GATE_KM
 
-	// 1. Is the caller's own default country coherent? If so we are done — positive evidence for the default,
-	//    no override, and the common domestic path costs two lookups and changes nothing. With no default in
-	//    force (the browser cascade) there is nothing to test — the sweep below carries the whole verdict.
-	if (defaultCountry && (await coherenceIn(defaultCountry, postcode, locality, backend, gateKm))) return null
+	// 1. Is the caller's own default country coherent with ANY of the address's locality values? If so we are done —
+	//    positive evidence for the default, no override, and the common domestic path (one locality value) costs two
+	//    lookups and changes nothing. With no default in force (the browser cascade) there is nothing to test — the
+	//    sweep below carries the whole verdict.
+	if (defaultCountry) {
+		for (const locality of localities) {
+			if (await coherenceIn(defaultCountry, postcode, locality, backend, gateKm)) return null
+		}
+	}
 
 	// 2. The default could not place this pair. Which countries could? Two sources, unioned:
 	//
@@ -400,22 +445,27 @@ export async function findPostcodeCountryScope(
 		.filter((country) => country !== defaultCountry)
 		.slice(0, MAX_CANDIDATE_COUNTRIES)
 
-	const coherent: PostcodeCountryScope[] = []
+	// 3. The pair sweep, per locality value in document order: the first value that produces evidence decides. A value
+	//    the band cannot see (`Aravaca`, a neighbourhood) yields zero coherent countries and the NEXT value gets its
+	//    turn — betting the verdict on a single value re-scoped that address to a US ZIP centroid (see
+	//    localityValuesInDocumentOrder). Exactly one coherent country is a verdict. Two coherent countries mean the
+	//    geometry genuinely does not decide, and guessing between them is precisely what this mechanism exists not to
+	//    do — a TIE is a hard abstention, never a fall-through to a later value or the weaker rungs below.
+	for (const locality of localities) {
+		const coherent: PostcodeCountryScope[] = []
 
-	for (const country of candidates) {
-		const hit = await coherenceIn(country, postcode, locality, backend, gateKm, pcHolders.get(country))
+		for (const country of candidates) {
+			const hit = await coherenceIn(country, postcode, locality, backend, gateKm, pcHolders.get(country))
 
-		if (hit) {
-			coherent.push({ country, postcode, locality, evidence: "pair", ...hit })
+			if (hit) {
+				coherent.push({ country, postcode, locality, evidence: "pair", ...hit })
+			}
 		}
+
+		if (coherent.length === 1) return coherent[0]!
+
+		if (coherent.length > 1) return null
 	}
-
-	// 3. Exactly one country makes the pair consistent, or we fall through. Two coherent countries mean the geometry
-	//    genuinely does not decide, and guessing between them is precisely what this mechanism exists not to do — so a
-	//    TIE is a hard abstention, never a fall-through to the weaker rungs below.
-	if (coherent.length === 1) return coherent[0]!
-
-	if (coherent.length > 1) return null
 
 	// The single-sided rungs below lean on the DEFAULT country as the domestic-plausibility guard
 	// ("Vienna, VA" stays in Virginia because the default corroborates a half). With no default there
@@ -430,23 +480,49 @@ export async function findPostcodeCountryScope(
 	//        agree with anything no matter how good the locality evidence is; or
 	//      - the locality is a name no admin gazetteer carries (`Praha 3`, `Praha 9` — municipal districts).
 	//
-	//    So each half gets to speak alone, under two conditions that keep this from becoming a guess. First, the
-	//    DEFAULT country must corroborate NEITHER half — if the address's own city or its own postcode exists at
-	//    home, the address is domestically plausible and nothing foreign may be proposed (this is what holds
-	//    `123 Main St, Vienna, VA 22180` in Virginia even though Wien is the vastly more prominent Vienna).
-	//    Second, the speaking half must name EXACTLY ONE country in the entire gazetteer — the same uniqueness bar
-	//    the pair rung uses, applied to one side.
+	//    So each half gets to speak alone, under conditions that keep this from becoming a guess. The
+	//    POSTCODE half is all-or-nothing: the default country holding this postcode makes the address
+	//    domestically plausible outright, and nothing foreign may be proposed. The LOCALITY half is
+	//    judged PER VALUE — a value the default country holds is domestic corroboration for THAT value
+	//    (it is neutralized as a foreign witness) without silencing its siblings. `14 Long St, Green
+	//    Point, Cape Town, 8001` is why: "Green Point" has pop-0 US namesakes, and letting that one
+	//    value abstain the whole pass handed a uniquely-ZA "Cape Town" to a hard US filter (the walk
+	//    answered Green Point, Pennsylvania). `123 Main St, Vienna, VA 22180` still holds in Virginia:
+	//    its ONLY locality value is domestic, so no foreign witness remains. The speaking value must
+	//    name EXACTLY ONE country in the entire gazetteer — the same uniqueness bar the pair rung uses,
+	//    applied to one side — and all speaking values must AGREE on that country.
 	if (pcHolders.has(defaultCountry)) return null
 
-	if (await holdsLocality(backend, locality, defaultCountry)) return null
+	// 4a. A locality value names exactly one country. Stronger than the postcode rung — a place name is far
+	//     more discriminative than a four-digit code — so it is tried first. A verdict stands down when that
+	//     country's OWN postcode row contradicts the locality (outside the gate): the two halves disagreeing
+	//     inside one country is exactly what the pair test exists to catch, and a single-sided rung must not
+	//     launder it.
+	// PRIMARY-keyed rows only (#1626's re-reading discipline, applied to a country verdict): "the locality
+	// names exactly one country" must mean a place NAMED that, never a place aliased to it — "NL"'s only
+	// locality-band bearer was an exact ALIAS of Nal, Afghanistan, and a single alias row steered the whole
+	// walk's country. The pair rung keeps aliases: there the postcode's own geometry corroborates them.
+	let anyDomestic = false
+	let anyLocalityKnown = false
+	const verdicts = new Map<string, PostcodeCountryScope>()
 
-	// 4a. The locality names exactly one country. Stronger than the postcode rung — a place name is far more
-	//     discriminative than a four-digit code — so it is tried first. It stands down when that country's OWN
-	//     postcode row contradicts the locality (outside the gate): the two halves disagreeing inside one country
-	//     is exactly what the pair test exists to catch, and a single-sided rung must not launder it.
-	const locHolders = await countriesHolding(backend, locality, "locality", LOCALITY_HOLDER_FETCH)
+	for (const locality of localities) {
+		if (await holdsLocality(backend, locality, defaultCountry)) {
+			anyDomestic = true
 
-	if (locHolders.size === 1) {
+			continue
+		}
+
+		const locHolders = await countriesHolding(backend, locality, "locality", LOCALITY_HOLDER_FETCH, {
+			primaryOnly: true,
+		})
+
+		if (locHolders.size) {
+			anyLocalityKnown = true
+		}
+
+		if (locHolders.size !== 1) continue
+
 		const [country, localityPlace] = [...locHolders.entries()][0]!
 		const ownPostcode = pcHolders.get(country)
 
@@ -454,18 +530,25 @@ export async function findPostcodeCountryScope(
 			ownPostcode !== undefined &&
 			haversineKm(ownPostcode.lat, ownPostcode.lon, localityPlace.lat, localityPlace.lon) > gateKm
 
-		if (country !== defaultCountry && !contradicted) {
-			return { country, postcode, locality, evidence: "locality", localityPlace }
+		if (country !== defaultCountry && !contradicted && !verdicts.has(country)) {
+			verdicts.set(country, { country, postcode, locality, evidence: "locality", localityPlace })
 		}
 	}
 
-	// 4b. The locality is in no gazetteer (or names several countries) and the postcode is held in exactly one.
-	//     `Biskupcova 1843/3, 13000 Praha 3`: `13000` is a CZ code and nothing else, anywhere.
-	if (!locHolders.size && pcHolders.size === 1) {
+	// Every speaking value must agree: two values uniquely naming DIFFERENT countries is a genuine
+	// ambiguity, and guessing between them is what this mechanism exists not to do.
+	if (verdicts.size === 1) return [...verdicts.values()][0]!
+
+	if (verdicts.size > 1) return null
+
+	// 4b. The postcode is held in exactly one country and the locality half is silent EVERYWHERE — no value
+	//     is domestic and no value names any country. `Biskupcova 1843/3, 13000 Praha 3`: `13000` is a CZ
+	//     code and nothing else, anywhere, and `Praha 3` (a municipal district) is in no admin gazetteer.
+	if (!anyDomestic && !anyLocalityKnown && pcHolders.size === 1) {
 		const [country, postcodePlace] = [...pcHolders.entries()][0]!
 
 		if (country !== defaultCountry) {
-			return { country, postcode, locality, evidence: "postcode", postcodePlace }
+			return { country, postcode, locality: localities[0]!, evidence: "postcode", postcodePlace }
 		}
 	}
 

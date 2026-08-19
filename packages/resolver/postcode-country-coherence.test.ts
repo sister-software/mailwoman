@@ -29,7 +29,12 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { describe, expect, it } from "vitest"
 
-import { findPostcodeCountryScope, firstLocalityValue } from "./postcode-country-coherence.ts"
+import {
+	findPostcodeCountryScope,
+	firstLocalityValue,
+	localityValuesInDocumentOrder,
+	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
+} from "./postcode-country-coherence.ts"
 import { createWOFResolver } from "./resolve.ts"
 
 //#region Fixtures — the real 75001 collision
@@ -751,6 +756,261 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 
 		expect(scope?.evidence).toBe("pair")
 		expect(scope?.distanceKm).toBeLessThan(1)
+	})
+})
+
+describe("findPostcodeCountryScope — multi-value locality fallthrough", () => {
+	// `Calle Mayor 12, Aravaca, 28023 Madrid`: the model tags BOTH `Aravaca` and `Madrid` as localities.
+	// `Aravaca` is a neighbourhood the locality band cannot see; `Madrid` carries the ES pair. Coordinates
+	// are the live candidate rows: the ES 28023 row is Aravaca's own CP, 9.6 km from the Madrid locality.
+	const PC_28023_ES: ResolvedPlace = {
+		id: 900_200,
+		name: "28023",
+		placetype: "postalcode",
+		country: "ES",
+		lat: 40.46005,
+		lon: -3.786808,
+		score: 9,
+		exactMatch: true,
+	}
+
+	// ZIP 28023, China Grove NC — the centroid the first-value-only pass answered with.
+	const PC_28023_US: ResolvedPlace = {
+		id: 900_201,
+		name: "28023",
+		placetype: "postalcode",
+		country: "US",
+		lat: 35.56952,
+		lon: -80.60223,
+		score: 9,
+		exactMatch: true,
+	}
+
+	const MADRID_ES: ResolvedPlace = {
+		id: 900_202,
+		name: "Madrid",
+		placetype: "locality",
+		country: "ES",
+		lat: 40.43489,
+		lon: -3.678245,
+		score: 9,
+		prominence: 3_255_944,
+		exactMatch: true,
+	}
+
+	// Madrid, Iowa — 1,600+ km from ZIP 28023, so the US default is NOT coherent on the second value either.
+	const MADRID_IA: ResolvedPlace = {
+		id: 900_203,
+		name: "Madrid",
+		placetype: "locality",
+		country: "US",
+		lat: 41.874538,
+		lon: -93.819866,
+		score: 5,
+		prominence: 2799,
+		exactMatch: true,
+	}
+
+	const aravacaTree = (): AddressTree => ({
+		raw: "Calle Mayor 12, Aravaca, 28023 Madrid",
+		roots: [
+			node({ tag: "street", value: "Calle Mayor" }),
+			node({ tag: "locality", value: "Aravaca" }),
+			node({ tag: "postcode", value: "28023" }),
+			node({ tag: "locality", value: "Madrid" }),
+		],
+	})
+
+	it("falls through to the SECOND locality value when the first is invisible to the band (Aravaca → Madrid → ES)", async () => {
+		const backend = makeBackend([PC_28023_ES, PC_28023_US, MADRID_ES, MADRID_IA])
+
+		const scope = await findPostcodeCountryScope(aravacaTree().roots, backend, {
+			postcode: "28023",
+			defaultCountry: "US",
+		})
+
+		expect(scope?.country).toBe("ES")
+		expect(scope?.evidence).toBe("pair")
+		expect(scope?.locality).toBe("Madrid")
+		expect(scope?.postcodePlace?.id).toBe(PC_28023_ES.id)
+		expect(scope?.distanceKm).toBeLessThan(POSTCODE_COUNTRY_COHERENCE_GATE_KM)
+	})
+
+	it("a DOMESTIC value neutralizes itself, not its siblings — Green Point/Cape Town → ZA (rung 4a)", async () => {
+		// `14 Long St, Green Point, Cape Town, 8001` under the inferred US default. "Green Point" has pop-0
+		// US namesakes (domestic corroboration for that VALUE only); "Cape Town" names exactly one country
+		// in the whole gazetteer. Any-value-kills abstained the pass and the hard US filter answered Green
+		// Point, Pennsylvania — 12,748 km off. The live 8001 rows are NO/AU/SI: no US row, no ZA row.
+		const greenPointPA: ResolvedPlace = {
+			id: 900_220,
+			name: "Green Point",
+			placetype: "locality",
+			country: "US",
+			lat: 40.48092,
+			lon: -76.55163,
+			score: 5,
+			exactMatch: true,
+		}
+
+		const greenPointAU: ResolvedPlace = {
+			id: 900_221,
+			name: "Green Point",
+			placetype: "locality",
+			country: "AU",
+			lat: -32.2492053,
+			lon: 152.5175294,
+			score: 5,
+			prominence: 522,
+			exactMatch: true,
+		}
+
+		const capeTownZA: ResolvedPlace = {
+			id: 900_222,
+			name: "Cape Town",
+			placetype: "locality",
+			country: "ZA",
+			lat: -33.9288301,
+			lon: 18.4172197,
+			score: 9,
+			prominence: 3_740_026,
+			exactMatch: true,
+		}
+
+		const pc8001AU: ResolvedPlace = {
+			id: 900_223,
+			name: "8001",
+			placetype: "postalcode",
+			country: "AU",
+			lat: -37.814,
+			lon: 144.9633,
+			score: 9,
+			exactMatch: true,
+		}
+
+		const backend = makeBackend([greenPointPA, greenPointAU, capeTownZA, pc8001AU])
+
+		const tree: AddressTree = {
+			raw: "14 Long St, Green Point, Cape Town, 8001",
+			roots: [
+				node({ tag: "street", value: "Long St" }),
+				node({ tag: "locality", value: "Green Point" }),
+				node({ tag: "locality", value: "Cape Town" }),
+				node({ tag: "postcode", value: "8001" }),
+			],
+		}
+
+		const scope = await findPostcodeCountryScope(tree.roots, backend, {
+			postcode: "8001",
+			defaultCountry: "US",
+		})
+
+		expect(scope?.country).toBe("ZA")
+		expect(scope?.evidence).toBe("locality")
+		expect(scope?.locality).toBe("Cape Town")
+	})
+
+	it("a TIE on a later value is a hard abstention, never a fall-through to the single-sided rungs", async () => {
+		// First value `Zzv` names exactly one country in the locality band, so a buggy fall-through past the
+		// tie would let rung 4a scope to NO. Second value `Mirakol` is pair-coherent in BOTH HR and RS.
+		const zzvNO: ResolvedPlace = {
+			id: 900_210,
+			name: "Zzv",
+			placetype: "locality",
+			country: "NO",
+			lat: 60.39,
+			lon: 5.32,
+			score: 9,
+			prominence: 1000,
+			exactMatch: true,
+		}
+
+		const pc20000HR: ResolvedPlace = {
+			id: 900_211,
+			name: "20000",
+			placetype: "postalcode",
+			country: "HR",
+			lat: 42.65,
+			lon: 18.09,
+			score: 9,
+			exactMatch: true,
+		}
+
+		const pc20000RS: ResolvedPlace = {
+			id: 900_212,
+			name: "20000",
+			placetype: "postalcode",
+			country: "RS",
+			lat: 44.01,
+			lon: 20.91,
+			score: 9,
+			exactMatch: true,
+		}
+
+		const mirakolHR: ResolvedPlace = {
+			id: 900_213,
+			name: "Mirakol",
+			placetype: "locality",
+			country: "HR",
+			lat: 42.66,
+			lon: 18.1,
+			score: 9,
+			prominence: 5000,
+			exactMatch: true,
+		}
+
+		const mirakolRS: ResolvedPlace = {
+			id: 900_214,
+			name: "Mirakol",
+			placetype: "locality",
+			country: "RS",
+			lat: 44,
+			lon: 20.9,
+			score: 9,
+			prominence: 4000,
+			exactMatch: true,
+		}
+
+		const backend = makeBackend([zzvNO, pc20000HR, pc20000RS, mirakolHR, mirakolRS])
+
+		const tree: AddressTree = {
+			raw: "Zzv, 20000 Mirakol",
+			roots: [
+				node({ tag: "locality", value: "Zzv" }),
+				node({ tag: "postcode", value: "20000" }),
+				node({ tag: "locality", value: "Mirakol" }),
+			],
+		}
+
+		const scope = await findPostcodeCountryScope(tree.roots, backend, {
+			postcode: "20000",
+			defaultCountry: "US",
+		})
+
+		expect(scope).toBeNull()
+	})
+})
+
+describe("localityValuesInDocumentOrder", () => {
+	it("collects every locality in document order, then dependent localities", () => {
+		const roots = [
+			node({ tag: "locality", value: "Aravaca" }),
+			node({ tag: "dependent_locality", value: "Shoreditch" }),
+			node({ tag: "locality", value: "Madrid" }),
+		]
+
+		expect(localityValuesInDocumentOrder(roots)).toEqual(["Aravaca", "Madrid", "Shoreditch"])
+	})
+
+	it("deduplicates case-insensitively", () => {
+		const roots = [node({ tag: "locality", value: "Madrid" }), node({ tag: "locality", value: "MADRID" })]
+
+		expect(localityValuesInDocumentOrder(roots)).toEqual(["Madrid"])
+	})
+
+	it("caps the value list", () => {
+		const roots = ["A", "B", "C", "D"].map((value) => node({ tag: "locality", value }))
+
+		expect(localityValuesInDocumentOrder(roots)).toEqual(["A", "B", "C"])
 	})
 })
 

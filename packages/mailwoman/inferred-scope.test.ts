@@ -34,4 +34,20 @@ describe("shouldDropInferredScope (#1684)", () => {
 	it("never touches an EXPLICIT scope, whatever the head says", () => {
 		expect(shouldDropInferredScope(tree({ country: "FR", confidence: 1 }), "US", false)).toBe(false)
 	})
+
+	it("drops on a postcode FORMAT that excludes the inferred country — the A1V 0A9 Gander class", () => {
+		expect(shouldDropInferredScope(tree(), "US", true, ["CA"])).toBe(true)
+	})
+
+	it("keeps the scope when the format set INCLUDES the inferred country — the 75008 protection again", () => {
+		expect(shouldDropInferredScope(tree(), "US", true, ["US", "FR", "DE"])).toBe(false)
+	})
+
+	it("an empty format set is silence, not foreignness", () => {
+		expect(shouldDropInferredScope(tree(), "US", true, [])).toBe(false)
+	})
+
+	it("the format signal never overrides an EXPLICIT scope either", () => {
+		expect(shouldDropInferredScope(tree(), "US", false, ["CA"])).toBe(false)
+	})
 })

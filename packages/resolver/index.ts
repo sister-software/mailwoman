@@ -43,6 +43,7 @@ export type {
 export {
 	findPostcodeCountryScope,
 	firstLocalityValue,
+	localityValuesInDocumentOrder,
 	POSTCODE_COUNTRY_COHERENCE_GATE_KM,
 	stampPostcodeCountryScope,
 } from "./postcode-country-coherence.ts"

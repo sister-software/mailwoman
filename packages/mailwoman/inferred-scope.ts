@@ -27,18 +27,29 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 
 /**
  * Whether a locale-inferred `defaultCountry` should be withheld from the resolve — true only when the scope is inferred
- * AND the parse carries a confident locale-head verdict for a different country. An absent verdict (under threshold, or
- * the head never ran) keeps the scope: unknown is not foreign.
+ * AND the address's own evidence points away from it, on either of two independent signals:
+ *
+ * 1. The locale head confidently reads the text as a DIFFERENT country's addressing (see the module docstring).
+ * 2. The postcode's FORMAT implies a country set that EXCLUDES the inferred country (`formatCountries`, from the #1589
+ *    machinery). `A1V 0A9` is structurally Canadian and nothing else, yet the inferred US scope used to survive it —
+ *    the format evidence only reached the postalcode probe, never the walk's own scope, so `Gander` resolved to a US
+ *    alias ghost. The format signal only speaks on DISTINCTIVE shapes: `countriesFromPostcodeFormat("75008")` is the
+ *    empty set (a bare 5-digit string is ambiguous many ways), so every such postcode keeps the scope via the empty-set
+ *    silence below, and the Dallas ZIP the locale prior exists to protect never reaches the exclusion test.
+ *
+ * An absent verdict on both signals keeps the scope: unknown is not foreign.
  */
 export function shouldDropInferredScope(
 	tree: AddressTree,
 	defaultCountry: string,
-	defaultCountryIsInferred: boolean
+	defaultCountryIsInferred: boolean,
+	formatCountries: readonly string[] = []
 ): boolean {
 	if (!defaultCountryIsInferred) return false
+	const inferred = defaultCountry.toUpperCase()
 	const verdict = tree.localeCountry
 
-	if (!verdict) return false
+	if (verdict && verdict.country.toUpperCase() !== inferred) return true
 
-	return verdict.country.toUpperCase() !== defaultCountry.toUpperCase()
+	return formatCountries.length > 0 && !formatCountries.some((country) => country.toUpperCase() === inferred)
 }

@@ -917,6 +917,62 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 	return geocodeAddressOnce(input, deps)
 }
 
+/**
+ * Thread the address's COUNTRY EVIDENCE into the walk's options — one seam for the whole precedence chain: an explicit
+ * caller scope is supreme; an inferred scope yields to the #1684 gate; postcode-format countries (#1589) reach the
+ * scoped `postalcode` probe; the fuzzy tier's locale scope (#1585) and the soft locale prior (#27) thread beneath.
+ */
+function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: GeocodeDeps): void {
+	// #1589: the parsed postcode's format-implied countries. Computed BEFORE the scope block so the scope
+	// gate can read them; threaded to the resolver either way.
+	const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
+
+	if (deps.defaultCountry) {
+		// #1684 conditional scope: a locale-INFERRED scope yields to the model's own confident contrary
+		// read of the text, or to a postcode FORMAT that excludes the inferred country (see
+		// shouldDropInferredScope). The scope is DROPPED, never re-pointed — the worldwide race with
+		// cross-country primary preference + fame decides, which is the behavior the graded scope=none
+		// arm measured on exactly this class ("Nanjing Road, Huangpu, Shanghai" was a West Virginia
+		// namesake under the inferred filter). An explicit caller scope never enters here.
+		if (shouldDropInferredScope(tree, deps.defaultCountry, deps.defaultCountryIsInferred === true, formatCountries)) {
+			// No hard scope; the postcode-format block below may still scope, which is the documented
+			// order (format evidence outranks a locale hint).
+		} else {
+			opts.defaultCountry = deps.defaultCountry
+
+			// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
+			// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
+			// default locale filters out the DE country row and falls to a US alias locality.
+			if (deps.defaultCountryIsInferred === true) {
+				opts.defaultCountryIsInferred = true
+			}
+		}
+	}
+
+	// #1589: the format-implied countries also reach the resolver's scoped `postalcode` probe. The
+	// resolver applies them ONLY when no country constraint survives — which keeps an explicit
+	// defaultCountry supreme over format evidence, which in turn outranks a locale hint.
+	if (formatCountries.length) {
+		opts.postcodeFormatCountries = formatCountries
+	}
+
+	// #1585: the locale hint's country scopes the typo-fuzzy tier — always threaded, never a filter on
+	// exact matches (the backend's fuzzy block is the only consumer).
+	if (deps.fuzzyCountryScope) {
+		opts.fuzzyCountryScope = deps.fuzzyCountryScope
+	}
+
+	// #27: the locale country as a SOFT prior, only where no hard scope is in force. Nothing else in the
+	// cascade is disturbed — the resolver ignores it under a `defaultCountry` or an `anchorPosterior`.
+	if (deps.localeCountryPrior && !opts.defaultCountry) {
+		opts.localeCountryPrior = deps.localeCountryPrior
+
+		if (deps.localeCountryPriorWeight !== undefined) {
+			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
+		}
+	}
+}
+
 async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
 	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
 	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
@@ -947,54 +1003,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		...(deps.resolveTraceSink ? { traceSink: deps.resolveTraceSink } : {}),
 	}
 
-	if (deps.defaultCountry) {
-		// #1684 conditional scope: a locale-INFERRED scope yields to the model's own confident contrary
-		// read of the text (see shouldDropInferredScope). The scope is DROPPED, never re-pointed — the
-		// worldwide race with cross-country primary preference + fame decides, which is the behavior the
-		// graded scope=none arm measured on exactly this class ("Nanjing Road, Huangpu, Shanghai" was a
-		// West Virginia namesake under the inferred filter). An explicit caller scope never enters here.
-		if (shouldDropInferredScope(tree, deps.defaultCountry, deps.defaultCountryIsInferred === true)) {
-			// No hard scope; the postcode-format block below may still scope, which is the documented
-			// order (format evidence outranks a locale hint).
-		} else {
-			opts.defaultCountry = deps.defaultCountry
-
-			// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
-			// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
-			// default locale filters out the DE country row and falls to a US alias locality.
-			if (deps.defaultCountryIsInferred === true) {
-				opts.defaultCountryIsInferred = true
-			}
-		}
-	}
-
-	// #1589: the parsed postcode's format-implied countries, for the resolver's scoped `postalcode`
-	// probe. Threaded unconditionally — the resolver applies it ONLY when no country constraint
-	// survives, which keeps an explicit defaultCountry supreme over format evidence, which in turn
-	// outranks a locale hint (the withheld-scope path in the CLI).
-	{
-		const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
-
-		if (formatCountries.length) {
-			opts.postcodeFormatCountries = formatCountries
-		}
-	}
-
-	// #1585: the locale hint's country scopes the typo-fuzzy tier — always threaded, never a filter on
-	// exact matches (the backend's fuzzy block is the only consumer).
-	if (deps.fuzzyCountryScope) {
-		opts.fuzzyCountryScope = deps.fuzzyCountryScope
-	}
-
-	// #27: the locale country as a SOFT prior, only where no hard scope is in force. Nothing else in the
-	// cascade is disturbed — the resolver ignores it under a `defaultCountry` or an `anchorPosterior`.
-	if (deps.localeCountryPrior && !opts.defaultCountry) {
-		opts.localeCountryPrior = deps.localeCountryPrior
-
-		if (deps.localeCountryPriorWeight !== undefined) {
-			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
-		}
-	}
+	applyCountryEvidence(opts, tree, deps)
 
 	if (deps.bias && deps.bias.length) {
 		opts.bias = deps.bias
@@ -1208,13 +1217,16 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	let resolved = await deps.resolver.resolveTree(tree, opts)
 
-	// Second pass, ONLY when the coherence pass actually overrode the country. Rooftop + street-centroid shards are
-	// selected BEFORE the resolve (they have to be — they're resolver inputs), off a country that has now been shown
-	// wrong, so a corrected FR address would otherwise sit at its commune centroid with no BAN shard ever consulted.
-	// Re-select for the corrected country and resolve once more. `opts.defaultCountry` is deliberately left alone so
-	// the coherence pass re-derives the same verdict (2 lookups) and its `postcode_country_scope` receipt survives onto
-	// the returned tree. Bounded at one extra resolve, and unreachable unless an override fired.
-	const scopeCountry = postcodeCountryScopeOf(resolved)
+	// Second pass, whenever the RESOLVE settled a different country than the shards were selected for. Rooftop +
+	// street-centroid shards are selected BEFORE the resolve (they have to be — they're resolver inputs), off a
+	// country that can be corrected by any of several mechanisms mid-resolve: the #42 coherence override and the
+	// #1735 explicit pre-scope stamp receipts, but the placer and the #1684 dropped-scope worldwide race do not —
+	// `92 Laurell Road, Gander, NL A1V 0A9` resolved Gander CA with no receipt and sat at the city centroid while
+	// the CA rooftop shard held the exact point. So the trigger is the resolved tree's OWN country, with the
+	// receipt kept as the fallback for trees whose scope changed without a resolved carrier node.
+	// `opts.defaultCountry` is deliberately left alone so a receipt-driven verdict re-derives identically and
+	// survives onto the returned tree. Bounded at one extra resolve.
+	const scopeCountry = resolvedCountryOf(resolved) ?? postcodeCountryScopeOf(resolved)
 
 	if (scopeCountry && scopeCountry.toLowerCase() !== preResolveCountry && !usShards.addressPoints) {
 		const rooftop = rooftopFor(scopeCountry)
@@ -1295,6 +1307,25 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
  * `postcode_country_scope` stamp. `undefined` when the pass was off, abstained, or agreed with the caller's default —
  * i.e. whenever nothing was overridden.
  */
+/**
+ * The resolved tree's own country — the first `resolver_country` stamp on any node (constant across one address's
+ * resolved nodes), or undefined when nothing resolved with one. The rooftop second pass keys on this.
+ */
+function resolvedCountryOf(tree: AddressTree): string | undefined {
+	const stack: AddressNode[] = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+		const c = (n.metadata?.["resolver_country"] as string | undefined)?.trim()
+
+		if (c) return c.toUpperCase()
+
+		stack.push(...n.children)
+	}
+
+	return undefined
+}
+
 function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 	const stack: AddressNode[] = [...tree.roots]
 
