@@ -75,4 +75,23 @@ describe("validateTree", () => {
 		const v = validateTree(tree)
 		expect(v.violations.some((x) => x.type === "illegal-edge" && x.tag === "postcode")).toBe(true)
 	})
+
+	test("a unit anchored by a VENUE is valid — the sub-venue case the contract used to omit", () => {
+		// `Terminal 5, Heathrow Airport, Hounslow, TW6 2GA` parses to exactly this shape and is a GATED PASS on the
+		// board. Before `venue` joined PARENT_OF[unit] the checker called it a stranded dependent, so the contract was
+		// narrower than the capability already being tested — the checker was wrong, not the parse.
+		const tree = {
+			raw: "Terminal 5, Heathrow Airport, Hounslow",
+			roots: [node("venue", "Heathrow Airport"), node("unit", "Terminal 5"), node("locality", "Hounslow")],
+		}
+
+		expect(validateTree(tree).valid).toBe(true)
+	})
+
+	test("a unit with NO anchor of any kind is still stranded", () => {
+		// Widening the contract must not make the check vacuous: a unit alone has nothing to belong to.
+		const tree = { raw: "Terminal 5", roots: [node("unit", "Terminal 5")] }
+
+		expect(validateTree(tree).violations.some((x) => x.type === "stranded-dependent" && x.tag === "unit")).toBe(true)
+	})
 })
