@@ -183,8 +183,13 @@ const CORPUS_SIZE = 572
  * (the surface-router receipt — 'boul St-Laurent' reaches the attested OSM rooftop) and the fully-French form lands
  * improvement_target (the francophone-CA scope confound: the locale head's FR 1.00 hard-scopes the walk and
  * Montréal-la-Cluse answers). 570 → 572, so the board id moves too.
+ *
+ * Moved again the same day — → this — by the #1738 dominant-bearer guard's promotions: `ca-qc-boul-st-laurent-full`
+ * (5,858 km → the attested rooftop at 0 m) and `za-cs-14-long-st-green` (the 12,748-km Green Point ghost's row,
+ * finished by the guard after the per-value coherence rule opened the door) both flip improvement_target → pass,
+ * byte-identical now-PASSES across two consecutive full-board runs. Status + note edits; the board id holds.
  */
-const CORPUS_HASH = "628924e53e36d2c5bd4af295aa453af717cd5d756a2d430a7d82d8071287527b"
+const CORPUS_HASH = "912aa685c822fccb7c66f08a1625b514da123751b4e6247dba0aeda284b1c6e3"
 
 /**
  * `ablationBoardID` of the corpus.
