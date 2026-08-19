@@ -52,6 +52,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -144,16 +145,6 @@ for (const arm of arms) {
 
 //#region Scoring
 
-const PLACETYPE_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
-	localadmin: 4,
-	borough: 4,
-	county: 3,
-	region: 2,
-	country: 0,
-}
-
 interface Resolved {
 	id: number
 	name: string
@@ -218,7 +209,11 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+		if (
+			!best ||
+			(placetypeSpecificity(r.placetype) ?? Number.NEGATIVE_INFINITY) >
+				(placetypeSpecificity(best.placetype) ?? Number.NEGATIVE_INFINITY)
+		) {
 			best = r
 		}
 	}

@@ -60,6 +60,7 @@ import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { COARSE_CLASSES } from "@mailwoman/core/coarse-placer"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath, mailwomanDataRoot, percentile } from "@mailwoman/core/utils"
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
@@ -259,19 +260,6 @@ interface OaRow {
 	source: string
 }
 
-/**
- * Most-specific placetype wins (locality beats region beats country).
- */
-const PLACETYPE_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
-	localadmin: 4,
-	borough: 4,
-	county: 3,
-	region: 2,
-	country: 0,
-}
-
 interface Resolved {
 	id: number
 	name: string
@@ -364,7 +352,11 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+		if (
+			!best ||
+			(placetypeSpecificity(r.placetype) ?? Number.NEGATIVE_INFINITY) >
+				(placetypeSpecificity(best.placetype) ?? Number.NEGATIVE_INFINITY)
+		) {
 			best = r
 		}
 	}
