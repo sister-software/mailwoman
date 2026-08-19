@@ -134,12 +134,59 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 				all: options.all,
 			})
 
+			// WHERE each repo comes from is resolved per repo, not assumed to be upstream. `gh repo list` enumerates the
+			// UPSTREAM org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
+			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
+			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
+			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
+			const { resolveWOFRepoOrigin } = await import("../../../gazetteer-pipeline/wof-repo-origin.ts")
+			const { execFile } = await import("node:child_process")
+			const { promisify } = await import("node:util")
+
+			const run = promisify(execFile)
+
+			// `execFile`, not zx: zx's `.sync` template did not reject into a surrounding try/catch here, so the probe
+			// returned `true` for every repo — including `whosonfirst-data-postalcode-gb`, which has no fork — and the
+			// 404 arrived later as an unhandled rejection. A probe whose failure mode is "answers yes to everything" is
+			// worse than no probe, because its answer routes the clone.
+			const forkProbe = async (org: string, repo: string): Promise<boolean> => {
+				try {
+					await run("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
+
+					return true
+				} catch (error) {
+					// A 404 is the real answer "no fork". Anything else is a FAILED lookup and must throw, so the resolver
+					// records upstream-with-a-caveat rather than upstream-as-established-fact.
+					if (/HTTP 404|Not Found/i.test(`${(error as Error).message}${(error as { stderr?: string }).stderr ?? ""}`)) {
+						return false
+					}
+
+					throw error
+				}
+			}
+
+			const resolved = await Promise.all(
+				selection.selected.map(async ({ name }) => {
+					const origin = await resolveWOFRepoOrigin(name, forkProbe)
+
+					if (origin.source === "fork") {
+						console.error(`▸ ${name}: ${origin.reason}`)
+					} else if (origin.reason.includes("fork lookup failed")) {
+						console.error(`▸ ${name}: ${origin.reason}`)
+					}
+
+					// `owner` is the DIRECTORY, and it stays upstream even when the bytes come from our fork. The
+					// destination is `<root>/<owner>/<name>`, so keying it on the resolved org would give one repo two
+					// homes — and `ingestWOF` globs the whole root, so the build would read both and resolve the conflict
+					// by FastGlob enumeration order (`repos-audit.ts` documents that hazard). One repo, one directory,
+					// whichever remote filled it.
+					return { name, url: origin.url, owner: WOF_REPO_OWNER }
+				})
+			)
+
 			// The placetypes codex is not optional: `Placetype.prepare` below reads it, and every consumer of a
 			// synchronized tree resolves placetypes through it.
-			const sources: RepositorySource[] = [
-				...selection.selected.map(({ name, url }) => ({ name, url, owner: WOF_REPO_OWNER })),
-				PLACETYPES_REPO_SOURCE,
-			]
+			const sources: RepositorySource[] = [...resolved, PLACETYPES_REPO_SOURCE]
 
 			setPlan({ destination: destination.toString(), selection, sourceCount: sources.length })
 
