@@ -193,8 +193,9 @@ const CORPUS_SIZE = 572
  * Arabic-Indic '١' for an input whose own text carries the Latin '1' — the oracle's canonical rendering leaked into the
  * component pin (a dual-script assertion belongs in expectComponentRenderings with BOTH forms, #34). The coordinate
  * half was already cured by the #1738 guard (Cairo GEORGIA → Cairo EGYPT, 101 m). Pin + note edit; the board id holds.
+ * The row then promoted the same day — byte-identical now-PASSES across two consecutive full-board runs.
  */
-const CORPUS_HASH = "d57293f2677ec7470abda7c12dc8886e453f94534373ba911539b715f6342cc2"
+const CORPUS_HASH = "aeb7c4e5a81d55bbb483016690ab98cc3fd9f4b017fbe6b99fab0fa8c51fb5da"
 
 /**
  * `ablationBoardID` of the corpus.
