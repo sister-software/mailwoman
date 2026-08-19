@@ -56,14 +56,10 @@ describe("geocodeAddress — parsedTree dedupe", () => {
 		const classifier = fakeClassifier(emptyTree)
 		const { resolver } = captureResolver()
 
-		// retryAlternateRegister off pins the single pass this dedupe surface is about: the fake resolver
-		// echoes an empty tree, so the Decision-A rider would otherwise (correctly) spend its one
-		// alternate-register re-parse on the zero-hit. The rider has its own tests in geocode-core.test.ts.
 		await geocodeAddress("500 N Hiatus Rd, Pembroke Pines, FL", {
 			classifier,
 			resolver,
 			placeCountry: false,
-			retryAlternateRegister: false,
 		})
 
 		expect(classifier.parse).toHaveBeenCalledTimes(1)

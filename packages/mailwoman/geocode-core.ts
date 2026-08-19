@@ -70,7 +70,6 @@ import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
 import { applyStreetMissFallback } from "./street-miss-fallback.ts"
 import { assembleStreetName } from "./street-name-assembly.ts"
-import { isStreetNameQuery } from "./street-name-query.ts"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 
@@ -314,13 +313,6 @@ export interface GeocodeDeps {
 	 * (`/v1/batch` + CSV → `"formatted"`, autocomplete drop-ins → `"fragmented"`).
 	 */
 	inputMode?: InputMode
-	/**
-	 * The Decision-A retry rider (operator-specced 2026-07-28): when a geocode ZERO-HITS (no coordinate AND no
-	 * candidates), re-parse ONCE in the alternative register and re-resolve. Fires only when the register was DERIVED (an
-	 * explicit {@link inputMode} is never second-guessed) and never loops. Default ON; pass `false` to pin single-pass
-	 * behavior.
-	 */
-	retryAlternateRegister?: boolean
 	/**
 	 * Per-state shard resolver. Omit for admin-only geocoding.
 	 */
@@ -917,34 +909,12 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	const result = await geocodeAddressOnce(input, deps)
-
-	// Decision-A retry rider: a ZERO-HIT (no coordinate, no candidates) in a DERIVED register earns one
-	// attempt in the alternative register — a misrouted fragment/record can resolve on the flip; a
-	// second miss returns the original result. Explicit registers and caller-supplied trees are never
-	// second-guessed; the retry itself passes an explicit mode, so it cannot recurse.
-	const zeroHit = result.lat == null && (!result.candidates || result.candidates.length === 0)
-
-	if (
-		zeroHit &&
-		deps.retryAlternateRegister !== false &&
-		deps.inputMode === undefined &&
-		deps.parsedTree === undefined &&
-		!isStreetNameQuery(result.components)
-	) {
-		const parseInput =
-			deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
-
-		const used = deriveGeocodeRegister(parseInput)
-		const flipped: InputMode = used === "formatted" ? "fragmented" : "formatted"
-		const retried = await geocodeAddressOnce(input, { ...deps, inputMode: flipped })
-
-		if (retried.lat != null || (retried.candidates && retried.candidates.length)) {
-			return retried
-		}
-	}
-
-	return result
+	// The Decision-A retry rider (a zero-hit in a DERIVED register earned one attempt in the flipped one)
+	// lived here from 2026-07-28 to 2026-08-19 and was retired under the #486 repair-retirement policy with
+	// a measured record of exactly zero: no effect on the full board, none on its 199-row failure slice
+	// (counterfactual sweep), and none on 300 fresh BAN + 300 fresh FDIC register records — the misrouted-
+	// record class it was specced for. #1694 holds the receipts.
+	return geocodeAddressOnce(input, deps)
 }
 
 async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {

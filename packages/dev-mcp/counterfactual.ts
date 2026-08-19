@@ -34,13 +34,7 @@ import { DISTANCE_THRESHOLDS_KM } from "./geo-grade.ts"
  * The fixed lever space, in the CLI's own vocabulary — the same keys `EngineConfig` uses, so a flip a reader wants to
  * reproduce is a `config` they can paste into any other tool.
  */
-export const COUNTERFACTUAL_LEVERS = [
-	"locale",
-	"gazetteer_prior",
-	"country_scope",
-	"retry_alternate_register",
-	"fork_entity",
-] as const
+export const COUNTERFACTUAL_LEVERS = ["locale", "gazetteer_prior", "country_scope", "fork_entity"] as const
 
 export type CounterfactualLever = (typeof COUNTERFACTUAL_LEVERS)[number]
 
@@ -163,17 +157,6 @@ export function enumerateFlips(
 		from: effective.countryScope,
 		to: scopeTo,
 		patch: { country_scope: scopeTo },
-	})
-
-	// The session leaves this key ABSENT under the production default, and `geocode-core.ts` reads it as
-	// `retryAlternateRegister !== false` — so absent means ON, and the flip from absent is to false.
-	const retryOn = effective.retryAlternateRegister !== false
-
-	flips.push({
-		lever: "retry_alternate_register",
-		from: String(retryOn),
-		to: String(!retryOn),
-		patch: { retry_alternate_register: !retryOn },
 	})
 
 	flips.push({

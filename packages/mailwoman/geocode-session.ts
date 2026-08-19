@@ -112,10 +112,10 @@ export interface GeocodeSessionOptions {
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * Whether a ZERO-HIT may be retried in the alternative input register (the Decision-A rider).
-	 *
-	 * Exposed so the lever is measurable: it changes answers on the default path, and a lever an A/B cannot reach is a
-	 * lever nobody can price. `undefined` keeps the production default, which is ON.
+	 * DEPRECATED NO-OP, removed at the next major. The Decision-A retry rider it controlled was retired 2026-08-19 under
+	 * the #486 repair-retirement policy with a measured record of exactly zero effect (the board, its failure slice, and
+	 * 600 fresh register records — #1694 holds the receipts). Accepted so existing callers keep compiling; ignored,
+	 * because single-pass is now the only behavior.
 	 */
 	retryAlternateRegister?: boolean
 	placeCountryThreshold: number
@@ -633,9 +633,6 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const result = await geocodeAddress(input, {
 			classifier,
-			...(options.retryAlternateRegister === undefined
-				? {}
-				: { retryAlternateRegister: options.retryAlternateRegister }),
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,

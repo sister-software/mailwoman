@@ -171,7 +171,6 @@ export const ENGINE_CONFIG_SCHEMA = z
 		postcode_shape_coherence: z.boolean().optional(),
 		postcode_containment_coherence: z.boolean().optional(),
 		admin_containment_rerank: z.boolean().optional(),
-		retry_alternate_register: z.boolean().optional(),
 	})
 	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 

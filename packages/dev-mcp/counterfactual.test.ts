@@ -56,12 +56,6 @@ describe("enumerateFlips — one lever at a time", () => {
 		expect(noOverlay.skipped[0]!.why).toContain("no weights overlay ships for JP")
 	})
 
-	it("reads an absent retry_alternate_register as the production default it means, not as off", () => {
-		// `resolveConfig` leaves the key absent under the default and `geocode-core.ts` reads it as `!== false`, so
-		// absent is ON — a flip that read absent as off would re-run the row in the state it was already in.
-		expect(flipFor("retry_alternate_register", BASE_LOCALE, "US")).toMatchObject({ from: "true", to: "false" })
-	})
-
 	it("flips country_scope between auto and none in both directions", () => {
 		expect(enumerateFlips(resolveConfig({ country_scope: "none" }), "US").flips).toContainEqual(
 			expect.objectContaining({ lever: "country_scope", from: "none", to: "auto" })
