@@ -13,6 +13,7 @@ import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
+import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
 import { TSVSpliterator } from "spliterator"
 
 import type { PlaceAttrs } from "./build-candidate.ts"
@@ -69,14 +70,14 @@ export async function resurrectCurrencyHoles(ctx: {
 	progress: (phase: string, message: string) => void
 }): Promise<number> {
 	const deadStmt = ctx.src.prepare(
-		`SELECT id, name, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude
+		`SELECT id, name, placetype, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude
 		 FROM spr
 		 WHERE country = ? AND placetype = 'locality'
 		   AND is_current = 0 AND is_deprecated = 1 AND is_superseded = 0`
 	)
 
 	const liveStmt = ctx.src.prepare(
-		`SELECT latitude, longitude FROM spr WHERE country = ? AND name = ? AND is_current != 0`
+		`SELECT latitude, longitude, placetype FROM spr WHERE country = ? AND name = ? AND is_current != 0`
 	)
 
 	let total = 0
@@ -160,12 +161,29 @@ export async function resurrectCurrencyHoles(ctx: {
 
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
+			// The dead-row query is scoped to `locality` today; read it from the row anyway so widening that query
+			// cannot silently start comparing every candidate against a hardcoded rung.
+			const deadPlacetype = String(d.placetype ?? "locality")
 
-			const liveNear = liveStmt
-				.all(cc, name)
-				.some(
-					(row) => haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) <= CURRENCY_BACKFILL_RADIUS_KM
-				)
+			// A live row blocks only when it is AT LEAST AS COARSE as the dead one. The original gate compared name and
+			// distance alone, on the premise that a nearby same-name row means "the place is alive under another
+			// placetype" — true for a place recorded twice, false for a placetype DEMOTION, which is the shape that
+			// actually occurs: WOF retired `Gillingham` the locality (pop 101,187) and kept `Gillingham` the
+			// neighbourhood 3.2 km away, and the gate read the surviving CHILD as covering its own dead parent.
+			// Sixteen of seventeen GB refusals had exactly that shape (#1746).
+			//
+			// An UNRANKED placetype blocks, which is the conservative direction: this gate's failure mode is inventing
+			// a place, so a row we cannot rank is treated as covering rather than waved through.
+			const liveNear = liveStmt.all(cc, name).some((row) => {
+				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
+					return false
+				}
+
+				// Blocks UNLESS the live row is strictly finer. The equal rung must still block — a live `locality`
+				// covers a dead `locality` — and an unranked placetype blocks too, since this gate's failure mode
+				// is inventing a place.
+				return isStrictlyFiner(String(row.placetype ?? ""), deadPlacetype) !== true
+			})
 
 			if (liveNear) {
 				blocked++

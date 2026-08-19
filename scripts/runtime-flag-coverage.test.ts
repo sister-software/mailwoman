@@ -40,6 +40,7 @@ const REGISTER = String(repoRootPath("docs", "engineering", "reference", "runtim
 function registerFlags(markdown: string): string[] {
 	const flags = new Set<string>()
 
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one register file, read whole and bounded
 	for (const line of markdown.split("\n")) {
 		if (!line.startsWith("| `")) continue
 
