@@ -173,7 +173,10 @@ session-notes-*.md
 # residual probes under scripts/eval/); the old scripts/diag-*.ts glob never matched.
 scripts/diag-*.ts
 scripts/diag-*.sh
-scripts/diagnostic/
+# Contents rather than the directory: git cannot re-include a file whose PARENT DIRECTORY is excluded, so
+# `scripts/diagnostic/` made the keeper negations below unreachable and blocked the pre-commit hook's re-add.
+scripts/diagnostic/*
+!scripts/diagnostic/calibration-reliability.ts
 scripts/eval/*-residual.ts
 
 # Coarse-placer (#244) training data + model artifacts — regenerable, not committed
