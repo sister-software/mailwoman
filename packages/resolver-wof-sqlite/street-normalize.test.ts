@@ -192,15 +192,22 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 })
 
 describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 coverage lane)", () => {
-	it("pl: folds ł (the non-decomposing letter) and expands leading type abbreviations", () => {
-		expect(normalizeStreetForKeyLocale("ul. Świętokrzyska", "pl")).toBe("ulica swietokrzyska")
-		expect(normalizeStreetForKeyLocale("ulica Świętokrzyska", "pl")).toBe("ulica swietokrzyska")
+	it("pl: folds ł (the non-decomposing letter) and STRIPS the leading type — OSM Poland tags streets bare", () => {
+		// Typed, spelled and bare surfaces all key to the shard's bare form (22 of 5.56M rows carry "ulica").
+		expect(normalizeStreetForKeyLocale("ul. Świętokrzyska", "pl")).toBe("swietokrzyska")
+		expect(normalizeStreetForKeyLocale("ulica Świętokrzyska", "pl")).toBe("swietokrzyska")
+		expect(normalizeStreetForKeyLocale("Świętokrzyska", "pl")).toBe("swietokrzyska")
 		expect(normalizeStreetForKeyLocale("Marszałkowska", "pl")).toBe("marszalkowska")
-		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("aleja jerozolimskie")
+		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("jerozolimskie")
+		expect(normalizeStreetForKeyLocale("Plac Zamkowy", "pl")).toBe("zamkowy")
+		// The type alone is a name, not a prefix — never stripped to nothing.
+		expect(normalizeStreetForKeyLocale("Ulica", "pl")).toBe("ulica")
 	})
 
-	it("vn: folds đ so an undiacritized query keys identically — and expands nothing", () => {
+	it("vn: folds BOTH đ (d-with-stroke) and ð (eth) — OSM mixes the codepoints inside one value", () => {
 		expect(normalizeStreetForKeyLocale("Đường Trần Hưng Đạo", "vn")).toBe("duong tran hung dao")
+		// The measured OSM mixture: U+0110 leading, U+00D0 (ETH) inside Đạo — the majority variant's key.
+		expect(normalizeStreetForKeyLocale("\u0110ường Trần Hưng \u00D0ạo", "vn")).toBe("duong tran hung dao")
 		expect(normalizeStreetForKeyLocale("Duong Tran Hung Dao", "vn")).toBe("duong tran hung dao")
 		expect(normalizeStreetForKeyLocale("Phố Huế", "vn")).toBe("pho hue")
 	})

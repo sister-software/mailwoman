@@ -192,15 +192,14 @@ const FR_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Polish street-type abbreviations → canonical full form, leading position ("ul. Marszałkowska", "al. Jerozolimskie").
- * The fold has already stripped the trailing period.
+ * Polish leading street-type tokens, STRIPPED rather than expanded. Measured on the 5.56M-row PL OSM shard
+ * (2026-08-19): OSM Poland tags `addr:street` BARE — `ulica%` covers 22 rows and `ul.%` eight, so an EXPANSION rule
+ * makes a typed query ("ul. Świętokrzyska" → "ulica swietokrzyska") miss the 3,846 bare "swietokrzyska" rows. Stripping
+ * the leading type on BOTH sides keys typed and bare surfaces identically. The full words are stripped too: the
+ * aleja/plac/osiedle populations (48,597 / 26,815 / 39,552 rows) spell the word out, and "Plac Zamkowy" must key the
+ * same as a query's "plac zamkowy" or bare "Zamkowy". Never stripped when it is the only token.
  */
-const PL_STREET_ABBREV = new Map<string, string>([
-	["ul", "ulica"],
-	["al", "aleja"],
-	["pl", "plac"],
-	["os", "osiedle"],
-])
+const PL_LEADING_TYPE = new Set(["ul", "ulica", "al", "aleja", "aleje", "pl", "plac", "os", "osiedle"])
 
 /**
  * Indonesian street-type abbreviations → canonical full form, leading position ("Jl. Thamrin", "Gg. Waru").
@@ -221,11 +220,12 @@ const ID_STREET_ABBREV = new Map<string, string>([
  *   "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
  * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
  * - **pl** — fold + ł→l (Ł does not NFKD-decompose, so the generic fold keeps it and an undiacritized query would miss;
- *   every other Polish diacritic is a combining form the fold already strips) + expand leading type abbreviations
- *   (ul→ulica, al→aleja, pl→plac, os→osiedle).
- * - **vn** — fold + đ→d (same non-decomposing hazard as ł; all other Vietnamese diacritics strip). Deliberately NO
- *   type-abbreviation map yet: the common abbreviation is the single letter "Đ." for Đường, and expanding a bare folded
- *   "d" token would rewrite initials — measure the miss rate on the built shard before adding anything.
+ *   every other Polish diacritic is a combining form the fold already strips) + STRIP the leading type token — see
+ *   {@link PL_LEADING_TYPE} for the measured reason expansion was wrong for this source.
+ * - **vn** — fold + đ→d AND ð→d (both non-decomposing, and OSM mixes the two codepoints inside single values — see the
+ *   branch comment). Deliberately NO type-abbreviation map yet: the common abbreviation is the single letter "Đ." for
+ *   Đường, and expanding a bare folded "d" token would rewrite initials — measure the miss rate on the built shard
+ *   before adding anything.
  * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang); Indonesian street surfaces are otherwise
  *   ASCII-clean.
  */
@@ -268,9 +268,11 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			break
 		case "pl":
 			for (let i = 0; i < tokens.length; i++) {
-				const t = tokens[i]!.replaceAll("ł", "l")
+				tokens[i] = tokens[i]!.replaceAll("ł", "l")
+			}
 
-				tokens[i] = PL_STREET_ABBREV.get(t) ?? t
+			if (tokens.length > 1 && PL_LEADING_TYPE.has(tokens[0]!)) {
+				tokens.shift()
 			}
 			break
 		case "id":
@@ -279,10 +281,13 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			}
 			break
 		case "vn":
-			// The đ→d letter map is the whole vn treatment — see the locale table for why no
-			// abbreviation map exists yet.
+			// đ (U+0111, d-with-stroke) AND ð (U+00F0, eth): OSM Vietnamese data mixes the two visually
+			// identical codepoints inside single values — the 2026-08-19 shard measured `Đường Trần Hưng
+			// Đạo` carrying d-with-stroke at the front and ETH in `Đạo`, splitting the country's most
+			// common street into two keys with the MAJORITY variant (630 vs 421 rows) unreachable by a
+			// correctly-typed query. No abbreviation map — see the locale table.
 			for (let i = 0; i < tokens.length; i++) {
-				tokens[i] = tokens[i]!.replaceAll("đ", "d")
+				tokens[i] = tokens[i]!.replaceAll("đ", "d").replaceAll("ð", "d")
 			}
 			break
 	}
