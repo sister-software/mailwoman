@@ -289,7 +289,11 @@ export function applyEntityTiers(
 		result.lon !== null &&
 		(result.resolution_tier === "admin" || result.resolution_tier === "street")
 	) {
-		const hit = probeVenueNearAnchor(result.venue, { lat: result.lat, lon: result.lon }, { lookup: deps.poiLookup })
+		const hit = probeVenueNearAnchorFolded(
+			result.venue,
+			{ lat: result.lat, lon: result.lon },
+			{ lookup: deps.poiLookup }
+		)
 
 		if (hit) {
 			result.lat = hit.latitude
@@ -297,5 +301,92 @@ export function applyEntityTiers(
 			result.resolution_tier = "venue"
 			result.entity = { name: hit.name, categoryID: hit.categoryID, confidence: hit.confidence, country: hit.country }
 		}
+	}
+}
+
+/**
+ * The head segment of a QUALIFIER-DECORATED venue name: everything before the first dash-style separator, with any
+ * trailing parenthetical dropped. Board-measured classes (2026-08-19): the input carries the marketing string while the
+ * poi row carries the bare name or a differently-combined one — "Mischicks Day Spa - St Andrews Lakes - Rochester,
+ * Kent" vs the row "Mischicks Day Spa - St Andrews Lakes"; "The North Face - Covent Garden" vs the row "The North
+ * Face". Returns null when stripping changes nothing (no second leg to run) or when the head collapses to a single
+ * token (a one-word head like "The" matches everything and means nothing).
+ */
+function venueHeadSegment(venueRaw: string): string | null {
+	const head = venueRaw
+		.split(/\s+[-–—]\s+/)[0]!
+		.replace(/\s*\([^)]*\)\s*$/, "")
+		.trim()
+
+	if (!head || head === venueRaw.trim()) return null
+
+	if (head.split(/\s+/).length < 2) return null
+
+	return head
+}
+
+/**
+ * {@link probeVenueNearAnchor} with the qualifier-folding second leg: the exact leg runs first and an exact local-unique
+ * hit is never second-guessed; only when it abstains does the probe retry comparing HEAD SEGMENTS on both sides ({@link
+ * venueHeadSegment}). Local uniqueness binds on the folded key exactly as on the exact one — a chain with two branches
+ * in the metro ("The North Face" twice in London) abstains.
+ */
+export function probeVenueNearAnchorFolded(
+	venueRaw: string,
+	anchor: { lat: number; lon: number },
+	opts: Pick<ForkEntityProbeOpts, "lookup">
+): ForkEntityHit | null {
+	const exact = probeVenueNearAnchor(venueRaw, anchor, opts)
+
+	if (exact) return exact
+
+	// The fold can land on EITHER side: the query's head against a bare row, or the query against a
+	// decorated row's head — so the comparison folds both, and the leg runs even when only the hit
+	// side can differ.
+	const queryHead = venueHeadSegment(venueRaw) ?? venueRaw.trim()
+	const queryKey = normalizeLocalityForKey(queryHead)
+
+	if (!queryKey) return null
+
+	const hits = opts.lookup.search({ name: queryHead, limit: 24 })
+
+	const folded = hits.filter((h) => {
+		if (h.name === null) return false
+		const hitHead = venueHeadSegment(h.name) ?? h.name
+
+		return normalizeLocalityForKey(hitHead) === queryKey
+	})
+
+	if (!folded.length) return null
+
+	const entities: Array<(typeof folded)[number]> = []
+
+	for (const hit of folded) {
+		const twin = entities.find((e) => distanceM(e.latitude, e.longitude, hit.latitude, hit.longitude) <= SAME_ENTITY_M)
+
+		if (twin) {
+			if (hit.confidence > twin.confidence) {
+				entities[entities.indexOf(twin)] = hit
+			}
+
+			continue
+		}
+
+		entities.push(hit)
+	}
+
+	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_GATE_M)
+
+	if (near.length !== 1) return null
+
+	const top = near[0]!
+
+	return {
+		name: top.name ?? venueRaw,
+		categoryID: top.categoryID,
+		latitude: top.latitude,
+		longitude: top.longitude,
+		country: top.country,
+		confidence: top.confidence,
 	}
 }

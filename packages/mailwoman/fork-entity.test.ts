@@ -11,7 +11,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { probeForkEntity, probeVenueNearAnchor, type ForkEntityProbeOpts } from "./fork-entity.ts"
+import {
+	probeForkEntity,
+	probeVenueNearAnchor,
+	probeVenueNearAnchorFolded,
+	type ForkEntityProbeOpts,
+} from "./fork-entity.ts"
 import type { POIExecutorLookup } from "./poi-executor.ts"
 
 /**
@@ -146,5 +151,52 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 		const hit = probeVenueNearAnchor("Africa House", LONDON, { lookup })
 
 		expect(hit?.confidence).toBe(0.95)
+	})
+})
+
+describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => {
+	const LONDON = { lat: 51.5074, lon: -0.1278 }
+	const ROCHESTER = { lat: 51.36, lon: 0.44 }
+
+	it("matches the query's decorated form against the row's differently-decorated one — the Mischicks class", () => {
+		const lookup = stubLookup([
+			{ name: "Mischicks Day Spa - St Andrews Lakes", lat: 51.35984, lon: 0.43781, country: "GB" },
+		])
+
+		const hit = probeVenueNearAnchorFolded("Mischicks Day Spa - St Andrews Lakes - Rochester, Kent", ROCHESTER, {
+			lookup,
+		})
+
+		expect(hit?.latitude).toBeCloseTo(51.35984)
+	})
+
+	it("never second-guesses an exact hit — the exact leg runs first", () => {
+		const lookup = stubLookup([
+			{ name: "Nine Elms Tavern", lat: 51.48223, lon: -0.13718, country: "GB", confidence: 0.99 },
+			// A folded-comparable decoy the second leg would also accept.
+			{ name: "Nine Elms Tavern - Riverside", lat: 51.49, lon: -0.14, country: "GB", confidence: 0.5 },
+		])
+
+		const hit = probeVenueNearAnchorFolded("Nine Elms Tavern", LONDON, { lookup })
+
+		expect(hit?.confidence).toBe(0.99)
+	})
+
+	it("abstains when the folded head matches TWO local entities — the chain-branch class", () => {
+		// The query's decoration exists on NO row (the exact leg abstains), and the folded head matches
+		// both metro branches — a genuine ambiguity. A query naming an existing branch verbatim is the
+		// exact leg's win, not this leg's problem.
+		const lookup = stubLookup([
+			{ name: "The North Face - Covent Garden", lat: 51.512, lon: -0.123, country: "GB" },
+			{ name: "The North Face - Oxford Street", lat: 51.515, lon: -0.141, country: "GB" },
+		])
+
+		expect(probeVenueNearAnchorFolded("The North Face - Long Acre", LONDON, { lookup })).toBeNull()
+	})
+
+	it("refuses a one-token head — a bare article matches everything and means nothing", () => {
+		const lookup = stubLookup([{ name: "The - Bar", lat: 51.51, lon: -0.12, country: "GB" }])
+
+		expect(probeVenueNearAnchorFolded("The - Unrelated Qualifier", LONDON, { lookup })).toBeNull()
 	})
 })
