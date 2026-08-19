@@ -48,6 +48,8 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["pl", "pl"],
 	["vn", "vn"],
 	["id", "id"],
+	// Islamabad-sector addressing ("House 4, Street 25, F-7/2") is English-typed; the en rules fold it.
+	["pk", "en"],
 ])
 
 /**
