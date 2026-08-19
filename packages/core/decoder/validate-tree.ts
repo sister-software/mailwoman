@@ -40,9 +40,18 @@ const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"dependent_locality",
 	"attention",
 	"cedex",
-	"intersection_a",
-	"intersection_b",
 ])
+
+/*
+ * `intersection_a` / `intersection_b` are deliberately NOT strict dependents, for the same reason the geographic
+ * containers above are exempt: `Main St and 5th Ave` is a bare intersection QUERY — a degenerate-but-valid parse with
+ * no street or locality to anchor to, and the correct answer for that input. Treating the pair as stranded flagged it
+ * identically to `Elephant and Castle Road`, which is a genuine defect (one street read as a junction), so the rule
+ * had no power to separate a right answer from a wrong one. A check that fires on both is not evidence about either.
+ *
+ * The `Elephant and Castle Road` defect is real and stays tracked — by the board's own expectation for that row
+ * (#1750), which is where a claim needing TRUTH belongs. This file only makes claims a tree can settle about itself.
+ */
 
 export interface TreeViolation {
 	type: "illegal-edge" | "stranded-dependent"

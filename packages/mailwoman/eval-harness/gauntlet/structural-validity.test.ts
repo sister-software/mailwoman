@@ -48,9 +48,6 @@ function weightsPresent(): boolean {
  * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
  */
 const KNOWN_INVALID: Record<string, string> = {
-	"gb-street-name-elephant-and-castle-road":
-		"#1750 — a bare street name decodes as intersection_a + intersection_b with no street. Parses correctly WITH a locality.",
-	"kw-street-name-sheikh-jaber-al-ahmad-al-sabah-causeway": "#1750 — same shape, and with no conjunction in the input.",
 	"gb-interesting-mischicks":
 		"#1747 residual — `Grv` stranded in a multi-clause venue string; not adjacent to a place name, so the affix repair correctly declines it.",
 	"ie-op2-pairc-adhamhnain": "`Letterkenny` read as dependent_locality with no locality anchor. Undiagnosed.",
@@ -114,6 +111,7 @@ describe.skipIf(!weightsPresent())("board structural validity", () => {
 		}
 
 		const unexpected = [...new Set(invalid)].filter((id) => !(id in KNOWN_INVALID)).toSorted()
+
 		const fixed = Object.keys(KNOWN_INVALID)
 			.filter((id) => !invalid.includes(id))
 			.toSorted()
