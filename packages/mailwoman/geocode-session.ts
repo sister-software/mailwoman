@@ -104,6 +104,10 @@ export interface GeocodeSessionOptions {
 	placeCountry: boolean
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
+	/**
+	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Default OFF.
+	 */
+	poiVenueTier?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
@@ -670,6 +674,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #1649: the lexicon-aware kind classifier — a thing-query abstains instead of resolving nonsense.
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
+			// The opt-in venue tier reuses the fork-entity wiring's poiLookup; the flag alone opts in.
+			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 		})
 

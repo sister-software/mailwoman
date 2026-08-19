@@ -25,6 +25,7 @@
  *      query resolve at all.
  */
 
+import type { AddressNode } from "@mailwoman/core/decoder"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import {
@@ -174,5 +175,127 @@ export function applyForkEntityAnswer(
 
 	if (coherence.admin_coherence) {
 		result.admin_coherence = coherence.admin_coherence
+	}
+}
+
+/**
+ * How far a venue entity may sit from the resolved admin anchor and still be "this address's venue", meters. Wide on
+ * purpose: the anchor is a LOCALITY centroid (a metro's centroid can sit 20+ km from its edges), and the gate exists to
+ * separate the local bearer from same-named entities in other cities, not to assert rooftop precision.
+ */
+const VENUE_ANCHOR_GATE_M = 30_000
+
+/**
+ * Probe the entity layer for a parsed VENUE near a resolved anchor — the #1684 POI-half's first mechanism, and the
+ * anchored sibling of {@link probeForkEntity}. The fork probe requires WORLDWIDE uniqueness because a bare fork surface
+ * has no other evidence; a venue-led address DOES — the walk already resolved its admin anchor — so the discipline here
+ * is LOCAL uniqueness: exact name-key entities only, and exactly ONE of them within {@link VENUE_ANCHOR_GATE_M} of the
+ * anchor. Two same-named venues in one metro is a genuine ambiguity and abstains; entities beyond the gate are other
+ * cities' bearers and never contest.
+ */
+export function probeVenueNearAnchor(
+	venueRaw: string,
+	anchor: { lat: number; lon: number },
+	opts: Pick<ForkEntityProbeOpts, "lookup">
+): ForkEntityHit | null {
+	const nameKey = normalizeLocalityForKey(venueRaw)
+
+	if (!nameKey) return null
+
+	const hits = opts.lookup.search({ name: venueRaw, limit: 24 })
+	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
+
+	if (!exact.length) return null
+
+	// Same duplicate-row collapse as the fork probe: one physical venue often carries several rows.
+	const entities: Array<(typeof exact)[number]> = []
+
+	for (const hit of exact) {
+		const twin = entities.find((e) => distanceM(e.latitude, e.longitude, hit.latitude, hit.longitude) <= SAME_ENTITY_M)
+
+		if (twin) {
+			if (hit.confidence > twin.confidence) {
+				entities[entities.indexOf(twin)] = hit
+			}
+
+			continue
+		}
+
+		entities.push(hit)
+	}
+
+	const near = entities.filter((e) => distanceM(anchor.lat, anchor.lon, e.latitude, e.longitude) <= VENUE_ANCHOR_GATE_M)
+
+	if (near.length !== 1) return null
+
+	const top = near[0]!
+
+	return {
+		name: top.name ?? venueRaw,
+		categoryID: top.categoryID,
+		latitude: top.latitude,
+		longitude: top.longitude,
+		country: top.country,
+		confidence: top.confidence,
+	}
+}
+
+/**
+ * The entity answers, applied in tier order — extracted from `geocodeAddressOnce` as one cohesive unit (the
+ * ceiling-extraction discipline):
+ *
+ * 1. The fork→entity probe (#1585's entity half): a DECLARED fork whose incumbent resolution produced no coordinate takes
+ *    the worldwide-unique entity. Default-on under the D-rule — a null is the only thing that can change.
+ * 2. The VENUE TIER (#1684's POI half) — OPT-IN, default OFF: a venue-led address that resolved only to its admin anchor
+ *    upgrades to the entity bearing the venue's exact name-key near that anchor ({@link probeVenueNearAnchor} owns the
+ *    local-uniqueness discipline). Measured ceiling before any mechanism existed: 30 of 55 gb_venue* board rows name a
+ *    poi.db-visible venue, 15 of them tracked failures; measured effect at first light: 7 of 57 rows upgrade
+ *    admin→venue, all within 0.14 km of their anchors. Never fires over an address_point/interpolated answer — a
+ *    street+number that resolved rooftop IS the venue's address — and the flag stays opt-in until a full-board battery
+ *    earns the D-rule promotion.
+ */
+export function applyEntityTiers(
+	result: ForkEntityAnswerTarget & {
+		resolution_tier: string | null
+		entity?: { name: string; categoryID: string | null; confidence: number; country: string }
+	},
+	markers: readonly { code: string }[],
+	parseInput: string,
+	resolvedRoots: readonly AddressNode[],
+	deps: {
+		poiLookup?: ForkEntityProbeOpts["lookup"]
+		isStreetGeneric?: ForkEntityProbeOpts["isStreetGeneric"]
+		poiVenueTier?: boolean
+	}
+): void {
+	if (
+		result.lat === null &&
+		markers.some((m) => m.code === "declared_fork") &&
+		deps.poiLookup &&
+		deps.isStreetGeneric
+	) {
+		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
+
+		if (entity) {
+			applyForkEntityAnswer(result, entity, resolvedRoots)
+		}
+	}
+
+	if (
+		deps.poiVenueTier === true &&
+		deps.poiLookup &&
+		result.venue &&
+		result.lat !== null &&
+		result.lon !== null &&
+		(result.resolution_tier === "admin" || result.resolution_tier === "street")
+	) {
+		const hit = probeVenueNearAnchor(result.venue, { lat: result.lat, lon: result.lon }, { lookup: deps.poiLookup })
+
+		if (hit) {
+			result.lat = hit.latitude
+			result.lon = hit.longitude
+			result.resolution_tier = "venue"
+			result.entity = { name: hit.name, categoryID: hit.categoryID, confidence: hit.confidence, country: hit.country }
+		}
 	}
 }

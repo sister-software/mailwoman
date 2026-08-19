@@ -59,7 +59,7 @@ import type {
 import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
-import { applyForkEntityAnswer, probeForkEntity } from "./fork-entity.ts"
+import { applyEntityTiers } from "./fork-entity.ts"
 import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hierarchy-lineage.ts"
 import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
@@ -272,6 +272,12 @@ export interface GeocodeDeps {
 	 * like every optional artifact). Both this AND {@link isStreetGeneric} are required for a probe.
 	 */
 	poiLookup?: import("./poi-executor.ts").POIExecutorLookup
+	/**
+	 * OPT-IN venue tier (#1684's POI half): upgrade a venue-led address's admin/street answer to the poi.db entity
+	 * bearing the venue's exact name-key near the resolved anchor. Default OFF — the ceiling is measured (15 tracked
+	 * gb_venue rows are data-visible) but the D-rule promotion needs its own full-board battery.
+	 */
+	poiVenueTier?: boolean
 	/**
 	 * Street-morphology token test (the #1315 gate's matcher) — gate 2 of the fork→entity probe. Absent = no probe: an
 	 * ungated probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the guard.
@@ -1306,22 +1312,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		markers.push(ambiguity)
 	}
 
-	// The fork→entity probe (#1585's entity half; fork-entity.ts owns the three gates). Fires only on
-	// a DECLARED fork whose incumbent resolution produced no coordinate — a null is the only thing
-	// that can change, which is what makes this default-on under the D-rule. Positive evidence only:
-	// the probe adds an answer where there was none; it never contests one.
-	if (
-		result.lat === null &&
-		markers.some((m) => m.code === "declared_fork") &&
-		deps.poiLookup &&
-		deps.isStreetGeneric
-	) {
-		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
-
-		if (entity) {
-			applyForkEntityAnswer(result, entity, resolved.roots)
-		}
-	}
+	// Entity answers (fork-entity.ts owns both probes and their gates): the declared-fork rescue and the
+	// opt-in venue tier, extracted as one unit — see applyEntityTiers.
+	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
 
 	result.intent_markers = markers
 

@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { probeForkEntity, type ForkEntityProbeOpts } from "./fork-entity.ts"
+import { probeForkEntity, probeVenueNearAnchor, type ForkEntityProbeOpts } from "./fork-entity.ts"
 import type { POIExecutorLookup } from "./poi-executor.ts"
 
 /**
@@ -96,5 +96,55 @@ describe("probeForkEntity", () => {
 
 		expect(hit).not.toBeNull()
 		expect(hit!.confidence).toBe(0.95)
+	})
+})
+
+describe("probeVenueNearAnchor (#1684's venue tier)", () => {
+	const LONDON = { lat: 51.5074, lon: -0.1278 }
+
+	it("answers the single exact-name entity near the anchor — local uniqueness, not worldwide", () => {
+		const lookup = stubLookup([
+			// The local bearer plus a same-named entity in another city: the fork probe would abstain
+			// on this pair; the anchored probe must not, because the anchor separates them.
+			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
+			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
+		])
+
+		const hit = probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })
+
+		expect(hit?.latitude).toBeCloseTo(51.48223)
+		expect(hit?.country).toBe("GB")
+	})
+
+	it("abstains when TWO same-named entities sit inside the gate — a metro-local ambiguity", () => {
+		const lookup = stubLookup([
+			{ name: "The Red Lion", lat: 51.51, lon: -0.12, country: "GB" },
+			{ name: "The Red Lion", lat: 51.52, lon: -0.2, country: "GB" },
+		])
+
+		expect(probeVenueNearAnchor("The Red Lion", LONDON, { lookup })).toBeNull()
+	})
+
+	it("abstains when the only exact bearer is beyond the gate — another city's venue never contests", () => {
+		const lookup = stubLookup([{ name: "Nine Elms Tavern", lat: 40.7, lon: -74, country: "US" }])
+
+		expect(probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })).toBeNull()
+	})
+
+	it("requires exact name-key equality — an FTS partial is not the venue", () => {
+		const lookup = stubLookup([{ name: "Nine Elms Tavern and Grill", lat: 51.48, lon: -0.13, country: "GB" }])
+
+		expect(probeVenueNearAnchor("Nine Elms Tavern", LONDON, { lookup })).toBeNull()
+	})
+
+	it("collapses duplicate rows of one physical venue before judging uniqueness", () => {
+		const lookup = stubLookup([
+			{ name: "Africa House", lat: 51.51691, lon: -0.11956, confidence: 0.95, country: "GB" },
+			{ name: "Africa House", lat: 51.51692, lon: -0.11957, confidence: 0.9, country: "GB" },
+		])
+
+		const hit = probeVenueNearAnchor("Africa House", LONDON, { lookup })
+
+		expect(hit?.confidence).toBe(0.95)
 	})
 })
