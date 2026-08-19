@@ -623,6 +623,12 @@ class WOFResolver implements Resolver {
 		reportCapabilityGaps(this.capabilityGaps)
 	}
 
+	/**
+	 * The `Resolver.findPlace` passthrough — one direct gazetteer probe for pipeline-level consumers (#1738's
+	 * dominant-bearer guard). Bound as a method so `this.#backend` stays private.
+	 */
+	findPlace: Resolver["findPlace"] = (query) => this.#backend.findPlace(query)
+
 	async resolveTree(tree: AddressTree, opts: ResolveOpts = {}): Promise<AddressTree> {
 		// Postcode-shape coherence (#31, Mechanism 1): the earliest pass in the tree — pure-sync and
 		// backend-free, run BEFORE `state.postcode` is read so an excluded span can never become the

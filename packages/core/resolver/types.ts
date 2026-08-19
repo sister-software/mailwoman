@@ -1188,6 +1188,13 @@ export function isPlacetypeFallback(requestedPlacetype: string, candidatePlacety
 export interface Resolver {
 	resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree>
 	/**
+	 * Direct gazetteer probe, passed through from the {@link ResolverBackend} — for pipeline-level consumers that need one
+	 * lookup outside a tree walk (the #1738 dominant-bearer guard on the coarse placer's hard-country promotion is the
+	 * first). Optional like the members below: a resolver without it degrades its consumers to their without-the-probe
+	 * behavior, never to a crash.
+	 */
+	findPlace?: ResolverBackend["findPlace"]
+	/**
 	 * Facts the loaded gazetteer artifact declares about itself, passed through from the {@link ResolverBackend} so
 	 * pipeline-level consumers (the hard-country coverage gate, guard-B plausibility) read them from the handle they
 	 * already hold. Absent = artifact predates the manifest → code-constant fallback.

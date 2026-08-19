@@ -1089,7 +1089,33 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			)
 
 			if (hardCountry) {
-				opts.hardCountry = hardCountry
+				// #1738: a language read is not a country verdict. The placer's languages are pluricentric —
+				// French text licenses {FR, CA, BE, CH, …} — and hardening on the language's home country
+				// exiled the francophone-CA class ("1001 Boulevard Saint-Laurent, Montréal" answered
+				// Montréal-la-Cluse, Ain: the FR hard filter excluded Québec before any race ran). The
+				// promotion therefore yields when the tree's own locality names a place whose DOMINANT
+				// bearer (population-first, unscoped, exact) lives in a different country: Paris under
+				// French text still hardens (the dominant Paris IS in FR); Montréal does not, and the
+				// placer's posterior stays the SOFT anchor the worldwide race weighs. An unknown or fuzzy
+				// bearer is not disagreement, and a resolver without the findPlace passthrough hardens
+				// exactly as before — absence degrades to the prior behavior, never to a crash.
+				const localityValue = decodeAsJSON(tree).locality as string | undefined
+
+				const dominant =
+					localityValue && deps.resolver.findPlace
+						? (
+								await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => [])
+							)[0]
+						: undefined
+
+				const dominantDisagrees =
+					dominant?.country !== undefined &&
+					dominant.exactMatch !== false &&
+					dominant.country.toUpperCase() !== hardCountry.toUpperCase()
+
+				if (!dominantDisagrees) {
+					opts.hardCountry = hardCountry
+				}
 			}
 		}
 	}

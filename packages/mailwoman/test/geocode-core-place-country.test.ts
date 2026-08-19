@@ -119,3 +119,111 @@ describe("geocodeAddress — coarse-placer soft prior (#244)", () => {
 		expect(seen[0]?.anchorPosterior).toBeUndefined()
 	})
 })
+
+describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", () => {
+	const node = (tag: "street" | "locality", value: string) => ({
+		tag,
+		value,
+		start: 0,
+		end: value.length,
+		confidence: 0.95,
+		children: [],
+	})
+
+	/**
+	 * A street + locality tree — NOT bare-locality, so the placer block runs (the #912 lever skips bare trees).
+	 */
+	const treeWithLocality = (locality: string): AddressTree => ({
+		raw: `1001 Rue X, ${locality}`,
+		roots: [node("street", "Rue X"), node("locality", locality)],
+	})
+
+	const placerFR = () => ({ country: "FR", confidence: 0.97 })
+
+	function guardResolver(dominant: { country: string; exactMatch?: boolean } | undefined): {
+		resolver: Resolver
+		seen: ResolveOpts[]
+	} {
+		const { resolver, seen } = captureResolver()
+
+		resolver.findPlace = vi.fn(async () =>
+			dominant
+				? [
+						{
+							id: 1,
+							name: "x",
+							placetype: "locality",
+							country: dominant.country,
+							lat: 45,
+							lon: -73,
+							score: 9,
+							...(dominant.exactMatch === undefined ? {} : { exactMatch: dominant.exactMatch }),
+						},
+					]
+				: []
+		)
+
+		return { resolver, seen }
+	}
+
+	test("a DISAGREEING dominant bearer keeps the posterior soft — Montréal under French text never hardens to FR", async () => {
+		const { resolver, seen } = guardResolver({ country: "CA", exactMatch: true })
+
+		await geocodeAddress("1001 Rue X, Montréal", {
+			classifier: fakeClassifier(treeWithLocality("Montréal")),
+			resolver,
+			placeCountry: placerFR,
+		})
+
+		expect(seen[0]?.hardCountry).toBeUndefined()
+		expect(seen[0]?.anchorPosterior).toMatchObject({ FR: 0.97 })
+	})
+
+	test("an AGREEING dominant bearer hardens exactly as before — Paris under French text", async () => {
+		const { resolver, seen } = guardResolver({ country: "FR", exactMatch: true })
+
+		await geocodeAddress("1001 Rue X, Paris", {
+			classifier: fakeClassifier(treeWithLocality("Paris")),
+			resolver,
+			placeCountry: placerFR,
+		})
+
+		expect(seen[0]?.hardCountry).toBe("FR")
+	})
+
+	test("an unknown locality is not disagreement — hardens as before", async () => {
+		const { resolver, seen } = guardResolver(undefined)
+
+		await geocodeAddress("1001 Rue X, Zzyzzx", {
+			classifier: fakeClassifier(treeWithLocality("Zzyzzx")),
+			resolver,
+			placeCountry: placerFR,
+		})
+
+		expect(seen[0]?.hardCountry).toBe("FR")
+	})
+
+	test("a FUZZY top bearer is not disagreement — only an exact bearer may soften", async () => {
+		const { resolver, seen } = guardResolver({ country: "CA", exactMatch: false })
+
+		await geocodeAddress("1001 Rue X, Montréa", {
+			classifier: fakeClassifier(treeWithLocality("Montréa")),
+			resolver,
+			placeCountry: placerFR,
+		})
+
+		expect(seen[0]?.hardCountry).toBe("FR")
+	})
+
+	test("a resolver WITHOUT the findPlace passthrough hardens exactly as before — absence degrades honestly", async () => {
+		const { resolver, seen } = captureResolver()
+
+		await geocodeAddress("1001 Rue X, Montréal", {
+			classifier: fakeClassifier(treeWithLocality("Montréal")),
+			resolver,
+			placeCountry: placerFR,
+		})
+
+		expect(seen[0]?.hardCountry).toBe("FR")
+	})
+})
