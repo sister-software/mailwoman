@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 573
+const CORPUS_SIZE = 575
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -199,8 +199,12 @@ const CORPUS_SIZE = 573
  * two independent causes in one row (the model tags `Newport` street / `Wales` locality, so a locality-band lookup
  * cannot see the GB macroregion and Wales Township, Michigan wins a correctly-unscoped worldwide race; and the Newport
  * (Gwent) locality is itself one of the January 2019 deprecations). 572 → 573, so the board id moves too.
+ *
+ * Moved 2026-08-19 (late) — → this — by the `gb-cs-brixton-hill` / `gb-cs-biggin-hill` pair (#1747): a `street_suffix`
+ * with no `street` anywhere in the tree, so the resolver was handed a bare `Brixton` and answered Brixton, DEVON, 300.3
+ * km away. 573 → 575, so the board id moves too.
  */
-const CORPUS_HASH = "70898aa1c0e544b8b694881bbd6ce9da4264576e4e9b3f78e714cb5e0feddb09"
+const CORPUS_HASH = "6bf4b0c2de076e11926a065822def4e36293b962ddc1081c8bdf6ff00cab12ea"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -215,10 +219,10 @@ const CORPUS_HASH = "70898aa1c0e544b8b694881bbd6ce9da4264576e4e9b3f78e714cb5e0fe
  * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
  * (`@537:61edb19b8e64` → `@558:e5279b66a119`), and for the 11-row gloss-key board (`@558:e5279b66a119` →
  * `@569:841ca85a6402`), and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → `@570:7ec63e6affb2`), and
- * for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → `@572:7e171ef0a6af`), and for the Newport-Wales row
- * (`@572:7e171ef0a6af` → this).
+ * for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → `@572:7e171ef0a6af`), for the Newport-Wales row
+ * (`@572:7e171ef0a6af` → `@573:0037d08bc94a`), and for the 2-row stranded-affix pair (`@573:0037d08bc94a` → this).
  */
-const BOARD_ID = "gauntlet-regression@573:0037d08bc94a"
+const BOARD_ID = "gauntlet-regression@575:acce97708a29"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.

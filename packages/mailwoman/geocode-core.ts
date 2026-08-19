@@ -68,6 +68,7 @@ import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { repairPostcodeContradiction } from "./postcode-repair.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
+import { repairStrandedAffix } from "./stranded-affix-repair.ts"
 import { applyStreetMissFallback } from "./street-miss-fallback.ts"
 import { assembleStreetName } from "./street-name-assembly.ts"
 
@@ -888,6 +889,11 @@ export async function parseForGeocode(
 	// any caller derives scope from the tree: the session's bare-postcode guard must see the repaired
 	// tree, or a locale-inferred country filter starves the lookup the repair exists to enable.
 	repairPostcodeContradiction(tree, queryShape)
+
+	// #1747: a `street_suffix` with no `street` anywhere, abutting a place name, belongs to that name — `Brixton Hill`
+	// parsed as locality `Brixton` + a floating `Hill` and resolved 300 km away. Runs after the postcode repairs so it
+	// judges the final tree, and its adjacency guard leaves a genuine one-word street untouched.
+	repairStrandedAffix(tree)
 
 	return tree
 }
