@@ -45,6 +45,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 			postcode_shape_coherence: false,
 			postcode_containment_coherence: false,
 			admin_containment_rerank: true,
+			poi_venue_tier: true,
 			trace: true,
 		})
 

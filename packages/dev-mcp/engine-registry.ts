@@ -59,6 +59,11 @@ export interface EngineConfig {
 	postcode_containment_coherence?: boolean
 	admin_containment_rerank?: boolean
 	/**
+	 * The opt-in venue tier (#1684's POI half) — default OFF in production; this lever exists so the promotion battery
+	 * measures it with the standard tooling.
+	 */
+	poi_venue_tier?: boolean
+	/**
 	 * Record the decode-path evidence on every run. OFF by default and left off by the measuring tools: the trace is kept
 	 * per run, so it is a per-row cost paid only where the evidence is the answer.
 	 */
@@ -103,6 +108,7 @@ export const EFFECTIVE_KEY_FOR = {
 	postcode_shape_coherence: "postcodeShapeCoherence",
 	postcode_containment_coherence: "postcodeContainmentCoherence",
 	admin_containment_rerank: "adminContainmentRerank",
+	poi_venue_tier: "poiVenueTier",
 	trace: "trace",
 } as const satisfies Record<keyof EngineConfig, string>
 
@@ -139,6 +145,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
 		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
 		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
+		...(config.poi_venue_tier === true ? { poiVenueTier: true } : {}),
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
