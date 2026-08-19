@@ -13,7 +13,7 @@ import { z } from "zod"
 import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "../run-store.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 
-export const runsTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const runsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_runs",
 	description:
 		'What is in the run store — the past comparisons a {kind:"recorded"} arm can replay. Newest first. A run ' +

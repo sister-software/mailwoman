@@ -14,13 +14,18 @@
  *   SentencePiece marks exactly what it could not represent by falling back to raw UTF-8 bytes, so the question is one
  *   measurement. The worked example is Vietnamese (#1744): `Đường` — the word that marks a street, the way `Street`
  *   does in English — encodes as `Đ|<0xC6>|<0xB0>|<0xE1>|<0xBB>|<0x9D>|ng`, five raw bytes through the middle, so no
- *   piece in the vocabulary means `Đường` and no corpus can teach it as a unit. 40.6% of Vietnamese pieces were byte
- *   fallbacks against 3.7% for the same addresses written in Latin.
+ *   piece in the vocabulary means `Đường` and no corpus can teach it as a unit. On five VN addresses (204 characters)
+ *   against the en-us tokenizer, 40.6% of pieces were byte fallbacks and 0.94 pieces fell per character, against 3.7%
+ *   and 0.41 for the same addresses transliterated.
  *
- *   A RATE ALONE IS NOT A FINDING, which is why the per-character report is not optional. Vietnamese is not missing
- *   from the vocabulary — `Đ`, `ạ`, `ô`, `ă`, `ê` are all present. Twelve characters are missing and every one is a
- *   vowel carrying TWO marks (`ư ầ ậ ế ễ ệ ố ồ ộ ờ ợ ừ`). "Add Vietnamese" and "add twelve codepoints" are different
- *   decisions, and only the second is one somebody can price.
+ *   BOTH FIGURES MOVE WITH THE SAMPLE, which is the reason `control` exists rather than a remembered threshold — a
+ *   two-line probe of the same language measures 34.4%, and neither number means anything except beside its arm.
+ *
+ *   A RATE ALONE IS NOT A FINDING either, which is why the per-character report is not optional. Vietnamese is not
+ *   missing from the vocabulary — `Đ`, `ạ`, `ô`, `ă`, `ê` are all present. What is missing, across that five-address
+ *   sample, is twelve characters, every one a vowel carrying TWO marks (`ư ầ ậ ế ễ ệ ố ồ ộ ờ ợ ừ`); a smaller sample
+ *   names a subset of the same set. "Add Vietnamese" and "add these codepoints" are different decisions, and only the
+ *   second is one somebody can price.
  *
  *   Normalization form does not matter here and the tool does not offer it as a knob: SentencePiece normalizes
  *   internally, and NFC and NFD were measured to give byte-identical piece counts on the same string.

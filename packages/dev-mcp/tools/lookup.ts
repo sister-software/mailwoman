@@ -16,7 +16,7 @@ import { LookupSource } from "../lookup.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA } from "../tool-kit.ts"
 
-export const lookupTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const lookupTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_lookup",
 	description:
 		"Ask a data source directly whether it knows a string. Keeps ABSENCE (the source has no entry) apart from " +

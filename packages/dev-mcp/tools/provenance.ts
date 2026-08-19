@@ -13,7 +13,7 @@ import { z } from "zod"
 import { runProvenance } from "../provenance.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 
-export const provenanceTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const provenanceTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_provenance",
 	description:
 		"WHAT AM I MEASURING AGAINST — the state of the artifacts under the engine, before a number from any " +

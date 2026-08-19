@@ -13,7 +13,7 @@ import { z } from "zod"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { runVocabulary } from "../vocabulary.ts"
 
-export const vocabTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const vocabTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_vocab",
 	description:
 		"Can the tokenizer REPRESENT this input at all? A parse defect on a non-Latin locale has two causes that " +

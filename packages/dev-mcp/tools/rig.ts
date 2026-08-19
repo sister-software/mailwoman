@@ -13,7 +13,7 @@ import { z } from "zod"
 import { ENGINE_RIGS, rigQuery, rigStart, rigStatus, rigStop, type EngineRigName } from "../engine-rigs.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 
-export const rigTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const rigTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_rig",
 	description:
 		"Drive the LOCAL comparison rigs — Pelias and Photon — that `mwdev_compare`'s external arm grades but " +

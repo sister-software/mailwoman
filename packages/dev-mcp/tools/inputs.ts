@@ -14,7 +14,7 @@ import { resolveInputSet, type InputSetRef } from "../input-sets.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const inputsTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const inputsTool = (_deps: DevToolDeps): DevTool => ({
 	name: "mwdev_inputs",
 	description:
 		"Describe an input set BEFORE measuring it: how many rows, which strata, what kind of truth it carries, " +

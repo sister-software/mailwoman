@@ -39,7 +39,7 @@ const RUN_ROW_FIELDS = [
 
 type RunRowField = (typeof RUN_ROW_FIELDS)[number]
 
-export const runTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_run",
 	description:
 		"Geocode an input set through a warm engine. Defaults to the FULL regression board — pass a literal set " +

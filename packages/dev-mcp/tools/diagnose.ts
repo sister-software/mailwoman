@@ -14,7 +14,7 @@ import { COUNTERFACTUAL_FULL_RUN_MAX_ROWS, DIAGNOSE_SHAPES, runDiagnose } from "
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const diagnoseTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const diagnoseTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_diagnose",
 	description:
 		"Per-row MECHANISM ACCOUNT (#1722), measured on the ONE-config out-of-the-box path (the #1669 caveat on " +

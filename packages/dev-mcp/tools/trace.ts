@@ -16,7 +16,7 @@ import { resolveInputSet } from "../input-sets.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA, componentsOf, provenanceFor, renderTrace, slimParseTrace } from "../tool-kit.ts"
 
-export const traceTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_trace",
 	description:
 		"Per-stage evidence for a handful of inputs — what the model was told, what it was fed, what it decided. " +

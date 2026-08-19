@@ -14,7 +14,7 @@ import { runCensus } from "../census.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const censusTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const censusTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_census",
 	description:
 		"Activation-coverage census (#1719): one traced parse per input, aggregated per MECHANISM rather than per " +

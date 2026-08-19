@@ -16,7 +16,7 @@ import { resolveInputSet, type InputSetRef } from "../input-sets.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, provenanceFor } from "../tool-kit.ts"
 
-export const benchTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_bench",
 	description:
 		"Latency and throughput for the geocode path, cold and warm reported SEPARATELY. Single-threaded on " +

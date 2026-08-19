@@ -15,7 +15,7 @@ import { runCompare } from "../compare.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const compareTool = ({ registry, jobs }: DevToolDeps): DevTool => ({
+export const compareTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_compare",
 	description:
 		"Run one input set through two arms and diff them. PATH CAVEAT (#1669): a mailwoman arm runs ONE config — " +
