@@ -17,8 +17,37 @@
  *
  *   Classification is v1: transparent seam-fact predicate matching, with NO calibration. Every result says so in its
  *   own `calibration` field. A row that matches no shape and still fails its expectation is reported `unclassified`
- *   rather than squeezed into the nearest match — that population is what v2's Mondrian class-conditional conformal
- *   layer mints new classes from, and a label applied to it now is the thing v2 would have to un-learn.
+ *   rather than squeezed into the nearest match, because a label applied to it now is the thing a calibrated v2 would
+ *   have to un-learn.
+ *
+ *   What v2 is, stated precisely (the loose earlier wording — "shapes get a calibrated posterior, novelty mints a
+ *   class" — was wrong twice over, and the correction is worth carrying here rather than rediscovering):
+ *
+ *   1. **Class-conditional (Mondrian) SPLIT CONFORMAL** over held-out diagnosed rows, calibrated per shape, so a
+ *      minority shape is not judged by a threshold a majority shape set. It yields PREDICTION SETS and p-values with
+ *      an empirical coverage guarantee — NOT a posterior. A p of 0.82 is not "82% likely to be this shape", and any
+ *      surface that reads it that way is lying about what conformal gives.
+ *   2. **A separate conformal novelty detector** whose job is to ABSTAIN when no known shape fits.
+ *   3. **Minting a new shape is a downstream clustering-and-review step**, not an operation conformal performs.
+ *      Standard Mondrian CP assumes the taxonomy already exists; open-set conformal can flag that an observation
+ *      belongs to no known class, and what to do about that is our architecture, not the method's.
+ *
+ *   Two measured obstacles stand between v1 and that v2, both visible in this tool's own census and neither solved by
+ *   more code:
+ *
+ *   - **Resolution is bounded by class size.** A conformal p-value moves in steps of 1/(n+1), so a class needs
+ *     n >= 1/alpha - 1 calibration rows before a threshold at error rate alpha exists at all (19 rows for alpha=0.05).
+ *     On the 2026-08-19 board slice the shapes ran evidence_starved 113, retrieval_empty 95, scope_miss_readmission
+ *     75, wrong_instance_detected 38, rank_flip 10, parse_shape_contradiction 3, mis_tag_in_vocabulary 1. The first
+ *     four could carry calibration; the last three cannot, and splitting them into train/calibration halves makes it
+ *     worse.
+ *   - **These shapes are MULTI-LABEL and Mondrian partitions.** `by_shape` counts overlap by construction and the
+ *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest seam,
+ *     full label set, or something else — and that choice is a modelling decision, not a detail.
+ *
+ *   Exchangeability is the third question and the least comfortable one: calibration rows drawn from the tracked board
+ *   are actively drained by the fixes this tool motivates (five promoted in one night), so yesterday's diagnosed
+ *   population is not exchangeable with tomorrow's failures.
  *
  *   Aggregation is BY SHAPE with each class's n, never by raw row count: the n=64 city-only aggregate at p=0.084 that
  *   motivated this issue concealed a six-row single-mechanism finding, and a rate over a mixture is a number about the
@@ -910,7 +939,7 @@ export async function runDiagnose(registry: EngineRegistry, args: Record<string,
 		input_set: inputSetProvenance(set),
 		calibration: "none — v1 seam-fact matching",
 		calibration_note:
-			"Shapes here are PREDICATE MATCHES over pipeline seams, not a calibrated posterior: there is no confidence, " +
+			"Shapes here are PREDICATE MATCHES over pipeline seams, carrying no coverage guarantee: there is no confidence, " +
 			"no abstention band and no guarantee attached to any of them. Each shape's predicate travels beside its " +
 			"count so the claim is checkable by reading it.",
 		summary: [
