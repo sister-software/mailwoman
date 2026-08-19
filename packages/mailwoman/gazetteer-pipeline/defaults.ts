@@ -298,8 +298,13 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 
 /**
  * Pinned Overture release for the divisions theme (rows churn between monthly releases; never mix two).
+ *
+ * Overture DELETES old releases — the bucket held exactly two when this was last checked, so a pin survives on the
+ * order of a month and then the build fails with `No files found that match the pattern`. Keep this equal to
+ * `poi/defaults.ts`'s `DEFAULT_RELEASE`: two pins drifting apart is what left this one on a pruned release while POI
+ * moved, and mixing two vintages inside one artifact is the thing the line above forbids.
  */
-export const DEFAULT_OVERTURE_RELEASE = "2026-06-17.0"
+export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 
 /**
  * Staging suffix for admin rebuilds — build here, verify, THEN swap over the live name (RELEASING.md).

@@ -30,6 +30,7 @@ import {
 	geonamesAdminGapCountries,
 } from "../defaults.ts"
 import { buildFTS } from "../fts.ts"
+import { checkOvertureRelease } from "../overture-release.ts"
 import { buildSHA, stampLayerManifest } from "../stamp-manifest.ts"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.ts"
 import { enrichAdmin } from "./enrich.ts"
@@ -98,6 +99,14 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	if (existsSync(ingestPath)) {
 		unlinkSync(ingestPath)
 	}
+
+	// BEFORE the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
+	// question, and discovering it after 2.9M records reads as a network fault rather than an expired pin.
+	const releaseCheck = await checkOvertureRelease(overtureRelease)
+
+	phase("preflight", releaseCheck.message)
+
+	if (!releaseCheck.present) throw new Error(releaseCheck.message)
 
 	phase("staging", ingestPath)
 	const db = new DatabaseSync(ingestPath)
