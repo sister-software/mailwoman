@@ -162,7 +162,7 @@ export function normalizeStreetForKey(street: string): string {
  * article, so no salient-token / multi-key index is built yet (deferred until probing shows the normalizer can't absorb
  * the false-negatives).
  */
-export type StreetLocale = "us" | "en" | "fr" | "de" | "nl"
+export type StreetLocale = "us" | "en" | "fr" | "de" | "nl" | "pl" | "vn" | "id"
 
 /**
  * French street-type abbreviations → canonical full form, applied per token after {@link fold}. French address types
@@ -192,6 +192,26 @@ const FR_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
+ * Polish street-type abbreviations → canonical full form, leading position ("ul. Marszałkowska", "al. Jerozolimskie").
+ * The fold has already stripped the trailing period.
+ */
+const PL_STREET_ABBREV = new Map<string, string>([
+	["ul", "ulica"],
+	["al", "aleja"],
+	["pl", "plac"],
+	["os", "osiedle"],
+])
+
+/**
+ * Indonesian street-type abbreviations → canonical full form, leading position ("Jl. Thamrin", "Gg. Waru").
+ */
+const ID_STREET_ABBREV = new Map<string, string>([
+	["jl", "jalan"],
+	["jln", "jalan"],
+	["gg", "gang"],
+])
+
+/**
  * Normalize a street name for the address-point key in a non-US locale. Same function build-side and probe-side (the
  * one-function discipline). US delegates to {@link normalizeStreetForKey}.
  *
@@ -200,6 +220,14 @@ const FR_STREET_ABBREV = new Map<string, string>([
  * - **de** — fold + ß→ss + canonicalize the GLUED `-str(.)` suffix to `-strasse` ("Lindenstr." → "lindenstrasse",
  *   "Lindenstraße" → "lindenstrasse"); an already-full "-strasse" is left intact.
  * - **nl** — fold + canonicalize the glued `-str` suffix to `-straat` ("Kerkstr." → "kerkstraat").
+ * - **pl** — fold + ł→l (Ł does not NFKD-decompose, so the generic fold keeps it and an undiacritized query would miss;
+ *   every other Polish diacritic is a combining form the fold already strips) + expand leading type abbreviations
+ *   (ul→ulica, al→aleja, pl→plac, os→osiedle).
+ * - **vn** — fold + đ→d (same non-decomposing hazard as ł; all other Vietnamese diacritics strip). Deliberately NO
+ *   type-abbreviation map yet: the common abbreviation is the single letter "Đ." for Đường, and expanding a bare folded
+ *   "d" token would rewrite initials — measure the miss rate on the built shard before adding anything.
+ * - **id** — fold + expand leading type abbreviations (jl/jln→jalan, gg→gang); Indonesian street surfaces are otherwise
+ *   ASCII-clean.
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): string {
 	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
@@ -207,7 +235,9 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// Hyphen → space so a compound name keys the same whether the source or the query writes the
 	// hyphen ("Champs-Élysées", "St-Honoré") or a space — both sides fold identically, so this is pure
 	// robustness. It also splits a hyphenated abbreviation ("St-Honoré" → "st honore") into tokens the
-	// per-locale type/Saint map can see.
+	// per-locale type/Saint map can see. Letter maps for non-decomposing letters (ß, ł, đ) live in the
+	// per-locale branches, NEVER here: widening the shared pipeline would silently change keys under
+	// every already-built shard of the other locales.
 	const tokens = fold(street).replaceAll("ß", "ss").replaceAll("-", " ").split(/\s+/).filter(Boolean)
 
 	if (!tokens.length) return ""
@@ -234,6 +264,25 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 				if (t.endsWith("str") && !t.endsWith("straat")) {
 					tokens[i] = t.replace(/str$/, "straat")
 				}
+			}
+			break
+		case "pl":
+			for (let i = 0; i < tokens.length; i++) {
+				const t = tokens[i]!.replaceAll("ł", "l")
+
+				tokens[i] = PL_STREET_ABBREV.get(t) ?? t
+			}
+			break
+		case "id":
+			for (let i = 0; i < tokens.length; i++) {
+				tokens[i] = ID_STREET_ABBREV.get(tokens[i]!) ?? tokens[i]!
+			}
+			break
+		case "vn":
+			// The đ→d letter map is the whole vn treatment — see the locale table for why no
+			// abbreviation map exists yet.
+			for (let i = 0; i < tokens.length; i++) {
+				tokens[i] = tokens[i]!.replaceAll("đ", "d")
 			}
 			break
 	}

@@ -190,3 +190,29 @@ describe("streetLocaleForSurface (the Québec surface router)", () => {
 		expect(query).toBe(build)
 	})
 })
+
+describe("normalizeStreetForKeyLocale — the pl/vn/id branches (the 2026-08-19 coverage lane)", () => {
+	it("pl: folds ł (the non-decomposing letter) and expands leading type abbreviations", () => {
+		expect(normalizeStreetForKeyLocale("ul. Świętokrzyska", "pl")).toBe("ulica swietokrzyska")
+		expect(normalizeStreetForKeyLocale("ulica Świętokrzyska", "pl")).toBe("ulica swietokrzyska")
+		expect(normalizeStreetForKeyLocale("Marszałkowska", "pl")).toBe("marszalkowska")
+		expect(normalizeStreetForKeyLocale("al. Jerozolimskie", "pl")).toBe("aleja jerozolimskie")
+	})
+
+	it("vn: folds đ so an undiacritized query keys identically — and expands nothing", () => {
+		expect(normalizeStreetForKeyLocale("Đường Trần Hưng Đạo", "vn")).toBe("duong tran hung dao")
+		expect(normalizeStreetForKeyLocale("Duong Tran Hung Dao", "vn")).toBe("duong tran hung dao")
+		expect(normalizeStreetForKeyLocale("Phố Huế", "vn")).toBe("pho hue")
+	})
+
+	it("id: expands the jalan/gang abbreviations", () => {
+		expect(normalizeStreetForKeyLocale("Jl. Thamrin", "id")).toBe("jalan thamrin")
+		expect(normalizeStreetForKeyLocale("Jalan Thamrin", "id")).toBe("jalan thamrin")
+		expect(normalizeStreetForKeyLocale("Gg. Waru", "id")).toBe("gang waru")
+	})
+
+	it("the letter maps stay OUT of the other locales — built shards keep their keys", () => {
+		// A Polish-named street in a de shard keys with ł intact, exactly as the shard was built.
+		expect(normalizeStreetForKeyLocale("Łuckastraße", "de")).toBe("łuckastrasse")
+	})
+})

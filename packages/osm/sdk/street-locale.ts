@@ -41,6 +41,13 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	// French word under en); the bulk of French surfaces passed through the en fold unchanged on both
 	// sides and were already reachable (889,341 QC-bbox "rue " rows answered their own key).
 	["ca", "en"],
+	// The 2026-08-19 retrieval-coverage lane (census bucket 1). Each locale's rules carry the letter
+	// map its NFKD fold cannot supply: pl folds ł→l (Świętokrzyska strips, Łucka does not), vn folds
+	// đ→d, id is ASCII-clean. Type abbreviations expand leading (ul→ulica, jl→jalan); vn deliberately
+	// ships none — "Đ." folds to a bare "d" and expanding initials is the wrong trade.
+	["pl", "pl"],
+	["vn", "vn"],
+	["id", "id"],
 ])
 
 /**
