@@ -14,7 +14,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
-import { buildToolTable, type DevToolDeps } from "./tools.ts"
+import { buildToolTable, type DevToolDeps } from "./tools/index.ts"
 
 export function createDevMCPServer(deps: DevToolDeps): McpServer {
 	const server = new McpServer({ name: "mailwoman-dev", version: "9.1.0" })

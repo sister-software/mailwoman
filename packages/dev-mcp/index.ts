@@ -53,5 +53,5 @@ export { gradeRow, significance, seedToCaseTable, caseCarriesTruth, type RowGrad
 export { resolveInputSet, type InputSetRef, type ResolvedInputSet } from "./input-sets.ts"
 export { describeObservedRate, wilsonInterval, zeroEventUpperBound, type PowerReading } from "./power.ts"
 export { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
-export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "./tools.ts"
+export { buildToolTable, type DevTool, type DevToolDeps, type Provenance } from "./tools/index.ts"
 export { createDevMCPServer } from "./server.ts"

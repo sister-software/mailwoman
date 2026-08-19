@@ -33,7 +33,7 @@ import { z } from "zod"
 
 import { EngineRegistry } from "./engine-registry.ts"
 import { JobRegistry } from "./jobs.ts"
-import { buildToolTable, type DevTool } from "./tools.ts"
+import { buildToolTable, type DevTool } from "./tools/index.ts"
 
 interface HandshakeMessage {
 	type: "handshake"
