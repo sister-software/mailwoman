@@ -169,9 +169,17 @@ const CORPUS_SIZE = 570
  * Moved again the same day — → this — by the dj-cs-djibouti re-pin: `expectPlaceName` moves to the canonical "Republic
  * of Djibouti" (the #1650 country-population rebuild let the bare-country repick win, 9.9 km inside the 25 km bar; the
  * coordinate gate already excludes the 65.9-km city row, so the country row is the only admissible answer and
- * hierarchy[0].name carries its canonical resolver_name). Name + note edit only, so the board id holds.
+ * hierarchy[0].name carries its canonical resolver_name). The same commit also flipped dj's status to pass (now-PASSES
+ * byte-identical across two runs; attribution #1650) and rewrote the Rochester note to its measured cause — the
+ * paragraph above under-reported that. Board id held throughout.
+ *
+ * Moved again the same day — → this — by the Rochester promotion: `gb-cs-rochester-kent` flips improvement_target →
+ * pass with the #1737 receipt (the candidate build's currency backfill resurrects the WOF-deprecated Kent locality
+ * under a GeoNames attestation; the row answers wof:101750331 at ~2.5 km with region coherence flipping contradicted →
+ * confirmed; now-PASSES byte-identical across two consecutive full-board runs on the swapped artifact). Status + note
+ * edit; the board id holds; the row joins the gated set at its next run.
  */
-const CORPUS_HASH = "73981777b9b13587f33ea758aa626d70a694d90fb3904852705c72a6800e9750"
+const CORPUS_HASH = "500279bec1f44c6b07b2e495b3162e1c4829d7e4cdd29043fe5dab550819b747"
 
 /**
  * `ablationBoardID` of the corpus.
