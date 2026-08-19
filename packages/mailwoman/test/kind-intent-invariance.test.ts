@@ -108,9 +108,17 @@ beforeAll(async () => {
 	CATEGORY_QUERY_INPUTS = new Set(cases.filter((c) => c.id.includes("-cat-")).map((c) => c.input))
 })
 
-describe("ROAD_TO_V9 §4 — zero reclassification over the 572-case corpus", () => {
-	test("the committed corpus is the size this receipt claims", () => {
-		expect(corpus).toHaveLength(572)
+/**
+ * A FLOOR, not the current count. The failure worth catching is a corpus that loads SHORT — a truncated read or a
+ * silently-filtered set makes every zero-reclassification claim below vacuous while still passing. Growth is the normal
+ * operation: a board row lands most working days, and an exact pin turns each one into a red build in a file nobody
+ * editing the board would think to open. Raise this only when the floor stops being a meaningful lower bound.
+ */
+const CORPUS_FLOOR = 550
+
+describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", () => {
+	test("the committed corpus loaded at full length rather than short", () => {
+		expect(corpus.length).toBeGreaterThanOrEqual(CORPUS_FLOOR)
 	})
 
 	test.each(["as-written", "lowercase"] as const)(
