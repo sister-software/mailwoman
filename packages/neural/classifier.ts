@@ -72,7 +72,6 @@ import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } f
 import { MailwomanTokenizer } from "./tokenizer.ts"
 import { TRACE_PRIOR_KINDS } from "./trace.ts"
 import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.ts"
-import { buildTrailingLocalityPriors, type TrailingLocalityPriorOpts } from "./trailing-locality-prior.ts"
 import { repairUnitLabels } from "./unit-repair.ts"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.ts"
@@ -773,25 +772,6 @@ export class NeuralAddressClassifier {
 		tracePriors?.push({
 			kind: "streetMorphology",
 			applied: morphologyPrior !== undefined && matrixHasBias(morphologyPrior),
-		})
-
-		// Trailing-locality prior (comma-free "street + trailing city", fork B — see
-		// trailing-locality-prior.ts). Opt-in; absent → byte-stable.
-		const trailingLocalityPrior = opts?.trailingLocality
-			? buildTrailingLocalityPriors(pieces, this.labels, {
-					...opts.trailingLocality,
-					// R3 (locality-present ⇒ silent) reads the CURRENT argmax — the emissions as composed so far.
-					emissions: opts.trailingLocality.emissions ?? emissions,
-				})
-			: undefined
-
-		if (trailingLocalityPrior) {
-			emissions = addEmissionMatrix(emissions, trailingLocalityPrior)
-		}
-
-		tracePriors?.push({
-			kind: "trailingLocality",
-			applied: trailingLocalityPrior !== undefined && matrixHasBias(trailingLocalityPrior),
 		})
 
 		// Stage 2.7 span proposer (#518, M2+M3): typed span proposals consumed as phrase priors.

@@ -953,10 +953,6 @@ export interface ResolveOpts {
 	 */
 	hierarchyCompletion?: boolean
 	/**
-	 * @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored.
-	 */
-	cityStateFallback?: boolean
-	/**
 	 * Attach each resolved node's ancestor lineage (#404) — the containment chain (county → region → country) the
 	 * backend's {@link ResolverBackend.ancestors} returns — onto `metadata.ancestors`. The Pelias/Nominatim
 	 * "always-attach-the-hierarchy" enrichment, so a consumer gets the full admin ladder from a single resolved place.

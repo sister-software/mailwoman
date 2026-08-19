@@ -706,7 +706,7 @@ describe("resolveTree — alternatives (candidate-list API)", () => {
 		})
 	})
 
-	test("the deprecated cityStateFallback alias still drives completion (#415)", async () => {
+	test("an explicit hierarchyCompletion: true drives completion, same as the default (#415)", async () => {
 		const backend = new FakeResolverBackend(DUAL_ROLE_PLACES, RELATION)
 		const input = tree("Berlin 10115", [node("region", "Berlin", 0, 6), node("postcode", "10115", 7, 12)])
 

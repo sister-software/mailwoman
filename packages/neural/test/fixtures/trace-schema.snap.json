@@ -246,10 +246,6 @@
 			"applied": false
 		},
 		{
-			"kind": "trailingLocality",
-			"applied": false
-		},
-		{
 			"kind": "spanProposer",
 			"applied": false
 		},

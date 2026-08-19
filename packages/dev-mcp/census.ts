@@ -49,11 +49,6 @@ export const CENSUS_ALLOWLIST: Partial<Record<string, string>> = {
 		"Deliberately zeroed in production (ZEROED_MORPHOLOGY_OPTS, runtime-pipeline.ts): the morphology FST is loaded " +
 		"to serve the #1142 street-context gate INSIDE the fst prior, and its own emission bias ships at scale 0 — " +
 		"ungated it measured US-golden −48. A firing here means a non-default morphology config, worth knowing.",
-	trailingLocality:
-		"Parked — fork B of the comma-free arc, opt-in by construction, and no production path opts in (the shipped " +
-		"comma-free fix is the FST gate+distribution route). First verified inert by this census, 2026-08-17, present " +
-		"on 558/558 board rows and applied on none. If the fork is never taken up, the honest end state is deletion, " +
-		"not a permanent allowlist row.",
 }
 
 /**

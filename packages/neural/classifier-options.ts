@@ -24,7 +24,6 @@ import type { SemiCRFTransitions } from "./semi-markov-decode.ts"
 import type { SpanProposalPriorOpts } from "./span-proposal-prior.ts"
 import type { StreetMorphologyPriorOpts } from "./street-morphology-prior.ts"
 import type { MailwomanTokenizer } from "./tokenizer.ts"
-import type { TrailingLocalityPriorOpts } from "./trailing-locality-prior.ts"
 import type { WordConsistencyOpts } from "./word-consistency.ts"
 
 export interface NeuralAddressClassifierConfig {
@@ -279,22 +278,6 @@ export interface ParseOpts {
 	 * Override bias magnitudes for the morphology prior.
 	 */
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
-	/**
-	 * Trailing-locality prior (comma-free "street + trailing city" — fork B). Geometry-gated: fires only on a trailing
-	 * word-span that matches a gazetteer locality by PRESENCE, with street-affix evidence before it, and never on the
-	 * street name itself. Importance-free — complementary to the FST prior, and deliberately decoupled from `fst` /
-	 * `fstStreetMorphology` (the fork-A lesson: broad FST bias is geometrically opposed to the street-context gate).
-	 * Absent → byte-stable. See `trailing-locality-prior.ts`.
-	 *
-	 * ⚠ OPT-IN ONLY, deliberately never auto-wired: the prior cannot separate a trailing city from a person-name street
-	 * surname ("Avenue Marceau Julien") — it regresses the #1143 bare-street population on open-vocabulary street text
-	 * (measured 2026-07-25). Use only where the input register is known comma-free over notable cities.
-	 *
-	 * @deprecated D3 (ROAD_TO_MAILWOMAN_V8_1_0 §5.3): scheduled for deletion at the next major. Net-negative on the
-	 *   held-out BAN population — the open-vocab wall no decode prior crosses. The lasting fix is training-side (#1102);
-	 *   the next-major architecture (Option A, retrieval-augmented encoding) absorbs this mechanism's job.
-	 */
-	trailingLocality?: TrailingLocalityPriorOpts
 	/**
 	 * When true, run the deterministic postcode regex repair pass (v0.7 #35) on the decoded label sequence before
 	 * tree-building. Detects postcode-shaped substrings (GB/CA/NL/US/FR/… patterns) and snaps/adds the postcode span to
