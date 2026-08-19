@@ -29,11 +29,14 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],
-	// CA keys with the `en` rules — right for anglophone Canada, and DELIBERATELY partial for Québec:
-	// French street surfaces ("rue", "boulevard") fold under the wrong rules there, so those rows key
-	// to surfaces no probe produces and simply never answer. Absence, not wrongness — the NI-OSM
-	// partial-shard posture. Per-row locale routing (fr rules for QC rows) is the finishing move; the
-	// anglo witness class ("92 Laurel Rd, Gander NL") does not wait on it.
+	// CA keys with the `en` rules — right for anglophone Canada, and DELIBERATELY partial for Québec.
+	// Measured on the built shard: most French surfaces pass through the `en` fold UNCHANGED, and since
+	// build and probe apply the same fold, those rows stay reachable — 892,425 rows nationwide key on a
+	// "rue " surface (889,341 inside the QC bounding box) and answer their own key. What breaks is
+	// ABBREVIATION variance (~3,115 rows): the `en` rules cannot fold "boul"/"av" to the full French
+	// word, so an abbreviated query misses a full-word row and vice versa. Per-row locale routing (fr
+	// rules for QC rows) is the finishing move; the anglo witness class ("92 Laurel Rd, Gander NL")
+	// does not wait on it.
 	["ca", "en"],
 ])
 
