@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 569
+const CORPUS_SIZE = 570
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -156,12 +156,17 @@ const CORPUS_SIZE = 569
  * country rows entered every prominence race at population 0, and the codex fallback ended that. Each passed twice (the
  * pre-swap A/B battery and the post-swap board). Status flips only again; the gate grows 366 → 368.
  *
- * Moved 2026-08-18 night — → this — by the #1730 role guard (39d219e8c): `bf-gloss-to-accent` flips improvement_target
- * → pass with its note rewritten to the fix receipt (the bare-region race refuses abbr-stamped alias rows; `Tó` answers
- * the primary-named Tô BF at 0 km, was Toledo ES at 3,171 km). Stable across the D-rule battery and two consecutive
+ * Moved 2026-08-18 night — by the #1730 role guard (39d219e8c): `bf-gloss-to-accent` flips improvement_target → pass
+ * with its note rewritten to the fix receipt (the bare-region race refuses abbr-stamped alias rows; `Tó` answers the
+ * primary-named Tô BF at 0 km, was Toledo ES at 3,171 km). Stable across the D-rule battery and two consecutive
  * full-board runs. Status + note edit; the gate grows 368 → 369.
+ *
+ * Moved 2026-08-19 — → this — by `gb-cs-rochester-kent`: city-plus-county disambiguation lands improvement_target for
+ * the live Rochester-Kent → Rochester-Northumberland miss (the Kent alternative sits flagged `regionScopeMiss` — the
+ * re-admission class), found when a live GB POI query over the Kent Rochester came back empty and read as a data gap.
+ * 569 → 570, so the board id moves too.
  */
-const CORPUS_HASH = "fcfa41767c435ddb42590b8680534494aab6bb9d1e504a1de3990ef1b80e8a1a"
+const CORPUS_HASH = "ef895ae9fe2cb9da8c27606cb58a907ecf9970075f43b4b8d907932552f6a171"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -174,9 +179,10 @@ const CORPUS_HASH = "fcfa41767c435ddb42590b8680534494aab6bb9d1e504a1de3990ef1b80
  * (`@522:da202fa6e714` → `@523:08b0b462cb23`), for the 7-row fuzzy-scope board (`@523:08b0b462cb23` →
  * `@534:ee145335c825`), for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`), and for the 2-row
  * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
- * (`@537:61edb19b8e64` → `@558:e5279b66a119`), and for the 11-row gloss-key board (`@558:e5279b66a119` → this).
+ * (`@537:61edb19b8e64` → `@558:e5279b66a119`), and for the 11-row gloss-key board (`@558:e5279b66a119` →
+ * `@569:841ca85a6402`), and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → this).
  */
-const BOARD_ID = "gauntlet-regression@569:841ca85a6402"
+const BOARD_ID = "gauntlet-regression@570:7ec63e6affb2"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
