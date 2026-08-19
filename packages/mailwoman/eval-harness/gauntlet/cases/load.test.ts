@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 570
+const CORPUS_SIZE = 572
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -178,8 +178,13 @@ const CORPUS_SIZE = 570
  * under a GeoNames attestation; the row answers wof:101750331 at ~2.5 km with region coherence flipping contradicted →
  * confirmed; now-PASSES byte-identical across two consecutive full-board runs on the swapped artifact). Status + note
  * edit; the board id holds; the row joins the gated set at its next run.
+ *
+ * Moved again the same day — → this — by the 2-row `ca_qc_street` witness pair (#1738): the abbreviated form lands pass
+ * (the surface-router receipt — 'boul St-Laurent' reaches the attested OSM rooftop) and the fully-French form lands
+ * improvement_target (the francophone-CA scope confound: the locale head's FR 1.00 hard-scopes the walk and
+ * Montréal-la-Cluse answers). 570 → 572, so the board id moves too.
  */
-const CORPUS_HASH = "500279bec1f44c6b07b2e495b3162e1c4829d7e4cdd29043fe5dab550819b747"
+const CORPUS_HASH = "628924e53e36d2c5bd4af295aa453af717cd5d756a2d430a7d82d8071287527b"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -193,9 +198,10 @@ const CORPUS_HASH = "500279bec1f44c6b07b2e495b3162e1c4829d7e4cdd29043fe5dab55081
  * `@534:ee145335c825`), for the Teichstraße situs row (`@534:ee145335c825` → `@535:b54fe280134e`), and for the 2-row
  * G-NAF au_rooftop board (`@535:b54fe280134e` → `@537:61edb19b8e64`), and for the range-surface pin
  * (`@537:61edb19b8e64` → `@558:e5279b66a119`), and for the 11-row gloss-key board (`@558:e5279b66a119` →
- * `@569:841ca85a6402`), and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → this).
+ * `@569:841ca85a6402`), and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → `@570:7ec63e6affb2`), and
+ * for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → this).
  */
-const BOARD_ID = "gauntlet-regression@570:7ec63e6affb2"
+const BOARD_ID = "gauntlet-regression@572:7e171ef0a6af"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
