@@ -229,6 +229,12 @@ failed hypothesis about the trailing-region shard.
 
 ## Standing caveat
 
-The gauntlet grades **FST-less** (#1497, corroborated independently by #1669): `parseForGeocode`
+> **STRUCK 2026-08-19 — no longer true, and it was true only for one more day after this was written.**
+> `gazetteerPrior` became default-ON in the harness on **2026-08-16** (`harness.ts`'s `priorDepsFor`:
+> "only an explicit `false` withholds the prior"), so the board grades WITH the prior. The numbers in
+> this document stand — they were measured under the caveat — but do not carry the caveat forward to a
+> later reading. It survived in the type's own docstring until ba515ebdc and was quoted as live in #1684.
+
+~~The gauntlet grades **FST-less** (#1497, corroborated independently by #1669): `parseForGeocode`
 calls `classifier.parse` with no `fst` key and `GeocodeClassifier` cannot express one. Both arms are
-crippled identically so every comparison here holds, but the board understates both.
+crippled identically so every comparison here holds, but the board understates both.~~
