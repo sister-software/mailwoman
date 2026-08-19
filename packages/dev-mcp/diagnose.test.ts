@@ -370,6 +370,63 @@ describe("assembleAccount — the terminal states", () => {
 		expect(SHAPE_PREDICATES.unclassified).toContain("novelty signal")
 	})
 
+	it("refines unclassified to mis_tag_in_vocabulary when an expected component's value sits verbatim in the input", () => {
+		// The bd-op2-london-college class: the expectation names locality "Dhaka" and postcode "1205", the input
+		// carries both surfaces, and the parse produced NEITHER tag — the decode assigned in-vocabulary text elsewhere.
+		const item: ResolvedInput = {
+			id: "row-bd",
+			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
+			country: "BD",
+			expectComponents: { locality: "Dhaka", postcode: "1205", country: "Bangladesh" },
+		}
+
+		const parsedWithoutLocality = run({
+			result: {
+				lat: 24.4,
+				lon: 90.2,
+				resolution_tier: "admin",
+				components: { street: "Kalabagan 1st", house_number: "58", country: "Bangladesh" },
+				hierarchy: [],
+			},
+			trace: traceOf(),
+		})
+
+		expect(assembleAccount(item, parsedWithoutLocality, FAILED_EXPECTATION).shapes).toEqual(["mis_tag_in_vocabulary"])
+	})
+
+	it("keeps unclassified when the expected tag EXISTS with a wrong value — that failure has a component to interrogate", () => {
+		const item: ResolvedInput = {
+			id: "row-wrong-value",
+			input: "58 Kalabagan 1st Ln, Dhaka 1205, Bangladesh",
+			country: "BD",
+			expectComponents: { locality: "Dhaka" },
+		}
+
+		const parsedWithWrongLocality = run({
+			result: {
+				lat: 24.4,
+				lon: 90.2,
+				resolution_tier: "admin",
+				components: { locality: "Kalabagan" },
+				hierarchy: [],
+			},
+			trace: traceOf(),
+		})
+
+		expect(assembleAccount(item, parsedWithWrongLocality, FAILED_EXPECTATION).shapes).toEqual(["unclassified"])
+	})
+
+	it("keeps unclassified when the missing component's expected value is NOT in the input — nothing to mis-tag", () => {
+		const item: ResolvedInput = {
+			id: "row-absent-surface",
+			input: "Somewhere Else Entirely",
+			country: "BD",
+			expectComponents: { locality: "Dhaka" },
+		}
+
+		expect(assembleAccount(item, run({ trace: traceOf() }), FAILED_EXPECTATION).shapes).toEqual(["unclassified"])
+	})
+
 	it("never lets a failed expectation add to a MECHANISM claim", () => {
 		// Commitment 1: expectations pin outcomes, never mechanisms. A row that matched a mechanism shape keeps exactly
 		// that shape whether it passed or failed.

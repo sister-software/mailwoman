@@ -91,6 +91,29 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
+		// Dead rows FIRST: a country with no deprecated-no-successor localities needs no attestors at all, and
+		// loading a national dump to judge zero rows is pure heap pressure on a build already near its ceiling
+		// (the first live run OOM'd in a later pass with JP/KR dumps loaded for 0 dead names each).
+		const dead = deadStmt.all(cc)
+
+		if (!dead.length) {
+			ctx.progress("currency-backfill", `${cc}: 0 dead names — dump not loaded`)
+
+			continue
+		}
+
+		// Only the dead names' own folded keys can ever be probed, so only those keys are worth holding —
+		// the rest of the national dump streams through without residency.
+		const deadKeys = new Set<string>()
+
+		for (const d of dead) {
+			const k = normalizeLocalityForKey(String(d.name ?? ""))
+
+			if (k) {
+				deadKeys.add(k)
+			}
+		}
+
 		// Folded name → P-class attestors. GeoNames columns by index: 1 name, 2 ascii, 4 lat, 5 lon,
 		// 6 feature_class, 14 population.
 		const attestors = new Map<string, { lat: number; lon: number; pop: number }[]>()
@@ -98,13 +121,15 @@ export async function resurrectCurrencyHoles(ctx: {
 		for await (const f of TSVSpliterator.fromAsync(dumpPath, { header: false })) {
 			if (f[6] !== "P") continue
 
+			const keys = [normalizeLocalityForKey(String(f[1] ?? "")), normalizeLocalityForKey(String(f[2] ?? ""))].filter(
+				(key) => key && deadKeys.has(key)
+			)
+
+			if (!keys.length) continue
+
 			const row = { lat: Number(f[4]), lon: Number(f[5]), pop: Number(f[14]) || 0 }
 
-			for (const key of new Set([
-				normalizeLocalityForKey(String(f[1] ?? "")),
-				normalizeLocalityForKey(String(f[2] ?? "")),
-			])) {
-				if (!key) continue
+			for (const key of new Set(keys)) {
 				const bag = attestors.get(key)
 
 				if (bag) {
@@ -124,7 +149,7 @@ export async function resurrectCurrencyHoles(ctx: {
 
 		ctx.tx.exec("BEGIN")
 
-		for (const d of deadStmt.all(cc)) {
+		for (const d of dead) {
 			const name = String(d.name ?? "")
 			const pkey = normalizeLocalityForKey(name)
 

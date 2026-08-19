@@ -85,6 +85,7 @@ export const DIAGNOSE_SHAPES = [
 	"rank_flip",
 	"wrong_instance_detected",
 	"clean",
+	"mis_tag_in_vocabulary",
 	"unclassified",
 ] as const
 
@@ -114,6 +115,11 @@ export const SHAPE_PREDICATES: Record<DiagnoseShape, string> = {
 		"Admin coherence CONTRADICTED a parsed qualifier, or a hierarchy entry resolved outside the winner's stamped " +
 		"lineage — the answer names a place the address's own text does not contain.",
 	clean: "No mechanism-state predicate matched, and the row did not fail an expectation.",
+	mis_tag_in_vocabulary:
+		"No mechanism-state predicate matched; the row failed on an expected component the parse never produced, whose " +
+		"expected value occurs verbatim in the input — the decode assigned in-vocabulary text to other tags, so the " +
+		"component never existed for any downstream mechanism to act on. A TERMINAL state like `unclassified` (it reads " +
+		"the expectation, which mechanism shapes may not); the fix path is model/corpus, not decode or retrieval.",
 	unclassified:
 		"No mechanism-state predicate matched and the row FAILED its expectation. The novelty signal, not a verdict: " +
 		"v1 has no shape for whatever happened here.",
@@ -744,6 +750,27 @@ export function aggregateCounterfactuals(
 //#endregion
 
 /**
+ * The in-vocabulary mis-tag refinement of `unclassified` (#1722 v2 — the `bd-op2-london-college` class, where `Dhaka
+ * 1205` decoded as street + house_number and the expected locality/postcode never existed): an expected component tag
+ * the parse never produced, whose expected VALUE occurs verbatim in the input. A tag that exists with a WRONG value is
+ * a different fact and stays out — that failure has a component to interrogate; this one does not.
+ */
+function misTaggedInVocabulary(
+	item: ResolvedInput,
+	components: Record<string, string | undefined> | undefined
+): boolean {
+	const expected = item.seed?.expectComponents ?? item.expectComponents
+
+	if (!expected) return false
+
+	const input = item.input.toLowerCase()
+
+	return Object.entries(expected).some(
+		([tag, value]) => Boolean(value) && components?.[tag] === undefined && input.includes(String(value).toLowerCase())
+	)
+}
+
+/**
  * Assemble one row's account: the seams, the shapes they match, and the terminal state.
  */
 export function assembleAccount(
@@ -759,7 +786,11 @@ export function assembleAccount(
 	const shapes = matchShapes({ parse, evidence, retrieval, outcome })
 
 	if (!shapes.length) {
-		shapes.push(expectation.met === false ? "unclassified" : "clean")
+		if (expectation.met === false) {
+			shapes.push(misTaggedInVocabulary(item, run.result.components) ? "mis_tag_in_vocabulary" : "unclassified")
+		} else {
+			shapes.push("clean")
+		}
 	}
 
 	return {
