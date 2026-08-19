@@ -12,7 +12,11 @@
 
 import type { StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-export { normalizeStreetForKeyLocale, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+export {
+	normalizeStreetForKeyLocale,
+	streetLocaleForSurface,
+	type StreetLocale,
+} from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale. Deliberately small: only the countries we actually
@@ -29,14 +33,13 @@ const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["fr", "fr"],
 	["de", "de"],
 	["nl", "nl"],
-	// CA keys with the `en` rules — right for anglophone Canada, and DELIBERATELY partial for Québec.
-	// Measured on the built shard: most French surfaces pass through the `en` fold UNCHANGED, and since
-	// build and probe apply the same fold, those rows stay reachable — 892,425 rows nationwide key on a
-	// "rue " surface (889,341 inside the QC bounding box) and answer their own key. What breaks is
-	// ABBREVIATION variance (~3,115 rows): the `en` rules cannot fold "boul"/"av" to the full French
-	// word, so an abbreviated query misses a full-word row and vice versa. Per-row locale routing (fr
-	// rules for QC rows) is the finishing move; the anglo witness class ("92 Laurel Rd, Gander NL")
-	// does not wait on it.
+	// CA keys with the `en` BASE, and `streetLocaleForSurface` routes each French-lead surface to the
+	// fr rules per row — at build AND at probe, one shared function (the #861 discipline). A shard
+	// built before the router keys its French-lead rows under the en fold, so the router's fr keys
+	// only match a shard built with it: rebuild the CA shard when adopting. The measured gap the
+	// router closes is abbreviation variance (~3,115 rows: "boul"/"Ste-" cannot fold to the full
+	// French word under en); the bulk of French surfaces passed through the en fold unchanged on both
+	// sides and were already reachable (889,341 QC-bbox "rue " rows answered their own key).
 	["ca", "en"],
 ])
 

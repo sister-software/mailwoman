@@ -46,7 +46,7 @@ import {
 	type OSMAddressPointDatabase,
 } from "../sdk/address-point-schema.ts"
 import { extractAddrPoints } from "../sdk/extract.ts"
-import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "../sdk/street-locale.ts"
+import { normalizeStreetForKeyLocale, streetLocaleForCountry, streetLocaleForSurface } from "../sdk/street-locale.ts"
 import { buildStreetRecoveryIndex } from "../sdk/street-recovery.ts"
 
 interface BuildArgs {
@@ -179,7 +179,9 @@ async function main(): Promise<void> {
 			recovered++
 		}
 
-		const streetNorm = normalizeStreetForKeyLocale(street, locale)
+		// Per-SURFACE locale routing (the Québec finishing move): a French-lead surface folds under the fr
+		// rules whatever the country default; the probe side routes with the same shared function.
+		const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 		const number = rec.housenumber.trim().toLowerCase()
 
 		if (!streetNorm || !number) {

@@ -24,6 +24,7 @@ import { hasTable } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
 	streetKeyVariants,
+	streetLocaleForSurface,
 	stripArrondissement,
 	type StreetLocale,
 } from "./street-normalize.ts"
@@ -93,7 +94,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 		// the first variant to answer wins, so an attested literal key is never second-guessed.
 		let row: AddressPointRow | undefined
 
-		for (const streetNorm of streetKeyVariants(query.street, this.#locale)) {
+		for (const streetNorm of streetKeyVariants(query.street, streetLocaleForSurface(query.street, this.#locale))) {
 			row = this.#findForKey(streetNorm, number, query)
 
 			if (row) break

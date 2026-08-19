@@ -249,6 +249,35 @@ export function normalizeLocalityForKey(locality: string): string {
 }
 
 /**
+ * Leading French street-type token. French types LEAD the name ("avenue du Parc", "boul Saint-Laurent") while English
+ * types TRAIL ("Fifth Avenue", "Grosvenor Place"), so a leading type-token is the discriminating signal — "1 Avenue NE"
+ * starts with a digit and never matches. The separator lookahead is explicit rather than `\b` because a word boundary
+ * after an accented final letter ("carré") is not one to an ASCII-word `\b`.
+ */
+const FRENCH_LEAD_TYPE =
+	/^(?:rue|ruelle|av|ave|avenue|boul|bd|boulevard|ch|che|chemin|all[ée]e|imp|impasse|mont[ée]e|c[ôo]te|pl|place|prom|promenade|rang|rte|route|autoroute|carr[eé]|croissant|terrasse|sentier)(?=[\s.-]|$)/i
+
+/**
+ * Surface-driven street-locale ROUTER for bilingual shards — the Québec finishing move on the CA rooftop shard.
+ *
+ * A country registers ONE street locale, but Canada's street surfaces are two languages: under the `en` rules a French
+ * surface passes through mostly unchanged (both sides fold identically, so those rows stay reachable), and what breaks
+ * is abbreviation variance — the `en` rules cannot fold "boul"/"Ste-" to the full French word, so an abbreviated query
+ * misses a full-word row and vice versa. Routing on the SURFACE (not the province) also carries bilingual NB and the
+ * French street names outside Québec for free.
+ *
+ * ONE function, called by the shard BUILDER and the query PROBE alike — the #861 discipline: routing is part of the
+ * fold contract, and two transcriptions of this predicate would diverge exactly where it matters. Only an `en` base
+ * re-routes: a `fr`/`de`/`nl` shard already speaks its own rules, and the US pipeline stays untouched.
+ *
+ * Measured basis (CA shard, 2026-08-19): 183,963 distinct surfaces, 43,762 French-lead; 29,682 fold differently under
+ * fr-vs-en (888,265 rows), and the non-French half of those are English surfaces this router keeps on `en` unchanged.
+ */
+export function streetLocaleForSurface(street: string, base: StreetLocale): StreetLocale {
+	return base === "en" && FRENCH_LEAD_TYPE.test(street.trimStart()) ? "fr" : base
+}
+
+/**
  * Strip a trailing French arrondissement designator from a FOLDED commune key ("paris 8e arrondissement" → "paris",
  * "lyon 1er arrondissement" → "lyon", "marseille 10e arrondissement" → "marseille"). Paris, Lyon and Marseille are the
  * only French communes subdivided into _arrondissements municipaux_; a national register (BAN) names each row per

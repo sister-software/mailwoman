@@ -14,7 +14,9 @@ import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
 	normalizeStreetForKey,
+	normalizeStreetForKeyLocale,
 	streetKeyVariants,
+	streetLocaleForSurface,
 	stripLocalityQualifier,
 } from "./street-normalize.ts"
 
@@ -149,5 +151,42 @@ describe("streetKeyVariants", () => {
 
 	it("stays single-variant for non-US locales", () => {
 		expect(streetKeyVariants("Rue Saint Honoré", "fr")).toHaveLength(1)
+	})
+})
+
+describe("streetLocaleForSurface (the Québec surface router)", () => {
+	it("routes a French-lead surface to fr under an en base — the CA bilingual case", () => {
+		expect(streetLocaleForSurface("boul Saint-Laurent", "en")).toBe("fr")
+		expect(streetLocaleForSurface("Rue Gabrielle-Roy", "en")).toBe("fr")
+		expect(streetLocaleForSurface("Allée des Becs-Scie", "en")).toBe("fr")
+		expect(streetLocaleForSurface("Ch. de la Côte-des-Neiges", "en")).toBe("fr")
+	})
+
+	it("keeps English surfaces on en — trailing types and digit-lead never match", () => {
+		expect(streetLocaleForSurface("Laurell Road", "en")).toBe("en")
+		expect(streetLocaleForSurface("Fifth Avenue", "en")).toBe("en")
+		expect(streetLocaleForSurface("Grosvenor Place", "en")).toBe("en")
+		expect(streetLocaleForSurface("1 Avenue NE", "en")).toBe("en")
+		// "Main St": st abbreviates Street here, and the fr rules would expand it to saint — the
+		// lead-anchored predicate is what keeps that fold away from English surfaces.
+		expect(streetLocaleForSurface("Main St", "en")).toBe("en")
+	})
+
+	it("only an en base re-routes — fr/de/nl shards already speak their own rules, us stays untouched", () => {
+		expect(streetLocaleForSurface("Rue de Rivoli", "fr")).toBe("fr")
+		expect(streetLocaleForSurface("Rue Quelconque", "de")).toBe("de")
+		expect(streetLocaleForSurface("Rue Something", "us")).toBe("us")
+	})
+
+	it("routing composes with the fold: both ends of the CA abbreviation-variance class key identically", () => {
+		const build = normalizeStreetForKeyLocale(
+			"Boulevard Saint-Laurent",
+			streetLocaleForSurface("Boulevard Saint-Laurent", "en")
+		)
+
+		const query = normalizeStreetForKeyLocale("boul St-Laurent", streetLocaleForSurface("boul St-Laurent", "en"))
+
+		expect(build).toBe("boulevard saint laurent")
+		expect(query).toBe(build)
 	})
 })

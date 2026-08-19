@@ -27,6 +27,7 @@ import { hasTable } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
+	streetLocaleForSurface,
 	type StreetLocale,
 	stripArrondissement,
 } from "./street-normalize.ts"
@@ -99,7 +100,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 
 	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null {
 		if (!this.#byPostcode || !this.#byLocality) return null
-		const streetNorm = normalizeStreetForKeyLocale(query.street, this.#locale)
+		const streetNorm = normalizeStreetForKeyLocale(query.street, streetLocaleForSurface(query.street, this.#locale))
 
 		if (!streetNorm) return null
 
