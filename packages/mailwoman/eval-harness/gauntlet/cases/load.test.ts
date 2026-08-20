@@ -44,7 +44,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "./seed-case.ts"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 580
+const CORPUS_SIZE = 591
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -204,7 +204,7 @@ const CORPUS_SIZE = 580
  * with no `street` anywhere in the tree, so the resolver was handed a bare `Brixton` and answered Brixton, DEVON, 300.3
  * km away. 573 → 575, so the board id moves too.
  */
-const CORPUS_HASH = "93d5ebc4a11e04d14b1243748487899000a95912df43f67c96228cc7bdac973f"
+const CORPUS_HASH = "24cb955cc5797760c5fa4e3c282987f0b476267a9dcd09297a1a9d109fb1cd46"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -221,9 +221,10 @@ const CORPUS_HASH = "93d5ebc4a11e04d14b1243748487899000a95912df43f67c96228cc7bda
  * `@569:841ca85a6402`), and for the Rochester-Kent disambiguation row (`@569:841ca85a6402` → `@570:7ec63e6affb2`), and
  * for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → `@572:7e171ef0a6af`), for the Newport-Wales row
  * (`@572:7e171ef0a6af` → `@573:0037d08bc94a`), for the 2-row stranded-affix pair (`@573:0037d08bc94a` →
- * `@575:acce97708a29`), and for the 5-row trailing-region cohort (`@575:acce97708a29` → this).
+ * `@575:acce97708a29`), for the 5-row trailing-region cohort (`@575:acce97708a29` → `@580:7ff4bfccaa0e`), and for the
+ * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → this).
  */
-const BOARD_ID = "gauntlet-regression@580:7ff4bfccaa0e"
+const BOARD_ID = "gauntlet-regression@591:8c601b9f121f"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
