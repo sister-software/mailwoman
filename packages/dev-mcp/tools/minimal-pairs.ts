@@ -9,6 +9,7 @@
 
 import { z } from "zod"
 
+import type { EngineConfig } from "../engine-registry.ts"
 import { runMinimalPairs, type Ladder } from "../minimal-pairs.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA } from "../tool-kit.ts"
@@ -51,7 +52,7 @@ export const minimalPairsTool = ({ registry }: DevToolDeps): DevTool => ({
 	handler: async (args) =>
 		runMinimalPairs(registry, {
 			ladders: args["ladders"] as Ladder[],
-			config: args["config"] as never,
+			config: args["config"] as EngineConfig | undefined,
 		}),
 })
 

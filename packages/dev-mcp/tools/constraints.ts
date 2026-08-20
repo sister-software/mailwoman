@@ -10,6 +10,8 @@
 import { z } from "zod"
 
 import { runConstraintCensus } from "../constraint-census.ts"
+import type { EngineConfig } from "../engine-registry.ts"
+import type { InputSetRef } from "../input-sets.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
@@ -32,5 +34,9 @@ export const constraintsTool = ({ registry }: DevToolDeps): DevTool => ({
 			"Tracing is forced on regardless — the resolver-interior records are the census's entire input."
 		),
 	}),
-	handler: async (args) => runConstraintCensus(registry, args as never),
+	handler: async (args) =>
+		runConstraintCensus(registry, {
+			inputs: args["inputs"] as InputSetRef | undefined,
+			config: args["config"] as EngineConfig | undefined,
+		}),
 })
