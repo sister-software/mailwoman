@@ -18,23 +18,16 @@
  *   surviving CHILD as covering its own dead parent. Sixteen of seventeen GB refusals had exactly that shape. A rank
  *   comparison separates the two cases, and it needs the fine end of the scale that neither existing copy carried.
  *
- *   Ties are meaningful and not sloppiness: `localadmin` and `borough` occupy the same rung because WOF uses them for
- *   the same tier in different countries, and a tie makes each block the other — the conservative direction for a gate
- *   whose failure mode is inventing a place.
+ *   IT IS NOT THE ONLY TABLE. `resolver-wof-sqlite/ancestry.ts` publishes `PLACETYPE_DEPTH` for hierarchical
+ *   containment, and `eval-harness/gauntlet/ablation-expectation.ts` carries a deliberate copy of THAT one so an old
+ *   artifact can be re-graded against the table it was built with. This scale ORDERS the eleven placetypes they share
+ *   identically, and `specificity.test.ts` holds that agreement — the two differ only in offset and in what an
+ *   unranked placetype means, never in which of two placetypes is finer.
  *
- *   IT IS NOT THE ONLY TABLE, and a reader comparing it to a neighbour will find disagreements rather than a copy.
- *   `resolver-wof-sqlite/ancestry.ts` publishes `PLACETYPE_DEPTH` for hierarchical containment (unknown maps to 0 and
- *   sorts coarsest), and `eval-harness/gauntlet/ablation-expectation.ts` carries a deliberate copy of THAT one so an
- *   old artifact can be re-graded against the table it was built with. Over the eleven placetypes all three share,
- *   this scale and `PLACETYPE_DEPTH` order three pairs differently:
- *
- *   - `macrocounty` / `county` — DEPTH separates them, this ties them
- *   - `localadmin` / `borough` — DEPTH puts `borough` finer, this ties them
- *   - `locality` / `borough` — DEPTH puts `borough` FINER, this puts it coarser
- *
- *   The first two are the tie described above. The third is an inversion and is under review: a NYC borough sits
- *   inside its locality, which is DEPTH's reading, and the direction of that pair changes which dead rows the
- *   currency gate frees. 2,519 borough rows carry it against 8.2M localities.
+ *   They did not always agree. This scale once put `borough` COARSER than `locality` and tied `county` with
+ *   `macrocounty`, both wrong: a NYC borough sits inside its locality, and a macrocounty contains counties. The
+ *   inversion mattered — it let a live borough read as covering its own dead parent locality, which is the same shape
+ *   as the Gillingham defect above, one rung down.
  */
 
 import type { WhosOnFirstPlacetype } from "./definition.ts"
@@ -45,18 +38,18 @@ import type { WhosOnFirstPlacetype } from "./definition.ts"
  * every gate that reads this.
  */
 export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype | (string & {}), number>>> = {
-	address: 9,
-	building: 8,
-	campus: 8,
-	venue: 8,
-	postalcode: 7,
-	microhood: 6,
-	neighbourhood: 5,
-	macrohood: 4,
-	locality: 3,
-	localadmin: 2,
-	borough: 2,
-	county: 1,
+	address: 11,
+	building: 10,
+	campus: 10,
+	venue: 10,
+	postalcode: 9,
+	microhood: 8,
+	neighbourhood: 7,
+	macrohood: 6,
+	borough: 5,
+	locality: 4,
+	localadmin: 3,
+	county: 2,
 	macrocounty: 1,
 	region: 0,
 	macroregion: -1,

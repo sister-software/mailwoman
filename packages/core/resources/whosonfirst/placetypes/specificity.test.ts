@@ -39,10 +39,20 @@ describe("isAtLeastAsSpecific", () => {
 		expect(isAtLeastAsSpecific("locality", "neighbourhood")).toBe(false)
 	})
 
-	it("treats an equal rung as covering, including the deliberate localadmin/borough tie", () => {
+	it("treats an equal rung as covering", () => {
 		expect(isAtLeastAsSpecific("locality", "locality")).toBe(true)
+		expect(isAtLeastAsSpecific("venue", "building")).toBe(true)
+		expect(isAtLeastAsSpecific("building", "venue")).toBe(true)
+	})
+
+	it("puts a borough BELOW localadmin rather than level with it", () => {
+		// This pair was tied on the reasoning that WOF uses both for the same tier in different countries, which is
+		// true — an Alaska borough IS county-tier — but a tie is not a neutral answer. It made each cover the other,
+		// and one rung up that same tie let a live NYC-shaped borough cover its own dead parent locality. WOF's own
+		// containment ladder commits to sub-locality; a scale that has to pick one answer picks that one, and the
+		// Alaska reading stays wrong either way.
 		expect(isAtLeastAsSpecific("borough", "localadmin")).toBe(true)
-		expect(isAtLeastAsSpecific("localadmin", "borough")).toBe(true)
+		expect(isAtLeastAsSpecific("localadmin", "borough")).toBe(false)
 	})
 
 	it("says a region does not cover a locality", () => {
@@ -92,6 +102,9 @@ describe("isStrictlyFiner", () => {
 
 describe("the table", () => {
 	it("carries no duplicate rank except the rungs documented as deliberate ties", () => {
+		// Two survive, and neither is an admin rung. `building+campus+venue` are three names for a thing at an
+		// address, and `country+dependency` is WOF's own sovereignty hedge. The admin ladder itself is now strictly
+		// ordered, because a tie there is a silent disagreement with containment — see the agreement suite below.
 		const byRank = new Map<number, string[]>()
 
 		for (const [placetype, rank] of Object.entries(PLACETYPE_SPECIFICITY)) {
@@ -100,11 +113,68 @@ describe("the table", () => {
 
 		const ties = [...byRank.values()].filter((names) => names.length > 1).map((names) => names.toSorted().join("+"))
 
-		expect(ties.toSorted()).toEqual([
-			"borough+localadmin",
-			"building+campus+venue",
-			"country+dependency",
-			"county+macrocounty",
-		])
+		expect(ties.toSorted()).toEqual(["building+campus+venue", "country+dependency"])
+	})
+})
+
+/**
+ * The admin ladder, coarsest first — a copy of `resolver-wof-sqlite/ancestry.ts`'s `PLACETYPE_DEPTH` ORDER, and the
+ * only place in `core` allowed to know it.
+ *
+ * `core` cannot import from `resolver-wof-sqlite` (the dependency runs the other way), so the two tables cannot be
+ * derived from one another and this list is what keeps them honest. It records the ORDER only: the scales differ in
+ * offset by design, and `PLACETYPE_DEPTH` additionally maps an unranked placetype to 0 where this one answers
+ * `undefined`.
+ */
+const ANCESTRY_DEPTH_ORDER = [
+	"country",
+	"macroregion",
+	"region",
+	"macrocounty",
+	"county",
+	"localadmin",
+	"locality",
+	"borough",
+	"macrohood",
+	"neighbourhood",
+	"microhood",
+] as const
+
+describe("agreement with PLACETYPE_DEPTH", () => {
+	it("orders every shared placetype the same way the ancestry table does", () => {
+		const ranked = ANCESTRY_DEPTH_ORDER.map((placetype) => ({
+			placetype,
+			rank: PLACETYPE_SPECIFICITY[placetype],
+		}))
+
+		expect(
+			ranked.filter((r) => r.rank === undefined).map((r) => r.placetype),
+			"a placetype the ancestry ladder ranks and this scale does not"
+		).toEqual([])
+
+		// Strictly increasing, because the ladder is coarsest-first and this scale is higher-is-finer. A TIE would be
+		// a silent disagreement: `PLACETYPE_DEPTH` separates all eleven, so a tie here reverses no pair but does make
+		// `isStrictlyFiner` answer false where containment says true.
+		const disagreements = ranked
+			.slice(1)
+			.map((current, i) => ({ current, previous: ranked[i]! }))
+			.filter(({ current, previous }) => (current.rank as number) <= (previous.rank as number))
+			.map(({ current, previous }) => `${previous.placetype}(${previous.rank}) → ${current.placetype}(${current.rank})`)
+
+		expect(
+			disagreements,
+			"These pairs order differently from `PLACETYPE_DEPTH`. A `borough` ranked coarser than its `locality` is " +
+				"what let a live child cover its own dead parent in the currency gate; keep the two ladders in step."
+		).toEqual([])
+	})
+
+	it("places a borough INSIDE its locality — Brooklyn is not coarser than New York City", () => {
+		expect(isStrictlyFiner("borough", "locality")).toBe(true)
+		expect(isStrictlyFiner("locality", "borough")).toBe(false)
+	})
+
+	it("places a macrocounty OUTSIDE its counties", () => {
+		expect(isStrictlyFiner("county", "macrocounty")).toBe(true)
+		expect(isStrictlyFiner("macrocounty", "county")).toBe(false)
 	})
 })
