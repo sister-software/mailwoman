@@ -66,6 +66,16 @@ export interface RungReading {
 	lon: number | null
 	tier: string
 	/**
+	 * The #1649 intent gate's verdict, when it fired on this rung.
+	 *
+	 * A refused rung has NO components and no coordinate, and is otherwise indistinguishable from an input the parser
+	 * could make nothing of. It is the opposite: the gate discards a COMPLETED tree. `Cafe at St Mary's, Oxford` parses
+	 * to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and is then refused as a thing-query, while `The
+	 * Cafe at St Mary's, Oxford` is not — so a ladder over the two reads as a parse collapse unless the refusal is named
+	 * here.
+	 */
+	refused?: string
+	/**
 	 * What changed against the PREVIOUS rung. Null on step 0, where there is no previous rung — which is a different fact
 	 * from a delta whose every list is empty, and the rendering keeps them apart.
 	 */
@@ -163,8 +173,11 @@ function renderLadder(reading: Omit<LadderReading, "rendered">): string {
 
 		const cells = tags.map((tag, i) => (rung.components[tag] ?? ABSENT).padEnd(widths[i]!))
 		const mark = reading.first_divergence?.step === rung.step ? " ←" : ""
+		// A refusal is stated on the row itself. Its cells are all ABSENT, which without this reads as a parse that
+		// found nothing rather than a completed parse that was thrown away.
+		const refusal = rung.refused ? `  REFUSED as ${rung.refused} — parse discarded, not failed` : ""
 
-		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}`)
+		lines.push(`  ${rung.input.padEnd(inputWidth)}  ${cells.join("  ")}  ${rung.tier}${mark}${refusal}`)
 	}
 
 	if (reading.first_divergence) {
@@ -222,6 +235,7 @@ export async function runMinimalPairs(
 		for (const [step, input] of ladder.rungs.entries()) {
 			try {
 				const run = await engine.session.geocode(input)
+				const markers = (run.result as { intent_markers?: Array<{ kind: string }> }).intent_markers
 
 				rungs.push({
 					step,
@@ -231,6 +245,7 @@ export async function runMinimalPairs(
 					lon: run.result.lon,
 					tier: String(run.result.resolution_tier),
 					delta: null,
+					...(markers?.length ? { refused: markers.map((m) => m.kind).join(", ") } : {}),
 				})
 
 				evaluated++

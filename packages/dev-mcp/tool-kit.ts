@@ -230,6 +230,28 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
 	}
 }
 
+/**
+ * The #1649 intent gate's verdict, when it fired.
+ *
+ * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the gate discards a
+ * COMPLETED tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
+ * empty. Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of,
+ * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a
+ * thing-query. Reporting the refusal is what separates "we could not" from "we would not".
+ */
+function refusalRow(run: GeocodeRun): string[] {
+	const markers = (run.result as { intent_markers?: Array<{ kind: string; evidence?: string }> }).intent_markers
+
+	if (!markers?.length) return []
+
+	const named = markers.map((m) => (m.evidence ? `${m.kind} (${m.evidence})` : m.kind)).join(", ")
+
+	return [
+		`intent: REFUSED as ${named} — the #1649 gate discarded a completed parse rather than the parse failing. ` +
+			"Every empty component below follows from that decision, not from the model.",
+	]
+}
+
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
 		return {
@@ -247,6 +269,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
+			...refusalRow(run),
 			...resolverRows(run.trace),
 		],
 	}
@@ -266,7 +289,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 	}
 
 	if (!records.length) {
-		return ["resolver: no lookups performed (nothing resolvable in the tree)"]
+		return ["resolver: no lookups performed (no resolvable node reached the walk)"]
 	}
 
 	return records.map((record) => {
