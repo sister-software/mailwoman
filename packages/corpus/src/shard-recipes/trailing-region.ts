@@ -17,6 +17,29 @@
  *
  *   The recipe is country-agnostic; the country tail surface comes from the tuple's `country`
  *   field ("Spain", "United Kingdom") so one recipe serves every extraction.
+ *
+ *   POSTCODE-PREFIXED FORMS (2026-08-20, #1748). The two bare forms above were the whole shard, and the
+ *   board row this recipe was written for is NOT bare — it reads `…, 07691 Portopetro, Illes Balears,
+ *   Spain`. Measured over both built shards: 88,904 rows, zero containing a postcode. So the model
+ *   learned the bare tail correctly and had never once seen the shape it was failing on, which is why no
+ *   decode lever moved it.
+ *
+ *   The collapse is two-staged and neither trigger is a street, which is what makes this cheap to teach:
+ *
+ *       Portopetro, Illes Balears, Spain             locality ✓  region ✓
+ *       07691 Portopetro, Illes Balears, Spain       locality ✓  region DISCARDED
+ *       15, 07691 Portopetro, Illes Balears, Spain   locality DISPLACED by the region
+ *
+ *   A postcode alone drops the region (every locale measured); a house number then displaces the
+ *   locality. So the added surfaces are postcode-prefixed and house-number-plus-postcode-prefixed, and
+ *   the shard still needs no street names.
+ *
+ *   The (postcode, locality, region) triples are REAL — `postalcode-intl.db` parents joined to admin
+ *   localities and their region ancestors — with one filter that had to be measured rather than assumed.
+ *   A handful of localities act as catch-all parents: `Schwedt/Oder` claims 9,222 postcodes, `Korb`
+ *   4,846, against a p50 of 1 and a p99 of 53. Eight such hubs held 47% of the join. Capping at the p99
+ *   drops them and keeps 17,908 triples. The house number is synthetic because a house number asserts no
+ *   fact about a place; the postcode is not, because it does.
  */
 
 import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
@@ -50,10 +73,29 @@ export const trailingRegionRecipe: ShardRecipe = {
 			}
 
 			const withCountry = read % 2 === 0 && country.length > 0
+			const postcode = String(t.postcode ?? "").trim()
 
-			const components: Record<string, string> = withCountry ? { locality, region, country } : { locality, region }
+			// A tuple carrying a postcode emits the STRUCTURED tail — the shape the bare-only shard never
+			// contained. Every fourth such row also carries a house number, which is the second trigger:
+			// the postcode discards the region, the house number then displaces the locality.
+			const withHouseNumber = postcode.length > 0 && read % 4 === 1
+			const houseNumber = withHouseNumber ? String((read % 97) + 1) : ""
 
-			const raw = withCountry ? `${locality}, ${region}, ${country}` : `${locality}, ${region}`
+			const components: Record<string, string> = { locality, region }
+
+			if (withCountry) {
+				components["country"] = country
+			}
+			if (postcode) {
+				components["postcode"] = postcode
+			}
+			if (withHouseNumber) {
+				components["house_number"] = houseNumber
+			}
+
+			const tail = withCountry ? `${locality}, ${region}, ${country}` : `${locality}, ${region}`
+			const head = withHouseNumber ? `${houseNumber}, ${postcode} ` : postcode ? `${postcode} ` : ""
+			const raw = `${head}${tail}`
 			const source_id = shardSourceID("synth-trailing-region", { ...components, v: String(read) })
 
 			const canonical = {
