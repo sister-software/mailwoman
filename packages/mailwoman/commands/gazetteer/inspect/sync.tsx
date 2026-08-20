@@ -34,6 +34,7 @@ import { PathBuilder } from "path-ts"
 import { useState } from "react"
 
 import { formatBytes } from "../../../doctor/checks.ts"
+import type { ForkState } from "../../../gazetteer-pipeline/wof-repo-origin.ts"
 import {
 	assertDestinationNotARepoName,
 	selectRepos,
@@ -139,29 +140,44 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
 			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
-			const { resolveWOFRepoOrigin } = await import("../../../gazetteer-pipeline/wof-repo-origin.ts")
+			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("../../../gazetteer-pipeline/wof-repo-origin.ts")
 			const { execFile } = await import("node:child_process")
 			const { promisify } = await import("node:util")
 
 			const run = promisify(execFile)
 
-			// `execFile`, not zx: zx's `.sync` template did not reject into a surrounding try/catch here, so the probe
-			// returned `true` for every repo — including `whosonfirst-data-postalcode-gb`, which has no fork — and the
-			// 404 arrived later as an unhandled rejection. A probe whose failure mode is "answers yes to everything" is
-			// worse than no probe, because its answer routes the clone.
-			const forkProbe = async (org: string, repo: string): Promise<boolean> => {
+			/**
+			 * Ask GitHub what our fork IS, not merely whether it exists. `compare` answers `ahead_by` — commits the fork
+			 * holds that upstream does not — which is the only thing that makes a fork worth preferring. A 404 on the fork is
+			 * "absent"; a 404 on the comparison means the fork exists with no shared history to compare, which is not a
+			 * correction either, so it reads "clean".
+			 */
+			const forkProbe = async (org: string, repo: string): Promise<ForkState> => {
 				try {
 					await run("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
-
-					return true
 				} catch (error) {
-					// A 404 is the real answer "no fork". Anything else is a FAILED lookup and must throw, so the resolver
-					// records upstream-with-a-caveat rather than upstream-as-established-fact.
 					if (/HTTP 404|Not Found/i.test(`${(error as Error).message}${(error as { stderr?: string }).stderr ?? ""}`)) {
-						return false
+						return "absent"
 					}
 
+					// Anything else (no auth, no network, rate limit) is a FAILED lookup and must throw, so the
+					// resolver records upstream-with-a-caveat rather than upstream-as-established-fact.
 					throw error
+				}
+
+				try {
+					const { stdout } = await run("gh", [
+						"api",
+						`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
+						"--jq",
+						".ahead_by",
+					])
+
+					return Number(stdout.trim()) > 0 ? "diverged" : "clean"
+				} catch {
+					// The fork is known to exist; only the comparison failed. Treating that as "diverged" would
+					// prefer a possibly-stale snapshot on no evidence, so it degrades to clean.
+					return "clean"
 				}
 			}
 

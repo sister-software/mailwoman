@@ -26,6 +26,7 @@ import { Box, Text } from "ink"
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 
 import type { RepoSyncPlan } from "../../gazetteer-pipeline/repos-sync.ts"
+import type { ForkState } from "../../gazetteer-pipeline/wof-repo-origin.ts"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -84,29 +85,45 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
 		/**
-		 * `gh` answers whether the fork org holds a repo. A THROW here is not "no fork" — `resolveWOFRepoOrigin` keeps that
-		 * distinction, and the summary line reports it.
+		 * What our fork IS, not merely whether it exists. `compare` answers `ahead_by` — commits the fork holds that
+		 * upstream does not — and that is the only thing that makes a fork worth preferring, since the fork org holds a
+		 * fork of every WOF repo whether or not we have corrected it.
+		 *
+		 * A THROW is not "no fork": `resolveWOFRepoOrigin` keeps that distinction and the summary line reports it.
 		 */
-		const probe = async (org: string, repo: string): Promise<boolean> => {
-			await exec("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
+		const forkProbe = async (org: string, repo: string): Promise<ForkState> => {
+			try {
+				await exec("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
+			} catch (error) {
+				// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit) is a
+				// failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
+				if (/HTTP 404|Not Found/i.test(`${(error as Error).message}${(error as { stderr?: string }).stderr ?? ""}`)) {
+					return "absent"
+				}
 
-			return true
+				throw error
+			}
+
+			try {
+				const { stdout } = await exec("gh", [
+					"api",
+					`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
+					"--jq",
+					".ahead_by",
+				])
+
+				return Number(stdout.trim()) > 0 ? "diverged" : "clean"
+			} catch {
+				// The fork exists; only the comparison failed. Calling that "diverged" would prefer a possibly-stale
+				// snapshot on no evidence.
+				return "clean"
+			}
 		}
 
 		const plans = await planReposSync({
 			root,
 			repos,
-			probe: async (org, repo) => {
-				try {
-					return await probe(org, repo)
-				} catch (error) {
-					// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit) is a
-					// failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
-					if (/HTTP 404|Not Found/i.test((error as Error).message)) return false
-
-					throw error
-				}
-			},
+			probe: forkProbe,
 			// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is.
 			directoryFor: (repo) => {
 				const nested = join(root, UPSTREAM_ORG, repo)

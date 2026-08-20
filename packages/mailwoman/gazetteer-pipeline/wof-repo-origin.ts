@@ -12,9 +12,13 @@
  *   nobody else can see — the fork is public, the diff is a normal WOF record change, and the upstream PR is a push
  *   away from the same branch.
  *
- *   The preference is deliberately EXISTENCE-BASED, not configured: a fork that exists is one we made on purpose, and
- *   requiring a second registration step is how the two lists drift. A machine with no network, no `gh`, or no fork
- *   resolves upstream and says so — the honest degradation, never a hard failure.
+ *   The preference is DIVERGENCE-BASED, and must be: the fork org holds a fork of every `whosonfirst-data-*` repo,
+ *   almost all of which carry nothing of ours. Existence therefore says only that a fork was made. Divergence says a
+ *   correction lives there, which is the thing worth preferring a remote for. Nothing needs a second registration
+ *   step, so the two lists cannot drift apart.
+ *
+ *   A machine with no network, no `gh`, or no fork resolves upstream and says so — the plain degradation, never a
+ *   hard failure.
  *
  *   NOTHING here clones. It answers "where should this come from", so a clone, a fetch and an audit all read the same
  *   answer instead of three hand-typed URLs.
@@ -50,46 +54,62 @@ export function repoURL(org: string, repo: string): string {
 }
 
 /**
- * Does the fork org hold this repo? Injected so the resolver stays pure and testable; the CLI passes a `gh`-backed
- * probe, tests pass a set.
+ * What our fork of a repo is, relative to upstream.
+ *
+ * `"absent"` — the fork org does not hold it. `"clean"` — a fork exists carrying nothing upstream lacks. `"diverged"` —
+ * the fork holds at least one commit upstream does not, i.e. a correction of ours.
  */
-export type ForkProbe = (org: string, repo: string) => Promise<boolean>
+export type ForkState = "absent" | "clean" | "diverged"
+
+/**
+ * What our fork looks like. Injected so the resolver stays pure and testable; the CLI passes a `gh`-backed probe, tests
+ * pass a map.
+ *
+ * A boolean cannot express this: "a fork exists" and "the fork holds a correction" are different questions, and the
+ * fork org answers yes to the first for every WOF repo.
+ */
+export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 
 /**
  * Resolve the origin for one WOF repo.
  *
+ * DIVERGENCE, NOT EXISTENCE. A GitHub fork does not track its parent, so a fork carrying none of our commits is a
+ * point-in-time snapshot that drifts further from upstream every day it sits there. Preferring one would read older
+ * data for no benefit, silently, on every fresh clone — which is why a CLEAN fork resolves upstream and says why.
+ * "Prefer our fork" always meant "prefer the remote our corrections are on"; `diverged` is that, stated so a machine
+ * can check it.
+ *
  * A probe that THROWS (no network, no `gh`, no auth) resolves upstream with the failure in `reason`: an unreachable
- * fork registry is not evidence that no fork exists, and pretending otherwise would silently pull upstream data over a
- * correction we rely on. The caller sees which happened.
+ * fork registry is not evidence about the fork either way, and pretending otherwise would silently pull upstream data
+ * over a correction we rely on. The caller sees which happened.
  */
 export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Promise<RepoOrigin> {
-	let forked: boolean
+	let state: ForkState
 	let probeFailure: string | undefined
 
 	try {
-		forked = await probe(FORK_ORG, repo)
+		state = await probe(FORK_ORG, repo)
 	} catch (error) {
-		forked = false
+		state = "absent"
 		probeFailure = (error as Error).message
 	}
 
-	if (forked) {
+	if (state === "diverged") {
 		return {
 			repo,
 			org: FORK_ORG,
 			url: repoURL(FORK_ORG, repo),
 			source: "fork",
-			reason: `${FORK_ORG}/${repo} exists — our corrections ride this remote`,
+			reason: `${FORK_ORG}/${repo} carries commits upstream does not — our corrections ride this remote`,
 		}
 	}
 
-	return {
-		repo,
-		org: UPSTREAM_ORG,
-		url: repoURL(UPSTREAM_ORG, repo),
-		source: "upstream",
-		reason: probeFailure
-			? `fork lookup failed (${probeFailure}) — falling back to upstream, which is NOT evidence that no fork exists`
-			: `no ${FORK_ORG}/${repo} fork`,
-	}
+	const reason = probeFailure
+		? `fork lookup failed (${probeFailure}) — falling back to upstream, which is NOT evidence about the fork`
+		: state === "clean"
+			? `${FORK_ORG}/${repo} exists but carries nothing upstream lacks — upstream is the same content and stays current, ` +
+				"while a fork does not track its parent"
+			: `no ${FORK_ORG}/${repo} fork`
+
+	return { repo, org: UPSTREAM_ORG, url: repoURL(UPSTREAM_ORG, repo), source: "upstream", reason }
 }
