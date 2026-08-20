@@ -146,6 +146,13 @@ would drag core's ~11 MB of shipped data behind every leaf consumer — the same
 `nuts-lookup` and `timezone-lookup` keep local ray-casts today rather than depend on
 `@mailwoman/spatial`.
 
+**`CoverageBasis` and `supportsExclusion` MOVE here from `@mailwoman/core/layers`, which re-exports
+them.** Evidence cannot depend on core, and the alternative — each declaring its own copy of the same
+three strings — is the arrangement AGENTS.md records as a defect generator: _when two copies must
+agree, share the FUNCTION; sharing the constants proves nothing_. The #861 literals matched for the
+contract's whole life while the formula diverged. The `layer_coverage` schema and its IO stay in
+core; only the vocabulary and the gate move.
+
 **Registration:** a new workspace joins four registers, and only the first fails loudly — the root
 `workspaces` array, `.release-it.json`'s publish list, and **both** root `tsconfig.json` reference
 entries (`./packages/evidence` and `./packages/evidence/tsconfig.test.json`). See AGENTS.md.
