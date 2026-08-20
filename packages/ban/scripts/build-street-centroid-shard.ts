@@ -41,7 +41,7 @@ import {
 	STREET_CENTROID_COLUMNS,
 	type StreetCentroidDatabase,
 } from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
-import { stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { type NameKey, stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
 import { streetLocaleForBANCountry } from "../sdk/street-locale.ts"
@@ -105,8 +105,12 @@ async function main(): Promise<void> {
 	// The SEALED input — READ-ONLY, immutable; register the base-commune folder as a scalar SQL function.
 	const src = new DatabaseSync(args.source, { readOnly: true })
 
+	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand. The value is
+	// `address_point.locality_norm`, which the shared schema declares a `NameKey` (the builder wrote it through
+	// `normalizeLocalityForKey`), so re-minting it here restores a fact the SQL boundary dropped rather than asserting a
+	// new one — the fold is NOT re-applied, because a second fold of an already-folded key is what would drift.
 	src.function("ban_base_commune", { deterministic: true }, (loc: unknown): string =>
-		typeof loc === "string" && loc ? stripArrondissement(loc) : ""
+		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
 
 	const out = new DatabaseSync(tmp)

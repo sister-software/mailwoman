@@ -24,6 +24,7 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -51,13 +52,46 @@ function memoryDatabase(): DatabaseSync {
  * pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
-	{ name_key: "porto petro", name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
-	{ name_key: "illes balears", name: "Balearic Islands", placetype_id: 2, country_id: 1, spr_id: 2, is_primary: 0 },
-	{ name_key: "hart", name: "Hart", placetype_id: 1, country_id: 2, spr_id: 4, is_primary: 1, importance: 0.55 },
-	{ name_key: "hart", name: "Hyattsville", placetype_id: 1, country_id: 2, spr_id: 5, is_primary: 0, importance: 0.31 },
-	{ name_key: "1012", name: "1012", placetype_id: 3, country_id: 3, spr_id: 6, is_primary: 1 },
-	{ name_key: "1012lg", name: "1012LG", placetype_id: 3, country_id: 3, spr_id: 7, is_primary: 1 },
-	{ name_key: "vaduz", name: "Vaduz", placetype_id: 1, country_id: 4, spr_id: 8, importance: 0.18, population: 5197 },
+	// Each key is minted from the SURFACE the build folds, never written folded by hand — for an alias row that
+	// surface is the ALIAS, not the display `name`, which is why "Balearic Islands" keys under `illes balears`.
+	{ name_key: nameKey("Porto Petro"), name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
+	{
+		name_key: nameKey("Illes Balears"),
+		name: "Balearic Islands",
+		placetype_id: 2,
+		country_id: 1,
+		spr_id: 2,
+		is_primary: 0,
+	},
+	{
+		name_key: nameKey("Hart"),
+		name: "Hart",
+		placetype_id: 1,
+		country_id: 2,
+		spr_id: 4,
+		is_primary: 1,
+		importance: 0.55,
+	},
+	{
+		name_key: nameKey("Hart"),
+		name: "Hyattsville",
+		placetype_id: 1,
+		country_id: 2,
+		spr_id: 5,
+		is_primary: 0,
+		importance: 0.31,
+	},
+	{ name_key: nameKey("1012"), name: "1012", placetype_id: 3, country_id: 3, spr_id: 6, is_primary: 1 },
+	{ name_key: nameKey("1012LG"), name: "1012LG", placetype_id: 3, country_id: 3, spr_id: 7, is_primary: 1 },
+	{
+		name_key: nameKey("Vaduz"),
+		name: "Vaduz",
+		placetype_id: 1,
+		country_id: 4,
+		spr_id: 8,
+		importance: 0.18,
+		population: 5197,
+	},
 ]
 
 async function candidateFixture(): Promise<DatabaseSync> {

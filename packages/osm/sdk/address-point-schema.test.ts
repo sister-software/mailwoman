@@ -25,16 +25,19 @@ describe("OSM address-point layer schema", () => {
 
 		await createOSMAddressPointTables(db)
 
+		const street = "Dollis Park"
+		const streetNorm = normalizeStreetForKeyLocale(street, "en")
+
 		await db
 			.insertInto("address_point")
 			.values({
-				street_norm: "dollis park",
-				street_key: "dollis park",
+				street_norm: streetNorm,
+				street_key: canonicalizeRouteKey(streetNorm),
 				number: "2",
 				unit: null,
 				postcode: "N3 1HF",
-				locality_norm: "london",
-				street_raw: "Dollis Park",
+				locality_norm: normalizeLocalityForKey("London"),
+				street_raw: street,
 				lat: 51.599,
 				lon: -0.194,
 				source: "openstreetmap:gb",

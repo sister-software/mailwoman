@@ -20,7 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { type StreetCentroidDatabase, createStreetCentroidTable } from "./street-centroid-schema.ts"
 import { StreetCentroidSqliteLookup } from "./street-centroid.ts"
-import { stripArrondissement } from "./street-normalize.ts"
+import { normalizeLocalityForKey, stripArrondissement } from "./street-normalize.ts"
 
 interface Seed {
 	street_norm: string
@@ -74,15 +74,17 @@ async function seedShard(rows: Seed[]): Promise<string> {
 
 describe("stripArrondissement", () => {
 	it("strips a trailing French arrondissement designator to the base commune", () => {
-		expect(stripArrondissement("paris 8e arrondissement")).toBe("paris")
-		expect(stripArrondissement("lyon 1er arrondissement")).toBe("lyon")
-		expect(stripArrondissement("marseille 10e arrondissement")).toBe("marseille")
+		expect(stripArrondissement(normalizeLocalityForKey("Paris 8e Arrondissement"))).toBe("paris")
+		expect(stripArrondissement(normalizeLocalityForKey("Lyon 1er Arrondissement"))).toBe("lyon")
+		expect(stripArrondissement(normalizeLocalityForKey("Marseille 10e Arrondissement"))).toBe("marseille")
 	})
 
 	it("is a no-op for every other commune", () => {
-		expect(stripArrondissement("bordeaux")).toBe("bordeaux")
-		expect(stripArrondissement("le touquet paris plage")).toBe("le touquet paris plage")
-		expect(stripArrondissement("")).toBe("")
+		expect(stripArrondissement(normalizeLocalityForKey("Bordeaux"))).toBe("bordeaux")
+		// The fold keeps hyphens (only the STREET normalizer splits them), so the stored commune key is hyphenated —
+		// and a commune merely CONTAINING "paris" is never stripped.
+		expect(stripArrondissement(normalizeLocalityForKey("Le Touquet-Paris-Plage"))).toBe("le touquet-paris-plage")
+		expect(stripArrondissement(normalizeLocalityForKey(""))).toBe("")
 	})
 })
 

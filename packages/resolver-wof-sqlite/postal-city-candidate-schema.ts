@@ -20,6 +20,8 @@
 
 import { sql, type Kysely } from "kysely"
 
+import type { NameKey } from "./street-normalize.ts"
+
 /**
  * One postal-city → geo-locality edge, keyed exactly by `(name_key, postcode)`. The probe returns the geographic
  * locality directly; the denormalized name/coord avoid a join back to `candidate`.
@@ -28,7 +30,7 @@ export interface PostalCityCandidateTable {
 	/**
 	 * {@link normalizeLocalityForKey} of the postal-city name — the build/query-consistent probe key.
 	 */
-	name_key: string
+	name_key: NameKey
 	/**
 	 * The postcode the alias is scoped to (the second half of the exact key).
 	 */

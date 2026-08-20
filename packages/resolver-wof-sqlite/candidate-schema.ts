@@ -18,6 +18,7 @@
 import { sql, type Kysely } from "kysely"
 
 import type { CandidateAncestorsDatabase } from "./candidate-ancestors-schema.ts"
+import type { NameKey } from "./street-normalize.ts"
 
 /**
  * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the
@@ -28,7 +29,7 @@ export interface CandidateTable {
 	/**
 	 * The shared {@link normalizeLocalityForKey} of the name/alias — the probe key.
 	 */
-	name_key: string
+	name_key: NameKey
 	/**
 	 * Small int from {@link CountryCodeTable} (shrinks the clustered key).
 	 */

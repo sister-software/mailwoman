@@ -18,6 +18,8 @@
 
 import type { Kysely } from "kysely"
 
+import type { NameKey, RouteKey, StreetKey } from "./street-normalize.ts"
+
 /**
  * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is the
  * lookup; `street_key` is the #483 route-fold key for interpolation. Coordinates are non-null (the builder drops
@@ -27,11 +29,12 @@ export interface AddressPointTable {
 	/**
 	 * Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key.
 	 */
-	street_norm: string
+	street_norm: StreetKey
 	/**
-	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2).
+	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2). Its own brand, so it cannot be
+	 * interchanged with the plain `street_norm` above.
 	 */
-	street_key: string
+	street_key: RouteKey
 	/**
 	 * House number, normalized lower-case (kept TEXT — "123-A", "12 1/2" must survive).
 	 */
@@ -41,7 +44,7 @@ export interface AddressPointTable {
 	/**
 	 * Shared {@link normalizeLocalityForKey} of the locality — the fallback scope.
 	 */
-	locality_norm: string | null
+	locality_norm: NameKey | null
 	/**
 	 * The street as it appeared in the source (kept for display / debugging).
 	 */

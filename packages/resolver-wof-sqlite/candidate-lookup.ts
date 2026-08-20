@@ -50,7 +50,7 @@ import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary
 import { applyProximityRerank } from "./proximity-rerank.ts"
 import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "./region-keys.ts"
 import { hasColumn, hasTable } from "./sqlite-utils.ts"
-import { normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
+import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
 export { PRIMARY_PREFERENCE_LOG10, rankByPrimaryPreference, RERANK_FETCH } from "./primary-preference.ts"
@@ -419,8 +419,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		qualifier: string,
 		country: string | undefined,
 		opts: {
-			nameKey: string
-			strippedKey: string
+			nameKey: NameKey
+			strippedKey: NameKey
 			shapeFilters: string[]
 			shapeParams: Array<string | number>
 			limit: number

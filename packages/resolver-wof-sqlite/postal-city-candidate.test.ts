@@ -25,6 +25,7 @@ import {
 	POSTAL_CITY_CANDIDATE_TABLE,
 	type PostalCityCandidateDatabase,
 } from "./postal-city-candidate-schema.ts"
+import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 let scratch: string
 let candidatePath: string
@@ -65,7 +66,7 @@ async function attachPostalCityIndex(path: string): Promise<void> {
 	await kdb
 		.insertInto(POSTAL_CITY_CANDIDATE_TABLE)
 		.values({
-			name_key: "antioch",
+			name_key: normalizeLocalityForKey("Antioch"),
 			postcode: "37013",
 			spr_id: 1,
 			name: "Nashville",

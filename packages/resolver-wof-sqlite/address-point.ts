@@ -23,6 +23,7 @@ import type { AddressPointTable } from "./address-point-schema.ts"
 import { hasTable } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
+	type StreetKey,
 	streetKeyVariants,
 	streetLocaleForSurface,
 	stripArrondissement,
@@ -117,7 +118,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 	 * with the base-number fall — see each rung's note in place.
 	 */
 	#findForKey(
-		streetNorm: string,
+		streetNorm: StreetKey,
 		number: string,
 		query: {
 			street: string
@@ -166,7 +167,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 	 * when the prior missed.
 	 */
 	#probe(
-		streetNorm: string,
+		streetNorm: StreetKey,
 		number: string,
 		query: {
 			postcode?: string

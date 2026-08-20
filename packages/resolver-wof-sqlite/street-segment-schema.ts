@@ -17,6 +17,8 @@
 
 import type { Kysely } from "kysely"
 
+import type { RouteKey } from "./street-normalize.ts"
+
 /**
  * One TIGER street-segment edge: a `(from_hn, to_hn)` house-number range on one `side` of a named street, with the
  * geometry the interpolator walks. `min_hn`/`max_hn` are the sorted bounds (the probe filters on them); `parity` is
@@ -24,9 +26,12 @@ import type { Kysely } from "kysely"
  */
 export interface StreetSegmentTable {
 	/**
-	 * Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key.
+	 * `canonicalizeRouteKey(normalizeStreetForKey(street))` — the build/query-consistent probe key. The column NAME says
+	 * `street_norm`, but the value carries the route fold on top of the street fold, which is why the brand is
+	 * {@link RouteKey}: builder and probe both apply both folds, and a plain street key bound here misses every
+	 * numbered-route row.
 	 */
-	street_norm: string
+	street_norm: RouteKey
 	/**
 	 * `L` or `R` — the TIGER side the address range sits on.
 	 */

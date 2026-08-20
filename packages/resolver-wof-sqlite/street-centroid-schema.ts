@@ -22,6 +22,8 @@
 
 import type { Kysely } from "kysely"
 
+import type { NameKey, StreetKey } from "./street-normalize.ts"
+
 /**
  * One street roll-up. `(street_norm, postcode, locality_base)` is unique. `lat`/`lon` are the UNWEIGHTED mean of the
  * group's member address points (each source row = one point), so a cross-group weighted mean (`SUM(lat*point_count) /
@@ -32,7 +34,7 @@ export interface StreetCentroidTable {
 	/**
 	 * Shared `normalizeStreetForKeyLocale` of the street — the build/query-consistent probe key.
 	 */
-	street_norm: string
+	street_norm: StreetKey
 	/**
 	 * The 5-digit postcode of this group, or null when the source row carried none.
 	 */
@@ -40,7 +42,7 @@ export interface StreetCentroidTable {
 	/**
 	 * Arrondissement-stripped commune (`stripArrondissement(normalizeLocalityForKey(commune))`) — the fallback scope.
 	 */
-	locality_base: string
+	locality_base: NameKey
 	/**
 	 * Weighted-mean centroid latitude of the street's member points.
 	 */
@@ -75,6 +77,10 @@ export interface StreetCentroidTable {
 	 * name-evidence rerank folds the model's street surface with the SAME `foldStreetSurface` used to build this column
 	 * (the fold-parity contract), so it must not drift from `street_norm`'s richer normalizer. Indexed (`idx_sc_name`)
 	 * for a direct seek.
+	 *
+	 * Deliberately UNBRANDED despite the `name_key` column name: `foldStreetSurface` is a different fold from the
+	 * {@link NameKey} one every other `name_key` column carries, and giving it that brand would invite exactly the
+	 * cross-fold probe the brands exist to stop.
 	 */
 	name_key: string
 }
