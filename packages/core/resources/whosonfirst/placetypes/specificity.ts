@@ -11,7 +11,7 @@
  *   `dev-tools/score-hard-slice-board.run.ts` — agreeing on seven placetypes and both missing everything below
  *   `localadmin`.
  *
- *   THAT SHARED GAP IS WHY THIS FILE EXISTS rather than a third copy. #1746: the currency backfill refused to
+ *   THAT SHARED GAP IS WHY THIS FILE EXISTS. #1746: the currency backfill refused to
  *   resurrect a deprecated locality whenever ANY live same-name row sat within 10 km, "possibly under another
  *   placetype". For a place recorded twice that premise holds. For a placetype DEMOTION it does not — WOF retired
  *   `Gillingham` the locality (pop 101,187) and kept `Gillingham` the neighbourhood 3.2 km away, and the gate read the
@@ -21,6 +21,20 @@
  *   Ties are meaningful and not sloppiness: `localadmin` and `borough` occupy the same rung because WOF uses them for
  *   the same tier in different countries, and a tie makes each block the other — the conservative direction for a gate
  *   whose failure mode is inventing a place.
+ *
+ *   IT IS NOT THE ONLY TABLE, and a reader comparing it to a neighbour will find disagreements rather than a copy.
+ *   `resolver-wof-sqlite/ancestry.ts` publishes `PLACETYPE_DEPTH` for hierarchical containment (unknown maps to 0 and
+ *   sorts coarsest), and `eval-harness/gauntlet/ablation-expectation.ts` carries a deliberate copy of THAT one so an
+ *   old artifact can be re-graded against the table it was built with. Over the eleven placetypes all three share,
+ *   this scale and `PLACETYPE_DEPTH` order three pairs differently:
+ *
+ *   - `macrocounty` / `county` — DEPTH separates them, this ties them
+ *   - `localadmin` / `borough` — DEPTH puts `borough` finer, this ties them
+ *   - `locality` / `borough` — DEPTH puts `borough` FINER, this puts it coarser
+ *
+ *   The first two are the tie described above. The third is an inversion and is under review: a NYC borough sits
+ *   inside its locality, which is DEPTH's reading, and the direction of that pair changes which dead rows the
+ *   currency gate frees. 2,519 borough rows carry it against 8.2M localities.
  */
 
 import type { WhosOnFirstPlacetype } from "./definition.ts"
