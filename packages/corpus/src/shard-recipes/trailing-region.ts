@@ -86,9 +86,11 @@ export const trailingRegionRecipe: ShardRecipe = {
 			if (withCountry) {
 				components["country"] = country
 			}
+
 			if (postcode) {
 				components["postcode"] = postcode
 			}
+
 			if (withHouseNumber) {
 				components["house_number"] = houseNumber
 			}
@@ -96,14 +98,18 @@ export const trailingRegionRecipe: ShardRecipe = {
 			const tail = withCountry ? `${locality}, ${region}, ${country}` : `${locality}, ${region}`
 			const head = withHouseNumber ? `${houseNumber}, ${postcode} ` : postcode ? `${postcode} ` : ""
 			const raw = `${head}${tail}`
-			const source_id = shardSourceID("synth-trailing-region", { ...components, v: String(read) })
+			// A DISTINCT source for the structured rows. The sampler buckets by `source` and weights each bucket,
+			// so emitting these under `synth-trailing-region` would pool them with the 88,904 bare rows and make
+			// the new surface unweightable — the dose would silently be whatever the bare shard's weight bought.
+			const sourceLabel = postcode ? "synth-trailing-region-structured" : "synth-trailing-region"
+			const source_id = shardSourceID(sourceLabel, { ...components, v: String(read) })
 
 			const canonical = {
 				raw,
 				components,
 				country: String(t.cc ?? "").trim() || "und",
 				locale: String(t.locale ?? "und"),
-				source: "synth-trailing-region",
+				source: sourceLabel,
 				source_id,
 				corpus_version: "0.11.0",
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
