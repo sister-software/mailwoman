@@ -2702,17 +2702,35 @@ def quantize_onnx(
     --fp32-path=/data/output-v097-unit-v3-s42/model.onnx
     --int8-path=/data/models/quantized/model-v097-step-20000-int8.onnx``
     """
+    import hashlib
     import sys
     from pathlib import Path
+
+    # RELOAD BEFORE READING. This function is almost always called right after `export_onnx` wrote its
+    # fp32 to the volume, and a container that started with an older view reads the PREVIOUS model —
+    # silently, since the path is the same. Two checkpoints exported to `model.onnx` in sequence and
+    # quantized in between produced byte-identical int8 artifacts because of this, which reads as "the
+    # two checkpoints are the same model" rather than as a stale mount.
+    vol.reload()
 
     sys.path.insert(0, "/data/corpus-python/src")
     from mailwoman_train.quantize import quantize_dynamic_int8
 
     fp32 = Path(fp32_path)
     int8 = Path(int8_path)
-    print(f"Quantizing {fp32} → {int8}")
+
+    if not fp32.is_file():
+        raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
+
+    # The INPUT's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
+    # in the file says which checkpoint it came from, and the fp32 it was made from is usually
+    # overwritten by the next export.
+    fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()
+
+    print(f"Quantizing {fp32} (md5 {fp32_md5}) → {int8}")
     quantize_dynamic_int8(fp32, int8)
-    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB)")
+    int8_md5 = hashlib.md5(int8.read_bytes()).hexdigest()
+    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB, md5 {int8_md5})")
     vol.commit()
     print("Committed to volume.")
 
