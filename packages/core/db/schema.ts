@@ -11,11 +11,20 @@
  *
  *   The exported `Database` interface exists so `client.ts` has a target for `Kysely<Database>` and
  *   the boilerplate compiles without forcing a concrete schema commitment.
+ *
+ *   IT IS THE DEFAULT, NOT THE ONLY OPTION, and reading it as the only option is how `as never` gets written. Every
+ *   table name typed against `Record<string, never>` IS `never`, so `insertInto("poi")` cannot compile and a caller
+ *   who believes no alternative exists casts — which disarms not just that one check but every type-level guarantee
+ *   anyone later adds to the table (#1757 has the worked case: a branded key column whose check a neighbouring
+ *   `as never` had already defeated).
  */
 
 /**
- * Empty schema marker. Consumers declare their own schema interface and pass it directly to `new
- * Kysely<MySchema>({...})` or instantiate `new DatabaseClient<MySchema>(...)` once `DatabaseClient` becomes generic
- * (Phase 4.2 work).
+ * Empty schema marker, and the DEFAULT type argument only.
+ *
+ * Consumers declare their own schema interface and pass it directly: `new Kysely<MySchema>({…})` or `new
+ * DatabaseClient<MySchema>(…)`. `DatabaseClient<DB = Database>` is generic today, so this is available now — the
+ * sentence here once deferred it to "Phase 4.2 work", which had already landed, and a reader who believed that had no
+ * option but to cast.
  */
 export type Database = Record<string, never>
