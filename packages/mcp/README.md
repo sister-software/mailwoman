@@ -1,6 +1,6 @@
 # @mailwoman/mcp
 
-An **MCP server** exposing [Mailwoman](https://mailwoman.sister.software)'s parse/geocode/POI toolset to agents over stdio — no HTTP endpoint, just a subprocess an MCP client launches.
+An **MCP server** exposing [Mailwoman](https://mailwoman.ai)'s parse/geocode/POI toolset to agents over stdio — no HTTP endpoint, just a subprocess an MCP client launches.
 
 ## Tools
 

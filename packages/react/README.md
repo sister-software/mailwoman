@@ -1,6 +1,6 @@
 # @mailwoman/react
 
-React components + headless hooks for [mailwoman](https://mailwoman.sister.software) — the
+React components + headless hooks for [mailwoman](https://mailwoman.ai) — the
 parse/geocode/POI explorers from the docs site, decomposed and packaged for use in any React app.
 
 ## What's in the box

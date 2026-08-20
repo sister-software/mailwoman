@@ -92,7 +92,10 @@ export function repairStrandedAffix(tree: AddressTree): boolean {
 			if (index !== -1) {
 				nodes.splice(index, 1)
 			} else {
-				for (const node of nodes) if (node.children?.length) detach(node.children)
+				for (const node of nodes)
+					if (node.children?.length) {
+						detach(node.children)
+					}
 			}
 		}
 

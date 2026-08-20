@@ -1,6 +1,6 @@
 # @mailwoman/libpostal
 
-A **libpostal-compatible** parse/expand HTTP API over [Mailwoman](https://mailwoman.sister.software)'s
+A **libpostal-compatible** parse/expand HTTP API over [Mailwoman](https://mailwoman.ai)'s
 neural address parser. The lowest-dependency drop-in — `/parse` needs no gazetteer, just the model.
 
 ```bash

@@ -105,7 +105,7 @@ locality:         Blorenfeld
 
 No point is invented. An unresolved span stays a labeled span, and downstream code can tell the difference.
 
-The visual evidence for all of this is on [the demo map](https://mailwoman.sister.software/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · honest fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
+The visual evidence for all of this is on [the demo map](https://mailwoman.ai/demo). Its Layers panel carries two coverage overlays, "Coverage · optimistic fog" and "Coverage · honest fog": populated places the resolver cannot yet pin render as gray fog, weighted by importance, while rooftop and postcode coverage clears the fog. The optimistic reading lifts partial coverage so gaps surface as you zoom in; the second reading shades by what the data can do today. The fog sits exactly where civilization exists and our data does not — much of Africa, the Middle East, Central and South Asia, and South America, plus gaps like the UK and Ireland. The overlay build is documented in [the coverage-overlay runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/coverage-overlay.mdx).
 
 ## Where the parser's knowledge comes from
 
@@ -115,7 +115,7 @@ The model's side of "supported" is the training corpus: open, field-structured a
 
 Three instruments, in the order you'd reach for them:
 
-- **The demo map.** Type your own addresses at [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo) and flip the coverage overlays on. The fog answers "is my region pinned or sketched" faster than any table.
+- **The demo map.** Type your own addresses at [mailwoman.ai/demo](https://mailwoman.ai/demo) and flip the coverage overlays on. The fog answers "is my region pinned or sketched" faster than any table.
 - **The eval record.** [The eval reports](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/index.mdx) are the graded, dated evidence behind every claim above — the [parity scorecards](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/competitive-parity/index.mdx) for per-tag parse quality, the [resolver and geo panels](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/resolver-geo/index.mdx) for coordinate accuracy per locale.
 - **Your own sample.** The two-command pattern at the top of this page works on your data. If your addresses are heavy in a Tier-2 or Tier-3 locale, run a few hundred through `mailwoman geocode` and read the `resolution_tier` distribution before committing; [which languages Mailwoman handles well](./language-support.mdx) is the plain-language companion read, per language rather than per data layer.
 

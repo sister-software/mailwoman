@@ -470,5 +470,5 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	console.error(`  ✓ releases.json updated, defaultVersion=${releases.defaultVersion}`)
 
 	console.error(`\n✓ ${args.version} (${args.locale}) published successfully.`)
-	console.error(`  Demo: https://mailwoman.sister.software/demo/`)
+	console.error(`  Demo: https://mailwoman.ai/demo/`)
 }

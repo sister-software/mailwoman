@@ -64,7 +64,7 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 	version: packageJson.version,
 	description: packageJson.description,
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+	contact: { name: "Sister Software", url: "https://mailwoman.ai" },
 	servers: [
 		{
 			url: "http://{host}:{port}",

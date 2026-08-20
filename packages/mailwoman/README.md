@@ -168,7 +168,7 @@ Programmatically, build a `WofSqlitePlaceLookup` backend (from
 `@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
 and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
 `result.tree` roots then carry a `wof:id` and coordinate. See
-[Getting started → Adding resolution](https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse)
+[Getting started → Adding resolution](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse)
 for the worked example.
 
 ## Architecture
@@ -207,8 +207,8 @@ package is the umbrella that wires them together as a single `npm install`.
 
 ## Related
 
-- [Documentation & blog](https://mailwoman.sister.software)
-- [What Mailwoman Is](https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is)
+- [Documentation & blog](https://mailwoman.ai)
+- [What Mailwoman Is](https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is)
 - [GitHub](https://github.com/sister-software/mailwoman)
 
 ## License

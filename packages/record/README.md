@@ -66,7 +66,7 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 - [`@mailwoman/match`](../match) — the fuzzy matcher that consumes these records
 - [`@mailwoman/formatter`](../formatter) — `canonicalKey` used by `PostalAddress`
 - [`@mailwoman/registry`](../registry) — high-level `resolveEntities` that uses records
-- [Geocode-First Record Matching](https://mailwoman.sister.software/articles/concepts/geocode-first-record-matching/)
+- [Geocode-First Record Matching](https://mailwoman.ai/articles/concepts/geocode-first-record-matching/)
 
 ## License
 

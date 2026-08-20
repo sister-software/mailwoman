@@ -121,7 +121,7 @@ export function renderManPage(cliPath: string = CLI_PATH): string {
 		"street shards). Defaults to a platform data directory; `mailwoman doctor \\-\\-verbose`",
 		"prints every resolved path.",
 		".SH SEE ALSO",
-		"Project documentation: https://mailwoman.sister.software",
+		"Project documentation: https://mailwoman.ai",
 		".br",
 		"Issues: https://github.com/sister-software/mailwoman"
 	)

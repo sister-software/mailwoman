@@ -5,6 +5,7 @@
  */
 
 const AllowedOrigins: ReadonlySet<string> = new Set([
+	"https://mailwoman.ai",
 	"https://mailwoman.sister.software",
 	"https://sister.software",
 	"https://dev.sister.software",

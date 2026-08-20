@@ -1,6 +1,6 @@
 # @mailwoman/api-kit
 
-Plumbing for [Mailwoman](https://mailwoman.sister.software)'s HTTP surfaces — a node `serve` wrapper and
+Plumbing for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces — a node `serve` wrapper and
 OpenAPI emit helpers shared by the drop-in packages ([`@mailwoman/libpostal`](../libpostal),
 [`@mailwoman/photon`](../photon), [`@mailwoman/nominatim`](../nominatim)).
 
