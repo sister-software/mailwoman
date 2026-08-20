@@ -31,6 +31,7 @@ import { daemonTool } from "./daemon.ts"
 import { diagnoseTool } from "./diagnose.ts"
 import { inputsTool } from "./inputs.ts"
 import { lookupTool } from "./lookup.ts"
+import { minimalPairsTool } from "./minimal-pairs.ts"
 import { provenanceTool } from "./provenance.ts"
 import { rigTool } from "./rig.ts"
 import { runTool } from "./run.ts"
@@ -54,6 +55,7 @@ const FACTORIES = [
 	benchTool,
 	censusTool,
 	diagnoseTool,
+	minimalPairsTool,
 	rigTool,
 	provenanceTool,
 	vocabTool,
