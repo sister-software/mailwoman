@@ -68,6 +68,14 @@ export interface EngineConfig {
 	 * per run, so it is a per-row cost paid only where the evidence is the answer.
 	 */
 	trace?: boolean
+	/**
+	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
+	 *
+	 * NOT a lever and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring it
+	 * as a variable in a comparison would be declaring a variable that cannot move an outcome. The measuring tools that
+	 * read misses force it on, the same way they force `trace`.
+	 */
+	diagnose_unreachable?: boolean
 }
 
 /**
@@ -110,6 +118,7 @@ export const EFFECTIVE_KEY_FOR = {
 	admin_containment_rerank: "adminContainmentRerank",
 	poi_venue_tier: "poiVenueTier",
 	trace: "trace",
+	diagnose_unreachable: "diagnoseUnreachable",
 } as const satisfies Record<keyof EngineConfig, string>
 
 /**
@@ -151,6 +160,7 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 		...(config.resolve_db ? { resolveDB: config.resolve_db } : {}),
 		...(config.trace ? { trace: true } : {}),
+		...(config.diagnose_unreachable ? { diagnoseUnreachable: true } : {}),
 	}
 }
 

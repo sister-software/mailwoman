@@ -36,6 +36,7 @@ import {
 	type StreetCentroidLookup,
 	countriesFromPostcodeFormat,
 } from "@mailwoman/core/resolver"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst"
 import { haversineKm } from "@mailwoman/spatial"
 
 import {
@@ -118,6 +119,32 @@ function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 const TRACE_CANDIDATE_CAP = 10
 
 /**
+ * The fine end of the probe window: `microhood` and no finer.
+ *
+ * Everything above it — `postalcode`, `venue`, `campus`, `building`, `address` — is excluded because a mislabeled ADMIN
+ * span lands on another admin band, and probing every venue in a country per miss buys a long tail of coincidental name
+ * matches for a diagnostic that is meant to be read.
+ */
+const FINEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["microhood"]!
+
+/**
+ * The coarse end of the probe window. `country` and no coarser: a name matching at `continent` or `planet` says nothing
+ * about a mislabeled admin span, and the walk resolves the country from its own node anyway.
+ */
+const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
+
+/**
+ * The admin bands `ResolveOpts.diagnoseUnreachable` re-probes, coarse to fine.
+ *
+ * Derived from `PLACETYPE_SPECIFICITY` rather than typed out, so a placetype added there is probed here without anyone
+ * remembering to.
+ */
+const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPECIFICITY)
+	.filter(([, rank]) => rank !== undefined && rank <= FINEST_DIAGNOSTIC_BAND && rank >= COARSEST_DIAGNOSTIC_BAND)
+	.toSorted((a, b) => (a[1] as number) - (b[1] as number))
+	.map(([placetype]) => placetype)
+
+/**
  * Per-lookup trace bookkeeping (#1721). `#lookupAndPick` talks to ONE of these unconditionally — a real recorder when
  * `ResolveOpts.traceSink` is set, the frozen {@link NOOP_TRACE_RECORDER} otherwise — so the hot path carries no
  * per-event branches and the no-sink walk costs a handful of empty calls per node.
@@ -137,6 +164,7 @@ interface NodeTraceRecorder {
 	): void
 	gate(name: string): void
 	stage(name: string, order: readonly ResolvedPlace[]): void
+	reachable(bands: NonNullable<ResolveNodeTrace["reachableIn"]>): void
 	emit(picked: NonNullable<ResolveNodeTrace["picked"]> | null): void
 }
 
@@ -144,12 +172,15 @@ const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 	bind() {},
 	gate() {},
 	stage() {},
+	reachable() {},
 	emit() {},
 })
 
 function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): NodeTraceRecorder {
 	const gates: string[] = []
 	const stageOrders: Array<[string, readonly ResolvedPlace[]]> = []
+
+	let reachableIn: ResolveNodeTrace["reachableIn"]
 
 	let ctx: {
 		node: AddressNode
@@ -167,6 +198,9 @@ function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): Node
 		},
 		stage(name, order) {
 			stageOrders.push([name, order])
+		},
+		reachable(bands) {
+			reachableIn = bands
 		},
 		emit(picked) {
 			if (!ctx) return
@@ -214,6 +248,7 @@ function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): Node
 					limit: ctx.query.limit ?? ctx.defaultLimit,
 				},
 				gates,
+				...(reachableIn ? { reachableIn } : {}),
 				candidates: rows,
 				candidatesTruncated: Math.max(0, finalOrder.length - TRACE_CANDIDATE_CAP),
 				picked,
@@ -288,6 +323,11 @@ interface ResolutionState {
 	 * #1721 resolver-interior trace sink. Undefined (the default) = zero bookkeeping, byte-identical walk.
 	 */
 	traceSink?: (record: ResolveNodeTrace) => void
+	/**
+	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it. Diagnostic only — never
+	 * reaches the pick. See `ResolveOpts.diagnoseUnreachable`.
+	 */
+	diagnoseUnreachable?: boolean
 	/**
 	 * #27 locale-country SOFT prior for the bare-toponym admin walk. Undefined = no prior (the shipped default) →
 	 * byte-stable. See `ResolveOpts.localeCountryPrior` for the calibration and why it ships opt-in.
@@ -650,6 +690,8 @@ class WOFResolver implements Resolver {
 			defaultCountryIsInferred: opts.defaultCountryIsInferred === true,
 			bareLocalityNode: loneBareLocalityNode(tree, opts.placetypeMap ?? DEFAULT_PLACETYPE_MAP),
 			parentFallback: opts.parentFallback ?? true,
+			// Requires a sink: with nowhere to record the answer the probes would be pure cost.
+			...(opts.diagnoseUnreachable && opts.traceSink ? { diagnoseUnreachable: true } : {}),
 			postcode: firstPostcodeValue(tree.roots),
 			// #31 Mechanism 2 — forwarded to locality lookups (see #lookupAndPick). Opt-in, OFF by default.
 			postcodeContainmentCoherence: opts.postcodeContainmentCoherence === true,
@@ -940,6 +982,38 @@ class WOFResolver implements Resolver {
 		return decorated
 	}
 
+	/**
+	 * Which admin bands hold a value the probed band did not, keeping the country and dropping the parent.
+	 *
+	 * Bands come from `PLACETYPE_SPECIFICITY` rather than a list typed here: that table is already the repo's answer to
+	 * how coarse a placetype is, and a second hand-kept copy would agree right up until a placetype is added. Probed
+	 * coarse-to-fine so the report reads down the admin ladder.
+	 */
+	async #probeOtherBands(
+		query: Parameters<ResolverBackend["findPlace"]>[0],
+		probed: string
+	): Promise<NonNullable<ResolveNodeTrace["reachableIn"]>> {
+		const found: NonNullable<ResolveNodeTrace["reachableIn"]> = []
+
+		for (const band of DIAGNOSTIC_BANDS) {
+			if (band === probed) continue
+
+			try {
+				const hits = await this.#backend.findPlace({ ...query, placetype: band, parentID: undefined })
+
+				if (hits.length) {
+					found.push({ placetype: band, n: hits.length })
+				}
+			} catch {
+				// A band the backend cannot answer for is not evidence that the key is absent from it, so it is
+				// skipped rather than recorded as an empty result.
+				continue
+			}
+		}
+
+		return found
+	}
+
 	async #lookupAndPick(
 		node: AddressNode,
 		placetype: string,
@@ -1108,6 +1182,15 @@ class WOFResolver implements Resolver {
 					rec.gate("parent_fallback_retry")
 					candidates = await this.#backend.findPlace(query)
 					rec.stage("parent_fallback", candidates)
+				}
+
+				// DIAGNOSTIC ONLY, and after every real attempt: which OTHER bands hold this value. The answer never
+				// becomes the pick — a band the model did not ask for is not evidence about what the string means —
+				// but it separates the two facts a `null` cannot: a key we hold under another placetype is a
+				// reachability failure the tag caused, while a key nowhere is coverage. Off by default; one extra call
+				// per band per miss.
+				if (!candidates.length && state.diagnoseUnreachable) {
+					rec.reachable(await this.#probeOtherBands(query, placetype))
 				}
 			} catch {
 				// Defensive: a backend failure should not abort the whole tree walk. Leave the node with

@@ -47,12 +47,21 @@ describe("EFFECTIVE_KEY_FOR", () => {
 			admin_containment_rerank: true,
 			poi_venue_tier: true,
 			trace: true,
+			diagnose_unreachable: true,
 		})
 
 		const produced = Object.keys(resolved)
 		const missing = Object.values(EFFECTIVE_KEY_FOR).filter((key) => !produced.includes(key))
 
 		expect(missing).toEqual([])
+	})
+
+	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
+		// It is a session option, not a lever: the answer is byte-identical whether it is on, so declaring it as the
+		// variable of a comparison would declare a variable that cannot move an outcome. The tools that read misses
+		// force it on themselves. If someone "fixes" the asymmetry by adding it to the schema, this is the alarm.
+		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")
+		expect(Object.keys(EFFECTIVE_KEY_FOR)).toContain("diagnose_unreachable")
 	})
 
 	it("passes through a declaration that is not a config key at all", () => {

@@ -998,6 +998,18 @@ export interface ResolveOpts {
 	 * for debug surfaces, never a production default.
 	 */
 	traceSink?: (record: ResolveNodeTrace) => void
+	/**
+	 * When a lookup resolves NOTHING, re-probe the same value across the other admin bands and record which ones hold it
+	 * ({@link ResolveNodeTrace.reachableIn}) — a DIAGNOSTIC that never changes the answer.
+	 *
+	 * The distinction it buys is the one a `null` cannot carry: a key we hold under a different placetype is a
+	 * REACHABILITY failure — the model's tag chose the band, and a wrong tag makes a row we own unreachable — while a key
+	 * that exists nowhere is a coverage fact. Those call for opposite work and today reach a caller identically.
+	 *
+	 * Costs one extra backend call per band per miss, so it is off by default and belongs to debug surfaces. Requires
+	 * `traceSink`: with no sink there is nowhere to record the answer, and the probes would be pure cost.
+	 */
+	diagnoseUnreachable?: boolean
 }
 
 /**
@@ -1042,6 +1054,14 @@ export interface ResolveNodeTrace {
 		limit: number
 	}
 	gates: string[]
+	/**
+	 * Which OTHER admin bands hold this value, probed only when the lookup resolved nothing and
+	 * {@link ResolveOpts.diagnoseUnreachable} is on.
+	 *
+	 * `[]` is a measured absence — every band was asked and none held it, so the miss is coverage. `undefined` means
+	 * nobody asked, which is a different fact and must not be read as an empty answer.
+	 */
+	reachableIn?: Array<{ placetype: string; n: number }>
 	candidates: ResolveCandidateTrace[]
 	candidatesTruncated: number
 	picked: {

@@ -132,6 +132,16 @@ export interface GeocodeSessionOptions {
 	 */
 	trace?: boolean
 	/**
+	 * When a lookup resolves NOTHING, re-probe the value across the other admin bands and record which hold it.
+	 *
+	 * DIAGNOSTIC ONLY and off by default: the answer is byte-identical either way, and what changes is that a miss can
+	 * say WHY. A key we hold under another placetype is a reachability failure the model's tag caused; a key held nowhere
+	 * is coverage. Both reach a caller as `null` without this, and they call for opposite work.
+	 *
+	 * Costs one extra backend call per band per miss and needs {@link trace}, since the record is the whole product.
+	 */
+	diagnoseUnreachable?: boolean
+	/**
 	 * Optional one-time initialization milestones for interactive callers.
 	 */
 	onProgress?: (message: string) => void
@@ -677,6 +687,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// The opt-in venue tier reuses the fork-entity wiring's poiLookup; the flag alone opts in.
 			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
+			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})
 
 		const finishedAt = performance.now()

@@ -464,6 +464,11 @@ export interface GeocodeDeps {
 	 */
 	resolveTraceSink?: import("@mailwoman/core/resolver").ResolveOpts["traceSink"]
 	/**
+	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it (#1741/#1756). DIAGNOSTIC
+	 * — the answer never changes, only the record of why it was not found. Requires `resolveTraceSink`.
+	 */
+	diagnoseUnreachable?: boolean
+	/**
 	 * Lineage attachment (#404, `ResolveOpts.includeAncestors`) — stamp each resolved node's containment chain onto
 	 * `metadata.ancestors`, which is what puts region-class ancestry in front of the admin-coherence verdicts (#1717):
 	 * without it `region` reads `unverifiable` on every winner. **Default-on** for the geocode path — the stamp is
@@ -1021,6 +1026,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		// serving `ancestors()`, so an artifact predating the sidecar stays byte-identical.
 		includeAncestors: deps.includeAncestors !== false,
 		...(deps.resolveTraceSink ? { traceSink: deps.resolveTraceSink } : {}),
+		...(deps.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 	}
 
 	applyCountryEvidence(opts, tree, deps)
