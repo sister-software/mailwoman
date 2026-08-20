@@ -855,7 +855,7 @@ export async function runDiagnose(registry: EngineRegistry, args: Record<string,
 
 	const set = await resolveInputSet(ref)
 	// Tracing is the account's entire input, so it is forced on regardless of what the caller passed.
-	const engine = await registry.acquire({ ...config, trace: true })
+	const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 	const selected = limit ? set.inputs.slice(0, limit) : set.inputs
 
 	const startedAt = Date.now()

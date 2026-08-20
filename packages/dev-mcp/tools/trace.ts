@@ -37,8 +37,10 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 		const inputs = args["inputs"] as string[]
 		const config = (args["config"] as EngineConfig | undefined) ?? {}
 		const fullParseTrace = args["full_parse_trace"] === true
-		// Tracing is the answer here, so it is forced on regardless of what the caller passed.
-		const engine = await registry.acquire({ ...config, trace: true })
+		// Tracing is the answer here, so it is forced on regardless of what the caller passed. The band probe rides with
+		// it for the same reason: this surface exists to explain ONE row, and "resolved nothing" is not an explanation.
+		// Neither can change the answer, so neither is a lever the caller should have to ask for.
+		const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 
 		const set = await resolveInputSet({
 			kind: "literal",
