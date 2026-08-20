@@ -27,6 +27,7 @@ import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { benchTool } from "./bench.ts"
 import { censusTool } from "./census.ts"
 import { compareTool } from "./compare.ts"
+import { constraintsTool } from "./constraints.ts"
 import { daemonTool } from "./daemon.ts"
 import { diagnoseTool } from "./diagnose.ts"
 import { inputsTool } from "./inputs.ts"
@@ -54,6 +55,7 @@ const FACTORIES = [
 	traceTool,
 	benchTool,
 	censusTool,
+	constraintsTool,
 	diagnoseTool,
 	minimalPairsTool,
 	rigTool,
