@@ -3,143 +3,201 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus upload` — sync the local corpus + tokenizer to Cloudflare R2 via rclone.
+ *   `mailwoman corpus upload` — push a corpus version, the tokenizer, or the training code to R2.
  *
- *   Uploads the versioned corpus (v0.3.0 base + v0.4.0 adapter shards), the A1 tokenizer, and the
- *   training code to an R2 bucket so that a remote GPU provider can pull them at datacenter speed.
+ *   R2 IS THE ONLY WAY IN. `modal volume put` writes to the training volume are visible to
+ *   `modal volume ls/get` and NOT to containers — `train_remote.py` documents that in its own source,
+ *   and it is why every remote artifact travels local → R2 → container-side rclone. A corpus that never
+ *   reaches R2 cannot reach a GPU.
  *
- *   Requires RCLONE_S3_* env vars set in .env (Cloudflare R2 credentials).
+ *   VERSION-GENERAL BY ARGUMENT. This command used to carry a hardcoded five-step script — "sync corpus
+ *   v0.3.0", "sync corpus v0.4.0", tokenizer, code — so a new corpus version could not be uploaded
+ *   without editing it. Worse, the hardcoded versions had stopped existing locally, so the very first
+ *   step failed on a checkout where they were absent and buried the reason under rclone's harmless
+ *   missing-config NOTICE. That failure reads as "R2 is not configured" and is not.
+ *
+ *   Credentials come from `RCLONE_S3_*` in the typed private env, consumed through rclone's `:s3:`
+ *   connection-string form. **No `rclone.conf` is involved**, so the NOTICE about one being absent is
+ *   expected output, not a fault — it is suppressed here so it stops being read as an error.
  */
 
+import { $private } from "@mailwoman/core/env"
+import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
-const DEFAULT_CORPUS_DIR = dataRootPath("corpus", "versioned")
-const DEFAULT_TOKENIZER_DIR = dataRootPath("models", "tokenizer")
 
 /**
  * Native command-line contract consumed by the filesystem command router.
  */
 export const spec = {
 	name: "upload",
-	description: "Upload corpus and tokenizer artifacts",
+	description: "Upload a corpus version, tokenizer, or training code to R2",
 	options: {
 		bucket: { type: "string", default: DEFAULT_BUCKET, description: "R2 bucket name" },
-		"corpus-dir": { type: "string", default: DEFAULT_CORPUS_DIR, description: "Local corpus root" },
-		"tokenizer-dir": { type: "string", default: DEFAULT_TOKENIZER_DIR, description: "Local tokenizer root" },
-		"dry-run": { type: "boolean", default: false, description: "Show what would be uploaded without uploading" },
+		"corpus-version": {
+			type: "string",
+			description: "Corpus version directory under <data-root>/corpus/versioned (repeatable, comma-separated)",
+		},
+		"corpus-dir": { type: "string", description: "Local corpus root. Default <data-root>/corpus/versioned" },
+		tokenizer: { type: "boolean", default: false, description: "Also sync the tokenizer" },
+		code: { type: "boolean", default: false, description: "Also sync corpus-python (the training code)" },
+		"dry-run": { type: "boolean", default: false, description: "Report the plan and transfer nothing" },
 	},
 } as const satisfies CommandSpec
 
 interface Options {
 	bucket: string
-	corpusDir: string
-	tokenizerDir: string
+	corpusVersion?: string
+	corpusDir?: string
+	tokenizer: boolean
+	code: boolean
 	dryRun: boolean
 }
 
 interface Step {
 	label: string
-	status: "pending" | "running" | "done" | "error"
+	status: "pending" | "running" | "done" | "error" | "skipped"
 	detail?: string
 }
 
+const MARK: Record<Step["status"], string> = {
+	pending: "○",
+	running: "◼",
+	done: "✓",
+	error: "✗",
+	skipped: "–",
+}
+
 const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
-	const [steps, setSteps] = useState<Step[]>([
-		{ label: "Create bucket (if needed)", status: "pending" },
-		{ label: "Sync corpus v0.3.0", status: "pending" },
-		{ label: "Sync corpus v0.4.0", status: "pending" },
-		{ label: "Sync tokenizer", status: "pending" },
-		{ label: "Sync training code", status: "pending" },
-	])
+	const [steps, setSteps] = useState<Step[]>([])
 
-	const updateStep = (idx: number, update: Partial<Step>) => {
-		setSteps((prev) => prev.map((s, i) => (i === idx ? { ...s, ...update } : s)))
-	}
-
-	useCommandTask(async () => {
+	const state = useCommandTask(async () => {
 		const { $ } = await import("zx")
+		const { existsSync, readdirSync } = await import("node:fs")
+		const { join } = await import("node:path")
 
-		const rcloneBase = `:s3:${options.bucket}`
-		const dryFlag = options.dryRun ? "--dry-run" : ""
+		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
 
-		// Step 0: Create bucket
-		updateStep(0, { status: "running" })
+		const versions = (options.corpusVersion ?? "")
+			.split(",")
+			.map((v) => v.trim())
+			.filter(Boolean)
 
-		try {
-			await $`rclone mkdir ${rcloneBase} ${dryFlag}`.quiet()
-			updateStep(0, { status: "done" })
-		} catch {
-			updateStep(0, { status: "done", detail: "bucket may already exist" })
+		if (!versions.length && !options.tokenizer && !options.code) {
+			const available = existsSync(corpusRoot) ? readdirSync(corpusRoot).toSorted().slice(-6) : []
+
+			throw new Error(
+				"nothing selected. Pass --corpus-version <v> (and/or --tokenizer, --code).\n" +
+					`Recent versions under ${corpusRoot}:\n  ${available.join("\n  ")}`
+			)
 		}
 
-		// Step 1: Sync v0.3.0 corpus
-		updateStep(1, { status: "running" })
+		// rclone reads `:s3:` credentials from the environment. Point RCLONE_CONFIG at nothing so the
+		// "config file not found" NOTICE stops appearing in output that people read as a failure.
+		const env = childEnv({
+			RCLONE_CONFIG: "",
+			RCLONE_S3_PROVIDER: "Cloudflare",
+			RCLONE_S3_ENDPOINT: $private.RCLONE_S3_ENDPOINT ?? "",
+			RCLONE_S3_ACCESS_KEY_ID: $private.RCLONE_S3_ACCESS_KEY_ID ?? "",
+			RCLONE_S3_SECRET_ACCESS_KEY: $private.RCLONE_S3_SECRET_ACCESS_KEY ?? "",
+		})
 
-		try {
-			await $`rclone sync ${options.corpusDir}/v0.3.0/corpus-v0.3.0/ ${rcloneBase}/corpus/v0.3.0/ --progress --transfers 8 --checkers 16 ${dryFlag}`.quiet()
-			updateStep(1, { status: "done", detail: "v0.3.0 synced" })
-		} catch (error: unknown) {
-			const e = error as Record<string, unknown>
-			updateStep(1, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
-
-			return
+		if (!env["RCLONE_S3_ENDPOINT"] || !env["RCLONE_S3_ACCESS_KEY_ID"]) {
+			throw new Error(
+				"RCLONE_S3_ENDPOINT / RCLONE_S3_ACCESS_KEY_ID absent from the private env. These are the " +
+					"credentials, not an rclone.conf — a missing config file is normal for the `:s3:` form."
+			)
 		}
 
-		// Step 2: Sync v0.4.0 adapter shards
-		updateStep(2, { status: "running" })
+		const base = `:s3:${options.bucket}`
+		const dry = options.dryRun ? ["--dry-run"] : []
 
-		try {
-			await $`rclone sync ${options.corpusDir}/v0.4.0/corpus-v0.4.0/ ${rcloneBase}/corpus/v0.4.0/ --progress --transfers 4 ${dryFlag}`.quiet()
-			updateStep(2, { status: "done", detail: "v0.4.0 synced" })
-		} catch (error: unknown) {
-			const e = error as Record<string, unknown>
-			updateStep(2, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
-
-			return
+		interface Job {
+			label: string
+			source: string
+			dest: string
+			extra: string[]
 		}
 
-		// Step 3: Sync tokenizer
-		updateStep(3, { status: "running" })
+		const jobs: Job[] = []
 
-		try {
-			await $`rclone sync ${options.tokenizerDir}/ ${rcloneBase}/models/tokenizer/ --progress ${dryFlag}`.quiet()
-			updateStep(3, { status: "done", detail: "tokenizer synced" })
-		} catch (error: unknown) {
-			const e = error as Record<string, unknown>
-			updateStep(3, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
+		for (const version of versions) {
+			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
+			const nested = join(corpusRoot, version, `corpus-${version}`)
+			const source = existsSync(nested) ? nested : join(corpusRoot, version)
 
-			return
+			jobs.push({
+				label: `corpus ${version}`,
+				source,
+				dest: `${base}/corpus/${version}/`,
+				extra: ["--transfers", "8", "--checkers", "16"],
+			})
 		}
 
-		// Step 4: Sync training code
-		updateStep(4, { status: "running" })
+		if (options.tokenizer) {
+			jobs.push({
+				label: "tokenizer",
+				source: String(dataRootPath("models", "tokenizer")),
+				dest: `${base}/models/tokenizer/`,
+				extra: ["--transfers", "4"],
+			})
+		}
 
-		try {
-			await $`rclone sync ./corpus-python/ ${rcloneBase}/corpus-python/ --exclude '.venv/**' --exclude '__pycache__/**' --exclude '*.egg-info/**' --progress ${dryFlag}`.quiet()
-			updateStep(4, { status: "done", detail: "training code synced" })
-		} catch (error: unknown) {
-			const e = error as Record<string, unknown>
-			updateStep(4, { status: "error", detail: String(e.stderr ?? e.message ?? error).slice(0, 100) })
+		if (options.code) {
+			jobs.push({
+				label: "training code",
+				source: "./corpus-python/",
+				dest: `${base}/corpus-python/`,
+				extra: ["--exclude", ".venv/**", "--exclude", "__pycache__/**", "--exclude", "*.egg-info/**"],
+			})
+		}
+
+		setSteps(jobs.map((j) => ({ label: j.label, status: "pending" as const })))
+
+		const update = (index: number, patch: Partial<Step>) =>
+			setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
+
+		for (const [index, job] of jobs.entries()) {
+			// CHECK THE SOURCE FIRST. rclone's own error for an absent directory arrives buried under the
+			// config NOTICE, which is exactly how "this version does not exist here" got read as "R2 is
+			// broken". Say which path was missing instead.
+			if (!existsSync(job.source)) {
+				update(index, { status: "error", detail: `not found locally: ${job.source}` })
+
+				continue
+			}
+
+			update(index, { status: "running" })
+
+			try {
+				await $({ env })`rclone sync ${job.source} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
+				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
+			} catch (error: unknown) {
+				const e = error as Record<string, unknown>
+
+				update(index, { status: "error", detail: String(e["stderr"] ?? e["message"] ?? error).slice(0, 160) })
+			}
 		}
 	})
 
+	// A thrown selection/credential error is the whole message here — rendering only the step list would
+	// print a bare header and look like a no-op.
+	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+
 	return (
 		<Box flexDirection="column">
-			<Text bold>Corpus Upload → R2 ({options.bucket})</Text>
-			{Boolean(options.dryRun) && <Text color="yellow">DRY RUN — no files will be transferred</Text>}
+			<Text bold>corpus upload → R2 ({options.bucket})</Text>
+			{options.dryRun ? <Text color="yellow">DRY RUN — nothing is transferred</Text> : null}
 			<Text> </Text>
-			{steps.map((step, i) => (
-				<Box key={i}>
-					<Text>
-						{step.status === "done" ? "✓" : step.status === "running" ? "◼" : step.status === "error" ? "✗" : "○"}{" "}
-						{step.label}
-						{step.detail ? ` — ${step.detail}` : ""}
-					</Text>
-				</Box>
+			{steps.map((step) => (
+				<Text key={step.label}>
+					{MARK[step.status]} {step.label}
+					{step.detail ? ` — ${step.detail}` : ""}
+				</Text>
 			))}
 		</Box>
 	)
