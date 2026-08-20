@@ -120,40 +120,44 @@ const GeocodeCandidateSchema = z
 	.openapi("GeocodeCandidate")
 
 /**
+ * The `ComponentTag` union at this engine-agnostic boundary, named once so every schema that speaks about a tag speaks
+ * about the SAME list. Two hand-copied enums would agree on the day they were written and diverge on the day a tag is
+ * added — the shape of defect `feedback-parity-needs-shared-function-not-shared-constants` describes.
+ */
+const ComponentTagSchema = z.enum([
+	"country",
+	"region",
+	"locality",
+	"dependent_locality",
+	"postcode",
+	"subregion",
+	"house_number",
+	"street",
+	"street_prefix",
+	"street_prefix_particle",
+	"street_suffix",
+	"intersection_a",
+	"intersection_b",
+	"unit",
+	"venue",
+	"attention",
+	"po_box",
+	"cedex",
+	"prefecture",
+	"municipality",
+	"district",
+	"block",
+	"sub_block",
+	"building_number",
+	"building_name",
+])
+
+/**
  * Canonical parsed-component map carried by `GeocodeResult.components`. Spelled out at this engine-agnostic API
  * boundary for the same reason the result schema is hand-modeled; the compile-time drift pin in
  * `mailwoman/test/api-schema-drift.test.ts` catches any mismatch with the real `ComponentTag`-keyed result type.
  */
-const GeocodeComponentsSchema = z.partialRecord(
-	z.enum([
-		"country",
-		"region",
-		"locality",
-		"dependent_locality",
-		"postcode",
-		"subregion",
-		"house_number",
-		"street",
-		"street_prefix",
-		"street_prefix_particle",
-		"street_suffix",
-		"intersection_a",
-		"intersection_b",
-		"unit",
-		"venue",
-		"attention",
-		"po_box",
-		"cedex",
-		"prefecture",
-		"municipality",
-		"district",
-		"block",
-		"sub_block",
-		"building_number",
-		"building_name",
-	]),
-	z.string()
-)
+const GeocodeComponentsSchema = z.partialRecord(ComponentTagSchema, z.string())
 
 /**
  * One `GeocodeOutcome.intent_markers` entry — an advisory the ROAD_TO_V9 §4 intent vocabulary raised about the QUERY.
@@ -254,6 +258,20 @@ export const GeocodeOutcomeLikeSchema = z.object({
 			region: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 			country: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 		})
+		.optional(),
+	// #1755: spans the flat `components` map could not represent. `components` holds one value per tag, so a second
+	// `locality` span ceases to exist there — and without this line `region: null` means both "the input named no
+	// region" and "it named one and we deleted it". Absent when nothing was dropped; never an empty array on the wire,
+	// because the common case is nothing dropped and a client should not have to read a field to learn that.
+	dropped_components: z
+		.array(
+			z.object({
+				tag: ComponentTagSchema,
+				value: z.string(),
+				// The value that held the slot, so a reader sees which of the two survived without re-deriving it.
+				kept: z.string(),
+			})
+		)
 		.optional(),
 })
 

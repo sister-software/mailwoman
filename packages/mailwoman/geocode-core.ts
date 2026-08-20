@@ -28,7 +28,7 @@ import type { GeocodeOutcome, GeocodeOutcomeLike } from "@mailwoman/api"
 import { isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import type { AddressNode, AddressTree, DroppedSpan } from "@mailwoman/core/decoder"
 import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
@@ -101,6 +101,14 @@ export interface GeocodeResult {
 	 * `prefecture` / `block` observable instead of silently dropping it at the geocoder boundary.
 	 */
 	components: Partial<Record<ComponentTag, string>>
+	/**
+	 * Spans the flat projection could not represent, present only when there were any (#1755).
+	 *
+	 * The flat map holds one value per tag, so a second `locality` span ceases to exist at the projection. Without this,
+	 * `region: null` means both "the input named no region" and "it named one and we deleted it" — the meaning-of-zero
+	 * rule applied to a component. A consumer rendering an answer can now say which happened.
+	 */
+	dropped_components?: DroppedSpan[]
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
@@ -1374,7 +1382,11 @@ function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
-	const components = decodeAsJSON(tree)
+	// `includeDropped` is not optional here even though the flag is: a span the projection deleted is the ONE thing a
+	// caller cannot reconstruct from the result, and #1755 is what its absence cost — the #1748 trailing region is
+	// parsed, mistagged `locality`, and deleted at this line, which is why no decode lever ever moved that class.
+	const projected = decodeAsJSON(tree, { includeDropped: true })
+	const { dropped, ...components } = projected
 	const allNodes: AddressNode[] = []
 
 	const flatten = (nodes: readonly AddressNode[]) => {
@@ -1583,6 +1595,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const extractedOutcome: GeocodeOutcomeLike = {
 		input,
 		components,
+		...(dropped?.length ? { dropped_components: dropped } : {}),
 		lat,
 		lon,
 		resolution_tier: tier,

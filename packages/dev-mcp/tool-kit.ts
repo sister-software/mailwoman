@@ -239,6 +239,20 @@ export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"])
  * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a
  * thing-query. Reporting the refusal is what separates "we could not" from "we would not".
  */
+function droppedRow(run: GeocodeRun): string[] {
+	const dropped = (run.result as { dropped_components?: Array<{ tag: string; value: string; kept: string }> })
+		.dropped_components
+
+	if (!dropped?.length) return []
+
+	return [
+		"projection: " +
+			dropped.map((d) => `${d.tag} "${d.value}" DELETED — "${d.kept}" held the slot`).join("; ") +
+			" — the flat map holds one value per tag, so these spans were parsed and then discarded (#1755). " +
+			"A null component below may be this, not an absence in the input.",
+	]
+}
+
 function refusalRow(run: GeocodeRun): string[] {
 	const markers = (run.result as { intent_markers?: Array<{ kind: string; evidence?: string }> }).intent_markers
 
@@ -270,6 +284,7 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
 			...refusalRow(run),
+			...droppedRow(run),
 			...resolverRows(run.trace),
 		],
 	}
