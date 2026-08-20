@@ -1,6 +1,6 @@
 # @mailwoman/api
 
-The **native [Mailwoman](https://mailwoman.sister.software) HTTP API** — an engine-agnostic `/v1` surface
+The **native [Mailwoman](https://mailwoman.ai) HTTP API** — an engine-agnostic `/v1` surface
 (parse, geocode, batch, resolve, format) plus health, metrics, and an emitted OpenAPI document. Unlike its
 drop-in siblings ([`@mailwoman/nominatim`](../nominatim), [`@mailwoman/photon`](../photon),
 [`@mailwoman/libpostal`](../libpostal)), nothing here mimics a third-party API — this is Mailwoman's own

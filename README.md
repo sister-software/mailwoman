@@ -18,9 +18,9 @@
 </p>
 
 <p align="center">
-  <a href="https://mailwoman.sister.software/demo"><strong>Live demo</strong></a> ·
-  <a href="https://mailwoman.sister.software">Docs & blog</a> ·
-  <a href="https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse/">Getting started</a>
+  <a href="https://mailwoman.ai/demo"><strong>Live demo</strong></a> ·
+  <a href="https://mailwoman.ai">Docs & blog</a> ·
+  <a href="https://mailwoman.ai/docs/developers/get-started/install-and-first-parse/">Getting started</a>
 </p>
 
 <p align="center">
@@ -88,7 +88,7 @@ console.log(decodeAsJson(tree))
 The full library surface — confidence, the per-stage pipeline result, resolution, browser
 loading, and configuration — is documented in the [`mailwoman` package
 README](./packages/mailwoman/README.md) and in [Getting
-started](https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse).
+started](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse).
 
 ## Drop-in servers
 
@@ -134,7 +134,7 @@ npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
 ```
 
 OpenAPI 3.1 specifications for all three ship in each package and at
-[mailwoman.sister.software/openapi](https://mailwoman.sister.software/openapi/photon.yaml).
+[mailwoman.ai/openapi](https://mailwoman.ai/openapi/photon.yaml).
 
 ## How it works
 
@@ -152,7 +152,7 @@ The confidence numbers the parser returns are calibrated probabilities, not heur
 scores: when it says `0.88`, it is right about 88% of the time.
 
 For the longer version, read [What Mailwoman
-Is](https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is/).
+Is](https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is/).
 
 ## Locale coverage
 
@@ -164,7 +164,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 | **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set; NL resolved-p50 0.05 km     |
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
-The [browser demo](https://mailwoman.sister.software/demo) carries the same coverage. Full
+The [browser demo](https://mailwoman.ai/demo) carries the same coverage. Full
 receipts live in the [scope declaration](./docs/engineering/SCOPE.mdx) and the [eval
 reports](./docs/articles/evals/).
 
@@ -216,7 +216,7 @@ Mailwoman is dual-licensed:
 Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases);
 what we do and don't collect is stated plainly in the
 [privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md); funders and sponsors
-can read our machine-readable [funding.json](https://mailwoman.sister.software/funding.json).
+can read our machine-readable [funding.json](https://mailwoman.ai/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
 
 Portions of Mailwoman derived from [Pelias Parser](https://github.com/pelias/parser) remain

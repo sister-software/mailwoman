@@ -1,6 +1,6 @@
 ---
 name: run-docs
-description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaurus site (the marketing + docs + /demo app published to mailwoman.sister.software). Use this skill when asked to "run the docs," "start docusaurus," "screenshot a docs page," "verify a doc change," "test the /demo page," or to validate any change inside docs/.
+description: Run, build, smoke-test, and screenshot the @mailwoman/docs Docusaurus site (the marketing + docs + /demo app published to mailwoman.ai). Use this skill when asked to "run the docs," "start docusaurus," "screenshot a docs page," "verify a doc change," "test the /demo page," or to validate any change inside docs/.
 ---
 
 Paths below are relative to `docs/` (the workspace root). The skill directory is `docs/.claude/skills/run-docs/`.
@@ -71,7 +71,7 @@ node .claude/skills/run-docs/driver.mts --smoke
 node .claude/skills/run-docs/driver.mts --eval / "return document.querySelector('h1')?.innerText"
 ```
 
-Override the base URL with `MAILWOMAN_DOCS_URL=https://mailwoman.sister.software node .../driver.mts --check /docs/` to point the same driver at the deployed site.
+Override the base URL with `MAILWOMAN_DOCS_URL=https://mailwoman.ai node .../driver.mts --check /docs/` to point the same driver at the deployed site.
 
 Screenshots default to `/tmp/mailwoman-docs/<route>.png` if you omit the output path. Always `Read` the file after taking it — a 200 OK with a blank screenshot is the most common silent failure mode here (e.g. a JS bundle that errored after hydration).
 

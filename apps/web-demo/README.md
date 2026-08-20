@@ -2,7 +2,7 @@
 
 Small server-side demo that loads a `@mailwoman/neural-weights-*` ONNX model and serves a single-page UI for pasting an address and seeing per-token labels + confidence + decoded components.
 
-Hosted at <https://mailwoman.sister.software/> (gated by Cloudflare; behind the playpen host's nginx → systemd `mailwoman-demo.service` on `127.0.0.1:8888`).
+Hosted at <https://mailwoman.ai/> (gated by Cloudflare; behind the playpen host's nginx → systemd `mailwoman-demo.service` on `127.0.0.1:8888`).
 
 ## What it shows
 
@@ -42,7 +42,7 @@ See [`playpen/docs/docs/runbooks/adding-a-public-service.md`](../../playpen) for
 
 - Files installed to `/opt/mailwoman-demo/{server.py,index.html,venv/}` on the playpen host
 - `mailwoman-demo.service` systemd unit binds `127.0.0.1:8888`
-- nginx server block `mailwoman.sister.software` proxies through host nginx (port 8080) — see `/etc/nginx/sites-available/mailwoman-demo`
+- nginx server block `mailwoman.ai` proxies through host nginx (port 8080) — see `/etc/nginx/sites-available/mailwoman-demo`
 - Cloudflare tunnel routes the public hostname to `localhost:8080`
 - No authentik gating (public demo)
 
@@ -57,6 +57,6 @@ See [`playpen/docs/docs/runbooks/adding-a-public-service.md`](../../playpen) for
 
 1. Replace the int8 ONNX at `/mnt/playpen/mailwoman-data/models/quantized/`
 2. `sudo systemctl restart mailwoman-demo.service`
-3. Confirm via `curl -X POST https://mailwoman.sister.software/parse -d '{"text":"..."}'`
+3. Confirm via `curl -X POST https://mailwoman.ai/parse -d '{"text":"..."}'`
 
 The model card warning banner in `index.html` should also be updated to reflect the new version's quality bracket.

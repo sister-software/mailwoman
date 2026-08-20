@@ -16,7 +16,7 @@ differ, the repository copy governs code contributions and this page will be cor
   packages at https://www.npmjs.com/org/mailwoman. Model weights ship as data-only packages
   (`@mailwoman/neural-weights-en-us`, `-fr-fr`).
 - **Try it without installing:** the in-browser demo at
-  [mailwoman.sister.software/demo](https://mailwoman.sister.software/demo/), or the hosted
+  [mailwoman.ai/demo](https://mailwoman.ai/demo/), or the hosted
   Photon-compatible trial endpoint at `photon.sister.software`
   (e.g. [`/api?q=berlin&limit=3`](https://photon.sister.software/api?q=berlin&limit=3)).
 - Getting-started guide: [/docs/getting-started](./getting-started.mdx).

@@ -138,7 +138,7 @@ changing anything structural. The short version:
   dictionaries.
 - `packages/resolver*/`, `packages/codex/`, `packages/corpus/`, `packages/neural*/`,
   `packages/spatial/`, `packages/normalize/`, … — the supporting packages.
-- `docs/` — the Docusaurus site published to https://mailwoman.sister.software.
+- `docs/` — the Docusaurus site published to https://mailwoman.ai.
 
 ## Building, testing, and type-checking
 

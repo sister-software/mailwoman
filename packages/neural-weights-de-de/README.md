@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-de-de
 
-German (`de-DE`) weights overlay for [mailwoman](https://mailwoman.sister.software).
+German (`de-DE`) weights overlay for [mailwoman](https://mailwoman.ai).
 
 **Data-only.** This package ships no model of its own — it declares
 `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and shares that package's `model.onnx`

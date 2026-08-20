@@ -496,7 +496,7 @@ test("GET /openapi.json: full-info document config lands (license, contact, serv
 	}
 
 	expect(doc.info.license?.name).toBe("AGPL-3.0-only OR LicenseRef-Commercial")
-	expect(doc.info.contact?.url).toBe("https://mailwoman.sister.software")
+	expect(doc.info.contact?.url).toBe("https://mailwoman.ai")
 	expect(doc.servers?.[0]?.url).toBe("http://{host}:{port}")
 	expect(doc.security).toEqual([])
 	expect(doc.tags?.map((t) => t.name)).toContain("meta")

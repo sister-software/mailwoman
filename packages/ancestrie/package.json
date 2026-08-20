@@ -1,7 +1,6 @@
 {
 	"name": "@mailwoman/ancestrie",
 	"version": "9.1.0",
-	"private": false,
 	"description": "A materialized trie over an ancestry graph — one prefix walk yields lexical continuations, ranks, and containment lineage from a single static artifact.",
 	"keywords": [
 		"ancestry",

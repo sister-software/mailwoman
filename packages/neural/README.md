@@ -93,9 +93,9 @@ for the shipped model.
 - [`@mailwoman/neural-weights-en-us`](../neural-weights-en-us) — trained model bundle (en-US)
 - [`@mailwoman/neural-weights-fr-fr`](../neural-weights-fr-fr) — trained model bundle (fr-FR)
 - [`@mailwoman/core`](../core) — pipeline coordinator, types, decoder
-- [Neural Classification concepts](https://mailwoman.sister.software/articles/concepts/neural-classification/)
-- [ONNX Runtime concepts](https://mailwoman.sister.software/articles/concepts/onnx-runtime/)
-- [What Mailwoman Is](https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is)
+- [Neural Classification concepts](https://mailwoman.ai/articles/concepts/neural-classification/)
+- [ONNX Runtime concepts](https://mailwoman.ai/articles/concepts/onnx-runtime/)
+- [What Mailwoman Is](https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is)
 
 ## License
 

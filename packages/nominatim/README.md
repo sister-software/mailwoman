@@ -1,6 +1,6 @@
 # @mailwoman/nominatim
 
-A **Nominatim-compatible HTTP geocoding API** over the [Mailwoman](https://mailwoman.sister.software) engine. Point an existing Nominatim client at it and forward + reverse geocoding work — no PostgreSQL, no `osm2pgsql` import.
+A **Nominatim-compatible HTTP geocoding API** over the [Mailwoman](https://mailwoman.ai) engine. Point an existing Nominatim client at it and forward + reverse geocoding work — no PostgreSQL, no `osm2pgsql` import.
 
 ```bash
 # One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):

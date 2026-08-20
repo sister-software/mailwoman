@@ -86,9 +86,9 @@ withTermFrequency(model: FSModel, records: SourceRecord[]): FSModel
 - [`@mailwoman/formatter`](../formatter) — `canonicalKey` used for blocking
 - [`@mailwoman/address-id`](../address-id) — complementary exact-match join key
 - [`@mailwoman/registry`](../registry) — high-level `resolveEntities` that composes this pipeline
-- [Geocode-First Record Matching](https://mailwoman.sister.software/articles/concepts/geocode-first-record-matching/)
-- [Dedup Entity Truth](https://mailwoman.sister.software/articles/concepts/dedup-entity-truth/)
-- [Spatial Expectation & Density](https://mailwoman.sister.software/articles/concepts/spatial-expectation-and-density/)
+- [Geocode-First Record Matching](https://mailwoman.ai/articles/concepts/geocode-first-record-matching/)
+- [Dedup Entity Truth](https://mailwoman.ai/articles/concepts/dedup-entity-truth/)
+- [Spatial Expectation & Density](https://mailwoman.ai/articles/concepts/spatial-expectation-and-density/)
 
 ## License
 

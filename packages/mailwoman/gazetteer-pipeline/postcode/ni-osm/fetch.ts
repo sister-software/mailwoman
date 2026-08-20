@@ -187,7 +187,7 @@ export function createOverpassClient(): APIClient {
 			timeout: 600_000,
 			headers: {
 				// Overpass's fair-use policy asks that clients identify themselves.
-				"User-Agent": "mailwoman-gazetteer/1.0 (+https://mailwoman.sister.software)",
+				"User-Agent": "mailwoman-gazetteer/1.0 (+https://mailwoman.ai)",
 			},
 		},
 	})

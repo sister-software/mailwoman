@@ -91,13 +91,13 @@ Mailwoman is benchmarked against Nominatim, Pelias, and libpostal on the coordin
 
 **On input shapes the corpus never taught.** Multi-script and transliterated addresses are a known limitation, kept in a separately-reported adversarial slice rather than mixed into headline numbers: deltas there measure whether the limitation got fixed, not whether a release regressed. The characteristic parse failures (boundary slips, fragmented multi-word names, lookalike digit strings) are described in [the parsing walkthrough](./how-mailwoman-parses-an-address.mdx).
 
-**Where the fine-grained data ends.** Wherever a rooftop shard exists, accuracy is a property of the data. The gap is coverage: on a 1,172-address Texas facility panel, the rooftop tier fired on 47% of rows and interpolation on a further 12.5%, leaving roughly 40% at town centroids. The result says so itself (`resolution_tier: "admin"`), and the [demo map](https://mailwoman.sister.software/demo)'s coverage overlay fogs exactly the places the resolver can't yet pin.
+**Where the fine-grained data ends.** Wherever a rooftop shard exists, accuracy is a property of the data. The gap is coverage: on a 1,172-address Texas facility panel, the rooftop tier fired on 47% of rows and interpolation on a further 12.5%, leaving roughly 40% at town centroids. The result says so itself (`resolution_tier: "admin"`), and the [demo map](https://mailwoman.ai/demo)'s coverage overlay fogs exactly the places the resolver can't yet pin.
 
 ## Checking your own workload
 
 Everything above is measured on our panels, and your addresses are not our panels. Three cheap checks, in order of effort:
 
-1. **Run the demo presets, then your own strays.** The [demo](https://mailwoman.sister.software/demo)'s six preset addresses are the same ones every release must hold stable (`mailwoman eval preset-compare`); paste in a dozen of your ugliest real rows after them.
+1. **Run the demo presets, then your own strays.** The [demo](https://mailwoman.ai/demo)'s six preset addresses are the same ones every release must hold stable (`mailwoman eval preset-compare`); paste in a dozen of your ugliest real rows after them.
 2. **Batch a sample.** Point [`POST /v1/batch`](../recipes/batch-geocoding.md) at a few hundred representative rows. If you hold known-good coordinates for any of them, grade the way this project does: distance from truth, median and tail, not string similarity.
 3. **Read the fields that price the answer.** `resolution_tier` names the grain reached, `uncertainty_m` bounds the error, and calibrated `conf=` supports a threshold — accept above it, route the rest to review. Good enough is a comparison against your tolerance; those three fields make the comparison possible.
 

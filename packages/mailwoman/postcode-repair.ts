@@ -118,6 +118,7 @@ function collectNodes(tree: AddressTree, predicate: (node: AddressNode) => boole
 		if (predicate(node)) {
 			out.push(node)
 		}
+
 		stack.push(...node.children)
 	}
 

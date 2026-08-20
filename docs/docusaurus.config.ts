@@ -102,7 +102,7 @@ const config: Config = {
 		},
 	},
 
-	url: "https://mailwoman.sister.software",
+	url: "https://mailwoman.ai",
 	baseUrl: "/",
 	trailingSlash: false,
 

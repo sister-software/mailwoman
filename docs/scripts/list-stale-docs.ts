@@ -58,7 +58,7 @@ for (const page of await collectDocPages()) {
 if (stalePages.length) {
 	console.log(`${stalePages.length} page(s) are past their \`review-by:\` date as of ${today}.`)
 	console.log(
-		`For each: re-verify the page against its source of truth, refresh what drifted, then bump \`review-by:\` a quarter out (or retire the page — see [Contributing to the docs](https://mailwoman.sister.software/docs/contributing-docs)).\n`
+		`For each: re-verify the page against its source of truth, refresh what drifted, then bump \`review-by:\` a quarter out (or retire the page — see [Contributing to the docs](https://mailwoman.ai/docs/contributing-docs)).\n`
 	)
 
 	for (const page of stalePages) {
