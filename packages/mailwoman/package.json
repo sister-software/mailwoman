@@ -54,7 +54,8 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"man/mailwoman.1"
+		"man/mailwoman.1",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {
@@ -141,6 +142,16 @@
 			"default": "./out/debug-view/*.js",
 			"types": "./out/debug-view/*.d.ts"
 		},
+		"./debug-view/DebugFrame": {
+			"node": "./debug-view/DebugFrame.tsx",
+			"default": "./out/debug-view/DebugFrame.js",
+			"types": "./out/debug-view/DebugFrame.d.ts"
+		},
+		"./debug-view/command": {
+			"node": "./debug-view/command.tsx",
+			"default": "./out/debug-view/command.js",
+			"types": "./out/debug-view/command.d.ts"
+		},
 		"./geocode-stream": {
 			"node": "./geocode-stream.ts",
 			"default": "./out/geocode-stream.js",
@@ -195,6 +206,151 @@
 			"node": "./poi-overpass.ts",
 			"default": "./out/poi-overpass.js",
 			"types": "./out/poi-overpass.d.ts"
+		},
+		"./api-engine": {
+			"node": "./api-engine.ts",
+			"default": "./out/api-engine.js",
+			"types": "./out/api-engine.d.ts"
+		},
+		"./cli-native/spec": {
+			"node": "./cli-native/spec.ts",
+			"default": "./out/cli-native/spec.js",
+			"types": "./out/cli-native/spec.d.ts"
+		},
+		"./commands/parse": {
+			"node": "./commands/parse.tsx",
+			"default": "./out/commands/parse.js",
+			"types": "./out/commands/parse.d.ts"
+		},
+		"./commands/corpus/run": {
+			"node": "./commands/corpus/run.tsx",
+			"default": "./out/commands/corpus/run.js",
+			"types": "./out/commands/corpus/run.d.ts"
+		},
+		"./test-kit/cli-spawn-lock": {
+			"node": "./test-kit/cli-spawn-lock.ts",
+			"default": "./out/test-kit/cli-spawn-lock.js",
+			"types": "./out/test-kit/cli-spawn-lock.d.ts"
+		},
+		"./data-bundles": {
+			"node": "./data-bundles.ts",
+			"default": "./out/data-bundles.js",
+			"types": "./out/data-bundles.d.ts"
+		},
+		"./data-release": {
+			"node": "./data-release.ts",
+			"default": "./out/data-release.js",
+			"types": "./out/data-release.d.ts"
+		},
+		"./poi-intent": {
+			"node": "./poi-intent.ts",
+			"default": "./out/poi-intent.js",
+			"types": "./out/poi-intent.d.ts"
+		},
+		"./commands/registry/run": {
+			"node": "./commands/registry/run.tsx",
+			"default": "./out/commands/registry/run.js",
+			"types": "./out/commands/registry/run.d.ts"
+		},
+		"./runtime-pipeline": {
+			"node": "./runtime-pipeline.ts",
+			"default": "./out/runtime-pipeline.js",
+			"types": "./out/runtime-pipeline.d.ts"
+		},
+		"./admin-coherence": {
+			"node": "./admin-coherence.ts",
+			"default": "./out/admin-coherence.js",
+			"types": "./out/admin-coherence.d.ts"
+		},
+		"./data-inventory": {
+			"node": "./data-inventory.ts",
+			"default": "./out/data-inventory.js",
+			"types": "./out/data-inventory.d.ts"
+		},
+		"./fork-entity": {
+			"node": "./fork-entity.ts",
+			"default": "./out/fork-entity.js",
+			"types": "./out/fork-entity.d.ts"
+		},
+		"./poi-executor": {
+			"node": "./poi-executor.ts",
+			"default": "./out/poi-executor.js",
+			"types": "./out/poi-executor.d.ts"
+		},
+		"./hierarchy-lineage": {
+			"node": "./hierarchy-lineage.ts",
+			"default": "./out/hierarchy-lineage.js",
+			"types": "./out/hierarchy-lineage.d.ts"
+		},
+		"./inferred-scope": {
+			"node": "./inferred-scope.ts",
+			"default": "./out/inferred-scope.js",
+			"types": "./out/inferred-scope.d.ts"
+		},
+		"./interp-calibration": {
+			"node": "./interp-calibration.ts",
+			"default": "./out/interp-calibration.js",
+			"types": "./out/interp-calibration.d.ts"
+		},
+		"./kbest-street-rerank": {
+			"node": "./kbest-street-rerank.ts",
+			"default": "./out/kbest-street-rerank.js",
+			"types": "./out/kbest-street-rerank.d.ts"
+		},
+		"./default-reverse-geocoder": {
+			"node": "./default-reverse-geocoder.ts",
+			"default": "./out/default-reverse-geocoder.js",
+			"types": "./out/default-reverse-geocoder.d.ts"
+		},
+		"./postcode-repair": {
+			"node": "./postcode-repair.ts",
+			"default": "./out/postcode-repair.js",
+			"types": "./out/postcode-repair.d.ts"
+		},
+		"./query-intent": {
+			"node": "./query-intent.ts",
+			"default": "./out/query-intent.js",
+			"types": "./out/query-intent.d.ts"
+		},
+		"./region-recognition": {
+			"node": "./region-recognition.ts",
+			"default": "./out/region-recognition.js",
+			"types": "./out/region-recognition.d.ts"
+		},
+		"./stranded-affix-repair": {
+			"node": "./stranded-affix-repair.ts",
+			"default": "./out/stranded-affix-repair.js",
+			"types": "./out/stranded-affix-repair.d.ts"
+		},
+		"./cli-native/command-router": {
+			"node": "./cli-native/command-router.ts",
+			"default": "./out/cli-native/command-router.js",
+			"types": "./out/cli-native/command-router.d.ts"
+		},
+		"./autocomplete-core": {
+			"node": "./autocomplete-core.ts",
+			"default": "./out/autocomplete-core.js",
+			"types": "./out/autocomplete-core.d.ts"
+		},
+		"./commands/gazetteer/inspect/sync-plan": {
+			"node": "./commands/gazetteer/inspect/sync-plan.ts",
+			"default": "./out/commands/gazetteer/inspect/sync-plan.js",
+			"types": "./out/commands/gazetteer/inspect/sync-plan.d.ts"
+		},
+		"./doctor/checks": {
+			"node": "./doctor/checks.ts",
+			"default": "./out/doctor/checks.js",
+			"types": "./out/doctor/checks.d.ts"
+		},
+		"./doctor/runner": {
+			"node": "./doctor/runner.ts",
+			"default": "./out/doctor/runner.js",
+			"types": "./out/doctor/runner.d.ts"
+		},
+		"./tools/generate-clients": {
+			"node": "./tools/generate-clients.ts",
+			"default": "./out/tools/generate-clients.js",
+			"types": "./out/tools/generate-clients.d.ts"
 		}
 	},
 	"publishConfig": {

@@ -22,7 +22,8 @@
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
 		"us/street-suffix.json",
-		"out/us/street-suffix.json"
+		"out/us/street-suffix.json",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -91,6 +92,206 @@
 			"node": "./it/index.ts",
 			"default": "./out/it/index.js",
 			"types": "./out/it/index.d.ts"
+		},
+		"./address-system-conventions": {
+			"node": "./address-system-conventions.ts",
+			"default": "./out/address-system-conventions.js",
+			"types": "./out/address-system-conventions.d.ts"
+		},
+		"./gb/postcode": {
+			"node": "./gb/postcode.ts",
+			"default": "./out/gb/postcode.js",
+			"types": "./out/gb/postcode.d.ts"
+		},
+		"./level-semantics": {
+			"node": "./level-semantics.ts",
+			"default": "./out/level-semantics.js",
+			"types": "./out/level-semantics.d.ts"
+		},
+		"./postcode-systems": {
+			"node": "./postcode-systems.ts",
+			"default": "./out/postcode-systems.js",
+			"types": "./out/postcode-systems.d.ts"
+		},
+		"./au/delivery-service": {
+			"node": "./au/delivery-service.ts",
+			"default": "./out/au/delivery-service.js",
+			"types": "./out/au/delivery-service.d.ts"
+		},
+		"./au/level-designator": {
+			"node": "./au/level-designator.ts",
+			"default": "./out/au/level-designator.js",
+			"types": "./out/au/level-designator.d.ts"
+		},
+		"./au/postcode": {
+			"node": "./au/postcode.ts",
+			"default": "./out/au/postcode.js",
+			"types": "./out/au/postcode.d.ts"
+		},
+		"./au/state": {
+			"node": "./au/state.ts",
+			"default": "./out/au/state.js",
+			"types": "./out/au/state.d.ts"
+		},
+		"./ca/postal-code": {
+			"node": "./ca/postal-code.ts",
+			"default": "./out/ca/postal-code.js",
+			"types": "./out/ca/postal-code.d.ts"
+		},
+		"./ca/province": {
+			"node": "./ca/province.ts",
+			"default": "./out/ca/province.js",
+			"types": "./out/ca/province.d.ts"
+		},
+		"./ca/street-type": {
+			"node": "./ca/street-type.ts",
+			"default": "./out/ca/street-type.js",
+			"types": "./out/ca/street-type.d.ts"
+		},
+		"./country/country": {
+			"node": "./country/country.ts",
+			"default": "./out/country/country.js",
+			"types": "./out/country/country.d.ts"
+		},
+		"./country/display-names": {
+			"node": "./country/display-names.ts",
+			"default": "./out/country/display-names.js",
+			"types": "./out/country/display-names.d.ts"
+		},
+		"./country/official-languages": {
+			"node": "./country/official-languages.ts",
+			"default": "./out/country/official-languages.js",
+			"types": "./out/country/official-languages.d.ts"
+		},
+		"./country/reference": {
+			"node": "./country/reference.ts",
+			"default": "./out/country/reference.js",
+			"types": "./out/country/reference.d.ts"
+		},
+		"./country/subdivision": {
+			"node": "./country/subdivision.ts",
+			"default": "./out/country/subdivision.js",
+			"types": "./out/country/subdivision.d.ts"
+		},
+		"./de/bundesland": {
+			"node": "./de/bundesland.ts",
+			"default": "./out/de/bundesland.js",
+			"types": "./out/de/bundesland.d.ts"
+		},
+		"./de/postleitzahl": {
+			"node": "./de/postleitzahl.ts",
+			"default": "./out/de/postleitzahl.js",
+			"types": "./out/de/postleitzahl.d.ts"
+		},
+		"./de/street-type": {
+			"node": "./de/street-type.ts",
+			"default": "./out/de/street-type.js",
+			"types": "./out/de/street-type.d.ts"
+		},
+		"./fr/cedex": {
+			"node": "./fr/cedex.ts",
+			"default": "./out/fr/cedex.js",
+			"types": "./out/fr/cedex.d.ts"
+		},
+		"./fr/code-postal": {
+			"node": "./fr/code-postal.ts",
+			"default": "./out/fr/code-postal.js",
+			"types": "./out/fr/code-postal.d.ts"
+		},
+		"./fr/departement": {
+			"node": "./fr/departement.ts",
+			"default": "./out/fr/departement.js",
+			"types": "./out/fr/departement.d.ts"
+		},
+		"./fr/region": {
+			"node": "./fr/region.ts",
+			"default": "./out/fr/region.js",
+			"types": "./out/fr/region.d.ts"
+		},
+		"./fr/voie": {
+			"node": "./fr/voie.ts",
+			"default": "./out/fr/voie.js",
+			"types": "./out/fr/voie.d.ts"
+		},
+		"./gb/country": {
+			"node": "./gb/country.ts",
+			"default": "./out/gb/country.js",
+			"types": "./out/gb/country.d.ts"
+		},
+		"./gb/postcode-area": {
+			"node": "./gb/postcode-area.ts",
+			"default": "./out/gb/postcode-area.js",
+			"types": "./out/gb/postcode-area.d.ts"
+		},
+		"./gb/street-type": {
+			"node": "./gb/street-type.ts",
+			"default": "./out/gb/street-type.js",
+			"types": "./out/gb/street-type.d.ts"
+		},
+		"./jp/address-unit": {
+			"node": "./jp/address-unit.ts",
+			"default": "./out/jp/address-unit.js",
+			"types": "./out/jp/address-unit.d.ts"
+		},
+		"./jp/postal-code": {
+			"node": "./jp/postal-code.ts",
+			"default": "./out/jp/postal-code.js",
+			"types": "./out/jp/postal-code.d.ts"
+		},
+		"./jp/prefecture": {
+			"node": "./jp/prefecture.ts",
+			"default": "./out/jp/prefecture.js",
+			"types": "./out/jp/prefecture.d.ts"
+		},
+		"./nz/delivery-service": {
+			"node": "./nz/delivery-service.ts",
+			"default": "./out/nz/delivery-service.js",
+			"types": "./out/nz/delivery-service.d.ts"
+		},
+		"./nz/postcode": {
+			"node": "./nz/postcode.ts",
+			"default": "./out/nz/postcode.js",
+			"types": "./out/nz/postcode.d.ts"
+		},
+		"./us/floor-designator": {
+			"node": "./us/floor-designator.ts",
+			"default": "./out/us/floor-designator.js",
+			"types": "./out/us/floor-designator.d.ts"
+		},
+		"./us/military-address": {
+			"node": "./us/military-address.ts",
+			"default": "./out/us/military-address.js",
+			"types": "./out/us/military-address.d.ts"
+		},
+		"./us/po-box": {
+			"node": "./us/po-box.ts",
+			"default": "./out/us/po-box.js",
+			"types": "./out/us/po-box.d.ts"
+		},
+		"./us/state": {
+			"node": "./us/state.ts",
+			"default": "./out/us/state.js",
+			"types": "./out/us/state.d.ts"
+		},
+		"./us/street-directional": {
+			"node": "./us/street-directional.ts",
+			"default": "./out/us/street-directional.js",
+			"types": "./out/us/street-directional.d.ts"
+		},
+		"./us/street-suffix": {
+			"node": "./us/street-suffix.ts",
+			"default": "./out/us/street-suffix.js",
+			"types": "./out/us/street-suffix.d.ts"
+		},
+		"./us/unit-designator": {
+			"node": "./us/unit-designator.ts",
+			"default": "./out/us/unit-designator.js",
+			"types": "./out/us/unit-designator.d.ts"
+		},
+		"./us/zipcode": {
+			"node": "./us/zipcode.ts",
+			"default": "./out/us/zipcode.js",
+			"types": "./out/us/zipcode.d.ts"
 		}
 	},
 	"publishConfig": {

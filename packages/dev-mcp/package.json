@@ -15,10 +15,190 @@
 	"type": "module",
 	"exports": {
 		"./package.json": "./package.json",
+		"./cli": {
+			"node": "./cli.ts",
+			"default": "./out/cli.js",
+			"types": "./out/cli.d.ts"
+		},
 		".": {
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./arms": {
+			"node": "./arms.ts",
+			"default": "./out/arms.js",
+			"types": "./out/arms.d.ts"
+		},
+		"./bench": {
+			"node": "./bench.ts",
+			"default": "./out/bench.js",
+			"types": "./out/bench.d.ts"
+		},
+		"./census": {
+			"node": "./census.ts",
+			"default": "./out/census.js",
+			"types": "./out/census.d.ts"
+		},
+		"./evidence": {
+			"node": "./evidence.ts",
+			"default": "./out/evidence.js",
+			"types": "./out/evidence.d.ts"
+		},
+		"./cli-allowlist": {
+			"node": "./cli-allowlist.ts",
+			"default": "./out/cli-allowlist.js",
+			"types": "./out/cli-allowlist.d.ts"
+		},
+		"./compare": {
+			"node": "./compare.ts",
+			"default": "./out/compare.js",
+			"types": "./out/compare.d.ts"
+		},
+		"./engine-registry": {
+			"node": "./engine-registry.ts",
+			"default": "./out/engine-registry.js",
+			"types": "./out/engine-registry.d.ts"
+		},
+		"./oracle-arm": {
+			"node": "./oracle-arm.ts",
+			"default": "./out/oracle-arm.js",
+			"types": "./out/oracle-arm.d.ts"
+		},
+		"./run-store": {
+			"node": "./run-store.ts",
+			"default": "./out/run-store.js",
+			"types": "./out/run-store.d.ts"
+		},
+		"./external-arm": {
+			"node": "./external-arm.ts",
+			"default": "./out/external-arm.js",
+			"types": "./out/external-arm.d.ts"
+		},
+		"./compiled-tree": {
+			"node": "./compiled-tree.ts",
+			"default": "./out/compiled-tree.js",
+			"types": "./out/compiled-tree.d.ts"
+		},
+		"./tree-fingerprint": {
+			"node": "./tree-fingerprint.ts",
+			"default": "./out/tree-fingerprint.js",
+			"types": "./out/tree-fingerprint.d.ts"
+		},
+		"./tool-kit": {
+			"node": "./tool-kit.ts",
+			"default": "./out/tool-kit.js",
+			"types": "./out/tool-kit.d.ts"
+		},
+		"./confound": {
+			"node": "./confound.ts",
+			"default": "./out/confound.js",
+			"types": "./out/confound.d.ts"
+		},
+		"./constraint-census": {
+			"node": "./constraint-census.ts",
+			"default": "./out/constraint-census.js",
+			"types": "./out/constraint-census.d.ts"
+		},
+		"./counterfactual": {
+			"node": "./counterfactual.ts",
+			"default": "./out/counterfactual.js",
+			"types": "./out/counterfactual.d.ts"
+		},
+		"./diagnose": {
+			"node": "./diagnose.ts",
+			"default": "./out/diagnose.js",
+			"types": "./out/diagnose.d.ts"
+		},
+		"./input-sets": {
+			"node": "./input-sets.ts",
+			"default": "./out/input-sets.js",
+			"types": "./out/input-sets.d.ts"
+		},
+		"./engine-rigs": {
+			"node": "./engine-rigs.ts",
+			"default": "./out/engine-rigs.js",
+			"types": "./out/engine-rigs.d.ts"
+		},
+		"./gate-report": {
+			"node": "./gate-report.ts",
+			"default": "./out/gate-report.js",
+			"types": "./out/gate-report.d.ts"
+		},
+		"./gauntlet-report": {
+			"node": "./gauntlet-report.ts",
+			"default": "./out/gauntlet-report.js",
+			"types": "./out/gauntlet-report.d.ts"
+		},
+		"./geo-grade": {
+			"node": "./geo-grade.ts",
+			"default": "./out/geo-grade.js",
+			"types": "./out/geo-grade.d.ts"
+		},
+		"./grade": {
+			"node": "./grade.ts",
+			"default": "./out/grade.js",
+			"types": "./out/grade.d.ts"
+		},
+		"./lookup-sources": {
+			"node": "./lookup-sources.ts",
+			"default": "./out/lookup-sources.js",
+			"types": "./out/lookup-sources.d.ts"
+		},
+		"./lookup": {
+			"node": "./lookup.ts",
+			"default": "./out/lookup.js",
+			"types": "./out/lookup.d.ts"
+		},
+		"./lookup-tool": {
+			"node": "./lookup-tool.ts",
+			"default": "./out/lookup-tool.js",
+			"types": "./out/lookup-tool.d.ts"
+		},
+		"./minimal-pairs": {
+			"node": "./minimal-pairs.ts",
+			"default": "./out/minimal-pairs.js",
+			"types": "./out/minimal-pairs.d.ts"
+		},
+		"./place-id-provenance": {
+			"node": "./place-id-provenance.ts",
+			"default": "./out/place-id-provenance.js",
+			"types": "./out/place-id-provenance.d.ts"
+		},
+		"./power": {
+			"node": "./power.ts",
+			"default": "./out/power.js",
+			"types": "./out/power.d.ts"
+		},
+		"./tally": {
+			"node": "./tally.ts",
+			"default": "./out/tally.js",
+			"types": "./out/tally.d.ts"
+		},
+		"./jobs": {
+			"node": "./jobs.ts",
+			"default": "./out/jobs.js",
+			"types": "./out/jobs.d.ts"
+		},
+		"./tools": {
+			"node": "./tools/index.ts",
+			"default": "./out/tools/index.js",
+			"types": "./out/tools/index.d.ts"
+		},
+		"./vocabulary": {
+			"node": "./vocabulary.ts",
+			"default": "./out/vocabulary.js",
+			"types": "./out/vocabulary.d.ts"
+		},
+		"./worker-host": {
+			"node": "./worker-host.ts",
+			"default": "./out/worker-host.js",
+			"types": "./out/worker-host.d.ts"
+		},
+		"./worktree-arm": {
+			"node": "./worktree-arm.ts",
+			"default": "./out/worktree-arm.js",
+			"types": "./out/worktree-arm.d.ts"
 		}
 	},
 	"dependencies": {

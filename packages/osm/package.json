@@ -41,6 +41,31 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./sdk/address-point-schema": {
+			"node": "./sdk/address-point-schema.ts",
+			"default": "./out/sdk/address-point-schema.js",
+			"types": "./out/sdk/address-point-schema.d.ts"
+		},
+		"./sdk/street-locale": {
+			"node": "./sdk/street-locale.ts",
+			"default": "./out/sdk/street-locale.js",
+			"types": "./out/sdk/street-locale.d.ts"
+		},
+		"./sdk/extract-poi": {
+			"node": "./sdk/extract-poi.ts",
+			"default": "./out/sdk/extract-poi.js",
+			"types": "./out/sdk/extract-poi.d.ts"
+		},
+		"./sdk/extract-subvenue": {
+			"node": "./sdk/extract-subvenue.ts",
+			"default": "./out/sdk/extract-subvenue.js",
+			"types": "./out/sdk/extract-subvenue.d.ts"
+		},
+		"./sdk/representative-point": {
+			"node": "./sdk/representative-point.ts",
+			"default": "./out/sdk/representative-point.js",
+			"types": "./out/sdk/representative-point.d.ts"
 		}
 	},
 	"publishConfig": {

@@ -13,8 +13,8 @@ import { afterEach } from "vitest"
 import "../styles.css"
 import "../.storybook/preview-tokens.css"
 
-import { installActWrappers } from "./act.ts"
-import { cleanup } from "./render.tsx"
+import { installActWrappers } from "#test/act"
+import { cleanup } from "#test/render"
 
 const actGlobal = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
 

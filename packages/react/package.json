@@ -34,6 +34,9 @@
 	],
 	"type": "module",
 	"imports": {
+		"#test/act": "./test/act.ts",
+		"#test/mocks": "./test/mocks.tsx",
+		"#test/render": "./test/render.tsx",
 		"#index": {
 			"node": "./index.ts",
 			"default": "./out/index.js",
@@ -57,6 +60,146 @@
 			"node": "./map/index.ts",
 			"default": "./out/map/index.js",
 			"types": "./out/map/index.d.ts"
+		},
+		"./common/CopyButton": {
+			"node": "./common/CopyButton.tsx",
+			"default": "./out/common/CopyButton.js",
+			"types": "./out/common/CopyButton.d.ts"
+		},
+		"./common/KindBadge": {
+			"node": "./common/KindBadge.tsx",
+			"default": "./out/common/KindBadge.js",
+			"types": "./out/common/KindBadge.d.ts"
+		},
+		"./common/LoadingIndicator": {
+			"node": "./common/LoadingIndicator.tsx",
+			"default": "./out/common/LoadingIndicator.js",
+			"types": "./out/common/LoadingIndicator.d.ts"
+		},
+		"./common/PresetChips": {
+			"node": "./common/PresetChips.tsx",
+			"default": "./out/common/PresetChips.js",
+			"types": "./out/common/PresetChips.d.ts"
+		},
+		"./map/DemoMap": {
+			"node": "./map/DemoMap.tsx",
+			"default": "./out/map/DemoMap.js",
+			"types": "./out/map/DemoMap.d.ts"
+		},
+		"./map/GeocoderDemo": {
+			"node": "./map/GeocoderDemo.tsx",
+			"default": "./out/map/GeocoderDemo.js",
+			"types": "./out/map/GeocoderDemo.d.ts"
+		},
+		"./map/place-render": {
+			"node": "./map/place-render.ts",
+			"default": "./out/map/place-render.js",
+			"types": "./out/map/place-render.d.ts"
+		},
+		"./map/ResultCamera": {
+			"node": "./map/ResultCamera.tsx",
+			"default": "./out/map/ResultCamera.js",
+			"types": "./out/map/ResultCamera.d.ts"
+		},
+		"./map/geometry": {
+			"node": "./map/geometry.ts",
+			"default": "./out/map/geometry.js",
+			"types": "./out/map/geometry.d.ts"
+		},
+		"./map/OverlayLayers": {
+			"node": "./map/OverlayLayers.tsx",
+			"default": "./out/map/OverlayLayers.js",
+			"types": "./out/map/OverlayLayers.d.ts"
+		},
+		"./map/ResolvedPlaceLayers": {
+			"node": "./map/ResolvedPlaceLayers.tsx",
+			"default": "./out/map/ResolvedPlaceLayers.js",
+			"types": "./out/map/ResolvedPlaceLayers.d.ts"
+		},
+		"./map/types": {
+			"node": "./map/types.ts",
+			"default": "./out/map/types.js",
+			"types": "./out/map/types.d.ts"
+		},
+		"./map/BackendControl": {
+			"node": "./map/BackendControl.tsx",
+			"default": "./out/map/BackendControl.js",
+			"types": "./out/map/BackendControl.d.ts"
+		},
+		"./map/CompareToggle": {
+			"node": "./map/CompareToggle.tsx",
+			"default": "./out/map/CompareToggle.js",
+			"types": "./out/map/CompareToggle.d.ts"
+		},
+		"./map/PlaceAutocomplete": {
+			"node": "./map/PlaceAutocomplete.tsx",
+			"default": "./out/map/PlaceAutocomplete.js",
+			"types": "./out/map/PlaceAutocomplete.d.ts"
+		},
+		"./map/ResultPanel": {
+			"node": "./map/ResultPanel.tsx",
+			"default": "./out/map/ResultPanel.js",
+			"types": "./out/map/ResultPanel.d.ts"
+		},
+		"./map/usePlaceAutocomplete": {
+			"node": "./map/usePlaceAutocomplete.ts",
+			"default": "./out/map/usePlaceAutocomplete.js",
+			"types": "./out/map/usePlaceAutocomplete.d.ts"
+		},
+		"./map/VersionPicker": {
+			"node": "./map/VersionPicker.tsx",
+			"default": "./out/map/VersionPicker.js",
+			"types": "./out/map/VersionPicker.d.ts"
+		},
+		"./pipeline/ComponentTable": {
+			"node": "./pipeline/ComponentTable.tsx",
+			"default": "./out/pipeline/ComponentTable.js",
+			"types": "./out/pipeline/ComponentTable.d.ts"
+		},
+		"./pipeline/PipelineExplorer": {
+			"node": "./pipeline/PipelineExplorer.tsx",
+			"default": "./out/pipeline/PipelineExplorer.js",
+			"types": "./out/pipeline/PipelineExplorer.d.ts"
+		},
+		"./pipeline/ResolvedPlace": {
+			"node": "./pipeline/ResolvedPlace.tsx",
+			"default": "./out/pipeline/ResolvedPlace.js",
+			"types": "./out/pipeline/ResolvedPlace.d.ts"
+		},
+		"./poi/LiveResultsBlock": {
+			"node": "./poi/LiveResultsBlock.tsx",
+			"default": "./out/poi/LiveResultsBlock.js",
+			"types": "./out/poi/LiveResultsBlock.d.ts"
+		},
+		"./poi/types": {
+			"node": "./poi/types.ts",
+			"default": "./out/poi/types.js",
+			"types": "./out/poi/types.d.ts"
+		},
+		"./poi/OverpassBlock": {
+			"node": "./poi/OverpassBlock.tsx",
+			"default": "./out/poi/OverpassBlock.js",
+			"types": "./out/poi/OverpassBlock.d.ts"
+		},
+		"./poi/POIExplorer": {
+			"node": "./poi/POIExplorer.tsx",
+			"default": "./out/poi/POIExplorer.js",
+			"types": "./out/poi/POIExplorer.d.ts"
+		},
+		"./poi/SubjectPanel": {
+			"node": "./poi/SubjectPanel.tsx",
+			"default": "./out/poi/SubjectPanel.js",
+			"types": "./out/poi/SubjectPanel.d.ts"
+		},
+		"./poi/usePOISearch": {
+			"node": "./poi/usePOISearch.ts",
+			"default": "./out/poi/usePOISearch.js",
+			"types": "./out/poi/usePOISearch.d.ts"
+		},
+		"./runtime/useDemoRuntime": {
+			"node": "./runtime/useDemoRuntime.ts",
+			"default": "./out/runtime/useDemoRuntime.js",
+			"types": "./out/runtime/useDemoRuntime.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -79,7 +222,6 @@
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.5",
-		"@vitest/browser": "4.1.10",
 		"@vitest/browser-playwright": "4.1.10",
 		"maplibre-gl": "^5.24.0",
 		"playwright": "^1.62.1",

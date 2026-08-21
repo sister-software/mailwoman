@@ -20,7 +20,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {
@@ -36,6 +37,36 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./character-class": {
+			"node": "./character-class.ts",
+			"default": "./out/character-class.js",
+			"types": "./out/character-class.d.ts"
+		},
+		"./types": {
+			"node": "./types.ts",
+			"default": "./out/types.js",
+			"types": "./out/types.d.ts"
+		},
+		"./compute": {
+			"node": "./compute.ts",
+			"default": "./out/compute.js",
+			"types": "./out/compute.d.ts"
+		},
+		"./known-formats": {
+			"node": "./known-formats.ts",
+			"default": "./out/known-formats.js",
+			"types": "./out/known-formats.d.ts"
+		},
+		"./region-abbreviations": {
+			"node": "./region-abbreviations.ts",
+			"default": "./out/region-abbreviations.js",
+			"types": "./out/region-abbreviations.d.ts"
+		},
+		"./segmentation": {
+			"node": "./segmentation.ts",
+			"default": "./out/segmentation.js",
+			"types": "./out/segmentation.d.ts"
 		}
 	},
 	"publishConfig": {

@@ -16,9 +16,13 @@
 		"**/*.ts",
 		"!*.test.ts",
 		"!**/*.test.ts",
-		"!scripts/**"
+		"!scripts/**",
+		"!test/**"
 	],
 	"type": "module",
+	"exports": {
+		"./*": "./*"
+	},
 	"publishConfig": {
 		"access": "public"
 	},

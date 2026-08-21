@@ -20,7 +20,30 @@
 		"./contexts/*": "./src/contexts/*.tsx",
 		"./hooks/*": "./src/hooks/*.ts",
 		"./shared/resources": "./src/shared/resources/index.ts",
-		"./shared/*": "./src/shared/*.ts"
+		"./shared/*": "./src/shared/*.ts",
+		"./components/ModelVisualizer/fixtures/white-house.trace.json": "./src/components/ModelVisualizer/fixtures/white-house.trace.json",
+		"./components/ModelVisualizer/helpers": "./src/components/ModelVisualizer/helpers.ts",
+		"./pages/demo/map-helpers": "./src/pages/demo/_map-helpers.ts",
+		"./plugins/demo-assets/webpack-policy": {
+			"node": "./plugins/demo-assets/webpack-policy.ts",
+			"default": "./plugins/demo-assets/webpack-policy.ts",
+			"types": "./plugins/demo-assets/webpack-policy.ts"
+		},
+		"./plugins/demo-assets/workspace-aliases": {
+			"node": "./plugins/demo-assets/workspace-aliases.ts",
+			"default": "./plugins/demo-assets/workspace-aliases.ts",
+			"types": "./plugins/demo-assets/workspace-aliases.ts"
+		},
+		"./scripts/docs-frontmatter-contract": {
+			"node": "./scripts/docs-frontmatter-contract.ts",
+			"default": "./scripts/docs-frontmatter-contract.ts",
+			"types": "./scripts/docs-frontmatter-contract.ts"
+		},
+		"./scripts/generate-cli-reference": {
+			"node": "./scripts/generate-cli-reference.ts",
+			"default": "./scripts/generate-cli-reference.ts",
+			"types": "./scripts/generate-cli-reference.ts"
+		}
 	},
 	"scripts": {
 		"build": "yarn prebuild && docusaurus build",

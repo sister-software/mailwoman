@@ -1,0 +1,183 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import {
+	InMemoryAdapterRegistry,
+	canonicalDedupKey,
+	splitStreetLine,
+	stableSourceID,
+	streamingSha256,
+} from "@mailwoman/corpus/adapters/utils"
+import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow, CorpusAdapter } from "#types"
+
+function fixtureRow(overrides: Partial<CanonicalRow> = {}): CanonicalRow {
+	return {
+		raw: "Paris",
+		components: { locality: "Paris" },
+		country: "FR",
+		source: "test",
+		source_id: "test-1",
+		corpus_version: "0.1.0",
+		license: "CC0-1.0",
+		...overrides,
+	}
+}
+
+function fixtureAdapter(id: string): CorpusAdapter {
+	return {
+		id,
+		defaultLicense: "CC0-1.0",
+		description: `fixture adapter ${id}`,
+		async *rows() {
+			yield fixtureRow({ source: id, source_id: `${id}-1` })
+		},
+	}
+}
+
+describe("InMemoryAdapterRegistry", () => {
+	it("registers and looks up by id", () => {
+		const r = new InMemoryAdapterRegistry()
+		const a = fixtureAdapter("wof-admin")
+		r.register(a)
+		expect(r.get("wof-admin")).toBe(a)
+		expect(r.get("missing")).toBeUndefined()
+		expect(r.ids()).toEqual(["wof-admin"])
+		expect(r.list()).toEqual([a])
+	})
+
+	it("throws on duplicate id", () => {
+		const r = new InMemoryAdapterRegistry()
+		r.register(fixtureAdapter("wof-admin"))
+		expect(() => r.register(fixtureAdapter("wof-admin"))).toThrow(/already registered/)
+	})
+
+	it("preserves insertion order in list/ids", () => {
+		const r = new InMemoryAdapterRegistry()
+		r.register(fixtureAdapter("a"))
+		r.register(fixtureAdapter("c"))
+		r.register(fixtureAdapter("b"))
+		expect(r.ids()).toEqual(["a", "c", "b"])
+	})
+})
+
+describe("stableSourceID", () => {
+	it("is deterministic across calls", () => {
+		const id1 = stableSourceID("wof-admin", { locality: "Paris", country: "France" })
+		const id2 = stableSourceID("wof-admin", { locality: "Paris", country: "France" })
+		expect(id1).toBe(id2)
+	})
+
+	it("is order-independent on component key order", () => {
+		const id1 = stableSourceID("wof-admin", { locality: "Paris", country: "France" })
+		const id2 = stableSourceID("wof-admin", { country: "France", locality: "Paris" })
+		expect(id1).toBe(id2)
+	})
+
+	it("namespaces by adapter id", () => {
+		const a = stableSourceID("wof-admin", { locality: "Paris" })
+		const b = stableSourceID("openaddresses", { locality: "Paris" })
+		expect(a).not.toBe(b)
+		expect(a.startsWith("wof-admin-")).toBe(true)
+		expect(b.startsWith("openaddresses-")).toBe(true)
+	})
+
+	it("changes when any component value changes", () => {
+		const a = stableSourceID("wof-admin", { locality: "Paris" })
+		const b = stableSourceID("wof-admin", { locality: "Paris " })
+		expect(a).not.toBe(b)
+	})
+})
+
+describe("canonicalDedupKey", () => {
+	it("treats whitespace-only differences in raw as duplicates", () => {
+		const a = fixtureRow({ raw: "1600 Pennsylvania Ave, Washington" })
+		const b = fixtureRow({ raw: "  1600   Pennsylvania Ave,  Washington  " })
+		expect(canonicalDedupKey(a)).toBe(canonicalDedupKey(b))
+	})
+
+	it("treats case differences in raw as duplicates", () => {
+		const a = fixtureRow({ raw: "Paris" })
+		const b = fixtureRow({ raw: "PARIS" })
+		expect(canonicalDedupKey(a)).toBe(canonicalDedupKey(b))
+	})
+
+	it("treats different components as non-duplicates", () => {
+		const a = fixtureRow({ components: { locality: "Paris" } })
+		const b = fixtureRow({ components: { locality: "Lyon" } })
+		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(b))
+	})
+
+	it("excludes license + provenance: same row from two adapters is a duplicate", () => {
+		const a = fixtureRow({ source: "wof-admin", source_id: "1", license: "CC0-1.0" })
+		const b = fixtureRow({ source: "osm-places", source_id: "2", license: "ODbL-1.0" })
+		expect(canonicalDedupKey(a)).toBe(canonicalDedupKey(b))
+	})
+
+	it("distinguishes synthetic rows by augmentation method", () => {
+		const a = fixtureRow({ synth: { method: "case-upper", base_source_id: "test-1" } })
+		const b = fixtureRow({ synth: { method: "accent-strip", base_source_id: "test-1" } })
+		const c = fixtureRow()
+		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(b))
+		expect(canonicalDedupKey(a)).not.toBe(canonicalDedupKey(c))
+	})
+})
+
+describe("streamingSha256", () => {
+	it("matches a one-shot hash of the concatenated chunks", () => {
+		const incremental = streamingSha256()
+		incremental.update("hello, ")
+		incremental.update("world")
+		expect(incremental.digest()).toBe("09ca7e4eaa6e8ae9c7d261167129184883644d07dfba7cbfbc4c8a2e08360d5b")
+	})
+
+	it("is idempotent on digest()", () => {
+		const h = streamingSha256()
+		h.update("abc")
+		const first = h.digest()
+		const second = h.digest()
+		expect(first).toBe(second)
+	})
+
+	it("rejects update after digest", () => {
+		const h = streamingSha256()
+		h.update("abc")
+		h.digest()
+		expect(() => h.update("def")).toThrow(/after digest/)
+	})
+})
+
+describe("splitStreetLine", () => {
+	it("splits a standard urban address into house_number + street", () => {
+		expect(splitStreetLine("123 Main St")).toEqual({ house_number: "123", street: "Main St" })
+	})
+
+	it("preserves directional prefixes inside the street component", () => {
+		expect(splitStreetLine("6450 W Indian School Rd")).toEqual({
+			house_number: "6450",
+			street: "W Indian School Rd",
+		})
+	})
+
+	it("recognizes a single trailing letter on the house number", () => {
+		expect(splitStreetLine("101A Main St")).toEqual({ house_number: "101A", street: "Main St" })
+	})
+
+	it("recognizes hyphenated house numbers (NYC garden-apartment style)", () => {
+		expect(splitStreetLine("40-12 Bell Blvd")).toEqual({ house_number: "40-12", street: "Bell Blvd" })
+	})
+
+	it("returns street-only for shapes lacking a leading digit", () => {
+		expect(splitStreetLine("PO Box 1234")).toEqual({ street: "PO Box 1234" })
+		expect(splitStreetLine("RR 2 Box 67")).toEqual({ street: "RR 2 Box 67" })
+	})
+
+	it("returns null for empty or whitespace-only input", () => {
+		expect(splitStreetLine("")).toBeNull()
+		expect(splitStreetLine("   ")).toBeNull()
+	})
+})

@@ -22,7 +22,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {
@@ -283,6 +284,196 @@
 			"node": "./tools/index.ts",
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
+		},
+		"./identifiers": {
+			"node": "./identifiers.ts",
+			"default": "./out/identifiers.js",
+			"types": "./out/identifiers.d.ts"
+		},
+		"./errors/schema": {
+			"node": "./errors/schema.ts",
+			"default": "./out/errors/schema.js",
+			"types": "./out/errors/schema.d.ts"
+		},
+		"./api/APIClient": {
+			"node": "./api/APIClient.ts",
+			"default": "./out/api/APIClient.js",
+			"types": "./out/api/APIClient.d.ts"
+		},
+		"./api/responses": {
+			"node": "./api/responses.ts",
+			"default": "./out/api/responses.js",
+			"types": "./out/api/responses.d.ts"
+		},
+		"./api/pacer": {
+			"node": "./api/pacer.ts",
+			"default": "./out/api/pacer.js",
+			"types": "./out/api/pacer.d.ts"
+		},
+		"./api/retry": {
+			"node": "./api/retry.ts",
+			"default": "./out/api/retry.js",
+			"types": "./out/api/retry.d.ts"
+		},
+		"./types/component": {
+			"node": "./types/component.ts",
+			"default": "./out/types/component.js",
+			"types": "./out/types/component.d.ts"
+		},
+		"./decoder/build-tree": {
+			"node": "./decoder/build-tree.ts",
+			"default": "./out/decoder/build-tree.js",
+			"types": "./out/decoder/build-tree.d.ts"
+		},
+		"./decoder/types": {
+			"node": "./decoder/types.ts",
+			"default": "./out/decoder/types.js",
+			"types": "./out/decoder/types.d.ts"
+		},
+		"./decoder/calibration": {
+			"node": "./decoder/calibration.ts",
+			"default": "./out/decoder/calibration.js",
+			"types": "./out/decoder/calibration.d.ts"
+		},
+		"./decoder/proposals-to-tree": {
+			"node": "./decoder/proposals-to-tree.ts",
+			"default": "./out/decoder/proposals-to-tree.js",
+			"types": "./out/decoder/proposals-to-tree.d.ts"
+		},
+		"./tokenization/Span": {
+			"node": "./tokenization/Span.ts",
+			"default": "./out/tokenization/Span.js",
+			"types": "./out/tokenization/Span.d.ts"
+		},
+		"./decoder/serialize-json": {
+			"node": "./decoder/serialize-json.ts",
+			"default": "./out/decoder/serialize-json.js",
+			"types": "./out/decoder/serialize-json.d.ts"
+		},
+		"./decoder/serialize-tuples": {
+			"node": "./decoder/serialize-tuples.ts",
+			"default": "./out/decoder/serialize-tuples.js",
+			"types": "./out/decoder/serialize-tuples.d.ts"
+		},
+		"./decoder/serialize-xml": {
+			"node": "./decoder/serialize-xml.ts",
+			"default": "./out/decoder/serialize-xml.js",
+			"types": "./out/decoder/serialize-xml.d.ts"
+		},
+		"./decoder/resolve-proposal-overlaps": {
+			"node": "./decoder/resolve-proposal-overlaps.ts",
+			"default": "./out/decoder/resolve-proposal-overlaps.js",
+			"types": "./out/decoder/resolve-proposal-overlaps.d.ts"
+		},
+		"./decoder/containment": {
+			"node": "./decoder/containment.ts",
+			"default": "./out/decoder/containment.js",
+			"types": "./out/decoder/containment.d.ts"
+		},
+		"./decoder/validate-tree": {
+			"node": "./decoder/validate-tree.ts",
+			"default": "./out/decoder/validate-tree.js",
+			"types": "./out/decoder/validate-tree.d.ts"
+		},
+		"./decoder/unknown-spans": {
+			"node": "./decoder/unknown-spans.ts",
+			"default": "./out/decoder/unknown-spans.js",
+			"types": "./out/decoder/unknown-spans.d.ts"
+		},
+		"./env/schema": {
+			"node": "./env/schema.ts",
+			"default": "./out/env/schema.js",
+			"types": "./out/env/schema.d.ts"
+		},
+		"./layers/manifest": {
+			"node": "./layers/manifest.ts",
+			"default": "./out/layers/manifest.js",
+			"types": "./out/layers/manifest.d.ts"
+		},
+		"./layers/schema": {
+			"node": "./layers/schema.ts",
+			"default": "./out/layers/schema.js",
+			"types": "./out/layers/schema.d.ts"
+		},
+		"./locale/profiles": {
+			"node": "./locale/profiles/index.ts",
+			"default": "./out/locale/profiles/index.js",
+			"types": "./out/locale/profiles/index.d.ts"
+		},
+		"./locale/registry": {
+			"node": "./locale/registry.ts",
+			"default": "./out/locale/registry.js",
+			"types": "./out/locale/registry.d.ts"
+		},
+		"./pipeline/runtime-pipeline": {
+			"node": "./pipeline/runtime-pipeline.ts",
+			"default": "./out/pipeline/runtime-pipeline.js",
+			"types": "./out/pipeline/runtime-pipeline.d.ts"
+		},
+		"./pipeline/types": {
+			"node": "./pipeline/types.ts",
+			"default": "./out/pipeline/types.js",
+			"types": "./out/pipeline/types.d.ts"
+		},
+		"./resolver/types": {
+			"node": "./resolver/types.ts",
+			"default": "./out/resolver/types.js",
+			"types": "./out/resolver/types.d.ts"
+		},
+		"./pipeline/span-proposer": {
+			"node": "./pipeline/span-proposer.ts",
+			"default": "./out/pipeline/span-proposer.js",
+			"types": "./out/pipeline/span-proposer.d.ts"
+		},
+		"./policy/defaults": {
+			"node": "./policy/defaults.ts",
+			"default": "./out/policy/defaults.js",
+			"types": "./out/policy/defaults.d.ts"
+		},
+		"./policy/registry": {
+			"node": "./policy/registry.ts",
+			"default": "./out/policy/registry.js",
+			"types": "./out/policy/registry.d.ts"
+		},
+		"./resources/whosonfirst/sharded-repo": {
+			"node": "./resources/whosonfirst/sharded-repo.ts",
+			"default": "./out/resources/whosonfirst/sharded-repo.js",
+			"types": "./out/resources/whosonfirst/sharded-repo.d.ts"
+		},
+		"./resources/whosonfirst/placetypes/admin": {
+			"node": "./resources/whosonfirst/placetypes/admin.ts",
+			"default": "./out/resources/whosonfirst/placetypes/admin.js",
+			"types": "./out/resources/whosonfirst/placetypes/admin.d.ts"
+		},
+		"./tokenization/normalizer": {
+			"node": "./tokenization/normalizer.ts",
+			"default": "./out/tokenization/normalizer.js",
+			"types": "./out/tokenization/normalizer.d.ts"
+		},
+		"./types/mapping": {
+			"node": "./types/mapping.ts",
+			"default": "./out/types/mapping.js",
+			"types": "./out/types/mapping.d.ts"
+		},
+		"./utils/hash": {
+			"node": "./utils/hash.ts",
+			"default": "./out/utils/hash.js",
+			"types": "./out/utils/hash.d.ts"
+		},
+		"./utils/jsonl": {
+			"node": "./utils/jsonl.ts",
+			"default": "./out/utils/jsonl.js",
+			"types": "./out/utils/jsonl.d.ts"
+		},
+		"./utils/sealed-db": {
+			"node": "./utils/sealed-db.ts",
+			"default": "./out/utils/sealed-db.js",
+			"types": "./out/utils/sealed-db.d.ts"
+		},
+		"./utils/stats": {
+			"node": "./utils/stats.ts",
+			"default": "./out/utils/stats.js",
+			"types": "./out/utils/stats.d.ts"
 		}
 	},
 	"publishConfig": {

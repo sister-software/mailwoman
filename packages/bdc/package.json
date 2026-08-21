@@ -38,7 +38,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -57,6 +58,66 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./schema": {
+			"node": "./schema.ts",
+			"default": "./out/schema.js",
+			"types": "./out/schema.d.ts"
+		},
+		"./sdk/build-bdc": {
+			"node": "./sdk/build-bdc.ts",
+			"default": "./out/sdk/build-bdc.js",
+			"types": "./out/sdk/build-bdc.d.ts"
+		},
+		"./sdk/common": {
+			"node": "./sdk/common.ts",
+			"default": "./out/sdk/common.js",
+			"types": "./out/sdk/common.d.ts"
+		},
+		"./sdk/parsing": {
+			"node": "./sdk/parsing.ts",
+			"default": "./out/sdk/parsing.js",
+			"types": "./out/sdk/parsing.d.ts"
+		},
+		"./sdk/filing-dates": {
+			"node": "./sdk/filing-dates.ts",
+			"default": "./out/sdk/filing-dates.js",
+			"types": "./out/sdk/filing-dates.d.ts"
+		},
+		"./sdk/client": {
+			"node": "./sdk/client.ts",
+			"default": "./out/sdk/client.js",
+			"types": "./out/sdk/client.d.ts"
+		},
+		"./sdk/download": {
+			"node": "./sdk/download.ts",
+			"default": "./out/sdk/download.js",
+			"types": "./out/sdk/download.d.ts"
+		},
+		"./sdk/list-files": {
+			"node": "./sdk/list-files.ts",
+			"default": "./out/sdk/list-files.js",
+			"types": "./out/sdk/list-files.d.ts"
+		},
+		"./sdk/filing-landscape": {
+			"node": "./sdk/filing-landscape.ts",
+			"default": "./out/sdk/filing-landscape.js",
+			"types": "./out/sdk/filing-landscape.d.ts"
+		},
+		"./sdk/nearest-infrastructure": {
+			"node": "./sdk/nearest-infrastructure.ts",
+			"default": "./out/sdk/nearest-infrastructure.js",
+			"types": "./out/sdk/nearest-infrastructure.d.ts"
+		},
+		"./sdk/plausibility": {
+			"node": "./sdk/plausibility.ts",
+			"default": "./out/sdk/plausibility.js",
+			"types": "./out/sdk/plausibility.d.ts"
+		},
+		"./sdk/technologies": {
+			"node": "./sdk/technologies.ts",
+			"default": "./out/sdk/technologies.js",
+			"types": "./out/sdk/technologies.d.ts"
 		}
 	},
 	"publishConfig": {

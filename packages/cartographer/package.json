@@ -24,7 +24,8 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!__snapshots__/"
+		"!__snapshots__/",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -68,6 +69,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./base/composition": {
+			"node": "./base/composition.ts",
+			"default": "./out/base/composition.js",
+			"types": "./out/base/composition.d.ts"
 		}
 	},
 	"publishConfig": {

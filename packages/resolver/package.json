@@ -20,7 +20,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -44,6 +45,51 @@
 			"node": "./span-rescore.ts",
 			"default": "./out/span-rescore.js",
 			"types": "./out/span-rescore.d.ts"
+		},
+		"./backend-capabilities": {
+			"node": "./backend-capabilities.ts",
+			"default": "./out/backend-capabilities.js",
+			"types": "./out/backend-capabilities.d.ts"
+		},
+		"./admin-containment": {
+			"node": "./admin-containment.ts",
+			"default": "./out/admin-containment.js",
+			"types": "./out/admin-containment.d.ts"
+		},
+		"./plausibility": {
+			"node": "./plausibility.ts",
+			"default": "./out/plausibility.js",
+			"types": "./out/plausibility.d.ts"
+		},
+		"./postcode-prefix": {
+			"node": "./postcode-prefix.ts",
+			"default": "./out/postcode-prefix.js",
+			"types": "./out/postcode-prefix.d.ts"
+		},
+		"./postcode-shape-coherence": {
+			"node": "./postcode-shape-coherence.ts",
+			"default": "./out/postcode-shape-coherence.js",
+			"types": "./out/postcode-shape-coherence.d.ts"
+		},
+		"./remote-resolver": {
+			"node": "./remote-resolver.ts",
+			"default": "./out/remote-resolver.js",
+			"types": "./out/remote-resolver.d.ts"
+		},
+		"./rerank": {
+			"node": "./rerank.ts",
+			"default": "./out/rerank.js",
+			"types": "./out/rerank.d.ts"
+		},
+		"./street-evidence": {
+			"node": "./street-evidence.ts",
+			"default": "./out/street-evidence.js",
+			"types": "./out/street-evidence.d.ts"
+		},
+		"./toponym-prior": {
+			"node": "./toponym-prior.ts",
+			"default": "./out/toponym-prior.js",
+			"types": "./out/toponym-prior.d.ts"
 		}
 	},
 	"publishConfig": {
