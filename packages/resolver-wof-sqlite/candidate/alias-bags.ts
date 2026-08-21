@@ -7,18 +7,9 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { ALIAS_SEPARATOR } from "../fts.ts"
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import type { PlaceAttrs, StageRow } from "./place-attrs.ts"
-
-/**
- * Boundary-preserving alias-bag separator (#523, U+E000).
- *
- * This must stay the codepoint `fts.ts` joined the bag with — it is a private-use codepoint precisely so no real name
- * can carry one, which also means a mismatch yields ONE undivided key per place rather than an error. The writer
- * space-pads each separator and appends a trailing one, so the pieces this split hands back carry surrounding
- * whitespace and the last one is empty; {@link normalizeLocalityForKey} folds both away.
- */
-const ALIAS_SEP = "\u{E000}"
 
 /**
  * Pass 2 — explode each place's `place_search.alt_names` bag into distinct-key alias rows (`is_primary = 0`), and count
@@ -41,7 +32,10 @@ export function explodeAliasBags(
 		if (!a || !alt) continue
 		const seen = new Set<string>([a.pkey])
 
-		for (const piece of alt.split(ALIAS_SEP)) {
+		// The writer space-pads each separator and appends a trailing one, so every piece arrives with
+		// surrounding whitespace and the last one is empty. `normalizeLocalityForKey` folds both away,
+		// and the empty tail falls out at the `!k` guard below.
+		for (const piece of alt.split(ALIAS_SEPARATOR)) {
 			const k = normalizeLocalityForKey(piece)
 
 			if (!k || seen.has(k)) continue

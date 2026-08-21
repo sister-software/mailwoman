@@ -40,7 +40,7 @@ import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator, TextSpliterator } from "spliterator"
 
@@ -274,13 +274,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")
-	const ok = (db.prepare("PRAGMA integrity_check").get() as Record<string, string>)["integrity_check"]
-
-	if (ok !== "ok") {
-		console.error(`integrity_check failed: ${ok}`)
-
-		process.exit(1)
-	}
+	assertDatabaseIntegrity(db, args.output)
 
 	db.exec("VACUUM")
 	db.close()

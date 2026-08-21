@@ -55,7 +55,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
-import { sealDatabase } from "@mailwoman/core/utils"
+import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -667,13 +667,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")
-	const ok = (db.prepare("PRAGMA integrity_check").get() as Record<string, string>)["integrity_check"]
-
-	if (ok !== "ok") {
-		console.error(`integrity_check failed: ${ok}`)
-
-		process.exit(1)
-	}
+	assertDatabaseIntegrity(db, buildPath)
 
 	db.exec("VACUUM")
 	db.close()

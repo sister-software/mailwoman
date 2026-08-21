@@ -28,10 +28,9 @@ import {
 	type PlaceAttrs,
 	stageCountryDisplayNames,
 } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-const ALIAS_SEP = "\u{E000}"
 
 let scratch: string
 
@@ -73,7 +72,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (202, 170000);
 
 		-- alt-name bags (U+E000-separated); Chicago carries a colloquial alias
-		INSERT INTO place_search VALUES (200, 'Chi-Town${ALIAS_SEP}Windy City');
+		INSERT INTO place_search VALUES (200, 'Chi-Town${ALIAS_SEPARATOR}Windy City');
 		INSERT INTO place_search VALUES (202, 'St Etienne');
 
 		-- region abbreviation
@@ -240,11 +239,11 @@ describe("buildCandidateTable", () => {
 		src.exec(`
 			-- The gloss shape: a common-noun-named locality, NO population, NO importance, key volume over threshold.
 			INSERT INTO spr VALUES (300, 'Poisson', 'locality', 'FR', 46.0, 4.0, 45.9, 3.9, 46.1, 4.1, -1, 0);
-			INSERT INTO place_search VALUES (300, 'Fish${ALIAS_SEP}Fisch${ALIAS_SEP}Pesce${ALIAS_SEP}Vis');
+			INSERT INTO place_search VALUES (300, 'Fish${ALIAS_SEPARATOR}Fisch${ALIAS_SEPARATOR}Pesce${ALIAS_SEPARATOR}Vis');
 			-- The rescue: same key volume, but MEASURED prominence (population) — a famous place's exonym set.
 			INSERT INTO spr VALUES (301, 'Grandville', 'locality', 'FR', 47.0, 5.0, 46.9, 4.9, 47.1, 5.1, -1, 0);
 			INSERT INTO place_population VALUES (301, 2100000);
-			INSERT INTO place_search VALUES (301, 'Bigtown${ALIAS_SEP}Grossstadt${ALIAS_SEP}Grancitta${ALIAS_SEP}Grootstad');
+			INSERT INTO place_search VALUES (301, 'Bigtown${ALIAS_SEPARATOR}Grossstadt${ALIAS_SEPARATOR}Grancitta${ALIAS_SEPARATOR}Grootstad');
 			INSERT INTO place_search VALUES (201, 'SPR');
 			-- The abbr provenance signal: a variant name in the country's official language.
 			CREATE TABLE names (
