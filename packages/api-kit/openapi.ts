@@ -13,6 +13,8 @@ import { dirname } from "node:path"
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
 
+type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
+
 /**
  * The document config stamped into emitted documents: `title`/`version`/`description`/`summary`/`license`/`contact`
  * land under the document's `info` block; `externalDocs`/`servers`/`tags`/`security` are top-level document fields. All
@@ -32,7 +34,7 @@ export interface OpenAPIDocInfo {
 		variables?: Record<string, { default: string; description?: string }>
 	}>
 	tags?: Array<{ name: string; description?: string }>
-	security?: unknown[]
+	security?: OpenAPISecurityRequirements
 }
 
 /**
@@ -54,18 +56,28 @@ function toDocumentConfig(info: OpenAPIDocInfo) {
  * Mount the OpenAPI 3.1 document endpoint on `app` (default `/openapi.json`).
  */
 export function attachOpenAPIDocs(app: OpenAPIHono, info: OpenAPIDocInfo, path = "/openapi.json"): void {
-	// openapi3-ts's InfoObject/OpenAPIObject carry an `x-${string}` extension index signature that
-	// a plain interface can't satisfy — cast at the boundary rather than widening the public type.
-	app.doc31(path, { openapi: "3.1.0", ...toDocumentConfig(info) } as never)
+	const config: Parameters<OpenAPIHono["doc31"]>[1] = { openapi: "3.1.0", ...toDocumentConfig(info) }
+
+	app.doc31(path, config)
 }
 
 /**
  * Emit both document flavors programmatically (build artifacts, parity tests, client generation).
  */
 export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { v31: object; v30: object } {
+	const v31Config: Parameters<OpenAPIHono["getOpenAPI31Document"]>[0] = {
+		openapi: "3.1.0",
+		...toDocumentConfig(info),
+	}
+
+	const v30Config: Parameters<OpenAPIHono["getOpenAPIDocument"]>[0] = {
+		openapi: "3.0.3",
+		...toDocumentConfig(info),
+	}
+
 	return {
-		v31: app.getOpenAPI31Document({ openapi: "3.1.0", ...toDocumentConfig(info) } as never),
-		v30: app.getOpenAPIDocument({ openapi: "3.0.3", ...toDocumentConfig(info) } as never),
+		v31: app.getOpenAPI31Document(v31Config),
+		v30: app.getOpenAPIDocument(v30Config),
 	}
 }
 
