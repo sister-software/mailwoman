@@ -20,7 +20,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -29,6 +30,41 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./abbreviations": {
+			"node": "./abbreviations.ts",
+			"default": "./out/abbreviations.js",
+			"types": "./out/abbreviations.d.ts"
+		},
+		"./cjk": {
+			"node": "./cjk.ts",
+			"default": "./out/cjk.js",
+			"types": "./out/cjk.d.ts"
+		},
+		"./compute": {
+			"node": "./compute.ts",
+			"default": "./out/compute.js",
+			"types": "./out/compute.d.ts"
+		},
+		"./nfc": {
+			"node": "./nfc.ts",
+			"default": "./out/nfc.js",
+			"types": "./out/nfc.d.ts"
+		},
+		"./offset-map": {
+			"node": "./offset-map.ts",
+			"default": "./out/offset-map.js",
+			"types": "./out/offset-map.d.ts"
+		},
+		"./punctuation": {
+			"node": "./punctuation.ts",
+			"default": "./out/punctuation.js",
+			"types": "./out/punctuation.d.ts"
+		},
+		"./whitespace": {
+			"node": "./whitespace.ts",
+			"default": "./out/whitespace.js",
+			"types": "./out/whitespace.d.ts"
 		}
 	},
 	"publishConfig": {

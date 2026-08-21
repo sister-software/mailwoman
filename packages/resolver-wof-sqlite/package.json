@@ -21,7 +21,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -205,6 +206,91 @@
 			"node": "./weights-overlay-linker.ts",
 			"default": "./out/weights-overlay-linker.js",
 			"types": "./out/weights-overlay-linker.d.ts"
+		},
+		"./address-point-interpolation": {
+			"node": "./address-point-interpolation.ts",
+			"default": "./out/address-point-interpolation.js",
+			"types": "./out/address-point-interpolation.d.ts"
+		},
+		"./interpolation": {
+			"node": "./interpolation.ts",
+			"default": "./out/interpolation.js",
+			"types": "./out/interpolation.d.ts"
+		},
+		"./address-point": {
+			"node": "./address-point.ts",
+			"default": "./out/address-point.js",
+			"types": "./out/address-point.d.ts"
+		},
+		"./ancestry": {
+			"node": "./ancestry.ts",
+			"default": "./out/ancestry.js",
+			"types": "./out/ancestry.d.ts"
+		},
+		"./candidate-lookup": {
+			"node": "./candidate-lookup.ts",
+			"default": "./out/candidate-lookup.js",
+			"types": "./out/candidate-lookup.d.ts"
+		},
+		"./candidate-importance": {
+			"node": "./candidate-importance.ts",
+			"default": "./out/candidate-importance.js",
+			"types": "./out/candidate-importance.d.ts"
+		},
+		"./types": {
+			"node": "./types.ts",
+			"default": "./out/types.js",
+			"types": "./out/types.d.ts"
+		},
+		"./lookup": {
+			"node": "./lookup.ts",
+			"default": "./out/lookup.js",
+			"types": "./out/lookup.d.ts"
+		},
+		"./convention": {
+			"node": "./convention.ts",
+			"default": "./out/convention.js",
+			"types": "./out/convention.d.ts"
+		},
+		"./postal-city-alias-lookup": {
+			"node": "./postal-city-alias-lookup.ts",
+			"default": "./out/postal-city-alias-lookup.js",
+			"types": "./out/postal-city-alias-lookup.d.ts"
+		},
+		"./postal-city-candidate-schema": {
+			"node": "./postal-city-candidate-schema.ts",
+			"default": "./out/postal-city-candidate-schema.js",
+			"types": "./out/postal-city-candidate-schema.d.ts"
+		},
+		"./postcode-point-lookup": {
+			"node": "./postcode-point-lookup.ts",
+			"default": "./out/postcode-point-lookup.js",
+			"types": "./out/postcode-point-lookup.d.ts"
+		},
+		"./reverse": {
+			"node": "./reverse.ts",
+			"default": "./out/reverse.js",
+			"types": "./out/reverse.d.ts"
+		},
+		"./sharding": {
+			"node": "./sharding.ts",
+			"default": "./out/sharding.js",
+			"types": "./out/sharding.d.ts"
+		},
+		"./sqlite-convention-source": {
+			"node": "./sqlite-convention-source.ts",
+			"default": "./out/sqlite-convention-source.js",
+			"types": "./out/sqlite-convention-source.d.ts"
+		},
+		"./street-centroid": {
+			"node": "./street-centroid.ts",
+			"default": "./out/street-centroid.js",
+			"types": "./out/street-centroid.d.ts"
+		},
+		"./street-name-lookup": {
+			"node": "./street-name-lookup.ts",
+			"default": "./out/street-name-lookup.js",
+			"types": "./out/street-name-lookup.d.ts"
 		}
 	},
 	"publishConfig": {

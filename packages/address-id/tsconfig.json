@@ -7,6 +7,6 @@
 		"erasableSyntaxOnly": true
 	},
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [{ "path": "../codex" }, { "path": "../normalize" }]
 }

@@ -20,7 +20,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -129,6 +130,101 @@
 			"node": "./browser.ts",
 			"default": "./out/browser.js",
 			"types": "./out/browser.d.ts"
+		},
+		"./classifier": {
+			"node": "./classifier.ts",
+			"default": "./out/classifier.js",
+			"types": "./out/classifier.d.ts"
+		},
+		"./labels": {
+			"node": "./labels.ts",
+			"default": "./out/labels.js",
+			"types": "./out/labels.d.ts"
+		},
+		"./query-shape-prior": {
+			"node": "./query-shape-prior.ts",
+			"default": "./out/query-shape-prior.js",
+			"types": "./out/query-shape-prior.d.ts"
+		},
+		"./proposal-classifier": {
+			"node": "./proposal-classifier.ts",
+			"default": "./out/proposal-classifier.js",
+			"types": "./out/proposal-classifier.d.ts"
+		},
+		"./gazetteer-inference": {
+			"node": "./gazetteer-inference.ts",
+			"default": "./out/gazetteer-inference.js",
+			"types": "./out/gazetteer-inference.d.ts"
+		},
+		"./span-proposal-prior": {
+			"node": "./span-proposal-prior.ts",
+			"default": "./out/span-proposal-prior.js",
+			"types": "./out/span-proposal-prior.d.ts"
+		},
+		"./span-proposer-lexicon": {
+			"node": "./span-proposer-lexicon.ts",
+			"default": "./out/span-proposer-lexicon.js",
+			"types": "./out/span-proposer-lexicon.d.ts"
+		},
+		"./trace": {
+			"node": "./trace.ts",
+			"default": "./out/trace.js",
+			"types": "./out/trace.d.ts"
+		},
+		"./address-system": {
+			"node": "./address-system.ts",
+			"default": "./out/address-system.js",
+			"types": "./out/address-system.d.ts"
+		},
+		"./country-inference": {
+			"node": "./country-inference.ts",
+			"default": "./out/country-inference.js",
+			"types": "./out/country-inference.d.ts"
+		},
+		"./placetype-pair-prior": {
+			"node": "./placetype-pair-prior.ts",
+			"default": "./out/placetype-pair-prior.js",
+			"types": "./out/placetype-pair-prior.d.ts"
+		},
+		"./semi-markov-decode": {
+			"node": "./semi-markov-decode.ts",
+			"default": "./out/semi-markov-decode.js",
+			"types": "./out/semi-markov-decode.d.ts"
+		},
+		"./span-bridge": {
+			"node": "./span-bridge.ts",
+			"default": "./out/span-bridge.js",
+			"types": "./out/span-bridge.d.ts"
+		},
+		"./venue-structure": {
+			"node": "./venue-structure.ts",
+			"default": "./out/venue-structure.js",
+			"types": "./out/venue-structure.d.ts"
+		},
+		"./span-repair": {
+			"node": "./span-repair.ts",
+			"default": "./out/span-repair.js",
+			"types": "./out/span-repair.d.ts"
+		},
+		"./street-morphology-prior": {
+			"node": "./street-morphology-prior.ts",
+			"default": "./out/street-morphology-prior.js",
+			"types": "./out/street-morphology-prior.d.ts"
+		},
+		"./unit-repair": {
+			"node": "./unit-repair.ts",
+			"default": "./out/unit-repair.js",
+			"types": "./out/unit-repair.d.ts"
+		},
+		"./viterbi": {
+			"node": "./viterbi.ts",
+			"default": "./out/viterbi.js",
+			"types": "./out/viterbi.d.ts"
+		},
+		"./word-consistency": {
+			"node": "./word-consistency.ts",
+			"default": "./out/word-consistency.js",
+			"types": "./out/word-consistency.d.ts"
 		}
 	},
 	"publishConfig": {

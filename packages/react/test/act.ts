@@ -13,7 +13,7 @@
  *   Rather than sprinkle `await act(async () => …)` across ~150 call sites, we wrap the two APIs every
  *   test already routes through, ONCE, in place:
  *
- *     • `userEvent` (from `@vitest/browser/context`) — the interaction surface. Each method now runs its
+ *     • `userEvent` (from `vitest/browser`) — the interaction surface. Each method now runs its
  *       DOM event inside `act()` and then drains one macrotask tick, still inside the same `act()` scope,
  *       so a fire-and-forget `onClick` handler (e.g. `useClipboard`'s `copy()`, whose `setCopied(true)`
  *       lands after the click promise resolves — decoupled from the click) is captured too.
@@ -32,9 +32,9 @@
  *   idempotent (guarded) so a stray double-import can't double-wrap.
  */
 
-import { userEvent } from "@vitest/browser/context"
 import { act } from "react"
 import { vi } from "vitest"
+import { userEvent } from "vitest/browser"
 
 /**
  * Marker so a repeat import can't wrap an already-wrapped method (which would nest act() pointlessly).

@@ -38,7 +38,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -57,6 +58,16 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./sdk/extract": {
+			"node": "./sdk/extract.ts",
+			"default": "./out/sdk/extract.js",
+			"types": "./out/sdk/extract.d.ts"
+		},
+		"./sdk/street-locale": {
+			"node": "./sdk/street-locale.ts",
+			"default": "./out/sdk/street-locale.js",
+			"types": "./out/sdk/street-locale.d.ts"
 		}
 	},
 	"publishConfig": {

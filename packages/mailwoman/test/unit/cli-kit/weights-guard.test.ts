@@ -1,0 +1,84 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Pure-machinery tests for the CLI weights guard (plan 3). The interactive component is exercised
+ *   live under a pty in the plan's Task-4 verification; here we pin the npm invocation, the probe
+ *   semantics against a cache layout, and the probe's rejection of metadata-only installs.
+ */
+
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights-guard"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
+
+// A locale with NO weights package, which is the whole point: these cases assert the not-resolvable
+// path, so the locale must be one nothing can resolve. It was `de-DE` until 2026-08-02, when campaign
+// R9 shipped `@mailwoman/neural-weights-de-de` and silently invalidated the premise — `resolveWeights`
+// started finding the real workspace package and every "nothing resolves" assertion inverted.
+//
+// `pt-BR` is the current choice because Brazil has no carrier package. If one ever ships, this breaks
+// the same way, and the fix is the same: move to a locale that is still unclaimed.
+const LOCALE = "pt-BR"
+
+let cacheRoot: string
+
+beforeEach(() => {
+	cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-guard-"))
+})
+
+afterEach(() => {
+	rmSync(cacheRoot, { recursive: true, force: true })
+})
+
+describe("buildWeightsInstallArgs", () => {
+	test("targets the cache prefix with the locale package at latest", () => {
+		expect(buildWeightsInstallArgs("en-US", "/cache/root")).toEqual([
+			"install",
+			"--prefix",
+			"/cache/root",
+			"--no-audit",
+			"--no-fund",
+			"--loglevel",
+			"error",
+			"@mailwoman/neural-weights-en-us@latest",
+		])
+	})
+
+	test("honors an explicit spec", () => {
+		expect(buildWeightsInstallArgs("fr-FR", "/c", "6.0.0")).toContain("@mailwoman/neural-weights-fr-fr@6.0.0")
+	})
+})
+
+describe("probeWeights", () => {
+	test("ok=false with an actionable detail when nothing resolves", () => {
+		const probe = probeWeights(LOCALE, cacheRoot)
+
+		expect(probe.ok).toBe(false)
+		expect(probe.detail).toMatch(/Could not resolve/)
+		expect(probe.detail).toContain(weightsCachePackageDir(cacheRoot, LOCALE))
+	})
+
+	test("ok=true against a binary-carrying cache install", () => {
+		const packageDir = weightsCachePackageDir(cacheRoot, LOCALE)
+
+		mkdirSync(packageDir, { recursive: true })
+		writeFileSync(join(packageDir, "model.onnx"), "stub")
+		writeFileSync(join(packageDir, "tokenizer.model"), "stub")
+
+		expect(probeWeights(LOCALE, cacheRoot)).toEqual({ ok: true })
+	})
+
+	test("ok=false against a metadata-only cache install (the code-only-release tarball)", () => {
+		const packageDir = weightsCachePackageDir(cacheRoot, LOCALE)
+
+		mkdirSync(packageDir, { recursive: true })
+		writeFileSync(join(packageDir, "model-card.json"), "{}")
+
+		expect(probeWeights(LOCALE, cacheRoot).ok).toBe(false)
+	})
+})

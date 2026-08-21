@@ -8,7 +8,7 @@
 		"resolveJsonModule": true
 	},
 	"include": ["./**/*", "./us/street-suffix.json"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
 		{
 			"path": "../annotations"

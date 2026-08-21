@@ -5,7 +5,7 @@
  *
  *   A minimal React render harness for the browser-mode tests — `createRoot` into a fresh container,
  *   plus a `cleanup` that unmounts everything. Kept dependency-light (no @testing-library) since the
- *   components are small and `@vitest/browser/context` provides the querying + interaction API.
+ *   components are small and `vitest/browser` provides the querying + interaction API.
  */
 
 import type { ReactElement } from "react"

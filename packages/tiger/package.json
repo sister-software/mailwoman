@@ -33,7 +33,8 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!__snapshots__/"
+		"!__snapshots__/",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {

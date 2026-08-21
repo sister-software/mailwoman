@@ -22,7 +22,8 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!test-kit/**/*"
+		"!test-kit/**/*",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {
@@ -150,6 +151,81 @@
 			"node": "./src/codex/*.ts",
 			"default": "./out/src/codex/*.js",
 			"types": "./out/src/codex/*.d.ts"
+		},
+		"./utils/parquet": {
+			"node": "./src/utils/parquet.ts",
+			"default": "./out/src/utils/parquet.js",
+			"types": "./out/src/utils/parquet.d.ts"
+		},
+		"./test-kit/shard-recipe": {
+			"node": "./test-kit/shard-recipe.ts",
+			"default": "./out/test-kit/shard-recipe.js",
+			"types": "./out/test-kit/shard-recipe.d.ts"
+		},
+		"./tools/audit": {
+			"node": "./src/tools/audit.ts",
+			"default": "./out/src/tools/audit.js",
+			"types": "./out/src/tools/audit.d.ts"
+		},
+		"./tools/gb-title-case": {
+			"node": "./src/tools/gb-title-case.ts",
+			"default": "./out/src/tools/gb-title-case.js",
+			"types": "./out/src/tools/gb-title-case.d.ts"
+		},
+		"./tools/golden-relabel-street": {
+			"node": "./src/tools/golden-relabel-street.ts",
+			"default": "./out/src/tools/golden-relabel-street.js",
+			"types": "./out/src/tools/golden-relabel-street.d.ts"
+		},
+		"./tools/overture-subvenue": {
+			"node": "./src/tools/overture-subvenue.ts",
+			"default": "./out/src/tools/overture-subvenue.js",
+			"types": "./out/src/tools/overture-subvenue.d.ts"
+		},
+		"./tools/sub-venue-lexicon": {
+			"node": "./src/tools/sub-venue-lexicon.ts",
+			"default": "./out/src/tools/sub-venue-lexicon.js",
+			"types": "./out/src/tools/sub-venue-lexicon.d.ts"
+		},
+		"./tools/sub-venue-promotions": {
+			"node": "./src/tools/sub-venue-promotions.ts",
+			"default": "./out/src/tools/sub-venue-promotions.js",
+			"types": "./out/src/tools/sub-venue-promotions.d.ts"
+		},
+		"./tools/fetch/download": {
+			"node": "./src/tools/fetch/download.ts",
+			"default": "./out/src/tools/fetch/download.js",
+			"types": "./out/src/tools/fetch/download.d.ts"
+		},
+		"./tools/fetch/ppd": {
+			"node": "./src/tools/fetch/ppd.ts",
+			"default": "./out/src/tools/fetch/ppd.js",
+			"types": "./out/src/tools/fetch/ppd.d.ts"
+		},
+		"./utils/tokenize": {
+			"node": "./src/utils/tokenize.ts",
+			"default": "./out/src/utils/tokenize.js",
+			"types": "./out/src/utils/tokenize.d.ts"
+		},
+		"./utils/golden": {
+			"node": "./src/utils/golden.ts",
+			"default": "./out/src/utils/golden.js",
+			"types": "./out/src/utils/golden.d.ts"
+		},
+		"./utils/license": {
+			"node": "./src/utils/license.ts",
+			"default": "./out/src/utils/license.js",
+			"types": "./out/src/utils/license.d.ts"
+		},
+		"./utils/split": {
+			"node": "./src/utils/split.ts",
+			"default": "./out/src/utils/split.js",
+			"types": "./out/src/utils/split.d.ts"
+		},
+		"./utils/wof-json": {
+			"node": "./src/utils/wof-json.ts",
+			"default": "./out/src/utils/wof-json.js",
+			"types": "./out/src/utils/wof-json.d.ts"
 		}
 	},
 	"publishConfig": {

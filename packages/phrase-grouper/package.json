@@ -20,7 +20,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {
@@ -36,6 +37,21 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./group": {
+			"node": "./group.ts",
+			"default": "./out/group.js",
+			"types": "./out/group.d.ts"
+		},
+		"./rules": {
+			"node": "./rules.ts",
+			"default": "./out/rules.js",
+			"types": "./out/rules.d.ts"
+		},
+		"./types": {
+			"node": "./types.ts",
+			"default": "./out/types.js",
+			"types": "./out/types.d.ts"
 		}
 	},
 	"publishConfig": {

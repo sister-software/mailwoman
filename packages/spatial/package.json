@@ -28,7 +28,8 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!__snapshots__/"
+		"!__snapshots__/",
+		"!test/**"
 	],
 	"type": "module",
 	"imports": {
@@ -54,6 +55,31 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./coordinate-formats": {
+			"node": "./coordinate-formats.ts",
+			"default": "./out/coordinate-formats.js",
+			"types": "./out/coordinate-formats.d.ts"
+		},
+		"./open-location-code": {
+			"node": "./open-location-code.ts",
+			"default": "./out/open-location-code.js",
+			"types": "./out/open-location-code.d.ts"
+		},
+		"./geometries/polygon": {
+			"node": "./geometries/polygon.ts",
+			"default": "./out/geometries/polygon.js",
+			"types": "./out/geometries/polygon.d.ts"
+		},
+		"./h3/cell": {
+			"node": "./h3/cell.ts",
+			"default": "./out/h3/cell.js",
+			"types": "./out/h3/cell.d.ts"
+		},
+		"./sdk/well-known-text": {
+			"node": "./sdk/well-known-text.ts",
+			"default": "./out/sdk/well-known-text.js",
+			"types": "./out/sdk/well-known-text.d.ts"
 		}
 	},
 	"publishConfig": {
