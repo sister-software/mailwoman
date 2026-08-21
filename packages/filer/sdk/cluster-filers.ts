@@ -113,7 +113,7 @@
  *   `source_vintage` takes `sourceVintage`; `valid_from`/`valid_to` take
  *   `validFrom`. This split exists because `valid_from` participates in every downstream `asOf`-scoped
  *   predicate (`filer-lookup.ts`) as a plain STRING comparison — a label like `"2026-cluster-v1"` sorts
- *   lexicographically ABOVE any real ISO date this century, so writing it into `valid_from` silently
+ *   lexicographically ABOVE any ISO date in its own year, so writing it into `valid_from` silently
  *   breaks every `asOf`-scoped read against the edge. The "same run" identity
  *   question below (same-vintage rebuild vs. a genuinely earlier run) is answered by `sourceVintage`
  *   (the label IS the run's identity); the "which real date did this change happen" question is
@@ -319,7 +319,7 @@ export interface ClusterFilersOptions {
 	 * every earlier-vintage row this run closes out) — SEPARATE from {@link ClusterFilersOptions.sourceVintage} (same
 	 * rationale as `BuildFilerOptions.validFrom` in `build-filer.ts`). `valid_from` participates in every downstream
 	 * `asOf`-scoped predicate (`filer-lookup.ts`) as a plain STRING comparison, so it must always be ISO-sortable — a
-	 * vintage label like `"2026-cluster-v1"` sorts lexicographically ABOVE any real ISO date this century and would
+	 * vintage label like `"2026-cluster-v1"` sorts lexicographically ABOVE any ISO date in its own year and would
 	 * silently break every `asOf`-scoped read against the edge. Validated via {@linkcode assertISODate}. Also the "which
 	 * real date did this change happen" half of cross-vintage supersession (see the module docstring) — the "same run"
 	 * half is answered by `sourceVintage`, not this field.

@@ -283,14 +283,14 @@ export interface BuildFilerOptions {
 	 * makes the whole-file `sourceVintage` the tempting single source for BOTH `source_vintage` and `valid_from` — but
 	 * `sourceVintage` is a free-text human vintage label (e.g. `"2026-Q2"`), not guaranteed ISO-sortable, while
 	 * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as
-	 * a plain STRING comparison. `"2026-Q2"` sorts lexicographically ABOVE any real ISO date this century (`"Q"` > any
-	 * ASCII digit) — writing it into `valid_from` silently breaks every `asOf`-scoped read against that edge (reviewer
-	 * probe: a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []` from
-	 * `filerLookup`). Validated via {@linkcode assertISODate}. REQUIRED when `providerRows`/`providerListPath` is
-	 * supplied (thrown otherwise); ignored when no provider-list source is given. Deliberately NOT derived automatically
-	 * from `sourceVintage` when omitted — guessing a specific date from an arbitrary label (which day inside "Q2"?) would
-	 * be a fabrication this builder refuses to make; the caller, who knows the file's actual publish/effective date,
-	 * supplies it explicitly.
+	 * a plain STRING comparison. `"2026-Q2"` sorts lexicographically ABOVE any ISO date in its own year (`"Q"` outranks
+	 * every digit at the first position where the two differ) — writing it into `valid_from` silently breaks every
+	 * `asOf`-scoped read against that edge (reviewer probe: a fully populated filer.db built with `sourceVintage:
+	 * "2026-Q2"` returned `identifiers: []` from `filerLookup`). Validated via {@linkcode assertISODate}. REQUIRED when
+	 * `providerRows`/`providerListPath` is supplied (thrown otherwise); ignored when no provider-list source is given.
+	 * Deliberately NOT derived automatically from `sourceVintage` when omitted — guessing a specific date from an
+	 * arbitrary label (which day inside "Q2"?) would be a fabrication this builder refuses to make; the caller, who knows
+	 * the file's actual publish/effective date, supplies it explicitly.
 	 */
 	validFrom?: string
 	/**
