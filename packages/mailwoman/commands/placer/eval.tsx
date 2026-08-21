@@ -11,7 +11,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Evaluate the coarse placer (#244): in-distribution | openset | latin-offmap | quant-compare"
 

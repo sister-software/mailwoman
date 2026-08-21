@@ -58,7 +58,8 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { haversineKm } from "@mailwoman/spatial"
-import { createRuntimePipeline } from "mailwoman"
+
+import { createRuntimePipeline } from "#index"
 
 import { type HardSliceCase, loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
 import { createResolverBackend } from "../resolver-backend.ts"

@@ -6,8 +6,9 @@
 
 import { readFileSync } from "node:fs"
 
-import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
+
+import { repoRootPath } from "#utils"
 
 import { parseJSONStrict } from "../objects.ts"
 import type { BIOLabel } from "../types/component.ts"

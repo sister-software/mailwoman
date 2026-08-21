@@ -15,7 +15,7 @@ import Layout from "@theme/Layout"
 import TOC from "@theme/TOC"
 import React, { useEffect, useMemo, useState } from "react"
 
-import type { GlossaryBacklinks, GlossaryTagMeta, TaggedGlossaryTerm } from "../../../plugins/glossary/plugin.ts"
+import type { GlossaryBacklinks, GlossaryTagMeta, TaggedGlossaryTerm } from "#glossary-plugin"
 
 import styles from "./styles.module.css"
 

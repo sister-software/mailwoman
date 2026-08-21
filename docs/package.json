@@ -4,8 +4,10 @@
 	"private": true,
 	"description": "Docusaurus knowledge base for Mailwoman Geocoder",
 	"imports": {
+		"#docs-sub-header": "./src/components/DocsSubHeader/index.tsx",
 		"#e2e": "./test/e2e/index.ts",
 		"#e2e/*": "./test/e2e/*",
+		"#glossary-plugin": "./plugins/glossary/plugin.ts",
 		"#components/*": "./src/components/*.tsx",
 		"#contexts/*": "./src/contexts/*.tsx",
 		"#hooks/*": "./src/hooks/*.ts",
@@ -44,7 +46,9 @@
 	"dependencies": {
 		"@docusaurus/core": "^3.10.2",
 		"@docusaurus/faster": "^3.10.2",
+		"@docusaurus/plugin-content-docs": "^3.10.2",
 		"@docusaurus/preset-classic": "^3.10.2",
+		"@docusaurus/theme-common": "^3.10.2",
 		"@docusaurus/theme-mermaid": "^3.10.2",
 		"@mailwoman/cartographer": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
@@ -52,7 +56,6 @@
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
-		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/react": "workspace:^",
 		"@mailwoman/resolver": "workspace:*",
@@ -75,7 +78,6 @@
 	},
 	"devDependencies": {
 		"@docusaurus/module-type-aliases": "^3.10.2",
-		"@docusaurus/tsconfig": "^3.10.2",
 		"@docusaurus/types": "^3.10.2",
 		"@playwright/test": "^1.62.1",
 		"@storybook/addon-docs": "^10.5.5",
@@ -87,11 +89,12 @@
 		"@types/react-map-gl": "^6.1.8",
 		"@vitejs/plugin-react": "^6.0.5",
 		"@vvago/vale": "^3.17.0",
-		"ink": "^7.1.1",
 		"spliterator": "^6.1.0",
 		"sql.js-httpvfs": "^0.8.12",
 		"storybook": "^10.5.5",
 		"typescript": "^6.0.3",
+		"unist": "^0.0.1",
+		"unist-util-visit": "^5.1.0",
 		"vite": "^8.2.0"
 	},
 	"browserslist": {

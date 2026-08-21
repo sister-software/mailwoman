@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Span } from "@mailwoman/core/tokenization"
-import type { ClassificationProposal } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
+
+import { Span } from "#tokenization"
+import type { ClassificationProposal } from "#types"
 
 import { InMemoryPolicyRegistry } from "./registry.ts"
 

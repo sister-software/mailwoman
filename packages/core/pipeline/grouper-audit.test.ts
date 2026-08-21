@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { Span } from "@mailwoman/core/tokenization"
 import { describe, expect, it } from "vitest"
+
+import { Span } from "#tokenization"
 
 import type { AddressTree } from "../decoder/types.ts"
 import { grouperAudit, runPipeline } from "./runtime-pipeline.ts"

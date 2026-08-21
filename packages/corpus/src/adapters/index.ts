@@ -19,8 +19,8 @@
  *   implementations; the registered ids are unchanged).
  */
 
-import { defaultAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
-import type { CorpusAdapter } from "@mailwoman/corpus/types"
+import { defaultAdapterRegistry } from "#adapters/utils"
+import type { CorpusAdapter } from "#types"
 
 import { banAdapter } from "./ban/adapter.ts"
 import { fccBdcAdapter } from "./fcc-bdc/adapter.ts"

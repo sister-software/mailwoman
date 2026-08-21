@@ -14,9 +14,10 @@
 import { readFileSync } from "node:fs"
 import * as path from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
+
+import { parseJSONStrict } from "#objects"
+import { dataRootPath, repoRootPath } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 

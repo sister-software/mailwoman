@@ -36,10 +36,11 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { splitStreetLine } from "@mailwoman/corpus/adapters/utils"
-import { lookupStateAbbreviation } from "@mailwoman/corpus/codex/us-fips-state"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+
+import { splitStreetLine } from "#adapters/utils"
+import { lookupStateAbbreviation } from "#codex/us-fips-state"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

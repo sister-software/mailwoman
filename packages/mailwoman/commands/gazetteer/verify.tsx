@@ -22,7 +22,8 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
-import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -46,8 +47,7 @@ interface Options {
 const GazetteerVerify: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } =
-				await import("mailwoman/gazetteer-pipeline")
+			const { loadDefaultBaseline, verifyAdmin, verifyReversePanel, wofDir } = await import("#gazetteer-pipeline")
 
 			const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
 

@@ -5,9 +5,10 @@
  */
 
 import { BIO_LABELS, type ComponentTag } from "@mailwoman/core/types"
-import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow, LabeledRow } from "#types"
+import { alignRow } from "#utils"
 
 import {
 	AUGMENTATIONS,

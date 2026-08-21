@@ -34,7 +34,7 @@ interface Options {
 
 const GazetteerBuildNZLocalities: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildNZLocalitiesShard } = await import("../../../gazetteer-pipeline/nz-localities.ts")
+		const { buildNZLocalitiesShard } = await import("#gazetteer/nz-localities")
 		const r = await buildNZLocalitiesShard({ csvPath: options.csv, out: options.out })
 
 		return `nz-localities: ${r.inserted.toLocaleString()} locality rows (skipped ${r.skippedGroups} thin groups, source md5 ${r.sourceMD5.slice(0, 8)}) → ${r.out} — sealed 0444`

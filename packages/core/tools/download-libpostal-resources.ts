@@ -28,9 +28,9 @@ import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { isDirectory } from "@mailwoman/core/fs"
-import { CommandError } from "@mailwoman/core/scripting/command"
-import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { isDirectory } from "#fs"
+import { CommandError } from "#scripting/command"
+import { resourceDictionaryPath } from "#utils"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")

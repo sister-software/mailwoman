@@ -9,7 +9,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

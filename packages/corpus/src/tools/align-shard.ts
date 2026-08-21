@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { createWriteStream } from "node:fs"
 
+import { JSONSpliterator } from "spliterator"
+
 /**
  * Re-emit a CANONICAL jsonl ({raw, components, country, source, ...}) as a LABELED jsonl in the CURRENT align format,
  * by running every row through `alignRow` (corpus/src/align.ts).
@@ -26,8 +28,7 @@ import { createWriteStream } from "node:fs"
  * --output /tmp/kryptonite-labeled.jsonl\
  * --corpus-version 0.5.0
  */
-import { alignRow } from "@mailwoman/corpus/utils"
-import { JSONSpliterator } from "spliterator"
+import { alignRow } from "#utils"
 
 export interface AlignShardOptions {
 	input: string

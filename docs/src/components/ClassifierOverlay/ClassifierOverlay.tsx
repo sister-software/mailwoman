@@ -16,8 +16,8 @@
  *       influenced each parsed component.
  */
 
-import { confidenceTier } from "@mailwoman/docs/shared/confidence-tiers"
-import type { ResultNode } from "@mailwoman/docs/shared/resources"
+import { confidenceTier } from "#shared/confidence-tiers"
+import type { ResultNode } from "#shared/resources"
 
 import styles from "./styles.module.css"
 

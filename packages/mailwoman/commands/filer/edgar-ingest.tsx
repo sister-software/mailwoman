@@ -9,7 +9,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -42,7 +43,7 @@ const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const { readFileSync } = await import("node:fs")
 
-		// oxlint-disable mailwoman/prefer-spliterator
+		// oxlint-disable mailwoman/prefer-spliterator -- command input is materialized for the batch lookup below
 		const names = readFileSync(options.names, "utf8")
 			.split("\n")
 			.map((line) => line.trim())

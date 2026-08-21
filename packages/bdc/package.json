@@ -70,14 +70,9 @@
 		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
-		"@mailwoman/tiger": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.4",
-		"type-fest": "^5.8.0",
-		"yauzl-promise": "^4.0.0"
-	},
-	"devDependencies": {
-		"@types/yauzl-promise": "^4.0.1"
+		"type-fest": "^5.8.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

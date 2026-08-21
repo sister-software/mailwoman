@@ -43,7 +43,7 @@ interface Options {
 
 const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetMorphologyArtifact } = await import("../../../gazetteer-pipeline/street-morphology.ts")
+		const { buildStreetMorphologyArtifact } = await import("#gazetteer/street-morphology")
 
 		const built = buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,

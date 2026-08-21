@@ -23,10 +23,11 @@
  *        `"CC-BY-4.0"` per row (attribute "GeoNames").
  */
 
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { TSVSpliterator } from "spliterator"
+
+import { stableSourceID } from "#adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

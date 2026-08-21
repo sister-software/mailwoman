@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow, CorpusAdapter } from "#types"
 
 import {
 	InMemoryAdapterRegistry,

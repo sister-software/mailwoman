@@ -10,7 +10,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -28,7 +29,7 @@ const report = (line: string): void => console.error(line)
 const DevLintMDXAngles: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(
 		async () => {
-			const { lintMDXAngles } = await import("mailwoman/dev-tools/lint-mdx-angles")
+			const { lintMDXAngles } = await import("#dev-tools/lint-mdx-angles")
 
 			return lintMDXAngles({ files: args }, report)
 		},

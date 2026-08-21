@@ -20,7 +20,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "The Gauntlet gate — regression + metamorphic + held-out, one verdict"
 

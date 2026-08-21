@@ -10,7 +10,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "OpenAddresses real-point resolver eval — non-circular, neural vs v0 (Pelias)"
 

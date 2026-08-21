@@ -23,6 +23,7 @@ import { dirname } from "node:path"
 
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
@@ -33,7 +34,7 @@ import {
 	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C, uniqueQuantiles } from "./shared.ts"

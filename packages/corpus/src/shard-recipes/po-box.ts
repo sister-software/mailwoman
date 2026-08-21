@@ -9,11 +9,7 @@
  *   scripts/build-po-box-shard.mjs.
  */
 
-import {
-	synthesizeMilitaryPoBoxRow,
-	synthesizePoBoxRow,
-	type PoBoxBaseTuple,
-} from "@mailwoman/corpus/synthesizers/po-box"
+import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
 
 import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 

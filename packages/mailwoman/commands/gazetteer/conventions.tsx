@@ -30,7 +30,8 @@ import { DatabaseSync } from "node:sqlite"
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

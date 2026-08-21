@@ -22,16 +22,17 @@
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { makeLcg } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
+import { TextSpliterator } from "spliterator"
+
+import { stableSourceID } from "#adapters/utils"
 import {
 	countryToLocale,
 	REGION_OPTIONAL_LOCALES,
 	synthesizeMilitaryPoBoxRow,
 	synthesizePoBoxRow,
 	type PoBoxBaseTuple,
-} from "@mailwoman/corpus/synthesizers/po-box"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
-import { TextSpliterator } from "spliterator"
+} from "#synthesizers/po-box"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

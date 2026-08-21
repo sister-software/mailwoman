@@ -6,13 +6,14 @@
 
 import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
 
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+
 import {
 	type Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
-} from "@mailwoman/core/resources/languages"
-import { PathBuilder, type PathBuilderLike } from "path-ts"
+} from "#resources/languages"
 
 import { tryWithBackoff } from "./backoff.ts"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"

@@ -8,11 +8,11 @@ import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { runAdapter } from "@mailwoman/corpus/runner"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
+import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
+import { alignRow } from "#utils"
 
 import { USGOV_HRSA_FQHC_ADAPTER_ID, USGOV_HRSA_FQHC_DEFAULT_LICENSE, createUsgovHrsaFqhcAdapter } from "./adapter.ts"
 

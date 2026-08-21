@@ -18,7 +18,8 @@
 
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
+
+import { createRuntimePipeline } from "#index"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
 

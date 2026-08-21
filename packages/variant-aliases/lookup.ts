@@ -39,7 +39,7 @@ function loadTable(): VariantAliasTable {
 
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. Zero dependencies here, so
 	// `@mailwoman/core`'s parse wrappers are deliberately out of reach.
-	// oxlint-disable-next-line no-restricted-properties
+	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
 	return JSON.parse(readFileSync(found, "utf8")) as VariantAliasTable
 }
 

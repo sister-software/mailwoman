@@ -37,7 +37,7 @@
  *   `po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
  */
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
+import type { CanonicalRow } from "#types"
 
 //#region Types
 

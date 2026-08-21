@@ -11,7 +11,8 @@ import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { toMapHTML } from "@mailwoman/registry"
+
+import { toMapHTML } from "#index"
 
 /**
  * Options for {@linkcode sourceProvenanceMap}.

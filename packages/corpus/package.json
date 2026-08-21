@@ -26,7 +26,62 @@
 	],
 	"type": "module",
 	"imports": {
-		"#test-kit": "./test-kit/index.ts"
+		"#adapters/utils": {
+			"node": "./src/adapters/utils/index.ts",
+			"default": "./out/src/adapters/utils/index.js",
+			"types": "./out/src/adapters/utils/index.d.ts"
+		},
+		"#runner": {
+			"node": "./src/runner.ts",
+			"default": "./out/src/runner.js",
+			"types": "./out/src/runner.d.ts"
+		},
+		"#synthesizers/utils": {
+			"node": "./src/synthesizers/utils.ts",
+			"default": "./out/src/synthesizers/utils.js",
+			"types": "./out/src/synthesizers/utils.d.ts"
+		},
+		"#test-kit": "./test-kit/index.ts",
+		"#types": {
+			"node": "./src/types.ts",
+			"default": "./out/src/types.js",
+			"types": "./out/src/types.d.ts"
+		},
+		"#utils": {
+			"node": "./src/utils/index.ts",
+			"default": "./out/src/utils/index.js",
+			"types": "./out/src/utils/index.d.ts"
+		},
+		"#utils/*": {
+			"node": "./src/utils/*.ts",
+			"default": "./out/src/utils/*.js",
+			"types": "./out/src/utils/*.d.ts"
+		},
+		"#codex/*": {
+			"node": "./src/codex/*.ts",
+			"default": "./out/src/codex/*.js",
+			"types": "./out/src/codex/*.d.ts"
+		},
+		"#synthesizers/*": {
+			"node": "./src/synthesizers/*.ts",
+			"default": "./out/src/synthesizers/*.js",
+			"types": "./out/src/synthesizers/*.d.ts"
+		},
+		"#tools": {
+			"node": "./src/tools/index.ts",
+			"default": "./out/src/tools/index.js",
+			"types": "./out/src/tools/index.d.ts"
+		},
+		"#adapters/*": {
+			"node": "./src/adapters/*.ts",
+			"default": "./out/src/adapters/*.js",
+			"types": "./out/src/adapters/*.d.ts"
+		},
+		"#parquet-wrapper": {
+			"node": "./src/parquet-wrapper/index.ts",
+			"default": "./out/src/parquet-wrapper/index.js",
+			"types": "./out/src/parquet-wrapper/index.d.ts"
+		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
@@ -113,6 +168,7 @@
 		"spliterator": "^6.1.0"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2"
+		"@types/node": ">=26.1.2",
+		"kysely": "^0.29.4"
 	}
 }

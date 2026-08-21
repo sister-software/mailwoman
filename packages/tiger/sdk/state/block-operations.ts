@@ -6,6 +6,7 @@
 
 import type { GeometryLiteral, MultiPolygonLiteral } from "@mailwoman/spatial"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk"
+
 import type {
 	FIPSStateCode,
 	FIPSBlockGeoID,
@@ -13,7 +14,7 @@ import type {
 	TIGERBlockFeature,
 	TIGERBlockFeatureCollection,
 	TIGERTabulatedBlockProperties,
-} from "@mailwoman/tiger"
+} from "#index"
 
 export interface StateBlockIntersectionCriteria {
 	stateCode: FIPSStateCode

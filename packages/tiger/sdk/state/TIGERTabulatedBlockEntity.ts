@@ -5,7 +5,8 @@
  */
 
 import { smartSnakeCase } from "@mailwoman/core"
-import { TIGERProperty } from "@mailwoman/tiger"
+
+import { TIGERProperty } from "#index"
 
 /**
  * Default column selections for TIGER tabulated block entities.

@@ -8,8 +8,9 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { InMemoryAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
 import { beforeEach, describe, expect, it } from "vitest"
+
+import { InMemoryAdapterRegistry } from "#adapters/utils"
 
 import { createUsgovNPPESAdapter, USGOV_NPPES_ADAPTER_ID, USGOV_NPPES_DEFAULT_LICENSE } from "./adapter.ts"
 

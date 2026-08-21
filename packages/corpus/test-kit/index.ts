@@ -21,9 +21,10 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach } from "vitest"
+
+import type { CanonicalRow } from "#types"
 
 /**
  * A per-test scratch directory. `path` is only meaningful inside a test body — it is `""` until the `beforeEach` runs.

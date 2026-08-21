@@ -19,7 +19,8 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import { DEFAULT_COVERAGE_FLOOR } from "../../gazetteer-pipeline/defaults.ts"
 

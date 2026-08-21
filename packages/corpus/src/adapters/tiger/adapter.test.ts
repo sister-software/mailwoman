@@ -9,9 +9,9 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { runAdapter } from "@mailwoman/corpus/runner"
 import { beforeEach, describe, expect, it } from "vitest"
 
+import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "./adapter.ts"

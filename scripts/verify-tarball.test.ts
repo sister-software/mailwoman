@@ -10,7 +10,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { collectMissingBinTargets, collectMissingExportTargets, collectMissingFileEntries } from "./verify-tarball.ts"
+import {
+	collectMissingBinTargets,
+	collectMissingExportTargets,
+	collectMissingFileEntries,
+	collectMissingImportTargets,
+} from "./verify-tarball.ts"
 
 /**
  * What `@mailwoman/neural-weights-en-in@8.6.0` actually shipped — read back off the registry.
@@ -91,6 +96,15 @@ describe("collectMissingExportTargets", () => {
 
 	it("tolerates an absent exports map", () => {
 		expect(collectMissingExportTargets(undefined, new Set())).toEqual([])
+	})
+})
+
+describe("collectMissingImportTargets", () => {
+	it("audits compiled package-private aliases", () => {
+		const imports = { "#runner": { default: "./out/src/runner.js" } }
+
+		expect(collectMissingImportTargets(imports, new Set())).toEqual(["./out/src/runner.js"])
+		expect(collectMissingImportTargets(imports, new Set(["./out/src/runner.js"]))).toEqual([])
 	})
 })
 

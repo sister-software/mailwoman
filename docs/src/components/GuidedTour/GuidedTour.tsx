@@ -22,13 +22,14 @@
  *   The GuidedTour is rendered inside PipelineExplorer — no separate provider needed.
  */
 
-import { LoadingIndicator } from "@mailwoman/docs/components/LoadingIndicator/LoadingIndicator"
-import { SpanHighlight } from "@mailwoman/docs/components/SpanHighlight/SpanHighlight"
-import { useDemoEmbed } from "@mailwoman/docs/contexts/DemoEmbed"
-import { confidenceTier } from "@mailwoman/docs/shared/confidence-tiers"
-import { flattenTree } from "@mailwoman/docs/shared/demo-helpers"
-import type { DemoResult } from "@mailwoman/docs/shared/resources"
 import React, { useCallback, useEffect, useRef, useState } from "react"
+
+import { LoadingIndicator } from "#components/LoadingIndicator/LoadingIndicator"
+import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
+import { useDemoEmbed } from "#contexts/DemoEmbed"
+import { confidenceTier } from "#shared/confidence-tiers"
+import { flattenTree } from "#shared/demo-helpers"
+import type { DemoResult } from "#shared/resources"
 
 import { TOUR_STOPS, type StatusBadge } from "./tour-stops.ts"
 

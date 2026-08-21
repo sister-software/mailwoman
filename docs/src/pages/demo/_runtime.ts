@@ -23,28 +23,6 @@
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
-import type { ReleaseInfo, ResolveBias, StreetResolution } from "@mailwoman/docs/shared/demo-helpers"
-import {
-	DEFAULT_LOCALE,
-	normalizeReleasesManifest,
-	resolveDualRoles,
-	resolveStreet,
-	runCascade,
-	runClassifyStage,
-} from "@mailwoman/docs/shared/demo-helpers"
-import type { DocsDemoAssets } from "@mailwoman/docs/shared/demo-loader"
-import { loadDemoAssets } from "@mailwoman/docs/shared/demo-loader"
-import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
-import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "@mailwoman/docs/shared/register-range-sw"
-import {
-	assetURL,
-	HOSTED_STREET_SLUGS,
-	NATIONAL_STREET_FALLBACK_SLUG,
-	NATIONAL_STREET_SLUGS,
-	regionToStateSlug,
-	streetShardURL,
-} from "@mailwoman/docs/shared/resources"
-import type { ParseTraceLike, ResolvedHit } from "@mailwoman/docs/shared/resources"
 import type {
 	DemoAssetsLoadContext,
 	DemoManifest,
@@ -63,6 +41,29 @@ import type {
 } from "@mailwoman/react/map"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import type { ReleaseInfo, ResolveBias, StreetResolution } from "#shared/demo-helpers"
+import {
+	DEFAULT_LOCALE,
+	normalizeReleasesManifest,
+	resolveDualRoles,
+	resolveStreet,
+	runCascade,
+	runClassifyStage,
+} from "#shared/demo-helpers"
+import type { DocsDemoAssets } from "#shared/demo-loader"
+import { loadDemoAssets } from "#shared/demo-loader"
+import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "#shared/httpvfs-street"
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
+import {
+	assetURL,
+	HOSTED_STREET_SLUGS,
+	NATIONAL_STREET_FALLBACK_SLUG,
+	NATIONAL_STREET_SLUGS,
+	regionToStateSlug,
+	streetShardURL,
+} from "#shared/resources"
+import type { ParseTraceLike, ResolvedHit } from "#shared/resources"
 
 import {
 	fetchBasemapSource,
@@ -284,10 +285,9 @@ export function useDemoMapRuntime({
 
 			if (!p) {
 				p = (async () => {
-					const { loadHTTPVFSDatabase } = await import("@mailwoman/docs/shared/httpvfs-resolver")
+					const { loadHTTPVFSDatabase } = await import("#shared/httpvfs-resolver")
 
-					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
-						await import("@mailwoman/docs/shared/httpvfs-street")
+					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("#shared/httpvfs-street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsW = await loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL)

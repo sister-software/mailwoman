@@ -22,6 +22,7 @@
 import { writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+
 import {
 	addressFrequencyKey,
 	ingestRows,
@@ -32,7 +33,7 @@ import {
 	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { norm } from "./shared.ts"

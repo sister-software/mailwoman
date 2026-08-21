@@ -10,7 +10,7 @@
  *   scripts/build-house-venue-shard.mjs.
  */
 
-import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "@mailwoman/corpus/synthesizers/house-venue"
+import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
 
 import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 

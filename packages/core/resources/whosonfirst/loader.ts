@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
-import type { TextNormalizer } from "@mailwoman/core/tokenization"
 import FastGlob, { type Entry } from "fast-glob"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+
+import type { Alpha3bLanguageCode } from "#resources/languages"
+import type { TextNormalizer } from "#tokenization"
 
 import type { Displayable } from "../debugging.ts"
 import { ResourceMapCache } from "../ResourceMapCache.ts"

@@ -24,6 +24,9 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
+	"imports": {
+		"#package.json": "./package.json"
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {

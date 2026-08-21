@@ -23,7 +23,7 @@ import DocRootLayoutSidebar from "@theme/DocRoot/Layout/Sidebar"
 import clsx from "clsx"
 import { type ReactNode, useState } from "react"
 
-import { DocsSubHeader, useIsDocsSection } from "../../../components/DocsSubHeader/index.tsx"
+import { DocsSubHeader, useIsDocsSection } from "#docs-sub-header"
 
 import styles from "./styles.module.css"
 

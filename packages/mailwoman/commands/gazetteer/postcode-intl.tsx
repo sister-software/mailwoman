@@ -41,7 +41,8 @@ import { copyFileSync, existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

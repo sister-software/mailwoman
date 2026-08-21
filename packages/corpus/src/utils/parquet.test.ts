@@ -12,9 +12,10 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
-import type { LabeledRow } from "@mailwoman/corpus/types"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { ParquetReader } from "#parquet-wrapper"
+import type { LabeledRow } from "#types"
 
 import {
 	LABELED_ROW_SCHEMA,

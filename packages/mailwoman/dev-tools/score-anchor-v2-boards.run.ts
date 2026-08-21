@@ -38,8 +38,9 @@ import { parseArgs } from "node:util"
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
 import { JSONSpliterator } from "spliterator"
+
+import { createRuntimePipeline } from "#index"
 
 const REGISTERS = ["asis", "lower", "upper"] as const
 

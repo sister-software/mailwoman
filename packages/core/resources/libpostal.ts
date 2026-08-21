@@ -7,12 +7,13 @@
 import { readdir } from "node:fs/promises"
 import { availableParallelism } from "node:os"
 
-import { tryStat } from "@mailwoman/core/fs"
-import type { Alpha2LanguageCode } from "@mailwoman/core/resources/languages"
-import { TextNormalizer, type TextNormalizerInit } from "@mailwoman/core/tokenization"
 import type { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
 import { AsyncSequence, TextSpliterator } from "spliterator"
+
+import { tryStat } from "#fs"
+import type { Alpha2LanguageCode } from "#resources/languages"
+import { TextNormalizer, type TextNormalizerInit } from "#tokenization"
 
 import { resourceDictionaryPathBuilder } from "../utils/repo.ts"
 import { LocaleIndex } from "./LocaleIndex.ts"

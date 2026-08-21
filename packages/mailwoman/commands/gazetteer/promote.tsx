@@ -12,8 +12,9 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_CANDIDATE_OUT } from "mailwoman/gazetteer-pipeline/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -29,7 +30,7 @@ export const spec = {
 const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
-		const { promoteCandidate, wofDir } = await import("mailwoman/gazetteer-pipeline")
+		const { promoteCandidate, wofDir } = await import("#gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
 		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)

@@ -10,9 +10,10 @@
 
 import { OpenAPIHono, type z } from "@hono/zod-openapi"
 import { apiError, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
-import packageJson from "@mailwoman/api/package.json" with { type: "json" }
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
+
+import packageJson from "#package.json" with { type: "json" }
 
 import type { MailwomanAPIEngine } from "./engine.ts"
 import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "./routes.ts"

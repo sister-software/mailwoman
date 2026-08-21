@@ -13,7 +13,7 @@
  *   task-3 follow-up in DECISIONS.md).
  */
 
-import type { ComponentTag } from "@mailwoman/core/types"
+import type { ComponentTag } from "#types"
 
 import type { ClassifierPolicy } from "../policy/policy.ts"
 

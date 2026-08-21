@@ -31,14 +31,15 @@ import { fileURLToPath } from "node:url"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { LocaleBaseTuple } from "@mailwoman/corpus/synthesizers/german"
+
+import type { LocaleBaseTuple } from "#synthesizers/german"
 import {
 	classifyIdentifier,
 	readSubVenueJSONL,
 	type SubVenueLexiconTable,
 	SUBVENUE_PROMOTIONS,
 	type SubVenuePromotion,
-} from "@mailwoman/corpus/tools"
+} from "#tools"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "./locale.ts"
 import { makeMulberry32, readTuples as readShardTuples } from "./scaffold.ts"

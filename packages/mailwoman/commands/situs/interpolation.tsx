@@ -34,8 +34,9 @@ import { pipeline } from "node:stream/promises"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { TextSpliterator } from "spliterator"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * A successful response; anything else is an error page or an unfollowed redirect.

@@ -12,7 +12,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "FR fragment board — bare-street / particle / homonym / date-name classes with CIs (#727)"
 

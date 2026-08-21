@@ -11,7 +11,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -32,7 +33,7 @@ const report = (line: string): void => console.error(line)
 
 const DevGenerateTraceFixture: ParsedCommandComponent<Record<string, never>> = ({ args }) => {
 	const state = useCommandTask(async () => {
-		const { generateTraceFixture } = await import("mailwoman/dev-tools/generate-trace-fixture")
+		const { generateTraceFixture } = await import("#dev-tools/generate-trace-fixture")
 
 		return generateTraceFixture({ text: args[0] }, report)
 	})

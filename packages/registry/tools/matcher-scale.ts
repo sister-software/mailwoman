@@ -19,7 +19,8 @@
 import { writeFileSync } from "node:fs"
 
 import { makeLcg } from "@mailwoman/core/utils"
-import { resolveEntities, type SourceRecord } from "@mailwoman/registry"
+
+import { resolveEntities, type SourceRecord } from "#index"
 
 /**
  * Options for {@linkcode matcherScale}.

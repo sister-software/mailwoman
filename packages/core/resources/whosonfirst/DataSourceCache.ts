@@ -6,8 +6,9 @@
 
 import { mkdirSync } from "node:fs"
 
-import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
 import { dirname } from "path-ts"
+
+import type { Alpha3bLanguageCode } from "#resources/languages"
 
 import { PlacetypeDataSource, type PlacetypeDataSourceOptions } from "./PlacetypeDataSource.ts"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"

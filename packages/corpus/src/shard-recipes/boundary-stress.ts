@@ -12,11 +12,8 @@
  *   `synthesizeBoundaryStressRow` is NOT re-exported from the corpus index — imported directly here.
  */
 
-import {
-	type BoundaryStressTemplate,
-	synthesizeBoundaryStressRow,
-} from "@mailwoman/corpus/synthesizers/boundary-stress"
-import { alignRow } from "@mailwoman/corpus/utils"
+import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
+import { alignRow } from "#utils"
 
 import { makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 

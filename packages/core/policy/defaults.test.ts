@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { COMPONENT_TAGS } from "@mailwoman/core/types"
 import { expect, test } from "vitest"
+
+import { COMPONENT_TAGS } from "#types"
 
 import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.ts"
 

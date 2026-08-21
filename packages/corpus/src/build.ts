@@ -53,22 +53,22 @@ import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { defaultAdapterRegistry } from "@mailwoman/corpus/adapters/utils"
-import { runAdapter, type AdapterRunManifest } from "@mailwoman/corpus/runner"
-import { defaultAugmentationsForCountry, synthesizeRow } from "@mailwoman/corpus/synthesizers/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "@mailwoman/corpus/types"
+import { JSONSpliterator } from "spliterator"
+
+import { defaultAdapterRegistry } from "#adapters/utils"
+import { runAdapter, type AdapterRunManifest } from "#runner"
+import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
+import { alignRow } from "#utils/align"
+import { licenseExcluded } from "#utils/license"
+import { writeShards, type ShardManifest } from "#utils/parquet"
 import {
-	alignRow,
-	licenseExcluded,
-	writeShards,
 	defaultHoldouts,
 	splitForRow,
 	writeSplitManifestsFromLabeledFiles,
-	type ShardManifest,
 	type SplitManifest,
 	type SplitName,
-} from "@mailwoman/corpus/utils"
-import { JSONSpliterator } from "spliterator"
+} from "#utils/split"
 
 /**
  * Stage tags surfaced to `onProgress`.

@@ -21,10 +21,11 @@
 
 import { readFileSync, writeFileSync } from "node:fs"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, corePackagePath, median } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
+
+import { parseJSONStrict } from "#objects"
+import { dataRootPath, corePackagePath, median } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
 

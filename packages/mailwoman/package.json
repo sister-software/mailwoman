@@ -57,6 +57,53 @@
 		"man/mailwoman.1"
 	],
 	"type": "module",
+	"imports": {
+		"#doctor/*": {
+			"node": "./doctor/*.ts",
+			"default": "./out/doctor/*.js",
+			"types": "./out/doctor/*.d.ts"
+		},
+		"#gazetteer/*": {
+			"node": "./gazetteer-pipeline/*.ts",
+			"default": "./out/gazetteer-pipeline/*.js",
+			"types": "./out/gazetteer-pipeline/*.d.ts"
+		},
+		"#cli-kit": {
+			"node": "./cli-kit/index.ts",
+			"default": "./out/cli-kit/index.js",
+			"types": "./out/cli-kit/index.d.ts"
+		},
+		"#dev-tools/*": {
+			"node": "./dev-tools/*.ts",
+			"default": "./out/dev-tools/*.js",
+			"types": "./out/dev-tools/*.d.ts"
+		},
+		"#gazetteer-pipeline": {
+			"node": "./gazetteer-pipeline/index.ts",
+			"default": "./out/gazetteer-pipeline/index.js",
+			"types": "./out/gazetteer-pipeline/index.d.ts"
+		},
+		"#gazetteer-pipeline/*": {
+			"node": "./gazetteer-pipeline/*.ts",
+			"default": "./out/gazetteer-pipeline/*.js",
+			"types": "./out/gazetteer-pipeline/*.d.ts"
+		},
+		"#index": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"#cli-kit/weights-guard": {
+			"node": "./out/cli-kit/weights-guard.js",
+			"default": "./out/cli-kit/weights-guard.js",
+			"types": "./out/cli-kit/weights-guard.d.ts"
+		},
+		"#geocode-core": {
+			"node": "./geocode-core.ts",
+			"default": "./out/geocode-core.js",
+			"types": "./out/geocode-core.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -170,6 +217,7 @@
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
@@ -188,9 +236,7 @@
 		"kysely": "^0.29.4",
 		"onnxruntime-node": "^1.26.0",
 		"path-ts": "^2.1.0",
-		"pluralize": "^8.0.0",
 		"react": "^19.2.8",
-		"regenerate": "^1.4.2",
 		"spliterator": "^6.1.0",
 		"yauzl-promise": "^4.0.0",
 		"zod": "^4.4.3",

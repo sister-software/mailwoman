@@ -32,6 +32,7 @@ import { writeFileSync } from "node:fs"
 
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
@@ -43,7 +44,7 @@ import {
 	type ColumnMapping,
 	type ResolvedEntity,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import {

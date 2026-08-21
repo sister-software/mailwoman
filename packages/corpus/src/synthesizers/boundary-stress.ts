@@ -49,7 +49,7 @@
  *   base-locale shard. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
+import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the

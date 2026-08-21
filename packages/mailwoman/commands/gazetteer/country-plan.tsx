@@ -21,8 +21,9 @@ import { readFileSync, writeFileSync } from "node:fs"
 
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 
 import {
 	adminDBAvailable,

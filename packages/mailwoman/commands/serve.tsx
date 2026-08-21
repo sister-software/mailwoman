@@ -15,8 +15,9 @@ import process from "node:process"
 import { Spinner, StatusMessage } from "@inkjs/ui"
 import type { ServerHandle } from "@mailwoman/api-kit"
 import { Box, Text } from "ink"
-import type { CommandSpec, ParsedCommandComponent } from "mailwoman/cli-kit"
 import { useEffect, useState } from "react"
+
+import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
 
 interface ServerConfig {
 	port: number

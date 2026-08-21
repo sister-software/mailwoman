@@ -11,7 +11,8 @@ import { readFileSync, writeFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { toMapHTML } from "@mailwoman/registry"
+
+import { toMapHTML } from "#index"
 
 /**
  * Distinct agencies a combination needs before it is plotted as a cross-agency cluster.

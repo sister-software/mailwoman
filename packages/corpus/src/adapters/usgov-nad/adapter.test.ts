@@ -5,8 +5,9 @@
  */
 
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
 
 import { createUsgovNADAdapter, USGOV_NAD_ADAPTER_ID, USGOV_NAD_DEFAULT_LICENSE } from "./adapter.ts"
 

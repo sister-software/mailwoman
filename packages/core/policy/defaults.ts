@@ -8,7 +8,7 @@
  *   edits one entry here with a commit-message rationale.
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+import { COMPONENT_TAGS, type ComponentTag } from "#types"
 
 import type { ClassifierPolicy, PolicyMode } from "./policy.ts"
 

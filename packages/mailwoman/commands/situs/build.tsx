@@ -40,7 +40,8 @@ import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 const positiveInteger = (v: number): boolean => Number.isInteger(v) && v > 0
 

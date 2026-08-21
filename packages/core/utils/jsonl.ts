@@ -29,7 +29,7 @@ export function readJSONL<T>(path: string): T[] {
 	return (
 		[...TextSpliterator.from(readFileSync(path, "utf8"))]
 			.filter((line) => line.trim().length > 0)
-			// oxlint-disable-next-line no-restricted-properties
+			// oxlint-disable-next-line no-restricted-properties -- deprecated helper's throw-on-corrupt contract is preserved
 			.map((line) => JSON.parse(line) as T)
 	)
 }

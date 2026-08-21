@@ -7,8 +7,8 @@
  *   {@link synthesizeStreetRow} → aligned LabeledRow. Ported from scripts/build-street-shard.mjs.
  */
 
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import { synthesizeStreetRow, type StreetBaseTuple } from "@mailwoman/corpus/synthesizers/street"
+import { stableSourceID } from "#adapters/utils"
+import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 
 import { alignAndWrite, makeLcg, readTuples, type ShardRecipe } from "./scaffold.ts"
 

@@ -8,9 +8,9 @@ import { rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { runAdapter } from "@mailwoman/corpus/runner"
 import { describe, expect, it } from "vitest"
 
+import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 import { OPENADDRESSES_ADAPTER_ID, OPENADDRESSES_DEFAULT_LICENSE, createOpenaddressesAdapter } from "./adapter.ts"

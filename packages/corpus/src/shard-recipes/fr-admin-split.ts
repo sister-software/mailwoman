@@ -33,10 +33,11 @@
 import { departementForCodePostal } from "@mailwoman/codex/fr"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { CSVSpliterator, Delimiters } from "spliterator"
+
+import { stableSourceID } from "#adapters/utils"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 

@@ -46,7 +46,7 @@ const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options 
 		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
 
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
-			await import("../../../gazetteer-pipeline/postcode/ni-osm-shard.ts")
+			await import("#gazetteer/postcode/ni-osm-shard")
 
 		const result = await buildPostcodeNIOSM({
 			sourceDir: options.sourceDir,

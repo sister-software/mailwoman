@@ -6,12 +6,10 @@
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
-import {
-	synthesizeAnchorAbsorptionRow,
-	type AnchorAbsorptionTemplate,
-} from "@mailwoman/corpus/synthesizers/anchor-absorption"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
+
+import { synthesizeAnchorAbsorptionRow, type AnchorAbsorptionTemplate } from "#synthesizers/anchor-absorption"
+import { alignRow } from "#utils"
 
 // A deterministic RNG so the assertions are stable.
 function rowFor(template: AnchorAbsorptionTemplate, seed = 1) {

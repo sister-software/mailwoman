@@ -36,6 +36,13 @@
 		"!__snapshots__/"
 	],
 	"type": "module",
+	"imports": {
+		"#index": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./sdk": {
@@ -65,7 +72,6 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@turf/boolean-contains": "^7.3.5",
 		"kysely": "^0.29.4",
-		"shapefile-parser": "^1.0.3",
 		"spliterator": "^6.1.0",
 		"type-fest": "^5.8.0"
 	},

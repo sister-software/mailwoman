@@ -6,8 +6,9 @@
  *   Provides functions for parsing and converting extended Well-Known text and binary data.
  */
 
-import type { GeometryCollection, GeometryLiteral } from "@mailwoman/spatial"
 import wkx from "wkx"
+
+import type { GeometryCollection, GeometryLiteral } from "#index"
 
 /**
  * Given an extended Well-Known Binary (EWKB) buffer, parse it into a GeoJSON geometry object.

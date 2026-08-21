@@ -12,8 +12,9 @@
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 const h3 = (description: string, defaultValue: number) =>
 	({

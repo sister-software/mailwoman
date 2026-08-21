@@ -18,7 +18,8 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import type { TriageRow, TriageSummary } from "../../gazetteer-pipeline/wof-triage.ts"
 

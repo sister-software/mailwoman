@@ -31,9 +31,10 @@ import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
+
+import { stableSourceID } from "#adapters/utils"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"

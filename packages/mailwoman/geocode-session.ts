@@ -43,8 +43,9 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { CommandError } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
+
+import { CommandError } from "#cli-kit"
 
 import { resolverDefaultCountry } from "./country-scope.ts"
 import {

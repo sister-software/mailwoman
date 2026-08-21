@@ -26,11 +26,12 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
-		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"mailwoman": "workspace:*",
+		"path-ts": "^2.1.0",
+		"spliterator": "^6.1.0",
 		"zod": "^4.4.3"
 	}
 }

@@ -41,7 +41,8 @@ import { createGunzip } from "node:zlib"
 import { cacheRootPath } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import type { FanoutCandidate } from "../../gazetteer-pipeline/importance-fanout.ts"
 

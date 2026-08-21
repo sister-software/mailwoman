@@ -4,14 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
+
 import {
 	type Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha2LanguageCode,
 	isAlpha3bLanguageCode,
-} from "@mailwoman/core/resources/languages"
-import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
+} from "#resources/languages"
 
 import type { WhosOnFirstPlacetype } from "./definition.ts"
 

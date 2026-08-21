@@ -32,13 +32,8 @@ import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pip
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
-import {
-	CommandError,
-	type CommandSpec,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -231,7 +226,7 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 }
 
 async function runPOI(input: string, options: Options): Promise<string> {
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 
 	const classifier = await tryLoadNeural(options.locale)
 	const resolverHandle = await tryLoadResolver(options)

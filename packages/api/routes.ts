@@ -24,7 +24,6 @@ import { apiError, metricsSnapshot, recordTimed } from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
-import type { GeocodeResult } from "mailwoman/geocode-core"
 
 import type { MailwomanAPIEngine } from "./engine.ts"
 import {

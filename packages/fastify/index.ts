@@ -22,11 +22,12 @@
  */
 
 import type { decodeAsTuples } from "@mailwoman/core/decoder"
-import packageJson from "@mailwoman/fastify/package.json" with { type: "json" }
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
 import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "mailwoman"
 import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode-core"
+
+import packageJson from "#package.json" with { type: "json" }
 
 /**
  * Structural shape of the runtime pipeline (`createRuntimePipeline`'s return value): a function from raw input +

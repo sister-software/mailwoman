@@ -27,9 +27,10 @@
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
+
+import { stableSourceID } from "#adapters/utils"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 

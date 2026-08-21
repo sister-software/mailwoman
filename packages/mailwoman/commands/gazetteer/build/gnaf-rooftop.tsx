@@ -50,7 +50,7 @@ interface Options {
 
 const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildGNAFRooftopShard } = await import("../../../gazetteer-pipeline/gnaf-rooftop.ts")
+		const { buildGNAFRooftopShard } = await import("#gazetteer/gnaf-rooftop")
 
 		const r = await buildGNAFRooftopShard({
 			standardDir: options.standardDir,

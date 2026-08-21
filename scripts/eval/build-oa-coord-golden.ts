@@ -26,7 +26,7 @@
  *   --entry it/countrywide.csv --out data/eval/external/oa-it-coord-150.jsonl --n 150
  */
 
-// oxlint-disable max-depth
+// oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
 import { createReadStream, globSync, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"

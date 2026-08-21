@@ -62,9 +62,10 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { LocaleBaseTuple } from "@mailwoman/corpus/synthesizers/german"
-import type { SubVenueLexiconTable } from "@mailwoman/corpus/tools"
-import { alignRow } from "@mailwoman/corpus/utils"
+
+import type { LocaleBaseTuple } from "#synthesizers/german"
+import type { SubVenueLexiconTable } from "#tools"
+import { alignRow } from "#utils"
 
 import { makeMulberry32, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 import {
