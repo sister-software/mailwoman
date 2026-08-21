@@ -63,7 +63,8 @@ const ALLOWED: Record<string, string> = {
 	"packages/neural/weights.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 	// The ORACLE for that layout. A fixture built with the implementation's own helper cannot fail when the
 	// implementation is wrong, so this file spells the path out independently and ties the helper back to it.
-	"packages/neural/test/weights-cache.test.ts": "pins the cache layout independently of the helper that builds it",
+	"packages/neural/test/integration/weights-cache.test.ts":
+		"pins the cache layout independently of the helper that builds it",
 	// Probes a FOREIGN scratch project it just created with `npm install`. The whole point is to read the install
 	// layout from outside; `import.meta.resolve` would answer from the monorepo's graph — the exact thing the clean-
 	// install smoke exists to NOT consult.
@@ -75,10 +76,11 @@ const ALLOWED: Record<string, string> = {
 	"packages/dev-mcp/worktree-arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
 	// The ORACLE for that farm, on the same principle as the weights-cache pair above: a fixture built with the
 	// implementation's own helper cannot fail when the implementation is wrong.
-	"packages/dev-mcp/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
+	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
 	// Writes a FIXTURE cache in the npm-prefix layout `weightsCachePackageDir` reads. Spelling it out here is what
 	// makes the cache rung's test independent of the helper it is exercising.
-	"packages/neural/test/weights-overlay.test.ts": "builds a fixture cache in the npm-prefix layout, independently",
+	"packages/neural/test/integration/weights-overlay.test.ts":
+		"builds a fixture cache in the npm-prefix layout, independently",
 }
 
 /**
