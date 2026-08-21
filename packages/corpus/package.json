@@ -168,7 +168,7 @@
 		"spliterator": "^6.1.0"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2",
-		"kysely": "^0.29.4"
+		"@types/node": ">=26.2.0",
+		"kysely": "^0.29.5"
 	}
 }
