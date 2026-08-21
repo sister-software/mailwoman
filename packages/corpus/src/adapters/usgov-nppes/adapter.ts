@@ -21,6 +21,7 @@
  *   License: stamped `"Public Domain"` per CMS's federal government distribution terms.
  */
 
+import { isNonEmptyString } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
@@ -60,10 +61,13 @@ function composeRaw(
 	state: string,
 	postcode: string
 ): string {
-	const streetPart = [house, street].filter(Boolean).join(" ").trim()
-	const cityPart = [city.trim(), [state, postcode].filter(Boolean).join(" ").trim()].filter(Boolean).join(", ")
+	const streetPart = [house, street].filter(isNonEmptyString).join(" ").trim()
 
-	return [venue, streetPart, cityPart].filter(Boolean).join(", ")
+	const cityPart = [city.trim(), [state, postcode].filter(isNonEmptyString).join(" ").trim()]
+		.filter(isNonEmptyString)
+		.join(", ")
+
+	return [venue, streetPart, cityPart].filter(isNonEmptyString).join(", ")
 }
 
 export function createUsgovNPPESAdapter(): CorpusAdapter {
@@ -109,12 +113,12 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const fullStreet = [address1, address2].filter(Boolean).join(" ")
+				const fullStreet = [address1, address2].filter(isNonEmptyString).join(" ")
 				const split = splitStreetLine(fullStreet)
 
 				if (!split) continue
 
-				const venue = orgName || [firstName, lastName].filter(Boolean).join(" ") || undefined
+				const venue = orgName || [firstName, lastName].filter(isNonEmptyString).join(" ") || undefined
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),

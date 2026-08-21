@@ -131,6 +131,7 @@
  *   place.
  */
 
+import { isNonEmptyString } from "@mailwoman/core/objects"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
@@ -643,7 +644,7 @@ const DISTINCT_SECOND_VALUE_RATIO = 0.7
 
 function isNameOverNameTable(rows: readonly TableCell[][]): boolean {
 	const seconds = rows.flatMap((row) => {
-		const values = row.map((cell) => cell.text).filter(Boolean)
+		const values = row.map((cell) => cell.text).filter(isNonEmptyString)
 
 		if (values.length !== 2) return []
 
@@ -714,7 +715,7 @@ function subsidiariesFromTable(
 		if (present[rowIndex]!.every((cell) => cell.tag === "th")) continue
 
 		const values = row.map((cell) => cell.text)
-		const nonBlank = values.filter(Boolean)
+		const nonBlank = values.filter(isNonEmptyString)
 
 		if (!nonBlank.length) {
 			unparseable++
@@ -915,7 +916,7 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 	const spaced = line
 		.split(/[ \t]{2,}/)
 		.map((part) => normalizeWhitespace(part))
-		.filter(Boolean)
+		.filter(isNonEmptyString)
 
 	if (spaced.length === 2) {
 		return { name: spaced[0]!, jurisdiction: spaced[1] }

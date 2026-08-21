@@ -33,7 +33,7 @@
 import { readdir } from "node:fs/promises"
 import { join } from "node:path"
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isNonEmptyString, tryParsingJSON } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
 
@@ -176,7 +176,7 @@ function composeHouseNumber(r: NADRecord): string | undefined {
 	const pre = (r.AddNum_Pre ?? "").toString().trim()
 	const suf = (r.AddNum_Suf ?? "").toString().trim()
 
-	return [pre, num, suf].filter(Boolean).join(" ").trim() || undefined
+	return [pre, num, suf].filter(isNonEmptyString).join(" ").trim() || undefined
 }
 
 interface DecomposedNADStreet {
@@ -195,9 +195,9 @@ function decomposeNADStreet(r: NADRecord): DecomposedNADStreet | undefined {
 		const preSep = (r.St_PreSep ?? "").toString().trim()
 		const posTyp = (r.St_PosTyp ?? "").toString().trim()
 		const posDir = (r.St_PosDir ?? "").toString().trim()
-		const prefix = [preDir, preTyp, preSep].filter(Boolean).join(" ") || undefined
-		const suffix = [posTyp, posDir].filter(Boolean).join(" ") || undefined
-		const full = [prefix, name, suffix].filter(Boolean).join(" ")
+		const prefix = [preDir, preTyp, preSep].filter(isNonEmptyString).join(" ") || undefined
+		const suffix = [posTyp, posDir].filter(isNonEmptyString).join(" ") || undefined
+		const full = [prefix, name, suffix].filter(isNonEmptyString).join(" ")
 
 		return { prefix, street: name, suffix, full }
 	}
@@ -231,10 +231,10 @@ function composeRaw(parts: {
 	region: string
 	postcode: string
 }): string {
-	const streetLine = [parts.houseNumber, parts.street, parts.unit].filter(Boolean).join(" ").trim()
+	const streetLine = [parts.houseNumber, parts.street, parts.unit].filter(isNonEmptyString).join(" ").trim()
 	const tail = `${parts.locality}, ${parts.region} ${parts.postcode}`
 
-	return [parts.venue, streetLine || undefined, tail].filter(Boolean).join(", ")
+	return [parts.venue, streetLine || undefined, tail].filter(isNonEmptyString).join(", ")
 }
 
 export function createUsgovNADAdapter(): CorpusAdapter {

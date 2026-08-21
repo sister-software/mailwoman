@@ -131,6 +131,13 @@ export function isRecordLike(input: unknown): input is object {
 }
 
 /**
+ * Type guard for string composition pipelines that discard empty optional fields.
+ */
+export function isNonEmptyString(input: unknown): input is string {
+	return typeof input === "string" && input.length > 0
+}
+
+/**
  * Type-helper to remove nullability from an object's properties.
  *
  * @category Object
