@@ -73,7 +73,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@turf/boolean-contains": "^7.3.5",
 		"kysely": "^0.29.4",
-		"spliterator": "^6.1.0",
+		"spliterator": "^6.2.0",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {

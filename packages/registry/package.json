@@ -100,7 +100,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
-		"spliterator": "^6.1.0"
+		"spliterator": "^6.2.0"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.1.2",

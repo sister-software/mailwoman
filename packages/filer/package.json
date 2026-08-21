@@ -178,7 +178,7 @@
 		"@mailwoman/registry": "workspace:*",
 		"kysely": "^0.29.4",
 		"read-excel-file": "^9.3.5",
-		"spliterator": "^6.1.0",
+		"spliterator": "^6.2.0",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
