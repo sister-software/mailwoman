@@ -30,6 +30,7 @@
  *   inlined the variant logic and never called it).
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
@@ -197,7 +198,7 @@ export const frOrderRecipe: ShardRecipe = {
 			const { raw, components } = rendered
 
 			// Safety check: every component must appear verbatim in raw (alignment precondition).
-			const componentValues = Object.values(components).filter(Boolean) as string[]
+			const componentValues = Object.values(components).filter(isPresent)
 
 			if (!componentValues.every((v) => raw.includes(v))) {
 				skipped++

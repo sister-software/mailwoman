@@ -6,6 +6,8 @@
 
 import { createHash } from "node:crypto"
 
+import { isPresent } from "../objects.ts"
+
 /**
  * A value that can be used as input to {@link simpleSHA3}.
  *
@@ -36,7 +38,7 @@ export type SHA3Input = Record<string | number, SHA3Seed> | SHA3Seed[]
 export function normalizeSHASeeds(input: SHA3Input): string[] {
 	const seeds = Array.isArray(input) ? input : Object.values(input)
 
-	const normalizedSeeds = seeds.map((seed) => seed?.toString().trim()).filter(Boolean) as string[]
+	const normalizedSeeds = seeds.map((seed) => seed?.toString().trim()).filter(isPresent)
 
 	if (!normalizedSeeds.length) {
 		throw new Error("Cannot generate a SHA3 hash without input.")
