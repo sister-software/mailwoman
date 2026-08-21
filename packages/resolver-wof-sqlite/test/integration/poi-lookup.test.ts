@@ -28,6 +28,7 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -41,10 +42,6 @@ function cellFor(latitude: number, longitude: number): number {
 	const full = latLngToCell(latitude, longitude, POI_H3_RESOLUTION) as H3Cell
 
 	return shortCellToInt(full)
-}
-
-function nameKeyFor(name: string): string {
-	return name.toLowerCase().replaceAll(/[^a-z0-9]/g, "")
 }
 
 interface FixtureRow {
@@ -195,7 +192,7 @@ async function buildFixture(path: string): Promise<void> {
 	for (const row of ALL_ROWS) {
 		const categoryID = row.category ? (CATEGORY_IDS[row.category] ?? 0) : 0
 		const confidence = row.confidence ?? 0.9
-		const nameKey = nameKeyFor(row.name)
+		const nameKey = normalizeLocalityForKey(row.name)
 		const h3Cell = cellFor(row.latitude, row.longitude)
 
 		await kdb

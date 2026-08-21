@@ -15,6 +15,7 @@ import {
 	POI_FTS_TABLE,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import type { Kysely } from "kysely"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
@@ -54,7 +55,7 @@ describe("poi schema", () => {
 				rowid_key: 1,
 				brand_wikidata: "Q38076",
 				name: "McDonald's",
-				name_key: "mcdonalds",
+				name_key: normalizeLocalityForKey("McDonald's"),
 				latitude: 39.78,
 				longitude: -89.65,
 				country: "US",
