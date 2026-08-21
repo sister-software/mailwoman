@@ -65,6 +65,21 @@
 			"default": "./out/oracle-arm.js",
 			"types": "./out/oracle-arm.d.ts"
 		},
+		"./reliability": {
+			"node": "./reliability.ts",
+			"default": "./out/reliability.js",
+			"types": "./out/reliability.d.ts"
+		},
+		"./reliability-report": {
+			"node": "./reliability-report.ts",
+			"default": "./out/reliability-report.js",
+			"types": "./out/reliability-report.d.ts"
+		},
+		"./reliability-surfaces": {
+			"node": "./reliability-surfaces.ts",
+			"default": "./out/reliability-surfaces.js",
+			"types": "./out/reliability-surfaces.d.ts"
+		},
 		"./run-store": {
 			"node": "./run-store.ts",
 			"default": "./out/run-store.js",

@@ -34,6 +34,7 @@ import { inputsTool } from "./inputs.ts"
 import { lookupTool } from "./lookup.ts"
 import { minimalPairsTool } from "./minimal-pairs.ts"
 import { provenanceTool } from "./provenance.ts"
+import { reliabilityTool } from "./reliability.ts"
 import { rigTool } from "./rig.ts"
 import { runTool } from "./run.ts"
 import { runsTool } from "./runs.ts"
@@ -58,6 +59,7 @@ const FACTORIES = [
 	constraintsTool,
 	diagnoseTool,
 	minimalPairsTool,
+	reliabilityTool,
 	rigTool,
 	provenanceTool,
 	vocabTool,
