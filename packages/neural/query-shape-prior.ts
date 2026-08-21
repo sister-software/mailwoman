@@ -44,7 +44,7 @@ export interface QueryShapeLike {
 	regionAbbreviations?: ReadonlyArray<RegionAbbreviationHitLike>
 }
 
-export interface RegionAbbreviationHitLike {
+interface RegionAbbreviationHitLike {
 	start: number
 	span: string
 }

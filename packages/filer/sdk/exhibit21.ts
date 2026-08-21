@@ -1,136 +1,14 @@
 /**
- * @copyright Sister Software.
+ * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Exhibit 21 ("Subsidiaries of the Registrant") fetch + parse (decision 6, gate 3).
+ * @file Conservative SEC Exhibit 21 subsidiary parser.
  *
- *   Exhibit 21 is genuinely inconsistent across filers: some file a clean HTML `<table>`, some a nested
- *   `<ul>`/`<li>` corporate tree, some a plain fixed-width-column text block (the older SGML-era filings),
- *   and plenty are simply malformed in ways none of the above recognize. {@linkcode parseExhibit21} tries
- *   exactly three recognized shapes, in order — table, then nested list, then plain text — and DECISION 6
- *   BINDS on every one of them: a row/line this parser cannot confidently reduce to a subsidiary name (and
- *   optional jurisdiction) is COUNTED as `unparseable` and DROPPED, never guessed at. Gate 3 lives here and
- *   is load-bearing: a mangled fixture yields zero subsidiaries, a non-zero `unparseable`, and no thrown
- *   error; a clean fixture yields exactly the expected list.
- *
- *   **The invariant: a name is only emitted if it appears in the input as a contiguous string.** Every
- *   `ParsedSubsidiary.name`/`.jurisdiction` this module emits must be a substring of the document once tags
- *   are stripped, entities decoded, and whitespace collapsed — never text assembled by joining two things
- *   the source kept apart, and never text truncated at a boundary the source didn't put there. Concatenating
- *   an unclosed cell into its neighbor, pairing two unrelated lines as name/jurisdiction, and splitting a
- *   name in half at an inline tag's artifact space are all violations of this invariant, not merely of
- *   decision 6 — they fabricate a claim ("this string names a subsidiary") the input never made. It's
- *   directly testable (`exhibit21.test.ts`'s substring-invariant test asserts it across every fixture) and
- *   is the standard every extraction strategy below is held to.
- *
- *   **No HTML-parser dependency.** This workspace has none (`@mailwoman/filer`'s only runtime deps are
- *   `@mailwoman/*` workspaces + kysely + type-fest — see `form499.ts`/`provider-list.ts` for the identical
- *   hand-rolled-parser precedent), and Exhibit 21's known shapes don't need one. Table/list extraction below
- *   is a small, deliberately narrow regex-based scan — not a general HTML parser, and not trying to be one.
- *
- *   **Table strategy.** EVERY top-level `<table>...</table>` in the document is read, in document order
- *   (depth-tracked, so a nested layout/formatting table belongs to the cell it sits in and is never a table of
- *   its own). Reading only the outermost one was the single largest recall defect the real corpus exposed:
- *   EDGAR splits one logical subsidiary list across sibling page-break tables constantly, and only the first
- *   carries a header. A row's cells are found by slicing between successive `<td>`/`<th>` START tags rather
- *   than requiring a matching close tag: Word-exported EDGAR HTML routinely leaves `<td>` unclosed, and a
- *   browser (and this parser) treats that as implicitly closed by the next cell or the row's end, not as one
- *   cell whose text runs on into its neighbor's.
- *
- *   Each table's rows are right-padded to its widest row and every column blank in EVERY row is dropped —
- *   per table, column-wise, never per row, because a row-by-row blank filter destroys the one piece of
- *   evidence that distinguishes a top-level subsidiary row from an indented child row (whether the row's
- *   LEADING cell was blank). An undropped all-blank spacer column makes every data row look 3-wide, which is
- *   the shape the extra-column rule abstains on; that alone cost five vendored filings every subsidiary they
- *   state.
- *
- *   A table's own header row then MAPS its columns, when it labels exactly one of them with a jurisdiction
- *   label: the jurisdiction column is that one, and the name column is the first other column not labelled
- *   with an "other" label (`% of ownership`, `conducts business under`, `d/b/a`, …). This is not guessing
- *   which of N columns means what — the document says so. The mapping CARRIES FORWARD to subsequent sibling
- *   tables until another header row replaces it. When the mapped name column is blank on a row, the first
- *   non-blank column strictly BETWEEN the name and jurisdiction columns is the name (an indented corporate
- *   tree; the nesting depth is discarded, since an Exhibit 21 row is a registrant→subsidiary edge either
- *   way); when there is no such column the row FALLS THROUGH to the generic rules rather than abstaining,
- *   because a ragged table misaligns the mapping without making its rows unreadable.
- *
- *   Four abstentions run before the mapping is consulted, in this order: a row whose first non-blank value is
- *   a bare FOOTNOTE MARKER (`(1)`, `*`) is the footnote's own text; a row holding exactly one value inside a
- *   table that is not a plain single-column name list is a SECTION HEADING; a cell whose raw HTML keeps
- *   several complete legal names apart at a block boundary states MORE VALUES than the row can align; and a
- *   whole table abstains as a NAME/NAME list — two columns of entity names, no jurisdiction anywhere — when
- *   it has 4+ two-value rows, more than half of whose second values carry a legal designation and more than
- *   70% of which are distinct. Every one of the four is an abstention, and none of them invents a value.
- *
- *   A row made ENTIRELY of `<th>` cells is recognized as a header/label row and skipped (neither counted as
- *   a subsidiary nor as `unparseable`) — this is unambiguous given well-formed markup. A row is also
- *   recognized as a header/decoration row — same skip, but COUNTED as `unparseable`, since this is a content
- *   judgment rather than markup certainty — when every non-blank cell is either pure decoration (no letter
- *   or digit anywhere in it, e.g. `"----"`) or an EXACT case-insensitive match against a short fixed list of
- *   the literal boilerplate phrases EDGAR filings use (`"name of subsidiary"`, `"jurisdiction of
- *   incorporation"`, `"subsidiaries of the registrant"`, …). This is deliberately NOT substring/keyword
- *   sniffing on words like "subsidiary" or "jurisdiction" — that would misfire on a company literally named
- *   that — it's an exact whole-cell match against known non-entity boilerplate text, which a real legal
- *   entity name does not collide with.
- *
- *   A data row with exactly 1 or 2 non-blank values is confident (`{name}` or `{name, jurisdiction}`); a row
- *   with 0 cells is silently ignored as formatting cruft (an empty `<tr></tr>`); a row with a BLANK leading
- *   cell, or 3+ non-blank values (an extra column this parser has no confident meaning for — an ownership
- *   percentage, an EIN — that no header row explained), is `unparseable` — decision 6's "when in doubt,
- *   abstain and count it", applied literally.
- *
- *   **List/plain-text strategies abstain on the JURISDICTION only, never on the name — except where the
- *   whole line is itself unparseable.** A candidate line that doesn't match a recognized name/jurisdiction
- *   split (a 2+-space column gap, a trailing `(Jurisdiction)` parenthetical, or EXACTLY one comma — 2+ commas
- *   is genuinely ambiguous, since a legal name can itself contain one, e.g. `"Acme Fiber, LLC"`) still
- *   becomes `{name: <the whole line>}` rather than an invented jurisdiction — recording an unsplit name is
- *   not a guess, since nothing about the name itself was uncertain. A line with a 3+-column 2+-space-gap
- *   split is `unparseable` instead (the same "extra column, no confident meaning" abstention the table
- *   strategy applies), and the same header/decoration-row check the table strategy uses is applied to the
- *   split name/jurisdiction here too — the plain-text path gets no free pass on EDGAR's boilerplate titles
- *   just because it has no `<th>` markup to lean on. Only a line that reduces to nothing (after decoding
- *   entities and stripping any stray tags) is `unparseable` on the same basis as a blank line elsewhere.
- *
- *   Tag-stripping (shared by all three strategies, `stripTags`) only inserts a separating space where the
- *   source had no adjacent whitespace already — otherwise it strips to nothing. This matters beyond cosmetic
- *   spacing: naively replacing every tag with a space turns `</p><p>` (two adjacent tags, no interior
- *   whitespace, common in minified filings) into a false 2+-space "column gap" in the plain-text strategy,
- *   and turns `<b>Acme</b> Fiber LLC` into a false gap after `</b>` in the list strategy — both would
- *   otherwise fabricate a name/jurisdiction split the source never intended. The plain-text strategy
- *   additionally rewrites known BLOCK-level tag boundaries (`</p>`, `<br>`, `</tr>`, …) to real line breaks
- *   before stripping the rest — a minified single-line document with no real `\n` at all still gets one
- *   logical line per paragraph/row, rather than every paragraph concatenated onto one fixed-width line.
- *
- *   **Fetch.** {@linkcode fetchExhibit21} is a thin "fetch + parse" pairing — it takes anything satisfying
- *   {@link SECDocumentClient} (one method, `getDocument`, from `sec-client.ts`) rather than the concrete
- *   `SECClient` class, so a test never needs a full axios harness. Discovering WHICH URL a given filing's
- *   Exhibit 21 lives at (the filing index, or EDGAR full-text search) is out of scope here — this module
- *   parses a document once its URL is already known.
- *
- *   **Document window.** {@linkcode documentWindow} runs once, first, before any strategy sees the document.
- *   EDGAR's archive serves an exhibit wrapped in its SGML `<DOCUMENT>` submission envelope — `<TYPE>EX-21.1`,
- *   `<SEQUENCE>3`, `<FILENAME>…`, `<DESCRIPTION>…` lines ahead of the real `<TEXT>` payload, and an HTML
- *   `<head>`/`<title>` inside THAT which names the source file, not a subsidiary. `stripTags` turning those
- *   into bare lines (`EX-21.1`, `3`, the filename, `Document`) is exactly how they got emitted as subsidiaries
- *   before this existed. `documentWindow` slices to the content between `<TEXT>`/`</TEXT>` (falling back to
- *   the whole input when either boundary is absent, so a document with no SGML envelope is unaffected) and
- *   strips `<head>...</head>` and `<script>`/`<style>` blocks from what's left.
- *
- *   **Line/list refinements (real-filing hardening).** A leading bullet/list marker (`•`, `●`, a dash used as
- *   one) is stripped from a candidate line BEFORE the name/jurisdiction split runs — `bandwidth-2025.htm`'s
- *   bulleted `Name (Jurisdiction)` convention otherwise reads as a false 2+-space column gap between the
- *   bullet and the name, emitting the bullet itself as the name. A candidate that EXACTLY matches a known
- *   document-title/section-heading shape (`TITLE_LINE_PATTERNS` — "Exhibit 21", "List of Subsidiaries of X",
- *   "X AND SUBSIDIARIES", …), or whose token count exceeds `MAX_ENTITY_NAME_WORDS` (12 — the longest
- *   legitimate name in the corpus is 8 tokens), is `unparseable` and dropped before the split runs at all —
- *   the word cap is what lets `alti-global-2025.htm` (which separates entries with nothing but a double
- *   space, so no name/jurisdiction boundary exists to find) abstain entirely instead of guessing one. The
- *   single-comma split additionally abstains when the text after the comma is JUST a corporate designator
- *   (`canonicalizeOrganizationName` from `@mailwoman/record` reduces it to an empty canonical name) —
- *   `"Horizon Services, Inc."` is one entity's whole name, not a name/jurisdiction pair, and "Inc." is not a
- *   place.
+ * Recognizes measured table, list, and plain-text filing shapes and counts uncertain rows instead of inventing entities.
+ * See `exhibit21-parser.md` for the parsing contract and abstention rules.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
@@ -643,7 +521,7 @@ const DISTINCT_SECOND_VALUE_RATIO = 0.7
 
 function isNameOverNameTable(rows: readonly TableCell[][]): boolean {
 	const seconds = rows.flatMap((row) => {
-		const values = row.map((cell) => cell.text).filter(Boolean)
+		const values = row.map((cell) => cell.text).filter(isPresent)
 
 		if (values.length !== 2) return []
 
@@ -714,7 +592,7 @@ function subsidiariesFromTable(
 		if (present[rowIndex]!.every((cell) => cell.tag === "th")) continue
 
 		const values = row.map((cell) => cell.text)
-		const nonBlank = values.filter(Boolean)
+		const nonBlank = values.filter(isPresent)
 
 		if (!nonBlank.length) {
 			unparseable++
@@ -915,7 +793,7 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 	const spaced = line
 		.split(/[ \t]{2,}/)
 		.map((part) => normalizeWhitespace(part))
-		.filter(Boolean)
+		.filter(isPresent)
 
 	if (spaced.length === 2) {
 		return { name: spaced[0]!, jurisdiction: spaced[1] }
@@ -997,7 +875,10 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 	for (const line of lines) {
 		const unmarked = line.replace(LIST_MARKER_PATTERN, "")
 
-		const wordCount = unmarked.trim().split(/\s+/).filter(Boolean).length
+		const wordCount = unmarked
+			.trim()
+			.split(/\s+/)
+			.filter((value) => value.length > 0).length
 
 		if (wordCount > MAX_ENTITY_NAME_WORDS) {
 			unparseable++

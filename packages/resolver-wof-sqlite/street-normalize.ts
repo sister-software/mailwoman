@@ -269,7 +269,11 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// per-locale type/Saint map can see. Letter maps for non-decomposing letters (ß, ł, đ) live in the
 	// per-locale branches, NEVER here: widening the shared pipeline would silently change keys under
 	// every already-built shard of the other locales.
-	const tokens = fold(street).replaceAll("ß", "ss").replaceAll("-", " ").split(/\s+/).filter(Boolean)
+	const tokens = fold(street)
+		.replaceAll("ß", "ss")
+		.replaceAll("-", " ")
+		.split(/\s+/)
+		.filter((value) => value.length > 0)
 
 	if (!tokens.length) return "" as StreetKey
 
@@ -399,10 +403,43 @@ export function stripLocalityQualifier(locality: string): string {
 		s = s.split("/")[0]!.trim()
 	}
 
-	// "Kraubath/Mur", "St.Kanzian/Klopeiner See"
-	s = s.replace(/\s+[a-zà-ÿ]\.\s*\S.*$/iu, "") // abbreviated " b.Graz" / " o.Bleiburg" / " a.d. …"
-	s = s.replace(/\s+(im|an der|ob|bei|in der|unter|vor)\s+\S.*$/iu, "") // " im Simmental", " bei Graz"
-	s = s.replace(/\s+(S|N|E|W|V|Ø|Sø|Fyn|Thy|Sjælland|Jylland|[A-ZÅÄÖ]{2})$/u, "") // " S", " VD", " Thy"
+	const words = [...s.matchAll(/\S+/gu)].map((match) => ({ value: match[0], index: match.index }))
+	let qualifierStart: number | undefined
+
+	for (let index = 1; index < words.length; index++) {
+		const word = words[index]!
+		const first = word.value[0] ?? ""
+		const abbreviated = /[a-zà-ÿ]/iu.test(first) && word.value[1] === "." && word.value.length > 2
+		const oneWordQualifier = ["im", "ob", "bei", "unter", "vor"].includes(word.value.toLowerCase())
+
+		const twoWordQualifier =
+			["an", "in"].includes(word.value.toLowerCase()) && words[index + 1]?.value.toLowerCase() === "der"
+
+		const hasQualifierValue = oneWordQualifier ? index + 1 < words.length : index + 2 < words.length
+
+		if (abbreviated || ((oneWordQualifier || twoWordQualifier) && hasQualifierValue)) {
+			qualifierStart = word.index
+
+			break
+		}
+	}
+
+	const suffix = words.at(-1)
+
+	if (
+		qualifierStart === undefined &&
+		suffix &&
+		words.length > 1 &&
+		(["S", "N", "E", "W", "V", "Ø", "Sø", "Fyn", "Thy", "Sjælland", "Jylland"].includes(suffix.value) ||
+			/^[A-ZÅÄÖ]{2}$/u.test(suffix.value))
+	) {
+		qualifierStart = suffix.index
+	}
+
+	if (qualifierStart !== undefined) {
+		s = s.slice(0, qualifierStart).trimEnd()
+	}
+
 	s = s.trim()
 
 	return s === locality.trim() ? "" : s

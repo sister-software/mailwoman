@@ -51,7 +51,7 @@ const DEFAULT_ENTRY_LIMIT = 10
  * `fuzzy` is deliberately NOT here: the FTS5-trigram typo tier corrects a misspelling into a DIFFERENT string, so
  * running it would report a hit for a surface the gazetteer has never held.
  */
-export const CandidateRoute = {
+const CandidateRoute = {
 	/**
 	 * `normalizeLocalityForKey(query)` — the key the build wrote.
 	 */
@@ -67,7 +67,7 @@ export const CandidateRoute = {
 	PostcodeFold: "postcode-fold",
 } as const
 
-export type CandidateRoute = (typeof CandidateRoute)[keyof typeof CandidateRoute]
+type CandidateRoute = (typeof CandidateRoute)[keyof typeof CandidateRoute]
 
 export interface CandidateLookupOptions {
 	/**
@@ -322,12 +322,12 @@ export interface WOFShard {
  * at query time — it was never indexed. `names-exact` is the byte-exact probe on the indexed `names` table, which
  * carries deprecated records and is the only cheap way to see them.
  */
-export const WOFRoute = {
+const WOFRoute = {
 	Fts: "fts",
 	NamesExact: "names-exact",
 } as const
 
-export type WOFRoute = (typeof WOFRoute)[keyof typeof WOFRoute]
+type WOFRoute = (typeof WOFRoute)[keyof typeof WOFRoute]
 
 interface WOFEntry extends PlaceIDProvenance {
 	route: WOFRoute

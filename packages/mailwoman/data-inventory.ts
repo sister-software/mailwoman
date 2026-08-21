@@ -200,7 +200,7 @@ function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; s
  * `lstat` before `stat`: a symlinked artifact must report BOTH the link and the size of what it points at, and `stat`
  * alone silently answers for the target while `lstat` alone silently answers for the link.
  */
-export function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
+function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
 	const link = lstatSync(path).isSymbolicLink() ? readlinkSync(path) : undefined

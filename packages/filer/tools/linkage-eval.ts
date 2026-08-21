@@ -2,54 +2,10 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Corporate-family linkage evaluation runner.
  *
- *   `filerLinkageEval` (decisions 3 & 4) — measures whether a `filer.db` build places two registrants
- *   in the same CORPORATE FAMILY, and how much of that answer depends on the filer having disclosed its
- *   parent.
- *
- *   **What the prediction is read from.** Two registrants are
- *   predicted to be the same family iff `filer_family` places them in a common family as of
- *   {@linkcode EVAL_AS_OF}, read through the shipped reader (`family-rollup.ts`'s `familyRollup`) rather
- *   than a query written for this eval. That is where corporate-family membership actually lives: the
- *   builder writes one `filer_family` row per holding-/management-company edge, and every reader on the
- *   product surface answers "which families does this node belong to" from that table.
- *
- *   `filer_cluster` is the wrong table for this question, and wrong in a way that looks like a result: it
- *   is the ENTITY-resolution output, answering "are these two identifiers the same legal entity". An eval
- *   pointed at it scores 0.000 — and scores exactly 0.000 with the truth field fully present, with the
- *   answer handed back as an authoritative ownership edge, and with two same-family filers given
- *   byte-identical legal names. A measurement that cannot move when it is handed the answer is not
- *   measuring anything, which is the whole job of the control run below.
- *
- *   **The two runs.** Both build a real scratch `filer.db` from the same authored corpus and run the same
- *   shipped pipeline; they differ in one field.
- *
- *   - `withheld` — `holdingCompany` cleared on every input row ({@linkcode buildFilteredEvalInputs}) before
- *     `buildFilerDatabase` ever sees it. This is the measurement: can family membership be recovered
- *     WITHOUT the disclosure?
- *   - `control` — the identical corpus with `holdingCompany` intact. This is not a product result (a
- *     pipeline that transcribes a disclosed field should score 1.000 on it); it is the check that the
- *     harness reads a table the truth can actually reach, so that the withheld run's number is falsifiable.
- *
- *   **Truth.** Two registrants belong to the same corporate family iff their reported `holdingCompany`
- *   values canonicalize to the same string ({@linkcode mintFamilyID}, the builder's own rule). The unit is
- *   the REGISTRANT, not the FRN: two FRNs that share a `bdc_provider_id` are one legal entity, so
- *   {@linkcode buildTruthRegistrants} folds them into a single scored id before any family label is
- *   assigned. Scoring them as two ids would let the truth partition claim one company sits in two
- *   different families at once.
- *
- *   **Management-company families are excluded from both truth and prediction, deliberately.** The builder
- *   also writes a `filer_family` row for a reported `managementCompany`, under a separately namespaced
- *   `management_company_name:` family id. Operational control is not ownership, `managementCompany` is not
- *   withheld by this eval, and the truth partition makes no claim about it — counting a shared manager as
- *   evidence of shared ownership would let a field this eval does NOT withhold answer a question about one
- *   it does. The corpus contains two filers reporting the same management company precisely so that
- *   exclusion is load-bearing rather than theoretical: including them would show up immediately as a false
- *   positive in the control run.
- *
- *   The corpus itself, the two input projections and the truth construction live in `linkage-corpus.ts` —
- *   pure data and pure functions, auditable without running anything. This file is the part that has to
- *   run: build, cluster, count, read, score, render.
+ * Runs withheld-disclosure and control builds against the shipped family reader. See `linkage-eval.md` for the
+ * measurement contract, truth unit, and leakage controls.
  */
 
 import { chmodSync } from "node:fs"

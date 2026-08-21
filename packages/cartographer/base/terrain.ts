@@ -26,9 +26,4 @@ export function createTerrainDEMSource(): RasterDEMSourceSpecification {
 /**
  * Identifier for the Nexus terrain tileset.
  */
-export const TerrainTileSetID = TileSetSourceID("terrain")
-
-/**
- * Identifier for the Nexus terrain tileset.
- */
 export const HillshadeTileSetID = TileSetSourceID("hillshade")

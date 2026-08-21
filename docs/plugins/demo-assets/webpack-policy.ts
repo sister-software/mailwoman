@@ -11,7 +11,8 @@ import { resolve } from "node:path"
 import type { Configuration } from "webpack"
 import webpack from "webpack"
 
-import { buildWorkspaceAliases, resolveWorkspaceDir, resolveWorkspaceFile } from "./resolve.ts"
+import { buildWorkspaceAliases } from "./workspace-aliases.ts"
+import { resolvePackageFile } from "./workspace-resolution.ts"
 
 const NODE_BUILTIN_SHIMS = {
 	"node:path": "./node-path-shim.js",
@@ -54,10 +55,9 @@ function bundleAliases(isServer: boolean, emptyShim: string): Record<string, str
 	const alias = buildWorkspaceAliases()
 
 	if (isServer) {
-		const neuralDir = resolveWorkspaceDir("@mailwoman/neural")
+		const browserRunner = resolvePackageFile("@mailwoman/neural", "onnx-runner-browser")
 
-		if (neuralDir) {
-			const browserRunner = resolveWorkspaceFile(neuralDir, "onnx-runner-browser")
+		if (browserRunner) {
 			alias["@mailwoman/neural/onnx-runner"] = browserRunner
 			alias["#onnx-runner"] = browserRunner
 		}

@@ -53,7 +53,7 @@ import { allRows, hasColumn, hasTable } from "./sqlite-utils.ts"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
-export { PRIMARY_PREFERENCE_LOG10, rankByPrimaryPreference, RERANK_FETCH } from "./primary-preference.ts"
+export { rankByPrimaryPreference } from "./primary-preference.ts"
 export type { RankedRow } from "./primary-preference.ts"
 
 export interface WOFCandidateTableLookupOpts {

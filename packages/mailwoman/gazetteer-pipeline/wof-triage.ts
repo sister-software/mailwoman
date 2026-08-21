@@ -372,7 +372,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 						name,
 						placetype: String(r["placetype"] ?? ""),
 						key,
-						words: new Set(key.split(" ").filter(Boolean)),
+						words: new Set(key.split(" ").filter((value) => value.length > 0)),
 						lat: Number(r["latitude"]),
 						lon: Number(r["longitude"]),
 					}
@@ -400,7 +400,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 				const placetype = String(record["placetype"] ?? "")
 
 				const { verdict, coveredBy } = judgeCoverage(
-					{ key, words: new Set(key.split(" ").filter(Boolean)), lat, lon, placetype },
+					{ key, words: new Set(key.split(" ").filter((value) => value.length > 0)), lat, lon, placetype },
 					live
 				)
 

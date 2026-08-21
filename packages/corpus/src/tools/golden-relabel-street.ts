@@ -60,7 +60,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { basename, join } from "node:path"
 
 import { isStreetDirectionalToken, matchTrailingSuffix, type USStreetSuffix } from "@mailwoman/codex/us"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256File } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
@@ -616,7 +616,7 @@ export async function relabelGoldenDirectory(
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {
 	const span = (components: Record<string, string>): string =>
 		[components.street_prefix, components.street, components.street_suffix]
-			.filter(Boolean)
+			.filter(isPresent)
 			.map((s) => JSON.stringify(s))
 			.join(" + ")
 

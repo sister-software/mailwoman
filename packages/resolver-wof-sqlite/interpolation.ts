@@ -33,8 +33,8 @@ import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 import { haversineKm } from "./geo.ts"
-import { allRows, hasTable } from "./sqlite-utils.ts"
-import { canonicalizeRouteKey, streetKeyVariants } from "./street-normalize.ts"
+import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
+import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
 
 /**
  * How an interpolated answer was computed (#483 Method 2):
@@ -170,8 +170,10 @@ function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; 
 export class StreetInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
 	readonly #ownsDB: boolean
-	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
-	readonly #byStreet: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #byPostcode:
+		| PreparedAll<[postcode: string, street: RouteKey, minNumber: number, maxNumber: number], SegmentRow>
+		| undefined
+	readonly #byStreet: PreparedAll<[street: RouteKey, minNumber: number, maxNumber: number], SegmentRow> | undefined
 	readonly #radiusCalibration: number | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync }) {
@@ -190,12 +192,14 @@ export class StreetInterpolator implements InterpolationLookup {
 		if (hasTable(this.#db, "street_segment")) {
 			const columns = `from_hn, to_hn, min_hn, max_hn, parity, postcode, geometry, source, release`
 
-			this.#byPostcode = this.#db.prepare(
+			this.#byPostcode = prepareAll(
+				this.#db,
 				`SELECT ${columns} FROM street_segment
 				 WHERE postcode = ? AND street_norm = ? AND min_hn <= ? AND max_hn >= ?`
 			)
 
-			this.#byStreet = this.#db.prepare(
+			this.#byStreet = prepareAll(
+				this.#db,
 				`SELECT ${columns} FROM street_segment
 				 WHERE street_norm = ? AND min_hn <= ? AND max_hn >= ?`
 			)
@@ -249,8 +253,8 @@ export class StreetInterpolator implements InterpolationLookup {
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
 			// km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode
-				? allRows<SegmentRow>(this.#byPostcode, query.postcode.trim(), streetNorm, n, n)
-				: allRows<SegmentRow>(this.#byStreet, streetNorm, n, n)
+				? this.#byPostcode(query.postcode.trim(), streetNorm, n, n)
+				: this.#byStreet(streetNorm, n, n)
 
 			const hit = this.#answerFromRows(rows, n, query)
 

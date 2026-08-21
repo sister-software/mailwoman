@@ -33,7 +33,7 @@ const REFUSAL_KINDS: ReadonlySet<string> = new Set(["poi_query", "poi_category",
 /**
  * Did a marker set come from this gate? Read by `geocodeAddress`'s retry rider.
  */
-export function hasRefusalMarker(markers: readonly QueryIntentMarker[]): boolean {
+function hasRefusalMarker(markers: readonly QueryIntentMarker[]): boolean {
 	return markers.some((m) => REFUSAL_KINDS.has(m.kind))
 }
 

@@ -21,21 +21,7 @@ export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
  * OSM-derived tag names; populated from Mailwoman's `ComponentTag` / resolved ancestor lineage (mapping owned by
  * #804).
  */
-export interface NominatimAddressDetails {
-	house_number?: string
-	road?: string
-	neighbourhood?: string
-	suburb?: string
-	city?: string
-	town?: string
-	village?: string
-	county?: string
-	state?: string
-	postcode?: string
-	country?: string
-	country_code?: string
-	[key: string]: string | undefined
-}
+export type NominatimAddressDetails = Record<string, string>
 
 /**
  * A single Nominatim result object (the shape geopy and friends parse).

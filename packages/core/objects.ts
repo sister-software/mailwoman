@@ -112,7 +112,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	const keys = isIterable(constraints) ? Array.from(constraints) : Object.values(constraints)
 
 	for (const key of keys) {
-		const value = (input as never)[key]
+		const value = Reflect.get(input, key) as O[keyof O]
 		picked[key as keyof O] = transform ? transform(value, key, input) : value
 	}
 
@@ -128,6 +128,18 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 
 export function isRecordLike(input: unknown): input is object {
 	return typeof input === "object" && input !== null && !Array.isArray(input)
+}
+
+type Falsy = false | 0 | 0n | "" | null | undefined
+
+/**
+ * Typed counterpart to `Boolean` for collection filters. The runtime semantics are intentionally identical: all falsy
+ * values are removed, while the overload narrows them out of the resulting element type.
+ */
+export function isPresent<T>(input: T): input is Exclude<T, Falsy>
+
+export function isPresent(input: unknown): boolean {
+	return Boolean(input)
 }
 
 /**

@@ -26,14 +26,14 @@
  *   contract test pins the library's export name against this file.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 // Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
-// docs/plugins/demo-assets/resolve.mjs) — the shared alias-bag parser keeps this backend's exact
+// docs/plugins/demo-assets/workspace-aliases.ts) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
@@ -408,7 +408,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 			// `borough` / `localadmin` rows — Brooklyn-the-borough is a borough, not a locality, and a
 			// strict filter made it unreachable (the "Brooklyn → Brooklyn Park, MN" bug).
 			const types = expandPlacetypeFilter(
-				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
+				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(isPresent)
 			)
 
 			if (types.length) {
@@ -641,7 +641,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
 		// (today's production demo). Mirrors the Node WOFCandidateTableLookup probe.
 		const requestedPlacetypes = query.placetype
-			? ((Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[])
+			? (Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(isPresent)
 			: []
 
 		const wantsLocality =

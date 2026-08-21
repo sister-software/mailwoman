@@ -183,7 +183,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
-		const { tryParsingJSON } = await import("@mailwoman/core/objects")
+		const { isPresent, tryParsingJSON } = await import("@mailwoman/core/objects")
 
 		const out = options.out
 		const points = options.points ?? ""
@@ -203,7 +203,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			? options.countries
 					.split(",")
 					.map((c) => c.trim().toUpperCase())
-					.filter(Boolean)
+					.filter(isPresent)
 			: null
 
 		const repos = options.repos

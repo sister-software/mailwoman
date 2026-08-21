@@ -29,7 +29,7 @@
 
 import { spawnSync } from "node:child_process"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "./publish-exports.ts"
@@ -151,7 +151,7 @@ export function readTarball(tarballPath: string): TarballContents {
 
 	const shipped = new Set(
 		[...TextSpliterator.from(listing.stdout)]
-			.filter(Boolean)
+			.filter(isPresent)
 			.map((line) => normalizeEntry(line.replace(/^package\//, "")))
 	)
 

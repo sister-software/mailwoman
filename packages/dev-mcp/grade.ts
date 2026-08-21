@@ -76,7 +76,7 @@ export function caseCarriesTruth(seed: SeedCase): boolean {
 	)
 }
 
-export type GradeMode = "truth" | "diff-only"
+type GradeMode = "truth" | "diff-only"
 
 export type RowGrade = "improved" | "regressed" | "neutral" | "ungradeable"
 

@@ -23,7 +23,7 @@ export function cfNormalize(s: string): string {
 /**
  * Padded character-trigram set (a leading/trailing space pads short tokens).
  */
-export function trigrams(s: string): Set<string> {
+function trigrams(s: string): Set<string> {
 	const t = ` ${s} `
 	const out = new Set<string>()
 

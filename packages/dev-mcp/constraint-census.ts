@@ -35,7 +35,7 @@ import { provenanceFor, type Provenance } from "./tool-kit.ts"
 /**
  * One lookup that resolved nothing, with the constraint that was in force and what the gazetteer holds regardless.
  */
-export interface ConstraintMiss {
+interface ConstraintMiss {
 	id: string
 	input: string
 	tag: string
@@ -66,7 +66,7 @@ interface CensusDatabase {
 
 type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
 
-export interface GateReading {
+interface GateReading {
 	gates: string
 	fired: number
 	resolved_nothing: number

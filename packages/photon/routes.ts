@@ -158,12 +158,9 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 
 		const collection = await engine.search(params)
 
-		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD. The
-		// declared 200 schema documents only the FeatureCollection shape (matching the legacy yaml); the
-		// jsonld branch's differing runtime shape is a local cast at the boundary,
-		// never a wire-behavior change (api-kit's `openapi.ts` sets the precedent for this idiom).
+		// #1052: `format=jsonld` re-serializes the SAME FeatureCollection as schema.org `Place[]` JSON-LD.
 		if (asString(q["format"]) === "jsonld") {
-			return c.json(photonToSchemaOrg(collection) as never, 200)
+			return c.json(photonToSchemaOrg(collection), 200)
 		}
 
 		return c.json(collection, 200)
@@ -193,10 +190,9 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine): vo
 
 		const collection = await engine.reverse(params)
 
-		// #1052: `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD. See
-		// the search handler's comment above for why this is a local cast, not a wire-behavior change.
+		// #1052: `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD.
 		if (asString(q["format"]) === "jsonld") {
-			return c.json(photonToSchemaOrg(collection) as never, 200)
+			return c.json(photonToSchemaOrg(collection), 200)
 		}
 
 		return c.json(collection, 200)

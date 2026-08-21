@@ -405,7 +405,7 @@ function hasTitlePrepositionPredecessor(nonEmptyGroups: readonly WordGroup[], wi
  * - `"window"` — the sliding 1..{@link WINDOW_MAX_WORDS}-word behavior. Opt-in only; re-enabling as a default requires a
  *   venue-aware suppression mechanism AND a re-measured venue-confound FP=0 (see the module docstring).
  */
-export type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
+type PlacetypePairProbeMode = "auto" | "segment" | "anchored" | "window"
 
 /**
  * Out-record for trace support, mutated in place by {@link buildPlacetypePairPriors} when the caller supplies it via
@@ -529,7 +529,7 @@ export interface PlacetypePairPriorOpts {
  * the decoder's index-based `ViterbiTransitionAdjustment` (`viterbi.ts`); this module deliberately never learns the
  * decoder's axis.
  */
-export interface TransitionAdjustment {
+interface TransitionAdjustment {
 	/**
 	 * Piece position whose INCOMING transition is adjusted — the child span's first piece.
 	 */
@@ -866,7 +866,7 @@ function makeCensusParentRecorder(
 
 	return (parent) => {
 		const keys = parent.key === parent.concatKey ? [parent.key] : [parent.key, parent.concatKey]
-		const dedupeKey = keys.join(" ")
+		const dedupeKey = keys.join("\0")
 
 		if (seen.has(dedupeKey)) return
 

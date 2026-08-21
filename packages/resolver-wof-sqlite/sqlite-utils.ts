@@ -27,6 +27,41 @@ export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputVal
 }
 
 /**
+ * A prepared single-row query whose parameter tuple remains visible to TypeScript. `StatementSync` accepts only the
+ * broad `SQLInputValue[]`, which otherwise erases tagged key types before they reach SQLite.
+ */
+export type PreparedGet<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row | undefined
+
+/**
+ * Prepare a single-row query while preserving its exact parameter tuple at every call site.
+ */
+export function prepareGet<Parameters extends SQLInputValue[], Row>(
+	db: DatabaseSync,
+	sql: string
+): PreparedGet<Parameters, Row> {
+	const statement = db.prepare(sql)
+
+	return (...parameters) => getRow<Row>(statement, ...parameters)
+}
+
+/**
+ * Multi-row counterpart to {@link PreparedGet}.
+ */
+export type PreparedAll<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row[]
+
+/**
+ * Prepare a multi-row query while preserving its exact parameter tuple at every call site.
+ */
+export function prepareAll<Parameters extends SQLInputValue[], Row>(
+	db: DatabaseSync,
+	sql: string
+): PreparedAll<Parameters, Row> {
+	const statement = db.prepare(sql)
+
+	return (...parameters) => allRows<Row>(statement, ...parameters)
+}
+
+/**
  * True when `name` is a table in the open database. The street-level lookups use this to degrade gracefully on an
  * empty/tableless shard — an interrupted `build-*-shard.ts`, or a stray 0-byte file (e.g. `sqlite3 <missing>.db "…"`
  * CREATES one) — rather than throwing `no such table` at construction and taking down a whole state's geocode (#568). A

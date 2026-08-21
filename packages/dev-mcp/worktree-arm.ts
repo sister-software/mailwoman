@@ -169,7 +169,7 @@ process.stdout.write(JSON.stringify({ answers }))
 /**
  * One answer from the child, in the shape the comparison's arm runner projects from.
  */
-export interface WorktreeAnswer {
+interface WorktreeAnswer {
 	input: string
 	lat: number | null
 	lon: number | null

@@ -244,7 +244,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 		}
 	}
 
-	const tokens = working.split(/\s+/).filter(Boolean)
+	const tokens = working.split(/\s+/).filter((value) => value.length > 0)
 
 	if (!tokens.length) return Object.keys(result).length ? result : null
 

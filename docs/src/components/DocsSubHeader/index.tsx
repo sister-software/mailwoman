@@ -99,5 +99,3 @@ export const DocsSubHeader: FC<DocsSubHeaderProps> = ({ navbarRef, hidden }) => 
 		</nav>
 	)
 }
-
-export default DocsSubHeader

@@ -95,7 +95,7 @@ function isValidTransition(from: string, to: string): boolean {
  * `I-`/fresh-`B-` continuation costs more than the local win recovers; a transition-entry bonus pays that structural
  * toll directly).
  */
-export interface ViterbiTransitionAdjustment {
+interface ViterbiTransitionAdjustment {
 	/**
 	 * Timestep whose INCOMING transition is adjusted.
 	 */

@@ -62,7 +62,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-n
  * One admin-coherence verdict. See the module docstring for the exact meaning of each — in particular, `unverifiable`
  * is an absence-of-evidence claim about the WINNER, never about the parse.
  */
-export type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
+type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
 
 /**
  * The per-component verdicts. Both members are always present when the report exists (the `intent_markers` discipline:
@@ -88,7 +88,7 @@ export interface ParsedAdminQualifiers {
  * One link of the winner's containment lineage, as the resolver stamped it (`metadata.ancestors`, the #404 opt-in) — a
  * structural slice of `@mailwoman/core`'s `Ancestor`.
  */
-export interface AdminAncestor {
+interface AdminAncestor {
 	placetype: string
 	name: string
 }

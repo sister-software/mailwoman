@@ -80,7 +80,7 @@ export const ANCESTRIE_FORMAT_VERSION = 1
 /**
  * Fixed header size in bytes: magic, version, flags, and the nine u32 fields that follow.
  */
-export const HEADER_SIZE = 48
+const HEADER_SIZE = 48
 
 /**
  * State-table entry: edge offset/count and entry-ref offset/count, all 32-bit.
@@ -128,7 +128,7 @@ const ALIGNMENT = 4
 /**
  * Round `n` up to the next {@link ALIGNMENT} boundary.
  */
-export function align4(n: number): number {
+function align4(n: number): number {
 	return (n + ALIGNMENT - 1) & ~(ALIGNMENT - 1)
 }
 

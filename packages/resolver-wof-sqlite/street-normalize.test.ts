@@ -120,6 +120,12 @@ describe("stripLocalityQualifier (query-side fallback)", () => {
 		// "am Main" is part of the canonical name — must NOT be over-stripped.
 		expect(stripLocalityQualifier("Frankfurt am Main")).toBe("")
 		expect(stripLocalityQualifier("New York")).toBe("")
+		expect(stripLocalityQualifier("Foo an der")).toBe("")
+		expect(stripLocalityQualifier("S")).toBe("")
+	})
+
+	it("handles long non-matching input without regex backtracking", () => {
+		expect(stripLocalityQualifier(`Saint ${"a".repeat(100_000)}`)).toBe("")
 	})
 })
 

@@ -91,7 +91,12 @@ const CODE_SET_LEVELS: ComparisonLevel[] = [
  * 1 when the whitespace-joined code sets share ANY code, else 0 (order/count-insensitive, case-folded).
  */
 function codeSetOverlap(a: string, b: string): number {
-	const sa = new Set(a.toUpperCase().split(/\s+/).filter(Boolean))
+	const sa = new Set(
+		a
+			.toUpperCase()
+			.split(/\s+/)
+			.filter((value) => value.length > 0)
+	)
 
 	for (const t of b.toUpperCase().split(/\s+/)) if (t && sa.has(t)) return 1
 

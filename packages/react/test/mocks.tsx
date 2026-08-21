@@ -101,7 +101,7 @@ export const mockBrandLiveSearchSuccess: POILiveSearch = async ({ brandWikidata 
 /**
  * An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook.
  */
-export const STUB_MAP_STYLE: DemoMapStyle = {
+const STUB_MAP_STYLE: DemoMapStyle = {
 	version: 8,
 	name: "demo-runtime-stub",
 	sources: {},

@@ -16,7 +16,7 @@
  */
 export type VariantKind = "amenity" | "brand"
 
-export interface VariantAliasBase {
+interface VariantAliasBase {
 	/**
 	 * The user-typed variant. Always lowercase for the lookup key (CJK preserved as-is).
 	 */

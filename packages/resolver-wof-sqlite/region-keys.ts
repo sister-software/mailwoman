@@ -35,14 +35,52 @@ export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "
  * is a real name whose stripped variant simply also matches, and a set union can only widen confirmation, so the
  * closure is monotone: `contradicted → confirmed` is the only movement it can cause.
  */
-const COUNTY_QUALIFIER_PREFIX = /^(?:co\.?|county)\s+/i
+const COUNTY_QUALIFIER_PREFIXES = ["county", "co.", "co"] as const
 
 /**
  * Trailing admin-qualifier words, the suffix sibling of the prefix above: `San José Province` (CR board row) folds
  * against stored `San José` only with the word removed. Same monotone rule — the stripped form joins the set, never
  * replaces the original.
  */
-const ADMIN_QUALIFIER_SUFFIX = /\s+(?:province|prov\.?)$/i
+const ADMIN_QUALIFIER_SUFFIXES = ["province", "prov.", "prov"] as const
+
+function withoutPrefix(value: string, prefixes: readonly string[]): string {
+	const folded = value.toLowerCase()
+
+	for (const prefix of prefixes) {
+		if (!folded.startsWith(prefix) || !/\s/u.test(value[prefix.length] ?? "")) continue
+
+		let offset = prefix.length
+
+		while (/\s/u.test(value[offset] ?? "")) {
+			offset++
+		}
+
+		return value.slice(offset)
+	}
+
+	return value
+}
+
+function withoutSuffix(value: string, suffixes: readonly string[]): string {
+	const folded = value.toLowerCase()
+
+	for (const suffix of suffixes) {
+		const offset = value.length - suffix.length
+
+		if (offset <= 0 || !folded.endsWith(suffix) || !/\s/u.test(value[offset - 1] ?? "")) continue
+
+		let end = offset
+
+		while (end > 0 && /\s/u.test(value[end - 1] ?? "")) {
+			end--
+		}
+
+		return value.slice(0, end)
+	}
+
+	return value
+}
 
 /**
  * The comparable keys a region string expands to: its own fold (the shared candidate.db `name_key` normalizer,
@@ -55,9 +93,10 @@ const ADMIN_QUALIFIER_SUFFIX = /\s+(?:province|prov\.?)$/i
 export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
 	const keys = new Set([normalizeLocalityForKey(value)])
 
-	for (const pattern of [COUNTY_QUALIFIER_PREFIX, ADMIN_QUALIFIER_SUFFIX]) {
-		const stripped = value.replace(pattern, "")
-
+	for (const stripped of [
+		withoutPrefix(value, COUNTY_QUALIFIER_PREFIXES),
+		withoutSuffix(value, ADMIN_QUALIFIER_SUFFIXES),
+	]) {
 		if (stripped !== value && stripped.trim()) {
 			keys.add(normalizeLocalityForKey(stripped))
 		}

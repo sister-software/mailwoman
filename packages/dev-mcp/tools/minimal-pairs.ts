@@ -55,5 +55,3 @@ export const minimalPairsTool = ({ registry }: DevToolDeps): DevTool => ({
 			config: args["config"] as EngineConfig | undefined,
 		}),
 })
-
-export { MOVED_KM } from "../minimal-pairs.ts"

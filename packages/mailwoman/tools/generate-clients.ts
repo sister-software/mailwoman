@@ -49,7 +49,7 @@ import type { Check } from "#cli-kit"
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
 
-export type ClientSurface = (typeof CLIENT_SURFACES)[number]
+type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
 /**
  * OpenAPI flavors the emitters print. 3.1 is the published document; 3.0 is progenitor's diet (openapiv3 only
@@ -87,7 +87,7 @@ function copyLicenseFiles(destDir: string): void {
 /**
  * Absolute paths to each surface's emitted document, per flavor.
  */
-export interface SpecPaths {
+interface SpecPaths {
 	v31: Record<ClientSurface, string>
 	v30: Record<ClientSurface, string>
 }
@@ -95,7 +95,7 @@ export interface SpecPaths {
 /**
  * Everything a completed (or partially completed, on early abort) run produced.
  */
-export interface GenerateClientsReceipt {
+interface GenerateClientsReceipt {
 	version: string
 	outDir: string
 	specsDir: string

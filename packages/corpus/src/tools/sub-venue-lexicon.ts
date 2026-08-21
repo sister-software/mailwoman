@@ -69,7 +69,7 @@
 import { readFileSync, statSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "./sub-venue-promotions.ts"
@@ -406,7 +406,7 @@ export function surfacesFromWikidata(
 		const source = binding.kind?.value === "alt" ? "wikidata:alt" : "wikidata:label"
 		// A concept can carry the same string as both a label and an alias, and across dialect subtags
 		// (`zh`, `zh-cn`, `zh-hans` all say 航站楼). Key the dedupe on the tuple that identifies a row.
-		const key = `${phrase} ${recordID} ${lang} ${source}`
+		const key = `${phrase}\0${recordID}\0${lang}\0${source}`
 
 		if (seen.has(key)) continue
 		seen.add(key)
@@ -568,7 +568,7 @@ export function extractAttestedPhrases(
 	const shapes = new Map<string, { count: number; examples: Set<string> }>()
 
 	const note = (phrase: string, lang: string, sourceTag: string, context: string): void => {
-		const key = `${phrase} ${lang} ${sourceTag}`
+		const key = `${phrase}\0${lang}\0${sourceTag}`
 		const entry = surfaceCounts.get(key) ?? { count: 0, context: new Map<string, number>() }
 
 		entry.count++
@@ -593,7 +593,7 @@ export function extractAttestedPhrases(
 
 		if (row.ref) {
 			const shape = classifyIdentifier(row.ref)
-			const key = `${row.designatorID} ${shape}`
+			const key = `${row.designatorID}\0${shape}`
 			const entry = shapes.get(key) ?? { count: 0, examples: new Set<string>() }
 
 			entry.count++
@@ -607,7 +607,7 @@ export function extractAttestedPhrases(
 	}
 
 	const surfaces: SubVenueSurface[] = [...surfaceCounts].map(([key, entry]) => {
-		const [phrase, lang, sourceTag] = key.split(" ") as [string, string, string]
+		const [phrase, lang, sourceTag] = key.split("\0") as [string, string, string]
 		const record = index.get(phrase)!
 
 		return {
@@ -624,7 +624,7 @@ export function extractAttestedPhrases(
 	})
 
 	const identifierShapes: IdentifierShape[] = [...shapes].map(([key, entry]) => {
-		const [designatorID, shape] = key.split(" ") as [string, string]
+		const [designatorID, shape] = key.split("\0") as [string, string]
 
 		return {
 			designatorID,
@@ -720,12 +720,12 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  */
 export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): SubVenueSurface[] {
 	const derived = new Map<string, SubVenueSurface>()
-	const seen = new Set(surfaces.map((s) => `${s.phrase} ${s.recordID} ${s.lang}`))
+	const seen = new Set(surfaces.map((s) => `${s.phrase}\0${s.recordID}\0${s.lang}`))
 
 	const emit = (phrase: string, from: SubVenueSurface): void => {
 		if (phrase === from.phrase) return
 
-		const key = `${phrase} ${from.recordID} ${from.lang}`
+		const key = `${phrase}\0${from.recordID}\0${from.lang}`
 
 		if (seen.has(key) || derived.has(key)) return
 
@@ -747,7 +747,7 @@ export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): Su
 	for (const surface of surfaces) {
 		if (!LATIN_PHRASE.test(surface.phrase)) continue
 
-		const parts = surface.phrase.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+		const parts = surface.phrase.split(/[^\p{L}\p{N}]+/u).filter(isPresent)
 
 		if (parts.length < 2) continue
 
@@ -828,7 +828,7 @@ function commonPrefixLength(a: string, b: string): number {
 function sharedSubstringCandidates(pool: ReadonlySet<string>): string[] {
 	const phrases = [...pool]
 	const spaced = phrases.some((phrase) => /\s/u.test(phrase))
-	const tokens = spaced ? new Set(phrases.flatMap((phrase) => phrase.split(/\s+/u).filter(Boolean))) : null
+	const tokens = spaced ? new Set(phrases.flatMap((phrase) => phrase.split(/\s+/u).filter(isPresent))) : null
 	const counts = new Map<string, number>()
 
 	for (const phrase of phrases) {
