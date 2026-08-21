@@ -199,4 +199,11 @@ describe("probeVenueNearAnchorFolded (the qualifier-folding second leg)", () => 
 
 		expect(probeVenueNearAnchorFolded("The - Unrelated Qualifier", LONDON, { lookup })).toBeNull()
 	})
+
+	it("handles long decorations without regex backtracking", () => {
+		const lookup = stubLookup([])
+		const decoration = "x".repeat(100_000)
+
+		expect(probeVenueNearAnchorFolded(`Mischicks Day Spa - ${decoration}`, LONDON, { lookup })).toBeNull()
+	})
 })

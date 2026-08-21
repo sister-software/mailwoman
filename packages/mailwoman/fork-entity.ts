@@ -313,10 +313,31 @@ export function applyEntityTiers(
  * token (a one-word head like "The" matches everything and means nothing).
  */
 function venueHeadSegment(venueRaw: string): string | null {
-	const head = venueRaw
-		.split(/\s+[-–—]\s+/)[0]!
-		.replace(/\s*\([^)]*\)\s*$/, "")
-		.trim()
+	let separator = -1
+
+	for (let index = 1; index < venueRaw.length - 1; index++) {
+		const character = venueRaw[index]
+
+		if (
+			(character === "-" || character === "–" || character === "—") &&
+			/\s/u.test(venueRaw[index - 1]!) &&
+			/\s/u.test(venueRaw[index + 1]!)
+		) {
+			separator = index
+
+			break
+		}
+	}
+
+	let head = (separator === -1 ? venueRaw : venueRaw.slice(0, separator)).trim()
+
+	if (head.endsWith(")")) {
+		const parenthetical = head.lastIndexOf("(")
+
+		if (parenthetical !== -1) {
+			head = head.slice(0, parenthetical).trimEnd()
+		}
+	}
 
 	if (!head || head === venueRaw.trim()) return null
 
