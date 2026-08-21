@@ -166,6 +166,18 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
+	 * The `model.onnx` this instance loaded, and which rung of the resolution ladder produced it.
+	 *
+	 * `undefined` on an instance built through the plain constructor rather than {@link loadFromWeights} — there was no
+	 * resolution, so there is nothing to report, which is absence and not an unknown model.
+	 */
+	get resolvedWeights(): { modelPath: string; source: string } | undefined {
+		return this.cfg.modelPath && this.cfg.weightsSource
+			? { modelPath: this.cfg.modelPath, source: this.cfg.weightsSource }
+			: undefined
+	}
+
+	/**
 	 * The default-ON Stage 2.7 config: codex lexicon (us/au/nz), frozen measured scales (the prior builder's own
 	 * defaults). Built once per instance, only when a parse actually needs it.
 	 */
@@ -465,6 +477,8 @@ export class NeuralAddressClassifier {
 			...(placetypeCensus ? { placetypeCensus } : {}),
 			...(resolved.fstPath ? { fstPath: resolved.fstPath } : {}),
 			...(resolved.streetMorphologyPath ? { streetMorphologyPath: resolved.streetMorphologyPath } : {}),
+			modelPath: resolved.modelPath,
+			weightsSource: resolved.source,
 			...(suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode } : {}),
 			// The card's `mode` is an open string; a non-SystemCode value degrades to a null conventions row
 			// downstream (`conventionsForSystem` on an unknown code), never a throw — so the widening cast is

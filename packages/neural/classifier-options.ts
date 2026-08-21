@@ -80,6 +80,22 @@ export interface NeuralAddressClassifierConfig {
 	 */
 	streetMorphologyPath?: string
 	/**
+	 * Path to the `model.onnx` this instance actually loaded, surfaced verbatim from {@link resolveWeights} — PATH ONLY,
+	 * same posture as {@link NeuralConfig.fstPath}. Exposed via {@link NeuralAddressClassifier.modelPath}.
+	 *
+	 * Resolution walks several rungs and an unusable rung is SKIPPED rather than reported, so which model answered is not
+	 * derivable from the options a caller passed: `resolveWeights` honours an explicit `cacheRoot` only when that
+	 * directory holds the binaries, and otherwise falls through to the installed workspace package. A caller grading a
+	 * candidate therefore cannot tell a graded candidate from a graded default without reading this back.
+	 */
+	modelPath?: string
+	/**
+	 * Which rung of the resolution ladder produced {@link NeuralConfig.modelPath} — `explicit`, `cache:<package>`,
+	 * `overlay:<package>`, or the installed package name. The path alone answers "which file"; this answers "and was that
+	 * the file I asked for", which is the question a mis-staged candidate turns on.
+	 */
+	weightsSource?: string
+	/**
 	 * Optional postcode-anchor lookup (#239/#240). When set, `parse` builds per-piece anchor features from the text +
 	 * this lookup and feeds them to the runner — for models trained with the anchor channel (exported with the
 	 * `anchor_features`/`anchor_confidence` ONNX inputs). Omit for plain models. Load via `loadAnchorLookup` from

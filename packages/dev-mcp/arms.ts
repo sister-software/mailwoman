@@ -39,6 +39,10 @@ export interface ArmRunner {
 
 /**
  * A mailwoman arm — one warm engine under one configuration.
+ *
+ * "Configuration" includes the MODEL: `config.weights_cache` names a candidate weights bundle, so shipped-vs-candidate
+ * is an ordinary two-arm comparison here rather than a pair of hand-written scripts. What it cannot vary is SOURCE —
+ * both arms run whatever this process imported, which is what {@link WorktreeArm} exists for.
  */
 interface MailwomanArm {
 	kind: "mailwoman"
@@ -83,8 +87,9 @@ export interface RecordedArm {
  * A mailwoman arm running a DIFFERENT VERSION OF THE SOURCE, in its own process (see `worktree-arm.ts`).
  *
  * The kind a source change needs and the other four cannot express. A `mailwoman` arm runs whatever this process
- * imported, so two of them can only differ by CONFIG; a `recorded` arm replays a past run but cannot produce a new one
- * at an old ref. Neither answers "what does my edit do", which is the question most maintainer changes are.
+ * imported, so two of them can only differ by CONFIG — which does cover the model, via `weights_cache`, but never the
+ * code that loads it; a `recorded` arm replays a past run but cannot produce a new one at an old ref. Neither answers
+ * "what does my edit do", which is the question most maintainer changes are.
  */
 export interface WorktreeArm {
 	kind: "worktree"

@@ -92,6 +92,18 @@ export interface GeocodeSessionOptions {
 	 */
 	gazetteerPrior?: boolean
 	locale: string
+	/**
+	 * Grade a CANDIDATE weights bundle instead of the installed one — a package-shaped directory
+	 * (`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as staged by an eval harness or `npm install
+	 * --prefix`. Unset loads whatever the resolution ladder finds, which is what production does.
+	 *
+	 * `resolveWeights` treats this rung as authoritative ONLY when the directory holds `model.onnx` and
+	 * `tokenizer.model`; a cache missing them falls through to the installed workspace package, which in this repo always
+	 * resolves. So a path typo does not fail here — it loads the SHIPPED model under the candidate's label. A caller that
+	 * cannot tolerate that must check the layout before constructing the session and read
+	 * {@link GeocodeSession.artifacts} back after; `missingWeightsCacheArtifacts` is the shared check.
+	 */
+	weightsCacheRoot?: string
 	bias?: string
 	defaultCountry?: string
 	countryScope: "auto" | "locale" | "none"
@@ -228,6 +240,13 @@ export interface GeocodeSession {
 	artifacts: {
 		fstPath?: string
 		streetMorphologyPath?: string
+		/**
+		 * The `model.onnx` the classifier loaded, and which rung of the resolution ladder produced it (`package:…`,
+		 * `overlay:…`, `cache:…`, `explicit`). The pair is what makes {@link GeocodeSessionOptions.weightsCacheRoot}
+		 * auditable: a candidate that fell through to the installed weights reports a `package:` source here while the
+		 * options object still reads as a candidate run.
+		 */
+		weights?: { modelPath: string; source: string }
 	}
 	geocode(input: string): Promise<GeocodeRun>
 	close(): void
@@ -340,6 +359,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: options.locale,
 			overlayRoot: resolvePath(options.dataRoot, "weights"),
+			// Ahead of the overlay in the ladder rather than beside it: a caller naming a candidate bundle is naming
+			// the thing under test, and an overlay silently winning would grade the artifact they were replacing.
+			...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
 		})
 	} catch {
 		throw new CommandError(
@@ -718,6 +740,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(streetMorphology && classifier.streetMorphologyPath
 				? { streetMorphologyPath: classifier.streetMorphologyPath }
 				: {}),
+			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
 		},
 		geocode,
 		close,
