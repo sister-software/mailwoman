@@ -100,6 +100,14 @@ export interface LookupResult {
 	 * silently answers "no" for every query because a file is missing is the worst possible answer.
 	 */
 	unavailable_reason?: string
+	/**
+	 * One entry per locale when several were asked for — the same queries against each locale's own artifact.
+	 *
+	 * Present INSTEAD OF `rows` for a sweep. A locale whose artifact is missing carries its own `unavailable_reason` here
+	 * rather than dropping out of the map: five shipped overlays ship no FST at all, and a locale absent from the result
+	 * reads as a locale that knew nothing.
+	 */
+	by_locale?: Record<string, { artifact?: string; rows: LookupRow[]; unavailable_reason?: string }>
 	notes: string[]
 }
 
@@ -137,15 +145,24 @@ export function lookupFST(
 			raw.map((e) => ({ placetype: e.placetype, importance: e.referential ?? e.importance ?? 0 }))
 		)
 
+		const entries = [...collapsed].map(([tag, importance]) => ({ tag, importance, fires: importance > 0 }))
+		const firing = entries.filter((entry) => entry.fires)
+		const plural = raw.length === 1 ? "y" : "ies"
+
 		return {
 			query,
 			hit: true,
-			entries: [...collapsed].map(([tag, importance]) => ({ tag, importance })),
-			note: collapsed.size
-				? `Accepted with ${raw.length} entr${raw.length === 1 ? "y" : "ies"}; the decoder sees the per-tag max above.`
-				: `Accepted with ${raw.length} entr${raw.length === 1 ? "y" : "ies"}, but none carries a BIO-mapped placetype ` +
+			entries,
+			note: !collapsed.size
+				? `Accepted with ${raw.length} entr${plural}, but none carries a BIO-mapped placetype ` +
 					"(localadmin / county / borough / neighbourhood are walked and dropped), so the decoder receives NOTHING " +
-					"from this surface. That is different from a zero.",
+					"from this surface. That is different from a zero."
+				: firing.length
+					? `Accepted with ${raw.length} entr${plural}; the decoder sees the per-tag max above.`
+					: `Accepted with ${raw.length} entr${plural} carrying a BIO-mapped placetype, ALL at importance 0, so ` +
+						"the prior is INERT on this surface: `applyBias` computes `importance * biasScale * maxBias * …` and " +
+						"keeps a tag only when that exceeds the running max, which starts at 0. Present in the gazetteer and " +
+						"contributing nothing are different facts.",
 		}
 	})
 }

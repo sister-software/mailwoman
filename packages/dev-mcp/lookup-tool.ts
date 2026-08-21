@@ -48,6 +48,7 @@ import {
 	lookupStreetMorphology,
 	openSealedArtifact,
 	type LookupResult,
+	type LookupRow,
 } from "./lookup.ts"
 import { syntheticIDNote } from "./place-id-provenance.ts"
 
@@ -58,6 +59,10 @@ export interface LookupArgs {
 	source: LookupSource
 	queries: string[]
 	locale?: string
+	/**
+	 * Sweep the same queries across several locales' own artifacts. FST sources only.
+	 */
+	locales?: string[]
 	country?: string
 	limit?: number
 	config?: EngineConfig
@@ -362,30 +367,72 @@ function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Postco
  * no runtime configuration reads.
  */
 async function runFSTLookup(registry: EngineRegistry, args: LookupArgs): Promise<LookupResult> {
-	const engine = await registry.acquire({ ...args.config, gazetteer_prior: true })
+	const notes =
+		args.source === LookupSource.FST
+			? [
+					"Entries are the per-BIO-tag MAX, which is all the emission prior reads. A surface accepted with no " +
+						"BIO-mapped placetype gives the decoder nothing — different from a zero, and different again from an " +
+						"entry AT importance 0, which is BIO-mapped and still inert. `fires` is that third state.",
+				]
+			: []
+
+	if (args.locales?.length) {
+		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
+
+		// Sequential, and each locale costs a full session build: `artifacts` reports what a session READ, so learning
+		// which artifact a locale's decoder consults means building that locale's decoder. The registry evicts to its
+		// cap as this walks, so a wide sweep rebuilds rather than accumulating.
+		for (const locale of args.locales) {
+			byLocale[locale] = await probeLocaleFST(registry, args, locale)
+		}
+
+		return { source: args.source, by_locale: byLocale, rows: [], notes }
+	}
+
+	const probe = await probeLocaleFST(registry, args, args.config?.locale)
+
+	if (probe.unavailable_reason) {
+		return { source: args.source, rows: [], unavailable_reason: probe.unavailable_reason, notes: [UNAVAILABLE_NOTE] }
+	}
+
+	return {
+		source: args.source,
+		provenance: { engine_id: probe.engine_id, artifact: probe.artifact },
+		rows: probe.rows,
+		notes,
+	}
+}
+
+/**
+ * One locale's answer, with a missing artifact reported IN PLACE rather than by omission.
+ *
+ * Five shipped overlays carry no FST at all, so a sweep that dropped those locales would read as a set of locales that
+ * knew nothing about the queries.
+ */
+async function probeLocaleFST(
+	registry: EngineRegistry,
+	args: LookupArgs,
+	locale: string | undefined
+): Promise<{ artifact?: string; engine_id?: string; rows: LookupRow[]; unavailable_reason?: string }> {
+	const engine = await registry.acquire({
+		...args.config,
+		...(locale ? { locale } : {}),
+		gazetteer_prior: true,
+	})
 
 	const path =
 		args.source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
 
 	const loaded = loadFSTArtifact(path, deserializeFST as never)
 
-	if ("unavailable" in loaded) {
-		return { source: args.source, rows: [], unavailable_reason: loaded.unavailable, notes: [UNAVAILABLE_NOTE] }
-	}
+	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
 
 	return {
-		source: args.source,
-		provenance: { engine_id: engine.engineID, artifact: path },
+		...(path ? { artifact: path } : {}),
+		engine_id: engine.engineID,
 		rows:
 			args.source === LookupSource.FST
 				? lookupFST(loaded.fst, normalizeTokens, args.queries)
 				: lookupStreetMorphology(loaded.fst, args.queries),
-		notes:
-			args.source === LookupSource.FST
-				? [
-						"Entries are the per-BIO-tag MAX, which is all the emission prior reads. A surface accepted with no " +
-							"BIO-mapped placetype gives the decoder nothing — different from a zero.",
-					]
-				: [],
 	}
 }
