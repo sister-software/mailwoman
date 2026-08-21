@@ -10,7 +10,7 @@
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
 
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import type { EngineRegistry } from "./engine-registry.ts"
 
@@ -35,8 +35,8 @@ const HOLDINGS: Record<string, string[]> = {
 	nowhereville: [],
 }
 
-vi.mock("./lookup.ts", () => ({
-	openSealedArtifact: () => ({
+const dependencies = {
+	openArtifact: () => ({
 		db: {
 			prepare: () => ({
 				all: (key: unknown) => (HOLDINGS[String(key)] ?? []).map((placetype) => ({ placetype })),
@@ -44,11 +44,7 @@ vi.mock("./lookup.ts", () => ({
 			close: () => {},
 		},
 	}),
-}))
-
-vi.mock("@mailwoman/resolver-wof-sqlite/street-normalize", () => ({
-	normalizeLocalityForKey: (v: string) => v.toLowerCase().trim(),
-}))
+}
 
 function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistry {
 	return {
@@ -90,7 +86,7 @@ describe("constraint census", () => {
 			b: [{ tag: "locality", value: "Nowhereville", placetype: "locality", gates: [], picked: false }],
 		})
 
-		const r = await runConstraintCensus(registry, { inputs: LITERAL(["a", "b"]) })
+		const r = await runConstraintCensus(registry, { inputs: LITERAL(["a", "b"]) }, dependencies)
 
 		expect(r.n_resolved_nothing).toBe(2)
 		expect(r.n_reachability).toBe(1)
@@ -112,7 +108,7 @@ describe("constraint census", () => {
 		// A second gate fires just as often but DOES pick sometimes — it must not be called inert.
 		byInput["alive"] = [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["live_gate"], picked: true }]
 
-		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) })
+		const r = await runConstraintCensus(fakeRegistry(byInput), { inputs: LITERAL([...dead, "alive"]) }, dependencies)
 
 		expect(r.inert_gates.join()).toContain("some_retry")
 		expect(r.inert_gates.join()).not.toContain("live_gate")
@@ -125,7 +121,8 @@ describe("constraint census", () => {
 			fakeRegistry({
 				a: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: ["rare_gate"], picked: false }],
 			}),
-			{ inputs: LITERAL(["a"]) }
+			{ inputs: LITERAL(["a"]) },
+			dependencies
 		)
 
 		expect(r.inert_gates).toEqual([])
@@ -140,7 +137,8 @@ describe("constraint census", () => {
 				a: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: [], picked: false, candidates: 4 }],
 				b: [{ tag: "locality", value: "Bayern", placetype: "locality", gates: [], picked: false }],
 			}),
-			{ inputs: LITERAL(["a", "b"]) }
+			{ inputs: LITERAL(["a", "b"]) },
+			dependencies
 		)
 
 		expect(r.misses.filter((m) => m.had_candidates)).toHaveLength(1)
@@ -154,7 +152,8 @@ describe("constraint census", () => {
 			fakeRegistry({
 				a: [{ tag: "locality", value: "Illes Balears", placetype: "locality", gates: [], picked: true }],
 			}),
-			{ inputs: LITERAL(["a"]) }
+			{ inputs: LITERAL(["a"]) },
+			dependencies
 		)
 
 		expect(r.n_lookups).toBe(1)
