@@ -153,7 +153,7 @@ export interface ForkEntityAnswerTarget {
  * resolved answer — a coherence verdict (#1724). The entity offers a country and no ancestor chain, so a stated region
  * grades `unverifiable` rather than going silently unchecked.
  */
-export function applyForkEntityAnswer(
+function applyForkEntityAnswer(
 	result: ForkEntityAnswerTarget,
 	entity: ForkEntityHit,
 	roots: readonly AdminCoherenceTreeNode[]

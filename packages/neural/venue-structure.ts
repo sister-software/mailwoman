@@ -49,7 +49,7 @@ import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst
  * anchors, handled by the parser proper). Typed against {@link WhosOnFirstPlacetype} so the compiler enforces that each
  * entry is a genuine WOF term.
  */
-export const WOF_VENUE_STRUCTURE_PLACETYPES = [
+const WOF_VENUE_STRUCTURE_PLACETYPES = [
 	"arcade",
 	"building",
 	"campus",
@@ -65,7 +65,7 @@ export const WOF_VENUE_STRUCTURE_PLACETYPES = [
  * Kept as its own list rather than merged above precisely so the provenance stays legible: these are OSM tag values,
  * not WOF placetypes, and a reader tracing where "terminal" came from should land on the right standard.
  */
-export const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
+const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
 
 /**
  * Every venue-interior designator the span proposer recognizes, lowercased.

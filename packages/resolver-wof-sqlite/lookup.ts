@@ -1352,6 +1352,4 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	}
 }
 
-export { trigramJaccard, trigrams } from "./name-score.ts"
-
 export type { RankingWeights } from "./ranking-weights.ts"

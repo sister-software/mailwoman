@@ -225,7 +225,7 @@ export interface CounterfactualAnswer {
  * into a number (zero, or infinity) is the projection this whole surface exists to avoid. `changed_abstention` is the
  * fact in that case.
  */
-export interface CounterfactualMove extends MoveReading {
+interface CounterfactualMove extends MoveReading {
 	lever: CounterfactualLever
 	from: string
 	to: string

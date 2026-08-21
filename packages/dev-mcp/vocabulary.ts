@@ -31,15 +31,13 @@
  *   internally, and NFC and NFD were measured to give byte-identical piece counts on the same string.
  */
 
-import { readFileSync } from "node:fs"
-
 /**
  * SentencePiece renders a byte it cannot represent as `<0xNN>`. This is the whole measurement — everything else is
  * aggregation over it.
  */
 const BYTE_PIECE = /^<0x[0-9A-Fa-f]{2}>$/
 
-export interface VocabularyLine {
+interface VocabularyLine {
 	text: string
 	pieces: number
 	characters: number
@@ -182,17 +180,6 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 			: {}),
 		...((options.perCharacter ?? true) ? { characters: characterCoverage(tokenizer, options.texts) } : {}),
 	}
-}
-
-/**
- * Read newline-delimited inputs from a file, for a sweep bigger than an argument list.
- */
-export function readVocabularyInputs(path: string): string[] {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a hand-written probe list, read whole and bounded
-	return readFileSync(path, "utf8")
-		.split("\n")
-		.map((line) => line.trim())
-		.filter(Boolean)
 }
 
 /**

@@ -39,7 +39,7 @@ export const EQUIVALENCE_THRESHOLD_KM = 25
  * The pre-registered TOST equivalence bound, in percentage points. Two arms are declared equivalent only when the whole
  * confidence interval for their difference at {@link EQUIVALENCE_THRESHOLD_KM} sits inside ±5 pp.
  */
-export const EQUIVALENCE_BOUND_PP = 5
+const EQUIVALENCE_BOUND_PP = 5
 
 /**
  * One-sided critical z at α = 0.05, the standard TOST pairing — each of the two one-sided tests is run at 5%, which

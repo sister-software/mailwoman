@@ -62,7 +62,7 @@ export function pickLargerAdmin(country: ResolvedPlace | null, region: ResolvedP
  * role-NULL exonym tier stays open, which is what lets 格鲁吉亚 win the country race through its display-name alias. An
  * artifact without the role column ignores the exclusion and the races behave as before.
  */
-export const BARE_RACE_EXCLUDED_NAME_ROLES: readonly string[] = ["abbr", "gloss"]
+const BARE_RACE_EXCLUDED_NAME_ROLES: readonly string[] = ["abbr", "gloss"]
 
 /**
  * The best `country`-placetype row for a bare toponym span, or null. `scopedCountry` is the same hard filter the

@@ -114,7 +114,7 @@ const ABORT_AFTER_CONSECUTIVE_FAILURES = 5
  */
 const DEFAULT_GRADE_THRESHOLD_KM = EQUIVALENCE_THRESHOLD_KM
 
-export interface CompareOptions {
+interface CompareOptions {
 	inputs?: InputSetRef
 	armA: unknown
 	armB: unknown

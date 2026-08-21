@@ -36,7 +36,7 @@ import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
  * Borrowed from the counterfactual threshold for the same reason it was chosen there: below the tightest distance
  * anything here grades at, a move cannot change a verdict, so reporting it fills the table with coordinate jitter.
  */
-export const MOVED_KM = 1
+const MOVED_KM = 1
 
 /**
  * One ladder: an ordered series of inputs, each differing minimally from the one before it.
@@ -49,7 +49,7 @@ export interface Ladder {
 /**
  * What changed between one rung and the previous one.
  */
-export interface RungDelta {
+interface RungDelta {
 	gained: Array<{ tag: string; value: string }>
 	lost: Array<{ tag: string; value: string }>
 	changed: Array<{ tag: string; from: string; to: string }>
@@ -58,7 +58,7 @@ export interface RungDelta {
 	tier_to: string
 }
 
-export interface RungReading {
+interface RungReading {
 	step: number
 	input: string
 	components: Record<string, string>
@@ -83,7 +83,7 @@ export interface RungReading {
 	error?: string
 }
 
-export interface LadderReading {
+interface LadderReading {
 	label: string
 	rungs: RungReading[]
 	/**

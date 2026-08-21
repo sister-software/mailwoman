@@ -177,7 +177,7 @@ export function crossEngineReading(armA: string, armB: string, declared: string[
  * WITHIN either backend the wrong answers' score range sits inside the correct answers' range with a HIGHER mean — so
  * it cannot be thresholded on either, which is why this is a refusal rather than a warning.
  */
-export const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
+const INCOMPARABLE_FIELDS = new Set(["resolver_score", "score", "prominence"])
 
 export function assertComparableField(field: string): void {
 	if (INCOMPARABLE_FIELDS.has(field)) {

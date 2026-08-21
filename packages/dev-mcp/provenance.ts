@@ -27,7 +27,7 @@ import { existsSync, lstatSync, readlinkSync, statSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 
-export interface ArtifactState {
+interface ArtifactState {
 	name: string
 	path: string
 	exists: boolean
@@ -48,7 +48,7 @@ export interface ArtifactState {
 	sealed: boolean | null
 }
 
-export interface RepoVintage {
+interface RepoVintage {
 	repo: string
 	origin: string
 	source: string

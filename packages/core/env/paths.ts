@@ -34,7 +34,7 @@ export function cwdPathBuilder(...paths: string[]): string {
 /**
  * Find `.env` files from the current working directory up to the home directory or repository root.
  */
-export function cwdEnvPaths(): string[] {
+function cwdEnvPaths(): string[] {
 	const found: string[] = []
 	let directory = process.cwd()
 	const home = homedir()

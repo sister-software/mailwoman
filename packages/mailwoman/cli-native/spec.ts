@@ -11,7 +11,7 @@ import { parseArgs } from "node:util"
 
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-export type OptionValue = boolean | number | string | boolean[] | number[] | string[]
+type OptionValue = boolean | number | string | boolean[] | number[] | string[]
 
 interface OptionSpecBase {
 	description: string
@@ -21,12 +21,12 @@ interface OptionSpecBase {
 	required?: boolean
 }
 
-export interface BooleanOptionSpec extends OptionSpecBase {
+interface BooleanOptionSpec extends OptionSpecBase {
 	type: "boolean"
 	default?: boolean | boolean[]
 }
 
-export interface NumberOptionSpec extends OptionSpecBase {
+interface NumberOptionSpec extends OptionSpecBase {
 	type: "number"
 	default?: number | number[]
 	hint?: string
@@ -34,7 +34,7 @@ export interface NumberOptionSpec extends OptionSpecBase {
 	validationMessage?: string
 }
 
-export interface StringOptionSpec extends OptionSpecBase {
+interface StringOptionSpec extends OptionSpecBase {
 	type: "string"
 	default?: string | string[]
 	hint?: string
@@ -43,9 +43,9 @@ export interface StringOptionSpec extends OptionSpecBase {
 	validationMessage?: string
 }
 
-export type OptionSpec = BooleanOptionSpec | NumberOptionSpec | StringOptionSpec
+type OptionSpec = BooleanOptionSpec | NumberOptionSpec | StringOptionSpec
 
-export interface PositionalSpec {
+interface PositionalSpec {
 	name: string
 	description: string
 	required?: boolean

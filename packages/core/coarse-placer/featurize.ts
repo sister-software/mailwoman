@@ -65,7 +65,7 @@ export const COARSE_CLASSES = [
 	"OTHER",
 ] as const
 
-export type CoarseClass = (typeof COARSE_CLASSES)[number]
+type CoarseClass = (typeof COARSE_CLASSES)[number]
 
 /**
  * Hashed-feature dimensionality (2^16). Keeps the weight matrix small (28×65536 ≈ 1.8 MB int8) while collisions stay

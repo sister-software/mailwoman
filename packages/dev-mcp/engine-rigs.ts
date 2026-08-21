@@ -120,7 +120,7 @@ export const ENGINE_RIGS = {
 
 export type EngineRigName = keyof typeof ENGINE_RIGS
 
-export interface ContainerState {
+interface ContainerState {
 	name: string
 	/**
 	 * The runtime's own status string (`Up 2 minutes`, `Exited (0) 3 days ago`, `Created`), or `absent` when no container

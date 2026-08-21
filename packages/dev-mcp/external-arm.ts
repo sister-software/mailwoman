@@ -52,7 +52,7 @@ export type ExternalEngine = (typeof ExternalEngine)[keyof typeof ExternalEngine
  * operators did not consent to being a benchmark subject. Refused rather than warned — a warning on the cheapest thing
  * to type is a warning that gets typed.
  */
-export const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
+const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
 
 /**
  * Minimum spacing between two dispatches to an external arm, in milliseconds.

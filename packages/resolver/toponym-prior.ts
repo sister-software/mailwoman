@@ -79,7 +79,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
  * cross-country question — which country's bearer a bare query meant.
  */
-export const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
+const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
 
 /**
  * The fields a ranking key reads. Structural rather than `ResolvedPlace` so the backend's own `PlaceCandidate` (a

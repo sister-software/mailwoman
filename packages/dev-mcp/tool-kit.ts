@@ -416,13 +416,7 @@ export type StratumKey = "country" | "address_kind" | "status" | "truth_toleranc
  * stratified result and is not one. Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
  * `{"unknown": {n: 60}}` rather than saying the key did not exist.
  */
-export const STRATUM_KEYS: readonly StratumKey[] = [
-	"country",
-	"address_kind",
-	"status",
-	"truth_tolerance_m",
-	"truth_type",
-]
+const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]
 
 /**
  * @throws When `by` is not a known stratum — silence here manufactures a fake one-bucket table.

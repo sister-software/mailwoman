@@ -53,7 +53,7 @@ export type OracleProviderName = (typeof OracleProviderName)[keyof typeof Oracle
  * Where the daemon reads its oracle opt-in. Under the data root rather than the repo: it names an operator's billing
  * posture on one machine, which is not a fact about the source tree and must never be committed.
  */
-export const ORACLE_CONFIG_PATH = String(dataRootPath("dev-mcp", "oracle-config.json"))
+const ORACLE_CONFIG_PATH = String(dataRootPath("dev-mcp", "oracle-config.json"))
 
 /**
  * The shape of that file.

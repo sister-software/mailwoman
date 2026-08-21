@@ -25,7 +25,7 @@
  *   manufacturing exactly the kind of number this repo's meaning-of-zero rule exists to forbid.
  */
 
-export interface GauntletLayerReport {
+interface GauntletLayerReport {
 	layer: string
 	gated_pass: number
 	gated_total: number

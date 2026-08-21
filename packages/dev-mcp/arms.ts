@@ -40,7 +40,7 @@ export interface ArmRunner {
 /**
  * A mailwoman arm — one warm engine under one configuration.
  */
-export interface MailwomanArm {
+interface MailwomanArm {
 	kind: "mailwoman"
 	config: EngineConfig
 }
@@ -103,7 +103,7 @@ export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm | Wor
  * `mailwoman` because the question a recorded arm answers is almost always "did OUR side change since that run" — the
  * external or oracle side is the control, and re-running it is what a recorded arm exists to avoid.
  */
-export const DEFAULT_RECORDED_ARM = "mailwoman"
+const DEFAULT_RECORDED_ARM = "mailwoman"
 
 const MAILWOMAN_ARM_SCHEMA = z.object({
 	kind: z.literal("mailwoman"),

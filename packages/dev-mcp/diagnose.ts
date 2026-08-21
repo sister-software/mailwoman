@@ -218,14 +218,14 @@ export interface AccountInput {
  * `n_tokens: 0` with null statistics is a real state (an empty parse), kept apart from a mean of zero — one says
  * nothing was decoded, the other says everything was decoded with no confidence.
  */
-export interface DecodeReading {
+interface DecodeReading {
 	path: "viterbi" | "argmax"
 	n_tokens: number
 	mean_confidence: number | null
 	min_confidence: number | null
 }
 
-export interface KnownFormatReading {
+interface KnownFormatReading {
 	format: string
 	confidence: number
 	text: string
@@ -256,7 +256,7 @@ export interface ParseSeams {
  * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately NOT carried —
  * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
  */
-export interface LookupSeam {
+interface LookupSeam {
 	tag: string
 	value: string
 	placetype: string
@@ -603,7 +603,7 @@ export function expectationCase(
  * Typed against the real `GeocodeResult` rather than {@link AccountInput}: `checkCase` reads the gauntlet projection,
  * and projecting twice is how a recorded answer and the live one it came from stop agreeing.
  */
-export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
+function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
 	const expectation = expectationCase(item)
 
 	if (!expectation) return { source: "none", met: null, issues: [] }
