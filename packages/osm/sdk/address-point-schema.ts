@@ -37,25 +37,19 @@ export interface OSMAddressPointDatabase extends LayerContractDatabase {
  */
 export const OSM_ADDRESS_POINT_COLUMNS = [...ADDRESS_POINT_COLUMNS, "h3_cell"] as const
 
-const asAddressPointDB = (db: Kysely<OSMAddressPointDatabase>): Kysely<AddressPointDatabase> =>
-	db as unknown as Kysely<AddressPointDatabase>
-
-const asContractDB = (db: Kysely<OSMAddressPointDatabase>): Kysely<LayerContractDatabase> =>
-	db as unknown as Kysely<LayerContractDatabase>
-
 /**
  * Create the legacy-compatible domain table plus OSM's contract/spine extension.
  */
 export async function createOSMAddressPointTables(db: Kysely<OSMAddressPointDatabase>): Promise<void> {
-	await createAddressPointTable(asAddressPointDB(db))
+	await createAddressPointTable(db)
 
 	await db.schema
 		.alterTable("address_point")
 		.addColumn("h3_cell", "integer", (column) => column.notNull())
 		.execute()
 
-	await createLayerManifestTable(asContractDB(db))
-	await createLayerCoverageTable(asContractDB(db))
+	await createLayerManifestTable(db)
+	await createLayerCoverageTable(db)
 }
 
 /**
@@ -63,8 +57,4 @@ export async function createOSMAddressPointTables(db: Kysely<OSMAddressPointData
  */
 export async function createOSMAddressPointIndexes(db: Kysely<OSMAddressPointDatabase>): Promise<void> {
 	await db.schema.createIndex("idx_ap_h3").on("address_point").column("h3_cell").execute()
-}
-
-export function asOSMLayerContractDB(db: Kysely<OSMAddressPointDatabase>): Kysely<LayerContractDatabase> {
-	return asContractDB(db)
 }

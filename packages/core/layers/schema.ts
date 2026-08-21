@@ -147,9 +147,20 @@ export interface LayerContractDatabase {
 }
 
 /**
+ * The slice of a Kysely handle the contract helpers touch — the parameter type every one of them takes.
+ *
+ * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is NOT assignable to
+ * `Kysely<LayerContractDatabase>` even when `POIDatabase extends LayerContractDatabase`. The incompatibility is in
+ * `transaction()` and `with()`, which the contract never calls. Naming only the members it does call lets a layer pass
+ * its own handle directly. The alternative — a cast at every call site — does not merely skip one check: it disarms
+ * every column-level guarantee these two tables carry, including any added later.
+ */
+export type LayerContractHandle = Pick<Kysely<LayerContractDatabase>, "insertInto" | "schema" | "selectFrom">
+
+/**
  * Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline.
  */
-export async function createLayerManifestTable(db: Kysely<LayerContractDatabase>): Promise<void> {
+export async function createLayerManifestTable(db: LayerContractHandle): Promise<void> {
 	await db.schema
 		.createTable("layer_manifest")
 		.addColumn("name", "text", (c) => c.primaryKey())
@@ -171,7 +182,7 @@ export async function createLayerManifestTable(db: Kysely<LayerContractDatabase>
 /**
  * Create `layer_coverage` — small fixed-width rows probed by PK, the WITHOUT ROWID sweet spot.
  */
-export async function createLayerCoverageTable(db: Kysely<LayerContractDatabase>): Promise<void> {
+export async function createLayerCoverageTable(db: LayerContractHandle): Promise<void> {
 	await db.schema
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())

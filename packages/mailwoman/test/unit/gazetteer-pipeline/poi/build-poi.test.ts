@@ -160,7 +160,7 @@ describe("buildPOIDatabase", () => {
 		expect(firstPhysicalRow.confidence).toBeCloseTo(maxConfidence, 10)
 
 		// --- manifest reads back valid ---
-		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
+		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
 			name: "poi",
@@ -184,7 +184,7 @@ describe("buildPOIDatabase", () => {
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(30)
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
-		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
 
 		// --- end-to-end via the POILookup reader ---
 		using lookup = new POILookup({ databasePath: out })
@@ -319,7 +319,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		const raw = new DatabaseSync(out, { readOnly: true })
 		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
 
-		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
+		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
 			name: "poi",
@@ -334,7 +334,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 
 		// --- Gate-relevant: the zero-observed-rows cell must round-trip, never read back as undefined ---
 		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
-		const readBack = await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, zeroCell.h3Cell)
+		const readBack = await readLayerCoverage(kdb, zeroCell.h3Cell)
 
 		expect(readBack).toEqual({
 			h3Cell: zeroCell.h3Cell,
@@ -448,7 +448,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 
 		const raw = new DatabaseSync(out, { readOnly: true })
 		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
-		const contractDB = kdb as unknown as Kysely<LayerContractDatabase>
+		const contractDB = kdb
 
 		const builderWrittenCoverage = await readLayerCoverage(contractDB, overrideCell.h3Cell)
 

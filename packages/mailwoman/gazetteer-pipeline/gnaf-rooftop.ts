@@ -37,7 +37,6 @@ import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import {
-	asOSMLayerContractDB,
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
 	OSM_ADDRESS_H3_RESOLUTION,
@@ -333,10 +332,10 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 
 	log(`[gnaf] indexing…`)
 
-	await createAddressPointIndexes(kdb as unknown as DatabaseClient<AddressPointDatabase>)
+	await createAddressPointIndexes(kdb)
 	await createOSMAddressPointIndexes(kdb)
 
-	await writeLayerManifest(asOSMLayerContractDB(kdb), {
+	await writeLayerManifest(kdb, {
 		name: "gnaf-address-points-au-au",
 		version: release,
 		schemaVersion: 1,

@@ -42,8 +42,8 @@ describe("poi schema", () => {
 	it("stages + contract tables coexist and accept typed rows", async () => {
 		const { kdb } = openMemory()
 		await createPOIStagingTables(kdb)
-		await createLayerManifestTable(kdb as unknown as Kysely<LayerContractDatabase>)
-		await createLayerCoverageTable(kdb as unknown as Kysely<LayerContractDatabase>)
+		await createLayerManifestTable(kdb)
+		await createLayerCoverageTable(kdb)
 
 		await kdb
 			.insertInto("poi_stage")

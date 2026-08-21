@@ -17,6 +17,8 @@ import type { DatabaseSync } from "node:sqlite"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { sql, type Kysely } from "kysely"
 
+import type { NameKey } from "./street-normalize.ts"
+
 /**
  * One POI row. Clustered PK: h3_cell → category_id → neg_rank → rowid_key.
  */
@@ -39,9 +41,12 @@ export interface POITable {
 	rowid_key: number
 	name: string | null
 	/**
-	 * Lowercased, diacritic-flattened probe key for exact name lookups.
+	 * Probe key for exact name lookups, minted by {@link normalizeLocalityForKey} at build AND at query.
+	 *
+	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`: it binds to the parameter, returns
+	 * fewer rows, and the shortfall reads as a coverage gap in the data rather than a defect in the probe.
 	 */
-	name_key: string | null
+	name_key: NameKey | null
 	brand_wikidata: string | null
 	latitude: number
 	longitude: number
@@ -69,7 +74,7 @@ export interface POIStageTable {
 	neg_rank: number | null
 	rowid_key: number | null
 	name: string | null
-	name_key: string | null
+	name_key: NameKey | null
 	brand_wikidata: string | null
 	latitude: number
 	longitude: number
