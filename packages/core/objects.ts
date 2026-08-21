@@ -130,11 +130,16 @@ export function isRecordLike(input: unknown): input is object {
 	return typeof input === "object" && input !== null && !Array.isArray(input)
 }
 
+type Falsy = false | 0 | 0n | "" | null | undefined
+
 /**
- * Type guard for string composition pipelines that discard empty optional fields.
+ * Typed counterpart to `Boolean` for collection filters. The runtime semantics are intentionally identical: all falsy
+ * values are removed, while the overload narrows them out of the resulting element type.
  */
-export function isNonEmptyString(input: unknown): input is string {
-	return typeof input === "string" && input.length > 0
+export function isPresent<T>(input: T): input is Exclude<T, Falsy>
+
+export function isPresent(input: unknown): boolean {
+	return Boolean(input)
 }
 
 /**
