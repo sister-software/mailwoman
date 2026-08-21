@@ -33,7 +33,7 @@ import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 // Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
-// docs/plugins/demo-assets/resolve.mjs) — the shared alias-bag parser keeps this backend's exact
+// docs/plugins/demo-assets/workspace-aliases.ts) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the

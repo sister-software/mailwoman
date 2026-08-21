@@ -10,7 +10,7 @@ import { resolve } from "node:path"
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
 
-import { stagePairIndexes, stageSQLJSHTTPVFS } from "./resolve.ts"
+import { stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
 import { configureDemoWebpack } from "./webpack-policy.ts"
 
 export default function demoAssetsPlugin(context: LoadContext): Plugin {

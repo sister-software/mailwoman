@@ -8,8 +8,8 @@ import { resolve } from "node:path"
 
 import { describe, expect, test } from "vitest"
 
-import { buildWorkspaceAliases } from "./resolve.ts"
 import { configureDemoWebpack } from "./webpack-policy.ts"
+import { buildWorkspaceAliases } from "./workspace-aliases.ts"
 
 const docsDir = resolve(import.meta.dirname, "../..")
 
