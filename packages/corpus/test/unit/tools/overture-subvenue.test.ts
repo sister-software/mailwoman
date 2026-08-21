@@ -52,6 +52,11 @@ interface FixtureDatabase {
 		neg_rank: number
 		rowid_key: number
 		name: string | null
+		/**
+		 * Mirrors the shipped column so a rename fails here; it does NOT mirror the fold. The real `poi.name_key` is
+		 * `NameKey`, minted by `normalizeLocalityForKey` — which this package cannot reach, and which no assertion here
+		 * needs. Do not copy the value expression below as if it were the fold.
+		 */
 		name_key: string | null
 		brand_wikidata: string | null
 		latitude: number

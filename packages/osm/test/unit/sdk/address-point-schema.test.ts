@@ -6,7 +6,6 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import {
-	asOSMLayerContractDB,
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
 	OSM_ADDRESS_H3_RESOLUTION,
@@ -47,7 +46,7 @@ describe("OSM address-point layer schema", () => {
 
 		await createOSMAddressPointIndexes(db)
 
-		await writeLayerManifest(asOSMLayerContractDB(db), {
+		await writeLayerManifest(db, {
 			name: "osm-address-points-gb-test",
 			version: "fixture",
 			schemaVersion: 1,
@@ -63,9 +62,9 @@ describe("OSM address-point layer schema", () => {
 			createdAt: "2026-08-09T00:00:00.000Z",
 		})
 
-		const manifest = await readLayerManifest(asOSMLayerContractDB(db))
+		const manifest = await readLayerManifest(db)
 		expect(manifest.spineKeys).toEqual({ h3: { column: "h3_cell", resolution: 9 } })
-		expect(await readLayerCoverage(asOSMLayerContractDB(db), 123_456)).toBeUndefined()
+		expect(await readLayerCoverage(db, 123_456)).toBeUndefined()
 
 		const columns = raw.prepare("PRAGMA table_info(address_point)").all() as Array<{ name: string; notnull: number }>
 		expect(columns.find((column) => column.name === "h3_cell")?.notnull).toBe(1)

@@ -29,6 +29,11 @@ import { DatabaseSync } from "node:sqlite"
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
+import {
+	createAddressConventionTable,
+	createConventionMetaTable,
+	type ConventionDatabase,
+} from "@mailwoman/resolver-wof-sqlite/convention-schema"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -121,18 +126,11 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const db = new DatabaseSync(output)
 		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
-		const kdb = new DatabaseClient({ database: db })
+		const kdb = new DatabaseClient<ConventionDatabase>({ database: db })
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 
-		await kdb.schema
-			.createTable("address_convention")
-			// wof_id: the WOF admin polygon this profile attaches to. convention: the Convention JSON.
-			// source: provenance — why this row exists / where it came from.
-			.addColumn("wof_id", "integer", (c) => c.primaryKey())
-			.addColumn("convention", "text", (c) => c.notNull())
-			.addColumn("source", "text", (c) => c.notNull())
-			.execute()
+		await createAddressConventionTable(kdb)
 
 		const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
@@ -141,11 +139,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
-		await kdb.schema
-			.createTable("meta")
-			.addColumn("key", "text", (c) => c.primaryKey())
-			.addColumn("value", "text")
-			.execute()
+		await createConventionMetaTable(kdb)
 
 		const meta: Record<string, string> = {
 			name: "mailwoman-conventions",

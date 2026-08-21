@@ -222,6 +222,11 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	const kdb = new DatabaseClient<TIGERDatabase>({ database: db })
 	await initializeTIGERSchema(kdb)
 
+	/**
+	 * `level` picks the table AND the row shape, but nothing ties them at the type level: {@link buildRow} returns the
+	 * union and Kysely needs the arm's concrete row. The narrowings below are sound only because `buildRow` switches on
+	 * the SAME `level` — keep the two switches in step, or a row shape reaches the wrong table.
+	 */
 	const insertBatch = async (rows: Row[]): Promise<void> => {
 		if (level === "tabblock20") {
 			await kdb

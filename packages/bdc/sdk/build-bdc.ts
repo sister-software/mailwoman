@@ -8,8 +8,7 @@
  *
  *   Mirrors `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s shape closely: the same build-tuning
  *   pragmas, the same single-pass `Map<number, number>` coverage aggregation taken during the load
- *   (no second scan), the same {@link asContractDB} Kysely-invariance cast for the shared
- *   `@mailwoman/core/layers` calls, and the same `writeLayerManifest` → `sealDatabase` tail.
+ *   (no second scan), and the same `writeLayerManifest` → `sealDatabase` tail.
  *
  *   Two differences from that precedent, both deliberate:
  *
@@ -65,7 +64,6 @@ import {
 	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { openBuiltDatabase, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
@@ -205,16 +203,6 @@ export interface BuildBDCResult {
 	 * table, see {@link BuildBDCOptions.providers}).
 	 */
 	providersPopulated: number
-}
-
-/**
- * `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes `Kysely<DB>` INVARIANT
- * in `DB` — narrows a `DatabaseClient<BDCDatabase>` handle back down for the `@mailwoman/core/layers` calls. Exact
- * precedent: `build-poi.ts`'s own `asContractDB`; see that file for the full rationale (tried widening the shared
- * package's signatures first — breaks THEIR internal `insertInto`/`selectFrom` calls instead).
- */
-function asContractDB(kdb: DatabaseClient<BDCDatabase>): DatabaseClient<LayerContractDatabase> {
-	return kdb as unknown as DatabaseClient<LayerContractDatabase>
 }
 
 /**
@@ -601,8 +589,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	try {
 		progress("creating manifest/coverage/availability/provider/stage tables")
-		await createLayerManifestTable(asContractDB(kdb))
-		await createLayerCoverageTable(asContractDB(kdb))
+		await createLayerManifestTable(kdb)
+		await createLayerCoverageTable(kdb)
 		await createBDCAvailabilityTable(kdb)
 		await createBDCProviderTable(kdb)
 		await createBDCStageTable(kdb)
@@ -788,11 +776,11 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			observedRows,
 		}))
 
-		await writeLayerCoverage(asContractDB(kdb), coverageCells)
+		await writeLayerCoverage(kdb, coverageCells)
 
 		progress("writing layer manifest")
 
-		await writeLayerManifest(asContractDB(kdb), {
+		await writeLayerManifest(kdb, {
 			name: "bdc",
 			version: options.asOfDate,
 			schemaVersion: 1,

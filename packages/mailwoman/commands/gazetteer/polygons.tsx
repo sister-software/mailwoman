@@ -32,6 +32,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
@@ -183,6 +184,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
 		const { isPresent, tryParsingJSON } = await import("@mailwoman/core/objects")
 
 		const out = options.out
@@ -237,13 +239,9 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const dbOut = new DatabaseSync(tmpOut)
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
-		const kdb = new DatabaseClient({ database: dbOut })
+		const kdb = new DatabaseClient<PolygonDatabase>({ database: dbOut })
 
-		await kdb.schema
-			.createTable("polygons")
-			.addColumn("id", "integer", (c) => c.primaryKey())
-			.addColumn("geom", "text", (c) => c.notNull())
-			.execute()
+		await createPolygonsTable(kdb)
 
 		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 

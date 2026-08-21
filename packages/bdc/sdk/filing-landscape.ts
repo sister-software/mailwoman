@@ -140,14 +140,6 @@ const speedBucketCaseSQL = sql<string>`CASE
 END`
 
 /**
- * `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes `Kysely<DB>` INVARIANT
- * in `DB` — same narrowing cast as `build-bdc.ts`'s `asContractDB`.
- */
-function asContractDB(kdb: DatabaseClient<BDCDatabase>): Kysely<LayerContractDatabase> {
-	return kdb as unknown as Kysely<LayerContractDatabase>
-}
-
-/**
  * Reconstruct the res-6 ancestor of a res-9 short-cell int WITHOUT a centroid — see the module docstring for why the
  * centroid is the wrong input. Exported so tests can assert this agrees, cell-for-cell, with `build-bdc.ts`'s own
  * coverage-cell derivation (the two MUST share this derivation — see that file's docstring).
@@ -184,7 +176,7 @@ export async function filingLandscape(
 
 	// Read (and validate) the manifest FIRST — a broken/missing manifest must throw before any block is
 	// classified, never fall through to an "unstamped" answer (gate 4).
-	const manifest = await readLayerManifest(asContractDB(db))
+	const manifest = await readLayerManifest(db)
 
 	const requestedUnits: ReadonlyArray<string | number> = query.geoids ?? query.h3Cells!
 	const unitColumn = query.geoids ? ("geoid" as const) : ("h3_cell" as const)
@@ -230,7 +222,7 @@ export async function filingLandscape(
 		}
 
 		const res6Parent = res9ShortCellToRes6Parent(candidateCell)
-		const coverage = await readLayerCoverage(asContractDB(db), res6Parent)
+		const coverage = await readLayerCoverage(db, res6Parent)
 
 		if (coverage === undefined) {
 			unknownBlockCount++

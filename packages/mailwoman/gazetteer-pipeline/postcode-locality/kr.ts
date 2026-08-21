@@ -45,6 +45,15 @@ import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
 
+import {
+	createPostcodeLocalityIndex,
+	createPostcodeLocalityMetaTable,
+	createPostcodeLocalityTable,
+	POSTCODE_LOCALITY_INSERT_SQL,
+	type PostcodeLocalityDatabase,
+	type PostcodeLocalityInsertValues,
+} from "./schema.ts"
+
 /**
  * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
  */
@@ -196,21 +205,12 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	}
 
 	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
-	await kdb.schema
-		.createTable("postcode_locality")
-		.addColumn("postcode", "text", (c) => c.notNull())
-		.addColumn("country", "text", (c) => c.notNull())
-		.addColumn("locality_id", "integer", (c) => c.notNull())
-		.addColumn("locality_name", "text", (c) => c.notNull())
-		.addColumn("aliases", "text")
-		.addColumn("distance_km", "real", (c) => c.notNull())
-		.addColumn("is_containing", "integer", (c) => c.notNull())
-		.execute()
+	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 
-	const rows: Array<[string, string, number, string, string, number, number]> = []
+	const rows: PostcodeLocalityInsertValues[] = []
 	let resolved = 0
 	let nameConfirmed = 0
 	let provinceOk = 0
@@ -247,7 +247,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
+	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
 	db.exec("BEGIN")
 
 	for (const r of rows) {
@@ -256,22 +256,13 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	db.exec("COMMIT")
 
-	await kdb.schema
-		.createIndex("postcode_locality_by_pc")
-		.on("postcode_locality")
-		.columns(["postcode", "country"])
-		.execute()
+	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
 	dists.sort((a, b) => a - b)
 	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
 	const total = postal.size
 
-	await kdb.schema
-		.createTable("meta")
-		.ifNotExists()
-		.addColumn("key", "text", (c) => c.primaryKey())
-		.addColumn("value", "text")
-		.execute()
+	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
 
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-kr"],

@@ -40,6 +40,7 @@
 import { copyFileSync, existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -215,7 +216,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	}
 
 	const db = new DatabaseSync(outPath)
-	const kdb = new DatabaseClient({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
 	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()

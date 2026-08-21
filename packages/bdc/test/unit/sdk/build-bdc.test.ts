@@ -214,7 +214,7 @@ describe("buildBDCDatabase", () => {
 
 	it("(e) writes a manifest whose sourceVintage equals asOfDate", async () => {
 		using kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
-		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
+		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
 			name: "bdc",
@@ -241,7 +241,7 @@ describe("buildBDCDatabase", () => {
 		const totalObserved = coverageRows.reduce((sum, c) => sum + c.observed_rows, 0)
 		expect(totalObserved).toBe(result.rows)
 		// Meaning-of-zero: an unsurveyed cell is UNKNOWN, never present with completeness 0.
-		expect(await readLayerCoverage(kdb as unknown as Kysely<LayerContractDatabase>, 999_999_999)).toBeUndefined()
+		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
 	})
 
 	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted (3a decision 6)", async () => {
@@ -313,7 +313,7 @@ describe("buildBDCDatabase", () => {
 		expect(existsSync(`${out}.prev`)).toBe(false)
 
 		using kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
-		const manifest = await readLayerManifest(kdb as unknown as Kysely<LayerContractDatabase>)
+		const manifest = await readLayerManifest(kdb)
 		expect(manifest.sourceVintage).toBe("2026-07-01")
 	})
 })

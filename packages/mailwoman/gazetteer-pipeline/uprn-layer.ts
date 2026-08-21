@@ -552,14 +552,6 @@ interface UPRNAcquisitionSidecar {
 }
 
 /**
- * See `build-poi.ts`'s `asContractDB`: `Kysely<DB>` is INVARIANT in `DB`, so the layer-contract helpers need the handle
- * narrowed to the contract tables even though `UPRNDatabase` structurally carries them.
- */
-function asContractDB(kdb: DatabaseClient<UPRNDatabase>): DatabaseClient<LayerContractDatabase> {
-	return kdb as unknown as DatabaseClient<LayerContractDatabase>
-}
-
-/**
  * Locate the acquired archive in an offline `sourceDir`.
  */
 async function resolveOfflineArchive(sourceDir: string): Promise<string> {
@@ -657,8 +649,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	await createUPRNTable(kdb)
 	await createUPRNMetaTable(kdb)
-	await createLayerManifestTable(asContractDB(kdb))
-	await createLayerCoverageTable(asContractDB(kdb))
+	await createLayerManifestTable(kdb)
+	await createLayerCoverageTable(kdb)
 
 	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
 	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load; the
@@ -767,7 +759,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	// OS designates the product complete for GB, so observed cells are `designated`/1.0 — a miss inside one
 	// is evidence of absence. Unobserved cells stay ABSENT (unknown), per the meaning-of-zero rule.
 	await writeLayerCoverage(
-		asContractDB(kdb),
+		kdb,
 		[...coverage.entries()]
 			.toSorted((a, b) => a[0] - b[0])
 			.map(([h3Cell, observedRows]) => ({
@@ -785,7 +777,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	phase("manifest")
 
-	await writeLayerManifest(asContractDB(kdb), {
+	await writeLayerManifest(kdb, {
 		name: "os-open-uprn",
 		version: osVersion,
 		schemaVersion: 1,

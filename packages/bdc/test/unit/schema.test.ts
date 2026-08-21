@@ -30,7 +30,7 @@ describe("bdc schema", () => {
 		// `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes
 		// `Kysely<DB>` INVARIANT in `DB` (see build-bdc.ts's `asContractDB` for the full rationale) —
 		// narrow the handle back down for these two shared layer-contract calls.
-		const contractDB = db as unknown as Kysely<LayerContractDatabase>
+		const contractDB = db
 
 		await createLayerManifestTable(contractDB)
 		await createLayerCoverageTable(contractDB)

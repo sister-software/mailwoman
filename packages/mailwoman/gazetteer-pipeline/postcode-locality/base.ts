@@ -45,6 +45,14 @@ import { pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { haversineKm } from "@mailwoman/spatial"
 
+import {
+	createPostcodeLocalityIndex,
+	createPostcodeLocalityMetaTable,
+	createPostcodeLocalityTable,
+	POSTCODE_LOCALITY_INSERT_SQL,
+	type PostcodeLocalityDatabase,
+} from "./schema.ts"
+
 /**
  * Plus name:* / label:* props, gathered below.
  */
@@ -149,14 +157,9 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 			.join(", ") +
 		"}"
 
-	const kdb = new DatabaseClient({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
 
-	await kdb.schema
-		.createTable("meta")
-		.ifNotExists()
-		.addColumn("key", "text", (c) => c.primaryKey())
-		.addColumn("value", "text")
-		.execute()
+	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
 
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality"],
@@ -307,23 +310,13 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality shard
 	// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
 	// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
-	const kdb = new DatabaseClient({ database: out })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: out })
 
-	await kdb.schema
-		.createTable("postcode_locality")
-		.ifNotExists()
-		.addColumn("postcode", "text", (c) => c.notNull())
-		.addColumn("country", "text", (c) => c.notNull())
-		.addColumn("locality_id", "integer", (c) => c.notNull())
-		.addColumn("locality_name", "text", (c) => c.notNull())
-		.addColumn("aliases", "text")
-		.addColumn("distance_km", "real", (c) => c.notNull())
-		.addColumn("is_containing", "integer", (c) => c.notNull())
-		.execute()
+	await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 
 	out.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
 
-	const insert = out.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
+	const insert = out.prepare(POSTCODE_LOCALITY_INSERT_SQL)
 	let rows = 0
 	let nContained = 0
 	out.exec("BEGIN")
@@ -399,12 +392,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	out.exec("COMMIT")
 
-	await kdb.schema
-		.createIndex("postcode_locality_by_pc")
-		.ifNotExists()
-		.on("postcode_locality")
-		.columns(["postcode", "country"])
-		.execute()
+	await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
 
 	console.log(
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
