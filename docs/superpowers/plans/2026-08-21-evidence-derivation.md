@@ -72,7 +72,18 @@ Classify by hand — this is a judgement the measurement cannot make. The classe
 | `mistag_street` | the value is a fragment of a street phrase in the input              | `Avenida` ← `Avenida Corrientes`; `de Catalunya` ← `Rambla de Catalunya`; `Turner St` |
 | `mistag_poi`    | the value names a venue or landmark                                  | `Statue of Liberty`; `Great Mosque of Niamey`                                         |
 | `junk_span`     | the value is not a name at all                                       | `New` ← `New Territories, Hong Kong`; `near NAFTI`                                    |
-| `fold_failure`  | **the place is real and we plausibly hold it under another surface** | `Tel Aviv-Yafo`; `São Paulo - SP`; `Co. Westmeath`; `ХУД - 15 хороо`                  |
+| `fold_failure`  | **the place is real and we plausibly hold it under another surface** | see the three sub-mechanisms below                                                    |
+
+`fold_failure` is not one class. `normalizeLocalityForKey` — the fold `constraint-census` keys with — was
+measured correct (NFKD, strip combining marks, lowercase, strip `.,'’`, collapse whitespace), so the
+denominator is NOT contaminated by a diacritic bug. What it does do is keep hyphens and drop periods, and
+that produces three distinct failures. Record which one each row is:
+
+| Sub-mechanism       | Board row        | Folds to         | Register likely holds |
+| ------------------- | ---------------- | ---------------- | --------------------- |
+| `fold_hyphen`       | `Tel Aviv-Yafo`  | `tel aviv-yafo`  | `tel aviv yafo`       |
+| `fold_admin_suffix` | `São Paulo - SP` | `sao paulo - sp` | `sao paulo`           |
+| `fold_designator`   | `Co. Westmeath`  | `co westmeath`   | `westmeath`           |
 
 For every row you classify `fold_failure`, confirm it by probing the gazetteer for the same place under a repaired surface. Use the `mwdev_lookup` MCP tool. A row you cannot confirm is `unknown`, not `fold_failure` — a magnitude never carries its own absence.
 
@@ -471,9 +482,17 @@ rule into the type system for callers who build a link outside a database."
 - Produces:
   - `const CoverageBasis` / `type CoverageBasis` — `"designated" | "surveyed" | "source_present"`
   - `function supportsExclusion(cell: { basis?: CoverageBasis | null }): boolean`
+  - `function foldIdentity(fold: (s: string) => string): string`
+  - `const FOLD_PROBE_CORPUS: readonly string[]`
   - `interface CoverageScope { layer: string; h3Cell: number; basis: CoverageBasis; fold: string }`
   - `interface Exclusion { kind: "exclusion"; source: string; vintage: string; scope: CoverageScope }`
   - `function requireExclusionBasis(input: RequireExclusionInput): Exclusion | null`
+
+**Also in this task:** move `res9ShortCellToRes6Parent` from `packages/bdc/sdk/filing-landscape.ts` to
+`@mailwoman/spatial/h3/cell`, generalized over its two resolutions. It currently closes over
+`BDC_H3_RESOLUTION` / `BDC_COVERAGE_H3_RESOLUTION`, and Task 5 needs the identical derivation inside
+`resolver-wof-sqlite` — importing it from `@mailwoman/bdc` would be the wrong dependency direction. Same
+share-the-function rule that moves `CoverageBasis`. Steps 10-12.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -635,9 +654,13 @@ export interface RequireExclusionInput {
 	 * which is unknown — never a zero-completeness record (the meaning-of-zero rule).
 	 */
 	cell: { basis?: CoverageBasis | null } | undefined
-	/** The fold this probe folded its key with. */
+	/**
+	 * Identity of the fold this probe folded its key with. NOT a hand-written label: three packages already
+	 * export a function named `foldName` and all three compute different answers (`Ångström` → `a ngstro m` /
+	 * `angstrom` / `angstrom`), so a name is not an identity. Derive it with {@link foldIdentity}.
+	 */
 	probeFold: string
-	/** The fold the layer's builder wrote its keys with. */
+	/** Identity of the fold the layer's builder wrote its keys with, derived the same way. */
 	layerFold: string
 	/** The country of the thing being excluded, when the probe is country-scoped. */
 	country?: string
@@ -731,10 +754,150 @@ yarn vitest run packages/core/layers
 
 Expected: PASS. `packages/core/layers/schema.test.ts` already asserts `supportsExclusion` admits `Designated`/`Surveyed` and refuses `SourcePresent`/absent — those assertions must still pass unchanged, now against the moved implementation.
 
-- [ ] **Step 9: Commit**
+- [ ] **Step 9: Add `foldIdentity` — a fold is identified by what it computes, not what it is called**
+
+Three packages export a function named `foldName` and no two agree. Measured:
+
+```
+input        resolver/fold-name   codex/normalize   un-locode/index
+Ångström     a ngstro m           angstrom          angstrom
+São Paulo    sa o paulo           sao paulo         sao paulo
+Saint-Denis  saint denis          saint denis       saint-denis
+Zürich       zu rich              zurich            zurich
+```
+
+7 of 8 probe inputs disagree across the three. So `probeFold: "foldName@v1"` identifies nothing. Append to
+`packages/evidence/coverage.ts`:
+
+```ts
+/**
+ * Inputs a fold identity is computed over. Each exercises one axis a fold can differ on: a WORD-INTERNAL
+ * diacritic (the axis `resolver/fold-name.ts` gets wrong — it maps the combining mark to a space, splitting
+ * the word), a diacritic ADJACENT to punctuation (which hides that bug), hyphens, periods, apostrophes,
+ * case, collapsing whitespace, and a non-Latin script. Adding an input changes every identity, which is
+ * correct: it is a new distinction two folds may differ on. Never reorder — identity is order-dependent.
+ */
+export const FOLD_PROBE_CORPUS: readonly string[] = [
+	"Besançon",
+	"Le Pré-Saint-Gervais",
+	"Ångström",
+	"São Paulo - SP",
+	"Tel Aviv-Yafo",
+	"Co. Westmeath",
+	"L'Haÿ-les-Roses",
+	"  MIXED   Case  ",
+	"ХУД - 15 хороо",
+	"Đường Trần Hưng Đạo",
+]
+
+/**
+ * Identify a fold by its BEHAVIOUR over {@link FOLD_PROBE_CORPUS} — a name cannot do this job.
+ *
+ * Two folds that compute the same answers are interchangeable and share an identity, which is the property
+ * the exclusion gate needs: it is asking "was this key built by a fold equivalent to mine", not "were these
+ * two functions written in the same file".
+ *
+ * Deliberately NOT a cryptographic hash: the string is meant to be readable in a derivation and a diff, so a
+ * reviewer can see WHICH probe moved when an identity changes.
+ */
+export function foldIdentity(fold: (s: string) => string): string {
+	return FOLD_PROBE_CORPUS.map((probe) => fold(probe)).join("\u0001")
+}
+```
+
+- [ ] **Step 10: Test that `foldIdentity` separates the three `foldName`s**
+
+Append to `packages/evidence/coverage.test.ts`:
+
+```ts
+describe("foldIdentity", () => {
+	const resolverFold = (s: string) =>
+		s
+			.toLowerCase()
+			.normalize("NFD")
+			.replaceAll(/[^a-z0-9 ]/g, " ")
+			.replaceAll(/\s+/g, " ")
+			.trim()
+	const codexFold = (s: string) =>
+		s
+			.toLowerCase()
+			.normalize("NFD")
+			.replaceAll(/[\u0300-\u036F]/g, "")
+			.replaceAll(/[^a-z0-9]+/g, " ")
+			.trim()
+
+	it("gives three same-named folds three different identities", () => {
+		expect(foldIdentity(resolverFold)).not.toBe(foldIdentity(codexFold))
+	})
+
+	it("gives two independently-written but equivalent folds the SAME identity", () => {
+		const copy = (s: string) =>
+			s
+				.toLowerCase()
+				.normalize("NFD")
+				.replaceAll(/[\u0300-\u036F]/gu, "")
+				.replaceAll(/[^a-z0-9]+/gu, " ")
+				.trim()
+
+		expect(foldIdentity(copy)).toBe(foldIdentity(codexFold))
+	})
+
+	it("is stable across calls", () => {
+		expect(foldIdentity(codexFold)).toBe(foldIdentity(codexFold))
+	})
+})
+```
+
+Run: `yarn vitest run packages/evidence/coverage.test.ts`
+Expected: PASS, 9 tests.
+
+- [ ] **Step 11: Move `res9ShortCellToRes6Parent` to `@mailwoman/spatial`**
+
+Add to `packages/spatial/h3/cell.ts`, generalized over both resolutions:
+
+```ts
+/**
+ * Reconstruct a short-cell int's ancestor at a coarser resolution WITHOUT going through a centroid.
+ *
+ * The centroid is the wrong input: re-deriving a parent from a stored cell's centre can land in a different
+ * parent than the original cell belonged to, so a coverage read and the build that wrote it disagree on a
+ * fraction of cells. Reconstructing from the stored cell itself is exact.
+ *
+ * Lived in `bdc/sdk/filing-landscape.ts` closed over the BDC resolutions until `resolver-wof-sqlite` needed
+ * the identical derivation and importing from `@mailwoman/bdc` would have inverted the dependency.
+ */
+export function shortCellToParentInt(h3CellShortInt: number, from: number, to: number): number {
+	const fullCell = expandH3Cell(h3CellShortInt.toString(16) as H3CellShort, from)
+
+	return shortCellToInt(cellToParent(fullCell, to) as H3Cell)
+}
+```
+
+In `packages/bdc/sdk/filing-landscape.ts`, replace the body of `res9ShortCellToRes6Parent` with a call and
+keep the export — its callers (`nearest-infrastructure.ts`, `plausibility.ts`, and its own parity test)
+should not have to change in this task:
+
+```ts
+export function res9ShortCellToRes6Parent(h3CellShortInt: number): number {
+	return shortCellToParentInt(h3CellShortInt, BDC_H3_RESOLUTION, BDC_COVERAGE_H3_RESOLUTION)
+}
+```
+
+- [ ] **Step 12: Verify the move changed no cell**
 
 ```bash
-git add packages/evidence packages/core/layers packages/core/package.json packages/core/tsconfig.json yarn.lock
+yarn compile
+yarn vitest run packages/bdc packages/spatial
+```
+
+Expected: PASS. `filing-landscape`'s existing parity test asserts this derivation agrees cell-for-cell with
+`build-bdc.ts`'s own coverage-cell derivation — that test is the regression net for this move and must not
+be edited.
+
+- [ ] **Step 13: Commit**
+
+```bash
+git add packages/evidence packages/core/layers packages/core/package.json packages/core/tsconfig.json packages/spatial packages/bdc/sdk/filing-landscape.ts yarn.lock
 git commit -m "evidence: own CoverageBasis, and refuse an exclusion whose fold does not match the layer's
 
 Duplicating the three basis strings across core and evidence would have matched
@@ -833,26 +996,39 @@ reason, and coverage_confidence already carries that."
 
 ---
 
-## Task 5: GB spatial-existence probe over `uprn.db`
+## Task 5: Give `UPRNLookup`'s `null` its coverage scope
 
 **Gated on Task 1 returning PROCEED.**
 
+The probe already exists. `packages/resolver-wof-sqlite/uprn-lookup.ts` ships `UPRNLookup` with
+`coordinateOf(uprn)` and `nearestUPRN(latitude, longitude, radiusM)` — a bounded ring-walk over the res-9
+`h3_cell` index whose rings "stop as soon as geometry proves no unprobed cell could beat the best hit",
+capped at `UPRN_MAX_NEAREST_RADIUS_M = 10_000`, with an integration test. Its own docstring already states
+this task's requirement:
+
+> callers building negative evidence must consult `readLayerCoverage`, not this reader alone.
+
+So this task does not build a probe. It does the consult, and it puts the answer in the type so a caller
+cannot skip it.
+
 **Files:**
 
-- Create: `packages/resolver-wof-sqlite/spatial-existence.ts`
-- Create: `packages/resolver-wof-sqlite/spatial-existence.test.ts`
+- Create: `packages/resolver-wof-sqlite/uprn-existence.ts`
+- Create: `packages/resolver-wof-sqlite/uprn-existence.test.ts`
+- Modify: `packages/resolver-wof-sqlite/package.json` (add `@mailwoman/evidence`)
+- Modify: `packages/resolver-wof-sqlite/tsconfig.json` (add the reference)
 
 **Interfaces:**
 
-- Consumes: `requireExclusionBasis`, `CoverageBasis`, `Exclusion` from Task 3
+- Consumes: `requireExclusionBasis`, `foldIdentity`, `CoverageBasis`, `Exclusion` from Task 3; `shortCellToParentInt` from Task 3 step 11; the existing `UPRNLookup`, `UPRN_H3_RESOLUTION`, `UPRN_COVERAGE_H3_RESOLUTION`, `uprnH3Cell`
 - Produces:
-  - `interface SpatialExistenceProbe { nearestWithin(point: PointLiteral, radiusM: number): Exclusion | null; readonly countries: ReadonlySet<string> }`
-  - `class UPRNSpatialExistence implements SpatialExistenceProbe` with `constructor(dbPath: string, opts?: { countries?: Iterable<string> })`
-  - `const UPRN_EXISTENCE_FOLD = "uprn-point@res9"`
+  - `const UPRN_EXISTENCE_FOLD: string` — the identity of the point-keying used by both builder and probe
+  - `function uprnAbsenceAt(input: { lookup: UPRNLookup; contractDB: Kysely<LayerContractDatabase>; latitude: number; longitude: number; radiusM: number; country?: string }): Promise<Exclusion | null>`
 
 - [ ] **Step 1: Write the failing test**
 
-Create `packages/resolver-wof-sqlite/spatial-existence.test.ts`. Build a scratch SQLite fixture rather than reading the real `uprn.db` — the real artifact is build-local and a test must not require it:
+Create `packages/resolver-wof-sqlite/uprn-existence.test.ts`. Build a scratch fixture — the real `uprn.db`
+is build-local and a test must never require it:
 
 ```ts
 import { mkdtempSync, rmSync } from "node:fs"
@@ -860,112 +1036,169 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { CoverageBasis } from "@mailwoman/evidence"
-import { latLngToCell } from "h3-js"
 import { afterAll, describe, expect, it } from "vitest"
 
-import { UPRNSpatialExistence } from "./spatial-existence.ts"
+import { uprnAbsenceAt } from "./uprn-existence.ts"
+import { UPRNLookup } from "./uprn-lookup.ts"
+import { uprnH3Cell } from "./uprn-schema.ts"
 
 const dir = mkdtempSync(join(tmpdir(), "uprn-existence-"))
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
-/** A designated cell holding one point, and a designated cell holding none. */
-function fixture(name: string, basis: string | null): string {
+/** Westminster holds a point; Edinburgh is covered and empty; New York is outside coverage entirely. */
+const WESTMINSTER = { latitude: 51.5007, longitude: -0.1246 }
+const EDINBURGH = { latitude: 55.9533, longitude: -3.1883 }
+const NEW_YORK = { latitude: 40.7128, longitude: -74.006 }
+
+function fixture(name: string, basis: CoverageBasis): string {
 	const path = join(dir, name)
 	const db = new DatabaseSync(path)
 
 	db.exec(
-		`CREATE TABLE uprn (uprn INTEGER PRIMARY KEY, lat REAL NOT NULL, lon REAL NOT NULL, h3_cell INTEGER NOT NULL)`
+		`CREATE TABLE uprn (uprn INTEGER PRIMARY KEY, lat REAL NOT NULL, lon REAL NOT NULL, h3_cell INTEGER NOT NULL);
+		 CREATE INDEX idx_uprn_cell ON uprn (h3_cell);
+		 CREATE TABLE layer_coverage (h3_cell INTEGER PRIMARY KEY, completeness REAL NOT NULL, basis TEXT, observed_rows INTEGER NOT NULL);
+		 CREATE TABLE layer_manifest (name TEXT PRIMARY KEY, version TEXT NOT NULL, schema_version INTEGER NOT NULL, tier TEXT NOT NULL, license TEXT NOT NULL, attribution TEXT, source TEXT NOT NULL, source_vintage TEXT NOT NULL, build_cmd TEXT NOT NULL, build_sha TEXT NOT NULL, freshness_policy TEXT NOT NULL, spine_keys TEXT NOT NULL, created_at TEXT NOT NULL);`
 	)
-	db.exec(
-		`CREATE TABLE layer_coverage (h3_cell INTEGER PRIMARY KEY, completeness REAL NOT NULL, basis TEXT, observed_rows INTEGER NOT NULL)`
-	)
-	db.exec(
-		`CREATE TABLE layer_manifest (name TEXT PRIMARY KEY, version TEXT NOT NULL, source TEXT NOT NULL, source_vintage TEXT NOT NULL)`
-	)
-	db.prepare(`INSERT INTO layer_manifest VALUES (?, ?, ?, ?)`).run("os-open-uprn", "2026-08", "os-open-uprn", "2026-08")
 
-	// 51.5007, -0.1246 — Westminster. Its res-6 parent is the covered cell.
-	const res6 = latLngToCell(51.5007, -0.1246, 6)
-	const res6Empty = latLngToCell(55.9533, -3.1883, 6) // Edinburgh, covered but empty
+	db.prepare(`INSERT INTO uprn VALUES (?, ?, ?, ?)`).run(
+		1,
+		WESTMINSTER.latitude,
+		WESTMINSTER.longitude,
+		uprnH3Cell(WESTMINSTER.latitude, WESTMINSTER.longitude)
+	)
 
-	db.prepare(`INSERT INTO uprn VALUES (?, ?, ?, ?)`).run(1, 51.5007, -0.1246, 0)
-	db.prepare(`INSERT INTO layer_coverage VALUES (?, 1.0, ?, 1)`).run(BigInt(`0x${res6}`), basis)
-	db.prepare(`INSERT INTO layer_coverage VALUES (?, 1.0, ?, 0)`).run(BigInt(`0x${res6Empty}`), basis)
+	// Both cells are COVERED. Only one holds a point — that is the whole distinction under test.
+	for (const p of [WESTMINSTER, EDINBURGH]) {
+		db.prepare(`INSERT OR IGNORE INTO layer_coverage VALUES (?, 1.0, ?, 1)`).run(coverageCellFor(p), basis)
+	}
+
+	db.prepare(
+		`INSERT INTO layer_manifest VALUES ('os-open-uprn','2026-08',1,'build-local','OGL-UK-3.0',NULL,'os-open-uprn','2026-08','buildUPRNLayer','test','sealed','{}','2026-08-18T00:00:00.000Z')`
+	).run()
 	db.close()
 
 	return path
 }
+```
 
-describe("UPRNSpatialExistence", () => {
-	it("returns an exclusion for a designated cell with no point within the radius", () => {
-		const probe = new UPRNSpatialExistence(fixture("designated.db", CoverageBasis.Designated))
-		const e = probe.nearestWithin({ lat: 55.9533, lon: -3.1883 }, 250)
+`coverageCellFor` is `shortCellToParentInt(uprnH3Cell(lat, lon), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)` —
+import it rather than inlining the arithmetic, so the fixture and the implementation cannot disagree.
+
+```ts
+describe("uprnAbsenceAt", () => {
+	it("an empty DESIGNATED cell yields an exclusion", async () => {
+		using lookup = new UPRNLookup(fixture("designated.db", CoverageBasis.Designated))
+		const e = await uprnAbsenceAt({ ...deps(lookup), ...EDINBURGH, radiusM: 250 })
 
 		expect(e).not.toBeNull()
 		expect(e!.scope.basis).toBe("designated")
+		expect(e!.scope.layer).toBe("os-open-uprn")
+		// Vintage comes from the shard's own manifest, never a literal.
+		expect(e!.vintage).toBe("2026-08")
 	})
 
-	it("returns null when a point IS within the radius — presence, not absence", () => {
-		const probe = new UPRNSpatialExistence(fixture("present.db", CoverageBasis.Designated))
+	it("a point within the radius yields null — presence is not this probe's business", async () => {
+		using lookup = new UPRNLookup(fixture("present.db", CoverageBasis.Designated))
 
-		expect(probe.nearestWithin({ lat: 51.5007, lon: -0.1246 }, 250)).toBeNull()
+		expect(await uprnAbsenceAt({ ...deps(lookup), ...WESTMINSTER, radiusM: 250 })).toBeNull()
 	})
 
-	it("returns null for a source_present cell — the gate refuses regardless of emptiness", () => {
-		const probe = new UPRNSpatialExistence(fixture("sourcepresent.db", CoverageBasis.SourcePresent))
+	it("an empty SOURCE_PRESENT cell yields null — the gate refuses regardless of emptiness", async () => {
+		using lookup = new UPRNLookup(fixture("sourcepresent.db", CoverageBasis.SourcePresent))
 
-		expect(probe.nearestWithin({ lat: 55.9533, lon: -3.1883 }, 250)).toBeNull()
+		expect(await uprnAbsenceAt({ ...deps(lookup), ...EDINBURGH, radiusM: 250 })).toBeNull()
 	})
 
-	it("returns null for a point outside any covered cell — unsurveyed is unknown", () => {
-		const probe = new UPRNSpatialExistence(fixture("outside.db", CoverageBasis.Designated))
+	it("a point outside any covered cell yields null — unsurveyed is unknown, not absence", async () => {
+		using lookup = new UPRNLookup(fixture("outside.db", CoverageBasis.Designated))
 
-		expect(probe.nearestWithin({ lat: 40.7128, lon: -74.006 }, 250)).toBeNull()
+		expect(await uprnAbsenceAt({ ...deps(lookup), ...NEW_YORK, radiusM: 250 })).toBeNull()
 	})
 
-	it("returns null for a country outside its scope", () => {
-		const probe = new UPRNSpatialExistence(fixture("scoped.db", CoverageBasis.Designated), { countries: ["GB"] })
+	it("a non-GB country yields null even inside a covered cell", async () => {
+		using lookup = new UPRNLookup(fixture("scoped.db", CoverageBasis.Designated))
 
-		expect(probe.nearestWithin({ lat: 55.9533, lon: -3.1883 }, 250, "FR")).toBeNull()
+		expect(await uprnAbsenceAt({ ...deps(lookup), ...EDINBURGH, radiusM: 250, country: "FR" })).toBeNull()
 	})
 })
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `yarn vitest run packages/resolver-wof-sqlite/spatial-existence.test.ts`
-Expected: FAIL — cannot resolve `./spatial-existence.ts`.
+Run: `yarn vitest run packages/resolver-wof-sqlite/uprn-existence.test.ts`
+Expected: FAIL — cannot resolve `./uprn-existence.ts`.
 
-- [ ] **Step 3: Implement the probe**
+- [ ] **Step 3: Add the dependency**
 
-Create `packages/resolver-wof-sqlite/spatial-existence.ts`. Follow `street-name-lookup.ts`'s shape: prepared statements built once in the constructor, graceful degradation to a no-op miss on a tableless shard (#568 discipline), synchronous `find` because the resolution ladder is synchronous by design.
+In `packages/resolver-wof-sqlite/package.json` `dependencies`, add `"@mailwoman/evidence": "workspace:*"`.
+In `packages/resolver-wof-sqlite/tsconfig.json` `references`, add `{ "path": "../evidence" }`.
 
-The implementation must:
+- [ ] **Step 4: Implement the consult**
 
-1. Compute the query point's res-9 cell (`latLngToCell(lat, lon, 9)`), then its res-6 parent via the same `res9ShortCellToRes6Parent` convention `nearest-infrastructure.ts` uses.
-2. `SELECT basis FROM layer_coverage WHERE h3_cell = ?` for that res-6 parent. A missing row means `cell: undefined`.
-3. Search `uprn` for any point within `radiusM` using a bounding-box prefilter on `lat`/`lon` then an exact haversine — reuse `haversineKm` from `@mailwoman/spatial`, never re-derive it.
-4. If a point is found, return `null` — presence is not this probe's business.
-5. If none is found, return `requireExclusionBasis({ layer: "os-open-uprn", source, vintage, h3Cell: res6, cell, probeFold: UPRN_EXISTENCE_FOLD, layerFold: UPRN_EXISTENCE_FOLD, country, countries })`.
+Create `packages/resolver-wof-sqlite/uprn-existence.ts`. It is thin by construction — `nearestUPRN` does the
+search, `readLayerCoverage` does the coverage read, `requireExclusionBasis` does the gating:
 
-`source` and `vintage` come from the shard's own `layer_manifest`, read once in the constructor. Never hard-code them.
+```ts
+/**
+ * @copyright Sister Software.
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The consult `uprn-lookup.ts`'s docstring instructs: "callers building negative evidence must consult
+ *   `readLayerCoverage`, not this reader alone." A bare `null` from `nearestUPRN` is two different facts —
+ *   no UPRN here, or nobody surveyed here — and this is the only place that separates them.
+ *
+ *   `radiusM` is a CALLER'S parameter with no default. There is no radius that is correct for both "which
+ *   property is this coordinate" and "is this street built at all", and picking one here would bury that
+ *   choice where nobody reviewing an exclusion can see it.
+ */
 
-- [ ] **Step 4: Run the test to verify it passes**
+export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
+```
 
-Run: `yarn vitest run packages/resolver-wof-sqlite/spatial-existence.test.ts`
+`UPRN_EXISTENCE_FOLD` uses the identity fold deliberately: this probe keys on a COORDINATE, not a name, so
+there is no string folding to disagree about. Passing the same identity as both `probeFold` and `layerFold`
+records that the fold axis is not in play here, rather than silently omitting the check. Say so in the
+comment — a future reader will otherwise read it as a stub.
+
+The function:
+
+1. `const cell = uprnH3Cell(latitude, longitude)` then `shortCellToParentInt(cell, UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)`.
+2. `const coverage = await readLayerCoverage(contractDB, coverageCell)` — `undefined` means absent.
+3. `if (lookup.nearestUPRN(latitude, longitude, radiusM)) return null` — a hit is presence; nothing to say.
+4. `const manifest = await readLayerManifest(contractDB)` for `source` and `sourceVintage`, read once by the caller and passed in if this is hot.
+5. `return requireExclusionBasis({ layer: manifest.name, source: manifest.source, vintage: manifest.sourceVintage, h3Cell: coverageCell, cell: coverage, probeFold: UPRN_EXISTENCE_FOLD, layerFold: UPRN_EXISTENCE_FOLD, country, countries: new Set(["GB"]) })`.
+
+- [ ] **Step 5: Run the test to verify it passes**
+
+Run: `yarn compile && yarn vitest run packages/resolver-wof-sqlite/uprn-existence.test.ts`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Verify against the real shard**
+
+`uprn.db` is build-local, so this is a manual check rather than a test. Confirm the two cases the fixture
+cannot: a real GB postcode centroid inside coverage returns `null` (points exist there), and a Northern
+Ireland coordinate returns `null` for the OTHER reason (NI is outside OS Open UPRN coverage — the
+`uprn-lookup.ts` docstring names it). If NI returns an exclusion, the coverage read is wrong.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add packages/resolver-wof-sqlite/spatial-existence.ts packages/resolver-wof-sqlite/spatial-existence.test.ts
-git commit -m "resolver-wof-sqlite: ask uprn.db whether a designated cell is genuinely empty
+git add packages/resolver-wof-sqlite/uprn-existence.ts packages/resolver-wof-sqlite/uprn-existence.test.ts packages/resolver-wof-sqlite/package.json packages/resolver-wof-sqlite/tsconfig.json yarn.lock
+git commit -m "resolver-wof-sqlite: separate uprn's two nulls
 
-uprn.db is (uprn, lat, lon, h3_cell) — an identifier and a coordinate, no name
-— so the GB probe is spatial rather than lexical. Presence returns null; only
-an empty DESIGNATED cell produces an exclusion, and only through the gate."
+nearestUPRN already answers 'no UPRN within the radius' with a bounded ring
+walk, and its docstring already says a caller building negative evidence must
+consult readLayerCoverage rather than trust that null alone. Nothing did. This
+is that consult, and it returns an Exclusion or nothing so a caller cannot
+accidentally read an unsurveyed cell as an empty one.
+
+Northern Ireland is the case that proves it: outside OS Open UPRN coverage, so
+a null there is unknown and must never become evidence of absence."
 ```
 
 ---
@@ -1524,5 +1757,18 @@ whether that is true of the data or only of the sentence."
 **Spec coverage.** §1 → Tasks 2, 3. §2 three states → Task 1 (measure), Task 3 (fold gate). §3 package → Task 2. §3.1 union → Tasks 2, 3. §3.2 two axes → Task 7. §3.3 gate → Task 3. §3.4 demote-only → Task 6. §4.1 GB → Task 5. §4.2 US → Task 9. §4.3 plausibility → Task 4. §4.4 FR → Task 10. §5 derivation → Task 8. §6 falsifiers → Task 1 (F1), Task 6 step 6 (F3), Task 4 step 5 (F4), Task 8 step 6 (F5). **Gap: falsifier 2** (the GB arm's own board measurement) has no task — it cannot be written until Task 1 returns PROCEED and Task 5 lands, because the arm's shape depends on Task 1's verdict. Write it as a follow-up plan.
 
 **Type consistency.** `requireExclusionBasis` takes `RequireExclusionInput` in Tasks 3, 5 and 8 with the same field names. `Exclusion.scope` is `CoverageScope` throughout. `pickByStreetEvidence` keeps its existing name; `StreetEvidencePick.demoted` is `number[]` in both the test and the interface. `EpistemicStatus` values are lower-case strings in every assertion.
+
+**Codebase survey, 2026-08-21 — what this plan does NOT build because it already exists.** `UPRNLookup`
+(`resolver-wof-sqlite/uprn-lookup.ts`) already does the bounded nearest-point search Task 5 was going to
+write, and already names the coverage consult as the caller's obligation. `res9ShortCellToRes6Parent`
+already exists in `bdc/sdk/filing-landscape.ts` and moves rather than being re-derived.
+`normalizeLocalityForKey`'s fold was verified correct, so Task 1's denominator stands.
+`eval-harness/fragment-board.ts` is the board falsifier 2 will run on. `match/fellegi-sunter.ts` supplies
+`scorePair` / `decide` for the relation side when a later slice needs them.
+
+**Out of scope, found during the same survey.** `packages/resolver/fold-name.ts`'s `foldName` claims to be
+diacritic-insensitive and is not — it maps each combining mark to a space, so 6 of 9 French commune pairs
+fail the comparison it exists to perform, and its one live call site (`street-tier.ts:516`) DELETES the
+locality node on a false mismatch. Separate issue, separate fix; do not fold it into a task here.
 
 **Spec amended.** §3 originally left `CoverageBasis` duplicated across evidence and core. AGENTS.md's parity rule ("share the FUNCTION — sharing the constants proves nothing") forbids that, so Task 3 moves ownership to evidence and re-exports from core. The spec was updated in the same commit as this plan; the two agree.
