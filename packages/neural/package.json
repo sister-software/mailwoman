@@ -26,6 +26,7 @@
 	"sideEffects": false,
 	"imports": {
 		"#onnx-runner": {
+			"browser": "./out/onnx-runner-browser.js",
 			"node": "./onnx-runner.ts",
 			"default": "./out/onnx-runner.js",
 			"types": "./out/onnx-runner.d.ts"

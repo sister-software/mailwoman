@@ -181,6 +181,13 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	const coreDir = resolveWorkspaceDir("@mailwoman/core")
 
 	if (coreDir) {
+		// Must precede the broader `@mailwoman/core/resources` alias below: webpack applies aliases in
+		// insertion order. This leaf is browser-safe; the WOF barrel also exports filesystem-backed loaders.
+		aliases["@mailwoman/core/resources/whosonfirst/specificity"] = resolveWorkspaceFile(
+			coreDir,
+			"resources/whosonfirst/placetypes/specificity"
+		)
+
 		for (const sub of [
 			"decoder",
 			"classification",

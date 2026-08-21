@@ -36,7 +36,7 @@ import {
 	type StreetCentroidLookup,
 	countriesFromPostcodeFormat,
 } from "@mailwoman/core/resolver"
-import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 import { haversineKm } from "@mailwoman/spatial"
 
 import {

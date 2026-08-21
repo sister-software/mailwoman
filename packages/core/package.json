@@ -154,6 +154,11 @@
 			"default": "./out/resources/whosonfirst/index.js",
 			"types": "./out/resources/whosonfirst/index.d.ts"
 		},
+		"./resources/whosonfirst/specificity": {
+			"node": "./resources/whosonfirst/placetypes/specificity.ts",
+			"default": "./out/resources/whosonfirst/placetypes/specificity.js",
+			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts"
+		},
 		"./placetypes": {
 			"node": "./resources/whosonfirst/placetypes/definition.ts",
 			"default": "./out/resources/whosonfirst/placetypes/definition.js",
