@@ -54,7 +54,7 @@ import { readFileSync, renameSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { sealDatabase } from "@mailwoman/core/utils"
 import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
 import { haversineKm } from "@mailwoman/spatial"
@@ -482,7 +482,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	for (const d of districts) {
 		const districtHan = normHan(d.district)
 		const stemHan = districtHan.replace(DISTRICT_SUFFIX, "")
-		const aliases = [d.name, d.district, normHan(d.name) !== d.name ? normHan(d.name) : ""].filter(Boolean).join("|")
+		const aliases = [d.name, d.district, normHan(d.name) !== d.name ? normHan(d.name) : ""].filter(isPresent).join("|")
 
 		const hanMatches = (p: AdminPlace): boolean =>
 			p.hanNames.has(districtHan) || (stemHan.length >= 2 && p.hanNames.has(stemHan))

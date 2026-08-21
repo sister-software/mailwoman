@@ -69,7 +69,7 @@
 import { readFileSync, statSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "./sub-venue-promotions.ts"
@@ -747,7 +747,7 @@ export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): Su
 	for (const surface of surfaces) {
 		if (!LATIN_PHRASE.test(surface.phrase)) continue
 
-		const parts = surface.phrase.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+		const parts = surface.phrase.split(/[^\p{L}\p{N}]+/u).filter(isPresent)
 
 		if (parts.length < 2) continue
 
@@ -828,7 +828,7 @@ function commonPrefixLength(a: string, b: string): number {
 function sharedSubstringCandidates(pool: ReadonlySet<string>): string[] {
 	const phrases = [...pool]
 	const spaced = phrases.some((phrase) => /\s/u.test(phrase))
-	const tokens = spaced ? new Set(phrases.flatMap((phrase) => phrase.split(/\s+/u).filter(Boolean))) : null
+	const tokens = spaced ? new Set(phrases.flatMap((phrase) => phrase.split(/\s+/u).filter(isPresent))) : null
 	const counts = new Map<string, number>()
 
 	for (const phrase of phrases) {

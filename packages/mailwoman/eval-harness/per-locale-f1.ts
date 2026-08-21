@@ -60,7 +60,7 @@ import { basename, resolve } from "node:path"
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	NeuralAddressClassifier,
@@ -190,7 +190,7 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 		// Unfolded mode passes them through as their own tags — which is what the golden labels them as
 		// (`intersection_a` / `intersection_b`), so the fold was mis-scoring those rows in both directions.
 		if (foldStreetParts) {
-			out.street = [out.street, ...xs].filter(Boolean).join(" ")
+			out.street = [out.street, ...xs].filter(isPresent).join(" ")
 		} else {
 			if (flat.intersection_a) {
 				out.intersection_a = flat.intersection_a

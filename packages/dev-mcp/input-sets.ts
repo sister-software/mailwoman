@@ -17,7 +17,7 @@
 import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
@@ -366,7 +366,7 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 		}
 	}
 
-	const slugParts = [ref.country, ref.address_kind, ref.status].filter(Boolean)
+	const slugParts = [ref.country, ref.address_kind, ref.status].filter(isPresent)
 
 	return {
 		setID: slugParts.length ? `board:${slugParts.join("/")}` : "board",
@@ -429,7 +429,7 @@ function readCorpus(path: string, what: string): CorpusRow[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a fixed operator artifact of a few hundred rows, read once
 	return readFileSync(path, "utf8")
 		.split("\n")
-		.filter(Boolean)
+		.filter(isPresent)
 		.map((line) => parseJSONStrict<CorpusRow>(line))
 }
 
@@ -507,7 +507,7 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		}
 	}
 
-	const slug = [version, ref.country, ref.truth_type].filter(Boolean).join("/")
+	const slug = [version, ref.country, ref.truth_type].filter(isPresent).join("/")
 
 	return {
 		setID: `panel:${slug}`,

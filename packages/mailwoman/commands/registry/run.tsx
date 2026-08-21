@@ -22,7 +22,7 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
@@ -453,7 +453,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		const geojson = toGeoJSON(result.entities)
 
 		const crossSource = result.entities.filter(
-			(e) => new Set(e.records.map((r) => r.source).filter(Boolean)).size >= 2
+			(e) => new Set(e.records.map((r) => r.source).filter(isPresent)).size >= 2
 		).length
 
 		const summary =

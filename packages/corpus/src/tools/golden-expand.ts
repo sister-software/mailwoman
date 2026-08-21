@@ -51,7 +51,7 @@ import { dirname } from "node:path"
 
 import { ParquetReader } from "@dsnp/parquetjs"
 import { $private } from "@mailwoman/core/env"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createNewlineWriter } from "spliterator"
 
@@ -195,7 +195,7 @@ async function loadSeeds(
 	const paths = corpusPath
 		.split(",")
 		.map((p) => p.trim())
-		.filter(Boolean)
+		.filter(isPresent)
 
 	report?.(`reading seeds from ${paths.length} shard(s) (target: ${count}, stratified)`)
 
