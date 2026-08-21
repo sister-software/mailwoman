@@ -71,7 +71,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.4",
+		"kysely": "^0.29.5",
 		"type-fest": "^5.8.0"
 	},
 	"engines": {
