@@ -60,7 +60,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { renderOaResolverReport } from "./oa-resolver-report.ts"
-import { dumpAggPair, newAggPair, recordInto } from "./oa-resolver/aggregate.ts"
+import { dumpAggPair, newAggPair, recordInto, stateBucket } from "./oa-resolver/aggregate.ts"
 import { buildAssembledArm } from "./oa-resolver/assembled-arm.ts"
 import type { AnchorSources } from "./oa-resolver/coordinate-tiers.ts"
 import { anchorCoordinateFor, anchorCountryPosteriorFor, buildCoordinateTiers } from "./oa-resolver/coordinate-tiers.ts"
@@ -328,7 +328,7 @@ export async function oaResolverEval(
 		if (collectErrors && !ns.locMatch) {
 			errorRows.push({
 				input: row.input,
-				state: row.state ?? "??",
+				state: stateBucket(row.state),
 				expected: row.expected,
 				neural: {
 					locMatch: ns.locMatch,
