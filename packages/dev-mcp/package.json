@@ -185,6 +185,16 @@
 			"default": "./out/minimal-pairs.js",
 			"types": "./out/minimal-pairs.d.ts"
 		},
+		"./parse-compare": {
+			"node": "./parse-compare.ts",
+			"default": "./out/parse-compare.js",
+			"types": "./out/parse-compare.d.ts"
+		},
+		"./parse-compare-report": {
+			"node": "./parse-compare-report.ts",
+			"default": "./out/parse-compare-report.js",
+			"types": "./out/parse-compare-report.d.ts"
+		},
 		"./place-id-provenance": {
 			"node": "./place-id-provenance.ts",
 			"default": "./out/place-id-provenance.js",
@@ -230,6 +240,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/geocode-oracle": "workspace:*",
+		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

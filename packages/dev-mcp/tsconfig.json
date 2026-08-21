@@ -12,6 +12,7 @@
 		{ "path": "../codex" },
 		{ "path": "../core" },
 		{ "path": "../geocode-oracle" },
+		{ "path": "../libpostal" },
 		{ "path": "../neural" },
 		{ "path": "../resolver" },
 		{ "path": "../resolver-wof-sqlite" },

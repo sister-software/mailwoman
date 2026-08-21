@@ -34,6 +34,7 @@ import { diagnoseTool } from "./diagnose.ts"
 import { inputsTool } from "./inputs.ts"
 import { lookupTool } from "./lookup.ts"
 import { minimalPairsTool } from "./minimal-pairs.ts"
+import { parseCompareTool } from "./parse-compare.ts"
 import { provenanceTool } from "./provenance.ts"
 import { reliabilityTool } from "./reliability.ts"
 import { rigTool } from "./rig.ts"
@@ -54,6 +55,7 @@ const FACTORIES = [
 	lookupTool,
 	runTool,
 	compareTool,
+	parseCompareTool,
 	traceTool,
 	benchTool,
 	censusTool,
