@@ -698,10 +698,10 @@ async function deriveClusterMembersAsOf(
  * Validates an `identifiers[]` entry's `value` is a real {@link FRN} before it feeds
  * {@linkcode readFRNFilingCandidates} — a bare `identifier.value as FRN` type assertion would claim the shape without
  * ever checking it. Every `frn`-typed `identifiers[]` entry is minted from a `filer_node.identifier_value` that the
- * builder only ever writes via {@linkcode mintFRNNodeID}/{@linkcode toFRN} (`build-filer.ts`, `frn.ts`) — a real FRN
- * value here is an invariant the crosswalk's own writers guarantee, not a possibility this reader ought to silently
- * trust. A miss means a corrupted crosswalk, the same class of failure {@linkcode nodeOrThrow} guards against, so this
- * is loud rather than passing a malformed value into the filing-candidate query.
+ * builder only ever writes via `mintFRNNodeID`/{@linkcode toFRN} (`build/node-ids.ts`, `frn.ts`) — a real FRN value
+ * here is an invariant the crosswalk's own writers guarantee, not a possibility this reader ought to silently trust. A
+ * miss means a corrupted crosswalk, the same class of failure {@linkcode nodeOrThrow} guards against, so this is loud
+ * rather than passing a malformed value into the filing-candidate query.
  */
 function assertFRNIdentifier(value: string): FRN {
 	if (!isFRN(value)) {

@@ -42,18 +42,9 @@
 import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { COUNTRY_POPULATION, enumerateCountryDisplayNames, isOfficialLanguage } from "@mailwoman/codex/country"
+import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
-import { placetypeDepth } from "./ancestry.ts"
-import {
-	CANDIDATE_ANCESTOR_COLUMNS,
-	CANDIDATE_ANCESTOR_TABLE,
-	CANDIDATE_INTERVAL_TABLE,
-	createCandidateAncestorTable,
-	createCandidateIntervalTable,
-	MAX_ANCESTOR_DEPTH,
-} from "./candidate-ancestors-schema.ts"
 import { createCandidateFTS } from "./candidate-fts.ts"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "./candidate-importance.ts"
 import {
@@ -62,295 +53,20 @@ import {
 	createCandidateTable,
 	type CandidateDatabase,
 } from "./candidate-schema.ts"
+import { explodeAliasBags } from "./candidate/alias-bags.ts"
+import { buildAncestorsSidecar } from "./candidate/ancestors-sidecar.ts"
+import { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
+import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "./candidate/name-roles.ts"
+import type { PlaceAttrs } from "./candidate/place-attrs.ts"
+import { foldShard } from "./candidate/shard-fold.ts"
 import { resurrectCurrencyHoles } from "./currency-backfill.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
-/**
- * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).
- *
- * A bare `格鲁吉亚` (Georgia the country) resolved to NOTHING while `佐治亚州` (Georgia the US state) resolved correctly, and
- * the model gave both the same wrong `locality` tag — so the tag was never the variable. Measured 2026-08-15: 140 of
- * 237 country rows are synthetic and carry a canonical English name and nothing else; WOF holds no Chinese country
- * names at all; and the GeoNames alias fold filters through a Latin-script regex, so neither existing source could ever
- * supply them.
- *
- * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
- * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.
- *
- * `is_primary = 0`: these are NAMES THE WORLD USES, not the country's canonical name. The display `name` stays whatever
- * the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming it.
- *
- * Returns the row count so the caller can report it — a zero means ICU supplied nothing, which is a different fact from
- * the pass not having run.
- */
-export function stageCountryDisplayNames(ctx: {
-	attrs: Map<number, PlaceAttrs>
-	iso2ByID: Map<number, string>
-	countryPtID: number
-	stageRow: (k: string, a: PlaceAttrs, sid: number, isPrimary: number) => void
-	tx: { exec(sql: string): void }
-}): number {
-	// One country row per ISO2. Where a code has several (historic rows surviving the is_current filter), the most
-	// populous wins — the same tiebreak the ranking uses everywhere else.
-	const countryByISO2 = new Map<string, { sid: number; a: PlaceAttrs }>()
-
-	for (const [sid, a] of ctx.attrs) {
-		if (a.ptid !== ctx.countryPtID) continue
-
-		const iso2 = ctx.iso2ByID.get(a.cid)
-
-		if (!iso2 || iso2 === "??") continue
-
-		const held = countryByISO2.get(iso2)
-
-		if (!held || a.pop > held.a.pop) {
-			countryByISO2.set(iso2, { sid, a })
-		}
-	}
-
-	let staged = 0
-
-	ctx.tx.exec("BEGIN")
-
-	for (const { iso2, name } of enumerateCountryDisplayNames()) {
-		const target = countryByISO2.get(iso2)
-
-		if (!target) continue
-
-		const k = normalizeLocalityForKey(name)
-
-		// The country's own key is already staged as its primary; INSERT OR IGNORE at materialization dedupes the
-		// rest, so this only skips the obvious self-alias.
-		if (!k || k === target.a.pkey) continue
-
-		ctx.stageRow(k, target.a, target.sid, 0)
-
-		staged++
-	}
-
-	ctx.tx.exec("COMMIT")
-
-	return staged
-}
-
-/**
- * Pass 2 — explode each place's `place_search.alt_names` bag into distinct-key alias rows (`is_primary = 0`), and count
- * each place's distinct staged keys (primary included) — the gloss detector's key-count signal (#1730).
- */
-function explodeAliasBags(
-	src: DatabaseSync,
-	out: DatabaseSync,
-	attrs: Map<number, PlaceAttrs>,
-	stageRow: (k: string, a: PlaceAttrs, sid: number, isPrimary: number) => void
-): { nAlias: number; keyCounts: Map<number, number> } {
-	let nAlias = 0
-	const keyCounts = new Map<number, number>()
-	out.exec("BEGIN")
-
-	for (const r of src.prepare("SELECT wof_id, alt_names FROM place_search").iterate()) {
-		const a = attrs.get(Number(r.wof_id))
-		const alt = r.alt_names as string | null
-
-		if (!a || !alt) continue
-		const seen = new Set<string>([a.pkey])
-
-		for (const piece of alt.split(ALIAS_SEP)) {
-			const k = normalizeLocalityForKey(piece)
-
-			if (!k || seen.has(k)) continue
-			seen.add(k)
-			stageRow(k, a, Number(r.wof_id), 0)
-
-			nAlias++
-		}
-
-		keyCounts.set(Number(r.wof_id), seen.size)
-	}
-
-	out.exec("COMMIT")
-
-	return { nAlias, keyCounts }
-}
-
-/**
- * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows, WRITE-ONLY in this
- * generation (no ranking consumer; the rank penalty is its own D-rule-gated step with the `gloss_key` board as
- * tripwire). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region abbreviations
- * are never a gloss or a variant.
- *
- * - `gloss` is ANOMALY-based, and stamps only the certain core: key volume at/over the threshold + a non-admin placetype
- *
- *   - NO measured prominence (population absent AND importance unmeasured). Provenance cannot separate a gloss from an
- *     exonym — WOF imported both as `x_preferred` — and prominence is what rescues New York/Paris.
- * - `abbr` is PROVENANCE-based — the #936 signal: a WOF `variant` name in one of the country's official languages (or
- *   English), measured there at a 13× key-collision rate. A source without a `names` table (fixture-scale admin DBs)
- *   skips this detector loudly.
- *
- * Returns the stamp counts plus the census the prototype exists to report: how much of the ≥-threshold key tail carries
- * any role.
- */
-function stampNameRoles(ctx: {
-	src: DatabaseSync
-	out: DatabaseSync
-	attrs: Map<number, PlaceAttrs>
-	keyCounts: Map<number, number>
-	glossThreshold: number
-	ptcodes: Map<string, number>
-	ccodes: Map<string, number>
-	progress: (phase: string, message: string) => void
-}): { roleGloss: number; roleAbbr: number; keyTailPlaces: number; keyTailWithRole: number } {
-	const { src, out, attrs, keyCounts, glossThreshold, progress } = ctx
-	progress("roles", "stamping name roles (gloss anomaly + abbr provenance)")
-
-	const ptNameByID = new Map([...ctx.ptcodes].map(([placetype, id]) => [id, placetype]))
-	const iso2ByCID = new Map([...ctx.ccodes].map(([code, id]) => [id, code]))
-
-	let keyTailPlaces = 0
-	const glossSids: number[] = []
-
-	for (const [sid, count] of keyCounts) {
-		if (count < glossThreshold) continue
-
-		keyTailPlaces++
-		const a = attrs.get(sid)
-
-		if (!a) continue
-
-		if (GLOSS_EXCLUDED_PLACETYPES.has(ptNameByID.get(a.ptid) ?? "")) continue
-
-		if (a.pop > 0 || a.imp != null) continue
-		glossSids.push(sid)
-	}
-
-	out.exec(
-		"CREATE TEMP TABLE role_key (spr_id INTEGER NOT NULL, name_key TEXT NOT NULL, PRIMARY KEY (spr_id, name_key)) WITHOUT ROWID"
-	)
-
-	const insRoleKey = out.prepare("INSERT OR IGNORE INTO role_key VALUES (?, ?)")
-
-	// Zero abbr stamps from a skipped detector is a different fact from zero variants found.
-	const hasSourceNames =
-		src.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='names'").get() !== undefined
-
-	if (hasSourceNames) {
-		out.exec("BEGIN")
-
-		// Two provenance routes into the same stamp: WOF's abbreviation/short name KINDS arrive in the
-		// LANGUAGE column ('abbr'/'short' — 280 rows, measured 2026-08-18, Toledo's 'TO' among them) and
-		// qualify by kind alone; everything else qualifies as a variant in an official language.
-		for (const r of src
-			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
-			.iterate()) {
-			const a = attrs.get(Number(r.id))
-
-			if (!a) continue
-			const language = String(r.language ?? "")
-
-			if (language !== "abbr" && language !== "short") {
-				const iso2 = iso2ByCID.get(a.cid) ?? "??"
-
-				if (language !== "eng" && !isOfficialLanguage(iso2, language)) continue
-			}
-
-			const k = normalizeLocalityForKey(String(r.name ?? ""))
-
-			if (!k || k === a.pkey) continue
-			insRoleKey.run(Number(r.id), k)
-		}
-
-		out.exec("COMMIT")
-	} else {
-		progress("roles", "source carries no `names` table — abbr detector skipped (gloss still runs)")
-	}
-
-	// Stamp order is precedence: the provenance-based abbr first, then gloss fills what abbr did not claim.
-	const roleAbbr = Number(
-		out
-			.prepare(
-				`UPDATE cand_stage SET name_role = 'abbr'
-				 WHERE is_primary = 0 AND EXISTS (
-					SELECT 1 FROM role_key rk WHERE rk.spr_id = cand_stage.spr_id AND rk.name_key = cand_stage.name_key)`
-			)
-			.run().changes
-	)
-
-	out.exec("CREATE TEMP TABLE role_place (spr_id INTEGER PRIMARY KEY) WITHOUT ROWID")
-	out.exec("CREATE TEMP TABLE key_tail (spr_id INTEGER PRIMARY KEY) WITHOUT ROWID")
-	const insRolePlace = out.prepare("INSERT OR IGNORE INTO role_place VALUES (?)")
-	const insKeyTail = out.prepare("INSERT OR IGNORE INTO key_tail VALUES (?)")
-	out.exec("BEGIN")
-
-	for (const sid of glossSids) {
-		insRolePlace.run(sid)
-	}
-
-	for (const [sid, count] of keyCounts) {
-		if (count >= glossThreshold) {
-			insKeyTail.run(sid)
-		}
-	}
-
-	out.exec("COMMIT")
-
-	const roleGloss = Number(
-		out
-			.prepare(
-				`UPDATE cand_stage SET name_role = 'gloss'
-				 WHERE is_primary = 0 AND name_role IS NULL AND spr_id IN (SELECT spr_id FROM role_place)`
-			)
-			.run().changes
-	)
-
-	const keyTailWithRole = Number(
-		out
-			.prepare(
-				`SELECT count(DISTINCT spr_id) AS n FROM cand_stage
-				 WHERE name_role IS NOT NULL AND spr_id IN (SELECT spr_id FROM key_tail)`
-			)
-			.get()!["n"]
-	)
-
-	out.exec("DROP TABLE role_key")
-	out.exec("DROP TABLE role_place")
-	out.exec("DROP TABLE key_tail")
-
-	progress(
-		"roles",
-		`${roleAbbr.toLocaleString()} abbr + ${roleGloss.toLocaleString()} gloss rows stamped; ` +
-			`key tail (>= ${glossThreshold} keys): ${keyTailWithRole.toLocaleString()} of ${keyTailPlaces.toLocaleString()} places carry a role`
-	)
-
-	return { roleGloss, roleAbbr, keyTailPlaces, keyTailWithRole }
-}
-
-/**
- * Boundary-preserving alias-bag separator (#523, U+E000).
- */
-const ALIAS_SEP = "\u{E000}"
-
-/**
- * Key-count cut for the gloss anomaly detector (#1730) — the sweep's own boundary: 4,000 places carried >= 50 keys, and
- * a legitimate famous place at that count (New York, 176 keys) is separated by the PROMINENCE gate, never by this
- * number alone.
- */
-export const GLOSS_KEY_THRESHOLD = 50
-
-/**
- * Placetypes the gloss detector never flags. A country or region legitimately carries a name in every language — that
- * is what an exonym set IS — so key volume discriminates nothing there. The detector's population is the non-admin
- * tail, where a place named by a common noun ("Poisson", "Sunday") accumulating 200+ translations is a
- * machine-translated gloss set, not fame.
- */
-export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
-	"country",
-	"dependency",
-	"disputed",
-	"empire",
-	"macroregion",
-	"region",
-	"macrocounty",
-	"county",
-])
+// The build's contract is this module path; the passes behind it live in `./candidate/`. Re-exported
+// here so a consumer never has to know which pass owns which name.
+export { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
+export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "./candidate/name-roles.ts"
+export type { PlaceAttrs } from "./candidate/place-attrs.ts"
 
 export interface BuildCandidateOptions {
 	/**
@@ -473,212 +189,6 @@ export interface BuildCandidateResult {
 	 * Of {@link BuildCandidateResult.keyTailPlaces}, how many carry at least one stamped role row.
 	 */
 	keyTailWithRole: number
-}
-
-export interface PlaceAttrs {
-	cid: number
-	rid: number
-	ptid: number
-	name: string
-	lat: number
-	lon: number
-	mnLat: number
-	mnLon: number
-	mxLat: number
-	mxLon: number
-	pop: number
-	neg: number
-	pkey: string
-	/**
-	 * The place's toponym-fame score, or null when the score source has no measurement for it (#28). A property of the
-	 * PLACE, so it rides {@link stageRow} onto the alias and abbrev rows too — that is how a bare `Moscow` reaches
-	 * Москва's score through the alias row that carries the key.
-	 */
-	imp: number | null
-}
-
-/**
- * Pass 3b — the ancestors sidecar: closure rows + interval labels (candidate-ancestors-schema.ts owns the encoding
- * decision and the DAG/absence semantics). Reads the same source `ancestors` table the region stamp reads,
- * denormalizing each edge with the parent's name/key from `attrs`, streamed `ORDER BY id` so the clustered `(spr_id,
- * depth)` insert is sorted — the contiguous-leaves discipline of the candidate table itself.
- *
- * Excluded by policy: self rows, and placetypes outside the containment ladder (continent, empire, …: `placetypeDepth`
- * 0) — they discriminate nothing a consumer of this sidecar checks. An edge to a parent with no current `spr` row has
- * no name to denormalize; it is dropped and counted rather than stored blind.
- */
-async function buildAncestorsSidecar(ctx: {
-	src: DatabaseSync
-	out: DatabaseSync
-	kdb: DatabaseClient<CandidateDatabase>
-	attrs: Map<number, PlaceAttrs>
-	ptID: (pt: string | null) => number
-	progress: (phase: string, message: string) => void
-}): Promise<{ ancestorRows: number; ancestorPlaces: number; intervalPlaces: number }> {
-	const { src, out, attrs, ptID, progress } = ctx
-
-	progress("ancestors", "building containment sidecar (closure rows + interval labels)")
-	await createCandidateAncestorTable(ctx.kdb)
-	await createCandidateIntervalTable(ctx.kdb)
-
-	const insAncestor = out.prepare(
-		`INSERT INTO ${CANDIDATE_ANCESTOR_TABLE} VALUES (${CANDIDATE_ANCESTOR_COLUMNS.map(() => "?").join(", ")})`
-	)
-
-	// The canonical-parent forest the interval labels are computed over. One parent per place — the
-	// depth-1 edge (finest containment tier, lowest ancestor id; the `regionOf` MIN-stability
-	// convention). ALL parents stay in the closure rows; only the interval tree canonicalizes.
-	const canonicalParentOf = new Map<number, number>()
-	const childrenOf = new Map<number, number[]>()
-	const forest = new Set<number>()
-
-	let ancestorRows = 0
-	let ancestorPlaces = 0
-	let droppedParents = 0
-
-	// Per-child edge buffer; the stream below is grouped by child id, so each flush owns one place.
-	let childID = -1
-	let edges: Array<{ aid: number; apt: string }> = []
-
-	const flush = (): void => {
-		if (childID < 0 || !edges.length) return
-
-		// Deterministic nearest-first: containment depth descending, then ancestor id ascending —
-		// the FTS backend's `ancestorLineage` ordering, made stable across rebuilds.
-		edges.sort((a, b) => placetypeDepth(b.apt) - placetypeDepth(a.apt) || a.aid - b.aid)
-
-		if (edges.length > MAX_ANCESTOR_DEPTH) {
-			edges = edges.slice(0, MAX_ANCESTOR_DEPTH)
-		}
-
-		ancestorPlaces++
-
-		for (const [i, edge] of edges.entries()) {
-			const parent = attrs.get(edge.aid)!
-
-			insAncestor.run(childID, i + 1, edge.aid, ptID(edge.apt), parent.name, parent.pkey)
-
-			ancestorRows++
-		}
-
-		const canonical = edges[0]!.aid
-
-		canonicalParentOf.set(childID, canonical)
-
-		const siblings = childrenOf.get(canonical)
-
-		if (siblings) {
-			siblings.push(childID)
-		} else {
-			childrenOf.set(canonical, [childID])
-		}
-
-		forest.add(childID)
-		forest.add(canonical)
-	}
-
-	out.exec("BEGIN")
-
-	for (const r of src
-		.prepare("SELECT id, ancestor_id, ancestor_placetype FROM ancestors WHERE ancestor_id != id ORDER BY id")
-		.iterate()) {
-		const id = Number(r.id)
-
-		if (id !== childID) {
-			flush()
-			childID = id
-			edges = []
-		}
-
-		if (!attrs.has(id)) continue
-
-		const apt = String(r.ancestor_placetype ?? "")
-
-		if (placetypeDepth(apt) === 0) continue
-
-		const aid = Number(r.ancestor_id)
-
-		if (!attrs.has(aid)) {
-			droppedParents++
-
-			continue
-		}
-
-		edges.push({ aid, apt })
-	}
-
-	flush()
-	out.exec("COMMIT")
-
-	// Interval labels: pre/post-order DFS over the canonical-parent forest. Root order and child
-	// order are id-ascending so the labels are stable across rebuilds of the same source.
-	const preOf = new Map<number, number>()
-	const postOf = new Map<number, number>()
-
-	for (const kids of childrenOf.values()) {
-		// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass just built
-		kids.sort((a, b) => a - b)
-	}
-
-	const roots = [...forest].filter((id) => !canonicalParentOf.has(id))
-
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass just built
-	roots.sort((a, b) => a - b)
-
-	let counter = 0
-
-	for (const root of roots) {
-		preOf.set(root, counter++)
-		const stack: Array<{ id: number; next: number }> = [{ id: root, next: 0 }]
-
-		while (stack.length) {
-			const top = stack.at(-1)!
-			const kids = childrenOf.get(top.id)
-
-			if (kids && top.next < kids.length) {
-				const kid = kids[top.next++]!
-
-				// Each child holds exactly one canonical parent, so a labeled node here means the
-				// grouping upstream broke — skip rather than corrupt the numbering.
-				if (preOf.has(kid)) continue
-
-				preOf.set(kid, counter++)
-				stack.push({ id: kid, next: 0 })
-			} else {
-				postOf.set(top.id, counter++)
-				stack.pop()
-			}
-		}
-	}
-
-	// A canonical-parent CYCLE (corrupt source ancestry) leaves its members unreachable from any
-	// root: they simply receive no label, and containment against them reads unverifiable — the
-	// absence semantics the schema module states. Counted so a jump is visible across rebuilds.
-	const cycleSkipped = forest.size - preOf.size
-
-	const insInterval = out.prepare(`INSERT INTO ${CANDIDATE_INTERVAL_TABLE} VALUES (?, ?, ?)`)
-	const labeled = [...preOf.keys()]
-
-	// oxlint-disable-next-line unicorn/no-array-sort -- sorts an array this pass just built
-	labeled.sort((a, b) => a - b)
-
-	out.exec("BEGIN")
-
-	for (const id of labeled) {
-		insInterval.run(id, preOf.get(id)!, postOf.get(id)!)
-	}
-
-	out.exec("COMMIT")
-
-	progress(
-		"ancestors",
-		`${ancestorRows.toLocaleString()} closure rows across ${ancestorPlaces.toLocaleString()} places; ` +
-			`${preOf.size.toLocaleString()} interval labels` +
-			(droppedParents ? `; ${droppedParents.toLocaleString()} edges dropped (parent has no current spr row)` : "") +
-			(cycleSkipped ? `; ${cycleSkipped.toLocaleString()} places skipped (canonical-parent cycle)` : "")
-	)
-
-	return { ancestorRows, ancestorPlaces, intervalPlaces: preOf.size }
 }
 
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
@@ -966,128 +476,20 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// --- pass 3b: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
 	const sidecar = await buildAncestorsSidecar({ src, out, kdb, attrs, ptID, progress })
 
-	/**
-	 * Pass 4 — fold ONE postcode shard (`spr` rows with `placetype='postalcode'`) in, then pass 4b: the delivery-city
-	 * aliases hanging off the same shard's `names` table.
-	 *
-	 * Extracted rather than inlined because the shard loop is self-contained — it shares only the staging statement and
-	 * the code dictionaries with the passes above, and nothing after it reads anything it produces except the two
-	 * counters it returns.
-	 */
-	const foldShard = (
-		pcDB: string,
-		shardPlacetype: "postalcode" | "locality"
-	): { primaries: number; aliases: number } => {
-		progress(shardPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${pcDB}`)
-
-		const pc = new DatabaseSync(pcDB, { readOnly: true })
-		const pcPtid = ptID(shardPlacetype)
-		// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
-		// below has nothing to join against unless this primary loop records what it staged.
-		const pcAttrs = new Map<number, PlaceAttrs>()
-		let primaries = 0
-		let aliases = 0
-
-		out.exec("BEGIN")
-
-		for (const r of pc
-			.prepare(
-				`SELECT id, name, country, latitude, longitude,
-					min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
-				 FROM spr WHERE placetype = '${shardPlacetype}' AND latitude != 0 AND longitude != 0`
-			)
-			.iterate()) {
-			const name = String(r.name ?? "")
-			const key = normalizeLocalityForKey(name)
-
-			if (!key) continue
-
-			const lat = r.latitude as number
-			const lon = r.longitude as number
-
-			// region_id 0 (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
-			// (no population). bbox = the postcode's own min/max (falls back to the centroid point).
-			const a: PlaceAttrs = {
-				cid: ccID(r.country as string | null),
-				rid: 0,
-				ptid: pcPtid,
-				name,
-				lat,
-				lon,
-				mnLat: (r.mnlat as number) || lat,
-				mnLon: (r.mnlon as number) || lon,
-				mxLat: (r.mxlat as number) || lat,
-				mxLon: (r.mxlon as number) || lon,
-				pop: 0,
-				neg: 0,
-				pkey: key,
-				// A postcode has no toponym fame — nobody writes an encyclopedia article about SW1A 2AA — and
-				// the score source carries no `postalcode` rows to join against anyway. NULL is the truthful
-				// value: unmeasured, so the ranking key leaves postcode rows exactly where they were.
-				imp: null,
-			}
-
-			pcAttrs.set(Number(r.id), a)
-			stageRow(key, a, Number(r.id), 1)
-
-			primaries++
-		}
-
-		out.exec("COMMIT")
-
-		// --- pass 4b: postcode ALIAS names (#1495) ---
-		//
-		// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
-		// the shard's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
-		// downstream of `names` picked them up EXCEPT this build: `fts.ts` unions `spr.name` with every
-		// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
-		// while the candidate backend — whose every row IS an exact-tier row — had no key for it at
-		// all. Pass 2 does the equivalent fold for admin places, but reads the ADMIN `place_search`,
-		// and `attrs` holds admin ids only, so a postcode shard could never reach it.
-		//
-		// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
-		// alias, not a canonical postcode name), the row stays denormalized onto the POSTCODE's own
-		// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
-		// with place 11201, it does not rename the place to its delivery city.
-		const hasNames = pc.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='names'").get() !== undefined
-
-		if (hasNames) {
-			out.exec("BEGIN")
-
-			for (const r of pc.prepare("SELECT id, name FROM names").iterate()) {
-				const a = pcAttrs.get(Number(r.id))
-
-				if (!a) continue
-
-				const k = normalizeLocalityForKey(String(r.name ?? ""))
-
-				// The postcode's own key is already staged as the primary; `INSERT OR IGNORE` at
-				// materialization dedupes repeats, so this only skips the obvious self-alias.
-				if (!k || k === a.pkey) continue
-
-				stageRow(k, a, Number(r.id), 0)
-
-				aliases++
-			}
-
-			out.exec("COMMIT")
-		} else {
-			// Never a silent zero: real shards come from `createUnifiedSchema`, which always creates
-			// `names`. A shard without it has no alias surface to lose, but say so rather than reporting
-			// "0 aliases" from a table that was never read.
-			progress("postcode-aliases", `${pcDB} has no \`names\` table — no delivery-city aliases to fold`)
-		}
-
-		pc.close()
-
-		return { primaries, aliases }
-	}
-
+	// --- pass 4 + 4b: postcode and locality shards (foldShard owns the per-shard loop) ---
 	let nPostcode = 0
 	let nPostcodeAlias = 0
 
 	for (const pcDB of opts.postcodes ?? []) {
-		const folded = foldShard(pcDB, "postalcode")
+		const folded = foldShard({
+			out,
+			shardPath: pcDB,
+			shardPlacetype: "postalcode",
+			ccID,
+			ptID,
+			stageRow,
+			progress,
+		})
 
 		nPostcode += folded.primaries
 		nPostcodeAlias += folded.aliases
@@ -1100,7 +502,15 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let nLocality = 0
 
 	for (const locDB of opts.localities ?? []) {
-		const folded = foldShard(locDB, "locality")
+		const folded = foldShard({
+			out,
+			shardPath: locDB,
+			shardPlacetype: "locality",
+			ccID,
+			ptID,
+			stageRow,
+			progress,
+		})
 
 		nLocality += folded.primaries
 	}

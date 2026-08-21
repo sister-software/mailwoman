@@ -25,6 +25,28 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#candidate/alias-bags": {
+			"node": "./candidate/alias-bags.ts",
+			"default": "./out/candidate/alias-bags.js",
+			"types": "./out/candidate/alias-bags.d.ts"
+		},
+		"#candidate/name-roles": {
+			"node": "./candidate/name-roles.ts",
+			"default": "./out/candidate/name-roles.js",
+			"types": "./out/candidate/name-roles.d.ts"
+		},
+		"#candidate/place-attrs": {
+			"node": "./candidate/place-attrs.ts",
+			"default": "./out/candidate/place-attrs.js",
+			"types": "./out/candidate/place-attrs.d.ts"
+		},
+		"#sqlite-utils": {
+			"node": "./sqlite-utils.ts",
+			"default": "./out/sqlite-utils.js",
+			"types": "./out/sqlite-utils.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {

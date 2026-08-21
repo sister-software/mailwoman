@@ -42,6 +42,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#sdk/build/*": {
+			"node": "./sdk/build/*.ts",
+			"default": "./out/sdk/build/*.js",
+			"types": "./out/sdk/build/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./scripts/*": {
