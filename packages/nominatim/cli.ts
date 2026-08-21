@@ -217,7 +217,7 @@ async function serve(): Promise<void> {
 			const country = matchCountry(countryName)
 
 			if (country) {
-				if (!resolved.address.country) {
+				if (!resolved.address.country && country.canonical) {
 					resolved.address.country = country.canonical
 				}
 

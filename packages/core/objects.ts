@@ -112,7 +112,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	const keys = isIterable(constraints) ? Array.from(constraints) : Object.values(constraints)
 
 	for (const key of keys) {
-		const value = (input as never)[key]
+		const value = Reflect.get(input, key) as O[keyof O]
 		picked[key as keyof O] = transform ? transform(value, key, input) : value
 	}
 

@@ -218,13 +218,13 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		const results = await engine.search(params)
 
 		if (params.format === "geojson") {
-			return c.json(toFeatureCollection(results) as never, 200)
+			return c.json(toFeatureCollection(results), 200)
 		} else if (params.format === "jsonld") {
 			// #1052: re-serialize the SAME results as schema.org `Place[]`; jsonv2 stays the default.
-			return c.json(results.map(nominatimResultToSchemaOrg) as never, 200)
+			return c.json(results.map(nominatimResultToSchemaOrg), 200)
 		}
 
-		return c.json(results as never, 200)
+		return c.json(results, 200)
 	})
 
 	app.openapi(reverseRoute, async (c) => {
@@ -254,13 +254,13 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		const result = await engine.reverse(params)
 
 		if (params.format === "geojson") {
-			return c.json(toFeatureCollection(result ? [result] : []) as never, 200)
+			return c.json(toFeatureCollection(result ? [result] : []), 200)
 		} else if (params.format === "jsonld") {
 			// #1052: a single reverse hit → one schema.org `Place` (or null when unresolved).
-			return c.json((result ? nominatimResultToSchemaOrg(result) : null) as never, 200)
+			return c.json(result ? nominatimResultToSchemaOrg(result) : null, 200)
 		}
 
-		return c.json(result as never, 200)
+		return c.json(result, 200)
 	})
 
 	app.openapi(lookupRoute, async (c) => {
@@ -277,7 +277,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 
 		// NOTE: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`
 		// on `/lookup` falls through to the raw jsonv2 results, unlike `/search` and `/reverse`.
-		return c.json((params.format === "geojson" ? toFeatureCollection(results) : results) as never, 200)
+		return c.json(params.format === "geojson" ? toFeatureCollection(results) : results, 200)
 	})
 
 	app.openapi(statusRoute, async (c) => {
