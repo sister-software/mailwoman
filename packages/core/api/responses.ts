@@ -13,6 +13,18 @@ import { ResourceError } from "../errors/schema.ts"
 import { isRetryableStatus } from "./retry.ts"
 
 /**
+ * Whether an HTTP status is a 2xx success.
+ *
+ * Exists so a caller that opts out of throwing — `validateStatus: () => true`, for a graceful non-2xx path — can still
+ * ask the question by name. Written against axios's own `HttpStatusCode` because this package already owns that
+ * dependency; a consumer package spelling `>= 200 && < 300` inline would either name two bare thresholds or take an
+ * undeclared dependency to avoid it.
+ */
+export function isSuccessStatus(status: number): boolean {
+	return status >= HttpStatusCode.Ok && status < HttpStatusCode.MultipleChoices
+}
+
+/**
  * A response container, wrapping the actual response body.
  */
 export interface ResponseContainer<Body> {

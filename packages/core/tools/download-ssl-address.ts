@@ -9,9 +9,9 @@
  *
  *   See: https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
  *
- *   Replaces the bash `ssl-address-download.sh` (curl + jq) with native `fetch` + `JSON.parse`. The
- *   country list lives at `…/ssl-address/data` as a `~`-delimited `.countries` string; each country's
- *   record is then fetched from `…/ssl-address/data/<CC>` and written to `<out-dir>/<CC>.json`.
+ *   Replaces the bash `ssl-address-download.sh` (curl + jq). The country list lives at
+ *   `…/ssl-address/data` as a `~`-delimited `.countries` string; each country's record is then
+ *   fetched from `…/ssl-address/data/<CC>` and written to `<out-dir>/<CC>.json`.
  *
  *   ## Usage
  *
@@ -30,7 +30,23 @@ import { join } from "node:path"
 
 import { corePackagePath } from "#utils"
 
+import { APIClient, pluckResponseData } from "../api/index.ts"
+
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
+
+/**
+ * One host, ~250 small records, fetched `concurrency`-wide.
+ *
+ * Retry is the point: a throttle or a dropped connection on ONE country previously counted as a permanent failure for
+ * that country, and the run reported `written: 249, failed: 1` — indistinguishable from a country the source does not
+ * carry. No `minRequestIntervalMs`: the concurrency-wide burst is what this tool has always done and the host has not
+ * objected, and inventing a rate limit no measurement supports would only make a working tool slower.
+ */
+const sslAddressClient = new APIClient({
+	displayName: "ssl-address",
+	retry: true,
+	axios: { timeout: 60_000 },
+})
 
 /**
  * Flag-shaped options for {@linkcode downloadSSLAddress}.
@@ -50,10 +66,7 @@ export interface DownloadSSLAddressOptions {
  * Fetch the `~`-delimited country list and return it as an array of ISO codes.
  */
 async function fetchCountryCodes(): Promise<string[]> {
-	const res = await fetch(BASE_URL, { signal: AbortSignal.timeout(60_000) })
-
-	if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} fetching country list`)
-	const data = (await res.json()) as { countries?: string }
+	const data = await sslAddressClient.fetch<{ countries?: string }>({ url: BASE_URL }).then(pluckResponseData)
 
 	return (data.countries ?? "").split("~").filter(Boolean)
 }
@@ -62,10 +75,13 @@ async function fetchCountryCodes(): Promise<string[]> {
  * Fetch a single country's metadata record and write its raw JSON body to `<outDir>/<cc>.json`.
  */
 async function fetchCountry(cc: string, outDir: string): Promise<void> {
-	const res = await fetch(`${BASE_URL}/${cc}`, { signal: AbortSignal.timeout(60_000) })
+	// `responseType: "text"` keeps the RAW body: these records are written to disk verbatim, and letting
+	// axios parse then re-serialize would rewrite key order and spacing in a checked-in artifact.
+	const body = await sslAddressClient
+		.fetch<string>({ url: `${BASE_URL}/${cc}`, responseType: "text" })
+		.then(pluckResponseData)
 
-	if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} on ${cc}`)
-	await writeFile(join(outDir, `${cc}.json`), await res.text())
+	await writeFile(join(outDir, `${cc}.json`), body)
 }
 
 /**

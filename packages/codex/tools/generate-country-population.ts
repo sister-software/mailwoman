@@ -23,6 +23,8 @@
 import { writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 
 /**
@@ -78,10 +80,11 @@ export async function generateCountryPopulation(
 	report?: (line: string) => void
 ): Promise<GenerateCountryPopulationSummary> {
 	const outPath = options.out ?? DEFAULT_OUT
-	const response = await fetch(SOURCE)
 
-	if (!response.ok) throw new Error(`fetch ${SOURCE} failed: ${response.status}`)
-	const text = await response.text()
+	// `responseType: "text"` because the source is a tab-separated dump, not JSON.
+	const text = await new APIClient({ displayName: "geonames-country-info", retry: true })
+		.fetch<string>({ url: SOURCE, responseType: "text" })
+		.then(pluckResponseData)
 
 	const rows: Record<string, number> = {}
 

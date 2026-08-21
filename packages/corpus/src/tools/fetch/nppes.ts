@@ -28,6 +28,7 @@ import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"
 import { basename, join } from "node:path"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
 
@@ -53,13 +54,14 @@ interface SourceManifest {
  * `NPPES_Data_Dissemination_<Month>_<Year>*.zip`; weekly files carry a `MMDDYY_MMDDYY` date range, which we exclude.
  */
 async function discoverLatestZip(): Promise<string | undefined> {
-	const res = await fetch(INDEX_URL, {
-		headers: { "Accept-Encoding": "gzip, br" },
-		signal: AbortSignal.timeout(60_000),
+	// `responseType: "text"` — the index is HTML, scraped by regex below.
+	const html = await new APIClient({
+		displayName: "nppes-index",
+		retry: true,
+		axios: { headers: { "Accept-Encoding": "gzip, br" } },
 	})
-
-	if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} on ${INDEX_URL}`)
-	const html = await res.text()
+		.fetch<string>({ url: INDEX_URL, responseType: "text", timeout: 60_000 })
+		.then(pluckResponseData)
 
 	for (const match of html.matchAll(/NPPES_Data_Dissemination_[A-Za-z]+_\d{4}[^"]*\.zip/g)) {
 		const name = match[0]

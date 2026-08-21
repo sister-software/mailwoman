@@ -49,6 +49,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 
@@ -217,11 +218,12 @@ async function main(): Promise<void> {
 	const paths = taxonomyPaths()
 
 	if (values.fetch) {
-		const res = await fetch(OVERTURE_CATEGORIES_URL)
+		// `responseType: "text"` — the snapshot is CSV, written to disk verbatim.
+		const csv = await new APIClient({ displayName: "overture-categories", retry: true })
+			.fetch<string>({ url: OVERTURE_CATEGORIES_URL, responseType: "text" })
+			.then(pluckResponseData)
 
-		if (!res.ok) throw new Error(`generate-taxonomy: fetch ${OVERTURE_CATEGORIES_URL} → HTTP ${res.status}`)
-
-		writeFileSync(paths.csv, await res.text())
+		writeFileSync(paths.csv, csv)
 
 		console.log(`fetched snapshot → ${paths.csv}`)
 	}

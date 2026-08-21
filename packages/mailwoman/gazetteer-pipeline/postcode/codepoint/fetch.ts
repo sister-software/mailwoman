@@ -344,6 +344,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 
 	phase("download", `${download.fileName} (${download.size.toLocaleString()} bytes)`)
 
+	// Raw `fetch`: an OS Code-Point Open archive, streamed to disk below rather than held in memory.
 	const response = await fetch(download.url)
 
 	if (!response.ok || !response.body) {

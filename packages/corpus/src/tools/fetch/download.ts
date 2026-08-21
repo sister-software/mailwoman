@@ -90,6 +90,9 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 		let res: Response
 
 		try {
+			// Raw `fetch`, deliberately: this is the shared FILE downloader and the body is piped to disk below.
+			// `APIClient` is the repo default for API requests — small bodies, repeated calls — and buffers a
+			// non-stream response in memory, which is the one thing a multi-gigabyte transfer must not do.
 			res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
 		} catch (error) {
 			// AbortSignal timeouts and network-level failures are retryable.

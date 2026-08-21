@@ -40,6 +40,7 @@ import { existsSync, mkdirSync, statSync } from "node:fs"
 import { writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -93,6 +94,17 @@ interface ChunkManifest {
 	complete: boolean
 }
 
+/**
+ * ArcGIS paged reads. Retry is ON: the loop walks OBJECTID ranges to completion, so one throttled page previously ended
+ * a multi-hour national download. No rate budget — pages are requested one at a time and each assembles thousands of
+ * records server-side.
+ */
+const nadClient = new APIClient({
+	displayName: "nad",
+	retry: true,
+	axios: { headers: { "Accept-Encoding": "gzip, br" } },
+})
+
 async function fetchPage(startOID: number, endOID: number, pageSize: number): Promise<unknown[]> {
 	const url = new URL(`${FEATURE_SERVICE_URL}/query`)
 	url.searchParams.set("where", `OBJECTID BETWEEN ${startOID} AND ${endOID}`)
@@ -100,13 +112,12 @@ async function fetchPage(startOID: number, endOID: number, pageSize: number): Pr
 	url.searchParams.set("f", "json")
 	url.searchParams.set("resultRecordCount", String(pageSize))
 
-	const res = await fetch(url, {
-		headers: { "Accept-Encoding": "gzip, br" },
-		signal: AbortSignal.timeout(120_000),
-	})
-
-	if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} on OID ${startOID}-${endOID}`)
-	const data = (await res.json()) as { features?: Array<{ attributes: unknown }>; error?: { message: string } }
+	const data = await nadClient
+		.fetch<{ features?: Array<{ attributes: unknown }>; error?: { message: string } }>({
+			url: url.toString(),
+			timeout: 120_000,
+		})
+		.then(pluckResponseData)
 
 	if (data.error) throw new Error(`ArcGIS error on OID ${startOID}-${endOID}: ${data.error.message}`)
 
@@ -118,10 +129,10 @@ async function discoverTotalCount(): Promise<number> {
 	url.searchParams.set("where", "1=1")
 	url.searchParams.set("returnCountOnly", "true")
 	url.searchParams.set("f", "json")
-	const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
 
-	if (!res.ok) throw new Error(`Failed to discover NAD record count: HTTP ${res.status}`)
-	const data = (await res.json()) as { count?: number }
+	const data = await nadClient
+		.fetch<{ count?: number }>({ url: url.toString(), timeout: 30_000 })
+		.then(pluckResponseData)
 
 	if (typeof data.count !== "number") throw new Error("NAD count query returned no count field")
 

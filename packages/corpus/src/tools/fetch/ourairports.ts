@@ -39,6 +39,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 
+import { APIClient } from "@mailwoman/core/api"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -92,9 +93,13 @@ interface OurAirportsManifest {
  */
 async function readLastModified(url: string): Promise<string | null> {
 	try {
-		const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(30_000) })
+		const res = await new APIClient({ displayName: "ourairports", retry: true }).fetch({
+			url,
+			method: "head",
+			timeout: 30_000,
+		})
 
-		return res.ok ? res.headers.get("last-modified") : null
+		return (res.headers["last-modified"] as string | undefined) ?? null
 	} catch {
 		return null
 	}

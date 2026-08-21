@@ -101,6 +101,8 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Fetch the model from a URL and construct.
 	 */
 	static async fromURL(modelURL: string, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
+		// Raw `fetch`: this is the BROWSER runtime. `APIClient` carries axios, which has no place in the
+		// client bundle, and the platform primitive is what the browser already has.
 		const res = await fetch(modelURL)
 
 		if (!res.ok) throw new Error(`fetch ${modelURL} failed: ${res.status} ${res.statusText}`)
