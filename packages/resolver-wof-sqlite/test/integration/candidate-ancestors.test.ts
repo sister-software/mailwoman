@@ -38,6 +38,8 @@ import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidat
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
+import { allRows, getRow } from "#sqlite-utils"
+
 const GERMANY = 100
 const THURINGEN = 101
 const WEIMAR_DE = 102
@@ -134,9 +136,7 @@ afterEach(async () => {
 })
 
 function intervalOf(db: DatabaseSync, id: number): IntervalLabel | undefined {
-	return db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`).get(id) as unknown as
-		| IntervalLabel
-		| undefined
+	return getRow<IntervalLabel>(db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`), id)
 }
 
 describe("the candidate ancestors sidecar", () => {
@@ -144,19 +144,20 @@ describe("the candidate ancestors sidecar", () => {
 		const db = new DatabaseSync(candidatePath, { readOnly: true })
 
 		try {
-			const rows = db
-				.prepare(
-					`SELECT a.depth, a.parent_spr_id, pc.placetype AS placetype, a.parent_name, a.parent_name_key
-					 FROM ${CANDIDATE_ANCESTOR_TABLE} a JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
-					 WHERE a.spr_id = ? ORDER BY a.depth ASC`
-				)
-				.all(WEIMAR_DE) as unknown as Array<{
+			const rows = allRows<{
 				depth: number
 				parent_spr_id: number
 				placetype: string
 				parent_name: string
 				parent_name_key: string
-			}>
+			}>(
+				db.prepare(
+					`SELECT a.depth, a.parent_spr_id, pc.placetype AS placetype, a.parent_name, a.parent_name_key
+					 FROM ${CANDIDATE_ANCESTOR_TABLE} a JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
+					 WHERE a.spr_id = ? ORDER BY a.depth ASC`
+				),
+				WEIMAR_DE
+			)
 
 			// Nearest-first: county → region → country. The self row, the continent row and the edge to
 			// the absent place 999 contributed nothing.
@@ -224,9 +225,11 @@ describe("the candidate ancestors sidecar", () => {
 			expect(intervalContains(texas, weimarDE)).toBe(false)
 
 			// Descendant enumeration is a contiguous range scan.
-			const descendants = db
-				.prepare(`SELECT spr_id FROM ${CANDIDATE_INTERVAL_TABLE} WHERE pre > ? AND post < ? ORDER BY spr_id`)
-				.all(thuringen.pre, thuringen.post) as unknown as Array<{ spr_id: number }>
+			const descendants = allRows<{ spr_id: number }>(
+				db.prepare(`SELECT spr_id FROM ${CANDIDATE_INTERVAL_TABLE} WHERE pre > ? AND post < ? ORDER BY spr_id`),
+				thuringen.pre,
+				thuringen.post
+			)
 
 			expect(descendants.map((d) => d.spr_id)).toEqual([WEIMAR_DE, ERFURT, WEIMARER_LAND])
 		} finally {
@@ -238,8 +241,13 @@ describe("the candidate ancestors sidecar", () => {
 		const db = new DatabaseSync(candidatePath, { readOnly: true })
 
 		try {
-			const rows = db
-				.prepare(
+			const rows = allRows<{
+				spr_id: number
+				country: string
+				parent_name_key: string | null
+				parent_placetype: string | null
+			}>(
+				db.prepare(
 					`SELECT c.spr_id, cc.code AS country, a.parent_name_key, pc.placetype AS parent_placetype
 					 FROM candidate c
 					 JOIN country_codes cc ON cc.id = c.country_id
@@ -247,13 +255,9 @@ describe("the candidate ancestors sidecar", () => {
 					 LEFT JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
 					 WHERE c.name_key = ?
 					 ORDER BY c.neg_rank ASC, a.depth ASC`
-				)
-				.all(normalizeLocalityForKey("Weimar")) as unknown as Array<{
-				spr_id: number
-				country: string
-				parent_name_key: string | null
-				parent_placetype: string | null
-			}>
+				),
+				normalizeLocalityForKey("Weimar")
+			)
 
 			const regionKeyOf = (sprID: number): string | undefined =>
 				rows.find((r) => r.spr_id === sprID && r.parent_placetype === "region")?.parent_name_key ?? undefined
@@ -272,9 +276,10 @@ describe("the candidate ancestors sidecar", () => {
 		const db = new DatabaseSync(candidatePath, { readOnly: true })
 
 		try {
-			const parents = db
-				.prepare(`SELECT parent_spr_id FROM ${CANDIDATE_ANCESTOR_TABLE} WHERE spr_id = ? ORDER BY depth ASC`)
-				.all(AMBIVILLE) as unknown as Array<{ parent_spr_id: number }>
+			const parents = allRows<{ parent_spr_id: number }>(
+				db.prepare(`SELECT parent_spr_id FROM ${CANDIDATE_ANCESTOR_TABLE} WHERE spr_id = ? ORDER BY depth ASC`),
+				AMBIVILLE
+			)
 
 			// The complete containment record: both regions, then the country. Texas (lower id at the
 			// same tier) sorts first, which makes it the canonical depth-1 parent.
@@ -292,9 +297,10 @@ describe("the candidate ancestors sidecar", () => {
 			expect(intervalContains(louisiana, ambiville)).toBe(false)
 
 			// One interval row per place — the forest stayed a forest.
-			const { n } = db
-				.prepare(`SELECT COUNT(*) AS n FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
-				.get(AMBIVILLE) as unknown as { n: number }
+			const { n } = getRow<{ n: number }>(
+				db.prepare(`SELECT COUNT(*) AS n FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`),
+				AMBIVILLE
+			)!
 
 			expect(n).toBe(1)
 		} finally {

@@ -32,6 +32,8 @@ import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
+import { allRows } from "#sqlite-utils"
+
 let scratch: string
 
 /**
@@ -149,16 +151,17 @@ interface CandRow {
  * Resolve a normalized key the way the query side does — join the code maps back to strings.
  */
 function probe(db: DatabaseSync, key: string): CandRow[] {
-	return db
-		.prepare(
+	return allRows<CandRow>(
+		db.prepare(
 			`SELECT c.name_key, c.name, cc.code AS country, pc.placetype AS placetype,
 				c.latitude, c.longitude, c.min_lat, c.is_primary, c.population
 			 FROM candidate c
 			 JOIN country_codes cc ON cc.id = c.country_id
 			 JOIN placetype_codes pc ON pc.id = c.placetype_id
 			 WHERE c.name_key = ? ORDER BY c.neg_rank ASC`
-		)
-		.all(key) as unknown as CandRow[]
+		),
+		key
+	)
 }
 
 beforeEach(async () => {
@@ -493,10 +496,9 @@ describe("buildCandidateTable", () => {
 		}
 
 		function importanceOf(db: DatabaseSync, key: string): Array<number | null> {
-			return (
-				db
-					.prepare("SELECT importance FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC")
-					.all(key) as unknown as Array<{ importance: number | null }>
+			return allRows<{ importance: number | null }>(
+				db.prepare("SELECT importance FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC"),
+				key
 			).map((r) => r.importance)
 		}
 

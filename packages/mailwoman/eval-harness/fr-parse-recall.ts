@@ -24,7 +24,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { allRows, mailwomanDataRoot } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -153,13 +153,13 @@ export async function frParseRecall(
 
 				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
 				// DETERMINISTIC (GROUP BY + ORDER BY, no RANDOM) — the same shard yields the same 40 rows.
-				return db
-					.prepare(
+				return allRows<FRRow>(
+					db.prepare(
 						`SELECT street_raw, number, locality_norm, postcode FROM address_point
 						 WHERE locality_norm IS NOT NULL AND postcode IS NOT NULL AND street_raw LIKE '% %'
 						 GROUP BY street_norm ORDER BY number LIMIT 40`
 					)
-					.all() as unknown as FRRow[]
+				)
 			})()
 		: [...TextSpliterator.from(readFileSync(args.fixture, "utf8"))]
 				.filter((l) => l.trim())

@@ -6,25 +6,13 @@
  *   Small shared helpers for the SQLite-backed lookups.
  */
 
-import type { DatabaseSync, SQLInputValue, StatementSync } from "node:sqlite"
+import type { DatabaseSync, SQLInputValue } from "node:sqlite"
 
-/**
- * Execute a statement whose selected columns are described by `Row`.
- *
- * `node:sqlite` exposes results as generic records because it cannot infer a row shape from SQL text. Keep that
- * assertion at this database boundary instead of repeating a double cast at every query site. Callers must keep `Row`
- * aligned with the statement's projection.
- */
-export function allRows<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row[] {
-	return statement.all(...parameters) as unknown as Row[]
-}
+import { allRows, getRow } from "@mailwoman/core/utils"
 
-/**
- * Single-row counterpart to {@link allRows}.
- */
-export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row | undefined {
-	return statement.get(...parameters) as unknown as Row | undefined
-}
+// The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
+// seam; re-exported here because this module is where this package's readers already look for it.
+export { allRows, getRow } from "@mailwoman/core/utils"
 
 /**
  * A prepared single-row query whose parameter tuple remains visible to TypeScript. `StatementSync` accepts only the

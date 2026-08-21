@@ -38,6 +38,7 @@ import { existsSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { allRows } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -128,12 +129,13 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 
 			const conn = new DatabaseSync(db, { readOnly: true })
 
-			const rows = conn
-				.prepare(
+			const rows = allRows<PostcodeShardRow>(
+				conn.prepare(
 					`SELECT name, latitude AS lat, longitude AS lon FROM spr
 					 WHERE placetype='postalcode' AND is_current!=0 AND country=?`
-				)
-				.all(country) as unknown as PostcodeShardRow[]
+				),
+				country
+			)
 
 			conn.close()
 

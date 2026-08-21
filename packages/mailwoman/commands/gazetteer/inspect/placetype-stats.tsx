@@ -15,6 +15,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { allRows } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -101,27 +102,30 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 		const params = country ? [country] : []
 
 		// 1) counts
-		const counts = db
-			.prepare(`SELECT placetype, count(*) AS n FROM spr s WHERE is_current = 1 ${where} GROUP BY placetype`)
-			.all(...params) as unknown as Array<{ placetype: string; n: number }>
+		const counts = allRows<{ placetype: string; n: number }>(
+			db.prepare(`SELECT placetype, count(*) AS n FROM spr s WHERE is_current = 1 ${where} GROUP BY placetype`),
+			...params
+		)
 
 		// 2) parent-placetype distribution (child.parent_id -> parent.placetype)
-		const parentRows = db
-			.prepare(
+		const parentRows = allRows<{ child: string; parent: string; n: number }>(
+			db.prepare(
 				`SELECT c.placetype AS child, p.placetype AS parent, count(*) AS n
 				 FROM spr c JOIN spr p ON c.parent_id = p.id
 				 WHERE c.is_current = 1 ${cWhere} GROUP BY c.placetype, p.placetype`
-			)
-			.all(...params) as unknown as Array<{ child: string; parent: string; n: number }>
+			),
+			...params
+		)
 
 		// 3) ancestor-placetype distribution (via the ancestors chain table)
-		const ancRows = db
-			.prepare(
+		const ancRows = allRows<{ pt: string; anc: string; n: number }>(
+			db.prepare(
 				`SELECT s.placetype AS pt, a.ancestor_placetype AS anc, count(*) AS n
 				 FROM ancestors a JOIN spr s ON a.id = s.id
 				 WHERE s.is_current = 1 ${where} GROUP BY s.placetype, a.ancestor_placetype`
-			)
-			.all(...params) as unknown as Array<{ pt: string; anc: string; n: number }>
+			),
+			...params
+		)
 
 		db.close()
 

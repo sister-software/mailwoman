@@ -25,7 +25,7 @@
 import { existsSync } from "node:fs"
 import { DatabaseSync, type StatementSync } from "node:sqlite"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -226,7 +226,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 
 		if (cached !== undefined) return cached
 
-		const row = this.#placeStatement.get(id) as unknown as SprRow | undefined
+		const row = getRow<SprRow>(this.#placeStatement, id)
 
 		const place: AblationPlace | null = row
 			? {
@@ -256,7 +256,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 
 		if (cached) return cached
 
-		const rows = this.#lineageStatement.all(id) as unknown as SprRow[]
+		const rows = allRows<SprRow>(this.#lineageStatement, id)
 
 		const places = rows
 			.map(
@@ -304,7 +304,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 
 		if (cached) return cached
 
-		const rows = this.#namedStatement.all(key) as unknown as CandidateRow[]
+		const rows = allRows<CandidateRow>(this.#namedStatement, key)
 		const allowed = opts.placetypes ? new Set(opts.placetypes) : null
 		const seen = new Set<number>()
 		const places: AblationPlace[] = []

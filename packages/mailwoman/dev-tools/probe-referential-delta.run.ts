@@ -37,7 +37,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
-import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 
 import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
@@ -57,36 +57,37 @@ if (!existsSync(adminPath)) {
 } else {
 	const db = new DatabaseSync(adminPath, { open: true })
 
-	const saturated = (
-		db
-			.prepare("SELECT count(*) AS c FROM place_population WHERE population >= ?")
-			.get(REFERENTIAL_SATURATION_POPULATION) as unknown as { c: number }
-	).c
+	// `!` because the OUTER count(*) carries no GROUP BY, so SQLite always returns exactly one row.
+	const saturated = getRow<{ c: number }>(
+		db.prepare("SELECT count(*) AS c FROM place_population WHERE population >= ?"),
+		REFERENTIAL_SATURATION_POPULATION
+	)!.c
 
 	// The configuration where the tiebreak is load-bearing: two CURRENT places sharing a name, both
 	// clamped to referential 1.0. Anything less than this cannot produce a differing order.
-	const collidingPairs = (
-		db
-			.prepare(
-				`SELECT count(*) AS c FROM (
+	// Same one-row guarantee: the GROUP BY is inside the subquery, the outer count(*) has none.
+	const collidingPairs = getRow<{ c: number }>(
+		db.prepare(
+			`SELECT count(*) AS c FROM (
 					SELECT s.name FROM spr s JOIN place_population p ON p.id = s.id
 					WHERE s.is_current = 1 AND p.population >= ?
 					GROUP BY s.name HAVING count(*) > 1
 				)`
-			)
-			.get(REFERENTIAL_SATURATION_POPULATION) as unknown as { c: number }
-	).c
+		),
+		REFERENTIAL_SATURATION_POPULATION
+	)!.c
 
 	console.log(`- places at or above saturation: **${saturated.toLocaleString()}**`)
 	console.log(`- names carrying MORE THAN ONE saturated place: **${collidingPairs.toLocaleString()}**`)
 
-	const top = db
-		.prepare(
+	const top = allRows<{ name: string; country: string; population: number }>(
+		db.prepare(
 			`SELECT s.name AS name, s.country AS country, p.population AS population
 			 FROM spr s JOIN place_population p ON p.id = s.id
 			 WHERE s.is_current = 1 AND p.population >= ? ORDER BY p.population DESC LIMIT 10`
-		)
-		.all(REFERENTIAL_SATURATION_POPULATION) as unknown as Array<{ name: string; country: string; population: number }>
+		),
+		REFERENTIAL_SATURATION_POPULATION
+	)
 
 	for (const r of top) {
 		console.log(`  - ${r.name} (${r.country}) — ${r.population.toLocaleString()}`)

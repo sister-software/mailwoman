@@ -57,7 +57,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, md5File } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
 	PairIndexResolver,
@@ -137,25 +137,29 @@ function collectSurfaces(db: DatabaseSync, country: string, placetypes: string[]
 	const placeholder = placetypes.map(() => "?").join(",")
 	const surfaces = new Map<number, Set<string>>()
 
-	const sprRows = db
-		.prepare(
+	const sprRows = allRows<SurfaceRow>(
+		db.prepare(
 			`SELECT id, name FROM spr
 			 WHERE country = ? AND placetype IN (${placeholder}) AND is_current = 1 AND is_deprecated = 0`
-		)
-		.all(country, ...placetypes) as unknown as SurfaceRow[]
+		),
+		country,
+		...placetypes
+	)
 
 	for (const row of sprRows) {
 		surfaces.set(row.id, new Set([row.name]))
 	}
 
-	const officialRows = db
-		.prepare(
+	const officialRows = allRows<SurfaceRow>(
+		db.prepare(
 			`SELECT n.id, n.name FROM names n
 			 JOIN spr s ON s.id = n.id
 			 WHERE s.country = ? AND s.placetype IN (${placeholder})
 			   AND s.is_current = 1 AND s.is_deprecated = 0 AND n.official = 1`
-		)
-		.all(country, ...placetypes) as unknown as SurfaceRow[]
+		),
+		country,
+		...placetypes
+	)
 
 	for (const row of officialRows) {
 		surfaces.get(row.id)?.add(row.name)
@@ -204,16 +208,19 @@ async function main(): Promise<void> {
 
 		// Phase 1: id-level edges — child place under parent place, self-edges excluded, both endpoints
 		// current + non-deprecated.
-		const edgeRows = db
-			.prepare(
+		const edgeRows = allRows<EdgeRow>(
+			db.prepare(
 				`SELECT DISTINCT s.id AS child_id, a.ancestor_id AS parent_id
 				 FROM spr s
 				 JOIN ancestors a ON a.id = s.id AND a.ancestor_placetype IN (${parentPlaceholder}) AND a.ancestor_id != s.id
 				 JOIN spr r ON r.id = a.ancestor_id AND r.is_current = 1 AND r.is_deprecated = 0
 				 WHERE s.country = ? AND s.placetype IN (${childPlaceholder})
 				   AND s.is_current = 1 AND s.is_deprecated = 0`
-			)
-			.all(...spec.parentWOFPlacetypes, wofCountry, ...spec.childWOFPlacetypes) as unknown as EdgeRow[]
+			),
+			...spec.parentWOFPlacetypes,
+			wofCountry,
+			...spec.childWOFPlacetypes
+		)
 
 		// Phase 2: surfaces. Country-scoping the parent side is sound — every ancestor of a US locality
 		// is itself US; a parent outside the scope would simply have no surfaces and the edge is skipped.

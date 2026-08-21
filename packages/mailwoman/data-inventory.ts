@@ -27,6 +27,8 @@ import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync
 import { basename, join, relative } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
+import { getRow } from "@mailwoman/core/utils"
+
 /**
  * Whether an artifact can say how it was made.
  */
@@ -135,7 +137,7 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
 
 		if (!present) return {}
 
-		const row = db.prepare("SELECT * FROM layer_manifest LIMIT 1").get() as unknown as LayerManifest | undefined
+		const row = getRow<LayerManifest>(db.prepare("SELECT * FROM layer_manifest LIMIT 1"))
 
 		return row ? { manifest: row } : {}
 	} catch (error) {
