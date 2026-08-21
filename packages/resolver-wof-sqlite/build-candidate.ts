@@ -461,7 +461,9 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	out.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
-	// --- pass 3c: name roles (#1730 prototype — stampNameRoles owns the detectors) ---
+	// --- pass 3b: name roles (#1730 prototype — stampNameRoles owns the detectors) ---
+	// Independent of the sidecar below: this writes `cand_stage.name_role`, that writes the ancestor and
+	// interval tables, and neither reads the other's output. Ordered by label only.
 	const roles = stampNameRoles({
 		src,
 		out,
@@ -473,7 +475,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		progress,
 	})
 
-	// --- pass 3b: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
+	// --- pass 3c: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
 	const sidecar = await buildAncestorsSidecar({ src, out, kdb, attrs, ptID, progress })
 
 	// --- pass 4 + 4b: postcode and locality shards (foldShard owns the per-shard loop) ---

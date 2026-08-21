@@ -316,6 +316,7 @@ export async function nppesDedupBenchmark(
 
 	if (DUMP_OVERMERGES) {
 		const clusters = writeOvermergePacket(DUMP_OVERMERGES, {
+			state: STATE,
 			entities: gbtRes.entities,
 			rows,
 			recordCount: records.length,

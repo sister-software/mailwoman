@@ -111,7 +111,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { assertDatabaseIntegrity, dataRootPath } = await import("@mailwoman/core/utils")
 
 		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
@@ -159,9 +159,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 
 		db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
 		db.exec("ANALYZE")
-		const ok = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
-
-		if (ok !== "ok") throw new Error(`integrity_check failed: ${ok}`)
+		assertDatabaseIntegrity(db, output)
 		db.exec("VACUUM")
 		await kdb.destroy() // closes the underlying `db` handle
 

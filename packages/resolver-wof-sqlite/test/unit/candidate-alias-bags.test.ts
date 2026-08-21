@@ -14,6 +14,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { describe, expect, test } from "vitest"
 
@@ -24,10 +25,9 @@ import type { PlaceAttrs } from "#candidate/place-attrs"
  * The separator `fts.ts` joins the bag with, space-padded and trailing, exactly as a real `place_search` row carries
  * it.
  */
-const ALIAS_SEP = "\u{E000}"
 
 function bag(...aliases: string[]): string {
-	return aliases.join(` ${ALIAS_SEP} `) + ` ${ALIAS_SEP}`
+	return aliases.join(` ${ALIAS_SEPARATOR} `) + ` ${ALIAS_SEPARATOR}`
 }
 
 function place(name: string): PlaceAttrs {

@@ -13,6 +13,8 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { assertDatabaseIntegrity } from "@mailwoman/core/utils"
+
 import { OVERTURE_ID_BASE } from "./fold-overture.ts"
 
 export interface FreezeAdminOptions {
@@ -105,11 +107,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 	db.exec("PRAGMA optimize")
 
 	phase("integrity")
-	const integrity = db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }
-
-	if (integrity.integrity_check !== "ok") {
-		throw new Error(`freezeAdmin: integrity_check failed: ${integrity.integrity_check}`)
-	}
+	assertDatabaseIntegrity(db, "admin")
 
 	return { ancestorRows, backfillPlacesFixed, coincidentRoles: roles.rowCount }
 }

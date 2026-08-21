@@ -25,10 +25,33 @@
  *
  *   Measured on that same file: 421,555 rows carry one embedded comma inside a quoted `brand_name` and 327
  *   carry two ("FiberFirst, LLC", "Valor Telecommunications of Texas, LP"). A delimiter scan blind to quotes
- *   shifts every column right of `brand_name` on 4% of rows. `enableQuoteHandling` also keeps an embedded
- *   NEWLINE inside its row — no row in that file needs it (the 12/13/14-field line counts sum exactly to
- *   `wc -l`, so no record is split across lines), but the guarantee is what makes the reader safe on a file
- *   nobody has measured yet.
+ *   shifts every column right of `brand_name` on 4% of rows — measured exactly, a quote-blind
+ *   `String.split(",")` mismatches 81,095 of 2,000,000 real rows. `enableQuoteHandling` also keeps an
+ *   embedded NEWLINE inside its row — no row in that file needs it (the 12/13/14-field line counts sum
+ *   exactly to `wc -l`, so no record is split across lines), but the guarantee is what makes the reader safe
+ *   on a file nobody has measured yet.
+ *
+ *   ## What this costs, and where the cost actually is
+ *
+ *   The retired byte scanner did line-find + column-split + project in 1,105 ns/row from a resident buffer;
+ *   this reader costs 2,157 ns/row streaming. Decomposed on 2,000,000 real rows, one arm per process (arms
+ *   in a shared process mis-rank — the JIT warms across them):
+ *
+ *   ```
+ *   lines only, byte ranges, streaming      157 ns/row     <- the floor
+ *   + one TextDecoder.decode per line       233 ns/row
+ *   + String.split(",") + project            672 ns/row     <- quote-BLIND, 4% wrong
+ *   CSVSpliterator mode:"array" + project  2,157 ns/row     <- what we ship
+ *   ```
+ *
+ *   So the cost is the column emitter, not CSV parsing and not streaming: splitting one ~110-byte line into
+ *   twelve strings costs 1,823 ns/row over a floor where decode-plus-split costs 439. It is NOT
+ *   `enableQuoteHandling`, which is ~8% of the total. Filed upstream as sister-software/spliterator#6; when
+ *   that lands, this reader gets faster without changing.
+ *
+ *   Do not route around it by hand-rolling a splitter here again. The staging insert this feeds measures 615
+ *   ns/row, so the parse does dominate the ingest path — but a local fast-and-quote-blind parser is exactly
+ *   the trade that produced the scanner this replaced.
  */
 
 import type { AsyncDataResource } from "spliterator"

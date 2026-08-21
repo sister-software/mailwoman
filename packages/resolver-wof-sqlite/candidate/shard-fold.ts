@@ -47,9 +47,9 @@ export function foldShard(ctx: {
 		.prepare(
 			`SELECT id, name, country, latitude, longitude,
 				min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
-			 FROM spr WHERE placetype = '${shardPlacetype}' AND latitude != 0 AND longitude != 0`
+			 FROM spr WHERE placetype = ? AND latitude != 0 AND longitude != 0`
 		)
-		.iterate()) {
+		.iterate(shardPlacetype)) {
 		const name = String(r.name ?? "")
 		const key = normalizeLocalityForKey(name)
 

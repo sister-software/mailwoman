@@ -24,11 +24,10 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
+import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import type { FindPlaceQuery } from "@mailwoman/resolver-wof-sqlite/types"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-
-const ALIAS_SEP = "\u{E000}"
 
 let scratch: string
 let candidatePath: string
@@ -176,7 +175,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (971, 970, 'region');
 
 		-- Alias bag: the Russian city's transliteration, so "Moskva" resolves to it.
-		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEP}Moscow City');
+		INSERT INTO place_search VALUES (300, 'Moskva${ALIAS_SEPARATOR}Moscow City');
 		-- The #1730 role shape (the Toledo 'TO' class): a region whose alias bag carries an ABBREVIATION,
 		-- marked by the names table's abbreviation KIND (language='abbr', empty privateuse).
 		INSERT INTO place_search VALUES (990, 'TD');

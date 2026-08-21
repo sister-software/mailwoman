@@ -130,7 +130,10 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	} = input
 
 	const baseline = progression[0]! // no levers — the prior-prior behaviour
-	const bestLever = progression.at(-1)! // the full lever stack
+	// The LAST progression row — the whole A1–A5 stack, never compared on F1 against the others. Named for what it
+	// is: a row called `best` invites reading a stack-wide delta as one lever's marginal effect, which is how the
+	// authorized-official sentence below came to quote a five-lever number.
+	const fullStack = progression.at(-1)!
 	const base = sweep[0]! // threshold 0, full lever stack
 
 	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
@@ -177,7 +180,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 			`over ${addressFrequency.total.toLocaleString()} providers) to down-weight a crowded shared address; collapsing the redundant ` +
 			`address-key + distance comparisons into one spatial signal (A1) removes the double-count that let a shared address ` +
 			`over-vote a disagreeing name. The address-frequency + A1 baseline is F1 ${pct(progression[2]!.score.f1)}% at the ` +
-			`default threshold; the **authorized-official discriminator** is roughly neutral there (${signed(100 * (bestLever.score.f1 - progression[2]!.score.f1))}) ` +
+			`default threshold; the **authorized-official discriminator** is roughly neutral there (${signed(100 * (progression[3]!.score.f1 - progression[2]!.score.f1))}) ` +
 			`but enables a higher cutoff — it holds recall where the baseline alone collapses, reaching **${pct(best.score.f1)}%** at ` +
 			`threshold ${best.t} (below), the first config past the baseline (#625).`
 	)
@@ -347,7 +350,7 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 			`address-frequency + A1 baseline at F1 **${pct(progression[2]!.score.f1)}%** (${signed(100 * (progression[2]!.score.f1 - baseline.score.f1))} over baseline): ` +
 			`inverse-frequency weighting restores full weight to a *rare* shared address (stitching a provider's name-drifted ` +
 			`records together — mostly recall) while down-weighting a *crowded* one, and the collapsed spatial signal (A1) drops ` +
-			`the address+distance double-count. What remains is **precision / over-merge** — ${bestLever.score.overMergedClusters} ` +
+			`the address+distance double-count. What remains is **precision / over-merge** — ${fullStack.score.overMergedClusters} ` +
 			`clusters still fuse distinct co-located providers, because even one down-weighted spatial agreement can outvote a ` +
 			`disagreeing name. The lever search (#625) — two negatives, then the first positive: a name/org/phone ` +
 			`**corroboration gate** (A2/A3) — phone is an unreliable secondary identifier on NPPES (shared institutional ` +

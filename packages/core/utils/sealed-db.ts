@@ -85,6 +85,25 @@ export function sealDatabase(path: string): void {
 }
 
 /**
+ * Verify a freshly-built database is not corrupt, immediately before it is sealed and published.
+ *
+ * Belongs beside {@link sealDatabase} for the same reason `swapDatabaseIntoPlace` does: the check is part of the
+ * built-artifact lifecycle, and every builder was running it from its own copy. `integrity_check` answers with the
+ * single row `{ integrity_check: "ok" }` on a healthy file and one row per problem otherwise, so only the first matters
+ * — a builder that reads the column and compares it to `"ok"` has done the whole check.
+ *
+ * @throws When the database reports anything other than `ok`, naming the artifact and what SQLite said.
+ */
+export function assertDatabaseIntegrity(db: DatabaseSync, artifact: string): void {
+	const row = db.prepare("PRAGMA integrity_check").get() as { integrity_check: string } | undefined
+	const verdict = row?.integrity_check
+
+	if (verdict !== "ok") {
+		throw new Error(`integrity_check failed on ${basename(artifact)}: ${verdict ?? "no result"}`)
+	}
+}
+
+/**
  * Open a data artifact. Read-only by default. `write: true` is for builders working on UNsealed staging — against a
  * sealed artifact it throws {@link SealedArtifactError}.
  */

@@ -252,6 +252,7 @@ describe("writeOvermergePacket", () => {
 				rows,
 				recordCount: 4,
 				maxNpis: 300,
+				state: "CA",
 				orgNameLabel: (rec) => rec.id,
 			})
 
@@ -262,6 +263,10 @@ describe("writeOvermergePacket", () => {
 			expect(text).not.toContain("## Cluster 2")
 			expect(text).toContain('auth="Ada Lovelace"')
 			expect(text).toContain('taxonomy="208D"')
+			// The header names the run an adjudicator is holding. It read `TX` for every state until the
+			// sample's own state was threaded through, so a CA packet claimed to be a TX one.
+			expect(text).toContain("CA --max-npis 300")
+			expect(text).not.toContain("TX")
 		} finally {
 			rmSync(dir, { recursive: true, force: true })
 		}

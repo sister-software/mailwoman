@@ -87,8 +87,12 @@ export interface SubVenueModifier {
  */
 export interface SubVenueSurface {
 	/**
-	 * The phrase, lowercased for Latin-script languages and left as written otherwise (case-folding is meaningless for
-	 * Japanese, and `toLowerCase` on Turkish `I` is actively wrong).
+	 * The phrase, lowercased for Latin-script languages and left as written otherwise — case-folding is meaningless for
+	 * Han and Kana, which the script guard excludes.
+	 *
+	 * It does NOT exclude Turkish: `İ` (U+0130) is `\p{Script=Latin}`, so the guard admits it and `toLowerCase` folds it
+	 * to `i` plus a combining dot above. A Turkish surface therefore round-trips through a form its own locale would not
+	 * write. Nothing shipped depends on that today; a Turkish designator would.
 	 */
 	phrase: string
 	/**

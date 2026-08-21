@@ -122,7 +122,6 @@ export async function oaResolverEval(
 		addressPoints,
 		interpolation,
 		cascadeProvider,
-		dataRoot,
 		cascadeOn,
 		runAddrPt,
 		runInterp,
