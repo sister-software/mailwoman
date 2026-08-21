@@ -51,6 +51,7 @@ import {
 	type ShardConfig,
 } from "./sharding.ts"
 import { SqliteConventionSource } from "./sqlite-convention-source.ts"
+import { allRows } from "./sqlite-utils.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
 /**
@@ -438,15 +439,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const map = new Map<number, CoincidentLocality[]>()
 
 			if (coincidentRolesExists(this.#db)) {
-				const rows = this.#db
-					.prepare(
-						`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
-							s.latitude AS lat, s.longitude AS lon,
-							cr.relationship_type AS relationshipType, cr.locality_population AS population,
-							cr.distance_km AS distanceKm
-						FROM ${COINCIDENT_ROLES_TABLE} cr JOIN spr s ON s.id = cr.locality_id`
-					)
-					.all() as unknown as Array<{
+				const rows = allRows<{
 					adminID: number
 					id: number
 					name: string
@@ -456,7 +449,15 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 					relationshipType: string
 					population: number
 					distanceKm: number
-				}>
+				}>(
+					this.#db.prepare(
+						`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
+							s.latitude AS lat, s.longitude AS lon,
+							cr.relationship_type AS relationshipType, cr.locality_population AS population,
+							cr.distance_km AS distanceKm
+						FROM ${COINCIDENT_ROLES_TABLE} cr JOIN spr s ON s.id = cr.locality_id`
+					)
+				)
 
 				for (const r of rows) {
 					const candidate: CoincidentLocality = {
@@ -733,7 +734,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 		params.push(ftsLimit)
 
-		const rawRows = stmt.all(...params) as unknown as RawSearchRow[]
+		const rawRows = allRows<RawSearchRow>(stmt, ...params)
 
 		// #905 companion fetch: the same MATCH, ordered by population alone. For name floods
 		// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit
@@ -767,7 +768,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			const popParams = params.slice(0, -3) // drop the two boost params + ftsLimit
 			const seen = new Set(rawRows.map((r) => r.id))
 
-			for (const row of popStmt.all(...popParams, POPULATION_FETCH_LIMIT) as unknown as RawSearchRow[]) {
+			for (const row of allRows<RawSearchRow>(popStmt, ...popParams, POPULATION_FETCH_LIMIT)) {
 				if (!seen.has(row.id)) {
 					rawRows.push(row)
 				}
@@ -1073,12 +1074,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const pcWhere = query.country ? "postcode = ? AND country = ?" : "postcode = ?"
 		const pcParams: SQLInputValue[] = query.country ? [pc, query.country] : [pc]
 
-		const pcRows = this.#db
-			.prepare(
+		const pcRows = allRows<{ id: number; aliases: string | null; dist: number; containing: number }>(
+			this.#db.prepare(
 				`SELECT locality_id AS id, aliases, distance_km AS dist, is_containing AS containing
 				 FROM ${sch}.${POSTCODE_LOCALITY_TABLE} WHERE ${pcWhere}`
-			)
-			.all(...pcParams) as unknown as Array<{ id: number; aliases: string | null; dist: number; containing: number }>
+			),
+			...pcParams
+		)
 
 		if (!pcRows.length) return null
 
@@ -1194,14 +1196,15 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		const popJoin = hasPop ? `LEFT JOIN main.${PLACE_POPULATION_TABLE} pp ON pp.id = s.id` : ""
 		const ph = ids.map(() => "?").join(", ")
 
-		const rows = this.#db
-			.prepare(
+		const rows = allRows<RawSearchRow>(
+			this.#db.prepare(
 				`SELECT s.id AS id, s.name AS name, s.country AS country, s.parent_id AS parent_id,
 				        s.latitude AS lat, s.longitude AS lon, s.placetype AS placetype, ${popSelect}
 				 FROM main.spr s ${popJoin}
 				 WHERE s.id IN (${ph}) AND s.is_current != 0`
-			)
-			.all(...ids) as unknown as Array<RawSearchRow>
+			),
+			...ids
+		)
 
 		return rows.map((row) => {
 			const c: PlaceCandidate = {

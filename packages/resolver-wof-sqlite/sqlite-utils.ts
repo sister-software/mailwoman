@@ -6,7 +6,25 @@
  *   Small shared helpers for the SQLite-backed lookups.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync, SQLInputValue, StatementSync } from "node:sqlite"
+
+/**
+ * Execute a statement whose selected columns are described by `Row`.
+ *
+ * `node:sqlite` exposes results as generic records because it cannot infer a row shape from SQL text. Keep that
+ * assertion at this database boundary instead of repeating a double cast at every query site. Callers must keep `Row`
+ * aligned with the statement's projection.
+ */
+export function allRows<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row[] {
+	return statement.all(...parameters) as unknown as Row[]
+}
+
+/**
+ * Single-row counterpart to {@link allRows}.
+ */
+export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row | undefined {
+	return statement.get(...parameters) as unknown as Row | undefined
+}
 
 /**
  * True when `name` is a table in the open database. The street-level lookups use this to degrade gracefully on an
@@ -37,7 +55,7 @@ export function hasTable(db: DatabaseSync, name: string): boolean {
  */
 export function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
 	try {
-		const rows = db.prepare(`PRAGMA table_info(${table})`).all() as unknown as Array<{ name: string }>
+		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA table_info(${table})`))
 
 		return rows.some((r) => String(r.name) === column)
 	} catch {

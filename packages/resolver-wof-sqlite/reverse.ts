@@ -35,6 +35,7 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { ancestorLineage, placetypeDepth } from "./ancestry.ts"
 import { PLACE_BBOX_TABLE } from "./fts.ts"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.ts"
+import { allRows } from "./sqlite-utils.ts"
 import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
 
 /**
@@ -389,16 +390,17 @@ export class WOFReverseGeocoder implements Disposable {
 
 		params.push(opts.maxCandidates ?? DEFAULT_MAX_CANDIDATES)
 
-		return this.#admin
-			.prepare(
+		return allRows<CandidateRow>(
+			this.#admin.prepare(
 				`SELECT spr.id AS id, spr.name AS name, spr.placetype AS placetype, spr.country AS country,
 					spr.parent_id AS parent_id, spr.latitude AS lat, spr.longitude AS lon
 				FROM ${PLACE_BBOX_TABLE} bbox JOIN spr ON spr.id = bbox.id
 				WHERE ${where.join(" AND ")}
 				ORDER BY (bbox.max_lat - bbox.min_lat) * (bbox.max_lon - bbox.min_lon) ASC
 				LIMIT ?`
-			)
-			.all(...params) as unknown as CandidateRow[]
+			),
+			...params
+		)
 	}
 
 	/**
@@ -415,22 +417,21 @@ export class WOFReverseGeocoder implements Disposable {
 	): CandidateRow[] {
 		const windowDeg = (maxApproximateKm * 4) / 111
 
-		return this.#admin
-			.prepare(
+		return allRows<CandidateRow>(
+			this.#admin.prepare(
 				`SELECT s.id AS id, s.name AS name, s.placetype AS placetype, s.country AS country,
 					s.parent_id AS parent_id, s.latitude AS lat, s.longitude AS lon
 				FROM ancestors a JOIN spr s ON s.id = a.id
 				WHERE a.ancestor_id = ? AND s.placetype = ? AND s.is_current != 0 AND s.is_deprecated = 0
 					AND s.latitude BETWEEN ? AND ? AND s.longitude BETWEEN ? AND ?`
-			)
-			.all(
-				parentID,
-				placetype,
-				lat - windowDeg,
-				lat + windowDeg,
-				lon - windowDeg,
-				lon + windowDeg
-			) as unknown as CandidateRow[]
+			),
+			parentID,
+			placetype,
+			lat - windowDeg,
+			lat + windowDeg,
+			lon - windowDeg,
+			lon + windowDeg
+		)
 	}
 
 	/**

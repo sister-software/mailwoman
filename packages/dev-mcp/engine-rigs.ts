@@ -25,6 +25,7 @@ import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
 import { APIClient } from "@mailwoman/core/api"
+import { TextSpliterator } from "spliterator"
 
 import { assertScorableEndpoint } from "./external-arm.ts"
 
@@ -183,14 +184,11 @@ async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promis
 	}
 
 	const known = new Map(
-		listing
-			.split("\n")
-			.filter(Boolean)
-			.map((line) => {
-				const [name, ...rest] = line.split("\t")
+		[...TextSpliterator.from(listing)].filter(Boolean).map((line) => {
+			const [name, ...rest] = TextSpliterator.from(line, { delimiter: "\t" })
 
-				return [name!.trim(), rest.join("\t").trim()] as const
-			})
+			return [name!.trim(), rest.join("\t").trim()] as const
+		})
 	)
 
 	return rig.containers.map((name) => ({ name, status: known.get(name) ?? "absent" }))

@@ -36,6 +36,8 @@ import type { DatabaseSync } from "node:sqlite"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import type { Kysely } from "kysely"
 
+import { allRows } from "./sqlite-utils.ts"
+
 //#region Schema
 
 /**
@@ -163,9 +165,7 @@ export function encyclopedicClauses(db: DatabaseSync, schemaName: string): { sel
 	let present: boolean
 
 	try {
-		const rows = db.prepare(`PRAGMA ${schemaName}.table_info(place_importance)`).all() as unknown as Array<{
-			name: string
-		}>
+		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA ${schemaName}.table_info(place_importance)`))
 
 		present = rows.some((r) => r.name === "encyclopedic")
 	} catch {
@@ -253,7 +253,7 @@ export interface ImportanceSplit {
  */
 function tableColumns(db: DatabaseSync, table: string): Set<string> {
 	try {
-		const rows = db.prepare(`PRAGMA table_info(${table})`).all() as unknown as Array<{ name: string }>
+		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA table_info(${table})`))
 
 		return new Set(rows.map((r) => r.name))
 	} catch {
@@ -276,10 +276,10 @@ export function loadImportanceSplit(db: DatabaseSync): ImportanceSplit {
 	const populationColumns = tableColumns(db, "place_population")
 
 	if (populationColumns.has("population")) {
-		const rows = db.prepare("SELECT id, population FROM place_population").all() as unknown as Array<{
+		const rows = allRows<{
 			id: number
 			population: number
-		}>
+		}>(db.prepare("SELECT id, population FROM place_population"))
 
 		for (const row of rows) {
 			population.set(row.id, row.population)
@@ -297,11 +297,11 @@ export function loadImportanceSplit(db: DatabaseSync): ImportanceSplit {
 		// Post-split build: the columns ARE the contract. Referential is read verbatim rather than
 		// re-derived, so a build that scored referential differently stays visible instead of being
 		// silently overwritten by this reader's own formula.
-		const rows = db.prepare("SELECT id, referential, encyclopedic FROM place_importance").all() as unknown as Array<{
+		const rows = allRows<{
 			id: number
 			referential: number
 			encyclopedic: number | null
-		}>
+		}>(db.prepare("SELECT id, referential, encyclopedic FROM place_importance"))
 
 		for (const row of rows) {
 			if (row.referential > 0) {
@@ -317,10 +317,10 @@ export function loadImportanceSplit(db: DatabaseSync): ImportanceSplit {
 	}
 
 	if (importanceColumns.has("importance")) {
-		const rows = db.prepare("SELECT id, importance FROM place_importance").all() as unknown as Array<{
+		const rows = allRows<{
 			id: number
 			importance: number
-		}>
+		}>(db.prepare("SELECT id, importance FROM place_importance"))
 
 		let legacyFallbackRows = 0
 

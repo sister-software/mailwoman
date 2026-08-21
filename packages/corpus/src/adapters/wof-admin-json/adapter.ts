@@ -41,9 +41,11 @@
 
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
-import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "@mailwoman/corpus/utils"
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "#utils"
+
+import { emitWOFJSONRows, type WOFVariantSpec } from "../wof-json-rows.ts"
 
 /**
  * Display name for the country, keyed by ISO 3166-1 alpha-2.
@@ -95,18 +97,6 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 	}
 }
 
-interface VariantSpec {
-	/**
-	 * Hierarchy-variant id appended to `source_id`.
-	 */
-	suffix: string
-
-	/**
-	 * Component tag → display string the adapter will hand to the runner.
-	 */
-	components: Partial<Record<ComponentTag, string>>
-}
-
 /**
  * Compute the hierarchy variants for a record given its ancestry chain and the chosen `selfName`.
  *
@@ -117,7 +107,7 @@ interface VariantSpec {
  * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the OpenCage template produces the
  * canonicalized form (`"United States of America"`), matching the legacy SQLite adapter's behavior.
  */
-export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): VariantSpec[] {
+export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
@@ -126,7 +116,7 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 	const country = ancestry.find((a) => placetypeToTag(a.placetype) === "country")
 	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country?.name ?? row.country
 
-	const variants: VariantSpec[] = []
+	const variants: WOFVariantSpec[] = []
 
 	switch (selfTag) {
 		case "locality":
@@ -247,43 +237,15 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit rows in sorted-id order for deterministic JSONL.
-			const ids = [...byID.keys()].toSorted((a, b) => a - b)
-			let emitted = 0
-
-			for (const id of ids) {
-				if (opts.signal?.aborted) return
-				const rec = byID.get(id)!
-				const chain = ancestry.get(id) ?? []
-				const slots = nameSlotsFor(rec)
-
-				for (const slot of slots) {
-					const variants = variantsFor(rec, chain, slot.value)
-
-					for (const variant of variants) {
-						if (opts.limit !== undefined && emitted >= opts.limit) return
-
-						const raw = formatAddress(variant.components, rec.country, { separator: ", " })
-
-						if (!raw) continue
-						const aligned = reconcileComponents(variant.components, raw)
-
-						if (!Object.keys(aligned).length) continue
-
-						yield {
-							raw,
-							components: aligned,
-							country: rec.country,
-							locale: LOCALE_BY_COUNTRY[rec.country],
-							source: WOF_ADMIN_ADAPTER_ID,
-							source_id: `${WOF_ADMIN_ADAPTER_ID}-${rec.id}-${slot.key}-${variant.suffix}`,
-							corpus_version: "",
-							license: "CC0-1.0",
-						}
-
-						emitted++
-					}
-				}
-			}
+			yield* emitWOFJSONRows({
+				records: byID,
+				ancestry,
+				adapterOptions: opts,
+				adapterID: WOF_ADMIN_ADAPTER_ID,
+				localeByCountry: LOCALE_BY_COUNTRY,
+				nameSlotsFor,
+				variantsFor,
+			})
 		},
 	}
 }

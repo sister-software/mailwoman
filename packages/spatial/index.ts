@@ -7,6 +7,7 @@
 export * from "./bbox.ts"
 export * from "./coordinate-formats.ts"
 export * from "./coordinate-bounds.ts"
+export * from "./distance.ts"
 export * from "./feature.ts"
 export * from "./open-location-code.ts"
 export * from "./geometries/index.ts"

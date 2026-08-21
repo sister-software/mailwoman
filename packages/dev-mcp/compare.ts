@@ -20,7 +20,6 @@
 import { randomUUID } from "node:crypto"
 
 import { formatPercent } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
@@ -34,7 +33,17 @@ import {
 	type ArmRunner,
 	type RecordedArm,
 } from "./arms.ts"
-import { checkConfounds, crossEngineReading, type ConfoundReading } from "./confound.ts"
+import {
+	armsDiffered,
+	ARM_SEPARATION_THRESHOLD_KM,
+	assertedStratum,
+	type GeoRow,
+	isolationSentence,
+	recordAnswers,
+	resolveGradeMode,
+	withheldVerdict,
+} from "./compare-helpers.ts"
+import { checkConfounds, crossEngineReading } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
@@ -42,7 +51,6 @@ import {
 	distanceKm,
 	EQUIVALENCE_THRESHOLD_KM,
 	gradeAtThreshold,
-	hitAt,
 	thresholdKey,
 	thresholdTable,
 	tostEquivalence,
@@ -67,8 +75,8 @@ import {
 	RETENTION_MAX_RUNS,
 	RUN_STORE_DIR,
 	tryPutRun,
-	type RecordedAnswer,
 	type StoredRun,
+	type RecordedAnswer,
 } from "./run-store.ts"
 import {
 	bucketRows,
@@ -77,7 +85,6 @@ import {
 	inputSetProvenance,
 	provenanceFor,
 	stratify,
-	assertStratumKey,
 	type StratumKey,
 } from "./tool-kit.ts"
 import { worktreeArmRunner } from "./worktree-runner.ts"
@@ -547,22 +554,6 @@ async function externalRunner(
 }
 
 /**
- * One row of a cross-engine comparison.
- */
-// `issues_a` / `issues_b` are dropped rather than carried empty: they are `checkCase`'s output, and an empty issue
-// list on a row nothing graded reads as a row that graded clean.
-interface GeoRow extends Omit<ComparedRow, "a" | "b" | "issues_a" | "issues_b"> {
-	a: ExternalAnswer
-	b: ExternalAnswer
-	truth_lat: number | null
-	truth_lon: number | null
-	truth_tolerance_m: number | null
-	truth_type: string | null
-	distance_km_a: number | null
-	distance_km_b: number | null
-}
-
-/**
  * A comparison with at least one arm that is not mailwoman.
  *
  * Everything here is the pre-registered protocol and nothing here is a choice made after seeing the numbers: the same
@@ -884,72 +875,6 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 }
 
 /**
- * One arm's answers, in the shape a later run replays them from.
- *
- * Every row is recorded, including the no-results. A store that kept only the answered rows would replay as a set that
- * had never been asked about the rest, and "this arm did not answer here" is the finding on exactly the rows a
- * comparison is usually chasing.
- */
-function recordAnswers(rows: GeoRow[], side: "a" | "b"): RecordedAnswer[] {
-	return rows.map((row) => ({
-		id: row.id,
-		input: row.input,
-		lat: row[side].lat,
-		lon: row[side].lon,
-		label: row[side].label,
-		resultType: row[side].resultType,
-		noResultReason: row[side].noResultReason,
-	}))
-}
-
-/**
- * Whether two arms disagreed on one row.
- *
- * TWO RULES, because the good one needs truth and not every set has it.
- *
- * With truth, the useful difference is the VERDICT: whether the arms land on the same side of the thresholds. Two hits
- * 900 m apart are the same finding; a hit and a miss are not. A raw coordinate diff would report 100% and mean nothing,
- * because across engines the coordinates always differ.
- *
- * Without truth there is no verdict to cross, and the threshold rule silently answers "identical" for every row — both
- * distances are null, `hitAt(null, …)` is false on both sides, and the comparison reports `0 of N differed` however far
- * apart the two arms landed. Read through `describeObservedRate` that becomes "tight enough to read as a real absence",
- * which is a fabricated claim of no difference. So the truthless rule is arm SEPARATION: they differ when exactly one
- * of them answered, or when they answered more than {@link ARM_SEPARATION_THRESHOLD_KM} apart.
- *
- * Which rule ran is reported as `differed_basis` — the two are not the same measurement and a reader comparing across
- * two results needs to know which one produced each number.
- */
-function armsDiffered(
-	a: ExternalAnswer,
-	b: ExternalAnswer,
-	distanceA: number | null,
-	distanceB: number | null,
-	hasTruth: boolean
-): boolean {
-	if (hasTruth) {
-		return DISTANCE_THRESHOLDS_KM.some((threshold) => hitAt(distanceA, threshold) !== hitAt(distanceB, threshold))
-	}
-
-	const answeredA = a.lat !== null && a.lon !== null
-	const answeredB = b.lat !== null && b.lon !== null
-
-	if (answeredA !== answeredB) return true
-
-	if (!answeredA) return false
-
-	return haversineKm(a.lat!, a.lon!, b.lat!, b.lon!) > ARM_SEPARATION_THRESHOLD_KM
-}
-
-/**
- * How far apart two arms may land before they count as disagreeing, when there is no truth to grade against.
- *
- * The tightest of the pre-registered thresholds rather than a fourth number: a separation inside it is a separation
- * that could not change a verdict at any threshold the protocol reports.
- */
-const ARM_SEPARATION_THRESHOLD_KM = DISTANCE_THRESHOLDS_KM[0]!
-
-/**
  * How precise the truth itself is, as a histogram of the rows' own declared tolerances.
  *
  * Reported because a threshold table read without it is a trap: a board row asserting a 25 km tolerance is a city
@@ -1039,43 +964,4 @@ function stratumValue(row: GeoRow, by: StratumKey): string {
 	if (by === "address_kind") return row.address_kind ?? "unknown"
 
 	return row.status ?? "unknown"
-}
-
-/**
- * Pick the grading mode, honouring an explicit request and refusing one that cannot be met.
- *
- * `truth` is a REFUSAL when the set carries none, not a silent downgrade: a caller who asked to be graded and was
- * quietly given a diff is the exact failure §5.5 is about, one step earlier.
- */
-function resolveGradeMode(request: GradeRequest, hasTruth: boolean, absence: string): "truth" | "diff-only" {
-	if (request === "diff-only") return "diff-only"
-
-	if (request === "truth" && !hasTruth) {
-		throw new Error(
-			`grade: "truth" was requested but ${absence}. Nothing here can be graded — run against {kind:"board"}, or ` +
-				'pass grade: "diff-only" to describe the differences without a verdict.'
-		)
-	}
-
-	return hasTruth ? "truth" : "diff-only"
-}
-
-function withheldVerdict(mode: "truth" | "diff-only", reason: string): Record<string, unknown> {
-	return mode === "diff-only" ? { verdict: null, verdict_withheld_reason: reason } : {}
-}
-
-function isolationSentence(confounds: ConfoundReading, exclude: string): string {
-	if (confounds.variable_isolation === "clean") return ""
-
-	return `VARIABLE ISOLATION ${confounds.variable_isolation.toUpperCase()}: ${confounds.warnings.filter((warning) => warning !== exclude).join(" ")}`
-}
-
-/**
- * Validate a caller-supplied stratum. The zod enum catches this over MCP; a direct caller bypasses it, and an unchecked
- * cast there produced a one-bucket `unknown` table that looked stratified.
- */
-function assertedStratum(by: string): StratumKey {
-	assertStratumKey(by)
-
-	return by
 }

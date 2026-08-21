@@ -8,9 +8,9 @@ import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { runAdapter } from "@mailwoman/corpus/runner"
 import { describe, expect, it } from "vitest"
 
+import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 import { WOF_ADMIN_ADAPTER_ID, createWOFAdminAdapter, nameSlotsFor, variantsFor } from "./adapter.ts"

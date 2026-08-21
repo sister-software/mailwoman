@@ -30,6 +30,7 @@ import { DatabaseSync } from "node:sqlite"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk } from "h3-js"
 
+import { allRows } from "./sqlite-utils.ts"
 import { uprnFullCell } from "./uprn-schema.ts"
 
 /**
@@ -179,9 +180,10 @@ export class UPRNLookup implements Disposable {
 				const placeholders = chunk.map(() => "?").join(", ")
 
 				// Prepared fresh per chunk arity — a cold, per-call path, same posture as POILookup's batched hydration.
-				const rows = this.#db
-					.prepare(`SELECT uprn, lat, lon FROM uprn WHERE h3_cell IN (${placeholders})`)
-					.all(...chunk) as unknown as UPRNRow[]
+				const rows = allRows<UPRNRow>(
+					this.#db.prepare(`SELECT uprn, lat, lon FROM uprn WHERE h3_cell IN (${placeholders})`),
+					...chunk
+				)
 
 				for (const row of rows) {
 					const distanceM = haversineKm(latitude, longitude, row.lat, row.lon) * 1000
