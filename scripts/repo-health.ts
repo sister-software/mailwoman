@@ -9,13 +9,14 @@
  * failure disappear.
  */
 
+import { execFileSync } from "node:child_process"
+import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { relative, resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
-import fg from "fast-glob"
 import ts from "typescript"
 
 interface DebtCounters {
@@ -129,11 +130,38 @@ function visit(
 	walk(source)
 }
 
-const paths = await fg(["packages/**/*.{ts,tsx}", "scripts/**/*.{ts,tsx}", "docs/src/**/*.{ts,tsx}"], {
-	cwd: root,
-	absolute: true,
-	ignore: ["**/out/**", "**/build/**", "**/node_modules/**", "**/*.d.ts"],
-})
+/**
+ * Directories whose sources count toward repository debt.
+ */
+const TRACKED_ROOTS = ["packages/", "scripts/", "docs/src/"]
+
+/**
+ * The TRACKED `.ts`/`.tsx` sources, which is what "repository debt" has to mean.
+ *
+ * Enumerated from the INDEX, not the filesystem. A counter read off the disk is not a property of the repository — it
+ * is a property of whichever files happen to be sitting in that checkout. A tree carrying gitignored scratch scripts
+ * under `scripts/diagnostic/` counted 166 `asNever` against a clean checkout's 85 at the SAME commit, and the gate
+ * failed on files no commit contains. Two readers of this number must be able to reproduce each other.
+ */
+function trackedSourcePaths(): string[] {
+	const listed = execFileSync("git", ["ls-files", "-z", "--", "*.ts", "*.tsx"], {
+		cwd: root,
+		encoding: "utf8",
+		maxBuffer: 64 * 1024 * 1024,
+	})
+
+	return listed
+		.split("\0")
+		.filter((relativePath) => relativePath.length > 0)
+		.filter((relativePath) => TRACKED_ROOTS.some((prefix) => relativePath.startsWith(prefix)))
+		.filter((relativePath) => !/(?:^|\/)(?:out|build|node_modules)\//.test(relativePath))
+		.filter((relativePath) => !relativePath.endsWith(".d.ts"))
+		.map((relativePath) => resolve(root, relativePath))
+}
+
+// A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
+// rather than failing the whole gate on a file the next commit removes anyway.
+const paths = trackedSourcePaths().filter((path) => existsSync(path))
 
 const counters = emptyCounters()
 const rootManifest = parseJSONStrict<{ workspaces: string[] }>(await readFile(resolve(root, "package.json"), "utf8"))
