@@ -269,7 +269,11 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 	// per-locale type/Saint map can see. Letter maps for non-decomposing letters (ß, ł, đ) live in the
 	// per-locale branches, NEVER here: widening the shared pipeline would silently change keys under
 	// every already-built shard of the other locales.
-	const tokens = fold(street).replaceAll("ß", "ss").replaceAll("-", " ").split(/\s+/).filter(Boolean)
+	const tokens = fold(street)
+		.replaceAll("ß", "ss")
+		.replaceAll("-", " ")
+		.split(/\s+/)
+		.filter((value) => value.length > 0)
 
 	if (!tokens.length) return "" as StreetKey
 

@@ -286,7 +286,7 @@ function findSameCharPairs(text: string, ch: string): Array<{ open: number; clos
  * - Everything else (capitalized mid-string: "[Building A]", "(The White House)") → moderate.
  */
 function annotationConfidence(content: string, atEndOfInput: boolean, lexicon: SpanProposerLexicon): number {
-	const tokens = content.split(/\s+/).filter(Boolean)
+	const tokens = content.split(/\s+/).filter((value) => value.length > 0)
 
 	if (!tokens.length) return 0
 

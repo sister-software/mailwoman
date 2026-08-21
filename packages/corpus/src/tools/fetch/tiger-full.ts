@@ -193,7 +193,7 @@ export async function fetchTigerFull(
 	options: FetchTigerFullOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const skipStateFips = (options.skipStateFips ?? "50").split(/\s+/).filter(Boolean)
+	const skipStateFips = (options.skipStateFips ?? "50").split(/\s+/).filter((value) => value.length > 0)
 	const rateSleepMs = Math.round((options.rateSleep ?? 0.2) * 1000)
 	const maxParallel = options.maxParallel ?? 4
 	const dryRun = options.dryRun ?? false

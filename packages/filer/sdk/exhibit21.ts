@@ -997,7 +997,10 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 	for (const line of lines) {
 		const unmarked = line.replace(LIST_MARKER_PATTERN, "")
 
-		const wordCount = unmarked.trim().split(/\s+/).filter(Boolean).length
+		const wordCount = unmarked
+			.trim()
+			.split(/\s+/)
+			.filter((value) => value.length > 0).length
 
 		if (wordCount > MAX_ENTITY_NAME_WORDS) {
 			unparseable++
