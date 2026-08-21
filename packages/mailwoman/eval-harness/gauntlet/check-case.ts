@@ -163,7 +163,7 @@ export function scriptRenderings(value: string): string[] {
  * lists the renderings it requires, a key so listed supersedes the same key here, and every other assertion stays this
  * strict equality. See {@linkcode checkCase}'s component gate for the contract.
  */
-function componentMatches(got: string, expected: string): boolean {
+export function componentMatches(got: string, expected: string): boolean {
 	return got.toLowerCase() === expected.toLowerCase()
 }
 

@@ -34,7 +34,19 @@ export const lookupTool = ({ registry }: DevToolDeps): DevTool => ({
 			LookupSource.Codex,
 			LookupSource.Postcode,
 		]),
-		queries: z.array(z.string()).min(1).max(50),
+		queries: z.array(z.string()).min(1).max(100),
+		locales: z
+			.array(z.string())
+			.min(1)
+			.max(12)
+			.optional()
+			.describe(
+				"FST sources only — sweep the SAME queries across each locale's own artifact, answering per locale instead " +
+					"of once. This is the shape a degenerate-surface audit needs: do function words (`la`, `de`, `van`) or " +
+					"street-type words (`boulevard`, `rue`, `strasse`) accept as locality-ish entries, and in which locales? " +
+					"Each locale costs a full session build, so this is an occasional measurement rather than a probe. A " +
+					"locale whose overlay ships no FST reports its own absence in place rather than dropping out."
+			),
 		locale: z
 			.string()
 			.optional()
@@ -61,6 +73,7 @@ export const lookupTool = ({ registry }: DevToolDeps): DevTool => ({
 			source: args["source"] as LookupSource,
 			queries: args["queries"] as string[],
 			...(args["locale"] === undefined ? {} : { locale: args["locale"] as string }),
+			...(args["locales"] === undefined ? {} : { locales: args["locales"] as string[] }),
 			...(args["country"] === undefined ? {} : { country: args["country"] as string }),
 			...(args["limit"] === undefined ? {} : { limit: args["limit"] as number }),
 			...(args["config"] === undefined ? {} : { config: args["config"] as EngineConfig }),

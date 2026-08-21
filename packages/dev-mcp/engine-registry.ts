@@ -32,6 +32,7 @@ import { createHash } from "node:crypto"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 
+import { missingWeightsCacheArtifacts } from "./gate-report.ts"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
 
 /**
@@ -49,6 +50,14 @@ export interface EngineConfig {
 	candidate_db?: string
 	resolve_db?: string
 	data_root?: string
+	/**
+	 * Grade a CANDIDATE weights bundle rather than the installed one — the lever that turns a model question into a
+	 * comparison. Unset means whatever the resolution ladder finds, which is what production loads.
+	 *
+	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire} because the ladder's fall-through is
+	 * silent: see that function.
+	 */
+	weights_cache?: string
 	gazetteer_prior?: boolean
 	place_country?: boolean
 	place_country_threshold?: number
@@ -107,6 +116,7 @@ export const EFFECTIVE_KEY_FOR = {
 	candidate_db: "candidateDB",
 	resolve_db: "resolveDB",
 	data_root: "dataRoot",
+	weights_cache: "weightsCacheRoot",
 	gazetteer_prior: "gazetteerPrior",
 	place_country: "placeCountry",
 	place_country_threshold: "placeCountryThreshold",
@@ -159,9 +169,40 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 		...(config.resolve_db ? { resolveDB: config.resolve_db } : {}),
+		...(config.weights_cache ? { weightsCacheRoot: config.weights_cache } : {}),
 		...(config.trace ? { trace: true } : {}),
 		...(config.diagnose_unreachable ? { diagnoseUnreachable: true } : {}),
 	}
+}
+
+/**
+ * Refuse a candidate weights root that would not actually be loaded.
+ *
+ * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx` and `tokenizer.model`,
+ * and otherwise walks on to the installed workspace package — which in this repo always resolves. So the failure mode
+ * of a mis-typed or half-staged candidate is not an error: it is a full run of the SHIPPED model, reported under the
+ * candidate's label, with every number plausible. `promotion-gate.ts` refuses the same way and for the same reason;
+ * this is that guard on the warm path, sharing its check rather than re-deriving the layout.
+ *
+ * Runs BEFORE the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
+ *
+ * @throws When the root is wrong-shaped (no binaries) or under-staged (binaries present, but siblings its own card
+ *   declares are missing — the #1516 shape, which degrades a channel silently and reads as a model regression).
+ */
+export function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): void {
+	const { kind, paths } = missingWeightsCacheArtifacts(cacheRoot, locale)
+
+	if (kind === "ok") return
+
+	throw new Error(
+		kind === "wrong-shape"
+			? `weights_cache ${cacheRoot} is not a staged ${locale} bundle — missing ${paths.join(", ")}. ` +
+					"Refusing rather than falling through to the installed weights, which would grade the SHIPPED model " +
+					"under this candidate's label."
+			: `weights_cache ${cacheRoot} declares artifacts it does not ship — missing ${paths.join(", ")}. ` +
+					"A bundle short of its own card's files loads with those channels OFF and scores like a model " +
+					"regression, so it is refused rather than measured."
+	)
 }
 
 export function engineID(effective: GeocodeSessionOptions, fingerprint: TreeFingerprint): string {
@@ -192,6 +233,13 @@ export interface EngineSummary {
 	last_used_iso: string
 	uses: number
 	tree_fingerprint: string
+	/**
+	 * The model this engine actually loaded, and the ladder rung that produced it.
+	 *
+	 * Reported beside the config rather than derived from it, because the two can disagree in the one direction that
+	 * matters: `weights_cache` names what was ASKED FOR, and only this says what answered.
+	 */
+	weights: { model_path: string; source: string } | null
 }
 
 /**
@@ -271,6 +319,12 @@ export class EngineRegistry {
 			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
 		}
 
+		// After the stale-tree refusal (a moved tree invalidates every answer, candidate or not) and before the build,
+		// so a mis-staged candidate costs a stat rather than a construction.
+		if (effective.weightsCacheRoot) {
+			assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
+		}
+
 		const startedAt = Date.now()
 		const session = await createGeocodeSession(effective)
 
@@ -340,6 +394,12 @@ export class EngineRegistry {
 			last_used_iso: new Date(engine.lastUsed).toISOString(),
 			uses: engine.uses,
 			tree_fingerprint: engine.fingerprint.digest,
+			weights: engine.session.artifacts.weights
+				? {
+						model_path: engine.session.artifacts.weights.modelPath,
+						source: engine.session.artifacts.weights.source,
+					}
+				: null,
 		}))
 	}
 

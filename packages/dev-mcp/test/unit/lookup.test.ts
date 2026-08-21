@@ -36,13 +36,23 @@ describe("lookupFST", () => {
 		cook: [{ wofID: 102_081_171, placetype: "county", referential: 0.4948 }],
 	})
 
+	it("separates a zero-importance hit from a firing one", () => {
+		// `applyBias` computes `importance * biasScale * maxBias * …` and keeps a tag only when that exceeds the running
+		// max, which starts at 0. So a BIO-mapped entry at importance 0 contributes nothing to the decoder, and a caller
+		// reading only `hit` and `importance` cannot tell that from a bias the decoder acts on.
+		const [inert] = lookupFST(fst as never, tokens, ["Juan"])
+
+		expect(inert!.entries).toEqual([{ tag: "locality", importance: 0, fires: false }])
+		expect(inert!.note).toContain("INERT")
+	})
+
 	it("keeps a MISS apart from a zero", () => {
 		// The whole point. `Juan` is known and scored zero; `Sultan Qaboos` is not known at all. A caller that conflated
 		// them would read "the gazetteer gives this no weight" for a surface the gazetteer has never heard of.
 		const [known, unknown] = lookupFST(fst as never, tokens, ["Juan", "Sultan Qaboos"])
 
 		expect(known).toMatchObject({ hit: true })
-		expect(known!.entries).toEqual([{ tag: "locality", importance: 0 }])
+		expect(known!.entries).toEqual([{ tag: "locality", importance: 0, fires: false }])
 
 		expect(unknown).toMatchObject({ hit: false, entries: null })
 		expect(unknown!.note).toContain("absence, not a zero bias")
@@ -51,7 +61,7 @@ describe("lookupFST", () => {
 	it("reports the per-tag max, which is all the decoder reads", () => {
 		const [row] = lookupFST(fst as never, tokens, ["San Juan"])
 
-		expect(row!.entries).toEqual([{ tag: "locality", importance: 0.3733 }])
+		expect(row!.entries).toEqual([{ tag: "locality", importance: 0.3733, fires: true }])
 	})
 
 	it("says explicitly when an accepted surface gives the decoder nothing", () => {

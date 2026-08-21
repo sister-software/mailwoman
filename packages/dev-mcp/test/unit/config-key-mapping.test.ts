@@ -35,6 +35,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 			candidate_db: "/tmp/c.db",
 			resolve_db: "/tmp/r.db",
 			data_root: "/tmp/root",
+			weights_cache: "/tmp/candidate",
 			gazetteer_prior: false,
 			place_country: false,
 			place_country_threshold: 0.9,

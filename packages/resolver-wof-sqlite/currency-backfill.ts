@@ -16,8 +16,8 @@ import type { DatabaseSync } from "node:sqlite"
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
 import { TSVSpliterator } from "spliterator"
 
-import type { PlaceAttrs } from "./build-candidate.ts"
 import type { loadImportanceIndex } from "./candidate-importance.ts"
+import type { PlaceAttrs, StageRow } from "./candidate/place-attrs.ts"
 import { haversineKm } from "./geo.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
@@ -66,7 +66,7 @@ export async function resurrectCurrencyHoles(ctx: {
 	ptID: (pt: string | null) => number
 	regionOf: Map<number, number>
 	importance: ReturnType<typeof loadImportanceIndex> | undefined
-	stageRow: (k: string, a: PlaceAttrs, sid: number, isPrimary: number) => void
+	stageRow: StageRow
 	progress: (phase: string, message: string) => void
 }): Promise<number> {
 	const deadStmt = ctx.src.prepare(

@@ -162,6 +162,16 @@ export const ENGINE_CONFIG_SCHEMA = z
 		candidate_db: z.string().optional(),
 		resolve_db: z.string().optional(),
 		data_root: z.string().optional(),
+		weights_cache: z
+			.string()
+			.optional()
+			.describe(
+				"Grade a CANDIDATE model instead of the installed one: a package-shaped directory " +
+					"(`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as `mwdev_gate` takes. This is what makes " +
+					"shipped-vs-candidate an ordinary two-arm comparison rather than a script. A root that is not staged is " +
+					"REFUSED, not silently replaced by the shipped weights — the resolution ladder falls through, so an " +
+					"unchecked typo would grade the default model under the candidate's name."
+			),
 		gazetteer_prior: z.boolean().optional(),
 		place_country: z.boolean().optional(),
 		place_country_threshold: z.number().optional(),

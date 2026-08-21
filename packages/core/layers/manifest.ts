@@ -8,10 +8,8 @@
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
-import type { Kysely } from "kysely"
-
 import { parseJSONStrict } from "../objects.ts"
-import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractDatabase } from "./schema.ts"
+import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "./schema.ts"
 
 /**
  * Which spine columns a layer carries. At least one key is required.
@@ -105,7 +103,7 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 /**
  * Insert the single manifest row. Call exactly once, from the layer's build script.
  */
-export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, manifest: LayerManifest): Promise<void> {
+export async function writeLayerManifest(db: LayerContractHandle, manifest: LayerManifest): Promise<void> {
 	assertManifestInvariants(manifest)
 
 	await db
@@ -131,7 +129,7 @@ export async function writeLayerManifest(db: Kysely<LayerContractDatabase>, mani
 /**
  * Read + validate the manifest. Throws if the table is empty, multi-row, or invalid.
  */
-export async function readLayerManifest(db: Kysely<LayerContractDatabase>): Promise<LayerManifest> {
+export async function readLayerManifest(db: LayerContractHandle): Promise<LayerManifest> {
 	const rows = await db.selectFrom("layer_manifest").selectAll().execute()
 
 	if (rows.length !== 1) {
@@ -172,7 +170,7 @@ export const COVERAGE_INSERT_BATCH = 5000
  * Bulk-insert coverage cells (build-time; cold path, so Kysely inserts are fine), chunked to stay under SQLite's
  * bound-variable limit.
  */
-export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cells: CoverageCell[]): Promise<void> {
+export async function writeLayerCoverage(db: LayerContractHandle, cells: CoverageCell[]): Promise<void> {
 	if (!cells.length) return
 
 	for (let i = 0; i < cells.length; i += COVERAGE_INSERT_BATCH) {
@@ -196,10 +194,7 @@ export async function writeLayerCoverage(db: Kysely<LayerContractDatabase>, cell
  * Look up coverage for one short H3 cell. `undefined` = the cell was never surveyed (UNKNOWN) — callers must not
  * conflate this with `{completeness: 0}`.
  */
-export async function readLayerCoverage(
-	db: Kysely<LayerContractDatabase>,
-	h3Cell: number
-): Promise<CoverageCell | undefined> {
+export async function readLayerCoverage(db: LayerContractHandle, h3Cell: number): Promise<CoverageCell | undefined> {
 	const row = await db.selectFrom("layer_coverage").selectAll().where("h3_cell", "=", h3Cell).executeTakeFirst()
 
 	if (!row) return undefined

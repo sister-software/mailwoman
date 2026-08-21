@@ -4649,6 +4649,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/geocode-oracle": "workspace:*"
+    "@mailwoman/libpostal": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -4788,7 +4789,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@mailwoman/libpostal@workspace:packages/libpostal":
+"@mailwoman/libpostal@workspace:*, @mailwoman/libpostal@workspace:packages/libpostal":
   version: 0.0.0-use.local
   resolution: "@mailwoman/libpostal@workspace:packages/libpostal"
   dependencies:

@@ -20,17 +20,12 @@ import { execFileSync } from "node:child_process"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { createLayerManifestTable, type LayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
-
-/**
- * A `Kysely` handle narrowed to the layer-contract tables.
- *
- * `Kysely<DB>` is INVARIANT in `DB` because of its `transaction()` method, so a builder's own database handle is not
- * assignable to the contract's even when it structurally has every table the contract queries. Narrowing here rather
- * than widening the shared package's signatures follows `build-poi.ts`, which tried the generic bound first and found
- * it breaks the helpers' OWN internal `insertInto`/`selectFrom` calls.
- */
-type ContractHandle = Parameters<typeof writeLayerManifest>[0]
+import {
+	createLayerManifestTable,
+	type LayerContractDatabase,
+	type LayerManifest,
+	writeLayerManifest,
+} from "@mailwoman/core/layers"
 
 /**
  * Open `path`, write `manifest`, and close.
@@ -43,7 +38,7 @@ type ContractHandle = Parameters<typeof writeLayerManifest>[0]
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
 	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<never>({ database: db }) as unknown as ContractHandle
+	const kdb = new DatabaseClient<LayerContractDatabase>({ database: db })
 
 	try {
 		await createLayerManifestTable(kdb)

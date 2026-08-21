@@ -113,7 +113,12 @@
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import {
+	readLayerCoverage,
+	readLayerManifest,
+	type LayerContractDatabase,
+	type LayerContractHandle,
+} from "@mailwoman/core/layers"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
@@ -296,15 +301,6 @@ const SPEED_BUCKET_RANK: Readonly<Record<string, number>> = {
 }
 
 /**
- * `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes `Kysely<DB>` INVARIANT
- * in `DB` — same cast idiom as `filing-landscape.ts`'s own private `asContractDB` (decision 8: reuse, never re-derive;
- * copied rather than imported since the original is module-private).
- */
-function asContractDB(kdb: DatabaseClient<BDCDatabase>): Kysely<LayerContractDatabase> {
-	return kdb as unknown as Kysely<LayerContractDatabase>
-}
-
-/**
  * `true` when `filing` corroborates the claim: same `technology_code`, AND `filing.speed_bucket` ranks at or above the
  * claimed download speed's own bucket. A different tech, or a same-tech but LESSER filing, is `false` — never disproof,
  * just non-corroborating (spec §3.2 step 2).
@@ -373,7 +369,7 @@ function combineCoverage(
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",
-	contractDB: Kysely<LayerContractDatabase>,
+	contractDB: LayerContractHandle,
 	expectedResolution: number
 ): Promise<void> {
 	const manifest = await readLayerManifest(contractDB)
@@ -430,7 +426,7 @@ export async function plausibilityCheck(claim: PlausibilityClaim, deps: Plausibi
 	// independently per WIRED layer, not only when both are present: a poi-only call still joins poi's coverage
 	// table against a BDC_H3_RESOLUTION-derived cell (below) and must not do so unchecked.
 	if (deps.bdcDB) {
-		await assertLayerSpineResolution("bdc", asContractDB(deps.bdcDB), BDC_H3_RESOLUTION)
+		await assertLayerSpineResolution("bdc", deps.bdcDB, BDC_H3_RESOLUTION)
 	}
 
 	if (deps.poi) {

@@ -38,7 +38,6 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
 import {
-	asOSMLayerContractDB,
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
 	OSM_ADDRESS_H3_RESOLUTION,
@@ -225,10 +224,10 @@ async function main(): Promise<void> {
 
 	console.error(`[osm] indexing…`)
 
-	await createAddressPointIndexes(kdb as unknown as DatabaseClient<AddressPointDatabase>)
+	await createAddressPointIndexes(kdb)
 	await createOSMAddressPointIndexes(kdb)
 
-	await writeLayerManifest(asOSMLayerContractDB(kdb), {
+	await writeLayerManifest(kdb, {
 		name: `osm-address-points-${args.country}-${args.slug}`,
 		version: args.release,
 		schemaVersion: 1,

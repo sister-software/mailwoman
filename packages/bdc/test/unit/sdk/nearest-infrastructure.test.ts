@@ -61,6 +61,7 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -138,10 +139,6 @@ function cellFor(latitude: number, longitude: number): number {
 	return shortCellToInt(full)
 }
 
-function nameKeyFor(name: string): string {
-	return name.toLowerCase().replaceAll(/[^a-z0-9]/g, "")
-}
-
 /**
  * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom) — NOT
  * `buildPOIDatabase`, see this file's header docstring for why.
@@ -176,7 +173,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 				neg_rank: 1 - confidence,
 				rowid_key: rowidKey++,
 				name: row.name,
-				name_key: nameKeyFor(row.name),
+				name_key: normalizeLocalityForKey(row.name),
 				brand_wikidata: null,
 				latitude: row.latitude,
 				longitude: row.longitude,

@@ -69,6 +69,15 @@ export interface AddressPointDatabase {
 }
 
 /**
+ * The slice of a Kysely handle the `address_point` DDL touches — the parameter type its builders take.
+ *
+ * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`), so a shard that EXTENDS
+ * `AddressPointTable` — OSM adds `h3_cell` — cannot pass its own handle to a `Kysely<AddressPointDatabase>` parameter.
+ * Naming only `schema` lets it, and the DDL below needs nothing else.
+ */
+export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
+
+/**
  * The `address_point` columns in INSERT order. The builder's positional prepared statement derives its placeholder list
  * from this, so the positional order can't drift from the DDL / the reader.
  */
@@ -89,7 +98,7 @@ export const ADDRESS_POINT_COLUMNS = [
 /**
  * Create the `address_point` table — called before the streaming bulk load.
  */
-export async function createAddressPointTable(db: Kysely<AddressPointDatabase>): Promise<void> {
+export async function createAddressPointTable(db: AddressPointSchemaHandle): Promise<void> {
 	await db.schema
 		.createTable("address_point")
 		.addColumn("street_norm", "text", (c) => c.notNull())
@@ -110,7 +119,7 @@ export async function createAddressPointTable(db: Kysely<AddressPointDatabase>):
 /**
  * Create the three probe indexes the reader relies on (postcode-scope, locality-scope, route-key).
  */
-export async function createAddressPointIndexes(db: Kysely<AddressPointDatabase>): Promise<void> {
+export async function createAddressPointIndexes(db: AddressPointSchemaHandle): Promise<void> {
 	await db.schema
 		.createIndex("idx_ap_postcode")
 		.on("address_point")

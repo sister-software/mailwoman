@@ -175,6 +175,8 @@ export default {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
 		"mailwoman/no-database-boundary-cast": "error",
+		"mailwoman/no-database-handle-cast": "error",
+		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",
 		// `split("\n")`/`split("\t")` materializes every segment into one array before the first is
 		// read — the whole-buffer parse spliterator exists to avoid. Bounded-input sites keep split

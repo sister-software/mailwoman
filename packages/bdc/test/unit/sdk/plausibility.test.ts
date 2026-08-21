@@ -59,6 +59,7 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
 import { afterEach, describe, expect, it } from "vitest"
@@ -164,10 +165,6 @@ function cellFor(latitude: number, longitude: number): number {
 	return shortCellToInt(latLngToCell(latitude, longitude, 9) as H3Cell)
 }
 
-function nameKeyFor(name: string): string {
-	return name.toLowerCase().replaceAll(/[^a-z0-9]/g, "")
-}
-
 async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ scratch: string; path: string }> {
 	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-poi-"))
 	const path = join(scratch, "poi.db")
@@ -196,7 +193,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
 				neg_rank: 1 - confidence,
 				rowid_key: rowidKey++,
 				name: row.name,
-				name_key: nameKeyFor(row.name),
+				name_key: normalizeLocalityForKey(row.name),
 				brand_wikidata: null,
 				latitude: row.latitude,
 				longitude: row.longitude,

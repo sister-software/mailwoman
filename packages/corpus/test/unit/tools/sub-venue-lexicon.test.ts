@@ -368,6 +368,20 @@ test("deriveHeadNounSurfaces does not mistake the modifier half for the head", (
 	expect(derived.map((s) => s.phrase)).toEqual(["campus"])
 })
 
+test("deriveHeadNounSurfaces holds the cognate floor at five folded characters", () => {
+	// Both sides of the floor, and neither is reachable from the committed table — no surface there
+	// sits on the boundary, so without this a change to the constant moves the artifact in silence.
+	// `campo` shares four folded characters with `campus` and means FIELD.
+	expect(deriveHeadNounSurfaces([surface({ phrase: "campo sportivo", recordID: "campus", lang: "it" })])).toEqual([])
+
+	// `satélite` shares five with `satellite` and is the addressed form; a floor of six loses it.
+	expect(
+		deriveHeadNounSurfaces([surface({ phrase: "satélite de embarque", recordID: "satellite", lang: "es" })]).map(
+			(s) => s.phrase
+		)
+	).toEqual(["satélite"])
+})
+
 test("deriveHeadNounSurfaces finds the Japanese head by shared substring", () => {
 	// `ターミナル` is in none of the Wikidata labels on its own — every one of them is a compound — and
 	// it is the form Japanese addresses actually carry (`第1ターミナル`). Nothing else in the pipeline

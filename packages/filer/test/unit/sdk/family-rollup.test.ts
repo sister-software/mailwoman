@@ -401,8 +401,8 @@ describe("familyRollup — general reader contract", () => {
 	/**
 	 * `readFamilyDisplayNames` (`filer-lookup.ts`) reads back the raw spelling behind each `filer_family` row by looking
 	 * up the AUTHORITATIVE `filer_edge` from that row's `node_id` to its own stored `naming_node_id`, under the same
-	 * `(relationship, source, valid_from)` — the exact edge `build-filer.ts`'s `insertFamilyMembership` wrote the row in
-	 * lockstep with. That is a pure JOIN on persisted provenance: the reader never calls
+	 * `(relationship, source, valid_from)` — the exact edge `build/family-membership.ts`'s `insertFamilyMembership` wrote
+	 * the row in lockstep with. That is a pure JOIN on persisted provenance: the reader never calls
 	 * `mintFamilyID`/`canonicalizeOrganizationName` at all, so a canonicalizer change in `@mailwoman/record` cannot
 	 * silently empty a shipped artifact's `display_names`.
 	 *

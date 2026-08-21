@@ -55,6 +55,16 @@
 			"default": "./out/compare.js",
 			"types": "./out/compare.d.ts"
 		},
+		"./contract-census": {
+			"node": "./contract-census.ts",
+			"default": "./out/contract-census.js",
+			"types": "./out/contract-census.d.ts"
+		},
+		"./contract-report": {
+			"node": "./contract-report.ts",
+			"default": "./out/contract-report.js",
+			"types": "./out/contract-report.d.ts"
+		},
 		"./engine-registry": {
 			"node": "./engine-registry.ts",
 			"default": "./out/engine-registry.js",
@@ -64,6 +74,21 @@
 			"node": "./oracle-arm.ts",
 			"default": "./out/oracle-arm.js",
 			"types": "./out/oracle-arm.d.ts"
+		},
+		"./reliability": {
+			"node": "./reliability.ts",
+			"default": "./out/reliability.js",
+			"types": "./out/reliability.d.ts"
+		},
+		"./reliability-report": {
+			"node": "./reliability-report.ts",
+			"default": "./out/reliability-report.js",
+			"types": "./out/reliability-report.d.ts"
+		},
+		"./reliability-surfaces": {
+			"node": "./reliability-surfaces.ts",
+			"default": "./out/reliability-surfaces.js",
+			"types": "./out/reliability-surfaces.d.ts"
 		},
 		"./run-store": {
 			"node": "./run-store.ts",
@@ -160,6 +185,16 @@
 			"default": "./out/minimal-pairs.js",
 			"types": "./out/minimal-pairs.d.ts"
 		},
+		"./parse-compare": {
+			"node": "./parse-compare.ts",
+			"default": "./out/parse-compare.js",
+			"types": "./out/parse-compare.d.ts"
+		},
+		"./parse-compare-report": {
+			"node": "./parse-compare-report.ts",
+			"default": "./out/parse-compare-report.js",
+			"types": "./out/parse-compare-report.d.ts"
+		},
 		"./place-id-provenance": {
 			"node": "./place-id-provenance.ts",
 			"default": "./out/place-id-provenance.js",
@@ -205,6 +240,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/geocode-oracle": "workspace:*",
+		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",

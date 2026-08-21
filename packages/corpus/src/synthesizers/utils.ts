@@ -33,6 +33,7 @@ import {
 	matchLeadingDesignator,
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
+import { isPresent } from "@mailwoman/core/objects"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 } from "@mailwoman/core/utils"
 
@@ -239,7 +240,7 @@ export const typoInject: Augmentation = (row) => {
 		return n
 	}
 
-	const values = Object.values(row.components).filter(Boolean) as string[]
+	const values = Object.values(row.components).filter(isPresent)
 
 	const eligible = (Object.entries(row.components) as Array<[ComponentTag, string]>).filter(
 		([, v]) => v && ALPHA_NAME.test(v) && occurs(v) === 1 && !values.some((o) => o !== v && o.includes(v))
