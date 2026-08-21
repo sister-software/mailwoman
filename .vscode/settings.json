@@ -37,6 +37,7 @@
 	"explorer.fileNesting.enabled": true,
 	"explorer.fileNesting.patterns": {
 		"*.cjs": "*.d.cts",
+		"*.ts": "*.d.ts,*.test.ts,*.spec.ts",
 		".node-version": ".nvmrc",
 		"package.json": "package-lock.json, yarn.lock, .yarnrc, .yarnrc.yml, .yarn, .nvmrc, .node-version",
 		"tsconfig.json": "tsconfig.*.json, jsconfig.json"

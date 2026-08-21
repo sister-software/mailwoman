@@ -1,0 +1,18 @@
+{
+	"threshold": 1.31,
+	"reporters": ["json"],
+	"output": "scratchpad/repo-health/jscpd",
+	"minLines": 12,
+	"minTokens": 80,
+	"formats": ["typescript", "tsx"],
+	"ignore": [
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"**/out/**",
+		"docs/build/**",
+		"packages/sentencepiece-wasm/sentencepiece.mjs",
+		"packages/registry/models/**",
+		"**/*.d.ts"
+	],
+	"path": ["packages", "scripts"]
+}
