@@ -35,7 +35,7 @@ interface Options {
 
 const GazetteerBuildFST: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildLocaleFSTs } = await import("../../../gazetteer-pipeline/fst.ts")
+		const { buildLocaleFSTs } = await import("#gazetteer/fst")
 
 		const built = buildLocaleFSTs({
 			locales: options.locales?.split(",").map((s) => s.trim()),

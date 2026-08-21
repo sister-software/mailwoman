@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import { whitespaceTokenizer } from "./tokenize.ts"
 

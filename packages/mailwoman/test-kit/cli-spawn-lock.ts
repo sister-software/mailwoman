@@ -83,7 +83,7 @@ export function withCLISpawnLock<T>(fn: () => T): T {
 	// the loop's sole exit and misses the fallthrough, the same false positive scripts/bless-package.ts
 	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
 	// note it lands on the next COMMENT line and silently does nothing.
-	// oxlint-disable-next-line eslint/no-unreachable-loop
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
 	while (Date.now() < deadline) {
 		try {
 			mkdirSync(LOCK_DIR)
@@ -124,7 +124,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 	// the loop's sole exit and misses the fallthrough, the same false positive scripts/bless-package.ts
 	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
 	// note it lands on the next COMMENT line and silently does nothing.
-	// oxlint-disable-next-line eslint/no-unreachable-loop
+	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
 	while (Date.now() < deadline) {
 		try {
 			mkdirSync(LOCK_DIR)

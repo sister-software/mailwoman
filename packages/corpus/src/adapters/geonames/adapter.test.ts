@@ -8,8 +8,9 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { beforeEach, describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
 
 import { createGeonamesAdapter, GEONAMES_ADAPTER_ID, GEONAMES_DEFAULT_LICENSE } from "./adapter.ts"
 

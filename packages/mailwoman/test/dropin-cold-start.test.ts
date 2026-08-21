@@ -368,6 +368,7 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 			try {
 				seed = await resolveWeights({ locale: "en-us" })
 			} catch (error) {
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- an Error message is bounded and only its first line is displayed
 				ctx.skip(true, `no en-us weights resolvable in this environment — ${(error as Error).message.split("\n")[0]}`)
 
 				return

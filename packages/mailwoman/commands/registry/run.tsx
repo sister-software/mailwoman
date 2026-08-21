@@ -29,7 +29,8 @@ import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from 
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import { resolverDefaultCountry } from "../../country-scope.ts"
 import type { ShardResolver } from "../../geocode-core.ts"

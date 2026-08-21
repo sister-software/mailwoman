@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LibPostalLanguageCode } from "@mailwoman/core/resources"
-import { LocaleIndex, generatePlurals } from "@mailwoman/core/resources"
 import { expect, test } from "vitest"
+
+import type { LibPostalLanguageCode } from "#resources"
+import { LocaleIndex, generatePlurals } from "#resources"
 
 function createIndexFixture<T extends Iterable<readonly [string, Iterable<LibPostalLanguageCode>]>>(
 	fixtures: T

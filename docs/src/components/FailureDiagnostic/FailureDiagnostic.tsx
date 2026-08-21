@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { ResultNode } from "@mailwoman/docs/shared/resources"
+import type { ResultNode } from "#shared/resources"
 
 import styles from "./styles.module.css"
 

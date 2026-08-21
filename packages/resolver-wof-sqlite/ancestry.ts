@@ -17,6 +17,8 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { allRows } from "./sqlite-utils.ts"
+
 /**
  * WOF placetype → containment depth, coarsest = 1. Higher = finer. Placetypes we never resolve (continent, empire, …)
  * map to 0 and sort last. NOT the same table as the FST's `PLACETYPE_ORDER` (fst-serialize.ts) — that one is a
@@ -60,14 +62,15 @@ export interface AncestorPlaceRow {
  * NOT memoized here; `WOFSqlitePlaceLookup` keeps its own per-id cache.
  */
 export function ancestorLineage(db: DatabaseSync, id: number, schemaName = "main"): AncestorPlaceRow[] {
-	const rows = db
-		.prepare(
+	const rows = allRows<AncestorPlaceRow>(
+		db.prepare(
 			`SELECT a.ancestor_id AS id, a.ancestor_placetype AS placetype, s.name AS name,
 				s.country AS country, s.latitude AS lat, s.longitude AS lon
 			FROM ${schemaName}.ancestors a JOIN ${schemaName}.spr s ON s.id = a.ancestor_id
 			WHERE a.id = ? AND a.ancestor_id != a.id`
-		)
-		.all(id) as unknown as AncestorPlaceRow[]
+		),
+		id
+	)
 
 	rows.sort((a, b) => placetypeDepth(b.placetype) - placetypeDepth(a.placetype))
 

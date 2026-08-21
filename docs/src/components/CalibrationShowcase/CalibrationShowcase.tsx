@@ -25,9 +25,10 @@
  *   emitted by `scripts/eval/fit-isotonic-calibration.py`.
  */
 
-import { DEFAULT_LOCALE } from "@mailwoman/docs/shared/demo-helpers"
-import { assetURL } from "@mailwoman/docs/shared/resources"
 import React, { useEffect, useState } from "react"
+
+import { DEFAULT_LOCALE } from "#shared/demo-helpers"
+import { assetURL } from "#shared/resources"
 
 interface ReliabilityBin {
 	n: number

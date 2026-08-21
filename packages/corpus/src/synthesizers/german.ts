@@ -22,8 +22,9 @@
  *   `raw` so alignment lands.
  */
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { formatAddress } from "@mailwoman/formatter"
+
+import type { CanonicalRow } from "#types"
 
 /**
  * A real address tuple (e.g. one OpenAddresses row): street + locality required, rest optional.

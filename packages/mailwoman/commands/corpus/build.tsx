@@ -17,8 +17,9 @@
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
+
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
 
 /**
  * `--inputs` accepts either:

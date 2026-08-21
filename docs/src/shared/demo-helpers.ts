@@ -63,14 +63,14 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	 *
 	 * @deprecated use `hasFST` instead
 	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasFst?: boolean
 	/**
 	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
 	 *
 	 * @deprecated use `hasWOFDB` instead
 	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
 	/**
 	 * The spelling the LIVE 2026-08-11 manifest actually carries (WOF caps, lowercase b) — a wire key is a string

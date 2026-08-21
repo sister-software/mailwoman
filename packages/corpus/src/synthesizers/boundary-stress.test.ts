@@ -10,9 +10,10 @@
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import {
 	type BoundaryStressTemplate,

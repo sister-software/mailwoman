@@ -38,9 +38,10 @@ import {
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
+
+import { stableSourceID } from "#adapters/utils"
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import { NAME_PRONE_US_SUFFIXES } from "../name-prone-us-suffixes.ts"
 import { makeMulberry32, readCSVRecords, readZippedCSVRecords, shardSourceID, type ShardRecipe } from "./scaffold.ts"

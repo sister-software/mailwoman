@@ -23,8 +23,11 @@ interface AstNode {
 	value?: unknown
 	name?: string
 	callee?: AstNode
+	object?: AstNode
 	property?: AstNode
 	arguments?: AstNode[]
+	expression?: AstNode
+	typeAnnotation?: AstNode
 	quasis?: { value?: { cooked?: string } }[]
 	expressions?: AstNode[]
 }
@@ -32,6 +35,18 @@ interface AstNode {
 interface RuleContext {
 	options: unknown[]
 	report(descriptor: { node: unknown; message: string }): void
+	sourceCode?: SourceCode
+	getSourceCode?(): SourceCode
+}
+
+interface CommentNode {
+	type: string
+	range: [number, number]
+	value: string
+}
+
+interface SourceCode {
+	getAllComments(): CommentNode[]
 }
 
 interface Rule {
@@ -107,10 +122,110 @@ const preferSpliteratorRule: Rule = {
 	},
 }
 
+/**
+ * Kysely calls whose arguments are checked against the database schema.
+ */
+const DATABASE_BOUNDARY_METHODS = new Set([
+	"deleteFrom",
+	"insertInto",
+	"mergeInto",
+	"replaceInto",
+	"selectFrom",
+	"updateTable",
+	"values",
+])
+
+/**
+ * Whether an expression contains a cast through `never`, including a nested `as unknown as never`.
+ */
+function containsNeverCast(node: AstNode | undefined): boolean {
+	if (!node) return false
+
+	if (node.type === "TSAsExpression" || node.type === "TSTypeAssertion") {
+		if (node.typeAnnotation?.type === "TSNeverKeyword") return true
+
+		return containsNeverCast(node.expression)
+	}
+
+	return false
+}
+
+/**
+ * The identifier name of a non-computed member call, if this is one.
+ */
+function calledMethod(node: AstNode): string | null {
+	const callee = node.callee
+
+	if (!callee || (callee.type !== "MemberExpression" && callee.type !== "StaticMemberExpression")) return null
+
+	return callee.property?.type === "Identifier" ? (callee.property.name ?? null) : null
+}
+
+const noDatabaseBoundaryCastRule: Rule = {
+	meta: {
+		name: "no-database-boundary-cast",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			CallExpression(node: AstNode) {
+				const method = calledMethod(node)
+
+				if (!method || !DATABASE_BOUNDARY_METHODS.has(method)) return
+
+				for (const argument of node.arguments ?? []) {
+					if (!containsNeverCast(argument)) continue
+
+					context.report({
+						node: argument,
+						message:
+							`Do not cast through \`never\` at a database boundary (.${method}()). This disables every schema ` +
+							"guarantee, including branded normalization keys. Give `DatabaseClient`/`Kysely` its real database " +
+							"schema type instead.",
+					})
+				}
+			},
+		}
+	},
+}
+
+const OXLINT_DISABLE_DIRECTIVE = /\boxlint-disable(?:-next-line|-line)?\b/u
+
+const requireDisableReasonRule: Rule = {
+	meta: {
+		name: "require-disable-reason",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			Program() {
+				const sourceCode = context.sourceCode ?? context.getSourceCode?.()
+
+				if (!sourceCode) return
+
+				for (const comment of sourceCode.getAllComments()) {
+					if (!OXLINT_DISABLE_DIRECTIVE.test(comment.value) || comment.value.includes("--")) continue
+
+					context.report({
+						node: comment,
+						message:
+							"An oxlint suppression must explain why the forbidden shape is correct here. Add `-- reason` " +
+							"on the directive itself; a nearby comment can drift away or leave the disable behind.",
+					})
+				}
+			},
+		}
+	},
+}
+
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
+		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"prefer-spliterator": preferSpliteratorRule,
+		"require-disable-reason": requireDisableReasonRule,
 	},
 }
 

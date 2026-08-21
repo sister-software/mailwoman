@@ -16,7 +16,8 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.

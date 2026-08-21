@@ -28,7 +28,8 @@ import { existsSync, statSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

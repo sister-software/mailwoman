@@ -33,7 +33,7 @@ import {
 } from "@mailwoman/core/resolver"
 import { sql, type Kysely } from "kysely"
 
-import { hasTable } from "./sqlite-utils.ts"
+import { allRows, hasTable } from "./sqlite-utils.ts"
 
 /**
  * One country's hard-filter coverage measurement — the storage form of {@link CountryCoverageFact}.
@@ -194,11 +194,11 @@ export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifa
 	const countryCoverage = new Map<string, CountryCoverageFact>()
 
 	if (hasCoverage) {
-		const rows = db
-			.prepare(
+		const rows = allRows<CountryCoverageTable>(
+			db.prepare(
 				`SELECT country, hard_filter_safe, hard_resolve_rate, sample_size, measured_at, source FROM ${COUNTRY_COVERAGE_TABLE}`
 			)
-			.all() as unknown as CountryCoverageTable[]
+		)
 
 		for (const row of rows) {
 			const country = String(row.country).toUpperCase()
@@ -217,9 +217,9 @@ export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifa
 	const countryBBoxes = new Map<string, CountryBBoxFact>()
 
 	if (hasBBox) {
-		const rows = db
-			.prepare(`SELECT country, lat_min, lat_max, lon_min, lon_max, source FROM ${COUNTRY_BBOX_TABLE}`)
-			.all() as unknown as CountryBBoxTable[]
+		const rows = allRows<CountryBBoxTable>(
+			db.prepare(`SELECT country, lat_min, lat_max, lon_min, lon_max, source FROM ${COUNTRY_BBOX_TABLE}`)
+		)
 
 		for (const row of rows) {
 			const country = String(row.country).toUpperCase()

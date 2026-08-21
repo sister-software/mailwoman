@@ -44,8 +44,8 @@ const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { repoRootPath } = await import("@mailwoman/core/utils")
 		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
-		const { buildSHA } = await import("../../../gazetteer-pipeline/stamp-manifest.ts")
-		const { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE } = await import("../../../gazetteer-pipeline/uprn-layer.ts")
+		const { buildSHA } = await import("#gazetteer/stamp-manifest")
+		const { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE } = await import("#gazetteer/uprn-layer")
 
 		const result = await buildUPRNLayer({
 			sourceDir: options.sourceDir,

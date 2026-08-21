@@ -25,6 +25,68 @@
 		"!**/*.test.tsx"
 	],
 	"type": "module",
+	"imports": {
+		"#utils": {
+			"node": "./utils/index.ts",
+			"default": "./out/utils/index.js",
+			"types": "./out/utils/index.d.ts"
+		},
+		"#objects": {
+			"node": "./objects.ts",
+			"default": "./out/objects.js",
+			"types": "./out/objects.d.ts"
+		},
+		"#tokenization": {
+			"node": "./tokenization/index.ts",
+			"default": "./out/tokenization/index.js",
+			"types": "./out/tokenization/index.d.ts"
+		},
+		"#types": {
+			"node": "./types/index.ts",
+			"default": "./out/types/index.js",
+			"types": "./out/types/index.d.ts"
+		},
+		"#logging": {
+			"node": "./logging/index.ts",
+			"default": "./out/logging/index.js",
+			"types": "./out/logging/index.d.ts"
+		},
+		"#fs": {
+			"node": "./fs/node.ts",
+			"default": "./out/fs/node.js",
+			"types": "./out/fs/node.d.ts"
+		},
+		"#resources": {
+			"node": "./resources/index.ts",
+			"default": "./out/resources/index.js",
+			"types": "./out/resources/index.d.ts"
+		},
+		"#resources/languages": {
+			"node": "./resources/languages/index.ts",
+			"default": "./out/resources/languages/index.js",
+			"types": "./out/resources/languages/index.d.ts"
+		},
+		"#env": {
+			"node": "./env/index.ts",
+			"default": "./out/env/index.js",
+			"types": "./out/env/index.d.ts"
+		},
+		"#scripting/utils": {
+			"node": "./scripting/utils/index.ts",
+			"default": "./out/scripting/utils/index.js",
+			"types": "./out/scripting/utils/index.d.ts"
+		},
+		"#errors": {
+			"node": "./errors/index.ts",
+			"default": "./out/errors/index.js",
+			"types": "./out/errors/index.d.ts"
+		},
+		"#scripting/command": {
+			"node": "./scripting/command.ts",
+			"default": "./out/scripting/command.js",
+			"types": "./out/scripting/command.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -91,6 +153,11 @@
 			"node": "./resources/whosonfirst/index.ts",
 			"default": "./out/resources/whosonfirst/index.js",
 			"types": "./out/resources/whosonfirst/index.d.ts"
+		},
+		"./resources/whosonfirst/specificity": {
+			"node": "./resources/whosonfirst/placetypes/specificity.ts",
+			"default": "./out/resources/whosonfirst/placetypes/specificity.js",
+			"types": "./out/resources/whosonfirst/placetypes/specificity.d.ts"
 		},
 		"./placetypes": {
 			"node": "./resources/whosonfirst/placetypes/definition.ts",
@@ -235,7 +302,6 @@
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",
 		"pino": "^10.3.1",
-		"pino-pretty": "^13.1.3",
 		"pluralize": "^8.0.0",
 		"regenerate": "^1.4.2",
 		"spliterator": "^6.1.0",

@@ -9,9 +9,10 @@
  *   convention the US/FR-trained model never learned.
  */
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
+
+import type { CanonicalRow } from "#types"
+import { alignRow } from "#utils"
 
 import { type LocaleBaseTuple, synthesizeGermanRow, synthesizeLocaleRow } from "./german.ts"
 

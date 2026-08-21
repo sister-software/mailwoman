@@ -50,9 +50,9 @@ import { existsSync, writeFileSync } from "node:fs"
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { JSONSpliterator } from "spliterator"
+
+import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
 
 /**
  * Options for {@linkcode maskRegressionGate}.
@@ -117,103 +117,7 @@ const LOCALES: LocaleEvalSpec[] = [
  * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
  * tag here gets a mask-off↔mask-on delta computed.
  */
-const TAGS = [
-	"street_prefix",
-	"street",
-	"street_suffix",
-	"house_number",
-	"locality",
-	"region",
-	"postcode",
-	"country",
-	"unit",
-	"intersection_a",
-	"intersection_b",
-	"po_box",
-	"cedex",
-	"venue",
-	"dependent_locality",
-	"subregion",
-] as const
-
-//#endregion
-
-//#region Scoring
-
-interface Row {
-	raw: string
-	components: Record<string, string>
-}
-
-async function loadRows(files: string[]): Promise<Row[]> {
-	const rows: Row[] = []
-
-	for (const f of files) {
-		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
-
-		for await (const row of JSONSpliterator.fromAsync<Row>(f)) {
-			rows.push(row)
-		}
-	}
-
-	return rows
-}
-
-const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
-
-/**
- * Whether any gold row carries this tag — distinguishes a real 0 F1 from a tag never in scope.
- */
-function rowsHaveTag(rows: Row[], tag: string): boolean {
-	for (const r of rows) if (norm(r.components[tag])) return true
-
-	return false
-}
-
-/**
- * Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts.
- */
-async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
-	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
-
-	for (const t of TAGS) {
-		stat[t] = { tp: 0, fp: 0, fn: 0 }
-	}
-
-	for (const row of rows) {
-		const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
-		const exp = row.components
-
-		for (const t of TAGS) {
-			const e = norm(exp[t])
-			const g = norm(got[t])
-
-			if (e && g && e === g) {
-				stat[t]!.tp++
-			} else {
-				if (g) {
-					stat[t]!.fp++
-				}
-
-				if (e) {
-					stat[t]!.fn++
-				}
-			}
-		}
-	}
-
-	const out: Record<string, number> = {}
-
-	for (const t of TAGS) {
-		const { tp, fp, fn } = stat[t]!
-		const p = tp + fp ? tp / (tp + fp) : 0
-		const r = tp + fn ? tp / (tp + fn) : 0
-		const f1 = p + r ? (2 * p * r) / (p + r) : 0
-		out[t] = +(100 * f1).toFixed(1)
-	}
-
-	return out
-}
+const TAGS = UNFOLDED_ADDRESS_TAGS
 
 //#endregion
 
@@ -261,7 +165,7 @@ export async function maskRegressionGate(
 	const deltas: Delta[] = []
 
 	for (const spec of LOCALES) {
-		const rows = await loadRows(spec.files)
+		const rows = await loadPerTagEvalRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 		// Full SHIP-CONFIG otherwise (anchor-on + gazetteer-on — createScorer's defaults). Only the
@@ -279,12 +183,18 @@ export async function maskRegressionGate(
 		// mask-OFF: conventions disabled (the model's raw capability). createScorer warns about the
 		// declared-required override — expected.
 		const offScorer = await createScorer({ ...base, overrides: { conventions: false } })
-		const off = await perTagF1(offScorer, rows)
+
+		const off = await scorePerTagF1(rows, TAGS, async (raw) => {
+			return decodeAsJSON(await offScorer.parse(raw)) as Record<string, string>
+		})
 
 		// mask-ON: conventions in `auto` mode (locale-head detection → the detected system's
 		// forbiddenTags applied as a hard emission mask). The SHIP behavior whose damage we measure.
 		const onScorer = await createScorer({ ...base, overrides: { conventions: "auto" } })
-		const on = await perTagF1(onScorer, rows)
+
+		const on = await scorePerTagF1(rows, TAGS, async (raw) => {
+			return decodeAsJSON(await onScorer.parse(raw)) as Record<string, string>
+		})
 
 		for (const tag of TAGS) {
 			const inScope = rowsHaveTag(rows, tag) || off[tag]! > 0 || on[tag]! > 0

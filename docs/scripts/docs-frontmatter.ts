@@ -80,7 +80,7 @@ export function parseFrontmatter(source: string): { fields: Map<string, string>;
 	// contract is node built-ins only — no install has happened when it executes. A spliterator
 	// import here is ERR_MODULE_NOT_FOUND on every CI run (2026-08-04). Frontmatter blocks are a
 	// handful of short lines; the whole-buffer split costs nothing at this scale.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- pre-install, built-ins-only CI over a handful of frontmatter lines
 	for (const line of source.split("\n")) {
 		if (!opened) {
 			// A file without the opening fence has no frontmatter at all.

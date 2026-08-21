@@ -22,7 +22,7 @@ export * from "./gazetteer-inference.ts"
 export * from "./labels.ts"
 // Resolution, not curation: the `browser` condition on this subpath serves a counterpart whose every
 // entry point throws, so the value exports below are safe to name from a bundle.
-export * from "@mailwoman/neural/onnx-runner"
+export * from "#onnx-runner"
 export * from "./pair-index-resolver.ts"
 export * from "./postcode-binary-resolver.ts"
 export * from "./soft-features.ts"

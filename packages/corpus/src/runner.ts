@@ -31,13 +31,8 @@ import { createWriteStream, type WriteStream } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 
-import {
-	canonicalDedupKey,
-	streamingSha256,
-	type AdapterRegistry,
-	type StreamingHasher,
-} from "@mailwoman/corpus/adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Snapshot of the runner's state, emitted on every progress tick.

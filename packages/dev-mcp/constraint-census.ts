@@ -25,8 +25,6 @@
  *   this census exists to stop other people making.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
@@ -60,6 +58,13 @@ export interface ConstraintMiss {
 	 */
 	had_candidates: boolean
 }
+
+interface CensusDatabase {
+	prepare(sql: string): { all(nameKey: string): Array<Record<string, unknown>> }
+	close(): void
+}
+
+type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
 
 export interface GateReading {
 	gates: string
@@ -106,7 +111,7 @@ export interface ConstraintCensusResult {
  */
 const INERT_MIN_FIRINGS = 20
 
-function bandsHolding(db: DatabaseSync, nameKey: string): string[] {
+function bandsHolding(db: CensusDatabase, nameKey: string): string[] {
 	const rows = db
 		.prepare(
 			`SELECT DISTINCT p.placetype AS placetype
@@ -114,7 +119,7 @@ function bandsHolding(db: DatabaseSync, nameKey: string): string[] {
 			   JOIN placetype_codes p ON p.id = c.placetype_id
 			  WHERE c.name_key = ?`
 		)
-		.all(nameKey) as Array<Record<string, unknown>>
+		.all(nameKey)
 
 	return rows.map((r) => String(r["placetype"]))
 }
@@ -160,14 +165,15 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
  */
 export async function runConstraintCensus(
 	registry: EngineRegistry,
-	args: { inputs?: InputSetRef; config?: EngineConfig }
+	args: { inputs?: InputSetRef; config?: EngineConfig },
+	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {
 	const set = await resolveInputSet(args.inputs ?? { kind: "board" })
 	// Tracing is the census's entire input, and the band probe is what separates reachability from coverage. Both are
 	// forced on regardless of what the caller passed — neither can change an answer, so neither is a lever.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
-	const opened = openSealedArtifact(`${dataRoot}/wof/candidate.db`)
+	const opened = (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
 
 	if (!("db" in opened)) {
 		throw new Error(

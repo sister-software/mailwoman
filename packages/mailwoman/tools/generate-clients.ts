@@ -40,7 +40,8 @@ import { join } from "node:path"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import type { Check } from "mailwoman/cli-kit"
+
+import type { Check } from "#cli-kit"
 
 /**
  * The four surfaces every emitter + generated client covers. Order matches the salvaged README's table, mailwoman last

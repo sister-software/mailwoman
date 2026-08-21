@@ -33,7 +33,7 @@ import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 import { haversineKm } from "./geo.ts"
-import { hasTable } from "./sqlite-utils.ts"
+import { allRows, hasTable } from "./sqlite-utils.ts"
 import { canonicalizeRouteKey, streetKeyVariants } from "./street-normalize.ts"
 
 /**
@@ -249,8 +249,8 @@ export class StreetInterpolator implements InterpolationLookup {
 			// measured (2026-06-11 VT eval) at +2.3pp coverage for a poisoned tail (p99 1.0 → 20.8
 			// km, max 204 km — a unique name statewide can live in a far-away town).
 			const rows = query.postcode
-				? (this.#byPostcode.all(query.postcode.trim(), streetNorm, n, n) as unknown as SegmentRow[])
-				: (this.#byStreet.all(streetNorm, n, n) as unknown as SegmentRow[])
+				? allRows<SegmentRow>(this.#byPostcode, query.postcode.trim(), streetNorm, n, n)
+				: allRows<SegmentRow>(this.#byStreet, streetNorm, n, n)
 
 			const hit = this.#answerFromRows(rows, n, query)
 

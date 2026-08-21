@@ -34,9 +34,10 @@ import { parseArgs } from "node:util"
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
-import { deriveGeocodeRegister } from "mailwoman/geocode-core"
 import { JSONSpliterator } from "spliterator"
+
+import { deriveGeocodeRegister } from "#geocode-core"
+import { createRuntimePipeline } from "#index"
 
 const REGISTERS = ["asis", "lower", "upper"] as const
 

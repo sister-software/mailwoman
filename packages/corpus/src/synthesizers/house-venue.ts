@@ -28,7 +28,7 @@
  *   decompose-mode pressure.
  */
 
-import type { CanonicalRow } from "@mailwoman/corpus/types"
+import type { CanonicalRow } from "#types"
 
 export interface HouseVenueBaseTuple {
 	locality: string

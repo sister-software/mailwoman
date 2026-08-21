@@ -22,6 +22,9 @@ import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
+import { PathBuilder } from "path-ts"
+import { useState } from "react"
+
 import {
 	type Check,
 	CheckList,
@@ -29,12 +32,10 @@ import {
 	type CommandSpec,
 	type ParsedCommandComponent,
 	useCommandTask,
-} from "mailwoman/cli-kit"
-import { PathBuilder } from "path-ts"
-import { useState } from "react"
+} from "#cli-kit"
+import { formatBytes } from "#doctor/checks"
+import type { ForkState } from "#gazetteer/wof-repo-origin"
 
-import { formatBytes } from "../../../doctor/checks.ts"
-import type { ForkState } from "../../../gazetteer-pipeline/wof-repo-origin.ts"
 import {
 	assertDestinationNotARepoName,
 	selectRepos,
@@ -140,7 +141,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
 			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
-			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("../../../gazetteer-pipeline/wof-repo-origin.ts")
+			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("#gazetteer/wof-repo-origin")
 			const { execFile } = await import("node:child_process")
 			const { promisify } = await import("node:util")
 

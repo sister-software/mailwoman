@@ -40,8 +40,9 @@ import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { createRuntimePipeline } from "mailwoman"
 import { JSONSpliterator } from "spliterator"
+
+import { createRuntimePipeline } from "#index"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
 

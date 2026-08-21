@@ -24,6 +24,19 @@
 	],
 	"type": "module",
 	"sideEffects": false,
+	"imports": {
+		"#onnx-runner": {
+			"browser": "./out/onnx-runner-browser.js",
+			"node": "./onnx-runner.ts",
+			"default": "./out/onnx-runner.js",
+			"types": "./out/onnx-runner.d.ts"
+		},
+		"#weights": {
+			"node": "./weights.ts",
+			"default": "./out/weights.js",
+			"types": "./out/weights.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {

@@ -28,8 +28,9 @@
 import { $public } from "@mailwoman/core/env"
 import { type MapFrame, MapRenderer, TileSource } from "@mailwoman/map-tui"
 import { render, Text, useApp } from "ink"
-import { CommandError, useCommandTask, writeRawStdout } from "mailwoman/cli-kit"
 import React, { useEffect } from "react"
+
+import { CommandError, useCommandTask, writeRawStdout } from "#cli-kit"
 
 import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
 import { createGeocodeSession } from "../geocode-session.ts"

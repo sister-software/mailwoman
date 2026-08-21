@@ -1,0 +1,59 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"entry": ["scripts/**/*.ts", "corpus-python/scripts/**/*.ts", "docker/server.ts", "*.config.ts", "oxlint.plugin.ts"],
+	"ignore": [
+		"scripts/**/*.ts",
+		"corpus-python/scripts/**/*.ts",
+		"docker/server.ts",
+		"docs/**/*.mdx",
+		"docs/.agents/**",
+		"docs/build/**",
+		"packages/mailwoman/commands/**/*.tsx",
+		"packages/sentencepiece-wasm/sentencepiece.mjs",
+		"packages/*/out/**"
+	],
+	"ignoreBinaries": ["ogr2ogr", "script", "uvx"],
+	"ignoreDependencies": ["@duckdb/node-api"],
+	"workspaces": {
+		"packages/*": {
+			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"]
+		},
+		"packages/mailwoman": {
+			"entry": [
+				"index.ts",
+				"cli.tsx",
+				"commands/**/*.tsx",
+				"dev-tools/**/*.ts",
+				"geocode-worker.ts",
+				"test-fixtures/**/*"
+			]
+		},
+		"packages/dev-mcp": {
+			"entry": ["index.ts", "cli.ts", "worker.ts"]
+		},
+		"packages/{fastify,libpostal,mcp,nominatim,photon}": {
+			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"],
+			"ignoreDependencies": ["@mailwoman/neural", "@mailwoman/neural-weights-en-us"]
+		},
+		"packages/neural-weights-*": {
+			"entry": ["index.ts", "scripts/**/*.ts"],
+			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
+		},
+		"packages/registry": {
+			"entry": ["index.ts", "cli.ts", "models/**/*.ts", "tools/**/*.ts"]
+		},
+		"packages/tile-worker": {
+			"entry": ["index.ts", "_worker.ts"]
+		},
+		"docs": {
+			"entry": [
+				"docusaurus.config.ts",
+				"sidebars.ts",
+				"plugins/**/*.ts",
+				"scripts/**/*.{ts,mts}",
+				"src/**/*.{js,ts,tsx}",
+				"static/**/*.{js,mjs}"
+			]
+		}
+	}
+}

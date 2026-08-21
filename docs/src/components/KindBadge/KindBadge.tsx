@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { KindResult } from "@mailwoman/docs/shared/resources"
 import type { FC } from "react"
+
+import type { KindResult } from "#shared/resources"
 
 import styles from "./styles.module.css"
 

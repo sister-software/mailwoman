@@ -25,7 +25,8 @@
  */
 
 import { buildAddressTree, type AddressTree, type DecoderToken } from "@mailwoman/core/decoder"
-import type { ClassificationRecord } from "mailwoman"
+
+import type { ClassificationRecord } from "#index"
 
 export interface AdaptResult {
 	tree: AddressTree

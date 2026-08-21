@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { GeometryLiteral } from "@mailwoman/spatial"
 import { expect, test } from "vitest"
 import wkx from "wkx"
+
+import type { GeometryLiteral } from "#index"
 
 import {
 	geometryToEWKB,

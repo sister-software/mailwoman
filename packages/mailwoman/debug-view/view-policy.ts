@@ -14,7 +14,7 @@
  *   node like the rest of the non-component tier.
  */
 
-import { CommandError } from "mailwoman/cli-kit"
+import { CommandError } from "#cli-kit"
 
 import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
 import type { GeocodeResult } from "../geocode-core.ts"

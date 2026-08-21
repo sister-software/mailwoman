@@ -39,7 +39,7 @@ import type { InterpolationLookup } from "@mailwoman/resolver"
 
 import { haversineKm } from "./geo.ts"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
-import { hasTable } from "./sqlite-utils.ts"
+import { allRows, hasTable } from "./sqlite-utils.ts"
 import { canonicalizeRouteKey, streetKeyVariants } from "./street-normalize.ts"
 
 /**
@@ -116,7 +116,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetKey = canonicalizeRouteKey(variant)
 
-			rows = this.#byPostcode.all(query.postcode.trim(), streetKey, n) as unknown as PointRow[]
+			rows = allRows<PointRow>(this.#byPostcode, query.postcode.trim(), streetKey, n)
 
 			if (rows.length) break
 		}

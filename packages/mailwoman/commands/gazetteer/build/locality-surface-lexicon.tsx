@@ -38,7 +38,7 @@ interface Options {
 
 const GazetteerBuildLocalitySurfaceLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildLocalitySurfaceLexicon } = await import("../../../gazetteer-pipeline/evidence-lexicons.ts")
+		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
 
 		const built = buildLocalitySurfaceLexicon({
 			countries: options.countries?.split(",").map((s) => s.trim()),

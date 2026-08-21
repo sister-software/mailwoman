@@ -43,8 +43,9 @@ import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { createRuntimePipeline } from "mailwoman"
 import { TextSpliterator } from "spliterator"
+
+import { createRuntimePipeline } from "#index"
 
 import { compareComponents, CRITICAL_TAGS, VERDICT_SEVERITY, type Verdict } from "./compare.ts"
 import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"

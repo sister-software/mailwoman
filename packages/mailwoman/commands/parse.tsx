@@ -13,16 +13,11 @@ import { weightsPackageName } from "@mailwoman/neural/weights"
 import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
-import type { createRuntimePipeline } from "mailwoman"
-import {
-	CommandError,
-	type CommandSpec,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "mailwoman/cli-kit"
-import { probeWeights, WeightsGuard, type WeightsOutcome } from "mailwoman/cli-kit/weights-guard"
 import type React from "react"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import { probeWeights, WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import type { createRuntimePipeline } from "#index"
 
 import { resolverDefaultCountry } from "../country-scope.ts"
 
@@ -412,7 +407,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  * already printed — so no path degrades silently, and none double-warns.
  */
 async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
 	emitFaultWarnings(result)
@@ -522,7 +517,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
@@ -641,7 +636,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
 	}
 
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>

@@ -31,6 +31,34 @@ interface FixtureRow {
 	country: string
 }
 
+/**
+ * The deliberately small schema this fixture owns locally; see the file-level boundary note.
+ */
+interface FixtureDatabase {
+	poi_category_codes: {
+		id: number
+		category: string
+	}
+	layer_manifest: {
+		name: string
+		source_vintage: string
+	}
+	poi: {
+		h3_cell: number
+		category_id: number
+		neg_rank: number
+		rowid_key: number
+		name: string | null
+		name_key: string | null
+		brand_wikidata: string | null
+		latitude: number
+		longitude: number
+		country: string
+		confidence: number
+		gers_id: string | null
+	}
+}
+
 const CATEGORY_IDS: Record<string, number> = {
 	airport_terminal: 802,
 	campus_building: 733,
@@ -59,7 +87,7 @@ let databasePath: string
 
 async function buildFixture(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
-	using kdb = new DatabaseClient({ database: raw })
+	using kdb = new DatabaseClient<FixtureDatabase>({ database: raw })
 
 	await kdb.schema
 		.createTable("poi_category_codes")
@@ -92,22 +120,16 @@ async function buildFixture(path: string): Promise<void> {
 		.execute()
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
-		await kdb
-			.insertInto("poi_category_codes" as never)
-			.values({ id, category } as never)
-			.execute()
+		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()
 	}
 
-	await kdb
-		.insertInto("layer_manifest" as never)
-		.values({ name: "poi", source_vintage: "2026-05-20.0" } as never)
-		.execute()
+	await kdb.insertInto("layer_manifest").values({ name: "poi", source_vintage: "2026-05-20.0" }).execute()
 
 	let rowidKey = 1
 
 	for (const row of ROWS) {
 		await kdb
-			.insertInto("poi" as never)
+			.insertInto("poi")
 			.values({
 				h3_cell: 1000 + rowidKey,
 				category_id: CATEGORY_IDS[row.category]!,
@@ -121,7 +143,7 @@ async function buildFixture(path: string): Promise<void> {
 				country: row.country,
 				confidence: 0.9,
 				gers_id: null,
-			} as never)
+			})
 			.execute()
 	}
 }

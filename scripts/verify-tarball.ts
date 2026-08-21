@@ -45,6 +45,7 @@ export interface TarballContents {
 		name?: string
 		files?: unknown
 		exports?: unknown
+		imports?: unknown
 		bin?: unknown
 	}
 	/**
@@ -97,6 +98,13 @@ export function collectMissingFileEntries(files: unknown, shipped: Set<string>):
  */
 export function collectMissingExportTargets(exports: unknown, shipped: Set<string>): string[] {
 	return collectExportTargets(exports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
+}
+
+/**
+ * Which concrete package-import targets are absent from the tarball.
+ */
+export function collectMissingImportTargets(imports: unknown, shipped: Set<string>): string[] {
+	return collectExportTargets(imports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
 }
 
 /**
@@ -177,9 +185,10 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 	const name = manifest.name ?? tarballPath
 	const missingFiles = collectMissingFileEntries(manifest.files, shipped)
 	const missingExports = collectMissingExportTargets(manifest.exports, shipped)
+	const missingImports = collectMissingImportTargets(manifest.imports, shipped)
 	const missingBins = collectMissingBinTargets(manifest.bin, shipped)
 
-	if (missingFiles.length || missingExports.length || missingBins.length) {
+	if (missingFiles.length || missingExports.length || missingImports.length || missingBins.length) {
 		const lines = [`verify-tarball: ${name} does not contain what its manifest promises — refusing to publish:`]
 
 		for (const entry of missingFiles) {
@@ -188,6 +197,10 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 
 		for (const target of missingExports) {
 			lines.push(`  - exports target ${target} is not in the tarball`)
+		}
+
+		for (const target of missingImports) {
+			lines.push(`  - imports target ${target} is not in the tarball`)
 		}
 
 		for (const target of missingBins) {

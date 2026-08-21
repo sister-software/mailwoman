@@ -28,7 +28,8 @@ import { join } from "node:path"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Known parents probed after write, PER COUNTRY. Probing another country's names against a freshly built census prints

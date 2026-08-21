@@ -24,7 +24,8 @@ import { writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
-import { addressFrequencyKey, streamRows } from "@mailwoman/registry"
+
+import { addressFrequencyKey, streamRows } from "#index"
 
 import { norm } from "./shared.ts"
 

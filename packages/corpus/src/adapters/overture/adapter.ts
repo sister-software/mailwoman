@@ -31,10 +31,11 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
+
+import { stableSourceID } from "#adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

@@ -1,6 +1,7 @@
-import { ResourceError } from "@mailwoman/core/errors"
-import { ConsoleLogger } from "@mailwoman/core/logging"
 import { defaultRegistry } from "async-init"
+
+import { ResourceError } from "#errors"
+import { ConsoleLogger } from "#logging"
 
 export { cliArguments, scriptEntryPath } from "../arguments.ts"
 
@@ -81,6 +82,6 @@ export function runScript(scriptCallback: ScriptCallback): Promise<void> {
  * `scripts/lint-raw-env-argv.ts`) — read config through `$public`/`$private`.
  */
 export function childEnv(overrides: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
-	// oxlint-disable-next-line sister-software/no-process-globals
+	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed child-process environment boundary
 	return { ...process.env, ...overrides }
 }

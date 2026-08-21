@@ -31,6 +31,13 @@
 		"!__snapshots__/"
 	],
 	"type": "module",
+	"imports": {
+		"#index": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		"./coordinate-bounds": {
@@ -61,7 +68,6 @@
 	"devDependencies": {
 		"@googlemaps/google-maps-services-js": "^3.4.2",
 		"@mailwoman/annotations": "workspace:*",
-		"@types/google.maps": "^3.65.3",
 		"type-fest": "^5.8.0"
 	},
 	"optionalDependencies": {

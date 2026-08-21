@@ -28,7 +28,7 @@ interface Options {
 
 const GazetteerBuildStreetTypeLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetTypeLexicon } = await import("../../../gazetteer-pipeline/evidence-lexicons.ts")
+		const { buildStreetTypeLexicon } = await import("#gazetteer/evidence-lexicons")
 		const built = await buildStreetTypeLexicon({ output: options.output })
 
 		return `${built.path} — ${built.entries} surfaces, max_ngram=${built.maxNgram}`

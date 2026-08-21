@@ -49,7 +49,7 @@ import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./po
 import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary-preference.ts"
 import { applyProximityRerank } from "./proximity-rerank.ts"
 import { REGION_CLASS_PLACETYPES, regionQualifierProbeKeys } from "./region-keys.ts"
-import { hasColumn, hasTable } from "./sqlite-utils.ts"
+import { allRows, hasColumn, hasTable } from "./sqlite-utils.ts"
 import { type NameKey, normalizeLocalityForKey, stripLocalityQualifier } from "./street-normalize.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
@@ -238,15 +238,13 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 		// The code tables are tiny (country/placetype dictionaries) — load them once at construction so
 		// `findPlace` is a single B-tree probe with no dictionary round-trip.
-		for (const r of this.#db.prepare("SELECT id, code FROM country_codes").all() as unknown as CountryCodeTable[]) {
+		for (const r of allRows<CountryCodeTable>(this.#db.prepare("SELECT id, code FROM country_codes"))) {
 			const code = String(r.code).toUpperCase()
 			this.#countryToID.set(code, Number(r.id))
 			this.#idToCountry.set(Number(r.id), code)
 		}
 
-		for (const r of this.#db
-			.prepare("SELECT id, placetype FROM placetype_codes")
-			.all() as unknown as PlacetypeCodeTable[]) {
+		for (const r of allRows<PlacetypeCodeTable>(this.#db.prepare("SELECT id, placetype FROM placetype_codes"))) {
 			this.#placetypeToID.set(String(r.placetype), Number(r.id))
 			this.#idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
@@ -322,9 +320,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 		if (cached) return cached
 
-		const rows = this.#ancestorsProbe.all(pid) as unknown as Array<
-			Pick<CandidateAncestorTable, "parent_spr_id" | "parent_placetype_id" | "parent_name">
-		>
+		const rows = allRows<Pick<CandidateAncestorTable, "parent_spr_id" | "parent_placetype_id" | "parent_name">>(
+			this.#ancestorsProbe,
+			pid
+		)
 
 		const lineage: Ancestor[] = rows.map((r) => ({
 			id: Number(r.parent_spr_id),
@@ -371,7 +370,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		for (const key of regionQualifierProbeKeys(qualifier, country)) {
 			if (!key) continue
 
-			for (const row of this.#qualifierProbe.all(key) as unknown as Array<{ spr_id: number }>) {
+			for (const row of allRows<{ spr_id: number }>(this.#qualifierProbe, key)) {
 				ids.add(Number(row.spr_id))
 			}
 		}
@@ -455,9 +454,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			"ORDER BY neg_rank ASC LIMIT ?"
 
 		const injectFrom = (key: string, primaryOnly: boolean): void => {
-			const fetched = this.#db
-				.prepare(injectSQL(primaryOnly))
-				.all(key, ...opts.shapeParams, RERANK_FETCH) as unknown as CandidateRow[]
+			const fetched = allRows<CandidateRow>(
+				this.#db.prepare(injectSQL(primaryOnly)),
+				key,
+				...opts.shapeParams,
+				RERANK_FETCH
+			)
 
 			for (const row of fetched) {
 				const sprID = Number(row.spr_id)
@@ -491,7 +493,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				`${this.#importanceSelect} FROM candidate WHERE name_key = ? AND placetype_id IN (${bandIDs.map(() => "?").join(",")}) AND is_primary = 1 ` +
 				"ORDER BY neg_rank ASC LIMIT ?"
 
-			const fetched = this.#db.prepare(bandSQL).all(opts.nameKey, ...bandIDs, RERANK_FETCH) as unknown as CandidateRow[]
+			const fetched = allRows<CandidateRow>(this.#db.prepare(bandSQL), opts.nameKey, ...bandIDs, RERANK_FETCH)
 
 			for (const row of fetched) {
 				const sprID = Number(row.spr_id)
@@ -712,7 +714,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
 				`${this.#importanceSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
 
-			const fetched = this.#db.prepare(sql).all(...params, Math.max(limit, RERANK_FETCH)) as unknown as CandidateRow[]
+			const fetched = allRows<CandidateRow>(this.#db.prepare(sql), ...params, Math.max(limit, RERANK_FETCH))
 
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype)
 		}
@@ -776,7 +778,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				const match = ftsTrigramQuery(nameKey)
 
 				if (match) {
-					const hits = this.#ftsProbe.all(match, FUZZY_FETCH) as unknown as Array<{ name_key: string }>
+					const hits = allRows<{ name_key: string }>(this.#ftsProbe, match, FUZZY_FETCH)
 
 					const ranked = hits
 						.map((h) => ({ nk: String(h.name_key), s: wordFuzzySimilarity(nameKey, String(h.name_key)) }))

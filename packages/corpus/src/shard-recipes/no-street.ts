@@ -10,7 +10,7 @@
  *   scripts/build-no-street-shard.mjs.
  */
 
-import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "@mailwoman/corpus/synthesizers/no-street"
+import { synthesizeNoStreetRow, type NoStreetBaseTuple } from "#synthesizers/no-street"
 
 import { alignAndWrite, makeLcg, readTuples, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 

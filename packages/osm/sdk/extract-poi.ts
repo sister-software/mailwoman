@@ -50,6 +50,8 @@ import { spawn } from "node:child_process"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
+import { representativePoint } from "./representative-point.ts"
+
 /**
  * One Overture Places row, decoded to the flat shape `buildPOIDatabase`'s injected-rows seam consumes. Structurally
  * identical to `POISourceRow` in `mailwoman/gazetteer-pipeline/poi/build-poi.ts` — kept as a local copy per this
@@ -228,55 +230,6 @@ export function matchOSMPOITagRule(
 	}
 
 	return null
-}
-
-const isFinitePair = (lon: unknown, lat: unknown): boolean =>
-	typeof lon === "number" && typeof lat === "number" && Number.isFinite(lon) && Number.isFinite(lat)
-
-/**
- * Reduce a GeoJSON geometry to one representative coordinate: the point itself, or a ring-vertex average for a polygon.
- * Duplicated from `extract.ts` (not exported there) — see that module's comment for why a vertex average is an
- * acceptable rooftop-tier centroid.
- */
-function representativePoint(
-	geom: { type?: string; coordinates?: unknown } | null | undefined
-): [number, number] | null {
-	if (!geom) return null
-
-	if (geom.type === "Point") {
-		const c = geom.coordinates as [number, number]
-
-		return isFinitePair(c?.[0], c?.[1]) ? [c[0], c[1]] : null
-	}
-
-	const ring = (
-		geom.type === "Polygon"
-			? (geom.coordinates as number[][][])?.[0]
-			: geom.type === "MultiPolygon"
-				? (geom.coordinates as number[][][][])?.[0]?.[0]
-				: null
-	) as number[][] | null
-
-	if (!ring || !ring.length) return null
-
-	let n = ring.length
-
-	if (n > 1 && ring[0]![0] === ring[n - 1]![0] && ring[0]![1] === ring[n - 1]![1]) {
-		n--
-	}
-
-	let sx = 0
-	let sy = 0
-
-	for (let i = 0; i < n; i++) {
-		sx += ring[i]![0]!
-		sy += ring[i]![1]!
-	}
-
-	const lon = sx / n
-	const lat = sy / n
-
-	return isFinitePair(lon, lat) ? [lon, lat] : null
 }
 
 /**

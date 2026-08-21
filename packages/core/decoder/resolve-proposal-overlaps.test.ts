@@ -9,9 +9,10 @@
  *   decomposition.
  */
 
-import { Span } from "@mailwoman/core/tokenization"
-import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
 import { describe, expect, test } from "vitest"
+
+import { Span } from "#tokenization"
+import type { ClassificationProposal, ComponentTag } from "#types"
 
 import { resolveProposalOverlaps } from "./resolve-proposal-overlaps.ts"
 

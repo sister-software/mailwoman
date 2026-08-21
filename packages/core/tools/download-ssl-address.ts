@@ -28,7 +28,7 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { corePackagePath } from "@mailwoman/core/utils"
+import { corePackagePath } from "#utils"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 

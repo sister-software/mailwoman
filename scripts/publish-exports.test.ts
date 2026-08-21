@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest"
 
-import { collectExportTargets, transformExportsForPublish } from "./publish-exports.ts"
+import { collectExportTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
 
 const DEV_MAP = {
 	"./package.json": "./package.json",
@@ -68,5 +68,20 @@ describe("collectExportTargets", () => {
 		// condition, so a .ts leak can only survive via a non-node condition — the guard's job.
 		const leaked = collectExportTargets({ ".": { default: "./index.ts" } })
 		expect(leaked).toContain("./index.ts")
+	})
+})
+
+describe("transformImportsForPublish", () => {
+	it("keeps compiled aliases and drops source-only aliases", () => {
+		expect(
+			transformImportsForPublish({
+				"#runner": { node: "./src/runner.ts", default: "./out/src/runner.js" },
+				"#test-kit": "./test-kit/index.ts",
+				"#data": "./data/table.json",
+			})
+		).toEqual({
+			"#runner": { default: "./out/src/runner.js" },
+			"#data": "./data/table.json",
+		})
 	})
 })

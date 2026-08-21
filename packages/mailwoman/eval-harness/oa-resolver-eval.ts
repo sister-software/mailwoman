@@ -66,8 +66,9 @@ import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 import { createWOFResolver, expandPlacetypeFilter } from "@mailwoman/resolver"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { createRuntimePipeline, loadDefaultPlaceCountry } from "mailwoman"
 import { JSONSpliterator } from "spliterator"
+
+import { createRuntimePipeline, loadDefaultPlaceCountry } from "#index"
 
 import type { ShardProvider } from "../geocode-core.ts"
 import { renderOaResolverReport } from "./oa-resolver-report.ts"

@@ -11,7 +11,7 @@
  *   `GeocodeAddress` seam philosophy: ingest never pins the runtime, the caller wires it.
  */
 
-import type { ColumnMapping, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
+import type { ColumnMapping, GeocodeAddress, SourceRecord } from "#index"
 
 /**
  * The raw single-address geocode surface (the probe tools) — mirrors `mailwoman/geocode-core`'s wire shape.

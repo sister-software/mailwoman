@@ -7,9 +7,9 @@
 import { rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { runAdapter } from "@mailwoman/corpus/runner"
 import { describe, expect, it } from "vitest"
 
+import { runAdapter } from "#runner"
 import { readCanonicalRows, useScratchDir } from "#test-kit"
 
 import { OVERTURE_ADAPTER_ID, OVERTURE_DEFAULT_LICENSE, createOvertureAdapter } from "./adapter.ts"

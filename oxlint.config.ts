@@ -73,6 +73,8 @@ const config = createOxlintConfig({
 		"**/scratchpad",
 		"docs/build",
 		"docs/.docusaurus",
+		"**/.agents/**",
+		"**/.claude/**",
 		// Python venv + egg-info under corpus-python/ (vendored JS we don't own).
 		"**/.venv/**",
 		"**/*.egg-info/**",
@@ -172,10 +174,12 @@ export default {
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
+		"mailwoman/no-database-boundary-cast": "error",
+		"mailwoman/require-disable-reason": "error",
 		// `split("\n")`/`split("\t")` materializes every segment into one array before the first is
-		// read — the whole-buffer parse spliterator exists to avoid. Warn severity: a nudge toward
-		// streaming, not a gate; bounded-input sites keep split behind a scoped disable saying so.
-		"mailwoman/prefer-spliterator": "warn",
+		// read — the whole-buffer parse spliterator exists to avoid. Bounded-input sites keep split
+		// behind a scoped disable saying why their bound is durable.
+		"mailwoman/prefer-spliterator": "error",
 		// `JSON.parse` throws on corrupt input and returns `any`, so every direct call site either
 		// wraps it in its own try/catch or lets the exception escape untyped. `tryParsingJSON<T>`
 		// (`@mailwoman/core/objects`) is the house wrapper: typed result, non-throwing, explicit

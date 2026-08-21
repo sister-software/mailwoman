@@ -12,8 +12,9 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "mailwoman/cli-kit"
 import { useState } from "react"
+
+import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
 
 const positiveInteger = (description: string, defaultValue?: number) =>
 	({

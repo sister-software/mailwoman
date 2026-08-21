@@ -17,7 +17,7 @@ import { dirname, resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 
-import { transformExportsForPublish } from "./publish-exports.ts"
+import { transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
 
 /**
  * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in
@@ -57,12 +57,17 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 	dereferenceWorkspaceSymlinks(workspaceDir)
 
 	try {
-		const manifest = parseJSONStrict<{ exports?: unknown; publishConfig?: Record<string, unknown> }>(originalManifest)
+		const manifest = parseJSONStrict<{
+			exports?: unknown
+			imports?: unknown
+			publishConfig?: Record<string, unknown>
+		}>(originalManifest)
 
-		if (manifest.exports) {
+		if (manifest.exports || manifest.imports) {
 			manifest.publishConfig = {
 				...manifest.publishConfig,
-				exports: transformExportsForPublish(manifest.exports),
+				...(manifest.exports ? { exports: transformExportsForPublish(manifest.exports) } : {}),
+				...(manifest.imports ? { imports: transformImportsForPublish(manifest.imports) } : {}),
 			}
 
 			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")

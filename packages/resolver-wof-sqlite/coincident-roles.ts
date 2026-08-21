@@ -42,6 +42,8 @@ import type { DatabaseSync } from "node:sqlite"
 
 import { haversineKm } from "@mailwoman/spatial"
 
+import { allRows } from "./sqlite-utils.ts"
+
 /**
  * Table of places that hold more than one admin role — a locality that is also its county seat. Written by the
  * gazetteer build, read by the resolver when a coincident locality has to be chosen.
@@ -149,8 +151,8 @@ export function buildCoincidentRoles(
 	// Admin (region/county tier) ⋈ same-name DESCENDANT locality. `place_population` is optional (LEFT
 	// JOIN → 0 when absent). The relative-tolerance filter + relationship classification happen in JS so
 	// the SQL stays a plain join. `spr` exposes the bbox columns we need for the diagonal.
-	const candidates = db
-		.prepare(
+	const candidates = allRows<CandidateRow>(
+		db.prepare(
 			`SELECT r.id AS admin_id, r.placetype AS admin_placetype, r.country AS country, l.id AS locality_id,
 				r.latitude AS rlat, r.longitude AS rlon, l.latitude AS llat, l.longitude AS llon,
 				r.min_latitude, r.min_longitude, r.max_latitude, r.max_longitude,
@@ -163,7 +165,7 @@ export function buildCoincidentRoles(
 			WHERE r.placetype = 'region'
 				AND r.is_current != 0 AND r.is_deprecated = 0`
 		)
-		.all() as unknown as CandidateRow[]
+	)
 
 	onProgress("filtering", `${candidates.length} candidates`)
 
@@ -226,19 +228,19 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 
 	if (!coincidentRolesExists(db)) return map
 
-	const rows = db
-		.prepare(
-			`SELECT admin_id, locality_id, relationship_type, admin_placetype, distance_km, locality_population
-			FROM ${COINCIDENT_ROLES_TABLE}`
-		)
-		.all() as unknown as Array<{
+	const rows = allRows<{
 		admin_id: number
 		locality_id: number
 		relationship_type: CoincidentRole["relationshipType"]
 		admin_placetype: string
 		distance_km: number
 		locality_population: number
-	}>
+	}>(
+		db.prepare(
+			`SELECT admin_id, locality_id, relationship_type, admin_placetype, distance_km, locality_population
+			FROM ${COINCIDENT_ROLES_TABLE}`
+		)
+	)
 
 	for (const r of rows) {
 		const entry: CoincidentRole = {

@@ -17,8 +17,9 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_CANDIDATE_OUT } from "mailwoman/gazetteer-pipeline/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -49,7 +50,7 @@ interface Options {
 const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
 		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
-		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("mailwoman/gazetteer-pipeline")
+		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("#gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
 		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)

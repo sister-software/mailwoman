@@ -1,13 +1,14 @@
-import { CandidatePicker } from "@mailwoman/docs/components/CandidatePicker/CandidatePicker"
-import { FailureDiagnostic } from "@mailwoman/docs/components/FailureDiagnostic/FailureDiagnostic"
-import { KindBadge } from "@mailwoman/docs/components/KindBadge/KindBadge"
-import { SpanHighlight } from "@mailwoman/docs/components/SpanHighlight/SpanHighlight"
-import { TimingPanel } from "@mailwoman/docs/components/TimingPanel/TimingPanel"
-import { TreeView } from "@mailwoman/docs/components/TreeView/TreeView"
-import { confidenceTier } from "@mailwoman/docs/shared/confidence-tiers"
-import type { DemoResult } from "@mailwoman/docs/shared/resources"
 import CodeBlock from "@theme/CodeBlock"
 import { Fragment, useCallback, useState } from "react"
+
+import { CandidatePicker } from "#components/CandidatePicker/CandidatePicker"
+import { FailureDiagnostic } from "#components/FailureDiagnostic/FailureDiagnostic"
+import { KindBadge } from "#components/KindBadge/KindBadge"
+import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
+import { TimingPanel } from "#components/TimingPanel/TimingPanel"
+import { TreeView } from "#components/TreeView/TreeView"
+import { confidenceTier } from "#shared/confidence-tiers"
+import type { DemoResult } from "#shared/resources"
 
 import styles from "./styles.module.css"
 

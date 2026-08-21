@@ -31,7 +31,7 @@ interface Options {
 
 const GazetteerBuildCZDistricts: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildCZDistrictsShard } = await import("../../../gazetteer-pipeline/cz-districts.ts")
+		const { buildCZDistrictsShard } = await import("#gazetteer/cz-districts")
 		const r = await buildCZDistrictsShard({ sourcePath: options.source, out: options.out })
 
 		return `cz-districts: ${r.inserted} district rows (source md5 ${r.sourceMD5.slice(0, 8)}) → ${r.out} — sealed 0444`

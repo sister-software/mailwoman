@@ -58,6 +58,38 @@ export function transformExportsForPublish(exports: unknown): unknown {
 }
 
 /**
+ * Rewrite package-private `imports` aliases for the packed consumer manifest.
+ *
+ * These use the same development shape as exports: `node` points at source TypeScript so Node's native type stripping
+ * can run the checkout directly, while `default` points at emitted JavaScript. A package installed under `node_modules`
+ * cannot type-strip that source, so the packed map must drop every `node → .ts` condition.
+ */
+export function transformImportsForPublish(imports: unknown): unknown {
+	if (typeof imports !== "object" || imports === null) return imports
+
+	const out: Record<string, unknown> = {}
+
+	for (const [specifier, value] of Object.entries(imports as Record<string, unknown>)) {
+		// Source-only test aliases have no consumer representation and must not promise an excluded file.
+		if (typeof value === "string") {
+			if (!isTypeScriptSource(value)) {
+				out[specifier] = value
+			}
+
+			continue
+		}
+
+		const transformed = transformExportsForPublish({ [specifier]: value }) as Record<string, unknown>
+		const rewritten = transformed[specifier]
+
+		if (typeof rewritten === "object" && rewritten !== null && !Object.keys(rewritten).length) continue
+		out[specifier] = rewritten
+	}
+
+	return out
+}
+
+/**
  * Walk a transformed exports map; return every concrete (non-pattern) file target.
  */
 export function collectExportTargets(exports: unknown): string[] {

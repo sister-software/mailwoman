@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { ResultNode } from "@mailwoman/docs/shared/resources"
 import type { Meta, StoryObj } from "@storybook/react-vite"
+
+import type { ResultNode } from "#shared/resources"
 
 import { SpanHighlight } from "./SpanHighlight.tsx"
 

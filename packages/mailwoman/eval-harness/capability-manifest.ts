@@ -38,15 +38,15 @@
  *   omit it for a dry run that only prints the block.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { readFileSync, writeFileSync } from "node:fs"
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
-import { JSONSpliterator } from "spliterator"
+
+import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
 
 /**
  * Options for {@linkcode generateCapabilityManifest}.
@@ -120,24 +120,7 @@ const LOCALES: LocaleEvalSpec[] = [
 /**
  * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
  */
-const TAGS = [
-	"street_prefix",
-	"street",
-	"street_suffix",
-	"house_number",
-	"locality",
-	"region",
-	"postcode",
-	"country",
-	"unit",
-	"intersection_a",
-	"intersection_b",
-	"po_box",
-	"cedex",
-	"venue",
-	"dependent_locality",
-	"subregion",
-] as const
+const TAGS = UNFOLDED_ADDRESS_TAGS
 
 /**
  * The union of every tag any codex conventions row forbids — the ONLY tags the loader's delta-gate reads, so the ONLY
@@ -147,80 +130,6 @@ const TAGS = [
 const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
-
-//#endregion
-
-//#region Scoring
-
-interface Row {
-	raw: string
-	components: Record<string, string>
-}
-
-async function loadRows(files: string[]): Promise<Row[]> {
-	const rows: Row[] = []
-
-	for (const f of files) {
-		if (!existsSync(f)) throw new Error(`eval file not found: ${f}`)
-
-		for await (const row of JSONSpliterator.fromAsync<Row>(f)) {
-			rows.push(row)
-		}
-	}
-
-	return rows
-}
-
-const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
-
-/**
- * Per-tag exact-match F1 (percent, 1-decimal) over the rows. Mirrors score-affix.ts.
- */
-async function perTagF1(neural: NeuralAddressClassifier, rows: Row[]): Promise<Record<string, number>> {
-	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
-
-	for (const t of TAGS) {
-		stat[t] = { tp: 0, fp: 0, fn: 0 }
-	}
-
-	for (const row of rows) {
-		// Certification register (Decision A, 2026-07-30): these probes are full postal addresses — the
-		// FORMATTED register, where production runs the evidence-bundle channels OFF. Grading the
-		// always-fed config here certified a path production never serves (and on a bundle model read
-		// the fed-on-formatted damage register — street F1 collapsed to 24.9 in the first 6.7.0 run).
-		const got = decodeAsJSON(await neural.parse(row.raw, { inputMode: "formatted" })) as Record<string, string>
-		const exp = row.components
-
-		for (const t of TAGS) {
-			const e = norm(exp[t])
-			const g = norm(got[t])
-
-			if (e && g && e === g) {
-				stat[t]!.tp++
-			} else {
-				if (g) {
-					stat[t]!.fp++
-				}
-
-				if (e) {
-					stat[t]!.fn++
-				}
-			}
-		}
-	}
-
-	const out: Record<string, number> = {}
-
-	for (const t of TAGS) {
-		const { tp, fp, fn } = stat[t]!
-		const p = tp + fp ? tp / (tp + fp) : 0
-		const r = tp + fn ? tp / (tp + fn) : 0
-		const f1 = p + r ? (2 * p * r) / (p + r) : 0
-		out[t] = +(100 * f1).toFixed(1)
-	}
-
-	return out
-}
 
 //#endregion
 
@@ -251,7 +160,7 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 		capabilities[tier] = {}
 
 		for (const spec of LOCALES) {
-			const rows = await loadRows(spec.files)
+			const rows = await loadPerTagEvalRows(spec.files)
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
@@ -270,7 +179,11 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				overrides: { ...tierOverrides, conventions: false },
 			})
 
-			const off = await perTagF1(offScorer, rows)
+			const off = await scorePerTagF1(rows, TAGS, async (raw) => {
+				// Certification probes are formatted postal addresses, whose production path disables
+				// evidence-bundle channels.
+				return decodeAsJSON(await offScorer.parse(raw, { inputMode: "formatted" })) as Record<string, string>
+			})
 
 			// mask-ON: conventions in `auto` mode (reads the model's locale head → applies the detected
 			// system's forbiddenTags). This is the SHIP behavior whose damage we measure.
@@ -284,7 +197,9 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 				overrides: { ...tierOverrides, conventions: "auto" },
 			})
 
-			const on = await perTagF1(onScorer, rows)
+			const on = await scorePerTagF1(rows, TAGS, async (raw) => {
+				return decodeAsJSON(await onScorer.parse(raw, { inputMode: "formatted" })) as Record<string, string>
+			})
 
 			const perTag: Record<string, TagCapability> = {}
 
@@ -317,12 +232,6 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 	}
 
 	return capabilities
-}
-
-function rowsHaveTag(rows: Row[], tag: string): boolean {
-	for (const r of rows) if (norm(r.components[tag])) return true
-
-	return false
 }
 
 //#endregion

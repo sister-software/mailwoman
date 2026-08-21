@@ -24,7 +24,8 @@ import { writeFileSync } from "node:fs"
 
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
-import { streamRows } from "@mailwoman/registry"
+
+import { streamRows } from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { norm } from "./shared.ts"

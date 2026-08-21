@@ -9,8 +9,9 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
-import packageJson from "@mailwoman/photon/package.json" with { type: "json" }
 import { cors } from "hono/cors"
+
+import packageJson from "#package.json" with { type: "json" }
 
 import type { PhotonEngine } from "./engine.ts"
 import { registerPhotonRoutes } from "./routes.ts"

@@ -51,8 +51,7 @@ export function POIExplorer({ defaultText }: POIExplorerProps) {
 	// Preserves the tester's two failure modes — anchor unplaceable vs layer unreachable.
 	const runLiveSearch = useCallback<POILiveSearch>(
 		async ({ categoryID, overtureCategoryIDs, anchor }) => {
-			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } =
-				await import("@mailwoman/docs/shared/poi-httpvfs")
+			const { loadPOIWorker, resolveAnchorCenter, searchPOICategory } = await import("#shared/poi-httpvfs")
 
 			const center = await resolveAnchorCenter(sqljsBaseURL, anchor)
 

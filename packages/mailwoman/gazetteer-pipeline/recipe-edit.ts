@@ -48,6 +48,7 @@ function listBody(source: string, listName: string): { start: number; end: numbe
  * The lines of a list body, with their indentation preserved.
  */
 function bodyLines(body: string): string[] {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a bounded TypeScript list body is intentionally indexed and rewritten in memory
 	return body.split("\n")
 }
 

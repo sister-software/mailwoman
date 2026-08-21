@@ -156,6 +156,7 @@ describe("runWorktreeArm — cleanup", () => {
 		const listed = execFileSync("git", ["worktree", "list"], { cwd: root, encoding: "utf8" })
 
 		// The main checkout is always listed; a leaked worktree would be a second line.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- the test creates at most one extra worktree
 		expect(listed.trim().split("\n")).toHaveLength(1)
 	})
 

@@ -23,25 +23,25 @@
  * ```
  */
 
-import { AboutDemo } from "@mailwoman/docs/components/AboutDemo/AboutDemo"
-import { BIOHighlight } from "@mailwoman/docs/components/BIOHighlight/BIOHighlight"
-import { ClassifierOverlay } from "@mailwoman/docs/components/ClassifierOverlay/ClassifierOverlay"
-
-import "@mailwoman/react/styles.css"
-
-import { CRFDiff } from "@mailwoman/docs/components/CRFDiff/CRFDiff"
-import { FailureDiagnostic } from "@mailwoman/docs/components/FailureDiagnostic/FailureDiagnostic"
-import { FSTWalker } from "@mailwoman/docs/components/FSTWalker/FSTWalker"
-import { GuidedTour } from "@mailwoman/docs/components/GuidedTour/GuidedTour"
-import { SpanHighlight } from "@mailwoman/docs/components/SpanHighlight/SpanHighlight"
-import { SubwordExplorer } from "@mailwoman/docs/components/SubwordExplorer/SubwordExplorer"
-import { TimingPanel } from "@mailwoman/docs/components/TimingPanel/TimingPanel"
-import { TreeView } from "@mailwoman/docs/components/TreeView/TreeView"
-import { useDemoEmbed } from "@mailwoman/docs/contexts/DemoEmbed"
-import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "@mailwoman/docs/shared/demo-helpers"
 import { PipelineExplorer as ReactPipelineExplorer } from "@mailwoman/react"
 import type { ParseResult, PipelinePanels, PipelineRuntime, ResolvedPlaceView } from "@mailwoman/react"
 import { useMemo } from "react"
+
+import "@mailwoman/react/styles.css"
+
+import { AboutDemo } from "#components/AboutDemo/AboutDemo"
+import { BIOHighlight } from "#components/BIOHighlight/BIOHighlight"
+import { ClassifierOverlay } from "#components/ClassifierOverlay/ClassifierOverlay"
+import { CRFDiff } from "#components/CRFDiff/CRFDiff"
+import { FailureDiagnostic } from "#components/FailureDiagnostic/FailureDiagnostic"
+import { FSTWalker } from "#components/FSTWalker/FSTWalker"
+import { GuidedTour } from "#components/GuidedTour/GuidedTour"
+import { SpanHighlight } from "#components/SpanHighlight/SpanHighlight"
+import { SubwordExplorer } from "#components/SubwordExplorer/SubwordExplorer"
+import { TimingPanel } from "#components/TimingPanel/TimingPanel"
+import { TreeView } from "#components/TreeView/TreeView"
+import { useDemoEmbed } from "#contexts/DemoEmbed"
+import { DEFAULT_ADDRESS, resolveDualRoles, runCascade, runClassifyStage } from "#shared/demo-helpers"
 
 import styles from "./styles.module.css"
 

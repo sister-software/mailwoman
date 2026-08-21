@@ -11,14 +11,15 @@
  *   here so the staging route exercises the compare seam without touching `_app.tsx`.
  */
 
-import { VersionCompare } from "@mailwoman/docs/components/VersionCompare/VersionCompare"
-import type { ReleaseInfo } from "@mailwoman/docs/shared/demo-helpers"
-import { DEFAULT_LOCALE, flattenTree } from "@mailwoman/docs/shared/demo-helpers"
-import type { DemoResult, MailwomanClassifierLike, ResultNode } from "@mailwoman/docs/shared/resources"
-import { neuralClassifierLoadURLs } from "@mailwoman/docs/shared/resources"
 import type { ParseResult } from "@mailwoman/react"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
+
+import { VersionCompare } from "#components/VersionCompare/VersionCompare"
+import type { ReleaseInfo } from "#shared/demo-helpers"
+import { DEFAULT_LOCALE, flattenTree } from "#shared/demo-helpers"
+import type { DemoResult, MailwomanClassifierLike, ResultNode } from "#shared/resources"
+import { neuralClassifierLoadURLs } from "#shared/resources"
 
 export interface DemoCompareProps {
 	/**

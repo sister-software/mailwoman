@@ -15,7 +15,8 @@
  */
 
 import { Box, Text } from "ink"
-import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Generate + verify the Python and Rust API clients from the emitted OpenAPI specs"
 

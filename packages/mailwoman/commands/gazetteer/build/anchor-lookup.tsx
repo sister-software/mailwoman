@@ -44,7 +44,7 @@ interface Options {
 
 const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.ts")
+		const { buildAnchorLookup } = await import("#gazetteer/anchor-lookup")
 
 		const stats = buildAnchorLookup({
 			output: options.output,

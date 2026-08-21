@@ -10,7 +10,7 @@
  *   per-locale overrides at startup. Look-up and `apply` are pure.
  */
 
-import type { ClassificationProposal, ComponentTag } from "@mailwoman/core/types"
+import type { ClassificationProposal, ComponentTag } from "#types"
 
 import { buildDefaultPolicies, defaultPolicyFor } from "./defaults.ts"
 import type { ClassifierPolicy, PolicyMode, PolicyRegistry } from "./policy.ts"

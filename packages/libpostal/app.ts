@@ -9,9 +9,10 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
-import packageJson from "@mailwoman/libpostal/package.json" with { type: "json" }
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
+
+import packageJson from "#package.json" with { type: "json" }
 
 import type { LibpostalEngine } from "./engine.ts"
 import { registerLibpostalRoutes } from "./routes.ts"

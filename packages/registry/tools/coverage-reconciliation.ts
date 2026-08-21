@@ -32,6 +32,7 @@
 import { writeFileSync } from "node:fs"
 
 import { dataRootPath } from "@mailwoman/core/utils"
+
 import {
 	ingestRows,
 	reconcileCoverage,
@@ -43,7 +44,7 @@ import {
 	type GeocodeAddress,
 	type ReconcileConfig,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { buildSpecs, norm, type SourceSpec } from "./shared.ts"

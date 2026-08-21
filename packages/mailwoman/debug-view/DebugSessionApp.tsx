@@ -27,8 +27,9 @@
 import { $public } from "@mailwoman/core/env"
 import { lonLatToWorldPx, MapRenderer, TileSource, worldPxToLonLat, type MapFrame } from "@mailwoman/map-tui"
 import { Text, useApp, useInput, useStdout, type Key } from "ink"
-import { CommandError } from "mailwoman/cli-kit"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import { CommandError } from "#cli-kit"
 
 import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
 import type { GeocodeResult } from "../geocode-core.ts"

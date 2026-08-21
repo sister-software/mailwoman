@@ -20,7 +20,7 @@ import { appendFileSync } from "node:fs"
 import * as path from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "#utils"
 
 import { hashFNV1a } from "./fnv-hash.ts"
 

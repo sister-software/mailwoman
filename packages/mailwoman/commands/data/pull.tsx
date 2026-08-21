@@ -43,6 +43,8 @@ import { pipeline } from "node:stream/promises"
 import type { APIClient } from "@mailwoman/core/api"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Text } from "ink"
+import { resolvePath } from "path-ts"
+
 import {
 	type Check,
 	CheckList,
@@ -50,8 +52,7 @@ import {
 	type CommandSpec,
 	type ParsedCommandComponent,
 	useCommandTask,
-} from "mailwoman/cli-kit"
-import { resolvePath } from "path-ts"
+} from "#cli-kit"
 
 import {
 	artifactURL,

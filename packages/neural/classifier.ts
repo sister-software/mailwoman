@@ -31,9 +31,10 @@ import {
 	type SpanProposerLexicon,
 	WORD_CONSISTENCY_SHIP_DEFAULT,
 } from "@mailwoman/core/pipeline"
+
 // SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
 // `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
-import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "@mailwoman/neural/onnx-runner"
+import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "#onnx-runner"
 
 import {
 	confidentLocaleCountry,

@@ -16,8 +16,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "@mailwoman/neural/weights"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
+
+import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "#weights"
 
 const LOCALE = "pt-BR"
 const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"

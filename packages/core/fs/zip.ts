@@ -60,7 +60,7 @@ export function extractSingleFileZip(data: ArrayBuffer | Buffer): Promise<Buffer
 
 	// We use the async version of getData to avoid blocking the event loop.
 	return new Promise<Buffer>((resolve, reject) =>
-		// oxlint-disable-next-line no-promise-executor-return
+		// oxlint-disable-next-line no-promise-executor-return -- return the callback registration from this expression-bodied executor
 		entry!.getDataAsync((extractedData, error) => {
 			if (error) {
 				reject(error)

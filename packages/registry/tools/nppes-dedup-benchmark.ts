@@ -32,6 +32,8 @@ import { pathToFileURL } from "node:url"
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { haversineKm, jaccard, type GBT } from "@mailwoman/match"
+import { latLngToCell } from "h3-js"
+
 import {
 	addressFrequencyKey,
 	ingestRows,
@@ -41,8 +43,7 @@ import {
 	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
-} from "@mailwoman/registry"
-import { latLngToCell } from "h3-js"
+} from "#index"
 
 import type { EvalGeocodeStream, EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "./shared.ts"

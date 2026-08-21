@@ -75,7 +75,6 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/tiger": "workspace:*",
 		"@maplibre/maplibre-gl-style-spec": "^26.2.1",
 		"@protomaps/basemaps": "^5.7.2",

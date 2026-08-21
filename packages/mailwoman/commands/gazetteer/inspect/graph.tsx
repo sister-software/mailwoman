@@ -19,14 +19,9 @@ import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { Box, Text } from "ink"
-import {
-	type CommandSpec,
-	type ParsedCommandComponent,
-	CommandError,
-	parseRoles,
-	useCommandTask,
-} from "mailwoman/cli-kit"
 import { PathBuilder } from "path-ts"
+
+import { type CommandSpec, type ParsedCommandComponent, CommandError, parseRoles, useCommandTask } from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 

@@ -39,9 +39,11 @@
 
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
-import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "@mailwoman/corpus/utils"
-import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
+import { buildAncestryIndex, normalizeNameKey, walkFeatures, type WOFRecord } from "#utils"
+
+import { emitWOFJSONRows, type WOFVariantSpec } from "../wof-json-rows.ts"
 
 const COUNTRY_DISPLAY_NAME: Record<string, string> = {
 	US: "United States of America",
@@ -70,16 +72,11 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 	}
 }
 
-interface VariantSpec {
-	suffix: string
-	components: Partial<Record<ComponentTag, string>>
-}
-
 /**
  * Compute hierarchy variants for a postcode record. `selfName` is the postcode surface form (canonical `wof:name` for
  * the `default` slot, a `name:*` localized variant otherwise).
  */
-export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): VariantSpec[] {
+export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
 
 	const locality = ancestry.find((a) => placetypeToTag(a.placetype) === "locality")
@@ -87,7 +84,7 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfN
 	const country = ancestry.find((a) => placetypeToTag(a.placetype) === "country")
 	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country?.name ?? row.country
 
-	const variants: VariantSpec[] = [{ suffix: "self", components: { postcode: selfName } }]
+	const variants: WOFVariantSpec[] = [{ suffix: "self", components: { postcode: selfName } }]
 
 	if (locality) {
 		variants.push({
@@ -166,46 +163,16 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 			const ancestry = buildAncestryIndex(byID)
 
 			// Pass 2: emit postcode rows only, sorted by id for determinism.
-			const ids = [...byID.keys()].toSorted((a, b) => a - b)
-			let emitted = 0
-
-			for (const id of ids) {
-				if (opts.signal?.aborted) return
-				const rec = byID.get(id)!
-
-				if (placetypeToTag(rec.placetype) !== "postcode") continue
-
-				const chain = ancestry.get(id) ?? []
-				const slots = nameSlotsFor(rec)
-
-				for (const slot of slots) {
-					const variants = postcodeVariantsFor(rec, chain, slot.value)
-
-					for (const variant of variants) {
-						if (opts.limit !== undefined && emitted >= opts.limit) return
-
-						const raw = formatAddress(variant.components, rec.country, { separator: ", " })
-
-						if (!raw) continue
-						const aligned = reconcileComponents(variant.components, raw)
-
-						if (!Object.keys(aligned).length) continue
-
-						yield {
-							raw,
-							components: aligned,
-							country: rec.country,
-							locale: LOCALE_BY_COUNTRY[rec.country],
-							source: WOF_POSTALCODE_ADAPTER_ID,
-							source_id: `${WOF_POSTALCODE_ADAPTER_ID}-${rec.id}-${slot.key}-${variant.suffix}`,
-							corpus_version: "",
-							license: "CC0-1.0",
-						}
-
-						emitted++
-					}
-				}
-			}
+			yield* emitWOFJSONRows({
+				records: byID,
+				ancestry,
+				adapterOptions: opts,
+				adapterID: WOF_POSTALCODE_ADAPTER_ID,
+				localeByCountry: LOCALE_BY_COUNTRY,
+				shouldEmit: (record) => placetypeToTag(record.placetype) === "postcode",
+				nameSlotsFor,
+				variantsFor: postcodeVariantsFor,
+			})
 		},
 	}
 }

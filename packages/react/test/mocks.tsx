@@ -18,8 +18,8 @@ import type {
 	ParseResult,
 	PipelineRuntime,
 	Suggestion,
-} from "@mailwoman/react"
-import type { ResolvedMapPlace } from "@mailwoman/react/map"
+} from "#index"
+import type { ResolvedMapPlace } from "#map"
 
 const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } as unknown as CategoryRecord
 

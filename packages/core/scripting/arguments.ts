@@ -11,7 +11,7 @@
  * The one blessed accessor for user CLI arguments.
  */
 export function cliArguments(): string[] {
-	// oxlint-disable-next-line sister-software/no-process-globals
+	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed argv accessor
 	return process.argv.slice(2)
 }
 
@@ -19,6 +19,6 @@ export function cliArguments(): string[] {
  * The path of the executing script (`argv[1]`).
  */
 export function scriptEntryPath(): string {
-	// oxlint-disable-next-line sister-software/no-process-globals
+	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed argv entry-path accessor
 	return process.argv[1]!
 }

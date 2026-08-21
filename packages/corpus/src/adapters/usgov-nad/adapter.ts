@@ -34,9 +34,10 @@ import { readdir } from "node:fs/promises"
 import { join } from "node:path"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { TextSpliterator } from "spliterator"
+
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset

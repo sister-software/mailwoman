@@ -35,8 +35,9 @@ import {
 } from "@mailwoman/codex/us"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 } from "@mailwoman/core/utils"
-import type { CanonicalRow, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
-import { alignRow, assertSpanInvariants, type ComponentSpan } from "@mailwoman/corpus/utils"
+
+import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
+import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align"
 
 import { whitespaceTokenizer, type Tokenizer } from "../utils/tokenize.ts"
 

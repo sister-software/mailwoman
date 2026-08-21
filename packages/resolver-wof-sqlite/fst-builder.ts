@@ -18,6 +18,7 @@ import type { FSTNode } from "./fst-matcher.ts"
 import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
 import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
 import { loadImportanceSplit } from "./place-importance-schema.ts"
+import { allRows, getRow } from "./sqlite-utils.ts"
 
 const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",
@@ -78,7 +79,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		   AND placetype IN (${placeholders(placetypes)})`
 	)
 
-	const sprRows = sprStmt.all(...countries, ...placetypes) as unknown as SprRow[]
+	const sprRows = allRows<SprRow>(sprStmt, ...countries, ...placetypes)
 	progress("spr", `Loaded ${sprRows.length} places`)
 
 	// Phase 2: Build a lookup for parent chain resolution.
@@ -103,8 +104,8 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		for (let i = 0; i < orphanIDs.length; i += ANCESTOR_CHUNK) {
 			const chunk = orphanIDs.slice(i, i + ANCESTOR_CHUNK)
 
-			const rows = db
-				.prepare(
+			const rows = allRows<{ id: number; ancestor_id: number }>(
+				db.prepare(
 					`SELECT DISTINCT id, ancestor_id FROM ancestors
 					 WHERE id IN (${chunk.map(() => "?").join(",")}) AND ancestor_placetype IN ('country', 'region', 'county')
 					 ORDER BY id, CASE ancestor_placetype
@@ -112,8 +113,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 					   WHEN 'region' THEN 2
 					   WHEN 'country' THEN 3
 					 END`
-				)
-				.all(...chunk) as unknown as Array<{ id: number; ancestor_id: number }>
+				),
+				...chunk
+			)
 
 			for (const row of rows) {
 				let chain = ancestorsByID.get(row.id)
@@ -150,7 +152,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			let parentRow = sprByID.get(current)
 
 			if (!parentRow) {
-				const fetched = parentStmt.get(current) as unknown as SprRow | undefined
+				const fetched = getRow<SprRow>(parentStmt, current)
 
 				if (!fetched) break
 				parentRow = fetched
@@ -201,9 +203,9 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 					`SELECT id, name, language, privateuse FROM names WHERE id IN (${idPlaceholders}) AND language IN (${languages.map(() => "?").join(",")})`
 				)
 
-		const nameRows = (allLanguages
-			? nameStmt.all(...chunk)
-			: nameStmt.all(...chunk, ...languages)) as unknown as NameRow[]
+		const nameRows = allLanguages
+			? allRows<NameRow>(nameStmt, ...chunk)
+			: allRows<NameRow>(nameStmt, ...chunk, ...languages)
 
 		for (const row of nameRows) {
 			const existing = namesByPlace.get(row.id) ?? []

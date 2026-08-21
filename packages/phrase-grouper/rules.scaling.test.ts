@@ -18,9 +18,10 @@
  */
 
 import { normalize } from "@mailwoman/normalize"
-import { groupPhrasesSync } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { expect, test } from "vitest"
+
+import { groupPhrasesSync } from "#index"
 
 /**
  * Every token is capitalized place-name content and nothing terminates the run — the worst case for a forward walk, and
