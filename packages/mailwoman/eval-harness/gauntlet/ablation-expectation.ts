@@ -2,108 +2,11 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
+ * @file Graceful-degradation expectation model for gauntlet component ablations.
  *
- *   The ablation layer's GRACEFUL-DEGRADATION EXPECTATION MODEL — what a deletion is allowed to cost.
- *
- *   The layer as merged (#1500) graded every deletion variant against the UNDELETED case's single anchor and its single
- *   tolerance, which conflates two opposite outcomes. Drop `United States` from a Las Vegas hotel address and the NV +
- *   89109 that remain still pin the rooftop: that must HOLD. Drop the street and the house number and nothing pins a
- *   rooftop any more; landing on the locality centroid is the CORRECT answer, and grading it against an 80 m rooftop
- *   tolerance reports the pipeline as broken for doing the right thing. Drop everything down to a bare `Springfield` and
- *   there are 144 distinct Springfields with no population winner — there ABSTAINING is correct, and any confident
- *   coordinate is the defect.
- *
- *   So this module answers one question per variant: **given only what is LEFT of the address, how deep may the answer
- *   honestly be?** The answer is a RUNG on a ladder synthesized from the gazetteer, and the variant is graded against
- *   that rung instead of against the anchor.
- *
- *   ## The ladder
- *
- *   Rung 0 is the row's ASSERTED coordinate (`expect_lat`/`expect_lon`), radius = its own `expect_tolerance_m`. Rungs
- *   1..n are the chain CONTAINING that coordinate — a reverse geocode over `spr`/`place_bbox`, locality → county →
- *   region → country ({@linkcode buildCaseLadder} → {@linkcode ablationLadderFromChain}). Beyond the last rung is
- *   {@linkcode ABSTAIN_RUNG}: no coordinate at all.
- *
- *   Neither end of that comes from the parser, and the first draft's did. Building the ladder from the anchor's own
- *   resolved hierarchy graded the pipeline against its own opinion, and on the rows where that opinion is wrong (every
- *   `known_fail` / `improvement_target` row, i.e. the ones most worth measuring) it produced ladders that made correct
- *   answers fail: `bd-op2-ginza` anchored in Wollongong, Australia under a Dhaka hierarchy, and the postcode-deleted
- *   variant that resolved Dhaka correctly was graded a failure 9,063 km off. A chain derived FROM the coordinate cannot
- *   disagree with the coordinate.
- *
- *   A row with no asserted coordinate falls back to the pipeline's undeleted answer, which is weaker; those rows are
- *   marked `anchorSource: "pipeline-anchor"` and are the ones the corpus's `country` column most often catches.
- *
- *   Every rung carries a radius, and NO RUNG SHIPS WITHOUT ONE — the PFX1 discipline (`neural/postcode-prefix-index.ts`,
- *   #1484: a coordinate without a `radiusP95Km` is not a claim). Two measurements decide where the radius comes from
- *   (`admin-global-priority.db`, 2026-08-05):
- *
- *   1. **A zero-extent bbox is ABSENCE, not a radius of zero.** `spr`'s bbox columns default to `0` and are `NOT NULL`,
- *      so a place with no recorded extent stores `min == max`. That is 140 of 237 countries (59.1%), 1,691 of 4,299
- *      regions (39.3%), 2,148,316 of 4,363,942 localities (49.2%) and 300,166 of 348,323 neighbourhoods (86.2%). Reading
- *      those as radius 0 would make half the locality rungs pinpoints and fail every honest coarsening.
- *   2. **A non-degenerate bbox is not automatically a real one.** Of 22,780 sampled localities WITH a non-degenerate
- *      bbox, 12,881 (56.5%) had a sub-100 m extent — a rounding artifact, not a city.
- *
- *   Hence {@linkcode RUNG_RADIUS_FLOOR_KM}: the rung radius is `max(bbox radius, the placetype's floor)`, and the floor is
- *   that placetype's measured p90 bbox radius. The source is recorded per rung, so a re-grade with different numbers can
- *   be done off the artifact alone.
- *
- *   ## The expected rung, computed from what REMAINS
- *
- *   {@linkcode deriveExpectedRung} reads ONLY the components the deletion left behind, plus the gazetteer. It never sees
- *   the variant's output — grading an output against an expectation derived from that same output is circular and
- *   measures nothing, which is why {@linkcode deriveExpectedRung} takes no result argument at all and
- *   `ablation-expectation.test.ts` pins that invariance.
- *
- *   The cascade, in order:
- *
- *   1. A remaining POSTCODE that resolves to exactly one place pins that place.
- *   2. Otherwise a remaining LOCALITY-ish name is looked up under whatever remaining country/region evidence can
- *      constrain it, and pins its top candidate when the name is DECISIVE.
- *   3. Otherwise a remaining REGION pins the region; otherwise a remaining COUNTRY pins the country.
- *   4. Otherwise nothing is pinned → {@linkcode ABSTAIN_RUNG}, unless evidence this model has no index for survived, in
- *      which case it declines to constrain ({@linkcode UNCONSTRAINED_RUNG}) rather than guess.
- *
- *   Then: if the pinned place IS the base's own deepest admin rung and the street evidence (street + house number, or a
- *   venue) also survived, the expectation is rung 0 — the rooftop must hold. Otherwise the expectation is the pinned
- *   place's own rung. A pinned place that is NOT on the ladder is a HOMONYM TAKEOVER (delete `TX` from `Paris, TX` and
- *   the remaining evidence decisively names Paris, France): nothing on this ladder is pinned, so the expectation is
- *   abstain, flagged so the class stays countable.
- *
- *   ## The anchor floor
- *
- *   The layer's question is what the DELETION cost, so {@linkcode gradeAgainstLadder} judges from where the UNDELETED
- *   case already stood, never from a rooftop the row never reached. Without that floor,
- *   `ca-op3-lakehead-university` — already resolving to the Thunder Bay centroid before anything was deleted — charged
- *   seven of its components with a failure each, every one of them 0.00 km from its own anchor.
- *
- *   ## "Decisive", and the number behind it
- *
- *   A name is decisive when it resolves to exactly one place, or when the top candidate's population beats the runner-up
- *   by at least {@linkcode DECISIVE_MARGIN_LOG10}. The gazetteer is population-ranked (`neg_rank = -log10(population +
- *   1)`), so the margin is a subtraction on the column the resolver itself orders by.
- *
- *   0.5 (a 3.2x population margin) is MEASURED, not chosen. Over the 85 corpus rows that assert a locality and a
- *   coordinate, taking each bare locality name to the gazetteer and asking whether the top-ranked place is within 100 km
- *   of the row's own expected coordinate:
- *
- *   | margin cut | decisive rows | top-1 is the row's place | ambiguous rows | top-1 is the row's place |
- *   | ---------- | ------------: | -----------------------: | -------------: | -----------------------: |
- *   | 0.1        |            75 |                    84.0% |             10 |                    50.0% |
- *   | **0.5**    |        **64** |                **89.1%** |         **21** |                **52.4%** |
- *   | 1.0        |            55 |                    90.9% |             30 |                    60.0% |
- *   | 2.0        |            26 |                    96.2% |             59 |                    72.9% |
- *
- *   Below 0.5 the bare name picks the intended place at 52.4% — a coin flip, which is the operational meaning of
- *   "untenable ambiguity". Above it, 89.1%. Raising the cut further only drags correct rows into the ambiguous bucket
- *   (60%, then 73%), which is the model becoming pessimistic rather than sharper.
- *
- *   **The margin is worthless without {@linkcode COINCIDENT_PLACE_KM}.** WOF stores a big city twice — Paris the
- *   `locality` and Paris the `localadmin`, same population — so a raw top-2 margin reads 0.01 for Paris and 0.00 for
- *   Washington, i.e. every major city looks maximally ambiguous. Collapsing candidates within 10 km of a higher-ranked
- *   one (the same physical place, not a namesake) is what makes the number mean anything: Paris then reads 1.9 and
- *   Springfield still reads 0.05 across 144 distinct places.
+ * Builds a non-circular resolution ladder from the asserted coordinate, derives the honest rung from only the evidence
+ * remaining after deletion, and grades from the undeleted answer’s achieved rung. Every rung carries an explicit radius;
+ * ambiguous names abstain. See `ablation-expectation.md` for the design, measurements, and threshold rationale.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
