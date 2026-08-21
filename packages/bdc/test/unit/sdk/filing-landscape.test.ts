@@ -188,7 +188,7 @@ function openFixture(): DatabaseClient<BDCDatabase> {
 describe("filingLandscape — Gate 1: contract conformance", () => {
 	it("reads a manifest whose spine is res-9 h3, and stores h3_cell byte-compatible with shortCellToInt(latLngToCell(...))", async () => {
 		using db = openFixture()
-		const contractDB = db as unknown as Kysely<LayerContractDatabase>
+		const contractDB = db
 
 		const manifest = await readLayerManifest(contractDB)
 		expect(manifest.spineKeys.h3?.resolution).toBe(9)
@@ -212,7 +212,7 @@ describe("filingLandscape — Gate 1: contract conformance", () => {
 describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 	it("reports a geoid absent from the fixture in unknown_block_count, never as a zero-filing claim", async () => {
 		using db = openFixture()
-		const contractDB = db as unknown as Kysely<LayerContractDatabase>
+		const contractDB = db
 
 		// Independent honesty check on the fixture: an area NEVER fed to the builder carries no
 		// coverage row at all — proves the "absence" below is real, not an artifact of the query.
@@ -276,7 +276,7 @@ describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing,
 
 		const sfCoverageCell = res9ShortCellToRes6Parent(sfRow.h3_cell)
 
-		const contractDB = writable as unknown as Kysely<LayerContractDatabase>
+		const contractDB = writable
 		// Sanity: the builder DID write this coverage row, at the cell the reader derives — deleting it below is a
 		// deliberate corruption, not a pre-existing gap.
 		expect(await readLayerCoverage(contractDB, sfCoverageCell)).toBeDefined()
@@ -318,7 +318,7 @@ describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing,
 describe("filingLandscape — builder/reader coverage-cell unification", () => {
 	it("agrees with the builder's coverage cell even at a point where the two derivations used to disagree", async () => {
 		using db = openFixture()
-		const contractDB = db as unknown as Kysely<LayerContractDatabase>
+		const contractDB = db
 
 		const row = await db
 			.selectFrom("bdc_availability")
@@ -430,7 +430,7 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 		expect(existsSync(corruptOut)).toBe(true)
 
 		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
-		await (writable as unknown as Kysely<LayerContractDatabase>).deleteFrom("layer_manifest").execute()
+		await writable.deleteFrom("layer_manifest").execute()
 
 		await expect(filingLandscape(writable, { geoids: [GEOID_SF] })).rejects.toThrow(/manifest/)
 	})

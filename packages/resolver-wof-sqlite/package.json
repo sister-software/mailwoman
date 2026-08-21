@@ -291,6 +291,16 @@
 			"node": "./street-name-lookup.ts",
 			"default": "./out/street-name-lookup.js",
 			"types": "./out/street-name-lookup.d.ts"
+		},
+		"./convention-schema": {
+			"node": "./convention-schema.ts",
+			"default": "./out/convention-schema.js",
+			"types": "./out/convention-schema.d.ts"
+		},
+		"./polygon-schema": {
+			"node": "./polygon-schema.ts",
+			"default": "./out/polygon-schema.js",
+			"types": "./out/polygon-schema.d.ts"
 		}
 	},
 	"publishConfig": {

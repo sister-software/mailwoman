@@ -161,6 +161,80 @@ function calledMethod(node: AstNode): string | null {
 	return callee.property?.type === "Identifier" ? (callee.property.name ?? null) : null
 }
 
+/**
+ * Type names whose whole purpose is to carry a database schema.
+ */
+const DATABASE_HANDLE_TYPES = new Set(["DatabaseClient", "Kysely", "Transaction"])
+
+/**
+ * The type name of a cast's target, when the target is a plain (possibly generic) type reference.
+ */
+function castTargetName(node: AstNode): string | null {
+	const annotation = node.typeAnnotation
+
+	if (annotation?.type !== "TSTypeReference") return null
+
+	return annotation.typeName?.type === "Identifier" ? (annotation.typeName.name ?? null) : null
+}
+
+const noDatabaseHandleCastRule: Rule = {
+	meta: {
+		name: "no-database-handle-cast",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			TSAsExpression(node: AstNode) {
+				const name = castTargetName(node)
+
+				if (!name || !DATABASE_HANDLE_TYPES.has(name)) return
+
+				context.report({
+					node,
+					message:
+						`Do not cast a database handle to \`${name}<…>\`. Kysely is INVARIANT in its schema parameter, so a ` +
+						"handle over a schema that EXTENDS the one a helper wants is not assignable to it — but the " +
+						"incompatibility lives in `transaction()` and `with()`, which such helpers do not call. Narrow the " +
+						'HELPER\'S PARAMETER to the members it actually uses (`Pick<Kysely<Schema>, "insertInto" | "schema" ' +
+						'| "selectFrom">`) and the caller passes its own handle with no cast at all; `LayerContractHandle` ' +
+						"in `@mailwoman/core/layers` is the worked example. A cast here does not skip one check — it disarms " +
+						"every column-level guarantee those tables carry, branded normalization keys included.",
+				})
+			},
+		}
+	},
+}
+
+const requireDatabaseSchemaArgumentRule: Rule = {
+	meta: {
+		name: "require-database-schema-argument",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			NewExpression(node: AstNode) {
+				const callee = node.callee
+
+				if (callee?.type !== "Identifier" || !DATABASE_HANDLE_TYPES.has(callee.name ?? "")) return
+
+				if (node.typeArguments?.params?.length) return
+
+				context.report({
+					node,
+					message:
+						`\`new ${callee.name}(…)\` without a schema type argument falls back to the EMPTY schema ` +
+						"(`Record<string, never>`), so every table name is `never` and the next writer reaches for a cast in " +
+						"order to compile. Pass the artifact's own `Database` interface. If none exists, declare it beside " +
+						"the reader together with its `createXTable` builder, so a column added to one is a compile error " +
+						"against the other.",
+				})
+			},
+		}
+	},
+}
+
 const noDatabaseBoundaryCastRule: Rule = {
 	meta: {
 		name: "no-database-boundary-cast",
@@ -224,7 +298,9 @@ const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
+		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"prefer-spliterator": preferSpliteratorRule,
+		"require-database-schema-argument": requireDatabaseSchemaArgumentRule,
 		"require-disable-reason": requireDisableReasonRule,
 	},
 }

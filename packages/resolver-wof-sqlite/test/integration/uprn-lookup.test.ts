@@ -56,7 +56,7 @@ beforeAll(async () => {
 
 	const db = new DatabaseSync(databasePath)
 	const kdb = new DatabaseClient<UPRNDatabase>({ database: db })
-	const contract = kdb as unknown as DatabaseClient<LayerContractDatabase>
+	const contract = kdb
 
 	await createUPRNTable(kdb)
 	await createLayerManifestTable(contract)
