@@ -35,8 +35,10 @@ import { resolve } from "node:path"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
+	linkForce,
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
+	removeIfPresent,
 	warnIfFSTStale,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
@@ -54,38 +56,6 @@ const PKG_DIR = workspacePath("neural-weights-fr-fr")
 const DEST_DIR = String(weightsOverlayPath("fr-fr"))
 
 mkdirSync(DEST_DIR, { recursive: true })
-
-/**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers (weights.test.ts + every other suite
- * resolving weights on the lab runners) can hit mid-suite — bit CI on 2026-07-24 (v1-parse-gate: "missing model files"
- * while the materialize step had verifiably succeeded). rename(2) replaces the destination atomically.
- */
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
-
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
-
-/**
- * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
- */
-function removeIfPresent(dest: string): void {
-	try {
-		lstatSync(dest)
-	} catch {
-		return
-	}
-
-	unlinkSync(dest)
-
-	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
-}
 
 removeIfPresent(resolve(DEST_DIR, "model.onnx"))
 removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))

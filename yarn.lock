@@ -4876,6 +4876,7 @@ __metadata:
   resolution: "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -4894,6 +4895,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
 

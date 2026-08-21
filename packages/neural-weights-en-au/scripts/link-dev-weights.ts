@@ -34,6 +34,7 @@ import { existsSync, lstatSync, mkdirSync, renameSync, symlinkSync, unlinkSync }
 import { resolve } from "node:path"
 
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { linkForce, removeIfPresent } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
@@ -49,37 +50,6 @@ const PKG_DIR = workspacePath("neural-weights-en-au")
 const DEST_DIR = String(weightsOverlayPath("en-au"))
 
 mkdirSync(DEST_DIR, { recursive: true })
-
-/**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers can hit mid-suite — bit CI on 2026-07-24.
- * rename(2) replaces the destination atomically.
- */
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
-
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
-
-/**
- * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
- */
-function removeIfPresent(dest: string): void {
-	try {
-		lstatSync(dest)
-	} catch {
-		return
-	}
-
-	unlinkSync(dest)
-
-	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
-}
 
 removeIfPresent(resolve(DEST_DIR, "model.onnx"))
 removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))

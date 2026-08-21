@@ -60,7 +60,12 @@ import { resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { pairIndexStaleReason, peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import {
+	linkForce,
+	pairIndexStaleReason,
+	peekPairIndexHeaderFields,
+	removeIfPresent,
+} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
  * Hex characters in an md5 digest.
@@ -81,38 +86,6 @@ const PKG_DIR = workspacePath("neural-weights-en-nz")
 const DEST_DIR = String(weightsOverlayPath("en-nz"))
 
 mkdirSync(DEST_DIR, { recursive: true })
-
-/**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers (weights.test.ts + every other suite
- * resolving weights on the lab runners) can hit mid-suite — bit CI on 2026-07-24 (v1-parse-gate: "missing model files"
- * while the materialize step had verifiably succeeded). rename(2) replaces the destination atomically.
- */
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
-
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
-
-/**
- * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
- */
-function removeIfPresent(dest: string): void {
-	try {
-		lstatSync(dest)
-	} catch {
-		return
-	}
-
-	unlinkSync(dest)
-
-	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
-}
 
 /**
  * Read or compute MD5 hash for a file, using a sidecar .md5 cache to avoid re-hashing large files. The sidecar is
