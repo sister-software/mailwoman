@@ -30,8 +30,8 @@ import type { Observation } from "./reliability.ts"
  * What to do with a produced component the truth row never mentions.
  *
  * `exclude` (default) keeps it out of the curve and counts it separately — correct whenever truth is PARTIAL, which is
- * every corpus wired here. `wrong` grades it as an error, correct only against complete truth; choosing it on a partial
- * corpus measures the rule rather than the model.
+ * every corpus wired here. `wrong` grades it as an error, correct only against COMPLETE truth; on a partial corpus it
+ * measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
 	Exclude: "exclude",
@@ -109,13 +109,11 @@ export interface EngineLike {
  * harness's own rule — `componentMatches`, exact case-folded equality, SHARED rather than re-typed, because a local
  * copy of the correctness rule is how a calibration number quietly stops describing what the board describes.
  *
- * A produced tag the truth row does not mention is NOT graded by default, and this is the decision the measurement
- * turns on. The tempting rule is the strict one — predicting a component that should not exist is exactly the error a
- * calibrated confidence must not hide — and it is correct only against COMPLETE truth. No corpus wired here carries
- * that. Measured 2026-08-21: the regression board asserts a median of ONE component key per row (534 of 591 rows carry
- * any, max 8), golden a median of 4 and parity a median of 2, against the ~7 keys a full US address has. Under the
- * strict rule a board row asserting `locality` grades six correctly-parsed components as hallucinations, which is what
- * put a 120-row decode curve at accuracy 0.238 in its top confidence bin — a number about the rule, not the model.
+ * A produced tag the truth row does not mention is NOT graded by default. The strict reading — predicting a component
+ * that should not exist is exactly the error a calibrated confidence must not hide — holds only against COMPLETE truth,
+ * and no corpus wired here carries it: the regression board asserts a median of ONE component key per row (534 of 591
+ * rows assert any, max 8), golden a median of 4 and parity a median of 2, against the ~7 keys a full US address has. On
+ * truth that partial, a row asserting `locality` alone would grade six correctly-parsed components as hallucinations.
  *
  * So the unasserted tags are counted as their own cohort rather than folded in or thrown away: a reader asking the
  * hallucination question can see how much confidence rides on unverified components without that mass setting the

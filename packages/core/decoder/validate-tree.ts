@@ -30,8 +30,11 @@ import type { AddressNode, AddressTree } from "./types.ts"
 /**
  * Tags that cannot stand alone: each is a sub-component of a specific structural anchor (street / locality / venue /
  * postcode). If none of a tag's allowed parents appear anywhere in the tree, the node is an orphan fragment.
+ *
+ * This set is also the DENOMINATOR of the stranded-dependent check — the classes that CAN fire — so a caller counting
+ * which ones do reads it here rather than re-listing the tags, which would drift the moment one is added.
  */
-const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
+export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"street_prefix",
 	"street_prefix_particle",
 	"street_suffix",

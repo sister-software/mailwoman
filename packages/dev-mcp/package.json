@@ -55,6 +55,16 @@
 			"default": "./out/compare.js",
 			"types": "./out/compare.d.ts"
 		},
+		"./contract-census": {
+			"node": "./contract-census.ts",
+			"default": "./out/contract-census.js",
+			"types": "./out/contract-census.d.ts"
+		},
+		"./contract-report": {
+			"node": "./contract-report.ts",
+			"default": "./out/contract-report.js",
+			"types": "./out/contract-report.d.ts"
+		},
 		"./engine-registry": {
 			"node": "./engine-registry.ts",
 			"default": "./out/engine-registry.js",

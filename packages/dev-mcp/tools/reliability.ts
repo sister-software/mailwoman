@@ -78,9 +78,8 @@ export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 			.describe(
 				"`decode` only — what to do with a produced component no truth row mentions. `exclude` counts it in a " +
 					"separate cohort; `wrong` grades it as a hallucination, which is sound ONLY against a corpus asserting " +
-					"every component. None wired here does: measured 2026-08-21, the board asserts a median of ONE key per " +
-					"row, golden 4, parity 2, against the ~7 a full US address has. Choosing `wrong` on those measures the " +
-					"rule — it put a 120-row board curve at accuracy 0.238 in its top confidence bin."
+					"every component. None wired here does — the board asserts a median of ONE key per row, golden 4, parity " +
+					"2, against the ~7 a full US address has — so on these corpora `wrong` measures the corpus, not the model."
 			),
 		limit: z.number().int().positive().optional().describe("`decode` only — first N rows of the resolved set."),
 	}),

@@ -87,10 +87,8 @@ export async function runReliability(registry: EngineRegistry, args: Record<stri
 	const overall = reliabilityCurve(sample.observations, binCount)
 	const gate = thresholdTable(sample.observations, thresholds)
 
-	// The error classes are read at the FIRST threshold whose precision is the kind of number someone would ship on.
-	// Reading them at a fixed 0.9 was the scratchpad's choice and is wrong for a surface whose useful gate sits
-	// elsewhere; reading them at the caller's highest threshold would report the classes a gate nobody would set lets
-	// through.
+	// Read at the lowest threshold that admits anything, so the classes describe a gate someone could actually set. A
+	// threshold admitting nothing has no admitted errors to rank, which reads as a clean confusion matrix.
 	const gateForClasses = gate.find((row) => row.admitted > 0)?.threshold ?? thresholds[0] ?? 0
 
 	const reading = describeObservedRate({

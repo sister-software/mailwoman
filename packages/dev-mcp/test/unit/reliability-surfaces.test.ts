@@ -7,9 +7,8 @@
  *
  *   Three decisions in this fold are silent when wrong and change the resulting curve: which tokens count toward a
  *   component's confidence, how they are folded to one number, and what happens to a component the truth row never
- *   mentions. The last one has a tempting wrong answer in BOTH directions — grade it wrong and a partial-truth corpus
- *   scores correct output as hallucination; drop it silently and the curve covers a fraction of the parse without
- *   saying so — which is why it is reported as its own cohort and pinned here.
+ *   mentions. The last has a wrong answer in BOTH directions — grade it wrong and a partial-truth corpus scores correct
+ *   output as hallucination; drop it silently and the curve covers a fraction of the parse without saying so.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -63,9 +62,8 @@ describe("decodeReliabilitySample", () => {
 	}
 
 	it("keeps a produced tag the truth row never mentions OUT of the curve, and counts it", async () => {
-		// The measured reason (2026-08-21): no wired corpus asserts every component — the board asserts a median of one
-		// key per row. Grading the unasserted ones as hallucinations put a 120-row board curve at 0.238 accuracy in its
-		// top bin, which described the rule and not the model.
+		// No wired corpus asserts every component — the board asserts a median of one key per row — so an unasserted
+		// tag is not evidence of a hallucination, and curving it as one measures the corpus.
 		const sample = await decodeReliabilitySample(stubEngine(WITH_UNASSERTED), [ROW], ComponentAggregate.Min)
 
 		expect(sample.observations.map((observation) => observation.strata["tag"])).toEqual(["street"])
@@ -74,8 +72,7 @@ describe("decodeReliabilitySample", () => {
 	})
 
 	it("grades it as WRONG only when the caller asks for the strict rule", async () => {
-		// The strict rule stays reachable for a corpus that genuinely asserts every component; it is the DEFAULT that
-		// was wrong, not the option.
+		// The strict rule is sound against a corpus that genuinely asserts every component, so it stays reachable.
 		const sample = await decodeReliabilitySample(
 			stubEngine(WITH_UNASSERTED),
 			[ROW],
@@ -87,7 +84,7 @@ describe("decodeReliabilitySample", () => {
 
 		expect(venue?.correct).toBe(false)
 		expect(venue?.confidence).toBeCloseTo(0.95, 10)
-		// The cohort is inside `observations` now, so a separate count would double-report it.
+		// Under this policy the cohort lives inside `observations`, so a separate count would double-report it.
 		expect(sample.unasserted).toBeNull()
 	})
 
