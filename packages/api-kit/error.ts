@@ -36,6 +36,14 @@ export function errorResponse<S extends ContentfulStatusCode>(c: Context, status
 const GEOCODER_UNAVAILABLE_DETAIL =
 	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
-export function geocoderUnavailableError(c: Context) {
-	return errorResponse(c, 503, "geocoder unavailable", GEOCODER_UNAVAILABLE_DETAIL)
+/**
+ * The "engine method absent" 503, for the engine method the route actually needed.
+ *
+ * `subject` is a WIRE VALUE, not a label. `<subject> not available` is published verbatim in the HTTP API reference
+ * table and in the docker deploy guide, so a caller branching on it is doing what the docs told them to — and
+ * `/v1/resolve` answers `resolver`, not `geocoder`, because the method it found missing is `engine.resolveTree`. Rename
+ * this function freely; never the string it emits.
+ */
+export function geocoderUnavailableError(c: Context, subject: "geocoder" | "resolver" = "geocoder") {
+	return errorResponse(c, 503, `${subject} not available`, GEOCODER_UNAVAILABLE_DETAIL)
 }

@@ -353,6 +353,17 @@ jobs:
       - name: Compile
         run: yarn compile
 
+      # `@mailwoman/dev-mcp`'s symbol index shells out to ripgrep, which is NOT on the hosted image —
+      # `symbol-index`, `symbol-tool` and `symbol-precheck` failed with
+      # `ripgrep (rg) is not on PATH, so the declaration search did not run.` on every PR.
+      #
+      # Installed rather than skipped. That guard exists because an unrunnable searcher returning ""
+      # reads as "this symbol has no home", which is the answer the tool is for — so a runner without
+      # ripgrep must not quietly pass the suite that proves the guard works. The lab fleet already has
+      # it, which is why this only ever failed on the hosted leg.
+      - name: Install ripgrep (dev-mcp symbol index)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+
       # No weights materialization — this leg excludes every suite that loads the model or
       # hits a WOF DB (neural/test/**, mailwoman/test/**, resolver-wof-sqlite/**,
       # evidence-lexicons, geocode CLI). The 313-file sweep finishes in ~15s; suite-only
