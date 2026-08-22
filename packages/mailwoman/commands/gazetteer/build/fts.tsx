@@ -13,7 +13,8 @@ import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
-import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

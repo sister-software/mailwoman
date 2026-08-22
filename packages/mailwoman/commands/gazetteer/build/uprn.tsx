@@ -19,7 +19,8 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -43,7 +44,7 @@ interface Options {
 const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { repoRootPath } = await import("@mailwoman/core/utils")
-		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
+		const { artifactSizeMB } = await import("#gazetteer-pipeline")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")
 		const { buildUPRNLayer, OPEN_UPRN_COVERAGE_NOTE } = await import("#gazetteer/uprn-layer")
 

@@ -17,8 +17,9 @@
 import { execFileSync } from "node:child_process"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "mailwoman/gazetteer-pipeline/poi/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -44,7 +45,7 @@ interface Options {
 const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildBrandTable, defaultBrandTableOutPath, defaultPOIDatabasePath, writeBrandTable } =
-			await import("mailwoman/gazetteer-pipeline/poi/build-brands")
+			await import("#gazetteer-pipeline/poi/build-brands")
 
 		const dbPath = options.db ?? defaultPOIDatabasePath()
 		const out = options.out ?? defaultBrandTableOutPath()

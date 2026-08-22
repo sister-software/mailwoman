@@ -12,12 +12,9 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import {
-	DEFAULT_CANDIDATE_OUT,
-	DEFAULT_FOLD_COUNTRIES,
-	DEFAULT_IMPORTANCE_DB,
-} from "mailwoman/gazetteer-pipeline/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -60,7 +57,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			resolveImportanceDB,
 			resolvePostcodeShards,
 			wofDir,
-		} = await import("mailwoman/gazetteer-pipeline")
+		} = await import("#gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)

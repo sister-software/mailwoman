@@ -33,8 +33,9 @@ import { dirname, join } from "node:path"
 
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import type { PostcodePrefixLevel } from "mailwoman/gazetteer-pipeline/postcode-prefix"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode-prefix"
 
 /**
  * Read-only mode bits for the finished artifact — the same seal `sealDatabase` puts on a built database. A prefix index
@@ -137,7 +138,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 		const { PostcodePrefixIndexResolver, serializePostcodePrefixIndex } =
 			await import("@mailwoman/neural/postcode-prefix-index")
 
-		const { buildPostcodePrefixIndex } = await import("mailwoman/gazetteer-pipeline/postcode-prefix")
+		const { buildPostcodePrefixIndex } = await import("#gazetteer-pipeline/postcode-prefix")
 
 		const shard = args[0] as ShardName
 		const recipe: ShardRecipe = SHARD_RECIPES[shard]

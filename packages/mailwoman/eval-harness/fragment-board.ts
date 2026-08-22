@@ -35,6 +35,8 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
+import { flattenNodes } from "./flatten-nodes.ts"
+
 /**
  * Fixture set backing the fragment board — bare-street and partial-address probes.
  */
@@ -90,23 +92,6 @@ export function wilson(successes: number, total: number, z = 1.96): { low: numbe
 	return { low: Math.max(0, (centre - spread) / denom), high: Math.min(1, (centre + spread) / denom) }
 }
 
-function flatten(nodes: ReadonlyArray<{ tag: string; value: string; start: number; children?: unknown }>): Array<{
-	tag: string
-	value: string
-	start: number
-}> {
-	const out: Array<{ tag: string; value: string; start: number }> = []
-	const stack = [...nodes]
-
-	while (stack.length) {
-		const node = stack.pop() as { tag: string; value: string; start: number; children?: never[] }
-		out.push(node)
-		stack.push(...((node.children ?? []) as never[]))
-	}
-
-	return out
-}
-
 export async function runFragmentBoard(options: FragmentBoardOptions = {}): Promise<FragmentBoardOutcome> {
 	const fixtures = (
 		await Array.fromAsync(JSONSpliterator.fromAsync<FragmentFixture>(options.fixturesPath ?? FRAGMENT_BOARD_FIXTURES))
@@ -132,7 +117,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 
-		const street = flatten(tree.roots)
+		const street = flattenNodes(tree.roots)
 			.filter((node) => STREET_TAGS.has(node.tag))
 			.toSorted((a, b) => a.start - b.start)
 			.map((node) => node.value)

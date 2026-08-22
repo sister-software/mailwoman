@@ -46,6 +46,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
+import { flattenNodes } from "./flatten-nodes.ts"
 import { wilson } from "./fragment-board.ts"
 
 /**
@@ -79,24 +80,6 @@ export interface DigitBoardOutcome {
 
 const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-function flatten(nodes: ReadonlyArray<{ tag: string; value: string; start: number; children?: unknown }>): Array<{
-	tag: string
-	value: string
-	start: number
-}> {
-	const out: Array<{ tag: string; value: string; start: number }> = []
-	const stack = [...nodes]
-
-	while (stack.length) {
-		const node = stack.pop() as { tag: string; value: string; start: number; children?: never[] }
-
-		out.push(node)
-		stack.push(...((node.children ?? []) as never[]))
-	}
-
-	return out
-}
-
 const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
 	nodes
 		.filter((n) => n.tag === tag)
@@ -127,7 +110,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 
-		const nodes = flatten(tree.roots)
+		const nodes = flattenNodes(tree.roots)
 		const hn = tagText(nodes, "house_number")
 		const pc = tagText(nodes, "postcode")
 

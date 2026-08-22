@@ -42,8 +42,25 @@ function emptyCounters(): DebtCounters {
 	}
 }
 
+/**
+ * Unwrap the array/readonly/parenthesized wrappers a cast target can carry, so the check sees the type the author
+ * actually named. `x as never[]` is an `ArrayTypeNode` whose element is the keyword, and it is exactly as unchecked as
+ * the bare form.
+ */
+function unwrapTypeNode(type: ts.TypeNode): ts.TypeNode {
+	if (ts.isArrayTypeNode(type)) return unwrapTypeNode(type.elementType)
+
+	if (ts.isParenthesizedTypeNode(type)) return unwrapTypeNode(type.type)
+
+	if (ts.isTypeOperatorNode(type) && type.operator === ts.SyntaxKind.ReadonlyKeyword) {
+		return unwrapTypeNode(type.type)
+	}
+
+	return type
+}
+
 function isNeverCast(node: ts.Node): boolean {
-	return ts.isAsExpression(node) && node.type.kind === ts.SyntaxKind.NeverKeyword
+	return ts.isAsExpression(node) && unwrapTypeNode(node.type).kind === ts.SyntaxKind.NeverKeyword
 }
 
 function isUnknownCast(node: ts.Node): node is ts.AsExpression {
@@ -154,7 +171,7 @@ function trackedSourcePaths(): string[] {
 		.split("\0")
 		.filter((relativePath) => relativePath.length > 0)
 		.filter((relativePath) => TRACKED_ROOTS.some((prefix) => relativePath.startsWith(prefix)))
-		.filter((relativePath) => !/(?:^|\/)(?:out|build|node_modules)\//.test(relativePath))
+		.filter((relativePath) => !/(?:^|\/)(?:out|node_modules)\//.test(relativePath))
 		.filter((relativePath) => !relativePath.endsWith(".d.ts"))
 		.map((relativePath) => resolve(root, relativePath))
 }

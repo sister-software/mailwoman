@@ -35,7 +35,8 @@ import { DatabaseSync } from "node:sqlite"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/core/kysley/client"
 import type { FilerDatabase } from "@mailwoman/filer"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -69,7 +70,7 @@ interface Options {
 
 const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline/admin")
+		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 
 		const {
 			BDCFileCategory,

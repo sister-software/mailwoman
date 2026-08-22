@@ -20,7 +20,8 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -43,7 +44,7 @@ interface Options {
 
 const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
+		const { artifactSizeMB } = await import("#gazetteer-pipeline")
 
 		const { buildPostcodeNIOSM, NI_LIVE_POSTCODES, NI_TOTAL_DISTRICTS, NI_TOTAL_SECTORS } =
 			await import("#gazetteer/postcode/ni-osm-shard")

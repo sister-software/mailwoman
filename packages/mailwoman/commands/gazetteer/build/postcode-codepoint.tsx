@@ -16,7 +16,8 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -42,7 +43,7 @@ interface Options {
 
 const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline")
+		const { artifactSizeMB } = await import("#gazetteer-pipeline")
 		const { buildPostcodeCodePoint } = await import("#gazetteer/postcode/codepoint-shard")
 
 		const result = await buildPostcodeCodePoint({

@@ -24,9 +24,10 @@
 import { execFileSync } from "node:child_process"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import type { BBox, POISourceRow } from "mailwoman/gazetteer-pipeline/poi/build-poi"
-import { DEFAULT_RELEASE } from "mailwoman/gazetteer-pipeline/poi/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import type { BBox, POISourceRow } from "#gazetteer-pipeline/poi/build-poi"
+import { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
@@ -86,12 +87,11 @@ function parseBBoxFlag(raw: string): BBox {
 
 const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("mailwoman/gazetteer-pipeline/admin")
+		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { LayerTier } = await import("@mailwoman/core/layers")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
-		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } =
-			await import("mailwoman/gazetteer-pipeline/poi/build-poi")
+		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer-pipeline/poi/build-poi")
 
 		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 

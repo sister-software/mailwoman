@@ -13,7 +13,8 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -35,7 +36,7 @@ interface Options {
 const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { artifactSizeMB, buildAdmin, buildCandidate, DEFAULT_CANDIDATE_OUT, resolvePostcodeShards, wofDir } =
-			await import("mailwoman/gazetteer-pipeline")
+			await import("#gazetteer-pipeline")
 
 		console.error("▸ build admin (staging)")
 
