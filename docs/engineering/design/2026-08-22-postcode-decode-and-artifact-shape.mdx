@@ -7,8 +7,12 @@ status: design-note
 
 # Postcode decode as encoded intent
 
-**Status: design note (2026-08-22). No implementation. Every number below is reproducible from the
-scripts named in the appendix.**
+**Status: design note (2026-08-22), UPDATED the same night after the implementation run. Every number
+below is reproducible from the scripts named in the appendix.**
+
+Four of the questions this note left open have since been answered, and one of its recommendations
+was measured wrong. See [What the implementation run settled](#what-the-implementation-run-settled)
+before acting on anything above it.
 
 Related: [#1773](https://github.com/sister-software/mailwoman/issues/1773) (the grader bug that
 started this), `packages/neural/postcode-prefix-index.ts` (PFX1, the artifact), `pfx1.ksy` (its
@@ -61,10 +65,14 @@ for GB and wrong for FR, where a five-digit zone is coarser than the commune ins
 root of #1773 and is worth stating as a rule: **a global placetype scale cannot answer a
 per-address-system question.**
 
+The rule turned out to have a second edge, sharper than the first. The _ladder_ is per-address-system
+too, and it was holding one arm as a global default — see
+[finding 6](#6-the-ladders-locality-first-arm-is-a-per-country-claim).
+
 The US is the awkward case because it straddles three levels at once — 5-digit ZIP (area), Unique ZIP
 (one organization), ZIP+4 (one side of a street).
 
-## Five findings, measured
+## Five findings, measured — the first pass
 
 ### 1. There is no postcode parentage to consult
 
@@ -157,7 +165,101 @@ Whole run: 2.4 seconds. The 38% locality miss is a polygon gap — only 45,113 o
 carry geometry — not a PIP failure. `localadmin` returning _Capital Township_ confirms locality is the
 rung to aim at, with county as the honest fallback.
 
+## What the implementation run settled
+
+Everything above this line is the note as first written. Below is what building it found, including
+the place where the note above is wrong.
+
+### 6. The ladder's locality-first arm is a per-country claim
+
+The note framed the granularity spectrum as a problem for `PLACETYPE_SPECIFICITY`. It is also a
+problem for the ladder, which had two arms and was using one of them as a global default. Whether a
+postal zone is coarser than its locality is a fact about a country's **administrative** geography, and
+code length does not predict it — FR and DE are both 5-digit and disagree.
+
+Coordinate p50, locality-first against the postcode point, OpenAddresses panels through the
+production result assembly:
+
+| panel |  rows | locality-first | postcode point | verdict                                         |
+| ----- | ----: | -------------: | -------------: | ----------------------------------------------- |
+| DE    | 2,997 |        5.84 km |    **1.24 km** | postcode, on **every** percentile incl. p99     |
+| FR    | 3,000 |    **0.97 km** |        2.64 km | locality, closer on 77.5% of rows               |
+| IT    | 2,833 |    **1.34 km** |        3.05 km | locality, closer on 66.4%                       |
+| ES    | 2,929 |    **0.68 km** |        0.97 km | locality, but 46.1% of rows prefer the postcode |
+| US    |   577 |    **2.28 km** |        4.15 km | locality — see below                            |
+
+DE shipped as `AREA_POSTCODE_FINER_THAN_LOCALITY` (#1780). Its within-5-km population doubles,
+45.1% → 90.4%.
+
+### 7. The US row is 577 and not 10,000, and that difference nearly flipped a locale
+
+The US rooftop cascade is US-only **by construction** — `selectAddressPointsDB` composes
+`address-points-us-<slug>.db` — and it serves 94.2% of US queries:
+
+```
+result tier:  address_point 8,434   interpolated 989   admin 577
+```
+
+So only 577 panel rows reach an admin decision at all, and they are the rows no rooftop or
+interpolation shard could place: rural, sparsely covered, exactly where a locality centroid sits close
+and a ZIP zone is wide. Graded over all 10,000 the US reads as a postcode-first country (2.41 vs
+3.63 km) — **a selection effect, measured on a population production never sends to the ladder.**
+
+Read finding 5 with this in mind. The SCF tier is real and the PIP result stands, but the US is the
+locale where an admin-tier measurement describes the smallest slice of what users get.
+
+### 8. Canada is two systems, and the code says which
+
+The note listed CA as an open question — _"The blocker is one number."_ It was two. Measured on 879
+graded rows of the CA rooftop panel through the candidate backend:
+
+| population    | arm            |       p50 |         p90 |     ≤1 km | postcode closer on |
+| ------------- | -------------- | --------: | ----------: | --------: | -----------------: |
+| **732 urban** | locality-first |   2.51 km |     9.53 km |     26.4% |                    |
+|               | postcode-first |  **78 m** |   **373 m** | **94.7%** |          **90.4%** |
+| **114 rural** | locality-first | **929 m** | **5.73 km** | **53.5%** |                    |
+|               | postcode-first |   2.08 km |     8.11 km |     25.4% |              26.3% |
+
+Urban CA is GB's tier — 78 m against GB's 38 m — on a sample fifty times larger than the fifteen rows
+GB was admitted on. Rural CA is a delivery route, not a block face.
+
+Canada Post puts a `0` in the **second position** of a rural forward sortation area, so the code
+carries the answer: `T0H 1M0` is rural, `M1J 1A8` is not. The urban half shipped into
+`UNIT_GRADE_POSTCODE`; the rural half is excluded by that one character.
+
+**The pooled number would have been a trap.** Across both populations CA reads 0.10 km p50, which
+looks like a uniform win and is not one. Gating on the character beats promoting the country
+_measurably_ — the shipped result now beats blanket postcode-first on every percentile (p90 1.88 km
+vs 3.26, ≤1 km 86.2% vs 82.3%), because rural keeps the locality.
+
+### 9. `0,0` is a shard population, not an edge case
+
+144,715 rows across four shipped shards sit on null island — **48,216 of 142,604 JP postcodes, one in
+three** — and `decorateNode` was copying that onto the node, where every `lat != null` guard
+downstream accepts it. Thirteen hand-written `(lat !== 0 || lon !== 0)` comparisons existed to work
+around it, including one three lines above the assignment. Fixed at the seam (#1786): the place still
+resolves and identifies itself, and states that it cannot say where it is.
+
+No shipped CLI path produced a `0,0` answer — the cascade's country-bbox check rejects it — so this
+was a latent hazard with a live mechanism. Where it did cost something is evals: two DE panel rows
+graded **5,776 km** from their own address, moving the panel mean by 3.85 km on both arms.
+
+### 10. A shard named `postcode-*.db` cannot serve `postalcode` queries
+
+`deriveSchemaName` yields `postcode_ca_overture`; the routing tests `startsWith("postalcode_")`.
+"postcode" ≠ "postalcode", so seventeen shards holding 877,397 codes silently return zero hits, and
+`postalcode-geonames-intl.db` — which routes, being spelled right, but carries only `spr` — throws
+mid-query instead. Neither is live (these are build inputs, and the candidate table has all 843,739 CA
+codes at placetype 11), but the first CA measurement of this run reported _"974 of 1,000 rows resolve
+no postcode node"_, which reads as a coverage catastrophe and was a shard-selection artifact. #1791.
+
 ## What the artifact should assert
+
+**Built 2026-08-22 (#1784)** — 915 nodes, 42,313 units, 906 carrying a centroid, median
+`radiusP95Km` 53.56 km, 25,773 bytes. Leave-one-out against the arm a caller otherwise gets, 40,004
+units: SCF centroid p50 **29.9 km** against the region centroid's **154.6 km**, closer on 94.9%. It
+does not meet the GB ≥60%-within-10 km bar (17.7%) and should not — that bar is calibrated for outward
+codes with a 3.24 km median p95 radius.
 
 - **US SCF coordinate + `radiusP95Km`**: buildable now. Median p95 radius **53.7 km** on placed codes
   (p90 110 km), against GB outward's 3.24 km and the US 1-digit band's 662 km. A real tier, and one
@@ -167,7 +269,10 @@ rung to aim at, with county as the honest fallback.
 - **US SCF → locality**: from PIP where a polygon exists, county where it does not, and **nothing**
   where neither does. PFX1 already treats empty ancestry as a legitimate answer.
 
-## Two decisions that block the first artifact
+## Two decisions that block the NEXT artifact
+
+Neither blocked the US SCF index, which shipped as a PFX1 instance rather than a new format. Both
+still stand for whatever comes after it.
 
 ### Decision 1 — id width
 
@@ -214,18 +319,33 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
 
 ## Open questions
 
-- **ZIP currency is unanswerable from the shipped shard.** `is_current = 1` on all 42,319 rows,
+- **Still open. ZIP currency is unanswerable from the shipped shard.** `is_current = 1` on all 42,319 rows,
   `is_deprecated = 0` on all, `is_ceased` set on **all**. `10048` — the World Trade Center ZIP,
   retired in 2001 — is present at `0.0000, 0.0000` and flagged current. 414 rows sit on null island.
 - **The numbering plan is a first-digit witness**, so it catches only cross-band errors. The 0.69%
   PIP disagreement is a floor on the error, not the error.
-- **234 ZIPs (0.56%) fall outside every state polygon.** Coastal-boundary precision, or genuinely
-  offshore? Unmeasured.
-- **Canada.** `UNIT_GRADE_POSTCODE` excludes CA for a stated reason: 843,739 six-character LDU codes
-  would match the shape, but nothing has measured an LDU centroid against rooftop truth. If the LDU is
-  block-face grade as its documentation implies, CA belongs in the unit tier and would lead the admin
-  ladder. The blocker is one number. FSA/LDU maps onto PFX1 unchanged — FSA is the prefix tier
-  (~1,650 nodes, analogous to GB outward), LDU the unit tier.
+- ~~**234 ZIPs (0.56%) fall outside every state polygon.**~~ **ANSWERED — not coastal precision.**
+  Measured by distance to the nearest state boundary vertex: median **1,635 km**, and only 14 of the
+  234 are within 100 km of any boundary at all.
+
+  **220 of 234 carry a territory prefix** — PR, USVI, Guam, American Samoa, the Northern Marianas —
+  which the ZIP numbering plan gives no state band. `96916` sits at `13.2659,144.6892`, 5,036 km from
+  the nearest US state polygon, which is Alaska's. The #1784 build is right to withhold a region for
+  them, and right for the reason it does so rather than by accident.
+
+  The 14 that carry a mainland band split again, and only four are boundary precision: `78565` is
+  0.50 km outside TX on the Rio Grande and `55725` 1.30 km outside MN on the Canadian border. The
+  rest sit in the Pacific — `94157` and `94165`–`94168` share `37.7597,-122.6940`, 9.5 km due west of
+  San Francisco, which is the placeholder-coordinate signature of finding 3 rather than a
+  simplification artifact.
+
+  So a boundary buffer would recover four rows and mislocate two hundred and twenty. Reproduce with
+  `us-zip-outside-states.ts`.
+
+- ~~**Canada.**~~ **ANSWERED** — see [finding 8](#8-canada-is-two-systems-and-the-code-says-which).
+  It was two numbers, not one: urban 78 m, rural 2.08 km. The urban half shipped into the unit tier.
+  FSA/LDU still maps onto PFX1 unchanged — FSA is the prefix tier (~1,650 nodes, analogous to GB
+  outward), LDU the unit tier — and no FSA index has been built.
 - **Feeding the decode back into span confidence.** `postcode_prefix_ancestors` records what a prefix
   asserts, as metadata on a resolved node. Nothing lets it raise or lower confidence that a
   neighbouring span is really a locality. This is the piece that genuinely does not exist, and it is
@@ -236,12 +356,22 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
 All under `scripts/diagnostic/` (gitignored), run against
 `$MAILWOMAN_DATA_ROOT/wof/`:
 
-| Script                                                              | Produces                                   |
-| ------------------------------------------------------------------- | ------------------------------------------ |
-| `postcode-parentage-census.ts`                                      | finding 1                                  |
-| `us-scf-parentage-validity.ts`                                      | finding 2                                  |
-| `us-unique-zip-probe.ts`                                            | finding 3                                  |
-| `us-scf-ranked-states.ts`                                           | finding 4                                  |
-| `us-zip-pip-states.ts`                                              | finding 5, state level                     |
-| `us-zip-pip-locality.ts`                                            | finding 5, locality ladder                 |
-| `us-scf-radius.ts`, `us-scf-outliers.ts`, `us-zip-coord-quality.ts` | the radius tier and the placeholder census |
+| Script                                                              | Produces                                                                             |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `postcode-parentage-census.ts`                                      | finding 1                                                                            |
+| `us-scf-parentage-validity.ts`                                      | finding 2                                                                            |
+| `us-unique-zip-probe.ts`                                            | finding 3                                                                            |
+| `us-scf-ranked-states.ts`                                           | finding 4                                                                            |
+| `us-zip-pip-states.ts`                                              | finding 5, state level                                                               |
+| `us-zip-pip-locality.ts`                                            | finding 5, locality ladder                                                           |
+| `us-scf-radius.ts`, `us-scf-outliers.ts`, `us-zip-coord-quality.ts` | the radius tier and the placeholder census                                           |
+| `us-scf-pfx1-shape.ts`, `us-scf-outlier-probe.ts`                   | what a US SCF PFX1 build contains, before building it                                |
+| `us-scf-tier-value.ts`                                              | the leave-one-out SCF-vs-region comparison                                           |
+| `grader-vs-ladder.ts`                                               | #1773 — the grader's coordinate against production's                                 |
+| `ladder-arm-ab.ts`                                                  | findings 6–8 — both ladder arms on one resolve, `--cascade` for the production tiers |
+| `ca-ldu-grade.ts`                                                   | finding 8 — the CA LDU against rooftop truth, split urban/rural                      |
+
+`ladder-arm-ab.ts` is the one to reach for first. Two flags matter and both change the conclusion
+rather than the precision: `--cascade` decides whether you are measuring the ladder's own population
+or the whole panel (finding 7), and `--candidate-db` decides whether non-FTS shards are reachable at
+all (finding 10).
