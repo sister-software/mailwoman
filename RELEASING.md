@@ -239,8 +239,8 @@ node resolver-wof-sqlite/out/build-candidate-cli.js \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-us.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
   --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-geonames-intl.db \
-  --postcodes /mnt/playpen/mailwoman-data/wof/postcode-ca-overture.db \
-  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postcode-$cc-overture.db; done) \
+  --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-ca-overture.db \
+  $(for cc in at be ch cz dk es fi hr lt lu lv no pl pt si sk; do echo --postcodes /mnt/playpen/mailwoman-data/wof/postalcode-$cc-overture.db; done) \
   --out /mnt/playpen/mailwoman-data/wof/candidate-global.db
 # 2. Bump ADMIN_GAZETTEER_VERSION in docs/src/shared/resources.tsx (the immutable cache needs a fresh URL).
 # 3. Upload to the new path:

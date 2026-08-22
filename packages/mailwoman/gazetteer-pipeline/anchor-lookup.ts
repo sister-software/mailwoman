@@ -382,7 +382,7 @@ export const ANCHOR_PILOT_COUNTRIES = ["DE", "FR", "US"] as const
  * `postalcode-intl.db`, CC-BY 4.0). ORDER IS CENTROID PRIORITY, and the pilot three lead so a 5-digit code that already
  * had a DE/FR/US centroid keeps it verbatim; ES/IT only ever ADD posterior mass and fill placeholders.
  *
- * Not here, and why: **CA** (slot 3) — the built centroids live in `postcode-ca-overture.db`, an Overture-derived
+ * Not here, and why: **CA** (slot 3) — the built centroids live in `postalcode-ca-overture.db`, an Overture-derived
  * artifact (ODbL) that is build-local, not a redistributable training input. **JP** (slot 5) — `postalcode-jp.db`
  * exists, but a JP code is `\d{3}-\d{4}`, whose key form (`1000001`) collides shape-wise with nothing yet in the set
  * and needs its own confound board before it feeds a channel. **NI (`BT`) GB codes** — Code-Point Open carries zero of

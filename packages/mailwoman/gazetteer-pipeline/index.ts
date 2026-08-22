@@ -66,6 +66,14 @@ import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
  * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
+ *
+ * Every member is spelled `postalcode-`, and that is a routing contract rather than a house style. `deriveSchemaName`
+ * (`resolver-wof-sqlite/sharding.ts`) turns the filename into the attached SQL schema name, and
+ * `pickShardsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A shard added
+ * here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then unreachable
+ * to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
+ * `postcode-locality-<cc>.db` family is the deliberate exception and is NOT a member of this list: those hold a
+ * `postcode_locality` relation table and no `spr`, so they are never routed as place shards at all.
  */
 export const DEFAULT_POSTCODE_SHARDS = [
 	"postalcode-us.db",
@@ -96,9 +104,9 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	// (56,075 rows, worst coordinate delta 0).
 	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE,BE`.
 	"postalcode-geonames-tail.db",
-	"postcode-ca-overture.db",
+	"postalcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
-		(cc) => `postcode-${cc}-overture.db`
+		(cc) => `postalcode-${cc}-overture.db`
 	),
 ]
 

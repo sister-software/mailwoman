@@ -6,7 +6,7 @@
  *   Load the curated regression corpus from `cases/<cc>/*.jsonl`.
  *
  *   The corpus was one 3,530-line TS array until 2026-08-05. It is now one JSONL file per ISO-3166 alpha-2
- *   country dir — the per-`cc` layout the gazetteer shard set already uses (`postcode-<cc>-overture.db`) —
+ *   country dir — the per-`cc` layout the gazetteer shard set already uses (`postalcode-<cc>-overture.db`) —
  *   because the array had reached the size where "does GB assert dependent_locality anywhere?" was a scroll
  *   rather than a listing.
  *
@@ -34,7 +34,7 @@ import { TextSpliterator } from "spliterator"
 import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "./seed-case.ts"
 
 /**
- * An ISO-3166 alpha-2 country directory, lowercase — the layout key. Matches `postcode-<cc>-overture.db` in
+ * An ISO-3166 alpha-2 country directory, lowercase — the layout key. Matches `postalcode-<cc>-overture.db` in
  * `gazetteer-pipeline`, which is where the repo's per-`cc` convention already lives.
  */
 const COUNTRY_DIR = /^[a-z]{2}$/

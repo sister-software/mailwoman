@@ -268,9 +268,10 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		// A shard that carries `spr` is claiming to be a place shard, and every lookup path here reaches
 		// `place_search`. Without it the shard is unusable, and BOTH ways it fails are hard to read: an
 		// unroutable name returns zero hits (indistinguishable from "this country has no places") and a
-		// routable one throws mid-query from deep inside a SELECT. `postcode-ca-overture.db` is the worked
-		// case — 843,739 Canadian postcodes, `spr`-only, and named so that `startsWith("postalcode_")` never
-		// matches it, so `M1J1A8` came back as zero hits rather than as a configuration error.
+		// routable one throws mid-query from deep inside a SELECT. The unroutable half is the worse of the
+		// two: a shard reaches routing only through the name `deriveSchemaName` derives from its FILENAME, so
+		// a file spelled one letter off the placetype it serves answers with nothing while holding every row
+		// that was asked for.
 		//
 		// Shards with no `spr` are exempt by design: `postcode-locality-<cc>.db` carries a relation table and
 		// nothing else, and it is part of the documented default shard list.
