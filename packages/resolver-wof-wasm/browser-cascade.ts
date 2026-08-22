@@ -140,11 +140,16 @@ const WOF_RANK_REGION = 4
  */
 const PIN_RANK: Record<string, number> = {
 	locality: 5,
-	// An AREA-class postcode: below locality, above the locality peers — it still pins a bare-postcode query.
-	postalcode: 4.5,
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
+	// An AREA-class postcode sits below the whole locality TIER, not below `locality` alone. `borough` and `localadmin`
+	// are not peers OF that tier, they ARE it — `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
+	// because a New England civil town is `localadmin` in WOF. Ranked at 4.5 this pinned the postcode on 404 of 2,000 US
+	// panel rows where Node returns the town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon,
+	// VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. It still outranks `county`, so a
+	// bare-postcode query pins.
+	postalcode: 3.5,
 	county: 3,
 	macrocounty: 3,
 	region: 2,
