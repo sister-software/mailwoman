@@ -37,7 +37,7 @@ const withHouseNumber = parity
 
 const syntheticInputs = (await Array.fromAsync(TextSpliterator.fromAsync(SYNTHETIC_PATH)))
 	.map((line) => line.trim())
-	.filter(Boolean)
+	.filter((line) => line.length > 0)
 
 const queries = [...new Set([...withHouseNumber.slice(0, 172), ...syntheticInputs])]
 

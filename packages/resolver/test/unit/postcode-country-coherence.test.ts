@@ -365,7 +365,7 @@ const addressTree = (postcode: string | null, locality: string | null, street = 
 		roots.push(node({ tag: "locality", value: locality }))
 	}
 
-	return { raw: [street, postcode, locality].filter(Boolean).join(" "), roots }
+	return { raw: [street, postcode, locality].filter((part) => part != null && part.length > 0).join(" "), roots }
 }
 
 function nodeByTag(tree: AddressTree, tag: string): AddressNode | undefined {

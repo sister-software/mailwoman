@@ -105,7 +105,12 @@ function stableID(seed: string): number {
  * Nominatim. The `annotations` block is attached by the caller (empty until the annotations layer lands).
  */
 export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
-	const displayName = r.displayName ?? Object.values(r.address).filter(Boolean).join(", ")
+	const displayName =
+		r.displayName ??
+		Object.values(r.address)
+			.filter((value) => typeof value === "string" && value.length > 0)
+			.join(", ")
+
 	const lat = r.lat != null ? String(r.lat) : ""
 	const lon = r.lon != null ? String(r.lon) : ""
 
