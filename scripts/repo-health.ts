@@ -13,9 +13,9 @@ import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { readFile, writeFile } from "node:fs/promises"
 import { relative, resolve } from "node:path"
+import { parseArgs } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
 import ts from "typescript"
 
@@ -217,7 +217,15 @@ for (const path of paths) {
 	}
 }
 
-if (cliArguments().includes("--write-baseline")) {
+// The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`
+// invokes this with `--write-baseline`, and a camelCase key rejects that as an unknown option.
+const { values } = parseArgs({
+	options: {
+		"write-baseline": { type: "boolean", default: false },
+	},
+})
+
+if (values["write-baseline"]) {
 	await writeFile(baselinePath, `${JSON.stringify(counters, null, "\t")}\n`)
 	process.stdout.write(`Updated ${relative(root, baselinePath)}\n`)
 } else {

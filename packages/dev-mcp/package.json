@@ -234,6 +234,11 @@
 			"node": "./worktree-arm.ts",
 			"default": "./out/worktree-arm.js",
 			"types": "./out/worktree-arm.d.ts"
+		},
+		"./symbol-index": {
+			"node": "./symbol-index.ts",
+			"default": "./out/symbol-index.js",
+			"types": "./out/symbol-index.d.ts"
 		}
 	},
 	"dependencies": {

@@ -15,16 +15,16 @@
  *
  *   Usage (label=cacheRoot pairs; label=shipped uses the installed default):
  *     node packages/mailwoman/dev-tools/failure-report.run.ts \
- *       [corpus=golden:<dir>[:N]] [out=docs/articles/evals/competitive-parity/<file>.mdx] [date=YYYY-MM-DD] \
+ *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date YYYY-MM-DD] \
  *       shipped=shipped v257=/abs/scratchpad/v257-cache v261=/abs/scratchpad/v261-cache
  *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) + scratchpad/failure-report.json.
  */
 
 import { readdirSync, writeFileSync } from "node:fs"
 import { basename, resolve } from "node:path"
+import { parseArgs } from "node:util"
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
@@ -132,27 +132,29 @@ interface FixtureFailures {
 	failsByModel: Record<string, { label: string; expected: string; got: string }[]>
 }
 
-const args = cliArguments()
-// `corpus=parity` (default) or `corpus=golden:<dir>[:<sampleN>]`; everything else is a model spec.
-const corpusArg = args.find((a) => a.startsWith("corpus="))?.slice("corpus=".length)
-const RESERVED = ["corpus=", "out=", "date="]
+const { values: flags, positionals } = parseArgs({
+	options: {
+		corpus: { type: "string", short: "c", description: "corpus=parity (default) or corpus=golden:<dir>[:<sampleN>]" },
+		out: { type: "string", short: "o", description: "output MDX path" },
+		date: { type: "string", short: "d", description: "date stamp for the report" },
+	},
+	allowPositionals: true,
+})
 
-const specs = args
-	.filter((a) => !RESERVED.some((k) => a.startsWith(k)))
-	.map((a) => {
-		const [label, root] = a.split("=")
+const specs = positionals.map((a) => {
+	const [label, root] = a.split("=")
 
-		if (!label || !root) throw new Error(`bad spec ${a}; use label=cacheRoot (or label=shipped)`)
+	if (!label || !root) throw new Error(`bad spec ${a}; use label=cacheRoot (or label=shipped)`)
 
-		return { label, root }
-	})
+	return { label, root }
+})
 
 if (!specs.length)
 	throw new Error(
 		"usage: failure-report.run.ts [corpus=golden:<dir>] label=cacheRoot [label2=...] (label=shipped for default)"
 	)
 
-const { fixtures, kind: corpusKind, name: corpusName } = await loadCorpus(corpusArg)
+const { fixtures, kind: corpusKind, name: corpusName } = await loadCorpus(flags.corpus)
 
 async function parseTags(cls: NeuralAddressClassifier, raw: string): Promise<Map<string, string[]>> {
 	const byTag = new Map<string, string[]>()
@@ -266,15 +268,9 @@ writeFileSync("scratchpad/failure-report.json", JSON.stringify({ summary, record
 // MDX-safe: every dynamic cell is backtick-wrapped (angle brackets / braces stay literal in a code
 // span) with pipes + backticks escaped, so an address like "U12/345 <x>" can't break the table or trip
 // the MDX angle-lint. Trades are marked in markdown (**N (+Δ)**), not color.
-const outPath =
-	cliArguments()
-		.find((a) => a.startsWith("out="))
-		?.slice(4) || "docs/articles/evals/competitive-parity/failure-report.mdx"
 
-const stamp =
-	cliArguments()
-		.find((a) => a.startsWith("date="))
-		?.slice(5) || new Date().toISOString().slice(0, 10)
+const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-report.mdx"
+const stamp = flags.date || new Date().toISOString().slice(0, 10)
 
 const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
 const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")

@@ -24,10 +24,10 @@
 
 import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { parseArgs } from "node:util"
 
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -50,7 +50,12 @@ const PROBES: ReadonlyArray<{ system: string; country: string; postcode: string;
 	{ system: "nz", country: "NZ", postcode: "6011", locality: "Wellington" },
 ]
 
-const [backendName] = cliArguments()
+const { positionals } = parseArgs({
+	options: {},
+	allowPositionals: true,
+})
+
+const [backendName] = positionals
 
 if (backendName !== "fts" && backendName !== "candidate") {
 	throw new Error("usage: postcode-coherence-coverage.run.ts <fts|candidate>")

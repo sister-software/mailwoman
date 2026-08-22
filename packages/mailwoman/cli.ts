@@ -16,6 +16,7 @@
  */
 
 import { enableCompileCache, findPackageJSON } from "node:module"
+import { parseArgs } from "node:util"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run. V8's
 // on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s. The cache is
@@ -29,37 +30,38 @@ try {
 // build is 23.5% of the render work in `geocode --debug`'s interactive session: 12.35 ms → 4.25 ms of synchronous
 // main-thread work per keystroke at 120×36. Nothing in the CLI reads React's dev warnings, so production is the right
 // default — `??=` and not `=`, because vitest sets `NODE_ENV=test` and `core/env` models all three values.
-//
-// `@mailwoman/core/env` is the blessed READER of a live view over `process.env`; it has no writer, and importing one
-// here would defeat the point of this file. The `readonly NODE_ENV` in `mailwoman/types/node.d.ts` guards against a
-// library mutating the ambient environment out from under the process — this is the process's own entry point, ahead
-// of the first reader, which is the one place the guard is not aimed at.
-// oxlint-disable-next-line sister-software/no-process-globals -- see above.
-const environment = process.env as { NODE_ENV?: string }
-
-environment.NODE_ENV ??= "production"
+// oxlint-disable-next-line sister-software/no-process-globals -- See above
+process.env.NODE_ENV ??= "production"
 
 // The geocode command's --timing report needs a clock that starts before command dependencies are imported.
 // Keeping the stamp here lets it attribute the otherwise invisible CLI import graph without putting a
 // profiling dependency in this deliberately tiny launcher.
-;(globalThis as { __mailwomanCLIStartedAt?: number }).__mailwomanCLIStartedAt = performance.now()
+globalThis.__mailwomanCLIStartedAt = performance.now()
+
+// `strict: false` is required, not a relaxation: the launcher cannot enumerate the union of every command's flags, and
+// a strict parse rejects the first one it has not heard of — `--json`, `--locale`, `--debug` — before dispatch, which
+// is the whole CLI rather than one command. Unknown options stay in the vector for the command router to interpret.
+const { values, positionals } = parseArgs({
+	options: {
+		help: { type: "boolean", short: "h" },
+		timing: { type: "boolean", short: "t" },
+		version: { type: "boolean", short: "v" },
+	},
+	strict: false,
+	allowPositionals: true,
+})
+
+// A ROOT version request, which is why the positional count is load-bearing: `--version` reached from anywhere in the
+// vector would make the launcher answer `mw geocode --version` itself, swallowing a flag that belongs to the command.
+const rootVersionRequest = values.version === true && !positionals.length
 
 // Give an interactive geocode invocation feedback before its model and resolver graph loads.
-const { cliArguments } = await import("@mailwoman/core/scripting/arguments")
-const launchArguments = cliArguments()
-
 const interactiveGeocode =
-	process.stderr.isTTY === true &&
-	launchArguments[0] === "geocode" &&
-	!launchArguments.includes("--help") &&
-	!launchArguments.includes("-h") &&
-	!launchArguments.includes("--timing")
+	process.stderr.isTTY === true && positionals[0] === "geocode" && !values.help && !values.timing
 
 if (interactiveGeocode) {
 	console.error("[geocode] Loading command…")
 }
-
-const rootVersionRequest = launchArguments.length === 1 && ["--version", "-v"].includes(launchArguments[0]!)
 
 async function printVersion(): Promise<number> {
 	const packageJSONPath = findPackageJSON(import.meta.url)
@@ -91,15 +93,24 @@ function dispatchCommand(): Promise<number> {
 	const runnerModule = import("@mailwoman/core/scripting/command")
 	const routerModule = import("./cli-native/router.ts")
 	const commandRouterModule = import("./cli-native/command-router.ts")
+	const argumentsModule = import("@mailwoman/core/scripting/arguments")
 
-	return Promise.all([runnerModule, routerModule, commandRouterModule]).then(
-		([{ runCLICommand }, { dispatchNativeCommand }, { dispatchCommand: dispatchFilesystemCommand }]) =>
-			runCLICommand(() =>
-				dispatchNativeCommand(launchArguments).then(
-					(exitCode) => exitCode ?? dispatchFilesystemCommand(launchArguments)
-				)
+	return Promise.all([runnerModule, routerModule, commandRouterModule, argumentsModule]).then(
+		([
+			{ runCLICommand },
+			{ dispatchNativeCommand },
+			{ dispatchCommand: dispatchFilesystemCommand },
+			{ cliArguments },
+		]) => {
+			const launchArguments = cliArguments()
+
+			return runCLICommand(() =>
+				dispatchNativeCommand(launchArguments).then((exitCode) => {
+					return exitCode ?? dispatchFilesystemCommand(launchArguments)
+				})
 			).then((exitCode) => exitCode ?? 0)
+		}
 	)
 }
 
-process.exitCode = rootVersionRequest ? await printVersion() : await dispatchCommand()
+process.exitCode = await (rootVersionRequest ? printVersion() : dispatchCommand())

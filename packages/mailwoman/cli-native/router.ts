@@ -7,6 +7,8 @@
  * importing their implementations. A loader is the only edge from the router to a command module.
  */
 
+import type { UnsafeCLIArguments } from "@mailwoman/core/scripting/arguments"
+
 export interface NativeCommandModule {
 	run(args: readonly string[]): Promise<number>
 }
@@ -45,11 +47,11 @@ export const nativeCommandRoutes: Readonly<Record<string, NativeCommandRoute>> =
 /**
  * Dispatch a direct command, or return `undefined` so the caller can try the filesystem command tree.
  */
-export async function dispatchNativeCommand(userArguments: readonly string[]): Promise<number | undefined> {
+export function dispatchNativeCommand(userArguments: UnsafeCLIArguments): Promise<number | void> {
 	const [name, ...args] = userArguments
 	const route = name ? nativeCommandRoutes[name] : undefined
 
-	if (!route) return undefined
+	if (!route) return Promise.resolve()
 
-	return (await route.load()).run(args)
+	return route.load().then((module) => module.run(args))
 }

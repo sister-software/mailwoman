@@ -40,6 +40,7 @@ import { reliabilityTool } from "./reliability.ts"
 import { rigTool } from "./rig.ts"
 import { runTool } from "./run.ts"
 import { runsTool } from "./runs.ts"
+import { symbolTool } from "./symbol.ts"
 import { traceTool } from "./trace.ts"
 import { vocabTool } from "./vocab.ts"
 
@@ -66,6 +67,7 @@ const FACTORIES = [
 	reliabilityTool,
 	rigTool,
 	provenanceTool,
+	symbolTool,
 	vocabTool,
 	runsTool,
 ] as const satisfies ReadonlyArray<(deps: DevToolDeps) => DevTool>

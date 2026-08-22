@@ -40,8 +40,6 @@ import { validatePage } from "./docs-frontmatter-contract.ts"
 import { collectDocPages, type DocPage, isDelegatedWorkstream, isExcludedFromBuild } from "./docs-frontmatter.ts"
 import { allowedDuplicateTitles, allowedOrphans } from "./docs-structure-allowlist.ts"
 
-// parseArgs reads process.argv.slice(2) by default — the blessed pattern (core/scripting/utils'
-// `cliArguments()` docstring): call it bare rather than slicing process.argv ourselves.
 const { values: flags } = parseArgs({
 	options: {
 		strict: { type: "boolean", default: false },
