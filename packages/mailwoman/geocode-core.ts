@@ -55,6 +55,7 @@ import type {
 	Resolver,
 	StreetCentroidLookup,
 } from "@mailwoman/resolver"
+import { adminLadderFor } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
@@ -1464,29 +1465,24 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	}
 
 	if (tier === "admin") {
-		// `postcode` joins the ladder (after the locality tiers, before region): a lone-postcode
-		// query resolves the postcode node itself — without it here the result reported 0,0 despite
-		// a resolved coordinate (found building the proximity-bias feature's 48026 case).
+		// The ordering lives in `@mailwoman/resolver`'s `adminLadderFor`, beside the placetype scale the eval
+		// harnesses sort by, so the two cannot disagree about where a postcode sits without failing a test.
 		//
-		// #977 / #22: EXCEPT when the resolved postcode is an EXACT hit on a UNIT-GRADE code — an NL PC6 or a
-		// GB unit postcode is street-block-class (~8 and ~15 addresses respectively), categorically tighter
-		// than any locality centroid, so it leads the ladder. See {@link isUnitGradePostcodeHit} for the
-		// three-way guard that keeps the locality-first epoch convention (adopted for FR, where 5-digit zone
-		// centroids are COARSER than communes) untouched everywhere else.
-		//
-		// The GB half is what #22 fixed: `29 Brecknock Road, London, N7 0BT` resolved its unit postcode to
-		// 51.5500/-0.1307 — 38 m from the rooftop truth — and the ladder returned the London centroid 5.6 km
-		// away, on all 15 GB rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer
-		// and no lookup failed; the answer was on the tree and this list did not ask for it.
+		// Two constraints this list carries and a reader cannot recover from the ordering alone. `postcode` has to
+		// be ON the ladder at all: a lone-postcode query resolves the postcode node and nothing else, and without
+		// the rung the result reported 0,0 despite a resolved coordinate (the proximity-bias feature's 48026 case).
+		// And a unit-grade hit has to LEAD it: `29 Brecknock Road, London, N7 0BT` resolves its unit postcode to
+		// 51.5500/-0.1307, 38 m from the rooftop truth, against a London centroid 5.6 km away — on all 15 GB
+		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed;
+		// the answer was on the tree and this list did not ask for it.
 		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
 
-		const unitPostcodeExact =
-			pcNode !== undefined &&
-			isUnitGradePostcodeHit(pcNode.value, pcNode.metadata?.["resolver_name"] as string | undefined)
-
-		const adminPriority: ReadonlyArray<string> = unitPostcodeExact
-			? ["postcode", "locality", "dependent_locality", "region", "country"]
-			: ["locality", "dependent_locality", "postcode", "region", "country"]
+		const adminPriority = adminLadderFor(
+			pcNode && {
+				value: pcNode.value,
+				resolverName: pcNode.metadata?.["resolver_name"] as string | undefined,
+			}
+		)
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)

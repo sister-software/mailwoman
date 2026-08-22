@@ -7,14 +7,18 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
+import { mostSpecificResolved } from "@mailwoman/resolver"
 
 /**
  * A resolver-attributed node: the WOF place it landed on, that place's name/placetype, and its coordinate.
+ *
+ * `value` is the PARSED span, kept beside the resolver's own `name` because ranking a `postalcode` needs both — a full
+ * unit shape the resolver answered with a coarser stem is area-grade, whatever the user typed.
  */
 export interface Resolved {
 	id: number
 	name: string
+	value: string
 	placetype: string
 	lat: number
 	lon: number
@@ -66,7 +70,15 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
 			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
 			const name = String(meta?.["resolver_name"] ?? n.value ?? "")
-			out.push({ id: Number(n.placeID.slice(4)), name, placetype, lat: n.lat, lon: n.lon })
+
+			out.push({
+				id: Number(n.placeID.slice(4)),
+				name,
+				value: String(n.value ?? ""),
+				placetype,
+				lat: n.lat,
+				lon: n.lon,
+			})
 		}
 
 		// Multi-role completion (#415/#416): a dual-role region carries extra roles (e.g. `locality`) as
@@ -84,7 +96,15 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 			if (interp.placeID?.startsWith("wof:") && interp.lat !== undefined && interp.lon !== undefined) {
 				const placetype = String(interp.sourceID ?? interp.tag).split(":")[0] ?? ""
 				const name = String(interp.metadata?.["resolver_name"] ?? n.value ?? "")
-				out.push({ id: Number(interp.placeID.slice(4)), name, placetype, lat: interp.lat, lon: interp.lon })
+
+				out.push({
+					id: Number(interp.placeID.slice(4)),
+					name,
+					value: String(n.value ?? ""),
+					placetype,
+					lat: interp.lat,
+					lon: interp.lon,
+				})
 			}
 		}
 
@@ -101,23 +121,14 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 }
 
 /**
- * The deepest resolved place in the set — the one whose coordinate the eval grades. An unranked placetype sorts below
- * every ranked one, so it wins only when nothing else resolved.
+ * The deepest resolved place in the set — the one whose coordinate the eval grades.
+ *
+ * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns. A flat
+ * `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality, which is production's ladder on
+ * ONE arm and its opposite on the other.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
-	let best: Resolved | null = null
-
-	for (const r of rs) {
-		if (
-			!best ||
-			(placetypeSpecificity(r.placetype) ?? Number.NEGATIVE_INFINITY) >
-				(placetypeSpecificity(best.placetype) ?? Number.NEGATIVE_INFINITY)
-		) {
-			best = r
-		}
-	}
-
-	return best
+	return mostSpecificResolved(rs, (r) => ({ placetype: r.placetype, value: r.value, resolverName: r.name }))
 }
 
 /**

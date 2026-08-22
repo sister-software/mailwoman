@@ -1,0 +1,158 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file The two shapes of one ordering must agree.
+ *
+ *   Result assembly walks a TAG ladder; the eval harnesses sort resolved nodes by PLACETYPE. Both are expressing the
+ *   same claim about where a postcode sits, and #1773 is what it cost when they drifted: each harness froze one arm of
+ *   a conditional as a constant, so every grader was right on one half of the data and wrong on the other,
+ *   unconditionally. The binding assertions below are the ones a constant cannot satisfy.
+ */
+
+import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/core/resolver"
+import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
+import {
+	ADMIN_LADDER_LOCALITY_FIRST,
+	ADMIN_LADDER_UNIT_POSTCODE,
+	adminLadderFor,
+	AREA_GRADE_POSTALCODE_SPECIFICITY,
+	mostSpecificResolved,
+	resolvedSpecificity,
+} from "@mailwoman/resolver/admin-winner"
+import { describe, expect, it } from "vitest"
+
+/**
+ * A GB unit postcode the resolver answered with the FULL code — the #22 case.
+ */
+const GB_UNIT = { value: "N7 0BT", resolverName: "n70bt" }
+/**
+ * The same span, coarsened by the resolver to the outward district — AREA-class.
+ */
+const GB_OUTWARD = { value: "N7 0BT", resolverName: "n7" }
+/**
+ * A US ZIP: a full code, and never unit-grade whatever the resolver returns.
+ */
+const US_ZIP = { value: "62701", resolverName: "62701" }
+/**
+ * An NL PC6.
+ */
+const NL_PC6 = { value: "1012 LG", resolverName: "1012LG" }
+
+const rank = (placetype: string, hit?: { value: string; resolverName: string }): number =>
+	resolvedSpecificity({ placetype, ...(hit ? { value: hit.value, resolverName: hit.resolverName } : {}) })
+
+const leads = (ladder: ReadonlyArray<string>, a: string, b: string): boolean => ladder.indexOf(a) < ladder.indexOf(b)
+
+describe("adminLadderFor", () => {
+	it("leads with the postcode only on a unit-grade exact hit", () => {
+		expect(adminLadderFor(GB_UNIT)).toBe(ADMIN_LADDER_UNIT_POSTCODE)
+		expect(adminLadderFor(NL_PC6)).toBe(ADMIN_LADDER_UNIT_POSTCODE)
+		expect(adminLadderFor(GB_OUTWARD)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor(US_ZIP)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor(undefined)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+	})
+
+	it("carries the same rungs on both arms", () => {
+		expect([...ADMIN_LADDER_UNIT_POSTCODE].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
+	})
+})
+
+describe("resolvedSpecificity", () => {
+	it("ranks a unit-grade postcode above every locality tier", () => {
+		expect(rank("postalcode", GB_UNIT)).toBeGreaterThan(rank("locality"))
+		expect(rank("postalcode", NL_PC6)).toBeGreaterThan(rank("locality"))
+	})
+
+	// The tier is the resolver's own `locality` GROUP, not the `locality` placetype: a New England civil town resolves
+	// as `localadmin`, and ranking a ZIP above it puts the postcode point back on exactly those rows.
+	it("ranks an AREA-grade postcode below every member of the locality tier", () => {
+		const tier = PLACETYPE_FILTER_GROUPS["locality"] ?? []
+
+		expect(tier.length).toBeGreaterThan(1)
+
+		for (const hit of [US_ZIP, GB_OUTWARD]) {
+			for (const placetype of tier) {
+				expect(rank("postalcode", hit)).toBeLessThan(rank(placetype))
+			}
+		}
+	})
+
+	it("ranks an AREA-grade postcode above the county tiers and region", () => {
+		for (const hit of [US_ZIP, GB_OUTWARD]) {
+			for (const placetype of [...(PLACETYPE_FILTER_GROUPS["county"] ?? []), "region", "country"]) {
+				expect(rank("postalcode", hit)).toBeGreaterThan(rank(placetype))
+			}
+		}
+	})
+
+	it("leaves every other placetype on the shared scale", () => {
+		for (const [placetype, specificity] of Object.entries(PLACETYPE_SPECIFICITY)) {
+			if (placetype === "postalcode") continue
+
+			expect(rank(placetype)).toBe(specificity)
+		}
+	})
+
+	it("sorts an unranked placetype below everything, including planet", () => {
+		expect(rank("wormhole")).toBe(Number.NEGATIVE_INFINITY)
+		expect(rank("wormhole")).toBeLessThan(rank("planet"))
+	})
+
+	it("treats a postcode with no parsed span as area-grade", () => {
+		expect(resolvedSpecificity({ placetype: "postalcode" })).toBe(AREA_GRADE_POSTALCODE_SPECIFICITY)
+	})
+})
+
+describe("the ladder and the scale agree", () => {
+	// The binding assertion. A grader that froze one arm passes each half in isolation and fails here.
+	it("orders postcode against locality the same way, on both arms", () => {
+		for (const hit of [GB_UNIT, NL_PC6, US_ZIP, GB_OUTWARD]) {
+			const ladderLeadsWithPostcode = leads(adminLadderFor(hit), "postcode", "locality")
+			const scaleLeadsWithPostcode = rank("postalcode", hit) > rank("locality")
+
+			expect(scaleLeadsWithPostcode).toBe(ladderLeadsWithPostcode)
+		}
+	})
+
+	it("orders postcode against region the same way, on both arms", () => {
+		for (const hit of [GB_UNIT, US_ZIP]) {
+			expect(rank("postalcode", hit) > rank("region")).toBe(leads(adminLadderFor(hit), "postcode", "region"))
+		}
+	})
+})
+
+describe("mostSpecificResolved", () => {
+	const place = (placetype: string, value = "", resolverName = "") => ({ placetype, value, resolverName })
+
+	const pick = <T extends { placetype: string; value: string; resolverName: string }>(candidates: T[]) =>
+		mostSpecificResolved(candidates, (c) => ({
+			placetype: c.placetype,
+			value: c.value,
+			resolverName: c.resolverName,
+		}))
+
+	it("returns null on an empty set", () => {
+		expect(pick([])).toBeNull()
+	})
+
+	it("prefers the locality over an area-grade postcode", () => {
+		const locality = place("locality")
+		expect(pick([place("postalcode", US_ZIP.value, US_ZIP.resolverName), locality])).toBe(locality)
+	})
+
+	it("prefers a unit-grade postcode over the locality", () => {
+		const postcode = place("postalcode", GB_UNIT.value, GB_UNIT.resolverName)
+		expect(pick([place("locality"), postcode])).toBe(postcode)
+	})
+
+	it("keeps the first of a tie, which is document order", () => {
+		const first = place("locality")
+		expect(pick([first, place("locality")])).toBe(first)
+	})
+
+	it("returns the candidate object itself, not a projection", () => {
+		const only = { ...place("locality"), id: 42 }
+		expect(pick([only])).toBe(only)
+	})
+})

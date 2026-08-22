@@ -56,6 +56,11 @@
 			"default": "./out/admin-containment.js",
 			"types": "./out/admin-containment.d.ts"
 		},
+		"./admin-winner": {
+			"node": "./admin-winner.ts",
+			"default": "./out/admin-winner.js",
+			"types": "./out/admin-winner.d.ts"
+		},
 		"./plausibility": {
 			"node": "./plausibility.ts",
 			"default": "./out/plausibility.js",

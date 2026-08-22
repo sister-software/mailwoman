@@ -52,10 +52,9 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver } from "@mailwoman/resolver"
+import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -149,6 +148,7 @@ for (const arm of arms) {
 interface Resolved {
 	id: number
 	name: string
+	value: string
 	placetype: string
 	lat: number
 	lon: number
@@ -169,6 +169,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			out.push({
 				id: Number(n.placeID.slice(4)),
 				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
+				value: String(n.value ?? ""),
 				placetype: String(n.sourceID ?? "").split(":")[0] ?? "",
 				lat: n.lat,
 				lon: n.lon,
@@ -187,6 +188,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 				out.push({
 					id: Number(interp.placeID.slice(4)),
 					name: String(interp.metadata?.["resolver_name"] ?? n.value ?? ""),
+					value: String(n.value ?? ""),
 					placetype: String(interp.sourceID ?? interp.tag).split(":")[0] ?? "",
 					lat: interp.lat,
 					lon: interp.lon,
@@ -206,20 +208,12 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	return out
 }
 
+/**
+ * The resolved place whose coordinate this board grades — `@mailwoman/resolver`'s ranking, the same one result assembly
+ * walks, so a board score tracks what a caller is handed.
+ */
 function mostSpecific(rs: Resolved[]): Resolved | null {
-	let best: Resolved | null = null
-
-	for (const r of rs) {
-		if (
-			!best ||
-			(placetypeSpecificity(r.placetype) ?? Number.NEGATIVE_INFINITY) >
-				(placetypeSpecificity(best.placetype) ?? Number.NEGATIVE_INFINITY)
-		) {
-			best = r
-		}
-	}
-
-	return best
+	return mostSpecificResolved(rs, (r) => ({ placetype: r.placetype, value: r.value, resolverName: r.name }))
 }
 
 interface Outcome {

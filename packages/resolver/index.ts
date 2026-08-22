@@ -53,6 +53,17 @@ export { findRescoreCandidate, hasResolvedPlace } from "./span-rescore.ts"
 export type { RescoreCandidate, SpanRescoreOptions } from "./span-rescore.ts"
 export { adminContainmentVerdict, partitionByContainment } from "./admin-containment.ts"
 
+export {
+	ADMIN_LADDER_LOCALITY_FIRST,
+	ADMIN_LADDER_UNIT_POSTCODE,
+	adminLadderFor,
+	AREA_GRADE_POSTALCODE_SPECIFICITY,
+	mostSpecificResolved,
+	resolvedSpecificity,
+} from "./admin-winner.ts"
+
+export type { ResolvedPostcodeHit, ResolvedSpecificityInput } from "./admin-winner.ts"
+
 // The type contract + placetype helpers live in core (pure types, keep core a leaf). Re-export so
 // consumers get the whole surface from `@mailwoman/resolver`.
 export * from "@mailwoman/core/resolver"

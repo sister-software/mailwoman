@@ -81,8 +81,13 @@ const stringArgs = rawStringArgs as {
  * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` SWITCHES per
  * row, leading with `postcode` only when `isUnitGradePostcodeHit` says the code is street-block-class (a GB unit
  * postcode, an NL PC6) and with `locality` otherwise. This table is the second arm, flattened — right for the FR rows
- * it grades and wrong for a GB unit-postcode row, which it will never see. A harness that graded both would have to
- * call that predicate rather than pick one of its outcomes as a constant.
+ * it grades and wrong for a GB unit-postcode row, which it will never see.
+ *
+ * `@mailwoman/resolver`'s `resolvedSpecificity` is the conditional both arms now consume, and this table is the last
+ * flat copy left. It differs on ONE axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the shared
+ * scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier. Migrating changes this gate's
+ * verdict on any row that resolves a `localadmin` or `borough`, so it needs that count on this gate's own panel first —
+ * a promoted convention does not move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,
