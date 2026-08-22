@@ -61,6 +61,11 @@
 			"default": "./out/admin-winner.js",
 			"types": "./out/admin-winner.d.ts"
 		},
+		"./decorate-node": {
+			"node": "./decorate-node.ts",
+			"default": "./out/decorate-node.js",
+			"types": "./out/decorate-node.d.ts"
+		},
 		"./plausibility": {
 			"node": "./plausibility.ts",
 			"default": "./out/plausibility.js",
