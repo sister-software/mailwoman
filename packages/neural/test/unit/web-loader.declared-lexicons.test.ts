@@ -59,7 +59,7 @@ const BASE = "https://cdn.example/mailwoman/v9.1.0"
  * the assertion surface is WHICH names were derived, not what loaded.
  */
 function makeRecordingFetch(card: object | null, requested: string[]): typeof fetch {
-	return (async (input: RequestInfo | URL) => {
+	return async (input) => {
 		const url = String(input)
 		requested.push(url)
 
@@ -76,7 +76,7 @@ function makeRecordingFetch(card: object | null, requested: string[]): typeof fe
 		}
 
 		return new Response(new Uint8Array([1, 2, 3]))
-	}) as unknown as typeof fetch
+	}
 }
 
 function installMockSession(): void {

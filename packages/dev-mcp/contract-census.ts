@@ -22,6 +22,7 @@
  */
 
 import { STRICT_DEPENDENTS, validateTree, type AddressTree, type TreeViolation } from "@mailwoman/core/decoder"
+import type { ComponentTag } from "@mailwoman/core/types"
 
 /**
  * The tag this violation is about, and the class it belongs to — the key a tally groups on.
@@ -101,7 +102,7 @@ export function censusTrees(rows: readonly ContractRow[]): ContractCensus {
 
 	for (const row of rows) {
 		for (const tag of tagsPresent(row.tree)) {
-			if (STRICT_DEPENDENTS.has(tag as never)) {
+			if (STRICT_DEPENDENTS.has(tag)) {
 				produced.set(tag, (produced.get(tag) ?? 0) + 1)
 			}
 		}
@@ -170,8 +171,8 @@ export function censusTrees(rows: readonly ContractRow[]): ContractCensus {
 	}
 }
 
-function tagsPresent(tree: AddressTree): string[] {
-	const tags: string[] = []
+function tagsPresent(tree: AddressTree): ComponentTag[] {
+	const tags: ComponentTag[] = []
 
 	const walk = (nodes: AddressTree["roots"]): void => {
 		for (const node of nodes) {

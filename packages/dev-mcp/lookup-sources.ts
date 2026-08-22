@@ -27,7 +27,7 @@
 import type { DatabaseSync } from "node:sqlite"
 
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
-import { allRows } from "@mailwoman/core/utils"
+import { allRows, getRow } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
@@ -355,6 +355,15 @@ interface WOFEntry extends PlaceIDProvenance {
 	population: number | null
 }
 
+/**
+ * One row as {@link SPR_COLUMNS} projects it: a {@link WOFEntry} minus the fields the probe adds, plus the two currency
+ * flags the caller filters on and then drops.
+ */
+type WOFRow = Omit<WOFEntry, "route" | "shard" | keyof PlaceIDProvenance> & {
+	is_current: number
+	is_deprecated: number
+}
+
 const SPR_COLUMNS =
 	"spr.id, spr.parent_id, spr.name, spr.placetype, spr.country, spr.latitude, spr.longitude, " +
 	"spr.is_current, spr.is_deprecated, pop.population AS population"
@@ -425,16 +434,11 @@ export function lookupWOF(
 		const collect = (shard: WOFShard, route: WOFRoute, statements: { rows: string; count: string }, bind: string) => {
 			const params = scoped ? [bind, country!] : [bind]
 
-			let rows: Array<
-				Omit<WOFEntry, "route" | "shard" | keyof PlaceIDProvenance> & {
-					is_current: number
-					is_deprecated: number
-				}
-			>
+			let rows: WOFRow[]
 
 			try {
-				rows = shard.db.prepare(statements.rows).all(...params, limit) as unknown as typeof rows
-				scanned += Number((shard.db.prepare(statements.count).get(...params) as { n: number } | undefined)?.n ?? 0)
+				rows = allRows<WOFRow>(shard.db.prepare(statements.rows), ...params, limit)
+				scanned += Number(getRow<{ n: number }>(shard.db.prepare(statements.count), ...params)?.n ?? 0)
 			} catch (error) {
 				failed.push(`${shard.name} (${route}): ${(error as Error).message}`)
 
@@ -589,9 +593,9 @@ export function lookupPOI(db: DatabaseSync, queries: string[], options: POILooku
 
 		const total = wantCountry ? (countScoped.get(key, wantCountry) as { n: number }).n : totalUnscoped
 
-		const entries = (wantCountry
-			? rowsScoped.all(key, wantCountry, limit)
-			: rowsAll.all(key, limit)) as unknown as POIEntry[]
+		const entries = wantCountry
+			? allRows<POIEntry>(rowsScoped, key, wantCountry, limit)
+			: allRows<POIEntry>(rowsAll, key, limit)
 
 		return {
 			query,

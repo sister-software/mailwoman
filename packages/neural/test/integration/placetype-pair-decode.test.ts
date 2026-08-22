@@ -15,6 +15,7 @@
  *   reach the decode-order behavior these tests actually check.
  */
 
+import type { ComponentTag } from "@mailwoman/core/types"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
@@ -50,13 +51,19 @@ function col(label: string): number {
 /**
  * A minimal `PairIndexLike` resolving exactly one (child, parent) pair, at the real artifact's delta (6.0).
  */
-function fixedPairIndex(child: string, parent: string, tag: string, delta = 6, transitionBeta?: number): PairIndexLike {
+function fixedPairIndex(
+	child: string,
+	parent: string,
+	tag: ComponentTag,
+	delta = 6,
+	transitionBeta?: number
+): PairIndexLike {
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
 		// No `parentDelta`: these are decode-ORDER tests for the child-side bias, and adding a parent write
 		// would move spans they assert on for reasons unrelated to what they measure.
-		probe: (c, p) => (c === child && p === parent ? ({ tag, parentTag: "locality" } as never) : undefined),
+		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : undefined),
 	}
 }
 

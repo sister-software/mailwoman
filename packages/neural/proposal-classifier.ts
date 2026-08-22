@@ -37,9 +37,10 @@ export interface NeuralProposalClassifierConfig {
 	 */
 	id: string
 	/**
-	 * The underlying neural classifier instance.
+	 * The underlying neural classifier. Typed by the one method the adapter calls, so a caller may supply anything that
+	 * parses — a real classifier, a remote one, a test double — without asserting it is the whole class.
 	 */
-	classifier: NeuralAddressClassifier
+	classifier: Pick<NeuralAddressClassifier, "parse">
 	/**
 	 * Component tags this classifier may emit. Defaults to the Stage 2 tag set (coarse + venue/street/house_number).
 	 * v0.2.0 Stage 1 models never decode to the fine tags anyway, so the broader default is forwards-compat without

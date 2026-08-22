@@ -207,11 +207,7 @@ async function compareMailwomanArms(
 		)
 	}
 
-	const confounds = checkConfounds(
-		engineA.effective as unknown as Record<string, unknown>,
-		engineB.effective as unknown as Record<string, unknown>,
-		options.declared
-	)
+	const confounds = checkConfounds(engineA.effective, engineB.effective, options.declared)
 
 	const rows: ComparedRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
@@ -309,7 +305,7 @@ async function compareMailwomanArms(
 		isolationSentence(confounds, zeroDifferenceCaveat),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter(Boolean)
+		.filter((sentence) => sentence.length > 0)
 		.join(" ")
 
 	// Both arms are recorded under distinct labels: they are two configurations of the same engine, so `mailwoman` alone
@@ -383,7 +379,7 @@ async function mailwomanRunner(
 
 	return {
 		label: "mailwoman",
-		provenance: provenanceFor(engine, set) as unknown as Record<string, unknown>,
+		provenance: { ...provenanceFor(engine, set) },
 		warnings: [],
 		answer: async (input) => answerFromGauntletResult(toGauntletResult((await engine.session.geocode(input)).result)),
 	}
@@ -768,7 +764,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		confounds.warnings.join(" "),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter(Boolean)
+		.filter((sentence) => sentence.length > 0)
 		.join(" ")
 
 	const run: StoredRun = {

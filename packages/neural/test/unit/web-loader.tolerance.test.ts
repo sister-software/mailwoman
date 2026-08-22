@@ -104,7 +104,7 @@ const TOKENIZER_URL = "https://cdn.example/mailwoman/v9/tokenizer.model"
  * mocked, so the content is irrelevant).
  */
 function makeFetch(statusFor: (url: string) => number): typeof fetch {
-	return (async (input: RequestInfo | URL) => {
+	return async (input) => {
 		const url = String(input)
 		const status = statusFor(url)
 
@@ -125,7 +125,7 @@ function makeFetch(statusFor: (url: string) => number): typeof fetch {
 		}
 
 		return new Response(new Uint8Array([1, 2, 3])) // model / tokenizer — mocked downstream
-	}) as unknown as typeof fetch
+	}
 }
 
 function baseOpts(fetchImpl: typeof fetch, postcodeBinaryURLs: readonly string[]) {

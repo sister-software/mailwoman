@@ -86,7 +86,7 @@ describe("gradeRow", () => {
 			seed({ expectComponents: { locality: "Paris" } }),
 			result({ locality: "Lyon" }),
 			result({ locality: "Nice" }),
-			check as never
+			check
 		)
 
 		expect(graded.grade).toBe("neutral")
@@ -97,14 +97,14 @@ describe("gradeRow", () => {
 			seed({ expectComponents: { locality: "Paris" } }),
 			result({ locality: "Lyon" }),
 			result({ locality: "Paris" }),
-			check as never
+			check
 		)
 
 		const worse = gradeRow(
 			seed({ expectComponents: { locality: "Paris" } }),
 			result({ locality: "Paris" }),
 			result({ locality: "Lyon" }),
-			check as never
+			check
 		)
 
 		expect(better.grade).toBe("improved")
@@ -114,7 +114,7 @@ describe("gradeRow", () => {
 	it("marks a row with no expectations ungradeable, never neutral", () => {
 		// The distinction the 2026-08-15 failure turned on: an ungradeable row added to the neutral pile inflates the
 		// denominator of a verdict it was never part of.
-		const graded = gradeRow(seed(), result(), result(), check as never)
+		const graded = gradeRow(seed(), result(), result(), check)
 
 		expect(graded.grade).toBe("ungradeable")
 	})

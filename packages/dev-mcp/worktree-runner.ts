@@ -14,7 +14,7 @@
  */
 
 import type { ArmRunner, WorktreeArm } from "./arms.ts"
-import { type EngineRegistry, resolveConfig } from "./engine-registry.ts"
+import { type EffectiveConfig, type EngineRegistry, resolveConfig } from "./engine-registry.ts"
 import type { ResolvedInputSet } from "./input-sets.ts"
 import { runWorktreeArm } from "./worktree-arm.ts"
 
@@ -35,7 +35,7 @@ export async function worktreeArmRunner(
 	arm: WorktreeArm,
 	set: ResolvedInputSet
 ): Promise<ArmRunner> {
-	const effective = resolveConfig(arm.config) as unknown as Record<string, unknown>
+	const effective: EffectiveConfig = resolveConfig(arm.config)
 
 	const result = await runWorktreeArm({
 		repoRoot: registry.repoRoot,

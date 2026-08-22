@@ -109,7 +109,7 @@ function gbIndexBytes(): Uint8Array {
 }
 
 function makeFetch(): typeof fetch {
-	return (async (input: RequestInfo | URL) => {
+	return async (input) => {
 		const url = String(input)
 
 		if (url === TOKENIZER_URL) return new Response(new Uint8Array(readFileSync(TOKENIZER_FIXTURE)))
@@ -117,7 +117,7 @@ function makeFetch(): typeof fetch {
 		if (url === GB_INDEX) return new Response(gbIndexBytes().slice().buffer)
 
 		return new Response(new Uint8Array([1, 2, 3])) // model bytes — the ORT session is mocked
-	}) as unknown as typeof fetch
+	}
 }
 
 function baseOpts(pairIndexURLs: readonly string[], country?: string) {

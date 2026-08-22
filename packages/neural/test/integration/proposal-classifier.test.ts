@@ -14,10 +14,13 @@ import { existsSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import type { Section } from "@mailwoman/core/types"
+import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
-import { createNeuralProposalClassifier } from "@mailwoman/neural/proposal-classifier"
+import {
+	createNeuralProposalClassifier,
+	type NeuralProposalClassifierConfig,
+} from "@mailwoman/neural/proposal-classifier"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -36,10 +39,16 @@ const MODEL_PATH =
 const haveModel = existsSync(MODEL_PATH)
 
 /**
+ * The coarse tags the v0.2.0 model is expected to reach at least one of. Typed so a tag that leaves the union stops
+ * compiling rather than silently never matching.
+ */
+const COARSE_TAGS: readonly ComponentTag[] = ["region", "locality", "postcode"]
+
+/**
  * Minimal stub that just returns a canned tree, ignoring the input text.
  */
-function stubClassifier(tree: AddressTree): NeuralAddressClassifier {
-	return { parse: async () => tree } as unknown as NeuralAddressClassifier
+function stubClassifier(tree: AddressTree): NeuralProposalClassifierConfig["classifier"] {
+	return { parse: async () => tree }
 }
 
 describe("createNeuralProposalClassifier — adapter shape", () => {
@@ -163,7 +172,7 @@ describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with v0.2.0 
 		const proposals = await cls.classify(makeSection("Washington DC 20500"), {})
 		const tags = new Set(proposals.map((p) => p.component))
 		// Don't over-assert — the v0.2.0 model can miss country/region; insist on at least one of them.
-		const coarseHit = ["region", "locality", "postcode"].some((t) => tags.has(t as never))
+		const coarseHit = COARSE_TAGS.some((tag) => tags.has(tag))
 		expect(coarseHit).toBe(true)
 
 		for (const p of proposals) {
