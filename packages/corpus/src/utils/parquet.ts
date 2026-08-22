@@ -60,6 +60,10 @@ export const SHARD_COMPRESSION = "SNAPPY" as const
 /**
  * A single Parquet-style row shape. The `[key: string]: unknown` index signature is required for compatibility with
  * `ParquetRecordLike` in the wrapper — parquetjs accepts any string key on rows.
+ *
+ * The three columns the schema marks `optional: true` are optional here too: `appendRow` receives the row with them
+ * OMITTED rather than null (see {@link appendShape}), and a reader gets back whichever of null/absent parquetjs
+ * surfaces.
  */
 export interface ParquetRow {
 	raw: string
@@ -69,13 +73,13 @@ export interface ParquetRow {
 	span_ends: readonly number[]
 	span_tags: readonly string[]
 	country: string
-	locale: string | null
+	locale?: string | null
 	source: string
 	source_id: string
 	corpus_version: string
 	license: string
-	synth_method: string | null
-	synth_base_id: string | null
+	synth_method?: string | null
+	synth_base_id?: string | null
 	[key: string]: unknown
 }
 
@@ -140,6 +144,11 @@ export interface ShardDescriptor {
 	sha256: string
 	first_source_id: string
 	last_source_id: string
+	/**
+	 * The shard's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
+	 * `first_source_id`'s prefix; `writeShards` itself writes multi-source shards and leaves it unset.
+	 */
+	source?: string
 }
 
 export interface ShardManifest {
@@ -229,8 +238,8 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
  * explicitly is fine, but cleaner to omit so the on-disk Definition Levels match what PyArrow / DuckDB / etc. produce
  * for the same logical row.
  */
-function appendShape(row: ParquetRow): Record<string, unknown> {
-	const out: Record<string, unknown> = {
+function appendShape(row: ParquetRow): ParquetRow {
+	const out: ParquetRow = {
 		raw: row.raw,
 		tokens: row.tokens,
 		labels: row.labels,
@@ -336,7 +345,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 			}
 
 			const pq = rowToParquet(row)
-			await writer!.appendRow(appendShape(pq) as unknown as ParquetRow)
+			await writer!.appendRow(appendShape(pq))
 
 			if (shardRows === 0) {
 				firstSourceID = row.source_id

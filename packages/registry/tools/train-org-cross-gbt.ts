@@ -84,7 +84,7 @@ export interface TrainOrgCrossSourceGBTOptions {
 	date?: string
 }
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	/**
 	 * The CCN — the cross-system facility key; rides `record.id` as the held-out label.
 	 */
@@ -187,10 +187,10 @@ export async function trainOrgCrossSourceGBT(
 	const ccRows = rows.filter((r) => r.source === "care-compare")
 
 	const records: SourceRecord[] = [
-		...(await ingestRows(posRows as unknown as Record<string, string>[], mappingFor("cms-pos"), {
+		...(await ingestRows(posRows, mappingFor("cms-pos"), {
 			geocodeAddress: geocoder.seam,
 		})),
-		...(await ingestRows(ccRows as unknown as Record<string, string>[], mappingFor("care-compare"), {
+		...(await ingestRows(ccRows, mappingFor("care-compare"), {
 			geocodeAddress: geocoder.seam,
 		})),
 	]

@@ -25,6 +25,7 @@
  */
 
 import { COUNTRY_SURFACE_FORMS, CountryNames } from "@mailwoman/codex/country"
+import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
@@ -221,14 +222,14 @@ function renderCountry(
 	let body: string
 
 	if (order === "us") {
-		const regPc = [reg, pc].filter(Boolean).join(" ")
+		const regPc = [reg, pc].filter(isPresent).join(" ")
 		body = `${hn} ${street}, ${loc}${regPc ? ", " + regPc : ""}`
 	} else if (order === "fr") {
 		// French is NUMBER-street, postcode-city: "84 Route de la Fontaine, 75008 Paris".
-		body = `${hn} ${street}, ${[pc, loc].filter(Boolean).join(" ")}`
+		body = `${hn} ${street}, ${[pc, loc].filter(isPresent).join(" ")}`
 	} else {
 		// DE/IT/NL: street-number, postcode-city: "Pariser Platz 1, 10117 Berlin".
-		const pcCity = [pc, loc].filter(Boolean).join(" ")
+		const pcCity = [pc, loc].filter(isPresent).join(" ")
 		body = `${street} ${hn}, ${pcCity}`
 	}
 

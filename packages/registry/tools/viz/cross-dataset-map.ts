@@ -11,8 +11,9 @@ import { readFileSync, writeFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
-import { toMapHTML } from "#index"
+import { type MapFeatureData, toMapHTML } from "#index"
 
 /**
  * Distinct agencies a combination needs before it is plotted as a cross-agency cluster.
@@ -62,8 +63,8 @@ const SOURCE_AGENCY: Record<string, string> = {
 
 const agencyOf = (s: string) => SOURCE_AGENCY[s] ?? s
 
-const sourcesOf = (f: { properties: Record<string, unknown> | null }) =>
-	Array.isArray(f.properties?.["sources"]) ? (f.properties!["sources"] as string[]) : []
+const sourcesOf = (f: GeoFeature<PointLiteral, MapFeatureData>): string[] =>
+	Array.isArray(f.properties?.sources) ? f.properties.sources : []
 
 /**
  * Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre HTML page.
@@ -76,10 +77,7 @@ export function crossDatasetMap(
 	const OUT = options.outHTML || tempRootPath("cross-dataset-map.html")
 	const CROSS_AGENCY_ONLY = options.crossAgencyOnly ?? false
 
-	const parsed = parseJSONStrict<{
-		type: "FeatureCollection"
-		features: Array<{ properties: Record<string, unknown> | null }>
-	}>(readFileSync(IN, "utf8"))
+	const parsed = parseJSONStrict<GeoFeatureCollection<PointLiteral, MapFeatureData>>(readFileSync(IN, "utf8"))
 
 	const total = parsed.features.length
 
@@ -97,7 +95,7 @@ export function crossDatasetMap(
 		const bucket = combo.map(label).join(" + ") || "unlinked"
 
 		if (f.properties) {
-			f.properties["bucket"] = bucket
+			f.properties.bucket = bucket
 		}
 
 		if (new Set(combo.map(agencyOf)).size >= MIN_DISTINCT_AGENCIES) {
@@ -110,7 +108,7 @@ export function crossDatasetMap(
 	const kept = geojson.features.length
 	const scope = CROSS_AGENCY_ONLY ? "across agencies" : "across sources"
 
-	const html = toMapHTML(geojson as never, {
+	const html = toMapHTML(geojson, {
 		title: `Cross-dataset entity links — ${kept} resolved ${scope} (no shared key)`,
 		flavor: "light",
 		colorBy: "bucket",

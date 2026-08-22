@@ -60,6 +60,7 @@
  *        `JP` key. The JP extract is harvested and ready; the leg belongs to the JP shard.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
@@ -375,7 +376,7 @@ export function renderGroups(
 
 	const raw = groups
 		.map((group) => group.map((piece) => fold(piece.text)).join(" "))
-		.filter(Boolean)
+		.filter(isPresent)
 		.join(separator)
 
 	const components: Partial<Record<ComponentTag, string>> = {}

@@ -179,7 +179,7 @@ export async function nppesDedupBenchmark(
 			throw new Error("parallelGeocode requires the injected geocodeStream (see ./eval-geocoder.ts)")
 		}
 
-		const normalized = await ingestRows(rows as unknown as Record<string, string>[], mapping)
+		const normalized = await ingestRows(rows, mapping)
 		const order = new Map(normalized.map((r, i) => [r.id, i]))
 		const geocoded: SourceRecord[] = []
 
@@ -208,7 +208,7 @@ export async function nppesDedupBenchmark(
 			return g
 		}
 
-		records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+		records = await ingestRows(rows, mapping, {
 			geocodeAddress: countedSeam,
 			addressSeparator: LEGACY ? " " : ", ",
 		})

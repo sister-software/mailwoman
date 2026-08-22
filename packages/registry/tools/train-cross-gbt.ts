@@ -93,7 +93,7 @@ export interface TrainCrossSourceGBTOptions {
 	date?: string
 }
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -215,10 +215,10 @@ export async function trainCrossSourceGBT(
 	const opRows = rows.filter((r) => r.source === "openpayments")
 
 	const records: SourceRecord[] = [
-		...(await ingestRows(nppesRows as unknown as Record<string, string>[], mappingFor("nppes"), {
+		...(await ingestRows(nppesRows, mappingFor("nppes"), {
 			geocodeAddress: geocoder.seam,
 		})),
-		...(await ingestRows(opRows as unknown as Record<string, string>[], mappingFor("openpayments"), {
+		...(await ingestRows(opRows, mappingFor("openpayments"), {
 			geocodeAddress: geocoder.seam,
 		})),
 	]

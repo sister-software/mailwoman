@@ -31,6 +31,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { isPresent } from "@mailwoman/core/objects"
 import { allRows, getRow } from "@mailwoman/core/utils"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -127,7 +128,7 @@ export function synthesizeJpAddress(
 		components.dependent_locality = neighbourhoodName
 	}
 
-	const raw = [regionName, localityName, neighbourhoodName].filter(Boolean).join("")
+	const raw = [regionName, localityName, neighbourhoodName].filter(isPresent).join("")
 
 	return { raw, components }
 }

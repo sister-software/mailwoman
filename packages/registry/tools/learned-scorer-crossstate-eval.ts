@@ -89,7 +89,7 @@ export interface ScorerCrossStateEvalOptions {
 
 const choose2 = (n: number) => (n * (n - 1)) / 2
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -243,8 +243,7 @@ export async function scorerCrossStateEval(
 	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
 
-	const geocodeRows = (rows: MessyRow[]) =>
-		ingestRows(rows as unknown as Record<string, string>[], mapping, { geocodeAddress: geocoder.seam })
+	const geocodeRows = (rows: MessyRow[]) => ingestRows(rows, mapping, { geocodeAddress: geocoder.seam })
 
 	const trainRecords = await geocodeRows(samples[TRAIN_STATE]!.rows)
 	const evalRecords = await geocodeRows(samples[EVAL_STATE]!.rows)

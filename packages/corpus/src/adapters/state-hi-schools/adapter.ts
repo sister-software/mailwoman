@@ -29,6 +29,7 @@
  *   License: stamped `"Public Domain"` per Hawaii state government open-data terms.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
@@ -120,14 +121,14 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 					postcode: zip,
 				}
 
-				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
 
 				const raw = [
 					name,
 					streetPart,
-					[city, [HI_STATE_ABBR, zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+					[city, [HI_STATE_ABBR, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
 				]
-					.filter(Boolean)
+					.filter(isPresent)
 					.join(", ")
 
 				const aligned = reconcileComponents(components, raw)

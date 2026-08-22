@@ -76,7 +76,7 @@ export async function renderPlotlyHTMLToPNG(
 			on?: (event: string, cb: () => void) => void
 		}
 
-		const doc = (globalThis as unknown as { document: { querySelectorAll(s: string): Iterable<unknown> } }).document
+		const doc = Reflect.get(globalThis, "document") as { querySelectorAll(s: string): Iterable<unknown> }
 
 		const divs = [...doc.querySelectorAll("div")]
 			.map((d) => d as PlotlyDiv)

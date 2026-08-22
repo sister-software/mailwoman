@@ -53,6 +53,11 @@ export interface SubVenueHarvestRow {
 	 * this file's header on phrase attribution. Carried into {@link SubVenueSurface.context}.
 	 */
 	designatorID: string
+	/**
+	 * `venue` (station, airport, campus) or `sub_venue`, when the source's rule assigns one. The harvest itself does not
+	 * read it; the sub-venue shard recipe fills its venue slot from it.
+	 */
+	tier?: string
 	name?: string | null
 	ref?: string | null
 	localizedNames?: Record<string, string>

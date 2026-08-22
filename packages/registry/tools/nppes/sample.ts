@@ -6,6 +6,7 @@
  *   address-frequency table built in the same pass.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import type { TermFrequencyTable } from "@mailwoman/match"
 
 import { addressFrequencyKey, streamRows } from "#index"
@@ -17,7 +18,7 @@ import { orgTokens, type NPIPrimary } from "./org-name.ts"
  * One synthetic input row for the matcher; `npi` is the hidden NPI-level truth, `entityID` the site-level entity-level
  * truth (subpart-collapsed).
  */
-export interface MessyRow {
+export interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -146,7 +147,7 @@ export async function buildNPPESSample(
 				// it only separates co-located DISTINCT providers whose sets are disjoint.
 				const taxonomy = C.taxonomy
 					.map((col) => norm(r[col]))
-					.filter(Boolean)
+					.filter(isPresent)
 					.join(" ")
 
 				// Entity-level (site) truth: same org + same physical address. Subparts (NPPES
