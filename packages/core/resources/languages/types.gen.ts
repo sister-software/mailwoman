@@ -427,10 +427,12 @@ export type Alpha3bLanguageCode =
 	| "afr"
 	| "aka"
 	| "alb"
+	| "sqi"
 	| "amh"
 	| "ara"
 	| "arg"
 	| "arm"
+	| "hye"
 	| "asm"
 	| "ava"
 	| "ave"
@@ -439,6 +441,7 @@ export type Alpha3bLanguageCode =
 	| "bak"
 	| "bam"
 	| "baq"
+	| "eus"
 	| "bel"
 	| "ben"
 	| "bis"
@@ -446,19 +449,23 @@ export type Alpha3bLanguageCode =
 	| "bre"
 	| "bul"
 	| "bur"
+	| "mya"
 	| "cat"
 	| "cha"
 	| "che"
 	| "chi"
+	| "zho"
 	| "chu"
 	| "chv"
 	| "cor"
 	| "cos"
 	| "cre"
 	| "cze"
+	| "ces"
 	| "dan"
 	| "div"
 	| "dut"
+	| "nld"
 	| "dzo"
 	| "eng"
 	| "epo"
@@ -468,15 +475,19 @@ export type Alpha3bLanguageCode =
 	| "fij"
 	| "fin"
 	| "fre"
+	| "fra"
 	| "fry"
 	| "ful"
 	| "geo"
+	| "kat"
 	| "ger"
+	| "deu"
 	| "gla"
 	| "gle"
 	| "glg"
 	| "glv"
 	| "gre"
+	| "ell"
 	| "grn"
 	| "guj"
 	| "hat"
@@ -489,6 +500,7 @@ export type Alpha3bLanguageCode =
 	| "hun"
 	| "ibo"
 	| "ice"
+	| "isl"
 	| "ido"
 	| "iii"
 	| "iku"
@@ -523,11 +535,14 @@ export type Alpha3bLanguageCode =
 	| "lub"
 	| "lug"
 	| "mac"
+	| "mkd"
 	| "mah"
 	| "mal"
 	| "mao"
+	| "mri"
 	| "mar"
 	| "may"
+	| "msa"
 	| "mlg"
 	| "mlt"
 	| "mon"
@@ -548,6 +563,7 @@ export type Alpha3bLanguageCode =
 	| "oss"
 	| "pan"
 	| "per"
+	| "fas"
 	| "pli"
 	| "pol"
 	| "por"
@@ -555,12 +571,14 @@ export type Alpha3bLanguageCode =
 	| "que"
 	| "roh"
 	| "rum"
+	| "ron"
 	| "run"
 	| "rus"
 	| "sag"
 	| "san"
 	| "sin"
 	| "slo"
+	| "slk"
 	| "slv"
 	| "sme"
 	| "smo"
@@ -583,6 +601,7 @@ export type Alpha3bLanguageCode =
 	| "tgl"
 	| "tha"
 	| "tib"
+	| "bod"
 	| "tir"
 	| "ton"
 	| "tsn"
@@ -598,6 +617,7 @@ export type Alpha3bLanguageCode =
 	| "vie"
 	| "vol"
 	| "wel"
+	| "cym"
 	| "wln"
 	| "wol"
 	| "xho"
@@ -809,10 +829,12 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["afr", ["Afrikaans"]],
 	["aka", ["Akan"]],
 	["alb", ["Albanian"]],
+	["sqi", ["Albanian"]],
 	["amh", ["Amharic"]],
 	["ara", ["Arabic"]],
 	["arg", ["Aragonese"]],
 	["arm", ["Armenian"]],
+	["hye", ["Armenian"]],
 	["asm", ["Assamese"]],
 	["ava", ["Avaric"]],
 	["ave", ["Avestan"]],
@@ -821,6 +843,7 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["bak", ["Bashkir"]],
 	["bam", ["Bambara"]],
 	["baq", ["Basque"]],
+	["eus", ["Basque"]],
 	["bel", ["Belarusian"]],
 	["ben", ["Bengali"]],
 	["bis", ["Bislama"]],
@@ -828,19 +851,23 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["bre", ["Breton"]],
 	["bul", ["Bulgarian"]],
 	["bur", ["Burmese"]],
+	["mya", ["Burmese"]],
 	["cat", ["Catalan", "Valencian"]],
 	["cha", ["Chamorro"]],
 	["che", ["Chechen"]],
 	["chi", ["Chinese"]],
+	["zho", ["Chinese"]],
 	["chu", ["Church Slavic", "Old Slavonic", "Church Slavonic", "Old Bulgarian", "Old Church Slavonic"]],
 	["chv", ["Chuvash"]],
 	["cor", ["Cornish"]],
 	["cos", ["Corsican"]],
 	["cre", ["Cree"]],
 	["cze", ["Czech"]],
+	["ces", ["Czech"]],
 	["dan", ["Danish"]],
 	["div", ["Divehi", "Dhivehi", "Maldivian"]],
 	["dut", ["Dutch", "Flemish"]],
+	["nld", ["Dutch", "Flemish"]],
 	["dzo", ["Dzongkha"]],
 	["eng", ["English"]],
 	["epo", ["Esperanto"]],
@@ -850,15 +877,19 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["fij", ["Fijian"]],
 	["fin", ["Finnish"]],
 	["fre", ["French"]],
+	["fra", ["French"]],
 	["fry", ["Western Frisian"]],
 	["ful", ["Fulah"]],
 	["geo", ["Georgian"]],
+	["kat", ["Georgian"]],
 	["ger", ["German"]],
+	["deu", ["German"]],
 	["gla", ["Gaelic", "Scottish Gaelic"]],
 	["gle", ["Irish"]],
 	["glg", ["Galician"]],
 	["glv", ["Manx"]],
 	["gre", ["Greek, Modern (1453-)"]],
+	["ell", ["Greek, Modern (1453-)"]],
 	["grn", ["Guarani"]],
 	["guj", ["Gujarati"]],
 	["hat", ["Haitian", "Haitian Creole"]],
@@ -871,6 +902,7 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["hun", ["Hungarian"]],
 	["ibo", ["Igbo"]],
 	["ice", ["Icelandic"]],
+	["isl", ["Icelandic"]],
 	["ido", ["Ido"]],
 	["iii", ["Sichuan Yi", "Nuosu"]],
 	["iku", ["Inuktitut"]],
@@ -905,11 +937,14 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["lub", ["Luba-Katanga"]],
 	["lug", ["Ganda"]],
 	["mac", ["Macedonian"]],
+	["mkd", ["Macedonian"]],
 	["mah", ["Marshallese"]],
 	["mal", ["Malayalam"]],
 	["mao", ["Maori"]],
+	["mri", ["Maori"]],
 	["mar", ["Marathi"]],
 	["may", ["Malay"]],
+	["msa", ["Malay"]],
 	["mlg", ["Malagasy"]],
 	["mlt", ["Maltese"]],
 	["mon", ["Mongolian"]],
@@ -930,6 +965,7 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["oss", ["Ossetian", "Ossetic"]],
 	["pan", ["Panjabi", "Punjabi"]],
 	["per", ["Persian"]],
+	["fas", ["Persian"]],
 	["pli", ["Pali"]],
 	["pol", ["Polish"]],
 	["por", ["Portuguese"]],
@@ -937,12 +973,14 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["que", ["Quechua"]],
 	["roh", ["Romansh"]],
 	["rum", ["Romanian", "Moldavian", "Moldovan"]],
+	["ron", ["Romanian", "Moldavian", "Moldovan"]],
 	["run", ["Rundi"]],
 	["rus", ["Russian"]],
 	["sag", ["Sango"]],
 	["san", ["Sanskrit"]],
 	["sin", ["Sinhala", "Sinhalese"]],
 	["slo", ["Slovak"]],
+	["slk", ["Slovak"]],
 	["slv", ["Slovenian"]],
 	["sme", ["Northern Sami"]],
 	["smo", ["Samoan"]],
@@ -965,6 +1003,7 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["tgl", ["Tagalog"]],
 	["tha", ["Thai"]],
 	["tib", ["Tibetan"]],
+	["bod", ["Tibetan"]],
 	["tir", ["Tigrinya"]],
 	["ton", ["Tonga (Tonga Islands)"]],
 	["tsn", ["Tswana"]],
@@ -980,6 +1019,7 @@ export const Alpha3bLabelMap: ReadonlyMap<Alpha3bLanguageCode, string[]> = new M
 	["vie", ["Vietnamese"]],
 	["vol", ["Volapük"]],
 	["wel", ["Welsh"]],
+	["cym", ["Welsh"]],
 	["wln", ["Walloon"]],
 	["wol", ["Wolof"]],
 	["xho", ["Xhosa"]],
@@ -1365,4 +1405,24 @@ export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCod
 	["yor", "yo"],
 	["zha", "za"],
 	["zul", "zu"],
+	["sqi", "sq"],
+	["hye", "hy"],
+	["eus", "eu"],
+	["mya", "my"],
+	["zho", "zh"],
+	["ces", "cs"],
+	["nld", "nl"],
+	["fra", "fr"],
+	["kat", "ka"],
+	["deu", "de"],
+	["ell", "el"],
+	["isl", "is"],
+	["mkd", "mk"],
+	["mri", "mi"],
+	["msa", "ms"],
+	["fas", "fa"],
+	["ron", "ro"],
+	["slk", "sk"],
+	["bod", "bo"],
+	["cym", "cy"],
 ])
