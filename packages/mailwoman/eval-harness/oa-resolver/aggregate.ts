@@ -71,11 +71,22 @@ export function bump(a: Agg, locMatch: boolean, regMatch: boolean, resolved: boo
 }
 
 /**
+ * The per-state bucket label a row is tallied under.
+ *
+ * Shared rather than repeated because the two views of one row must agree on it: an EMPTY state is as unknown as a
+ * missing one, so `||` is the operator, not `??`. The error dump read `?? "??"` and therefore filed an empty-state row
+ * under `""` while every aggregate filed the same row under `"??"`.
+ */
+export function stateBucket(state: string | undefined): string {
+	return state || "??"
+}
+
+/**
  * Fold one row's outcome into an arm's per-state bucket AND its headline. A row with no state lands in `??` rather than
  * being dropped, so the per-state buckets always sum to the headline.
  */
 export function recordInto(pair: AggPair, state: string | undefined, outcome: ArmOutcome): void {
-	const st = state || "??"
+	const st = stateBucket(state)
 
 	if (!pair.byState.has(st)) {
 		pair.byState.set(st, newAgg())

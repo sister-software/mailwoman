@@ -14,6 +14,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
+import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 
 import type { Resolved } from "./tree-hits.ts"
 
@@ -62,64 +63,17 @@ const normName = (s: string | undefined): string => {
 
 /**
  * Resolved region names are the gazetteer's CANONICAL full names ("California", "District of Columbia"); OA's
- * expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so region-match compares like-for-like.
- * Embedded inline (not imported from @mailwoman/corpus, which has no exports map → fragile subpath import for a
- * standalone script).
+ * expected.region is the USPS abbreviation ("CA", "DC"). Map full name → abbrev so region-match compares
+ * like-for-like.
+ *
+ * Derived from `@mailwoman/codex/us`, the same place the German and French lookups above come from — the table this
+ * replaced was embedded because the codex "has no exports map", which has not been true for some time. It carried 52 of
+ * the codex's 56 entries, agreeing on every one; the four it lacked are Guam, the US Virgin Islands, the Northern
+ * Marianas and American Samoa, whose rows could not match on region at all.
  */
-const STATE_NAME_TO_ABBR: Record<string, string> = {
-	alabama: "AL",
-	alaska: "AK",
-	arizona: "AZ",
-	arkansas: "AR",
-	california: "CA",
-	colorado: "CO",
-	connecticut: "CT",
-	delaware: "DE",
-	"district of columbia": "DC",
-	florida: "FL",
-	georgia: "GA",
-	hawaii: "HI",
-	idaho: "ID",
-	illinois: "IL",
-	indiana: "IN",
-	iowa: "IA",
-	kansas: "KS",
-	kentucky: "KY",
-	louisiana: "LA",
-	maine: "ME",
-	maryland: "MD",
-	massachusetts: "MA",
-	michigan: "MI",
-	minnesota: "MN",
-	mississippi: "MS",
-	missouri: "MO",
-	montana: "MT",
-	nebraska: "NE",
-	nevada: "NV",
-	"new hampshire": "NH",
-	"new jersey": "NJ",
-	"new mexico": "NM",
-	"new york": "NY",
-	"north carolina": "NC",
-	"north dakota": "ND",
-	ohio: "OH",
-	oklahoma: "OK",
-	oregon: "OR",
-	pennsylvania: "PA",
-	"rhode island": "RI",
-	"south carolina": "SC",
-	"south dakota": "SD",
-	tennessee: "TN",
-	texas: "TX",
-	utah: "UT",
-	vermont: "VT",
-	virginia: "VA",
-	washington: "WA",
-	"west virginia": "WV",
-	wisconsin: "WI",
-	wyoming: "WY",
-	"puerto rico": "PR",
-}
+const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
+	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [norm(name), abbreviation])
+)
 
 /**
  * True if the resolved region matches the expected one, comparing like-for-like across the surface forms each side

@@ -74,6 +74,15 @@ const stringArgs = rawStringArgs as {
  * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
  * All dumps BEFORE this epoch are postcode-convention: NEVER compare across conventions (the tokenizer-F1 rule,
  * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
+ *
+ * Do NOT "align" this table to `PLACETYPE_SPECIFICITY`. That scale ranks `postalcode` above `locality`, which is the
+ * preference this convention exists to reject, and swapping it in reinstates the measurement that hid the FR gap.
+ *
+ * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` SWITCHES per
+ * row, leading with `postcode` only when `isUnitGradePostcodeHit` says the code is street-block-class (a GB unit
+ * postcode, an NL PC6) and with `locality` otherwise. This table is the second arm, flattened — right for the FR rows
+ * it grades and wrong for a GB unit-postcode row, which it will never see. A harness that graded both would have to
+ * call that predicate rather than pick one of its outcomes as a constant.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,

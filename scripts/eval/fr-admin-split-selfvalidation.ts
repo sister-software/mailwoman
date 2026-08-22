@@ -33,6 +33,7 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -56,17 +57,11 @@ const values = rawValues as { db?: string; n?: string; out?: string }
 
 /**
  * --- tiny helpers copied from oa-resolver-eval.ts (kept in lockstep, see that file) ----------------.
+ *
+ * The placetype ordering is no longer among them: it reads the shared `PLACETYPE_SPECIFICITY` scale, the same swap
+ * `1540064dd` made on the two copies this one was cloned from. Note the sibling `fr-admin-split-gate.ts` deliberately
+ * does NOT — it grades on the post-#945 locality-over-postcode convention, which that scale inverts.
  */
-const PLACETYPE_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
-	localadmin: 4,
-	borough: 4,
-	county: 3,
-	region: 2,
-	country: 0,
-}
-
 interface Resolved {
 	id: number
 	name: string
@@ -103,7 +98,14 @@ function mostSpecific(rs: Resolved[]): Resolved | null {
 	let best: Resolved | null = null
 
 	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
+		// NEGATIVE_INFINITY, not -1: the local table this replaced floored at `country: 0`, so -1 meant
+		// "unknown sorts below everything". The shared scale runs to `planet: -5`, where -1 would sort an
+		// unknown placetype ABOVE country.
+		if (
+			!best ||
+			(placetypeSpecificity(r.placetype) ?? Number.NEGATIVE_INFINITY) >
+				(placetypeSpecificity(best.placetype) ?? Number.NEGATIVE_INFINITY)
+		) {
 			best = r
 		}
 	}
