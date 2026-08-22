@@ -3,6 +3,6 @@
 	"doubleCast": 157,
 	"deepRelativeImports": 0,
 	"filterBoolean": 137,
-	"productionFilesOver1000Lines": 6,
+	"productionFilesOver1000Lines": 5,
 	"selfPackageImports": 0
 }
