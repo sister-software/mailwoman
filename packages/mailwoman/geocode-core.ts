@@ -47,15 +47,15 @@ import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwom
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
-import type {
-	AddressPointLookup,
-	InterpolationLookup,
-	PostcodePrefixIndexLike,
-	ResolveOpts,
-	Resolver,
-	StreetCentroidLookup,
+import {
+	adminLadderForNodes,
+	type AddressPointLookup,
+	type InterpolationLookup,
+	type PostcodePrefixIndexLike,
+	type ResolveOpts,
+	type Resolver,
+	type StreetCentroidLookup,
 } from "@mailwoman/resolver"
-import { adminLadderFor } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
@@ -1475,14 +1475,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		// 51.5500/-0.1307, 38 m from the rooftop truth, against a London centroid 5.6 km away — on all 15 GB
 		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed;
 		// the answer was on the tree and this list did not ask for it.
-		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
-
-		const adminPriority = adminLadderFor(
-			pcNode && {
-				value: pcNode.value,
-				resolverName: pcNode.metadata?.["resolver_name"] as string | undefined,
-			}
-		)
+		const adminPriority = adminLadderForNodes(allNodes)
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
