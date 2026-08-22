@@ -47,8 +47,25 @@ export function decorateNode(
 
 	node.source = "resolver"
 	node.sourceID = `${resolved.placetype}:${resolved.id}`
-	node.lat = resolved.lat
-	node.lon = resolved.lon
+
+	// `0,0` is the gazetteer's UNLOCATED sentinel, not a location in the Gulf of Guinea. Shards carry a lot of it —
+	// 48,216 of 142,604 JP postcodes, 86,377 GB, 9,708 intl, 414 US — and stamping it produces a node that answers
+	// "yes" to every `lat != null` guard downstream, including the admin ladder's. Absence is the representable form
+	// (`AddressNode.lat` is optional and {@link isResolvedWithCoord} already reads the sentinel this way), so the
+	// place resolves and identifies itself while stating it cannot say where it is.
+	//
+	// Both are cleared together rather than left stale: a coordinate from a previously-decorated place beside this
+	// one's `placeID` would be a worse answer than none.
+	const located = resolved.lat !== undefined && resolved.lon !== undefined && (resolved.lat !== 0 || resolved.lon !== 0)
+
+	if (located) {
+		node.lat = resolved.lat
+		node.lon = resolved.lon
+	} else {
+		delete node.lat
+		delete node.lon
+	}
+
 	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers; the URI scheme stays this simple
 	// Record the resolver's ranking score AND the resolved place's CANONICAL name. The name is the
 	// gazetteer's truth for the place we picked — distinct from `node.value` (the raw input span). It
