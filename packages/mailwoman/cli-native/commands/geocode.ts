@@ -303,7 +303,7 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 
 async function openSession(options: GeocodeOptions) {
 	const importStartedAt = performance.now()
-	const { createGeocodeSession } = await import("../../geocode-session.ts")
+	const { createGeocodeSession } = await import("#geocode-session")
 	const importedAt = performance.now()
 	const showProgress = process.stderr.isTTY === true && !options.timing
 
@@ -313,7 +313,7 @@ async function openSession(options: GeocodeOptions) {
 	})
 
 	if (options.timing) {
-		const cliStartedAt = (globalThis as { __mailwomanCLIStartedAt?: number }).__mailwomanCLIStartedAt
+		const cliStartedAt = globalThis.__mailwomanCLIStartedAt
 
 		if (cliStartedAt != null) {
 			console.error(`[timing] startup.command_and_router   ${(importStartedAt - cliStartedAt).toFixed(2)} ms`)

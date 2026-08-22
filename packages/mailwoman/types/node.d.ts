@@ -4,6 +4,8 @@
 
 declare module "process" {
 	global {
+		var __mailwomanCLIStartedAt: number | undefined
+
 		namespace NodeJS {
 			interface ProcessEnv {
 				/**
@@ -11,7 +13,7 @@ declare module "process" {
 				 *
 				 * @see {@link https://nodejs.org/en/learn/getting-started/nodejs-the-difference-between-development-and-production | The difference between development and production}
 				 */
-				readonly NODE_ENV?: "development" | "production"
+				NODE_ENV?: "development" | "production"
 
 				/**
 				 * Whether or not we are running on a CI server.

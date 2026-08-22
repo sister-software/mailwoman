@@ -3,7 +3,7 @@ import { defaultRegistry } from "async-init"
 import { ResourceError } from "#errors"
 import { ConsoleLogger } from "#logging"
 
-export { cliArguments, scriptEntryPath } from "../arguments.ts"
+export { cliArguments, passThroughCLIArguments, scriptEntryPath } from "../arguments.ts"
 
 /**
  * Logs an error that occurred while running a script.

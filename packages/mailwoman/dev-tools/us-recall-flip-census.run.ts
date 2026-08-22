@@ -9,20 +9,31 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */
 
+import { parseArgs } from "node:util"
+
 import { decodeAsTuples } from "@mailwoman/core/decoder"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
+
+import { CLIUsageError } from "#cli-kit"
 
 /**
  * Samples a bucket needs before its flip rate is worth reporting rather than noise.
  */
 const MIN_REPORTABLE_SAMPLES = 4
 
+// TODO: Use Tagged from type-fest to force type.
 const fold = (v: string) => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
-const [candidateRoot, sampleArg] = cliArguments()
 
-if (!candidateRoot) throw new Error("usage: us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]")
+const { positionals } = parseArgs({
+	allowPositionals: true,
+})
+
+const [candidateRoot, sampleArg] = positionals
+
+if (!candidateRoot) {
+	throw new CLIUsageError("usage: us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]")
+}
 
 const SAMPLE = Number(sampleArg ?? 900)
 
