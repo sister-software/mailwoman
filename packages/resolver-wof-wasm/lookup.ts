@@ -352,7 +352,7 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 		// Non-postcode queries SPLIT on intra-token punctuation — fusing made "Thiron-Gardais" an
 		// unmatchable single term while the FTS doc holds two (#945).
-		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length > 0)
 
 		for (let i = 0; i < parts.length; i++) {
 			const body = parts[i]!.replaceAll("*", "")
