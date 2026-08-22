@@ -142,6 +142,16 @@ export function effectiveKeyFor(declared: string): string {
 	return (EFFECTIVE_KEY_FOR as Record<string, string>)[declared] ?? declared
 }
 
+/**
+ * {@link GeocodeSessionOptions} in a form a JSON record accepts.
+ *
+ * Structurally the same type, field for field. It exists because TypeScript withholds an implicit index signature from
+ * an INTERFACE — declaration merging could add a member later — so an interface value is not assignable to
+ * `Record<string, unknown>` however plainly it is one. The mapping is checked property by property and keeps each
+ * field's own type, which a cast through `unknown` would discard.
+ */
+export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
+
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 	// THE production defaults, from the geocode command's own factory — never re-typed here (#1732).
 	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
@@ -205,11 +215,9 @@ export function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): v
 	)
 }
 
-export function engineID(effective: GeocodeSessionOptions, fingerprint: TreeFingerprint): string {
+export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprint): string {
 	const canonical = JSON.stringify(
-		Object.fromEntries(
-			Object.entries(effective as unknown as Record<string, unknown>).toSorted(([a], [b]) => a.localeCompare(b))
-		)
+		Object.fromEntries(Object.entries(effective).toSorted(([a], [b]) => a.localeCompare(b)))
 	)
 
 	return createHash("sha256").update(`${canonical}\n${fingerprint.digest}`).digest("hex").slice(0, 16)
@@ -218,7 +226,7 @@ export function engineID(effective: GeocodeSessionOptions, fingerprint: TreeFing
 export interface Engine {
 	engineID: string
 	session: GeocodeSession
-	effective: GeocodeSessionOptions
+	effective: EffectiveConfig
 	fingerprint: TreeFingerprint
 	buildMs: number
 	lastUsed: number
@@ -389,7 +397,7 @@ export class EngineRegistry {
 		return [...this.#engines.values()].map((engine) => ({
 			engine_id: engine.engineID,
 			locale: engine.effective.locale,
-			config_effective: engine.effective as unknown as Record<string, unknown>,
+			config_effective: engine.effective,
 			build_ms: engine.buildMs,
 			last_used_iso: new Date(engine.lastUsed).toISOString(),
 			uses: engine.uses,

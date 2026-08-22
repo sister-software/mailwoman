@@ -52,7 +52,7 @@ describe("weights overlays inherit their base's label vocabulary", () => {
 
 			// Reaching into `labels` rather than asserting on a parse: a wrong vocabulary throws on the first
 			// parse, and a thrown assertion says less than a count comparison does.
-			const labels = (classifier as unknown as { labels: readonly string[] }).labels
+			const labels = classifier["labels"]
 
 			expect(labels, `${locale} resolved ${labels.length} labels; en-US resolves ${baseline?.length}`).toHaveLength(
 				baseline?.length ?? 0

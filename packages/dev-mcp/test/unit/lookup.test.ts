@@ -40,7 +40,7 @@ describe("lookupFST", () => {
 		// `applyBias` computes `importance * biasScale * maxBias * …` and keeps a tag only when that exceeds the running
 		// max, which starts at 0. So a BIO-mapped entry at importance 0 contributes nothing to the decoder, and a caller
 		// reading only `hit` and `importance` cannot tell that from a bias the decoder acts on.
-		const [inert] = lookupFST(fst as never, tokens, ["Juan"])
+		const [inert] = lookupFST(fst, tokens, ["Juan"])
 
 		expect(inert!.entries).toEqual([{ tag: "locality", importance: 0, fires: false }])
 		expect(inert!.note).toContain("INERT")
@@ -49,7 +49,7 @@ describe("lookupFST", () => {
 	it("keeps a MISS apart from a zero", () => {
 		// The whole point. `Juan` is known and scored zero; `Sultan Qaboos` is not known at all. A caller that conflated
 		// them would read "the gazetteer gives this no weight" for a surface the gazetteer has never heard of.
-		const [known, unknown] = lookupFST(fst as never, tokens, ["Juan", "Sultan Qaboos"])
+		const [known, unknown] = lookupFST(fst, tokens, ["Juan", "Sultan Qaboos"])
 
 		expect(known).toMatchObject({ hit: true })
 		expect(known!.entries).toEqual([{ tag: "locality", importance: 0, fires: false }])
@@ -59,7 +59,7 @@ describe("lookupFST", () => {
 	})
 
 	it("reports the per-tag max, which is all the decoder reads", () => {
-		const [row] = lookupFST(fst as never, tokens, ["San Juan"])
+		const [row] = lookupFST(fst, tokens, ["San Juan"])
 
 		expect(row!.entries).toEqual([{ tag: "locality", importance: 0.3733, fires: true }])
 	})
@@ -67,7 +67,7 @@ describe("lookupFST", () => {
 	it("says explicitly when an accepted surface gives the decoder nothing", () => {
 		// `county` is walked, deduped, and dropped without touching the emission matrix. An empty entry list here is a
 		// third state — neither absence nor a zero — and it must say so.
-		const [row] = lookupFST(fst as never, tokens, ["Cook"])
+		const [row] = lookupFST(fst, tokens, ["Cook"])
 
 		expect(row).toMatchObject({ hit: true })
 		expect(row!.entries).toEqual([])
@@ -80,14 +80,14 @@ describe("lookupStreetMorphology", () => {
 	const fst = stubFST({ street: [], road: [] })
 
 	it("reports a hit and a miss", () => {
-		const [hit, miss] = lookupStreetMorphology(fst as never, ["street", "qaboos"])
+		const [hit, miss] = lookupStreetMorphology(fst, ["street", "qaboos"])
 
 		expect(hit).toMatchObject({ hit: true })
 		expect(miss).toMatchObject({ hit: false, entries: null })
 	})
 
 	it("notes when a multi-word query was walked, since this source answers about single words", () => {
-		const [row] = lookupStreetMorphology(fst as never, ["main street"])
+		const [row] = lookupStreetMorphology(fst, ["main street"])
 
 		expect(row!.note).toContain("2 tokens")
 	})
@@ -113,13 +113,13 @@ describe("loadFSTArtifact", () => {
 	it("reports an unresolved path as unavailable rather than as an empty source", () => {
 		// A source whose artifact is missing answers "no" to everything, which reads as absence for every query. That is
 		// the one answer this must never give silently.
-		expect(loadFSTArtifact(undefined, () => ({}) as never)).toEqual({
+		expect(loadFSTArtifact(undefined, () => stubFST({}))).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})
 	})
 
 	it("reports a missing file by path", () => {
-		const result = loadFSTArtifact("/nonexistent/fst.bin", () => ({}) as never)
+		const result = loadFSTArtifact("/nonexistent/fst.bin", () => stubFST({}))
 
 		expect("unavailable" in result && result.unavailable).toContain("/nonexistent/fst.bin")
 	})

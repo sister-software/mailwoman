@@ -397,17 +397,22 @@ describe("parentTag record field (schemaVersion 3 — the typed parent)", () => 
 	})
 
 	it("refuses an entry with no parentTag at all", () => {
-		const entries = [{ child: "a", parent: "b", tag: "locality" }] as unknown as PairIndexEntry[]
+		const entries = [{ child: "a", parent: "b", tag: "locality" } as PairIndexEntry]
 
 		expect(() => serializePairIndex(HEADER, entries)).toThrow(/parentTag/)
 	})
 
 	it("refuses an entry whose parentTag is not a ComponentTag, naming it", () => {
-		const entries = [
-			{ child: "a", parent: "b", tag: "locality", parentTag: "not_a_tag" },
-		] as unknown as PairIndexEntry[]
+		// Typed with `parentTag: string` because that is what a builder hands over — the tag union is what
+		// `serializePairIndex` is being asked to enforce, so the fixture cannot assert it up front.
+		const entry: Omit<PairIndexEntry, "parentTag"> & { parentTag: string } = {
+			child: "a",
+			parent: "b",
+			tag: "locality",
+			parentTag: "not_a_tag",
+		}
 
-		expect(() => serializePairIndex(HEADER, entries)).toThrow(/not_a_tag/)
+		expect(() => serializePairIndex(HEADER, [entry as PairIndexEntry])).toThrow(/not_a_tag/)
 	})
 
 	it("REFUSES a v2 binary (child tag only, no parent byte) with rebuild guidance", () => {

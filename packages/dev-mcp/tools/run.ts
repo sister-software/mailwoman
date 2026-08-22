@@ -107,10 +107,10 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					lat: run.result.lat,
 					lon: run.result.lon,
 					tier: run.result.resolution_tier,
-					admin_coherence: (run.result as unknown as Record<string, unknown>)["admin_coherence"] ?? null,
+					admin_coherence: run.result.admin_coherence ?? null,
 					// The resolved winner identities (name + placeID per rung) — what the chimera triage (#1731)
 					// otherwise drops to the CLI for. Coordinate diffs alone cannot see a wrong-instance win.
-					hierarchy: (run.result as unknown as Record<string, unknown>)["hierarchy"] ?? null,
+					hierarchy: run.result.hierarchy ?? null,
 					timing_ms: run.timing,
 				}
 

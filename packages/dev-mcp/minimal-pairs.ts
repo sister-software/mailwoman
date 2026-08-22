@@ -312,7 +312,7 @@ export async function runMinimalPairs(
 		n_rungs_requested: requested,
 		n_rungs_evaluated: evaluated,
 		n_rungs_errored: errored,
-		config_effective: engine.effective as unknown as Record<string, unknown>,
+		config_effective: engine.effective,
 		engine_id: engine.engineID,
 		moved_km_threshold: MOVED_KM,
 		ladders: readings,

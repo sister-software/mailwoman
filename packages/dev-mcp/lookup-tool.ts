@@ -423,7 +423,7 @@ async function probeLocaleFST(
 	const path =
 		args.source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
 
-	const loaded = loadFSTArtifact(path, deserializeFST as never)
+	const loaded = loadFSTArtifact(path, deserializeFST)
 
 	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
 

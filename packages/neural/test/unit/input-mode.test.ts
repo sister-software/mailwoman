@@ -36,9 +36,9 @@ function stubRunner(seen: { evidence: unknown[] }): NeuralRunner {
 			const evidence = args[4]
 			seen.evidence.push(evidence)
 
-			return { logits: ids.map(() => LABELS.map(() => 0)) }
+			return { logits: ids.map(() => LABELS.map(() => 0)), numLabels: LABELS.length }
 		},
-	} as unknown as NeuralRunner
+	}
 }
 
 async function makeClassifier(seen: { evidence: unknown[] }) {

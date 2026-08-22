@@ -9,10 +9,14 @@
  */
 
 import { slimParseTrace } from "@mailwoman/dev-mcp/tool-kit"
+import type { NeuralParseTrace } from "@mailwoman/neural/trace"
 import { describe, expect, it } from "vitest"
 
-const PARSE = {
+const PARSE: NeuralParseTrace = {
 	text: "KT2 6AB",
+	caseNormalized: false,
+	detectedSystem: null,
+	systemSource: "off",
 	pieces: [{ piece: "▁K", id: 1, start: 0, end: 1 }],
 	tokens: [{ piece: "▁K", start: 0, end: 1, label: "B-postcode", confidence: 0.91 }],
 	path: [9],
@@ -27,11 +31,11 @@ const PARSE = {
 	anchor: { features: [[0, 0]], confidence: [0.5] },
 	gazetteer: { features: [[1, 0]], confidence: [1] },
 	country: { features: [[0, 1]], confidence: [0] },
-} as never
+}
 
 describe("slimParseTrace", () => {
 	it("drops the matrices, keeps the discrete diagnostics, and says what it omitted", () => {
-		const slim = slimParseTrace(PARSE) as Record<string, unknown>
+		const slim = slimParseTrace(PARSE)
 
 		expect(slim["logits"]).toBeUndefined()
 		expect(slim["emissions"]).toBeUndefined()
@@ -39,7 +43,7 @@ describe("slimParseTrace", () => {
 		expect(slim["gazetteer"]).toEqual({ confidence: [1] })
 		expect(slim["country"]).toEqual({ confidence: [0] })
 
-		expect(slim["tokens"]).toEqual(PARSE["tokens" as never])
+		expect(slim["tokens"]).toEqual(PARSE.tokens)
 		expect(slim["path"]).toEqual([9])
 		expect(slim["localeLogits"]).toEqual([1.5, -0.2])
 		expect(String(slim["matrices_omitted"])).toContain("full_parse_trace")

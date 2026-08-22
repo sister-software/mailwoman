@@ -130,7 +130,7 @@ function nzIndexBytes(): Uint8Array {
  * + tokenizer are mocked, so the content is irrelevant).
  */
 function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch {
-	return (async (input: RequestInfo | URL) => {
+	return async (input) => {
 		const url = String(input)
 		const outcome = respond(url)
 
@@ -139,7 +139,7 @@ function makeFetch(respond: (url: string) => Uint8Array | number): typeof fetch 
 		}
 
 		return new Response(outcome.slice().buffer)
-	}) as unknown as typeof fetch
+	}
 }
 
 function baseOpts(fetchImpl: typeof fetch, pairIndexURLs: readonly string[], country?: string) {

@@ -50,8 +50,7 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 	// "Strasse 12 10115 Berlin" — the postcode "10115" is chars [11, 16).
 	const TEXT = "Strasse 12 10115 Berlin"
 
-	const piece = (p: string, start: number, end: number): TokenizedPiece =>
-		({ piece: p, id: 0, start, end }) as unknown as TokenizedPiece
+	const piece = (p: string, start: number, end: number): TokenizedPiece => ({ piece: p, id: 0, start, end })
 
 	// pieces, with the postcode split across two (101 | 15)
 	const PIECES = [
@@ -141,10 +140,10 @@ describe("buildAnchorFeatures — span modes", () => {
 			const end = start + m[0].length
 			const mid = start + Math.max(1, Math.floor(m[0].length / 2))
 
-			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid } as unknown as TokenizedPiece)
+			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid })
 
 			if (mid < end) {
-				out.push({ piece: text.slice(mid, end), id: 0, start: mid, end } as unknown as TokenizedPiece)
+				out.push({ piece: text.slice(mid, end), id: 0, start: mid, end })
 			}
 		}
 
@@ -284,10 +283,10 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 			const end = start + m[0].length
 			const mid = start + Math.max(1, Math.floor(m[0].length / 2))
 
-			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid } as unknown as TokenizedPiece)
+			out.push({ piece: text.slice(start, mid), id: 0, start, end: mid })
 
 			if (mid < end) {
-				out.push({ piece: text.slice(mid, end), id: 0, start: mid, end } as unknown as TokenizedPiece)
+				out.push({ piece: text.slice(mid, end), id: 0, start: mid, end })
 			}
 		}
 
