@@ -5,9 +5,12 @@
  * @file #1791 — a shard that cannot serve a lookup should say so at construction, not by going quiet.
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
- *   from "this country has no places" — `postcode-ca-overture.db` holds 843,739 Canadian postcodes and answered
- *   `M1J1A8` with nothing, because `startsWith("postalcode_")` never matches `postcode_ca_overture`. A routable name
- *   threw from deep inside a SELECT instead.
+ *   from "this country has no places": a shard reaches routing only through the name `deriveSchemaName` derives from
+ *   its filename, so a file spelled one letter off the placetype it serves answers with nothing while holding every
+ *   row that was asked for. A routable name threw from deep inside a SELECT instead.
+ *
+ *   The two `spr`-only fixtures below differ ONLY in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
+ *   not — so each test isolates one of the two failure modes.
  */
 
 import { mkdtempSync, rmSync } from "node:fs"
@@ -72,8 +75,8 @@ beforeAll(() => {
 	writeMain(join(dir, "admin.db"))
 	// Routes by name (`postalcode_x` starts with `postalcode_`), so the old failure was a mid-query throw.
 	writeSprOnly(join(dir, "postalcode-x.db"))
-	// Routes NOWHERE — the CA case, spelled `postcode` where the placetype is `postalcode`.
-	writeSprOnly(join(dir, "postcode-ca-overture.db"))
+	// Routes NOWHERE — spelled `postcode` where the placetype is `postalcode`.
+	writeSprOnly(join(dir, "postcode-x.db"))
 	writeRelationOnly(join(dir, "postcode-locality-intl.db"))
 })
 
@@ -96,7 +99,7 @@ describe("shard capability guard", () => {
 		let message = ""
 
 		try {
-			new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postcode-ca-overture.db")] })
+			new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postcode-x.db")] })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -104,7 +107,7 @@ describe("shard capability guard", () => {
 		expect(message).toMatch(/carries "spr" but no "place_search"/)
 		// The half that turns "zero hits" into a diagnosis: this shard would never have been queried anyway.
 		expect(message).toMatch(/matches no routed placetype/)
-		expect(message).toContain("postcode_ca_overture")
+		expect(message).toContain("postcode_x")
 	})
 
 	it("says nothing about a shard that routes, when it only lacks the table", () => {
