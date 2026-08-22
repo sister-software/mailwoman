@@ -38,7 +38,7 @@ import { dirname } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 import { createGunzip } from "node:zlib"
 
-import { cacheRootPath } from "@mailwoman/core/utils"
+import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
 
@@ -158,7 +158,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 				 WHERE c.other_source = 'wd:id' AND s.is_current = 1`
 			)
 
-			const rows = stmt.all() as unknown as Array<FanoutCandidate & { other_id: string }>
+			const rows = allRows<FanoutCandidate & { other_id: string }>(stmt)
 			const grouped = new Map<string, FanoutCandidate[]>()
 
 			for (const row of rows) {
@@ -288,10 +288,10 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const wofReferential = new Map<number, number>()
 
 		try {
-			const popRows = db.prepare("SELECT id, population FROM place_population").all() as unknown as Array<{
+			const popRows = allRows<{
 				id: number
 				population: number
-			}>
+			}>(db.prepare("SELECT id, population FROM place_population"))
 
 			for (const row of popRows) {
 				const score = referentialFromPopulation(row.population)
@@ -336,7 +336,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		// The total is READ BACK, never derived by adding the two counters. The counters describe what
 		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
 		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
-		const total = (db.prepare("SELECT count(*) AS c FROM place_importance").get() as unknown as { c: number }).c
+		const total = getRow<{ c: number }>(db.prepare("SELECT count(*) AS c FROM place_importance"))!.c
 
 		await kdb.destroy() // closes the underlying `db` handle
 

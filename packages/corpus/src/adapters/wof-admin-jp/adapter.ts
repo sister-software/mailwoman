@@ -31,6 +31,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { allRows, getRow } from "@mailwoman/core/utils"
+
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
@@ -161,16 +163,16 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				// seed; there are tens of thousands of neighbourhood seeds.
 				const byID = new Map<number, PlaceRow>()
 
-				for (const row of db
-					.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
-					.all() as unknown as PlaceRow[]) {
+				for (const row of allRows<PlaceRow>(
+					db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
+				)) {
 					byID.set(row.id, row)
 				}
 
 				const outsideStmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 
 				const resolveOutside = (id: number): PlaceRow | undefined => {
-					const row = outsideStmt.get(id) as unknown as PlaceRow | undefined
+					const row = getRow<PlaceRow>(outsideStmt, id)
 
 					if (row) {
 						byID.set(id, row)

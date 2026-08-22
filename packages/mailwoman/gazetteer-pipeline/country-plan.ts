@@ -18,6 +18,8 @@
 import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import { getRow } from "@mailwoman/core/utils"
+
 import { AdminSource } from "./country-sources.ts"
 
 /**
@@ -47,21 +49,20 @@ export function censusForCountry(adminDBPath: string, country: string): SourceCe
 	const db = new DatabaseSync(adminDBPath, { readOnly: true })
 
 	try {
-		const row = db
-			.prepare(
+		const row = getRow<{ wof: number | null; overture: number | null; geonames: number | null }>(
+			db.prepare(
 				`SELECT
 					SUM(CASE WHEN id < ? THEN 1 ELSE 0 END) AS wof,
 					SUM(CASE WHEN id >= ? AND id < ? THEN 1 ELSE 0 END) AS overture,
 					SUM(CASE WHEN id >= ? THEN 1 ELSE 0 END) AS geonames
 				FROM spr WHERE country = ?`
-			)
-			.get(
-				OVERTURE_BAND_START,
-				OVERTURE_BAND_START,
-				GEONAMES_BAND_START,
-				GEONAMES_BAND_START,
-				country.toUpperCase()
-			) as unknown as { wof: number | null; overture: number | null; geonames: number | null } | undefined
+			),
+			OVERTURE_BAND_START,
+			OVERTURE_BAND_START,
+			GEONAMES_BAND_START,
+			GEONAMES_BAND_START,
+			country.toUpperCase()
+		)
 
 		return {
 			country: country.toUpperCase(),

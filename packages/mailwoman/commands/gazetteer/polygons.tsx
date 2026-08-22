@@ -31,7 +31,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
@@ -218,10 +218,9 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
 			: `placetype NOT IN ('postalcode')`
 
-		const rows = (
-			src
-				.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
-				.all(...(countries ?? [])) as unknown as SprRow[]
+		const rows = allRows<SprRow>(
+			src.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`),
+			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
 		src.close()

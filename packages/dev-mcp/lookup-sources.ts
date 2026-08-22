@@ -27,6 +27,7 @@
 import type { DatabaseSync } from "node:sqlite"
 
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
+import { allRows } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
@@ -144,14 +145,14 @@ export function lookupCandidate(
 			return {
 				total: totalUnscoped,
 				totalUnscoped,
-				rows: rowsAll.all(key, limit) as unknown as Array<Omit<CandidateEntry, "route">>,
+				rows: allRows<Omit<CandidateEntry, "route">>(rowsAll, key, limit),
 			}
 		}
 
 		return {
 			total: (countScoped.get(key, countryID.id) as { n: number }).n,
 			totalUnscoped,
-			rows: rowsScoped.all(key, countryID.id, limit) as unknown as Array<Omit<CandidateEntry, "route">>,
+			rows: allRows<Omit<CandidateEntry, "route">>(rowsScoped, key, countryID.id, limit),
 		}
 	}
 

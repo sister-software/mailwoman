@@ -15,6 +15,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { allRows } from "@mailwoman/core/utils"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,
@@ -49,7 +50,7 @@ async function buildShard(ifNotExists: boolean): Promise<DatabaseSync> {
 }
 
 function tableInfo(db: DatabaseSync, table: string): TableInfoRow[] {
-	return db.prepare(`PRAGMA table_info(${table})`).all() as unknown as TableInfoRow[]
+	return allRows<TableInfoRow>(db.prepare(`PRAGMA table_info(${table})`))
 }
 
 describe("createPostcodeLocalityTable", () => {
@@ -116,12 +117,10 @@ describe("createPostcodeLocalityIndex", () => {
 		])
 
 		expect(
-			(
-				db.prepare("PRAGMA index_info(postcode_locality_by_pc)").all() as unknown as Array<{
-					seqno: number
-					name: string
-				}>
-			).map((c) => [c.seqno, c.name])
+			allRows<{
+				seqno: number
+				name: string
+			}>(db.prepare("PRAGMA index_info(postcode_locality_by_pc)")).map((c) => [c.seqno, c.name])
 		).toEqual([
 			[0, "postcode"],
 			[1, "country"],

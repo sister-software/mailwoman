@@ -31,7 +31,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, repoRootPath, workspacePath } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
@@ -80,14 +80,14 @@ export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
 	const db = new DatabaseSync(dbPath, { readOnly: true })
 
 	try {
-		return db
-			.prepare(
+		return allRows<BrandNameCount>(
+			db.prepare(
 				`SELECT brand_wikidata AS wikidata, name, COUNT(*) AS n
 				 FROM poi
 				 WHERE brand_wikidata IS NOT NULL AND name IS NOT NULL
 				 GROUP BY brand_wikidata, name`
 			)
-			.all() as unknown as BrandNameCount[]
+		)
 	} finally {
 		db.close()
 	}

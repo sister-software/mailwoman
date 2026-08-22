@@ -25,6 +25,7 @@ import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
+import { getRow } from "@mailwoman/core/utils"
 
 /**
  * The ancestor's identity as this manifest records it.
@@ -46,9 +47,9 @@ export function ancestorIdentity(adminDBPath: string): string {
 
 		if (!present) return "unknown (admin gazetteer predates the layer contract)"
 
-		const row = db.prepare("SELECT name, version FROM layer_manifest LIMIT 1").get() as unknown as
-			| { name: string; version: string }
-			| undefined
+		const row = getRow<{ name: string; version: string }>(
+			db.prepare("SELECT name, version FROM layer_manifest LIMIT 1")
+		)
 
 		return row ? `${row.name}@${row.version}` : "unknown (admin manifest is empty)"
 	} catch (error) {

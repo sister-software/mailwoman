@@ -26,7 +26,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -59,7 +59,7 @@ interface Point {
 }
 
 function pointOf(id: number): Point {
-	const row = pointStmt.get(id) as unknown as Point | undefined
+	const row = getRow<Point>(pointStmt, id)
 
 	if (!row) throw new Error(`wof id ${id} not found in ${WOF_DB} — a curated row names a place that is not there`)
 
