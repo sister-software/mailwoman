@@ -1125,9 +1125,35 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
+			// #1738's disagreement test, hoisted. It used to sit inside the hardCountry branch below and
+			// gate the HARD filter only, which left the SOFT posterior ungated — and the soft posterior is
+			// enough on its own: the within-tier sort key is `(prominence ?? score) + w·posterior[country]`
+			// at w = 1, so on `Queen Street, Bristol` a 0.9261 posterior gap overturns GB Bristol's 0.884776
+			// prominence lead and the answer moves 5,274 km to Connecticut (#1751). The placer reads the
+			// STREET TOKEN — `King Street, Bristol` reads GB 0.5227 and survives, `Queen` does not — and
+			// nothing else in the tree names a country.
+			//
+			// One probe, read by both gates. An unknown or fuzzy bearer is not disagreement, and a resolver
+			// without the findPlace passthrough behaves exactly as before.
+			const localityValue = decodeAsJSON(tree).locality as string | undefined
+
+			const dominant =
+				localityValue && deps.resolver.findPlace
+					? (await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => []))[0]
+					: undefined
+
+			const dominantBearer = dominant?.country !== undefined && dominant.exactMatch !== false ? dominant.country : null
+
+			const dominantDisagreesWithPlacer =
+				dominantBearer !== null && dominantBearer.toUpperCase() !== placed.country.toUpperCase()
+
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
-			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
-			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+			// Withheld entirely when the locality's own dominant bearer lives elsewhere: the placer is then
+			// contradicting retrieval about the one component that DOES name a place, and retrieval wins.
+			if (!dominantDisagreesWithPlacer) {
+				opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
+				opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+			}
 
 			// #743/#194: default-on coverage-guarded HARD country filter (same gate as the runtime pipeline,
 			// via the shared helper so the two production paths can't drift). Same safelist precedence as
@@ -1151,19 +1177,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 				// placer's posterior stays the SOFT anchor the worldwide race weighs. An unknown or fuzzy
 				// bearer is not disagreement, and a resolver without the findPlace passthrough hardens
 				// exactly as before — absence degrades to the prior behavior, never to a crash.
-				const localityValue = decodeAsJSON(tree).locality as string | undefined
-
-				const dominant =
-					localityValue && deps.resolver.findPlace
-						? (
-								await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => [])
-							)[0]
-						: undefined
-
-				const dominantDisagrees =
-					dominant?.country !== undefined &&
-					dominant.exactMatch !== false &&
-					dominant.country.toUpperCase() !== hardCountry.toUpperCase()
+				const dominantDisagrees = dominantBearer !== null && dominantBearer.toUpperCase() !== hardCountry.toUpperCase()
 
 				if (!dominantDisagrees) {
 					opts.hardCountry = hardCountry
