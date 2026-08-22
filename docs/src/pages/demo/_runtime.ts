@@ -513,7 +513,9 @@ export function useDemoMapRuntime({
 		[runParseWithBias]
 	)
 
-	// ── FST autocomplete (the combobox's injected fetcher) ─────────────────────────────────────────────────
+	/**
+	 * FST autocomplete, the combobox's injected fetcher.
+	 */
 	const autocomplete = useCallback(async (query: string): Promise<Suggestion[]> => {
 		const fst = assetsRef.current?.fstMatcher
 
@@ -533,7 +535,9 @@ export function useDemoMapRuntime({
 		}
 	}, [])
 
-	// ── Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon). ───────
+	/**
+	 * Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon).
+	 */
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
 			const extras = extrasRef.current.get(candidate) ?? {}
