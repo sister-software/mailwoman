@@ -33,6 +33,7 @@ import {
 	buildPlaceSearchFTS,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
+	PLACE_SEARCH_TABLE,
 	placeBboxExists,
 	placePopulationExists,
 	placeSearchFTSExists,
@@ -107,6 +108,20 @@ export interface WOFSqlitePlaceLookupOpts {
  *
  * - Nearby localities with WOF alt-name aliases.
  */
+/**
+ * The placetypes `pickShardsForPlacetype`'s substring rule can route by name. Not every WOF placetype — only the ones a
+ * purpose-built shard is ever named for — so the diagnostic below can say "this name routes nowhere" without claiming
+ * to enumerate the gazetteer.
+ */
+const KNOWN_ROUTED_PLACETYPES: ReadonlyArray<string> = [
+	"postalcode",
+	"locality",
+	"region",
+	"county",
+	"country",
+	"venue",
+]
+
 const POSTCODE_LOCALITY_TABLE = "postcode_locality"
 
 /**
@@ -248,6 +263,36 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			this.#hasBboxIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_BBOX_TABLE))
 			this.#hasPopulationIndex.set(s.schemaName, this.#shardHasTable(s.schemaName, PLACE_POPULATION_TABLE))
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.#db, s.schemaName))
+		}
+
+		// A shard that carries `spr` is claiming to be a place shard, and every lookup path here reaches
+		// `place_search`. Without it the shard is unusable, and BOTH ways it fails are hard to read: an
+		// unroutable name returns zero hits (indistinguishable from "this country has no places") and a
+		// routable one throws mid-query from deep inside a SELECT. `postcode-ca-overture.db` is the worked
+		// case — 843,739 Canadian postcodes, `spr`-only, and named so that `startsWith("postalcode_")` never
+		// matches it, so `M1J1A8` came back as zero hits rather than as a configuration error.
+		//
+		// Shards with no `spr` are exempt by design: `postcode-locality-<cc>.db` carries a relation table and
+		// nothing else, and it is part of the documented default shard list.
+		for (const s of this.#shards) {
+			if (s.schemaName === "main") continue
+
+			if (!this.#shardHasTable(s.schemaName, "spr")) continue
+
+			if (this.#shardHasTable(s.schemaName, PLACE_SEARCH_TABLE)) continue
+
+			const routes = KNOWN_ROUTED_PLACETYPES.some(
+				(pt) => s.schemaName === pt || s.schemaName.startsWith(`${pt}_`) || s.schemaName.endsWith(`_${pt}`)
+			)
+
+			throw new Error(
+				`WOFSqlitePlaceLookup: ${s.path} carries "spr" but no "${PLACE_SEARCH_TABLE}" table, so it cannot serve a ` +
+					`lookup. Build it with the FTS index, or leave it out — it is usable as a BUILD input either way.` +
+					(routes
+						? ""
+						: ` Its schema name "${s.schemaName}" also matches no routed placetype (${KNOWN_ROUTED_PLACETYPES.join(", ")}), ` +
+							`so it would never have been queried even with the table — check the filename's spelling.`)
+			)
 		}
 
 		// #920 country-aware shard routing: probe each NON-MAIN shard's country set once at
