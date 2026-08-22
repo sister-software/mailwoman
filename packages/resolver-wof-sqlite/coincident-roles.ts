@@ -40,6 +40,7 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import type { CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { allRows } from "./sqlite-utils.ts"
@@ -257,6 +258,62 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
 			list.push(entry)
 		} else {
 			map.set(r.admin_id, [entry])
+		}
+	}
+
+	return map
+}
+
+/**
+ * The relation joined with `spr`, as an in-memory map keyed by `admin_id` — the resolver-facing view of
+ * {@link loadCoincidentRoles}, carrying the canonical name and coordinates each coincident locality resolves to.
+ * Returns an empty map when the relation table is absent.
+ */
+export function loadCoincidentLocalities(db: DatabaseSync): Map<number, CoincidentLocality[]> {
+	const map = new Map<number, CoincidentLocality[]>()
+
+	if (coincidentRolesExists(db)) {
+		const rows = allRows<{
+			adminID: number
+			id: number
+			name: string
+			country: string
+			lat: number
+			lon: number
+			relationshipType: string
+			population: number
+			distanceKm: number
+		}>(
+			db.prepare(
+				`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
+					s.latitude AS lat, s.longitude AS lon,
+					cr.relationship_type AS relationshipType, cr.locality_population AS population,
+					cr.distance_km AS distanceKm
+				FROM ${COINCIDENT_ROLES_TABLE} cr JOIN spr s ON s.id = cr.locality_id`
+			)
+		)
+
+		for (const r of rows) {
+			const candidate: CoincidentLocality = {
+				id: r.id,
+				name: r.name,
+				placetype: "locality",
+				country: r.country,
+				lat: r.lat,
+				lon: r.lon,
+				score: 0,
+				relationshipType: r.relationshipType,
+				population: r.population,
+				distanceKm: r.distanceKm,
+			}
+
+			const list = map.get(r.adminID)
+
+			if (list) {
+				list.push(candidate)
+			} else {
+				map.set(r.adminID, [candidate])
+			}
 		}
 	}
 
