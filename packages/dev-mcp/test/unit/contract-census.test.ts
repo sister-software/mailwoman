@@ -19,7 +19,7 @@ function node(tag: string, value: string, children: AddressNode[] = []): Address
 }
 
 function tree(roots: AddressNode[]): AddressTree {
-	return { roots, system: undefined } as unknown as AddressTree
+	return { raw: "", roots, system: undefined }
 }
 
 function row(id: string, input: string, roots: AddressNode[]): ContractRow {

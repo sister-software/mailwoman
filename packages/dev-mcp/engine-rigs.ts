@@ -184,11 +184,13 @@ async function containerStates(rig: (typeof ENGINE_RIGS)[EngineRigName]): Promis
 	}
 
 	const known = new Map(
-		[...TextSpliterator.from(listing)].filter(Boolean).map((line) => {
-			const [name, ...rest] = TextSpliterator.from(line, { delimiter: "\t" })
+		[...TextSpliterator.from(listing)]
+			.filter((line) => line.length > 0)
+			.map((line) => {
+				const [name, ...rest] = TextSpliterator.from(line, { delimiter: "\t" })
 
-			return [name!.trim(), rest.join("\t").trim()] as const
-		})
+				return [name!.trim(), rest.join("\t").trim()] as const
+			})
 	)
 
 	return rig.containers.map((name) => ({ name, status: known.get(name) ?? "absent" }))

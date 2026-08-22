@@ -71,7 +71,7 @@ export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set
 export function provenanceFor(
 	engine: {
 		engineID: string
-		effective: unknown
+		effective: Record<string, unknown>
 		fingerprint: { digest: string; gitHead: string; dirtyFiles: string[] }
 		buildMs: number
 		uses: number
@@ -84,7 +84,7 @@ export function provenanceFor(
 		git_head: engine.fingerprint.gitHead,
 		dirty: engine.fingerprint.dirtyFiles.length > 0,
 		dirty_files: engine.fingerprint.dirtyFiles,
-		config_effective: engine.effective as Record<string, unknown>,
+		config_effective: engine.effective,
 		engine_build_ms: engine.buildMs,
 		engine_was_warm: engine.uses > 1,
 		input_set: inputSetProvenance(set),
@@ -217,11 +217,7 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * vectors) and states what it dropped; `full_parse_trace: true` returns the raw object for the rare numeric dig.
  */
 export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
-	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse as unknown as Record<string, unknown> & {
-		anchor?: { confidence?: unknown }
-		gazetteer?: { confidence?: unknown }
-		country?: { confidence?: unknown }
-	}
+	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
 
 	void logits
 	void emissions
@@ -325,7 +321,7 @@ function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
 			record.query.regionQualifier ? `qualifier=${JSON.stringify(record.query.regionQualifier)}` : null,
 			`limit=${record.query.limit}`,
 		]
-			.filter(Boolean)
+			.filter((part) => part !== null)
 			.join(" ")
 
 		const reach =

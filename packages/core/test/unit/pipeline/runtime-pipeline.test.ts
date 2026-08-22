@@ -132,7 +132,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 
 describe("isBareLocalityTree — #912 lever 1 (placer abstention shape)", () => {
 	const node = (tag: string, value: string, children: AddressNode[] = []): AddressNode =>
-		({ tag, value, children }) as unknown as AddressNode
+		({ tag, value, children }) as AddressNode
 
 	const tree = (roots: AddressNode[]): AddressTree => ({ raw: "", roots })
 

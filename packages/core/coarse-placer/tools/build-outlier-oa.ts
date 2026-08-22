@@ -110,6 +110,12 @@ const FAMILIES: Record<string, string[]> = {
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
 /**
+ * Address parts are joined positionally; an absent field arrives as the empty string and must not become a stray
+ * separator.
+ */
+const nonEmpty = (part: string): boolean => part.length > 0
+
+/**
  * Assemble a plausible address string from an OA row — SAME shape variants as build-outlier-latin.
  */
 function assemble(r: Record<string, unknown>): string | null {
@@ -123,16 +129,16 @@ function assemble(r: Record<string, unknown>): string | null {
 	// nothing distinctive
 	// Drop raw-coord-only / PO-box-ish noise (DeepSeek gotcha): need a real street or locality token.
 	if (!street && !/[a-z]/i.test(locality)) return null
-	const head = [num, street].filter(Boolean).join(" ")
+	const head = [num, street].filter(nonEmpty).join(" ")
 	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
 
 	switch (h % 3) {
 		case 0:
-			return [head, [pc, locality].filter(Boolean).join(" ")].filter(Boolean).join(", ")
+			return [head, [pc, locality].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
 		case 1:
-			return [head, locality, pc].filter(Boolean).join(", ").trim()
+			return [head, locality, pc].filter(nonEmpty).join(", ").trim()
 		default:
-			return [head, [locality, pc].filter(Boolean).join(" ")].filter(Boolean).join(", ")
+			return [head, [locality, pc].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
 	}
 }
 

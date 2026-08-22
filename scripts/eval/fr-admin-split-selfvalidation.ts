@@ -34,7 +34,7 @@ import { parseArgs } from "node:util"
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
-import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, percentile } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
@@ -138,8 +138,8 @@ interface Commune {
 
 // Communes with their département (placetype 'region' in WOF-FR) + how many distinct départements
 // share the same commune NAME (the collision degree — the disambiguation pressure).
-const rows = db
-	.prepare(
+const rows = allRows<Commune>(
+	db.prepare(
 		`WITH fr_comm AS (
        SELECT l.id, l.name AS commune, l.latitude AS lat, l.longitude AS lon, r.name AS dept
        FROM spr l
@@ -152,7 +152,7 @@ const rows = db
      SELECT f.id, f.commune, f.dept, f.lat, f.lon, coll.c AS collisionCount
      FROM fr_comm f JOIN coll ON coll.commune = f.commune`
 	)
-	.all() as unknown as Commune[]
+)
 
 // Deterministic shuffle (no Math.random in this env) — order by id hash.
 const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
@@ -163,7 +163,7 @@ db.close()
 // --- resolver (production path) ------------------------------------------------------------------
 const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 const backend = new WOFSqlitePlaceLookup({ databasePath: DB })
-const resolver = createWOFResolver(backend as never)
+const resolver = createWOFResolver(backend)
 const resolveOpts = { defaultCountry: "FR" }
 
 /**

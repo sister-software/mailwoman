@@ -29,12 +29,12 @@ import type { SQLInputValue, StatementSync } from "node:sqlite"
  * runtime while the type promises otherwise.
  */
 export function allRows<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row[] {
-	return statement.all(...parameters) as unknown as Row[]
+	return statement.all(...parameters) as Row[]
 }
 
 /**
  * Single-row counterpart to {@link allRows}. `undefined` when the statement matched nothing.
  */
 export function getRow<Row>(statement: StatementSync, ...parameters: SQLInputValue[]): Row | undefined {
-	return statement.get(...parameters) as unknown as Row | undefined
+	return statement.get(...parameters) as Row | undefined
 }

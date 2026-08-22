@@ -778,8 +778,8 @@ async function main(): Promise<void> {
 	}
 
 	const parseOpts = {
-		...(adminFST ? { fst: adminFST as never } : {}),
-		...(morphologyFST ? { fstStreetMorphology: morphologyFST as never } : {}),
+		...(adminFST ? { fst: adminFST } : {}),
+		...(morphologyFST ? { fstStreetMorphology: morphologyFST } : {}),
 		postcodeRepair: args.postcodeRepair,
 		unitRepair: args.unitRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
@@ -787,7 +787,7 @@ async function main(): Promise<void> {
 	// #478: the assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver —
 	// the arena grades COMPONENT parses (Stage 3 / grouper / reconcile), not coordinates.
 	const pipeline = args.assembled
-		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST as never } : {}) })
+		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: undefined
 
 	if (pipeline) {

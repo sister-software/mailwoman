@@ -167,7 +167,7 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 		tokenizerPath = resolveWeights({ locale: options.locale ?? "en-us" }).tokenizerPath
 	}
 
-	const tokenizer = (await MailwomanTokenizer.loadFromFile(tokenizerPath)) as unknown as Tokenizer
+	const tokenizer: Tokenizer = await MailwomanTokenizer.loadFromFile(tokenizerPath)
 
 	const lines = options.texts.map((text) => measureLine(tokenizer, text, options.sequences ?? false))
 

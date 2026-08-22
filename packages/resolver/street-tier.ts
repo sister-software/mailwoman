@@ -313,7 +313,7 @@ function foldVoieTokens(s: string): string[] {
 		.replaceAll(/[.,'’]/g, "")
 		.replaceAll("-", " ")
 		.split(/\s+/)
-		.filter(Boolean)
+		.filter((token) => token.length > 0)
 }
 
 /**
@@ -416,7 +416,7 @@ export function applyStreetCentroid(
 	const rawSegments = raw
 		.split(",")
 		.map((s) => s.trim())
-		.filter(Boolean)
+		.filter((segment) => segment.length > 0)
 
 	const CAP = 5
 

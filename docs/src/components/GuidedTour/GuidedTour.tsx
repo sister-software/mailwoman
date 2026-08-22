@@ -158,7 +158,7 @@ export const GuidedTour: React.FC = () => {
 				const pipelineResult = await runPipeline(state.address, {
 					computeQueryShape,
 					groupPhrases,
-					classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+					classifier: classifier as Parameters<typeof runPipeline>[1]["classifier"],
 				})
 
 				const tClassify = performance.now()

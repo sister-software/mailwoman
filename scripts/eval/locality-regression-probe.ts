@@ -21,6 +21,7 @@
 
 import { parseArgs } from "node:util"
 
+import { isPresent } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
@@ -46,7 +47,7 @@ const wordIncludes = (hay: string, needle: string) =>
 
 // All street-family text the candidate emitted (folded), for the "did street eat it" test.
 const streetFamily = (p: Record<string, string>) =>
-	norm([p.street_prefix, p.street, p.street_suffix].filter(Boolean).join(" "))
+	norm([p.street_prefix, p.street, p.street_suffix].filter(isPresent).join(" "))
 
 const load = (modelPath: string) =>
 	NeuralAddressClassifier.loadFromWeights({

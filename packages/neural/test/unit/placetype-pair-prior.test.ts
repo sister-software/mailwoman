@@ -28,6 +28,7 @@
 
 import { existsSync } from "node:fs"
 
+import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import {
@@ -98,6 +99,17 @@ function makePiecesWithCommas(text: string): Array<{ piece: string; start: numbe
 }
 
 /**
+ * Resolve a fixture spec's tag name against the real tag union, naming a spec that misspells one.
+ */
+function asComponentTag(value: string | undefined): ComponentTag {
+	const tag = COMPONENT_TAGS.find((candidate) => candidate === value)
+
+	if (!tag) throw new Error(`fixture names ${JSON.stringify(value)}, which is not a ComponentTag`)
+
+	return tag
+}
+
+/**
  * A `PairIndexLike` double backed by a plain `(child, parent) -> edge` map, with recorded probe calls so tests can
  * assert on the exact keys probed (the space-join proof needs this).
  *
@@ -129,7 +141,7 @@ function mockPairIndex(
 
 			const [tag, parentTag = "locality"] = spec.split(">")
 
-			return { tag, parentTag } as never
+			return { tag: asComponentTag(tag), parentTag: asComponentTag(parentTag) }
 		},
 	}
 }

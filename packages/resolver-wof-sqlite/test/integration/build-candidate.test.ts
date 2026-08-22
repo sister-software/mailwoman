@@ -274,9 +274,10 @@ describe("buildCandidateTable", () => {
 		const db = new DatabaseSync(output, { readOnly: true })
 
 		const role = (key: string): Array<{ name: string; role: string | null; primary: number }> =>
-			db
-				.prepare(`SELECT name, name_role AS role, is_primary AS "primary" FROM candidate WHERE name_key = ?`)
-				.all(key) as never
+			allRows<{ name: string; role: string | null; primary: number }>(
+				db.prepare(`SELECT name, name_role AS role, is_primary AS "primary" FROM candidate WHERE name_key = ?`),
+				key
+			)
 
 		try {
 			// Gloss core: every alias of the double-absent place stamps; its primary never does.

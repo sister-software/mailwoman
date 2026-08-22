@@ -67,7 +67,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 		// fusing "Thiron-Gardais" into the unmatchable single term `ThironGardais` while the FTS
 		// doc holds two terms (#945 — the entire hyphenated-name class missed at the raw lookup;
 		// masked for years because pre-splice tokenizers never emitted hyphen-preserved values).
-		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length > 0)
 
 		if (!parts.length) continue
 

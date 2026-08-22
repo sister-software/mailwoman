@@ -16,8 +16,8 @@ import { GeoPoint, type GeoPointInput } from "./geometries/point.ts"
  * @see {@link https://en.wikipedia.org/wiki/Degree_(angle) Wikipedia: Degree (angle)}
  */
 export const ConversionFactor = {
-	DegreesToRadians: (Math.PI / 180) as unknown as 0.01745329251,
-	RadiansToDegrees: (180 / Math.PI) as unknown as 57.2957795131,
+	DegreesToRadians: Math.PI / 180,
+	RadiansToDegrees: 180 / Math.PI,
 } as const
 
 /**
