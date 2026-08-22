@@ -17,16 +17,15 @@ import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator } from "spliterator"
 
-import { stableSourceID } from "#adapters/utils"
+import { stableSourceIDFromParts } from "#adapters/utils"
 import { alignRow } from "#utils"
 
 /**
- * {@link stableSourceID}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't
- * `ComponentTag`s. `stableSourceID` sorts + hashes EVERY key it's given, so passing extra keys is how the legacy
- * builders kept per-variant ids unique — the strict typing is just too narrow for that. Centralizes the one cast.
+ * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary disambiguator keys (e.g. a variant index
+ * `v`) that aren't `ComponentTag`s, which is how the legacy builders kept per-variant ids unique.
  */
 export function shardSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
-	return stableSourceID(adapterID, parts as unknown as Parameters<typeof stableSourceID>[1])
+	return stableSourceIDFromParts(adapterID, parts)
 }
 
 /**

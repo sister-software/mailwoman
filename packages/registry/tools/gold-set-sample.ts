@@ -22,6 +22,7 @@
 
 import { writeFileSync } from "node:fs"
 
+import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
@@ -141,7 +142,7 @@ export async function goldSetSample(
 		const line1 = norm(r[C.pAddr])
 
 		if (!org || !line1) continue
-		const address = [line1, norm(r[C.pCity]), STATE, norm(r[C.pZip])].filter(Boolean).join(", ")
+		const address = [line1, norm(r[C.pCity]), STATE, norm(r[C.pZip])].filter(isPresent).join(", ")
 		const addrKey = addressFrequencyKey(address)
 
 		if (!addrKey) continue

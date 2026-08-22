@@ -84,7 +84,7 @@ export interface TrainDedupGBTOptions {
 	date?: string
 }
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -243,7 +243,7 @@ export async function trainDedupGBT(
 		attributes: { authorizedOfficial: "auth" },
 	}
 
-	const records: SourceRecord[] = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+	const records: SourceRecord[] = await ingestRows(rows, mapping, {
 		geocodeAddress: geocoder.seam,
 	})
 

@@ -151,9 +151,8 @@ async function writeOneShard(
 		sha256,
 		first_source_id: firstSourceID,
 		last_source_id: lastSourceID,
-		// Stamp source so audit.ts attributes the shard without falling back to filename-prefix
-		// inference. Cast widens ShardDescriptor; the field is read by audit.ts.
-		...({ source } as Record<string, string>),
+		// Stamp source so audit.ts attributes the shard without falling back to filename-prefix inference.
+		source,
 	}
 }
 

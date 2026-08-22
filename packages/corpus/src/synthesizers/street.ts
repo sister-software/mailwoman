@@ -19,6 +19,8 @@
  *   adapter.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
+
 import { decomposeStreet } from "#adapters/tiger/street-decompose"
 import type { CanonicalRow } from "#types"
 
@@ -223,7 +225,7 @@ export function synthesizeStreetRow(
 	const trailing = pick(TRAILING_DIRECTIONALS, random)
 
 	// Build the "full" street string the adapter would receive from TIGER FULLNAME.
-	const parts = [prefix, name, suffix, trailing].filter(Boolean)
+	const parts = [prefix, name, suffix, trailing].filter(isPresent)
 	const fullStreet = parts.join(" ")
 
 	// Pass through the same decomposeStreet TIGER uses — match the training distribution.

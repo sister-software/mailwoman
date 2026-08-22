@@ -22,6 +22,7 @@
  *   fast-follow; the mapping is an explicit input here.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
 import { CSVSpliterator, Delimiters } from "spliterator"
@@ -205,7 +206,7 @@ export function pick(row: Record<string, string>, columns?: string | string[], s
 
 	const value = list
 		.map((c) => row[c]?.trim())
-		.filter(Boolean)
+		.filter(isPresent)
 		.join(separator)
 		.trim()
 

@@ -36,7 +36,7 @@ export function compileLicenseExcludes(spec: string): RegExp[] {
 	return spec
 		.split(",")
 		.map((s) => s.trim())
-		.filter(Boolean)
+		.filter((entry) => entry !== "")
 		.map((s) => new RegExp("^" + s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))
 }
 

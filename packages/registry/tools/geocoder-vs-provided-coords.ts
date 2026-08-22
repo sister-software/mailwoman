@@ -22,6 +22,7 @@
 
 import { writeFileSync } from "node:fs"
 
+import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
 
@@ -134,7 +135,7 @@ export async function geocoderVsProvidedCoords(
 		}
 
 		scanned++
-		const address = [line, city, state, zip].filter(Boolean).join(", ")
+		const address = [line, city, state, zip].filter(isPresent).join(", ")
 		const g = await geocoder.geocode(address)
 
 		if (g.lat === null || g.lon === null) {

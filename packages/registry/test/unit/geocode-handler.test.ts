@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { PostalAddress } from "@mailwoman/record"
 import { makeGeocodeHandler } from "@mailwoman/registry/geocode-handler"
 import type { GeocodeAddress } from "@mailwoman/registry/ingest"
 import type { SourceRecord } from "@mailwoman/registry/types"
@@ -14,12 +13,17 @@ const rec = (raw: Record<string, string>): SourceRecord => ({ id: "x", raw }) as
 
 describe("makeGeocodeHandler", () => {
 	it("recomputes the address from raw+mapping and attaches the geocode", async () => {
-		const seam: GeocodeAddress = async (raw) => ({ formatted: raw.toUpperCase() }) as unknown as PostalAddress
+		const seam: GeocodeAddress = async (raw) => ({
+			components: {},
+			canonicalKey: "",
+			formatted: raw.toUpperCase(),
+		})
+
 		const handle = makeGeocodeHandler(seam, { address: ["addr", "city", "state"] })
 
 		const out = await handle(rec({ addr: "1 Main St", city: "Austin", state: "TX" }))
 
-		expect((out.address as unknown as { formatted: string }).formatted).toBe("1 MAIN ST, AUSTIN, TX")
+		expect(out.address?.formatted).toBe("1 MAIN ST, AUSTIN, TX")
 	})
 
 	it("leaves a record with no mapped address untouched (no geocode call)", async () => {

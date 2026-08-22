@@ -18,6 +18,7 @@
  *   License: stamped `"Public Domain"` per IMLS federal government distribution terms.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
@@ -100,10 +101,14 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 					// a postal-surface component here.
 				}
 
-				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
 
-				const raw = [libName, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
-					.filter(Boolean)
+				const raw = [
+					libName,
+					streetPart,
+					[city, [stateAbbr, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
+				]
+					.filter(isPresent)
 					.join(", ")
 
 				const aligned = reconcileComponents(components, raw)

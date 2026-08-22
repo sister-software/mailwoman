@@ -100,7 +100,7 @@ export interface ScorerClusteringEvalOptions {
 	outMd?: string
 }
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -254,7 +254,7 @@ export async function scorerClusteringEval(
 	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
 
-	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+	const records = await ingestRows(rows, mapping, {
 		geocodeAddress: geocoder.seam,
 	})
 

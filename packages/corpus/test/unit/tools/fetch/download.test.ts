@@ -95,7 +95,7 @@ describe("manifest helpers", () => {
 		const keyed = await loadManifestEntries<{ id: string; sha256: string }>(path, (e) => e.id)
 		expect(keyed.get("b")?.sha256).toBe("y")
 
-		await writeManifest(path, undefined as never).catch(() => {})
+		await writeManifest(path, undefined).catch(() => {})
 		expect(await readManifest("/nonexistent/MANIFEST.json")).toBeNull()
 	})
 

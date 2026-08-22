@@ -19,6 +19,7 @@
  *   federal).
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
@@ -72,9 +73,9 @@ function composeRaw(
 	state: string,
 	postcode: string
 ): string {
-	const cityPart = [city.trim(), [state, postcode].filter(Boolean).join(" ").trim()].filter(Boolean).join(", ")
+	const cityPart = [city.trim(), [state, postcode].filter(isPresent).join(" ").trim()].filter(isPresent).join(", ")
 
-	return [venue, streetPart, cityPart].filter(Boolean).join(", ")
+	return [venue, streetPart, cityPart].filter(isPresent).join(", ")
 }
 
 export function createUsgovIrsBmfAdapter(): CorpusAdapter {
@@ -117,7 +118,7 @@ export function createUsgovIrsBmfAdapter(): CorpusAdapter {
 				if (!split) continue
 
 				const streetPart =
-					"po_box" in split ? split.po_box : [split.house_number, split.street].filter(Boolean).join(" ")
+					"po_box" in split ? split.po_box : [split.house_number, split.street].filter(isPresent).join(" ")
 
 				const components: CanonicalRow["components"] = {
 					...(venue ? { venue } : {}),

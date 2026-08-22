@@ -10,6 +10,7 @@
  *   a coordinate are omitted (a Point feature needs one).
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import type { EntityGeoData, ResolvedEntity, SourceRecord } from "./types.ts"
@@ -23,7 +24,7 @@ function displayName(record: SourceRecord): string | null {
 	if (!name) return null
 
 	const joined = [name.prefix, name.given, name.middle, name.familyParticle, name.family, name.suffix]
-		.filter(Boolean)
+		.filter(isPresent)
 		.join(" ")
 		.trim()
 

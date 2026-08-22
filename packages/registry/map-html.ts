@@ -28,7 +28,7 @@
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { layers, namedFlavor } from "@protomaps/basemaps"
 
-import type { EntityGeoData } from "./types.ts"
+import type { MapFeatureData } from "./types.ts"
 
 /**
  * MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major.
@@ -106,7 +106,7 @@ function escapeHTML(text: string): string {
 	return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
 }
 
-function sourceCount(props: EntityGeoData): number {
+function sourceCount(props: MapFeatureData): number {
 	return Array.isArray(props["sources"]) ? props["sources"].length : 0
 }
 
@@ -116,7 +116,7 @@ function sourceCount(props: EntityGeoData): number {
  * state rather than a broken map.
  */
 export function toMapHTML(
-	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
+	geojson: GeoFeatureCollection<PointLiteral, MapFeatureData>,
 	options: MapHTMLOptions = {}
 ): string {
 	const title = options.title ?? "Mailwoman — resolved entities"
@@ -141,7 +141,7 @@ export function toMapHTML(
 		}
 	}
 
-	const colorFor = (props: EntityGeoData): string => {
+	const colorFor = (props: MapFeatureData): string => {
 		if (mode === "bucket") {
 			const b = props["bucket"] != null ? String(props["bucket"]) : "—"
 

@@ -29,6 +29,7 @@ import { join } from "node:path"
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
 
@@ -157,7 +158,7 @@ function composeRaw(
 	}
 
 	lines.push(dependentLocality)
-	const cityLine = [postcode, locality].filter(Boolean).join(" ").trim()
+	const cityLine = [postcode, locality].filter(isPresent).join(" ").trim()
 
 	if (cityLine) {
 		lines.push(cityLine)

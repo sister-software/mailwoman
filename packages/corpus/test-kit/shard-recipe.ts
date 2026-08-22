@@ -17,6 +17,8 @@ import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 
+import type { ShardRecipeOpts } from "../src/shard-recipes/scaffold.ts"
+
 /**
  * The fields a shard-recipe assertion reads off an emitted row.
  *
@@ -38,7 +40,7 @@ export interface ShardRow {
  * A recipe's `run` surface, as the tests drive it.
  */
 export interface ShardRecipe<TStats> {
-	run(options: never, emit: (line: string) => void): Promise<TStats>
+	run(options: ShardRecipeOpts, emit: (line: string) => void): Promise<TStats>
 }
 
 /**
@@ -63,13 +65,13 @@ export function shardRunner<TStats>(prefix: string, recipe: ShardRecipe<TStats>,
 	return async function run(
 		tuples: object[],
 		surfaces: string[],
-		opts: Record<string, unknown> = {}
+		opts: Partial<ShardRecipeOpts> = {}
 	): Promise<{ stats: TStats; rows: ShardRow[] }> {
 		const { input, exclude } = scratch(prefix, tuples, surfaces)
 		const lines: string[] = []
 
 		const stats = await recipe.run(
-			{ output: "", seed, variants: 1, input, excludeSurfaces: exclude, ...opts } as never,
+			{ output: "", seed, variants: 1, input, excludeSurfaces: exclude, ...opts },
 			(line) => lines.push(line)
 		)
 

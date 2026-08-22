@@ -9,6 +9,8 @@
  *   stays with that probe.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
+
 import type { ColumnMapping } from "../ingest.ts"
 
 export interface SourceSpec {
@@ -27,7 +29,7 @@ export const norm = (s: string | undefined): string => (s ?? "").trim()
  * Join the four US address columns into one line, dropping blanks.
  */
 export const addr = (line: string, city: string, st: string, zip: string): string =>
-	[norm(line), norm(city), norm(st), norm(zip)].filter(Boolean).join(", ")
+	[norm(line), norm(city), norm(st), norm(zip)].filter(isPresent).join(", ")
 
 /**
  * Arithmetic mean; `0` on an empty sample rather than `NaN`, because these feed report tables that print a number per

@@ -28,6 +28,7 @@
  *   distribution terms.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
 
@@ -115,10 +116,10 @@ function composeRaw(
 	state: string,
 	postcode: string
 ): string {
-	const streetPart = [house, street].filter(Boolean).join(" ").trim()
-	const cityPart = [city.trim(), [state, postcode].filter(Boolean).join(" ").trim()].filter(Boolean).join(", ")
+	const streetPart = [house, street].filter(isPresent).join(" ").trim()
+	const cityPart = [city.trim(), [state, postcode].filter(isPresent).join(" ").trim()].filter(isPresent).join(", ")
 
-	return [venue.trim(), streetPart, cityPart].filter(Boolean).join(", ")
+	return [venue.trim(), streetPart, cityPart].filter(isPresent).join(", ")
 }
 
 export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {

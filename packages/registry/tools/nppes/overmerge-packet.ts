@@ -8,6 +8,8 @@
 
 import { writeFileSync } from "node:fs"
 
+import { isPresent } from "@mailwoman/core/objects"
+
 import type { ResolvedEntity, SourceRecord } from "#index"
 
 import type { MessyRow } from "./sample.ts"
@@ -80,7 +82,7 @@ export function writeOvermergePacket(path: string, input: OvermergePacketInput):
 				const src = rowByID.get(rec.id)
 
 				out.push(
-					`  - npi=${rec.id} · name="${[rec.name?.given, rec.name?.family].filter(Boolean).join(" ")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
+					`  - npi=${rec.id} · name="${[rec.name?.given, rec.name?.family].filter(isPresent).join(" ")}" · org="${rec.organization?.canonical ?? ""}" · addr="${rec.address?.raw ?? ""}" · auth="${src?.auth ?? ""}" · taxonomy="${src?.taxonomy ?? ""}"`
 				)
 			}
 		}

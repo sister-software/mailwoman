@@ -104,8 +104,20 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  * length.
  */
 export function stableSourceID(adapterID: string, components: Partial<Record<ComponentTag, string>>): string {
-	const sortedKeys = Object.keys(components).toSorted() as ComponentTag[]
-	const payload = sortedKeys.map((k) => `${k}=${components[k] ?? ""}`).join("\u001F")
+	return stableSourceIDFromParts(adapterID, components)
+}
+
+/**
+ * {@link stableSourceID} over arbitrary disambiguator keys — a variant index, a slot number, anything that is not a
+ * `ComponentTag`. Every key handed in is sorted and hashed either way; only the key vocabulary differs, and the narrow
+ * signature above is what stops an adapter hashing a misspelled component name.
+ */
+export function stableSourceIDFromParts(
+	adapterID: string,
+	parts: Readonly<Record<string, string | undefined>>
+): string {
+	const sortedKeys = Object.keys(parts).toSorted()
+	const payload = sortedKeys.map((k) => `${k}=${parts[k] ?? ""}`).join("\u001F")
 	// One `update` over the joined string, not three chained ones — identical byte stream either way,
 	// but the separator has to stay inline or every id in every shard changes.
 	const digest = sha256Hex(`${adapterID}\u001E${payload}`)
