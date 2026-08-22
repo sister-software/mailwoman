@@ -79,7 +79,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let cascadeProvider: ShardProvider | null = null
 
 	if (cascadeOn) {
-		const { ShardProvider } = await import("mailwoman/geocode-core")
+		const { ShardProvider } = await import("#geocode-core")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 
 		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)

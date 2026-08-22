@@ -251,7 +251,9 @@ describe("resolveFSTPath", () => {
 		vi.stubEnv("MAILWOMAN_FST_BIN", undefined)
 
 		try {
-			expect(resolveFSTPath()).toBe(dataRootPath("wof", "fst-per-locale", "fst-en-US.bin"))
+			// Lowercase on both halves — the name `gazetteer-pipeline/fst.ts` actually writes. This assertion
+			// previously restated the resolver's own spelling, so it agreed with the code and with no artifact.
+			expect(resolveFSTPath()).toBe(dataRootPath("wof", "fst-per-locale", "fst-en-us.bin"))
 		} finally {
 			vi.unstubAllEnvs()
 		}
