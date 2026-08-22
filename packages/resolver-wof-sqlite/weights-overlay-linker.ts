@@ -2,17 +2,80 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * Shared development tooling for building and validating placetype-pair indexes in weights overlays.
+ * Shared development tooling for weights overlays: the symlink primitives every overlay linker uses, and the
+ * placetype-pair index build.
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	statSync,
+	symlinkSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs"
 import { resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
+
+/**
+ * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
+ * unlink-then-symlink leaves a no-file window that concurrent vitest workers can hit mid-suite — bit CI on 2026-07-24.
+ * rename(2) replaces the destination atomically.
+ */
+export function linkForce(src: string, dest: string): void {
+	const tmp = `${dest}.tmp-link`
+
+	if (existsSync(tmp)) {
+		unlinkSync(tmp)
+	}
+
+	symlinkSync(src, tmp)
+	renameSync(tmp, dest)
+}
+
+/**
+ * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
+ */
+export function removeIfPresent(dest: string): void {
+	try {
+		lstatSync(dest)
+	} catch {
+		return
+	}
+
+	unlinkSync(dest)
+
+	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
+}
+
+/**
+ * Symlink one soft-feed sibling into an overlay, warning rather than failing when the source is absent.
+ *
+ * Every one of these artifacts is OPTIONAL by design — the runtime has a fallback for each, so a fresh worktree that
+ * has not built the gazetteer still geocodes. That is why the miss prints the consequence instead of throwing: the
+ * operator needs to know which channel just resolved OFF, not to have the link step abort.
+ */
+export function linkSoftFeedSibling(source: string, destination: string, consequenceIfMissing: string): boolean {
+	if (!existsSync(source)) {
+		console.error(`WARNING: missing ${source} — ${consequenceIfMissing}`)
+
+		return false
+	}
+
+	linkForce(source, destination)
+
+	console.log(`linked ${destination} \u2190 ${source}`)
+
+	return true
+}
 
 /**
  * What one pair-index overlay has to say about itself. Everything else is shared.

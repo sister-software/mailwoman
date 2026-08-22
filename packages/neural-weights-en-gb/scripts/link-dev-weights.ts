@@ -91,6 +91,7 @@ import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
+	linkForce,
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
 	warnIfFSTStale,
@@ -141,23 +142,6 @@ if (!existsSync(SRC_TOKENIZER)) {
 	console.error(`missing source tokenizer: ${SRC_TOKENIZER}`)
 
 	process.exit(1)
-}
-
-/**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers (weights.test.ts + every other suite
- * resolving weights on the lab runners) can hit mid-suite — bit CI on 2026-07-24 (v1-parse-gate: "missing model files"
- * while the materialize step had verifiably succeeded). rename(2) replaces the destination atomically.
- */
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
-
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
 }
 
 /**

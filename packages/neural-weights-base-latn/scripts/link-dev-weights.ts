@@ -9,6 +9,7 @@ import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
@@ -24,17 +25,6 @@ const PKG_DIR = workspacePath("neural-weights-base-latn")
 const DEST_DIR = String(weightsOverlayPath("base-latn"))
 
 mkdirSync(DEST_DIR, { recursive: true })
-
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
-
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
 
 /**
  * Model + tokenizer: same source as the en-us workspace uses ($MAILWOMAN_DEV_MODEL env override supported).
