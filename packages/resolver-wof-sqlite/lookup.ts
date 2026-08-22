@@ -265,30 +265,42 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.#db, s.schemaName))
 		}
 
-		// A shard that carries `spr` is claiming to be a place shard, and every lookup path here reaches
-		// `place_search`. Without it the shard is unusable, and BOTH ways it fails are hard to read: an
-		// unroutable name returns zero hits (indistinguishable from "this country has no places") and a
-		// routable one throws mid-query from deep inside a SELECT. The unroutable half is the worse of the
-		// two: a shard reaches routing only through the name `deriveSchemaName` derives from its FILENAME, so
-		// a file spelled one letter off the placetype it serves answers with nothing while holding every row
-		// that was asked for.
+		// Every lookup path here reaches `place_search`, and a shard without it fails in one of two ways
+		// that are both hard to read: an unroutable name returns zero hits (indistinguishable from "this
+		// country has no places") and a routable one throws mid-query from deep inside a SELECT. The
+		// unroutable half is the worse of the two — a shard reaches routing only through the name
+		// `deriveSchemaName` derives from its FILENAME, so a file spelled one letter off the placetype it
+		// serves answers with nothing while holding every row that was asked for.
 		//
-		// Shards with no `spr` are exempt by design: `postcode-locality-<cc>.db` carries a relation table and
-		// nothing else, and it is part of the documented default shard list.
+		// Two independent things bring a shard under the guard, and it needs both. Carrying `spr` is a
+		// CLAIM to be a place shard. Carrying a name that routes is an INVITATION to be queried as one, and
+		// it is made by the filename alone — so a database with no tables at all still gets picked, still
+		// answers no query, and still dies inside a SELECT. Testing only the claim lets an empty or
+		// truncated file past construction; testing only the name would exempt a correctly-named build
+		// input. A shard needs to fail neither test to be exempt.
+		//
+		// Exempt by design: `postcode-locality-<cc>.db` carries a relation table and nothing else, matches
+		// no routed placetype, and is part of the documented default shard list.
 		for (const s of this.#shards) {
 			if (s.schemaName === "main") continue
-
-			if (!this.#shardHasTable(s.schemaName, "spr")) continue
-
-			if (this.#shardHasTable(s.schemaName, PLACE_SEARCH_TABLE)) continue
 
 			const routes = KNOWN_ROUTED_PLACETYPES.some(
 				(pt) => s.schemaName === pt || s.schemaName.startsWith(`${pt}_`) || s.schemaName.endsWith(`_${pt}`)
 			)
 
+			const claimsPlaceShard = this.#shardHasTable(s.schemaName, "spr")
+
+			if (!routes && !claimsPlaceShard) continue
+
+			if (this.#shardHasTable(s.schemaName, PLACE_SEARCH_TABLE)) continue
+
 			throw new Error(
-				`WOFSQLitePlaceLookup: ${s.path} carries "spr" but no "${PLACE_SEARCH_TABLE}" table, so it cannot serve a ` +
-					`lookup. Build it with the FTS index, or leave it out — it is usable as a BUILD input either way.` +
+				`WOFSQLitePlaceLookup: ${s.path} ` +
+					(claimsPlaceShard
+						? `carries "spr" but no "${PLACE_SEARCH_TABLE}" table, so it cannot serve a lookup.`
+						: `is named for a routed placetype but carries neither "spr" nor "${PLACE_SEARCH_TABLE}", so every ` +
+							`query routed to it would die mid-SELECT. An empty or truncated file reads exactly like this.`) +
+					` Build it with the FTS index, or leave it out — it is usable as a BUILD input either way.` +
 					(routes
 						? ""
 						: ` Its schema name "${s.schemaName}" also matches no routed placetype (${KNOWN_ROUTED_PLACETYPES.join(", ")}), ` +

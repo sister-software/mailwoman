@@ -11,6 +11,11 @@
  *
  *   The two `spr`-only fixtures below differ ONLY in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
  *   not — so each test isolates one of the two failure modes.
+ *
+ *   `postalcode-empty.db` is the third case and the one the first cut missed. It carries NO tables, so a guard
+ *   keyed on `spr` alone reads it as "not claiming to be a place shard" and waves it through — after which every
+ *   query routed to it by its NAME dies mid-SELECT, which is the exact failure the guard exists to prevent. A
+ *   zero-byte or truncated shard file is this shape, and one was on disk when the guard first shipped.
  */
 
 import { mkdtempSync, rmSync } from "node:fs"
@@ -57,6 +62,13 @@ const writeSprOnly = (path: string): void => {
 }
 
 /**
+ * A shard with NOTHING in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
+ */
+const writeEmpty = (path: string): void => {
+	new DatabaseSync(path).close()
+}
+
+/**
  * A relation-table shard, which never claims to be a place shard and is part of the documented default set.
  */
 const writeRelationOnly = (path: string): void => {
@@ -78,6 +90,8 @@ beforeAll(() => {
 	// Routes NOWHERE — spelled `postcode` where the placetype is `postalcode`.
 	writeSprOnly(join(dir, "postcode-x.db"))
 	writeRelationOnly(join(dir, "postcode-locality-intl.db"))
+	// Routes by name and carries nothing at all — the shape `postalcode-fr.db` had on disk.
+	writeEmpty(join(dir, "postalcode-empty.db"))
 })
 
 afterAll(() => {
@@ -132,5 +146,20 @@ describe("shard capability guard", () => {
 
 	it("does not examine the MAIN shard for routing — it is the fallback by definition", () => {
 		expect(() => new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db")] })).not.toThrow()
+	})
+
+	it("refuses an EMPTY shard whose name routes — no spr to claim with, and it would still be queried", () => {
+		let message = ""
+
+		try {
+			new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postalcode-empty.db")] })
+		} catch (error) {
+			message = (error as Error).message
+		}
+
+		// The message must NOT assert a table the file does not have. That claim was false for this shape.
+		expect(message).not.toMatch(/carries "spr"/)
+		expect(message).toMatch(/named for a routed placetype/)
+		expect(message).toMatch(/die mid-SELECT/)
 	})
 })
