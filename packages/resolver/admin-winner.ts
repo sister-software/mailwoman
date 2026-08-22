@@ -14,6 +14,7 @@
  */
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
+import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 
 /**
@@ -74,6 +75,28 @@ export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): Reado
 		isUnitGradePostcodeHit(postcode.value, postcode.resolverName) || areaPostcodeLeadsLocality(postcode.country)
 
 	return leads ? ADMIN_LADDER_POSTCODE_FIRST : ADMIN_LADDER_LOCALITY_FIRST
+}
+
+/**
+ * The ladder for a flat list of resolved nodes — the shape result assembly holds.
+ *
+ * Which node counts, and which of its fields the decision reads, is part of the ordering rather than the caller's
+ * business: `country` is the one the RESOLVER placed the code in, never a caller's requested scope, because the ladder
+ * is asking which address system this code belongs to and a scope is a filter on the answer rather than evidence about
+ * it. Getting that wrong at a call site would be invisible.
+ */
+export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArray<string> {
+	const node = nodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
+
+	if (!node) return ADMIN_LADDER_LOCALITY_FIRST
+
+	const country = node.metadata?.["resolver_country"]
+
+	return adminLadderFor({
+		value: node.value,
+		resolverName: node.metadata?.["resolver_name"] as string | undefined,
+		...(typeof country === "string" ? { country } : {}),
+	})
 }
 
 /**

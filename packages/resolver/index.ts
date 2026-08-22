@@ -57,6 +57,7 @@ export {
 	ADMIN_LADDER_LOCALITY_FIRST,
 	ADMIN_LADDER_POSTCODE_FIRST,
 	adminLadderFor,
+	adminLadderForNodes,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,
 	resolvedSpecificity,

@@ -11,12 +11,14 @@
  */
 
 import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/codex"
+import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 import {
 	ADMIN_LADDER_LOCALITY_FIRST,
 	ADMIN_LADDER_POSTCODE_FIRST,
 	adminLadderFor,
+	adminLadderForNodes,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,
 	resolvedSpecificity,
@@ -86,6 +88,45 @@ describe("adminLadderFor", () => {
 	// with its panel, the way DE did.
 	it("holds exactly the countries a full-panel measurement has admitted", () => {
 		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE"])
+	})
+})
+
+describe("adminLadderForNodes", () => {
+	const pcNode = (
+		value: string,
+		resolverName: string,
+		over: { country?: string; lat?: number; lon?: number } = {}
+	): AddressNode => ({
+		tag: "postcode",
+		value,
+		start: 0,
+		end: value.length,
+		confidence: 1,
+		children: [],
+		metadata: { resolver_name: resolverName, ...(over.country ? { resolver_country: over.country } : {}) },
+		...(over.lat === undefined ? {} : { lat: over.lat, lon: over.lon }),
+	})
+
+	it("finds the postcode node and reads both routes off it", () => {
+		expect(adminLadderForNodes([pcNode("N7 0BT", "n70bt", { lat: 51.55, lon: -0.13 })])).toBe(
+			ADMIN_LADDER_POSTCODE_FIRST
+		)
+
+		expect(adminLadderForNodes([pcNode("12623", "12623", { country: "DE", lat: 52.5, lon: 13.5 })])).toBe(
+			ADMIN_LADDER_POSTCODE_FIRST
+		)
+
+		expect(adminLadderForNodes([pcNode("62701", "62701", { country: "US", lat: 39.8, lon: -89.6 })])).toBe(
+			ADMIN_LADDER_LOCALITY_FIRST
+		)
+	})
+
+	it("ignores a postcode node with no coordinate — the ladder picks among placed nodes", () => {
+		expect(adminLadderForNodes([pcNode("12623", "12623", { country: "DE" })])).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+	})
+
+	it("falls back to locality-first when no postcode node is present", () => {
+		expect(adminLadderForNodes([])).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 })
 

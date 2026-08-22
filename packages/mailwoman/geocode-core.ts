@@ -48,11 +48,10 @@ import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import {
-	adminLadderFor,
+	adminLadderForNodes,
 	type AddressPointLookup,
 	type InterpolationLookup,
 	type PostcodePrefixIndexLike,
-	type ResolvedPostcodeHit,
 	type ResolveOpts,
 	type Resolver,
 	type StreetCentroidLookup,
@@ -1386,26 +1385,6 @@ function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 }
 
 /**
- * The resolved postcode the admin ladder reads, or `undefined` when none carries a coordinate.
- *
- * `country` is the one the RESOLVER placed the code in, never the caller's requested scope: the ladder is asking which
- * address system this code belongs to, and a caller's scope is a filter on the answer rather than evidence about it.
- */
-function postcodeLadderHit(allNodes: readonly AddressNode[]): ResolvedPostcodeHit | undefined {
-	const node = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
-
-	if (!node) return undefined
-
-	const country = node.metadata?.["resolver_country"]
-
-	return {
-		value: node.value,
-		resolverName: node.metadata?.["resolver_name"] as string | undefined,
-		...(typeof country === "string" ? { country } : {}),
-	}
-}
-
-/**
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
@@ -1496,7 +1475,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		// 51.5500/-0.1307, 38 m from the rooftop truth, against a London centroid 5.6 km away — on all 15 GB
 		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed;
 		// the answer was on the tree and this list did not ask for it.
-		const adminPriority = adminLadderFor(postcodeLadderHit(allNodes))
+		const adminPriority = adminLadderForNodes(allNodes)
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
