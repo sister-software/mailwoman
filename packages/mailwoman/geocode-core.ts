@@ -635,6 +635,7 @@ export function regionToStateSlug(
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
+	let resolvedCountry: string | null = null
 	const stack = [...tree.roots]
 
 	while (stack.length) {
@@ -645,8 +646,32 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
 		}
 
+		if (!resolvedCountry) {
+			const stamped = (node.metadata?.["resolver_country"] as string | undefined)?.trim()
+
+			if (stamped) {
+				resolvedCountry = stamped.toUpperCase()
+			}
+		}
+
 		stack.push(...node.children)
 	}
+
+	// A slug names a US shard and nothing else, but `regionToStateSlug` accepts ANY two-letter region, so a foreign
+	// subnational code that happens to spell a US state selects that state's rooftop shard. Measured against the shards
+	// on disk: 8 of 16 Italian province codes reach one (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia,
+	// CA→California, MO→Missouri, AL→Alabama, MT→Montana), 5 of 5 Spanish, 6 of 12 Brazilian, and AU's WA→Washington.
+	// IT and ES are tier-1 and write the code in ordinary postal form — `20121 Milano MI`.
+	//
+	// Nothing WRONG comes back today, and the reason is not structural: the lookup keys on (postcode, street, number) or
+	// (locality, street, number), and Milano's 20xxx simply does not collide with Michigan's 48xxx–49xxx. Cádiz province
+	// is `CA`, Cadiz is a real California locality and Calle Real a real California street, so the locality variant is one
+	// coincident house number away from a ROOFTOP-tier answer on the wrong continent — the highest-confidence thing this
+	// pipeline emits.
+	//
+	// An UNKNOWN country still passes: dropping the slug there would take the street tier away from every US address whose
+	// country never resolved, which is the failure #1787 exists to avoid, not to cause.
+	if (resolvedCountry !== null && resolvedCountry !== "US") return null
 
 	return regionToStateSlug(regionValue, regionResolverName)
 }
