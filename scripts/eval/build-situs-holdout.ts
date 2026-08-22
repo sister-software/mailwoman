@@ -63,7 +63,7 @@ for (const r of rows) {
 	if (!number || !street || !postcode) continue
 	// Realistic input: number street, locality REGION postcode. Interp is postcode-scoped, so the
 	// postcode is what matters; locality/region help the parser route + resolve admin.
-	const input = `${number} ${street}, ${[locality, region, postcode].filter(Boolean).join(" ")}`
+	const input = `${number} ${street}, ${[locality, region, postcode].filter((part) => part.length > 0).join(" ")}`
 	lines.push(JSON.stringify({ input, lat: r.lat, lon: r.lon }))
 }
 

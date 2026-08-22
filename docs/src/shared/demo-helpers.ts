@@ -406,7 +406,7 @@ export async function runClassifyStage(
 		{
 			computeQueryShape,
 			groupPhrases,
-			classifier: deps.classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+			classifier: deps.classifier as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
 		},

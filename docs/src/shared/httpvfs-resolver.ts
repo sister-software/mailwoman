@@ -107,11 +107,13 @@ function sanitizeFTS(text: string): string {
 /**
  * Sql.js exec result → row objects.
  */
-function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
+function rowsFromExec<Row = Record<string, unknown>>(
+	res: Array<{ columns: string[]; values: unknown[][] }> | undefined
+): Row[] {
 	if (!res || !res.length) return []
 	const { columns, values } = res[0]
 
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
+	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
 }
 
 interface HTTPVFSWorker {
@@ -726,7 +728,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank` +
 				`${optionalSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${Math.max(limit, RERANK_FETCH)}`
 
-			const fetched = rowsFromExec(await this.#worker.db.exec(sql)) as unknown as CandidateProbeRow[]
+			const fetched = rowsFromExec<CandidateProbeRow>(await this.#worker.db.exec(sql))
 
 			return rankByPrimaryPreference(fetched, limit, undefined, idToPlacetype)
 		}

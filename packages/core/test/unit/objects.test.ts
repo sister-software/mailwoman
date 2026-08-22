@@ -20,7 +20,7 @@ test("pick: accepts an enum-like record (picks by its values)", () => {
 })
 
 test("pick: applies the transform callback to each picked value", () => {
-	expect(pick({ a: 1, b: 2 }, ["a", "b"], (value) => ((value as number) * 10) as never)).toEqual({ a: 10, b: 20 })
+	expect(pick({ a: 1, b: 2 }, ["a", "b"], (value) => value * 10)).toEqual({ a: 10, b: 20 })
 })
 
 test("pick: a falsy input returns an empty object", () => {

@@ -242,7 +242,7 @@ async function main() {
 	const officialNameExact = pins["official-name-exact"] === true
 
 	const resolver = createWOFResolver(
-		new WOFSqlitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined) as never
+		new WOFSqlitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
 	)
 
 	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")

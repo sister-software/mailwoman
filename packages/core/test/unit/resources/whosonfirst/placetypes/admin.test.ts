@@ -74,7 +74,7 @@ test("pluckPlacetypeSpec: builds the localized name map from name:<lang>_x_<kind
 		baseProps({ "name:eng_x_preferred": "London", "name:fra_x_preferred": "Londres" } as Partial<WOFProperties>)
 	)
 
-	expect(spec.localizedPropMap.get("eng" as never)?.get("preferred")).toBe("London")
+	expect(spec.localizedPropMap.get("eng")?.get("preferred")).toBe("London")
 	expect(spec.localizedPropMap.get("fra" as never)?.get("preferred")).toBe("Londres")
 })
 

@@ -39,11 +39,17 @@ function tokens(): DecoderToken[] {
 	]
 }
 
+interface ShapedNode {
+	tag: string
+	value: string
+	children: readonly ShapedNode[]
+}
+
 /**
  * Stable structural fingerprint: each node as `tag(value)` with nested children.
  */
-function shape(nodes: { tag: string; value: string; children: unknown[] }[]): string {
-	return nodes.map((n) => `${n.tag}[${shape(n.children as never)}]`).join(",")
+function shape(nodes: readonly ShapedNode[]): string {
+	return nodes.map((n) => `${n.tag}[${shape(n.children)}]`).join(",")
 }
 
 describe("AddressTree.system + containmentFor", () => {
@@ -58,9 +64,9 @@ describe("AddressTree.system + containmentFor", () => {
 	})
 
 	test("system is behavior-neutral today — identical structure regardless of system", () => {
-		const base = shape(buildAddressTree(RAW, tokens()).roots as never)
-		const western = shape(buildAddressTree(RAW, tokens(), { system: "western" }).roots as never)
-		const japanese = shape(buildAddressTree(RAW, tokens(), { system: "japanese" }).roots as never)
+		const base = shape(buildAddressTree(RAW, tokens()).roots)
+		const western = shape(buildAddressTree(RAW, tokens(), { system: "western" }).roots)
+		const japanese = shape(buildAddressTree(RAW, tokens(), { system: "japanese" }).roots)
 		expect(western).toBe(base)
 		expect(japanese).toBe(base)
 	})

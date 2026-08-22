@@ -35,7 +35,7 @@ export const DemoMapControls: React.FC = () => {
 	const [map, setMap] = useState<MapLibreMap | null>(null)
 
 	useEffect(() => {
-		setMap((mapRef?.getMap() as unknown as MapLibreMap) ?? null)
+		setMap(mapRef?.getMap() ?? null)
 	}, [mapRef])
 
 	return <DebugControl map={map} />

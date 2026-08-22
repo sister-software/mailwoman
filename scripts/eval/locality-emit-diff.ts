@@ -13,7 +13,7 @@ import { parseArgs } from "node:util"
  *     --base out/v180/model.onnx --cand out/v190-int8/model.onnx \
  *     --golden data/eval/external/oa-pt-coord-150.jsonl --default-country PT --n 30
  */
-import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { JSONSpliterator } from "spliterator"
@@ -63,11 +63,11 @@ async function main() {
 
 	const base = await mk(values["base"] || "")
 	const cand = await mk(values["cand"] || "")
-	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: WOF }) as never)
+	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: WOF }))
 	const opts = { defaultCountry: cc }
 
-	const didResolve = async (tree: unknown): Promise<boolean> => {
-		const r = await resolver.resolveTree(tree as never, opts)
+	const didResolve = async (tree: AddressTree): Promise<boolean> => {
+		const r = await resolver.resolveTree(tree, opts)
 
 		const has = (node: { placeID?: string; children: unknown[] }): boolean =>
 			!!node.placeID?.startsWith("wof:") || (node.children as { placeID?: string; children: unknown[] }[]).some(has)

@@ -117,7 +117,7 @@ const DemoInner: React.FC<{ initialCenter: Coordinates2D; debugDefault?: boolean
 
 				return (
 					<DocsResultPanel
-						result={displayResult as unknown as DemoResult}
+						result={displayResult as DemoResult}
 						selectedCandidateIndex={selectedCandidateIndex}
 						onSelectCandidate={onSelectCandidate}
 					/>

@@ -16,7 +16,7 @@ import {
 	resolveRetryPolicy,
 	retryDelayMs,
 } from "@mailwoman/core/api/retry"
-import { AxiosError } from "axios"
+import { AxiosError, type InternalAxiosRequestConfig } from "axios"
 import { describe, expect, it } from "vitest"
 
 describe("parseRetryAfterMs", () => {
@@ -90,8 +90,8 @@ describe("classifyAxiosFailure", () => {
 		return new AxiosError("failed", AxiosError.ERR_BAD_RESPONSE, undefined, undefined, {
 			status,
 			statusText: "",
-			headers: headers as never,
-			config: {} as never,
+			headers,
+			config: {} as InternalAxiosRequestConfig,
 			data: undefined,
 		})
 	}

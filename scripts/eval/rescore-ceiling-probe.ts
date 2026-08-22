@@ -62,7 +62,7 @@ async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF })
-	const resolver = createWOFResolver(lookup as never)
+	const resolver = createWOFResolver(lookup)
 
 	const model = await createScorer({
 		modelPath: MODEL,
@@ -107,7 +107,7 @@ async function main() {
 		for (const row of rows) {
 			s.n++
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
-			const r = await resolver.resolveTree(tree as never, { defaultCountry: cc })
+			const r = await resolver.resolveTree(tree, { defaultCountry: cc })
 
 			if ((r.roots as N9[]).some(hasWOF)) {
 				s.res++
@@ -137,7 +137,7 @@ async function main() {
 					const dis = pc ? await lookup.findPlace({ text: gold, country: cc, postcode: pc, limit: 5 }) : goldCands
 
 					// findPlace candidates carry lat/lon (NOT the ResolvedPlace latitude/longitude).
-					const dists = (dis as unknown as { lat: number; lon: number }[])
+					const dists = dis
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
 						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))
 

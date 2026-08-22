@@ -45,7 +45,7 @@ async function main(): Promise<void> {
 					files: (values["files"] as string)
 						.split(",")
 						.map((s) => s.trim())
-						.filter(Boolean),
+						.filter((file) => file.length > 0),
 				}
 			: {}),
 		...(values["weights-cache"] != null ? { weightsCache: values["weights-cache"] as string } : {}),

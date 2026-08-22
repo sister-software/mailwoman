@@ -57,7 +57,9 @@ describe("layer manifest IO", () => {
 
 	it("rejects an unknown tier at write time", async () => {
 		using db = await openContractDB()
-		await expect(writeLayerManifest(db, { ...MANIFEST, tier: "bootleg" as never })).rejects.toThrow(/tier/)
+		const offContract: Omit<LayerManifest, "tier"> & { tier: string } = { ...MANIFEST, tier: "bootleg" }
+
+		await expect(writeLayerManifest(db, offContract as LayerManifest)).rejects.toThrow(/tier/)
 	})
 
 	it("rejects a manifest with no spine keys", async () => {
