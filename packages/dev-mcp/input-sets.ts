@@ -14,11 +14,11 @@
  *   drawn from, because a denominator that travels with the number is the only kind that survives a relay.
  */
 
-import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
@@ -150,10 +150,6 @@ export interface ResolvedInputSet {
 	notes: string[]
 }
 
-function sha256(values: string[]): string {
-	return createHash("sha256").update(values.join("\n")).digest("hex")
-}
-
 function countStrata(cases: SeedCase[], pick: (c: SeedCase) => string | undefined): Map<string, number> {
 	const counts = new Map<string, number>()
 
@@ -282,7 +278,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		setID: `holdout:${source}/${n}${ref.seed === undefined ? "" : `/seed-${ref.seed}`}`,
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: "random-draw",
 		populationN: drawnFrom,
 		notCovered: [
@@ -315,10 +311,10 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 	}
 
 	return {
-		setID: `literal:${sha256(ref.inputs).slice(0, 12)}`,
+		setID: `literal:${sha256Hex(ref.inputs).slice(0, 12)}`,
 		inputs: ref.inputs.map((input, index) => ({ id: String(index), input })),
 		n: ref.inputs.length,
-		sha256: sha256(ref.inputs),
+		sha256: sha256Hex(ref.inputs),
 		selection: "hand-picked",
 		why: ref.why,
 		notCovered: [],
@@ -383,7 +379,7 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 			...(seed.expectToleranceM === undefined ? {} : { toleranceM: seed.expectToleranceM }),
 		})),
 		n: filtered.length,
-		sha256: sha256(filtered.map((r) => `${r.id}\t${r.input}`)),
+		sha256: sha256Hex(filtered.map((r) => `${r.id}\t${r.input}`)),
 		selection: isSlice ? "slice" : "full",
 		...(isSlice ? { populationN: all.length } : {}),
 		notCovered,
@@ -513,7 +509,7 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		setID: `panel:${slug}`,
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: isSlice ? "slice" : "full",
 		...(isSlice ? { populationN: all.length } : {}),
 		notCovered,
@@ -561,7 +557,7 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 		setID: `golden:${version}/${split}`,
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: "full",
 		notCovered: split === "dev" ? ['the held-back split — `split: "full"` reaches it, deliberately separately'] : [],
 		hasTruth: coordinateTruthCounts(inputs),
@@ -604,7 +600,7 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		setID: ref.country ? `parity:${ref.country}` : "parity",
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: isSlice ? "slice" : "full",
 		...(isSlice ? { populationN: all.length } : {}),
 		notCovered: isSlice

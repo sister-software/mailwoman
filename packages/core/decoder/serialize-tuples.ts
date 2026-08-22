@@ -25,7 +25,13 @@ export interface SerializeTuplesOpts {
 	includeUnknown?: boolean
 }
 
-function flatten(node: AddressNode, out: AddressNode[]): void {
+/**
+ * Recursively flattens an `AddressNode` tree into a source-ordered list of nodes.
+ *
+ * @param node The root node to flatten.
+ * @param out The output array to which flattened nodes will be appended.
+ */
+export function flatten(node: AddressNode, out: AddressNode[]): void {
 	out.push(node)
 
 	for (const child of node.children) {

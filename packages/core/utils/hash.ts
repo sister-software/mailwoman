@@ -25,8 +25,10 @@ export async function sha256File(path: string): Promise<string> {
 /**
  * SHA-256 of in-memory content, hex-encoded.
  */
-export function sha256Hex(data: string | NodeJS.ArrayBufferView): string {
-	return createHash("sha256").update(data).digest("hex")
+export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): string {
+	const formattedData = Array.isArray(data) ? data.join("\n") : data
+
+	return createHash("sha256").update(formattedData).digest("hex")
 }
 
 /**
