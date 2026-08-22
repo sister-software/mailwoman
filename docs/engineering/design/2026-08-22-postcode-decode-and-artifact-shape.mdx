@@ -1,0 +1,247 @@
+---
+title: "Design note: postcode decode as encoded intent, and the artifact shape it needs"
+description: A postal code carries its own location. What we can decode without retrieval, what the on-disk formats already do, and the two decisions blocking the first artifact.
+role: decision
+status: design-note
+---
+
+# Postcode decode as encoded intent
+
+**Status: design note (2026-08-22). No implementation. Every number below is reproducible from the
+scripts named in the appendix.**
+
+Related: [#1773](https://github.com/sister-software/mailwoman/issues/1773) (the grader bug that
+started this), `packages/neural/postcode-prefix-index.ts` (PFX1, the artifact), `pfx1.ksy` (its
+normative layout).
+
+## The claim
+
+A postal code is not an opaque key. It is **compressed, locale-specific information about where it
+is**, and much of it is readable without asking a gazetteer anything.
+
+This matters exactly where retrieval helps least. `800 E Monroe St, Springfield, IL 62701` is
+over-specified: retrieval disambiguates and any decode is redundant. Strip it to
+`800 E Monroe St 62701` and the ZIP is the **only** evidence of place in the string — and it is
+evidence a decoder can read with no database.
+
+Pelias penalizes numeric spans positionally: is this five-digit run a house number or a postcode,
+given where it sits? That is a prior on the SPAN. Nothing asks whether the code's own content
+**corroborates** the neighbouring spans, or lets that corroboration move confidence.
+
+## What already exists
+
+Most of the machinery is built. The gap is narrower than it looks.
+
+| Piece                                        | Where                                | State                                         |
+| -------------------------------------------- | ------------------------------------ | --------------------------------------------- |
+| shape → country                              | `core/resolver/postcode-format.ts`   | **default-ON**                                |
+| shape → candidate address systems            | `codex/postcode-systems.ts`          | shipped, overlap-aware                        |
+| granularity tier, by measurement             | `codex/postcode-systems.ts`          | NL PC6 + GB unit only                         |
+| prefix → asserted ancestry + measured radius | `resolver/postcode-prefix.ts` (PFX1) | built, **default-OFF**, GB only               |
+| coordinate-based consistency                 | `resolver/resolve.ts`                | default-ON, **needs the postcode to resolve** |
+| generic prefix-walk trie                     | `@mailwoman/ancestrie`               | shipped, unused for postcodes                 |
+
+`candidateSystemsForPostcode` is already overlap-aware: `62701` is accepted by the US, DE and FR
+shapes, and it returns all three. Resolving that ambiguity by picking one locale up front is the
+failure to avoid — the caller's country scope is what narrows it.
+
+## The granularity spectrum is the design constraint
+
+One `postalcode` placetype covers systems that are not comparable:
+
+| System                      | What a full code means                    | Grade              |
+| --------------------------- | ----------------------------------------- | ------------------ |
+| Australia, US 5-digit ZIP   | a delivery area / locality                | **area**           |
+| Canada LDU, UK unit, NL PC6 | a street segment or small address cluster | **street segment** |
+| Singapore                   | one building or house                     | **delivery point** |
+| Ireland Eircode             | one postal address                        | **address**        |
+
+`PLACETYPE_SPECIFICITY` assigns `postalcode: 9`, above `locality: 4`, and that single number is right
+for GB and wrong for FR, where a five-digit zone is coarser than the commune inside it. This is the
+root of #1773 and is worth stating as a rule: **a global placetype scale cannot answer a
+per-address-system question.**
+
+The US is the awkward case because it straddles three levels at once — 5-digit ZIP (area), Unique ZIP
+(one organization), ZIP+4 (one side of a street).
+
+## Five findings, measured
+
+### 1. There is no postcode parentage to consult
+
+The natural fix for #1773 — ask the hierarchy whether this postcode is finer than this locality — has
+no data behind it:
+
+```
+postalcode-gb-codepoint.db     1,746,976 rows   parent_id set on 0.0%
+postalcode-geonames-intl.db      446,914 rows   parent_id set on 0.0%
+admin-global-priority.db               0 postalcode rows
+ancestor edges whose CHILD is a postalcode:  0
+```
+
+Postcodes live in separate shards, outside the admin hierarchy. A containment relation does exist,
+purpose-built, in `postcode-locality-intl.db` — `is_containing` and `distance_km` per pair, 7.6M
+pairs for GB — and nothing in either grader consults it.
+
+### 2. WOF parentage is a contaminated instrument for US ZIPs
+
+The ZIP numbering plan is an independent witness: a `5xxxx` code cannot be in New York whatever a
+gazetteer parent says.
+
+```
+ZIPs with both a numbering band and a resolvable WOF state: 38,816
+agree:        35,533 (91.54%)
+CONTRADICTED:  3,283  (8.46%)
+```
+
+PFX1's own header independently records 7.9%, arrived at by a different method. The two agree.
+
+### 3. The contamination has a computable signature
+
+USPS **Unique ZIPs** — assigned to an organization by mail volume, `00501` is the IRS, `12345` is
+General Electric, `10118` is the Empire State Building — describe a mail route, not an area. Their
+gazetteer parentage is whatever the source could attach them to.
+
+The detectable signature is not the unique-ness but the **placeholder coordinate**: a coordinate
+shared by codes from different SCFs.
+
+```
+agreeing ZIPs on a shared coordinate:    1,594/35,533 (4.5%)
+DISAGREEING ZIPs on a shared coordinate: 2,153/3,283 (65.6%)
+```
+
+A 14.5× enrichment. `38.8933,-77.0146` carries 133 codes across five SCFs; `40.1604,-75.4090` carries
+48 codes across **29 unrelated** SCFs.
+
+### 4. Ranked state shares do NOT separate signal from artifact
+
+The first proposal was to return `Array<[state, share]>` and let a threshold decide. Measured, it
+fails:
+
+```
+cut     kept   plausible   implausible   precision
+0.00     749        195           554      26.0%
+0.10     249         77           172      30.9%
+0.30      76         36            40      47.4%
+```
+
+**554 of 749 minority state entries (74%) are flatly contradicted by the numbering plan**, and the
+plausible and implausible share distributions overlap (medians 6.9% and 5.1%). A weighted array would
+ship mostly noise with a number attached, which is worse than shipping nothing because it looks
+calibrated.
+
+### 5. Point-in-polygon beats parentage by 12×, and needs no licence
+
+PIP depends on neither parentage nor a USPS database — only the code's own coordinate and a state
+boundary, both of which we already ship under permissive licences.
+
+|                                         | WOF parentage | **point-in-polygon** |
+| --------------------------------------- | ------------: | -------------------: |
+| ZIPs contradicted by the numbering plan |         8.46% |            **0.69%** |
+| SCFs sitting in one state               |         36.6% |            **97.2%** |
+| dominant state plausible                |         97.0% |            **99.7%** |
+
+And PIP's residual error is inherited, not produced: 264 of its 286 remaining contradictions sit on a
+placeholder coordinate. On clean input it is wrong 22 times in 41,905 — about 0.05%.
+
+The same pass reaches down the admin ladder, degrading by **coverage** rather than by silent
+wrongness:
+
+| Level      | polygons |    ZIPs placed | `62701`          |
+| ---------- | -------: | -------------: | ---------------- |
+| locality   |   45,113 | 25,798 (61.6%) | **Springfield**  |
+| localadmin |   23,343 | 17,565 (41.9%) | Capital Township |
+| county     |    3,142 | 41,658 (99.4%) | Sangamon         |
+| region     |       51 | 41,671 (99.4%) | Illinois         |
+
+Whole run: 2.4 seconds. The 38% locality miss is a polygon gap — only 45,113 of 160,077 US localities
+carry geometry — not a PIP failure. `localadmin` returning _Capital Township_ confirms locality is the
+rung to aim at, with county as the honest fallback.
+
+## What the artifact should assert
+
+- **US SCF coordinate + `radiusP95Km`**: buildable now. Median p95 radius **53.7 km** on placed codes
+  (p90 110 km), against GB outward's 3.24 km and the US 1-digit band's 662 km. A real tier, and one
+  neither existing consumer was designed around — which is exactly why PFX1 makes the radius
+  mandatory beside a coordinate.
+- **US SCF → state**: from PIP, single-state for 877 of 902 SCFs. Not an array.
+- **US SCF → locality**: from PIP where a polygon exists, county where it does not, and **nothing**
+  where neither does. PFX1 already treats empty ancestry as a legitimate answer.
+
+## Two decisions that block the first artifact
+
+### Decision 1 — id width
+
+`PostcodePrefixAncestor.wofID` is an `f64` because WOF ids exceed 2^32; the NI shard's synthetic
+postcode ids start at 9.8e12. `AncestrieRecord.id` is a `u32`. **These cannot both be right if the
+postcode appliance returns WOF ancestry through ancestrie.**
+
+| Option                       | Cost                                                                 | Notes                                                          |
+| ---------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------- |
+| widen ancestrie ids to `u64` | +4 bytes × (entry + id index + parent tables), ~12 MB per 1M entries | `BigInt64Array` reads are slower                               |
+| **dense ordinal mapping**    | ~0                                                                   | build-time WOF id → `u32` ordinal; the real id becomes payload |
+| `f64`, as PFX1 does          | +4 bytes, exact to 2^53                                              | ids stop being integers to the type system                     |
+
+**Recommendation: dense ordinals.** It is the technique the format already uses for tokens — intern
+the wide thing, reference an ordinal — applied one level up. Hot tables stay `u32`, and an external
+identifier belongs in the payload.
+
+### Decision 2 — a seventh hand-rolled format, or a shared header
+
+Six formats exist: `PCN1`, `PCB1`, `PIX1`, `PFX1`, `ANCT`, and the FST. Each carries a per-file
+"this file owns BOTH ends" discipline and no shared code. That has held — but the conventions have
+already forked:
+
+- header: `u32 headerLen` + UTF-8 JSON (`PCN1`/`PIX1`/`PFX1`) vs a fixed 48-byte binary (`ANCT`);
+- ids: `f64` (PFX1) vs `u32` (ancestrie).
+
+**Recommendation: extract a shared header module at the seventh format, not the eighth** — magic,
+version, section table, source-md5 stamp. The per-file discipline stays for the payload.
+
+## What it resembles, for orientation
+
+- **Ancestrie** is a Lucene FST + impact-ordered postings + a nested-set index, packaged like
+  PMTiles. The pre/post interval labels give O(1) containment both ways and make descendant
+  enumeration a contiguous range scan; the usual objection (relabelling on update) is void because
+  the artifact is sealed and rebuilt whole.
+- **PFX1** is a Parquet dictionary-encoded column group, flattened row-wise.
+- **Protobuf** is the wrong tool for the index itself: varints mean you cannot seek, so no mmap and
+  no binary search. It is a fine container for pre-sorted opaque blobs.
+- **Parquet/GeoParquet** fit bulk analytical postcode work — row groups are byte-range addressable —
+  but need a WASM decoder and have poor point-query latency.
+- **Entropy coding (Huffman)** buys little here: postcodes share prefixes _and_ suffixes, so the
+  FST/DAWG already exploits the redundancy that matters, and a decode cost on every read is the wrong
+  trade at these sizes.
+
+## Open questions
+
+- **ZIP currency is unanswerable from the shipped shard.** `is_current = 1` on all 42,319 rows,
+  `is_deprecated = 0` on all, `is_ceased` set on **all**. `10048` — the World Trade Center ZIP,
+  retired in 2001 — is present at `0.0000, 0.0000` and flagged current. 414 rows sit on null island.
+- **The numbering plan is a first-digit witness**, so it catches only cross-band errors. The 0.69%
+  PIP disagreement is a floor on the error, not the error.
+- **234 ZIPs (0.56%) fall outside every state polygon.** Coastal-boundary precision, or genuinely
+  offshore? Unmeasured.
+- **Canada.** `UNIT_GRADE_POSTCODE` excludes CA for a stated reason: 843,739 six-character LDU codes
+  would match the shape, but nothing has measured an LDU centroid against rooftop truth. If the LDU is
+  block-face grade as its documentation implies, CA belongs in the unit tier and would lead the admin
+  ladder. The blocker is one number. FSA/LDU maps onto PFX1 unchanged — FSA is the prefix tier
+  (~1,650 nodes, analogous to GB outward), LDU the unit tier.
+- **Feeding the decode back into span confidence.** `postcode_prefix_ancestors` records what a prefix
+  asserts, as metadata on a resolved node. Nothing lets it raise or lower confidence that a
+  neighbouring span is really a locality. This is the piece that genuinely does not exist, and it is
+  what the Pelias observation is actually about.
+
+## Appendix — reproducing the numbers
+
+All under `scripts/diagnostic/` (gitignored), run against
+`$MAILWOMAN_DATA_ROOT/wof/`:
+
+| Script                                                              | Produces                                   |
+| ------------------------------------------------------------------- | ------------------------------------------ |
+| `postcode-parentage-census.ts`                                      | finding 1                                  |
+| `us-scf-parentage-validity.ts`                                      | finding 2                                  |
+| `us-unique-zip-probe.ts`                                            | finding 3                                  |
+| `us-scf-ranked-states.ts`                                           | finding 4                                  |
+| `us-zip-pip-states.ts`                                              | finding 5, state level                     |
+| `us-zip-pip-locality.ts`                                            | finding 5, locality ladder                 |
+| `us-scf-radius.ts`, `us-scf-outliers.ts`, `us-zip-coord-quality.ts` | the radius tier and the placeholder census |
