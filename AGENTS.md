@@ -225,7 +225,7 @@ If a release fails partway through publishing:
   - `packages/core/utils/sealed-db.ts` — `swapDatabaseIntoPlace(tmp, final)`, the atomic publish step this file specifies in prose, next to `sealDatabase` / `openBuiltDatabase`.
   - `packages/core/utils/stats.ts` — `percentile` (nearest-rank, `p` in **[0, 100]**), `median`, `formatPercent`. Watch the unit: local copies elsewhere took a fraction, so a careless swap silently changes a gate number.
   - `packages/core/utils/jsonl.ts`, `packages/core/utils/hash.ts` — JSONL read/write/iterate, `sha256File` / `sha256Hex` / `md5File`.
-  - `@mailwoman/spatial` — `haversineKm`, and now `pointInRing` / `pointInPolygon` / `pointInMultiPolygon`. `packages/resolver-wof-sqlite/geo.ts` re-exports both for its own readers.
+  - `@mailwoman/spatial` — `haversineKm`, `pointInRing` / `pointInPolygon` / `pointInMultiPolygon`, the ring-list GeoJSON types with `pointInPolygonRings` / `geometryContains`, and `bboxAround`. Import them from here and nowhere else: several of them were defined in `resolver-wof-sqlite/geo.ts` despite having no SQLite dependency, which is how a gazetteer BUILD step ended up taking point-in-polygon from a query backend. That seam is gone, along with the package's `./geo` subpath.
   - `packages/match/comparators.ts` — `jaro`, `jaroWinkler`, `levenshteinSimilarity`, `nameSimilarity`, `jaccard`.
   - `packages/corpus/src/adapter.ts` — `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`, the house-number/street split every US CSV adapter uses.
 
