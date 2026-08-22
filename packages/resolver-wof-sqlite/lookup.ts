@@ -17,7 +17,8 @@ import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@
 import { Kysely } from "kysely"
 
 import { ancestorLineage } from "./ancestry.ts"
-import { COINCIDENT_ROLES_TABLE, coincidentRolesExists } from "./coincident-roles.ts"
+import { candidateFromSearchRow, rankCandidates } from "./candidate-scoring.ts"
+import { loadCoincidentLocalities } from "./coincident-roles.ts"
 import {
 	ADDRESS_CONVENTION_TABLE,
 	resolveConvention,
@@ -29,7 +30,6 @@ import {
 } from "./convention.ts"
 import { normalizePlacetypes, sanitizeFTSQuery } from "./fts-query.ts"
 import {
-	aliasBagExactMatch,
 	buildPlaceSearchFTS,
 	PLACE_BBOX_TABLE,
 	PLACE_POPULATION_TABLE,
@@ -37,12 +37,13 @@ import {
 	placePopulationExists,
 	placeSearchFTSExists,
 } from "./fts.ts"
-import { bboxAround, haversineKm } from "./geo.ts"
+import { haversineKm } from "./geo.ts"
 import { cfNormalize, softNameScore, trigramJaccard } from "./name-score.ts"
-import { compareReferential, encyclopedicClauses, referentialFromPopulation } from "./place-importance-schema.ts"
+import { encyclopedicClauses } from "./place-importance-schema.ts"
 import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
 import { DEFAULT_WEIGHTS, type RankingWeights } from "./ranking-weights.ts"
 import type { WOFDatabase } from "./schema.ts"
+import { fetchSearchRows, type RawSearchRow } from "./search-fetch.ts"
 import {
 	pickShardForPlacetype,
 	pickShardsForPlacetype,
@@ -53,13 +54,6 @@ import {
 import { SqliteConventionSource } from "./sqlite-convention-source.ts"
 import { allRows } from "./sqlite-utils.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
-
-/**
- * Query length at or below which the FTS window is widened. A two- or three-character query is almost always a region
- * abbreviation, where the exact match can otherwise fall outside the window behind higher-bm25 partial hits — "NY"
- * losing to "New York".
- */
-const SHORT_QUERY_MAX_LENGTH = 3
 
 export interface WOFSqlitePlaceLookupOpts {
 	/**
@@ -106,44 +100,6 @@ export interface WOFSqlitePlaceLookupOpts {
 	 * byte-identical — every alias code path is gated on this being non-null, so an unprovided reader changes no score.
 	 */
 	postalCityAliases?: WOFPostalCityAliasLookup
-}
-
-/**
- * Over-fetch floor for SHORT (≤3-char) queries — region abbreviations like "NY"/"VT". An exact-abbrev holder's BM25 is
- * poor (long multilingual alt-name document), so the normal `limit * 4` window can drop it before `exactMatchTiering`
- * promotes it. 200 comfortably covers every same-abbrev region across the 12-country gazetteer (a 2-letter token
- * matches a few dozen regions at most) while staying a cheap region-placetype fetch. See the `#fuzzyNameMatch`
- * over-fetch comment.
- */
-const SHORT_QUERY_OVERFETCH = 200
-
-/**
- * How many rows the population-ordered companion fetch (#905) adds to the candidate pool. Small on purpose: its only
- * job is to guarantee the FAMOUS holders of a name enter the pool at all — for "Paris"-class floods the bm25 window is
- * saturated by thousands of tiny same-name rows and no boost inside the bm25-based ORDER BY can rescue a candidate
- * whose bm25 is length-poisoned by ~15 points (see the fetch-site comment).
- */
-const POPULATION_FETCH_LIMIT = 15
-
-interface RawSearchRow {
-	id: number
-	name: string
-	placetype: string
-	country: string | null
-	parent_id: number | null
-	rank: number // BM25 (lower = better in SQLite); we negate to get higher-is-better
-	lat: number | null
-	lon: number | null
-	min_latitude: number | null
-	max_latitude: number | null
-	min_longitude: number | null
-	max_longitude: number | null
-	population: number | null // from the place_population aux table; null when missing
-	/**
-	 * From `place_importance.encyclopedic` when the shard's table carries the two-score split columns. NULL means the
-	 * place has no Wikipedia article, or the shard predates the split — absence either way, and never 0 (ROAD_TO_V9 §2).
-	 */
-	encyclopedic: number | null
 }
 
 /**
@@ -436,54 +392,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		if (!Number.isFinite(id)) return []
 
 		if (!this.#coincidentRolesCache) {
-			const map = new Map<number, CoincidentLocality[]>()
-
-			if (coincidentRolesExists(this.#db)) {
-				const rows = allRows<{
-					adminID: number
-					id: number
-					name: string
-					country: string
-					lat: number
-					lon: number
-					relationshipType: string
-					population: number
-					distanceKm: number
-				}>(
-					this.#db.prepare(
-						`SELECT cr.admin_id AS adminID, s.id AS id, s.name AS name, s.country AS country,
-							s.latitude AS lat, s.longitude AS lon,
-							cr.relationship_type AS relationshipType, cr.locality_population AS population,
-							cr.distance_km AS distanceKm
-						FROM ${COINCIDENT_ROLES_TABLE} cr JOIN spr s ON s.id = cr.locality_id`
-					)
-				)
-
-				for (const r of rows) {
-					const candidate: CoincidentLocality = {
-						id: r.id,
-						name: r.name,
-						placetype: "locality",
-						country: r.country,
-						lat: r.lat,
-						lon: r.lon,
-						score: 0,
-						relationshipType: r.relationshipType,
-						population: r.population,
-						distanceKm: r.distanceKm,
-					}
-
-					const list = map.get(r.adminID)
-
-					if (list) {
-						list.push(candidate)
-					} else {
-						map.set(r.adminID, [candidate])
-					}
-				}
-			}
-
-			this.#coincidentRolesCache = map
+			this.#coincidentRolesCache = loadCoincidentLocalities(this.#db)
 		}
 
 		return this.#coincidentRolesCache.get(id) ?? []
@@ -555,18 +464,6 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	async #fuzzyNameMatch(query: FindPlaceQuery, forceShard?: ResolvedShard): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
 
-		// Over-fetch so post-scoring + exact-match tiering have room to re-rank. SHORT queries (a 2–3-char
-		// region abbreviation like "NY"/"VT") are the danger case the `exactMatchTiering` docstring flags:
-		// the exact-abbrev holder's BM25 is poor (its long multilingual alt-name document tanks the score),
-		// so under the normal `limit * 4` window it drops OUT of the candidate pool BEFORE tiering can
-		// promote it — "NY" then resolves to a token-matching foreign region (Highland, GB) instead of New
-		// York. Widen the window for short queries so the exact match is always present to be tiered.
-		// (Cross-country abbrev collisions — "VT" is BOTH Vermont and Viterbo — still need a country/
-		// postcode signal to disambiguate; this only rescues the window-drop class, not genuine ambiguity.
-		// With a `country` hint every abbrev resolves; bare + no-context lifts 7→10/15 US states.)
-		const ftsLimit =
-			query.text.trim().length <= SHORT_QUERY_MAX_LENGTH ? Math.max(limit * 4, SHORT_QUERY_OVERFETCH) : limit * 4
-
 		// Expand the placetype filter through the shared equivalence table (core/resolver): a
 		// `locality` query must also reach `borough` / `localadmin` rows — Brooklyn-the-borough
 		// (pop 2.5M) is a borough, not a locality, and a strict filter made it unreachable so the
@@ -629,377 +526,37 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 				countriesBySchema: this.#shardCountries,
 			})
 
-		const sch = shard.schemaName // bare schema name; safe to interpolate (validated at construction)
+		// bare schema name; safe to interpolate (validated at construction)
+		const sch = shard.schemaName
 
-		// Filter out historical / superseded / deprecated places by default — they live in the same
-		// spr table but should never win a contemporary lookup. `is_current = 0` is the only WOF
-		// value that means "not current"; both `-1` (modern) and `1` (legacy) mean current. See #91.
-		// Note: with schema-qualified FROM the bare `place_search` reference in MATCH resolves to
-		// the FROM table — required by FTS5 parser, see sharding.ts header comment.
-		const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
-		const params: SQLInputValue[] = [ftsQuery]
-
-		if (placetypes && placetypes.length) {
-			where.push(`spr.placetype IN (${placetypes.map(() => "?").join(", ")})`)
-			params.push(...placetypes)
-		}
-
-		if (query.country) {
-			where.push("spr.country = ?")
-			params.push(query.country)
-		}
-
-		if (query.parentID !== undefined) {
-			where.push(`(spr.parent_id = ? OR spr.id IN (SELECT id FROM ${sch}.ancestors WHERE ancestor_id = ?))`)
-			params.push(query.parentID, query.parentID)
-		}
-
-		// Bbox + near-with-radius are SQL-level filters via the R*Tree. We only emit the JOIN when
-		// the active shard has the R*Tree; missing-but-requested is silently treated as no-bbox-
-		// filter so legacy DBs / shards-without-bbox don't crash.
-		const shardHasBbox = this.#hasBboxIndex.get(sch) === true
-		const useBboxJoin = (query.bbox || query.near?.maxDistanceKm !== undefined) && shardHasBbox
-		let joinClause = `JOIN ${sch}.spr ON spr.id = place_search.wof_id`
-
-		if (useBboxJoin) {
-			joinClause += ` JOIN ${sch}.${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
-			// AABB intersection — both bbox sides must overlap. R*Tree handles this in O(log n).
-			const filterBox = query.bbox || bboxAround(query.near!.lat, query.near!.lon, query.near!.maxDistanceKm!)
-			where.push("bbox.min_lat <= ? AND bbox.max_lat >= ?", "bbox.min_lon <= ? AND bbox.max_lon >= ?")
-			params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
-		}
-
-		// LEFT JOIN the population aux table when present. Missing-on-this-shard means the SELECT
-		// just doesn't include the population column; the post-scoring loop treats it as 0.
-		const shardHasPopulation = this.#hasPopulationIndex.get(sch) === true
-
-		const populationSelect = shardHasPopulation
-			? `${PLACE_POPULATION_TABLE}.population AS population`
-			: `NULL AS population`
-
-		const populationJoin = shardHasPopulation
-			? `LEFT JOIN ${sch}.${PLACE_POPULATION_TABLE} ON ${PLACE_POPULATION_TABLE}.id = spr.id`
-			: ""
-
-		// The encyclopedic score is CARRIED, never ranked on (ROAD_TO_V9 §2, ratified 2026-08-06) — it
-		// appears in the SELECT and in no ORDER BY, here or in the companion fetch below. Gated on the
-		// split column, so a pre-split shard emits a literal NULL and builds no join at all.
-		const { select: encyclopedicSelect, join: encyclopedicJoin } = this.#encyclopedicClauses.get(sch)!
-
-		// Push the population boost into the ORDER BY when the index is available, so famous places
-		// (whose long alt-name lists hurt BM25) actually make it into the over-fetch window. The TS
-		// post-scoring will still compute the same boost for the final score; this just ensures the
-		// candidate set is right.
-		//
-		// Formula: rank_adjusted = bm25 - populationBoost * min(1.0, log10(1 + pop) / scaleLog10)
-		// Lower rank_adjusted = better (matches SQLite's bm25 convention of "more negative = better").
-		//
-		// #905 — do NOT reach for bm25 column weights here. Measured falsification (2026-07-02): FTS5's
-		// bm25 length normalization is polluted by the row's TOTAL document size, so identical 1-token
-		// `name` docs read −16.0 (empty alt_names) vs −0.43 (2.7 KB alt_names) EVEN with the alt_names
-		// column weighted to zero — no weighting isolates name relevance in this schema. The famous-
-		// holder guarantee lives in the population-ordered companion fetch below instead, and the
-		// exact tier breaks ties by population in the post-scoring sort.
-		const orderByExpr = shardHasPopulation
-			? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
-			: "bm25(place_search)"
-
-		// Schema-qualified FROM with bare-name MATCH — required syntax for FTS5 on attached schemas.
-		// See sharding.ts header for the gotcha that drove this design.
-		const stmt = this.#db.prepare(`
-			SELECT
-				spr.id AS id,
-				spr.name,
-				spr.placetype,
-				spr.country,
-				spr.parent_id,
-				bm25(place_search) AS rank,
-				spr.latitude AS lat,
-				spr.longitude AS lon,
-				spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
-				${populationSelect},
-				${encyclopedicSelect}
-			FROM ${sch}.place_search
-			${joinClause}
-			${populationJoin}
-			${encyclopedicJoin}
-			WHERE ${where.join(" AND ")}
-			ORDER BY ${orderByExpr} ASC
-			LIMIT ?
-		`)
-
-		if (shardHasPopulation) {
-			params.push(this.#weights.populationBoost, this.#weights.populationScaleLog10)
-		}
-
-		params.push(ftsLimit)
-
-		const rawRows = allRows<RawSearchRow>(stmt, ...params)
-
-		// #905 companion fetch: the same MATCH, ordered by population alone. For name floods
-		// ("Paris" matches thousands of gap-fill villages) the bm25-based window above cannot admit
-		// the famous holder — its bm25 is length-poisoned by the row's alias bulk (measured ~15 pts,
-		// vs a +4.0 boost cap), so FR Paris never even reaches post-scoring. This fetch makes the
-		// prominent holders of a name pool-complete BY CONSTRUCTION; the exact-tier sort below
-		// decides whether they win. Skipped without a population index (nothing to order by).
-		if (shardHasPopulation) {
-			const popStmt = this.#db.prepare(`
-				SELECT
-					spr.id AS id,
-					spr.name,
-					spr.placetype,
-					spr.country,
-					spr.parent_id,
-					bm25(place_search) AS rank,
-					spr.latitude AS lat,
-					spr.longitude AS lon,
-					spr.min_latitude, spr.max_latitude, spr.min_longitude, spr.max_longitude,
-					${populationSelect},
-					${encyclopedicSelect}
-				FROM ${sch}.place_search
-				${joinClause}
-				${populationJoin}
-				${encyclopedicJoin}
-				WHERE ${where.join(" AND ")}
-				ORDER BY COALESCE(${PLACE_POPULATION_TABLE}.population, 0) DESC
-				LIMIT ?
-			`)
-
-			const popParams = params.slice(0, -3) // drop the two boost params + ftsLimit
-			const seen = new Set(rawRows.map((r) => r.id))
-
-			for (const row of allRows<RawSearchRow>(popStmt, ...popParams, POPULATION_FETCH_LIMIT)) {
-				if (!seen.has(row.id)) {
-					rawRows.push(row)
-				}
-			}
-		}
-
-		const queryLen = query.text.length
-
-		const candidates = rawRows.map((row): PlaceCandidate => {
-			// SQLite's bm25() returns a lower-is-better score (negative for matches). Negate so we
-			// start from a higher-is-better baseline.
-			let score = -row.rank
-
-			if (placetypes && placetypes.length && placetypes.includes(row.placetype as WOFPlacetype)) {
-				score += this.#weights.placetypeMatchBoost
-			}
-
-			if (!placetypes && row.placetype === "locality") {
-				score += this.#weights.localityImplicitBoost
-			}
-
-			if (query.country && row.country === query.country) {
-				score += this.#weights.countryMatchBoost
-			}
-
-			if (query.parentID !== undefined) {
-				score += row.parent_id === query.parentID ? this.#weights.directChildBoost : this.#weights.descendantBoost
-			}
-
-			const extraLen = Math.max(0, row.name.length - queryLen - 3)
-			score -= (this.#weights.lengthPenaltyWeight * extraLen) / 10
-
-			// Proximity boost: only applied when the query carries `near` AND the candidate has real
-			// coordinates. The formula decays smoothly with distance so close-but-not-exact hits
-			// still benefit; tunable via proximityBoost + proximityScaleKm.
-			let distanceKm: number | undefined
-			// The best decayed-distance term over `near` + every `bias` point (each point's term is
-			// scaled by its weight; the MAX wins — a candidate near ANY hint is "nearby"). Carried
-			// into the exact-tier prominence sort below when hints are present.
-			let proximityTerm = 0
-
-			if (row.lat !== null && row.lon !== null && !(row.lat === 0 && row.lon === 0)) {
-				const hints: Array<{ lat: number; lon: number; weight: number }> = []
-
-				if (query.near) {
-					hints.push({ lat: query.near.lat, lon: query.near.lon, weight: 1 })
-				}
-
-				for (const b of query.bias ?? []) {
-					hints.push({ lat: b.lat, lon: b.lon, weight: b.weight ?? 1 })
-				}
-
-				let scoreTerm = 0
-
-				for (const h of hints) {
-					const d = haversineKm(h.lat, h.lon, row.lat, row.lon)
-					const decay = h.weight / (1 + d / this.#weights.proximityScaleKm)
-					const prom = decay * this.#weights.biasBoost
-
-					if (prom > proximityTerm) {
-						proximityTerm = prom
-						distanceKm = d
-						scoreTerm = decay * this.#weights.proximityBoost
-					}
-				}
-
-				score += scoreTerm
-			}
-
-			// Population boost: capped at `populationBoost` magnitude at `10^populationScaleLog10`
-			// people. Missing population → no contribution. Never penalizes.
-			let popTerm = 0
-
-			if (row.population !== null && row.population > 0 && this.#weights.populationScaleLog10 > 0) {
-				const popLog = Math.log10(1 + row.population)
-				const popFraction = Math.min(1, popLog / this.#weights.populationScaleLog10)
-				popTerm = this.#weights.populationBoost * popFraction
-				score += popTerm
-			}
-
-			// Combined prominence for the exact-tier sort when proximity hints are present: population
-			// and nearness in the SAME additive units, so the map view / the user's location can win a
-			// cross-country postcode tie without a hard filter.
-			const prominence = popTerm + proximityTerm
-
-			const candidate: PlaceCandidate = {
-				id: row.id,
-				prominence,
-				name: row.name,
-				placetype: row.placetype as WOFPlacetype,
-				country: row.country ?? "",
-				lat: row.lat ?? 0,
-				lon: row.lon ?? 0,
-				parent_id: row.parent_id ?? undefined,
-				score,
-			}
-
-			if (distanceKm !== undefined) {
-				candidate.distanceKm = distanceKm
-			}
-
-			if (row.population !== null && row.population > 0) {
-				candidate.population = row.population
-				// The named ranking key (ROAD_TO_V9 §2). DERIVED, not stored — a pure function of the
-				// population already on this row, so it cannot drift from what the ordering uses.
-				candidate.referential = referentialFromPopulation(row.population)
-			}
-
-			// Carried for consumers (annotations / API surfaces). No ranking site reads it.
-			if (row.encyclopedic !== null) {
-				candidate.encyclopedic = row.encyclopedic
-			}
-
-			// Candidate bbox — parity with the WASM lookup (resolver-wof-wasm/lookup.ts), whose
-			// consumers (the demo cascade's region constraint) read it. Without this the Node
-			// backend's region→bbox constraint is dead and disambiguation falls to population
-			// ranking (the Springfield-IL→MO failure the #524 smoke eval caught).
-			if (
-				row.min_latitude != null &&
-				row.max_latitude != null &&
-				row.min_longitude != null &&
-				row.max_longitude != null
-			) {
-				candidate.bbox = {
-					minLat: row.min_latitude,
-					maxLat: row.max_latitude,
-					minLon: row.min_longitude,
-					maxLon: row.max_longitude,
-				}
-			}
-
-			return candidate
+		const rawRows = fetchSearchRows({
+			db: this.#db,
+			schemaName: sch,
+			query,
+			placetypes,
+			ftsQuery,
+			limit,
+			hasBboxIndex: this.#hasBboxIndex,
+			hasPopulationIndex: this.#hasPopulationIndex,
+			encyclopedicClauses: this.#encyclopedicClauses,
+			weights: this.#weights,
 		})
 
-		// Exact-match tiering: a candidate whose name OR any alias equals the query text (case-folded)
-		// ranks above any partial match, with the weighted-sum score (incl. population) breaking ties
-		// WITHIN a tier. See the RankingWeights.exactMatchTiering docstring for why this aligns the
-		// population prior rather than overriding it. One cheap indexed lookup over the candidate ids.
-		// Runs even for a SINGLE candidate so `exactMatch` is stamped consistently (parity with the
-		// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
-		// demo cascade / #369 re-rank read.
-		if (this.#weights.exactMatchTiering && candidates.length) {
-			const exactIds = this.#exactMatchIds(
-				sch,
-				candidates.map((c) => c.id as number),
-				query.text
-			)
-
-			// Stamp the tier onto every candidate (not just when the tiering sort fires) so a downstream
-			// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
-			// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
-			for (const c of candidates) {
-				c.exactMatch = exactIds.has(c.id as number)
-			}
-
-			if (exactIds.size) {
-				// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
-				// only breaks population ties. Exactness saturates text relevance, and the bm25
-				// residue inside `score` is length-noise (see the fetch-site comment), so letting it
-				// order the tier is what sent unscoped "Paris" to an Ohio township. The partial tier
-				// keeps score order — text relevance still means something there. This makes the
-				// exactMatchTiering docstring literal: match quality primary, prominence within.
-				//
-				// #912 sub-tier: a NAME-exact candidate (spr.name equals the query) outranks an
-				// ALIAS-exact one ('Paris' the place beats 'Paris Township' held via alias 'Paris').
-				// The place's own name is a stronger identity claim than an alias — aliases exist to
-				// widen recall, not to tie primaries. ME→Maine is untouched: 'ME' name-exact-matches
-				// nothing, so the alias sub-tier still decides there. Population orders within each
-				// sub-tier as before.
-				const norm = (v: string): string => v.toLowerCase().trim().replaceAll(/\s+/g, " ")
-				const needle = norm(query.text)
-
-				// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
-				// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
-				// Turku's name, not merely its alias. Floor-gated on the holder's population (see the
-				// RankingWeights docstring for the measured 100k boundary). officialIds ⊆ exactIds by
-				// construction (official rows are names rows), so only the sub-tier KIND changes.
-				const officialIds = this.#weights.officialNameExact
-					? this.#officialNameIds(
-							sch,
-							candidates
-								.filter(
-									(c) => exactIds.has(c.id as number) && (c.population ?? 0) >= this.#weights.officialNameExactFloor
-								)
-								.map((c) => c.id as number),
-							query.text
-						)
-					: undefined
-
-				const kind = (c: PlaceCandidate): number => {
-					if (!exactIds.has(c.id as number)) return 0
-
-					if (norm(String(c.name ?? "")) === needle) return 2
-
-					return officialIds?.has(c.id as number) ? 2 : 1
-				}
-
-				// With proximity hints (near/bias), prominence (population + nearness, same units)
-				// replaces raw population as the within-tier key — the 48026 rule: the map view or
-				// the user's location breaks a cross-country postcode tie. Without hints, REFERENTIAL
-				// ordering decides.
-				//
-				// ROAD_TO_V9 §2: this is the site that "orders namesakes", so it is the site that has to
-				// say what it orders by. `compareReferential` is referential DESC with raw population as
-				// the tiebreak, which is provably the SAME ORDER as the `(b.population ?? 0) - (a.population ?? 0)`
-				// it replaces — referential is strictly increasing in population below saturation and
-				// constant above it, and the tiebreak restores the order in the saturated tail. Measured
-				// zero-delta, not assumed: see `place-importance-schema.test.ts` and `resolver-referential-ranking.test.ts`.
-				// Encyclopedic importance is not, and must not become, an input here.
-				const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
-
-				candidates.sort((a, b) => {
-					const ax = kind(a)
-					const bx = kind(b)
-
-					if (bx !== ax) return bx - ax
-
-					if (ax >= 1) {
-						if (hasHints) return (b.prominence ?? 0) - (a.prominence ?? 0) || b.score - a.score
-
-						return compareReferential(a, b) || b.score - a.score
-					}
-
-					return b.score - a.score
-				})
-
-				return candidates.slice(0, limit)
-			}
+		const scoring = {
+			query,
+			placetypes,
+			queryLen: query.text.length,
+			weights: this.#weights,
 		}
 
-		candidates.sort((a, b) => b.score - a.score)
+		const candidates = rawRows.map((row) => candidateFromSearchRow(row, scoring))
+
+		rankCandidates(candidates, {
+			db: this.#db,
+			schemaName: sch,
+			query,
+			weights: this.#weights,
+		})
 
 		return candidates.slice(0, limit)
 	}
@@ -1224,102 +781,6 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 
 			return c
 		})
-	}
-
-	/**
-	 * Among `ids`, return the subset whose name OR any alias equals `text` case-insensitively — the exact-match tier for
-	 * ranking. One indexed query over `<schema>.names`. When the shard has no `names` table (a slim DB built with
-	 * `dropNames`, or a postcode-only shard), fall back to the self-contained `place_search` FTS content: its `alt_names`
-	 * column is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch`
-	 * recovers the exact alias tier ("New York City" → New York) that the dropped `names` table used to provide.
-	 */
-	#exactMatchIds(schemaName: string, ids: number[], text: string): Set<number> {
-		const out = new Set<number>()
-		const trimmed = text.trim()
-
-		if (!ids.length || !trimmed) return out
-		const placeholders = ids.map(() => "?").join(", ")
-
-		try {
-			const rows = this.#db
-				.prepare(
-					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND name = ? COLLATE NOCASE`
-				)
-				.all(...ids, trimmed) as Array<{ id: number }>
-
-			for (const r of rows) {
-				out.add(r.id)
-			}
-
-			return out
-		} catch {
-			// No `names` table on this shard — fall through to the place_search alias bag.
-		}
-
-		try {
-			const rows = this.#db
-				.prepare(
-					`SELECT wof_id AS id, name, alt_names FROM ${schemaName}.place_search WHERE wof_id IN (${placeholders})`
-				)
-				.all(...ids) as Array<{ id: number; name: string | null; alt_names: string | null }>
-
-			const norm = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
-			const needle = norm(trimmed)
-
-			for (const r of rows) {
-				if (r.name !== null && norm(r.name) === needle) {
-					out.add(r.id)
-				}
-			}
-
-			// Alias pass via the shared bag parser (#523). Separated bags (built since #523) get a true
-			// per-alias equality check, ungated — matching the `names`-table branch above, where an
-			// alias match counts as exact regardless of other candidates. Legacy bags (no separator)
-			// fall back to padded containment, gated on "no canonical exact in the pool" because their
-			// lost boundaries would otherwise false-promote interior fragments ("York" inside the alias
-			// "New York City") or cross-alias fragments ("York New" across "…York" + "New City…").
-			const anyCanonicalExact = out.size > 0
-
-			for (const r of rows) {
-				if (aliasBagExactMatch(r.alt_names, needle, anyCanonicalExact)) {
-					out.add(r.id)
-				}
-			}
-		} catch {
-			// Shard without place_search either → no exact-match tier. Falls back to weighted-sum order.
-		}
-
-		return out
-	}
-
-	/**
-	 * Among `ids` (already known exact matches), the subset holding `text` as an OFFICIAL name (`names.official = 1`, the
-	 * #940 ingest bit). Same COLLATE NOCASE semantics as {@link WOFSqlitePlaceLookup.#exactMatchIds} so the two probes
-	 * agree on what "equals the query" means. Fails soft on gazetteers built before #940 (no `official` column) — the
-	 * sub-tier then behaves exactly as if `officialNameExact` were off.
-	 */
-	#officialNameIds(schemaName: string, ids: number[], text: string): Set<number> {
-		const out = new Set<number>()
-		const trimmed = text.trim()
-
-		if (!ids.length || !trimmed) return out
-		const placeholders = ids.map(() => "?").join(", ")
-
-		try {
-			const rows = this.#db
-				.prepare(
-					`SELECT DISTINCT id FROM ${schemaName}.names WHERE id IN (${placeholders}) AND official = 1 AND name = ? COLLATE NOCASE`
-				)
-				.all(...ids, trimmed) as Array<{ id: number }>
-
-			for (const r of rows) {
-				out.add(r.id)
-			}
-		} catch {
-			// Pre-#940 gazetteer (no `official` column) or a names-less slim shard — feature inert.
-		}
-
-		return out
 	}
 
 	close(): void {
