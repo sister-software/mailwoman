@@ -37,7 +37,15 @@ import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"
-import { alignRow, LABELED_ROW_SCHEMA, PARQUET_COLUMNS, ROW_GROUP_SIZE, rowToParquet, SHARD_COMPRESSION } from "#utils"
+import {
+	alignRow,
+	appendShape,
+	LABELED_ROW_SCHEMA,
+	PARQUET_COLUMNS,
+	ROW_GROUP_SIZE,
+	rowToParquet,
+	SHARD_COMPRESSION,
+} from "#utils"
 import type { ParquetRow, ShardDescriptor, ShardManifest } from "#utils"
 
 import { ParquetWriter } from "../parquet-wrapper/index.ts"
@@ -77,33 +85,6 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 	}
 }
 
-function appendShape(row: ParquetRow): Record<string, unknown> {
-	const out: Record<string, unknown> = {
-		raw: row.raw,
-		tokens: row.tokens,
-		labels: row.labels,
-		country: row.country,
-		source: row.source,
-		source_id: row.source_id,
-		corpus_version: row.corpus_version,
-		license: row.license,
-	}
-
-	if (row.locale !== null) {
-		out.locale = row.locale
-	}
-
-	if (row.synth_method !== null) {
-		out.synth_method = row.synth_method
-	}
-
-	if (row.synth_base_id !== null) {
-		out.synth_base_id = row.synth_base_id
-	}
-
-	return out
-}
-
 /**
  * Write one shard for a single source slug. Returns the populated ShardDescriptor + a list of quarantine reasons for
  * rows that failed alignment.
@@ -127,7 +108,7 @@ async function writeOneShard(
 
 	for (const row of rows) {
 		const pq = rowToParquet(row)
-		await writer.appendRow(appendShape(pq) as unknown as ParquetRow)
+		await writer.appendRow(appendShape(pq))
 
 		if (firstSourceID === "") {
 			firstSourceID = row.source_id
