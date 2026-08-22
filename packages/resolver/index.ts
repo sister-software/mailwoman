@@ -55,7 +55,7 @@ export { adminContainmentVerdict, partitionByContainment } from "./admin-contain
 
 export {
 	ADMIN_LADDER_LOCALITY_FIRST,
-	ADMIN_LADDER_UNIT_POSTCODE,
+	ADMIN_LADDER_POSTCODE_FIRST,
 	adminLadderFor,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,

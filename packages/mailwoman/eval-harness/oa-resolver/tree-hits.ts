@@ -20,6 +20,11 @@ export interface Resolved {
 	name: string
 	value: string
 	placetype: string
+	/**
+	 * ISO-3166 alpha-2 the resolver placed the node in, when it stamped one. Read only for a `postalcode`, whose rank
+	 * against the locality is per-address-system.
+	 */
+	country?: string
 	lat: number
 	lon: number
 }
@@ -102,6 +107,9 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 					name,
 					value: String(n.value ?? ""),
 					placetype,
+					...(typeof interp.metadata?.["resolver_country"] === "string"
+						? { country: interp.metadata["resolver_country"] as string }
+						: {}),
 					lat: interp.lat,
 					lon: interp.lon,
 				})
@@ -128,7 +136,12 @@ export function collectResolved(tree: AddressTree): Resolved[] {
  * ONE arm and its opposite on the other.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
-	return mostSpecificResolved(rs, (r) => ({ placetype: r.placetype, value: r.value, resolverName: r.name }))
+	return mostSpecificResolved(rs, (r) => ({
+		placetype: r.placetype,
+		value: r.value,
+		resolverName: r.name,
+		...(r.country ? { country: r.country } : {}),
+	}))
 }
 
 /**

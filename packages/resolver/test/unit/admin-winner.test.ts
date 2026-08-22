@@ -10,11 +10,12 @@
  *   unconditionally. The binding assertions below are the ones a constant cannot satisfy.
  */
 
+import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/codex"
 import { PLACETYPE_FILTER_GROUPS } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 import {
 	ADMIN_LADDER_LOCALITY_FIRST,
-	ADMIN_LADDER_UNIT_POSTCODE,
+	ADMIN_LADDER_POSTCODE_FIRST,
 	adminLadderFor,
 	AREA_GRADE_POSTALCODE_SPECIFICITY,
 	mostSpecificResolved,
@@ -38,23 +39,53 @@ const US_ZIP = { value: "62701", resolverName: "62701" }
  * An NL PC6.
  */
 const NL_PC6 = { value: "1012 LG", resolverName: "1012LG" }
+/**
+ * A German PLZ: an ordinary 5-digit code, unit-grade by no shape test, whose SYSTEM earns the lead.
+ */
+const DE_PLZ = { value: "12623", resolverName: "12623" }
 
-const rank = (placetype: string, hit?: { value: string; resolverName: string }): number =>
-	resolvedSpecificity({ placetype, ...(hit ? { value: hit.value, resolverName: hit.resolverName } : {}) })
+const rank = (placetype: string, hit?: { value: string; resolverName: string; country?: string }): number =>
+	resolvedSpecificity({
+		placetype,
+		...(hit
+			? { value: hit.value, resolverName: hit.resolverName, ...(hit.country ? { country: hit.country } : {}) }
+			: {}),
+	})
 
 const leads = (ladder: ReadonlyArray<string>, a: string, b: string): boolean => ladder.indexOf(a) < ladder.indexOf(b)
 
 describe("adminLadderFor", () => {
 	it("leads with the postcode only on a unit-grade exact hit", () => {
-		expect(adminLadderFor(GB_UNIT)).toBe(ADMIN_LADDER_UNIT_POSTCODE)
-		expect(adminLadderFor(NL_PC6)).toBe(ADMIN_LADDER_UNIT_POSTCODE)
+		expect(adminLadderFor(GB_UNIT)).toBe(ADMIN_LADDER_POSTCODE_FIRST)
+		expect(adminLadderFor(NL_PC6)).toBe(ADMIN_LADDER_POSTCODE_FIRST)
 		expect(adminLadderFor(GB_OUTWARD)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(US_ZIP)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 		expect(adminLadderFor(undefined)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
 	})
 
 	it("carries the same rungs on both arms", () => {
-		expect([...ADMIN_LADDER_UNIT_POSTCODE].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
+		expect([...ADMIN_LADDER_POSTCODE_FIRST].toSorted()).toEqual([...ADMIN_LADDER_LOCALITY_FIRST].toSorted())
+	})
+
+	// #1780. The second route to postcode-first: the CODE is ordinary, the address SYSTEM is not.
+	it("leads with an area-grade postcode for a country whose codes outrank its localities", () => {
+		expect(adminLadderFor({ ...DE_PLZ, country: "DE" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
+		expect(adminLadderFor({ ...DE_PLZ, country: "de" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
+	})
+
+	it("leaves every other country on the locality-first default", () => {
+		for (const country of ["FR", "IT", "ES", "US", "GB", "NL", "AU", "CA", "JP", ""]) {
+			expect(adminLadderFor({ ...DE_PLZ, country })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		}
+
+		expect(adminLadderFor({ ...DE_PLZ, country: undefined })).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+		expect(adminLadderFor(DE_PLZ)).toBe(ADMIN_LADDER_LOCALITY_FIRST)
+	})
+
+	// The membership table is a MEASURED claim, so a silent addition is the thing to catch — a new entry has to arrive
+	// with its panel, the way DE did.
+	it("holds exactly the countries a full-panel measurement has admitted", () => {
+		expect([...AREA_POSTCODE_FINER_THAN_LOCALITY].toSorted()).toEqual(["DE"])
 	})
 })
 
@@ -107,7 +138,15 @@ describe("resolvedSpecificity", () => {
 describe("the ladder and the scale agree", () => {
 	// The binding assertion. A grader that froze one arm passes each half in isolation and fails here.
 	it("orders postcode against locality the same way, on both arms", () => {
-		for (const hit of [GB_UNIT, NL_PC6, US_ZIP, GB_OUTWARD]) {
+		for (const hit of [
+			GB_UNIT,
+			NL_PC6,
+			US_ZIP,
+			GB_OUTWARD,
+			{ ...DE_PLZ, country: "DE" },
+			{ ...DE_PLZ, country: "FR" },
+			DE_PLZ,
+		]) {
 			const ladderLeadsWithPostcode = leads(adminLadderFor(hit), "postcode", "locality")
 			const scaleLeadsWithPostcode = rank("postalcode", hit) > rank("locality")
 

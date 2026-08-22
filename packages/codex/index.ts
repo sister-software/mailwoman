@@ -38,6 +38,8 @@ export * as levels from "./level-semantics.ts"
 export * as nz from "./nz/index.ts"
 
 export {
+	AREA_POSTCODE_FINER_THAN_LOCALITY,
+	areaPostcodeLeadsLocality,
 	candidateSystemsForPostcode,
 	isUnitGradePostcodeHit,
 	type SystemCode,

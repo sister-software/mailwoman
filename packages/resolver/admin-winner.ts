@@ -13,13 +13,14 @@
  *   silent disagreement: result assembly walks a TAG ladder, and the eval harnesses sort resolved nodes by placetype.
  */
 
-import { isUnitGradePostcodeHit } from "@mailwoman/codex"
+import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 
 /**
- * The admin fallback order when the resolved postcode is a unit-grade exact hit — the postcode leads.
+ * The admin fallback order when the postcode leads — a unit-grade exact hit, or an address system whose area-grade code
+ * is still finer than its locality ({@link areaPostcodeLeadsLocality}).
  */
-export const ADMIN_LADDER_UNIT_POSTCODE: ReadonlyArray<string> = [
+export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 	"postcode",
 	"locality",
 	"dependent_locality",
@@ -30,12 +31,8 @@ export const ADMIN_LADDER_UNIT_POSTCODE: ReadonlyArray<string> = [
 /**
  * The admin fallback order everywhere else: the locality tiers lead and the postcode sits between them and `region`.
  *
- * This arm is a PER-ADDRESS-SYSTEM claim held as a global default, and two tier-1 locales are on the wrong side of it.
- * Coordinate p50 on 400 OpenAddresses rows per country, THIS arm vs the postcode point: DE 5.73 km / 1.21, US 3.58 /
- * 2.49, FR 1.07 / 2.57, IT 1.43 / 3.16, ES 0.66 / 0.98. FR, IT and ES want the locality; DE and US want the postcode,
- * and code length does not predict which — FR and DE are both 5-digit and disagree.
- *
- * Moving this list changes runtime answers, so it needs a declared epoch and a before/after, not a cleanup pass. #1780.
+ * This is the #945 epoch convention, and it is the DEFAULT rather than the universal answer — which address systems
+ * leave it is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question, and that table carries the per-country measurement.
  */
 export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 	"locality",
@@ -46,21 +43,37 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
- * The resolved postcode a ladder decision reads: the PARSED span and the resolver's own hit. Both are needed — a full
- * unit shape the resolver answered with a coarser stem is area-grade, whatever the user typed.
+ * The resolved postcode a ladder decision reads: the PARSED span, the resolver's own hit, and the country the resolver
+ * placed it in.
+ *
+ * The first two are needed together because a full unit shape the resolver answered with a coarser stem is area-grade,
+ * whatever the user typed. `country` is separate evidence and answers a different question — not how tight this code
+ * is, but whether this address system's codes are tighter than its localities at all.
  */
 export interface ResolvedPostcodeHit {
 	value: string
 	resolverName: string | undefined
+	/**
+	 * ISO-3166 alpha-2 the RESOLVER placed the postcode in, not a caller's requested scope. Absent when the postcode did
+	 * not resolve to a country, which reads as the locality-first default.
+	 */
+	country?: string
 }
 
 /**
  * Pick the admin fallback order for one resolved tree.
+ *
+ * Two independent routes to postcode-first: the code itself is unit-grade, or the address system's area-grade codes are
+ * finer than its localities. Either one is sufficient and the second is what makes this per-country rather than
+ * global.
  */
 export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): ReadonlyArray<string> {
-	return postcode !== undefined && isUnitGradePostcodeHit(postcode.value, postcode.resolverName)
-		? ADMIN_LADDER_UNIT_POSTCODE
-		: ADMIN_LADDER_LOCALITY_FIRST
+	if (postcode === undefined) return ADMIN_LADDER_LOCALITY_FIRST
+
+	const leads =
+		isUnitGradePostcodeHit(postcode.value, postcode.resolverName) || areaPostcodeLeadsLocality(postcode.country)
+
+	return leads ? ADMIN_LADDER_POSTCODE_FIRST : ADMIN_LADDER_LOCALITY_FIRST
 }
 
 /**
@@ -82,6 +95,11 @@ export const AREA_GRADE_POSTALCODE_SPECIFICITY = 2.5
 export interface ResolvedSpecificityInput {
 	placetype: string
 	/**
+	 * ISO-3166 alpha-2 the resolver placed this candidate in. Read only for a `postalcode`, where it decides whether the
+	 * address system's area-grade codes outrank its localities.
+	 */
+	country?: string
+	/**
 	 * The parsed span. Absent for a non-postcode candidate, where nothing conditional applies.
 	 */
 	value?: string
@@ -102,9 +120,11 @@ export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number
 		return PLACETYPE_SPECIFICITY[candidate.placetype] ?? Number.NEGATIVE_INFINITY
 	}
 
-	return isUnitGradePostcodeHit(candidate.value ?? "", candidate.resolverName)
-		? (PLACETYPE_SPECIFICITY["postalcode"] ?? Number.NEGATIVE_INFINITY)
-		: AREA_GRADE_POSTALCODE_SPECIFICITY
+	const leads =
+		isUnitGradePostcodeHit(candidate.value ?? "", candidate.resolverName) ||
+		areaPostcodeLeadsLocality(candidate.country)
+
+	return leads ? (PLACETYPE_SPECIFICITY["postalcode"] ?? Number.NEGATIVE_INFINITY) : AREA_GRADE_POSTALCODE_SPECIFICITY
 }
 
 /**
