@@ -22,7 +22,8 @@ import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
-import { haversineKm, WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
 /**

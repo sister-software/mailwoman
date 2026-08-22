@@ -14,11 +14,11 @@ import { resolve } from "node:path"
 import type { DatabaseSync } from "node:sqlite"
 
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
+import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
 
 import type { loadImportanceIndex } from "./candidate-importance.ts"
 import type { PlaceAttrs, StageRow } from "./candidate/place-attrs.ts"
-import { haversineKm } from "./geo.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /**

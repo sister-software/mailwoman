@@ -36,9 +36,6 @@ import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-sc
 // docs/plugins/demo-assets/workspace-aliases.ts) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
-// THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
-// one-normalizer discipline that keeps the candidate table's keys reachable by construction.
-import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import {
 	rankByPrimaryPreference,
 	type RankedRow,
@@ -46,6 +43,9 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-rerank"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+// THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
+// one-normalizer discipline that keeps the candidate table's keys reachable by construction.
+import { haversineKm } from "@mailwoman/spatial"
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 

@@ -18,7 +18,6 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,
@@ -27,7 +26,7 @@ import {
 	type StreetLocale,
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
-import { clampFraction, pointAlong } from "@mailwoman/spatial"
+import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
 
 /**
  * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.

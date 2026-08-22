@@ -9,8 +9,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { bboxAround, haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { bboxAround, haversineKm } from "@mailwoman/spatial"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {

@@ -19,13 +19,8 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { $public } from "@mailwoman/core/env"
-import {
-	geometryContains,
-	pointInPolygonRings,
-	pointInRing,
-	type GeojsonPosition,
-} from "@mailwoman/resolver-wof-sqlite/geo"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
+import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "@mailwoman/spatial"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const square = (minX: number, minY: number, maxX: number, maxY: number): GeojsonPosition[] => [

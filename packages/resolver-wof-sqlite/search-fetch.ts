@@ -5,12 +5,18 @@
  *
  *   The FTS5 candidate fetch behind the fuzzy name match: the schema-qualified `place_search`
  *   MATCH, its population-ordered companion fetch, and the raw row shape both of them return.
+ *
+ *   Bbox and near-with-radius narrow at the SQL level through SQLite's built-in `rtree`, whose index name and schema
+ *   live in `fts.ts` beside the FTS5 build. That is why this package pulls neither SpatiaLite nor turf: the R*Tree does
+ *   the narrowing, and the passes downstream of it operate on ≤ a few hundred candidates per query rather than the
+ *   whole corpus, so an exact haversine over the survivors is cheap.
  */
 
 import type { DatabaseSync, SQLInputValue } from "node:sqlite"
 
+import { bboxAround } from "@mailwoman/spatial"
+
 import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "./fts.ts"
-import { bboxAround } from "./geo.ts"
 import type { RankingWeights } from "./ranking-weights.ts"
 import { allRows } from "./sqlite-utils.ts"
 import type { FindPlaceQuery, WOFPlacetype } from "./types.ts"

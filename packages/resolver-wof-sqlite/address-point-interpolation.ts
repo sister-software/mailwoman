@@ -36,8 +36,8 @@
 import { DatabaseSync } from "node:sqlite"
 
 import type { InterpolationLookup } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 
-import { haversineKm } from "./geo.ts"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
 import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"

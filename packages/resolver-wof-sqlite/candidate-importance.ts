@@ -43,7 +43,8 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { haversineKm } from "./geo.ts"
+import { haversineKm } from "@mailwoman/spatial"
+
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /**

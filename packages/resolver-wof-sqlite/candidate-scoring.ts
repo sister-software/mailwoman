@@ -9,8 +9,9 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
+import { haversineKm } from "@mailwoman/spatial"
+
 import { exactMatchIDs, officialNameIDs } from "./exact-match.ts"
-import { haversineKm } from "./geo.ts"
 import { compareReferential, referentialFromPopulation } from "./place-importance-schema.ts"
 import type { RankingWeights } from "./ranking-weights.ts"
 import type { RawSearchRow } from "./search-fetch.ts"

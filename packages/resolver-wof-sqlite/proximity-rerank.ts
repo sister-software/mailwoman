@@ -22,7 +22,7 @@
  *      caller that only returns the array in bias order has its ordering silently discarded downstream.
  */
 
-import { haversineKm } from "./geo.ts"
+import { haversineKm } from "@mailwoman/spatial"
 
 /**
  * Full magnitude of the nearness term at distance 0, before decay.

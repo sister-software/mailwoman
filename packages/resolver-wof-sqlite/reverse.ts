@@ -31,10 +31,10 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 
 import { ancestorLineage, placetypeDepth } from "./ancestry.ts"
 import { PLACE_BBOX_TABLE } from "./fts.ts"
-import { geometryContains, haversineKm, type GeojsonGeometry } from "./geo.ts"
 import { allRows } from "./sqlite-utils.ts"
 import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
 

@@ -30,9 +30,8 @@ import { DatabaseSync } from "node:sqlite"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { InterpolationLookup } from "@mailwoman/resolver"
-import { clampFraction, pointAlong } from "@mailwoman/spatial"
+import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
 
-import { haversineKm } from "./geo.ts"
 import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
 

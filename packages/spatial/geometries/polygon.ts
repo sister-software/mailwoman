@@ -353,6 +353,9 @@ export type GeojsonGeometry = GeojsonPolygon | GeojsonMultiPolygon | { type: str
  *
  * A named alias for {@linkcode pointInPolygon}: the "rings" spelling is what makes the ring-list argument obvious at a
  * call site that has just pulled `coordinates` off a parsed geometry.
+ *
+ * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast and has to be matched BY
+ * HAND if this one changes — it is the one copy no import can reach.
  */
 export function pointInPolygonRings(lon: number, lat: number, rings: readonly GeojsonPosition[][]): boolean {
 	return pointInPolygon(lon, lat, rings)

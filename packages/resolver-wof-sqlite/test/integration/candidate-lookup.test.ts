@@ -25,8 +25,8 @@ import { createWOFResolver } from "@mailwoman/resolver"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
-import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import type { FindPlaceQuery } from "@mailwoman/resolver-wof-sqlite/types"
+import { haversineKm } from "@mailwoman/spatial"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string

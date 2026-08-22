@@ -14,6 +14,7 @@ import { DatabaseSync, type SQLInputValue } from "node:sqlite"
 
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 import { Kysely } from "kysely"
 
 import { ancestorLineage } from "./ancestry.ts"
@@ -38,7 +39,6 @@ import {
 	placePopulationExists,
 	placeSearchFTSExists,
 } from "./fts.ts"
-import { haversineKm } from "./geo.ts"
 import { cfNormalize, softNameScore, trigramJaccard } from "./name-score.ts"
 import { encyclopedicClauses } from "./place-importance-schema.ts"
 import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"

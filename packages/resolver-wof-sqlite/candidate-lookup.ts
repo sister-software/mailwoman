@@ -32,6 +32,7 @@ import {
 	type Ancestor,
 	type GazetteerArtifactCoverage,
 } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -43,7 +44,6 @@ import {
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
-import { haversineKm } from "./geo.ts"
 import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
 import { rankByPrimaryPreference, type RankedRow, RERANK_FETCH } from "./primary-preference.ts"
