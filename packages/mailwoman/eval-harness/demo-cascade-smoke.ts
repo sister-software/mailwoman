@@ -43,14 +43,15 @@
  *   this file. `runCascade` now comes from `@mailwoman/resolver-wof-wasm/browser-cascade`, which is
  *   where `demo-helpers` re-exports it FROM — the same function, so the "measure the REAL cascade"
  *   guarantee is intact and the docs dependency (which `mailwoman`'s tsconfig cannot carry: `docs`
- *   depends on `mailwoman`, so a project reference would be a cycle) is gone. `flattenTree` is
- *   copied verbatim below because it is defined locally in `demo-helpers` and is 20 lines of pure
- *   tree walk; see the note on it.
+ *   depends on `mailwoman`, so a project reference would be a cycle) is gone. The flattener that was
+ *   copied here for the same reason now comes from `@mailwoman/core/decoder` (`flattenTreeNodes`),
+ *   which both this and the demo take it from — and which fixed the order both copies had wrong.
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
@@ -66,50 +67,6 @@ import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
-
-/**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
- *
- * Copied verbatim from `docs/src/shared/demo-helpers.ts`, which defines it locally rather than re-exporting it. Taking
- * it by import would mean a `mailwoman` → `docs` project reference, and `docs` already depends on `mailwoman` — a
- * cycle. Twenty lines of pure tree walk with no behavior to drift is the cheaper of the two evils; if a third consumer
- * appears, promote it to a shared package instead of copying it again.
- *
- * TODO: NOT TRUE DE-DUPE THIS NOW.
- */
-function flattenTree(
-	tree?: AddressTree | null
-): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
-	const roots = tree?.roots ?? []
-
-	interface TreeNode {
-		tag: string
-		value?: unknown
-		confidence?: number
-		start?: number
-		end?: number
-		children?: unknown
-	}
-
-	const stack = [...(roots as TreeNode[])]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
-		}
-
-		if (Array.isArray(n.children)) {
-			for (const c of n.children) {
-				stack.push(c as TreeNode)
-			}
-		}
-	}
-
-	return out.toReversed()
-}
 
 /**
  * Options for {@linkcode demoCascadeSmoke} — one field per flag the gate used to serialize into argv.
@@ -311,16 +268,19 @@ export async function demoCascadeSmoke(
 			fst: fst as Parameters<typeof runPipeline>[1]["fst"],
 		})
 
-		// Node selection copied VERBATIM from the demo page (docs/src/pages/demo/index.tsx) — same
-		// locality/city filter, same highest-confidence region pick, same postcode find.
-		const nodes = flattenTree(tree)
-		const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts) — same locality filter,
+		// same highest-confidence region pick, same postcode find.
+		// `city` / `state` / `postal_code` are libpostal vocabulary and are NOT `ComponentTag`s, so the
+		// `|| n.tag === "…"` arms that used to sit here could never match. They compiled only while the
+		// flattener returned `{ tag: string }`; the real tag union makes them a type error.
+		const nodes = flattenTreeNodes(tree)
+		const localityNodes = nodes.filter((n) => n.tag === "locality")
 
 		const stateNode = nodes
-			.filter((n) => n.tag === "region" || n.tag === "state")
+			.filter((n) => n.tag === "region")
 			.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 
-		const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
+		const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
 		// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
 		// passes + span-rescore) over the lookup, exactly as the browser composes it. The node

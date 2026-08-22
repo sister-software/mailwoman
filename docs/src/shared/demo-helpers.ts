@@ -11,7 +11,7 @@
 // usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
-import { clampConfidence } from "@mailwoman/core/decoder"
+import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult } from "@mailwoman/react"
 
@@ -183,36 +183,13 @@ export function pairCountryForInput(input: string): string | undefined {
 //#region Tree flattening
 
 /**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
+ * Flatten a solver tree to its nodes in source order.
  *
- * The second copy — `packages/mailwoman/eval-harness/demo-cascade-smoke.ts` — is a MIRROR, not a home: the smoke test
- * exists to reproduce what the demo does, and `packages/` cannot import from the private `docs` workspace anyway. So
- * collapsing them means choosing a third home in a shared package, which is a real decision and not a move.
- *
- * @todo Give this a home in a shared package, and have both callers take it from there.
+ * Re-exported rather than declared: `@mailwoman/core/decoder`'s `flattenTreeNodes` is the shared home, and the local
+ * copy this replaces sorted by TRAVERSAL order — which put a child ahead of its parent on 7 of 10 ordinary addresses
+ * (`street_suffix` before `street`, `house_number` before `street`, `postcode` before `locality`).
  */
-export function flattenTree(tree?: AddressTree | null): TreeNode[] {
-	const out: TreeNode[] = []
-
-	const roots = tree?.roots ?? []
-	const stack = [...(roots as TreeNode[])]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
-		}
-
-		if (Array.isArray(n.children)) {
-			for (const c of n.children) {
-				stack.push(c as TreeNode)
-			}
-		}
-	}
-
-	return out.toReversed()
-}
+export { flattenTreeNodes as flattenTree } from "@mailwoman/core/decoder"
 
 //#endregion
 
@@ -221,7 +198,7 @@ export function flattenTree(tree?: AddressTree | null): TreeNode[] {
 /**
  * A source-order parsed node, as {@link flattenTree} yields it.
  */
-export type FlatNode = ReturnType<typeof flattenTree>[number]
+export type FlatNode = FlatTreeNode
 
 /**
  * What both demo parse paths need out of the neural classify stage before resolution.
@@ -344,7 +321,7 @@ export async function runClassifyStage(
 
 	return {
 		tree,
-		nodes: flattenTree(tree),
+		nodes: flattenTreeNodes(tree),
 		kindResult: kindResult as ParseResult["kindResult"],
 		timing: { shape: tShape - tStart, classify: tClassify - tShape },
 	}
