@@ -3,8 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regenerate `core/resources/languages/types.gen.ts` — the ISO 639-1/639-2b language-code types +
+ *   Regenerate `core/resources/languages/types.gen.ts` — the ISO 639-1 / 639-2 language-code types +
  *   label maps — from the committed `internal/languages.csv` resource dictionary.
+ *
+ *   BOTH 639-2 standards are emitted, and the reason is data, not completeness. ISO 639-2 has two
+ *   three-letter forms: /B (bibliographic) and /T (terminological, identical to 639-3). They differ
+ *   for exactly 20 languages, and **Who's On First keys its name properties in /T** — so a /B-only
+ *   union excluded `deu`, `fra` and `nld`, three tier-1 locales, while admitting spellings the data
+ *   never uses. Measured over the built gazetteer's `names` table: 3,591,751 rows on the /T side of
+ *   those 20 pairs against 247 on the /B side, a ratio of 14,542:1.
+ *
+ *   /B is NOT dropped: `packages/codex/country/official-languages.ts` lists both forms deliberately
+ *   (`DE: ["de","deu","ger"]`) and 247 real rows carry one, so the union accepts either and both map
+ *   to the same label and the same alpha-2.
+ *
+ *   NAME DEBT, deliberately not paid here: `Alpha3bLanguageCode`, `Alpha3bLabelMap`, `Alpha3bToAlpha2`
+ *   and the CSV's `alpha3-b` header all still say "b" while holding both standards. Renaming them is a
+ *   published-API break and belongs in a major.
  *
  *   Usage: mailwoman dev generate language-types
  */
@@ -47,6 +62,8 @@ export async function generateLanguageTypes(
 	const alpha2Entries = new Map<string, string[]>()
 	const alpha3bEntries = new Map<string, string[]>()
 	const entryLines: [alpha2: string, alpha3b: string][] = []
+	// The 20 divergent /T spellings, kept apart so they widen the accepting direction only.
+	const alpha3tPairs: [alpha2: string, alpha3t: string][] = []
 
 	report?.(`Reading ${dataSourcePath}`)
 
@@ -57,6 +74,8 @@ export async function generateLanguageTypes(
 		const alpha3b = columns[0] as string
 		const alpha2 = columns[1] as string
 		const labelsConcatenated = columns[2] as string
+		// Empty for the 163 languages whose two 639-2 forms agree; a distinct code for the 20 that diverge.
+		const alpha3t = (columns[3] as string | undefined) ?? ""
 
 		const labels = labelsConcatenated.split("; ")
 
@@ -64,6 +83,19 @@ export async function generateLanguageTypes(
 		alpha3bEntries.set(alpha3b, labels)
 
 		entryLines.push([alpha2, alpha3b])
+
+		// The /T spelling is a first-class member of the same union and maps to the same label and the
+		// same alpha-2. It is the form WOF actually writes, so a lookup keyed on it must hit.
+		//
+		// It goes to `alpha3tPairs`, NOT to `entryLines`. Both lists build BOTH direction maps from a
+		// `new Map([...])`, where the LAST entry for a key wins — so appending the /T form to
+		// `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")` from `ger` to `deu`. That map is
+		// named for the /B standard and documented as returning it; changing what it answers is a
+		// separate decision from widening what the union ACCEPTS, and it is not this one.
+		if (alpha3t) {
+			alpha3bEntries.set(alpha3t, labels)
+			alpha3tPairs.push([alpha2, alpha3t])
+		}
 	}
 
 	const handle = await fs.open(outfile, "w")
@@ -177,8 +209,10 @@ export const Alpha2ToAlpha3b: ReadonlyMap<Alpha2LanguageCode, Alpha3bLanguageCod
 export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCode> = new Map([
 `)
 
-	for (const [alpha2, alpha3b] of entryLines) {
-		await writeLine(`["${alpha3b}", "${alpha2}"],`)
+	// This direction ACCEPTS a code, so it takes both spellings — the keys are distinct, nothing is
+	// overwritten, and `deu` answers `de` exactly as `ger` does.
+	for (const [alpha2, alpha3] of [...entryLines, ...alpha3tPairs]) {
+		await writeLine(`["${alpha3}", "${alpha2}"],`)
 	}
 
 	await writeLine(`])`)
