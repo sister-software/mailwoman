@@ -1122,7 +1122,11 @@ class WOFResolver implements Resolver {
 		// vector per row. The no-sink walk talks to the frozen no-op recorder — zero per-event branches.
 		const rec = state.traceSink ? createNodeTraceRecorder(state.traceSink) : NOOP_TRACE_RECORDER
 
-		rec.bind(node, placetype, query, state.candidatesPerLookup)
+		// The query is SNAPSHOT, not bound live. `emit` reads `ctx.query.parentID` at the END of the walk, and the
+		// parent-fallback retry `delete`s that key mid-lookup — so binding the object itself lets a later mutation
+		// rewrite history. That is how 196 lookups which every one of them carried a parent came out of the
+		// constraint census reading `parentID: absent`.
+		rec.bind(node, placetype, { ...query }, state.candidatesPerLookup)
 
 		let candidates: ResolvedPlace[]
 
@@ -1192,10 +1196,14 @@ class WOFResolver implements Resolver {
 				if (!candidates.length && state.diagnoseUnreachable) {
 					rec.reachable(await this.#probeOtherBands(query, placetype))
 				}
-			} catch {
+			} catch (error) {
 				// Defensive: a backend failure should not abort the whole tree walk. Leave the node with
 				// its classifier attribution intact.
-				rec.gate("backend_error")
+				//
+				// The reason rides the gate name. A bare `backend_error` cannot tell a closed database from a
+				// finalized statement from a genuine query fault, which is what made three full-board constraint
+				// runs unreadable — 64 of 591 rows errored and the census could not say why.
+				rec.gate(`backend_error: ${(error as Error).message}`)
 				rec.emit(null)
 
 				return null
