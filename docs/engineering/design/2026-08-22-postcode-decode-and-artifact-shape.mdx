@@ -324,9 +324,24 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
   retired in 2001 — is present at `0.0000, 0.0000` and flagged current. 414 rows sit on null island.
 - **The numbering plan is a first-digit witness**, so it catches only cross-band errors. The 0.69%
   PIP disagreement is a floor on the error, not the error.
-- **234 ZIPs (0.56%) fall outside every state polygon.** Coastal-boundary precision, or genuinely
-  offshore? Still unmeasured — the #1784 build reports the same 234 under `outsideEveryRegion`, so the
-  number is now produced by the shipped builder rather than only by a probe.
+- ~~**234 ZIPs (0.56%) fall outside every state polygon.**~~ **ANSWERED — not coastal precision.**
+  Measured by distance to the nearest state boundary vertex: median **1,635 km**, and only 14 of the
+  234 are within 100 km of any boundary at all.
+
+  **220 of 234 carry a territory prefix** — PR, USVI, Guam, American Samoa, the Northern Marianas —
+  which the ZIP numbering plan gives no state band. `96916` sits at `13.2659,144.6892`, 5,036 km from
+  the nearest US state polygon, which is Alaska's. The #1784 build is right to withhold a region for
+  them, and right for the reason it does so rather than by accident.
+
+  The 14 that carry a mainland band split again, and only four are boundary precision: `78565` is
+  0.50 km outside TX on the Rio Grande and `55725` 1.30 km outside MN on the Canadian border. The
+  rest sit in the Pacific — `94157` and `94165`–`94168` share `37.7597,-122.6940`, 9.5 km due west of
+  San Francisco, which is the placeholder-coordinate signature of finding 3 rather than a
+  simplification artifact.
+
+  So a boundary buffer would recover four rows and mislocate two hundred and twenty. Reproduce with
+  `us-zip-outside-states.ts`.
+
 - ~~**Canada.**~~ **ANSWERED** — see [finding 8](#8-canada-is-two-systems-and-the-code-says-which).
   It was two numbers, not one: urban 78 m, rural 2.08 km. The urban half shipped into the unit tier.
   FSA/LDU still maps onto PFX1 unchanged — FSA is the prefix tier (~1,650 nodes, analogous to GB
