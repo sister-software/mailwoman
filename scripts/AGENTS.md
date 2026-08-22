@@ -3,6 +3,9 @@
 This is not a dumping ground for all manner of one-off scripts. If you're considering adding a new script, ask yourself: is this a one-off, or is it a reusable tool?
 
 If you are adding a new diagnostic script, it should be written preferably in TypeScript, or Python if absolutely necessary. If you do need somewhere to put a one-off script, add it to @./scratchpad/ which is ignored by git automatically.
+Consider adding a new command to @./mailwoman/commands or an eval harness command to @./mailwoman/eval-harness/ instead of adding a new script. Also consider adding an MCP tool if the script is a reusable.
+
+BE VIGILANT ABOUT CODE DUPLICATION.
 
 ## Build Scripts
 
@@ -32,6 +35,7 @@ Scripts for inspecting the training data, model, or artifacts. These are not par
    Command implementations live in `mailwoman/eval-harness/` behind `mailwoman eval …`.
    `eval/oa-resolver-eval.ts` forwards existing direct invocations to that implementation.
 4. **`diagnostic/`** — gitignored one-off investigations.
+   - This has since been deprecated in favor of `eval/` and `mailwoman eval …` commands. If you're reaching for this it means you should be adding a new `mailwoman eval …` command or updating the mailwoman-dev MCP.
 
 Everything else lives where it belongs: gazetteer builders → `mailwoman/gazetteer-pipeline/` (`mailwoman gazetteer …`); corpus tools → `mailwoman/corpus-tools/` (`mailwoman corpus …`); coarse-placer training → `core/coarse-placer/tools/`; matcher-only tools + viz → `registry/tools/`; census/TIGER tools → `tiger/tools/`; the Modal training launcher → `corpus-python/modal/train_remote.py`. There is no `scripts/lib/` — use `node:util` `parseArgs` and `@mailwoman/core/utils`. Do NOT add new builders, mutators, or shared-lib dirs here.
 
