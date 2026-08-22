@@ -41,7 +41,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		return 0
 	}
 
-	const { runDoctor, describeEnvironment, renderDoctorReport } = await import("mailwoman/doctor")
+	const { runDoctor, describeEnvironment, renderDoctorReport } = await import("#doctor")
 
 	const report = await runDoctor()
 	const environment = parsed.values.verbose ? describeEnvironment() : undefined
