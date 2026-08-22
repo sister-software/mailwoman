@@ -10,6 +10,7 @@
  *   districts), and a duplicate prefix must throw rather than silently keep one of two counts.
  */
 
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	PostcodePrefixIndexResolver,
 	serializePostcodePrefixIndex,
@@ -124,5 +125,125 @@ describe("PFX1 postcode-prefix index", () => {
 		bytes[0] = 0
 
 		expect(() => new PostcodePrefixIndexResolver(bytes)).toThrow(/bad magic/)
+	})
+})
+
+describe("PFX1 layout conformance (docs/engineering/reference/pfx1.ksy)", () => {
+	it("serializer output walks byte-for-byte per the documented layout", () => {
+		const bytes = serializePostcodePrefixIndex(header, nodes)
+		const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+		const decoder = new TextDecoder()
+
+		// magic: the ASCII bytes "PFX1"
+		expect(decoder.decode(bytes.subarray(0, 4))).toBe("PFX1")
+
+		// header_len: u4le, then header_json: UTF-8 JSON of exactly that many bytes
+		const headerLen = view.getUint32(4, true)
+		const parsedHeader = parseJSONStrict<PostcodePrefixHeader>(decoder.decode(bytes.subarray(8, 8 + headerLen)))
+
+		expect(parsedHeader.schemaVersion).toBe(1)
+		// The meaning-of-zero statement is mandatory: a miss against a partial register is unattested,
+		// not absent, and a reader cannot tell the two apart without it.
+		expect(parsedHeader.coverageNote.length).toBeGreaterThan(0)
+
+		// ancestor_count: u4le, then the interned dictionary
+		let o = 8 + headerLen
+		const ancestorCount = view.getUint32(o, true)
+		o += 4
+
+		// Three distinct surfaces (UK, England, Northern Ireland) across four nodes that make seven
+		// references — the dictionary is the anti-repetition device, so it must be SHORTER than the
+		// reference count, which the assertion at the end of the walk states directly.
+		expect(ancestorCount).toBe(3)
+
+		for (let i = 0; i < ancestorCount; i++) {
+			const placetypeLen = bytes[o++]!
+			expect(decoder.decode(bytes.subarray(o, o + placetypeLen)).length).toBeGreaterThan(0)
+			o += placetypeLen
+			// f64, not u32: WOF ids exceed 2^32 and must stay exactly representable.
+			const wofID = view.getFloat64(o, true)
+			o += 8
+
+			expect(Number.isInteger(wofID)).toBe(true)
+			expect(Math.abs(wofID)).toBeLessThanOrEqual(Number.MAX_SAFE_INTEGER)
+
+			const nameLen = bytes[o++]!
+			o += nameLen
+		}
+
+		// node_count: u4le, then the prefix records
+		const nodeCount = view.getUint32(o, true)
+		o += 4
+
+		expect(nodeCount).toBe(nodes.length)
+
+		let previousPrefix = ""
+		let totalRefs = 0
+
+		for (let i = 0; i < nodeCount; i++) {
+			const prefixLen = bytes[o++]!
+
+			expect(prefixLen).toBeGreaterThan(0)
+
+			const prefix = decoder.decode(bytes.subarray(o, o + prefixLen))
+			o += prefixLen
+
+			// Sorted ascending by prefix — what makes the build byte-deterministic.
+			expect(prefix > previousPrefix).toBe(true)
+			previousPrefix = prefix
+
+			const refCount = bytes[o++]!
+			totalRefs += refCount
+
+			for (let r = 0; r < refCount; r++) {
+				expect(view.getUint32(o, true)).toBeLessThan(ancestorCount)
+				o += 4
+			}
+
+			const flags = bytes[o++]!
+
+			// Bits 2-7 are reserved and must be clear.
+			expect(flags & 0b1111_1100).toBe(0)
+
+			const hasCoordinate = (flags & 0b01) !== 0
+			const hasRadius = (flags & 0b10) !== 0
+
+			// The radius may never travel without a coordinate, nor a coordinate without a radius.
+			expect(hasRadius).toBe(hasCoordinate)
+
+			if (hasCoordinate) {
+				// Quantized against 32767, so the decoded value must land within the grid's ~300 m.
+				expect(Math.abs((view.getInt16(o, true) * 90) / 32_767)).toBeLessThanOrEqual(90)
+				o += 2
+				expect(Math.abs((view.getInt16(o, true) * 180) / 32_767)).toBeLessThanOrEqual(180)
+				o += 2
+			}
+
+			if (hasRadius) {
+				expect(view.getFloat32(o, true)).toBeGreaterThan(0)
+				o += 4
+			}
+
+			expect(view.getUint32(o, true)).toBeGreaterThan(0)
+			o += 4
+		}
+
+		// The dictionary earns its place: more references than entries.
+		expect(totalRefs).toBeGreaterThan(ancestorCount)
+
+		// The walk consumed the buffer exactly — no trailing bytes, no short read.
+		expect(o).toBe(bytes.length)
+	})
+
+	it("the ancestry-only tier survives as ABSENCE, never as a 0,0 sentinel", () => {
+		// A magnitude never carries its own absence: BT9's coordinate-less record must be shorter than
+		// a coordinate-bearing one by exactly the 4 + 4 bytes the two optional fields occupy.
+		const withCoordinate = serializePostcodePrefixIndex(header, [
+			{ prefix: "AA1", ancestors: [uk], lat: 51, lon: 0, radiusP95Km: 1, unitCount: 1 },
+		])
+
+		const withoutCoordinate = serializePostcodePrefixIndex(header, [{ prefix: "AA1", ancestors: [uk], unitCount: 1 }])
+
+		expect(withCoordinate.length - withoutCoordinate.length).toBe(8)
 	})
 })
