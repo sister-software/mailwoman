@@ -24,19 +24,9 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { findRescoreCandidate } from "@mailwoman/resolver/span-rescore"
 import { describe, expect, it } from "vitest"
 
-/**
- * The backend's name key: fold diacritics AWAY (`Zürich` → `zurich`), the way `normalizeLocalityForKey` does. Dropping
- * combining marks rather than replacing them with a space is the whole point — replace, and `Zürich` keys as `zu rich`
- * and matches nothing it should.
- */
-const norm = (s: string): string =>
-	s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/\p{M}/gu, "")
-		.replaceAll(/[^a-z0-9 ]/g, " ")
-		.replaceAll(/\s+/g, " ")
-		.trim()
+import { backendNameKey } from "../helpers/backend-name-key.ts"
+
+const norm = backendNameKey
 
 /**
  * Live rows off the shipped `candidate.db`, 2026-08-10 (`prominence` = log10(population + 1)).

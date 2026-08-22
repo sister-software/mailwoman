@@ -55,7 +55,6 @@ import {
 	pickLargerAdmin,
 } from "./bare-toponym-race.ts"
 import { decorateNode, isResolvedWithCoord } from "./decorate-node.ts"
-import { foldName } from "./fold-name.ts"
 import {
 	findPostcodeCountryScope,
 	type PostcodeCountryScope,

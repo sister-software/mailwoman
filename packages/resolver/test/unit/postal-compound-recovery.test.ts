@@ -17,13 +17,9 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { postcodeCodeSubset } from "@mailwoman/resolver/span-rescore"
 import { describe, expect, it } from "vitest"
 
-const norm = (s: string): string =>
-	s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[^a-z0-9 ]/g, " ")
-		.replaceAll(/\s+/g, " ")
-		.trim()
+import { backendNameKey } from "../helpers/backend-name-key.ts"
+
+const norm = backendNameKey
 
 /**
  * The SI shape: the village + its bare-code postcode row (the #920 name law — codes stored bare).

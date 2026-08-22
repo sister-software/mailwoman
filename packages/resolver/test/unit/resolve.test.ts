@@ -1325,6 +1325,67 @@ describe("resolveTree — street-centroid tier (#1042)", () => {
 		expect(localities).toHaveLength(1) // same commune (case-insensitive) — kept
 	})
 
+	// #1764. The register comparison is documented diacritic-INSENSITIVE and was not: NFD produced the combining
+	// mark and `[^a-z0-9 ]` then replaced it with a SPACE, so `Sète` folded to "se te" and matched nothing. The
+	// negative branch of that comparison is a `roots.splice`, so the miss DELETED a correct locality node.
+	//
+	// The asymmetry is what makes the fold decide. `communes[]` is built from `adminValues` first, which already
+	// holds the node's OWN value — so whenever the typed value hits the register the fold cannot matter. It matters
+	// only when the typed value MISSES and the gazetteer's accented display name is the one leg left to match on.
+	test("#1764: the register-commune fold is diacritic-insensitive ('Sète' ≡ 'Sete')", async () => {
+		const lookup = fakeStreetCentroids([
+			{ street: "allee pierre barthas", commune: "Sete", lat: 43.403651, lon: 3.670243 },
+		])
+
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+
+		const input = tree("Allee Pierre Barthas, Sete", [
+			node("street", "Allee Pierre Barthas", 0, 20),
+			{
+				tag: "locality",
+				value: "Barthas",
+				start: 13,
+				end: 20,
+				confidence: 0.5,
+				children: [],
+				metadata: { resolver_name: "Sète", resolver_country: "FR", span_rescore: true },
+			},
+		])
+
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+
+		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(1) // same commune, differently accented — kept
+	})
+
+	// The negative twin: the fix must not weaken #1058's guard. A genuinely different commune still goes.
+	//
+	// The RAW text must keep naming Sete, or the register never hits, `matchedCommune` is never set and the guard
+	// never runs — a test that would pass for the wrong reason. Only `resolver_name` moves.
+	test("#1764: a differently-accented fold does not weaken the #1058 guard ('Lyon' ≠ 'Sete')", async () => {
+		const lookup = fakeStreetCentroids([
+			{ street: "allee pierre barthas", commune: "Sete", lat: 43.403651, lon: 3.670243 },
+		])
+
+		const resolver = createWOFResolver(new FakeResolverBackend(FIXTURE_PLACES))
+
+		const input = tree("Allee Pierre Barthas, Sete", [
+			node("street", "Allee Pierre Barthas", 0, 20),
+			{
+				tag: "locality",
+				value: "Barthas",
+				start: 13,
+				end: 20,
+				confidence: 0.5,
+				children: [],
+				metadata: { resolver_name: "Lyon", resolver_country: "FR", span_rescore: true },
+			},
+		])
+
+		const out = await resolver.resolveTree(input, { streetCentroids: frProvider(lookup), streetCountryHints: ["fr"] })
+
+		expect(out.roots.filter((n) => n.tag === "locality")).toHaveLength(0) // contradicts the register — dropped
+	})
+
 	test("never fires when a house number is present (rooftop tiers' domain)", async () => {
 		let called = false
 
