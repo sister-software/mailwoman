@@ -9,7 +9,7 @@
  */
 
 import { OpenAPIHono, type z } from "@hono/zod-openapi"
-import { apiError, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
+import { errorResponse, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
 
@@ -97,7 +97,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		// just `/v1/format`).
 		defaultHook: (result, c) => {
 			if (!result.success) {
-				return apiError(c, 400, "invalid request body", summarizeValidationError(result.error))
+				return errorResponse(c, 400, "invalid request body", summarizeValidationError(result.error))
 			}
 
 			return undefined
@@ -117,10 +117,10 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		// validator throws before a route's own hook ever sees the body, so it lands here instead of the
 		// per-route 400s in routes.ts. Answer 400, not the 500 net (which stays reserved for engine faults).
 		if (error instanceof Error && error.message.includes("Malformed JSON")) {
-			return apiError(c, 400, "invalid request body", "malformed JSON")
+			return errorResponse(c, 400, "invalid request body", "malformed JSON")
 		}
 
-		return apiError(c, 500, "internal error", error instanceof Error ? error.message : String(error))
+		return errorResponse(c, 500, "internal error", error instanceof Error ? error.message : String(error))
 	})
 
 	// Ahead of the handlers (which buffer the body into memory) so an oversized POST is rejected before that
@@ -129,7 +129,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		"/v1/*",
 		bodyLimit({
 			maxSize: options.bodyLimitBytes ?? DEFAULT_BODY_LIMIT_BYTES,
-			onError: (c) => apiError(c, 413, "request body too large"),
+			onError: (c) => errorResponse(c, 413, "request body too large"),
 		})
 	)
 

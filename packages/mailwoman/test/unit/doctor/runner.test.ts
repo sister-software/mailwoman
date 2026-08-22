@@ -14,8 +14,14 @@
 import { readFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { CheckStatus, type DoctorCheck } from "mailwoman/doctor/checks"
-import { defaultDoctorDeps, describeEnvironment, runDoctor, type DoctorDeps } from "mailwoman/doctor/runner"
+import {
+	CheckStatus,
+	defaultDoctorDeps,
+	describeEnvironment,
+	runDoctor,
+	type DoctorDeps,
+	type DoctorCheck,
+} from "mailwoman/doctor"
 import { describe, expect, it } from "vitest"
 
 /**

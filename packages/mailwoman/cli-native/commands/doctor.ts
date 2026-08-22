@@ -41,10 +41,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		return 0
 	}
 
-	const [{ runDoctor, describeEnvironment }, { renderDoctorReport }] = await Promise.all([
-		import("../../doctor/runner.ts"),
-		import("../../doctor/format.ts"),
-	])
+	const { runDoctor, describeEnvironment, renderDoctorReport } = await import("mailwoman/doctor")
 
 	const report = await runDoctor()
 	const environment = parsed.values.verbose ? describeEnvironment() : undefined

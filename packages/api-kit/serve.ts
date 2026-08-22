@@ -15,10 +15,10 @@ import { serve } from "@hono/node-server"
  */
 export type FetchLike = (request: Request, ...args: never[]) => Response | Promise<Response>
 
-export interface ServeNodeOptions {
-	fetch: FetchLike
-	port: number
-	hostname: string
+/**
+ * Options for `serveNode()`. Extracted since Hono doesn't seem to export them.
+ */
+export type ServeNodeOptions = Parameters<typeof serve>[0] & {
 	/**
 	 * Called once the listener is bound — receives the actual port (useful with `port: 0`).
 	 */
@@ -33,7 +33,7 @@ export interface ServerHandle {
  * Boot a node HTTP listener for a Hono app. Returns a handle whose `close()` resolves when the listener is down.
  */
 export function serveNode(options: ServeNodeOptions): ServerHandle {
-	const server = serve({ fetch: options.fetch as never, port: options.port, hostname: options.hostname }, (info) =>
+	const server = serve({ fetch: options.fetch, port: options.port, hostname: options.hostname }, (info) =>
 		options.onListen?.({ port: info.port, address: info.address })
 	)
 

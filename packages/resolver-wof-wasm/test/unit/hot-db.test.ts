@@ -25,6 +25,7 @@
 
 import { readFile } from "node:fs/promises"
 
+import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
 import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
@@ -71,14 +72,16 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 	})
 
 	describe("demo resolution (runCascade — the shared resolveTree over the WASM lookup, #861)", () => {
-		const node = (tag: string, value: string, children: object[] = []) => ({
+		const node = (tag: ComponentTag, value: string, children: AddressNode[] = []): AddressNode => ({
 			tag,
 			value,
 			confidence: 0.95,
 			children,
+			start: 0,
+			end: 0,
 		})
 
-		const tree = (raw: string, roots: object[]) => ({ raw, roots }) as { roots: unknown[] }
+		const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
 
 		test('locality "Brooklyn" alone → the borough', async () => {
 			const hits = await runCascade(

@@ -337,15 +337,10 @@
 			"default": "./out/commands/gazetteer/inspect/sync-plan.js",
 			"types": "./out/commands/gazetteer/inspect/sync-plan.d.ts"
 		},
-		"./doctor/checks": {
-			"node": "./doctor/checks.ts",
-			"default": "./out/doctor/checks.js",
-			"types": "./out/doctor/checks.d.ts"
-		},
-		"./doctor/runner": {
-			"node": "./doctor/runner.ts",
-			"default": "./out/doctor/runner.js",
-			"types": "./out/doctor/runner.d.ts"
+		"./doctor": {
+			"node": "./doctor/index.ts",
+			"default": "./out/doctor/index.js",
+			"types": "./out/doctor/index.d.ts"
 		},
 		"./tools/generate-clients": {
 			"node": "./tools/generate-clients.ts",

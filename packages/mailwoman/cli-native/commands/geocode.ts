@@ -303,7 +303,9 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 
 async function openSession(options: GeocodeOptions) {
 	const importStartedAt = performance.now()
-	const { createGeocodeSession } = await import("../../geocode-session.ts")
+
+	const { createGeocodeSession } = await import("mailwoman/geocode-session")
+
 	const importedAt = performance.now()
 	const showProgress = process.stderr.isTTY === true && !options.timing
 
@@ -395,6 +397,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		const [{ render }, { createElement }, { GeocodeDebugCommand }] = await Promise.all([
 			import("ink"),
 			import("react"),
+			// TODO: Do not use dynamic relative imports.
 			import("../../debug-view/command.tsx"),
 		])
 

@@ -24,7 +24,7 @@ import {
 	versionMeetsFloor,
 	weightsCheck,
 	type DoctorCheck,
-} from "mailwoman/doctor/checks"
+} from "mailwoman/doctor"
 import { describe, expect, it } from "vitest"
 
 describe("version parsing + floor comparison", () => {

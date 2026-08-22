@@ -20,7 +20,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { apiError, metricsSnapshot, recordTimed } from "@mailwoman/api-kit"
+import { geocoderUnavailableError, metricsSnapshot, recordTimed } from "@mailwoman/api-kit"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
@@ -50,15 +50,6 @@ import {
 export const DEFAULT_BATCH_MAX = 500
 
 const startedAt = Date.now()
-
-/**
- * `detail` text for every 503 "engine method absent" response (`/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`)
- * — the express-era remediation carried forward: a stranger hitting a 503 must see the exact fix, not just "not
- * available". Matches `mailwoman/api-engine.ts`'s `buildPreflightMessage()` boot-time banner in spirit (same two
- * missing pieces — the packages, and the gazetteer data), condensed to one line for a JSON error body.
- */
-const GEOCODER_UNAVAILABLE_DETAIL =
-	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
 
 /**
  * Options for {@link registerMailwomanAPIRoutes}.
@@ -271,6 +262,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 	app.openapi(parseGetRoute, async (c) => {
 		if (!engine.parse) return c.json({ error: "parse not implemented" }, 501)
+
 		const address = c.req.query("address")?.trim()
 
 		if (!address) return c.json({ error: "address is required" }, 400)
@@ -311,7 +303,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		geocodeRoute,
 		async (c) => {
 			if (!engine.geocode) {
-				return apiError(c, 503, "geocoder not available", GEOCODER_UNAVAILABLE_DETAIL)
+				return geocoderUnavailableError(c)
 			}
 
 			const { address, input_mode } = c.req.valid("json")
@@ -353,7 +345,9 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				return c.json({ error: `batch too large: ${addresses.length} > ${batchMax}` }, 413)
 			}
 
-			if (!engine.batch) return apiError(c, 503, "geocoder not available", GEOCODER_UNAVAILABLE_DETAIL)
+			if (!engine.batch) {
+				return geocoderUnavailableError(c)
+			}
 
 			// Whole-call latency, recorded under the "batch" tier. Per-row tier metrics are the ENGINE's
 			// responsibility (phase 4b) — this app only times the call as a unit.
@@ -386,11 +380,12 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		// street node's stamped resolution tier per call — the wired engine must carry that over, and
 		// must trim batch rows the same way (the route passes raw input through).
 		async (c) => {
-			if (!engine.resolveTree) return apiError(c, 503, "resolver not available", GEOCODER_UNAVAILABLE_DETAIL)
+			if (!engine.resolveTree) {
+				return geocoderUnavailableError(c)
+			}
+
 			const { tree, opts } = c.req.valid("json")
-			// The wire schema keeps `tree` loose (`{ roots: unknown[] }`, forward-compat) — a local cast at the
-			// boundary onto the engine's `AddressTree` contract, matching the established idiom (api-kit's
-			// `openapi.ts`, the drop-ins' response casts) for "documented wire shape looser than the domain type".
+
 			const outcome = await engine.resolveTree(tree as unknown as AddressTree, opts ?? {})
 
 			return c.json(outcome, 200)
@@ -403,7 +398,10 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 	)
 
 	app.openapi(reloadRoute, async (c) => {
-		if (!engine.reload) return apiError(c, 503, "geocoder not available", GEOCODER_UNAVAILABLE_DETAIL)
+		if (!engine.reload) {
+			return geocoderUnavailableError(c)
+		}
+
 		const outcome = await engine.reload()
 
 		return c.json(outcome, 200)

@@ -15,6 +15,7 @@
  */
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
+import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
@@ -238,14 +239,14 @@ export class CandidateResolverBackend implements ResolverBackend {
 
 export async function runCascade(
 	lookup: MailwomanLookupLike,
-	tree: { roots: unknown[] },
+	tree: AddressTree,
 	rawText: string,
 	bias?: ResolveBias
 ): Promise<CascadeHits> {
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
 	const backend = new CandidateResolverBackend(lookup)
-	const resolver = createWOFResolver(backend as never)
+	const resolver = createWOFResolver(backend)
 
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
 	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
@@ -253,7 +254,7 @@ export async function runCascade(
 	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
 	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
 	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
-	const resolved = (await resolver.resolveTree(tree as never, {
+	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),
 	})) as unknown as {

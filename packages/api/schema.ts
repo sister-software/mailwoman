@@ -7,7 +7,7 @@
  *   libpostal), nothing here is a vendor contract — this surface is ours to design, so request
  *   bodies are REQUIRED and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
  *   on the app maps validation failures through the shared `APIErrorSchema` envelope
- *   (`apiError(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
+ *   (`errorResponse(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
  *   surface holds to: where no legacy contract exists, the validator MAY speak, but only in
  *   our envelope.
  *

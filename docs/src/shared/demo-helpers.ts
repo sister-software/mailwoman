@@ -12,8 +12,8 @@
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
 import { clampConfidence } from "@mailwoman/core/decoder"
+import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult } from "@mailwoman/react"
-import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
@@ -22,16 +22,6 @@ import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookup
 export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 //#region Types
-
-/**
- * WOF hierarchy rank of a locality.
- */
-const WOF_RANK_LOCALITY = 5
-
-/**
- * WOF hierarchy rank of a region, one step up from a locality.
- */
-const WOF_RANK_REGION = 4
 
 export interface ReleaseInfo {
 	version: string
@@ -116,7 +106,7 @@ export interface ParsedNode {
 }
 
 export interface TreeNode {
-	tag?: string
+	tag: string
 	value?: unknown
 	confidence?: number
 	start?: number
@@ -192,6 +182,11 @@ export function pairCountryForInput(input: string): string | undefined {
 
 //#region US state abbreviation expansion
 
+// TODO: WE have this elsewhere
+
+/**
+ * @deprecated
+ */
 const US_STATE_ABBREV: Record<string, string> = {
 	AL: "Alabama",
 	AK: "Alaska",
@@ -247,12 +242,19 @@ const US_STATE_ABBREV: Record<string, string> = {
 	PR: "Puerto Rico",
 }
 
+// TODO: WE have this elsewhere
+/**
+ * @deprecated
+ */
 export const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
 
+// TODO: WE have this elsewhere
 /**
  * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French département) before
  * "Illinois", so its France bbox filters out the actual US city — expanding to the full name resolves the right region.
  * Full names pass through unchanged.
+ *
+ * @deprecated
  */
 export function expandUSRegion(text: string): string {
 	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
@@ -263,13 +265,15 @@ export function expandUSRegion(text: string): string {
 //#region Tree flattening
 
 /**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
+ * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order. TODO: We have
+ * this elsewhere.
+ *
+ * @todo Move this out of docs into somewhere re-usable
  */
-export function flattenTree(
-	tree: unknown
-): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
-	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
+export function flattenTree(tree?: AddressTree | null): TreeNode[] {
+	const out: TreeNode[] = []
+
+	const roots = tree?.roots ?? []
 	const stack = [...(roots as TreeNode[])]
 
 	while (stack.length) {
@@ -305,7 +309,7 @@ export interface ClassifyStageResult {
 	/**
 	 * The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`).
 	 */
-	tree: unknown
+	tree: AddressTree
 	/**
 	 * Source-order flattened nodes.
 	 */
@@ -506,21 +510,6 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 //#endregion
 
 //#region WOF resolution
-
-/**
- * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
- */
-interface ResolvedTreeNode {
-	source?: string
-	sourceID?: string
-	value?: unknown
-	lat?: number
-	lon?: number
-	placeID?: string
-	metadata?: Record<string, unknown>
-	alternatives?: unknown[]
-	children?: ResolvedTreeNode[]
-}
 
 /**
  * Admin resolution for the demo (#861): run the SHARED `@mailwoman/resolver` `resolveTree` — the greedy walk + admin

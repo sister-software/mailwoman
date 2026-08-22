@@ -29,6 +29,13 @@ export const APIErrorSchema = z
  * handler's return type against that specific route's declared per-status `responses` map. A flat-typed `status` param
  * would widen every branch to "any content-carrying status", which no single declared response branch matches.
  */
-export function apiError<S extends ContentfulStatusCode>(c: Context, status: S, error: string, detail?: string) {
+export function errorResponse<S extends ContentfulStatusCode>(c: Context, status: S, error: string, detail?: string) {
 	return c.json(detail === undefined ? { error } : { error, detail }, status)
+}
+
+const GEOCODER_UNAVAILABLE_DETAIL =
+	"install @mailwoman/neural + @mailwoman/resolver-wof-sqlite and provide gazetteer data (MAILWOMAN_WOF_DB / MAILWOMAN_CANDIDATE_DB)"
+
+export function geocoderUnavailableError(c: Context) {
+	return errorResponse(c, 503, "geocoder unavailable", GEOCODER_UNAVAILABLE_DETAIL)
 }

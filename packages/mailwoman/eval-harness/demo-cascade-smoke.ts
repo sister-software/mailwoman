@@ -49,8 +49,9 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
+import { join } from "node:path"
 
+import type { AddressTree } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runPipeline } from "@mailwoman/core/pipeline"
@@ -73,12 +74,14 @@ import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
  * it by import would mean a `mailwoman` → `docs` project reference, and `docs` already depends on `mailwoman` — a
  * cycle. Twenty lines of pure tree walk with no behavior to drift is the cheaper of the two evils; if a third consumer
  * appears, promote it to a shared package instead of copying it again.
+ *
+ * TODO: NOT TRUE DE-DUPE THIS NOW.
  */
 function flattenTree(
-	tree: unknown
+	tree?: AddressTree | null
 ): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
 	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
-	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
+	const roots = tree?.roots ?? []
 
 	interface TreeNode {
 		tag: string
@@ -222,11 +225,11 @@ export async function demoCascadeSmoke(
 	// runs; in a clean install without the package the leg fails HERE, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = options.stageDir || tempRootPath("v440-stage", "en-us", "v4.4.0")
-	const DB = options.db || ($public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))
-	const MODEL = options.model || path.join(STAGE, "model.onnx")
-	const TOK = options.tokenizer || path.join(STAGE, "tokenizer.model")
-	const CARD = options.card || path.join(STAGE, "model-card.json")
-	const FST = options.fst || path.join(STAGE, "fst-en-US.bin")
+	const DB = options.db || ($public.MAILWOMAN_WOF_HOT_DB ?? join(STAGE, "wof-hot.db"))
+	const MODEL = options.model || join(STAGE, "model.onnx")
+	const TOK = options.tokenizer || join(STAGE, "tokenizer.model")
+	const CARD = options.card || join(STAGE, "model-card.json")
+	const FST = options.fst || join(STAGE, "fst-en-US.bin")
 	const GAZ = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const FILE = options.file || "data/eval/external/demo-cascade-smoke.jsonl"
 	const JSON_OUT = options.json || ""
@@ -270,7 +273,7 @@ export async function demoCascadeSmoke(
 	const card = parseJSONStrict<{ labels?: readonly string[] }>(readFileSync(CARD, "utf8"))
 
 	const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
-		.map((f) => path.join(STAGE, f))
+		.map((f) => join(STAGE, f))
 		.filter((p) => existsSync(p))
 
 	if (!postcodeBinaries.length) {
@@ -322,7 +325,7 @@ export async function demoCascadeSmoke(
 		// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
 		// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
 		// extraction above stays for the explain output + the anchor-centroid fallback below.
-		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree as { roots: unknown[] }, row.input)
+		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree, row.input)
 
 		// The demo's anchor-centroid fallback for postcode-only dead ends (WOF placeholder zeros / the
 		// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.

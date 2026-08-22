@@ -382,7 +382,13 @@ export function useDemoMapRuntime({
 			}
 
 			const asView = (nds: typeof nodes): ParsedComponent[] =>
-				nds.map((n) => ({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end }))
+				nds.map((n) => ({
+					tag: n.tag || "unknown",
+					value: n.value,
+					confidence: n.confidence,
+					start: n.start,
+					end: n.end,
+				}))
 
 			const wofLookup = assets?.lookup ?? null
 
@@ -431,7 +437,7 @@ export function useDemoMapRuntime({
 			}
 
 			const tBeforeResolve = performance.now()
-			const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, input, resolveBias)
+			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
 			const tResolve = performance.now()
 
 			// Anchor-centroid fallback (postcode-only dead ends): synthesize an approximate hit from postcode-*.bin.
