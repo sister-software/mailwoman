@@ -123,11 +123,11 @@ export {
 	haversineKm,
 	pointInPolygonRings,
 	pointInRing,
-	type Bbox,
 	type GeojsonGeometry,
 	type GeojsonMultiPolygon,
 	type GeojsonPolygon,
 	type GeojsonPosition,
+	type LatLonBounds,
 } from "./geo.ts"
 
 export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "./ancestry.ts"

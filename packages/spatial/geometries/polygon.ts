@@ -310,3 +310,78 @@ export function fetchOSMElementViaOverpassAPI(input: PolygonLiteral): Promise<OS
 			throw ResourceError.wrap(error, "osm", "overpass-api", "fetch")
 		})
 }
+
+//#region Ring-list geometry — the parsed-GeoJSON shape
+
+/**
+ * A GeoJSON position — `[lon, lat]`, possibly carrying extra dimensions this module ignores.
+ *
+ * Deliberately looser than {@linkcode Coordinates2D}: a gazetteer geometry arrives from `JSON.parse`, where nothing has
+ * checked the arity, and a tuple type there would be a claim about data rather than a description of it.
+ */
+export type GeojsonPosition = [number, number, ...number[]]
+
+/**
+ * A GeoJSON `Polygon` as a RING LIST — `[outerRing, hole1, hole2, …]`.
+ *
+ * This coexists with {@linkcode PolygonLiteral} on purpose, and the difference is load-bearing. `PolygonLiteral`
+ * defaults to {@linkcode SolidPolygonPath}, a one-element tuple that cannot express a hole; a real administrative
+ * boundary routinely has them (a country with a lake, a locality with an enclave). Use this type for geometry read off
+ * a gazetteer, and `PolygonLiteral` where the solid/nested distinction is one you are asserting rather than
+ * discovering.
+ */
+export interface GeojsonPolygon {
+	type: "Polygon"
+	coordinates: GeojsonPosition[][]
+}
+
+/**
+ * A GeoJSON `MultiPolygon` — one ring list per polygon.
+ */
+export interface GeojsonMultiPolygon {
+	type: "MultiPolygon"
+	coordinates: GeojsonPosition[][][]
+}
+
+/**
+ * Either areal geometry, or an open fallback for the types containment cannot answer (Point, LineString, …).
+ */
+export type GeojsonGeometry = GeojsonPolygon | GeojsonMultiPolygon | { type: string; coordinates?: unknown }
+
+/**
+ * Even-odd containment over a polygon's ring list (`[outer, hole1, …]`).
+ *
+ * A named alias for {@linkcode pointInPolygon}: the "rings" spelling is what makes the ring-list argument obvious at a
+ * call site that has just pulled `coordinates` off a parsed geometry.
+ */
+export function pointInPolygonRings(lon: number, lat: number, rings: readonly GeojsonPosition[][]): boolean {
+	return pointInPolygon(lon, lat, rings)
+}
+
+/**
+ * Does an areal GeoJSON geometry contain the point?
+ *
+ * The three-valued return is the point of the function. `null` means the geometry is NOT AREAL — a Point or a
+ * LineString cannot contain anything — and a caller must read that as "no polygon on record", the same as a missing
+ * geometry, never as a rejection. Collapsing it to `false` is how a place with a point-only record gets excluded from a
+ * containment pass instead of falling through to the approximate path.
+ */
+export function geometryContains(
+	geometry: GeojsonGeometry | null | undefined,
+	lon: number,
+	lat: number
+): boolean | null {
+	if (!geometry) return null
+
+	if (geometry.type === "Polygon") {
+		return pointInPolygonRings(lon, lat, (geometry as GeojsonPolygon).coordinates)
+	}
+
+	if (geometry.type === "MultiPolygon") {
+		return (geometry as GeojsonMultiPolygon).coordinates.some((rings) => pointInPolygonRings(lon, lat, rings))
+	}
+
+	return null
+}
+
+//#endregion

@@ -56,8 +56,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/core/utils"
-import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
-import { haversineKm } from "@mailwoman/spatial"
+import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
 import {

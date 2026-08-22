@@ -26,9 +26,9 @@
  *   --radius-km 10 --max-candidates 4
  *
  *   PORT NOTE (from scripts/build-postcode-locality.py): faithful TypeScript port. Point-in-polygon
- *   REUSES the canonical even-odd ray cast `geometryContains` from
- *   `@mailwoman/resolver-wof-sqlite/geo` (byte-identical to the Python `in_geom`/`ray_in_ring`; the
- *   geo.ts header names this script as the in-sync sibling). Haversine is ported inline (asin form)
+ *   REUSES the canonical even-odd ray cast `geometryContains` from `@mailwoman/spatial`
+ *   (byte-identical to the Python `in_geom`/`ray_in_ring`; `scripts/eval/pip-containment.py` is the
+ *   one copy no import can reach and must be matched by hand). Haversine is ported inline (asin form)
  *   to match the Python exactly. The output is written DIRECTLY to `--output` — NOT via a
  *   temp-then-move — because this builder is deliberately ACCUMULATIVE: `CREATE TABLE IF NOT
  *   EXISTS` + `DELETE FROM … WHERE country=?` lets one shared DB be filled DE, FR, … in successive
@@ -42,8 +42,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { assertDatabaseIntegrity, pyRound, sealDatabase } from "@mailwoman/core/utils"
-import { geometryContains, type GeojsonGeometry } from "@mailwoman/resolver-wof-sqlite/geo"
-import { haversineKm } from "@mailwoman/spatial"
+import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 
 import {
 	createPostcodeLocalityIndex,

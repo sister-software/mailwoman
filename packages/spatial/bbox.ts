@@ -6,9 +6,20 @@
  *   GeoJSON Bounding Boxes
  */
 
+import { toRad } from "./coordinate-formats.ts"
 import type { PolygonLiteral, SolidPolygonPath } from "./geometries/polygon.ts"
 import { clampLatitude, wrapLongitude } from "./position.ts"
 import { CoordinateProjection } from "./projection.ts"
+
+/**
+ * Kilometres per degree of latitude, which is very nearly constant on a sphere.
+ */
+const KM_PER_DEGREE_LATITUDE = 111
+
+/**
+ * Floor for cos(latitude) so a polar bbox stays finite. See {@linkcode bboxAround}.
+ */
+const MIN_COS_LATITUDE = 1e-6
 
 /**
  * Arity of a 2D bounding box: `[west, south, east, north]`.
@@ -452,3 +463,43 @@ export class GeoBoundingBox {
 
 	//#endregion
 }
+
+//#region Equirectangular bbox around a point
+
+/**
+ * A flat latitude/longitude range, as a query filter rather than a model.
+ *
+ * Distinct from {@linkcode GeoBoundingBox} on purpose: that is a class carrying a projection and private state, which an
+ * SQL row cannot be. This is the plain shape a spatial-index query is built from — four numbers, no behaviour.
+ */
+export interface LatLonBounds {
+	minLat: number
+	maxLat: number
+	minLon: number
+	maxLon: number
+}
+
+/**
+ * Approximate bounds `radiusKM` in each direction around a point.
+ *
+ * The spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally, 1° longitude ≈ 111 km × cos(lat).
+ * It is a FILTER, not an answer — it over-selects near the poles and along a long east-west span, and a caller is
+ * expected to re-check survivors with an exact haversine distance. That is what makes the approximation safe: it may
+ * admit a point it should not, and never excludes one it should keep.
+ */
+export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBounds {
+	const latDelta = radiusKM / KM_PER_DEGREE_LATITUDE
+	// cos(±90°) is 0, which would divide the longitude delta to Infinity and select the whole globe. Clamp so a polar
+	// query stays a wide band rather than becoming unbounded.
+	const cosLat = Math.max(Math.cos(toRad(lat)), MIN_COS_LATITUDE)
+	const lonDelta = radiusKM / (KM_PER_DEGREE_LATITUDE * cosLat)
+
+	return {
+		minLat: lat - latDelta,
+		maxLat: lat + latDelta,
+		minLon: lon - lonDelta,
+		maxLon: lon + lonDelta,
+	}
+}
+
+//#endregion

@@ -26,8 +26,19 @@ const MGRS_LAT_MIN = -80
  */
 const MGRS_LAT_MAX = 84
 
-const toRad = (d: number): number => (d * Math.PI) / 180
-const toDeg = (r: number): number => (r * 180) / Math.PI
+/**
+ * WGS-84 degrees → radians.
+ */
+export function toRad(deg: number): number {
+	return (deg * Math.PI) / 180
+}
+
+/**
+ * WGS-84 radians → degrees.
+ */
+export function toDeg(rad: number): number {
+	return (rad * 180) / Math.PI
+}
 
 /**
  * Render a single signed degree as `D° M′ S″ H` with the given hemisphere letters `[positive, negative]`.
