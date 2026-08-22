@@ -82,10 +82,29 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * - **GB unit** (`N7 0BT`) — ~15 addresses per code, 1,751,733 shipped from OS Code-Point Open. Measured 2026-08-10
  *   against the panel-v2 GB rooftop truth: unit centroid within 1 km on 15/15 rows, median 38 m, max 100 m, while the
  *   locality centroid the ladder returned instead was 5.1–14.6 km out.
+ * - **CA URBAN LDU** (`M1J 1A8`) — 843,739 six-character codes. Measured on 879 graded rows of the CA OSM-rooftop panel,
+ *   through the production candidate backend, ladder arm against ladder arm:
  *
- * **CA is deliberately absent.** The shipped gazetteer carries 843,739 six-character CA codes (full LDU, block-face
- * grade), so the shape would fire — but nothing has measured a CA LDU centroid against a rooftop truth, and an
- * unmeasured granularity claim does not earn a default-on tier promotion. Add either with a measurement, not a regex.
+ *   | 732 URBAN rows | p50 | p75 | p90 | ≤1 km | | -------------- | ---: | ---: | ---: | ---: | | locality-first | 2.51
+ *   km | 5.42 km | 9.53 km | 26.4% | | postcode-first | **78 m** | **162 m** | **373 m** | **94.7%** |
+ *
+ *   Closer on 90.4% of them. That is GB's tier on a sample fifty times larger than GB's.
+ *
+ * **CA RURAL is excluded, and the code says which.** Canada Post puts a `0` in the SECOND position of a rural forward
+ * sortation area, so `T0H 1M0` is rural and `M1J 1A8` is not — no lookup required. A rural LDU serves a delivery route
+ * rather than a block face, and it measures like one. On the same panel, the 114 rural rows:
+ *
+ * | 114 RURAL rows | p50       | p75         | p90         | ≤1 km     |
+ * | -------------- | --------: | ----------: | ----------: | --------: |
+ * | locality-first | **929 m** | **2.02 km** | **5.73 km** | **53.5%** |
+ * | postcode-first | 2.08 km   | 4.79 km     | 8.11 km     | 25.4%     |
+ *
+ * Postcode-first is closer on only 26.3% of them, so the pattern below admits `[1-9]` in that position and nothing
+ * else. `509 Main Street South-West Falher AB T0H 1M0` is the worked case: 0.29 km from the locality centroid and 43.18
+ * km from its own postal code.
+ *
+ * The pooled CA number hides that entirely — 0.10 km p50 across both populations reads as a uniform win and is not one.
+ * A tier claim that averages two granularities is the thing this table exists to prevent.
  *
  * Lives in codex (per-address-system postal reference) so the Node result assembly (`mailwoman/geocode-core`) and the
  * demo's pin ranking consume ONE tier definition — the 2026-08-11 staged-repoint e2e measured the two disagreeing.
@@ -97,6 +116,9 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	// `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN anchors, restated here so this module stays
 	// dependency-free within the package (the slices import THIS, never the reverse).
 	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
+	// CA urban LDU — `M1J 1A8`. The `[1-9]` in the second position is the whole tier claim: a `0` there marks a RURAL
+	// forward sortation area, which measures 2.08 km p50 against the locality's 929 m and does not belong here.
+	/^[A-Z][1-9][A-Z]\s?\d[A-Z]\d$/i,
 ]
 
 /**
