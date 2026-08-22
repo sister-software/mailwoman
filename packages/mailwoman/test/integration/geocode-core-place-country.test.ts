@@ -165,7 +165,21 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 		return { resolver, seen }
 	}
 
-	test("a DISAGREEING dominant bearer keeps the posterior soft — Montréal under French text never hardens to FR", async () => {
+	// CONTRACT CHANGE, #1751 narrowing #1738. This test asserted `anchorPosterior` SURVIVED a disagreeing
+	// bearer — "the placer's posterior stays the SOFT anchor the worldwide race weighs". At
+	// `COARSE_PLACER_ANCHOR_WEIGHT = 1` that anchor is not soft: the within-tier key is
+	// `(prominence ?? score) + w · posterior[country]`, so on `Queen Street, Bristol` a 0.9261 posterior
+	// gap overturned GB Bristol's 0.884776 prominence lead and the answer moved 5,274 km to Connecticut.
+	// A prior that decides is not a prior.
+	//
+	// So a disagreeing bearer now withholds BOTH. The outcome #1738 protects is unchanged — measured
+	// end to end, `1001 Boulevard Saint-Laurent, Montréal` still answers 45.5079245, -73.5593271, CA —
+	// and the board is identical on both arms (gauntlet 382/383, 449/591 resolved, same tier tally).
+	//
+	// The alternative that would preserve #1738's wording is to keep the posterior at a REDUCED weight
+	// it cannot decide with. That needs a measured weight rather than a chosen one (#1740's complaint
+	// about `placeCountryThreshold`), and no population exists to measure it on yet.
+	test("a DISAGREEING dominant bearer withholds the placer entirely — Montréal under French text", async () => {
 		const { resolver, seen } = guardResolver({ country: "CA", exactMatch: true })
 
 		await geocodeAddress("1001 Rue X, Montréal", {
@@ -175,6 +189,20 @@ describe("geocodeAddress — the dominant-bearer guard on hardCountry (#1738)", 
 		})
 
 		expect(seen[0]?.hardCountry).toBeUndefined()
+		expect(seen[0]?.anchorPosterior).toBeUndefined()
+	})
+
+	// The other half of the contract, unchanged and worth pinning: an AGREEING bearer still gets the
+	// soft posterior. Withholding on agreement would retire the placer, not narrow it.
+	test("an AGREEING dominant bearer still gets the soft posterior", async () => {
+		const { resolver, seen } = guardResolver({ country: "FR", exactMatch: true })
+
+		await geocodeAddress("1001 Rue X, Paris", {
+			classifier: fakeClassifier(treeWithLocality("Paris")),
+			resolver,
+			placeCountry: placerFR,
+		})
+
 		expect(seen[0]?.anchorPosterior).toMatchObject({ FR: 0.97 })
 	})
 
