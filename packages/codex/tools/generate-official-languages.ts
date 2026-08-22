@@ -23,6 +23,7 @@ import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 
 /**
@@ -59,6 +60,12 @@ export interface GenerateOfficialLanguagesSummary {
 	outPath: string
 }
 
+/**
+ * One call per CLDR supplemental file, against a CDN that throttles. Retry only — the caller makes a handful of
+ * requests, so a rate budget would be ceremony over a burst that never happens.
+ */
+const cldrClient = new APIClient({ displayName: "cldr", retry: true })
+
 interface LanguagePopulation {
 	_officialStatus?: string
 }
@@ -69,11 +76,8 @@ async function loadCLDR(file: string, cldrDir: string | undefined, cldrVersion: 
 	}
 
 	const url = `https://cdn.jsdelivr.net/npm/cldr-core@${cldrVersion}/supplemental/${file}.json`
-	const res = await fetch(url)
 
-	if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`)
-
-	return res.json()
+	return cldrClient.fetch<unknown>({ url }).then(pluckResponseData)
 }
 
 /**

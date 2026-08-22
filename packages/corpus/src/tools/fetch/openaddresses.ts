@@ -62,6 +62,7 @@ import { pipeline } from "node:stream/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 import { promisify } from "node:util"
 
+import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { sha256File } from "@mailwoman/core/utils"
 
@@ -263,18 +264,28 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
-		const res = await fetch(`${OA_BASE}/api/collections`, {
-			headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" },
-			signal: AbortSignal.timeout(30_000),
+		// The collections API only. The COLLECTION ARCHIVES stay on raw `fetch` — they stream multi-gigabyte
+		// bodies straight to disk, where response caching is nonsense and axios would buffer them in memory.
+		const res = await new APIClient({
+			displayName: "openaddresses-api",
+			retry: true,
+			axios: { headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" } },
 		})
+			// `validateStatus` keeps a non-2xx as a RESPONSE rather than a throw: the caller reports the status and
+			// returns `fail(country)`, a graceful path this must not turn into an exception.
+			.fetch<OaCollection[]>({
+				url: `${OA_BASE}/api/collections`,
+				timeout: 30_000,
+				validateStatus: () => true,
+			})
 
-		if (!res.ok) {
+		if (!isSuccessStatus(res.status)) {
 			report?.(`ERROR: GET /api/collections returned HTTP ${res.status}.`)
 
 			return fail(country)
 		}
 
-		const collections = (await res.json()) as OaCollection[]
+		const collections = res.data
 		const match = collections.find((item) => item.name === country)
 
 		if (match?.id === undefined) {

@@ -50,6 +50,7 @@ import { mkdir } from "node:fs/promises"
 import { dirname } from "node:path"
 
 import { ParquetReader } from "@dsnp/parquetjs"
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -345,24 +346,28 @@ function makeDeepseekProvider(model: string): LlmProvider {
 		name: "deepseek",
 		model,
 		async generateVariants(seed, n) {
-			const res = await fetch("https://api.deepseek.com/chat/completions", {
-				method: "POST",
-				headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-				body: JSON.stringify({
-					model,
-					messages: [
-						{ role: "system", content: SYSTEM_PROMPT },
-						{ role: "user", content: buildUserPrompt(seed, n) },
-					],
-					response_format: { type: "json_object" },
-					max_tokens: 800,
-					temperature: 0.7,
-				}),
-				signal: AbortSignal.timeout(60_000),
+			const data = await new APIClient({
+				displayName: "deepseek",
+				retry: true,
+				axios: { headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" } },
 			})
+				.fetch<{ choices?: Array<{ message: { content: string } }> }>({
+					url: "https://api.deepseek.com/chat/completions",
+					method: "post",
+					timeout: 60_000,
+					data: {
+						model,
+						messages: [
+							{ role: "system", content: SYSTEM_PROMPT },
+							{ role: "user", content: buildUserPrompt(seed, n) },
+						],
+						response_format: { type: "json_object" },
+						max_tokens: 800,
+						temperature: 0.7,
+					},
+				})
+				.then(pluckResponseData)
 
-			if (!res.ok) throw new Error(`DeepSeek HTTP ${res.status}: ${await res.text()}`)
-			const data = (await res.json()) as { choices?: Array<{ message: { content: string } }> }
 			const content = data.choices?.[0]?.message.content ?? "{}"
 
 			return parseCandidates(content)
@@ -379,24 +384,30 @@ function makeAnthropicProvider(model: string): LlmProvider {
 		name: "anthropic",
 		model,
 		async generateVariants(seed, n) {
-			const res = await fetch("https://api.anthropic.com/v1/messages", {
-				method: "POST",
-				headers: {
-					"x-api-key": apiKey,
-					"anthropic-version": "2023-06-01",
-					"Content-Type": "application/json",
+			const data = await new APIClient({
+				displayName: "anthropic",
+				retry: true,
+				axios: {
+					headers: {
+						"x-api-key": apiKey,
+						"anthropic-version": "2023-06-01",
+						"Content-Type": "application/json",
+					},
 				},
-				body: JSON.stringify({
-					model,
-					max_tokens: 800,
-					system: SYSTEM_PROMPT,
-					messages: [{ role: "user", content: buildUserPrompt(seed, n) }],
-				}),
-				signal: AbortSignal.timeout(60_000),
 			})
+				.fetch<{ content?: Array<{ type: string; text: string }> }>({
+					url: "https://api.anthropic.com/v1/messages",
+					method: "post",
+					timeout: 60_000,
+					data: {
+						model,
+						max_tokens: 800,
+						system: SYSTEM_PROMPT,
+						messages: [{ role: "user", content: buildUserPrompt(seed, n) }],
+					},
+				})
+				.then(pluckResponseData)
 
-			if (!res.ok) throw new Error(`Anthropic HTTP ${res.status}: ${await res.text()}`)
-			const data = (await res.json()) as { content?: Array<{ type: string; text: string }> }
 			const text = data.content?.find((c) => c.type === "text")?.text ?? "[]"
 
 			return parseCandidates(text)

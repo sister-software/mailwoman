@@ -17,6 +17,7 @@
 
 import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -76,12 +77,20 @@ function plausibleUs(lat: number, lon: number): boolean {
 	)
 }
 
+/**
+ * Retry is ON because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
+ * throttled page in the middle aborted the whole build. The tmp-then-rename tail means a partial run is discarded
+ * rather than published, so the cost of a transient failure was the entire download, not a corrupt artifact.
+ *
+ * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link PAGE} rows, so the loop already
+ * paces itself at whatever the API takes to assemble 10,000 records.
+ */
+const fdicClient = new APIClient({ displayName: "fdic", retry: true })
+
 async function fetchPage(offset: number): Promise<Loc[]> {
 	const url = `${API}?fields=${FIELDS}&limit=${PAGE}&offset=${offset}&format=json`
-	const res = await fetch(url)
 
-	if (!res.ok) throw new Error(`FDIC ${res.status} at offset ${offset}`)
-	const body = (await res.json()) as { data?: Array<{ data: Loc }> }
+	const body = await fdicClient.fetch<{ data?: Array<{ data: Loc }> }>({ url }).then(pluckResponseData)
 
 	return (body.data ?? []).map((d) => d.data)
 }

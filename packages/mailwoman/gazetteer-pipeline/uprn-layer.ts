@@ -322,6 +322,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 
 	phase("download", `${download.fileName} (${download.size.toLocaleString()} bytes)`)
 
+	// Raw `fetch`: an OS Open UPRN archive, streamed to disk below rather than held in memory.
 	const response = await fetch(download.url)
 
 	if (!response.ok || !response.body) {

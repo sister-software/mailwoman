@@ -197,6 +197,8 @@ async function probeRemote(
  * while still asking for, and receiving, the whole file.
  */
 async function downloadToDisk(url: string, destPath: string): Promise<number> {
+	// Raw `fetch` for the TRANSFER; the HEAD probes above go through `APIClient`. The body streams to disk, so
+	// there is nothing to pace and nothing worth caching.
 	const res = await fetch(url, { headers: { range: "bytes=0-" } })
 
 	if (!res.ok || !res.body) throw new Error(`download failed (HTTP ${res.status}) for ${url}`)

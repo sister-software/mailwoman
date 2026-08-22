@@ -17,6 +17,8 @@
 import { writeFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 
 /**
@@ -97,10 +99,10 @@ export async function generateCountryReference(
 	report?: (line: string) => void
 ): Promise<GenerateCountryReferenceSummary> {
 	const outPath = options.out ?? DEFAULT_OUT
-	const response = await fetch(SOURCE)
 
-	if (!response.ok) throw new Error(`fetch ${SOURCE} failed: ${response.status}`)
-	const countries = (await response.json()) as MledozeCountry[]
+	const countries = await new APIClient({ displayName: "mledoze-countries", retry: true })
+		.fetch<MledozeCountry[]>({ url: SOURCE })
+		.then(pluckResponseData)
 
 	const rows: Record<string, CountryReferenceEntry> = {}
 

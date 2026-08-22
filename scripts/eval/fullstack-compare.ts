@@ -258,6 +258,13 @@ function mapGeocodeEarth(props: Props | undefined): Rec {
 	return out
 }
 
+/**
+ * Raw `fetch`, and NOT `APIClient`, even though every host here rate-limits.
+ *
+ * This harness's product is what each provider answered, failures included — it records `{__error}` and moves on so one
+ * provider being down does not void the comparison. Retrying would change what is measured: a throttled provider would
+ * report a late success where the run should record that it throttled.
+ */
 async function fetchJSON(url: string, headers: Record<string, string> = {}): Promise<unknown> {
 	try {
 		const res = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) })

@@ -37,6 +37,7 @@ import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, resolve } from "node:path"
 
+import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
@@ -126,11 +127,18 @@ function run(cmd: string, args: string[]) {
 	}
 }
 
+/**
+ * Hugging Face throttles, and this runs a HEAD per published artifact during a release verification sweep. Retry keeps
+ * a throttled probe from reading as a MISSING artifact — the one answer that would have a release believe it failed to
+ * upload something it uploaded.
+ */
+const hfClient = new APIClient({ displayName: "publish-hf", retry: true })
+
 async function checkRemoteFileExists(url: string) {
 	try {
-		const res = await fetch(url, { method: "HEAD", redirect: "follow" })
+		await hfClient.fetch({ url, method: "head" })
 
-		return res.ok
+		return true
 	} catch {
 		return false
 	}
@@ -425,13 +433,13 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	// --- Phase 4: update releases.json ---
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
-	const res = await fetch(releasesURL, { redirect: "follow" })
+	const res = await hfClient.fetch<ReleaseManifest>({ url: releasesURL, validateStatus: () => true })
 
-	if (!res.ok) {
+	if (!isSuccessStatus(res.status)) {
 		fail(`failed to fetch ${releasesURL}`)
 	}
 
-	const releases = (await res.json()) as ReleaseManifest
+	const releases = res.data
 
 	const newEntry: Record<string, unknown> = {
 		version: args.version,

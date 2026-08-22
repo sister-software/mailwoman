@@ -28,6 +28,7 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -205,13 +206,17 @@ export async function fetchTigerFull(
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
-	const listingRes = await fetch(`${TIGER_BASE_URL}/`, {
-		headers: { "Accept-Encoding": "gzip, br" },
-		signal: AbortSignal.timeout(60_000),
+	// `responseType: "text"` — an Apache directory index, scraped below. The per-county ARCHIVE downloads
+	// stay on raw `fetch` (they stream to disk; see `downloadOne`).
+	const listingRes = await new APIClient({
+		displayName: "tiger-listing",
+		retry: true,
+		axios: { headers: { "Accept-Encoding": "gzip, br" } },
 	})
+		.fetch<string>({ url: `${TIGER_BASE_URL}/`, responseType: "text", timeout: 60_000 })
+		.then(pluckResponseData)
 
-	if (!listingRes.ok) throw new Error(`Failed to fetch TIGER directory listing: HTTP ${listingRes.status}`)
-	const html = await listingRes.text()
+	const html = listingRes
 	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g))].toSorted()
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
