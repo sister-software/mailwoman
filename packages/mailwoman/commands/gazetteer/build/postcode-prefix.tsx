@@ -60,6 +60,11 @@ interface ShardRecipe {
 	scope: string
 	level: PostcodePrefixLevel
 	/**
+	 * WOF polygon shard under `<data-root>/wof/`, for a recipe whose ancestry is point-in-polygon rather than a
+	 * documented area table. Absent means the recipe does not use geometry.
+	 */
+	polygonFile?: string
+	/**
 	 * Prefixes probed after write. Per SHARD, never shared: probing Code-Point prefixes against a freshly built NI index
 	 * prints reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build
 	 * taught).
@@ -82,13 +87,24 @@ const SHARD_RECIPES = {
 		level: "outward",
 		probePrefixes: ["BT1", "BT9", "BT48", "BT94"],
 	},
+	"us-wof": {
+		sourceFile: "postalcode-us.db",
+		country: "us",
+		scope: "us",
+		level: "3",
+		polygonFile: "wof-polygons-us-full.db",
+		// One prefix per behaviour the arm can produce, so a probe line that goes quiet says which rule broke. `605` and
+		// `946` assert a state; `205` is the DC/MD/VA straddle that asserts the country alone; `995` is Alaska, whose
+		// honest radiusP95Km runs to hundreds of km and is the reason a coordinate may never ship without one.
+		probePrefixes: ["605", "946", "205", "995"],
+	},
 } as const satisfies Record<string, ShardRecipe>
 
 type ShardName = keyof typeof SHARD_RECIPES
 
 export const description = "Build a PFX1 postcode-prefix index from a postcode shard (B3-1)"
 
-const shardNames = ["gb-codepoint", "gb-ni-osm"] as const
+const shardNames = ["gb-codepoint", "gb-ni-osm", "us-wof"] as const
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -100,6 +116,7 @@ export const spec = {
 	options: {
 		source: { type: "string", description: "Shard path" },
 		admin: { type: "string", description: "WOF admin DB" },
+		polygons: { type: "string", description: "WOF polygon DB" },
 		out: { type: "string", description: "Output path" },
 		delta: { type: "number", description: "Soft-prior magnitude" },
 	},
@@ -108,6 +125,7 @@ export const spec = {
 interface Options {
 	source?: string
 	admin?: string
+	polygons?: string
 	out?: string
 	delta?: number
 }
@@ -126,9 +144,14 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 		const sourcePath = options.source ?? String(dataRootPath("wof", recipe.sourceFile))
 		const adminPath = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
+		const polygonPath = recipe.polygonFile
+			? (options.polygons ?? String(dataRootPath("wof", recipe.polygonFile)))
+			: undefined
+
 		for (const [label, path] of [
 			["shard", sourcePath],
 			["admin DB", adminPath],
+			...(polygonPath ? ([["polygon DB", polygonPath]] as const) : []),
 		] as const) {
 			if (!existsSync(path)) throw new Error(`postcode-prefix: ${label} not found: ${path}`)
 		}
@@ -138,6 +161,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 			adminPath,
 			country: recipe.country,
 			level: recipe.level,
+			...(polygonPath ? { polygonPath } : {}),
 		})
 
 		const buildDate = new Date().toISOString()
@@ -162,7 +186,11 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 			schemaVersion: 1,
 			levels: [recipe.level],
 			source,
-			sourceMD5s: [await md5File(sourcePath), await md5File(adminPath)],
+			sourceMD5s: [
+				await md5File(sourcePath),
+				await md5File(adminPath),
+				...(polygonPath ? [await md5File(polygonPath)] : []),
+			],
 			buildDate,
 			tier,
 			attribution,
@@ -202,10 +230,8 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 			throw new Error(`postcode-prefix: round-trip node count ${resolver.size} ≠ built ${built.nodes.length}`)
 		}
 
-		if (readUnits !== built.unitRows - built.skippedShort) {
-			throw new Error(
-				`postcode-prefix: round-trip unitCount sum ${readUnits} ≠ ${built.unitRows - built.skippedShort} indexed units`
-			)
+		if (readUnits !== built.indexedUnits) {
+			throw new Error(`postcode-prefix: round-trip unitCount sum ${readUnits} ≠ ${built.indexedUnits} indexed units`)
 		}
 
 		const probeLines = recipe.probePrefixes.map((prefix) => {
@@ -230,13 +256,21 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 				` ${options.delta !== undefined ? `delta=${options.delta}` : "(no delta — un-wired index)"}`,
 			`source (numbering register): ${source}`,
 			`coordinate tier: ${built.coordinateTier} — ${built.coordinateTierReason}`,
-			`ancestry withheld (border-straddling postcode areas): ${built.borderStraddlingPrefixes.length} prefixes` +
+			`ancestry withheld (the prefix spans more than one of them): ${built.borderStraddlingPrefixes.length} prefixes` +
 				(built.borderStraddlingPrefixes.length
 					? ` (${built.borderStraddlingPrefixes.slice(0, EXAMPLES_PER_LINE).join(", ")}${built.borderStraddlingPrefixes.length > EXAMPLES_PER_LINE ? ", …" : ""})`
 					: ""),
 			"round-trip (read back from the written bytes):",
 			`  nodes ${resolver.size.toLocaleString()}`,
 			`  unitCount sum ${readUnits.toLocaleString()} (shard rows ${built.unitRows.toLocaleString()}, ${built.skippedShort} too short to cleave)`,
+			...(Object.keys(built.excludedUnits).length
+				? [
+						`  units excluded from the coordinate: ` +
+							Object.entries(built.excludedUnits)
+								.map(([reason, count]) => `${reason} ${count.toLocaleString()}`)
+								.join(", "),
+					]
+				: []),
 			`  nodes with a coordinate ${withCoordinate.toLocaleString()} / ${resolver.size.toLocaleString()}`,
 			`  median per-prefix radiusP95Km ${readMedianRadius === null ? "— (ancestry-only)" : `${readMedianRadius.toFixed(4)} km`}`,
 			...probeLines,
