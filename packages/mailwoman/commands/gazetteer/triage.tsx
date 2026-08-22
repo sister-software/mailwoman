@@ -57,7 +57,7 @@ const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 		const countries = options.countries
 			?.split(",")
 			.map((cc) => cc.trim())
-			.filter(Boolean)
+			.filter((cc) => cc.length > 0)
 
 		const stamp = new Date().toISOString().slice(0, 10)
 		const outPath = options.out ?? String(dataRootPath("wof", "triage", `currency-${stamp}.jsonl`))

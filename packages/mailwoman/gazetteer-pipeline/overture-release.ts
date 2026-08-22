@@ -42,7 +42,7 @@ export async function listOvertureReleases(client?: APIClient): Promise<string[]
 
 	return [...String(response.data).matchAll(/<Prefix>release\/([^<]+?)\/?<\/Prefix>/g)]
 		.map((match) => match[1]!)
-		.filter(Boolean)
+		.filter((release) => release.length > 0)
 		.toSorted()
 }
 

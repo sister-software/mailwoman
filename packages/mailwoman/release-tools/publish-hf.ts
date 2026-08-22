@@ -158,7 +158,7 @@ function stageBinaryList(spec: string | undefined, label: string): string[] {
 		? spec
 				.split(",")
 				.map((s: string) => s.trim())
-				.filter(Boolean)
+				.filter((path) => path.length > 0)
 		: []
 
 	for (const localPath of paths) {

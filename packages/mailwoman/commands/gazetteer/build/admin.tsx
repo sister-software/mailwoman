@@ -43,7 +43,7 @@ const csv = (raw: string | undefined): string[] | undefined =>
 		? raw
 				.split(",")
 				.map((s) => s.trim().toUpperCase())
-				.filter(Boolean)
+				.filter((entry) => entry.length > 0)
 		: undefined
 
 const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {

@@ -155,7 +155,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const states = (
 			options.states ? options.states.split(",").map((s) => s.trim().toUpperCase()) : STATES_BY_COVERAGE
-		).filter(Boolean)
+		).filter((code) => code.length > 0)
 
 		mkdirSync(outDir, { recursive: true })
 

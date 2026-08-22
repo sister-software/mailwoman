@@ -210,7 +210,9 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		label: "  place",
 		tag: place?.tag ?? winner?.tag,
 		value: place?.name || place?.value || winner?.name || ABSENT,
-		detail: [place?.placeID ?? winner?.placeID, result.countryCode].filter(Boolean).join(" "),
+		detail: [place?.placeID ?? winner?.placeID, result.countryCode]
+			.filter((part) => part != null && part.length > 0)
+			.join(" "),
 	})
 
 	if (result.entity) {
@@ -236,7 +238,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 					entry.placeID,
 					entry.lat != null && entry.lon != null ? `(${formatCoordinate(entry.lat, entry.lon)})` : null,
 				]
-					.filter(Boolean)
+					.filter((part) => part != null && part.length > 0)
 					.join(" "),
 			})
 		}
@@ -253,7 +255,9 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 				label: `  ${candidate.tag}`,
 				tag: candidate.tag,
 				value: candidate.name,
-				detail: [candidate.countryCode, formatCoordinate(candidate.lat, candidate.lon)].filter(Boolean).join(" "),
+				detail: [candidate.countryCode, formatCoordinate(candidate.lat, candidate.lon)]
+					.filter((part) => part != null && part.length > 0)
+					.join(" "),
 			})
 		}
 	}

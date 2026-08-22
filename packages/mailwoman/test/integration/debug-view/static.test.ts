@@ -54,7 +54,7 @@ if (!canRun) {
 				!hasWOFDB && `no WOF admin SQLite at ${wofPath} (set $MAILWOMAN_WOF_DB)`,
 				!hasTiles && `no fixture PMTiles archive at ${TILES_PATH}`,
 			]
-				.filter(Boolean)
+				.filter((reason) => reason !== false)
 				.join("; ")
 	)
 }

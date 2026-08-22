@@ -101,7 +101,7 @@ const wofPaths = wofShardPaths().filter(existsSync)
 if (!wofPaths.length)
 	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")
 
-const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths }) as never)
+const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths }))
 
 const classifiers = new Map<string, Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>>>()
 
@@ -131,9 +131,9 @@ for (const arm of arms) {
 		byLocale.set(
 			locale,
 			createRuntimePipeline({
-				classifier: classifiers.get(locale)! as never,
-				resolver: resolver as never,
-				fst: fst as never,
+				classifier: classifiers.get(locale)!,
+				resolver,
+				fst,
 			})
 		)
 	}
@@ -304,7 +304,7 @@ for (const c of board) {
 		const pipeline = pipelines.get(arm)!.get(c.locale)!
 
 		try {
-			const { tree } = await pipeline(c.input, { locale: c.locale } as never)
+			const { tree } = await pipeline(c.input, { locale: c.locale })
 			byArm[arm] = score(c, collectResolved(tree))
 		} catch (error) {
 			console.error(`[${arm}] ${c.id} threw: ${(error as Error).message}`)

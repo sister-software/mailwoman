@@ -152,7 +152,7 @@ describe("the FR fragment board fixture", () => {
 
 	it("never repeats a street surface across classes", () => {
 		// A surface appearing in two classes would correlate the cells and break the intervals.
-		const surfaces = fixtures.map((f) => f.surface).filter(Boolean)
+		const surfaces = fixtures.map((f) => f.surface).filter((surface) => surface != null && surface.length > 0)
 
 		expect(new Set(surfaces).size).toBe(surfaces.length)
 	})

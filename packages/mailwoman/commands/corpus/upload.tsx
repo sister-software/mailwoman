@@ -86,7 +86,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 		const versions = (options.corpusVersion ?? "")
 			.split(",")
 			.map((v) => v.trim())
-			.filter(Boolean)
+			.filter((version) => version.length > 0)
 
 		if (!versions.length && !options.tokenizer && !options.code) {
 			const available = existsSync(corpusRoot) ? readdirSync(corpusRoot).toSorted().slice(-6) : []

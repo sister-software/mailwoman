@@ -103,7 +103,7 @@ export async function buildParseRig(
 		reportError(`[backend] postal-city alias scorer enabled (#475): ${postalCityAliasDB}`)
 	}
 
-	const resolver = createWOFResolver(backend as never)
+	const resolver = createWOFResolver(backend)
 
 	const localityMatches = buildLocalityMatcher(wofPaths[0]!)
 

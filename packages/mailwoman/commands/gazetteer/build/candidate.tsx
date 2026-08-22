@@ -70,7 +70,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
-					.filter(Boolean)
+					.filter((cc) => cc.length > 0)
 			: DEFAULT_FOLD_COUNTRIES
 
 		let adminDB = adminIn

@@ -11,6 +11,17 @@ import { describe, expect, it } from "vitest"
 
 const fakeWorker = workspacePath("mailwoman", "test-fixtures", "fake-geocode-worker.js")
 
+/**
+ * What `fake-geocode-worker.js` writes into the `address` slot instead of a geocode: the config locale it was handed
+ * and the number of mapped address columns. Reading it back is how the wiring becomes observable without a model.
+ */
+interface WiringEcho {
+	tag: string
+	cols: number
+}
+
+const echoOf = (record: SourceRecord): WiringEcho => record.address as unknown as WiringEcho
+
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
 	for (let i = 0; i < n; i++) {
 		yield { id: String(i), raw: { addr: `addr ${i}` } } as SourceRecord
@@ -33,8 +44,8 @@ describe("geocodeStream (wiring, fake worker)", () => {
 
 		expect(out).toHaveLength(50)
 		// Every record geocoded; config (locale) + mapping (address col count) reached the worker.
-		expect(out.every((r) => (r.address as unknown as { tag: string }).tag === "en-US")).toBe(true)
-		expect((out[0]!.address as unknown as { cols: number }).cols).toBe(2)
+		expect(out.every((r) => echoOf(r).tag === "en-US")).toBe(true)
+		expect(echoOf(out[0]!).cols).toBe(2)
 
 		// Records preserved (set comparison — completion order).
 		expect(out.map((r) => r.id).toSorted((a, b) => Number(a) - Number(b))).toEqual(

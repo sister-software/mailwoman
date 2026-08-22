@@ -379,7 +379,7 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 				})
 
 			// Attestation is looked up only for names under review, and only where a dump exists.
-			const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter(Boolean))
+			const keys = new Set(dead.map((r) => fold(String(r["name"] ?? ""))).filter((key) => key.length > 0))
 			const dumpPath = opts.geonamesDir ? resolve(opts.geonamesDir, `${country}.txt`) : undefined
 			const attestors = dumpPath && existsSync(dumpPath) ? await loadAttestors(dumpPath, keys) : undefined
 

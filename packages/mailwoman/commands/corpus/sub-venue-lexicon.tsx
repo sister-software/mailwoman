@@ -56,7 +56,7 @@ function parseExtracts(extractSpec: string | undefined): Array<{ path: string; r
 	return extractSpec
 		.split(",")
 		.map((entry) => entry.trim())
-		.filter(Boolean)
+		.filter((entry) => entry.length > 0)
 		.map((entry) => {
 			const split = entry.indexOf("=")
 

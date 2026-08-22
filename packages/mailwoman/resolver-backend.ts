@@ -77,7 +77,7 @@ export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailw
 		return raw
 			.split(",")
 			.map((path) => path.trim())
-			.filter(Boolean)
+			.filter((path) => path.length > 0)
 	}
 
 	return [...wofShardPaths(dataRoot)]

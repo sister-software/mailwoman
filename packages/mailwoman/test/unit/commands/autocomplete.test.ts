@@ -248,7 +248,7 @@ describe("resolveFSTPath", () => {
 	})
 
 	it("falls back to the application data directory when no explicit path and no env var", () => {
-		vi.stubEnv("MAILWOMAN_FST_BIN", undefined as unknown as string)
+		vi.stubEnv("MAILWOMAN_FST_BIN", undefined)
 
 		try {
 			expect(resolveFSTPath()).toBe(dataRootPath("wof", "fst-per-locale", "fst-en-US.bin"))

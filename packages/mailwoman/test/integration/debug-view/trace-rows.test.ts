@@ -13,10 +13,28 @@ import { ABSENT, channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } f
 import type { GeocodeTrace } from "mailwoman/geocode-session"
 import { describe, expect, it } from "vitest"
 
+const TEXT = "3215 SE Clinton St"
+
+/**
+ * A whole query shape, carrying only the formats a case wants to state. Built rather than cast: the annotated return
+ * type is what checks that a `format` name is one the detector can actually emit.
+ */
+function queryShapeOf(knownFormats: GeocodeTrace["queryShape"]["knownFormats"] = []): GeocodeTrace["queryShape"] {
+	return {
+		characterClass: "alphanumeric",
+		tokenClasses: [],
+		segments: [],
+		knownFormats,
+		regionAbbreviations: [],
+		totalLength: TEXT.length,
+		whitespacePattern: "single",
+	}
+}
+
 function traceOf(overrides: Partial<GeocodeTrace["parse"]> = {}): GeocodeTrace {
 	return {
 		parse: {
-			text: "3215 SE Clinton St",
+			text: TEXT,
 			caseNormalized: false,
 			pieces: [
 				{ piece: "▁3", id: 1, start: 0, end: 4 },
@@ -42,7 +60,7 @@ function traceOf(overrides: Partial<GeocodeTrace["parse"]> = {}): GeocodeTrace {
 			],
 			...overrides,
 		} as GeocodeTrace["parse"],
-		queryShape: { knownFormats: [] } as unknown as GeocodeTrace["queryShape"],
+		queryShape: queryShapeOf(),
 		inputMode: "formatted",
 		resolver: [],
 		locale: "en-US",
@@ -71,11 +89,9 @@ describe("systemRow", () => {
 	it("lists the query-shape known formats when Stage 2 found any", () => {
 		const trace = traceOf()
 
-		trace.queryShape = {
-			knownFormats: [{ format: "us_zip5", span: { start: 0, end: 5 }, confidence: 1 }],
-		} as unknown as GeocodeTrace["queryShape"]
+		trace.queryShape = queryShapeOf([{ format: "us_zip", span: { start: 0, end: 5, body: "97202" }, confidence: 1 }])
 
-		expect(systemRow(trace)).toContain("format us_zip5")
+		expect(systemRow(trace)).toContain("format us_zip")
 	})
 })
 

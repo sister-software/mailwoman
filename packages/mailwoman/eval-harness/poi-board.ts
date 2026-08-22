@@ -223,7 +223,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : undefined,
 				!topMatches ? mismatchDetail : undefined,
 			]
-				.filter(Boolean)
+				.filter((reason) => reason != null)
 				.join("; ")
 
 	return {

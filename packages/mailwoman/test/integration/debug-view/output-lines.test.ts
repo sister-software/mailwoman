@@ -25,7 +25,7 @@ const TREE = {
 			children: [{ tag: "street", value: "SE Clinton St", start: 5, end: 18, confidence: 0.98, children: [] }],
 		},
 	],
-} as unknown as AddressTree
+} as AddressTree
 
 const RESULT = {
 	input: TREE.raw,
@@ -34,6 +34,16 @@ const RESULT = {
 	resolution_tier: "address_point",
 	uncertainty_m: 1,
 	countryCode: "US",
+	components: {},
+	locality: null,
+	region: null,
+	postcode: null,
+	house_number: null,
+	street: null,
+	venue: null,
+	dependent_locality: null,
+	unit: null,
+	postcode_country_scope: null,
 	hierarchy: [
 		{ tag: "locality", value: "Portland", name: "Portland", placeID: "wof:101715829", lat: 45.537178, lon: -122.65 },
 	],
@@ -42,7 +52,7 @@ const RESULT = {
 		{ name: "Portland", tag: "locality", lat: 43.66, lon: -70.25, countryCode: "US", placeID: "wof:101715745" },
 	],
 	intent_markers: [],
-} as unknown as GeocodeResult
+} as GeocodeResult
 
 const TRACE = {
 	kind: {
@@ -103,7 +113,7 @@ describe("outputLines", () => {
 			candidates: [
 				{ name: "Oregon", tag: "region", lat: 43.9, lon: -120.6, countryCode: "US", placeID: "wof:85688513" },
 			],
-		} as unknown as GeocodeResult
+		} as GeocodeResult
 
 		const place = outputLines({ result, tree: TREE }).find((line) => line.label === "  place")
 

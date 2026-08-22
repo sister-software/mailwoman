@@ -19,7 +19,7 @@ function resultOf(tier: GeocodeResult["resolution_tier"], tags: string[]): Geoco
 	return {
 		resolution_tier: tier,
 		hierarchy: tags.map((tag) => ({ tag, value: tag, name: tag })),
-	} as unknown as GeocodeResult
+	} as GeocodeResult
 }
 
 describe("initialZoomForTier", () => {

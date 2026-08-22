@@ -304,7 +304,7 @@ export async function demoCascadeSmoke(
 		const { tree } = await runPipeline(row.input, {
 			computeQueryShape,
 			groupPhrases,
-			classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+			classifier: classifier as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: fst as Parameters<typeof runPipeline>[1]["fst"],
 		})
 
@@ -322,11 +322,7 @@ export async function demoCascadeSmoke(
 		// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
 		// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
 		// extraction above stays for the explain output + the anchor-centroid fallback below.
-		const hits = await runCascade(
-			lookup as unknown as Parameters<typeof runCascade>[0],
-			tree as { roots: unknown[] },
-			row.input
-		)
+		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree as { roots: unknown[] }, row.input)
 
 		// The demo's anchor-centroid fallback for postcode-only dead ends (WOF placeholder zeros / the
 		// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.

@@ -813,7 +813,7 @@ async function runNeural(
 			policy.set({ component: o.component, mode: o.mode })
 		}
 
-		const wholeInputSection = { body: input, start: 0, end: input.length } as unknown as Section
+		const wholeInputSection = { body: input, start: 0, end: input.length } as Section
 		const proposals = await collectProposals([wholeInputSection], [proposalCls], { locale: options.locale })
 		const filtered = filterByPolicy(proposals, policy, options.locale)
 		tree = proposalsToTree(input, filtered)

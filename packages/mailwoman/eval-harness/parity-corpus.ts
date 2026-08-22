@@ -127,7 +127,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 			const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
 			const { readFileSync } = await import("node:fs")
 
-			fstGazetteer = deserializeFST(readFileSync(fstPath)) as unknown as FSTMatcher
+			fstGazetteer = deserializeFST(readFileSync(fstPath))
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {

@@ -380,7 +380,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
-					.filter(Boolean)
+					.filter((cc) => cc.length > 0)
 			: ["PL", "CZ"]
 
 		const foldInto = options.foldInto
