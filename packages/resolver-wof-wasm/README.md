@@ -51,9 +51,19 @@ import wasmUrl from "@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm?url
 
 For webpack: use `asset/resource` rules on the `.wasm` extension and pass the resolved URL via the `wasmUrl` option.
 
-## Why not extend `WofSqlitePlaceLookup`?
+## Which pin the browser shows
 
-`WofSqlitePlaceLookup` is hard-bound to `node:sqlite` (the Node 22+ built-in). Subclassing across the Node/WASM line means dragging Node-only types into a browser package. We chose composition over inheritance: both classes implement the same `PlaceLookup` interface and (v0.2.0+) call the same shared query builder, but stay independently importable.
+`browser-cascade.ts` ranks the resolved places and shows the top one. Most of that table is the demo's own judgement and deliberately **not** `PLACETYPE_SPECIFICITY` — `neighbourhood` sits below `locality` here because that is the pin a viewer wants, where the shared scale ranks it above because it covers less ground.
+
+One rung is not the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
+
+Otherwise an area-grade postcode ranks **below the whole locality tier**, `{locality, borough, localadmin}`, not below `locality` alone. Ranking it between them pinned the postcode where the CLI returns the town on 20.2% of a US panel, and the town was closer on 65.6% of those — `344 East Sheldon Rd, Sheldon, VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. New England civil towns are `localadmin` in Who's On First, which is why the tier has three members and not one.
+
+If you change this table, change it against the Node ladder. The two sides agreed on constants for a whole release once while the formula underneath them diverged.
+
+## Why not extend `WOFSqlitePlaceLookup`?
+
+`WOFSqlitePlaceLookup` is hard-bound to `node:sqlite` (the Node 22+ built-in). Subclassing across the Node/WASM line means dragging Node-only types into a browser package. We chose composition over inheritance: both classes implement the same `PlaceLookup` interface and (v0.2.0+) call the same shared query builder, but stay independently importable.
 
 ## License
 

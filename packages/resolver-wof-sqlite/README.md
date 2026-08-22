@@ -15,11 +15,11 @@ Requires Node 22+ for built-in `node:sqlite`.
 ## Quick start
 
 ```ts
-import { WofSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const lookup = new WofSqlitePlaceLookup({
+const lookup = new WOFSqlitePlaceLookup({
 	databasePath: "/path/to/whosonfirst-data-admin-us-latest.db",
-	buildFts: true, // build the FTS5 index on first open (one-time cost)
+	buildFTS: true, // build the FTS5 index on first open (one-time cost)
 })
 
 const candidates = await lookup.findPlace({
@@ -35,6 +35,25 @@ for (const c of candidates) {
 lookup.close()
 ```
 
+## A shard that cannot answer says so on construction
+
+Shards are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail quietly, and both now throw when you build the lookup:
+
+- The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits, which is indistinguishable from "this country has no places".
+- The shard carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
+
+The predicate is the **table, not the filename**: a shard carrying `spr` is claiming to be a place shard, and every lookup path here reaches the FTS index. A relation-table shard like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default shard list working.
+
+```
+WOFSqlitePlaceLookup: …/postcode-ca-overture.db carries "spr" but no "place_search" table, so it
+cannot serve a lookup. Build it with the FTS index, or leave it out — it is usable as a BUILD input
+either way. Its schema name "postcode_ca_overture" also matches no routed placetype (postalcode,
+locality, region, county, country, venue), so it would never have been queried even with the table
+— check the filename's spelling.
+```
+
+The second sentence appears only when the name routes nowhere. It is the half that turns zero hits into a diagnosis.
+
 ## Multi-shard (admin + postcode in one connection)
 
 Pass an array of paths to open multiple WOF shards on a single connection — each is opened as a
@@ -44,7 +63,7 @@ separate SQLite schema via `ATTACH DATABASE`. Schema names auto-derive from file
 `postalcode_us` shard automatically, everything else hits main.
 
 ```ts
-const lookup = new WofSqlitePlaceLookup({
+const lookup = new WOFSqlitePlaceLookup({
 	databasePath: ["/data/wof/whosonfirst-data-admin-us-latest.db", "/data/wof/whosonfirst-data-postalcode-us-latest.db"],
 })
 
@@ -55,7 +74,7 @@ await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postco
 Override schema names or routing explicitly when needed:
 
 ```ts
-new WofSqlitePlaceLookup({
+new WOFSqlitePlaceLookup({
 	databasePath: ["/data/wof/admin.db", { path: "/data/oddly-named.db", schemaName: "pc", placetypes: ["postalcode"] }],
 })
 ```
@@ -83,7 +102,7 @@ bunzip2 whosonfirst-data-admin-us-latest.db.bz2
 
 Upstream WOF SQLite distributions ship a `places` table but **not** an FTS5 index. The resolver needs FTS5 to do fast prefix + token-bag matching. Two options:
 
-1. **`buildFts: true` on construction** — builds the index lazily on first open. Cost is one-time but expensive (~minutes on the full US admin shard). Use for prototyping.
+1. **`buildFTS: true` on construction** — builds the index lazily on first open. Cost is one-time but expensive (~minutes on the full US admin shard). Use for prototyping.
 2. **Pre-build the index with `mailwoman gazetteer build fts`** — ship the DB with the index included so first-open is fast. Recommended for production.
 
 ### `mailwoman gazetteer build fts`
@@ -143,7 +162,7 @@ What survives in the slim DB:
 
 What gets dropped: the `geojson` table, which is build-time only — `lookup.ts` never reads it at query time, and it accounts for ~95% of the on-disk size. The `place_population` aux table consumes `wof:population` from geojson before we drop it.
 
-`WofSqlitePlaceLookup` opens the slim DB without any code change. Out-of-set queries (a locality not in the top-K) correctly return zero hits.
+`WOFSqlitePlaceLookup` opens the slim DB without any code change. Out-of-set queries (a locality not in the top-K) correctly return zero hits.
 
 You can also build the index programmatically via the package's `./fts` subpath:
 
@@ -209,7 +228,7 @@ R*Tree because it computes haversine distance against the centroid columns direc
 All weights are configurable via the second ctor argument:
 
 ```ts
-new WofSqlitePlaceLookup({ databasePath }, { countryMatchBoost: 0.5 })
+new WOFSqlitePlaceLookup({ databasePath }, { countryMatchBoost: 0.5 })
 ```
 
 Defaults are in `lookup.ts::DEFAULT_WEIGHTS`.
@@ -246,7 +265,7 @@ Coverage includes: placetype filtering, country filtering, the empty-result case
 
 ## Concurrency model
 
-This package opens a single `node:sqlite` connection per `WofSqlitePlaceLookup` instance. SQLite is single-writer / many-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is fine (queries queue) but won't parallelize across cores.
+This package opens a single `node:sqlite` connection per `WOFSqlitePlaceLookup` instance. SQLite is single-writer / many-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is fine (queries queue) but won't parallelize across cores.
 
 ## License
 

@@ -253,6 +253,75 @@ mid-query instead. Neither is live (these are build inputs, and the candidate ta
 codes at placetype 11), but the first CA measurement of this run reported _"974 of 1,000 rows resolve
 no postcode node"_, which reads as a coverage catastrophe and was a shard-selection artifact. #1791.
 
+### 11. The currency flags are not empty, they are CONSTANT
+
+The note recorded ZIP currency as unanswerable. It is, but the reason matters: the columns that would
+answer it are not missing and not sparse — they are **constants written by the builder**, and they
+look exactly like data.
+
+Across all 42,319 rows of `postalcode-us.db`:
+
+```
+is_current      1 → 42,319        is_superseded    0 → 42,319
+is_deprecated   0 → 42,319        is_superseding   0 → 42,319
+is_ceased       1 → 42,319
+```
+
+Every one is single-valued, so every one carries zero bits. `is_ceased = 1` on every row is the tell
+— read literally it says every US ZIP has ceased.
+
+**The proof that these are builder artifacts rather than data is the disagreement between shards:**
+
+| shard                        |      rows | `is_current` | `is_deprecated` | `is_ceased` |
+| ---------------------------- | --------: | -----------: | --------------: | ----------: |
+| `postalcode-us.db`           |    42,319 |        all 1 |           all 0 |   **all 1** |
+| `postalcode-intl.db`         |   444,727 |      444,708 |          **19** |   **all 1** |
+| `postalcode-gb-codepoint.db` | 1,746,976 |        all 1 |           all 0 |   **all 0** |
+| `postalcode-nl-pc6.db`       |   464,964 |        all 1 |           all 0 |   **all 0** |
+
+`is_ceased` is 1 everywhere in two shards and 0 everywhere in the other two. The value tells you which
+builder wrote the file, not anything about the code. Nineteen `is_deprecated` rows in the intl shard
+are the only postal-currency information in any of them.
+
+So `10048` — the World Trade Center ZIP, retired in 2001 — sits at `0,0` flagged `is_current = 1`, and
+is indistinguishable from `00501` (the IRS at Holtsville, live) and `12345` (General Electric, live),
+which carry the same three flags and differ only in having a coordinate.
+
+**The one real signal is `lastmodified`**, which is genuinely varied — 6,665 distinct values. But it
+answers a different question (when the upstream record was last touched) and it stops at
+**2021-01-21**, so the shard's provenance is four and a half years old.
+
+#### Why the obvious free substitute does not work
+
+Census ZCTAs are the free, permissive approximation of ZIP areas, and the shard already carries a
+`centroid_source` table with **979 rows stamped `census-zcta-2024`** — so someone has already reached
+for exactly that. Two facts kill it as a currency source:
+
+- Every one of those 979 is a **territory** code (969xx Guam and neighbours). The enrichment was
+  scoped to the places WOF could not place, not to currency.
+- **Zero of the 414 null-island ZIPs were enriched by it.** Those 414 spread across 210 sectional
+  centres with no concentration — 100xx (Manhattan PO boxes) is the densest at twelve — which is the
+  signature of PO-box-only and organisation codes. ZCTAs are built from populated address blocks and
+  **exclude PO-box-only ZIPs by design**, so a ZCTA join is structurally blind to exactly the
+  population whose currency is most in doubt.
+
+#### What this means for a consumer
+
+The honest posture is the one the artifact already takes elsewhere: **do not claim what the source
+cannot say.** Concretely —
+
+1. **Never read these five columns for US postcodes.** A filter on `is_current` selects everything and
+   reads as though it selected something, which is worse than no filter at all.
+2. **A retired code answers like a live one.** Treat a US ZIP hit as "this code existed in a 2021-era
+   register", not as "this code is deliverable today".
+3. **The absent coordinate is the closest thing to a signal we hold** — the 414 unplaceable codes are
+   enriched in PO-box-only and organisation codes, the class where retirement concentrates. It is a
+   correlate, not an answer, and #1786 now makes that absence visible rather than a Gulf-of-Guinea
+   coordinate.
+
+Answering it properly needs a source with a retirement date. USPS publishes one and licenses it;
+HUD's quarterly USPS crosswalk is free and covers active codes; neither has been evaluated here.
+
 ## What the artifact should assert
 
 **Built 2026-08-22 (#1784)** — 915 nodes, 42,313 units, 906 carrying a centroid, median
@@ -319,9 +388,8 @@ version, section table, source-md5 stamp. The per-file discipline stays for the 
 
 ## Open questions
 
-- **Still open. ZIP currency is unanswerable from the shipped shard.** `is_current = 1` on all 42,319 rows,
-  `is_deprecated = 0` on all, `is_ceased` set on **all**. `10048` — the World Trade Center ZIP,
-  retired in 2001 — is present at `0.0000, 0.0000` and flagged current. 414 rows sit on null island.
+- ~~**ZIP currency is unanswerable from the shipped shard.**~~ **ANSWERED, and the answer is worse than
+  "unrecorded" — see [finding 11](#11-the-currency-flags-are-not-empty-they-are-constant).**
 - **The numbering plan is a first-digit witness**, so it catches only cross-band errors. The 0.69%
   PIP disagreement is a floor on the error, not the error.
 - ~~**234 ZIPs (0.56%) fall outside every state polygon.**~~ **ANSWERED — not coastal precision.**
