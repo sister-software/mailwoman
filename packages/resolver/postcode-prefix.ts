@@ -92,8 +92,9 @@ export function derivePostcodePrefix(code: string, country?: string): string | n
 		// "BT93GS" → "BT9"). Exactly 3 — never a greedy regex, the build-side twin is `outwardOf`.
 		case "GB":
 			return compact.length >= MIN_GB_OUTWARD_CODE_LENGTH ? compact.slice(0, -3) : null
-		// The 3-digit section ("94043" → "940"). No US artifact ships yet (B3-4 is ZCTA acquisition);
-		// the law is tested ahead of the data.
+		// The 3-digit sectional centre ("94043" → "940"). Deliberately looser than the build side, which
+		// requires a real ZIP shape: a probe for something that is not a code simply misses, and a reader
+		// that re-derived the writer's validation would be a second copy of it.
 		case "US":
 			return compact.length >= MIN_US_SECTION_CODE_LENGTH ? compact.slice(0, 3) : null
 		default:
