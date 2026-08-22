@@ -7,7 +7,7 @@
  *   (`scripts/build-unified-wof.ts`). This is the CANONICAL gazetteer — we never use the
  *   off-the-shelf geocode.earth prebuilt dumps (they assign different WOF ids to the same place;
  *   see the `feedback-custom-wof-db-only` memory). The table/column names match the resolver's
- *   expectations (`lookup.ts`) so `WOFSqlitePlaceLookup` works unchanged, INCLUDING the `ancestors`
+ *   expectations (`lookup.ts`) so `WOFSQLitePlaceLookup` works unchanged, INCLUDING the `ancestors`
  *   table (which lookup.ts's parent-constraint subquery needs) — see `populateAncestors`. The
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */

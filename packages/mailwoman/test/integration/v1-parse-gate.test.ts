@@ -84,7 +84,7 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
 import { JSONSpliterator } from "spliterator"
@@ -214,7 +214,7 @@ describe.skipIf(!weightsPresent() || !gazetteerPresent())(
 		test("neural resolution is coordinate-safe and the garbage tail is bounded by the plausibility guard", async () => {
 			const rulesGolden = await loadRulesGolden()
 			const neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-			const backend = new WOFSqlitePlaceLookup({ databasePath: [ADMIN_DB, POSTCODE_DB] })
+			const backend = new WOFSQLitePlaceLookup({ databasePath: [ADMIN_DB, POSTCODE_DB] })
 			const resolver = createWOFResolver(backend)
 
 			const fixtures = (

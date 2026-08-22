@@ -26,7 +26,7 @@
  *
  *   The output DB has the resolver-facing schema: `spr`, `names`, `place_population`, plus the
  *   `place_search` FTS5 / `place_bbox` R*Tree virtual tables rebuilt against the trimmed row set
- *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSqlitePlaceLookup`
+ *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSQLitePlaceLookup`
  *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
  *
  *   Multi-shard inputs (e.g. admin + postcode) are processed in sequence; selected rows accumulate

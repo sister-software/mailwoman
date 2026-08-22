@@ -14,7 +14,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, describe, expect, test } from "vitest"
 
 interface SeedPlace {
@@ -102,12 +102,12 @@ const TURKU_ABO: SeedPlace[] = [
 
 const FLAG_ON: Partial<RankingWeights> = { officialNameExact: true }
 
-let lookup: WOFSqlitePlaceLookup
+let lookup: WOFSQLitePlaceLookup
 afterEach(() => lookup?.close())
 
 describe("findPlace — officialNameExact (#936 option 3)", () => {
 	test("flag OFF (explicit): the hamlet's own name beats Turku's official alias — the pre-#936 behavior", async () => {
-		lookup = new WOFSqlitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true }, { officialNameExact: false })
+		lookup = new WOFSQLitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true }, { officialNameExact: false })
 		const results = await lookup.findPlace({ text: "Åbo", placetype: "locality" })
 
 		expect(results.length).toBeGreaterThan(1)
@@ -115,7 +115,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 	})
 
 	test("DEFAULT (flag ON since the 2026-07-03 promote): Turku's official name joins the name-exact sub-tier", async () => {
-		lookup = new WOFSqlitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true })
+		lookup = new WOFSQLitePlaceLookup({ database: buildDB(TURKU_ABO), buildFTS: true })
 		const results = await lookup.findPlace({ text: "Åbo", placetype: "locality" })
 
 		expect(results[0]!.id).toBe(2)
@@ -123,7 +123,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 	})
 
 	test("holder below the population floor stays alias-tier (the junk-tier guard)", async () => {
-		lookup = new WOFSqlitePlaceLookup(
+		lookup = new WOFSQLitePlaceLookup(
 			{ database: buildDB(TURKU_ABO), buildFTS: true },
 			{ officialNameExact: true, officialNameExactFloor: 500_000 }
 		)
@@ -134,7 +134,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 	})
 
 	test("a plain (non-official) alias still loses to the name holder — Paris Township stays down", async () => {
-		lookup = new WOFSqlitePlaceLookup(
+		lookup = new WOFSQLitePlaceLookup(
 			{
 				database: buildDB([
 					{ id: 10, name: "Paris", country: "FR", population: 2_100_000 },
@@ -151,7 +151,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 	})
 
 	test("official alias of the SMALLER place cannot demote the bigger name holder (population within tier)", async () => {
-		lookup = new WOFSqlitePlaceLookup(
+		lookup = new WOFSQLitePlaceLookup(
 			{
 				database: buildDB([
 					{ id: 20, name: "Córdoba", country: "AR", population: 2_106_734 },
@@ -168,7 +168,7 @@ describe("findPlace — officialNameExact (#936 option 3)", () => {
 	})
 
 	test("pre-#940 gazetteer (no official column) fails soft: flag ON behaves as OFF", async () => {
-		lookup = new WOFSqlitePlaceLookup(
+		lookup = new WOFSQLitePlaceLookup(
 			{ database: buildDB(TURKU_ABO, { omitOfficialColumn: true }), buildFTS: true },
 			FLAG_ON
 		)

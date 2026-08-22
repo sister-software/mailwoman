@@ -275,7 +275,7 @@ refusal names what is resident and what it would cost.
 | Held                                                                  | Cost to rebuild           | Owner                                   |
 | --------------------------------------------------------------------- | ------------------------- | --------------------------------------- |
 | `NeuralAddressClassifier` + per-country overlay classifiers           | ~1.0 s (measured, §1.2)   | engine worker                           |
-| Resolver backend (`WOFCandidateTableLookup` / `WOFSqlitePlaceLookup`) | ~2 ms open, 2.0 GB mapped | engine worker                           |
+| Resolver backend (`WOFCandidateTableLookup` / `WOFSQLitePlaceLookup`) | ~2 ms open, 2.0 GB mapped | engine worker                           |
 | `ShardProvider`, `BANShardProvider`, `OSMShardProvider`, `POILookup`  | ~6 ms                     | engine worker                           |
 | `CoarsePlacer`, FST + street-morphology matchers                      | ~23 ms                    | engine worker                           |
 | Board corpus (837 rows) + its `regressionCorpusHash`                  | ms                        | supervisor, re-verified per read (§3.4) |

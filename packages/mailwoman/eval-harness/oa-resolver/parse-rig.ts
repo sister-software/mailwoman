@@ -81,7 +81,7 @@ export async function buildParseRig(
 	// without to measure the lift. No-op on the candidate backend (it folds aliases at build time).
 	const postalCityAliasDB = options.postalCityAliasDB || ""
 
-	const { WOFSqlitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
+	const { WOFSQLitePlaceLookup, WOFCandidateTableLookup, WOFPostalCityAliasLookup } =
 		await import("@mailwoman/resolver-wof-sqlite")
 
 	const postalCityAliases = postalCityAliasDB
@@ -90,7 +90,7 @@ export async function buildParseRig(
 
 	const backend = candidateDB
 		? new WOFCandidateTableLookup({ databasePath: candidateDB })
-		: new WOFSqlitePlaceLookup({
+		: new WOFSQLitePlaceLookup({
 				databasePath: wofPaths.length === 1 ? wofPaths[0]! : wofPaths,
 				postalCityAliases,
 			})

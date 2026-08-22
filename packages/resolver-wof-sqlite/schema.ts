@@ -159,7 +159,7 @@ export interface CoincidentRolesTable {
 
 /**
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`. Tables not listed here
- * will fail type-checked queries — by design. The reader ({@link WOFSqlitePlaceLookup}) already consumes this; the
+ * will fail type-checked queries — by design. The reader ({@link WOFSQLitePlaceLookup}) already consumes this; the
  * build/augment WRITERS adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
  * TIGER adapter).
  */

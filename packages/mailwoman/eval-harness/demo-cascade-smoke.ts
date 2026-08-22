@@ -62,7 +62,7 @@ import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
@@ -298,7 +298,7 @@ export async function demoCascadeSmoke(
 	})
 
 	const fst = deserializeFST(readFileSync(FST))
-	const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
+	const lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
 
 	// ── Run ──────────────────────────────────────────────────────────────────────────────────────────
 	const results: RowResult[] = []

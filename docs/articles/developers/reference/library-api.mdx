@@ -461,7 +461,7 @@ and the geocode.
 | `worker`      | `string` or `URL`     | the bundled worker                    | A replacement worker entry point             |
 
 One constraint decides whether this function fits your setup. Its worker constructs a
-`WOFSqlitePlaceLookup` directly, so it resolves against a full Who's On First SQLite distribution and
+`WOFSQLitePlaceLookup` directly, so it resolves against a full Who's On First SQLite distribution and
 cannot use a `candidate.db`. If your setup is the `candidate.db` one the tutorials teach, run your own
 pool over `geocodeAddress` instead — [Batch geocode at
 volume](../how-to/batch-geocode-at-volume.mdx) has that loop.

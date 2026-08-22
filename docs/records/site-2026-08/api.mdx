@@ -50,13 +50,13 @@ const { tree, logits, pieces } = await classifier.parseWithLogits("350 5th Ave, 
 ### `createWOFResolver(backend)`
 
 Wraps a place-lookup backend as a `Resolver`. The backend is any `PlaceLookup` — on the
-server that's a `WOFSqlitePlaceLookup` over a Who's On First SQLite distribution.
+server that's a `WOFSQLitePlaceLookup` over a Who's On First SQLite distribution.
 
 ```ts
 import { createWOFResolver, type ResolverBackend } from "@mailwoman/resolver"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const lookup = new WOFSqlitePlaceLookup({ databasePath: "./wof.sqlite" })
+const lookup = new WOFSQLitePlaceLookup({ databasePath: "./wof.sqlite" })
 // `PlaceLookup` and `ResolverBackend` are structurally adjacent but not identical, so the
 // backend is passed through a cast — the same one every internal call site uses today.
 const resolver = createWOFResolver(lookup as unknown as ResolverBackend)

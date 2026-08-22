@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `WOFSqlitePlaceLookup` — the resolver implementation backed by `node:sqlite` + a Kysely-typed
+ *   `WOFSQLitePlaceLookup` — the resolver implementation backed by `node:sqlite` + a Kysely-typed
  *   query layer where the queries are non-trivial, and raw SQL where they aren't (FTS5 MATCH, the
  *   FTS index build).
  *
@@ -56,7 +56,7 @@ import { SqliteConventionSource } from "./sqlite-convention-source.ts"
 import { allRows } from "./sqlite-utils.ts"
 import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "./types.ts"
 
-export interface WOFSqlitePlaceLookupOpts {
+export interface WOFSQLitePlaceLookupOpts {
 	/**
 	 * Path to the WOF SQLite distribution on disk. Mutually exclusive with `database`.
 	 *
@@ -139,7 +139,7 @@ const CF_PC_DECAY_KM = 8
 const CF_MISMATCH_KM = 50
 const CF_MISMATCH_DELTA = 0.5
 
-export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
+export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #db: DatabaseSync
 	readonly #ownsDB: boolean
 	readonly #kysely: Kysely<WOFDatabase>
@@ -206,13 +206,13 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	 */
 	readonly #postalCityAliases: WOFPostalCityAliasLookup | null
 
-	constructor(opts: WOFSqlitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
+	constructor(opts: WOFSQLitePlaceLookupOpts, weights?: Partial<RankingWeights>) {
 		if (opts.database && opts.databasePath) {
-			throw new Error("WOFSqlitePlaceLookup: pass either `database` or `databasePath`, not both")
+			throw new Error("WOFSQLitePlaceLookup: pass either `database` or `databasePath`, not both")
 		}
 
 		if (!opts.database && !opts.databasePath) {
-			throw new Error("WOFSqlitePlaceLookup: one of `database` or `databasePath` is required")
+			throw new Error("WOFSQLitePlaceLookup: one of `database` or `databasePath` is required")
 		}
 
 		if (opts.database) {
@@ -287,7 +287,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 			)
 
 			throw new Error(
-				`WOFSqlitePlaceLookup: ${s.path} carries "spr" but no "${PLACE_SEARCH_TABLE}" table, so it cannot serve a ` +
+				`WOFSQLitePlaceLookup: ${s.path} carries "spr" but no "${PLACE_SEARCH_TABLE}" table, so it cannot serve a ` +
 					`lookup. Build it with the FTS index, or leave it out — it is usable as a BUILD input either way.` +
 					(routes
 						? ""
@@ -483,7 +483,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 		this.#warnedUnknownStrategies.add(name)
 
 		console.warn(
-			`WOFSqlitePlaceLookup: a convention names strategy "${name}", which this build does not register ` +
+			`WOFSQLitePlaceLookup: a convention names strategy "${name}", which this build does not register ` +
 				`(known: ${[...this.#strategies.keys()].join(", ")}). Skipping it. If the convention asset was built ` +
 				`against a newer code revision, rebuild the asset for this one.`
 		)
@@ -853,7 +853,7 @@ export class WOFSqlitePlaceLookup implements PlaceLookup, Disposable {
 	#assertFTSExists(): void {
 		if (!placeSearchFTSExists(this.#db)) {
 			throw new Error(
-				"WOFSqlitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman gazetteer build fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
+				"WOFSQLitePlaceLookup: `place_search` FTS5 table is missing. Pass `buildFTS: true` to build it on open, or run `mailwoman gazetteer build fts <path-to-wof.db>` ahead of time (see resolver-wof-sqlite/README.md)."
 			)
 		}
 	}

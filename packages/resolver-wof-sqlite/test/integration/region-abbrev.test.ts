@@ -22,7 +22,7 @@
  */
 import { DatabaseSync } from "node:sqlite"
 
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 // US regions, their USPS abbreviations (what add-region-abbrevs writes into `names`), and two
@@ -89,10 +89,10 @@ function buildDB(): DatabaseSync {
 	return db
 }
 
-let lookup: WOFSqlitePlaceLookup
+let lookup: WOFSQLitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
+	lookup = new WOFSQLitePlaceLookup({ database: buildDB(), buildFTS: true })
 })
 
 afterEach(() => {

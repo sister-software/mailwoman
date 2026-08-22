@@ -18,7 +18,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let dir: string
@@ -86,12 +86,12 @@ afterAll(() => {
 
 describe("shard capability guard", () => {
 	it("constructs against a complete shard set", () => {
-		expect(() => new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db")] })).not.toThrow()
+		expect(() => new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db")] })).not.toThrow()
 	})
 
 	it("refuses a shard that carries spr and no place_search", () => {
 		expect(
-			() => new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postalcode-x.db")] })
+			() => new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postalcode-x.db")] })
 		).toThrow(/carries "spr" but no "place_search"/)
 	})
 
@@ -99,7 +99,7 @@ describe("shard capability guard", () => {
 		let message = ""
 
 		try {
-			new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postcode-x.db")] })
+			new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postcode-x.db")] })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -114,7 +114,7 @@ describe("shard capability guard", () => {
 		let message = ""
 
 		try {
-			new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postalcode-x.db")] })
+			new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postalcode-x.db")] })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -126,11 +126,11 @@ describe("shard capability guard", () => {
 		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place shard. Guarding on the filename
 		// rather than on the table would have broken the shipped default.
 		expect(
-			() => new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postcode-locality-intl.db")] })
+			() => new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db"), join(dir, "postcode-locality-intl.db")] })
 		).not.toThrow()
 	})
 
 	it("does not examine the MAIN shard for routing — it is the fallback by definition", () => {
-		expect(() => new WOFSqlitePlaceLookup({ databasePath: [join(dir, "admin.db")] })).not.toThrow()
+		expect(() => new WOFSQLitePlaceLookup({ databasePath: [join(dir, "admin.db")] })).not.toThrow()
 	})
 })

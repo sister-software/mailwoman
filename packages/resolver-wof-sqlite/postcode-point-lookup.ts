@@ -13,7 +13,7 @@
  *   anchor only needs "does this string exist as a postcode, in which countries, near where". A
  *   future WASM build swaps this for an FST-backed resolver behind the same `lookup()` seam.
  *
- *   Why multiple shards instead of the multi-shard `WOFSqlitePlaceLookup`: that resolver routes a
+ *   Why multiple shards instead of the multi-shard `WOFSQLitePlaceLookup`: that resolver routes a
  *   query to ONE shard by placetype, but every postcode shard shares `placetype='postalcode'`, so a
  *   single query could only ever hit one country's shard. The anchor needs the union across
  *   countries to build its country posterior, so it queries each shard directly.

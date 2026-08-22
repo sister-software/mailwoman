@@ -324,7 +324,7 @@ That corollary covers a MEASUREMENT THAT STILL BINDS, and nothing else. It is no
 
 ### Acronym casing in identifiers
 
-Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
+Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSQLitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
 
 - **`snake_case`** — DB columns and wire keys (`parent_id`, `place_id`, `name_key`) stay as-is; they're string contracts, and the convention is camelCase-only by construction.
 - **External library names** — match the dependency's own casing (`HttpStatusCode` from axios, `createQueryId`/`createWithSql` from kysely, `sqlite-wasm`).

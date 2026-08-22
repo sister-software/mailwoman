@@ -17,7 +17,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { WOFPostalCityAliasLookup } from "@mailwoman/resolver-wof-sqlite/postal-city-alias-lookup"
 import {
 	createPostalCityAliasTable,
@@ -113,7 +113,7 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	afterEach(() => aliasDB?.close())
 
 	it("WITHOUT the reader, a postal-city query resolves to the same-named distractor (the bug)", async () => {
-		const lookup = new WOFSqlitePlaceLookup({ database: buildMainDB(), buildFTS: true })
+		const lookup = new WOFSQLitePlaceLookup({ database: buildMainDB(), buildFTS: true })
 		const r = await lookup.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		// The bare name-match wins the far Antioch, and the postcode/name conflict fires.
 		expect(r[0]?.name).toBe("Antioch")
@@ -124,7 +124,7 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 	it("WITH the reader, the postal city resolves to its geographic locality (the fix)", async () => {
 		aliasDB = await buildAliasDB()
 
-		const lookup = new WOFSqlitePlaceLookup({
+		const lookup = new WOFSQLitePlaceLookup({
 			database: buildMainDB(),
 			buildFTS: true,
 			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDB }),
@@ -143,7 +143,7 @@ describe("postal-city alias coordinate-first wiring (#475)", () => {
 		// exactly as without the reader. Here the distractor still wins (no alias rescues Nashville).
 		aliasDB = await buildAliasDB()
 
-		const lookup = new WOFSqlitePlaceLookup({
+		const lookup = new WOFSQLitePlaceLookup({
 			database: buildMainDB(),
 			buildFTS: true,
 			postalCityAliases: new WOFPostalCityAliasLookup({ database: aliasDB }),

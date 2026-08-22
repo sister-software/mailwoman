@@ -121,8 +121,8 @@ console.log(`### 2. Live query replay\n`)
 if (!wofPaths.length) {
 	console.log(`- no WOF shards found — replay skipped\n`)
 } else {
-	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WOFSqlitePlaceLookup({ databasePath: wofPaths })
+	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 	const board = await loadHardSliceBoard(values.board)
 
 	// Board inputs AND their probe surfaces: the input is what a user types, the surface is the token

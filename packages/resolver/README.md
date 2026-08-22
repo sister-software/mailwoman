@@ -14,9 +14,9 @@ npm install @mailwoman/resolver
 
 ```ts
 import { createWOFResolver } from "@mailwoman/resolver"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const backend = new WOFSqlitePlaceLookup({ databasePath: "/path/to/admin.db" })
+const backend = new WOFSQLitePlaceLookup({ databasePath: "/path/to/admin.db" })
 const resolver = createWOFResolver(backend)
 
 const decorated = await resolver.resolveTree(tree)

@@ -11,7 +11,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -70,10 +70,10 @@ function buildFixtureDB(): DatabaseSync {
 	return db
 }
 
-let lookup: WOFSqlitePlaceLookup
+let lookup: WOFSQLitePlaceLookup
 
 beforeEach(() => {
-	lookup = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
+	lookup = new WOFSQLitePlaceLookup({ database: buildFixtureDB(), buildFTS: true })
 })
 
 afterEach(() => {
@@ -123,7 +123,7 @@ describe("findPlace — population boost", () => {
 	})
 
 	test("the population boost can be tuned to 0 — falls back to BM25-only ordering", async () => {
-		const dbg = new WOFSqlitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
+		const dbg = new WOFSQLitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
 
 		try {
 			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
@@ -154,7 +154,7 @@ describe("findPlace — population boost", () => {
 		const db = buildFixtureDB()
 		buildPlaceSearchFTS(db)
 		db.exec(`DROP TABLE place_population`)
-		const fallback = new WOFSqlitePlaceLookup({ database: db })
+		const fallback = new WOFSQLitePlaceLookup({ database: db })
 
 		try {
 			const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })

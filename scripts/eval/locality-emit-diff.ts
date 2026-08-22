@@ -49,7 +49,7 @@ async function main() {
 	).slice(0, n)
 
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 
 	const mk = (m: string) =>
 		createScorer({
@@ -63,7 +63,7 @@ async function main() {
 
 	const base = await mk(values["base"] || "")
 	const cand = await mk(values["cand"] || "")
-	const resolver = createWOFResolver(new WOFSqlitePlaceLookup({ databasePath: WOF }))
+	const resolver = createWOFResolver(new WOFSQLitePlaceLookup({ databasePath: WOF }))
 	const opts = { defaultCountry: cc }
 
 	const didResolve = async (tree: AddressTree): Promise<boolean> => {

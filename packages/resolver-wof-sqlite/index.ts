@@ -19,7 +19,7 @@ export type {
 	WOFDatabase,
 } from "./schema.ts"
 
-export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpts } from "./lookup.ts"
+export { WOFSQLitePlaceLookup, type RankingWeights, type WOFSQLitePlaceLookupOpts } from "./lookup.ts"
 
 export {
 	CANDIDATE_ANCESTOR_COLUMNS,

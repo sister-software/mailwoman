@@ -11,7 +11,7 @@
  */
 import { DatabaseSync } from "node:sqlite"
 
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-convention-source"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -79,7 +79,7 @@ describe("SqliteConventionSource", () => {
 
 describe("convention-asset auto-detect → dispatch", () => {
 	it("with no address_convention rows for the country, the coord-first path still recovers the town", async () => {
-		const lookup = new WOFSqlitePlaceLookup({ database: buildDB(), buildFTS: true })
+		const lookup = new WOFSQLitePlaceLookup({ database: buildDB(), buildFTS: true })
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
 		lookup.close()
@@ -89,7 +89,7 @@ describe("convention-asset auto-detect → dispatch", () => {
 		// The convention asset lives in the same (main) schema; the lookup auto-detects address_convention
 		// and queries it by the DE country WOF id (90). Dropping postcode_area_resolution means the typo
 		// no longer recovers Plauen — proof the asset drives findPlace with no opts.conventions injection.
-		const lookup = new WOFSqlitePlaceLookup({
+		const lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
 			buildFTS: true,
 		})
@@ -102,7 +102,7 @@ describe("convention-asset auto-detect → dispatch", () => {
 	it("warns loudly (once) on a convention that names an unknown strategy, then continues", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 
-		const lookup = new WOFSqlitePlaceLookup({
+		const lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([
 				{ wof_id: 90, convention: { candidateStrategies: ["does_not_exist", "fallback_fuzzy_name_match"] } },
 			]),

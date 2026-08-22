@@ -14,7 +14,7 @@
  *   {@link normalizeLocalityForKey} (build- and query-consistent), each row is denormalized (display
  *   `name`, centroid, bbox), and population rank is precomputed into `neg_rank` — so the result is
  *   POPULATION-FIRST and COUNTRY-AGNOSTIC (when no `country` filter is given), exactly like the
- *   demo. That's the deliberate divergence from {@link WOFSqlitePlaceLookup}'s FTS/bm25 ranking: a
+ *   demo. That's the deliberate divergence from {@link WOFSQLitePlaceLookup}'s FTS/bm25 ranking: a
  *   bare "Moscow" resolves to the 10.4 M-pop Russian city, not whichever same-name US township bm25
  *   floats to the top.
  *
@@ -147,7 +147,7 @@ function ftsTrigramQuery(s: string): string {
 }
 
 /**
- * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSqlitePlaceLookup} in `createWOFResolver(backend)`
+ * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSQLitePlaceLookup} in `createWOFResolver(backend)`
  * — same `findPlace` contract, population-first ranking.
  */
 export class WOFCandidateTableLookup implements PlaceLookup {

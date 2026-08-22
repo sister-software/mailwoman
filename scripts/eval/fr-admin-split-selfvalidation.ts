@@ -161,8 +161,8 @@ const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 db.close()
 
 // --- resolver (production path) ------------------------------------------------------------------
-const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-const backend = new WOFSqlitePlaceLookup({ databasePath: DB })
+const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+const backend = new WOFSQLitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend)
 const resolveOpts = { defaultCountry: "FR" }
 

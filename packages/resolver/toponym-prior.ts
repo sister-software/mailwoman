@@ -100,7 +100,7 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 
 	for (const c of candidates) {
 		// `exactMatch` is TRI-STATE: true / false / undefined (a backend path that stamps no flag —
-		// e.g. WOFSqlitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID). Only a
+		// e.g. WOFSQLitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID). Only a
 		// stated TRUE earns the exact tier; undefined must not outrank a real fuzzy name match
 		// (the 2026-08-10 de.native_locality incident: 75 Saxon towns lost to nameless neighbours).
 		;(c.exactMatch === true ? exact : rest).push(c)

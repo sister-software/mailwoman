@@ -30,7 +30,7 @@ import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
-import { WOFCandidateTableLookup, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
 import { conventionCandidateDBPath } from "../resolver-backend.ts"
 
@@ -61,7 +61,7 @@ const candidatePath = conventionCandidateDBPath()
 const backend: ResolverBackend =
 	backendName === "candidate"
 		? new WOFCandidateTableLookup({ databasePath: candidatePath })
-		: new WOFSqlitePlaceLookup({ databasePath: wofShardPaths().filter(existsSync) })
+		: new WOFSQLitePlaceLookup({ databasePath: wofShardPaths().filter(existsSync) })
 
 //#region 1. Row counts
 

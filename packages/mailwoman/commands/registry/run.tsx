@@ -235,7 +235,7 @@ export interface EvalGeocoderFlags {
 
 /**
  * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take. This is the eval
- * scripts' historical construction, preserved exactly: a plain `WOFSqlitePlaceLookup` over an explicit WOF path (NOT
+ * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (NOT
  * the candidate-table backend {@link buildGeocoder} uses), `defaultCountry: "US"`, `placeCountry: false`, and
  * `postcodeRepair: true` at the parse — so migrated evals reproduce the retired scripts' numbers. Shared by the
  * `registry train-scorer` and `registry scorer-eval` commands.
@@ -260,7 +260,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		})
 
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: wof })
+		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
 		const shardProvider = new ShardProvider(mod, dataRoot)
 

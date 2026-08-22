@@ -32,7 +32,7 @@ export class SqliteConventionSource implements ConventionSource {
 	/**
 	 * @param db An open handle to a DB that has the convention asset attached (or is it).
 	 * @param schema The schema name the `address_convention` table lives under (`main` or an ATTACHed shard name —
-	 *   `WOFSqlitePlaceLookup` auto-detects which shard carries the table).
+	 *   `WOFSQLitePlaceLookup` auto-detects which shard carries the table).
 	 */
 	constructor(db: DatabaseSync, schema: string) {
 		this.#db = db

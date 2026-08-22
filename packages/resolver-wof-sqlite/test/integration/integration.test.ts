@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Integration tests for `WOFSqlitePlaceLookup` against a real Who's On First SQLite distribution.
+ *   Integration tests for `WOFSQLitePlaceLookup` against a real Who's On First SQLite distribution.
  *
  *   These are gated on the WOF DB being present on disk — the suite SKIPS (with a clear stderr
  *   message) if the path doesn't exist. CI runs against the fixture-only suites; operators with the
@@ -23,7 +23,7 @@ import { existsSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
@@ -34,11 +34,11 @@ const hasWOFDB = existsSync(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)
 
-describeIfWOF(`WOFSqlitePlaceLookup integration against ${wofPath}`, () => {
-	let lookup: WOFSqlitePlaceLookup
+describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
+	let lookup: WOFSQLitePlaceLookup
 
 	beforeAll(() => {
-		lookup = new WOFSqlitePlaceLookup({ databasePath: wofPath })
+		lookup = new WOFSQLitePlaceLookup({ databasePath: wofPath })
 	})
 
 	afterAll(() => {

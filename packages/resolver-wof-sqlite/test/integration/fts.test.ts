@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the FTS5 build helpers used by both `WOFSqlitePlaceLookup` and the
+ *   Tests for the FTS5 build helpers used by both `WOFSQLitePlaceLookup` and the
  *   `mailwoman gazetteer build fts` CLI.
  */
 

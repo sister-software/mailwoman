@@ -164,7 +164,7 @@ mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.s
 mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ```
 
-Programmatically, build a `WOFSqlitePlaceLookup` backend (from
+Programmatically, build a `WOFSQLitePlaceLookup` backend (from
 `@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
 and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
 `result.tree` roots then carry a `wof:id` and coordinate. See

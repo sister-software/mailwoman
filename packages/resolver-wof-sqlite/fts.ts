@@ -5,7 +5,7 @@
  *
  *   FTS5 index lifecycle for the WOF SQLite distribution.
  *
- *   Shared by `WOFSqlitePlaceLookup` (lazy build via `buildFTS: true`) and the operator-side
+ *   Shared by `WOFSQLitePlaceLookup` (lazy build via `buildFTS: true`) and the operator-side
  *   `mailwoman gazetteer build fts` CLI (ahead-of-time build to avoid first-open latency in production).
  *
  *   Upstream WOF SQLite distributions do NOT ship FTS5. The index lives in a `place_search` virtual
@@ -17,7 +17,7 @@
 import type { DatabaseSync } from "node:sqlite"
 
 /**
- * Name of the FTS5 virtual table this module owns. Centralized so `WOFSqlitePlaceLookup` and the CLI can't drift apart.
+ * Name of the FTS5 virtual table this module owns. Centralized so `WOFSQLitePlaceLookup` and the CLI can't drift apart.
  */
 export const PLACE_SEARCH_TABLE = "place_search"
 
@@ -326,7 +326,7 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
 }
 
 /**
- * Returns true iff the `place_search` table exists in the connected DB. Used by `WOFSqlitePlaceLookup` for its "FTS
+ * Returns true iff the `place_search` table exists in the connected DB. Used by `WOFSQLitePlaceLookup` for its "FTS
  * missing — pass buildFTS:true or run the CLI" guard.
  */
 export function placeSearchFTSExists(db: DatabaseSync): boolean {

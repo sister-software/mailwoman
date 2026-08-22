@@ -6,7 +6,7 @@
  *   Shared resolver-backend selector for the CLI commands + server routers. Picks the byte-range
  *   CANDIDATE-table lookup ({@link WOFCandidateTableLookup}) — the SAME backend + population-first,
  *   country-agnostic ranking the browser demo uses — when a `candidate.db` is reachable, else the
- *   FTS admin lookup ({@link WOFSqlitePlaceLookup}).
+ *   FTS admin lookup ({@link WOFSQLitePlaceLookup}).
  *
  *   Why this exists: the demo resolves localities population-first ("Moscow" → the 10.4 M-pop Russian
  *   city), but the FTS resolver ranks by bm25 + exact-match tiering, so a bare homonym goes to
@@ -28,7 +28,7 @@ import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
 	WOFPostalCityAliasLookup,
-	WOFSqlitePlaceLookup,
+	WOFSQLitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
 import { resolvePath } from "path-ts"
 
@@ -132,7 +132,7 @@ export function buildNoGazetteerMessage(opts: { dataRoot: string; docsPath: stri
  * The lookup constructors this selector needs — a structural subset of `@mailwoman/resolver-wof-sqlite`.
  */
 interface ResolverLookupModule {
-	WOFSqlitePlaceLookup: typeof WOFSqlitePlaceLookup
+	WOFSQLitePlaceLookup: typeof WOFSQLitePlaceLookup
 	WOFCandidateTableLookup: typeof WOFCandidateTableLookup
 	WOFPostalCityAliasLookup: typeof WOFPostalCityAliasLookup
 }
@@ -163,7 +163,7 @@ export function createResolverBackend(
 		console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
 	}
 
-	return new mod.WOFSqlitePlaceLookup({
+	return new mod.WOFSQLitePlaceLookup({
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,
 		postalCityAliases,
 	})

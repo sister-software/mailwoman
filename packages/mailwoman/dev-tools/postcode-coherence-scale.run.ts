@@ -46,7 +46,7 @@ import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { wofShardPaths } from "@mailwoman/core/utils"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
-import { WOFCandidateTableLookup, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"
 
 import { conventionCandidateDBPath } from "../resolver-backend.ts"
@@ -137,7 +137,7 @@ function makeBackend(): ResolverBackend {
 
 	console.error(`[probe] FTS backend over ${paths.length} shards: ${paths.join(", ")}`)
 
-	return new WOFSqlitePlaceLookup({ databasePath: paths })
+	return new WOFSQLitePlaceLookup({ databasePath: paths })
 }
 
 const backend = makeBackend()

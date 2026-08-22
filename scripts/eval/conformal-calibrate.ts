@@ -229,10 +229,10 @@ async function buildCascade(paths: {
 
 	const neural = new NeuralAddressClassifier({ tokenizer, runner, labels: modelCard.labels })
 
-	const { WOFSqlitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
+	const { WOFSQLitePlaceLookup, AddressPointSqliteLookup, StreetInterpolator } =
 		await import("@mailwoman/resolver-wof-sqlite")
 
-	const backend = new WOFSqlitePlaceLookup({
+	const backend = new WOFSQLitePlaceLookup({
 		databasePath: paths.wofPaths.length === 1 ? paths.wofPaths[0]! : paths.wofPaths,
 	})
 

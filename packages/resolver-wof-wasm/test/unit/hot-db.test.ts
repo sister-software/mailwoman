@@ -27,7 +27,7 @@ import { readFile } from "node:fs/promises"
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
@@ -129,7 +129,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 	describe("Node lookup (resolver-wof-sqlite) — parity on the same DB", () => {
 		test('"Brooklyn" locality query → the borough (placetype expansion + alias-bag exact tier)', async () => {
-			const lookup = new WOFSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			const lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
 			try {
 				const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
@@ -141,7 +141,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 		})
 
 		test('"New York City" → the New York locality via the alias bag (no names table on the slim DB)', async () => {
-			const lookup = new WOFSqlitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			const lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
 			try {
 				const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })

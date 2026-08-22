@@ -61,9 +61,9 @@ Otherwise an area-grade postcode ranks **below the whole locality tier**, `{loca
 
 If you change this table, change it against the Node ladder. The two sides agreed on constants for a whole release once while the formula underneath them diverged.
 
-## Why not extend `WOFSqlitePlaceLookup`?
+## Why not extend `WOFSQLitePlaceLookup`?
 
-`WOFSqlitePlaceLookup` is hard-bound to `node:sqlite` (the Node 22+ built-in). Subclassing across the Node/WASM line means dragging Node-only types into a browser package. We chose composition over inheritance: both classes implement the same `PlaceLookup` interface and (v0.2.0+) call the same shared query builder, but stay independently importable.
+`WOFSQLitePlaceLookup` is hard-bound to `node:sqlite` (the Node 22+ built-in). Subclassing across the Node/WASM line means dragging Node-only types into a browser package. We chose composition over inheritance: both classes implement the same `PlaceLookup` interface and (v0.2.0+) call the same shared query builder, but stay independently importable.
 
 ## License
 

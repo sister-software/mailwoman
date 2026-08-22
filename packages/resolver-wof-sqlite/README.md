@@ -15,9 +15,9 @@ Requires Node 22+ for built-in `node:sqlite`.
 ## Quick start
 
 ```ts
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const lookup = new WOFSqlitePlaceLookup({
+const lookup = new WOFSQLitePlaceLookup({
 	databasePath: "/path/to/whosonfirst-data-admin-us-latest.db",
 	buildFTS: true, // build the FTS5 index on first open (one-time cost)
 })
@@ -45,7 +45,7 @@ Shards are `ATTACH`ed by a schema name **derived from the filename**, and querie
 The predicate is the **table, not the filename**: a shard carrying `spr` is claiming to be a place shard, and every lookup path here reaches the FTS index. A relation-table shard like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default shard list working.
 
 ```
-WOFSqlitePlaceLookup: …/postcode-ca-overture.db carries "spr" but no "place_search" table, so it
+WOFSQLitePlaceLookup: …/postcode-ca-overture.db carries "spr" but no "place_search" table, so it
 cannot serve a lookup. Build it with the FTS index, or leave it out — it is usable as a BUILD input
 either way. Its schema name "postcode_ca_overture" also matches no routed placetype (postalcode,
 locality, region, county, country, venue), so it would never have been queried even with the table
@@ -63,7 +63,7 @@ separate SQLite schema via `ATTACH DATABASE`. Schema names auto-derive from file
 `postalcode_us` shard automatically, everything else hits main.
 
 ```ts
-const lookup = new WOFSqlitePlaceLookup({
+const lookup = new WOFSQLitePlaceLookup({
 	databasePath: ["/data/wof/whosonfirst-data-admin-us-latest.db", "/data/wof/whosonfirst-data-postalcode-us-latest.db"],
 })
 
@@ -74,7 +74,7 @@ await lookup.findPlace({ text: "62701", placetype: "postalcode" }) // → postco
 Override schema names or routing explicitly when needed:
 
 ```ts
-new WOFSqlitePlaceLookup({
+new WOFSQLitePlaceLookup({
 	databasePath: ["/data/wof/admin.db", { path: "/data/oddly-named.db", schemaName: "pc", placetypes: ["postalcode"] }],
 })
 ```
@@ -162,7 +162,7 @@ What survives in the slim DB:
 
 What gets dropped: the `geojson` table, which is build-time only — `lookup.ts` never reads it at query time, and it accounts for ~95% of the on-disk size. The `place_population` aux table consumes `wof:population` from geojson before we drop it.
 
-`WOFSqlitePlaceLookup` opens the slim DB without any code change. Out-of-set queries (a locality not in the top-K) correctly return zero hits.
+`WOFSQLitePlaceLookup` opens the slim DB without any code change. Out-of-set queries (a locality not in the top-K) correctly return zero hits.
 
 You can also build the index programmatically via the package's `./fts` subpath:
 
@@ -228,7 +228,7 @@ R*Tree because it computes haversine distance against the centroid columns direc
 All weights are configurable via the second ctor argument:
 
 ```ts
-new WOFSqlitePlaceLookup({ databasePath }, { countryMatchBoost: 0.5 })
+new WOFSQLitePlaceLookup({ databasePath }, { countryMatchBoost: 0.5 })
 ```
 
 Defaults are in `lookup.ts::DEFAULT_WEIGHTS`.
@@ -265,7 +265,7 @@ Coverage includes: placetype filtering, country filtering, the empty-result case
 
 ## Concurrency model
 
-This package opens a single `node:sqlite` connection per `WOFSqlitePlaceLookup` instance. SQLite is single-writer / many-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is fine (queries queue) but won't parallelize across cores.
+This package opens a single `node:sqlite` connection per `WOFSQLitePlaceLookup` instance. SQLite is single-writer / many-reader; the Kysely wrapper around the connection serializes all queries through a mutex. For high-concurrency HTTP servers, instantiate one resolver per request handler or per pool slot — sharing a single instance across concurrent requests is fine (queries queue) but won't parallelize across cores.
 
 ## License
 

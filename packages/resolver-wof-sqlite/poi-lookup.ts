@@ -142,7 +142,7 @@ type POIRow = Pick<
 /**
  * Node reader over `poi.db`. `implements Disposable` so callers can `using lookup = new POILookup(...)` (or call
  * `[Symbol.dispose]()` explicitly), the same precedent as {@link WOFCandidateTableLookup} /
- * {@link WOFSqlitePlaceLookup}.
+ * {@link WOFSQLitePlaceLookup}.
  */
 export class POILookup implements Disposable {
 	#db: DatabaseSync

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for `WOFSqlitePlaceLookup` against an in-memory fixture DB. The fixture mimics the shape of
+ *   Tests for `WOFSQLitePlaceLookup` against an in-memory fixture DB. The fixture mimics the shape of
  *   a real WOF SQLite distribution but with ~10 hand-picked places — enough to exercise the FTS,
  *   placetype + country + parent filters, and ranking heuristics. No checked-in binary.
  *
@@ -17,7 +17,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -300,18 +300,18 @@ function buildFixtureDB(path = ":memory:"): DatabaseSync {
 	return db
 }
 
-let lookup: WOFSqlitePlaceLookup
+let lookup: WOFSQLitePlaceLookup
 
 beforeEach(() => {
 	const db = buildFixtureDB()
-	lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+	lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 })
 
 afterEach(() => {
 	lookup.close()
 })
 
-describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
+describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	test('"Paris" with no country/parent filter returns both Paris,FR and Paris,US as localities', async () => {
 		// Without a popularity signal (real WOF has wof:population; v0.1 doesn't model it) the
 		// resolver has no reason to prefer one Paris over the other — both are valid candidates.
@@ -413,10 +413,10 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		// FTS `alt_names` token bag. #exactMatchIds must fall back to it so "Brooklyn" still tiers the
 		// exact-named borough above the fuzzy "Brooklyn Park" against a hot/slim DB.
 		const db = buildFixtureDB()
-		const withFTS = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		withFTS.close() // releases nothing we need — the FTS table now exists on `db`, which we own
 		db.exec(`DROP TABLE names`)
-		const lookup2 = new WOFSqlitePlaceLookup({ database: db })
+		const lookup2 = new WOFSQLitePlaceLookup({ database: db })
 
 		try {
 			const candidates = await lookup2.findPlace({ text: "Brooklyn", placetype: "locality" })
@@ -433,10 +433,10 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		// the exact tier must NOT promote it. Pre-#523 the bag was space-joined and the padded
 		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
 		const db = buildFixtureDB()
-		const withFTS = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		withFTS.close()
 		db.exec(`DROP TABLE names`)
-		const lookup2 = new WOFSqlitePlaceLookup({ database: db })
+		const lookup2 = new WOFSQLitePlaceLookup({ database: db })
 
 		try {
 			const straddle = await lookup2.findPlace({ text: "York New", placetype: "locality" })
@@ -454,7 +454,7 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 		const db = buildFixtureDB()
 
 		{
-			using disposable = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+			using disposable = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 			const cands = await disposable.findPlace({ text: "Paris" })
 			expect(cands.length).toBeGreaterThan(0)
 		}
@@ -466,19 +466,19 @@ describe("WOFSqlitePlaceLookup against an inline WOF fixture", () => {
 	})
 })
 
-describe("WOFSqlitePlaceLookup ctor", () => {
+describe("WOFSQLitePlaceLookup ctor", () => {
 	test("requires exactly one of database / databasePath", () => {
-		expect(() => new WOFSqlitePlaceLookup({})).toThrow(/one of/)
+		expect(() => new WOFSQLitePlaceLookup({})).toThrow(/one of/)
 
 		expect(
-			() => new WOFSqlitePlaceLookup({ database: new DatabaseSync(":memory:"), databasePath: "/tmp/x.db" })
+			() => new WOFSQLitePlaceLookup({ database: new DatabaseSync(":memory:"), databasePath: "/tmp/x.db" })
 		).toThrow(/not both/)
 	})
 
 	test("errors loudly when FTS table is missing and buildFTS is false", () => {
 		const db = new DatabaseSync(":memory:")
 		db.exec(`CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT);`)
-		expect(() => new WOFSqlitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
+		expect(() => new WOFSQLitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
 		db.close()
 	})
 
@@ -494,18 +494,18 @@ describe("WOFSqlitePlaceLookup ctor", () => {
 		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped shard.
 		{
 			const disk = buildFixtureDB(dbPath)
-			const builder = new WOFSqlitePlaceLookup({ database: disk, buildFTS: true })
+			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
 			builder.close() // #ownsDB is false for a passed-in handle, so `disk` stays open; FTS is now persisted.
 			disk.close()
 		}
 		chmodSync(dbPath, 0o444)
 
-		let ro: WOFSqlitePlaceLookup | undefined
+		let ro: WOFSQLitePlaceLookup | undefined
 
 		try {
 			// The real code path: databasePath → `new DatabaseSync(path, { readOnly: !opts.buildFTS })`.
 			// With buildFTS omitted this opens the 0444 file read-only; a write-mode open would throw here.
-			ro = new WOFSqlitePlaceLookup({ databasePath: dbPath })
+			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 			const candidates = await ro.findPlace({ text: "Paris", country: "US" })
 			expect(candidates.length).toBeGreaterThan(0)
 			expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })

@@ -29,7 +29,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { referentialFromPopulation } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -140,10 +140,10 @@ function buildFixtureDB(
 	return db
 }
 
-const open = (places: readonly FixturePlace[], withEncyclopedic: boolean): WOFSqlitePlaceLookup =>
-	new WOFSqlitePlaceLookup({ database: buildFixtureDB(places, { withEncyclopedic }), buildFTS: true })
+const open = (places: readonly FixturePlace[], withEncyclopedic: boolean): WOFSQLitePlaceLookup =>
+	new WOFSQLitePlaceLookup({ database: buildFixtureDB(places, { withEncyclopedic }), buildFTS: true })
 
-let lookup: WOFSqlitePlaceLookup | undefined
+let lookup: WOFSQLitePlaceLookup | undefined
 
 afterEach(() => {
 	lookup?.close()

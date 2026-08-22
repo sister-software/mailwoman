@@ -60,8 +60,8 @@ const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.childr
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
-	const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WOFSqlitePlaceLookup({ databasePath: WOF })
+	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
+	const lookup = new WOFSQLitePlaceLookup({ databasePath: WOF })
 	const resolver = createWOFResolver(lookup)
 
 	const model = await createScorer({

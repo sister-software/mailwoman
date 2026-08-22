@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-shard ATTACH tests for `WOFSqlitePlaceLookup`.
+ *   Multi-shard ATTACH tests for `WOFSQLitePlaceLookup`.
  *
  *   Uses on-disk fixture DBs because ATTACH requires file paths. Tests run unconditionally (the
  *   fixture DBs are built in-test via the same shape the real WOF distribution uses), so this
@@ -16,7 +16,7 @@ import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string
@@ -71,11 +71,11 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
+describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	test("opens a single shard via string path (backwards compatible)", async () => {
 		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
 		buildAdminShard(adminPath)
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: adminPath })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: adminPath })
 
 		try {
 			const r = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
@@ -92,7 +92,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
 		try {
 			// Locality query → admin shard
@@ -117,7 +117,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(oddlyNamed)
 
-		const lookup = new WOFSqlitePlaceLookup({
+		const lookup = new WOFSQLitePlaceLookup({
 			databasePath: [adminPath, { path: oddlyNamed, schemaName: "pc", placetypes: ["postalcode"] }],
 		})
 
@@ -138,7 +138,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
 		try {
 			// "62701" near Illinois coords with a 10km hard filter — only 62701 and 62702 in fixture
@@ -163,7 +163,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
 		try {
 			// No placetype → main only. "62701" won't match (it's in postcode shard); Springfield will.
@@ -180,7 +180,7 @@ describe("WOFSqlitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		// Only admin shard — no postcode shard. A postalcode query falls back to main, returns
 		// nothing because admin has no postalcodes.
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: [adminPath] })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
 
 		try {
 			const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })

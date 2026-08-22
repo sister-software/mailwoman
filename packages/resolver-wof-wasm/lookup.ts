@@ -6,7 +6,7 @@
  *   `WOFWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
  *
  *   V1 scope: text + placetype + limit + country. The full ranking surface from
- *   `WOFSqlitePlaceLookup` (parentID descendant filter, near-proximity boost, bbox hard filter,
+ *   `WOFSQLitePlaceLookup` (parentID descendant filter, near-proximity boost, bbox hard filter,
  *   population-weighted ordering) is queued for v2 in the same PR series — see Phase B tracking
  *   issue #98. The v1 scope is the minimum that lets the public demo answer "type a US city /
  *   postcode, get a hit".
@@ -213,7 +213,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				// artifact, boundaries lost) it falls back to padded containment gated on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier
-				// (`WOFSqlitePlaceLookup.#exactMatchIds`).
+				// (`WOFSQLitePlaceLookup.#exactMatchIds`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 
@@ -238,7 +238,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
 				// Surface the exact-match tier so a downstream country re-rank (#369) can keep the country
-				// pin from crossing it — parity with `WOFSqlitePlaceLookup`. See ResolvedPlace.exactMatch.
+				// pin from crossing it — parity with `WOFSQLitePlaceLookup`. See ResolvedPlace.exactMatch.
 				exactMatch: exactTier === 0,
 				bbox:
 					row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
@@ -258,7 +258,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	/**
 	 * Dual-role localities coincident with an admin id, from the `coincident_roles` relation (#403) carried into the slim
 	 * DB by build-slim. Backs the resolver's hierarchy completion (on by default) in the browser — mirrors
-	 * `WOFSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
+	 * `WOFSQLitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
 	 * memoized (the relation is ~hundreds of rows).
 	 */
 	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {

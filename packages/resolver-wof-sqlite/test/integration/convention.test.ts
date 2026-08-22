@@ -9,7 +9,7 @@
  *        precedence over a country → region → locality ancestor chain (most-specific wins, weights
  *        merge key-by-key). This is the mechanism the EU locales never exercise (they ride
  *        WORLD_DEFAULT).
- *   2. Live dispatch — a `WOFSqlitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
+ *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
 import { DatabaseSync } from "node:sqlite"
@@ -21,7 +21,7 @@ import {
 	SeedConventionSource,
 	WORLD_DEFAULT,
 } from "@mailwoman/resolver-wof-sqlite/convention"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 describe("convention engine — merge + resolve", () => {
@@ -116,7 +116,7 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
-		const lookup = new WOFSqlitePlaceLookup({ database: db, buildFTS: true })
+		const lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		// "Plaun" won't FTS-match; postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
@@ -127,7 +127,7 @@ describe("convention engine — live dispatch", () => {
 		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from the
 		// strategy list means the typo no longer recovers Plauen — proof the merged convention controls
 		// findPlace dispatch through the live country → WOF-id → convention path.
-		const lookup = new WOFSqlitePlaceLookup({
+		const lookup = new WOFSQLitePlaceLookup({
 			database: db,
 			buildFTS: true,
 			conventions: { 90: { candidateStrategies: ["fallback_fuzzy_name_match"] } },

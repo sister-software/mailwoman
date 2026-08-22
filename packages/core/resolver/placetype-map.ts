@@ -31,7 +31,7 @@ export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
 	dependent_locality: "locality",
 	subregion: "county",
 	// `postcode` (mailwoman tag) maps to WOF's `postalcode` placetype. Resolves only when the
-	// backend has the postcode shard available — `WOFSqlitePlaceLookup` auto-routes `postalcode`
+	// backend has the postcode shard available — `WOFSQLitePlaceLookup` auto-routes `postalcode`
 	// queries to a `postalcode_us` (or similarly-named) shard, falling back to main if absent.
 	postcode: "postalcode",
 }

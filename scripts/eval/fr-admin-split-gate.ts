@@ -181,7 +181,7 @@ async function main() {
 		}>(goldenPath)
 	)
 
-	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
+	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
 		await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite"),
 			import("@mailwoman/neural/scorer"),
@@ -242,7 +242,7 @@ async function main() {
 	const officialNameExact = pins["official-name-exact"] === true
 
 	const resolver = createWOFResolver(
-		new WOFSqlitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
+		new WOFSQLitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
 	)
 
 	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")

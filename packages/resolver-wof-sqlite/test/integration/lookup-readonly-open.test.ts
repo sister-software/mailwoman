@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression guard for the OPEN MODE `WOFSqlitePlaceLookup` chooses on the `databasePath` branch: read-only by
+ *   Regression guard for the OPEN MODE `WOFSQLitePlaceLookup` chooses on the `databasePath` branch: read-only by
  *   default (every serve/query path), read-write ONLY when `buildFTS` is requested (the FTS5 index build — the sole
  *   writer). Shipped shards are sealed 0444 and Docker `:ro` mounts forbid write-mode opens (#1213).
  *
@@ -55,7 +55,7 @@ afterAll(() => vi.resetModules())
 // Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
 const { DatabaseSync } = await import("node:sqlite")
-const { WOFSqlitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
+const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
  * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.
@@ -92,7 +92,7 @@ function readOnlyForOpenOf(path: string): boolean | undefined {
 	return opens[0]!.readOnly
 }
 
-describe("WOFSqlitePlaceLookup open mode (databasePath branch)", () => {
+describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 	let dir: string
 	let dbPath: string
 
@@ -116,7 +116,7 @@ describe("WOFSqlitePlaceLookup open mode (databasePath branch)", () => {
 
 	test("buildFTS: true opens the main shard READ-WRITE (the FTS5 index build must write)", () => {
 		spy.opens.length = 0
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: dbPath, buildFTS: true })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })
 
 		try {
 			expect(readOnlyForOpenOf(dbPath)).toBe(false)
@@ -127,11 +127,11 @@ describe("WOFSqlitePlaceLookup open mode (databasePath branch)", () => {
 
 	test("buildFTS omitted opens the main shard READ-ONLY, even against a sealed 0444 file, and still queries", async () => {
 		// Build the FTS index first (read-write), then seal the file 0444 to mimic a shipped shard.
-		new WOFSqlitePlaceLookup({ databasePath: dbPath, buildFTS: true }).close()
+		new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true }).close()
 		chmodSync(dbPath, 0o444)
 
 		spy.opens.length = 0
-		const lookup = new WOFSqlitePlaceLookup({ databasePath: dbPath })
+		const lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 
 		try {
 			// The distinguishing signal: the construction chose readOnly:true (a write-mode open would fail on a
