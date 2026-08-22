@@ -10,7 +10,7 @@
  * Themed via --ifm-* CSS custom properties.
  */
 
-/* ── Shared container ──────────────────────────────────────────────────── */
+/* #region Shared container */
 
 .container {
 	display: flex;
@@ -28,7 +28,9 @@
 	text-align: center;
 }
 
-/* ── Pulse (skeleton bars) ────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Pulse (skeleton bars) */
 
 .pulseTrack {
 	display: flex;
@@ -80,7 +82,9 @@
 	}
 }
 
-/* ── Spinner (CSS ring) ───────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Spinner (CSS ring) */
 
 .spinner {
 	width: 2rem;
@@ -109,7 +113,9 @@
 	border-width: 4px;
 }
 
-/* ── Staged progress ──────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Staged progress */
 
 .stagedList {
 	display: flex;
@@ -227,3 +233,5 @@
 	border-radius: 50%;
 	animation: spin 0.7s linear infinite;
 }
+
+/* #endregion */

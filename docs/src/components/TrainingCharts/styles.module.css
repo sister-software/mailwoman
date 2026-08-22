@@ -9,7 +9,7 @@
  *   and auto-poll with countdown timer.
  */
 
-/* ── Container ─────────────────────────────────────────────────────────── */
+/* #region Container */
 
 .container {
 	background: var(--ifm-background-surface-color);
@@ -26,7 +26,9 @@
 	font-weight: 600;
 }
 
-/* ── Controls bar ──────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Controls bar  */
 
 .controls {
 	display: flex;
@@ -59,7 +61,9 @@
 	min-width: 200px;
 }
 
-/* ── Metric checkboxes ─────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Metric checkboxes */
 
 .metricCheckboxes {
 	display: flex;
@@ -101,7 +105,9 @@
 	color: var(--ifm-color-primary-contrast-foreground);
 }
 
-/* ── Poll indicator ────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Poll indicator */
 
 .pollBar {
 	display: flex;
@@ -136,7 +142,9 @@
 	}
 }
 
-/* ── Status messages ───────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Status messages */
 
 .status {
 	text-align: center;
@@ -152,7 +160,9 @@
 	font-size: 0.82rem;
 }
 
-/* ── Chart area ────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Chart area */
 
 .chartWrapper {
 	position: relative;
@@ -167,7 +177,9 @@
 	font-family: var(--ifm-font-family-base);
 }
 
-/* ── Tooltip ───────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Tooltip */
 
 .tooltip {
 	position: absolute;
@@ -209,7 +221,9 @@
 	font-weight: 600;
 }
 
-/* ── Legend ────────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Legend */
 
 .legend {
 	display: flex;
