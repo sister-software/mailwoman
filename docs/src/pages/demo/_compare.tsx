@@ -104,7 +104,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 						: "unknown"
 				)
 
-				setClassifier(cls as unknown as MailwomanClassifierLike)
+				setClassifier(cls as MailwomanClassifierLike)
 			} catch (caught) {
 				if (cancelled) return
 				setError(caught instanceof Error ? caught.message : String(caught))
@@ -151,7 +151,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 				const cPipelineResult = await runPipeline(primaryInput, {
 					computeQueryShape,
 					groupPhrases,
-					classifier: cls as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+					classifier: cls as Parameters<typeof runPipeline>[1]["classifier"],
 				})
 
 				const cClassifyTime = performance.now() - cStart - cShapeTime
@@ -193,7 +193,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 			{error ? <p className="mw-error">{error}</p> : null}
 			{compareResult && primary ? (
 				<VersionCompare
-					primary={primary as unknown as DemoResult}
+					primary={primary as DemoResult}
 					compare={compareResult}
 					primaryVersion={primaryVersion}
 					compareVersion={compareVersion ?? "?"}

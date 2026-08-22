@@ -60,7 +60,7 @@ export function treeToProposals(
 
 	const visit = (node: AddressNode): void => {
 		if (!emits || emits.has(node.tag)) {
-			const span = { start: node.start, end: node.end, body: node.value } as unknown as Span
+			const span = { start: node.start, end: node.end, body: node.value } as Span
 
 			proposals.push({
 				span,

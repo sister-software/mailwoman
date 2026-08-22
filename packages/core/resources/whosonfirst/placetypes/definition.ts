@@ -119,14 +119,15 @@ export type PlacetypeDefinitionInit = {
 export function normalizePlacetypeDefinition(
 	initLike: PlacetypeDefinition | PlacetypeDefinitionInit
 ): PlacetypeDefinition {
-	const spec: Record<string, unknown> = {}
+	const spec = {} as PlacetypeDefinition
 
 	for (const [key, value] of Object.entries(initLike)) {
 		const normalizedKey = key.startsWith(WOFPrefix) ? key.slice(WOFPrefix.length) : key
-		spec[normalizedKey] = value
+
+		Reflect.set(spec, normalizedKey, value)
 	}
 
-	return spec as unknown as PlacetypeDefinition
+	return spec
 }
 
 /**

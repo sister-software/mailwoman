@@ -215,7 +215,7 @@ export function useDemoMapRuntime({
 				if (cancelled) return
 				const composer = new StyleSpecificationComposer({ sources: { [MailwomanBaseTileSetID]: basemapSource } })
 
-				setMapStyle(composer.toJSON() as unknown as DemoMapStyle)
+				setMapStyle(composer.toJSON())
 			})
 			.catch((error) => {
 				console.error("Failed to compose basemap style", error)
@@ -522,7 +522,7 @@ export function useDemoMapRuntime({
 		try {
 			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
 
-			const res = fstAutocomplete(fst as unknown as Parameters<typeof fstAutocomplete>[0], query, {
+			const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
 				maxSuggestions: 6,
 				dedupeByName: true,
 			})

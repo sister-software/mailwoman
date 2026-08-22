@@ -24,7 +24,7 @@
 
 import { parseArgs } from "node:util"
 
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
 // CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
 // that must not drift, so this repo-local diagnostic imports the module directly (same posture as
@@ -55,19 +55,19 @@ console.log(`localitySurface   ${resolved.localitySurfaceLexiconPath ?? "(none)"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
 // The channel sources are private config; reach them the way `#decode` does.
-const cfg = (classifier as unknown as { cfg: Record<string, unknown> }).cfg
+const cfg = (classifier as unknown as { cfg: NeuralAddressClassifierConfig }).cfg
 
 const normalizeCase = values["normalize-case"] !== "false"
 const text = normalizeCase ? normalizeInputCase(values.text!) : values.text!
-const pieces = (cfg.tokenizer as { encode: (t: string) => { pieces: never[] } }).encode(text).pieces
+const pieces = cfg.tokenizer.encode(text).pieces
 
 const channels = buildSoftFeatures(text, pieces, {
-	...(cfg.postcodeAnchorLookup ? { postcodeAnchorLookup: cfg.postcodeAnchorLookup as never } : {}),
-	...(cfg.postcodeAnchorSpanMode ? { postcodeAnchorSpanMode: cfg.postcodeAnchorSpanMode as never } : {}),
-	...(cfg.gazetteerLexicon ? { gazetteerLexicon: cfg.gazetteerLexicon as never } : {}),
-	...(cfg.countryLexicon ? { countryLexicon: cfg.countryLexicon as never } : {}),
-	...(cfg.streetTypeLexicon ? { streetTypeLexicon: cfg.streetTypeLexicon as never } : {}),
-	...(cfg.localitySurfaceLexicon ? { localitySurfaceLexicon: cfg.localitySurfaceLexicon as never } : {}),
+	...(cfg.postcodeAnchorLookup ? { postcodeAnchorLookup: cfg.postcodeAnchorLookup } : {}),
+	...(cfg.postcodeAnchorSpanMode ? { postcodeAnchorSpanMode: cfg.postcodeAnchorSpanMode } : {}),
+	...(cfg.gazetteerLexicon ? { gazetteerLexicon: cfg.gazetteerLexicon } : {}),
+	...(cfg.countryLexicon ? { countryLexicon: cfg.countryLexicon } : {}),
+	...(cfg.streetTypeLexicon ? { streetTypeLexicon: cfg.streetTypeLexicon } : {}),
+	...(cfg.localitySurfaceLexicon ? { localitySurfaceLexicon: cfg.localitySurfaceLexicon } : {}),
 	...(cfg.suppressGazetteerNearPostcode ? { suppressGazetteerNearPostcode: true } : {}),
 })
 

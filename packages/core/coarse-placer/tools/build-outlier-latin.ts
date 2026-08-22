@@ -85,7 +85,7 @@ const HELDOUT_COUNTRIES = ["CA", "LI"]
  * Address_levels arrives as a list (node-api) or its string repr; pull the value strings out.
  */
 function levelValues(al: unknown): string[] {
-	if (Array.isArray(al)) return al.map((x) => (x && x.value ? String(x.value) : "")).filter(Boolean)
+	if (Array.isArray(al)) return al.flatMap((x) => (x && x.value ? [String(x.value)] : []))
 	const s = String(al ?? "")
 	const out: string[] = []
 
@@ -103,6 +103,12 @@ function levelValues(al: unknown): string[] {
 }
 
 /**
+ * Address parts are joined positionally; an absent field arrives as the empty string and must not become a stray
+ * separator.
+ */
+const nonEmpty = (part: string): boolean => part.length > 0
+
+/**
  * Assemble a plausible address string from an Overture address row. Deterministic variant by hash.
  */
 function assemble(r: Record<string, unknown>): string | null {
@@ -113,17 +119,17 @@ function assemble(r: Record<string, unknown>): string | null {
 	const locality = (r.postal_city ? String(r.postal_city) : "") || levels.at(-1) || levels[0] || ""
 
 	if (!street && !locality) return null // nothing distinctive
-	const head = [num, street].filter(Boolean).join(" ")
-	const tail = [pc, locality].filter(Boolean).join(" ")
+	const head = [num, street].filter(nonEmpty).join(" ")
+	const tail = [pc, locality].filter(nonEmpty).join(" ")
 	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
 
 	switch (h % 3) {
 		case 0:
-			return [head, tail].filter(Boolean).join(", ")
+			return [head, tail].filter(nonEmpty).join(", ")
 		case 1:
-			return [head, locality, pc].filter(Boolean).join(", ").trim()
+			return [head, locality, pc].filter(nonEmpty).join(", ").trim()
 		default:
-			return [head, [locality, pc].filter(Boolean).join(" ")].filter(Boolean).join(", ")
+			return [head, [locality, pc].filter(nonEmpty).join(" ")].filter(nonEmpty).join(", ")
 	}
 }
 

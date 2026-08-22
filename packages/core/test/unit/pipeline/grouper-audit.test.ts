@@ -6,27 +6,22 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import { grouperAudit, runPipeline } from "@mailwoman/core/pipeline/runtime-pipeline"
-import type {
-	NormalizedInputLite,
-	PhraseProposal,
-	QueryShapeLite,
-	RuntimePipelineStages,
-} from "@mailwoman/core/pipeline/types"
+import type { PhraseProposal, RuntimePipelineStages } from "@mailwoman/core/pipeline/types"
 import { describe, expect, it } from "vitest"
 
 import { Span } from "#tokenization"
 
 function makeStages(overrides: Partial<RuntimePipelineStages> = {}): RuntimePipelineStages {
 	return {
-		normalize: (raw) => ({ normalized: raw, originalToNormalized: (i: number) => i }) as unknown as NormalizedInputLite,
+		normalize: (raw) => ({ raw, normalized: raw }),
 		computeQueryShape: (input) => {
 			// The stage contract accepts a bare string as well as a normalized input.
 			const normalized = typeof input === "string" ? input : input.normalized
 
 			return {
 				knownFormats: [],
-				segments: [{ body: normalized, span: { start: 0, end: normalized.length } }],
-			} as unknown as QueryShapeLite
+				segments: [{ body: normalized, index: 0 }],
+			}
 		},
 		...overrides,
 	}

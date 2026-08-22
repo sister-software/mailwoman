@@ -238,7 +238,7 @@ async function buildCascade(paths: {
 
 	return {
 		neural,
-		resolver: createWOFResolver(backend as never),
+		resolver: createWOFResolver(backend),
 		addressPoints: new AddressPointSqliteLookup(paths.addressPointsDB),
 		interpolation: new StreetInterpolator({ dbPath: paths.interpolationDB }),
 	}

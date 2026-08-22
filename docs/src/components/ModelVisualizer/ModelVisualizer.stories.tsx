@@ -22,7 +22,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const WhiteHouse: Story = {
-	args: { trace: fixture as unknown as ParseTraceLike },
+	args: { trace: fixture as ParseTraceLike },
 }
 
 export const EmptyInput: Story = {
