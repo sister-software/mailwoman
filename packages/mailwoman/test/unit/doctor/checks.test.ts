@@ -8,13 +8,13 @@
  *   exit-code discipline are covered here without standing up a data root.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import {
 	assembleReport,
 	checkPOI,
 	CheckStatus,
 	computeExitCode,
 	dataRootCheck,
-	formatBytes,
 	gazetteerCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
@@ -46,18 +46,6 @@ describe("version parsing + floor comparison", () => {
 		expect(versionMeetsFloor("24.17.9", ">=24.18.0")).toBe(false)
 		expect(versionMeetsFloor("23.99.99", ">=24.18.0")).toBe(false)
 		expect(versionMeetsFloor("24.18.0", ">=24.18.5")).toBe(false)
-	})
-})
-
-describe("formatBytes", () => {
-	it("scales to B / KB / MB / GB", () => {
-		expect(formatBytes(0)).toBe("0 B")
-		expect(formatBytes(512)).toBe("512 B")
-		expect(formatBytes(64_000)).toBe("64 KB")
-		expect(formatBytes(35_800_000)).toBe("35.8 MB")
-		// The data bundles live here: candidate.db, poi.db, and the 41 GB US street tier.
-		expect(formatBytes(1_652_916_224)).toBe("1.7 GB")
-		expect(formatBytes(41_261_826_048)).toBe("41.3 GB")
 	})
 })
 
@@ -147,8 +135,8 @@ describe("gazetteerCheck (optional)", () => {
 
 		expect(c.status).toBe(CheckStatus.OK)
 		expect(c.detail).toContain("candidate.db")
-		// 1.4e9 bytes reads as GB, not "1400.0 MB" — see formatBytes' GB tier.
-		expect(c.detail).toContain("1.4 GB")
+		// That the size is rendered at all, not how: a literal would pin the runner's locale rather than this check.
+		expect(c.detail).toContain(ByteFormatter.formatSI(1_400_000_000))
 	})
 
 	it("ok on a discovered WOF shard", () => {

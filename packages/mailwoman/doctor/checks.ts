@@ -6,7 +6,7 @@
  *   Pure decision logic for `mailwoman doctor` — the out-of-box diagnostic. Each `*Check` function
  *   takes a plain OBSERVATION object (facts already gathered from the filesystem/runtime by
  *   {@link ../doctor/runner.ts}) and returns a {@link DoctorCheck}. Keeping the verdict logic pure —
- *   no `fs`, no `import`, no env — is what makes it unit-testable without rendering Ink or standing up
+ *   no IO, no env — is what makes it unit-testable without rendering Ink or standing up
  *   a data root: the runner injects the IO seams, this module owns only the ok/missing/degraded call.
  *
  *   Meaning-of-zero discipline (memory: feedback-meaning-of-zero): a missing OPTIONAL layer reports as
@@ -14,16 +14,7 @@
  *   runtime) drive the process exit code — parse works without a data root, gazetteer, or POI layer.
  */
 
-/**
- * Bytes per MB, for human-readable sizes. Decimal rather than binary, matching how disk sizes are quoted.
- */
-const BYTES_PER_MB = 1_000_000
-
-/**
- * Bytes per GB. The data bundles are the reason this tier exists: `data --list` reported the US street tier as "41261.8
- * MB", a number nobody can read as "don't start this on a laptop SSD".
- */
-const BYTES_PER_GB = 1_000_000_000
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 
 /**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.
@@ -124,19 +115,6 @@ export function versionMeetsFloor(version: string, floor: string): boolean {
 	return v.patch >= f.patch
 }
 
-/**
- * Bytes → a compact `41.3 GB` / `12.3 MB` / `640 KB` / `12 B` string.
- */
-export function formatBytes(bytes: number): string {
-	if (bytes >= BYTES_PER_GB) return `${(bytes / BYTES_PER_GB).toFixed(1)} GB`
-
-	if (bytes >= BYTES_PER_MB) return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`
-
-	if (bytes >= 1000) return `${(bytes / 1000).toFixed(0)} KB`
-
-	return `${bytes} B`
-}
-
 //#region Observations (facts the runner gathers) → checks (verdicts)
 
 /**
@@ -188,7 +166,7 @@ export function weightsCheck(o: WeightsObservation): DoctorCheck {
 		return {
 			...base,
 			status: CheckStatus.Degraded,
-			detail: `resolved (${o.resolved.source}) but a weight file is empty — model.onnx ${formatBytes(o.modelSize ?? 0)}, tokenizer.model ${formatBytes(o.tokenizerSize ?? 0)}`,
+			detail: `resolved (${o.resolved.source}) but a weight file is empty — model.onnx ${ByteFormatter.formatSI(o.modelSize ?? 0)}, tokenizer.model ${ByteFormatter.formatSI(o.tokenizerSize ?? 0)}`,
 			consequence: WEIGHTS_CONSEQUENCE,
 			fix: WEIGHTS_FIX,
 		}
@@ -197,7 +175,7 @@ export function weightsCheck(o: WeightsObservation): DoctorCheck {
 	return {
 		...base,
 		status: CheckStatus.OK,
-		detail: `${o.resolved.source} · model.onnx ${formatBytes(o.modelSize)}, tokenizer.model ${formatBytes(o.tokenizerSize)}`,
+		detail: `${o.resolved.source} · model.onnx ${ByteFormatter.formatSI(o.modelSize)}, tokenizer.model ${ByteFormatter.formatSI(o.tokenizerSize)}`,
 	}
 }
 
@@ -317,7 +295,7 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	const base = { id: "gazetteer", label: "Admin gazetteer", core: false }
 
 	if (o.envCandidate) {
-		const size = o.envCandidate.sizeBytes ? ` (${formatBytes(o.envCandidate.sizeBytes)})` : ""
+		const size = o.envCandidate.sizeBytes ? ` (${ByteFormatter.formatSI(o.envCandidate.sizeBytes)})` : ""
 
 		return { ...base, status: CheckStatus.OK, detail: `candidate.db · ${o.envCandidate.path}${size}` }
 	}
@@ -329,7 +307,7 @@ export function gazetteerCheck(o: GazetteerObservation): DoctorCheck {
 	}
 
 	if (o.wofShard) {
-		const size = o.wofShard.sizeBytes ? ` (${formatBytes(o.wofShard.sizeBytes)})` : ""
+		const size = o.wofShard.sizeBytes ? ` (${ByteFormatter.formatSI(o.wofShard.sizeBytes)})` : ""
 
 		return { ...base, status: CheckStatus.OK, detail: `WOF admin shard · ${o.wofShard.path}${size}` }
 	}

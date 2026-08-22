@@ -20,6 +20,7 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 
+import { BYTES_PER_KIB } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -29,7 +30,6 @@ import { downloadToFile, writeManifest } from "./download.ts"
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
  * than data.
  */
-const BYTES_PER_KIB = 1024
 
 export type FetchStateSourcesOptions = BaseFetchOptions
 

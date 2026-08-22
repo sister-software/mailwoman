@@ -57,6 +57,11 @@
 			"default": "./out/fs/node.js",
 			"types": "./out/fs/node.d.ts"
 		},
+		"#fs/utils": {
+			"node": "./fs/utils/index.ts",
+			"default": "./out/fs/utils/index.js",
+			"types": "./out/fs/utils/index.d.ts"
+		},
 		"#resources": {
 			"node": "./resources/index.ts",
 			"default": "./out/resources/index.js",
@@ -179,6 +184,11 @@
 			"node": "./fs/zip.ts",
 			"default": "./out/fs/zip.js",
 			"types": "./out/fs/zip.d.ts"
+		},
+		"./fs/utils": {
+			"node": "./fs/utils/index.ts",
+			"default": "./out/fs/utils/index.js",
+			"types": "./out/fs/utils/index.d.ts"
 		},
 		"./scripting": {
 			"node": "./scripting/index.ts",

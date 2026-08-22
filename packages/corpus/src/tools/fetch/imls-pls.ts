@@ -27,6 +27,7 @@ import { existsSync, mkdirSync, statSync } from "node:fs"
 import { rm } from "node:fs/promises"
 import { basename, join } from "node:path"
 
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
 
@@ -37,7 +38,6 @@ import { downloadToFile, readManifest, writeManifest } from "./download.ts"
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
  * than data.
  */
-const BYTES_PER_KIB = 1024
 
 /**
  * The PLS FY 2023 bulk CSV ZIP (most recent as of 2026-05). If IMLS publishes a newer year, update this URL.
@@ -93,7 +93,7 @@ export async function fetchIMLSPLS(
 		report,
 	})
 
-	report?.(`  Downloaded: ${(zipSize / 1024 / 1024).toFixed(1)} MB`)
+	report?.(`  Downloaded: ${ByteFormatter.formatIEC(zipSize)}`)
 
 	if (zipSize < BYTES_PER_KIB) {
 		report?.(`  ✗ Response too small (${zipSize} bytes) — probable error page`)

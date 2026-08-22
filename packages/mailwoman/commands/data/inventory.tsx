@@ -14,6 +14,7 @@
  *   scrollback. A full listing is 200+ lines, so on any terminal it would.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
 
@@ -27,7 +28,6 @@ import {
 	rebuildHint,
 	takeInventory,
 } from "../../data-inventory.ts"
-import { formatBytes } from "../../doctor/checks.ts"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +
@@ -85,7 +85,7 @@ function rollup(entries: readonly InventoryEntry[]): string[] {
 		.map(([dir, c]) => {
 			const mark = c.manifested === c.total ? "✓" : c.manifested === 0 ? "✗" : "·"
 
-			return `  ${mark} ${String(c.manifested).padStart(3)}/${String(c.total).padEnd(4)} ${formatBytes(c.bytes).padStart(10)}  ${dir}`
+			return `  ${mark} ${String(c.manifested).padStart(3)}/${String(c.total).padEnd(4)} ${ByteFormatter.formatSI(c.bytes).padStart(10)}  ${dir}`
 		})
 }
 
@@ -147,7 +147,10 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			lines.push(``, `every artifact:`)
 
 			for (const entry of report.entries) {
-				lines.push(`  ${entry.provenance.padEnd(14)} ${formatBytes(entry.bytes).padStart(10)}  ${entry.path}`)
+				lines.push(
+					`  ${entry.provenance.padEnd(14)} ${ByteFormatter.formatSI(entry.bytes).padStart(10)}  ${entry.path}`
+				)
+
 				lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ ${rebuildHint(entry)}`)
 			}
 		} else {

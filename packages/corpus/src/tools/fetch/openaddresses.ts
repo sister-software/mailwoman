@@ -64,6 +64,7 @@ import { promisify } from "node:util"
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -82,8 +83,6 @@ const HTTP_OK = 200
  * Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body.
  */
 const MIN_PLAUSIBLE_SHARD_BYTES = 10_240
-
-const BYTES_PER_KIB = 1024
 
 const execFileAsync = promisify(execFile)
 
@@ -131,20 +130,6 @@ async function countLines(path: string): Promise<number> {
 	}
 
 	return count
-}
-
-function humanBytes(bytes: number): string {
-	const units = ["B", "KiB", "MiB", "GiB", "TiB"]
-	let value = bytes
-	let unit = 0
-
-	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
-		value /= 1024
-
-		unit++
-	}
-
-	return `${value.toFixed(unit === 0 ? 0 : 1)}${units[unit]}`
 }
 
 interface StreamDownloadOpts {
@@ -406,7 +391,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	await writeManifest(manifestPath, manifest)
 
-	report?.(`  ✓ ${humanBytes(size)}  rows=${rowCount}  sha256=${sha}`)
+	report?.(`  ✓ ${ByteFormatter.formatIEC(size)}  rows=${rowCount}  sha256=${sha}`)
 	report?.(`  MANIFEST written to ${manifestPath}`)
 	report?.(`=== done`)
 	report?.(`Feed to the adapter:`)

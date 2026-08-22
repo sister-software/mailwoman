@@ -14,13 +14,13 @@
  *   short terminal it would.
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 
 import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "../../data-bundles.ts"
-import { formatBytes } from "../../doctor/checks.ts"
 
 /**
  * Shown at the top of `mailwoman data --help`. Commander reuses it in the root command listing, so it is held to two
@@ -63,7 +63,7 @@ function listBundles(dataRoot: string): string {
 		lines.push(
 			`  ${bundle.name}`,
 			`    ${bundle.description}`,
-			`    ${files} file${files === 1 ? "" : "s"}, ~${formatBytes(totalBytes)} → ${destination}`,
+			`    ${files} file${files === 1 ? "" : "s"}, ~${ByteFormatter.formatSI(totalBytes)} → ${destination}`,
 			""
 		)
 	}

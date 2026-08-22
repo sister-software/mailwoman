@@ -24,6 +24,7 @@ import { join } from "node:path"
 import { setTimeout as sleep } from "node:timers/promises"
 import { gunzipSync } from "node:zlib"
 
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -33,7 +34,6 @@ import { downloadToFile, loadManifestEntries, writeManifest } from "./download.t
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
  * than data.
  */
-const BYTES_PER_KIB = 1024
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
@@ -156,26 +156,6 @@ export interface BanManifestEntry {
 
 export type FetchBanOptions = BaseFetchOptions
 
-/**
- * Mimic `numfmt --to=iec` for a friendly byte-size log line.
- */
-function iec(bytes: number): string {
-	if (bytes < BYTES_PER_KIB) return String(bytes)
-	const units = ["K", "M", "G", "T", "P"]
-	let value = bytes / 1024
-	let i = 0
-
-	while (value >= BYTES_PER_KIB && i < units.length - 1) {
-		value /= 1024
-
-		i++
-	}
-
-	const rounded = value < 10 ? value.toFixed(1) : Math.round(value).toString()
-
-	return `${rounded}${units[i] ?? ""}`
-}
-
 export async function fetchBan(options: FetchBanOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const banDir = join(options.outRoot, "ban")
 	const manifestPath = join(banDir, "MANIFEST.json")
@@ -281,7 +261,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			bytes,
 		})
 
-		report?.(`  ✓ ${iec(bytes)}  sha256=${sha}`)
+		report?.(`  ✓ ${ByteFormatter.formatIEC(bytes)}  sha256=${sha}`)
 
 		fetched++
 

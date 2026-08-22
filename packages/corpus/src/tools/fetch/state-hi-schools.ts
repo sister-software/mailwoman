@@ -25,6 +25,7 @@ import { existsSync, mkdirSync, statSync } from "node:fs"
 import { unlink } from "node:fs/promises"
 import { join } from "node:path"
 
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -34,7 +35,6 @@ import { downloadToFile, readManifest, writeManifest } from "./download.ts"
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
  * than data.
  */
-const BYTES_PER_KIB = 1024
 
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
 const SLUG = "state-hi-schools"
@@ -94,26 +94,6 @@ interface Manifest {
 	sha256: string
 	bytes: number
 	notes: string
-}
-
-/**
- * Mimic `numfmt --to=iec` for a friendly byte-size log line.
- */
-function iec(bytes: number): string {
-	if (bytes < BYTES_PER_KIB) return String(bytes)
-	const units = ["K", "M", "G", "T", "P"]
-	let value = bytes / 1024
-	let i = 0
-
-	while (value >= BYTES_PER_KIB && i < units.length - 1) {
-		value /= 1024
-
-		i++
-	}
-
-	const rounded = value < 10 ? value.toFixed(1) : Math.round(value).toString()
-
-	return `${rounded}${units[i] ?? ""}`
 }
 
 /**
@@ -190,7 +170,7 @@ export async function fetchStateHISchools(
 	}
 
 	const xlsxSize = statSync(xlsxDest).size
-	report?.(`  Downloaded XLSX: ${iec(xlsxSize)}`)
+	report?.(`  Downloaded XLSX: ${ByteFormatter.formatIEC(xlsxSize)}`)
 
 	if (xlsxSize < BYTES_PER_KIB) {
 		report?.(`  ✗ Response too small (${xlsxSize} bytes) — probable error page`)
@@ -221,7 +201,7 @@ export async function fetchStateHISchools(
 
 	await writeManifest(manifestPath, manifest)
 
-	report?.(`  ✓ ${iec(csvSize)}  sha256=${csvSha}`)
+	report?.(`  ✓ ${ByteFormatter.formatIEC(csvSize)}  sha256=${csvSha}`)
 	report?.(`  MANIFEST written to ${manifestPath}`)
 
 	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }

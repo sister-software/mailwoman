@@ -6,6 +6,7 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -27,7 +28,6 @@ export type { CountryScope } from "../country-scope.ts"
 /**
  * Bytes per KiB, for human-readable sizes.
  */
-const BYTES_PER_KIB = 1024
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -561,17 +561,6 @@ function formatMs(ms: number): string {
 	return `${Math.round(ms)}ms`
 }
 
-function formatBytes(b: number): string {
-	const sign = b < 0 ? "-" : "+"
-	const abs = Math.abs(b)
-
-	if (abs < BYTES_PER_KIB) return `${sign}${abs}B`
-
-	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
-
-	return `${sign}${(abs / 1024 / 1024).toFixed(1)}MB`
-}
-
 /**
  * Run the runtime pipeline N times against a single input and report per-stage timing percentiles + heap delta. The
  * first 5 iterations are warmup (excluded from stats) so JIT + lazy-imports settle before measurement. Useful for
@@ -687,7 +676,10 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 	)
 
 	lines.push("")
-	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
+	// `formatIEC` carries a minus itself; a growth needs the plus spelled out or the sign is only legible by absence.
+	const heapDelta = collected.heapDelta
+
+	lines.push(`heap delta (post-warmup → post-bench): ${heapDelta > 0 ? "+" : ""}${ByteFormatter.formatIEC(heapDelta)}`)
 
 	return lines.join("\n")
 }

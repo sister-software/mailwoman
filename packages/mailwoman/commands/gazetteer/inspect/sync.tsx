@@ -19,6 +19,7 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -33,7 +34,6 @@ import {
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { formatBytes } from "#doctor/checks"
 import type { ForkState } from "#gazetteer/wof-repo-origin"
 
 import {
@@ -209,7 +209,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 
 			console.error(
 				`▸ sync ${formatQuantity(sources.length)} repositories ` +
-					`(${formatBytes(selection.totalDiskUsageKB * 1024)} as GitHub reports them) → ${destination}` +
+					`(${ByteFormatter.formatSI(selection.totalDiskUsageKB * 1024)} as GitHub reports them) → ${destination}` +
 					(options.dryRun ? " (dry-run)" : "")
 			)
 
@@ -299,7 +299,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 		<Box flexDirection="column">
 			<Text color="gray">
 				{plan.destination} — {formatQuantity(plan.sourceCount)} repositories,{" "}
-				{formatBytes(plan.selection.totalDiskUsageKB * 1024)}
+				{ByteFormatter.formatSI(plan.selection.totalDiskUsageKB * 1024)}
 			</Text>
 
 			{active.map((name) => (
