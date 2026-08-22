@@ -79,7 +79,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		const requested = (options.countries ?? "")
 			.split(",")
 			.map((cc) => cc.trim().toLowerCase())
-			.filter(Boolean)
+			.filter((cc) => cc.length > 0)
 			.map((cc) => `whosonfirst-data-admin-${cc}`)
 
 		const audit = auditReposRoot(root, { readCommits: false })

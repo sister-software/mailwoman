@@ -47,7 +47,7 @@ const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
 		const names = readFileSync(options.names, "utf8")
 			.split("\n")
 			.map((line) => line.trim())
-			.filter(Boolean)
+			.filter((line) => line.length > 0)
 
 		// oxlint-enable mailwoman/prefer-spliterator
 

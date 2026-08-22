@@ -92,7 +92,8 @@ const SHAPES = [
 	{
 		name: "street fragment",
 		tag: "street",
-		build: (c: Record<string, string>) => (c.street ? [c.house_number, c.street].filter(Boolean).join(" ") : undefined),
+		build: (c: Record<string, string>) =>
+			c.street ? [c.house_number, c.street].filter((part) => part != null && part.length > 0).join(" ") : undefined,
 		// The model emits the street as a FAMILY (prefix/name/particle/suffix); assemble it the way
 		// `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
 		emit: ["street_prefix", "street", "street_prefix_particle", "street_suffix"],

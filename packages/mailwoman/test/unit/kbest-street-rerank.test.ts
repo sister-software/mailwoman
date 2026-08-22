@@ -40,7 +40,7 @@ const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 			{ piece: "Corsier", start: 4, end: 11, label: "I-street", confidence: 0.9 },
 		],
 		...(spanScores ? { spanScores } : {}),
-	}) as unknown as NeuralParseTrace
+	}) as NeuralParseTrace
 
 const mockClassifier = (t: NeuralParseTrace): NeuralAddressClassifier =>
 	({ traceParse: async () => t }) as unknown as NeuralAddressClassifier

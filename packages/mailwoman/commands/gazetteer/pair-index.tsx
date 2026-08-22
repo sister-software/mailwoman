@@ -152,7 +152,7 @@ function splitPathList(value: string | undefined): string[] {
 	return (value ?? "")
 		.split(",")
 		.map((path) => path.trim())
-		.filter(Boolean)
+		.filter((path) => path.length > 0)
 }
 
 /**

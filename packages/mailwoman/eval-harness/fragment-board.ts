@@ -121,7 +121,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 
 	// hit = the scored assertion held. For positive classes that is street exact-match; for the
 	// negative class it is the ABSENCE of a street.
-	const tally = new Map<string, { hit: number; total: number; misses: FragmentFixture[] }>()
+	const tally = new Map<string, { hit: number; total: number; misses: Array<FragmentFixture & { got: string }> }>()
 
 	for (const fixture of fixtures) {
 		// Production config — the query-shape prior is fed on every path production parses on
@@ -132,7 +132,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 
-		const street = flatten(tree.roots as never)
+		const street = flatten(tree.roots)
 			.filter((node) => STREET_TAGS.has(node.tag))
 			.toSorted((a, b) => a.start - b.start)
 			.map((node) => node.value)
@@ -149,7 +149,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 		if (ok) {
 			bucket.hit++
 		} else {
-			bucket.misses.push({ ...fixture, got: street } as never)
+			bucket.misses.push({ ...fixture, got: street })
 		}
 
 		tally.set(fixture.klass, bucket)
@@ -188,7 +188,7 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 			const want = miss.expect_no_street ? "(no street)" : (miss.expect.street ?? []).join(" ")
 
 			console.log(`    ${JSON.stringify(miss.input)}`)
-			console.log(`        want=${JSON.stringify(want)}  got=${JSON.stringify((miss as never as { got: string }).got)}`)
+			console.log(`        want=${JSON.stringify(want)}  got=${JSON.stringify(miss.got)}`)
 		}
 	}
 

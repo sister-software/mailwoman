@@ -44,7 +44,7 @@ function splitList(raw: string | undefined): string[] {
 	return raw
 		.split(",")
 		.map((entry) => entry.trim())
-		.filter(Boolean)
+		.filter((entry) => entry.length > 0)
 }
 
 /**

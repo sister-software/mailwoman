@@ -23,7 +23,7 @@ const parityInputs = await Array.fromAsync(JSONSpliterator.fromAsync<ParityCase>
 
 const syntheticInputs = await Array.fromAsync(TextSpliterator.fromAsync(SYNTHETIC_PATH), (line) => line.trim())
 
-const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter(Boolean)])]
+const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter((line) => line.length > 0)])]
 
 const { engine, preflight } = await createServeEngine()
 

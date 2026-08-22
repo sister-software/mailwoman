@@ -223,7 +223,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		ledger.runs.splice(dup, 1)
 	}
 
-	ledger.runs.push(row as never)
+	ledger.runs.push(row)
 
 	const tmp = `${ledgerPath}.tmp`
 

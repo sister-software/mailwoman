@@ -12,7 +12,7 @@ import { repairStrandedAffix } from "mailwoman/stranded-affix-repair"
 import { describe, expect, it } from "vitest"
 
 function node(tag: string, value: string, start: number, children: AddressNode[] = []): AddressNode {
-	return { tag, value, start, end: start + value.length, confidence: 0.9, children } as unknown as AddressNode
+	return { tag, value, start, end: start + value.length, confidence: 0.9, children } as AddressNode
 }
 
 function tagged(tree: AddressTree): string[] {

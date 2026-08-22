@@ -126,7 +126,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 				? options.licenseFilter
 						.split(",")
 						.map((d) => d.trim().toLowerCase())
-						.filter(Boolean)
+						.filter((dataset) => dataset.length > 0)
 				: []
 		)
 

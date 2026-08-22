@@ -51,7 +51,7 @@ const normName = (s: string | undefined): string => {
 
 	const toks = x
 		.split(" ")
-		.filter(Boolean)
+		.filter((token) => token.length > 0)
 		.map((t) => ABBR[t] ?? t)
 
 	return toks
@@ -206,7 +206,7 @@ export function buildLocalityMatcher(adminShardPath: string): LocalityMatcher {
 			const quals = e
 				.slice(base.length + 1)
 				.split(" ")
-				.filter(Boolean)
+				.filter((qualifier) => qualifier.length > 0)
 
 			const anc = ancestorTokensFor(locNode.id)
 

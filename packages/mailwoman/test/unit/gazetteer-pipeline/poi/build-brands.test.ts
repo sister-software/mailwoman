@@ -215,7 +215,7 @@ describe("serializeBrandTable", () => {
 			version: "0.1.0",
 			sourceLayer: SOURCE_LAYER,
 			brands: [{ wikidata: "Q1", name: "Chain Co", aliases: ["Alt Co"], rows: 30 }],
-		} as unknown as POIBrandTable
+		} as POIBrandTable
 
 		expect(serializeBrandTable(table)).toBe(serializeBrandTable(structuredClone(table)))
 		expect(serializeBrandTable(table).endsWith("\n")).toBe(true)

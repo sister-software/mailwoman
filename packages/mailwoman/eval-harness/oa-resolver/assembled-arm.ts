@@ -68,8 +68,8 @@ export async function buildAssembledArm(
 					// `fstPath` key, `"fstPath" in classifier` is false, and the pipeline degrades to the
 					// no-FST default without a word. Forward it.
 					...(neural.fstPath ? { fstPath: neural.fstPath } : {}),
-				} as never,
-				resolver: resolver as never,
+				},
+				resolver,
 				placeCountry: evalPlacer ?? false,
 				hardPlaceCountry: useHardCountry && !!evalPlacer,
 				// `--place-country-hard-all` overrides the production coverage safelist with the full in-map

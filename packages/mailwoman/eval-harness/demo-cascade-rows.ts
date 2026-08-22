@@ -170,7 +170,19 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			}
 		}
 
-		rows.push(row as unknown as SmokeRow)
+		// Assembled field by field rather than cast: every value above has been checked, and building the row from those
+		// checks is what makes the schema and the validator one statement instead of two that can drift.
+		rows.push({
+			input: row.input,
+			expect: {
+				...(typeof expect.id === "number" ? { id: expect.id } : {}),
+				...(typeof expect.name === "string" ? { name: expect.name } : {}),
+				...(typeof expect.placetype === "string" ? { placetype: expect.placetype } : {}),
+				...(expect.anchor_centroid === true ? { anchor_centroid: true } : {}),
+			},
+			...(typeof row.note === "string" ? { note: row.note } : {}),
+			...(typeof row.source === "string" ? { source: row.source } : {}),
+		})
 	}
 
 	if (!rows.length) {

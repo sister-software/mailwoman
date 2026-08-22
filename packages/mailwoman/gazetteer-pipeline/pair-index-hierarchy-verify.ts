@@ -36,7 +36,12 @@ import { parseArgs } from "node:util"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import { KNOWN_SCHEMA_VERSION, PairIndexResolver, peekPairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
+import {
+	KNOWN_SCHEMA_VERSION,
+	type PairIndexHeader,
+	PairIndexResolver,
+	peekPairIndexHeader,
+} from "@mailwoman/neural/pair-index-resolver"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
@@ -205,7 +210,7 @@ function main(): void {
 			fail(`header foldVersion ${header.foldVersion} != 1`)
 		}
 
-		const extended = header as unknown as {
+		const extended = header as PairIndexHeader & {
 			probeArtifact?: boolean
 			edge?: { child?: string; parent?: string }
 			source?: { kind?: string; namePolicy?: string }

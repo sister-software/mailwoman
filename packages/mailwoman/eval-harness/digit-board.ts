@@ -127,7 +127,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 
-		const nodes = flatten(tree.roots as never)
+		const nodes = flatten(tree.roots)
 		const hn = tagText(nodes, "house_number")
 		const pc = tagText(nodes, "postcode")
 

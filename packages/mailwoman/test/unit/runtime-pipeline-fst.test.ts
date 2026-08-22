@@ -74,7 +74,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 	it("auto-loads the classifier's fstPath gazetteer and passes it to parse on the first call", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "mw-fst-autoload-"))
 		const { classifier, calls } = fakeClassifier(writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier: classifier as never })
+		const pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
@@ -88,7 +88,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 	it("fst: false suppresses the auto-load (byte-stable escape hatch)", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "mw-fst-optout-"))
 		const { classifier, calls } = fakeClassifier(writeTinyFST(dir))
-		const pipeline = createRuntimePipeline({ classifier: classifier as never, fst: false })
+		const pipeline = createRuntimePipeline({ classifier, fst: false })
 
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
@@ -98,7 +98,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 
 	it("a classifier without fstPath parses without the gazetteer (byte-stable)", async () => {
 		const { classifier, calls } = fakeClassifier()
-		const pipeline = createRuntimePipeline({ classifier: classifier as never })
+		const pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("1 Anywhere Road")
 		expect(calls.length).toBeGreaterThan(0)
@@ -112,7 +112,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
 		const { readFileSync } = await import("node:fs")
 		const explicit = deserializeFST(readFileSync(explicitPath))
-		const pipeline = createRuntimePipeline({ classifier: classifier as never, fst: explicit })
+		const pipeline = createRuntimePipeline({ classifier, fst: explicit })
 
 		await pipeline("1 Testville Road")
 		expect(calls[0]!.fst).toBe(explicit)

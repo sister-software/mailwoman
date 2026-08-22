@@ -51,7 +51,7 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
-					.filter(Boolean)
+					.filter((cc) => cc.length > 0)
 			: undefined
 
 		const result = await buildPostcodeGeonamesTail({

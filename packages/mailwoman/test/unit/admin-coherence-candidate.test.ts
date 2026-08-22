@@ -127,7 +127,7 @@ async function verdictFor(regionValue: string, includeAncestors: boolean) {
 		adminCoherence: false,
 	})
 
-	const nodes = flatten(resolved.roots) as unknown as AdminCoherenceSourceNode[]
+	const nodes = flatten(resolved.roots) as AdminCoherenceSourceNode[]
 	const winner = nodes.find((n) => n.tag === "locality")!
 
 	return { winner, fragment: adminCoherenceField(nodes, winner, undefined) }
@@ -139,7 +139,7 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 
 		// The ranking is untouched: population-first still answers Weimar, Texas — with the
 		// disambiguator in the input. That is the #1717 defect, faithfully reproduced.
-		const stamped = winner as unknown as AddressNode
+		const stamped = winner as AddressNode
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)
 

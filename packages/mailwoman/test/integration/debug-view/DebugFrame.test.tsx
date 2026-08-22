@@ -19,7 +19,7 @@ const TREE = {
 		{ tag: "locality", value: "Portland", start: 20, end: 28, confidence: 0.97, children: [] },
 		{ tag: "region", value: "OR", start: 29, end: 31, confidence: 0.96, children: [] },
 	],
-} as unknown as AddressTree
+} as AddressTree
 
 const RESULT = {
 	input: "3215 SE Clinton St, Portland OR",
@@ -33,7 +33,9 @@ const RESULT = {
 	house_number: "3215",
 	street: "SE Clinton St",
 	countryCode: "US",
-	hierarchy: [{ tag: "locality", value: "Portland", placeID: "wof:101715829", lat: 45.52, lon: -122.67 }],
+	hierarchy: [
+		{ tag: "locality", value: "Portland", name: "Portland", placeID: "wof:101715829", lat: 45.52, lon: -122.67 },
+	],
 	candidates: [
 		{ name: "Portland", tag: "locality", lat: 45.52, lon: -122.67, countryCode: "US", placeID: "wof:101715829" },
 		{ name: "Portland", tag: "locality", lat: 43.66, lon: -70.25, countryCode: "US", placeID: "wof:101715745" },
@@ -41,8 +43,10 @@ const RESULT = {
 	components: {},
 	venue: null,
 	dependent_locality: null,
+	unit: null,
+	postcode_country_scope: null,
 	intent_markers: [],
-} as unknown as GeocodeResult
+} as GeocodeResult
 
 /**
  * A trace shaped like the session's, with each evidence row given something distinguishable to say.
@@ -72,11 +76,20 @@ const TRACE = {
 			{ piece: "▁Portland", start: 20, end: 28, label: "B-locality", confidence: 0.94 },
 		],
 	},
-	queryShape: { knownFormats: [] },
+	queryShape: {
+		characterClass: "alphanumeric",
+		tokenClasses: [],
+		segments: [],
+		knownFormats: [],
+		regionAbbreviations: [],
+		totalLength: RESULT.input.length,
+		whitespacePattern: "single",
+	},
 	kind: { kind: "structured_address", confidence: 0.9, alternatives: [] },
 	inputMode: "formatted",
 	locale: "en-US",
-} as unknown as GeocodeTrace
+	resolver: [],
+} as GeocodeTrace
 
 const BASE_DATA = {
 	input: RESULT.input,

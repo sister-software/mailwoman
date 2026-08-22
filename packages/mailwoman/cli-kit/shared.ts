@@ -213,7 +213,7 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 	const parsed = raw
 		.split(",")
 		.map((s) => s.trim())
-		.filter(Boolean)
+		.filter((role) => role.length > 0)
 
 	for (const role of parsed) {
 		if (!valid.has(role)) {

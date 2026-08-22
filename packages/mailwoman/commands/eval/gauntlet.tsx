@@ -99,7 +99,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 								components: components
 									.split(",")
 									.map((c) => c.trim())
-									.filter(Boolean),
+									.filter((component) => component.length > 0),
 							}
 						: {}),
 					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its

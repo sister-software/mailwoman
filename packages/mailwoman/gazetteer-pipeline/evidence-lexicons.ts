@@ -91,7 +91,7 @@ export function painterFold(surface: string): string[] {
 	return surface
 		.split(/\s+/)
 		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-		.filter(Boolean)
+		.filter((word) => word.length > 0)
 		.map((w) => w.toLowerCase())
 }
 

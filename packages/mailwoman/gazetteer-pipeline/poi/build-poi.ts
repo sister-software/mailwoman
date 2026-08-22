@@ -207,7 +207,11 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 
 	phase("probe", "DESCRIBE places schema")
 	const describeResult = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${glob}') LIMIT 1`)
-	const describeRows = describeResult.getRowObjects() as unknown as DescribeColumn[]
+
+	const describeRows: DescribeColumn[] = describeResult
+		.getRowObjects()
+		.map((row) => ({ column_name: String(row["column_name"]) }))
+
 	const categoryColumn = chooseCategoryColumn(describeRows)
 	const hasBrand = hasBrandColumn(describeRows)
 	const countryExpression = chooseCountryExpression(describeRows)
@@ -296,7 +300,7 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 			const colNames = stream.columnNames()
 
 			for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
-				const rows = chunk.getRowObjects(colNames) as unknown as Array<{
+				const rows = chunk.getRowObjects(colNames) as Array<{
 					name: string | null
 					category: string | null
 					brand_wikidata: string | null

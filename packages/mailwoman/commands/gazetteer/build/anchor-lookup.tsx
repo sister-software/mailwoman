@@ -52,7 +52,7 @@ const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }
 			include: options.include
 				?.split(",")
 				.map((c) => c.trim())
-				.filter(Boolean),
+				.filter((code) => code.length > 0),
 			gbOutward: options.gbOutward,
 		})
 

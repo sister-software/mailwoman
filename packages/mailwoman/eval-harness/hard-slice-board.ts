@@ -275,17 +275,19 @@ export const HARD_SLICE_BOARD_PATH = ((): string => {
  * content hash is a function of CONTENT, not of literal ordering.
  */
 export function canonicalizeHardSliceCase(c: HardSliceCase): HardSliceCase {
-	const out: Record<string, unknown> = {}
+	const out: Partial<HardSliceCase> = {}
 
 	for (const key of HARD_SLICE_KEY_ORDER) {
 		const value = c[key]
 
+		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write target to the intersection of
+		// every field type, which nothing satisfies. The accumulator keeps its own type either way.
 		if (value !== undefined) {
-			out[key] = value
+			Object.assign(out, { [key]: value })
 		}
 	}
 
-	return out as unknown as HardSliceCase
+	return out as HardSliceCase
 }
 
 /**

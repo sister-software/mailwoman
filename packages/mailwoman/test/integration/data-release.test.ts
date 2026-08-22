@@ -60,7 +60,7 @@ class FakeInterp {
 	}
 }
 
-const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolator: FakeInterp } as never
+const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolator: FakeInterp }
 
 /**
  * Ensure a directory exists and return it.
@@ -119,7 +119,7 @@ describe("ShardProvider atomic switchover", () => {
 		writeFileSync(join(root, "releases.json"), JSON.stringify({ "address-points": "v1" }))
 
 		const provider = new ShardProvider(factory, root)
-		const v1 = provider.for("tx").addressPoints as unknown as FakeAddressPoints
+		const v1 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
 		expect(provider.versions()).toEqual({ "address-points": "v1" })
 
@@ -128,7 +128,7 @@ describe("ShardProvider atomic switchover", () => {
 		writeFileSync(join(root, "releases.json"), JSON.stringify({ "address-points": "v2" }))
 		expect(provider.reload()).toEqual({ "address-points": "v2" })
 
-		const v2 = provider.for("tx").addressPoints as unknown as FakeAddressPoints
+		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")
 		// One-generation grace: the v1 handle is retired but NOT yet closed.
 		expect(v1.closed).toBe(false)

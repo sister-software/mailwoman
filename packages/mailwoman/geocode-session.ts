@@ -280,7 +280,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 	return (raw ?? "")
 		.split(";")
 		.map((part: string) => part.trim())
-		.filter(Boolean)
+		.filter((part) => part.length > 0)
 		.map((part: string) => {
 			const [coords, w] = part.split(":")
 			const [lat, lon] = coords!.split(",").map(Number)

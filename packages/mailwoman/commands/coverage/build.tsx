@@ -119,7 +119,7 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 				excludeStates: options.excludeStates
 					.split(",")
 					.map((s) => s.trim())
-					.filter(Boolean),
+					.filter((state) => state.length > 0),
 				dataRoot: options.dataRoot,
 				interpRoot: options.interp ? options.interpRoot : null,
 				fineRes: options.fineRes,
@@ -136,7 +136,7 @@ const CoverageBuild: ParsedCommandComponent<Options> = ({ options }) => {
 				postcodeExcludeCountries: options.postcodeExclude
 					.split(",")
 					.map((s) => s.trim())
-					.filter(Boolean),
+					.filter((country) => country.length > 0),
 				tileMaxZoom: options.maxZoom,
 				out: options.out,
 				keepNdjson: options.keepNdjson,
