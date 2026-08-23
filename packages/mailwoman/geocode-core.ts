@@ -952,7 +952,22 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
 
 		if (refusal) {
-			const abstained = extractGeocodeResult(input, { raw: input, roots: [] })
+			// The parse SUCCEEDED and used to be thrown away: this built the outcome from an EMPTY tree, so a
+			// refused `Cafe at St Mary's, Oxford` reported `components: {}` while `parseForGeocode` had produced
+			// `locality: Oxford` › `dependent_locality: St Mary's` › `street: Cafe`. `intent_markers` said WHY we
+			// abstained; nothing said what we understood, and a caller could not tell a refusal from a parse that
+			// found nothing without reading the marker.
+			//
+			// No extra parse on any production path — the session computes the tree once and threads it as
+			// `parsedTree` (geocode-session.ts:679). The fallback only runs for a direct `geocodeAddress` caller
+			// on a refused input, and this branch RETURNS, so nothing can parse twice.
+			//
+			// The tree has not been resolved here, so no node carries a coordinate and the outcome is
+			// coordinate-free by construction rather than by nulling. The abstain contract is graded on the
+			// coordinate alone (`check-case.ts`'s `expect_abstain`), and none of the six abstain board rows
+			// declares `expectComponents` — so this adds what was understood without weakening the refusal.
+			const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+			const abstained = extractGeocodeResult(input, tree)
 
 			abstained.intent_markers = refusal
 
