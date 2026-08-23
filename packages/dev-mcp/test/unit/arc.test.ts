@@ -23,6 +23,7 @@ function leg(label: string, improved: number, regressed: number, extra: Partial<
 		of: 649,
 		regressedByCountry: {},
 		regressedInputs: [],
+		improvedInputs: [],
 		...extra,
 	}
 }
@@ -113,6 +114,26 @@ describe("decideArc", () => {
 
 		expect(summarizeArc(arc)).not.toContain("upper bound")
 		expect(summarizeArc(arc)).toContain("inherits no base")
+	})
+
+	it("renders BOTH halves of the trade, not only the regressions", () => {
+		// The first version recorded regressedInputs and not improvedInputs, so every report it produced showed the
+		// losses as addresses and the wins as a bare count. A candidate is a trade; a reader cannot price one with a
+		// side hidden.
+		const arc = decideArc(
+			leg("control", 0, 0, { differed: 0 }),
+			undefined,
+			leg("candidate", 1, 1, {
+				improvedInputs: ["12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India"],
+				regressedInputs: ["Unter den Linden"],
+			}),
+			"from-scratch"
+		)
+
+		const out = renderArc(arc)
+
+		expect(out).toContain("+ 12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India")
+		expect(out).toContain("- Unter den Linden")
 	})
 
 	it("renders the verdict first and the ADDRESSES last, never only a count", () => {
