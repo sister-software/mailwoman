@@ -9,7 +9,7 @@
 
 import { z } from "zod"
 
-import { renderArc, runArc } from "../arc.ts"
+import { renderArc, runArc, summarizeArc } from "../arc.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
@@ -69,13 +69,7 @@ export const arcTool = ({ registry }: DevToolDeps): DevTool => ({
 		return {
 			...arc,
 			rendered: renderArc(arc),
-			summary:
-				`${arc.verdict.toUpperCase()}. Candidate net ${arc.candidate.net} ` +
-				`(${arc.candidate.improved} improved, ${arc.candidate.regressed} regressed)` +
-				(arc.attributableNet === undefined
-					? ", with no null leg to attribute it against — treat as an upper bound. "
-					: `, of which net ${arc.attributableNet} is attributable to the lever rather than to the fine-tune. `) +
-				arc.reasons.join(" "),
+			summary: summarizeArc(arc),
 		}
 	},
 })

@@ -253,6 +253,30 @@ export async function runArc(registry: EngineRegistry, options: ArcOptions): Pro
 }
 
 /**
+ * The one-line verdict.
+ *
+ * It lives beside {@linkcode decideArc} rather than in the tool wrapper because the first version computed the same
+ * sentence in both places and they disagreed on their first live run: `reasons` correctly called a from-scratch run's
+ * null INAPPLICABLE while the wrapper's summary still called the number an upper bound carrying a fine-tune tax. Two
+ * copies of a rule agree until one of them is fixed.
+ */
+export function summarizeArc(arc: ArcResult): string {
+	const attribution =
+		arc.attributableNet === undefined
+			? arc.shape === "from-scratch"
+				? ", which is already the attributable number — a from-scratch run inherits no base. "
+				: ", with no null leg to attribute it against — treat as an upper bound. "
+			: `, of which net ${arc.attributableNet} is attributable to the lever rather than to the fine-tune. `
+
+	return (
+		`${arc.verdict.toUpperCase()}. Candidate net ${arc.candidate.net} ` +
+		`(${arc.candidate.improved} improved, ${arc.candidate.regressed} regressed)` +
+		attribution +
+		arc.reasons.join(" ")
+	)
+}
+
+/**
  * Render an arc the way it should be read — the verdict, then what the controls said, then the addresses.
  */
 export function renderArc(arc: ArcResult): string {

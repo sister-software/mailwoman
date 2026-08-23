@@ -9,7 +9,7 @@
  *   may not is worse than one that reports nothing.
  */
 
-import { type ArcLeg, decideArc, renderArc } from "@mailwoman/dev-mcp/arc"
+import { type ArcLeg, decideArc, renderArc, summarizeArc } from "@mailwoman/dev-mcp/arc"
 import { describe, expect, it } from "vitest"
 
 function leg(label: string, improved: number, regressed: number, extra: Partial<ArcLeg> = {}): ArcLeg {
@@ -104,6 +104,15 @@ describe("decideArc", () => {
 		expect(arc.reasons.some((r) => r.includes("none is applicable"))).toBe(true)
 		// And it can still ship: shipped IS the attributable baseline here.
 		expect(arc.verdict).toBe("ship")
+	})
+
+	it("does not contradict its own reasons in the one-line summary", () => {
+		// The first live run said "no null leg to attribute it against - treat as an upper bound" in the summary while
+		// the reasons beside it correctly called the null inapplicable. Two copies of a rule agree until one is fixed.
+		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), undefined, leg("candidate", 3, 1), "from-scratch")
+
+		expect(summarizeArc(arc)).not.toContain("upper bound")
+		expect(summarizeArc(arc)).toContain("inherits no base")
 	})
 
 	it("renders the verdict first and the ADDRESSES last, never only a count", () => {
