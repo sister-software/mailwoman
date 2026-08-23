@@ -109,6 +109,15 @@ export interface CoverageReport {
 	countries: CountryCoverage[]
 	mismatches: CoverageMismatches
 	corpusVersion: string
+	/**
+	 * The corpus version the CONFIG points at, which is not always the one the census counted.
+	 */
+	configuredCorpusVersion?: string
+	/**
+	 * Set when the censused corpus and the configured corpus differ. Its presence means every row count in this report is
+	 * about a corpus the run does not read, so a zero is not evidence of absence.
+	 */
+	corpusMismatch?: string
 	corpusRowsTotal: number
 	/**
 	 * ISO timestamp the cached corpus census was taken, or `null` when it was computed in this call.
@@ -231,6 +240,38 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 interface ParquetLike {
 	getCursor(columns?: string[]): { next(): Promise<Record<string, unknown> | null> }
 	close?(): Promise<void>
+}
+
+/**
+ * The corpus version the training config points at, from its `corpus_dir`.
+ *
+ * This exists so a CACHED census can be checked against the corpus the run actually reads. The two are separate
+ * artifacts that both look authoritative: the census names the corpus it counted, the config names the corpus it trains
+ * on, and nothing made them agree. A census of `0.26.0` answering a question about a `0.27.0` run reports a country's
+ * rows as ZERO when the newer corpus added them — an absence indistinguishable from the real thing, which is the
+ * failure this whole file exists to prevent.
+ *
+ * Returns undefined when the config states no corpus_dir; that is "cannot check", not "they match".
+ */
+export function readConfiguredCorpusVersion(configPath: string): string | undefined {
+	if (!existsSync(configPath)) return undefined
+
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a training config is a few hundred lines, read sync
+	for (const line of readFileSync(configPath, "utf8").split("\n")) {
+		const match = /^\s*corpus_dir:\s*["']?([^"'\s]+)/.exec(line)
+
+		if (!match) continue
+
+		// .../versioned/<version>/corpus-<version> — the directory segment is the version.
+		const segments = match[1]!.split("/").filter((segment) => segment.length)
+		const versioned = segments.indexOf("versioned")
+
+		if (versioned !== -1 && segments[versioned + 1]) return segments[versioned + 1]!.replace(/^v/, "")
+
+		return segments.at(-1)?.replace(/^corpus-v?/, "")
+	}
+
+	return undefined
 }
 
 /**
@@ -453,6 +494,18 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const trains = (c: CountryCoverage): boolean => c.admitted && c.corpusRows > 0
 
+	const configuredCorpusVersion = readConfiguredCorpusVersion(options.configPath)
+
+	// A cached census and a config are two artifacts that both look authoritative and were never made to agree. When
+	// they name different corpora every row count below is about the WRONG corpus, and reads as a real absence.
+	const corpusMismatch =
+		configuredCorpusVersion && census.corpusVersion !== "unknown" && configuredCorpusVersion !== census.corpusVersion
+			? `The census counted corpus ${census.corpusVersion}; the config trains on ${configuredCorpusVersion}. ` +
+				"Every row count here is about the corpus that was COUNTED, not the one that trains — a country the " +
+				"newer corpus added reads as zero rows. Re-run with refresh, or point at the config whose corpus was " +
+				"censused."
+			: undefined
+
 	return {
 		countries,
 		mismatches: {
@@ -463,6 +516,8 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			measuredButUntrained: countries.filter((c) => c.boardRows > 0 && !trains(c)).map((c) => c.country),
 		},
 		corpusVersion: census.corpusVersion,
+		configuredCorpusVersion,
+		...(corpusMismatch ? { corpusMismatch } : {}),
 		corpusRowsTotal: census.total,
 		corpusCensusTakenAt: takenAt,
 		configPath: options.configPath,
