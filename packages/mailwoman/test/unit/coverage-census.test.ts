@@ -15,7 +15,12 @@ import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { buildCorpusCensus, readAdmittedCountries, readBoardCoverage } from "mailwoman/coverage-census"
+import {
+	buildCorpusCensus,
+	readAdmittedCountries,
+	readBoardCoverage,
+	readConfiguredCorpusVersion,
+} from "mailwoman/coverage-census"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let root: string
@@ -155,4 +160,58 @@ describe.skipIf(!existsSync(CORPUS))("buildCorpusCensus against a real shard", (
 		expect(census.total).toBeGreaterThan(0)
 		expect(census.streetRows["GB"] ?? 0).toBeGreaterThan(0)
 	}, 120_000)
+})
+
+describe("readConfiguredCorpusVersion", () => {
+	function config(body: string): string {
+		const path = join(mkdtempSync(join(tmpdir(), "mw-cfg-")), "c.yaml")
+
+		writeFileSync(path, body)
+
+		return path
+	}
+
+	it("reads the version out of a versioned corpus_dir", () => {
+		// The real shape. This is the half the census never checked: the config names 0.27.0 while a cached census
+		// counted 0.26.0, and every row count silently answers about the corpus that was counted.
+		const path = config(
+			"data:\n  corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl\n"
+		)
+
+		expect(readConfiguredCorpusVersion(path)).toBe("0.27.0-house-venue-intl")
+	})
+
+	it("returns undefined rather than a guess when the config states no corpus_dir", () => {
+		// "Cannot check" is not "they match". Returning a plausible default here would manufacture agreement.
+		expect(readConfiguredCorpusVersion(config("data:\n  max_length: 128\n"))).toBeUndefined()
+		expect(readConfiguredCorpusVersion("/nonexistent-config.yaml")).toBeUndefined()
+	})
+
+	it("falls back to the trailing directory when the path is not /versioned/-shaped", () => {
+		expect(readConfiguredCorpusVersion(config("data:\n  corpus_dir: /data/corpus/corpus-v0.5.0\n"))).toBe("0.5.0")
+	})
+})
+
+describe("readAdmittedCountries — the Norway shape", () => {
+	it("keeps a QUOTED NO as the string it is, and counts it", () => {
+		// A YAML parser turns a bare `NO` key into boolean false, which is the bug this reader exists to avoid
+		// reproducing. A quoted "NO" must still be counted — a regex requiring a bare key silently drops Norway and
+		// reports it as never admitted.
+		const path = join(mkdtempSync(join(tmpdir(), "mw-cfg-no-")), "c.yaml")
+
+		writeFileSync(path, 'data:\n  country_weights:\n    US: 1.0\n    "NO": 1.0\n    FR: 1.0\n')
+
+		const admitted = readAdmittedCountries(path)
+
+		expect(admitted.has("NO")).toBe(true)
+		expect(admitted.size).toBe(3)
+	})
+
+	it("does not admit a country at weight zero — that is a hard drop, not a low weight", () => {
+		const path = join(mkdtempSync(join(tmpdir(), "mw-cfg-zero-")), "c.yaml")
+
+		writeFileSync(path, "data:\n  country_weights:\n    US: 1.0\n    PE: 0\n")
+
+		expect(readAdmittedCountries(path).has("PE")).toBe(false)
+	})
 })
