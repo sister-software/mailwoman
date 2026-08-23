@@ -65,6 +65,7 @@ export interface ArcLeg {
  * What the arc concluded, and whether it is entitled to conclude anything.
  */
 export interface ArcResult {
+	shape: RunShape
 	control?: ArcLeg
 	null?: ArcLeg
 	candidate: ArcLeg
@@ -115,8 +116,19 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 	}
 }
 
+/**
+ * How the candidate was trained.
+ *
+ * This is not bookkeeping: it decides whether a null leg is MISSING or INAPPLICABLE. A fine-tune inherits a base and
+ * pays to touch it, so a null is the only thing that separates the lever's cost from the tax. A from-scratch run
+ * inherits nothing, so there is no tax to subtract and demanding a null would be asking for a control of nothing.
+ * Reporting the second case with the first case's caveat is how a correct number gets discounted.
+ */
+export type RunShape = "fine-tune" | "from-scratch"
+
 export interface ArcOptions {
 	candidate: string
+	shape?: RunShape
 	/**
 	 * A staged copy of the SHIPPED weights, run through the identical candidate path. Dereference the symlinks when
 	 * staging it — a directory that points back at the shipped artifacts grades the shipped model under the candidate's
@@ -135,7 +147,12 @@ export interface ArcOptions {
  * The verdict, given three legs. Pure on purpose: this is the half that was getting decided by eye, and deciding it by
  * eye is what produced eight confidently-wrong regression counts.
  */
-export function decideArc(control: ArcLeg | undefined, nullLeg: ArcLeg | undefined, candidate: ArcLeg): ArcResult {
+export function decideArc(
+	control: ArcLeg | undefined,
+	nullLeg: ArcLeg | undefined,
+	candidate: ArcLeg,
+	shape: RunShape = "fine-tune"
+): ArcResult {
 	const reasons: string[] = []
 	let attributable = true
 
@@ -153,10 +170,15 @@ export function decideArc(control: ArcLeg | undefined, nullLeg: ArcLeg | undefin
 		)
 	}
 
-	if (!nullLeg) {
+	if (!nullLeg && shape === "fine-tune") {
 		reasons.push(
 			"No null leg ran. The candidate's regression count is GROSS — it carries the cost of touching the base at " +
 				"all, which measured 10 of 649 rows on this base with no new data. Treat the count as an upper bound."
+		)
+	} else if (!nullLeg) {
+		reasons.push(
+			"No null leg, and none is applicable: a from-scratch run inherits no base, so there is no fine-tune tax to " +
+				"subtract and the comparison against shipped is already the attributable one."
 		)
 	}
 
@@ -189,6 +211,7 @@ export function decideArc(control: ArcLeg | undefined, nullLeg: ArcLeg | undefin
 			: "hold"
 
 	return {
+		shape,
 		...(control ? { control } : {}),
 		...(nullLeg ? { null: nullLeg } : {}),
 		candidate,
@@ -226,7 +249,7 @@ export async function runArc(registry: EngineRegistry, options: ArcOptions): Pro
 	const nullLeg = options.null ? await compare("null (same base, no new data)", options.null) : undefined
 	const candidate = await compare("candidate", options.candidate)
 
-	return decideArc(control, nullLeg, candidate)
+	return decideArc(control, nullLeg, candidate, options.shape ?? "fine-tune")
 }
 
 /**

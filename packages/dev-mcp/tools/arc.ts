@@ -45,12 +45,21 @@ export const arcTool = ({ registry }: DevToolDeps): DevTool => ({
 					"it is what makes a regression count attributable. One ~13-minute run amortises over every candidate " +
 					"on that base. Omitting it marks the candidate's regressions as a GROSS upper bound."
 			),
+		shape: z
+			.enum(["fine-tune", "from-scratch"])
+			.optional()
+			.describe(
+				"How the candidate was trained. Decides whether an absent null leg is MISSING or INAPPLICABLE: a " +
+					"from-scratch run inherits no base, so there is no fine-tune tax to subtract and shipped is already the " +
+					"right baseline. Defaults to fine-tune, which is the shape that needs the null."
+			),
 		inputs: INPUT_SET_SCHEMA.optional().describe("Defaults to the 649-row board."),
 		locale: z.string().optional(),
 	}),
 	handler: async (args) => {
 		const arc = await runArc(registry, {
 			candidate: args["candidate"] as string,
+			...(args["shape"] ? { shape: args["shape"] as "fine-tune" | "from-scratch" } : {}),
 			...(args["control"] ? { control: args["control"] as string } : {}),
 			...(args["null"] ? { null: args["null"] as string } : {}),
 			...(args["inputs"] === undefined ? {} : { inputs: args["inputs"] }),

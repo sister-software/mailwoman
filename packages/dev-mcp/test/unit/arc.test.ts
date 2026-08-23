@@ -93,6 +93,19 @@ describe("decideArc", () => {
 		expect(arc.verdict).toBe("hold")
 	})
 
+	it("does not charge a FROM-SCRATCH run a fine-tune tax it never paid", () => {
+		// A missing null and an inapplicable null are different facts. v5.0.0 is from-scratch: it inherits no base, so
+		// discounting its number as "an upper bound carrying the cost of touching the base" would understate a run that
+		// touched no base.
+		const arc = decideArc(leg("control", 0, 0, { differed: 0 }), undefined, leg("candidate", 20, 4), "from-scratch")
+
+		expect(arc.shape).toBe("from-scratch")
+		expect(arc.reasons.some((r) => r.includes("upper bound"))).toBe(false)
+		expect(arc.reasons.some((r) => r.includes("none is applicable"))).toBe(true)
+		// And it can still ship: shipped IS the attributable baseline here.
+		expect(arc.verdict).toBe("ship")
+	})
+
 	it("renders the verdict first and the ADDRESSES last, never only a count", () => {
 		const arc = decideArc(
 			leg("control", 0, 0, { differed: 0 }),
