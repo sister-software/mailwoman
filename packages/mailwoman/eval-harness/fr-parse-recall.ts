@@ -20,11 +20,11 @@
  *   Run: node scripts/eval/fr-parse-recall.ts
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { allRows, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, mailwomanDataRoot, workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
@@ -38,6 +38,41 @@ const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
  * the failure SHAPE without burying the rates underneath it.
  */
 const MAX_REPORTED_FAILURES = 12
+
+/**
+ * Locate a weights SIBLING artifact — `postcode-us.bin`, `anchor-lexicon-v1.json` — the way the runtime does.
+ *
+ * These were read from `packages/neural-weights-en-us/` directly, which is EMPTY on a dev checkout: the linkers write
+ * into the data-root overlay so the tracked workspace stays bare. So this leg threw ENOENT, and the gate rendered the
+ * throw as `fr.bare_street_intact FAIL (floor 75%)` — a crash reported as a measurement, and one indistinguishable from
+ * the French regression this floor exists to catch.
+ *
+ * Order matters. A candidate's OWN siblings come first, so grading a candidate never silently mixes in the shipped
+ * lexicon; the data-root overlay is the dev-checkout answer; the tracked workspace is last and is only non-empty on a
+ * release checkout where `copy-weights.ts` has run.
+ *
+ * Throws with every path it tried rather than returning a default. A missing anchor lexicon changes the parse, so a
+ * silent fallback here would produce a well-formed wrong floor reading.
+ */
+function resolveWeightsSibling(fileName: string, weightsCache?: string): string {
+	const candidates = [
+		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
+		String(dataRootPath("weights", "en-us", fileName)),
+		`${String(workspacePath("neural-weights-en-us"))}/${fileName}`,
+	]
+
+	const found = candidates.find((path) => existsSync(path))
+
+	if (!found) {
+		throw new Error(
+			`fr-parse-recall: cannot locate ${fileName}. Tried, in order:\n  ${candidates.join("\n  ")}\n` +
+				"On a dev checkout this comes from the data-root overlay — run the en-us link-dev-weights script. " +
+				"This is a MISSING ARTIFACT, not a French parse regression; do not read it as the bare-street floor."
+		)
+	}
+
+	return found
+}
 
 /**
  * Options for {@linkcode frParseRecall} — one field per flag the gate used to serialize into argv.
@@ -74,6 +109,11 @@ export interface FRParseRecallOptions {
 	 * Emit machine-readable rates to this path for the promotion gate.
 	 */
 	json?: string
+	/**
+	 * Package-shaped candidate weights root. When set, the anchor + lexicon siblings are taken from the CANDIDATE rather
+	 * than from the shipped overlay — grading a candidate against the shipped lexicon measures neither.
+	 */
+	weightsCache?: string
 	/**
 	 * The enforced floor, in percent. When set, {@linkcode FRParseRecallResult.pass} is false if the BARE-intact rate
 	 * falls below it — which is how the leg's old `process.exit(1)` reaches the gate now.
@@ -171,8 +211,11 @@ export async function frParseRecall(
 		const card = parseJSONStrict<{ labels: string[] }>(readFileSync(args.modelCard, "utf8"))
 
 		const anchor = new PostcodeBinaryResolver(
-			readFileSync("packages/neural-weights-en-us/postcode-us.bin")
+			readFileSync(resolveWeightsSibling("postcode-us.bin", options.weightsCache))
 		).toAnchorLookup()
+
+		const lexiconPath = resolveWeightsSibling("anchor-lexicon-v1.json", options.weightsCache)
+		const lexicon = parseGazetteerLexicon(parseJSONStrict(readFileSync(lexiconPath, "utf8")))
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizer),
@@ -184,9 +227,7 @@ export async function frParseRecall(
 			runner,
 			labels: card.labels,
 			postcodeAnchorLookup: anchor,
-			gazetteerLexicon: parseGazetteerLexicon(
-				parseJSONStrict(readFileSync("packages/neural-weights-en-us/anchor-lexicon-v1.json", "utf8"))
-			),
+			gazetteerLexicon: lexicon,
 			suppressGazetteerNearPostcode: true,
 			addressSystemConventions: "auto",
 			bridgePunctuationGaps: true,
