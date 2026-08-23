@@ -41,7 +41,11 @@ export type InputSetRef =
 	| { kind: "golden"; version?: string; split?: GoldenSplit }
 	| { kind: "parity"; country?: string }
 	| { kind: "holdout"; source?: HoldoutSource; n?: number; seed?: number }
-	| { kind: "literal"; inputs: string[]; why: string }
+	| {
+			kind: "literal"
+			inputs: Array<string | LiteralInputWithTruth>
+			why: string
+	  }
 
 /**
  * Held-out truth sources. `fr` is BAN, `us` is FDIC — the two `gauntlet/holdout.ts` defines, named here so a caller
@@ -72,6 +76,21 @@ type PanelVersion = (typeof PANEL_VERSIONS)[number]
 const GOLDEN_SPLITS = ["dev", "full"] as const
 
 type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
+
+/**
+ * A hand-picked input that carries its own truth point.
+ *
+ * `lat`/`lon` are an ASSERTION by whoever wrote the call. Nothing here verifies them, so the set's `why` has to say
+ * where they came from — a resolved map link, an oracle, a survey. An invented pin grades nothing and looks identical
+ * to a real one in the output.
+ */
+export interface LiteralInputWithTruth {
+	input: string
+	lat: number
+	lon: number
+	tolerance_m?: number
+	truth_type?: string
+}
 
 export interface ResolvedInput {
 	/**
@@ -310,17 +329,50 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
+	// A row may carry its own truth point. That is what turns this from an observation set into the AUTHORING loop
+	// for a new board row: measure the candidates against real coordinates first, then write the case file with the
+	// status you measured — rather than writing rows and discovering the score afterwards.
+	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
+		typeof entry === "string"
+			? { id: String(index), input: entry }
+			: {
+					id: String(index),
+					input: entry.input,
+					truthLat: entry.lat,
+					truthLon: entry.lon,
+					...(entry.tolerance_m === undefined ? {} : { toleranceM: entry.tolerance_m }),
+					...(entry.truth_type === undefined ? {} : { truthType: entry.truth_type }),
+				}
+	)
+
+	const graded = rows.filter((row) => row.truthLat !== undefined).length
+	// The digest keys on what was MEASURED — input plus its truth point — so two sets that share inputs but pin
+	// different coordinates cannot collide on `setID` and be read as the same run.
+	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
+
 	return {
-		setID: `literal:${sha256Hex(ref.inputs).slice(0, 12)}`,
-		inputs: ref.inputs.map((input, index) => ({ id: String(index), input })),
-		n: ref.inputs.length,
-		sha256: sha256Hex(ref.inputs),
+		setID: `literal:${sha256Hex(digest).slice(0, 12)}`,
+		inputs: rows,
+		n: rows.length,
+		sha256: sha256Hex(digest),
 		selection: "hand-picked",
 		why: ref.why,
 		notCovered: [],
-		hasTruth: { components: 0, coordinates: 0, tier: 0, any: 0, none: ref.inputs.length },
+		hasTruth: {
+			components: 0,
+			coordinates: graded,
+			tier: 0,
+			any: graded,
+			none: rows.length - graded,
+		},
 		notes: [
-			"Hand-picked inputs carry no expectations, so this set can be observed but not graded.",
+			graded === 0
+				? "Hand-picked inputs carry no expectations, so this set can be observed but not graded."
+				: graded === rows.length
+					? `All ${graded} rows carry a truth COORDINATE, so this set grades on distance. It carries no component or ` +
+						"tier truth — a row can be right to the metre and still have parsed the wrong thing."
+					: `${graded} of ${rows.length} rows carry a truth coordinate; the rest are observed only. Read the graded ` +
+						"fraction against its own denominator, never against n.",
 			"Results from this set report their confidence bound in the summary sentence — see power.ts.",
 		],
 	}
