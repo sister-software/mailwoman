@@ -288,6 +288,26 @@ export function createKnownLocalityGate(country: string, adminDB?: string): (nam
  * v4.8.0 shard came to teach street names as cities. So `admin2` is the locality, `admin1` the region, and column 3 the
  * DEPENDENT locality — which is also the left context the shard needs.
  *
+ * WHICH COUNTRIES THIS READER CAN SERVE. It needs `admin2` (the city) and `admin1` (the region), and a country can
+ * publish one without the other. Measured 2026-08-23 across the exports on disk:
+ *
+ * | country    | rows      | admin1 | admin2 | usable here                     |
+ * | ---------- | --------: | -----: | -----: | ------------------------------- |
+ * | PT, MX, IN | 145k–207k | 100%   | 100%   | yes                             |
+ * | BD, LK     | 1.3k–1.8k | 100%   | 100%   | yes                             |
+ * | PH         | 2,317     | 88%    | 88%    | yes, 88% of rows                |
+ * | PK         | 2,563     | 100%   | **0%** | NO — no city column             |
+ * | TH         | 903       | 100%   | **1%** | NO — effectively no city column |
+ * | ID         | 81,058    | **0%** | 0%     | NO — no region either           |
+ * | ZA         | 3,920     | **0%** | —      | NO                              |
+ *
+ * A country in the NO rows yields zero from this reader, and that is the correct outcome rather than a gap to route
+ * around: taking column 3 as the locality is what made the v4.8.0 shard train `Mahatma Gandhi Road` as a city. If one
+ * of them is wanted, it needs a city column from somewhere else, not a relaxed mapping.
+ *
+ * NOT PUBLISHED AT ALL by GeoNames, checked the same day: VE, VN, NP, MM, KH. Those are acquisition questions, and for
+ * VE specifically OpenAddresses 404s too — see the arc retrospective.
+ *
  * Three source properties a caller cannot see from a row count, all handled here. Hyphen-format countries publish each
  * code TWICE (`3750-000` and `3750000`, exactly 2.00× for PT and PL), so the first surface of a code wins and its twin
  * is dropped. Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields nothing
