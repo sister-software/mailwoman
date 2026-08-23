@@ -41,6 +41,7 @@ All fine-tunes off the v4.4.0 base (60k steps), 8,000 steps, EWC λ=1e4, A100-40
 | v4.8.0  | + `after_region` (IN) | 32,125 |  9.4% | **7 improved / 25 regressed**  |
 | v4.9.0  | + dependent locality  | 31,815 |  9.4% | **11 improved / 31 regressed** |
 | v4.10.0 | v4.9.0 shard, 1 rep   | 31,815 |  3.1% | **9 improved / 22 regressed**  |
+| v4.11.0 | house-venue INTL      | 18,000 |   n/a | **5 improved / 18 regressed**  |
 
 ### v4.8.0 — the shard taught "the first named segment is the locality"
 
@@ -108,11 +109,51 @@ the classes it does not contain, at any exposure that teaches anything.
 
 **All four runs are DO-NOT-SHIP. Nothing was promoted or published.**
 
+### v4.11.0 — the composition hypothesis, tested and eliminated
+
+The conclusion below was that an admin-only shard damages the classes it does not contain. v4.11.0
+tested it directly by putting the same surface into rows that DO contain them.
+
+`house-venue` was already emitting the target tail — `Springfield, IL 02101` and `Bengaluru,
+Karnataka 560038` are the same locality-region-postcode shape — and every row it emits carries a
+venue, a street AND a house number. 18,000 IN/PT/MX rows with real
+postcodes were emitted under the EXISTING `synth-house-venue` source, so they took a share of a bucket
+that has shipped at weight 2.0 rather than claiming a new dose. Measured on the shard: venue 100%,
+street 100%, house_number 100%.
+
+    Bob's Pizza, 9 Lake Dr, Srikakulam, Andhra Pradesh 532001
+    8457 Maple Blvd, Brasserie du Marché, Aguascalientes, Aguascalientes 20000
+
+**5 improved / 18 regressed, net −13. FR −3, GB −5, IE −3. Nine venue-led regressions.**
+
+No new source, no new dose, the alternatives present in every row — and the same countries lost the
+same classes. So the cause is NOT the shard's internal composition, and it is not exposure:
+
+| run         | new source? | own dose? | venue/street present? |     net | venue-led |
+| ----------- | ----------- | --------- | --------------------- | ------: | --------: |
+| v4.8.0      | yes         | 9.4%      | no                    |     −18 |        12 |
+| v4.9.0      | yes         | 9.4%      | no                    |     −20 |        15 |
+| v4.10.0     | yes         | 3.1%      | no                    |     −13 |         9 |
+| **v4.11.0** | **no**      | **no**    | **yes**               | **−13** |     **9** |
+
+What every run shares is the DATA: non-US/FR admin tails entering a model whose tail expectations were
+set by US and FR. Adding them shifts those expectations for the countries it already knows, and FR/GB/
+IE venue rows are where that shows. Composition and dose modulate the size of the shift; neither
+removes it.
+
 ## The cause, stated once
 
-**A shard containing only admin segments cannot be dosed at ~9% of the stream without damaging
-whichever class occupies the position it teaches — because it cannot teach the alternatives.** Three
-shapes demonstrated it. Moving the taught position moved the damage; it did not remove it.
+**Adding non-US/FR admin tails to this model regresses FR/GB/IE venue parsing, and neither
+composition nor dose removes it.** Five runs: three admin-only shards at three doses, one dose cut on
+a byte-identical shard, and one that carried venue+street+house_number in every row inside an
+already-shipping bucket. All five net-negative, all five losing the same classes in the same
+countries. Composition and dose modulate the size of the shift; the shift itself tracks the data.
+
+That points past the corpus at the model: a 39.3M-param encoder fine-tuned with an EWC brake against a
+US/FR base may not have capacity to hold a new tail convention without moving an old one. The next
+experiment is therefore NOT another shard — it is the same data against a different training shape
+(no EWC brake, or a longer run, or a from-scratch base that sees all the tails at once). That is a
+larger commitment than a fine-tune and should be scoped as one.
 
 ## What this does and does not license
 
