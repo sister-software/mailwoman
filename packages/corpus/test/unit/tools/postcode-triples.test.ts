@@ -26,12 +26,19 @@ const TAB = String.fromCharCode(9)
 const root = mkdtempSync(join(tmpdir(), "mw-postcode-triples-"))
 
 /**
- * Write a GeoNames-shaped export. Columns: country, postcode, place, admin1 — the four the reader uses.
+ * Write a GeoNames-shaped export as `[country, postcode, place, admin1, admin2]`.
+ *
+ * The real file has twelve columns and the reader takes four of them from non-adjacent positions — place is 2, admin1
+ * is 3, admin2 is FIVE. Writing them in argument order and padding the gap keeps the fixture readable while still
+ * exercising the real offsets; a fixture that packed them adjacently would pass against a reader with the wrong index.
  */
-function writeExport(name: string, rows: ReadonlyArray<readonly [string, string, string, string]>): string {
+function writeExport(name: string, rows: ReadonlyArray<readonly [string, string, string, string, string]>): string {
 	const path = join(root, name)
 
-	writeFileSync(path, rows.map((cells) => cells.join(TAB)).join("\n") + "\n")
+	const line = ([country, postcode, place, admin1, admin2]: readonly string[]): string =>
+		[country, postcode, place, admin1, "code", admin2].join(TAB)
+
+	writeFileSync(path, rows.map((cells) => line(cells)).join("\n") + "\n")
 
 	return path
 }
@@ -46,9 +53,9 @@ describe("readTriplesFromGeonames", () => {
 		// PT and PL publish every code twice — exactly 2.00× on both. Keeping both doubles the country's weight in the
 		// shard while adding no fact.
 		const path = writeExport("pt.txt", [
-			["PT", "3750-000", "Águeda", "Aveiro"],
-			["PT", "3750000", "Águeda", "Aveiro"],
-			["PT", "3750-011", "Águeda", "Aveiro"],
+			["PT", "3750-000", "Borralha", "Aveiro", "Águeda"],
+			["PT", "3750000", "Borralha", "Aveiro", "Águeda"],
+			["PT", "3750-011", "Borralha", "Aveiro", "Águeda"],
 		])
 
 		const triples = await readTriplesFromGeonames("PT", path, "Portugal", acceptAll)
@@ -56,23 +63,27 @@ describe("readTriplesFromGeonames", () => {
 		expect(triples).toHaveLength(2)
 		// The punctuated surface is the one people write, so it is the one that survives.
 		expect(triples[0]?.postcode).toBe("3750-000")
+		// admin2 is the locality; column 3 becomes the dependent locality.
+		expect(triples[0]?.locality).toBe("Águeda")
+		expect(triples[0]?.dependentLocality).toBe("Borralha")
 	})
 
 	it("drops a row with NO region rather than emitting a blank one", async () => {
 		// ZA's export is 100% place and 0% admin1. A blank region would look like data and teach nothing.
 		const path = writeExport("blank.txt", [
-			["PT", "1000-001", "Lisboa", ""],
-			["PT", "1000-002", "Lisboa", "Lisboa"],
+			["PT", "1000-001", "Alvalade", "", "Lisboa"],
+			["PT", "1000-002", "Alvalade", "Lisboa", "Lisboa"],
 		])
 
 		expect(await readTriplesFromGeonames("PT", path, "Portugal", acceptAll)).toHaveLength(1)
 	})
 
 	it("drops a place the gazetteer does not know as a locality", async () => {
-		// `Zona Centro` is a colonia. Labelling it `locality` trains the locality/dependent_locality boundary backwards.
+		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the gate applies to admin2, the
+		// locality, so a row whose CITY the gazetteer does not know is the one that drops.
 		const path = writeExport("mx.txt", [
-			["MX", "20000", "Zona Centro", "Aguascalientes"],
-			["MX", "20010", "Aguascalientes", "Aguascalientes"],
+			["MX", "20000", "Zona Centro", "Aguascalientes", "Unknownville"],
+			["MX", "20010", "Colonia Norte", "Aguascalientes", "Aguascalientes"],
 		])
 
 		const triples = await readTriplesFromGeonames("MX", path, "Mexico", {
@@ -84,18 +95,21 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("stamps the country's attested PLACEMENT onto every row", async () => {
-		const path = writeExport("in.txt", [["IN", "560038", "Bengaluru", "Karnataka"]])
+		const path = writeExport("in.txt", [["IN", "560038", "Mahatma Gandhi Road", "Karnataka", "Bengaluru"]])
 
 		const [row] = await readTriplesFromGeonames("IN", path, "India", acceptAll)
 
-		// `…, Bengaluru, Karnataka 560038, India` — the `in_structured` board row.
+		// `…, Bengaluru, Karnataka 560038, India` — the `in_structured` board row. Column 3 is `Mahatma Gandhi Road`, a
+		// STREET, which is exactly why it must not be read as the locality.
+		expect(row?.locality).toBe("Bengaluru")
+		expect(row?.dependentLocality).toBe("Mahatma Gandhi Road")
 		expect(row?.postcodePlacement).toBe("after_region")
 		expect(row?.locale).toBe("en-IN")
 	})
 
 	it("emits NOTHING for a country whose placement nothing attests", async () => {
 		// Not a failure — extracting AU with a guessed placement would teach a convention AU may not use.
-		const path = writeExport("au.txt", [["AU", "2000", "Sydney", "New South Wales"]])
+		const path = writeExport("au.txt", [["AU", "2000", "The Rocks", "New South Wales", "Sydney"]])
 
 		expect(await readTriplesFromGeonames("AU", path, "Australia", acceptAll)).toEqual([])
 	})

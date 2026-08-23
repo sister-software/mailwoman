@@ -1,0 +1,379 @@
+# v4.8.0 SMOKE (500 steps) — trailing-region PLACEMENT (#1748 / #1821)
+#
+# Not an experiment. This exists to prove the config LOADS and the shard is REACHED before the real
+# run spends GPU: the 134-country map, the v0.25.0 corpus dir, and the re-dosed source weight are all
+# new, and each fails silently rather than loudly. Read the completeness audit and the per-source row
+# counts in its log; ignore its metrics, which 500 steps cannot inform.
+#
+# WHAT v4.7.0 GOT WRONG, and it was not the dose. Its shard emitted the postcode only at the HEAD
+# (`const head = ... ${postcode} `), so every one of its 17,908 rows was postcode-LEADING. That was
+# correct for its four source countries — FR, DE, ES and IT all write the code first — and it silently
+# decided which countries the shard could teach, because the same digits change TAG with position.
+#
+# Measured on the shipped model, one row moved one slot:
+#
+#   Heladeria Frappe Mania, Avenida Country Club, Barcelona 6001, Anzoategui, Venezuela
+#     -> house_number 6001 | street "Avenida Country Club, Barcelona" | locality "Anzoategui"   573 km
+#   Heladeria Frappe Mania, Avenida Country Club, 6001 Barcelona, Anzoategui, Venezuela
+#     -> postcode 6001 | locality "Barcelona"                                                   correct
+#
+# `Sandton 2196` vs `2196 Sandton` behaves the same way. No decode-time lever moves it:
+# postcodeShapeCoherence=true leaves all eight VE board rows byte-identical. So this is corpus.
+#
+# WHAT IS ADDED: synth-trailing-region-structured v25 — 32,125 rows from 32,435 REAL
+# (postcode, locality, region) triples, in TWO placements, each attested by a gauntlet board row:
+#   leading       16,435 rows  FR DE ES IT NL PT MX   "8600-315 Lagos, Algarve, Portugal"     (pt_structured)
+#   after_region  16,000 rows  IN                     "Bengaluru, Karnataka 560038, India"    (in_structured)
+#
+# The leading arm is NOT filler — it is the counter-distribution. `no-fragment.ts`'s header records
+# what happens without one: teaching a new surface alone flips the model's default rather than
+# teaching it a distinction. FR/DE/ES/IT pass on the leading form today and must keep passing.
+#
+# VE gets ZERO rows and cannot get any — GeoNames does not publish Venezuela and nothing else on disk
+# carries a VE postcode. Whether IN's after_region rows generalize to VE's after_locality is the
+# question this run exists to answer, against 4 ve_city_postcode_trailing_state rows already on the board.
+#
+# KNOWN LIMITATION for the model card: all 16,000 trailing rows are IN. The run cannot distinguish
+# "learned after_region" from "learned India" using the trailing arm alone. The VE rows separate them.
+#
+# EXTRACTION is committed now (packages/corpus/src/tools/postcode-triples.ts); v0.24.0's was a one-off
+# that never landed, which is why the shard was unbuildable for a new country. Route notes in its
+# docstring: parent_id joins for FR/DE/ES/IT/NL only, GeoNames carries the triple inline for PT/MX/IN,
+# and nearest-locality-centroid was measured (13.5-81.1% agreement) and REJECTED.
+#
+# COUNTRY_WEIGHTS is now 134 codes, up from 25. `data_loader.py:301` drops any country absent from the
+# map, so the old 25 was the exhaustive training-country list and everything else was silently dropped
+# — the Norway bug's mechanism, still live for every other country. The new map is the union of the
+# shipped 25, IN, all 129 gauntlet-board countries, and KR/TW.
+#
+# KR and TW are the one judgement call here: neither is on the board, but both carry corpus rows
+# (1,083,156 and 678,660) of the same wof-admin toponym class as CN and JP, which the board does carry.
+# #288 validates JP/KR/TW together; admitting two of the three would teach the model that Korean and
+# Taiwanese toponyms are not places.
+#
+# COST of the expansion, measured rather than assumed: 0.778% of every epoch. country_weights is a
+# per-row admission gate applied INSIDE each source's stream, and the source multinomial fixes each
+# source's draw share — so admitting CN's 11.36M rows does not buy CN 1.7% of the run. CN's rows live
+# almost entirely in wof-admin, which is 1.155% of draws, so CN lands at 0.368%.
+#
+# 101 of the 134 codes have ZERO rows in the corpus. They admit nothing today and are declarations of
+# intent; train_remote.py's completeness audit reports them as "0 rows seen", which is correct and not
+# a failure. The two that matter and are NOT inert: IN (this shard's 16,000 rows) and NZ (11,957).
+#
+# ADMITTED FOR THE FIRST TIME, with rows: CN 11,357,947 | JP 2,092,821 | KR 1,083,156 | TW 678,660 |
+# NZ 11,957 | TR 1,124 | LB 1,117 | JO 1,101 | GE 1,071 | AS 5. All are 0.0% street-level wof-admin
+# toponyms. This is NOT the JP work: #296 and the v8-jp-full shard teach JP block structure under the
+# 47-label `stage3-jp` set (STAGE3_TAGS + JP_FINE_TAGS), which needs a wider head and an additive
+# fine-tune. Admitting JP here teaches toponym recognition only.
+#
+# DOSE: 3 reps/row x 32,125 rows against 155.0 other-source total over 8,000 x 128 = 1,024,000 samples
+# -> 16.10, a 9.4% share. v4.7.0 was 6 reps x 17,908 -> 18.17 at 10.5%. Nearly the same dose, twice the
+# surface breadth, and six reps is now arithmetically impossible at this row count.
+#
+# PRE-REGISTERED GATE (set before the run):
+#   1. the gated fraction does not lose a row;
+#   2. FR and DE show no regression anywhere - iron rule 6, the D-rule;
+#   3. the 4 ve_city_postcode_trailing_state rows are the IMPROVEMENT metric, not the gate;
+#   4. WATCH: tier-1 must not regress from the 134-country admission. If it does, the expansion and the
+#      placement change are separable - re-run with the 25-country map to attribute.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.25.0-trailing-region-placement/corpus-v0.25.0-trailing-region-placement
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights:
+    AD: 1.0
+    AE: 1.0
+    AF: 1.0
+    AG: 1.0
+    AI: 1.0
+    AL: 1.0
+    AO: 1.0
+    AR: 1.0
+    AS: 1.0
+    AT: 1.0
+    AU: 1.0
+    AW: 1.0
+    BA: 1.0
+    BB: 1.0
+    BD: 1.0
+    BE: 1.0
+    BF: 1.0
+    BI: 1.0
+    BJ: 1.0
+    BM: 1.0
+    BN: 1.0
+    BQ: 1.0
+    BR: 1.0
+    BS: 1.0
+    BT: 1.0
+    BW: 1.0
+    BY: 1.0
+    BZ: 1.0
+    CA: 1.0
+    CD: 1.0
+    CF: 1.0
+    CG: 1.0
+    CH: 1.0
+    CK: 1.0
+    CN: 1.0
+    CO: 1.0
+    CR: 1.0
+    CV: 1.0
+    CW: 1.0
+    CY: 1.0
+    CZ: 1.0
+    DE: 1.0
+    DJ: 1.0
+    DK: 1.0
+    DM: 1.0
+    DO: 1.0
+    EG: 1.0
+    ER: 1.0
+    ES: 1.0
+    FI: 1.0
+    FK: 1.0
+    FM: 1.0
+    FO: 1.0
+    FR: 1.0
+    GB: 1.0
+    GD: 1.0
+    GE: 1.0
+    GH: 1.0
+    GM: 1.0
+    GT: 1.0
+    GW: 1.0
+    HK: 1.0
+    HR: 1.0
+    HU: 1.0
+    ID: 1.0
+    IE: 1.0
+    IL: 1.0
+    IM: 1.0
+    IN: 1.0
+    IO: 1.0
+    IS: 1.0
+    IT: 1.0
+    JO: 1.0
+    JP: 1.0
+    KH: 1.0
+    KR: 1.0
+    KW: 1.0
+    KY: 1.0
+    LB: 1.0
+    MA: 1.0
+    ML: 1.0
+    MN: 1.0
+    MP: 1.0
+    MS: 1.0
+    MU: 1.0
+    MW: 1.0
+    MX: 1.0
+    MY: 1.0
+    NA: 1.0
+    NE: 1.0
+    NG: 1.0
+    NI: 1.0
+    NL: 1.0
+    "NO": 1.0
+    NZ: 1.0
+    OM: 1.0
+    PG: 1.0
+    PH: 1.0
+    PK: 1.0
+    PL: 1.0
+    PM: 1.0
+    PR: 1.0
+    PT: 1.0
+    RU: 1.0
+    RW: 1.0
+    SA: 1.0
+    SB: 1.0
+    SC: 1.0
+    SE: 1.0
+    SG: 1.0
+    SH: 1.0
+    SI: 1.0
+    SK: 1.0
+    SM: 1.0
+    SO: 1.0
+    SR: 1.0
+    ST: 1.0
+    SV: 1.0
+    SX: 1.0
+    TH: 1.0
+    TK: 1.0
+    TM: 1.0
+    TO: 1.0
+    TR: 1.0
+    TT: 1.0
+    TW: 1.0
+    UA: 1.0
+    US: 1.0
+    VE: 1.0
+    VG: 1.0
+    VI: 1.0
+    VN: 1.0
+    VU: 1.0
+    ZA: 1.0
+  source_weights:
+    # DOSE-FIRST (#1677): weight = target_reps x rows x total / (samples - target_reps x rows).
+    # 6 reps/row x 17,908 rows against 155.0 total over 8,000 x 128 = 1,024,000 samples -> 18.17,
+    # a 10.5% share. Parity with the bare trailing-region shards, measured at 7.7 and 5.2 reps/row.
+    # For contrast, the weight that collapsed v4.6.0 was 1.0 and bought 165 reps/row.
+    synth-trailing-region-structured: 16.10
+    synth-house-venue: 2.0
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-nad: 1.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    deepseek-kryptonite: 3.0
+    synth-intersection: 1.0
+    synth-german: 6.0
+    synth-fr-order: 3.0
+    synth-fr-admin-split: 6.0
+    synth-unit: 1.5
+    synth-po-box-cedex: 1.5
+    synth-affix: 2.0
+    synth-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    synth-anchor-absorption: 6.0
+    synth-fr-bare-street: 0.0 # SUPERSEDED (vintages must never co-feed)
+    synth-fr-bare-street-v20: 0.0 # SUPERSEDED
+    synth-fr-bare-street-v21: 0.0 # SUPERSEDED by -v22
+    synth-fr-bare-street-v22: 6.0 # dose held at v4.5.1's value; the v22 counter-forms are the run's ONE variable
+    synth-si-bare-village: 12.0
+    synth-no-street-led: 0.0
+    synth-cz-pcfirst-preposition: 0.0 # SUPERSEDED (vintages must never co-feed)
+    synth-cz-pcfirst-preposition-v20: 0.0 # SUPERSEDED by -v21
+    synth-cz-pcfirst-preposition-v21: 12.0
+    synth-nl-postcode: 6.0
+    synth-fragment: 6.0
+    synth-fr-fragment: 12.0
+    synth-no-fragment: 12.0
+    synth-gb: 6.0
+    synth-sub-venue: 12.0
+    synth-suffix-boundary: 2.5
+  augment_exclude_sources:
+    - synth-suffix-boundary
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train: # FINE-TUNE (B11 template): init_from the v4.4.0 base, fresh optimizer, EWC brake.
+  init_from: /data/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000
+  ewc_lambda: 1.0e4
+  ewc_fisher_path: /data/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000/fisher-diag-v1.npz
+  ewc_reference: /data/output-v440-suffix-boundary-v2-s42/checkpoints/step-060000
+  output_dir: /data/output-v480-placement-smoke-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 1.0e-5
+  weight_decay: 0.01
+  warmup_steps: 200
+  grad_clip_norm: 1.0
+  max_steps: 500
+  eval_every_steps: 250
+  save_every_steps: 500
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  trackio_project: mailwoman
+  trackio_run_name: v480-placement-smoke-500-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""

@@ -55,6 +55,14 @@ import type { PostcodePlacement } from "../shard-recipes/scaffold.ts"
  */
 export interface PostcodeTriple {
 	postcode: string
+	/**
+	 * The segment BEFORE the locality, when the source has one. Load-bearing rather than decorative: a shard whose every
+	 * row begins with the locality teaches that the first named segment IS the locality, and that flips the model's
+	 * default. Measured on the v4.8.0 candidate, which had no such segment — `Ye Three Lords, 27 Minories, London EC3N
+	 * 1DE` came back `locality: "Ye Three Lords"` with the venue and the street both gone, and 11 of its 25 regressions
+	 * were venue-led rows across seven countries.
+	 */
+	dependentLocality?: string
 	locality: string
 	region: string
 	country: string
@@ -228,7 +236,7 @@ export function readTriplesFromParentJoin(
 /**
  * GeoNames postal columns (0-based), matching `@mailwoman/corpus`'s `geonames-postal` adapter.
  */
-const GEONAMES_COL = { country: 0, postcode: 1, place: 2, admin1: 3 } as const
+const GEONAMES_COL = { country: 0, postcode: 1, place: 2, admin1: 3, admin2: 5 } as const
 
 /**
  * A predicate answering whether a name is a LOCALITY the admin gazetteer knows, for one country.
@@ -274,6 +282,12 @@ export function createKnownLocalityGate(country: string, adminDB?: string): (nam
 /**
  * Read triples straight out of a GeoNames `<CC>.txt` export — no join, the names are columns 3 and 4.
  *
+ * COLUMN 3 IS NOT THE LOCALITY. It is the finest-grained named place for the code, and for `560001` that is `Mahatma
+ * Gandhi Road` — a STREET — while the city, `Bengaluru`, is column 5 (admin2). MX is the same shape (`Roma Norte` is a
+ * colonia inside `Cuauhtémoc`) and so is PT (`Abrigada` inside `Alenquer`). Reading column 3 as the locality is how the
+ * v4.8.0 shard came to teach street names as cities. So `admin2` is the locality, `admin1` the region, and column 3 the
+ * DEPENDENT locality — which is also the left context the shard needs.
+ *
  * Three source properties a caller cannot see from a row count, all handled here. Hyphen-format countries publish each
  * code TWICE (`3750-000` and `3750000`, exactly 2.00× for PT and PL), so the first surface of a code wins and its twin
  * is dropped. Some countries populate the place but not admin1 — ZA is 100% place, 0% region — which yields nothing
@@ -296,16 +310,21 @@ export async function readTriplesFromGeonames(
 
 	for await (const cells of TSVSpliterator.fromAsync(path, { header: false }) as AsyncIterable<string[]>) {
 		const postcode = (cells[GEONAMES_COL.postcode] ?? "").trim()
-		const locality = (cells[GEONAMES_COL.place] ?? "").trim()
+		const dependentLocality = (cells[GEONAMES_COL.place] ?? "").trim()
+		const locality = (cells[GEONAMES_COL.admin2] ?? "").trim()
 		const region = (cells[GEONAMES_COL.admin1] ?? "").trim()
 
 		if (!postcode || !locality || !region) continue
 
-		// A place name the gazetteer does not know as a locality is most often a sub-locality — see the gate's docstring.
+		// The gate applies to the LOCALITY — admin2 — not to the fine-grained name, which is expected to be a street or
+		// a colonia and is emitted as the dependent locality rather than dropped.
 		if (!isKnownLocality(locality)) continue
 
+		// A dependent locality that merely repeats its parent teaches a doubled segment, not a boundary.
+		const dep = dependentLocality && dependentLocality !== locality ? dependentLocality : ""
+
 		// The bare twin of a punctuated code carries no new fact, and keeping both doubles the country's weight.
-		const key = `${postcode.replaceAll("-", "")} ${locality}`
+		const key = `${postcode.replaceAll("-", "")} ${locality} ${dep}`
 
 		if (seen.has(key)) continue
 
@@ -313,6 +332,7 @@ export async function readTriplesFromGeonames(
 
 		out.push({
 			postcode,
+			...(dep ? { dependentLocality: dep } : {}),
 			locality,
 			region,
 			country: countryName,
