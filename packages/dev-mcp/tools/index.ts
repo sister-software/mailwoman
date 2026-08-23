@@ -24,6 +24,7 @@
 
 import { buildSpawnTools } from "../spawn-tools.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { arcTool } from "./arc.ts"
 import { benchTool } from "./bench.ts"
 import { censusTool } from "./census.ts"
 import { compareTool } from "./compare.ts"
@@ -32,6 +33,7 @@ import { contractTool } from "./contract.ts"
 import { coverageTool } from "./coverage.ts"
 import { daemonTool } from "./daemon.ts"
 import { diagnoseTool } from "./diagnose.ts"
+import { diffParseTool } from "./diff-parse.ts"
 import { inputsTool } from "./inputs.ts"
 import { lookupTool } from "./lookup.ts"
 import { minimalPairsTool } from "./minimal-pairs.ts"
@@ -58,6 +60,7 @@ const FACTORIES = [
 	lookupTool,
 	runTool,
 	compareTool,
+	arcTool,
 	parseCompareTool,
 	traceTool,
 	benchTool,
@@ -70,6 +73,7 @@ const FACTORIES = [
 	rigTool,
 	provenanceTool,
 	coverageTool,
+	diffParseTool,
 	sourcesTool,
 	symbolTool,
 	vocabTool,

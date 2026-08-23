@@ -115,6 +115,11 @@
 			"default": "./out/tree-fingerprint.js",
 			"types": "./out/tree-fingerprint.d.ts"
 		},
+		"./arc": {
+			"node": "./arc.ts",
+			"default": "./out/arc.js",
+			"types": "./out/arc.d.ts"
+		},
 		"./tool-kit": {
 			"node": "./tool-kit.ts",
 			"default": "./out/tool-kit.js",

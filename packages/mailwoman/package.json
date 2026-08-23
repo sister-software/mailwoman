@@ -137,6 +137,11 @@
 			"default": "./out/eval-harness/*.js",
 			"types": "./out/eval-harness/*.d.ts"
 		},
+		"./geocode-diff": {
+			"node": "./geocode-diff.ts",
+			"default": "./out/geocode-diff.js",
+			"types": "./out/geocode-diff.d.ts"
+		},
 		"./coverage-census": {
 			"node": "./coverage-census.ts",
 			"default": "./out/coverage-census.js",

@@ -77,6 +77,26 @@ export interface FlatTreeNode {
 	confidence: number
 	start: number
 	end: number
+	/**
+	 * Where the assertion came from — `rule`, `neural`, `resolver`.
+	 *
+	 * Carried because a span that keeps its tag, its text and its confidence while its source moves from `resolver` to
+	 * `neural` has lost its gazetteer backing, and a projection that drops this reports that span as unchanged.
+	 */
+	source?: string
+	sourceID?: string
+	/**
+	 * The resolver's answer for this span, when one won.
+	 *
+	 * Carried for the same reason `source` is: a projection that keeps only the text and the tag cannot tell a span that
+	 * resolved to a DIFFERENT place from one that did not move at all, and those are a ranking problem and a non-event
+	 * respectively. `alternatives` is reduced to its LENGTH — the retrieval breadth is what a consumer reads, and handing
+	 * over the candidate objects invites a walk this projection exists to have already done.
+	 */
+	placeID?: string
+	lat?: number
+	lon?: number
+	alternatives?: number
 }
 
 /**
@@ -113,6 +133,12 @@ export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 			confidence: node.confidence,
 			start: node.start,
 			end: node.end,
+			...(node.source === undefined ? {} : { source: node.source }),
+			...(node.sourceID === undefined ? {} : { sourceID: node.sourceID }),
+			...(node.placeID === undefined ? {} : { placeID: node.placeID }),
+			...(node.lat === undefined ? {} : { lat: node.lat }),
+			...(node.lon === undefined ? {} : { lon: node.lon }),
+			...(node.alternatives === undefined ? {} : { alternatives: node.alternatives.length }),
 		}))
 		.toSorted((a, b) => a.start - b.start)
 }

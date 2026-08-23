@@ -330,6 +330,11 @@
 			"default": "./out/types/component.js",
 			"types": "./out/types/component.d.ts"
 		},
+		"./decoder/parse-diff": {
+			"node": "./decoder/parse-diff.ts",
+			"default": "./out/decoder/parse-diff.js",
+			"types": "./out/decoder/parse-diff.d.ts"
+		},
 		"./decoder/build-tree": {
 			"node": "./decoder/build-tree.ts",
 			"default": "./out/decoder/build-tree.js",
